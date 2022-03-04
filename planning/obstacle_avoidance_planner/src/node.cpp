@@ -53,7 +53,8 @@ bool isPathShapeChanged(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> &
     prev_path_points,
-  const double max_path_shape_change_dist, const double delta_yaw_threshold)
+  const double max_mpt_length, const double max_path_shape_change_dist,
+  const double delta_yaw_threshold)
 {
   if (!prev_path_points) {
     return false;
@@ -63,15 +64,15 @@ bool isPathShapeChanged(
   const auto opt_prev_begin_idx = tier4_autoware_utils::findNearestIndex(
     *prev_path_points, ego_pose, std::numeric_limits<double>::max(), delta_yaw_threshold);
   const size_t prev_begin_idx = opt_prev_begin_idx ? *opt_prev_begin_idx : 0;
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> truncated_prev_points{
-    prev_path_points->begin() + prev_begin_idx, prev_path_points->end()};
+  const auto truncated_prev_points =
+    points_utils::clipForwardPoints(*prev_path_points, prev_begin_idx, max_mpt_length);
 
   // truncate points from ego pose to fixed end points
   const auto opt_begin_idx = tier4_autoware_utils::findNearestIndex(
     path_points, ego_pose, std::numeric_limits<double>::max(), delta_yaw_threshold);
   const size_t begin_idx = opt_begin_idx ? *opt_begin_idx : 0;
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> truncated_points{
-    path_points.begin() + begin_idx, path_points.end()};
+  const auto truncated_points =
+    points_utils::clipForwardPoints(path_points, begin_idx, max_mpt_length);
 
   // guard for lateral offset
   if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {
@@ -947,8 +948,10 @@ bool ObstacleAvoidancePlanner::checkReplan(
     return true;
   }
 
+  const double max_mpt_length =
+    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
   if (isPathShapeChanged(
-        current_ego_pose_, path_points, prev_path_points_ptr_,
+        current_ego_pose_, path_points, prev_path_points_ptr_, max_mpt_length,
         max_path_shape_change_dist_for_replan_,
         traj_param_.delta_yaw_threshold_for_closest_point)) {
     RCLCPP_INFO(get_logger(), "Replan since path shape was changed.");

@@ -77,7 +77,7 @@
 
     # replanning & trimming trajectory param outside algorithm
     replan:
-      max_path_shape_change_dist: 2.0 # threshold of path shape change from behavior path [m]
+      max_path_shape_change_dist: 0.3 # threshold of path shape change from behavior path [m]
       max_ego_moving_dist_for_replan: 3.0 # threshold of ego's moving distance for replan [m]
       max_delta_time_sec_for_replan: 1.0 # threshold of delta time for replan [second]
 
