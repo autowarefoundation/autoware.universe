@@ -138,10 +138,8 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 geometry_msgs::msg::Pose transformAbsCoordinate2D(
   const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
-SearchRangeIndex getPathIndexRangeWithLaneId(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point, const int64_t lane_id,
-  const double distance_threshold = 10.0);
+SearchRangeIndex getPathIndexRangeIncludeLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int64_t lane_id);
 /**
  * @brief find nearest segment index with search range
  */
@@ -184,7 +182,7 @@ size_t findNearestSegmentIndex(const T & points, const PointWithSearchRangeIndex
  * @brief find nearest segment index within distance threshold
  */
 template <class T>
-PointWithSearchRangeIndex findFirstNearestSearchRangeIndex(
+PointWithSearchRangeIndex findFirstNearSearchRangeIndex(
   const T & points, const geometry_msgs::msg::Point & point, const double distance_thresh = 9.0)
 {
   tier4_autoware_utils::validateNonEmpty(points);

@@ -23,34 +23,25 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
-SearchRangeIndex getPathIndexRangeWithLaneId(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point, const int64_t lane_id, const double distance_threshold)
+SearchRangeIndex getPathIndexRangeIncludeLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int64_t lane_id)
 {
   /**
-   * @brief find index_pair within distance threshold to target point
+   * @brief find path index range include given lane_id
    *        |<-min_idx       |<-max_idx
-   *  ----nn|oooooooxoooooooo|nnn-------
-   *        |<--dst thresh-->|
-   * x : dst point
-   * n : path point contains lane id farther than distance threshold
-   * o : path point contains lane id within distance threshold
+   *  ------|oooooooooooooooo|-------
    */
   SearchRangeIndex search_range = {0, path.points.size() - 1};
   bool found_first_idx = false;
   for (size_t i = 0; i < path.points.size(); i++) {
     const auto & p = path.points.at(i);
     for (const auto & id : p.lane_ids) {
-      const auto & position = p.point.pose.position;
       if (id == lane_id) {
-        const double current_distance = std::hypot(point.x - position.x, point.y - position.y);
-        if (current_distance < distance_threshold) {
-          if (!found_first_idx) {
-            search_range.min_idx = i;
-            found_first_idx = true;
-          }
-          search_range.max_idx = i;
+        if (!found_first_idx) {
+          search_range.min_idx = i;
+          found_first_idx = true;
         }
+        search_range.max_idx = i;
       }
     }
   }

@@ -211,9 +211,9 @@ bool StopLineModule::modifyPathVelocity(
   const geometry_msgs::msg::Point stop_line_position = getCenterOfStopLine(stop_line_);
   const auto & current_position = planner_data_->current_pose.pose.position;
   const PointWithSearchRangeIndex src_point_with_search_range_index =
-    planning_utils::findFirstNearestSearchRangeIndex(path->points, current_position);
+    planning_utils::findFirstNearSearchRangeIndex(path->points, current_position);
   const SearchRangeIndex dst_search_range =
-    planning_utils::getPathIndexRangeWithLaneId(*path, stop_line_position, lane_id_);
+    planning_utils::getPathIndexRangeIncludeLaneId(*path, lane_id_);
 
   // Find collision
   const auto collision = findCollision(*path, stop_line, dst_search_range);
@@ -229,10 +229,19 @@ bool StopLineModule::modifyPathVelocity(
   // Calculate stop pose and insert index
   const auto stop_pose_with_index = calcStopPose(*path, offset_segment);
 
-  PointWithSearchRangeIndex dst_point_with_search_range_index = {
-    stop_pose_with_index->pose.position, dst_search_range};
-  const double signed_arc_dist_to_stop_point = planning_utils::calcSignedArcLengthWithSearchIndex(
-    path->points, src_point_with_search_range_index, dst_point_with_search_range_index);
+  const PointWithSearchRangeIndex dst_point_with_search_range_index = {
+    stop_line_position, dst_search_range};
+  const double stop_line_margin = base_link2front + planner_param_.stop_margin;
+  /**
+   * @brief : calculate signed arc length consider stop margin from stop line
+   *
+   * |----------------------------|
+   * s---ego----------x--|--------g
+   */
+  const double signed_arc_dist_to_stop_point =
+    planning_utils::calcSignedArcLengthWithSearchIndex(
+      path->points, src_point_with_search_range_index, dst_point_with_search_range_index) -
+    stop_line_margin;
   if (state_ == State::APPROACH) {
     // Insert stop pose
     *path = insertStopPose(*path, *stop_pose_with_index, stop_reason);
