@@ -24,6 +24,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
         src/autoware_control_toolbox/autoware_control_toolbox.cpp
         src/autoware_control_toolbox/utils/act_utils_eigen.cpp
         src/autoware_control_toolbox/utils/act_utils.cpp
+        src/disturbance_generators/disturbance_generators.cpp
         )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
 autoware_set_compile_options(${PROJECT_NAME})
