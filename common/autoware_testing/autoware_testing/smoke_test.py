@@ -17,6 +17,7 @@
 import os
 import shlex
 import unittest
+import time
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
@@ -25,7 +26,7 @@ from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import launch_testing
-import pytest
+import rclpy
 
 
 def resolve_node(context, *args, **kwargs):
@@ -74,8 +75,21 @@ def generate_test_description():
     )
 
 
+class DummyTest(unittest.TestCase):
+    def test_wait_for_node_ready(self):
+        """
+        Waiting for the node is ready
+        """
+        rclpy.init()
+        test_node = rclpy.create_node("test_node")
+        while(len(test_node.get_node_names()) == 0):
+            time.sleep(0.1)
+            print("waiting for Node to be ready")
+        rclpy.shutdown()
+
+
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
     def test_exit_code(self, proc_output, proc_info):
-        # Check that process exits with code -15 code: termination request, sent to the program
-        launch_testing.asserts.assertExitCodes(proc_info, [-15])
+        # Check that process exits with code 0
+        launch_testing.asserts.assertExitCodes(proc_info)
