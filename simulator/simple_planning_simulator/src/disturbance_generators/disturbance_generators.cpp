@@ -118,6 +118,10 @@ DelayModelSISO::DelayModelSISO(const double &Td,
 
 }
 
+/**
+ * @brief given a time delay value, updates the internal transfer function and state space models of the time-delay.
+ * @param newTd time-delay value.
+ * */
 void DelayModelSISO::updateModel(const double &newTd)
 {
     Td_ = newTd;

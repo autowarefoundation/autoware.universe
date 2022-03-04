@@ -4,7 +4,7 @@
       simple_planning_simulator:
         simulated_frame_id: "base_link"
         origin_frame_id: "map"
-        vehicle_model_type: "DELAY_STEER_ACC_GEARED"
+        vehicle_model_type: "DELAY_STEER_ACC_DIST"
         initialize_source: "INITIAL_POSE_TOPIC"
         timer_sampling_time_ms: 25
         add_measurement_noise: False

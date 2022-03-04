@@ -21,6 +21,7 @@
 #include "rclcpp_components/register_node_macro.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+#include "autoware_control_toolbox/utils/act_utils.hpp"
 
 #include <tf2/LinearMath/Quaternion.h>
 
@@ -37,7 +38,7 @@ namespace
 {
 
     autoware_auto_vehicle_msgs::msg::VelocityReport to_velocity_report(
-            const std::shared_ptr <SimModelInterface> vehicle_model_ptr)
+            const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
     {
         autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
         velocity.longitudinal_velocity = static_cast<float32_t>(vehicle_model_ptr->getVx());
@@ -46,7 +47,7 @@ namespace
         return velocity;
     }
 
-    nav_msgs::msg::Odometry to_odometry(const std::shared_ptr <SimModelInterface> vehicle_model_ptr)
+    nav_msgs::msg::Odometry to_odometry(const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
     {
         nav_msgs::msg::Odometry odometry;
         odometry.pose.pose.position.x = vehicle_model_ptr->getX();
@@ -59,7 +60,7 @@ namespace
     }
 
     autoware_auto_vehicle_msgs::msg::SteeringReport to_steering_report(
-            const std::shared_ptr <SimModelInterface> vehicle_model_ptr)
+            const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
     {
         autoware_auto_vehicle_msgs::msg::SteeringReport steer;
         steer.steering_tire_angle = static_cast<float32_t>(vehicle_model_ptr->getSteer());
@@ -89,29 +90,39 @@ namespace simulation
 
             sub_init_pose_ = create_subscription<PoseWithCovarianceStamped>(
                     "/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
+
             sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
                     "input/ackermann_control_command", QoS{1},
                     std::bind(&SimplePlanningSimulator::on_ackermann_cmd, this, _1));
+
             sub_gear_cmd_ = create_subscription<GearCommand>(
                     "input/gear_command", QoS{1}, std::bind(&SimplePlanningSimulator::on_gear_cmd, this, _1));
+
             sub_turn_indicators_cmd_ = create_subscription<TurnIndicatorsCommand>(
                     "input/turn_indicators_command", QoS{1},
                     std::bind(&SimplePlanningSimulator::on_turn_indicators_cmd, this, _1));
+
             sub_hazard_lights_cmd_ = create_subscription<HazardLightsCommand>(
                     "input/hazard_lights_command", QoS{1},
                     std::bind(&SimplePlanningSimulator::on_hazard_lights_cmd, this, _1));
+
             sub_trajectory_ = create_subscription<Trajectory>(
                     "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
+
             sub_engage_ = create_subscription<Engage>(
                     "input/engage", rclcpp::QoS{1}, std::bind(&SimplePlanningSimulator::on_engage, this, _1));
 
             pub_control_mode_report_ =
                     create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
+
             pub_gear_report_ = create_publisher<GearReport>("output/gear_report", QoS{1});
+
             pub_turn_indicators_report_ =
                     create_publisher<TurnIndicatorsReport>("output/turn_indicators_report", QoS{1});
+
             pub_hazard_lights_report_ =
                     create_publisher<HazardLightsReport>("output/hazard_lights_report", QoS{1});
+
             pub_current_pose_ = create_publisher<PoseStamped>("/current_pose", QoS{1});
             pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
             pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
@@ -123,6 +134,7 @@ namespace simulation
                     std::bind(&SimplePlanningSimulator::on_parameter, this, _1));
 
             timer_sampling_time_ms_ = static_cast<uint32_t>(declare_parameter("timer_sampling_time_ms", 25));
+
             on_timer_ = create_wall_timer(
                     std::chrono::milliseconds(timer_sampling_time_ms_),
                     std::bind(&SimplePlanningSimulator::on_timer, this));
@@ -195,22 +207,36 @@ namespace simulation
             {
                 vehicle_model_type_ = VehicleModelType::IDEAL_STEER_ACC;
                 vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerAcc>(wheelbase);
+
             } else if (vehicle_model_type_str == "IDEAL_STEER_ACC_GEARED")
             {
                 vehicle_model_type_ = VehicleModelType::IDEAL_STEER_ACC_GEARED;
                 vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerAccGeared>(wheelbase);
+
             } else if (vehicle_model_type_str == "DELAY_STEER_VEL")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
                         vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
                         vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
+
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
                         vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
                         acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+
+            } else if (vehicle_model_type_str == "DELAY_STEER_ACC_DIST")
+            {
+                vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_DIST;
+                vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc_Dist>(vel_lim, steer_lim, vel_rate_lim,
+                                                                                  steer_rate_lim, wheelbase,
+                                                                                  timer_sampling_time_ms_ / 1000.0,
+                                                                                  acc_time_delay, acc_time_constant,
+                                                                                  steer_time_delay,
+                                                                                  steer_time_constant);
+
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;
@@ -224,7 +250,7 @@ namespace simulation
         }
 
         rcl_interfaces::msg::SetParametersResult SimplePlanningSimulator::on_parameter(
-                const std::vector <rclcpp::Parameter> &parameters)
+                const std::vector<rclcpp::Parameter> &parameters)
         {
             rcl_interfaces::msg::SetParametersResult result;
             result.successful = true;
@@ -250,6 +276,8 @@ namespace simulation
                 RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting initialization...");
                 return;
             }
+
+            ns_utils::print("In ontimer call ... ");
 
             // update vehicle dynamics
             {
@@ -347,7 +375,8 @@ namespace simulation
                 input << vel, steer;
             } else if (  // NOLINT
                     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
-                    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC)
+                    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
+                    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST)
             {
                 input << acc, steer;
             } else if (  // NOLINT
@@ -446,6 +475,7 @@ namespace simulation
                 state << x, y, yaw, vx, steer;
             } else if (  // NOLINT
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
+                    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST ||
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
             {
                 state << x, y, yaw, vx, steer, accx;

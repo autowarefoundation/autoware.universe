@@ -83,6 +83,9 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
     updateRungeKutta(dt, delayed_input);
 
     state_(IDX::VX) = std::max(-vx_lim_, std::min(state_(IDX::VX), vx_lim_));
+
+    // Debugs
+    ns_utils::print("In the vehicle disturbance vehicle model \n");
 }
 
 void SimModelDelaySteerAcc_Dist::initializeInputQueue(const float64_t &dt)

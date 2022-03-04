@@ -22,6 +22,7 @@
 #include <memory>
 
 /**
+ * @class DelayModelSISO
  * @brief given a time delay Td value, stores time-varying time delay model.
  * */
 class DelayModelSISO
@@ -66,6 +67,7 @@ private:
 
 // -------------------- INTERFACE CLASSES ------------------------------------
 /**
+ * @class IDisturbanceInterface_TimeDelay
  * @brief Input Disturbance TimeDelay Interface.
  * */
 class IDisturbanceInterface_TimeDelay
