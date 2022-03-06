@@ -39,6 +39,9 @@ protected:
     //!< @brief gear command defined in autoware_auto_msgs/GearCommand
     uint8_t gear_ = autoware_auto_vehicle_msgs::msg::GearCommand::DRIVE;
 
+    // DISTURBANCE Generator Set
+    IDisturbanceCollection disturbance_collection_{};
+
 public:
     /**
      * @brief constructor
@@ -46,6 +49,11 @@ public:
      * @param [in] dim_u dimension of input u
      */
     SimModelInterface(int dim_x, int dim_u);
+
+    void setDisturbance(IDisturbanceCollection const &dist_collection)
+    {
+        disturbance_collection_ = dist_collection;
+    }
 
     /**
      * @brief destructor
@@ -161,6 +169,20 @@ public:
      */
     virtual Eigen::VectorXd calcModel(
             const Eigen::VectorXd &state, const Eigen::VectorXd &input) = 0;
+
+/**
+ * @return original non-modified and delayed inputs
+ * */
+
+    std::pair<double, double> getSteerTimeDelayDisturbanceInputs();
+
+    double getCurrentSteerTimeDelay();
+
+    std::pair<double, double> getAccTimeDelayDisturbanceInputs();
+
+    double getCurrentAccTimeDelay();
+
+    double getCurrentRoadSlopeAccDisturbance();
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
