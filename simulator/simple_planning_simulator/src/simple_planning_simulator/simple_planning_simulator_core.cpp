@@ -130,6 +130,7 @@ namespace simulation
             pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
             pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
             pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
+            pub_dist_generator_ = create_publisher<DisturbanceGeneratorReport>("output/disturbance_generator", QoS{1});
             pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
 
             /* set param callback */
@@ -406,8 +407,8 @@ namespace simulation
 
             // set current state
             current_odometry_ = to_odometry(vehicle_model_ptr_);
-            current_odometry_.pose.pose.position.z = get_z_pose_from_trajectory(
-                    current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y);
+            current_odometry_.pose.pose.position.z = get_z_pose_from_trajectory(current_odometry_.pose.pose.position.x,
+                                                                                current_odometry_.pose.pose.position.y);
 
             current_velocity_ = to_velocity_report(vehicle_model_ptr_);
             current_steer_ = to_steering_report(vehicle_model_ptr_);
@@ -433,6 +434,10 @@ namespace simulation
             publish_turn_indicators_report();
             publish_hazard_lights_report();
             publish_tf(current_odometry_);
+
+            current_disturbance_gen_.steer_time_delay_value = 1.0;
+
+            pub_dist_generator_->publish(current_disturbance_gen_);
 
             // DEBUG
             ns_utils::print("Current engage ", current_engage_);
@@ -558,8 +563,8 @@ namespace simulation
             steer.steering_tire_angle += static_cast<float32_t>((*n.steer_dist_)(*n.rand_engine_));
         }
 
-        void SimplePlanningSimulator::set_initial_state_with_transform(
-                const PoseStamped &pose_stamped, const Twist &twist)
+        void
+        SimplePlanningSimulator::set_initial_state_with_transform(const PoseStamped &pose_stamped, const Twist &twist)
         {
             auto transform = get_transform_msg(origin_frame_id_, pose_stamped.header.frame_id);
             Pose pose;
@@ -584,15 +589,18 @@ namespace simulation
             if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL)
             {
                 state << x, y, yaw;
+
             } else if (  // NOLINT
                     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
                     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED)
             {
                 state << x, y, yaw, vx;
+
             } else if (  // NOLINT
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL)
             {
                 state << x, y, yaw, vx, steer;
+
             } else if (  // NOLINT
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST ||

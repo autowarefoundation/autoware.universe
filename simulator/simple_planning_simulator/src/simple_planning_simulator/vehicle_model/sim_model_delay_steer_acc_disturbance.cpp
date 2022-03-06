@@ -98,8 +98,8 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
 //    delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
 //    steer_input_queue_.pop_front();
 
-    const double raw_acc_command = input_(IDX_U::ACCX_DES);
-    const double raw_steer_command = input_(IDX_U::STEER_DES);
+    const double &raw_acc_command = input_(IDX_U::ACCX_DES);
+    const double &raw_steer_command = input_(IDX_U::STEER_DES);
 
     // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
     delayed_input(IDX_U::ACCX_DES) = raw_acc_command;// acc_delayed + acc_slope_dist;
@@ -125,8 +125,7 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
         acc_delayed = disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput
                 (raw_acc_command);
 
-        acc_slope_dist = disturbance_collection_
-                .road_slope_outputDisturbance_ptr_->getDisturbedOutput();
+        acc_slope_dist = disturbance_collection_.road_slope_outputDisturbance_ptr_->getDisturbedOutput();
 
         // ns_utils::print("Current Slope Acceleration : ", acc_slope_dist);
     } else

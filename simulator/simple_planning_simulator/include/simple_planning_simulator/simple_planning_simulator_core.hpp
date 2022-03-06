@@ -48,13 +48,15 @@
 #include "autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
+
+
 #include "common/types.hpp"
 
 #include "tier4_api_utils/tier4_api_utils.hpp"
 #include "tier4_external_api_msgs/srv/initialize_pose.hpp"
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
-
+#include "autoware_auto_vehicle_msgs/msg/disturbance_generator_report.hpp"
 
 namespace simulation
 {
@@ -78,6 +80,7 @@ namespace simulation
         using autoware_auto_vehicle_msgs::msg::SteeringReport;
         using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
         using autoware_auto_vehicle_msgs::msg::VelocityReport;
+        using autoware_auto_vehicle_msgs::msg::DisturbanceGeneratorReport;
         using tier4_external_api_msgs::srv::InitializePose;
         using geometry_msgs::msg::Pose;
         using geometry_msgs::msg::PoseStamped;
@@ -112,8 +115,7 @@ namespace simulation
         class MeasurementNoiseGenerator
         {
         public:
-            MeasurementNoiseGenerator()
-            {}
+            MeasurementNoiseGenerator() = default;
 
             std::shared_ptr<std::mt19937> rand_engine_;
             std::shared_ptr<std::normal_distribution<>> pos_dist_;
@@ -141,6 +143,7 @@ namespace simulation
             rclcpp::Publisher<HazardLightsReport>::SharedPtr pub_hazard_lights_report_;
             rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_tf_;
             rclcpp::Publisher<PoseStamped>::SharedPtr pub_current_pose_;
+            rclcpp::Publisher<DisturbanceGeneratorReport>::SharedPtr pub_dist_generator_;
 
             rclcpp::Subscription<GearCommand>::SharedPtr sub_gear_cmd_;
             rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr sub_turn_indicators_cmd_;
@@ -177,6 +180,7 @@ namespace simulation
             HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_;
             Trajectory::ConstSharedPtr current_trajectory_ptr_;
             bool current_engage_;
+            DisturbanceGeneratorReport current_disturbance_gen_;
 
             /* frame_id */
             std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
