@@ -76,7 +76,7 @@ public:
     // virtual ~disturbanceInterface() = default;
     virtual double getDisturbedInput(double const &input) = 0;
 
-    [[nodiscard]] virtual double getCurrentTimeDelayValue() const = 0;
+    virtual double getCurrentTimeDelayValue() const = 0;
 
     /**
      * @brief returns a pair of time-delayed and nondelayed input pairs.

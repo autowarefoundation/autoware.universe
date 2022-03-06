@@ -214,7 +214,6 @@ namespace simulation
             // Disturbance Generator Collection.
             IDisturbanceCollection disturbance_collection;
 
-
             /**
              * @brief Create a time varying time-delay input disturbance instance from the parameters.
              * If the time delay for the given control is zero an identity mapping is created.
@@ -434,10 +433,12 @@ namespace simulation
             publish_turn_indicators_report();
             publish_hazard_lights_report();
             publish_tf(current_odometry_);
+
+            // DEBUG
+            ns_utils::print("Current engage ", current_engage_);
         }
 
-        void
-        SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
+        void SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
         {
             // save initial pose
             Twist initial_twist;

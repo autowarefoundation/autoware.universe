@@ -102,25 +102,63 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
     const double raw_steer_command = input_(IDX_U::STEER_DES);
 
     // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
-
-
     delayed_input(IDX_U::ACCX_DES) = raw_acc_command;// acc_delayed + acc_slope_dist;
     delayed_input(IDX_U::STEER_DES) = raw_steer_command; //steer_delayed;
 
 
     // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
-//    delayed_input(IDX_U::STEER_DES) = steer_delayed;
-//    delayed_input(IDX_U::ACCX_DES) = acc_delayed + acc_slope_dist;
 
+    auto &&steer_delayed = disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput
+            (raw_steer_command);
+
+
+
+    // Apply the acceleration delay when only the vehicle is moving, as when stopping its const and we do not want to
+    // send unapplied acceleration to the vehicle.
+    double acc_delayed{};
+
+    // Apply the slope disturbance in a similar manner.
+    double acc_slope_dist{};
+
+    if (std::fabs(state_(IDX::VX)) > EPS)
+    {
+        acc_delayed = disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput
+                (raw_acc_command);
+
+        acc_slope_dist = disturbance_collection_
+                .road_slope_outputDisturbance_ptr_->getDisturbedOutput();
+
+        // ns_utils::print("Current Slope Acceleration : ", acc_slope_dist);
+    } else
+    {
+        acc_delayed = raw_acc_command;
+
+        // The delay model is a differential equation, and when vehicle is stopping, there is a constant breaking
+        // input. We do not want to send this unused input to the delay model.
+
+        disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(0.0);
+
+    }
+
+    delayed_input(IDX_U::STEER_DES) = steer_delayed;
+    delayed_input(IDX_U::ACCX_DES) = acc_delayed + acc_slope_dist;
 
     // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
+
     // Integrate the state
     updateRungeKutta(dt, delayed_input);
 
     state_(IDX::VX) = std::max(-vx_lim_, std::min(state_(IDX::VX), vx_lim_));
 
     // Debugs
+    auto current_steering_delay = disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getCurrentTimeDelayValue();
+    auto current_acc_delay = disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getCurrentTimeDelayValue();
+
     ns_utils::print("In the vehicle disturbance vehicle model \n");
+    ns_utils::print("Current steering and acc time delay values : ", current_steering_delay,
+                    current_acc_delay);
+
+
 }
 
 //void SimModelDelaySteerAcc_Dist::initializeInputQueue(const float64_t &dt)
