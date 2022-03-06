@@ -88,7 +88,7 @@ public:
      * @brief set gear
      * @param [in] gear gear command defined in autoware_auto_msgs/GearCommand
      */
-    void setGear(const uint8_t gear);
+    void setGear(uint8_t gear);
 
     /**
      * @brief update vehicle states with Runge-Kutta methods
@@ -153,13 +153,13 @@ public:
     /**
      * @brief get state vector dimension
      */
-    inline int getDimX()
+    inline int getDimX() const
     { return dim_x_; }
 
     /**
      * @brief get input vector demension
      */
-    inline int getDimU()
+    inline int getDimU() const
     { return dim_u_; }
 
     /**

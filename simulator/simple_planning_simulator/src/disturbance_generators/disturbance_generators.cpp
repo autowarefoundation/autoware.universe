@@ -189,8 +189,6 @@ double OutputDisturbance_SlopeVariation::getDisturbedOutput()
         /**
          * Any method or randomization can be used to generate a new Td value.
          * */
-
-
         current_road_slope_ =
                 mean_road_slope_ + road_slope_fluctuation_ * sin(w_of_sin_ * time_from_beginning.count());
 
