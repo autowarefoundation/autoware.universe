@@ -33,7 +33,6 @@
 #include <utility>
 
 using namespace std::chrono_literals;
-
 namespace
 {
 
@@ -89,14 +88,16 @@ namespace simulation
             using std::placeholders::_2;
 
             sub_init_pose_ = create_subscription<PoseWithCovarianceStamped>(
-                    "/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
+                    "/initialpose", QoS{1},
+                    std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
 
             sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
                     "input/ackermann_control_command", QoS{1},
                     std::bind(&SimplePlanningSimulator::on_ackermann_cmd, this, _1));
 
             sub_gear_cmd_ = create_subscription<GearCommand>(
-                    "input/gear_command", QoS{1}, std::bind(&SimplePlanningSimulator::on_gear_cmd, this, _1));
+                    "input/gear_command", QoS{1},
+                    std::bind(&SimplePlanningSimulator::on_gear_cmd, this, _1));
 
             sub_turn_indicators_cmd_ = create_subscription<TurnIndicatorsCommand>(
                     "input/turn_indicators_command", QoS{1},
@@ -107,10 +108,12 @@ namespace simulation
                     std::bind(&SimplePlanningSimulator::on_hazard_lights_cmd, this, _1));
 
             sub_trajectory_ = create_subscription<Trajectory>(
-                    "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
+                    "input/trajectory", QoS{1},
+                    std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
 
             sub_engage_ = create_subscription<Engage>(
-                    "input/engage", rclcpp::QoS{1}, std::bind(&SimplePlanningSimulator::on_engage, this, _1));
+                    "input/engage", rclcpp::QoS{1},
+                    std::bind(&SimplePlanningSimulator::on_engage, this, _1));
 
             pub_control_mode_report_ =
                     create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
@@ -133,23 +136,27 @@ namespace simulation
             set_param_res_ = this->add_on_set_parameters_callback(
                     std::bind(&SimplePlanningSimulator::on_parameter, this, _1));
 
-            timer_sampling_time_ms_ = static_cast<uint32_t>(declare_parameter("timer_sampling_time_ms", 25));
+            timer_sampling_time_ms_ = static_cast<uint32_t>(declare_parameter(
+                    "timer_sampling_time_ms", 25));
 
             on_timer_ = create_wall_timer(
                     std::chrono::milliseconds(timer_sampling_time_ms_),
                     std::bind(&SimplePlanningSimulator::on_timer, this));
 
             tier4_api_utils::ServiceProxyNodeInterface proxy(this);
-            group_api_service_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+            group_api_service_ = create_callback_group(
+                    rclcpp::CallbackGroupType::MutuallyExclusive);
             srv_set_pose_ = proxy.create_service<tier4_external_api_msgs::srv::InitializePose>(
-                    "/api/simulator/set/pose", std::bind(&SimplePlanningSimulator::on_set_pose, this, _1, _2),
+                    "/api/simulator/set/pose",
+                    std::bind(&SimplePlanningSimulator::on_set_pose, this, _1, _2),
                     rmw_qos_profile_services_default, group_api_service_);
 
             // set vehicle model type
             initialize_vehicle_model();
 
             // set initialize source
-            const auto initialize_source = declare_parameter("initialize_source", "INITIAL_POSE_TOPIC");
+            const auto initialize_source = declare_parameter("initialize_source",
+                                                             "INITIAL_POSE_TOPIC");
             RCLCPP_INFO(this->get_logger(), "initialize_source : %s", initialize_source.c_str());
             if (initialize_source == "ORIGIN")
             {
@@ -173,7 +180,8 @@ namespace simulation
                 m.pos_dist_ = std::make_shared<std::normal_distribution<>>(0.0, pos_noise_stddev);
                 m.vel_dist_ = std::make_shared<std::normal_distribution<>>(0.0, vel_noise_stddev);
                 m.rpy_dist_ = std::make_shared<std::normal_distribution<>>(0.0, rpy_noise_stddev);
-                m.steer_dist_ = std::make_shared<std::normal_distribution<>>(0.0, steer_noise_stddev);
+                m.steer_dist_ = std::make_shared<std::normal_distribution<>>(0.0,
+                                                                             steer_noise_stddev);
 
                 x_stddev_ = declare_parameter("x_stddev", 0.0001);
                 y_stddev_ = declare_parameter("y_stddev", 0.0001);
@@ -182,9 +190,11 @@ namespace simulation
 
         void SimplePlanningSimulator::initialize_vehicle_model()
         {
-            const auto vehicle_model_type_str = declare_parameter("vehicle_model_type", "IDEAL_STEER_VEL");
+            const auto vehicle_model_type_str = declare_parameter("vehicle_model_type",
+                                                                  "IDEAL_STEER_VEL");
 
-            RCLCPP_INFO(this->get_logger(), "vehicle_model_type = %s", vehicle_model_type_str.c_str());
+            RCLCPP_INFO(this->get_logger(), "vehicle_model_type = %s",
+                        vehicle_model_type_str.c_str());
 
             const float64_t vel_lim = declare_parameter("vel_lim", 50.0);
             const float64_t vel_rate_lim = declare_parameter("vel_rate_lim", 7.0);
@@ -217,34 +227,44 @@ namespace simulation
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
-                        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-                        vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
+                        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
+                        timer_sampling_time_ms_ / 1000.0,
+                        vel_time_delay, vel_time_constant, steer_time_delay,
+                        steer_time_constant);
 
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
-                        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-                        acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+                        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
+                        timer_sampling_time_ms_ / 1000.0,
+                        acc_time_delay, acc_time_constant, steer_time_delay,
+                        steer_time_constant);
 
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC_DIST")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_DIST;
-                vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc_Dist>(vel_lim, steer_lim, vel_rate_lim,
-                                                                                  steer_rate_lim, wheelbase,
-                                                                                  acc_time_delay, acc_time_constant,
+                vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc_Dist>(vel_lim,
+                                                                                  steer_lim,
+                                                                                  vel_rate_lim,
+                                                                                  steer_rate_lim,
+                                                                                  wheelbase,
+                                                                                  acc_time_delay,
+                                                                                  acc_time_constant,
                                                                                   steer_time_delay,
                                                                                   steer_time_constant);
-
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared>(
-                        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-                        acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+                        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
+                        timer_sampling_time_ms_ / 1000.0,
+                        acc_time_delay, acc_time_constant, steer_time_delay,
+                        steer_time_constant);
             } else
             {
-                throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
+                throw std::invalid_argument(
+                        "Invalid vehicle_model_type: " + vehicle_model_type_str);
             }
         }
 
@@ -259,7 +279,8 @@ namespace simulation
             {
                 tier4_autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
                 tier4_autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
-            } catch (const rclcpp::exceptions::InvalidParameterTypeException &e)
+            }
+            catch (const rclcpp::exceptions::InvalidParameterTypeException &e)
             {
                 result.successful = false;
                 result.reason = e.what();
@@ -272,7 +293,8 @@ namespace simulation
         {
             if (!is_initialized_)
             {
-                RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting initialization...");
+                RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000,
+                                     "waiting initialization...");
                 return;
             }
 
@@ -319,7 +341,8 @@ namespace simulation
             publish_tf(current_odometry_);
         }
 
-        void SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
+        void
+        SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
         {
             // save initial pose
             Twist initial_twist;
@@ -347,7 +370,8 @@ namespace simulation
         {
             current_ackermann_cmd_ptr_ = msg;
             set_input(
-                    msg->lateral.steering_tire_angle, msg->longitudinal.speed, msg->longitudinal.acceleration);
+                    msg->lateral.steering_tire_angle, msg->longitudinal.speed,
+                    msg->longitudinal.acceleration);
         }
 
         void SimplePlanningSimulator::set_input(const float steer, const float vel, const float accel)
@@ -405,7 +429,8 @@ namespace simulation
             current_turn_indicators_cmd_ptr_ = msg;
         }
 
-        void SimplePlanningSimulator::on_hazard_lights_cmd(const HazardLightsCommand::ConstSharedPtr msg)
+        void
+        SimplePlanningSimulator::on_hazard_lights_cmd(const HazardLightsCommand::ConstSharedPtr msg)
         {
             current_hazard_lights_cmd_ptr_ = msg;
         }
@@ -498,8 +523,10 @@ namespace simulation
             bool found = false;
             for (size_t i = 0; i < current_trajectory_ptr_->points.size(); ++i)
             {
-                const double dist_x = (current_trajectory_ptr_->points.at(i).pose.position.x - x);
-                const double dist_y = (current_trajectory_ptr_->points.at(i).pose.position.y - y);
+                const double dist_x = (current_trajectory_ptr_->points.at(i).pose.position.x -
+                                       x);
+                const double dist_y = (current_trajectory_ptr_->points.at(i).pose.position.y -
+                                       y);
                 double sqrt_dist = dist_x * dist_x + dist_y * dist_y;
                 if (sqrt_dist < min_sqrt_dist)
                 {
@@ -526,9 +553,11 @@ namespace simulation
                 {
                     const auto time_point = tf2::TimePoint(std::chrono::milliseconds(0));
                     transform = tf_buffer_.lookupTransform(
-                            parent_frame, child_frame, time_point, tf2::durationFromSec(0.0));
+                            parent_frame, child_frame, time_point,
+                            tf2::durationFromSec(0.0));
                     break;
-                } catch (tf2::TransformException &ex)
+                }
+                catch (tf2::TransformException &ex)
                 {
                     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
                     rclcpp::sleep_for(std::chrono::milliseconds(500));

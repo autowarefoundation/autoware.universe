@@ -27,6 +27,7 @@ SimModelDelaySteerAcc_Dist::SimModelDelaySteerAcc_Dist(float64_t vx_lim,
                                                        float64_t acc_time_constant,
                                                        float64_t steer_delay,
                                                        float64_t steer_time_constant)
+
         : SimModelInterface(6 /* dim x */, 2 /* dim u */),
           MIN_TIME_CONSTANT(0.03),
           vx_lim_(vx_lim),
@@ -43,22 +44,34 @@ SimModelDelaySteerAcc_Dist::SimModelDelaySteerAcc_Dist(float64_t vx_lim,
 }
 
 float64_t SimModelDelaySteerAcc_Dist::getX()
-{ return state_(IDX::X); }
+{
+    return state_(IDX::X);
+}
 
 float64_t SimModelDelaySteerAcc_Dist::getY()
-{ return state_(IDX::Y); }
+{
+    return state_(IDX::Y);
+}
 
 float64_t SimModelDelaySteerAcc_Dist::getYaw()
-{ return state_(IDX::YAW); }
+{
+    return state_(IDX::YAW);
+}
 
 float64_t SimModelDelaySteerAcc_Dist::getVx()
-{ return state_(IDX::VX); }
+{
+    return state_(IDX::VX);
+}
 
 float64_t SimModelDelaySteerAcc_Dist::getVy()
-{ return 0.0; }
+{
+    return 0.0;
+}
 
 float64_t SimModelDelaySteerAcc_Dist::getAx()
-{ return state_(IDX::ACCX); }
+{
+    return state_(IDX::ACCX);
+}
 
 float64_t SimModelDelaySteerAcc_Dist::getWz()
 {
@@ -66,7 +79,9 @@ float64_t SimModelDelaySteerAcc_Dist::getWz()
 }
 
 float64_t SimModelDelaySteerAcc_Dist::getSteer()
-{ return state_(IDX::STEER); }
+{
+    return state_(IDX::STEER);
+}
 
 void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
 {

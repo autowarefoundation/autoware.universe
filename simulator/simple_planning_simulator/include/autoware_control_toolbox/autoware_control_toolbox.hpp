@@ -16,10 +16,10 @@
 #include <boost/optional.hpp>
 #include "utils/act_utils_eigen.hpp"
 
-namespace ns_control_toolbox {
+namespace ns_control_toolbox
+{
 
-    double constexpr
-    EPS = std::numeric_limits<double>::epsilon();
+    double constexpr EPS = std::numeric_limits<double>::epsilon();
 
 /**
  * @brief Transfer Function representation in descending power of  Laplace variable "s".
@@ -28,17 +28,21 @@ namespace ns_control_toolbox {
  * @param Nd	: size of the denominator array
  * */
 
-    struct tf {
+    struct tf
+    {
         // Constructors.
         tf()
-                : num_{1.}, den_{1.} {}
+                : num_{1.}, den_{1.}
+        {}
 
         // Constructor from non-empty numerator and denominator std::vectors.
         tf(std::vector<double> num, std::vector<double> den)
-                : num_{std::move(num)}, den_{std::move(den)} {}
+                : num_{std::move(num)}, den_{std::move(den)}
+        {}
 
         // Copy constructor.
-        tf(tf const &other) {
+        tf(tf const &other)
+        {
             num_ = other.num_;
             den_ = other.den_;
         }
@@ -51,16 +55,20 @@ namespace ns_control_toolbox {
             den_ = std::move(other.den_);
         }
 
-        tf &operator=(tf const &other) {
-            if (this != &other) {
+        tf &operator=(tf const &other)
+        {
+            if (this != &other)
+            {
                 num_ = other.num_;
                 den_ = other.den_;
             }
             return *this;
         }
 
-        tf &operator=(tf const &&other) {
-            if (this != &other) {
+        tf &operator=(tf const &&other)
+        {
+            if (this != &other)
+            {
                 num_ = other.num_;
                 den_ = other.den_;
             }
@@ -88,7 +96,8 @@ namespace ns_control_toolbox {
  *
  * */
 
-    struct tf2ss {
+    struct tf2ss
+    {
         tf2ss();
 
         explicit tf2ss(tf const &sys_tf);
@@ -96,15 +105,18 @@ namespace ns_control_toolbox {
         tf2ss(std::vector<double> const &num, std::vector<double> const &den);
 
         // Copy constructor
-        tf2ss(tf2ss const &other) {
+        tf2ss(tf2ss const &other)
+        {
             A_ = other.A_;
             B_ = other.B_;
             C_ = other.C_;
             D_ = other.D_;
         }
 
-        tf2ss &operator=(tf2ss const &other) {
-            if (this != &other) {
+        tf2ss &operator=(tf2ss const &other)
+        {
+            if (this != &other)
+            {
                 A_ = other.A_;
                 B_ = other.B_;
                 C_ = other.C_;
