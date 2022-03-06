@@ -26,7 +26,8 @@ SimModelDelaySteerAcc_Dist::SimModelDelaySteerAcc_Dist(float64_t vx_lim,
                                                        float64_t acc_delay,
                                                        float64_t acc_time_constant,
                                                        float64_t steer_delay,
-                                                       float64_t steer_time_constant)
+                                                       float64_t steer_time_constant,
+                                                       IDisturbanceCollection const &disturbance_collection)
 
         : SimModelInterface(6 /* dim x */, 2 /* dim u */),
           MIN_TIME_CONSTANT(0.03),
@@ -41,6 +42,8 @@ SimModelDelaySteerAcc_Dist::SimModelDelaySteerAcc_Dist(float64_t vx_lim,
           steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT))
 {
     // initializeInputQueue(dt);
+    setDisturbance(disturbance_collection);
+
 }
 
 float64_t SimModelDelaySteerAcc_Dist::getX()

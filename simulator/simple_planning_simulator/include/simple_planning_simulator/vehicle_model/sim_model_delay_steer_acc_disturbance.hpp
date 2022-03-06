@@ -22,8 +22,10 @@
 
 #include "eigen3/Eigen/LU"
 #include "eigen3/Eigen/Core"
-
+#include "common//types.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+
+constexpr float64_t EPS = std::numeric_limits<double>::epsilon(); // Epsilon constant
 
 class SimModelDelaySteerAcc_Dist : public SimModelInterface
 {
@@ -49,7 +51,8 @@ public:
                                float64_t acc_delay,
                                float64_t acc_time_constant,
                                float64_t steer_delay,
-                               float64_t steer_time_constant);
+                               float64_t steer_time_constant,
+                               IDisturbanceCollection const &disturbance_collection);
 
     /**
      * @brief default destructor

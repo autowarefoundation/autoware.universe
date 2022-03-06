@@ -209,10 +209,104 @@ namespace simulation
             const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
             const float64_t wheelbase = vehicle_info.wheel_base_m;
 
+
+            // CREATE a collection of disturbance generators.
+            // Disturbance Generator Collection.
+            IDisturbanceCollection disturbance_collection;
+
+
+            /**
+             * @brief Create a time varying time-delay input disturbance instance from the parameters.
+             * If the time delay for the given control is zero an identity mapping is created.
+             * */
+
+            // Read steering time-varying time delay disturbance parameters.
+            const bool steer_use_time_varying_td = declare_parameter("steer_use_time_varying_td", false);
+            const float64_t steer_td_changes_every_xsecs =
+                    declare_parameter("steer_td_changes_every_xsecs", 1.0); // do not set to 0.
+
+            const float64_t steer_exp_lambda = 1. / steer_td_changes_every_xsecs; // exponential distribution rate.
+
+            // Percentage
+            const float64_t steer_td_delta_sin_mag_percent =
+                    declare_parameter("steer_td_delta_sin_mag_percent", 5.0) / 100.;
+
+            const float64_t steer_td_angular_speed = declare_parameter("steer_td_angular_speed", 0.1);
+            const size_t steer_td_pade_order = static_cast<size_t>(declare_parameter("steer_td_pade_order", 2));
+
+            double dt = timer_sampling_time_ms_ / 1000.;
+
+            // STEERING Time DELAY
+            if (std::fabs(steer_time_delay) >= EPS)
+            {
+                DelayModelSISO steer_delay_siso_model(steer_time_delay, steer_td_pade_order, dt);
+                InputDisturbance_TimeDelayPade steer_td_time_varying_dist_gen(steer_delay_siso_model,
+                                                                              steer_exp_lambda,
+                                                                              steer_td_delta_sin_mag_percent,
+                                                                              steer_td_angular_speed,
+                                                                              steer_use_time_varying_td);
+
+
+                disturbance_collection.steering_inputDisturbance_time_delay_ptr_ =
+                        std::make_shared<InputDisturbance_TimeDelayPade>(steer_td_time_varying_dist_gen);
+
+            }
+
+            // Read acc time-varying time delay disturbance parameters.
+            const bool acc_use_time_varying_td = declare_parameter("acc_use_time_varying_td", false);
+            const float64_t acc_td_changes_every_xsecs = declare_parameter("acc_td_changes_every_xsecs",
+                                                                           5.0); // do not set to 0.
+
+            const float64_t acc_exp_lambda = 1. / acc_td_changes_every_xsecs; // exponential distribution rate.
+
+            // Percentage
+            const float64_t acc_td_delta_sin_mag_percent =
+                    declare_parameter("acc_td_delta_sin_mag_percent", 5.0) / 100.;
+
+            const float64_t acc_td_angular_speed = declare_parameter("acc_td_angular_speed", 0.1);
+            const size_t acc_td_pade_order = static_cast<size_t>(declare_parameter("acc_td_pade_order", 2));
+
+            // ACCELERATION Time DELAY
+            if (std::fabs(acc_time_delay) >= EPS)
+            {
+                DelayModelSISO acc_delay_siso_model(acc_time_delay, acc_td_pade_order, dt);
+                InputDisturbance_TimeDelayPade acc_td_time_varying_dist_gen(acc_delay_siso_model,
+                                                                            acc_exp_lambda,
+                                                                            acc_td_delta_sin_mag_percent,
+                                                                            acc_td_angular_speed,
+                                                                            acc_use_time_varying_td);
+
+
+                disturbance_collection.acc_inputDisturbance_time_delay_ptr_ =
+                        std::make_shared<InputDisturbance_TimeDelayPade>(acc_td_time_varying_dist_gen);
+
+            }
+
+            // Road Slope Output Disturbance
+            const bool rs_use_time_varying_slope = declare_parameter("rs_use_time_varying_slope", true);
+            const float64_t rs_mean_slope = declare_parameter("rs_mean_road_slope", 0.0);
+
+            float64_t rs_delta_sin_mag = declare_parameter("rs_delta_sin_mag", 5.0); // in degrees
+            ns_utils::deg2rad(rs_delta_sin_mag); // convert it to radians.
+
+            auto rs_road_slope_variation_angular_speed = declare_parameter("rs_road_slope_variation_angular_speed",
+                                                                           0.1);
+
+            // Create an output disturbance for the road slope.
+            OutputDisturbance_SlopeVariation road_slope_dist(rs_mean_slope,
+                                                             rs_delta_sin_mag,
+                                                             rs_road_slope_variation_angular_speed,
+                                                             rs_use_time_varying_slope);
+
+            disturbance_collection.road_slope_outputDisturbance_ptr_ =
+                    std::make_shared<OutputDisturbance_SlopeVariation>(road_slope_dist);
+
+
             if (vehicle_model_type_str == "IDEAL_STEER_VEL")
             {
                 vehicle_model_type_ = VehicleModelType::IDEAL_STEER_VEL;
                 vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerVel>(wheelbase);
+
             } else if (vehicle_model_type_str == "IDEAL_STEER_ACC")
             {
                 vehicle_model_type_ = VehicleModelType::IDEAL_STEER_ACC;
@@ -252,7 +346,8 @@ namespace simulation
                                                                                   acc_time_delay,
                                                                                   acc_time_constant,
                                                                                   steer_time_delay,
-                                                                                  steer_time_constant);
+                                                                                  steer_time_constant,
+                                                                                  disturbance_collection);
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED")
             {
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;

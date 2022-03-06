@@ -19,6 +19,34 @@
         x_stddev: 0.0001 # x standard deviation for dummy covariance in map coordinate
         y_stddev: 0.0001 # y standard deviation for dummy covariance in map coordinate
 
+        ## Disturbance generator models options.
+        # --------------- STEERING TIME-VARYING TIME DELAY DISTURBANCE -------------
+        steer_use_time_varying_td: false  # to use input varying delay
+        steer_td_pade_order: 2 # size_t order of Pade approximation.
 
+        # the value of time delay changes every x-secs. td + delta_td where delta_td is sinusoidal.
+        steer_td_changes_every_xsecs: 5.3
+
+        # magnitude of td variation in percentage of mean of Td. If Td=1 sec, td_delta 5% = 0.05
+        steer_td_delta_sin_mag_percent: 5.0
+        steer_td_angular_speed: 0.1 # rad/sec of the sin wave. td_delta = td_delta_sin_mag * sin(wt)
+
+        # --------------- ACCELERATION TIME-VARYING TIME DELAY DISTURBANCE -------------
+        # Time-varying input delay parameters for longitudinal control input.
+        acc_use_time_varying_td: false  # to use input varying delay
+        acc_td_pade_order: 2 # size_t order of Pade approximation.
+
+        # the value of time delay changes every x-secs. td + delta_td where delta_td is sinusoidal.
+        acc_td_changes_every_xsecs: 6.3
+
+        # magnitude of td variation in percentage of mean of Td. If Td=1 sec, td_delta 5% = 0.05
+        acc_td_delta_sin_mag_percent: 5.0
+        acc_td_angular_speed: 0.1 # rad/sec of the sin wave. td_delta = td_delta_sin_mag * sin(wt)
+
+        ## ----------------- ROAD SLOPE TIME-VARYING DISTURBANCE ------------------------------
+        rs_use_time_varying_slope: false # use time varying slope
+        rs_mean_road_slope: 0.0 # mean value of slope degrees
+        rs_delta_sin_mag: 5.0 # slope fluctuations in degrees
+        rs_road_slope_variation_angular_speed: 0.1 # angular speed of the sinus fluctuations
 
 # Note: vehicle characteristics parameters (e.g. wheelbase) are defined in a separate file.
