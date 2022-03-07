@@ -1685,7 +1685,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
         }
 
         if (lanelet_at_left && extend_to_opposite_lane) {  // means lanelets in the opposite
-                                                            // direction exist
+                                                           // direction exist
           auto lanelet_at_right = route_handler->getRightLanelet(lanelet_at_left.get());
           while (lanelet_at_right) {
             lanelet_to_be_extended.push_back(lanelet_at_right.get());
@@ -1704,7 +1704,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
           lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
         }
         if (lanelet_at_right && extend_to_opposite_lane) {  // means lanelets in the opposite
-                                                             // direction exist
+                                                            // direction exist
           auto lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_right.get());
           while (lanelet_at_left) {
             lanelet_to_be_extended.push_back(lanelet_at_left.get());
