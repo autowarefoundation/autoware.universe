@@ -115,7 +115,7 @@ DataAssociation::DataAssociation(
   {
     const int min_iou_label_num = static_cast<int>(std::sqrt(min_iou_vector.size()));
     Eigen::Map<Eigen::MatrixXd> min_iou_matrix_tmp(
-      max_rad_vector.data(), min_iou_label_num, min_iou_label_num);
+      min_iou_vector.data(), min_iou_label_num, min_iou_label_num);
     min_iou_matrix_ = min_iou_matrix_tmp.transpose();
   }
 
@@ -217,7 +217,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double iou = utils::get2dIoU(
             {measurement_object.kinematics.pose_with_covariance.pose, measurement_object.shape},
             {tracked_object.kinematics.pose_with_covariance.pose, tracked_object.shape});
-          if (iou < min_iou) passed_gate = false;
+          // if (iou < min_iou) passed_gate = false;
         }
 
         // all gate is passed
@@ -226,7 +226,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           if (score < score_threshold_) score = 0.0;
         }
       }
-
+      std::cerr << __LINE__ <<":" << score << std::endl;
       score_matrix(tracker_idx, measurement_idx) = score;
     }
   }
