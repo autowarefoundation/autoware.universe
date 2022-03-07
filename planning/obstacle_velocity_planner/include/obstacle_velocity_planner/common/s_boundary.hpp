@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef OBSTACLE_AVOIDANCE_PLANNER_ST_BOUNDARY_HPP_
-#define OBSTACLE_AVOIDANCE_PLANNER_ST_BOUNDARY_HPP_
+#ifndef OBSTACLE_VELOCITY_PLANNER__COMMON__S_BOUNDARY_HPP_
+#define OBSTACLE_VELOCITY_PLANNER__COMMON__S_BOUNDARY_HPP_
 
 #include <limits>
 #include <vector>
@@ -20,14 +20,14 @@
 class SBoundary
 {
 public:
-    SBoundary(const double _max_s, const double _min_s) : max_s(_max_s), min_s(_min_s) {}
-    SBoundary() : max_s(std::numeric_limits<double>::max()), min_s(0.0) {}
+  SBoundary(const double _max_s, const double _min_s) : max_s(_max_s), min_s(_min_s) {}
+  SBoundary() : max_s(std::numeric_limits<double>::max()), min_s(0.0) {}
 
-    double max_s = std::numeric_limits<double>::max();
-    double min_s = 0.0;
-    bool is_object = false;
+  double max_s = std::numeric_limits<double>::max();
+  double min_s = 0.0;
+  bool is_object = false;
 };
 
 using SBoundaries = std::vector<SBoundary>;
 
-#endif // OBSTACLE_AVOIDANCE_PLANNER_ST_BOUNDARY_HPP_
+#endif  // OBSTACLE_VELOCITY_PLANNER__COMMON__S_BOUNDARY_HPP_

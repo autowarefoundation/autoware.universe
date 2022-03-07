@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ geometry_msgs::msg::Point toMsg(tf2::Vector3 vec)
 namespace resampling
 {
 std::vector<rclcpp::Duration> resampledValidRelativeTimeVector(
-  const rclcpp::Time & start_time, const rclcpp::Time & obj_base_time, const std::vector<double> & rel_time_vec, const double duration)
+  const rclcpp::Time & start_time, const rclcpp::Time & obj_base_time,
+  const std::vector<double> & rel_time_vec, const double duration)
 {
   const auto prediction_duration = rclcpp::Duration::from_seconds(duration);
   const auto end_time = start_time + prediction_duration;
@@ -58,10 +59,10 @@ std::vector<rclcpp::Duration> resampledValidRelativeTimeVector(
   // NOTE: rel_time_vec is relative time to start_time.
   //       rel_valid_time_vec is relative to obj_base_time, which is time stamp in predicted object.
   std::vector<rclcpp::Duration> rel_valid_time_vec;
-  for(const auto & time : rel_time_vec) {
+  for (const auto & time : rel_time_vec) {
     // absolute target time
     const auto target_time = start_time + rclcpp::Duration::from_seconds(time);
-    if(target_time > end_time) {
+    if (target_time > end_time) {
       break;
     }
 
@@ -78,11 +79,12 @@ std::vector<rclcpp::Duration> resampledValidRelativeTimeVector(
 }
 
 autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_auto_perception_msgs::msg::PredictedPath & input_path, const std::vector<rclcpp::Duration> & rel_time_vec)
+  const autoware_auto_perception_msgs::msg::PredictedPath & input_path,
+  const std::vector<rclcpp::Duration> & rel_time_vec)
 {
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
 
-  for(const auto & rel_time : rel_time_vec) {
+  for (const auto & rel_time : rel_time_vec) {
     const auto opt_pose = lerpByTimeStamp(input_path, rel_time);
     if (!opt_pose) {
       continue;
@@ -113,8 +115,6 @@ geometry_msgs::msg::Pose lerpByPose(
 boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
   const autoware_auto_perception_msgs::msg::PredictedPath & path, const rclcpp::Duration & rel_time)
 {
-  geometry_msgs::msg::Pose lerpt_pt;
-
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
   if (path.path.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -124,10 +124,9 @@ boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
   }
   if (rel_time < rclcpp::Duration::from_seconds(0.0)) {
     RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("DynamicAvoidance.resample"),
-      "failed to interpolate path by time!"
-        << std::endl
-        << "query time: " << rel_time.seconds());
+      rclcpp::get_logger("DynamicAvoidance.resample"), "failed to interpolate path by time!"
+                                                         << std::endl
+                                                         << "query time: " << rel_time.seconds());
 
     return {};
   }
@@ -137,7 +136,8 @@ boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
       rclcpp::get_logger("DynamicAvoidance.resample"),
       "failed to interpolate path by time!"
         << std::endl
-        << "path max duration: " << path.path.size() * rclcpp::Duration(path.time_step).seconds() << std::endl
+        << "path max duration: " << path.path.size() * rclcpp::Duration(path.time_step).seconds()
+        << std::endl
         << "query time       : " << rel_time.seconds());
 
     return {};
@@ -167,7 +167,8 @@ inline void convertEulerAngleToMonotonic(std::vector<double> & a)
 }
 
 autoware_auto_planning_msgs::msg::Trajectory applyLinearInterpolation(
-  const std::vector<double> & base_index, const autoware_auto_planning_msgs::msg::Trajectory & base_trajectory,
+  const std::vector<double> & base_index,
+  const autoware_auto_planning_msgs::msg::Trajectory & base_trajectory,
   const std::vector<double> & out_index, const bool use_spline_for_pose)
 {
   std::vector<double> px, py, pz, pyaw, tlx, taz, alx, aaz;
