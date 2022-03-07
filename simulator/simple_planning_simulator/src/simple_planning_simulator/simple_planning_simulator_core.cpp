@@ -286,7 +286,7 @@ namespace simulation
             const bool rs_use_time_varying_slope = declare_parameter("rs_use_time_varying_slope", true);
             const float64_t rs_mean_slope = declare_parameter("rs_mean_road_slope", 0.0);
 
-            float64_t rs_delta_sin_mag = declare_parameter("rs_delta_sin_mag", 5.0); // in degrees
+            float64_t rs_delta_sin_mag = declare_parameter("rs_delta_sin_mag", 1.0); // in degrees
             ns_utils::deg2rad(rs_delta_sin_mag); // convert it to radians.
 
             auto rs_road_slope_variation_angular_speed = declare_parameter("rs_road_slope_variation_angular_speed",
@@ -524,6 +524,7 @@ namespace simulation
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST)
             {
                 input << acc, steer;
+
             } else if (  // NOLINT
                     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
@@ -583,7 +584,15 @@ namespace simulation
 
             vel.longitudinal_velocity += static_cast<float32_t>(velocity_noise);
 
+
             steer.steering_tire_angle += static_cast<float32_t>((*n.steer_dist_)(*n.rand_engine_));
+
+//            if ((vehicle_model_type_ != VehicleModelType::DELAY_STEER_ACC_DIST) &&
+//                (vehicle_model_type_ != VehicleModelType::DELAY_STEER_ACC_GEARED_DIST))
+//            {
+//                steer.steering_tire_angle += static_cast<float32_t>((*n.steer_dist_)(*n.rand_engine_));
+//            }
+
         }
 
         void

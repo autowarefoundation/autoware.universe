@@ -89,7 +89,6 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
     delayed_input(IDX_U::STEER_DES) = raw_steer_command; //steer_delayed;
 
     // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
-
     auto &&steer_delayed = disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput
             (raw_steer_command);
 

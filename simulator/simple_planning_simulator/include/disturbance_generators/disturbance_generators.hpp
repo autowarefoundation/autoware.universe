@@ -110,7 +110,7 @@ public:
      * @return pair_type pair ([ml, bl] , [mr, br])  where m is the slope of the deadzone, and b is x-intercept of
      * the deadzone boundary
      * */
-    [[nodiscard]] virtual pair_type getCurrentTimeDelayValue() const = 0;
+    [[nodiscard]] virtual pair_type getCurrentDeadZoneParameters() const = 0;
 
 };
 
@@ -150,7 +150,7 @@ public:
         return input;
     }
 
-    [[nodiscard]] pair_type getCurrentTimeDelayValue() const override
+    [[nodiscard]] pair_type getCurrentDeadZoneParameters() const override
     {
         // m = 1, b =0 for both left and right parts of a dead-zone nonlinearity graph.
         auto inactive_deadzone_params = std::make_pair(1.0, 0.0);
@@ -286,7 +286,7 @@ private:
     double w_of_sin_{0.}; // <-@brief time fluctuates sinusoidally with an angular velocity.
     bool use_time_varying_slope_{true};
 
-    // g m/s/s
+    // g - [m/s/s]
     const double g_{9.81};
 
     std::chrono::steady_clock::time_point tp_instantiation_{std::chrono::steady_clock::now()};
