@@ -1,7 +1,7 @@
 #include "obstacle_velocity_planner/box2d.hpp"
 
 #include <tf2/utils.h>
-#include <autoware_utils/autoware_utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 Box2d::Box2d(const geometry_msgs::msg::Pose & center_pose, const double length, const double width)
  : center_(center_pose.position), length_(length), width_(width), half_length_(length/2.0), half_width_(width/2.0)
@@ -22,10 +22,10 @@ void Box2d::InitCorners() {
     const double dx2 = sin_heading_ * half_width_;
     const double dy2 = -cos_heading_ * half_width_;
 
-    const auto p1 = autoware_utils::createPoint(center_.x + dx1 + dx2, center_.y + dy1 + dy2, center_.z);
-    const auto p2 = autoware_utils::createPoint(center_.x + dx1 - dx2, center_.y + dy1 - dy2, center_.z);
-    const auto p3 = autoware_utils::createPoint(center_.x - dx1 - dx2, center_.y - dy1 - dy2, center_.z);
-    const auto p4 = autoware_utils::createPoint(center_.x - dx1 + dx2, center_.y - dy1 + dy2, center_.z);
+    const auto p1 = tier4_autoware_utils::createPoint(center_.x + dx1 + dx2, center_.y + dy1 + dy2, center_.z);
+    const auto p2 = tier4_autoware_utils::createPoint(center_.x + dx1 - dx2, center_.y + dy1 - dy2, center_.z);
+    const auto p3 = tier4_autoware_utils::createPoint(center_.x - dx1 - dx2, center_.y - dy1 - dy2, center_.z);
+    const auto p4 = tier4_autoware_utils::createPoint(center_.x - dx1 + dx2, center_.y - dy1 + dy2, center_.z);
     corners_.clear();
     corners_.resize(4);
     corners_[0] = p1;

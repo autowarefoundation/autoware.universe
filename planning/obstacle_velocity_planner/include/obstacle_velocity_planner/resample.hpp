@@ -15,10 +15,10 @@
 #ifndef OBSTACLE_VELOCITY_PLANNER_RESAMPLE_HPP_
 #define OBSTACLE_VELOCITY_PLANNER_RESAMPLE_HPP_
 
-#include "autoware_utils/autoware_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include "autoware_perception_msgs/msg/predicted_path.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 
 #include "boost/optional.hpp"
 
@@ -26,19 +26,20 @@
 
 namespace resampling
 {
-autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_perception_msgs::msg::PredictedPath & input_path, const std::vector<double> & time_vec,
-  const rclcpp::Time & start_time, const double duration);
+std::vector<rclcpp::Duration> resampledValidRelativeTimeVector(
+  const rclcpp::Time & start_time, const rclcpp::Time & obj_base_time, const std::vector<double> & rel_time_vec, const double duration);
+
+autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
+  const autoware_auto_perception_msgs::msg::PredictedPath & input_path, const std::vector<rclcpp::Duration> & rel_time_vec);
 
 geometry_msgs::msg::Pose lerpByPose(
   const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, const double t);
 
-bool lerpByTimeStamp(
-  const autoware_perception_msgs::msg::PredictedPath & path, const rclcpp::Time & t,
-  geometry_msgs::msg::Pose * lerped_pt);
+boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
+  const autoware_auto_perception_msgs::msg::PredictedPath & path, const rclcpp::Duration & rel_time);
 
-autoware_planning_msgs::msg::Trajectory applyLinearInterpolation(
-  const std::vector<double> & base_index, const autoware_planning_msgs::msg::Trajectory & base_trajectory,
+autoware_auto_planning_msgs::msg::Trajectory applyLinearInterpolation(
+  const std::vector<double> & base_index, const autoware_auto_planning_msgs::msg::Trajectory & base_trajectory,
   const std::vector<double> & out_index, const bool use_spline_for_pose = false);
 }  // namespace resampling
 

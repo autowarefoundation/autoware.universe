@@ -65,7 +65,7 @@ private:
   double over_j_weight_;
 
   // QPSolver
-  osqp::OSQPInterface qp_solver_;
+  autoware::common::osqp::OSQPInterface qp_solver_;
 };
 
 #endif  // OBSTACLE_VELOCITY_PLANNER_VELOCITY_OPTIMIZER_HPP_

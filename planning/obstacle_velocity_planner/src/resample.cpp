@@ -49,30 +49,46 @@ geometry_msgs::msg::Point toMsg(tf2::Vector3 vec)
 
 namespace resampling
 {
-autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_perception_msgs::msg::PredictedPath & input_path, const std::vector<double> & time_vec,
-  const rclcpp::Time & start_time, const double duration)
+std::vector<rclcpp::Duration> resampledValidRelativeTimeVector(
+  const rclcpp::Time & start_time, const rclcpp::Time & obj_base_time, const std::vector<double> & rel_time_vec, const double duration)
 {
-  autoware_perception_msgs::msg::PredictedPath resampled_path;
-
   const auto prediction_duration = rclcpp::Duration::from_seconds(duration);
   const auto end_time = start_time + prediction_duration;
 
-  for(const auto & time : time_vec) {
-    const auto current_time = start_time + rclcpp::Duration::from_seconds(time);
-    if(current_time > end_time) {
+  // NOTE: rel_time_vec is relative time to start_time.
+  //       rel_valid_time_vec is relative to obj_base_time, which is time stamp in predicted object.
+  std::vector<rclcpp::Duration> rel_valid_time_vec;
+  for(const auto & time : rel_time_vec) {
+    // absolute target time
+    const auto target_time = start_time + rclcpp::Duration::from_seconds(time);
+    if(target_time > end_time) {
       break;
     }
 
-    geometry_msgs::msg::Pose pose;
-    if (!lerpByTimeStamp(input_path, current_time, &pose)) {
+    // relative target time
+    const auto rel_target_time = target_time - obj_base_time;
+    if (rel_target_time < rclcpp::Duration::from_seconds(0.0)) {
       continue;
     }
-    geometry_msgs::msg::PoseWithCovarianceStamped predicted_pose;
-    predicted_pose.header.frame_id = "map";
-    predicted_pose.header.stamp = current_time;
-    predicted_pose.pose.pose = pose;
-    resampled_path.path.push_back(predicted_pose);
+
+    rel_valid_time_vec.push_back(rel_target_time);
+  }
+
+  return rel_valid_time_vec;
+}
+
+autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
+  const autoware_auto_perception_msgs::msg::PredictedPath & input_path, const std::vector<rclcpp::Duration> & rel_time_vec)
+{
+  autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
+
+  for(const auto & rel_time : rel_time_vec) {
+    const auto opt_pose = lerpByTimeStamp(input_path, rel_time);
+    if (!opt_pose) {
+      continue;
+    }
+
+    resampled_path.path.push_back(opt_pose.get());
   }
 
   return resampled_path;
@@ -94,76 +110,64 @@ geometry_msgs::msg::Pose lerpByPose(
   return pose;
 }
 
-bool lerpByTimeStamp(
-  const autoware_perception_msgs::msg::PredictedPath & path, const rclcpp::Time & t,
-  geometry_msgs::msg::Pose * lerped_pt)
+boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
+  const autoware_auto_perception_msgs::msg::PredictedPath & path, const rclcpp::Duration & rel_time)
 {
+  geometry_msgs::msg::Pose lerpt_pt;
+
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  if (lerped_pt == nullptr) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      rclcpp::get_logger("DynamicAvoidance.resample"), clock, 1000,
-      "failed to lerp by time due to nullptr pt");
-    return false;
-  }
   if (path.path.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       rclcpp::get_logger("DynamicAvoidance.resample"), clock, 1000,
       "Empty path. Failed to interpolate path by time!");
-    return false;
+    return {};
   }
-  if (t < path.path.front().header.stamp) {
+  if (rel_time < rclcpp::Duration::from_seconds(0.0)) {
     RCLCPP_DEBUG_STREAM(
       rclcpp::get_logger("DynamicAvoidance.resample"),
       "failed to interpolate path by time!"
         << std::endl
-        << "path start time: " << path.path.front().header.stamp.sec << std::endl
-        << "path end time  : " << path.path.back().header.stamp.sec << std::endl
-        << "query time     : " << t.seconds());
+        << "query time: " << rel_time.seconds());
 
-    *lerped_pt = path.path.front().pose.pose;
-    return false;
+    return {};
   }
 
-  if (t > path.path.back().header.stamp) {
+  if (rel_time > rclcpp::Duration(path.time_step) * static_cast<double>(path.path.size())) {
     RCLCPP_DEBUG_STREAM(
       rclcpp::get_logger("DynamicAvoidance.resample"),
       "failed to interpolate path by time!"
         << std::endl
-        << "path start time: " << path.path.front().header.stamp.sec << std::endl
-        << "path end time  : " << path.path.back().header.stamp.sec << std::endl
-        << "query time     : " << t.seconds());
-    *lerped_pt = path.path.back().pose.pose;
+        << "path max duration: " << path.path.size() * rclcpp::Duration(path.time_step).seconds() << std::endl
+        << "query time       : " << rel_time.seconds());
 
-    return false;
+    return {};
   }
 
-  for (size_t i = 1; i < path.path.size(); i++) {
+  for (size_t i = 1; i < path.path.size(); ++i) {
     const auto & pt = path.path.at(i);
     const auto & prev_pt = path.path.at(i - 1);
-    if (t <= pt.header.stamp) {
-      const rclcpp::Duration duration = safeSubtraction(pt.header.stamp, prev_pt.header.stamp);
-      const auto offset = t - prev_pt.header.stamp;
-      const auto ratio = offset.seconds() / duration.seconds();
-      *lerped_pt = lerpByPose(prev_pt.pose.pose, pt.pose.pose, ratio);
-      return true;
+    if (rel_time <= rclcpp::Duration(path.time_step) * static_cast<double>(i)) {
+      const auto offset = rel_time - rclcpp::Duration(path.time_step) * static_cast<double>(i - 1);
+      const auto ratio = offset.seconds() / rclcpp::Duration(path.time_step).seconds();
+      return lerpByPose(prev_pt, pt, ratio);
     }
   }
 
   RCLCPP_ERROR_STREAM(
     rclcpp::get_logger("DynamicAvoidance.resample"), "Something failed in function: " << __func__);
-  return false;
+  return {};
 }
 
 inline void convertEulerAngleToMonotonic(std::vector<double> & a)
 {
   for (unsigned int i = 1; i < a.size(); ++i) {
     const double da = a[i] - a[i - 1];
-    a[i] = a[i - 1] + autoware_utils::normalizeRadian(da);
+    a[i] = a[i - 1] + tier4_autoware_utils::normalizeRadian(da);
   }
 }
 
-autoware_planning_msgs::msg::Trajectory applyLinearInterpolation(
-  const std::vector<double> & base_index, const autoware_planning_msgs::msg::Trajectory & base_trajectory,
+autoware_auto_planning_msgs::msg::Trajectory applyLinearInterpolation(
+  const std::vector<double> & base_index, const autoware_auto_planning_msgs::msg::Trajectory & base_trajectory,
   const std::vector<double> & out_index, const bool use_spline_for_pose)
 {
   std::vector<double> px, py, pz, pyaw, tlx, taz, alx, aaz;
@@ -172,10 +176,9 @@ autoware_planning_msgs::msg::Trajectory applyLinearInterpolation(
     py.push_back(p.pose.position.y);
     pz.push_back(p.pose.position.z);
     pyaw.push_back(tf2::getYaw(p.pose.orientation));
-    tlx.push_back(p.twist.linear.x);
-    taz.push_back(p.twist.angular.z);
-    alx.push_back(p.accel.linear.x);
-    aaz.push_back(p.accel.angular.z);
+    tlx.push_back(p.longitudinal_velocity_mps);
+    taz.push_back(p.heading_rate_rps);
+    alx.push_back(p.acceleration_mps2);
   }
 
   convertEulerAngleToMonotonic(pyaw);
@@ -197,19 +200,18 @@ autoware_planning_msgs::msg::Trajectory applyLinearInterpolation(
   const auto alx_p = interpolation::lerp(base_index, alx, out_index);
   const auto aaz_p = interpolation::lerp(base_index, aaz, out_index);
 
-  autoware_planning_msgs::msg::Trajectory out_trajectory;
+  autoware_auto_planning_msgs::msg::Trajectory out_trajectory;
   out_trajectory.header = base_trajectory.header;
-  autoware_planning_msgs::msg::TrajectoryPoint point;
+  autoware_auto_planning_msgs::msg::TrajectoryPoint point;
   for (unsigned int i = 0; i < out_index.size(); ++i) {
     point.pose.position.x = px_p.at(i);
     point.pose.position.y = py_p.at(i);
     point.pose.position.z = pz_p.at(i);
-    point.pose.orientation = autoware_utils::createQuaternionFromYaw(pyaw_p.at(i));
+    point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(pyaw_p.at(i));
 
-    point.twist.linear.x = tlx_p.at(i);
-    point.twist.angular.z = taz_p.at(i);
-    point.accel.linear.x = alx_p.at(i);
-    point.accel.angular.z = aaz_p.at(i);
+    point.longitudinal_velocity_mps = tlx_p.at(i);
+    point.heading_rate_rps = taz_p.at(i);
+    point.acceleration_mps2 = alx_p.at(i);
     out_trajectory.points.push_back(point);
   }
   return out_trajectory;

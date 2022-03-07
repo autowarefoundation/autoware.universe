@@ -19,7 +19,7 @@ import rclpy
 from rclpy.node import Node
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from autoware_planning_msgs.msg import Trajectory
+from autoware_auto_planning_msgs.msg import Trajectory
 from geometry_msgs.msg import Pose, TwistStamped, Twist
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -201,12 +201,12 @@ class TrajectoryVisualizer(Node):
             opt_closest = self.calcClosestTrajectory(trajectory)
             if opt_closest >= 0:
                 x_closest = x[opt_closest]
-                self.im3.set_data(x_closest, self.localization_twist.linear.x)
-                self.im4.set_data(x_closest, self.vehicle_twist.linear.x)
+                self.im3.set_data(x_closest, self.localization_longitudinal_velocity_mps)
+                self.im4.set_data(x_closest, self.vehicle_longitudinal_velocity_mps)
 
                 opt_zero_vel_id = -1
                 for i in range(opt_closest, len(trajectory.points)):
-                    if(trajectory.points[i].twist.linear.x < 1e-3):
+                    if(trajectory.points[i].longitudinal_velocity_mps < 1e-3):
                         opt_zero_vel_id = i
                         break
                 else:
@@ -228,7 +228,7 @@ class TrajectoryVisualizer(Node):
             if max_closest >= 0:
                 max_zero_vel_id = -1
                 for i in range(max_closest, len(max_trajectory.points)):
-                    if(max_trajectory.points[i].twist.linear.x < 1e-3):
+                    if(max_trajectory.points[i].longitudinal_velocity_mps < 1e-3):
                         max_zero_vel_id = i
                         break
                 else:
@@ -307,7 +307,7 @@ class TrajectoryVisualizer(Node):
             t_arr.append(t_sum)
 
         for i in range(start, end - 1):
-            v = traj.points[i].twist.linear.x
+            v = traj.points[i].longitudinal_velocity_mps
             ds = ds_arr[i - start]
             dt = ds / max(v, 0.1)
             t_sum += dt
@@ -317,7 +317,7 @@ class TrajectoryVisualizer(Node):
     def ToVelList(self, traj):
         v_list = []
         for p in traj.points:
-            v_list.append(p.twist.linear.x)
+            v_list.append(p.longitudinal_velocity_mps)
         return v_list
 
     def updatePose(self, from_link, to_link):
