@@ -14,8 +14,8 @@
 
 #include "map_based_prediction_node.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <interpolation/linear_interpolation.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -45,7 +45,7 @@ lanelet::ConstLanelets getLanelets(const map_based_prediction::LaneletsData & da
 
   return lanelets;
 }
-}
+}  // namespace
 
 namespace map_based_prediction
 {
@@ -88,8 +88,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
 
-  pub_objects_ = this->create_publisher<PredictedObjects>(
-    "objects", rclcpp::QoS{1});
+  pub_objects_ = this->create_publisher<PredictedObjects>("objects", rclcpp::QoS{1});
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
 }
@@ -104,8 +103,7 @@ PredictedObjectKinematics MapBasedPredictionNode::convertToPredictedKinematics(
   return output;
 }
 
-void MapBasedPredictionNode::mapCallback(
-  const HADMapBin::ConstSharedPtr msg)
+void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -114,8 +112,7 @@ void MapBasedPredictionNode::mapCallback(
   RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Map is loaded");
 }
 
-void MapBasedPredictionNode::objectsCallback(
-  const TrackedObjects::ConstSharedPtr in_objects)
+void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
 {
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
@@ -168,10 +165,9 @@ void MapBasedPredictionNode::objectsCallback(
     if (
       transformed_object.classification.front().label != ObjectClassification::CAR &&
       transformed_object.classification.front().label != ObjectClassification::BUS &&
-      transformed_object.classification.front().label != ObjectClassification::TRAILER&&
+      transformed_object.classification.front().label != ObjectClassification::TRAILER &&
       transformed_object.classification.front().label != ObjectClassification::MOTORCYCLE &&
       transformed_object.classification.front().label != ObjectClassification::TRUCK) {
-
       PredictedPath predicted_path =
         path_generator_->generatePathForNonVehicleObject(output.header, transformed_object);
       predicted_path.confidence = 1.0;
@@ -380,12 +376,12 @@ void MapBasedPredictionNode::removeOldObjectsHistory(const double current_time)
   }
 }
 
-LaneletsData MapBasedPredictionNode::getCurrentLanelets(
-  const TrackedObject & object)
+LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & object)
 {
   // obstacle point
   lanelet::BasicPoint2d search_point(
-    object.kinematics.pose_with_covariance.pose.position.x, object.kinematics.pose_with_covariance.pose.position.y);
+    object.kinematics.pose_with_covariance.pose.position.x,
+    object.kinematics.pose_with_covariance.pose.position.y);
 
   // nearest lanelet
   std::vector<std::pair<double, lanelet::Lanelet>> surrounding_lanelets =
@@ -416,8 +412,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(
 }
 
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
-  const std::pair<double, lanelet::Lanelet> & lanelet,
-  const TrackedObject & object,
+  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
   const lanelet::BasicPoint2d & search_point)
 {
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
@@ -447,8 +442,8 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 
   // Step3. Calculate the angle difference between the lane angle and obstacle angle
   double object_yaw = getObjectYaw(object);
-  const double lane_yaw =
-    lanelet::utils::getLaneletAngle(lanelet.second, object.kinematics.pose_with_covariance.pose.position);
+  const double lane_yaw = lanelet::utils::getLaneletAngle(
+    lanelet.second, object.kinematics.pose_with_covariance.pose.position);
   const double delta_yaw = object_yaw - lane_yaw;
   const double normalized_delta_yaw = std::atan2(std::sin(delta_yaw), std::cos(delta_yaw));
   const double abs_norm_delta = std::fabs(normalized_delta_yaw);
@@ -465,8 +460,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 }
 
 float MapBasedPredictionNode::calculateLocalLikelihood(
-  const lanelet::Lanelet & current_lanelet,
-  const TrackedObject & object) const
+  const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const
 {
   const auto & obj_point = object.kinematics.pose_with_covariance.pose.position;
 
@@ -528,8 +522,8 @@ void MapBasedPredictionNode::updateObjectsHistory(
 }
 
 std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
-  const TrackedObject & object,
-  const LaneletsData & current_lanelets_data, const double object_detected_time)
+  const TrackedObject & object, const LaneletsData & current_lanelets_data,
+  const double object_detected_time)
 {
   const double delta_horizon = 1.0;
   const double obj_vel = object.kinematics.twist_with_covariance.twist.linear.x;
@@ -617,8 +611,8 @@ void MapBasedPredictionNode::addValidPath(
 }
 
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
-  const TrackedObject & object,
-  const LaneletData & current_lanelet_data, const double object_detected_time)
+  const TrackedObject & object, const LaneletData & current_lanelet_data,
+  const double object_detected_time)
 {
   // Step1. Check if we have the object in the buffer
   const std::string object_id = toHexString(object.object_id);
@@ -670,7 +664,8 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const auto current_lanelet = current_lanelet_data.lanelet;
   const double current_time_delay = std::max(current_time - object_detected_time, 0.0);
   const auto current_pose = compensateTimeDelay(
-    object.kinematics.pose_with_covariance.pose, object.kinematics.twist_with_covariance.twist, current_time_delay);
+    object.kinematics.pose_with_covariance.pose, object.kinematics.twist_with_covariance.twist,
+    current_time_delay);
   const double dist = tier4_autoware_utils::calcDistance2d(prev_pose, current_pose);
   lanelet::routing::LaneletPaths possible_paths =
     routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
@@ -777,8 +772,7 @@ double MapBasedPredictionNode::calcLeftLateralOffset(
 }
 
 void MapBasedPredictionNode::updateFuturePossibleLanelets(
-  const TrackedObject & object,
-  const lanelet::routing::LaneletPaths & paths)
+  const TrackedObject & object, const lanelet::routing::LaneletPaths & paths)
 {
   std::string object_id = toHexString(object.object_id);
   if (objects_history_.count(object_id) == 0) {
@@ -799,10 +793,9 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
 }
 
 void MapBasedPredictionNode::addReferencePaths(
-  const TrackedObject & object,
-  const lanelet::routing::LaneletPaths & candidate_paths, const float path_probability,
-  const ManeuverProbability & maneuver_probability, const Maneuver & maneuver,
-  std::vector<PredictedRefPath> & reference_paths)
+  const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
+  const float path_probability, const ManeuverProbability & maneuver_probability,
+  const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths)
 {
   if (!candidate_paths.empty()) {
     updateFuturePossibleLanelets(object, candidate_paths);
@@ -1006,8 +999,7 @@ bool MapBasedPredictionNode::isDuplicated(
 }
 
 bool MapBasedPredictionNode::isDuplicated(
-  const PredictedPath & predicted_path,
-  const std::vector<PredictedPath> & predicted_paths)
+  const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths)
 {
   const double CLOSE_PATH_THRESHOLD = 0.1;
   for (const auto & prev_predicted_path : predicted_paths) {
@@ -1021,7 +1013,7 @@ bool MapBasedPredictionNode::isDuplicated(
 
   return false;
 }
-} // map_based_prediction
+}  // namespace map_based_prediction
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(map_based_prediction::MapBasedPredictionNode)

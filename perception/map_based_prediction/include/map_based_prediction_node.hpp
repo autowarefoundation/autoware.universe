@@ -17,10 +17,10 @@
 
 #include "path_generator.hpp"
 
-#include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/transform_listener.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -43,7 +43,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
 
 namespace map_based_prediction
 {
@@ -82,12 +81,12 @@ using ManeuverProbability = std::unordered_map<Maneuver, float>;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedObjectKinematics;
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
-using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
+using autoware_auto_perception_msgs::msg::TrackedObject;
+using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
+using autoware_auto_perception_msgs::msg::TrackedObjects;
 
 class MapBasedPredictionNode : public rclcpp::Node
 {
@@ -135,8 +134,7 @@ private:
 
   // Member Functions
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
-  void objectsCallback(
-    const TrackedObjects::ConstSharedPtr in_objects);
+  void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
@@ -145,25 +143,22 @@ private:
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
-    const std::pair<double, lanelet::Lanelet> & lanelet,
-    const TrackedObject & object,
+    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
     const lanelet::BasicPoint2d & search_point);
   float calculateLocalLikelihood(
-    const lanelet::Lanelet & current_lanelet,
-    const TrackedObject & object) const;
+    const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   static double getObjectYaw(const TrackedObject & object);
 
   void updateObjectsHistory(
-    const std_msgs::msg::Header & header,
-    const TrackedObject & object,
+    const std_msgs::msg::Header & header, const TrackedObject & object,
     const LaneletsData & current_lanelets_data);
 
   std::vector<PredictedRefPath> getPredictedReferencePath(
-    const TrackedObject & object,
-    const LaneletsData & current_lanelets_data, const double object_detected_time);
+    const TrackedObject & object, const LaneletsData & current_lanelets_data,
+    const double object_detected_time);
   Maneuver predictObjectManeuver(
-    const TrackedObject & object,
-    const LaneletData & current_lanelet, const double object_detected_time);
+    const TrackedObject & object, const LaneletData & current_lanelet,
+    const double object_detected_time);
   void addValidPath(
     const lanelet::routing::LaneletPaths & candidate_paths,
     lanelet::routing::LaneletPaths & valid_paths);
@@ -180,28 +175,24 @@ private:
     const lanelet::routing::LaneletPaths & center_paths);
 
   void addReferencePaths(
-    const TrackedObject & object,
-    const lanelet::routing::LaneletPaths & candidate_paths, const float path_probability,
-    const ManeuverProbability & maneuver_probability, const Maneuver & maneuver,
-    std::vector<PredictedRefPath> & reference_paths);
+    const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
+    const float path_probability, const ManeuverProbability & maneuver_probability,
+    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths);
   std::vector<PosePath> convertPathType(const lanelet::routing::LaneletPaths & paths);
   PosePath resamplePath(const PosePath & base_path) const;
 
   void updateFuturePossibleLanelets(
-    const TrackedObject & object,
-    const lanelet::routing::LaneletPaths & paths);
+    const TrackedObject & object, const lanelet::routing::LaneletPaths & paths);
 
   bool isDuplicated(
     const std::pair<double, lanelet::ConstLanelet> & target_lanelet,
     const LaneletsData & lanelets_data);
   bool isDuplicated(
-    const PredictedPath & predicted_path,
-    const std::vector<PredictedPath> & predicted_paths);
+    const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
 
   visualization_msgs::msg::Marker getDebugMarker(
-    const TrackedObject & object, const Maneuver & maneuver,
-    const size_t obj_num);
+    const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
 };
-} // namespace map_based_prediction
+}  // namespace map_based_prediction
 
 #endif  // MAP_BASED_PREDICTION_NODE_HPP_

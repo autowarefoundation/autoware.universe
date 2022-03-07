@@ -40,8 +40,7 @@ inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, flo
 }
 
 visualization_msgs::msg::Marker MapBasedPredictionNode::getDebugMarker(
-  const TrackedObject & object, const Maneuver & maneuver,
-  const size_t obj_num)
+  const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num)
 {
   visualization_msgs::msg::Marker marker{};
   marker.header.frame_id = "map";
@@ -69,4 +68,4 @@ visualization_msgs::msg::Marker MapBasedPredictionNode::getDebugMarker(
 
   return marker;
 }
-} // map_based_prediction
+}  // namespace map_based_prediction
