@@ -103,6 +103,19 @@ PredictedObjectKinematics MapBasedPredictionNode::convertToPredictedKinematics(
   return output;
 }
 
+PredictedObject MapBasedPredictionNode::convertToPredictedObject(
+  const TrackedObject & tracked_object)
+{
+  PredictedObject predicted_object;
+  predicted_object.kinematics = convertToPredictedKinematics(tracked_object.kinematics);
+  predicted_object.classification = tracked_object.classification;
+  predicted_object.object_id = tracked_object.object_id;
+  predicted_object.shape = tracked_object.shape;
+  predicted_object.existence_probability = tracked_object.existence_probability;
+
+  return predicted_object;
+}
+
 void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Start loading lanelet");
@@ -172,12 +185,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         path_generator_->generatePathForNonVehicleObject(output.header, transformed_object);
       predicted_path.confidence = 1.0;
 
-      PredictedObject predicted_object;
-      predicted_object.kinematics = convertToPredictedKinematics(transformed_object.kinematics);
-      predicted_object.classification = transformed_object.classification;
-      predicted_object.object_id = transformed_object.object_id;
-      predicted_object.shape = transformed_object.shape;
-      predicted_object.existence_probability = transformed_object.existence_probability;
+      auto predicted_object = convertToPredictedObject(transformed_object);
       predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       output.objects.push_back(predicted_object);
       continue;
@@ -198,12 +206,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         continue;
       }
 
-      PredictedObject predicted_object;
-      predicted_object.kinematics = convertToPredictedKinematics(transformed_object.kinematics);
-      predicted_object.classification = transformed_object.classification;
-      predicted_object.object_id = transformed_object.object_id;
-      predicted_object.shape = transformed_object.shape;
-      predicted_object.existence_probability = transformed_object.existence_probability;
+      auto predicted_object = convertToPredictedObject(transformed_object);
       predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       output.objects.push_back(predicted_object);
       continue;
@@ -220,12 +223,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         continue;
       }
 
-      PredictedObject predicted_object;
-      predicted_object.kinematics = convertToPredictedKinematics(transformed_object.kinematics);
-      predicted_object.classification = transformed_object.classification;
-      predicted_object.object_id = transformed_object.object_id;
-      predicted_object.shape = transformed_object.shape;
-      predicted_object.existence_probability = transformed_object.existence_probability;
+      auto predicted_object = convertToPredictedObject(transformed_object);
       predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       output.objects.push_back(predicted_object);
       continue;
@@ -245,12 +243,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         continue;
       }
 
-      PredictedObject predicted_object;
-      predicted_object.kinematics = convertToPredictedKinematics(transformed_object.kinematics);
-      predicted_object.classification = transformed_object.classification;
-      predicted_object.object_id = transformed_object.object_id;
-      predicted_object.shape = transformed_object.shape;
-      predicted_object.existence_probability = transformed_object.existence_probability;
+      auto predicted_object = convertToPredictedObject(transformed_object);
       predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       output.objects.push_back(predicted_object);
       continue;
@@ -292,12 +285,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         predicted_path.confidence = predicted_path.confidence / sum_confidence;
       }
 
-      PredictedObject predicted_object;
-      predicted_object.kinematics = convertToPredictedKinematics(transformed_object.kinematics);
-      predicted_object.classification = transformed_object.classification;
-      predicted_object.object_id = transformed_object.object_id;
-      predicted_object.shape = transformed_object.shape;
-      predicted_object.existence_probability = transformed_object.existence_probability;
+      auto predicted_object = convertToPredictedObject(transformed_object);
       for (const auto & predicted_path : predicted_paths) {
         predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       }

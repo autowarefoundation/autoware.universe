@@ -139,6 +139,8 @@ private:
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
 
+  PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
+
   void removeOldObjectsHistory(const double current_time);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
