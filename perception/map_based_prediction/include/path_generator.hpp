@@ -57,20 +57,17 @@ public:
   PathGenerator(const double time_horizon, const double sampling_time_interval);
 
   PredictedPath generatePathForNonVehicleObject(
-    const std_msgs::msg::Header & origin_header,
-    const TrackedObject & object);
+    const std_msgs::msg::Header & origin_header, const TrackedObject & object);
 
   PredictedPath generatePathForLowSpeedVehicle(
-    const std_msgs::msg::Header & origin_header,
-    const TrackedObject & object) const;
+    const std_msgs::msg::Header & origin_header, const TrackedObject & object) const;
 
   PredictedPath generatePathForOffLaneVehicle(
-    const std_msgs::msg::Header & origin_header,
-    const TrackedObject & object);
+    const std_msgs::msg::Header & origin_header, const TrackedObject & object);
 
   PredictedPath generatePathForOnLaneVehicle(
-    const std_msgs::msg::Header & origin_header,
-    const TrackedObject & object, const PosePath & ref_paths);
+    const std_msgs::msg::Header & origin_header, const TrackedObject & object,
+    const PosePath & ref_paths);
 
 private:
   // Parameters
@@ -79,12 +76,11 @@ private:
 
   // Member functions
   PredictedPath generateStraightPath(
-    const std_msgs::msg::Header & origin_header,
-    const TrackedObject & object) const;
+    const std_msgs::msg::Header & origin_header, const TrackedObject & object) const;
 
   PredictedPath generatePolynomialPath(
-    const std_msgs::msg::Header & origin_header,
-    const TrackedObject & object, const PosePath & ref_path);
+    const std_msgs::msg::Header & origin_header, const TrackedObject & object,
+    const PosePath & ref_path);
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length);
@@ -97,18 +93,17 @@ private:
     const PosePath & base_path, const FrenetPath & frenet_predicted_path);
 
   PredictedPath convertPredictedPath(
-    const TrackedObject & object,
-    const FrenetPath & frenet_predicted_path, const PosePath & ref_path);
+    const TrackedObject & object, const FrenetPath & frenet_predicted_path,
+    const PosePath & ref_path);
 
   FrenetPoint getFrenetPoint(
-    const std_msgs::msg::Header & header,
-    const TrackedObject & object, const PosePath & ref_path);
+    const std_msgs::msg::Header & header, const TrackedObject & object, const PosePath & ref_path);
 
   double getPointYaw(
     const geometry_msgs::msg::Point & current_p, const geometry_msgs::msg::Point & next_p);
   double getPointYaw(
     const double curr_x, const double curr_y, const double next_x, const double next_y);
 };
-}
+}  // namespace map_based_prediction
 
 #endif  // PATH_GENERATOR_HPP_
