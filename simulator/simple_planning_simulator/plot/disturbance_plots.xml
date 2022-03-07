@@ -1,45 +1,58 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab containers="1" tab_name="time_delay_disturbance">
+  <Tab tab_name="time_delay_disturbance" containers="1">
    <Container>
-    <DockSplitter orientation="-" sizes="1" count="1">
-     <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
-      <DockSplitter orientation="-" sizes="0.5;0.5" count="2">
+    <DockSplitter sizes="1" orientation="-" count="1">
+     <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
+      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range bottom="-2.283925" right="66.597784" top="-1.214117" left="0.000000"/>
+         <range top="1.131639" right="99.976910" bottom="-0.910271" left="0.000000"/>
          <limitY/>
-         <curve color="#1f77b4" name="/simulation/output/disturbance_generator/acc_delayed_input"/>
-         <curve color="#d62728" name="/simulation/output/disturbance_generator/acc_original_input"/>
+         <curve name="/simulation/output/disturbance_generator/acc_delayed_input" color="#eb1533"/>
+         <curve name="/simulation/output/disturbance_generator/acc_original_input" color="#2732d6"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range bottom="0.094759" right="66.597784" top="0.105229" left="0.000000"/>
+         <range top="0.105054" right="99.976910" bottom="0.094762" left="0.000000"/>
          <limitY/>
-         <curve color="#1ac938" name="/simulation/output/disturbance_generator/acc_time_delay_value"/>
+         <curve name="/simulation/output/disturbance_generator/acc_time_delay_value" color="#1ac938"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter orientation="-" sizes="0.5;0.5" count="2">
+      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range bottom="-0.100000" right="66.597784" top="0.100000" left="0.000000"/>
+         <range top="0.061361" right="99.976910" bottom="-0.354852" left="0.000000"/>
          <limitY/>
-         <curve color="#ff7f0e" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
-         <curve color="#f14cc1" name="/simulation/output/disturbance_generator/steer_original_input"/>
+         <curve name="/simulation/output/disturbance_generator/steer_delayed_input" color="#ff2a0e"/>
+         <curve name="/simulation/output/disturbance_generator/steer_original_input" color="#0000ea"/>
         </plot>
        </DockArea>
        <DockArea name="...">
         <plot style="Lines" mode="TimeSeries">
-         <range bottom="0.228468" right="66.597784" top="0.252436" left="0.000000"/>
+         <range top="0.252546" right="99.976910" bottom="0.229223" left="0.000000"/>
          <limitY/>
-         <curve color="#9467bd" name="/simulation/output/disturbance_generator/steer_time_delay_value"/>
+         <curve name="/simulation/output/disturbance_generator/steer_time_delay_value" color="#9467bd"/>
         </plot>
        </DockArea>
       </DockSplitter>
      </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Road Slope" containers="1">
+   <Container>
+    <DockSplitter sizes="1" orientation="-" count="1">
+     <DockArea name="...">
+      <plot style="Lines" mode="TimeSeries">
+       <range top="0.100000" right="99.976910" bottom="-0.100000" left="0.000000"/>
+       <limitY/>
+       <curve name="/simulation/output/disturbance_generator/road_slope_acc" color="#1f77b4"/>
+      </plot>
+     </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
@@ -50,7 +63,7 @@
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default delimiter="0" time_axis=""/>
+   <default time_axis="" delimiter="0"/>
   </plugin>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>
@@ -68,8 +81,8 @@
   </plugin>
   <plugin ID="UDP Server"/>
   <plugin ID="WebSocket Server"/>
-  <plugin status="idle" ID="CSV Exporter"/>
-  <plugin status="idle" ID="ROS2 Topic Re-Publisher"/>
+  <plugin ID="CSV Exporter" status="idle"/>
+  <plugin ID="ROS2 Topic Re-Publisher" status="idle"/>
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
  <previouslyLoaded_Datafiles/>
