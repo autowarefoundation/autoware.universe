@@ -44,7 +44,15 @@ if(BUILD_TESTING)
 
   # launch_testing
   find_package(launch_testing_ament_cmake REQUIRED)
-  add_launch_test(test/test_fault_injection_node.test.py)
+  add_launch_test(
+    test/test_fault_injection_node.test.py
+    TARGET test_fault_injection_launch_test
+  )
+  set_tests_properties(
+    test_fault_injection_launch_test
+    PROPERTIES
+    LABELS "launch_test"
+  )
 
   install(DIRECTORY
     test/config
