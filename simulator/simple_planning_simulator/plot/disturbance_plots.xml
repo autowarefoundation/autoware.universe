@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab containers="1" tab_name="time_delay_disturbance">
+   <Container>
+    <DockSplitter orientation="-" sizes="1" count="1">
+     <DockSplitter orientation="|" sizes="0.5;0.5" count="2">
+      <DockSplitter orientation="-" sizes="0.5;0.5" count="2">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range bottom="-2.283925" right="66.597784" top="-1.214117" left="0.000000"/>
+         <limitY/>
+         <curve color="#1f77b4" name="/simulation/output/disturbance_generator/acc_delayed_input"/>
+         <curve color="#d62728" name="/simulation/output/disturbance_generator/acc_original_input"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range bottom="0.094759" right="66.597784" top="0.105229" left="0.000000"/>
+         <limitY/>
+         <curve color="#1ac938" name="/simulation/output/disturbance_generator/acc_time_delay_value"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+      <DockSplitter orientation="-" sizes="0.5;0.5" count="2">
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range bottom="-0.100000" right="66.597784" top="0.100000" left="0.000000"/>
+         <limitY/>
+         <curve color="#ff7f0e" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
+         <curve color="#f14cc1" name="/simulation/output/disturbance_generator/steer_original_input"/>
+        </plot>
+       </DockArea>
+       <DockArea name="...">
+        <plot style="Lines" mode="TimeSeries">
+         <range bottom="0.228468" right="66.597784" top="0.252436" left="0.000000"/>
+         <limitY/>
+         <curve color="#9467bd" name="/simulation/output/disturbance_generator/steer_time_delay_value"/>
+        </plot>
+       </DockArea>
+      </DockSplitter>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default delimiter="0" time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS2 bags">
+   <use_header_stamp value="false"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS2 Topic Subscriber">
+   <use_header_stamp value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="true"/>
+   <selected_topics>
+    <topic name="/simulation/output/disturbance_generator"/>
+   </selected_topics>
+  </plugin>
+  <plugin ID="UDP Server"/>
+  <plugin ID="WebSocket Server"/>
+  <plugin status="idle" ID="CSV Exporter"/>
+  <plugin status="idle" ID="ROS2 Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS2 Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

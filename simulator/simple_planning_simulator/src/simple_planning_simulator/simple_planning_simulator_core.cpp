@@ -435,11 +435,18 @@ namespace simulation
             publish_hazard_lights_report();
             publish_tf(current_odometry_);
 
-            current_disturbance_gen_.steer_time_delay_value = 1.0;
+            // DEBUG
+            current_disturbance_gen_.steer_time_delay_value = static_cast<float32_t>(vehicle_model_ptr_->getCurrentSteerTimeDelay());
+            auto steering_input_pair = vehicle_model_ptr_->getSteerTimeDelayDisturbanceInputs();
+            current_disturbance_gen_.steer_original_input = static_cast<float32_t>(steering_input_pair.first);
+            current_disturbance_gen_.steer_delayed_input = static_cast<float32_t>(steering_input_pair.second);
+
+            current_disturbance_gen_.acc_time_delay_value = static_cast<float32_t>(vehicle_model_ptr_->getCurrentAccTimeDelay());
+            auto acc_input_pair = vehicle_model_ptr_->getAccTimeDelayDisturbanceInputs();
+            current_disturbance_gen_.acc_original_input = static_cast<float32_t>(acc_input_pair.first);
+            current_disturbance_gen_.acc_delayed_input = static_cast<float32_t>(acc_input_pair.second);
 
             pub_dist_generator_->publish(current_disturbance_gen_);
-
-            // DEBUG
             ns_utils::print("Current engage ", current_engage_);
         }
 
