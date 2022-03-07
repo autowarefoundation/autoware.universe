@@ -1674,35 +1674,47 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
 
   {
     // 0. Extend to right/left of objects
-    for (const auto & obstacle : avoidance_data_.objects) {
-      auto object_lanelet = obstacle.overhang_lanelet;
-      if (isOnRight(obstacle)) {
-        auto lanelet_at_left = route_handler->getLeftLanelet(object_lanelet);
+    const auto searchLeftLaneletsAndAppendToDrivableAreas =
+      [&route_handler](
+        const lanelet::ConstLanelet & current_lanelet, auto & lanelet_to_be_extended) noexcept {
+        auto lanelet_at_left = route_handler->getLeftLanelet(current_lanelet);
         while (lanelet_at_left) {
-          extended_lanelets.push_back(lanelet_at_left.get());
+          lanelet_to_be_extended.push_back(lanelet_at_left.get());
           lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
         }
-        if (lanelet_at_left) {
-          auto lanelet_at_right =
-            planner_data_->route_handler->getRightLanelet(lanelet_at_left.get());
+
+        if (lanelet_at_left) {  // means lanelets in the opposite direction exist
+          auto lanelet_at_right = route_handler->getRightLanelet(lanelet_at_left.get());
           while (lanelet_at_right) {
-            extended_lanelets.push_back(lanelet_at_right.get());
+            lanelet_to_be_extended.push_back(lanelet_at_right.get());
             lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
           }
         }
-      } else {
-        auto lanelet_at_right = route_handler->getRightLanelet(object_lanelet);
+      };
+
+    const auto searchRightLaneletsAndAppendToDrivableAreas =
+      [&route_handler](
+        const lanelet::ConstLanelet & current_lanelet, auto & lanelet_to_be_extended) noexcept {
+        auto lanelet_at_right = route_handler->getRightLanelet(current_lanelet);
         while (lanelet_at_right) {
-          extended_lanelets.push_back(lanelet_at_right.get());
+          lanelet_to_be_extended.push_back(lanelet_at_right.get());
           lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
         }
-        if (lanelet_at_right) {
+        if (lanelet_at_right) {  // means lanelets in the opposite direction exist
           auto lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_right.get());
           while (lanelet_at_left) {
-            extended_lanelets.push_back(lanelet_at_left.get());
+            lanelet_to_be_extended.push_back(lanelet_at_left.get());
             lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
           }
         }
+      };
+
+    for (const auto & obstacle : avoidance_data_.objects) {
+      auto object_lanelet = obstacle.overhang_lanelet;
+      if (isOnRight(obstacle)) {
+        searchLeftLaneletsAndAppendToDrivableAreas(object_lanelet, extended_lanelets);
+      } else {
+        searchRightLaneletsAndAppendToDrivableAreas(object_lanelet, extended_lanelets);
       }
     }
   }
