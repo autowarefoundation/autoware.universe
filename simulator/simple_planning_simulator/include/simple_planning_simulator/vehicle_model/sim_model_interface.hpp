@@ -153,13 +153,13 @@ public:
     /**
      * @brief get state vector dimension
      */
-    inline int getDimX() const
+    [[nodiscard]] inline int getDimX() const
     { return dim_x_; }
 
     /**
      * @brief get input vector demension
      */
-    inline int getDimU() const
+    [[nodiscard]] inline int getDimU() const
     { return dim_u_; }
 
     /**

@@ -1,38 +1,37 @@
 simple_planning_simulator {#simple_planning_simulator-package-design}
 ===========
 
-
 # Purpose / Use cases
 
 This node simulates the vehicle motion for a vehicle command in 2D using a simple vehicle model.
 
-
-
 # Design
 
-
-The purpose of this simulator is for the integration test of planning and control modules. This does not simulate sensing or perception, but is implemented in pure c++ only and works without GPU.
+The purpose of this simulator is for the integration test of planning and control modules. This does not simulate
+sensing or perception, but is implemented in pure c++ only and works without GPU.
 
 ## Assumptions / Known limits
 
- - It simulates only in 2D motion.
- - It does not perform physical operations such as collision and sensing, but only calculates the integral results of vehicle dynamics.
-
+- It simulates only in 2D motion.
+- It does not perform physical operations such as collision and sensing, but only calculates the integral results of
+  vehicle dynamics.
 
 ## Inputs / Outputs / API
 
-
 **input**
- - input/vehicle_control_command [`autoware_auto_msgs/msg/VehicleControlCommand`] : target command to drive a vehicle.
- - input/ackermann_control_command [`autoware_auto_msgs/msg/AckermannControlCommand`] : target command to drive a vehicle.
- - input/vehicle_state_command [`autoware_auto_msgs/msg/VehicleStateCommand`] : target state command (e.g. gear).
- - /initialpose [`geometry_msgs/msg/PoseWithCovarianceStamped`] : for initial pose
+
+- input/vehicle_control_command [`autoware_auto_msgs/msg/VehicleControlCommand`] : target command to drive a vehicle.
+- input/ackermann_control_command [`autoware_auto_msgs/msg/AckermannControlCommand`] : target command to drive a
+  vehicle.
+- input/vehicle_state_command [`autoware_auto_msgs/msg/VehicleStateCommand`] : target state command (e.g. gear).
+- /initialpose [`geometry_msgs/msg/PoseWithCovarianceStamped`] : for initial pose
 
 **output**
- - /tf [`tf2_msgs/msg/TFMessage`] : simulated vehicle pose (base_link)
- - /vehicle/vehicle_kinematic_state [`autoware_auto_msgs/msg/VehicleKinematicState`] : simulated kinematic state (defined in CoM)
- - /vehicle/state_report [`autoware_auto_msgs/msg/VehicleStateReport`] : current vehicle state (e.g. gear, mode, etc.)
 
+- /tf [`tf2_msgs/msg/TFMessage`] : simulated vehicle pose (base_link)
+- /vehicle/vehicle_kinematic_state [`autoware_auto_msgs/msg/VehicleKinematicState`] : simulated kinematic state (defined
+  in CoM)
+- /vehicle/state_report [`autoware_auto_msgs/msg/VehicleStateReport`] : current vehicle state (e.g. gear, mode, etc.)
 
 ## Inner-workings / Algorithms
 
@@ -50,24 +49,24 @@ The purpose of this simulator is for the integration test of planning and contro
 |angvel_noise_stddev    | double | Standard deviation for angular velocity noise| 0.0|
 |steer_noise_stddev     | double | Standard deviation for steering angle noise|  0.0001|
 
-
-
 ### Vehicle Model Parameters
-
 
 **vehicle_model_type options**
 
- - `IDEAL_STEER_VEL`
- - `IDEAL_STEER_ACC`
- - `IDEAL_STEER_ACC_GEARED`
- - `DELAY_STEER_VEL`
- - `DELAY_STEER_ACC`
- - `DELAY_STEER_ACC_GEARED`
+- `IDEAL_STEER_VEL`
+- `IDEAL_STEER_ACC`
+- `IDEAL_STEER_ACC_GEARED`
+- `DELAY_STEER_VEL`
+- `DELAY_STEER_ACC`
+- `DELAY_STEER_ACC_GEARED`
 
-The `IDEAL` model moves ideally as commanded, while the `DELAY` model moves based on a 1st-order with time delay model. The `STEER` means the model receives the steer command. The `VEL` means the model receives the target velocity command, while the `ACC` model receives the target acceleration command. The `GEARED` suffix means that the motion will consider the gear command: the vehicle moves only one direction following the gear.
+The `IDEAL` model moves ideally as commanded, while the `DELAY` model moves based on a 1st-order with time delay model.
+The `STEER` means the model receives the steer command. The `VEL` means the model receives the target velocity command,
+while the `ACC` model receives the target acceleration command. The `GEARED` suffix means that the motion will consider
+the gear command: the vehicle moves only one direction following the gear.
 
-The table below shows which models correspond to what parameters. The model names are written in abbreviated form (e.g. IDEAL_STEER_VEL = I_ST_V).
-
+The table below shows which models correspond to what parameters. The model names are written in abbreviated form (e.g.
+IDEAL_STEER_VEL = I_ST_V).
 
 |Name|Type|Description|I_ST_V|I_ST_A|I_ST_A_G|D_ST_V|D_ST_A|D_ST_A_G|Default value| unit |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
@@ -83,22 +82,23 @@ The table below shows which models correspond to what parameters. The model name
 |steer_rate_lim         | double | limit of steering angle change rate                      | x | x | x | o | o | o | 5.0 | [rad/s] |
 <!-- |deadzone_delta_steer   | double | dead zone for the steering dynamics                      | x | x | x | o | o | 0.0 | [rad] | -->
 
-
-*Note*: The steering/velocity/acceleration dynamics is modeled by a first order system with a deadtime in a *delay* model. The definition of the *time constant* is the time it takes for the step response to rise up to 63% of its final value. The *deadtime* is a delay in the response to a control input.
-
+*Note*: The steering/velocity/acceleration dynamics is modeled by a first order system with a deadtime in a *delay*
+model. The definition of the *time constant* is the time it takes for the step response to rise up to 63% of its final
+value. The *deadtime* is a delay in the response to a control input.
 
 ### Default TF configuration
 
-Since the vehicle outputs `odom`->`base_link` tf, this simulator outputs the tf with the same frame_id configuration.
-In the simple_planning_simulator.launch.py, the node that outputs the `map`->`odom` tf, that usually estimated by the localization module (e.g. NDT), will be launched as well. Since the tf output by this simulator module is an ideal value, `odom`->`map` will always be 0.
-
+Since the vehicle outputs `odom`->`base_link` tf, this simulator outputs the tf with the same frame_id configuration. In
+the simple_planning_simulator.launch.py, the node that outputs the `map`->`odom` tf, that usually estimated by the
+localization module (e.g. NDT), will be launched as well. Since the tf output by this simulator module is an ideal
+value, `odom`->`map` will always be 0.
 
 ## Error detection and handling
 
 The only validation on inputs being done is testing for a valid vehicle model type.
 
-
 # Security considerations
+
 <!-- Required -->
 <!-- Things to consider:
 - Spoofing (How do you check for and handle fake input?)
@@ -108,18 +108,63 @@ The only validation on inputs being done is testing for a valid vehicle model ty
 - Denial of Service (How do you handle spamming?).
 - Elevation of Privilege (Do you need to change permission levels during execution?) -->
 
-
 # References / External links
+
 This is originally developed in the Autoware.AI. See the link below.
 
 https://github.com/Autoware-AI/simulation/tree/master/wf_simulator
 
 # Future extensions / Unimplemented parts
 
- - Improving the accuracy of vehicle models (e.g., adding steering dead zones and slip behavior)
- - Cooperation with modules that output pseudo pointcloud or pseudo perception results
-
+- Improving the accuracy of vehicle models (e.g., adding steering dead zones and slip behavior)
+- Cooperation with modules that output pseudo pointcloud or pseudo perception results
 
 # Related issues
 
- - #1142: Follow-up to #570 - Integrate simple_planning_simulator Into CI
+- # 1142: Follow-up to #570 - Integrate simple_planning_simulator Into CI
+
+### DISTURBANCE GENERATOR MODIFICATIONS
+
+We implemented the disturbance generator classes to simulate the effects of unknown input and output disturbances acting
+on the vehicle models. The disturbance generator only works with the following vehicle_model_type option. The pose is
+calculated by a bicycle kinematics model.
+
+`DELAY_STEER_ACC_DIST` : Uses the computed acceleration as an input to the vehicle model. The steering and acceleration
+models are 1st-Order models. The input and output disturbance active if they are chosen in the related parameter file.
+
+The disturbance generator requires [the modified autoware_control_msgs test branch](https://github.
+com/tier4/autoware_iv_msgs/tree/test/autoware_control_msgs_nonlinear_mpc_jpntaxi) to visualize the disturbances. A
+plog-juggler configuration file can be found in the config folder.
+
+We implemented the following Input Disturbances:
+
+- Time-varying time delay input disturbance on an input (steering or acceleration),
+- Time-varying dead-zone nonlinearity on an input.
+- **[to be implemented]** Time-varying dead-zone
+
+##### Time-varying time-delay disturbance parameters for an input (for steering and acceleration input channels):
+
+| Name                          | Type   | Description                                                  | Default value |
+| :---------------------------- | :----- | :----------------------------------------------------------- |:--------------|
+| steer_use_time_varying_td     | bool   | If true, the delay value changes sinusoidally. The change points of the time-delay magnitude is sampled by an Exponential distribution. | false         |
+| steer_td_pade_order           | size_t | Approximates a model for a given time-delay model with the Pade approximation. | 2             |
+| {**}_td_changes_every_xsecs   | double | The duration of mean time in which the time-delay stays constant. The duration is sampled from an exponential function with this mean value. | 10.0          |
+| {**}_td_delta_sin_mag_percent | double | How much the time-delay value changes. This value is a percentage of the mean-time-delay value. | 5.0%          |
+| {**}_td_angular_speed         | double | At the time-point change points, the time-delay deviation from the mean value is calculated using a sin(w*t) function. This parameter defines the angular velocity [rad/sec] of this sinus fluctuations. | 0.1           |
+
+The output disturbance module consists of the followings:
+
+* Road slope variation acting on the acceleration as `g*sin(road_slope)`,
+* **[to be implemented]**  Yaw moment disturbance which disturb the yaw angle and captures, The yaw moment disturbance
+  may occur when the left and right tire road frictions coefficients are different, or a sudden wind hits sideways.
+* **[to be implemented]**  Road friction disturbance which capture if the road wet or icy.
+
+##### Time-varying road slope parameters:
+
+| Name                                  | Type   | Description                                            | Default value |
+| :------------------------------------ | :----- | :----------------------------------------------------- |:--------------|
+| rs_use_time_varying_slope             | bool   | If true, the slope value changes sinusoidally in time. | false         |
+| rs_mean_road_slope                    | double | Mean slope value.                                      | 0.0           |
+| rs_delta_sin_mag                      | double | Magnitude of slope fluctuations in degrees.            | 1.0           |
+| rs_road_slope_variation_angular_speed | double | Angular speed of the sinusoidal fluctuations.          | 0.1           |
+
