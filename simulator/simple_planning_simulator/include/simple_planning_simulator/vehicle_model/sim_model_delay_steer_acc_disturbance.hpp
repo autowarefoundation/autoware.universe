@@ -25,7 +25,6 @@
 #include "common//types.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-constexpr float64_t EPS = std::numeric_limits<double>::epsilon(); // Epsilon constant
 
 class SimModelDelaySteerAcc_Dist : public SimModelInterface
 {

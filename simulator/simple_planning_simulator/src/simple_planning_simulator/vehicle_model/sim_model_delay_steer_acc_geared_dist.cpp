@@ -88,6 +88,9 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
     // consider gear
     // update position and velocity first, and then acceleration is calculated naturally
     updateStateWithGear(state_, prev_state, gear_, dt);
+
+    // Debug
+    ns_utils::print("In GEARED vehicle Model");
 }
 
 void SimModelDelaySteerAccGeared_Dist::initializeInputQueue(const float64_t &dt)

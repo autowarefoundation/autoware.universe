@@ -14,7 +14,6 @@
 
 #include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.hpp"
 
-#include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.hpp"
 
 #include <algorithm>
 

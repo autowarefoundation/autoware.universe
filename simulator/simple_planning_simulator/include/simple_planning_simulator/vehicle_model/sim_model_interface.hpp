@@ -23,6 +23,7 @@
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
 using autoware::common::types::bool8_t;
+constexpr float64_t EPS = std::numeric_limits<double>::epsilon(); // Epsilon constant
 
 /**
  * @class SimModelInterface
