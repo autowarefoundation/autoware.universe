@@ -1086,7 +1086,7 @@ boost::optional<double> ObstacleVelocityPlanner::getDistanceToCollisionPoint(
   }
 
   const auto object_box = Box2d(obj_pose, obj_length, obj_width);
-  const auto object_points = object_box.GetAllCorners();
+  const auto object_points = object_box.getAllCorners();
 
   // Get nearest segment index for each point
   size_t min_nearest_idx = ego_traj_data.s.size();
@@ -1146,7 +1146,7 @@ boost::optional<size_t> ObstacleVelocityPlanner::getCollisionIdx(
   for (size_t ego_idx = start_idx; ego_idx <= end_idx; ++ego_idx) {
     const auto ego_center_pose = transformBaseLink2Center(ego_traj.traj.points.at(ego_idx).pose);
     const auto ego_box = Box2d(ego_center_pose, vehicle_length_, vehicle_width_);
-    if (ego_box.HasOverlap(obj_box)) {
+    if (ego_box.hasOverlap(obj_box)) {
       return ego_idx;
     }
   }

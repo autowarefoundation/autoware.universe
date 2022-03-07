@@ -27,9 +27,9 @@ class Box2d
 public:
   Box2d(const geometry_msgs::msg::Pose & center_pose, const double length, const double width);
 
-  bool HasOverlap(const Box2d & box) const;
+  bool hasOverlap(const Box2d & box) const;
 
-  void InitCorners();
+  void initCorners();
 
   /**
    * @brief Getter of the center of the box
@@ -41,13 +41,13 @@ public:
    * @brief Getter of the x-coordinate of the center of the box
    * @return The x-coordinate of the center of the box
    */
-  double center_x() const { return center_.x; }
+  double getCenterX() const { return center_.x; }
 
   /**
    * @brief Getter of the y-coordinate of the center of the box
    * @return The y-coordinate of the center of the box
    */
-  double center_y() const { return center_.y; }
+  double getCenterY() const { return center_.y; }
 
   /**
    * @brief Getter of the length
@@ -65,13 +65,13 @@ public:
    * @brief Getter of half the length
    * @return Half the length of the heading-axis
    */
-  double half_length() const { return half_length_; }
+  double getHalfLength() const { return half_length_; }
 
   /**
    * @brief Getter of half the width
    * @return Half the width of the box taken perpendicularly to the heading
    */
-  double half_width() const { return half_width_; }
+  double getHalfWidth() const { return half_width_; }
 
   /**
    * @brief Getter of the heading
@@ -83,13 +83,13 @@ public:
    * @brief Getter of the cosine of the heading
    * @return The cosine of the heading
    */
-  double cos_heading() const { return cos_heading_; }
+  double getCosHeading() const { return cos_heading_; }
 
   /**
    * @brief Getter of the sine of the heading
    * @return The sine of the heading
    */
-  double sin_heading() const { return sin_heading_; }
+  double getSinHeading() const { return sin_heading_; }
 
   /**
    * @brief Getter of the area of the box
@@ -107,12 +107,12 @@ public:
    * @brief Getter of the corners of the box
    * @param corners The vector where the corners are listed
    */
-  std::vector<geometry_msgs::msg::Point> GetAllCorners() const { return corners_; }
+  std::vector<geometry_msgs::msg::Point> getAllCorners() const { return corners_; }
 
-  double max_x() const { return max_x_; }
-  double min_x() const { return min_x_; }
-  double max_y() const { return max_y_; }
-  double min_y() const { return min_y_; }
+  double getMaxX() const { return max_x_; }
+  double getMinX() const { return min_x_; }
+  double getMaxY() const { return max_y_; }
+  double getMinY() const { return min_y_; }
 
 private:
   geometry_msgs::msg::Point center_;
