@@ -226,7 +226,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           if (score < score_threshold_) score = 0.0;
         }
       }
-      std::cerr << __LINE__ <<":" << score << std::endl;
+      std::cerr << __LINE__ << ":" << score << std::endl;
       score_matrix(tracker_idx, measurement_idx) = score;
     }
   }
