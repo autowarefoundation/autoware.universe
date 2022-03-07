@@ -36,11 +36,11 @@ public:
                                      float64_t vx_rate_lim,
                                      float64_t steer_rate_lim,
                                      float64_t wheelbase,
-                                     float64_t dt,
                                      float64_t acc_delay,
                                      float64_t acc_time_constant,
                                      float64_t steer_delay,
-                                     float64_t steer_time_constant);
+                                     float64_t steer_time_constant,
+                                     IDisturbanceCollection const &disturbance_collection);
 
     /**
      * @brief default destructor

@@ -362,12 +362,11 @@ namespace simulation
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared_Dist>(vel_lim, steer_lim,
                                                                                         vel_rate_lim, steer_rate_lim,
                                                                                         wheelbase,
-                                                                                        timer_sampling_time_ms_ /
-                                                                                        1000.0,
                                                                                         acc_time_delay,
                                                                                         acc_time_constant,
                                                                                         steer_time_delay,
-                                                                                        steer_time_constant);
+                                                                                        steer_time_constant,
+                                                                                        disturbance_collection);
             } else
             {
                 throw std::invalid_argument(

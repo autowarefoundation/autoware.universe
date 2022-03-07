@@ -97,10 +97,10 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
 //    delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
 //    steer_input_queue_.pop_front();
 
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
     const double &raw_acc_command = input_(IDX_U::ACCX_DES);
     const double &raw_steer_command = input_(IDX_U::STEER_DES);
 
-    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
     delayed_input(IDX_U::ACCX_DES) = raw_acc_command;// acc_delayed + acc_slope_dist;
     delayed_input(IDX_U::STEER_DES) = raw_steer_command; //steer_delayed;
 

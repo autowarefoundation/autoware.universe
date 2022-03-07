@@ -22,11 +22,11 @@ SimModelDelaySteerAccGeared_Dist::SimModelDelaySteerAccGeared_Dist(float64_t vx_
                                                                    float64_t vx_rate_lim,
                                                                    float64_t steer_rate_lim,
                                                                    float64_t wheelbase,
-                                                                   float64_t dt,
                                                                    float64_t acc_delay,
                                                                    float64_t acc_time_constant,
                                                                    float64_t steer_delay,
-                                                                   float64_t steer_time_constant)
+                                                                   float64_t steer_time_constant,
+                                                                   IDisturbanceCollection const &disturbance_collection)
         : SimModelInterface(6 /* dim x */, 2 /* dim u */),
           MIN_TIME_CONSTANT(0.03),
           vx_lim_(vx_lim),
@@ -39,7 +39,8 @@ SimModelDelaySteerAccGeared_Dist::SimModelDelaySteerAccGeared_Dist(float64_t vx_
           steer_delay_(steer_delay),
           steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT))
 {
-    initializeInputQueue(dt);
+    // initializeInputQueue(dt);
+    setDisturbance(disturbance_collection);
 }
 
 float64_t SimModelDelaySteerAccGeared_Dist::getX()
@@ -72,12 +73,57 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
 {
     Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
 
-    acc_input_queue_.push_back(input_(IDX_U::ACCX_DES));
-    delayed_input(IDX_U::ACCX_DES) = acc_input_queue_.front();
-    acc_input_queue_.pop_front();
-    steer_input_queue_.push_back(input_(IDX_U::STEER_DES));
-    delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
-    steer_input_queue_.pop_front();
+//    acc_input_queue_.push_back(input_(IDX_U::ACCX_DES));
+//    delayed_input(IDX_U::ACCX_DES) = acc_input_queue_.front();
+//    acc_input_queue_.pop_front();
+//
+//    steer_input_queue_.push_back(input_(IDX_U::STEER_DES));
+//    delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
+//    steer_input_queue_.pop_front();
+
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
+    const double &raw_acc_command = input_(IDX_U::ACCX_DES);
+    const double &raw_steer_command = input_(IDX_U::STEER_DES);
+
+    delayed_input(IDX_U::ACCX_DES) = raw_acc_command;// acc_delayed + acc_slope_dist;
+    delayed_input(IDX_U::STEER_DES) = raw_steer_command; //steer_delayed;
+
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
+
+    auto &&steer_delayed = disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput
+            (raw_steer_command);
+
+
+    // Apply the acceleration delay when only the vehicle is moving, as when stopping its const and we do not want to
+    // send un-applied acceleration to the vehicle.
+    double acc_delayed{};
+
+    // Apply the slope disturbance in a similar manner.
+    double acc_slope_dist{};
+
+    if (std::fabs(state_(IDX::VX)) > EPS)
+    {
+        acc_delayed = disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput
+                (raw_acc_command);
+
+        acc_slope_dist = disturbance_collection_.road_slope_outputDisturbance_ptr_->getDisturbedOutput();
+
+        // ns_utils::print("Current Slope Acceleration : ", acc_slope_dist);
+    } else
+    {
+        acc_delayed = raw_acc_command;
+
+        // The delay model is a differential equation, and when vehicle is stopping, there is a constant breaking
+        // input. We do not want to send this unused input to the delay model.
+
+        disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(0.0);
+
+    }
+
+    delayed_input(IDX_U::STEER_DES) = steer_delayed;
+    delayed_input(IDX_U::ACCX_DES) = acc_delayed + acc_slope_dist;
+
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
 
     const auto prev_state = state_;
     updateRungeKutta(dt, delayed_input);
