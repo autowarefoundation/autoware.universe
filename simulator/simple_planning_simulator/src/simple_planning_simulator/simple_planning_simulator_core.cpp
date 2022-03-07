@@ -457,6 +457,9 @@ namespace simulation
             current_disturbance_gen_.acc_original_input = static_cast<float32_t>(acc_input_pair.first);
             current_disturbance_gen_.acc_delayed_input = static_cast<float32_t>(acc_input_pair.second);
 
+            // Set road slope
+            current_disturbance_gen_.road_slope_acc = static_cast<float32_t>(vehicle_model_ptr_->getCurrentRoadSlopeAccDisturbance());
+
             pub_dist_generator_->publish(current_disturbance_gen_);
             ns_utils::print("Current engage ", current_engage_);
         }
