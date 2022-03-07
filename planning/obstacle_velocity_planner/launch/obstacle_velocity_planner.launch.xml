@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Global parameters -->
+
+    <arg name="param_path" default="$(find-pkg-share obstacle_velocity_planner)/config/obstacle_velocity_planner.param.yaml" />
+
+    <node pkg="obstacle_velocity_planner" exec="obstacle_velocity_planner" name="obstacle_velocity_planner" output="screen">
+        <param from="$(var param_path)" />
+        <remap from="~/input/trajectory" to="/planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/trajectory"/>
+        <remap from="~/output/trajectory" to="/planning/scenario_planning/lane_driving/obstacle_velocity_trajectory"/>
+    </node>
+</launch>
