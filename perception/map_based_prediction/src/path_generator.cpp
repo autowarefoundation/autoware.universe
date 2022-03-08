@@ -249,11 +249,11 @@ PosePath PathGenerator::interpolateReferencePath(
   interpolated_path.resize(interpolate_num);
   for (size_t i = 0; i < interpolate_num - 1; ++i) {
     geometry_msgs::msg::Pose interpolated_pose;
-    const double curr_x = slerp_ref_path_x.at(i);
-    const double curr_y = slerp_ref_path_y.at(i);
-    const double next_x = slerp_ref_path_x.at(i + 1);
-    const double next_y = slerp_ref_path_y.at(i + 1);
-    const double yaw = getPointYaw(curr_x, curr_y, next_x, next_y);
+    const auto current_point =
+      tier4_autoware_utils::createPoint(slerp_ref_path_x.at(i), slerp_ref_path_y.at(i), 0.0);
+    const auto next_point = tier4_autoware_utils::createPoint(
+      slerp_ref_path_x.at(i + 1), slerp_ref_path_y.at(i + 1), 0.0);
+    const double yaw = tier4_autoware_utils::calcAzimuthAngle(current_point, next_point);
     interpolated_pose.position = tier4_autoware_utils::createPoint(
       slerp_ref_path_x.at(i), slerp_ref_path_y.at(i), slerp_ref_path_z.at(i));
     interpolated_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
@@ -274,11 +274,11 @@ PredictedPath PathGenerator::convertPredictedPath(
   predicted_path.path.resize(ref_path.size());
   for (size_t i = 0; i < predicted_path.path.size(); ++i) {
     // Reference Point from interpolated reference path
-    const auto ref_pose = ref_path.at(i);
-    const auto ref_yaw = tf2::getYaw(ref_pose.orientation);
+    const auto & ref_pose = ref_path.at(i);
+    const auto & ref_yaw = tf2::getYaw(ref_pose.orientation);
 
     // Frenet Point from frenet predicted path
-    const auto frenet_point = frenet_predicted_path.at(i);
+    const auto & frenet_point = frenet_predicted_path.at(i);
 
     // Converted Pose
     geometry_msgs::msg::Pose predicted_pose;
@@ -288,8 +288,8 @@ PredictedPath PathGenerator::convertPredictedPath(
     if (i == 0) {
       predicted_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
     } else {
-      const double yaw =
-        getPointYaw(predicted_path.path.at(i - 1).position, predicted_pose.position);
+      const double yaw = tier4_autoware_utils::calcAzimuthAngle(
+        predicted_path.path.at(i - 1).position, predicted_pose.position);
       predicted_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
     }
     predicted_path.path.at(i) = predicted_pose;
@@ -326,21 +326,4 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
   return frenet_point;
 }
-
-double PathGenerator::getPointYaw(
-  const geometry_msgs::msg::Point & current_p, const geometry_msgs::msg::Point & next_p)
-{
-  const double curr_x = current_p.x;
-  const double curr_y = current_p.y;
-  const double next_x = next_p.x;
-  const double next_y = next_p.y;
-  return getPointYaw(curr_x, curr_y, next_x, next_y);
-}
-
-double PathGenerator::getPointYaw(
-  const double curr_x, const double curr_y, const double next_x, const double next_y)
-{
-  return std::atan2(next_y - curr_y, next_x - curr_x);
-}
-
 }  // namespace map_based_prediction

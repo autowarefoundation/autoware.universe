@@ -98,11 +98,6 @@ private:
 
   FrenetPoint getFrenetPoint(
     const std_msgs::msg::Header & header, const TrackedObject & object, const PosePath & ref_path);
-
-  double getPointYaw(
-    const geometry_msgs::msg::Point & current_p, const geometry_msgs::msg::Point & next_p);
-  double getPointYaw(
-    const double curr_x, const double curr_y, const double next_x, const double next_y);
 };
 }  // namespace map_based_prediction
 
