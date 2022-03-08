@@ -217,7 +217,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double iou = utils::get2dIoU(
             {measurement_object.kinematics.pose_with_covariance.pose, measurement_object.shape},
             {tracked_object.kinematics.pose_with_covariance.pose, tracked_object.shape});
-          // if (iou < min_iou) passed_gate = false;
+          if (iou < min_iou) passed_gate = false;
         }
 
         // all gate is passed
@@ -226,7 +226,6 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           if (score < score_threshold_) score = 0.0;
         }
       }
-      std::cerr << __LINE__ << ":" << score << std::endl;
       score_matrix(tracker_idx, measurement_idx) = score;
     }
   }
