@@ -115,7 +115,7 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
         // The delay model is a differential equation, and when vehicle is stopping, there is a constant breaking
         // input. We do not want to send this unused input to the delay model.
 
-        disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(0.0);
+        (void) disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(0.0);
 
     }
 
@@ -140,11 +140,11 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
 
 void SimModelDelaySteerAccGeared_Dist::initializeInputQueue(const float64_t &dt)
 {
-    size_t acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
+    auto acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
     acc_input_queue_.resize(acc_input_queue_size);
     std::fill(acc_input_queue_.begin(), acc_input_queue_.end(), 0.0);
 
-    size_t steer_input_queue_size = static_cast<size_t>(round(steer_delay_ / dt));
+    auto steer_input_queue_size = static_cast<size_t>(round(steer_delay_ / dt));
     steer_input_queue_.resize(steer_input_queue_size);
     std::fill(steer_input_queue_.begin(), steer_input_queue_.end(), 0.0);
 }

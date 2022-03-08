@@ -404,7 +404,7 @@ namespace simulation
                 return;
             }
 
-            ns_utils::print("In ontimer call ... ");
+            // ns_utils::print("In ontimer call ... ");
 
             // update vehicle dynamics
             {

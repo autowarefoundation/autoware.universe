@@ -14,7 +14,7 @@
 
 #include "disturbance_generators/disturbance_generators.hpp"
 
-#include <math.h>
+#include <cmath>
 #include <random>
 #include <utility>
 
