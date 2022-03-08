@@ -1,10 +1,10 @@
-# Map Based Prediction
+# map_based_prediction
 
-## Purpose
+## Role
 
-`map_based_prediction` is a module that predicts future trajectories of obstacles based on road shapes and obstacle pose.
+`map_based_prediction` is a module to predict the future paths of other vehicles and pedestrians according to the shape of the map and the surrounding environment.
 
-## Algorithm
+## Inner-workings / Algorithms
 
 1. Get lanelet path
    The first step is to get the lanelet of the current position of the car. After that, we obtain several trajectories based on the map.
@@ -30,7 +30,42 @@
 4. Drawing predicted trajectories
    From the current position and reference trajectories that we get in the step1, we create predicted trajectories by using Quintic polynomial. Note that, since this algorithm consider lateral and longitudinal motions separately, it sometimes generates dynamically-infeasible trajectories when the vehicle travels at a low speed. To deal with this problem, we only make straight line predictions when the vehicle speed is lower than a certain value (which is given as a parameter).
 
-## Assumptions/Known Limits
+## Inputs / Outputs
+
+### Input
+
+| Name                                               | Type                                                 | Description                              |
+| -------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| `~/perception/object_recognition/tracking/objects` | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking objects without predicted path. |
+| `~/vector_map`                                     | `autoware_auto_mapping_msgs::msg::HADMapBin`         | binary data of Lanelet2 Map.             |
+
+### Output
+
+| Name                     | Type                                                   | Description                           |
+| ------------------------ | ------------------------------------------------------ | ------------------------------------- |
+| `~/objects`              | `autoware_auto_perception_msgs::msg::PredictedObjects` | tracking objects with predicted path. |
+| `~/objects_path_markers` | `visualization_msgs::msg::MarkerArray`                 | marker for visualization.             |
+
+## Parameters
+
+| Parameter                                   | Type   | Description                                                                                                  |
+| ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| `enable_delay_compensation`                 | bool   | flag to enable the time delay compensation for the position of the object                                    |
+| `prediction_time_horizon`                   | double | predict time duration for predicted path [s]                                                                 |
+| `prediction_sampling_delta_time`            | double | sampling time for points in predicted path [s]                                                               |
+| `min_velocity_for_map_based_prediction`     | double | apply map-based prediction to the objects with higher velocity than this value                               |
+| `dist_threshold_for_searching_lanelet`      | double | The threshold of the angle used when searching for the lane to which the object belongs [rad]                |
+| `delta_yaw_threshold_for_searching_lanelet` | double | The threshold of the distance used when searching for the lane to which the object belongs [m]               |
+| `sigma_lateral_offset`                      | double | Standard deviation for lateral position of objects [m]                                                       |
+| `sigma_yaw_angle`                           | double | Standard deviation yaw angle of objects [rad]                                                                |
+| `object_buffer_time_length`                 | double | Time span of object history to store the information [s]                                                     |
+| `history_time_length`                       | double | Time span of object information used for prediction [s]                                                      |
+| `dist_ratio_threshold_to_left_bound`        | double | Conditions for using lane change detection of objects. Distance to the left bound of lanelet.                |
+| `dist_ratio_threshold_to_right_bound`       | double | Conditions for using lane change detection of objects. Distance to the right bound of lanelet.               |
+| `diff_dist_threshold_to_left_bound`         | double | Conditions for using lane change detection of objects. Differential value of horizontal position of objects. |
+| `diff_dist_threshold_to_right_bound`        | double | Conditions for using lane change detection of objects. Differential value of horizontal position of objects. |
+
+## Assumptions / Known limits
 
 `map_based_prediction` can only predict future trajectories for cars, tracks and buses.
 
