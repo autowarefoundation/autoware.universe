@@ -13,32 +13,10 @@
 // limitations under the License.
 
 #include "map_based_prediction_node.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
 
 namespace map_based_prediction
 {
-inline geometry_msgs::msg::Vector3 createMarkerScale(double x, double y, double z)
-{
-  geometry_msgs::msg::Vector3 scale;
-
-  scale.x = x;
-  scale.y = y;
-  scale.z = z;
-
-  return scale;
-}
-
-inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, float a)
-{
-  std_msgs::msg::ColorRGBA color;
-
-  color.r = r;
-  color.g = g;
-  color.b = b;
-  color.a = a;
-
-  return color;
-}
-
 visualization_msgs::msg::Marker MapBasedPredictionNode::getDebugMarker(
   const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num)
 {
@@ -51,7 +29,7 @@ visualization_msgs::msg::Marker MapBasedPredictionNode::getDebugMarker(
   marker.type = visualization_msgs::msg::Marker::CUBE;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose = object.kinematics.pose_with_covariance.pose;
-  marker.scale = createMarkerScale(3.0, 1.0, 1.0);
+  marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.0, 1.0);
 
   // Color by maneuver
   double r = 0.0;
@@ -64,7 +42,7 @@ visualization_msgs::msg::Marker MapBasedPredictionNode::getDebugMarker(
   } else {
     b = 1.0;
   }
-  marker.color = createMarkerColor(r, g, b, 0.8);
+  marker.color = tier4_autoware_utils::createMarkerColor(r, g, b, 0.8);
 
   return marker;
 }
