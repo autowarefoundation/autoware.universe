@@ -52,7 +52,7 @@ void Spline::generateSpline(
 
   a_ = base_value;
 
-  for (size_t i = 0; i < N - 1; ++i) {
+  for (size_t i = 0; i + 1 < N; ++i) {
     h_.push_back(base_index[i + 1] - base_index[i]);
   }
 
@@ -90,7 +90,7 @@ double Spline::acceleration(const double query, const std::vector<double> & base
   return 2.0 * c_[i] + 6.0 * d_[i] * (query - base_index[i]);
 }
 
-bool Spline::isIncrease(const std::vector<double> & x) const
+bool Spline::isIncrease(const std::vector<double> & x)
 {
   for (int i = 0; i < static_cast<int>(x.size()) - 1; ++i) {
     if (x[i] > x[i + 1]) return false;
@@ -100,7 +100,7 @@ bool Spline::isIncrease(const std::vector<double> & x) const
 
 bool Spline::isValidInput(
   const std::vector<double> & base_index, const std::vector<double> & base_value,
-  const std::vector<double> & return_index) const
+  const std::vector<double> & return_index)
 {
   if (base_index.empty() || base_value.empty() || return_index.empty()) {
     std::cout << "bad index : some vector is empty. base_index: " << base_index.size()
@@ -158,7 +158,7 @@ std::vector<double> Spline::solveLinearSystem(const double omega, const size_t m
 }
 
 bool Spline::isConvergeL1(
-  const std::vector<double> & r1, const std::vector<double> & r2, const double converge_range) const
+  const std::vector<double> & r1, const std::vector<double> & r2, const double converge_range)
 {
   double d = 0.0;
   for (size_t i = 0; i < r1.size(); ++i) {

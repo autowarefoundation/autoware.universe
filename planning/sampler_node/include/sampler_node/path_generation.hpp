@@ -17,6 +17,7 @@
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
+#include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -28,31 +29,28 @@ namespace sampler_node
 {
 /**
  * @brief generate candidate paths for the given problem inputs
- * @param [in] pose current ego pose
- * @param [in] twist current ego velocities
+ * @param [in] initial_state initial ego state
  * @param [in] path reference path to follow
  * @param [in] path_spline spline of the reference path
  * @param [in] previous_path previous path followed by ego
  * @param [in] constraints hard and soft constraints of the problem
- * @param [out] nb_violations number of constraint violations
  * @return generated candidate paths
  */
 std::vector<sampler_common::Path> generateCandidatePaths(
-  const sampler_common::Point & pose, const geometry_msgs::msg::Twist & twist,
-  const autoware_auto_planning_msgs::msg::Path & path,
+  const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
-  const sampler_common::Path & previous_path,
-  const sampler_common::Constraints & constraints, sampler_common::constraints::NumberOfViolations & nb_violations);
+  const autoware_auto_planning_msgs::msg::Path & path_msg,
+  const sampler_common::Constraints & constraints);
 
+std::vector<sampler_common::Path> generateBezierPaths(
+  const sampler_common::State & initial_state, const sampler_common::Path & base_path,
+  const autoware_auto_planning_msgs::msg::Path & path_msg,
+  const sampler_common::transform::Spline2D & path_spline);
 std::vector<sampler_common::Path> generateFrenetPaths(
-  const frenet_planner::FrenetState & initial_state,
-  const frenet_planner::Trajectory & base_path,
+  const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
   const sampler_common::transform::Spline2D & path_spline,
-  const sampler_common::Constraints & constraints, frenet_planner::Debug & debug);
-
-// generateCartesianTrajectories()
-// generateSigmoidTrajectories()
+  const sampler_common::Constraints & constraints);
 }  // namespace sampler_node
 
 #endif  // SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_

@@ -16,7 +16,7 @@
 
 #include <bezier_sampler/bezier.hpp>
 
-namespace motion_planning::bezier_sampler
+namespace bezier_sampler
 {
 Bezier::Bezier(Eigen::Matrix<double, 6, 2> control_points)
 : control_points_(std::move(control_points))
@@ -55,7 +55,8 @@ Eigen::Vector2d Bezier::valueM(const double t) const
   return ts * quintic_bezier_coefficients * control_points_;
 }
 
-// TODO ensure points are separated by fixed arc-length (rather than fixed t-parameter)
+// TODO(Maxime CLEMENT): ensure points are separated by fixed arc-length (rather than fixed
+// t-parameter)
 std::vector<Eigen::Vector2d> Bezier::cartesian(const int nb_points) const
 {
   std::vector<Eigen::Vector2d> points;
@@ -65,16 +66,18 @@ std::vector<Eigen::Vector2d> Bezier::cartesian(const int nb_points) const
   return points;
 }
 
-// TODO ensure points are separated by fixed arc-length (rather than fixed t-parameter)
+// TODO(Maxime CLEMENT): ensure points are separated by fixed arc-length (rather than fixed
+// t-parameter)
 std::vector<Eigen::Vector2d> Bezier::cartesian(const double resolution) const
 {
   std::vector<Eigen::Vector2d> points;
-  points.reserve((int)(1 / resolution));
+  points.reserve(static_cast<int>(1 / resolution));
   for (double t = 0.0; t <= 1.0; t += resolution) points.push_back(valueM(t));
   return points;
 }
 
-// TODO ensure points are separated by fixed arc-length (rather than fixed t-parameter)
+// TODO(Maxime CLEMENT): ensure points are separated by fixed arc-length (rather than fixed
+// t-parameter)
 std::vector<Eigen::Vector3d> Bezier::cartesianWithHeading(const int nb_points) const
 {
   std::vector<Eigen::Vector3d> points;
@@ -117,4 +120,4 @@ double Bezier::heading(const double t) const
   return std::atan2(vel.y(), vel.x());
 }
 
-}  // namespace motion_planning::bezier_sampler
+}  // namespace bezier_sampler

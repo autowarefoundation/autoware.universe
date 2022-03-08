@@ -15,6 +15,7 @@
 #include "sampler_common/path_reuse.hpp"
 
 #include "sampler_common/constraints/hard_constraint.hpp"
+#include "sampler_common/structures.hpp"
 
 #include <boost/geometry/algorithms/distance.hpp>
 
@@ -25,7 +26,7 @@ namespace sampler_common
 {
 bool tryToReusePath(
   const Path & path_to_reuse, const Point & current_pose, const double max_reuse_length,
-  const double max_deviation, Path & reusable_path)
+  const double max_deviation, const Constraints & constraints, Path & reusable_path)
 {
   // TODO(Maxime CLEMENT): use interpolation if we want better precision
   if (path_to_reuse.points.empty()) {
@@ -69,10 +70,9 @@ bool tryToReusePath(
   copy(path_to_reuse.yaws, reusable_path.yaws);
   copy(path_to_reuse.intervals, reusable_path.intervals);
 
-  std::vector<Path> paths = {reusable_path};
-
+  constraints::checkHardConstraints(reusable_path, constraints);
   // TODO(Maxime CLEMENT): points become empty when all paths are invalid but this should be
   // detected earlier
-  return !reusable_path.points.empty();
+  return !reusable_path.points.empty() && reusable_path.valid;
 }
 }  // namespace sampler_common

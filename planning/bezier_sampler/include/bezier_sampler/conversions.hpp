@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Tier IV, Inc. All rights reserved.
+ * Copyright 2022 Tier IV, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,12 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-namespace motion_planning::bezier_sampler
+#include <vector>
+
+namespace bezier_sampler
 {
-//@brief convert the given Bezier curve into a vector of autoware_auto_planning_msgs::msg::PathPoint
+/// @brief convert the given Bezier curve into a vector of
+/// autoware_auto_planning_msgs::msg::PathPoint
 // with the given number of equaly spaced points
 inline std::vector<autoware_auto_planning_msgs::msg::PathPoint> toPathPoints(
   const Bezier & b, int nb_points)
@@ -48,7 +51,7 @@ inline std::vector<autoware_auto_planning_msgs::msg::PathPoint> toPathPoints(
   }
   return points;
 }
-//@brief convert the given sequence of Bezier curves into a vector of
+/// @brief convert the given sequence of Bezier curves into a vector of
 // autoware_auto_planning_msgs::msg::PathPoints with the given number of equaly spaced points
 inline std::vector<autoware_auto_planning_msgs::msg::PathPoint> toPathPoints(
   const std::vector<Bezier> & bs, int nb_points)
@@ -61,7 +64,8 @@ inline std::vector<autoware_auto_planning_msgs::msg::PathPoint> toPathPoints(
   }
   return points;
 }
-//@brief convert the given Bezier curve into a vector of autoware_auto_planning_msgs::msg::PathPoint
+/// @brief convert the given Bezier curve into a vector of
+/// autoware_auto_planning_msgs::msg::PathPoint
 // with the given distance between points
 inline std::vector<autoware_auto_planning_msgs::msg::PathPoint> toPathPoints(
   const Bezier & b, double resolution)
@@ -75,4 +79,4 @@ inline std::vector<autoware_auto_planning_msgs::msg::PathPoint> toPathPoints(
   }
   return points;
 }
-}  // namespace motion_planning::bezier_sampler
+}  // namespace bezier_sampler

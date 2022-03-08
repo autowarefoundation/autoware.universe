@@ -47,15 +47,14 @@ public:
 private:
   void generateSpline(
     const std::vector<double> & base_index, const std::vector<double> & base_value);
-  [[nodiscard]] bool isIncrease(const std::vector<double> & x) const;
-  [[nodiscard]] bool isValidInput(
+  [[nodiscard]] static bool isIncrease(const std::vector<double> & x);
+  [[nodiscard]] static bool isValidInput(
     const std::vector<double> & base_index, const std::vector<double> & base_value,
-    const std::vector<double> & return_index) const;
+    const std::vector<double> & return_index);
   [[nodiscard]] std::vector<double> solveLinearSystem(
     const double omega, const size_t max_iter) const;
-  [[nodiscard]] bool isConvergeL1(
-    const std::vector<double> & r1, const std::vector<double> & r2,
-    const double converge_range) const;
+  [[nodiscard]] static bool isConvergeL1(
+    const std::vector<double> & r1, const std::vector<double> & r2, const double converge_range);
 };
 
 class Spline2D
@@ -73,7 +72,8 @@ public:
   [[nodiscard]] double yaw(const double s) const;
 
 private:
-  std::vector<double> arcLength(const std::vector<double> & x, const std::vector<double> & y);
+  static std::vector<double> arcLength(
+    const std::vector<double> & x, const std::vector<double> & y);
 };
 }  // namespace sampler_common::transform
 

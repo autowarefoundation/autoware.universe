@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Autoware Foundation. All rights reserved.
+ * Copyright 2022 Autoware Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 #include "frenet_planner/frenet_planner.hpp"
 
-#include "frenet_planner/polynomials.hpp"
-#include "frenet_planner/structures.hpp"
-
+#include <frenet_planner/polynomials.hpp>
+#include <frenet_planner/structures.hpp>
 #include <sampler_common/constraints/hard_constraint.hpp>
 #include <sampler_common/constraints/soft_constraint.hpp>
 #include <sampler_common/structures.hpp>
@@ -30,41 +29,47 @@
 
 namespace frenet_planner
 {
-std::optional<Trajectory> generateTrajectory(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints)
-{
-  // Generate candidate trajectories
-  // TODO(Maxime CLEMENT): dont use vector to improve erase performances
-  Debug debug;
-  auto trajectories =
-    generateTrajectories(reference_spline, initial_state, sampling_parameters, constraints, debug);
-  std::sort(trajectories.begin(), trajectories.end(), [](const auto & t1, const auto & t2) {
-    return (t1.valid && !t2.valid) || (t1.cost < t2.cost);
-  });
-
-  std::optional<Trajectory> trajectory;
-  if (trajectories.front().valid) trajectory = trajectories.front();
-  return trajectory;
-}
-
 std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
   const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
   Debug & debug)
 {
-  // Generate candidate trajectories
-  // TODO(Maxime CLEMENT): dont use vector to improve erase performances
   auto candidates = generateCandidates(initial_state, sampling_parameters);
-  calculateCartesian(reference_spline, candidates);
   for (auto & candidate : candidates) {
+    calculateCartesian(reference_spline, candidate);
     // Check hard constraints (Cartesian)
     const auto nb_of_violation =
       sampler_common::constraints::checkHardConstraints(candidate, constraints);
     debug.nb_constraint_violations.collision += nb_of_violation.collision;
     debug.nb_constraint_violations.curvature += nb_of_violation.curvature;
     // Calculate objective function
-    sampler_common::constraints::calculateCost(candidate, constraints);
+    sampler_common::constraints::calculateCost(candidate, constraints, reference_spline);
+  }
+  return candidates;
+}
+
+std::vector<sampler_common::Path> generatePaths(
+  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
+  const SamplingParameters & sampling_parameters)
+{
+  std::vector<sampler_common::Path> candidates;
+  FrenetState target_state;
+  const auto & sp = sampling_parameters;
+  for (const auto target_s : sp.target_longitudinal_positions) {
+    target_state.position.s = target_s;
+    for (const auto target_d : sp.target_lateral_positions) {
+      target_state.position.d = target_d;
+      for (const auto target_d_vel : sp.target_lateral_velocities) {
+        target_state.lateral_velocity = target_d_vel;
+        for (const auto target_d_acc : sp.target_lateral_accelerations) {
+          target_state.lateral_acceleration = target_d_acc;
+          auto candidate =
+            generateCandidate(initial_state, target_state, sampling_parameters.time_resolution);
+          calculateCartesian(reference_spline, candidate);
+          candidates.push_back(candidate);
+        }
+      }
+    }
   }
   return candidates;
 }
@@ -122,39 +127,79 @@ Trajectory generateCandidate(
   return trajectory;
 }
 
-void calculateCartesian(
-  const sampler_common::transform::Spline2D & reference, std::vector<Trajectory> & trajectories)
+Path generateCandidate(
+  const FrenetState & initial_state, const FrenetState & target_state, const double s_resolution)
 {
-  for (auto & trajectory : trajectories) {
-    if (trajectory.valid && !trajectory.frenet_points.empty()) {
-      trajectory.points.reserve(trajectory.frenet_points.size());
-      trajectory.yaws.reserve(trajectory.frenet_points.size() - 1);
-      trajectory.intervals.reserve(trajectory.frenet_points.size() - 1);
-      trajectory.curvatures.reserve(trajectory.frenet_points.size() - 1);
-      // Calculate cartesian positions
-      for (const auto & fp : trajectory.frenet_points) {
-        trajectory.points.push_back(reference.cartesian(fp));
-      }
-      // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
-      // Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
-      // Calculate cartesian yaw and interval values
-      for (auto it = trajectory.points.begin(); it != std::prev(trajectory.points.end()); ++it) {
-        const auto dx = std::next(it)->x() - it->x();
-        const auto dy = std::next(it)->y() - it->y();
-        trajectory.yaws.push_back(std::atan2(dy, dx));
-        trajectory.intervals.push_back(std::hypot(dx, dy));
-      }
-      // Calculate curvatures, velocities, accelerations
-      for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
-        const auto dyaw = trajectory.yaws[i] - trajectory.yaws[i - 1];
-        trajectory.curvatures.push_back(dyaw / trajectory.intervals[i - 1]);
-        trajectory.longitudinal_velocities.push_back(
-          trajectory.longitudinal_polynomial->velocity(trajectory.times[i - 1]));
-        trajectory.longitudinal_accelerations.push_back(
-          trajectory.longitudinal_polynomial->acceleration(trajectory.times[i - 1]));
-        trajectory.lateral_velocities.push_back(
-          trajectory.lateral_polynomial->velocity(trajectory.times[i - 1]));
-      }
+  Path path;
+  path.lateral_polynomial = Polynomial(
+    initial_state.position.d, initial_state.lateral_velocity, initial_state.lateral_acceleration,
+    target_state.position.d, target_state.lateral_velocity, target_state.lateral_acceleration,
+    target_state.position.s);
+  for (double s = initial_state.position.s; s <= target_state.position.s; s += s_resolution) {
+    path.frenet_points.emplace_back(
+      s, path.lateral_polynomial->position(s - initial_state.position.s));
+  }
+  return path;
+}
+
+void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path)
+{
+  if (path.valid && !path.frenet_points.empty()) {
+    path.points.reserve(path.frenet_points.size());
+    path.yaws.reserve(path.frenet_points.size() - 1);
+    path.intervals.reserve(path.frenet_points.size() - 1);
+    path.curvatures.reserve(path.frenet_points.size() - 1);
+    // Calculate cartesian positions
+    for (const auto & fp : path.frenet_points) {
+      path.points.push_back(reference.cartesian(fp));
+    }
+    // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
+    // Optimal path Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
+    // Calculate cartesian yaw and interval values
+    for (auto it = path.points.begin(); it != std::prev(path.points.end()); ++it) {
+      const auto dx = std::next(it)->x() - it->x();
+      const auto dy = std::next(it)->y() - it->y();
+      path.yaws.push_back(std::atan2(dy, dx));
+      path.intervals.push_back(std::hypot(dx, dy));
+    }
+    // Calculate curvatures, velocities, accelerations
+    for (size_t i = 1; i < path.yaws.size(); ++i) {
+      const auto dyaw = path.yaws[i] - path.yaws[i - 1];
+      path.curvatures.push_back(dyaw / path.intervals[i - 1]);
+    }
+  }
+}
+void calculateCartesian(
+  const sampler_common::transform::Spline2D & reference, Trajectory & trajectory)
+{
+  if (trajectory.valid && !trajectory.frenet_points.empty()) {
+    trajectory.points.reserve(trajectory.frenet_points.size());
+    trajectory.yaws.reserve(trajectory.frenet_points.size() - 1);
+    trajectory.intervals.reserve(trajectory.frenet_points.size() - 1);
+    trajectory.curvatures.reserve(trajectory.frenet_points.size() - 1);
+    // Calculate cartesian positions
+    for (const auto & fp : trajectory.frenet_points) {
+      trajectory.points.push_back(reference.cartesian(fp));
+    }
+    // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
+    // Optimal trajectory Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
+    // Calculate cartesian yaw and interval values
+    for (auto it = trajectory.points.begin(); it != std::prev(trajectory.points.end()); ++it) {
+      const auto dx = std::next(it)->x() - it->x();
+      const auto dy = std::next(it)->y() - it->y();
+      trajectory.yaws.push_back(std::atan2(dy, dx));
+      trajectory.intervals.push_back(std::hypot(dx, dy));
+    }
+    // Calculate curvatures, velocities, accelerations
+    for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
+      const auto dyaw = trajectory.yaws[i] - trajectory.yaws[i - 1];
+      trajectory.curvatures.push_back(dyaw / trajectory.intervals[i - 1]);
+      trajectory.longitudinal_velocities.push_back(
+        trajectory.longitudinal_polynomial->velocity(trajectory.times[i - 1]));
+      trajectory.longitudinal_accelerations.push_back(
+        trajectory.longitudinal_polynomial->acceleration(trajectory.times[i - 1]));
+      trajectory.lateral_velocities.push_back(
+        trajectory.lateral_polynomial->velocity(trajectory.times[i - 1]));
     }
   }
 }

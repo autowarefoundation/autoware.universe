@@ -26,25 +26,30 @@
 
 namespace frenet_planner
 {
-// @brief generate a valid trajectory (if any)
-std::optional<Trajectory> generateTrajectory(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints);
-// @brief generate all trajectories
+/// @brief generate all trajectories
 std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
   const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
   Debug & debug);
-// @brief generate a candidate trajectory
+/// @brief generate all paths
+std::vector<sampler_common::Path> generatePaths(
+  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
+  const SamplingParameters & sampling_parameters);
+/// @brief generate a candidate path
+Path generateCandidate(
+  const FrenetState & initial_state, const FrenetState & target_state, const double s_resolution);
+/// @brief generate a candidate trajectory
 Trajectory generateCandidate(
   const FrenetState & initial_state, const FrenetState & target_state, const double duration,
   const double time_resolution);
-// @brief generate candidate trajectories
+/// @brief generate candidate trajectories
 std::vector<Trajectory> generateCandidates(
   const FrenetState & initial_state, const SamplingParameters & sp);
-// @brief calculate cartesian frame of this trajectory
+/// @brief calculate the cartesian frame of the given path
+void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path);
+/// @brief calculate the cartesian frame of the given trajectory
 void calculateCartesian(
-  const sampler_common::transform::Spline2D & reference, std::vector<Trajectory> & trajectories);
+  const sampler_common::transform::Spline2D & reference, Trajectory & trajectory);
 
 }  // namespace frenet_planner
 

@@ -26,6 +26,53 @@
 
 namespace frenet_planner
 {
+struct Path : sampler_common::Path
+{
+  std::vector<sampler_common::FrenetPoint> frenet_points{};
+  std::optional<Polynomial> lateral_polynomial{};
+
+  Path() = default;
+  explicit Path(const sampler_common::Path & path) : sampler_common::Path(path) {}
+
+  void clear() override
+  {
+    sampler_common::Path::clear();
+    frenet_points.clear();
+    lateral_polynomial.reset();
+  }
+
+  void reserve(const size_t size) override
+  {
+    sampler_common::Path::reserve(size);
+    frenet_points.reserve(size);
+  }
+
+  [[nodiscard]] Path extend(const Path & path) const
+  {
+    Path extended_traj(sampler_common::Path::extend(path));
+    extended_traj.frenet_points.insert(
+      extended_traj.frenet_points.end(), frenet_points.begin(), frenet_points.end());
+    extended_traj.frenet_points.insert(
+      extended_traj.frenet_points.end(), path.frenet_points.begin(), path.frenet_points.end());
+    // TODO(Maxime CLEMENT): direct copy from the 2nd trajectory. might need to be improved
+    extended_traj.lateral_polynomial = path.lateral_polynomial;
+    return extended_traj;
+  }
+
+  [[nodiscard]] Path * subset(const size_t from_idx, const size_t to_idx) const override
+  {
+    auto * subpath = new Path(*sampler_common::Path::subset(from_idx, to_idx));
+    assert(to_idx >= from_idx);
+    subpath->reserve(to_idx - from_idx);
+
+    const auto copy_subset = [&](const auto & from, auto & to) {
+      to.insert(to.end(), std::next(from.begin(), from_idx), std::next(from.begin(), to_idx));
+    };
+    copy_subset(frenet_points, subpath->frenet_points);
+    return subpath;
+  };
+};
+
 struct Trajectory : sampler_common::Trajectory
 {
   std::vector<sampler_common::FrenetPoint> frenet_points{};
@@ -51,7 +98,7 @@ struct Trajectory : sampler_common::Trajectory
 
   [[nodiscard]] Trajectory extend(const Trajectory & traj) const
   {
-    Trajectory extended_traj;
+    Trajectory extended_traj(sampler_common::Trajectory::extend(traj));
     extended_traj.frenet_points.insert(
       extended_traj.frenet_points.end(), frenet_points.begin(), frenet_points.end());
     extended_traj.frenet_points.insert(

@@ -14,24 +14,15 @@
 
 #include "sampler_common/constraints/soft_constraint.hpp"
 
+#include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
 #include <numeric>
 
 namespace sampler_common::constraints
 {
-void calculateCost(Path & path, const Constraints & constraints)
+void calculateCurvatureCost(Path & path, const Constraints & constraints)
 {
-  path.cost = 0.0f;
-  // lateral deviation
-  /*
-  double lateral_deviation_sum = 0.0;
-  for (const auto & fp : path.frenet_points) {
-    lateral_deviation_sum += std::abs(fp.d);
-  }
-  path.cost += constraints.soft.lateral_deviation_weight * lateral_deviation_sum /
-                      static_cast<double>(path.frenet_points.size());
-  */
   // curvature
   double curvature_sum = 0.0;
   for (const auto curvature : path.curvatures) {
@@ -39,5 +30,26 @@ void calculateCost(Path & path, const Constraints & constraints)
   }
   path.cost +=
     constraints.soft.curvature_weight * curvature_sum / static_cast<double>(path.curvatures.size());
+}
+void calculateLengthCost(Path & path, const Constraints & constraints)
+{
+  const auto length = std::accumulate(path.intervals.begin(), path.intervals.end(), 0.0);
+  path.cost += constraints.soft.length_weight * length;
+}
+
+void calculateCost(
+  Path & path, const Constraints & constraints, const transform::Spline2D & reference)
+{
+  path.cost = 0.0f;
+  calculateCurvatureCost(path, constraints);
+  calculateLengthCost(path, constraints);
+  (void)reference;
+  /* TODO(Maxime CLEMENT): lateral deviation is too expensive to compute
+  calculateLateralDeviationCost(path, constraints, reference);
+  double lateral_deviation_sum = 0.0;
+  const auto fp = reference.frenet(path.points.back());
+  lateral_deviation_sum += std::abs(fp.d);
+  path.cost += constraints.soft.lateral_deviation_weight * lateral_deviation_sum;
+  */
 }
 }  // namespace sampler_common::constraints

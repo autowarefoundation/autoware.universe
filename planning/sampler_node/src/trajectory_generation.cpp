@@ -15,8 +15,8 @@
 #include "sampler_node/trajectory_generation.hpp"
 
 #include <frenet_planner/frenet_planner.hpp>
-#include <sampler_node/prepare_inputs.hpp>
 #include <sampler_common/trajectory_reuse.hpp>
+#include <sampler_node/prepare_inputs.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Tier IV, Inc. All rights reserved.
+ * Copyright 2022 Tier IV, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include <bezier_sampler/constraint_checker.hpp>
 
-namespace motion_planning::bezier_sampler
+namespace bezier_sampler
 {
 ConstraintChecker::ConstraintChecker(
   nav_msgs::msg::OccupancyGrid drivable_area, ConstraintParameters parameters)
@@ -31,7 +31,7 @@ ConstraintChecker::ConstraintChecker(
   double yaw{};
   m.getRPY(roll, pitch, yaw);
   drivable_area_rotation_ << std::cos(-yaw), -std::sin(-yaw), std::sin(-yaw), std::cos(-yaw);
-  // TODO
+  // TODO(Maxime CLEMENT):
   //  build polygon from the OccupancyGrid
   //  Convert to opencv image
   //  Extract contour
@@ -108,7 +108,7 @@ bool ConstraintChecker::isDrivable(const Bezier & path) const
 bool ConstraintChecker::isCollisionFree(const Bezier & path) const
 {
   for (const Eigen::Vector2d & position : buildFootprintPolygon(path).outer()) {
-    if (not isCollisionFree(position)) {
+    if (!isCollisionFree(position)) {
       // std::printf("Collision @ (%2.2f, %2.2f)\n", position.x(), position.y());
       return false;
     }
@@ -135,4 +135,4 @@ bool ConstraintChecker::isCollisionFree(const Eigen::Vector2d & position) const
          index.y() >= static_cast<int>(drivable_area_.info.height) ||
          static_cast<int>(drivable_area_.data[flat_index]) == 0;
 }
-}  // namespace motion_planning::bezier_sampler
+}  // namespace bezier_sampler

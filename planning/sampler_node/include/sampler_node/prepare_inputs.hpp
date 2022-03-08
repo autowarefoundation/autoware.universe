@@ -35,16 +35,23 @@
 
 namespace sampler_node
 {
-
+/// @brief prepare constraints
 sampler_common::Constraints prepareConstraints(
   const nav_msgs::msg::OccupancyGrid & drivable_area,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects);
+/// @brief prepare sampling parameters to generate trajectories in Frenet frame
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const frenet_planner::FrenetState & initial_state,
   const autoware_auto_planning_msgs::msg::Path & path, const double base_duration,
   const sampler_common::transform::Spline2D & path_spline);
+/// @brief prepare sampling parameters to generate paths in Frenet frame
+frenet_planner::SamplingParameters prepareSamplingParameters(
+  const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
+  const double base_length, const sampler_common::transform::Spline2D & path_spline);
+/// @brief prepare the 2D spline representation of the given Path message
 sampler_common::transform::Spline2D preparePathSpline(
   const autoware_auto_planning_msgs::msg::Path & path_msg);
+/// @brief prepare the previous trajectory
 frenet_planner::Trajectory preparePreviousTrajectory(
   const frenet_planner::Trajectory & prev_trajectory,
   const sampler_common::transform::Spline2D & path_spline);

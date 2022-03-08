@@ -15,9 +15,9 @@
 #include "sampler_node/prepare_inputs.hpp"
 
 #include "frenet_planner/structures.hpp"
-#include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -35,19 +35,11 @@ sampler_common::Constraints prepareConstraints(
   sampler_common::Constraints constraints;
   constraints.hard.max_curvature = 0.3;
   constraints.hard.min_curvature = -constraints.hard.max_curvature;
-  constraints.hard.max_lateral_deviation = 6.0;
-  constraints.hard.min_lateral_deviation = -5.0;
-  constraints.hard.max_acceleration = 3.0;
-  constraints.hard.min_acceleration = -6.0;
-  constraints.hard.max_jerk = 10.0;   // TODO(Maxime CLEMENT): not used yet
-  constraints.hard.min_jerk = -10.0;  // TODO(Maxime CLEMENT): not used yet
-  constraints.hard.max_velocity = 25.0;
-  constraints.hard.min_velocity = 0.0;  // no reverse allowed
-  constraints.soft.velocity_deviation_weight = 1.0;
   constraints.soft.lateral_deviation_weight = 0.1;
   constraints.soft.longitudinal_deviation_weight = 1.0;
   constraints.soft.jerk_weight = 1.0;
-  constraints.soft.curvature_weight = 10.0;
+  constraints.soft.length_weight = 1.0;
+  constraints.soft.curvature_weight = 1.0;
 
   if (false) {
     for (const auto & occ_grid_polygon : utils::occupancyGridToPolygons(drivable_area)) {
@@ -108,6 +100,38 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
       }
       sampling_parameters.target_longitudinal_accelerations = {-1.0, -0.5, 0.0};
     }
+  }
+  return sampling_parameters;
+}
+
+frenet_planner::SamplingParameters prepareSamplingParameters(
+  const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
+  const double base_length, const sampler_common::transform::Spline2D & path_spline)
+{
+  frenet_planner::SamplingParameters sampling_parameters;
+  sampling_parameters.time_resolution = 0.1;
+  sampling_parameters.target_durations = {};
+  sampling_parameters.target_lateral_positions = {-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0};
+  sampling_parameters.target_lateral_velocities = {-0.5, 0.0, 0.5};
+  sampling_parameters.target_lateral_accelerations = {0.0};
+  // Unused when generating Path (i.e., without velocity profile)
+  sampling_parameters.target_longitudinal_accelerations = {};
+  sampling_parameters.target_longitudinal_velocities = {};
+  const auto target_lengths = {20, 40, 60};
+  const auto max_s =
+    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
+  for (const auto target_length : target_lengths) {
+    const auto target_s =
+      path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length - base_length);
+    // Prevent a target past the end of the reference path
+    if (target_s < max_s)
+      sampling_parameters.target_longitudinal_positions.push_back(target_s);
+    else
+      break;
+  }
+  // Stopping
+  if (sampling_parameters.target_longitudinal_positions.empty()) {
+    sampling_parameters.target_longitudinal_positions = {max_s};
   }
   return sampling_parameters;
 }

@@ -21,11 +21,11 @@
 #include <bezier_sampler/conversions.hpp>
 #include <bezier_sampler/path_splitting.hpp>
 
-#include <autoware_auto_planning_msgs/Path.h>
-#include <autoware_auto_planning_msgs/PathPoint.h>
-#include <autoware_auto_planning_msgs/Trajectory.h>
-#include <autoware_auto_planning_msgs/TrajectoryPoint.h>
-#include <bezier_sampler/DebugPaths.h>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
 #include <ros/ros.h>
@@ -35,7 +35,7 @@
 #include <chrono>
 #include <cmath>
 
-namespace motion_planning
+namespace bezier_sampler
 {
 class PathSmootherNode
 {
@@ -48,8 +48,8 @@ private:
   ros::Publisher path_pub_;
   ros::Publisher debug_paths_pub_;
   ros::Subscriber path_sub_;
-  bezier_sampler::SamplingParameters params_;
-  bezier_sampler::ConstraintParameters cc_params_;
+  SamplingParameters params_;
+  ConstraintParameters cc_params_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
@@ -59,4 +59,4 @@ private:
   std::unique_ptr<geometry_msgs::Pose> getCurrentEgoPose();
   int getCurrentEgoPoseIndex(const autoware_auto_planning_msgs::msg::Path & path_msg);
 };
-}  // namespace motion_planning
+}  // namespace bezier_sampler

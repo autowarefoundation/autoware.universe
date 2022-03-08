@@ -28,7 +28,6 @@ namespace sampler_node::plot
 using sampler_common::FrenetPoint;
 using sampler_common::Point;
 using sampler_common::Polygon;
-using frenet_planner::Trajectory;
 class Plotter
 {
 public:
@@ -38,11 +37,15 @@ public:
   inline bool inCartesianRect(const QPoint & p) { return cartesian_rect_->rect().contains(p); }
   void plotReferencePath(const std::vector<Point> & reference_path);
   void plotReferencePath(const std::vector<double> & xs, const std::vector<double> & ys);
-  void plotTrajectories(const std::vector<Trajectory> & trajectories);
-  void plotFrenetTrajectories(const std::vector<Trajectory> & trajectories);
-  void plotCartesianTrajectories(const std::vector<Trajectory> & trajectories);
-  void plotCommittedTrajectory(const Trajectory & trajectory);
-  void plotSelectedTrajectory(const Trajectory & trajectory);
+  void plotTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories);
+  void plotPaths(const std::vector<sampler_common::Path> & paths);
+  void plotFrenetTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories);
+  void plotCartesianTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories);
+  void plotCartesianPaths(const std::vector<sampler_common::Path> & paths);
+  void plotCommittedTrajectory(const frenet_planner::Trajectory & trajectory);
+  void plotCommittedPath(const sampler_common::Path & path);
+  void plotSelectedTrajectory(const frenet_planner::Trajectory & trajectory);
+  void plotSelectedPath(const sampler_common::Path & path);
   void plotCurrentPose(const FrenetPoint &, const Point &);
   void plotPolygons(const std::vector<Polygon> & polygons);
   void pixelToCartesian(const QPoint p, double & graph_x, double & graph_y);
@@ -59,17 +62,17 @@ private:
   QCPGraph * reference_path_;
   QCPGraph * frenet_point_;
   QCPGraph * cartesian_point_;
-  std::vector<QCPCurve *> frenet_trajectories_;
-  std::vector<QCPCurve *> cartesian_trajectories_;
+  std::vector<QCPCurve *> frenet_curves_;
+  std::vector<QCPCurve *> cartesian_curves_;
   std::vector<QCPCurve *> polygons_;
   QCPCurve * selected_frenet_curve_ = nullptr;
   QCPCurve * selected_cartesian_curve_ = nullptr;
   QCPCurve * committed_frenet_curve_ = nullptr;
   QCPCurve * committed_cartesian_curve_ = nullptr;
 
-  static QCPCurve * trajectoryToFrenetCurve(const Trajectory & trajectory, QCPAxisRect * axis_rect);
-  static QCPCurve * trajectoryToCartesianCurve(
-    const Trajectory & trajectory, QCPAxisRect * axis_rect);
+  static QCPCurve * toFrenetCurve(
+    const frenet_planner::Trajectory & trajectory, QCPAxisRect * axis_rect);
+  static QCPCurve * toCartesianCurve(const sampler_common::Path & path, QCPAxisRect * axis_rect);
 };
 
 }  // namespace sampler_node::plot

@@ -16,10 +16,11 @@
 
 #include <bezier_sampler/bezier_sampling.hpp>
 
-namespace motion_planning::bezier_sampler
+namespace bezier_sampler
 {
 std::vector<Bezier> sample(
-  const Configuration & initial, const Configuration & final, const SamplingParameters & params)
+  const sampler_common::State & initial, const sampler_common::State & final,
+  const SamplingParameters & params)
 {
   // Sampling method from Section IV of A. Artuñedoet al.: Real-Time Motion Planning Approach for
   // Automated Driving in Urban Environments
@@ -27,7 +28,8 @@ std::vector<Bezier> sample(
   curves.reserve(params.nb_t * params.nb_t * params.nb_k);
 
   double distance_initial_to_final = std::sqrt(
-    (initial.x - final.x) * (initial.x - final.x) + (initial.y - final.y) * (initial.y - final.y));
+    (initial.pose.x() - final.pose.x()) * (initial.pose.x() - final.pose.x()) +
+    (initial.pose.y() - final.pose.y()) * (initial.pose.y() - final.pose.y()));
   // Tangent vectors
   const Eigen::Vector2d initial_tangent_unit(std::cos(initial.heading), std::sin(initial.heading));
   const Eigen::Vector2d final_tangent_unit(std::cos(final.heading), std::sin(final.heading));
@@ -50,8 +52,9 @@ std::vector<Bezier> sample(
           acceleration_length * final_tangent_unit +
           final.curvature * final_tangent_length * final_tangent_length * final_normal_unit;
         curves.push_back(generate(
-          {initial.x, initial.y}, {final.x, final.y}, initial_tangent_unit * initial_tangent_length,
-          initial_acceleration, final_tangent_unit * final_tangent_length, final_acceleration));
+          {initial.pose.x(), initial.pose.y()}, {final.pose.x(), final.pose.y()},
+          initial_tangent_unit * initial_tangent_length, initial_acceleration,
+          final_tangent_unit * final_tangent_length, final_acceleration));
       }
     }
   }
@@ -62,7 +65,7 @@ Bezier generate(
   const Eigen::Vector2d & initial_velocity, const Eigen::Vector2d & initial_acceleration,
   const Eigen::Vector2d & final_velocity, const Eigen::Vector2d & final_acceleration)
 {
-  // TODO use a more efficient matrix formulation ?
+  // TODO(Maxime CLEMENT): use a more efficient matrix formulation ?
   Eigen::Matrix<double, 6, 2> control_points;
   // P0 and P5 correspond to the initial and final configurations
   control_points.row(0) = initial_pose;
@@ -77,4 +80,4 @@ Bezier generate(
                           (1.0 / 20.0) * final_acceleration.transpose();
   return Bezier(control_points);
 }
-}  // namespace motion_planning::bezier_sampler
+}  // namespace bezier_sampler

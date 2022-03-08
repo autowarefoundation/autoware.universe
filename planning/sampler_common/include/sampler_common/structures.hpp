@@ -34,6 +34,13 @@ struct FrenetPoint
   double d;
 };
 
+struct State
+{
+  Point pose{};
+  double curvature{};
+  double heading{};
+};
+
 /// @brief Path
 struct Path
 {
@@ -90,6 +97,8 @@ struct Path
     return extended_path;
   }
 
+  // Return a pointer to allow overriding classes to return the appropriate type
+  // Without pointer we are stuck with returning a Path
   [[nodiscard]] virtual Path * subset(const size_t from_idx, const size_t to_idx) const
   {
     auto * subpath = new Path();
@@ -201,6 +210,7 @@ struct Constraints
   {
     double lateral_deviation_weight;
     double longitudinal_deviation_weight;
+    double length_weight;
     double velocity_deviation_weight;
     double jerk_weight;
     double curvature_weight;

@@ -24,9 +24,9 @@
 
 TEST(isCollisionFree, position_square)
 {
-  using motion_planning::bezier_sampler::Bezier;
-  using motion_planning::bezier_sampler::ConstraintChecker;
-  using motion_planning::bezier_sampler::ConstraintParameters;
+  using bezier_sampler::Bezier;
+  using bezier_sampler::ConstraintChecker;
+  using bezier_sampler::ConstraintParameters;
   // OccupancyGrid
   nav_msgs::msg::OccupancyGrid grid;
   grid.info.width = 3;
@@ -136,9 +136,9 @@ TEST(isCollisionFree, position_square)
 
 TEST(isCollisionFree, position_rectangle)
 {
-  using motion_planning::bezier_sampler::Bezier;
-  using motion_planning::bezier_sampler::ConstraintChecker;
-  using motion_planning::bezier_sampler::ConstraintParameters;
+  using bezier_sampler::Bezier;
+  using bezier_sampler::ConstraintChecker;
+  using bezier_sampler::ConstraintParameters;
   // OccupancyGrid
   nav_msgs::msg::OccupancyGrid grid;
   grid.info.width = 3;

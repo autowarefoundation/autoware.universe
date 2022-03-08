@@ -16,36 +16,35 @@
 
 #include <bezier_sampler/path_splitting.hpp>
 
-namespace motion_planning::bezier_sampler
+namespace bezier_sampler
 {
-// TODO /!\ curvatures should be probably be estimated over longer distances than just successive
-// points.
-std::vector<std::pair<Configuration, Configuration>> splitPath(
+// TODO(Maxime CLEMENT): curvatures should probably be estimated over longer distances than just
+// successive points.
+std::vector<std::pair<sampler_common::State, sampler_common::State>> splitPath(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_length,
   double max_length, int ego_pose_index)
 {
-  std::printf("\t Current ego pose index = %d\n", ego_pose_index);
-  std::vector<std::pair<Configuration, Configuration>> splits;
+  std::vector<std::pair<sampler_common::State, sampler_common::State>> splits;
   double total_arc_length(0.0);
   double sub_arc_length(0.0);
-  Configuration initial{};
-  Configuration final{};
+  sampler_common::State initial{};
+  sampler_common::State final{};
   auto it = std::next(path.begin(), ego_pose_index);
-  if (it != path.end() and std::next(it) != path.end()) {
-    initial.x = it->pose.position.x;
-    initial.y = it->pose.position.y;
+  if (it != path.end() && std::next(it) != path.end()) {
+    initial.pose = {it->pose.position.x, it->pose.position.y};
     // calculate heading using the angle towards the next point
-    initial.heading =
-      atan2(std::next(it)->pose.position.y - initial.y, std::next(it)->pose.position.x - initial.x);
+    initial.heading = atan2(
+      std::next(it)->pose.position.y - initial.pose.y(),
+      std::next(it)->pose.position.x - initial.pose.x());
     initial.curvature = 0.0;
   }
   for (it = std::next(it); it != std::prev(path.end()); ++it) {
-    if (sub_arc_length >= split_length or total_arc_length > max_length) {
-      final.x = it->pose.position.x;
-      final.y = it->pose.position.y;
+    if (sub_arc_length >= split_length || total_arc_length > max_length) {
+      final.pose = {it->pose.position.x, it->pose.position.y};
       // calculate heading using the angle from the previous point
-      final.heading =
-        atan2(final.y - std::prev(it)->pose.position.y, final.x - std::prev(it)->pose.position.x);
+      final.heading = atan2(
+        final.pose.y() - std::prev(it)->pose.position.y,
+        final.pose.x() - std::prev(it)->pose.position.x);
       final.curvature = curvature(*std::prev(it), *it, *std::next(it));
       splits.emplace_back(initial, final);
       initial = final;
@@ -63,30 +62,29 @@ std::vector<std::pair<Configuration, Configuration>> splitPath(
   }
   return splits;
 }
-std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
+std::vector<std::pair<sampler_common::State, sampler_common::State>> splitPathByCurvature(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_curvature)
 {
-  std::vector<std::pair<Configuration, Configuration>> splits;
+  std::vector<std::pair<sampler_common::State, sampler_common::State>> splits;
   double sum_curvature(0.0);
-  Configuration initial{};
-  Configuration final{};
+  sampler_common::State initial{};
+  sampler_common::State final{};
   if (path.size() > 2) {
-    initial.x = path[0].pose.position.x;
-    initial.y = path[0].pose.position.y;
+    initial.pose = {path[0].pose.position.x, path[0].pose.position.y};
     // calculate heading using the angle towards the next point
-    initial.heading =
-      std::atan2(path[1].pose.position.y - initial.y, path[1].pose.position.x - initial.x);
+    initial.heading = std::atan2(
+      path[1].pose.position.y - initial.pose.y(), path[1].pose.position.x - initial.pose.x());
     initial.curvature = curvature(path[0], path[1], path[2]);
   }
   for (auto it = std::next(path.begin()); it != std::prev(path.end()); ++it) {
     const double k = curvature(*std::prev(it), *it, *std::next(it));
     if (sum_curvature >= split_curvature) {
-      final.x = it->pose.position.x;
-      final.y = it->pose.position.y;
+      final.pose = {it->pose.position.x, it->pose.position.y};
       // calculate heading using the angle from the previous point
       final.heading = std::atan2(
-        final.y - std::prev(it)->pose.position.y, final.x - std::prev(it)->pose.position.x);
-      final.curvature = k;  // TODO compute proper curvature
+        final.pose.y() - std::prev(it)->pose.position.y,
+        final.pose.x() - std::prev(it)->pose.position.x);
+      final.curvature = k;  // TODO(Maxime CLEMENT): compute proper curvature
       splits.emplace_back(initial, final);
       initial = final;
       sum_curvature = 0.0;
@@ -101,7 +99,7 @@ std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
     }
   }
   std::cout << "Split by curvature size = " << splits.size() << std::endl;
-  // TODO do we want to always include a subpath to the last point of the path ?
+  // TODO(Maxime CLEMENT): do we want to always include a subpath to the last point of the path ?
   return splits;
 }
-}  // namespace motion_planning::bezier_sampler
+}  // namespace bezier_sampler
