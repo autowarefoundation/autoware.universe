@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "disturbance_generators/disturbance_generators.hpp"
+
+#include <math.h>
 #include <random>
 #include <utility>
 
@@ -33,7 +35,6 @@ InputDisturbance_TimeDelayPade::InputDisturbance_TimeDelayPade(DelayModelSISO de
     generator_ = std::mt19937(dev());
 
     // Generate a time distance ahead to schedule the next Td change.
-
     next_time_interval_ = time_delay_exp_dist_(generator_);
 
 //    auto now = std::chrono::system_clock::now();
@@ -198,12 +199,111 @@ double OutputDisturbance_SlopeVariation::getDisturbedOutput()
     return current_slope_disturbance_;
 }
 
-double InputDisturbance_DeadZone::getDisturbedInput(const double &input)
+InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance,
+                                                     const double &b_lr_mean,
+                                                     const double &b_lr_variance,
+                                                     const double &sin_mag,
+                                                     const bool &use_time_varying_deadzone) : b_mean_th_{b_lr_mean},
+                                                                                              a_sin_mag_{sin_mag},
+                                                                                              use_time_varying_deadzone_{
+                                                                                                      use_time_varying_deadzone}
 {
-    return input;
+
+    if (m_lr_variance < 0. || m_lr_variance > 0.5)
+    {
+        throw std::invalid_argument("Slope variance should not exceed 0.5 and must be positive");
+    }
+
+    /**
+     * @brief b_lr represents positive(right) and negative(left) thresholds. The left threshold must be multiplied by -1.
+     * */
+    if (b_lr_variance < 0. || b_lr_variance > b_mean_th_ / 2.0)
+    {
+        throw std::invalid_argument(
+                "Deadzone threshold variance should be lower than half threshold and  must be positive");
+    }
+
+    // Initialize the samplers.
+    // Slope min-max interval = mean{1.} +- var/2.
+
+    std::random_device dev;
+    generator_ = std::mt19937(dev());
+
+    // Initialize the slope sampler.
+    auto slope_low = 1.0 - m_lr_variance / 2.;
+    auto slope_high = 1.0 + m_lr_variance / 2.;
+    sampler_m_ = std::uniform_real_distribution<double>(slope_low, slope_high);
+
+    // Initialize the threshold sampler.
+    auto b_low = b_lr_mean - b_lr_variance / 2.;
+    auto b_high = b_lr_mean + b_lr_variance / 2.;
+    sampler_b_ = std::uniform_real_distribution<double>(b_low, b_high);
+
 }
 
-IDisturbanceInterface_DeadZone::pair_type InputDisturbance_DeadZone::getCurrentDeadZoneParameters() const
+
+double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
 {
-    return IDisturbanceInterface_DeadZone::pair_type();
+
+    double delta_v{}; // deadzone output
+
+    // Sample sinus phase.
+    phi_phase_ = sampler_phi_(generator_);
+
+    // if time-varying deadzone, sample
+    if (use_time_varying_deadzone_)
+    {
+        // Change random seed
+        std::random_device dev;
+        generator_ = std::mt19937(dev());
+
+
+        if (delta_u > current_br_threshold_)
+        {
+            // sample the slope. must be positive for all occasions.
+            current_mr_slope_ = sampler_m_(generator_);
+            current_br_threshold_ = sampler_b_(generator_);
+
+
+            delta_v = current_mr_slope_ *
+                      (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_br_threshold_);
+
+        } else if (delta_u < current_bl_threshold_)
+        {
+            // sample the slope. must be positive for all occasions.
+            current_ml_slope_ = sampler_m_(generator_);
+            current_bl_threshold_ = -1. * sampler_b_(generator_);
+
+            delta_v = current_ml_slope_ *
+                      (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_bl_threshold_);
+
+        } else
+        {
+            delta_v = 0.;
+        }
+
+
+    } else // omit sinusoidal part.
+    {
+
+        if (delta_u > current_br_threshold_)
+        {
+            delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
+
+        } else if (delta_u < current_bl_threshold_)
+        {
+            delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
+
+        } else
+        {
+            delta_v = 0.;
+        }
+
+    }
+
+    current_deadzoned_output_ = delta_v;
+
+    return current_deadzoned_output_;
 }
+
+

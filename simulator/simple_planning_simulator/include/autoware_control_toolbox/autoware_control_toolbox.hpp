@@ -75,7 +75,7 @@ namespace ns_control_toolbox
             return *this;
         }
 
-        tf &operator=(tf const &&other)
+        tf &operator=(tf &&other) noexcept
         {
             if (this != &other)
             {
@@ -171,5 +171,5 @@ namespace ns_control_toolbox
  * */
     tf padecoeff(double const &Td, size_t const &order);
 
-} // ns_control_toolbox
+} // namespace ns_control_toolbox
 #endif // AUTOWARE_CONTROL_TOOLBOX_HPP_

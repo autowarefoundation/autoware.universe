@@ -153,7 +153,7 @@ private:
      *  @brief Time delay is changed after tau seconds ahead to a new value.
      * */
     std::mt19937 generator_;
-    std::exponential_distribution<> time_delay_exp_dist_{0.0};
+    std::exponential_distribution<double> time_delay_exp_dist_{0.0};
 
     double next_time_interval_{};
 
@@ -178,6 +178,12 @@ class IDisturbanceInterface_DeadZone
 public:
     using pair_type = std::pair<std::pair<double, double>, std::pair<double, double>>;
 
+    // input --> DeadZone Model --> deadzone output
+    /**
+     * @brief returns output of the deadzone nonlinearity.
+     * @param input current input,
+     * @param current_ref reference value that input deviates from.
+     * */
     virtual double getDisturbedInput(double const &input) = 0;
 
     /**
@@ -185,10 +191,20 @@ public:
      * @return pair_type pair ([ml, bl] , [mr, br])  where m is the slope of the deadzone, and b is x-intercept of
      * the deadzone boundary
      * */
-    [[nodiscard]] virtual pair_type getCurrentDeadZoneParameters() const = 0;
+    [[nodiscard]] virtual pair_type getCurrentDeadZoneParameters() const
+    {
+        return {std::make_pair(current_ml_slope_, current_bl_threshold_),
+                std::make_pair(current_mr_slope_, current_br_threshold_)};
+    }
 
 protected:
-    double current_deadzoned_input_{};
+    double current_deadzoned_output_{};
+
+    // @brief Deadzone threshold left and right.
+    double current_ml_slope_{1.}; // <-@brief must be positive
+    double current_mr_slope_{1.};
+    double current_bl_threshold_{0.}; // <-@brief must be negative
+    double current_br_threshold_{0.}; // <-@brief must be positive
 
 };
 
@@ -199,19 +215,11 @@ protected:
 class InputDisturbance_DeadZoneIdentity : public IDisturbanceInterface_DeadZone
 {
 public:
-    double getDisturbedInput(double const &input) override
+    double getDisturbedInput(double const &delta_u) override
     {
         // ns_utils::print("Identity Input Disturbance is called ...");
-        current_deadzoned_input_ = input;
-        return current_deadzoned_input_;
-    }
-
-    [[nodiscard]] pair_type getCurrentDeadZoneParameters() const override
-    {
-        // m = 1, b =0 for both left and right parts of a dead-zone nonlinearity graph.
-        auto &&inactive_deadzone_params = std::make_pair(1.0, 0.0);
-
-        return std::make_pair(inactive_deadzone_params, inactive_deadzone_params);
+        current_deadzoned_output_ = delta_u;
+        return current_deadzoned_output_;
     }
 
 
@@ -224,31 +232,36 @@ class InputDisturbance_DeadZone : public IDisturbanceInterface_DeadZone
 {
 public:
 
-    double getDisturbedInput(double const &input) override;
+    InputDisturbance_DeadZone() = default;
 
-    [[nodiscard]] pair_type getCurrentDeadZoneParameters() const override;
+    InputDisturbance_DeadZone(double const &m_lr_variance,
+                              double const &b_lr_mean,
+                              double const &b_lr_variance,
+                              double const &sin_mag,
+                              bool const &use_time_varying_deadzone);
+
+
+    double getDisturbedInput(double const &delta_u) override;
 
 
 private:
 /**
- *  @brief [m, b]_{lr} are randomized. The equation of linear part (increasing) y = m*x + a*sin(2*pi*x+phi).
+ *  @brief [m, b]_{lr} are randomized. The equation of linear part (increasing) y = m*(x + a*sin(2*pi*x+phi) - b).
  * */
     std::mt19937 generator_;
     std::exponential_distribution<> time_delay_exp_dist_{0.0};
 
-    std::uniform_real_distribution<> sampler_b_;
-    std::uniform_real_distribution<> sampler_m_;
-    std::uniform_real_distribution<> sampler_a_;
-    std::uniform_real_distribution<> sampler_phi_;
+    std::uniform_real_distribution<double> sampler_m_{0., 1.}; // <-@brief  slope sampler
+    std::uniform_real_distribution<double> sampler_b_{0., 1.}; // <-@brief deadzone threshold sampler
+    std::uniform_real_distribution<double> sampler_phi_{0., M_2_PI}; // <-@brief sinus phase sampler
 
     //@brief linear part function variables.
-    double m_line_slope_{1.};
+    double m_mean_slope_{1.};
+    double b_mean_th_{};
     double a_sin_mag_{};
     double phi_phase_{};
 
-    // @brief Deadzone threshold left and right.
-    double bl_threshold_{};
-    double br_threshold_{};
+    bool use_time_varying_deadzone_{};
 
 };
 
