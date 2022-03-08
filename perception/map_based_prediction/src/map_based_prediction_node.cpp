@@ -316,9 +316,8 @@ double MapBasedPredictionNode::getObjectYaw(const TrackedObject & object)
   tf2::fromMsg(object_frame_pose, tf_object2future);
   tf_map2future = tf_map2object * tf_object2future;
   tf2::toMsg(tf_map2future, map_frame_pose);
-  double dx = map_frame_pose.position.x - object.kinematics.pose_with_covariance.pose.position.x;
-  double dy = map_frame_pose.position.y - object.kinematics.pose_with_covariance.pose.position.y;
-  return std::atan2(dy, dx);
+  return tier4_autoware_utils::calcAzimuthAngle(
+    object.kinematics.pose_with_covariance.pose.position, map_frame_pose.position);
 }
 
 void MapBasedPredictionNode::removeOldObjectsHistory(const double current_time)
