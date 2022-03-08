@@ -72,9 +72,9 @@ ObstacleVelocityPlanner::ObstacleVelocityPlanner(const rclcpp::NodeOptions & nod
   objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
     "/perception/object_recognition/objects", rclcpp::QoS{1},
     std::bind(&ObstacleVelocityPlanner::objectsCallback, this, _1));
-  twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "/localization/twist", rclcpp::QoS{1},
-    std::bind(&ObstacleVelocityPlanner::twistCallback, this, _1));
+  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+    "/localization/kinematic_state", rclcpp::QoS{1},
+    std::bind(&ObstacleVelocityPlanner::odomCallback, this, std::placeholders::_1));
   sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "/map/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&ObstacleVelocityPlanner::mapCallback, this, std::placeholders::_1));
@@ -176,9 +176,11 @@ void ObstacleVelocityPlanner::objectsCallback(
   in_objects_ptr_ = msg;
 }
 
-void ObstacleVelocityPlanner::twistCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+void ObstacleVelocityPlanner::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  current_twist_ptr_ = msg;
+  current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
+  current_twist_ptr_->header = msg->header;
+  current_twist_ptr_->twist = msg->twist.twist;
 }
 
 void ObstacleVelocityPlanner::smoothedTrajectoryCallback(
@@ -413,6 +415,7 @@ void ObstacleVelocityPlanner::trajectoryCallback(
       resampled_opt_position.push_back(query_s);
     }
   }
+
   const auto resampled_opt_velocity =
     interpolation::lerp(opt_position, opt_velocity, resampled_opt_position);
 
@@ -756,6 +759,7 @@ TrajectoryData ObstacleVelocityPlanner::resampleTrajectoryData(
   // Obtain trajectory length until the velocity is zero or stop dist
   const auto closest_stop_id =
     tier4_autoware_utils::searchZeroVelocityIndex(base_traj_data.traj.points);
+
   const double closest_stop_dist =
     closest_stop_id ? std::min(stop_dist, base_traj_data.s.at(*closest_stop_id)) : stop_dist;
   const double traj_length = std::min(closest_stop_dist, std::min(base_s.back(), max_traj_length));
@@ -787,12 +791,13 @@ TrajectoryData ObstacleVelocityPlanner::resampleTrajectoryData(
   return resampled_traj_data;
 }
 
+// TODO(murooka) what is the difference with applylienar interpolation
 autoware_auto_planning_msgs::msg::Trajectory ObstacleVelocityPlanner::resampleTrajectory(
   const std::vector<double> & base_index,
   const autoware_auto_planning_msgs::msg::Trajectory & base_trajectory,
   const std::vector<double> & query_index, const bool use_spline_for_pose)
 {
-  std::vector<double> px, py, pz, pyaw, tlx, taz, alx, aaz;
+  std::vector<double> px, py, pz, pyaw, tlx, taz, alx;
   for (const auto & p : base_trajectory.points) {
     px.push_back(p.pose.position.x);
     py.push_back(p.pose.position.y);
@@ -820,7 +825,6 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleVelocityPlanner::resampleTr
   const auto tlx_p = interpolation::lerp(base_index, tlx, query_index);
   const auto taz_p = interpolation::lerp(base_index, taz, query_index);
   const auto alx_p = interpolation::lerp(base_index, alx, query_index);
-  const auto aaz_p = interpolation::lerp(base_index, aaz, query_index);
 
   autoware_auto_planning_msgs::msg::Trajectory resampled_trajectory;
   resampled_trajectory.header = base_trajectory.header;
@@ -838,7 +842,6 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleVelocityPlanner::resampleTr
     point.acceleration_mps2 = alx_p.at(i);
     resampled_trajectory.points.at(i) = point;
   }
-
   return resampled_trajectory;
 }
 
@@ -1317,7 +1320,7 @@ ObstacleVelocityPlanner::resampledPredictedPath(
 
   // Resample Predicted Path
   const double duration =
-    std::min(std::max((obj_base_time - current_time).seconds(), 0.0), horizon);
+    std::min(std::max((obj_base_time + rclcpp::Duration(reliable_path->time_step) * (static_cast<double>(reliable_path->path.size()) - 1) - current_time).seconds(), 0.0), horizon);
 
   // Calculate relative valid time vector
   // rel_valid_time_vec is relative to obj_base_time.
@@ -1332,8 +1335,10 @@ ObstacleVelocityPlanner::getCurrentObjectPoseFromPredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time)
 {
-  for (const auto & obj_p : predicted_path.path) {
-    const double object_time = (obj_base_time - current_time).seconds();
+  for (size_t i = 0; i < predicted_path.path.size(); ++i) {
+    const auto & obj_p = predicted_path.path.at(i);
+
+    const double object_time = (obj_base_time + rclcpp::Duration(predicted_path.time_step) * static_cast<double>(i) - current_time).seconds();
     if (object_time >= 0) {
       return obj_p;
     }

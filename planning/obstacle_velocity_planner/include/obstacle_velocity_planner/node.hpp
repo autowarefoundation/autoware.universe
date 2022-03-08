@@ -32,6 +32,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
@@ -76,7 +77,7 @@ private:
 
   void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg);
 
-  void twistCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
 
   void trajectoryCallback(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg);
 
@@ -187,7 +188,7 @@ private:
     smoothed_trajectory_sub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     objects_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr
     sub_external_velocity_limit_;  //!< @brief subscriber for external velocity limit

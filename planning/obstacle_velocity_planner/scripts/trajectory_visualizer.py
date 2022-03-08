@@ -19,6 +19,7 @@ from autoware_auto_planning_msgs.msg import Trajectory
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
+from nav_msgs.msg import Odometry
 from matplotlib import animation
 import matplotlib.pyplot as plt
 import message_filters
@@ -66,7 +67,7 @@ class TrajectoryVisualizer(Node):
         self.optimized_st_graph = Trajectory()
 
         self.sub_localization_twist = self.create_subscription(
-            TwistStamped, "/localization/twist", self.CallbackLocalizationTwist, 1
+            Odometry, "/localization/kinematic_state", self.CallbackLocalizationOdom, 1
         )
         self.sub_vehicle_twist = self.create_subscription(
             TwistStamped, "/vehicle/status/twist", self.CallbackVehicleTwist, 1
@@ -102,8 +103,8 @@ class TrajectoryVisualizer(Node):
         plt.show()
         return
 
-    def CallbackLocalizationTwist(self, cmd):
-        self.localization_twist = cmd.twist
+    def CallbackLocalizationOdom(self, cmd):
+        self.localization_twist = cmd.twist.twist
 
     def CallbackVehicleTwist(self, cmd):
         self.vehicle_twist = cmd.twist
@@ -209,8 +210,8 @@ class TrajectoryVisualizer(Node):
             opt_closest = self.calcClosestTrajectory(trajectory)
             if opt_closest >= 0:
                 x_closest = x[opt_closest]
-                self.im3.set_data(x_closest, self.localization_longitudinal_velocity_mps)
-                self.im4.set_data(x_closest, self.vehicle_longitudinal_velocity_mps)
+                self.im3.set_data(x_closest, self.localization_twist.linear.x)
+                self.im4.set_data(x_closest, self.vehicle_twist.linear.x)
 
                 opt_zero_vel_id = -1
                 for i in range(opt_closest, len(trajectory.points)):

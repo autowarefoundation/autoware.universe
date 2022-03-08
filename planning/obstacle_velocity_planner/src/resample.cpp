@@ -83,6 +83,7 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   const std::vector<rclcpp::Duration> & rel_time_vec)
 {
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
+  resampled_path.time_step = input_path.time_step;
 
   for (const auto & rel_time : rel_time_vec) {
     const auto opt_pose = lerpByTimeStamp(input_path, rel_time);
@@ -131,7 +132,7 @@ boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
     return {};
   }
 
-  if (rel_time > rclcpp::Duration(path.time_step) * static_cast<double>(path.path.size())) {
+  if (rel_time > rclcpp::Duration(path.time_step) * (static_cast<double>(path.path.size()) - 1)) {
     RCLCPP_DEBUG_STREAM(
       rclcpp::get_logger("DynamicAvoidance.resample"),
       "failed to interpolate path by time!"
@@ -171,7 +172,7 @@ autoware_auto_planning_msgs::msg::Trajectory applyLinearInterpolation(
   const autoware_auto_planning_msgs::msg::Trajectory & base_trajectory,
   const std::vector<double> & out_index, const bool use_spline_for_pose)
 {
-  std::vector<double> px, py, pz, pyaw, tlx, taz, alx, aaz;
+  std::vector<double> px, py, pz, pyaw, tlx, taz, alx;
   for (const auto & p : base_trajectory.points) {
     px.push_back(p.pose.position.x);
     py.push_back(p.pose.position.y);
@@ -199,7 +200,6 @@ autoware_auto_planning_msgs::msg::Trajectory applyLinearInterpolation(
   const auto tlx_p = interpolation::lerp(base_index, tlx, out_index);
   const auto taz_p = interpolation::lerp(base_index, taz, out_index);
   const auto alx_p = interpolation::lerp(base_index, alx, out_index);
-  const auto aaz_p = interpolation::lerp(base_index, aaz, out_index);
 
   autoware_auto_planning_msgs::msg::Trajectory out_trajectory;
   out_trajectory.header = base_trajectory.header;
