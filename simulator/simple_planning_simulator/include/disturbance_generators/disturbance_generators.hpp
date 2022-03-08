@@ -50,7 +50,6 @@ public:
 
     void printModelTF();
 
-
 private:
     double meanTd_{0.0}; //  !<-@brief current delay that is used to compute a transfer function.
     size_t pade_order_{1}; //!<-@brief order of Pade approximation.
@@ -65,7 +64,7 @@ private:
 
 };
 
-// -------------------- INTERFACE CLASSES ------------------------------------
+// -------------------- TIME DELAY DISTURBANCE CLASSES ------------------------------------
 /**
  * @class IDisturbanceInterface_TimeDelay
  * @brief Input Disturbance TimeDelay Interface.
@@ -76,7 +75,7 @@ public:
     // virtual ~disturbanceInterface() = default;
     virtual double getDisturbedInput(double const &input) = 0;
 
-    virtual double getCurrentTimeDelayValue() const = 0;
+    [[nodiscard]] virtual double getCurrentTimeDelayValue() const = 0;
 
     /**
      * @brief returns a pair of time-delayed and nondelayed input pairs.
@@ -94,28 +93,6 @@ protected:
 
 };
 
-/**
- * @brief Input Disturbance Deadzone Interface
- * */
-
-class IDisturbanceInterface_DeadZone
-{
-public:
-    using pair_type = std::pair<std::pair<double, double>, std::pair<double, double>>;
-
-    virtual double getDisturbedInput(double const &input) = 0;
-
-    /**
-     * @brief Deadzone interface.
-     * @return pair_type pair ([ml, bl] , [mr, br])  where m is the slope of the deadzone, and b is x-intercept of
-     * the deadzone boundary
-     * */
-    [[nodiscard]] virtual pair_type getCurrentDeadZoneParameters() const = 0;
-
-};
-
-
-// -------------------- IDENTITY CLASSES ------------------------------------
 /**
  * @brief Identity class that maps the input as is when the time-delay value is zero in the settings.
  * */
@@ -138,30 +115,7 @@ public:
 
 };
 
-/**
- * @brief Identity class that maps the input as is when the time-delay value is zero in the settings.
- * */
-class InputDisturbance_DeadZone : public IDisturbanceInterface_DeadZone
-{
-public:
-    double getDisturbedInput(double const &input) override
-    {
-        // ns_utils::print("Identity Input Disturbance is called ...");
-        return input;
-    }
 
-    [[nodiscard]] pair_type getCurrentDeadZoneParameters() const override
-    {
-        // m = 1, b =0 for both left and right parts of a dead-zone nonlinearity graph.
-        auto inactive_deadzone_params = std::make_pair(1.0, 0.0);
-
-        return std::make_pair(inactive_deadzone_params, inactive_deadzone_params);
-    }
-
-};
-
-
-// -------------------- DISTURBANCE CLASSES ------------------------------------
 /**
  * @brief Input disturbance classes.
  *
@@ -213,9 +167,93 @@ private:
 
 };
 
+// -------------------- DEADZONE DISTURBANCE CLASSES ------------------------------------
+
+/**
+ * @brief Input Disturbance Deadzone Interface
+ * */
+
+class IDisturbanceInterface_DeadZone
+{
+public:
+    using pair_type = std::pair<std::pair<double, double>, std::pair<double, double>>;
+
+    virtual double getDisturbedInput(double const &input) = 0;
+
+    /**
+     * @brief Deadzone interface.
+     * @return pair_type pair ([ml, bl] , [mr, br])  where m is the slope of the deadzone, and b is x-intercept of
+     * the deadzone boundary
+     * */
+    [[nodiscard]] virtual pair_type getCurrentDeadZoneParameters() const = 0;
+
+protected:
+    double current_deadzoned_input_{};
+
+};
 
 
-// -------------------- OUTPUT DISTURBANCE - INTERFACE CLASSES ------------------------------------
+/**
+ * @brief Identity class that maps the input as is when the time-delay value is zero in the settings.
+ * */
+class InputDisturbance_DeadZoneIdentity : public IDisturbanceInterface_DeadZone
+{
+public:
+    double getDisturbedInput(double const &input) override
+    {
+        // ns_utils::print("Identity Input Disturbance is called ...");
+        current_deadzoned_input_ = input;
+        return current_deadzoned_input_;
+    }
+
+    [[nodiscard]] pair_type getCurrentDeadZoneParameters() const override
+    {
+        // m = 1, b =0 for both left and right parts of a dead-zone nonlinearity graph.
+        auto &&inactive_deadzone_params = std::make_pair(1.0, 0.0);
+
+        return std::make_pair(inactive_deadzone_params, inactive_deadzone_params);
+    }
+
+
+};
+
+/**
+ * @brief Identity class that maps the input as is when the time-delay value is zero in the settings.
+ * */
+class InputDisturbance_DeadZone : public IDisturbanceInterface_DeadZone
+{
+public:
+
+    double getDisturbedInput(double const &input) override;
+
+    [[nodiscard]] pair_type getCurrentDeadZoneParameters() const override;
+
+
+private:
+/**
+ *  @brief [m, b]_{lr} are randomized. The equation of linear part (increasing) y = m*x + a*sin(2*pi*x+phi).
+ * */
+    std::mt19937 generator_;
+    std::exponential_distribution<> time_delay_exp_dist_{0.0};
+
+    std::uniform_real_distribution<> sampler_b_;
+    std::uniform_real_distribution<> sampler_m_;
+    std::uniform_real_distribution<> sampler_a_;
+    std::uniform_real_distribution<> sampler_phi_;
+
+    //@brief linear part function variables.
+    double m_line_slope_{1.};
+    double a_sin_mag_{};
+    double phi_phase_{};
+
+    // @brief Deadzone threshold left and right.
+    double bl_threshold_{};
+    double br_threshold_{};
+
+};
+
+
+// -------------------- OUTPUT DISTURBANCE - ROAD SLOPE ------------------------------------
 /**
  * @brief Input disturbance class.
  * */
@@ -233,13 +271,12 @@ public:
     [[nodiscard]] virtual double getCurrentDisturbanceParameterValue() const = 0;
 
 protected:
+
     double current_slope_disturbance_{};  //!<@brief g*sin(theta)
 
 private:
 };
 
-
-// -------------------- OUTPUT DISTURBANCE - IDENTITY CLASSES ------------------------------------
 
 class OutputDisturbance_AdditiveIdentity : public IOutputDisturbance_Interface
 {
@@ -256,9 +293,7 @@ public:
         return current_slope_disturbance_;
     }
 
-private:
 };
-// -------------------- OUTPUT DISTURBANCE  CLASSES ------------------------------------
 
 class OutputDisturbance_SlopeVariation : public IOutputDisturbance_Interface
 {
@@ -309,7 +344,7 @@ struct IDisturbanceCollection
 
 
     // Destructor
-    ~IDisturbanceCollection() = default;
+    // ~IDisturbanceCollection() = default;
 
     // Input disturbances time-varying time-delay.
     std::shared_ptr<IDisturbanceInterface_TimeDelay> steering_inputDisturbance_time_delay_ptr_;

@@ -234,7 +234,7 @@ namespace simulation
             const float64_t steer_td_angular_speed = declare_parameter("steer_td_angular_speed", 0.1);
             const size_t steer_td_pade_order = static_cast<size_t>(declare_parameter("steer_td_pade_order", 2));
 
-            double dt = timer_sampling_time_ms_ / 1000.;
+            double dt = static_cast<double>(this->timer_sampling_time_ms_) / 1000.;
 
             // STEERING Time DELAY
             if (std::fabs(steer_time_delay) >= EPS)
@@ -322,7 +322,7 @@ namespace simulation
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
                         vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
-                        timer_sampling_time_ms_ / 1000.0,
+                        static_cast<double>(this->timer_sampling_time_ms_) / 1000.0,
                         vel_time_delay, vel_time_constant, steer_time_delay,
                         steer_time_constant);
 
@@ -331,7 +331,7 @@ namespace simulation
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
                         vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
-                        timer_sampling_time_ms_ / 1000.0,
+                        static_cast<double>(this->timer_sampling_time_ms_) / 1000.0,
                         acc_time_delay, acc_time_constant, steer_time_delay,
                         steer_time_constant);
 
@@ -353,7 +353,7 @@ namespace simulation
                 vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;
                 vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared>(
                         vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
-                        timer_sampling_time_ms_ / 1000.0,
+                        static_cast<double>(this->timer_sampling_time_ms_) / 1000.0,
                         acc_time_delay, acc_time_constant, steer_time_delay,
                         steer_time_constant);
             } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED_DIST")
@@ -461,7 +461,7 @@ namespace simulation
             current_disturbance_gen_.road_slope_acc = static_cast<float32_t>(vehicle_model_ptr_->getCurrentRoadSlopeAccDisturbance());
 
             pub_dist_generator_->publish(current_disturbance_gen_);
-            ns_utils::print("Current engage ", current_engage_);
+            // ns_utils::print("Current engage ", current_engage_);
         }
 
         void SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
@@ -640,9 +640,10 @@ namespace simulation
                     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
             {
                 state << x, y, yaw, vx, steer, accx;
-            }
-            vehicle_model_ptr_->setState(state);
+            } else
+            {}
 
+            vehicle_model_ptr_->setState(state);
             is_initialized_ = true;
         }
 
@@ -789,7 +790,7 @@ namespace simulation
             tf.transform.rotation = odometry.pose.pose.orientation;
 
             tf2_msgs::msg::TFMessage tf_msg{};
-            tf_msg.transforms.emplace_back(std::move(tf));
+            (void) tf_msg.transforms.emplace_back(std::move(tf));
             pub_tf_->publish(tf_msg);
         }
     }  // namespace simple_planning_simulator

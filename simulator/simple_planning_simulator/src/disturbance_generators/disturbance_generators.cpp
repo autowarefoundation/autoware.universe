@@ -197,3 +197,13 @@ double OutputDisturbance_SlopeVariation::getDisturbedOutput()
     current_slope_disturbance_ = g_ * sin(current_road_slope_);
     return current_slope_disturbance_;
 }
+
+double InputDisturbance_DeadZone::getDisturbedInput(const double &input)
+{
+    return input;
+}
+
+IDisturbanceInterface_DeadZone::pair_type InputDisturbance_DeadZone::getCurrentDeadZoneParameters() const
+{
+    return IDisturbanceInterface_DeadZone::pair_type();
+}
