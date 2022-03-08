@@ -92,7 +92,7 @@ private:
   PosePath interpolateReferencePath(
     const PosePath & base_path, const FrenetPath & frenet_predicted_path);
 
-  PredictedPath convertPredictedPath(
+  PredictedPath convertToPredictedPath(
     const TrackedObject & object, const FrenetPath & frenet_predicted_path,
     const PosePath & ref_path);
 

@@ -128,7 +128,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   }
 
   // Step4. Convert predicted trajectory from Frenet to Cartesian coordinate
-  return convertPredictedPath(object, frenet_predicted_path, interpolated_ref_path);
+  return convertToPredictedPath(object, frenet_predicted_path, interpolated_ref_path);
 }
 
 FrenetPath PathGenerator::generateFrenetPath(
@@ -137,6 +137,8 @@ FrenetPath PathGenerator::generateFrenetPath(
   FrenetPath path;
   const double duration = rclcpp::Time(target_point.header.stamp).seconds() -
                           rclcpp::Time(current_point.header.stamp).seconds();
+
+  // Compute Lateral and Longitudinal Coefficients to generate the trajectory
   const Eigen::Vector3d lat_coeff = calcLatCoefficients(current_point, target_point, duration);
   const Eigen::Vector2d lon_coeff = calcLonCoefficients(current_point, target_point, duration);
 
@@ -266,7 +268,7 @@ PosePath PathGenerator::interpolateReferencePath(
   return interpolated_path;
 }
 
-PredictedPath PathGenerator::convertPredictedPath(
+PredictedPath PathGenerator::convertToPredictedPath(
   const TrackedObject & object, const FrenetPath & frenet_predicted_path, const PosePath & ref_path)
 {
   PredictedPath predicted_path;
@@ -275,15 +277,12 @@ PredictedPath PathGenerator::convertPredictedPath(
   for (size_t i = 0; i < predicted_path.path.size(); ++i) {
     // Reference Point from interpolated reference path
     const auto & ref_pose = ref_path.at(i);
-    const auto & ref_yaw = tf2::getYaw(ref_pose.orientation);
 
     // Frenet Point from frenet predicted path
     const auto & frenet_point = frenet_predicted_path.at(i);
 
     // Converted Pose
-    geometry_msgs::msg::Pose predicted_pose;
-    predicted_pose.position.x = ref_pose.position.x - std::sin(ref_yaw) * frenet_point.d;
-    predicted_pose.position.y = ref_pose.position.y + std::cos(ref_yaw) * frenet_point.d;
+    auto predicted_pose = tier4_autoware_utils::calcOffsetPose(ref_pose, 0.0, frenet_point.d, 0.0);
     predicted_pose.position.z = object.kinematics.pose_with_covariance.pose.position.z;
     if (i == 0) {
       predicted_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
