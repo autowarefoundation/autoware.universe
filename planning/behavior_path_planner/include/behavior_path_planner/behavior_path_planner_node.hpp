@@ -126,6 +126,7 @@ private:
     const PathWithLaneId & path) const;  // (TODO) move to util
 
   void clipPathLength(PathWithLaneId & path) const;  // (TODO) move to util
+  void visualizeDrivableAreasWithSharedLanelets();
 
   /**
    * @brief Execute behavior tree and publish planned data.
@@ -156,6 +157,7 @@ private:
 
 private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
+  rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
