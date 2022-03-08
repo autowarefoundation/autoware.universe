@@ -236,7 +236,7 @@ public:
 
     InputDisturbance_DeadZone(double const &m_lr_variance,
                               double const &b_lr_mean,
-                              double const &b_lr_variance,
+                              double const &b_lr_variance_in_percent,
                               double const &sin_mag,
                               bool const &use_time_varying_deadzone);
 
@@ -350,6 +350,7 @@ struct IDisturbanceCollection
     IDisturbanceCollection()
             : steering_inputDisturbance_time_delay_ptr_{std::make_shared<InputDisturbance_IdentityTimeDelay>()},
               acc_inputDisturbance_time_delay_ptr_{std::make_shared<InputDisturbance_IdentityTimeDelay>()},
+              steering_dedzone_ptr_{std::make_shared<InputDisturbance_DeadZoneIdentity>()},
               road_slope_outputDisturbance_ptr_{std::make_shared<OutputDisturbance_AdditiveIdentity>()}
     {
 
@@ -362,6 +363,7 @@ struct IDisturbanceCollection
     // Input disturbances time-varying time-delay.
     std::shared_ptr<IDisturbanceInterface_TimeDelay> steering_inputDisturbance_time_delay_ptr_;
     std::shared_ptr<IDisturbanceInterface_TimeDelay> acc_inputDisturbance_time_delay_ptr_;
+    std::shared_ptr<IDisturbanceInterface_DeadZone> steering_dedzone_ptr_;
 
     // Output disturbances
     std::shared_ptr<IOutputDisturbance_Interface> road_slope_outputDisturbance_ptr_;

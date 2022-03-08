@@ -201,7 +201,7 @@ double OutputDisturbance_SlopeVariation::getDisturbedOutput()
 
 InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance,
                                                      const double &b_lr_mean,
-                                                     const double &b_lr_variance,
+                                                     const double &b_lr_variance_in_percent, /*in percentage*/
                                                      const double &sin_mag,
                                                      const bool &use_time_varying_deadzone) : b_mean_th_{b_lr_mean},
                                                                                               a_sin_mag_{sin_mag},
@@ -217,11 +217,11 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance
     /**
      * @brief b_lr represents positive(right) and negative(left) thresholds. The left threshold must be multiplied by -1.
      * */
-    if (b_lr_variance < 0. || b_lr_variance > b_mean_th_ / 2.0)
-    {
-        throw std::invalid_argument(
-                "Deadzone threshold variance should be lower than half threshold and  must be positive");
-    }
+//    if (b_lr_variance < 0. || b_lr_variance > b_mean_th_ / 2.0)
+//    {
+//        throw std::invalid_argument(
+//                "Deadzone threshold variance should be lower than half threshold and  must be positive");
+//    }
 
     // Initialize the samplers.
     // Slope min-max interval = mean{1.} +- var/2.
@@ -235,8 +235,9 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance
     sampler_m_ = std::uniform_real_distribution<double>(slope_low, slope_high);
 
     // Initialize the threshold sampler.
-    auto b_low = b_lr_mean - b_lr_variance / 2.;
-    auto b_high = b_lr_mean + b_lr_variance / 2.;
+    auto b_var = b_lr_mean * b_lr_variance_in_percent / 100.;
+    auto b_low = b_lr_mean - b_var / 2.;
+    auto b_high = b_lr_mean + b_var / 2.;
     sampler_b_ = std::uniform_real_distribution<double>(b_low, b_high);
 
 }
