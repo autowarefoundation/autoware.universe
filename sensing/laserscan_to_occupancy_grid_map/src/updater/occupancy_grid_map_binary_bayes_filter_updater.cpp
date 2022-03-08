@@ -47,7 +47,8 @@ inline unsigned char OccupancyGridMapBBFUpdater::applyBBF(
 
 bool OccupancyGridMapBBFUpdater::update(const Costmap2D & single_frame_occupancy_grid_map)
 {
-  updateOrigin(single_frame_occupancy_grid_map.getOriginX(), single_frame_occupancy_grid_map.getOriginY());
+  updateOrigin(
+    single_frame_occupancy_grid_map.getOriginX(), single_frame_occupancy_grid_map.getOriginY());
   for (unsigned int x = 0; x < getSizeInCellsX(); x++) {
     for (unsigned int y = 0; y < getSizeInCellsY(); y++) {
       unsigned int index = getIndex(x, y);
