@@ -43,6 +43,13 @@
         acc_td_delta_sin_mag_percent: 5.0
         acc_td_angular_speed: 0.1 # rad/sec of the sin wave. td_delta = td_delta_sin_mag * sin(wt)
 
+        ## ----------------- TIME-VARYING DEADZONE PARAMETERS ---------------------------------
+        dz_steer_use_time_varying_deadzone: true
+        dz_steer_mean_slope_variance: 0.1 # must be smaller than 0.5 and positive
+        dz_steer_mean_threshold: 0.1 # model dependent, for steering ~ 0 - 0.2
+        dz_steer_threshold_var: 20.0 # percentage of mean threshold
+        dz_steer_sin_mag: 0.1 # added to and must be proportional the slope
+
         ## ----------------- ROAD SLOPE TIME-VARYING DISTURBANCE ------------------------------
         rs_use_time_varying_slope: false # use time varying slope
         rs_mean_road_slope: 0.0 # mean value of slope degrees

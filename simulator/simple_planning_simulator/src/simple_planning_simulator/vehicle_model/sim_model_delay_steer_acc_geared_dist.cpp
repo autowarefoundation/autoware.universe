@@ -135,7 +135,7 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
     updateStateWithGear(state_, prev_state, gear_, dt);
 
     // Debug
-    ns_utils::print("In GEARED vehicle Model");
+    // ns_utils::print("In GEARED vehicle Model");
 }
 
 void SimModelDelaySteerAccGeared_Dist::initializeInputQueue(const float64_t &dt)

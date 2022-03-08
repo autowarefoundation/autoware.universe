@@ -45,7 +45,7 @@ public:
     /**
      * @brief default destructor
      */
-    ~SimModelDelaySteerAccGeared_Dist() = default;
+    // ~SimModelDelaySteerAccGeared_Dist() = default;
 
 private:
     const float64_t MIN_TIME_CONSTANT;  //!< @brief minimum time constant
