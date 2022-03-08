@@ -15,7 +15,7 @@
 #include "sampler_common/constraints/hard_constraint.hpp"
 
 #include <boost/geometry.hpp>
-#include <boost/geometry/algorithms/detail/distance/interface.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/core/cs.hpp>
 
 #include <algorithm>
@@ -34,8 +34,7 @@ bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygon
 {
   for (const auto & polygon : polygons) {
     for (const auto & point : path.points) {
-      // TODO(Maxime CLEMENT): better collision detection
-      if (boost::geometry::distance(point, polygon) < 2.0) {
+      if (boost::geometry::distance(point, polygon) < 1.0) {
         return true;
       }
     }

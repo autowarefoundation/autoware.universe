@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Autoware Foundation. All rights reserved.
+ * Copyright 2022 Autoware Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,25 +103,30 @@ void Plotter::plotReferencePath(const std::vector<double> & xs, const std::vecto
   reference_path_->setData(QVector<double>::fromStdVector(xs), QVector<double>::fromStdVector(ys));
 }
 
-void Plotter::plotTrajectories(const std::vector<Trajectory> & trajectories)
+void Plotter::plotTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories)
 {
   plotCartesianTrajectories(trajectories);
   plotFrenetTrajectories(trajectories);
 }
 
-void Plotter::plotFrenetTrajectories(const std::vector<Trajectory> & trajectories)
+void Plotter::plotPaths(const std::vector<sampler_common::Path> & paths)
 {
-  for (auto plottable : frenet_trajectories_) fcplot_->removePlottable(plottable);
+  plotCartesianPaths(paths);
+}
+
+void Plotter::plotFrenetTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories)
+{
+  for (auto plottable : frenet_curves_) fcplot_->removePlottable(plottable);
   polyplot_->clearGraphs();
-  frenet_trajectories_.clear();
+  frenet_curves_.clear();
 
   for (const auto & trajectory : trajectories) {
     if (trajectory.frenet_points.empty()) {
       continue;
     }
-    auto * frenet_curve = trajectoryToFrenetCurve(trajectory, frenet_rect_);
+    auto * frenet_curve = toFrenetCurve(trajectory, frenet_rect_);
     frenet_curve->setPen(QPen(QColor(0, 0, 255, 100)));
-    frenet_trajectories_.push_back(frenet_curve);
+    frenet_curves_.push_back(frenet_curve);
 
     // Plot polynomials
     QVector<double> ss;
@@ -142,42 +147,69 @@ void Plotter::plotFrenetTrajectories(const std::vector<Trajectory> & trajectorie
   }
 }
 
-void Plotter::plotCommittedTrajectory(const Trajectory & trajectory)
+void Plotter::plotCommittedTrajectory(const frenet_planner::Trajectory & trajectory)
 {
   if (committed_frenet_curve_ != nullptr) fcplot_->removePlottable(committed_frenet_curve_);
   if (committed_cartesian_curve_ != nullptr) fcplot_->removePlottable(committed_cartesian_curve_);
-  committed_frenet_curve_ = trajectoryToFrenetCurve(trajectory, frenet_rect_);
-  committed_cartesian_curve_ = trajectoryToCartesianCurve(trajectory, cartesian_rect_);
+  committed_frenet_curve_ = toFrenetCurve(trajectory, frenet_rect_);
+  committed_cartesian_curve_ = toCartesianCurve(trajectory, cartesian_rect_);
   const auto committed_color = QColor(0, 255, 0);
   committed_frenet_curve_->setPen(QPen(committed_color));
   committed_cartesian_curve_->setPen(QPen(committed_color));
 }
 
-void Plotter::plotSelectedTrajectory(const Trajectory & trajectory)
+void Plotter::plotSelectedTrajectory(const frenet_planner::Trajectory & trajectory)
 {
   if (selected_frenet_curve_ != nullptr) fcplot_->removePlottable(selected_frenet_curve_);
   if (selected_cartesian_curve_ != nullptr) fcplot_->removePlottable(selected_cartesian_curve_);
-  selected_frenet_curve_ = trajectoryToFrenetCurve(trajectory, frenet_rect_);
-  selected_cartesian_curve_ = trajectoryToCartesianCurve(trajectory, cartesian_rect_);
+  selected_frenet_curve_ = toFrenetCurve(trajectory, frenet_rect_);
+  selected_cartesian_curve_ = toCartesianCurve(trajectory, cartesian_rect_);
   const auto selected_color = QColor(255, 0, 0, 150);
   selected_frenet_curve_->setPen(QPen(selected_color));
   selected_cartesian_curve_->setPen(QPen(selected_color));
 }
 
-void Plotter::plotCartesianTrajectories(const std::vector<Trajectory> & trajectories)
+void Plotter::plotSelectedPath(const sampler_common::Path & path)
+{
+  if (selected_frenet_curve_ != nullptr) fcplot_->removePlottable(selected_frenet_curve_);
+  if (selected_cartesian_curve_ != nullptr) fcplot_->removePlottable(selected_cartesian_curve_);
+  selected_cartesian_curve_ = toCartesianCurve(path, cartesian_rect_);
+  const auto selected_color = QColor(255, 0, 0, 150);
+  selected_cartesian_curve_->setPen(QPen(selected_color));
+}
+
+void Plotter::plotCartesianTrajectories(
+  const std::vector<frenet_planner::Trajectory> & trajectories)
 {
   static const auto valid_pen = QPen(QColor(0, 0, 255, 100));
   static const auto invalid_pen = QPen(QColor(0, 0, 0, 100));
-  for (auto plottable : cartesian_trajectories_) fcplot_->removePlottable(plottable);
-  cartesian_trajectories_.clear();
+  for (auto plottable : cartesian_curves_) fcplot_->removePlottable(plottable);
+  cartesian_curves_.clear();
 
   for (const auto & trajectory : trajectories) {
     if (trajectory.points.empty()) {
       continue;
     }
-    auto * cart_curve = trajectoryToCartesianCurve(trajectory, cartesian_rect_);
+    auto * cart_curve = toCartesianCurve(trajectory, cartesian_rect_);
     cart_curve->setPen(trajectory.valid ? valid_pen : invalid_pen);
-    cartesian_trajectories_.push_back(cart_curve);
+    cartesian_curves_.push_back(cart_curve);
+  }
+}
+
+void Plotter::plotCartesianPaths(const std::vector<sampler_common::Path> & paths)
+{
+  static const auto valid_pen = QPen(QColor(0, 0, 255, 100));
+  static const auto invalid_pen = QPen(QColor(0, 0, 0, 100));
+  for (auto plottable : cartesian_curves_) fcplot_->removePlottable(plottable);
+  cartesian_curves_.clear();
+
+  for (const auto & path : paths) {
+    if (path.points.empty()) {
+      continue;
+    }
+    auto * cart_curve = toCartesianCurve(path, cartesian_rect_);
+    cart_curve->setPen(path.valid ? valid_pen : invalid_pen);
+    cartesian_curves_.push_back(cart_curve);
   }
 }
 
@@ -243,7 +275,8 @@ void Plotter::replot(const bool fc, const bool poly, const bool rescale)
   }
 }
 
-QCPCurve * Plotter::trajectoryToFrenetCurve(const Trajectory & trajectory, QCPAxisRect * axis_rect)
+QCPCurve * Plotter::toFrenetCurve(
+  const frenet_planner::Trajectory & trajectory, QCPAxisRect * axis_rect)
 {
   auto curve = new QCPCurve(axis_rect->axis(QCPAxis::atBottom), axis_rect->axis(QCPAxis::atLeft));
   QVector<double> xs;
@@ -258,15 +291,14 @@ QCPCurve * Plotter::trajectoryToFrenetCurve(const Trajectory & trajectory, QCPAx
   return curve;
 }
 
-QCPCurve * Plotter::trajectoryToCartesianCurve(
-  const Trajectory & trajectory, QCPAxisRect * axis_rect)
+QCPCurve * Plotter::toCartesianCurve(const sampler_common::Path & path, QCPAxisRect * axis_rect)
 {
   auto curve = new QCPCurve(axis_rect->axis(QCPAxis::atBottom), axis_rect->axis(QCPAxis::atLeft));
   QVector<double> xs;
   QVector<double> ys;
-  xs.reserve(static_cast<int>(trajectory.points.size()));
-  ys.reserve(static_cast<int>(trajectory.points.size()));
-  for (const auto & p : trajectory.points) {
+  xs.reserve(static_cast<int>(path.points.size()));
+  ys.reserve(static_cast<int>(path.points.size()));
+  for (const auto & p : path.points) {
     xs.push_back(p.x());
     ys.push_back(p.y());
   }

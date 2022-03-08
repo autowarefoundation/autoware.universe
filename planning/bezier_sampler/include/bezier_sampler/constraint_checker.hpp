@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Tier IV, Inc. All rights reserved.
+ * Copyright 2022 Tier IV, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
 #include <vector>
 
 BOOST_GEOMETRY_REGISTER_POINT_2D(Eigen::Vector2d, double, cs::cartesian, x(), y())
-namespace motion_planning::bezier_sampler
+namespace bezier_sampler
 {
 namespace bg = boost::geometry;
 using polygon_t = bg::model::polygon<Eigen::Vector2d>;
@@ -46,7 +46,7 @@ struct ConstraintParameters
   double hard_safety_margin;  // [m] distance from obstacles below which a path becomes invalid
   int nb_points;  // number of points to sample along Bezier curves for constraint checks
 };
-//@brief Constraint checker class
+/// @brief Constraint checker class
 class ConstraintChecker
 {
   // Drivable area occupancy grid
@@ -61,13 +61,13 @@ class ConstraintChecker
 
 public:
   ConstraintChecker(nav_msgs::msg::OccupancyGrid drivable_area, ConstraintParameters parameters);
-  //@brief build a polygon representing the footprint of the ego vehicle along the path
+  /// @brief build a polygon representing the footprint of the ego vehicle along the path
   [[nodiscard]] polygon_t buildFootprintPolygon(const Bezier & path) const;
-  //@brief return true if the given path is drivable (w.r.t maximum curvature)
+  /// @brief return true if the given path is drivable (w.r.t maximum curvature)
   [[nodiscard]] bool isDrivable(const Bezier & path) const;
-  //@brief return true if the given path is collision free
+  /// @brief return true if the given path is collision free
   [[nodiscard]] bool isCollisionFree(const Bezier & path) const;
-  //@brief return true if the given map position is collision free
+  /// @brief return true if the given map position is collision free
   [[nodiscard]] bool isCollisionFree(const Eigen::Vector2d & position) const;
 };
-}  // namespace motion_planning::bezier_sampler
+}  // namespace bezier_sampler

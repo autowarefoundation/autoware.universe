@@ -25,20 +25,19 @@
 #include <tf2/utils.h>
 
 #include <cmath>
+#include <utility>
 #include <vector>
 
-namespace motion_planning
-{
 namespace bezier_sampler
 {
-//@brief split the given vector of PathPoint into fixed arc-length segments
-std::vector<std::pair<Configuration, Configuration>> splitPath(
+/// @brief split the given vector of PathPoint into fixed arc-length segments
+std::vector<std::pair<sampler_common::State, sampler_common::State>> splitPath(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_length,
   double max_length, int ego_pose_index);
-//@brief split the given vector of PathPoint into segments with a maximum curvature integral
-std::vector<std::pair<Configuration, Configuration>> splitPathByCurvature(
+/// @brief split the given vector of PathPoint into segments with a maximum curvature integral
+std::vector<std::pair<sampler_common::State, sampler_common::State>> splitPathByCurvature(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path, double split_curvature);
-//@brief calculates the Menger curvature between the 3 given PathPoint
+/// @brief calculates the Menger curvature between the 3 given PathPoint
 inline double curvature(
   const autoware_auto_planning_msgs::msg::PathPoint & p0,
   const autoware_auto_planning_msgs::msg::PathPoint & p1,
@@ -54,4 +53,3 @@ inline double curvature(
   return 2 * std::sin(angle) / std::sqrt((x2 - x0) * (x2 - x0) + (y2 - y0) * (y2 - y0));
 }
 }  // namespace bezier_sampler
-}  // namespace motion_planning

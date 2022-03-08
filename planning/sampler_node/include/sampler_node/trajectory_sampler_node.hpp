@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER__SAMPLER_NODE_HPP_
-#define FRENET_PLANNER__SAMPLER_NODE_HPP_
+#ifndef SAMPLER_NODE__TRAJECTORY_SAMPLER_NODE_HPP_
+#define SAMPLER_NODE__TRAJECTORY_SAMPLER_NODE_HPP_
 
 #include "frenet_planner/frenet_planner.hpp"
 #include "frenet_planner/structures.hpp"
@@ -47,7 +47,7 @@
 
 namespace sampler_node
 {
-class FrenetPlannerNode : public rclcpp::Node
+class TrajectorySamplerNode : public rclcpp::Node
 {
 private:
   // Debug visualization
@@ -101,8 +101,8 @@ private:
     const std::vector<frenet_planner::Trajectory> & trajectories);
 
 public:
-  explicit FrenetPlannerNode(const rclcpp::NodeOptions & node_options);
+  explicit TrajectorySamplerNode(const rclcpp::NodeOptions & node_options);
 };
 }  // namespace sampler_node
 
-#endif  // FRENET_PLANNER__SAMPLER_NODE_HPP_
+#endif  // SAMPLER_NODE__TRAJECTORY_SAMPLER_NODE_HPP_

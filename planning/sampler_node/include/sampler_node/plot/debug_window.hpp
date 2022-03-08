@@ -15,9 +15,9 @@
 #ifndef SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
 #define SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
 
-#include "sampler_node/plot/plotter.hpp"
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
+#include "sampler_node/plot/plotter.hpp"
 
 #include <QInputDialog>
 #include <QMainWindow>
@@ -36,7 +36,6 @@ namespace sampler_node::plot
 {
 class MainWindow : public QMainWindow
 {
-
 public:
   explicit MainWindow(QWidget * parent = nullptr);
   ~MainWindow() override;
@@ -59,6 +58,6 @@ private:
   // Gui
   Ui::MainWindow * ui;
 };
-} // namespace sampler_node::plot
+}  // namespace sampler_node::plot
 
 #endif  // SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP

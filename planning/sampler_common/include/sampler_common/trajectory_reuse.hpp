@@ -32,6 +32,18 @@ bool tryToReuseTrajectory(
   const Trajectory & traj_to_reuse, const Point & current_pose, const double max_reuse_duration,
   const double max_reuse_length, const double max_deviation, const Constraints & constraints,
   Trajectory & reusable_traj);
+
+/// @brief try to reuse part of a path
+/// @param [in] path_to_reuse trajectory to check
+/// @param [in] current_state current state of ego
+/// @param [in] max_reuse_length maximum length of the path to reuse [m]
+/// @param [in] max_deviation maximum deviation from the path [m]
+/// @param [in] constraints constraints to check if the path is still feasible
+/// @param [out] reusable_path reusable path
+/// @return true if the path can be reused, else false
+bool tryToReusePath(
+  const Path & path_to_reuse, const State & current_state, const double max_reuse_length,
+  const double max_deviation, const Constraints & constraints, Path & reusable_path);
 }  // namespace sampler_common
 
 #endif  // SAMPLER_COMMON__TRAJECTORY_REUSE_HPP

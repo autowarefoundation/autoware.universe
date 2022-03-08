@@ -16,7 +16,7 @@
 
 #include <bezier_sampler/node.hpp>
 
-namespace motion_planning
+namespace bezier_sampler
 {
 PathSmootherNode::PathSmootherNode() : nh_(), pnh_("~"), tf_listener_(tf_buffer_)
 {
@@ -55,7 +55,8 @@ void PathSmootherNode::pathCallback(const autoware_auto_planning_msgs::msg::Path
   bezier_sampler::ConstraintChecker cc(msg.drivable_area, cc_params_);
   std::vector<bezier_sampler::Bezier> subpaths;
   // Split path and sample curves for each subpath
-  for (const std::pair<bezier_sampler::Configuration, bezier_sampler::Configuration> & configs :
+  for (const std::pair<
+         bezier_sampler::sampler_common::State, bezier_sampler::sampler_common::State> & configs :
        bezier_sampler::splitPath(msg.points, 7.0, 30.0, getCurrentEgoPoseIndex(msg))) {
     std::vector<bezier_sampler::Bezier> sampled_paths =
       sample(configs.first, configs.second, params_);
@@ -165,4 +166,4 @@ int PathSmootherNode::getCurrentEgoPoseIndex(
     });
   return std::distance(path_msg.points.begin(), traj_point_it) - 1;
 }
-}  // namespace motion_planning
+}  // namespace bezier_sampler

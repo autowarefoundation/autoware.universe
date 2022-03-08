@@ -16,14 +16,20 @@
 #define SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP
 
 #include "sampler_common/structures.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <functional>
 #include <vector>
 
 namespace sampler_common::constraints
 {
-/// @brief calculate the cost of the given path
-void calculateCost(Path & path, const Constraints & constraints);
+/// @brief calculate the curvature cost of the given path
+void calculateCurvatureCost(Path & path, const Constraints & constraints);
+/// @brief calculate the length cost of the given path
+void calculateLengthCost(Path & path, const Constraints & constraints);
+/// @brief calculate the overall cost of the given path
+void calculateCost(
+  Path & path, const Constraints & constraints, const transform::Spline2D & reference);
 }  // namespace sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP

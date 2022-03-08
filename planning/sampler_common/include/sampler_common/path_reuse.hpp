@@ -28,9 +28,8 @@ namespace sampler_common
 /// @param [out] reusable_path path to reuse (only if successful)
 /// @return true if the path can be reused, else false
 bool tryToReusePath(
-  const Path & path_to_reuse, const Point & current_pose, const double max_reuse_duration,
-  const double max_reuse_length, const double max_deviation, const Constraints & constraints,
-  Path & reusable_path);
+  const Path & path_to_reuse, const Point & current_pose, const double max_reuse_length,
+  const double max_deviation, const Constraints & constraints, Path & reusable_path);
 }  // namespace sampler_common
 
 #endif  // SAMPLER_COMMON__PATH_REUSE_HPP

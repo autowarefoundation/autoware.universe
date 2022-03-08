@@ -36,8 +36,13 @@ target_link_libraries(sampler_node
 )
 
 rclcpp_components_register_node(sampler_node
-  PLUGIN "sampler_node::FrenetPlannerNode"
-  EXECUTABLE sampler_node_exe
+  PLUGIN "sampler_node::TrajectorySamplerNode"
+  EXECUTABLE trajectory_sampler_node_exe
+)
+
+rclcpp_components_register_node(sampler_node
+  PLUGIN "sampler_node::PathSamplerNode"
+  EXECUTABLE path_sampler_node_exe
 )
 
 if(BUILD_TESTING)
