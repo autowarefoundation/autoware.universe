@@ -304,20 +304,11 @@ double MapBasedPredictionNode::getObjectYaw(const TrackedObject & object)
     return tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   }
 
-  geometry_msgs::msg::Pose object_frame_pose;
-  geometry_msgs::msg::Pose map_frame_pose;
-  object_frame_pose.position.x = object.kinematics.twist_with_covariance.twist.linear.x * 0.1;
-  object_frame_pose.position.y = object.kinematics.twist_with_covariance.twist.linear.y * 0.1;
-  tf2::Transform tf_object2future;
-  tf2::Transform tf_map2object;
-  tf2::Transform tf_map2future;
-
-  tf2::fromMsg(object.kinematics.pose_with_covariance.pose, tf_map2object);
-  tf2::fromMsg(object_frame_pose, tf_object2future);
-  tf_map2future = tf_map2object * tf_object2future;
-  tf2::toMsg(tf_map2future, map_frame_pose);
-  return tier4_autoware_utils::calcAzimuthAngle(
-    object.kinematics.pose_with_covariance.pose.position, map_frame_pose.position);
+  const auto & object_pose = object.kinematics.pose_with_covariance.pose;
+  const auto & object_twist = object.kinematics.twist_with_covariance.twist;
+  const auto future_object_pose = tier4_autoware_utils::calcOffsetPose(
+    object_pose, object_twist.linear.x * 0.1, object_twist.linear.y * 0.1, 0.0);
+  return tier4_autoware_utils::calcAzimuthAngle(future_object_pose.position, object_pose.position);
 }
 
 void MapBasedPredictionNode::removeOldObjectsHistory(const double current_time)
