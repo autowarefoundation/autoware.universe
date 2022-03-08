@@ -66,28 +66,16 @@ PredictedPath PathGenerator::generateStraightPath(
 {
   const auto & object_pose = object.kinematics.pose_with_covariance.pose;
   const auto & object_twist = object.kinematics.twist_with_covariance.twist;
+  const double ep = 0.001;
+  const double duration = time_horizon_ + ep;
 
   PredictedPath path;
   path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
-  const double ep = 0.001;
-  for (double dt = 0.0; dt < time_horizon_ + ep; dt += sampling_time_interval_) {
-    geometry_msgs::msg::Pose object_frame_pose;
-    geometry_msgs::msg::Pose world_frame_pose;
-    object_frame_pose.position.x = object_twist.linear.x * dt;
-    object_frame_pose.position.y = object_twist.linear.y * dt;
-    tf2::Quaternion quat;
-    quat.setRPY(0.0, 0.0, 0.0);
-    object_frame_pose.orientation = tf2::toMsg(quat);
-    tf2::Transform tf_object2future;
-    tf2::Transform tf_world2object;
-    tf2::Transform tf_world2future;
-
-    tf2::fromMsg(object_pose, tf_world2object);
-    tf2::fromMsg(object_frame_pose, tf_object2future);
-    tf_world2future = tf_world2object * tf_object2future;
-    tf2::toMsg(tf_world2future, world_frame_pose);
-
-    path.path.push_back(world_frame_pose);
+  path.path.reserve(static_cast<size_t>((duration) / sampling_time_interval_));
+  for (double dt = 0.0; dt < duration; dt += sampling_time_interval_) {
+    const auto future_obj_pose = tier4_autoware_utils::calcOffsetPose(
+      object_pose, object_twist.linear.x * dt, object_twist.linear.y * dt, 0.0);
+    path.path.push_back(future_obj_pose);
   }
 
   return path;
