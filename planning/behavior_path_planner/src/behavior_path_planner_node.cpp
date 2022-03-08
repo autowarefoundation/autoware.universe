@@ -131,12 +131,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // Start timer. This must be done after all data (e.g. vehicle pose, velocity) are ready.
   {
     const auto planning_hz = declare_parameter("planning_hz", 10.0);
-    const auto period = rclcpp::Rate(planning_hz).period();
-    auto on_timer = std::bind(&BehaviorPathPlannerNode::run, this);
-    timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer)>>(
-      this->get_clock(), period, std::move(on_timer),
-      this->get_node_base_interface()->get_context());
-    this->get_node_timers_interface()->add_timer(timer_, nullptr);
+    const auto period_ns = rclcpp::Rate(planning_hz).period();
+    timer_ = rclcpp::create_timer(
+      this, get_clock(), period_ns, std::bind(&BehaviorPathPlannerNode::run, this));
   }
 }
 
@@ -154,9 +151,11 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter("backward_length_buffer_for_end_of_pull_out", 5.0);
   p.minimum_lane_change_length = declare_parameter("minimum_lane_change_length", 8.0);
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
-  p.drivable_area_resolution = declare_parameter("drivable_area_resolution", 0.1);
-  p.drivable_area_width = declare_parameter("drivable_area_width", 100.0);
-  p.drivable_area_height = declare_parameter("drivable_area_height", 50.0);
+  p.drivable_area_resolution = declare_parameter<double>("drivable_area_resolution");
+  p.drivable_lane_forward_length = declare_parameter<double>("drivable_lane_forward_length");
+  p.drivable_lane_backward_length = declare_parameter<double>("drivable_lane_backward_length");
+  p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
+  p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
   p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
   p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
@@ -207,12 +206,15 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.resample_interval_for_output = dp("resample_interval_for_output", 3.0);
   p.detection_area_right_expand_dist = dp("detection_area_right_expand_dist", 0.0);
   p.detection_area_left_expand_dist = dp("detection_area_left_expand_dist", 1.0);
+  p.enable_avoidance_over_same_direction = dp("enable_avoidance_over_same_direction", true);
+  p.enable_avoidance_over_opposite_direction = dp("enable_avoidance_over_opposite_direction", true);
 
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
+  p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
 
   p.prepare_time = dp("prepare_time", 3.0);
   p.min_prepare_distance = dp("min_prepare_distance", 10.0);
@@ -220,6 +222,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.min_nominal_avoidance_speed = dp("min_nominal_avoidance_speed", 5.0);
   p.min_sharp_avoidance_speed = dp("min_sharp_avoidance_speed", 1.0);
+
+  p.road_shoulder_safety_margin = dp("road_shoulder_safety_margin", 0.5);
 
   p.max_right_shift_length = dp("max_right_shift_length", 1.5);
   p.max_left_shift_length = dp("max_left_shift_length", 1.5);
@@ -669,8 +673,8 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const PathWithLaneId & path) const
 {
   const auto goal = planner_data_->route_handler->getGoalPose();
-  const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
   const auto is_approved = planner_data_->approval.is_approved.data;
+  auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
 
   Pose refined_goal{};
   {
@@ -681,6 +685,7 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
       is_approved && planner_data_->route_handler->getPullOverTarget(
                        planner_data_->route_handler->getShoulderLanelets(), &pull_over_lane)) {
       refined_goal = planner_data_->route_handler->getPullOverGoalPose();
+      goal_lane_id = pull_over_lane.id();
     } else if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
       refined_goal = util::refineGoal(goal, goal_lanelet);
     } else {

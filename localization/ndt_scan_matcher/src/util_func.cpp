@@ -213,24 +213,23 @@ Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose)
 }
 
 std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov,
-  const size_t particle_num)
+  const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num)
 {
   std::default_random_engine engine(seed_gen());
   const Eigen::Map<const RowMatrixXd> covariance =
     makeEigenCovariance(base_pose_with_cov.pose.covariance);
 
-  std::normal_distribution<> x_distribution(0.0, covariance(0, 0));
-  std::normal_distribution<> y_distribution(0.0, covariance(1, 1));
-  std::normal_distribution<> z_distribution(0.0, covariance(2, 2));
-  std::normal_distribution<> roll_distribution(0.0, covariance(3, 3));
-  std::normal_distribution<> pitch_distribution(0.0, covariance(4, 4));
-  std::normal_distribution<> yaw_distribution(0.0, covariance(5, 5));
+  std::normal_distribution<> x_distribution(0.0, std::sqrt(covariance(0, 0)));
+  std::normal_distribution<> y_distribution(0.0, std::sqrt(covariance(1, 1)));
+  std::normal_distribution<> z_distribution(0.0, std::sqrt(covariance(2, 2)));
+  std::normal_distribution<> roll_distribution(0.0, std::sqrt(covariance(3, 3)));
+  std::normal_distribution<> pitch_distribution(0.0, std::sqrt(covariance(4, 4)));
+  std::normal_distribution<> yaw_distribution(0.0, std::sqrt(covariance(5, 5)));
 
   const auto base_rpy = getRPY(base_pose_with_cov);
 
   std::vector<geometry_msgs::msg::Pose> poses;
-  for (size_t i = 0; i < particle_num; ++i) {
+  for (int i = 0; i < particle_num; ++i) {
     geometry_msgs::msg::Vector3 xyz;
     geometry_msgs::msg::Vector3 rpy;
 

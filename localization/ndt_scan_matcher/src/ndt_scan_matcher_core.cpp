@@ -67,8 +67,9 @@ double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Poin
 }
 
 bool isLocalOptimalSolutionOscillation(
-  const std::vector<Eigen::Matrix4f> & result_pose_matrix_array, const float oscillation_threshold,
-  const float inversion_vector_threshold)
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
+    result_pose_matrix_array,
+  const float oscillation_threshold, const float inversion_vector_threshold)
 {
   bool prev_oscillation = false;
   int oscillation_cnt = 0;
@@ -102,6 +103,9 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
   converged_param_transform_probability_(4.5),
+  initial_estimate_particles_num_(100),
+  initial_pose_timeout_sec_(1.0),
+  initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10)
 {
@@ -163,6 +167,21 @@ NDTScanMatcher::NDTScanMatcher()
 
   converged_param_transform_probability_ = this->declare_parameter(
     "converged_param_transform_probability", converged_param_transform_probability_);
+
+  initial_estimate_particles_num_ =
+    this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
+
+  initial_pose_timeout_sec_ =
+    this->declare_parameter("initial_pose_timeout_sec", initial_pose_timeout_sec_);
+
+  initial_pose_distance_tolerance_m_ = this->declare_parameter(
+    "initial_pose_distance_tolerance_m", initial_pose_distance_tolerance_m_);
+
+  std::vector<double> output_pose_covariance =
+    this->declare_parameter<std::vector<double>>("output_pose_covariance");
+  for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
+    output_pose_covariance_[i] = output_pose_covariance[i];
+  }
 
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
   initial_pose_callback_group =
@@ -422,9 +441,27 @@ void NDTScanMatcher::callbackSensorPoints(
     initial_pose_msg_ptr_array_, sensor_ros_time, initial_pose_old_msg_ptr,
     initial_pose_new_msg_ptr);
   popOldPose(initial_pose_msg_ptr_array_, sensor_ros_time);
-  // TODO(Tier IV): check pose_timestamp - sensor_ros_time
+
+  // check the time stamp
+  bool valid_old_timestamp = validateTimeStampDifference(
+    initial_pose_old_msg_ptr->header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
+  bool valid_new_timestamp = validateTimeStampDifference(
+    initial_pose_new_msg_ptr->header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
+
+  // check the position jumping (ex. immediately after the initial pose estimation)
+  bool valid_new_to_old_distance = validatePositionDifference(
+    initial_pose_old_msg_ptr->pose.pose.position, initial_pose_new_msg_ptr->pose.pose.position,
+    initial_pose_distance_tolerance_m_);
+
+  // must all validations are true
+  if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
+    RCLCPP_WARN(get_logger(), "Validation error.");
+    return;
+  }
+
   const auto initial_pose_msg =
     interpolatePose(*initial_pose_old_msg_ptr, *initial_pose_new_msg_ptr, sensor_ros_time);
+
   // enf of critical section for initial_pose_msg_ptr_array_
   initial_pose_array_lock.unlock();
 
@@ -450,8 +487,8 @@ void NDTScanMatcher::callbackSensorPoints(
   result_pose_affine.matrix() = result_pose_matrix.cast<double>();
   const geometry_msgs::msg::Pose result_pose_msg = tf2::toMsg(result_pose_affine);
 
-  const std::vector<Eigen::Matrix4f> result_pose_matrix_array =
-    ndt_ptr_->getFinalTransformationArray();
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+    result_pose_matrix_array = ndt_ptr_->getFinalTransformationArray();
   std::vector<geometry_msgs::msg::Pose> result_pose_msg_array;
   for (const auto & pose_matrix : result_pose_matrix_array) {
     Eigen::Affine3d pose_affine;
@@ -509,15 +546,7 @@ void NDTScanMatcher::callbackSensorPoints(
   result_pose_with_cov_msg.header.stamp = sensor_ros_time;
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = result_pose_msg;
-
-  // TODO(Tier IV): temporary value
-  Eigen::Map<RowMatrixXd> covariance(&result_pose_with_cov_msg.pose.covariance[0], 6, 6);
-  covariance(0, 0) = 0.025;
-  covariance(1, 1) = 0.025;
-  covariance(2, 2) = 0.025;
-  covariance(3, 3) = 0.000625;
-  covariance(4, 4) = 0.000625;
-  covariance(5, 5) = 0.000625;
+  result_pose_with_cov_msg.pose.covariance = output_pose_covariance_;
 
   if (is_converged) {
     ndt_pose_pub_->publish(result_pose_stamped_msg);
@@ -603,7 +632,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
   }
 
   // generateParticle
-  const auto initial_poses = createRandomPoseArray(initial_pose_with_cov, 100);
+  const auto initial_poses =
+    createRandomPoseArray(initial_pose_with_cov, initial_estimate_particles_num_);
 
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
@@ -680,6 +710,38 @@ bool NDTScanMatcher::getTransform(
       get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
 
     *transform_stamped_ptr = identity;
+    return false;
+  }
+  return true;
+}
+
+bool NDTScanMatcher::validateTimeStampDifference(
+  const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
+  const double time_tolerance_sec)
+{
+  const double dt = std::abs((target_time - reference_time).seconds());
+  if (dt > time_tolerance_sec) {
+    RCLCPP_WARN(
+      get_logger(),
+      "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The "
+      "difference is %lf[sec] (the tolerance is %lf[sec]).",
+      reference_time.seconds(), target_time.seconds(), dt, time_tolerance_sec);
+    return false;
+  }
+  return true;
+}
+
+bool NDTScanMatcher::validatePositionDifference(
+  const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point,
+  const double distance_tolerance_m_)
+{
+  double distance = norm(target_point, reference_point);
+  if (distance > distance_tolerance_m_) {
+    RCLCPP_WARN(
+      get_logger(),
+      "Validation error. The distance from reference position to target position is %lf[m] (the "
+      "tolerance is %lf[m]).",
+      distance, distance_tolerance_m_);
     return false;
   }
   return true;

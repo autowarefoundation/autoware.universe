@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_BASE_H
-#define NORMAL_DISTRIBUTIONS_TRANSFORM_BASE_H
+#ifndef NDT__BASE_HPP_
+#define NDT__BASE_HPP_
 
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
@@ -48,7 +48,8 @@ public:
   virtual boost::shared_ptr<const pcl::PointCloud<PointTarget>> getInputTarget() const = 0;
   virtual boost::shared_ptr<const pcl::PointCloud<PointSource>> getInputSource() const = 0;
   virtual Eigen::Matrix4f getFinalTransformation() const = 0;
-  virtual std::vector<Eigen::Matrix4f> getFinalTransformationArray() const = 0;
+  virtual std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+  getFinalTransformationArray() const = 0;
 
   virtual Eigen::Matrix<double, 6, 6> getHessian() const = 0;
 
@@ -57,4 +58,4 @@ public:
 
 #include "ndt/impl/base.hpp"
 
-#endif
+#endif  // NDT__BASE_HPP_

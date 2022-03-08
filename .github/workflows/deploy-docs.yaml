@@ -29,8 +29,8 @@ jobs:
     if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}

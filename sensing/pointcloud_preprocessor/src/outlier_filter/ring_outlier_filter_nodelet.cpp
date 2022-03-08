@@ -39,52 +39,59 @@ void RingOutlierFilterComponent::filter(
   PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
-  if (input->row_step < 1) {
-    return;
-  }
-  std::vector<std::vector<std::size_t>> input_ring_array(128);
+  std::unordered_map<uint16_t, std::vector<std::size_t>> input_ring_map;
+  input_ring_map.reserve(128);
   sensor_msgs::msg::PointCloud2::SharedPtr input_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(*input);
 
   const auto ring_offset =
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Ring)).offset;
   for (std::size_t idx = 0U; idx < input_ptr->data.size(); idx += input_ptr->point_step) {
-    input_ring_array.at(*reinterpret_cast<uint16_t *>(&input_ptr->data[idx + ring_offset]))
-      .emplace_back(idx);
+    input_ring_map[*reinterpret_cast<uint16_t *>(&input_ptr->data[idx + ring_offset])].push_back(
+      idx);
   }
 
-  output.header = input->header;
   PointCloud2Modifier<PointXYZI> output_modifier{output, input->header.frame_id};
   output_modifier.reserve(input->width);
 
   std::vector<std::size_t> tmp_indices;
   tmp_indices.reserve(input->width);
 
-  for (const auto & ring_indices : input_ring_array) {
-    if (ring_indices.size() < 2) {
+  const auto azimuth_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Azimuth)).offset;
+  const auto distance_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Distance)).offset;
+  for (const auto & ring_indices : input_ring_map) {
+    if (ring_indices.second.size() < 2) {
       continue;
     }
 
-    for (size_t idx = 0; idx < ring_indices.size() - 1; ++idx) {
-      const auto current_idx = ring_indices.at(idx);
-      const auto next_idx = ring_indices.at(idx + 1);
-      PointXYZIRADRT * current_pt =
-        reinterpret_cast<PointXYZIRADRT *>(&input_ptr->data[current_idx]);
-      PointXYZIRADRT * next_pt = reinterpret_cast<PointXYZIRADRT *>(&input_ptr->data[next_idx]);
+    for (size_t idx = 0U; idx < ring_indices.second.size() - 1; ++idx) {
+      const auto & current_idx = ring_indices.second.at(idx);
+      const auto & next_idx = ring_indices.second.at(idx + 1);
       tmp_indices.emplace_back(current_idx);
 
       // if(std::abs(iter->distance - (iter+1)->distance) <= std::sqrt(iter->distance) * 0.08)
-      float azimuth_diff = next_pt->azimuth - current_pt->azimuth;
+      const auto current_pt_azimuth =
+        *reinterpret_cast<float *>(&input_ptr->data[current_idx + azimuth_offset]);
+      const auto next_pt_azimuth =
+        *reinterpret_cast<float *>(&input_ptr->data[next_idx + azimuth_offset]);
+      float azimuth_diff = next_pt_azimuth - current_pt_azimuth;
       azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
 
+      const auto current_pt_distance =
+        *reinterpret_cast<float *>(&input_ptr->data[current_idx + distance_offset]);
+      const auto next_pt_distance =
+        *reinterpret_cast<float *>(&input_ptr->data[next_idx + distance_offset]);
+
       if (
-        std::max(current_pt->distance, next_pt->distance) <
-          std::min(current_pt->distance, next_pt->distance) * distance_ratio_ &&
+        std::max(current_pt_distance, next_pt_distance) <
+          std::min(current_pt_distance, next_pt_distance) * distance_ratio_ &&
         azimuth_diff < 100.f) {
         continue;
       }
       if (isCluster(input_ptr, tmp_indices)) {
-        for (const auto tmp_idx : tmp_indices) {
+        for (const auto & tmp_idx : tmp_indices) {
           output_modifier.push_back(
             std::move(*reinterpret_cast<PointXYZI *>(&input_ptr->data[tmp_idx])));
         }
@@ -95,7 +102,7 @@ void RingOutlierFilterComponent::filter(
       continue;
     }
     if (isCluster(input_ptr, tmp_indices)) {
-      for (const auto tmp_idx : tmp_indices) {
+      for (const auto & tmp_idx : tmp_indices) {
         output_modifier.push_back(
           std::move(*reinterpret_cast<PointXYZI *>(&input_ptr->data[tmp_idx])));
       }

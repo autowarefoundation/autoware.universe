@@ -33,6 +33,36 @@ namespace test
 {
 // Default grid parameter such that UNKNOWN cells have a value of 50
 const behavior_velocity_planner::grid_utils::GridParam grid_param = {10, 51};
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using ConstPair = const std::pair<double, double>;
+
+/* lanelet
+        0 1 2 3 4 5
+      0 x
+      1   x
+      2     x
+      3       x
+      4         x
+      5           x
+      */
+inline lanelet::ConstLanelet createLanelet(
+  ConstPair & start = {0, 0}, ConstPair & end = {5, 5}, int nb_points = 6)
+{
+  const double interval =
+    std::hypot(end.first - start.first, end.second - start.second) / (nb_points - 1);
+  const double norm_x = (end.first - start.first) / interval;
+  const double norm_y = (end.second - start.second) / interval;
+  lanelet::Points3d path_points;
+  for (int i = 0; i < nb_points; i++) {
+    const double x = start.first + norm_x * i;
+    const double y = start.second + norm_y * i;
+    path_points.emplace_back(lanelet::InvalId, x, y, 0);
+  }
+  lanelet::LineString3d centerline(lanelet::InvalId, path_points);
+  lanelet::Lanelet path_lanelet(lanelet::InvalId);
+  path_lanelet.setCenterline(centerline);
+  return lanelet::ConstLanelet(path_lanelet);
+}
 
 /* Horizontal lanelet
         0 1 2 3 4 5 6
@@ -148,15 +178,15 @@ inline void generatePossibleCollisions(
     intersection_pose.position.x = y0 + y_step * i;
 
     // collision path point
-    autoware_auto_planning_msgs::msg::PathPoint collision_path_point{};
-    collision_path_point.pose.position.x = x0 + x_step * i + lon;
-    collision_path_point.pose.position.y = y0 + y_step * i;
+    autoware_auto_planning_msgs::msg::PathPoint collision_with_margin{};
+    collision_with_margin.pose.position.x = x0 + x_step * i + lon;
+    collision_with_margin.pose.position.y = y0 + y_step * i;
 
     lanelet::ArcCoordinates arc;
     arc.length = obstacle_info.position.x;
     arc.distance = obstacle_info.position.y;
 
-    PossibleCollisionInfo col(obstacle_info, collision_path_point, intersection_pose, arc);
+    PossibleCollisionInfo col(obstacle_info, collision_with_margin, intersection_pose, arc);
     possible_collisions.emplace_back(col);
   }
 }

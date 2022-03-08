@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_H
-#define NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_H
+#ifndef NDT__OMP_HPP_
+#define NDT__OMP_HPP_
 
 #include "ndt/base.hpp"
 
@@ -51,7 +51,8 @@ public:
   boost::shared_ptr<const pcl::PointCloud<PointTarget>> getInputTarget() const override;
   boost::shared_ptr<const pcl::PointCloud<PointSource>> getInputSource() const override;
   Eigen::Matrix4f getFinalTransformation() const override;
-  std::vector<Eigen::Matrix4f> getFinalTransformationArray() const override;
+  std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+  getFinalTransformationArray() const override;
 
   Eigen::Matrix<double, 6, 6> getHessian() const override;
 
@@ -70,4 +71,4 @@ private:
 
 #include "ndt/impl/omp.hpp"
 
-#endif
+#endif  // NDT__OMP_HPP_
