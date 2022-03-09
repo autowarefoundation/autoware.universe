@@ -58,6 +58,30 @@ inline tf2::Vector3 getTransVector3(
   double dz = to.position.z - from.position.z;
   return tf2::Vector3(dx, dy, dz);
 }
+
+visualization_msgs::msg::MarkerArray getObjectMarkerArray(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object, size_t idx,
+  const std::string & ns, const double r, const double g, const double b)
+{
+  const auto current_time = rclcpp::Clock().now();
+  visualization_msgs::msg::MarkerArray msg;
+
+  visualization_msgs::msg::Marker marker{};
+  marker.header.frame_id = "map";
+  marker.header.stamp = current_time;
+  marker.ns = ns;
+
+  marker.id = idx;
+  marker.lifetime = rclcpp::Duration::from_seconds(1.0);
+  marker.type = visualization_msgs::msg::Marker::CUBE;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.pose = object.kinematics.initial_pose_with_covariance.pose;
+  marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.0, 1.0);
+  marker.color = tier4_autoware_utils::createMarkerColor(r, g, b, 0.8);
+  msg.markers.push_back(marker);
+
+  return msg;
+}
 }  // namespace
 
 ObstacleVelocityPlanner::ObstacleVelocityPlanner(const rclcpp::NodeOptions & node_options)
@@ -97,8 +121,7 @@ ObstacleVelocityPlanner::ObstacleVelocityPlanner(const rclcpp::NodeOptions & nod
     create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/distance_to_closest_obj", 1);
   debug_calculation_time_ =
     create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/calculation_time", 1);
-  debug_marker_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", 1);
+  debug_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
 
   // Obstacle
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
@@ -903,6 +926,8 @@ boost::optional<SBoundaries> ObstacleVelocityPlanner::getSBoundaries(
     s_boundaries.at(i).max_s = ego_traj_data.s.back();
   }
 
+  visualization_msgs::msg::MarkerArray msg;
+
   const auto obj_base_time = rclcpp::Time(planner_data.target_objects.header.stamp);
   double min_slow_down_point_length = std::numeric_limits<double>::max();
   boost::optional<size_t> min_slow_down_idx = {};
@@ -927,10 +952,13 @@ boost::optional<SBoundaries> ObstacleVelocityPlanner::getSBoundaries(
       }
     }
 
-    // Calculate Safety Distance
+    // Step4 add object to marker
+    const auto marker = getObjectMarkerArray(obj, o_idx, "objects_to_follow", 0.7, 0.7, 0.0);
+    tier4_autoware_utils::appendMarkerArray(marker, &msg);
+
+    // Step5 search nearest obstacle to follow for rviz marker
     const double object_offset = obj.shape.dimensions.x / 2.0;
 
-    // Step4 search nearest obstacle to follow for rviz marker
     const auto predicted_path =
       resampledPredictedPath(obj, obj_base_time, current_time, time_vec, max_time_horizon_);
 
@@ -967,10 +995,9 @@ boost::optional<SBoundaries> ObstacleVelocityPlanner::getSBoundaries(
 
     const auto marker_pose = calcForwardPose(
       ego_traj_data, planner_data.current_pose.position, min_slow_down_point_length);
+    RCLCPP_ERROR_STREAM(get_logger(), min_slow_down_point_length);
 
     if (marker_pose) {
-      visualization_msgs::msg::MarkerArray msg;
-
       const double obj_vel = std::fabs(obj.kinematics.initial_twist_with_covariance.twist.linear.x);
       if (obj_vel < object_zero_velocity_threshold_) {
         const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
@@ -981,10 +1008,11 @@ boost::optional<SBoundaries> ObstacleVelocityPlanner::getSBoundaries(
           marker_pose.get(), "obstacle to follow", current_time, 0);
         tier4_autoware_utils::appendMarkerArray(markers, &msg);
       }
-
-      debug_marker_pub_->publish(msg);
     }
   }
+
+  // publish rviz marker
+  debug_marker_pub_->publish(msg);
 
   return s_boundaries;
 }
