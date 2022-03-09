@@ -218,36 +218,42 @@ namespace simulation
              * @brief Create a time varying time-delay input disturbance instance from the parameters.
              * If the time delay for the given control is zero an identity mapping is created.
              * */
-
-            // Read steering time-varying time delay disturbance parameters.
-            const bool steer_use_time_varying_td = declare_parameter("steer_use_time_varying_td", false);
-            const float64_t steer_td_changes_every_xsecs =
-                    declare_parameter("steer_td_changes_every_xsecs", 1.0); // do not set to 0.
-
-            const float64_t steer_exp_lambda = 1. / steer_td_changes_every_xsecs; // exponential distribution rate.
-
-            // Percentage
-            const float64_t steer_td_delta_sin_mag_percent =
-                    declare_parameter("steer_td_delta_sin_mag_percent", 5.0) / 100.;
-
-            const float64_t steer_td_angular_speed = declare_parameter("steer_td_angular_speed", 0.1);
-            const size_t steer_td_pade_order = static_cast<size_t>(declare_parameter("steer_td_pade_order", 2));
-
             double dt = static_cast<double>(this->timer_sampling_time_ms_) / 1000.;
+            bool use_steering_input_delay = declare_parameter("use_steering_input_delay", false);
 
-            // STEERING Time DELAY
-            if (std::fabs(steer_time_delay) >= EPS)
+            if (use_steering_input_delay)
             {
-                DelayModelSISO steer_delay_siso_model(steer_time_delay, steer_td_pade_order, dt);
-                InputDisturbance_TimeDelayPade steer_td_time_varying_dist_gen(steer_delay_siso_model,
-                                                                              steer_exp_lambda,
-                                                                              steer_td_delta_sin_mag_percent,
-                                                                              steer_td_angular_speed,
-                                                                              steer_use_time_varying_td);
+                // Read steering time-varying time delay disturbance parameters.
+                const bool steer_use_time_varying_td = declare_parameter("steer_use_time_varying_td", false);
+                const float64_t steer_td_changes_every_xsecs =
+                        declare_parameter("steer_td_changes_every_xsecs", 1.0); // do not set to 0.
+
+                const float64_t steer_exp_lambda = 1. / steer_td_changes_every_xsecs; // exponential distribution rate.
+
+                // Percentage
+                const float64_t steer_td_delta_sin_mag_percent =
+                        declare_parameter("steer_td_delta_sin_mag_percent", 5.0) / 100.;
+
+                const float64_t steer_td_angular_speed = declare_parameter("steer_td_angular_speed", 0.1);
+                const size_t steer_td_pade_order = static_cast<size_t>(declare_parameter("steer_td_pade_order", 2));
 
 
-                disturbance_collection.steering_inputDisturbance_time_delay_ptr_ =
-                        std::make_shared<InputDisturbance_TimeDelayPade>(steer_td_time_varying_dist_gen);
+
+                // STEERING Time DELAY
+                if (std::fabs(steer_time_delay) >= EPS)
+                {
+                    DelayModelSISO steer_delay_siso_model(steer_time_delay, steer_td_pade_order, dt);
+                    InputDisturbance_TimeDelayPade steer_td_time_varying_dist_gen(steer_delay_siso_model,
+                                                                                  steer_exp_lambda,
+                                                                                  steer_td_delta_sin_mag_percent,
+                                                                                  steer_td_angular_speed,
+                                                                                  steer_use_time_varying_td);
+
+
+                    disturbance_collection.steering_inputDisturbance_time_delay_ptr_ =
+                            std::make_shared<InputDisturbance_TimeDelayPade>(steer_td_time_varying_dist_gen);
+
+                }
 
             }
 

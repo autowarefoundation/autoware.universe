@@ -21,6 +21,7 @@
 
         ## Disturbance generator models options.
         # --------------- STEERING TIME-VARYING TIME DELAY DISTURBANCE -------------
+        use_steering_input_delay: false
         steer_use_time_varying_td: false  # to use input varying delay
         steer_td_pade_order: 2 # size_t order of Pade approximation.
 
