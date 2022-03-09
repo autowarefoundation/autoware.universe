@@ -52,10 +52,6 @@ namespace map_based_prediction
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
-  auto ret =
-    rcutils_logging_set_logger_level(this->get_logger().get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
-
-  rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   enable_delay_compensation_ = declare_parameter("enable_delay_compensation", true);
   prediction_time_horizon_ = declare_parameter("prediction_time_horizon", 10.0);
   prediction_sampling_time_interval_ = declare_parameter("prediction_sampling_delta_time", 0.5);
@@ -66,7 +62,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   delta_yaw_threshold_for_searching_lanelet_ =
     declare_parameter("delta_yaw_threshold_for_searching_lanelet", 0.785);
   sigma_lateral_offset_ = declare_parameter("sigma_lateral_offset", 0.5);
-  sigma_yaw_angle_ = declare_parameter("sigma_yaw_angle", 5.0);
+  sigma_yaw_angle_deg_ = declare_parameter("sigma_yaw_angle_deg", 5.0);
   object_buffer_time_length_ = declare_parameter("object_buffer_time_length", 2.0);
   history_time_length_ = declare_parameter("history_time_length", 1.0);
   dist_ratio_threshold_to_left_bound_ =
@@ -460,11 +456,11 @@ float MapBasedPredictionNode::calculateLocalLikelihood(
 
   // Compute Chi-squared distributed (Equation (8) in the paper)
   const double sigma_d = sigma_lateral_offset_;  // Standard Deviation for lateral position
-  const double sigma_yaw = M_PI * sigma_yaw_angle_ / 180.0;  // Standard Deviation for yaw angle
-  Eigen::Vector2d delta;
-  delta << lat_dist, abs_norm_delta_yaw;
-  Eigen::Matrix2d P_inv;
-  P_inv << 1.0 / (sigma_d * sigma_d), 0.0, 0.0, 1.0 / (sigma_yaw * sigma_yaw);
+  const double sigma_yaw = M_PI * sigma_yaw_angle_deg_ / 180.0;  // Standard Deviation for yaw angle
+  const Eigen::Vector2d delta(lat_dist, abs_norm_delta_yaw);
+  const Eigen::Matrix2d P_inv =
+    (Eigen::Matrix2d() << 1.0 / (sigma_d * sigma_d), 0.0, 0.0, 1.0 / (sigma_yaw * sigma_yaw))
+      .finished();
   const double MINIMUM_DISTANCE = 1e-6;
   const double dist = std::max(delta.dot(P_inv * delta), MINIMUM_DISTANCE);
 
