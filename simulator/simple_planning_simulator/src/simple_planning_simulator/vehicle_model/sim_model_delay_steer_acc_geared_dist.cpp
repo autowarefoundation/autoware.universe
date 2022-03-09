@@ -119,6 +119,12 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
 
     }
 
+    // Apply deadzone to steering
+    auto &&steer_deviation = steer_delayed - state_(IDX::STEER);
+    auto delta_steer_deadzoned = disturbance_collection_.steering_dedzone_ptr_->getDisturbedInput(steer_deviation);
+    auto steer_deadzoned = delta_steer_deadzoned + state_(IDX::STEER);
+
+
     delayed_input(IDX_U::STEER_DES) = steer_delayed;
     delayed_input(IDX_U::ACCX_DES) = acc_delayed + acc_slope_dist;
 
@@ -136,6 +142,15 @@ void SimModelDelaySteerAccGeared_Dist::update(const float64_t &dt)
 
     // Debug
     // ns_utils::print("In GEARED vehicle Model");
+    ns_utils::print("Steering delayed vs steering deadzone ", steer_delayed, steer_deadzoned);
+
+    // Returns pair of pairs [m, b]_right_left
+    auto current_deadzone_params = disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
+    ns_utils::print("Left deadzone params slope, threshold:  ", current_deadzone_params[0], current_deadzone_params[1]);
+    ns_utils::print("Right deadzone params slope, threshold:  ", current_deadzone_params[2],
+                    current_deadzone_params[3]);
+
+
 }
 
 void SimModelDelaySteerAccGeared_Dist::initializeInputQueue(const float64_t &dt)

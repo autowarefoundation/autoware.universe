@@ -46,7 +46,7 @@
         acc_td_angular_speed: 0.1 # rad/sec of the sin wave. td_delta = td_delta_sin_mag * sin(wt)
 
         ## ----------------- TIME-VARYING DEADZONE PARAMETERS ---------------------------------
-        use_deadzone_disturbance: false
+        use_deadzone_disturbance: true
         dz_steer_use_time_varying_deadzone: true
         dz_steer_mean_slope_variance: 0.1 # must be smaller than 0.5 and positive
         dz_steer_mean_threshold: 0.1 # model dependent, for steering ~ 0 - 0.2

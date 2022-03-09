@@ -176,7 +176,7 @@ private:
 class IDisturbanceInterface_DeadZone
 {
 public:
-    using pair_type = std::pair<std::pair<double, double>, std::pair<double, double>>;
+    //using pair_type = std::pair<std::pair<double, double>, std::pair<double, double>>;
 
     // input --> DeadZone Model --> deadzone output
     /**
@@ -187,17 +187,28 @@ public:
     virtual double getDisturbedInput(double const &input) = 0;
 
     /**
+    * @brief returns a pair of deadzone input and output.
+    * */
+    [[nodiscard]] std::pair<double, double> getOriginalAndDeadzonedInputs() const
+    {
+        return std::make_pair(current_deadzoned_input_, current_deadzoned_output_);
+    }
+
+    /**
      * @brief Deadzone interface.
      * @return pair_type pair ([ml, bl] , [mr, br])  where m is the slope of the deadzone, and b is x-intercept of
      * the deadzone boundary
      * */
-    [[nodiscard]] virtual pair_type getCurrentDeadZoneParameters() const
+    [[nodiscard]] virtual std::array<double, 4> getCurrentDeadZoneParameters() const
     {
-        return {std::make_pair(current_ml_slope_, current_bl_threshold_),
-                std::make_pair(current_mr_slope_, current_br_threshold_)};
+        std::array<double, 4> deadzone_params{current_ml_slope_, current_bl_threshold_,
+                                              current_mr_slope_, current_br_threshold_};
+
+        return deadzone_params;
     }
 
 protected:
+    double current_deadzoned_input_{};
     double current_deadzoned_output_{};
 
     // @brief Deadzone threshold left and right.
@@ -218,6 +229,7 @@ public:
     double getDisturbedInput(double const &delta_u) override
     {
         // ns_utils::print("Identity Input Disturbance is called ...");
+        current_deadzoned_input_ = delta_u;
         current_deadzoned_output_ = delta_u;
         return current_deadzoned_output_;
     }

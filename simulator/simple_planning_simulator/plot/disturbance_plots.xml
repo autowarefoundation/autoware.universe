@@ -1,41 +1,41 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab tab_name="time_delay_disturbance" containers="1">
+  <Tab containers="1" tab_name="time_delay_disturbance">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+    <DockSplitter orientation="-" count="1" sizes="1">
+     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
        <DockArea name="...">
-        <plot style="Lines" mode="TimeSeries">
-         <range top="1.131639" right="99.976910" bottom="-0.910271" left="0.000000"/>
+        <plot mode="TimeSeries" style="Lines">
+         <range right="69.402846" top="0.100000" left="0.000000" bottom="-0.100000"/>
          <limitY/>
-         <curve name="/simulation/output/disturbance_generator/acc_delayed_input" color="#eb1533"/>
-         <curve name="/simulation/output/disturbance_generator/acc_original_input" color="#2732d6"/>
+         <curve color="#eb1533" name="/simulation/output/disturbance_generator/acc_delayed_input"/>
+         <curve color="#2732d6" name="/simulation/output/disturbance_generator/acc_original_input"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" mode="TimeSeries">
-         <range top="0.105054" right="99.976910" bottom="0.094762" left="0.000000"/>
+        <plot mode="TimeSeries" style="Lines">
+         <range right="69.402846" top="0.100000" left="0.000000" bottom="-0.100000"/>
          <limitY/>
-         <curve name="/simulation/output/disturbance_generator/acc_time_delay_value" color="#1ac938"/>
+         <curve color="#1ac938" name="/simulation/output/disturbance_generator/acc_time_delay_value"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter sizes="0.500401;0.499599" orientation="-" count="2">
+      <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
        <DockArea name="...">
-        <plot style="Lines" mode="TimeSeries">
-         <range top="0.061361" right="99.976910" bottom="-0.354852" left="0.000000"/>
+        <plot mode="TimeSeries" style="Lines">
+         <range right="69.402846" top="0.100000" left="0.000000" bottom="-0.100000"/>
          <limitY/>
-         <curve name="/simulation/output/disturbance_generator/steer_delayed_input" color="#ff2a0e"/>
-         <curve name="/simulation/output/disturbance_generator/steer_original_input" color="#0000ea"/>
+         <curve color="#ff2a0e" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
+         <curve color="#0000ea" name="/simulation/output/disturbance_generator/steer_original_input"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" mode="TimeSeries">
-         <range top="0.252546" right="99.976910" bottom="0.229223" left="0.000000"/>
+        <plot mode="TimeSeries" style="Lines">
+         <range right="69.402846" top="0.249312" left="0.000000" bottom="0.229858"/>
          <limitY/>
-         <curve name="/simulation/output/disturbance_generator/steer_time_delay_value" color="#9467bd"/>
+         <curve color="#9467bd" name="/simulation/output/disturbance_generator/steer_time_delay_value"/>
         </plot>
        </DockArea>
       </DockSplitter>
@@ -43,27 +43,67 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="Road Slope" containers="1">
+  <Tab containers="1" tab_name="Road Slope">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
+    <DockSplitter orientation="-" count="1" sizes="1">
      <DockArea name="...">
-      <plot style="Lines" mode="TimeSeries">
-       <range top="0.100000" right="99.976910" bottom="-0.100000" left="0.000000"/>
+      <plot mode="TimeSeries" style="Lines">
+       <range right="69.402846" top="0.179769" left="0.000000" bottom="-0.179768"/>
        <limitY/>
-       <curve name="/simulation/output/disturbance_generator/road_slope_acc" color="#1f77b4"/>
+       <curve color="#1f77b4" name="/simulation/output/disturbance_generator/road_slope_acc"/>
       </plot>
      </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="0"/>
+  <Tab containers="1" tab_name="Deadzone">
+   <Container>
+    <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
+     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
+      <DockArea name="...">
+       <plot mode="TimeSeries" style="Lines">
+        <range right="121.699982" top="0.116701" left="21.726174" bottom="-0.086412"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/simulation/output/disturbance_generator/deadzone_input"/>
+        <curve color="#d62728" name="/simulation/output/disturbance_generator/deadzone_output"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot mode="TimeSeries" style="Lines">
+        <range right="121.699982" top="1.026289" left="21.726174" bottom="0.999359"/>
+        <limitY/>
+        <curve color="#1ac938" name="/simulation/output/disturbance_generator/left_deadzone_slope"/>
+        <curve color="#ff7f0e" name="/simulation/output/disturbance_generator/right_deadzone_slope"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
+      <DockArea name="...">
+       <plot mode="TimeSeries" style="Lines">
+        <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+        <limitY/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot mode="TimeSeries" style="Lines">
+        <range right="121.699982" top="0.101665" left="21.726174" bottom="-0.103011"/>
+        <limitY/>
+        <curve color="#f14cc1" name="/simulation/output/disturbance_generator/left_deadzone_threshold"/>
+        <curve color="#9467bd" name="/simulation/output/disturbance_generator/right_deadzone_threshold"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="2"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="1"/>
  <!-- - - - - - - - - - - - - - - -->
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>

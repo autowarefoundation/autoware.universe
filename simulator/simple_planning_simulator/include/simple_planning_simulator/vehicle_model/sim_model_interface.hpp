@@ -184,6 +184,12 @@ public:
     double getCurrentAccTimeDelay();
 
     double getCurrentRoadSlopeAccDisturbance();
+
+    // returns [ml, bl, mr, br]
+    std::array<double, 4> getCurrentDeadzoneParams();
+
+    // returns original and deadzoned inputs
+    std::pair<double, double> getCurrentDeadzoneDisturbanceInputs();
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_

@@ -421,8 +421,8 @@ namespace simulation
 
             try
             {
-                tier4_autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
-                tier4_autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
+                (void) tier4_autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
+                (void) tier4_autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
             }
             catch (const rclcpp::exceptions::InvalidParameterTypeException &e)
             {
@@ -437,8 +437,7 @@ namespace simulation
         {
             if (!is_initialized_)
             {
-                RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000,
-                                     "waiting initialization...");
+                RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting initialization...");
                 return;
             }
 
@@ -498,6 +497,21 @@ namespace simulation
             // Set road slope
             current_disturbance_gen_.road_slope_acc = static_cast<float32_t>(vehicle_model_ptr_->getCurrentRoadSlopeAccDisturbance());
 
+            // Set deadzone msg params
+            auto deadzone_params_array = vehicle_model_ptr_->getCurrentDeadzoneParams();
+            auto deadzone_input_output = vehicle_model_ptr_->getCurrentDeadzoneDisturbanceInputs();
+
+            current_disturbance_gen_.left_deadzone_slope = static_cast<float32_t>(deadzone_params_array[0]);
+            current_disturbance_gen_.left_deadzone_threshold = static_cast<float32_t>(deadzone_params_array[1]);
+
+            current_disturbance_gen_.right_deadzone_slope = static_cast<float32_t>(deadzone_params_array[2]);
+            current_disturbance_gen_.right_deadzone_threshold = static_cast<float32_t>(deadzone_params_array[3]);
+
+            current_disturbance_gen_.deadzone_input = static_cast<float32_t>(deadzone_input_output.first);
+            current_disturbance_gen_.deadzone_output = static_cast<float32_t>(deadzone_input_output.second);
+
+
+            // Publish
             pub_dist_generator_->publish(current_disturbance_gen_);
             // ns_utils::print("Current engage ", current_engage_);
         }
@@ -736,7 +750,7 @@ namespace simulation
                 catch (tf2::TransformException &ex)
                 {
                     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-                    rclcpp::sleep_for(std::chrono::milliseconds(500));
+                    (void) rclcpp::sleep_for(std::chrono::milliseconds(500));
                 }
             }
             return transform;

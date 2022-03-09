@@ -78,3 +78,14 @@ double SimModelInterface::getCurrentRoadSlopeAccDisturbance()
     return disturbance_collection_.road_slope_outputDisturbance_ptr_->getDisturbedOutput();
 }
 
+std::array<double, 4> SimModelInterface::getCurrentDeadzoneParams()
+{
+    return disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
+}
+
+std::pair<double, double> SimModelInterface::getCurrentDeadzoneDisturbanceInputs()
+{
+
+    return disturbance_collection_.steering_dedzone_ptr_->getOriginalAndDeadzonedInputs();
+}
+

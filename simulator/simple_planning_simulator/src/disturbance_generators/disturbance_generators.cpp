@@ -302,6 +302,7 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
 
     }
 
+    current_deadzoned_input_ = delta_u;
     current_deadzoned_output_ = delta_v;
 
     return current_deadzoned_output_;
