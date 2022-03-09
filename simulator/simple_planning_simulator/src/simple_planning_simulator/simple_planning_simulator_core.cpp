@@ -318,22 +318,26 @@ namespace simulation
             }
 
             // Steering Deadzone
-            const bool use_time_varying_dz = declare_parameter("dz_steer_use_time_varying_deadzone", false);
-            const float64_t dz_steer_mean_slope_variance = declare_parameter("dz_steer_mean_slope_variance", 0.1);
-            const float64_t dz_steer_mean_threshold = declare_parameter("dz_steer_mean_threshold", 0.1);
-            const float64_t dz_steer_threshold_variance = declare_parameter("dz_steer_threshold_variance", 0.1);
-            const float64_t dz_steer_sin_mag = declare_parameter("dz_steer_sin_mag", 0.1);
+            bool use_deadzone_disturbance = declare_parameter("use_deadzone_disturbance", false);
 
-            InputDisturbance_DeadZone steer_deadzone_dist_gen(dz_steer_mean_slope_variance,
-                                                              dz_steer_mean_threshold,
-                                                              dz_steer_threshold_variance,
-                                                              dz_steer_sin_mag,
-                                                              use_time_varying_dz);
+            if (use_deadzone_disturbance)
+            {
+                const bool use_time_varying_dz = declare_parameter("dz_steer_use_time_varying_deadzone", false);
+                const float64_t dz_steer_mean_slope_variance = declare_parameter("dz_steer_mean_slope_variance", 0.1);
+                const float64_t dz_steer_mean_threshold = declare_parameter("dz_steer_mean_threshold", 0.1);
+                const float64_t dz_steer_threshold_variance = declare_parameter("dz_steer_threshold_variance", 0.1);
+                const float64_t dz_steer_sin_mag = declare_parameter("dz_steer_sin_mag", 0.1);
 
-            disturbance_collection.steering_dedzone_ptr_ = std::make_shared<InputDisturbance_DeadZone>(
-                    steer_deadzone_dist_gen);
+                InputDisturbance_DeadZone steer_deadzone_dist_gen(dz_steer_mean_slope_variance,
+                                                                  dz_steer_mean_threshold,
+                                                                  dz_steer_threshold_variance,
+                                                                  dz_steer_sin_mag,
+                                                                  use_time_varying_dz);
 
+                disturbance_collection.steering_dedzone_ptr_ = std::make_shared<InputDisturbance_DeadZone>(
+                        steer_deadzone_dist_gen);
 
+            }
             // --- End of Disturbance Generator initialization -----
 
             if (vehicle_model_type_str == "IDEAL_STEER_VEL")
