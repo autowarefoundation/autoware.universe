@@ -138,6 +138,12 @@ public:
    */
   lanelet::Lanelets getLeftOppositeLanelets(const lanelet::ConstLanelet & lanelet) const;
 
+  lanelet::ConstLanelets getAllLeftSharedLinestringLanelets(
+    const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept;
+
+  lanelet::ConstLanelets getAllRightSharedLinestringLanelets(
+    const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept;
+
   lanelet::ConstLanelets getAllSharedLineStringLanelets(
     const lanelet::ConstLanelet & current_lane, bool is_right = true, bool is_left = true,
     bool is_opposite = true) const noexcept;
