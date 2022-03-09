@@ -2,7 +2,7 @@
 
 ## Purpose
 
-To ensure the perfomance of LiDAR and safety for autonomous driving, the abnormal condition diagnositcs feature is needed.
+To ensure the performance of LiDAR and safety for autonomous driving, the abnormal condition diagnostics feature is needed.
 LiDAR blockage is abnormal condition of LiDAR when some unwanted objects stitch to and block the light pulses and return signal.
 This node's purpose is to detect the existing of blockage on LiDAR and its related size and location.
 
