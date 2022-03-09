@@ -31,6 +31,8 @@
 constexpr double ZERO_VEL_THRESHOLD = 0.01;
 constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 
+namespace
+{
 std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
 {
   std::stringstream ss;
@@ -56,6 +58,7 @@ inline tf2::Vector3 getTransVector3(
   double dz = to.position.z - from.position.z;
   return tf2::Vector3(dx, dy, dz);
 }
+}  // namespace
 
 ObstacleVelocityPlanner::ObstacleVelocityPlanner(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_velocity_planner", node_options), self_pose_listener_(this), previous_acc_(0.0)
@@ -94,6 +97,8 @@ ObstacleVelocityPlanner::ObstacleVelocityPlanner(const rclcpp::NodeOptions & nod
     create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/distance_to_closest_obj", 1);
   debug_calculation_time_ =
     create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/calculation_time", 1);
+  debug_marker_pub_ =
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", 1);
 
   // Obstacle
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
@@ -200,76 +205,106 @@ void ObstacleVelocityPlanner::trajectoryCallback(
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  if (msg->points.empty() || !current_twist_ptr_) {
+  if (msg->points.empty() || !current_twist_ptr_ || !in_objects_ptr_) {
     return;
   }
 
-  // Get Current Pose
-  current_pose_ptr_ = self_pose_listener_.getCurrentPose();
+  // Prepare algorithmic data
+  ObstacleVelocityPlannerData planner_data;
+  planner_data.traj = *msg;
+  planner_data.current_pose = self_pose_listener_.getCurrentPose()->pose;
+  planner_data.current_vel = current_twist_ptr_->twist.linear.x;
+  planner_data.external_velocity_limit = external_velocity_limit_;
+  planner_data.target_objects = filterObjects(planner_data.current_pose);
 
+  // generate Trajectory
+  const auto output = generateTrajectory(planner_data);
+
+  // Publish trajectory
+  prev_output_ = output;
+  trajectory_pub_->publish(output);
+}
+
+autoware_auto_perception_msgs::msg::PredictedObjects ObstacleVelocityPlanner::filterObjects(
+  const geometry_msgs::msg::Pose & current_pose)
+{
+  autoware_auto_perception_msgs::msg::PredictedObjects target_objects = *in_objects_ptr_;
+  target_objects.objects.clear();
+
+  const auto surrounding_lanelets = getSurroundingLanelets(current_pose);
+
+  for (const auto & obj : in_objects_ptr_->objects) {
+    // Step1. Ignore obstacles that are not vehicles
+    if (
+      obj.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::CAR &&
+      obj.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK &&
+      obj.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::BUS &&
+      obj.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
+      // RCLCPP_DEBUG(get_logger(), "Ignore non-vehicle obstacle");
+      continue;
+    }
+
+    // Step2. Check if the object is on the map
+    if (use_hd_map_ && !checkOnMapObject(obj, surrounding_lanelets)) {
+      continue;
+    }
+
+    // Step3 Check the predicted path
+    if (obj.kinematics.predicted_paths.empty()) {
+      // RCLCPP_DEBUG(get_logger(), "This object does not have predicted paths");
+      continue;
+    }
+
+    target_objects.objects.push_back(obj);
+  }
+
+  return target_objects;
+}
+
+autoware_auto_planning_msgs::msg::Trajectory ObstacleVelocityPlanner::generateTrajectory(
+  const ObstacleVelocityPlannerData & planner_data)
+{
   // Create Time Vector defined by resampling time interval
-  std::vector<double> time_vec;
-  for (double t = 0.0; t < dense_time_horizon_; t += dense_resampling_time_interval_) {
-    time_vec.push_back(t);
-  }
-  if (dense_time_horizon_ - time_vec.back() < 1e-3) {
-    time_vec.back() = dense_time_horizon_;
-  } else {
-    time_vec.push_back(dense_time_horizon_);
-  }
-
-  for (double t = dense_time_horizon_ + sparse_resampling_time_interval_; t < max_time_horizon_;
-       t += sparse_resampling_time_interval_) {
-    time_vec.push_back(t);
-  }
-  if (max_time_horizon_ - time_vec.back() < 1e-3) {
-    time_vec.back() = max_time_horizon_;
-  } else {
-    time_vec.push_back(max_time_horizon_);
-  }
-
+  const std::vector<double> time_vec = createTimeVector();
   if (time_vec.size() < 2) {
     RCLCPP_ERROR(get_logger(), "Resolution size is not enough");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Get the nearest point on the trajectory
   const auto closest_idx = tier4_autoware_utils::findNearestIndex(
-    msg->points, current_pose_ptr_->pose, delta_yaw_threshold_of_nearest_index_);
-
-  // Check validity of the closest index
-  if (!closest_idx) {
+    planner_data.traj.points, planner_data.current_pose, delta_yaw_threshold_of_nearest_index_);
+  if (!closest_idx) {  // Check validity of the closest index
     RCLCPP_ERROR(get_logger(), "Closest Index is Invalid");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Transform original trajectory to TrajectoryData
-  const auto base_traj_data = getTrajectoryData(*msg, *closest_idx);
+  const auto base_traj_data = getTrajectoryData(planner_data.traj, *closest_idx);
   if (base_traj_data.traj.points.size() < 2) {
     RCLCPP_DEBUG(get_logger(), "The number of points on the trajectory data is too small");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Get Closest Stop Point for static obstacles
-  double closest_stop_dist = getClosestStopDistance(base_traj_data, time_vec);
+  double closest_stop_dist = getClosestStopDistance(planner_data, base_traj_data, time_vec);
 
   // Compute maximum velocity
   double v_max = 0.0;
-  for (const auto & point : msg->points) {
+  for (const auto & point : planner_data.traj.points) {
     v_max = std::max(v_max, static_cast<double>(point.longitudinal_velocity_mps));
   }
-  v_max = std::min(v_max, external_velocity_limit_);
+  v_max = std::min(v_max, planner_data.external_velocity_limit);
 
   // Get Current Velocity
   double v0;
   double a0;
-  std::tie(v0, a0) = calcInitialMotion(*msg, *closest_idx, prev_output_, closest_stop_dist);
+  std::tie(v0, a0) = calcInitialMotion(
+    planner_data.current_vel, planner_data.traj, *closest_idx, prev_output_, closest_stop_dist);
   v0 = std::min(v0 + initial_velocity_margin_, v_max);
   a0 = std::min(max_accel_, std::max(a0, min_accel_));
 
@@ -277,29 +312,23 @@ void ObstacleVelocityPlanner::trajectoryCallback(
   if (closest_stop_dist < 0.01) {
     RCLCPP_DEBUG(get_logger(), "Closest Stop Point is too close");
 
-    auto output_traj = *msg;
+    auto output_traj = planner_data.traj;
     output_traj.points.at(*closest_idx).longitudinal_velocity_mps = v0;
     for (size_t i = *closest_idx + 1; i < output_traj.points.size(); ++i) {
       output_traj.points.at(i).longitudinal_velocity_mps = 0.0;
     }
-    trajectory_pub_->publish(output_traj);
-    prev_output_ = output_traj;
-    return;
+    return output_traj;
   }
 
   // Check trajectory size
-  if (msg->points.size() - *closest_idx <= 2) {
+  if (planner_data.traj.points.size() - *closest_idx <= 2) {
     RCLCPP_DEBUG(get_logger(), "The number of points on the trajectory is too small");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Check if reached goal
-  if (checkHasReachedGoal(*msg, *closest_idx, v0) || !enable_adaptive_cruise_) {
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+  if (checkHasReachedGoal(planner_data.traj, *closest_idx, v0) || !enable_adaptive_cruise_) {
+    return planner_data.traj;
   }
 
   // Resample base trajectory data by time
@@ -308,18 +337,14 @@ void ObstacleVelocityPlanner::trajectoryCallback(
   if (resampled_traj_data.traj.points.size() < 2) {
     RCLCPP_DEBUG(
       get_logger(), "The number of points on the resampled trajectory data is too small");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Get S Boundaries from the obstacle
-  const auto s_boundaries = getSBoundaries(current_pose_ptr_->pose, resampled_traj_data, time_vec);
+  const auto s_boundaries = getSBoundaries(planner_data, resampled_traj_data, time_vec);
   if (!s_boundaries) {
     RCLCPP_DEBUG(get_logger(), "No Dangerous Objects around the ego vehicle");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Optimization
@@ -349,34 +374,29 @@ void ObstacleVelocityPlanner::trajectoryCallback(
   RCLCPP_DEBUG(get_logger(), "Optimization Time; %f[ms]", calculation_time_data.data);
 
   // Publish Debug trajectories
-  publishDebugTrajectory(*msg, *closest_idx, time_vec, *s_boundaries, optimized_result);
+  publishDebugTrajectory(
+    planner_data.traj, *closest_idx, time_vec, *s_boundaries, optimized_result);
 
   // Transformation from t to s
   const auto processed_result = processOptimizedResult(data.v0, optimized_result);
   if (!processed_result) {
     RCLCPP_DEBUG(get_logger(), "Processed Result is empty");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
   const auto & opt_position = processed_result->s;
   const auto & opt_velocity = processed_result->v;
 
   // Check Size
   if (opt_position.size() == 1 && opt_velocity.front() < ZERO_VEL_THRESHOLD) {
-    auto output = *msg;
+    auto output = planner_data.traj;
     output.points.at(*closest_idx).longitudinal_velocity_mps = data.v0;
     for (size_t i = *closest_idx + 1; i < output.points.size(); ++i) {
       output.points.at(i).longitudinal_velocity_mps = 0.0;
     }
-    trajectory_pub_->publish(output);
-    prev_output_ = output;
-    return;
+    return output;
   } else if (opt_position.size() == 1) {
     RCLCPP_DEBUG(get_logger(), "Optimized Trajectory is too small");
-    trajectory_pub_->publish(*msg);
-    prev_output_ = *msg;
-    return;
+    return planner_data.traj;
   }
 
   // Get Zero Velocity Position
@@ -447,9 +467,9 @@ void ObstacleVelocityPlanner::trajectoryCallback(
   }
 
   autoware_auto_planning_msgs::msg::Trajectory output;
-  output.header = msg->header;
+  output.header = planner_data.traj.header;
   for (size_t i = 0; i < *closest_idx; ++i) {
-    auto point = msg->points.at(i);
+    auto point = planner_data.traj.points.at(i);
     point.longitudinal_velocity_mps = data.v0;
     output.points.push_back(point);
   }
@@ -466,12 +486,37 @@ void ObstacleVelocityPlanner::trajectoryCallback(
     }
   }
 
-  prev_output_ = output;
-  trajectory_pub_->publish(output);
+  return output;
+}
+
+std::vector<double> ObstacleVelocityPlanner::createTimeVector()
+{
+  std::vector<double> time_vec;
+  for (double t = 0.0; t < dense_time_horizon_; t += dense_resampling_time_interval_) {
+    time_vec.push_back(t);
+  }
+  if (dense_time_horizon_ - time_vec.back() < 1e-3) {
+    time_vec.back() = dense_time_horizon_;
+  } else {
+    time_vec.push_back(dense_time_horizon_);
+  }
+
+  for (double t = dense_time_horizon_ + sparse_resampling_time_interval_; t < max_time_horizon_;
+       t += sparse_resampling_time_interval_) {
+    time_vec.push_back(t);
+  }
+  if (max_time_horizon_ - time_vec.back() < 1e-3) {
+    time_vec.back() = max_time_horizon_;
+  } else {
+    time_vec.push_back(max_time_horizon_);
+  }
+
+  return time_vec;
 }
 
 double ObstacleVelocityPlanner::getClosestStopDistance(
-  const TrajectoryData & ego_traj_data, const std::vector<double> & resolutions)
+  const ObstacleVelocityPlannerData & planner_data, const TrajectoryData & ego_traj_data,
+  const std::vector<double> & resolutions)
 {
   const auto current_time = get_clock()->now();
   double closest_stop_dist = ego_traj_data.s.back();
@@ -480,14 +525,11 @@ double ObstacleVelocityPlanner::getClosestStopDistance(
   closest_stop_dist = closest_stop_id
                         ? std::min(closest_stop_dist, ego_traj_data.s.at(*closest_stop_id))
                         : closest_stop_dist;
-  if (!in_objects_ptr_) {
-    return closest_stop_dist;
-  }
 
   double closest_obj_distance = ego_traj_data.s.back();
   autoware_auto_perception_msgs::msg::PredictedObject closest_obj;
-  const auto obj_base_time = rclcpp::Time(in_objects_ptr_->header.stamp);
-  for (const auto & obj : in_objects_ptr_->objects) {
+  const auto obj_base_time = rclcpp::Time(planner_data.target_objects.header.stamp);
+  for (const auto & obj : planner_data.target_objects.objects) {
     // Step1. Ignore obstacles that are not vehicles
     if (
       obj.classification.at(0).label !=
@@ -581,10 +623,11 @@ double ObstacleVelocityPlanner::getClosestStopDistance(
 
 // v0, a0
 std::tuple<double, double> ObstacleVelocityPlanner::calcInitialMotion(
-  const autoware_auto_planning_msgs::msg::Trajectory & input_traj, const size_t input_closest,
-  const autoware_auto_planning_msgs::msg::Trajectory & prev_traj, const double closest_stop_dist)
+  const double current_vel, const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
+  const size_t input_closest, const autoware_auto_planning_msgs::msg::Trajectory & prev_traj,
+  const double closest_stop_dist)
 {
-  const double vehicle_speed{std::fabs(current_twist_ptr_->twist.linear.x)};
+  const double vehicle_speed{std::fabs(current_vel)};
   const double target_vel{std::fabs(input_traj.points.at(input_closest).longitudinal_velocity_mps)};
 
   double initial_vel{};
@@ -846,63 +889,100 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleVelocityPlanner::resampleTr
 }
 
 boost::optional<SBoundaries> ObstacleVelocityPlanner::getSBoundaries(
-  const geometry_msgs::msg::Pose & current_pose, const TrajectoryData & ego_traj_data,
+  const ObstacleVelocityPlannerData & planner_data, const TrajectoryData & ego_traj_data,
   const std::vector<double> & time_vec)
 {
-  if (!in_objects_ptr_ || ego_traj_data.traj.points.empty()) {
+  if (ego_traj_data.traj.points.empty()) {
     return boost::none;
   }
-  const auto surrounding_lanelets = getSurroundingLanelets(current_pose);
+
+  const auto current_time = get_clock()->now();
 
   SBoundaries s_boundaries(time_vec.size());
   for (size_t i = 0; i < s_boundaries.size(); ++i) {
     s_boundaries.at(i).max_s = ego_traj_data.s.back();
   }
 
-  const auto obj_base_time = rclcpp::Time(in_objects_ptr_->header.stamp);
-  for (const auto & obj : in_objects_ptr_->objects) {
-    // Step1. Ignore obstacles that are not vehicles
-    if (
-      obj.classification.at(0).label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::CAR &&
-      obj.classification.at(0).label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK &&
-      obj.classification.at(0).label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::BUS &&
-      obj.classification.at(0).label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
-      // RCLCPP_DEBUG(get_logger(), "Ignore non-vehicle obstacle");
-      continue;
-    }
-
-    // Step2. Check if the object is on the map
-    if (use_hd_map_ && !checkOnMapObject(obj, surrounding_lanelets)) {
-      continue;
-    }
-
-    // Step3 Check object position
+  const auto obj_base_time = rclcpp::Time(planner_data.target_objects.header.stamp);
+  double min_slow_down_point_length = std::numeric_limits<double>::max();
+  boost::optional<size_t> min_slow_down_idx = {};
+  for (size_t o_idx = 0; o_idx < planner_data.target_objects.objects.size(); ++o_idx) {
+    const auto & obj = planner_data.target_objects.objects.at(o_idx);
+    // Step1 Check object position
     if (!checkIsFrontObject(obj, ego_traj_data.traj)) {
       // RCLCPP_DEBUG(get_logger(), "Ignore obstacle behind the trajectory");
       continue;
     }
 
-    // Step4 Check the predicted path
-    if (obj.kinematics.predicted_paths.empty()) {
-      // RCLCPP_DEBUG(get_logger(), "This object does not have predicted paths");
-      continue;
-    }
-
-    // Step5 Get S boundary from the obstacle
+    // Step2 Get S boundary from the obstacle
     const auto obj_s_boundaries = getSBoundaries(ego_traj_data, obj, obj_base_time, time_vec);
     if (!obj_s_boundaries) {
       continue;
     }
 
-    // Step6 update s boundaries
+    // Step3 update s boundaries
     for (size_t i = 0; i < obj_s_boundaries->size(); ++i) {
       if (obj_s_boundaries->at(i).max_s < s_boundaries.at(i).max_s) {
         s_boundaries.at(i) = obj_s_boundaries->at(i);
       }
+    }
+
+    // Calculate Safety Distance
+    const double object_offset = obj.shape.dimensions.x / 2.0;
+
+    // Step4 search nearest obstacle to follow for rviz marker
+    const auto predicted_path =
+      resampledPredictedPath(obj, obj_base_time, current_time, time_vec, max_time_horizon_);
+
+    const auto current_object_pose =
+      getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
+
+    const double obj_vel = std::fabs(obj.kinematics.initial_twist_with_covariance.twist.linear.x);
+    const double rss_dist =
+      planner_data.current_vel * t_idling_ + 0.5 * max_accel_ * std::pow(t_idling_, 2) +
+      std::pow(planner_data.current_vel + max_accel_ * t_idling_, 2) * 0.5 / std::abs(min_accel_) -
+      std::pow(obj_vel, 2) * 0.5 / std::abs(min_object_accel_);
+
+    const double ego_obj_length = tier4_autoware_utils::calcSignedArcLength(
+      ego_traj_data.traj.points, planner_data.current_pose.position,
+      current_object_pose.get().position);
+    const double slow_down_point_length =
+      ego_obj_length - (rss_dist + object_offset + safe_distance_margin_);
+
+    if (slow_down_point_length < min_slow_down_point_length) {
+      min_slow_down_point_length = slow_down_point_length;
+      min_slow_down_idx = o_idx;
+    }
+  }
+
+  // Publish wall marker for slowing down or stopping
+  if (min_slow_down_idx) {
+    const auto & obj = planner_data.target_objects.objects.at(min_slow_down_idx.get());
+
+    const auto predicted_path =
+      resampledPredictedPath(obj, obj_base_time, current_time, time_vec, max_time_horizon_);
+
+    const auto current_object_pose =
+      getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
+
+    const auto marker_pose = calcForwardPose(
+      ego_traj_data, planner_data.current_pose.position, min_slow_down_point_length);
+
+    if (marker_pose) {
+      visualization_msgs::msg::MarkerArray msg;
+
+      const double obj_vel = std::fabs(obj.kinematics.initial_twist_with_covariance.twist.linear.x);
+      if (obj_vel < object_zero_velocity_threshold_) {
+        const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
+          marker_pose.get(), "obstacle to follow", current_time, 0);
+        tier4_autoware_utils::appendMarkerArray(markers, &msg);
+      } else {
+        const auto markers = tier4_autoware_utils::createSlowDownVirtualWallMarker(
+          marker_pose.get(), "obstacle to follow", current_time, 0);
+        tier4_autoware_utils::appendMarkerArray(markers, &msg);
+      }
+
+      debug_marker_pub_->publish(msg);
     }
   }
 
@@ -1129,6 +1209,54 @@ boost::optional<double> ObstacleVelocityPlanner::getDistanceToCollisionPoint(
   return boost::none;
 }
 
+boost::optional<geometry_msgs::msg::Pose> ObstacleVelocityPlanner::calcForwardPose(
+  const TrajectoryData & ego_traj_data, const geometry_msgs::msg::Point & point,
+  const double target_length)
+{
+  const size_t nearest_idx =
+    tier4_autoware_utils::findNearestIndex(ego_traj_data.traj.points, point);
+
+  size_t search_idx = nearest_idx;
+  double length_to_search_idx;
+  for (; search_idx < ego_traj_data.traj.points.size(); ++search_idx) {
+    length_to_search_idx =
+      tier4_autoware_utils::calcSignedArcLength(ego_traj_data.traj.points, point, search_idx);
+    if (length_to_search_idx > target_length) {
+      break;
+    } else if (search_idx == ego_traj_data.traj.points.size() - 1) {
+      return {};
+    }
+  }
+
+  if (search_idx == 0) {
+    return {};
+  }
+
+  const auto & pre_pose = ego_traj_data.traj.points.at(search_idx - 1).pose;
+  const auto & next_pose = ego_traj_data.traj.points.at(search_idx).pose;
+
+  geometry_msgs::msg::Pose target_pose;
+
+  // lerp position
+  const double seg_length =
+    tier4_autoware_utils::calcDistance2d(pre_pose.position, next_pose.position);
+  const double lerp_ratio = (length_to_search_idx - target_length) / seg_length;
+  target_pose.position.x =
+    pre_pose.position.x + (next_pose.position.x - pre_pose.position.x) * lerp_ratio;
+  target_pose.position.y =
+    pre_pose.position.y + (next_pose.position.y - pre_pose.position.y) * lerp_ratio;
+  target_pose.position.z =
+    pre_pose.position.z + (next_pose.position.z - pre_pose.position.z) * lerp_ratio;
+
+  // lerp orientation
+  const double pre_yaw = tf2::getYaw(pre_pose.orientation);
+  const double next_yaw = tf2::getYaw(next_pose.orientation);
+  target_pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(pre_yaw + (next_yaw - pre_yaw) * lerp_ratio);
+
+  return target_pose;
+}
+
 double ObstacleVelocityPlanner::getObjectLongitudinalPosition(
   const TrajectoryData & traj_data, const geometry_msgs::msg::Pose & obj_pose)
 {
@@ -1319,8 +1447,15 @@ ObstacleVelocityPlanner::resampledPredictedPath(
     });
 
   // Resample Predicted Path
-  const double duration =
-    std::min(std::max((obj_base_time + rclcpp::Duration(reliable_path->time_step) * (static_cast<double>(reliable_path->path.size()) - 1) - current_time).seconds(), 0.0), horizon);
+  const double duration = std::min(
+    std::max(
+      (obj_base_time +
+       rclcpp::Duration(reliable_path->time_step) *
+         (static_cast<double>(reliable_path->path.size()) - 1) -
+       current_time)
+        .seconds(),
+      0.0),
+    horizon);
 
   // Calculate relative valid time vector
   // rel_valid_time_vec is relative to obj_base_time.
@@ -1338,7 +1473,10 @@ ObstacleVelocityPlanner::getCurrentObjectPoseFromPredictedPath(
   for (size_t i = 0; i < predicted_path.path.size(); ++i) {
     const auto & obj_p = predicted_path.path.at(i);
 
-    const double object_time = (obj_base_time + rclcpp::Duration(predicted_path.time_step) * static_cast<double>(i) - current_time).seconds();
+    const double object_time =
+      (obj_base_time + rclcpp::Duration(predicted_path.time_step) * static_cast<double>(i) -
+       current_time)
+        .seconds();
     if (object_time >= 0) {
       return obj_p;
     }

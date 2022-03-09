@@ -35,6 +35,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/optional.hpp>
 
@@ -72,6 +73,15 @@ public:
   explicit ObstacleVelocityPlanner(const rclcpp::NodeOptions & node_options);
 
 private:
+  struct ObstacleVelocityPlannerData
+  {
+    autoware_auto_planning_msgs::msg::Trajectory traj;
+    geometry_msgs::msg::Pose current_pose;
+    double current_vel;
+    double external_velocity_limit;
+    autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
+  };
+
   // Callback Functions
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
 
@@ -87,12 +97,22 @@ private:
   void onExternalVelocityLimit(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
 
   // Member Functions
+  autoware_auto_perception_msgs::msg::PredictedObjects filterObjects(
+    const geometry_msgs::msg::Pose & current_pose);
+
+  autoware_auto_planning_msgs::msg::Trajectory generateTrajectory(
+    const ObstacleVelocityPlannerData & planner_data);
+
+  std::vector<double> createTimeVector();
+
   double getClosestStopDistance(
-    const TrajectoryData & ego_traj_data, const std::vector<double> & resolutions);
+    const ObstacleVelocityPlannerData & planner_data, const TrajectoryData & ego_traj_data,
+    const std::vector<double> & resolutions);
 
   std::tuple<double, double> calcInitialMotion(
-    const autoware_auto_planning_msgs::msg::Trajectory & input_traj, const size_t input_closest,
-    const autoware_auto_planning_msgs::msg::Trajectory & prev_traj, const double closest_stop_dist);
+    const double current_vel, const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
+    const size_t input_closest, const autoware_auto_planning_msgs::msg::Trajectory & prev_traj,
+    const double closest_stop_dist);
 
   autoware_auto_planning_msgs::msg::TrajectoryPoint calcInterpolatedTrajectoryPoint(
     const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
@@ -115,7 +135,7 @@ private:
     const std::vector<double> & query_index, const bool use_spline_for_pose = false);
 
   boost::optional<SBoundaries> getSBoundaries(
-    const geometry_msgs::msg::Pose & current_pose, const TrajectoryData & ego_traj_data,
+    const ObstacleVelocityPlannerData & planner_data, const TrajectoryData & ego_traj_data,
     const std::vector<double> & time_vec);
 
   boost::optional<SBoundaries> getSBoundaries(
@@ -159,6 +179,10 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
     const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time);
 
+  boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
+    const TrajectoryData & ego_traj_data, const geometry_msgs::msg::Point & point,
+    const double target_length);
+
   boost::optional<double> getDistanceToCollisionPoint(
     const TrajectoryData & ego_traj_data, const ObjectData & obj_data,
     const double delta_yaw_threshold);
@@ -201,6 +225,7 @@ private:
     optimized_st_graph_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr distance_to_closest_obj_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr debug_calculation_time_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
 
   // Calculation time watcher
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
@@ -217,7 +242,6 @@ private:
 
   // Data for callback functions
   autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr in_objects_ptr_;
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_ptr_;  // current vehicle pose
 
   // Velocity and Acceleration data
   geometry_msgs::msg::TwistStamped::SharedPtr current_twist_ptr_;
