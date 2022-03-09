@@ -258,32 +258,38 @@ namespace simulation
             }
 
             // Read acc time-varying time delay disturbance parameters.
-            const bool acc_use_time_varying_td = declare_parameter("acc_use_time_varying_td", false);
-            const float64_t acc_td_changes_every_xsecs = declare_parameter("acc_td_changes_every_xsecs",
-                                                                           5.0); // do not set to 0.
+            bool use_acceleration_input_delay = declare_parameter("use_acceleration_input_delay", false);
 
-            const float64_t acc_exp_lambda = 1. / acc_td_changes_every_xsecs; // exponential distribution rate.
-
-            // Percentage
-            const float64_t acc_td_delta_sin_mag_percent =
-                    declare_parameter("acc_td_delta_sin_mag_percent", 5.0) / 100.;
-
-            const float64_t acc_td_angular_speed = declare_parameter("acc_td_angular_speed", 0.1);
-            const size_t acc_td_pade_order = static_cast<size_t>(declare_parameter("acc_td_pade_order", 2));
-
-            // ACCELERATION Time DELAY
-            if (std::fabs(acc_time_delay) >= EPS)
+            if (use_acceleration_input_delay)
             {
-                DelayModelSISO acc_delay_siso_model(acc_time_delay, acc_td_pade_order, dt);
-                InputDisturbance_TimeDelayPade acc_td_time_varying_dist_gen(acc_delay_siso_model,
-                                                                            acc_exp_lambda,
-                                                                            acc_td_delta_sin_mag_percent,
-                                                                            acc_td_angular_speed,
-                                                                            acc_use_time_varying_td);
+                const bool acc_use_time_varying_td = declare_parameter("acc_use_time_varying_td", false);
+                const float64_t acc_td_changes_every_xsecs = declare_parameter("acc_td_changes_every_xsecs",
+                                                                               5.0); // do not set to 0.
+
+                const float64_t acc_exp_lambda = 1. / acc_td_changes_every_xsecs; // exponential distribution rate.
+
+                // Percentage
+                const float64_t acc_td_delta_sin_mag_percent =
+                        declare_parameter("acc_td_delta_sin_mag_percent", 5.0) / 100.;
+
+                const float64_t acc_td_angular_speed = declare_parameter("acc_td_angular_speed", 0.1);
+                const size_t acc_td_pade_order = static_cast<size_t>(declare_parameter("acc_td_pade_order", 2));
+
+                // ACCELERATION Time DELAY
+                if (std::fabs(acc_time_delay) >= EPS)
+                {
+                    DelayModelSISO acc_delay_siso_model(acc_time_delay, acc_td_pade_order, dt);
+                    InputDisturbance_TimeDelayPade acc_td_time_varying_dist_gen(acc_delay_siso_model,
+                                                                                acc_exp_lambda,
+                                                                                acc_td_delta_sin_mag_percent,
+                                                                                acc_td_angular_speed,
+                                                                                acc_use_time_varying_td);
 
 
-                disturbance_collection.acc_inputDisturbance_time_delay_ptr_ =
-                        std::make_shared<InputDisturbance_TimeDelayPade>(acc_td_time_varying_dist_gen);
+                    disturbance_collection.acc_inputDisturbance_time_delay_ptr_ =
+                            std::make_shared<InputDisturbance_TimeDelayPade>(acc_td_time_varying_dist_gen);
+
+                }
 
             }
 

@@ -34,6 +34,7 @@
 
         # --------------- ACCELERATION TIME-VARYING TIME DELAY DISTURBANCE -------------
         # Time-varying input delay parameters for longitudinal control input.
+        use_acceleration_input_delay: false
         acc_use_time_varying_td: false  # to use input varying delay
         acc_td_pade_order: 2 # size_t order of Pade approximation.
 
