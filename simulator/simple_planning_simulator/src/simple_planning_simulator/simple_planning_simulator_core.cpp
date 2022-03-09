@@ -325,7 +325,9 @@ namespace simulation
                 const bool use_time_varying_dz = declare_parameter("dz_steer_use_time_varying_deadzone", false);
                 const float64_t dz_steer_mean_slope_variance = declare_parameter("dz_steer_mean_slope_variance", 0.1);
                 const float64_t dz_steer_mean_threshold = declare_parameter("dz_steer_mean_threshold", 0.1);
-                const float64_t dz_steer_threshold_variance = declare_parameter("dz_steer_threshold_variance", 0.1);
+
+                // Percent
+                const float64_t dz_steer_threshold_variance = declare_parameter("dz_steer_threshold_variance", 20.0);
                 const float64_t dz_steer_sin_mag = declare_parameter("dz_steer_sin_mag", 0.1);
 
                 InputDisturbance_DeadZone steer_deadzone_dist_gen(dz_steer_mean_slope_variance,

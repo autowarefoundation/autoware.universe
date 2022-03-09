@@ -49,7 +49,7 @@
         use_deadzone_disturbance: true
         dz_steer_use_time_varying_deadzone: true
         dz_steer_mean_slope_variance: 0.1 # must be smaller than 0.5 and positive
-        dz_steer_mean_threshold: 0.1 # model dependent, for steering ~ 0 - 0.2
+        dz_steer_mean_threshold: 0.05 # model dependent deadzone threshold, for steering ~ 0 - 0.2
         dz_steer_threshold_variance: 20.0 # percentage of mean threshold
         dz_steer_sin_mag: 0.1 # added to and must be proportional the slope
 

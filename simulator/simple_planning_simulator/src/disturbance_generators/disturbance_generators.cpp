@@ -209,9 +209,9 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance
                                                                                                       use_time_varying_deadzone}
 {
 
-    if (m_lr_variance < 0. || m_lr_variance > 0.5)
+    if (m_lr_variance < 0. || m_lr_variance > 1.0)
     {
-        throw std::invalid_argument("Slope variance should not exceed 0.5 and must be positive");
+        throw std::invalid_argument("Slope variance should not exceed 1.0 and must be positive");
     }
 
     /**
@@ -232,13 +232,29 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance
     // Initialize the slope sampler.
     auto slope_low = 1.0 - m_lr_variance / 2.;
     auto slope_high = 1.0 + m_lr_variance / 2.;
-    sampler_m_ = std::uniform_real_distribution<double>(slope_low, slope_high);
+    sampler_m_ = std::uniform_real_distribution<>(slope_low, slope_high);
 
     // Initialize the threshold sampler.
     auto b_var = b_lr_mean * b_lr_variance_in_percent / 100.;
     auto b_low = b_lr_mean - b_var / 2.;
     auto b_high = b_lr_mean + b_var / 2.;
-    sampler_b_ = std::uniform_real_distribution<double>(b_low, b_high);
+    sampler_b_ = std::uniform_real_distribution<>(b_low, b_high);
+
+    // Sample parameters and set
+    if (use_time_varying_deadzone_)
+    {
+        current_ml_slope_ = sampler_m_(generator_);
+        current_mr_slope_ = sampler_m_(generator_);
+
+        current_br_threshold_ = sampler_b_(generator_);
+        current_bl_threshold_ = -1.0 * sampler_b_(generator_);
+    } else
+    {
+        current_br_threshold_ = b_lr_mean;
+        current_bl_threshold_ = -b_lr_mean;
+        current_ml_slope_ = 1.0;
+        current_mr_slope_ = 1.0;
+    }
 
 }
 
@@ -248,32 +264,37 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
 
     double delta_v{}; // deadzone output
 
-    // Sample sinus phase.
-    phi_phase_ = sampler_phi_(generator_);
-
     // if time-varying deadzone, sample
     if (use_time_varying_deadzone_)
     {
+
+        // Sample sinus phase.
         // Change random seed
         std::random_device dev;
         generator_ = std::mt19937(dev());
+        phi_phase_ = sampler_phi_(generator_);
 
+        // Sample a slope and threshold - Both are always positive
+        double m_slope_sample = sampler_m_(generator_);
+        double b_deadzone_thr = sampler_b_(generator_);
 
-        if (delta_u > current_br_threshold_)
+        ns_utils::print("In deadzone sampling, sampled slope and deadzone ", m_slope_sample, b_deadzone_thr);
+
+        if (delta_u > b_deadzone_thr)
         {
-            // sample the slope. must be positive for all occasions.
-            current_mr_slope_ = sampler_m_(generator_);
-            current_br_threshold_ = sampler_b_(generator_);
-
+            current_mr_slope_ = m_slope_sample;
+            current_br_threshold_ = b_deadzone_thr;
 
             delta_v = current_mr_slope_ *
                       (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_br_threshold_);
 
-        } else if (delta_u < current_bl_threshold_)
+        } else if (delta_u < -1.0 * b_deadzone_thr)
         {
-            // sample the slope. must be positive for all occasions.
-            current_ml_slope_ = sampler_m_(generator_);
-            current_bl_threshold_ = -1. * sampler_b_(generator_);
+
+            current_ml_slope_ = m_slope_sample;
+            current_bl_threshold_ = -1. * b_deadzone_thr;
+
+            ns_utils::print("sampled slope ", current_ml_slope_);
 
             delta_v = current_ml_slope_ *
                       (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_bl_threshold_);
@@ -286,7 +307,6 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
 
     } else // omit sinusoidal part.
     {
-
         if (delta_u > current_br_threshold_)
         {
             delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);

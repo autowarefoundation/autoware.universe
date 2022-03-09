@@ -1,22 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget parent="main_window" name="Main Window">
+ <tabbed_widget name="Main Window" parent="main_window">
   <Tab containers="1" tab_name="time_delay_disturbance">
    <Container>
     <DockSplitter orientation="-" count="1" sizes="1">
      <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
       <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="69.402846" top="0.100000" left="0.000000" bottom="-0.100000"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range top="-0.020233" right="0.999844" left="0.000000" bottom="-0.630851"/>
          <limitY/>
          <curve color="#eb1533" name="/simulation/output/disturbance_generator/acc_delayed_input"/>
          <curve color="#2732d6" name="/simulation/output/disturbance_generator/acc_original_input"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="69.402846" top="0.100000" left="0.000000" bottom="-0.100000"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range top="0.100000" right="0.999844" left="0.000000" bottom="-0.100000"/>
          <limitY/>
          <curve color="#1ac938" name="/simulation/output/disturbance_generator/acc_time_delay_value"/>
         </plot>
@@ -24,16 +24,16 @@
       </DockSplitter>
       <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="69.402846" top="0.100000" left="0.000000" bottom="-0.100000"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range top="0.032684" right="0.999844" left="0.000000" bottom="-0.010330"/>
          <limitY/>
          <curve color="#ff2a0e" name="/simulation/output/disturbance_generator/steer_delayed_input"/>
          <curve color="#0000ea" name="/simulation/output/disturbance_generator/steer_original_input"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot mode="TimeSeries" style="Lines">
-         <range right="69.402846" top="0.249312" left="0.000000" bottom="0.229858"/>
+        <plot style="Lines" mode="TimeSeries">
+         <range top="0.230436" right="0.999844" left="0.000000" bottom="0.228488"/>
          <limitY/>
          <curve color="#9467bd" name="/simulation/output/disturbance_generator/steer_time_delay_value"/>
         </plot>
@@ -47,8 +47,8 @@
    <Container>
     <DockSplitter orientation="-" count="1" sizes="1">
      <DockArea name="...">
-      <plot mode="TimeSeries" style="Lines">
-       <range right="69.402846" top="0.179769" left="0.000000" bottom="-0.179768"/>
+      <plot style="Lines" mode="TimeSeries">
+       <range top="0.171490" right="0.999844" left="0.000000" bottom="0.159546"/>
        <limitY/>
        <curve color="#1f77b4" name="/simulation/output/disturbance_generator/road_slope_acc"/>
       </plot>
@@ -61,35 +61,35 @@
     <DockSplitter orientation="-" count="2" sizes="0.500401;0.499599">
      <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
       <DockArea name="...">
-       <plot mode="TimeSeries" style="Lines">
-        <range right="121.699982" top="0.116701" left="21.726174" bottom="-0.086412"/>
+       <plot style="Lines" mode="TimeSeries">
+        <range top="0.077470" right="145.100193" left="45.100339" bottom="-0.080929"/>
         <limitY/>
         <curve color="#1f77b4" name="/simulation/output/disturbance_generator/deadzone_input"/>
         <curve color="#d62728" name="/simulation/output/disturbance_generator/deadzone_output"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot mode="TimeSeries" style="Lines">
-        <range right="121.699982" top="1.026289" left="21.726174" bottom="0.999359"/>
+       <plot style="Lines" mode="TimeSeries">
+        <range top="0.967342" right="145.100193" left="45.100339" bottom="0.960212"/>
         <limitY/>
-        <curve color="#1ac938" name="/simulation/output/disturbance_generator/left_deadzone_slope"/>
-        <curve color="#ff7f0e" name="/simulation/output/disturbance_generator/right_deadzone_slope"/>
+        <curve color="#1d1ac9" name="/simulation/output/disturbance_generator/left_deadzone_slope"/>
+        <curve color="#ff0e0e" name="/simulation/output/disturbance_generator/right_deadzone_slope"/>
        </plot>
       </DockArea>
      </DockSplitter>
      <DockSplitter orientation="|" count="2" sizes="0.5;0.5">
       <DockArea name="...">
-       <plot mode="TimeSeries" style="Lines">
-        <range right="1.000000" top="1.000000" left="0.000000" bottom="0.000000"/>
+       <plot style="Lines" mode="TimeSeries">
+        <range top="1.000000" right="1.000000" left="0.000000" bottom="0.000000"/>
         <limitY/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot mode="TimeSeries" style="Lines">
-        <range right="121.699982" top="0.101665" left="21.726174" bottom="-0.103011"/>
+       <plot style="Lines" mode="TimeSeries">
+        <range top="0.106166" right="145.100193" left="45.100339" bottom="0.090243"/>
         <limitY/>
-        <curve color="#f14cc1" name="/simulation/output/disturbance_generator/left_deadzone_threshold"/>
-        <curve color="#9467bd" name="/simulation/output/disturbance_generator/right_deadzone_threshold"/>
+        <curve color="#4d4cf1" name="/simulation/output/disturbance_generator/left_deadzone_threshold"/>
+        <curve color="#fe1600" name="/simulation/output/disturbance_generator/right_deadzone_threshold"/>
        </plot>
       </DockArea>
      </DockSplitter>
@@ -103,7 +103,7 @@
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default delimiter="0" time_axis=""/>
+   <default time_axis="" delimiter="0"/>
   </plugin>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>
