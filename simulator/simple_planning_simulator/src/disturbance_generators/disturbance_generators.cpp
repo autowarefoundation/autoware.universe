@@ -235,9 +235,10 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance
     sampler_m_ = std::uniform_real_distribution<>(slope_low, slope_high);
 
     // Initialize the threshold sampler.
-    auto b_var = b_lr_mean * b_lr_variance_in_percent / 100.;
-    auto b_low = b_lr_mean - b_var / 2.;
-    auto b_high = b_lr_mean + b_var / 2.;
+    auto b_var = b_mean_th_ * b_lr_variance_in_percent / 100.;
+    auto b_low = b_mean_th_ - b_var / 2.;
+    auto b_high = b_mean_th_ + b_var / 2.;
+
     sampler_b_ = std::uniform_real_distribution<>(b_low, b_high);
 
     // Sample parameters and set
@@ -248,6 +249,9 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance
 
         current_br_threshold_ = sampler_b_(generator_);
         current_bl_threshold_ = -1.0 * sampler_b_(generator_);
+
+        phi_phase_ = sampler_phi_(generator_);
+
     } else
     {
         current_br_threshold_ = b_lr_mean;
@@ -272,7 +276,9 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
         // Change random seed
         std::random_device dev;
         generator_ = std::mt19937(dev());
-        phi_phase_ = sampler_phi_(generator_);
+
+        // Activate if we need more randomness on the linear part of the deadzone.
+        // phi_phase_ = sampler_phi_(generator_);
 
         // Sample a slope and threshold - Both are always positive
         double m_slope_sample = sampler_m_(generator_);
@@ -285,8 +291,11 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
             current_mr_slope_ = m_slope_sample;
             current_br_threshold_ = b_deadzone_thr;
 
-            delta_v = current_mr_slope_ *
-                      (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_br_threshold_);
+            // Textbook definition of deadzone nonlinearity
+            //delta_v = current_mr_slope_ *
+            // delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_br_threshold_);
+
+            delta_v = current_mr_slope_ * (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_));
 
         } else if (delta_u < -1.0 * b_deadzone_thr)
         {
@@ -294,10 +303,11 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
             current_ml_slope_ = m_slope_sample;
             current_bl_threshold_ = -1. * b_deadzone_thr;
 
-            ns_utils::print("sampled slope ", current_ml_slope_);
+            // Textbook definition of deadzone nonlinearity
+            //  delta_v = current_ml_slope_ *
+            // (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_bl_threshold_);
 
-            delta_v = current_ml_slope_ *
-                      (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_) - current_bl_threshold_);
+            delta_v = current_ml_slope_ * (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_));
 
         } else
         {
@@ -309,11 +319,13 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
     {
         if (delta_u > current_br_threshold_)
         {
-            delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
+            // delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
+            delta_v = current_mr_slope_ * delta_u;
 
         } else if (delta_u < current_bl_threshold_)
         {
-            delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
+            //delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
+            delta_v = current_ml_slope_ * delta_u;
 
         } else
         {
