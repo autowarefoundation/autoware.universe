@@ -140,17 +140,31 @@ We implemented the following Input Disturbances:
 
 - Time-varying time delay input disturbance on an input (steering or acceleration),
 - Time-varying dead-zone nonlinearity on an input.
-- **[to be implemented]** Time-varying dead-zone
+- Time-varying dead-zone
 
 ##### Time-varying time-delay disturbance parameters for an input (for steering and acceleration input channels):
 
-| Name (steering and acc)       | Type   | Description                                                  | Default value |
-|:------------------------------| :----- | :----------------------------------------------------------- |:--------------|
-| {**}_use_time_varying_td      | bool   | If true, the delay value changes sinusoidally. The change points of the time-delay magnitude is sampled by an Exponential distribution. | false         |
-| {**}_td_pade_order            | size_t | Approximates a model for a given time-delay model with the Pade approximation. | 2             |
-| {**}_td_changes_every_xsecs   | double | The duration of mean time in which the time-delay stays constant. The duration is sampled from an exponential function with this mean value. | 10.0          |
-| {**}_td_delta_sin_mag_percent | double | How much the time-delay value changes. This value is a percentage of the mean-time-delay value. | 5.0%          |
+| Name (steering and acc)       | Type   | Description                                                                                                                                                                                              | Default value |
+|:------------------------------|:-------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------|
+| {**}_use_input_delay          | bool   | Activate or deactivate the disturbance.                                                                                                                                                                  | false         |
+| {**}_use_time_varying_td      | bool   | If true, the delay value changes sinusoidally. The change points of the time-delay magnitude is sampled by an Exponential distribution.                                                                  | false         |
+| {**}_td_pade_order            | size_t | Approximates a model for a given time-delay model with the Pade approximation.                                                                                                                           | 2             |
+| {**}_td_changes_every_xsecs   | double | The duration of mean time in which the time-delay stays constant. The duration is sampled from an exponential function with this mean value.                                                             | 10.0          |
+| {**}_td_delta_sin_mag_percent | double | How much the time-delay value changes. This value is a percentage of the mean-time-delay value.                                                                                                          | 5.0%          |
 | {**}_td_angular_speed         | double | At the time-point change points, the time-delay deviation from the mean value is calculated using a sin(w*t) function. This parameter defines the angular velocity [rad/sec] of this sinus fluctuations. | 0.1           |
+
+##### Time-varying dead-zone disturbance parameters for an input (for steering and acceleration input channels):
+
+| Name (steering and acc)       | Type   | Description                                                                 | Default value |
+|:------------------------------|:-------|:----------------------------------------------------------------------------|:--------------|
+| {**}_use_deadzone_Disturbance | bool   | Activate or deactivate dead-zone nonlinearity.                              | false         |
+| {**}_use_time_varying_td      | bool   | If true, the deadzone parameters randomly sampled.                          | false         |
+| {**}_mean_slope               | double | Slope of the deadzone line sections.                                        | 1.0           |
+| {**}_mean_threshold           | double | Mean dead-zone threshold                                                    | 0.05          |
+| {**}_threshold_variance       | double | Variance of an uniform distribution that samples the threshold (in percent) | 20.0%         |
+| {**}_sin_mag                  | double | A small angle is added to the linear part of the deadzone                   | 0.05          |
+
+##### Time-varying dea
 
 The output disturbance module consists of the followings:
 
