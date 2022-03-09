@@ -71,8 +71,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   debug_drivable_area_publisher_ = create_publisher<OccupancyGrid>("~/debug/drivable_area", 1);
-  debug_drivable_area_lanelets_publisher_ =
-    create_publisher<OccupancyGrid>("~/drivable_area_lanelet", 1);
   debug_path_publisher_ = create_publisher<Path>("~/debug/path_for_visualize", 1);
 
   // For remote operation
@@ -83,6 +81,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // Debug
   debug_marker_publisher_ = create_publisher<MarkerArray>("~/debug/markers", 1);
+
+  if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
+    debug_drivable_area_lanelets_publisher_ =
+      create_publisher<OccupancyGrid>("~/drivable_area_lanelet", 1);
+  }
 
   // behavior tree manager
   {
@@ -162,6 +165,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
   p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
+  p.visualize_drivable_area_for_shared_linestrings_lanelet =
+    declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", false);
 
   // vehicle info
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
@@ -504,8 +509,10 @@ void BehaviorPathPlannerNode::run()
 
   publishDebugMarker(bt_manager_->getDebugMarkers());
 
-  debug_drivable_area_lanelets_publisher_->publish(
-    util::generateDrivableAreaForAllSharedLinestringLanelets(planner_data_));
+  if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
+    debug_drivable_area_lanelets_publisher_->publish(
+      util::generateDrivableAreaForAllSharedLinestringLanelets(planner_data_));
+  }
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
