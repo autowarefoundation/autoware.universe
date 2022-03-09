@@ -504,7 +504,8 @@ void BehaviorPathPlannerNode::run()
 
   publishDebugMarker(bt_manager_->getDebugMarkers());
 
-  visualizeDrivableAreasWithSharedLanelets();
+  debug_drivable_area_lanelets_publisher_->publish(
+    util::generateDrivableAreaForAllSharedLinestringLanelets(planner_data_));
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
@@ -706,12 +707,6 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   refined_path.header.stamp = this->now();
 
   return refined_path;
-}
-
-void BehaviorPathPlannerNode::visualizeDrivableAreasWithSharedLanelets()
-{
-  debug_drivable_area_lanelets_publisher_->publish(
-    util::generateDrivableAreaForAllSharedLinestringLanelets(planner_data_));
 }
 }  // namespace behavior_path_planner
 

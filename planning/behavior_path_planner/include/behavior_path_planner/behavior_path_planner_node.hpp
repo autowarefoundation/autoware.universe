@@ -126,7 +126,6 @@ private:
     const PathWithLaneId & path) const;  // (TODO) move to util
 
   void clipPathLength(PathWithLaneId & path) const;  // (TODO) move to util
-  void visualizeDrivableAreasWithSharedLanelets();
 
   /**
    * @brief Execute behavior tree and publish planned data.
