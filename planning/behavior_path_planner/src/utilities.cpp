@@ -1616,6 +1616,37 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   return centerline_path;
 }
 
+// TODO(Azu) Some parts of is the same with generateCenterLinePath. Therefore it might be better if
+// we can refactor some of the code for better readability
+OccupancyGrid generateDrivableAreaForAllSharedLinestringLanelets(
+  const std::shared_ptr<const PlannerData> planner_data)
+{
+  const auto & p = planner_data->parameters;
+  const auto & route_handler = planner_data->route_handler;
+  const auto & ego_pose = planner_data->self_pose->pose;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      "failed to find closest lanelet within route!!!");
+    return OccupancyGrid{};
+  }
+
+  const auto current_lanes = route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
+
+  lanelet::ConstLanelets all_lanelet;
+  for (const auto & lane : current_lanes) {
+    const auto shared_linestring_lanelet = route_handler->getAllSharedLineStringLanelets(lane);
+    all_lanelet.insert(
+      all_lanelet.end(), shared_linestring_lanelet.begin(), shared_linestring_lanelet.end());
+  }
+
+  return util::generateDrivableArea(
+    all_lanelet, p.drivable_area_resolution, p.vehicle_length, planner_data);
+}
+
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
 {
   return filterObjectsByVelocity(objects, -lim_v, lim_v);

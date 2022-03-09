@@ -710,77 +710,8 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
 
 void BehaviorPathPlannerNode::visualizeDrivableAreasWithSharedLanelets()
 {
-  [[maybe_unused]] const auto & route_handler = planner_data_->route_handler;
-  const auto ego_pose = planner_data_->self_pose->pose;
-  lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
-    return;
-  }
-
-  lanelet::ConstLanelets current_lanes =
-    route_handler->getLaneletSequence(current_lane, ego_pose, 0.5, 3.0);
-
-  [[maybe_unused]] const auto searchLeftLaneletsAndAppendToDrivableAreas =
-    [&route_handler](
-      const lanelet::ConstLanelet & current_lanelet, auto & lanelet_to_be_extended,
-      bool extend_to_opposite_lane = true) noexcept {
-      auto lanelet_at_left = route_handler->getLeftLanelet(current_lanelet);
-      auto lanelet_at_left_opposite = route_handler->getLeftOppositeLanelets(current_lanelet);
-      while (lanelet_at_left) {
-        lanelet_to_be_extended.push_back(lanelet_at_left.get());
-        lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
-        lanelet_at_left_opposite = route_handler->getLeftOppositeLanelets(lanelet_at_left.get());
-      }
-
-      if (!lanelet_at_left_opposite.empty() && extend_to_opposite_lane) {
-        auto lanelet_at_right = route_handler->getRightLanelet(lanelet_at_left_opposite.front());
-        while (lanelet_at_right) {
-          lanelet_to_be_extended.push_back(lanelet_at_right.get());
-          lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
-        }
-      }
-    };
-
-  [[maybe_unused]] const auto searchRightLaneletsAndAppendToDrivableAreas =
-    [&route_handler](
-      const lanelet::ConstLanelet & current_lanelet, auto & lanelet_to_be_extended,
-      bool extend_to_opposite_lane = true) noexcept {
-      auto lanelet_at_right = route_handler->getRightLanelet(current_lanelet);
-      auto lanelet_at_right_opposite = route_handler->getRightOppositeLanelets(current_lanelet);
-      while (lanelet_at_right) {
-        lanelet_to_be_extended.push_back(lanelet_at_right.get());
-        lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
-        lanelet_at_right_opposite = route_handler->getRightOppositeLanelets(lanelet_at_right.get());
-      }
-
-      if (!lanelet_at_right_opposite.empty() && extend_to_opposite_lane) {  // means lanelets in the
-                                                                            // opposite
-                                                                            // direction exist
-        lanelet_to_be_extended.push_back(lanelet_at_right_opposite.front());
-        auto lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_right_opposite.front());
-        while (lanelet_at_left) {
-          lanelet_to_be_extended.push_back(lanelet_at_left.get());
-          lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
-        }
-      }
-    };
-
-  lanelet::ConstLanelets debug_connected;
-  for (auto & lane : current_lanes) {
-    debug_connected.push_back(lane);
-    searchRightLaneletsAndAppendToDrivableAreas(lane, debug_connected);
-
-    constexpr bool isRightHandDriving = false;
-    searchLeftLaneletsAndAppendToDrivableAreas(lane, debug_connected, !isRightHandDriving);
-  }
-
-  constexpr double area_resolution = 0.1;
-  const auto & vehicle_length = planner_data_->parameters.vehicle_length;
-  std::cout << debug_connected.size() << '\n';
-
-  const auto drivabless =
-    util::generateDrivableArea(debug_connected, area_resolution, vehicle_length, planner_data_);
-  debug_drivable_area_lanelets_publisher_->publish(drivabless);
+  debug_drivable_area_lanelets_publisher_->publish(
+    util::generateDrivableAreaForAllSharedLinestringLanelets(planner_data_));
 }
 }  // namespace behavior_path_planner
 
