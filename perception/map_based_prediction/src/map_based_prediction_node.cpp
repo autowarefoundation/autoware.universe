@@ -553,12 +553,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
     // Step4. add candidate reference paths to the all_ref_paths
     const float path_prob = current_lanelet_data.probability;
-    addReferencePaths(
-      object, left_paths, path_prob, maneuver_prob, Maneuver::LEFT_LANE_CHANGE, all_ref_paths);
-    addReferencePaths(
-      object, right_paths, path_prob, maneuver_prob, Maneuver::RIGHT_LANE_CHANGE, all_ref_paths);
-    addReferencePaths(
-      object, center_paths, path_prob, maneuver_prob, Maneuver::LANE_FOLLOW, all_ref_paths);
+    const auto addReferencePathsLocal = [&](const auto & paths, const auto & maneuver) {
+      addReferencePaths(object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths);
+    };
+    addReferencePathsLocal(left_paths, Maneuver::LEFT_LANE_CHANGE);
+    addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
+    addReferencePathsLocal(center_paths, Maneuver::LANE_FOLLOW);
   }
 
   return all_ref_paths;
@@ -793,40 +793,49 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
   float right_lane_change_probability = 0.0;
   float lane_follow_probability = 0.0;
   if (!left_paths.empty() && predicted_maneuver == Maneuver::LEFT_LANE_CHANGE) {
-    left_lane_change_probability = 1.0;
+    constexpr float LF_PROB_WHEN_LC = 0.9;  // probability for lane follow during lane change
+    constexpr float LC_PROB_WHEN_LC = 1.0;  // probability for left lane change
+    left_lane_change_probability = LC_PROB_WHEN_LC;
     right_lane_change_probability = 0.0;
-    lane_follow_probability = 0.9;
+    lane_follow_probability = LF_PROB_WHEN_LC;
   } else if (!right_paths.empty() && predicted_maneuver == Maneuver::RIGHT_LANE_CHANGE) {
+    constexpr float LF_PROB_WHEN_LC = 0.9;  // probability for lane follow during lane change
+    constexpr float RC_PROB_WHEN_LC = 1.0;  // probability for right lane change
     left_lane_change_probability = 0.0;
-    right_lane_change_probability = 1.0;
-    lane_follow_probability = 0.9;
+    right_lane_change_probability = RC_PROB_WHEN_LC;
+    lane_follow_probability = LF_PROB_WHEN_LC;
   } else if (!center_paths.empty()) {
+    constexpr float LF_PROB = 1.0;  // probability for lane follow
+    constexpr float LC_PROB = 0.3;  // probability for left lane change
+    constexpr float RC_PROB = 0.3;  // probability for right lane change
     if (predicted_maneuver == Maneuver::LEFT_LANE_CHANGE) {
       // If prediction says left change, but left lane is empty, assume lane follow
       left_lane_change_probability = 0.0;
-      right_lane_change_probability = (!right_paths.empty()) ? 0.3 : 0.0;
+      right_lane_change_probability = (!right_paths.empty()) ? RC_PROB : 0.0;
     } else if (predicted_maneuver == Maneuver::RIGHT_LANE_CHANGE) {
       // If prediction says right change, but right lane is empty, assume lane follow
-      left_lane_change_probability = (!left_paths.empty()) ? 0.3 : 0.0;
+      left_lane_change_probability = (!left_paths.empty()) ? LC_PROB : 0.0;
       right_lane_change_probability = 0.0;
     } else {
       // Predicted Maneuver is Lane Follow
-      left_lane_change_probability = 0.3;
-      right_lane_change_probability = 0.3;
+      left_lane_change_probability = LC_PROB;
+      right_lane_change_probability = RC_PROB;
     }
-    lane_follow_probability = 1.0;
+    lane_follow_probability = LF_PROB;
   } else {
     // Center path is empty
+    constexpr float LC_PROB = 1.0;  // probability for left lane change
+    constexpr float RC_PROB = 1.0;  // probability for right lane change
     lane_follow_probability = 0.0;
     if (!left_paths.empty() && right_paths.empty()) {
-      left_lane_change_probability = 1.0;
+      left_lane_change_probability = LC_PROB;
       right_lane_change_probability = 0.0;
     } else if (left_paths.empty() && !right_paths.empty()) {
       left_lane_change_probability = 0.0;
-      right_lane_change_probability = 1.0;
+      right_lane_change_probability = RC_PROB;
     } else {
-      left_lane_change_probability = 1.0;
-      right_lane_change_probability = 1.0;
+      left_lane_change_probability = LC_PROB;
+      right_lane_change_probability = RC_PROB;
     }
   }
 
