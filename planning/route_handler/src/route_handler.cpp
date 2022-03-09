@@ -911,6 +911,65 @@ lanelet::Lanelets RouteHandler::getRightOppositeLanelets(
   return lanelet_map_ptr_->laneletLayer.findUsages(lanelet.rightBound().invert());
 }
 
+lanelet::ConstLanelets RouteHandler::getAllSharedLineStringLanelets(
+  const lanelet::ConstLanelet & current_lane, bool is_right, bool is_left,
+  bool is_opposite) const noexcept
+{
+  const auto searchAllLeftLanelets = [this, &is_opposite](
+                                       const lanelet::ConstLanelet & current_lanelet,
+                                       auto & lanelet_to_be_extended) noexcept {
+    auto lanelet_at_left = getLeftLanelet(current_lanelet);
+    auto lanelet_at_left_opposite = getLeftOppositeLanelets(current_lanelet);
+    while (lanelet_at_left) {
+      lanelet_to_be_extended.push_back(lanelet_at_left.get());
+      lanelet_at_left = getLeftLanelet(lanelet_at_left.get());
+      lanelet_at_left_opposite = getLeftOppositeLanelets(lanelet_at_left.get());
+    }
+
+    if (!lanelet_at_left_opposite.empty() && is_opposite) {
+      auto lanelet_at_right = getRightLanelet(lanelet_at_left_opposite.front());
+      while (lanelet_at_right) {
+        lanelet_to_be_extended.push_back(lanelet_at_right.get());
+        lanelet_at_right = getRightLanelet(lanelet_at_right.get());
+      }
+    }
+  };
+
+  const auto searchAllRightLanelets = [this, &is_opposite](
+                                        const lanelet::ConstLanelet & current_lanelet,
+                                        auto & lanelet_to_be_extended) noexcept {
+    auto lanelet_at_right = getRightLanelet(current_lanelet);
+    auto lanelet_at_right_opposite = getRightOppositeLanelets(current_lanelet);
+    while (lanelet_at_right) {
+      lanelet_to_be_extended.push_back(lanelet_at_right.get());
+      lanelet_at_right = getRightLanelet(lanelet_at_right.get());
+      lanelet_at_right_opposite = getRightOppositeLanelets(lanelet_at_right.get());
+    }
+
+    if (!lanelet_at_right_opposite.empty() && is_opposite) {  // means lanelets in
+                                                              // the opposite
+                                                              // direction exist
+      lanelet_to_be_extended.push_back(lanelet_at_right_opposite.front());
+      auto lanelet_at_left = getLeftLanelet(lanelet_at_right_opposite.front());
+      while (lanelet_at_left) {
+        lanelet_to_be_extended.push_back(lanelet_at_left.get());
+        lanelet_at_left = getLeftLanelet(lanelet_at_left.get());
+      }
+    }
+  };
+
+  lanelet::ConstLanelets shared_linestring_lanelet;
+  shared_linestring_lanelet.push_back(current_lane);
+  if (is_right) {
+    searchAllRightLanelets(current_lane, shared_linestring_lanelet);
+  }
+  if (is_left) {
+    searchAllLeftLanelets(current_lane, shared_linestring_lanelet);
+  }
+
+  return shared_linestring_lanelet;
+}
+
 lanelet::Lanelets RouteHandler::getLeftOppositeLanelets(const lanelet::ConstLanelet & lanelet) const
 {
   return lanelet_map_ptr_->laneletLayer.findUsages(lanelet.leftBound().invert());

@@ -138,6 +138,10 @@ public:
    */
   lanelet::Lanelets getLeftOppositeLanelets(const lanelet::ConstLanelet & lanelet) const;
 
+  lanelet::ConstLanelets getAllSharedLineStringLanelets(
+    const lanelet::ConstLanelet & current_lane, bool is_right = true, bool is_left = true,
+    bool is_opposite = true) const noexcept;
+
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
    * Only lanelet with same direction is considered
