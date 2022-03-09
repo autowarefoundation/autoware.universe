@@ -294,22 +294,28 @@ namespace simulation
             }
 
             // Road Slope Output Disturbance
-            const bool rs_use_time_varying_slope = declare_parameter("rs_use_time_varying_slope", true);
-            const float64_t rs_mean_slope = declare_parameter("rs_mean_road_slope", 0.0);
-            float64_t rs_delta_sin_mag = declare_parameter("rs_delta_sin_mag", 1.0); // in degrees
-            ns_utils::deg2rad(rs_delta_sin_mag); // convert it to radians.
+            bool use_road_slope_disturbance = declare_parameter("use_road_slope_disturbance", false);
 
-            auto rs_road_slope_variation_angular_speed = declare_parameter("rs_road_slope_variation_angular_speed",
-                                                                           0.1);
+            if (use_road_slope_disturbance)
+            {
+                const bool rs_use_time_varying_slope = declare_parameter("rs_use_time_varying_slope", true);
+                const float64_t rs_mean_slope = declare_parameter("rs_mean_road_slope", 0.0);
+                float64_t rs_delta_sin_mag = declare_parameter("rs_delta_sin_mag", 1.0); // in degrees
+                ns_utils::deg2rad(rs_delta_sin_mag); // convert it to radians.
 
-            // Create an output disturbance for the road slope.
-            OutputDisturbance_SlopeVariation road_slope_dist(rs_mean_slope,
-                                                             rs_delta_sin_mag,
-                                                             rs_road_slope_variation_angular_speed,
-                                                             rs_use_time_varying_slope);
+                auto rs_road_slope_variation_angular_speed = declare_parameter("rs_road_slope_variation_angular_speed",
+                                                                               0.1);
 
-            disturbance_collection.road_slope_outputDisturbance_ptr_ =
-                    std::make_shared<OutputDisturbance_SlopeVariation>(road_slope_dist);
+                // Create an output disturbance for the road slope.
+                OutputDisturbance_SlopeVariation road_slope_dist(rs_mean_slope,
+                                                                 rs_delta_sin_mag,
+                                                                 rs_road_slope_variation_angular_speed,
+                                                                 rs_use_time_varying_slope);
+
+                disturbance_collection.road_slope_outputDisturbance_ptr_ =
+                        std::make_shared<OutputDisturbance_SlopeVariation>(road_slope_dist);
+
+            }
 
             // Steering Deadzone
             const bool use_time_varying_dz = declare_parameter("dz_steer_use_time_varying_deadzone", false);
@@ -329,7 +335,6 @@ namespace simulation
 
 
             // --- End of Disturbance Generator initialization -----
-
 
             if (vehicle_model_type_str == "IDEAL_STEER_VEL")
             {
