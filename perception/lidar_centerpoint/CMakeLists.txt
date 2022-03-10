@@ -107,6 +107,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
   download(pts_backbone_neck_head_aip_x2.pt 18iOAlRsjvcWoUG9KiL1PlD7OY5mi9BSw 274fdf1580dd899e36c050c1366f1883)
 
   find_package(ament_cmake_auto REQUIRED)
+  find_package(pcl_ros REQUIRED)
   ament_auto_find_build_dependencies()
 
   include_directories(
