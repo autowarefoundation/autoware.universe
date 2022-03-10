@@ -338,7 +338,7 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
 }
 
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const std::vector<Slice> polys)
+  std::vector<PredictedObject> & objs, const std::vector<Slice> & polys)
 {
   std::vector<PredictedObject> filtered_obj;
   // stuck points by predicted objects
@@ -355,26 +355,26 @@ std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
 }
 
 void createPossibleCollisionsInDetectionArea(
-  const std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
-  std::vector<Point> & debug_points)
+  DebugData & debug_data)
 {
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {
     return;
   }
   double distance_lower_bound = std::numeric_limits<double>::max();
-  for (const Slice & detection_area_slice : detection_area_polygons) {
+  for (const Slice & detection_area_slice : debug_data.detection_area_polygons) {
     std::vector<grid_map::Position> occlusion_spot_positions;
     grid_utils::findOcclusionSpots(
       occlusion_spot_positions, grid, detection_area_slice.polygon,
       param.detection_area.min_occlusion_spot_size);
-    Point p;
-    for (const auto & op : occlusion_spot_positions) {
-      p.x = op[0];
-      p.y = op[1];
-      debug_points.emplace_back(p);
+    if (param.debug) {
+      for (const auto & op : occlusion_spot_positions) {
+        Point p =
+          tier4_autoware_utils::createPoint(op[0], op[1], path.points.at(0).point.pose.position.z);
+        debug_data.occlusion_points.emplace_back(p);
+      }
     }
     if (occlusion_spot_positions.empty()) continue;
     // for each partition find nearest occlusion spot from polygon's origin
@@ -409,7 +409,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
   double distance_lower_bound = std::numeric_limits<double>::max();
   PossibleCollisionInfo candidate;
   bool has_collision = false;
-  for (grid_map::Position occlusion_spot_position : occlusion_spot_positions) {
+  for (const grid_map::Position & occlusion_spot_position : occlusion_spot_positions) {
     // arc intersection
     lanelet::BasicPoint2d obstacle_point = {occlusion_spot_position[0], occlusion_spot_position[1]};
     lanelet::ArcCoordinates arc_coord_occlusion_point =

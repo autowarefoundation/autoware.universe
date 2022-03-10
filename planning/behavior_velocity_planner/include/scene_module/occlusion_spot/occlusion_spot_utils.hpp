@@ -185,7 +185,7 @@ struct DebugData
   double z;
   std::string road_type = "";
   std::string detection_type = "";
-  std::vector<lanelet::BasicPolygon2d> detection_areas;
+  std::vector<Slice> detection_area_polygons;
   std::vector<lanelet::BasicPolygon2d> partition_lanelets;
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;
@@ -194,7 +194,7 @@ struct DebugData
   PathWithLaneId interp_path;
   void resetData()
   {
-    detection_areas.clear();
+    detection_area_polygons.clear();
     parked_vehicle_point.clear();
     possible_collisions.clear();
     occlusion_points.clear();
@@ -210,7 +210,7 @@ bool isStuckVehicle(PredictedObject obj, const double min_vel);
 double offsetFromStartToEgo(
   const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx);
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const std::vector<Slice> polys);
+  std::vector<PredictedObject> & objs, const std::vector<Slice> & polys);
 std::vector<PredictedObject> getParkedVehicles(
   const PredictedObjects & dyn_objects, const PlannerParam & param,
   std::vector<Point> & debug_point);
@@ -240,10 +240,9 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 void createPossibleCollisionsInDetectionArea(
-  const std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
-  std::vector<Point> & debug_points);
+  DebugData & debug_data);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

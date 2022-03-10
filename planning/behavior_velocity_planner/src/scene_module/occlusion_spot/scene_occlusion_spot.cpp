@@ -90,16 +90,13 @@ bool OcclusionSpotModule::modifyPathVelocity(
   grid_map::GridMap grid_map;
   grid_utils::denoiseOccupancyGridCV(occ_grid, grid_map, param_.grid);
   double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
-  using Slice = occlusion_spot_utils::Slice;
-  std::vector<Slice> detection_area_polygons;
+  auto & detection_area_polygons = debug_data_.detection_area_polygons;
   utils::buildDetectionAreaPolygon(
     detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // Note: Don't consider offset from path start to ego here
   utils::createPossibleCollisionsInDetectionArea(
-    detection_area_polygons, possible_collisions, grid_map, interp_path, offset_from_start_to_ego,
-    param_, debug_data_.occlusion_points);
-  if (detection_area_polygons.empty()) return true;
+    possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_, debug_data_);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
   utils::calcSlowDownPointsForPossibleCollision(0, interp_path, 0.0, possible_collisions);
@@ -110,11 +107,6 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // these debug topics needs computation resource
   if (param_.debug) {
     publisher_->publish(occ_grid);
-    for (const auto & p : detection_area_polygons) {
-      debug_data_.detection_areas.emplace_back(p.polygon);
-    }
-  } else {
-    debug_data_.occlusion_points.clear();
   }
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
