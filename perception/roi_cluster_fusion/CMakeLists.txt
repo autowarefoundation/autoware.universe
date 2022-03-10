@@ -13,6 +13,7 @@ find_package(ament_lint_auto REQUIRED)
 find_package(ament_cmake_auto REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(pcl_ros REQUIRED)
 
 ament_auto_find_build_dependencies()
 
