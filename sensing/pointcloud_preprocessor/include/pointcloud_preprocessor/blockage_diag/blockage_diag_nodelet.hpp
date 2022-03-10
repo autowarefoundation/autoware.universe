@@ -82,6 +82,7 @@ private:
   uint erode_kernel_ = 10;
   uint ground_blockage_count_ = 0;
   uint sky_blockage_count_ = 0;
+  uint blockage_count_threshold_;
   std::string lidar_model_ = "Pandar40P";
 
 public:
