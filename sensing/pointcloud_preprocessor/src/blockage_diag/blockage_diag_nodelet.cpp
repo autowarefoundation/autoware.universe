@@ -43,7 +43,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     angle_range_deg_ = declare_parameter("angle_range", std::vector<double>{0.0, 360.0});
     distance_range_ = declare_parameter("distance_range", std::vector<double>{0.1, 200.0});
     lidar_model_ = static_cast<std::string>(declare_parameter("model", "Pandar40P"));
-    blockage_count_threshold_ = static_cast<uint>(declare_parameter("blockage_count_threshold",50));
+    blockage_count_threshold_ =
+      static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
   }
 
   updater_.setHardwareID("blockage_diag");
@@ -82,7 +83,9 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
   auto level = DiagnosticStatus::OK;
   if (ground_blockage_ratio_ < 0) {
     level = DiagnosticStatus::STALE;
-  } else if ((ground_blockage_ratio_ > ground_blockage_threshold_) && (ground_blockage_count_ > blockage_count_threshold_)) {
+  } else if (
+    (ground_blockage_ratio_ > ground_blockage_threshold_) &&
+    (ground_blockage_count_ > blockage_count_threshold_)) {
     level = DiagnosticStatus::ERROR;
   } else if (ground_blockage_ratio_ > 0.0f) {
     level = DiagnosticStatus::WARN;
