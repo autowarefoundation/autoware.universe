@@ -138,12 +138,32 @@ public:
    */
   lanelet::Lanelets getLeftOppositeLanelets(const lanelet::ConstLanelet & lanelet) const;
 
+  /**
+   * @brief Searches and return all lanelet on the left that shares same linestring
+   * @param the lanelet of interest
+   * @param (optional) flag to include the lane with opposite direction
+   * @return vector of lanelet that is connected via share linestring
+   */
   lanelet::ConstLanelets getAllLeftSharedLinestringLanelets(
     const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept;
 
+  /**
+   * @brief Searches and return all lanelet on the right that shares same linestring
+   * @param the lanelet of interest
+   * @param (optional) flag to include the lane with opposite direction
+   * @return vector of lanelet that is connected via share linestring
+   */
   lanelet::ConstLanelets getAllRightSharedLinestringLanelets(
     const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept;
 
+  /**
+   * @brief Searches and return all lanelet (left and right) that shares same linestring
+   * @param the lanelet of interest
+   * @param (optional) flag to search only right side
+   * @param (optional) flag to search only left side
+   * @param (optional) flag to include the lane with opposite direction
+   * @return vector of lanelet that is connected via share linestring
+   */
   lanelet::ConstLanelets getAllSharedLineStringLanelets(
     const lanelet::ConstLanelet & current_lane, bool is_right = true, bool is_left = true,
     bool is_opposite = true) const noexcept;
