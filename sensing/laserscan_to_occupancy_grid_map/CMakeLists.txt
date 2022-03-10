@@ -14,6 +14,7 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
+find_package(pcl_ros REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(laserscan_to_occupancy_grid_map SHARED
