@@ -39,13 +39,14 @@ OcclusionSpotInPublicModule::OcclusionSpotInPublicModule(
 : SceneModuleInterface(module_id, logger, clock)
 {
   param_ = planner_param;
+  debug_data_.detection_type = "object";
 }
 
 bool OcclusionSpotInPublicModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
-  debug_data_ = DebugData();
+  debug_data_.resetData();
   if (path->points.size() < 2) {
     return true;
   }

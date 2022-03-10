@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 #include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
@@ -39,13 +41,23 @@ OcclusionSpotModule::OcclusionSpotModule(
 : SceneModuleInterface(module_id, logger, clock), publisher_(publisher)
 {
   param_ = planner_param;
+  debug_data_.detection_type = "occupancy";
+  const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
+  const lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(ll);
+  for (const auto & partition : partitions) {
+    lanelet::BasicLineString2d line;
+    for (const auto & p : partition) {
+      line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
+    }
+    debug_data_.partition_lanelets.emplace_back(lanelet::BasicPolygon2d(line));
+  }
 }
 
 bool OcclusionSpotModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
-  debug_data_ = DebugData();
+  debug_data_.resetData();
   if (path->points.size() < 2) {
     return true;
   }

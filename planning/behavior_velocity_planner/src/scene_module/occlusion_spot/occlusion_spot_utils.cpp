@@ -419,6 +419,16 @@ void createPossibleCollisionsInDetectionArea(
   }
 }
 
+bool isBlockedByPartition(const LineString2d & direction, const BasicPolygons2d & partitions)
+{
+  for (const auto & p : partitions) {
+    if (bg::intersects(direction, p)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const BasicPoint2d base_point,

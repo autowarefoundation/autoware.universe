@@ -61,6 +61,7 @@ using lanelet::LaneletMapPtr;
 using lanelet::geometry::fromArcCoordinates;
 using lanelet::geometry::toArcCoordinates;
 using DetectionAreaIdx = boost::optional<std::pair<double, double>>;
+using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
 namespace occlusion_spot_utils
 {
@@ -174,6 +175,27 @@ struct PossibleCollisionInfo
     intersection_pose(intersection_pose),
     arc_lane_dist_at_collision(arc_lane_dist_to_occlusion)
   {
+  }
+};
+
+struct DebugData
+{
+  double z;
+  std::string road_type = "";
+  std::string detection_type = "";
+  std::vector<lanelet::BasicPolygon2d> detection_areas;
+  std::vector<lanelet::BasicPolygon2d> partition_lanelets;
+  std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
+  std::vector<PossibleCollisionInfo> possible_collisions;
+  std::vector<geometry_msgs::msg::Point> occlusion_points;
+  PathWithLaneId path_raw;
+  PathWithLaneId interp_path;
+  void resetData()
+  {
+    detection_areas.clear();
+    parked_vehicle_point.clear();
+    possible_collisions.clear();
+    occlusion_points.clear();
   }
 };
 
