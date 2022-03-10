@@ -156,7 +156,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
   debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, z);
   debug_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
   debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
-  debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.5, 1.0, 0.3);
+  debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.5);
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
   debug_marker.ns = ns;
   for (const auto & poly : polygons) {
