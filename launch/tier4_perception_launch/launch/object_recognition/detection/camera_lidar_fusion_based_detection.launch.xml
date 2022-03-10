@@ -125,7 +125,7 @@
   </include>
   <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
     <arg name="input/object0" value="detection_by_tracker/objects"/>
-    <arg name="input/object1" value="camera_lidar_fusion/short_range_objects"/>
+    <arg name="input/object1" value="camera_lidar_fusion/objects"/>
     <arg name="output/object" value="objects"/>
   </include>
 
