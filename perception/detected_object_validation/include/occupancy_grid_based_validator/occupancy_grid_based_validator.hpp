@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__HPP_
-#define DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__HPP_
+#ifndef OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
+#define OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
 
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -53,4 +53,4 @@ private:
 };
 }  // namespace occupancy_grid_based_validator
 
-#endif  // COSTMAP_GENERATOR__OBJECTS_TO_COSTMAP_HPP_
+#endif  // OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_

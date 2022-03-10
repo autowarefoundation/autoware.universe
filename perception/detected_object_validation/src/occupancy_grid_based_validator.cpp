@@ -24,9 +24,6 @@ namespace occupancy_grid_based_validator
 {
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
-
-
-
 OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("occupancy_grid_based_validator", node_options),
   tf_buffer_(this->get_clock()),
