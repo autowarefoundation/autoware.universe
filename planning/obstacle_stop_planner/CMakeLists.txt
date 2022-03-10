@@ -16,6 +16,7 @@ ament_auto_find_build_dependencies()
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
+find_package(pcl_ros REQUIRED)
 
 ament_auto_add_library(obstacle_stop_planner SHARED
   src/debug_marker.cpp
