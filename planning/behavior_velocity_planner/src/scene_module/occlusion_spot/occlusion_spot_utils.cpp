@@ -337,36 +337,6 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
   return possible_collisions;
 }
 
-DetectionAreaIdx extractTargetRoadArcLength(
-  const lanelet::LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
-  const ROAD_TYPE & target_road_type)
-{
-  bool found_target = false;
-  double start_dist = 0.0;
-  double dist_sum = 0.0;
-  // search lanelet that includes target_road_type only
-  for (size_t i = 0; i < path.points.size() - 1; i++) {
-    ROAD_TYPE search_road_type = occlusion_spot_utils::getCurrentRoadType(
-      lanelet_map_ptr->laneletLayer.get(path.points[i].lane_ids[0]), lanelet_map_ptr);
-    if (found_target && search_road_type != target_road_type) {
-      break;
-    }
-    // ignore path farther than max range
-    if (dist_sum > max_range) {
-      break;
-    }
-    if (!found_target && search_road_type == target_road_type) {
-      start_dist = dist_sum;
-      found_target = true;
-    }
-    const auto & curr_p = path.points[i].point.pose.position;
-    const auto & next_p = path.points[i + 1].point.pose.position;
-    dist_sum += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
-  }
-  if (!found_target) return {};
-  return DetectionAreaIdx(std::make_pair(start_dist, dist_sum));
-}
-
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
   std::vector<PredictedObject> & objs, const std::vector<Slice> polys)
 {
