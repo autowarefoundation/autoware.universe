@@ -40,6 +40,10 @@ OcclusionSpotInPublicModule::OcclusionSpotInPublicModule(
 {
   param_ = planner_param;
   debug_data_.detection_type = "object";
+  if (param_.use_partition_lanelet) {
+    const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
+    planning_utils::getAllPartitionLanelets(ll, debug_data_.partition_lanelets);
+  }
 }
 
 bool OcclusionSpotInPublicModule::modifyPathVelocity(

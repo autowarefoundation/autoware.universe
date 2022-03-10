@@ -42,14 +42,9 @@ OcclusionSpotModule::OcclusionSpotModule(
 {
   param_ = planner_param;
   debug_data_.detection_type = "occupancy";
-  const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
-  const lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(ll);
-  for (const auto & partition : partitions) {
-    lanelet::BasicLineString2d line;
-    for (const auto & p : partition) {
-      line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
-    }
-    debug_data_.partition_lanelets.emplace_back(lanelet::BasicPolygon2d(line));
+  if (param_.use_partition_lanelet) {
+    const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
+    planning_utils::getAllPartitionLanelets(ll, debug_data_.partition_lanelets);
   }
 }
 

@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -99,7 +100,8 @@ struct LatLon
 struct PlannerParam
 {
   METHOD method;
-  bool debug;  // [-]
+  bool debug;                  // [-]
+  bool use_partition_lanelet;  // [-]
   // parameters in yaml
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
@@ -231,10 +233,6 @@ void createPossibleCollisionBehindParkedVehicle(
 void calcSlowDownPointsForPossibleCollision(
   const int closest_idx, const PathWithLaneId & path, const double offset,
   std::vector<PossibleCollisionInfo> & possible_collisions);
-//!< @brief extract lanelet that includes target_road_type only
-DetectionAreaIdx extractTargetRoadArcLength(
-  const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
-  const ROAD_TYPE & target_road_type);
 //!< @brief convert a set of occlusion spots found on detection_area slice
 boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
