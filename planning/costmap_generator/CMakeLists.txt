@@ -13,6 +13,7 @@ endif()
 
 find_package(ament_cmake_auto REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io)
+find_package(pcl_ros REQUIRED)
 find_package(FLANN REQUIRED)
 ament_auto_find_build_dependencies()
 
