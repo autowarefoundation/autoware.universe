@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(obstacle_collision_checker)
 
 find_package(ament_cmake_auto REQUIRED)
+find_package(pcl_ros REQUIRED)
 ament_auto_find_build_dependencies()
 
 ### Compile options
