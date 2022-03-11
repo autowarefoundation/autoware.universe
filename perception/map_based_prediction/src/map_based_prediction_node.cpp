@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "map_based_prediction_node.hpp"
+#include "map_based_prediction/map_based_prediction_node.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>

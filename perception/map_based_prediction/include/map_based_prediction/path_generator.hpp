@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_GENERATOR_HPP_
-#define PATH_GENERATOR_HPP_
+#ifndef MAP_BASED_PREDICTION__PATH_GENERATOR_HPP_
+#define MAP_BASED_PREDICTION__PATH_GENERATOR_HPP_
 
 #include <Eigen/Eigen>
 #include <rclcpp/rclcpp.hpp>
@@ -101,4 +101,4 @@ private:
 };
 }  // namespace map_based_prediction
 
-#endif  // PATH_GENERATOR_HPP_
+#endif  // MAP_BASED_PREDICTION__PATH_GENERATOR_HPP_
