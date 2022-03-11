@@ -24,14 +24,12 @@ PathGenerator::PathGenerator(const double time_horizon, const double sampling_ti
 {
 }
 
-PredictedPath PathGenerator::generatePathForNonVehicleObject(
-  const std_msgs::msg::Header & origin_header, const TrackedObject & object)
+PredictedPath PathGenerator::generatePathForNonVehicleObject(const TrackedObject & object)
 {
-  return generateStraightPath(origin_header, object);
+  return generateStraightPath(object);
 }
 
-PredictedPath PathGenerator::generatePathForLowSpeedVehicle(
-  const std_msgs::msg::Header & origin_header, const TrackedObject & object) const
+PredictedPath PathGenerator::generatePathForLowSpeedVehicle(const TrackedObject & object) const
 {
   PredictedPath path;
   path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
@@ -43,26 +41,23 @@ PredictedPath PathGenerator::generatePathForLowSpeedVehicle(
   return path;
 }
 
-PredictedPath PathGenerator::generatePathForOffLaneVehicle(
-  const std_msgs::msg::Header & origin_header, const TrackedObject & object)
+PredictedPath PathGenerator::generatePathForOffLaneVehicle(const TrackedObject & object)
 {
-  return generateStraightPath(origin_header, object);
+  return generateStraightPath(object);
 }
 
 PredictedPath PathGenerator::generatePathForOnLaneVehicle(
-  const std_msgs::msg::Header & origin_header, const TrackedObject & object,
-  const PosePath & ref_paths)
+  const TrackedObject & object, const PosePath & ref_paths)
 {
   if (ref_paths.size() < 2) {
     const PredictedPath empty_path;
     return empty_path;
   }
 
-  return generatePolynomialPath(origin_header, object, ref_paths);
+  return generatePolynomialPath(object, ref_paths);
 }
 
-PredictedPath PathGenerator::generateStraightPath(
-  const std_msgs::msg::Header & origin_header, const TrackedObject & object) const
+PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) const
 {
   const auto & object_pose = object.kinematics.pose_with_covariance.pose;
   const auto & object_twist = object.kinematics.twist_with_covariance.twist;
@@ -82,21 +77,16 @@ PredictedPath PathGenerator::generateStraightPath(
 }
 
 PredictedPath PathGenerator::generatePolynomialPath(
-  const std_msgs::msg::Header & origin_header, const TrackedObject & object,
-  const PosePath & ref_path)
+  const TrackedObject & object, const PosePath & ref_path)
 {
   // Get current Frenet Point
   const double ref_path_len = tier4_autoware_utils::calcArcLength(ref_path);
-  const auto current_point = getFrenetPoint(origin_header, object, ref_path);
+  const auto current_point = getFrenetPoint(object, ref_path);
 
   // Step1. Set Target Frenet Point
   // Note that we do not set position s,
   // since we don't know the target longitudinal position
-  const double T = time_horizon_;
   FrenetPoint terminal_point;
-  terminal_point.header = current_point.header;
-  terminal_point.header.stamp =
-    rclcpp::Time(current_point.header.stamp) + rclcpp::Duration::from_seconds(T);
   terminal_point.s_vel = current_point.s_vel;
   terminal_point.s_acc = 0.0;
   terminal_point.d = 0.0;
@@ -123,8 +113,7 @@ FrenetPath PathGenerator::generateFrenetPath(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length)
 {
   FrenetPath path;
-  const double duration = rclcpp::Time(target_point.header.stamp).seconds() -
-                          rclcpp::Time(current_point.header.stamp).seconds();
+  const double duration = time_horizon_;
 
   // Compute Lateral and Longitudinal Coefficients to generate the trajectory
   const Eigen::Vector3d lat_coeff = calcLatCoefficients(current_point, target_point, duration);
@@ -143,9 +132,6 @@ FrenetPath PathGenerator::generateFrenetPath(
 
     // We assume the object is traveling at a constant speed along s direction
     FrenetPoint point;
-    point.header = current_point.header;
-    point.header.stamp =
-      rclcpp::Time(current_point.header.stamp) + rclcpp::Duration::from_seconds(t);
     point.s = std::max(s_next, 0.0);
     point.s_vel = current_point.s_vel;
     point.s_acc = current_point.s_acc;
@@ -285,8 +271,7 @@ PredictedPath PathGenerator::convertToPredictedPath(
   return predicted_path;
 }
 
-FrenetPoint PathGenerator::getFrenetPoint(
-  const std_msgs::msg::Header & header, const TrackedObject & object, const PosePath & ref_path)
+FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const PosePath & ref_path)
 {
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
@@ -303,7 +288,6 @@ FrenetPoint PathGenerator::getFrenetPoint(
     static_cast<float>(tf2::getYaw(ref_path.at(nearest_segment_idx).orientation));
   const float delta_yaw = obj_yaw - lane_yaw;
 
-  frenet_point.header = header;
   frenet_point.s = tier4_autoware_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
   frenet_point.d = tier4_autoware_utils::calcLateralOffset(ref_path, obj_point);
   frenet_point.s_vel = vx * std::cos(delta_yaw) - vy * std::sin(delta_yaw);

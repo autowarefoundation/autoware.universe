@@ -39,7 +39,6 @@ using autoware_auto_perception_msgs::msg::TrackedObjects;
 
 struct FrenetPoint
 {
-  std_msgs::msg::Header header;
   double s;
   double d;
   float s_vel;
@@ -56,18 +55,14 @@ class PathGenerator
 public:
   PathGenerator(const double time_horizon, const double sampling_time_interval);
 
-  PredictedPath generatePathForNonVehicleObject(
-    const std_msgs::msg::Header & origin_header, const TrackedObject & object);
+  PredictedPath generatePathForNonVehicleObject(const TrackedObject & object);
 
-  PredictedPath generatePathForLowSpeedVehicle(
-    const std_msgs::msg::Header & origin_header, const TrackedObject & object) const;
+  PredictedPath generatePathForLowSpeedVehicle(const TrackedObject & object) const;
 
-  PredictedPath generatePathForOffLaneVehicle(
-    const std_msgs::msg::Header & origin_header, const TrackedObject & object);
+  PredictedPath generatePathForOffLaneVehicle(const TrackedObject & object);
 
   PredictedPath generatePathForOnLaneVehicle(
-    const std_msgs::msg::Header & origin_header, const TrackedObject & object,
-    const PosePath & ref_paths);
+    const TrackedObject & object, const PosePath & ref_paths);
 
 private:
   // Parameters
@@ -75,12 +70,9 @@ private:
   double sampling_time_interval_;
 
   // Member functions
-  PredictedPath generateStraightPath(
-    const std_msgs::msg::Header & origin_header, const TrackedObject & object) const;
+  PredictedPath generateStraightPath(const TrackedObject & object) const;
 
-  PredictedPath generatePolynomialPath(
-    const std_msgs::msg::Header & origin_header, const TrackedObject & object,
-    const PosePath & ref_path);
+  PredictedPath generatePolynomialPath(const TrackedObject & object, const PosePath & ref_path);
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length);
@@ -96,8 +88,7 @@ private:
     const TrackedObject & object, const FrenetPath & frenet_predicted_path,
     const PosePath & ref_path);
 
-  FrenetPoint getFrenetPoint(
-    const std_msgs::msg::Header & header, const TrackedObject & object, const PosePath & ref_path);
+  FrenetPoint getFrenetPoint(const TrackedObject & object, const PosePath & ref_path);
 };
 }  // namespace map_based_prediction
 

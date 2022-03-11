@@ -178,7 +178,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       transformed_object.classification.front().label != ObjectClassification::MOTORCYCLE &&
       transformed_object.classification.front().label != ObjectClassification::TRUCK) {
       PredictedPath predicted_path =
-        path_generator_->generatePathForNonVehicleObject(output.header, transformed_object);
+        path_generator_->generatePathForNonVehicleObject(transformed_object);
       predicted_path.confidence = 1.0;
 
       auto predicted_object = convertToPredictedObject(transformed_object);
@@ -196,7 +196,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     // For off lane obstacles
     if (current_lanelets.empty()) {
       PredictedPath predicted_path =
-        path_generator_->generatePathForOffLaneVehicle(output.header, transformed_object);
+        path_generator_->generatePathForOffLaneVehicle(transformed_object);
       predicted_path.confidence = 1.0;
       if (predicted_path.path.empty()) {
         continue;
@@ -213,7 +213,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       std::fabs(transformed_object.kinematics.twist_with_covariance.twist.linear.x) <
       min_velocity_for_map_based_prediction_) {
       PredictedPath predicted_path =
-        path_generator_->generatePathForLowSpeedVehicle(output.header, transformed_object);
+        path_generator_->generatePathForLowSpeedVehicle(transformed_object);
       predicted_path.confidence = 1.0;
       if (predicted_path.path.empty()) {
         continue;
@@ -233,7 +233,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     // If predicted reference path is empty, assume this object is out of the lane
     if (ref_paths.empty()) {
       PredictedPath predicted_path =
-        path_generator_->generatePathForLowSpeedVehicle(output.header, transformed_object);
+        path_generator_->generatePathForLowSpeedVehicle(transformed_object);
       predicted_path.confidence = 1.0;
       if (predicted_path.path.empty()) {
         continue;
@@ -258,8 +258,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     // Generate Predicted Path
     std::vector<PredictedPath> predicted_paths;
     for (const auto & ref_path : ref_paths) {
-      PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
-        output.header, transformed_object, ref_path.path);
+      PredictedPath predicted_path =
+        path_generator_->generatePathForOnLaneVehicle(transformed_object, ref_path.path);
       predicted_path.confidence = ref_path.probability;
       if (predicted_path.path.empty() || isDuplicated(predicted_path, predicted_paths)) {
         continue;
