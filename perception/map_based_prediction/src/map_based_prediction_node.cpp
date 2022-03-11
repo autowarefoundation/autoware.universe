@@ -260,10 +260,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     for (const auto & ref_path : ref_paths) {
       PredictedPath predicted_path =
         path_generator_->generatePathForOnLaneVehicle(transformed_object, ref_path.path);
-      predicted_path.confidence = ref_path.probability;
-      if (predicted_path.path.empty() || isDuplicated(predicted_path, predicted_paths)) {
-        continue;
-      }
 
       predicted_paths.push_back(predicted_path);
     }
