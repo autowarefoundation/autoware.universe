@@ -1618,8 +1618,8 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
 // TODO(Azu) Some parts of is the same with generateCenterLinePath. Therefore it might be better if
 // we can refactor some of the code for better readability
-OccupancyGrid generateDrivableAreaForAllSharedLinestringLanelets(
-  const std::shared_ptr<const PlannerData> planner_data)
+lanelet::ConstLineStrings3d getDrivableAreaforAllSharedLinestringLanelets(
+  const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & p = planner_data->parameters;
   const auto & route_handler = planner_data->route_handler;
@@ -1630,21 +1630,18 @@ OccupancyGrid generateDrivableAreaForAllSharedLinestringLanelets(
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
       "failed to find closest lanelet within route!!!");
-    return OccupancyGrid{};
+    return {};
   }
 
   const auto current_lanes = route_handler->getLaneletSequence(
     current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
-
-  lanelet::ConstLanelets all_lanelet;
+  lanelet::ConstLineStrings3d linestring_shared;
   for (const auto & lane : current_lanes) {
-    const auto shared_linestring_lanelet = route_handler->getAllSharedLineStringLanelets(lane);
-    all_lanelet.insert(
-      all_lanelet.end(), shared_linestring_lanelet.begin(), shared_linestring_lanelet.end());
+    lanelet::ConstLineStrings3d furthest_line = route_handler->getFurthestLinestring(lane);
+    linestring_shared.insert(linestring_shared.end(), furthest_line.begin(), furthest_line.end());
   }
 
-  return util::generateDrivableArea(
-    all_lanelet, p.drivable_area_resolution, p.vehicle_length, planner_data);
+  return linestring_shared;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)

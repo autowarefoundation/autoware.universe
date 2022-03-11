@@ -84,7 +84,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     debug_drivable_area_lanelets_publisher_ =
-      create_publisher<OccupancyGrid>("~/drivable_area_lanelet", 1);
+      create_publisher<MarkerArray>("~/drivable_area_lanelet", 1);
   }
 
   // behavior tree manager
@@ -510,8 +510,10 @@ void BehaviorPathPlannerNode::run()
   publishDebugMarker(bt_manager_->getDebugMarkers());
 
   if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
-    debug_drivable_area_lanelets_publisher_->publish(
-      util::generateDrivableAreaForAllSharedLinestringLanelets(planner_data_));
+    const auto drivable_area_lines = marker_utils::createOvehangFurthestLineStringMarkerArray(
+      util::getDrivableAreaforAllSharedLinestringLanelets(planner_data_), "drivables", 0.984, 0.831,
+      0.725);
+    debug_drivable_area_lanelets_publisher_->publish(drivable_area_lines);
   }
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
