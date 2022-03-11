@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MAP_BASED_PREDICTION_NODE_HPP_
-#define MAP_BASED_PREDICTION_NODE_HPP_
+#ifndef MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
+#define MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 
-#include "path_generator.hpp"
+#include "map_based_prediction/path_generator.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -197,4 +197,4 @@ private:
 };
 }  // namespace map_based_prediction
 
-#endif  // MAP_BASED_PREDICTION_NODE_HPP_
+#endif  // MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
