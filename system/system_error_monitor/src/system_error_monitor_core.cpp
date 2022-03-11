@@ -111,9 +111,15 @@ diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Safe Fault]"));
   }
   for (const auto & hazard_diag : hazard_status.diag_latent_fault) {
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("system_error_monitor"), *clock, 5000, "[Latent Fault] %s: %s",
+      hazard_diag.name.c_str(), hazard_diag.message.c_str());
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Latent Fault]"));
   }
   for (const auto & hazard_diag : hazard_status.diag_single_point_fault) {
+    RCLCPP_ERROR_THROTTLE(
+      rclcpp::get_logger("system_error_monitor"), *clock, 5000, "[Single Point Fault] %s: %s",
+      hazard_diag.name.c_str(), hazard_diag.message.c_str());
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Single Point Fault]"));
   }
 
