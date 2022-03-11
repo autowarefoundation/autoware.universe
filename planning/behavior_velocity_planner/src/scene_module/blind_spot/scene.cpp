@@ -18,7 +18,7 @@
 #include <scene_module/blind_spot/scene.hpp>
 #include <scene_module/intersection/util.hpp>
 #include <utilization/boost_geometry_helper.hpp>
-#include <utilization/interpolate.hpp>
+#include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
 #include <boost/geometry/algorithms/distance.hpp>
@@ -45,7 +45,8 @@ BlindSpotModule::BlindSpotModule(
   turn_direction_(TurnDirection::INVALID)
 {
   planner_param_ = planner_param;
-  const auto & assigned_lanelet = planner_data->lanelet_map->laneletLayer.get(lane_id);
+  const auto & assigned_lanelet =
+    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   const std::string turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
   if (!turn_direction.compare("left")) {
     turn_direction_ = TurnDirection::LEFT;
@@ -74,8 +75,8 @@ bool BlindSpotModule::modifyPathVelocity(
   geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
 
   /* get lanelet map */
-  const auto lanelet_map_ptr = planner_data_->lanelet_map;
-  const auto routing_graph_ptr = planner_data_->routing_graph;
+  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
+  const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
@@ -200,7 +201,7 @@ bool BlindSpotModule::generateStopLine(
 
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!util::splineInterpolate(*path, interval, &path_ip, logger_)) {
+  if (!splineInterpolate(*path, interval, &path_ip, logger_)) {
     return false;
   }
   debug_data_.spline_path = path_ip;
@@ -518,7 +519,8 @@ bool BlindSpotModule::isTargetObjectType(
 boost::optional<geometry_msgs::msg::Point> BlindSpotModule::getStartPointFromLaneLet(
   const int lane_id) const
 {
-  lanelet::ConstLanelet lanelet = planner_data_->lanelet_map->laneletLayer.get(lane_id);
+  lanelet::ConstLanelet lanelet =
+    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   if (lanelet.centerline().empty()) {
     return boost::none;
   }

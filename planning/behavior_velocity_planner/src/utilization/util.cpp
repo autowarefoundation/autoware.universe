@@ -23,6 +23,42 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
+void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, Polygons2d & polys)
+{
+  const lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(ll);
+  for (const auto & partition : partitions) {
+    lanelet::BasicLineString2d line;
+    for (const auto & p : partition) {
+      line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
+    }
+    polys.emplace_back(lanelet::BasicPolygon2d(line));
+  }
+}
+
+SearchRangeIndex getPathIndexRangeIncludeLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int64_t lane_id)
+{
+  /**
+   * @brief find path index range include given lane_id
+   *        |<-min_idx       |<-max_idx
+   *  ------|oooooooooooooooo|-------
+   */
+  SearchRangeIndex search_range = {0, path.points.size() - 1};
+  bool found_first_idx = false;
+  for (size_t i = 0; i < path.points.size(); i++) {
+    const auto & p = path.points.at(i);
+    for (const auto & id : p.lane_ids) {
+      if (id == lane_id) {
+        if (!found_first_idx) {
+          search_range.min_idx = i;
+          found_first_idx = true;
+        }
+        search_range.max_idx = i;
+      }
+    }
+  }
+  return search_range;
+}
 Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object)
 {
   Polygon2d obj_footprint;

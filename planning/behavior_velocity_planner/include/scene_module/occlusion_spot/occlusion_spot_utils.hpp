@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -61,10 +62,12 @@ using lanelet::LaneletMapPtr;
 using lanelet::geometry::fromArcCoordinates;
 using lanelet::geometry::toArcCoordinates;
 using DetectionAreaIdx = boost::optional<std::pair<double, double>>;
+using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
 namespace occlusion_spot_utils
 {
 enum ROAD_TYPE { PRIVATE, PUBLIC, HIGHWAY, UNKNOWN };
+enum METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
 
 struct DetectionArea
 {
@@ -96,7 +99,9 @@ struct LatLon
 
 struct PlannerParam
 {
-  bool debug;  // [-]
+  METHOD method;
+  bool debug;                  // [-]
+  bool use_partition_lanelet;  // [-]
   // parameters in yaml
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
@@ -175,62 +180,37 @@ struct PossibleCollisionInfo
   }
 };
 
+struct DebugData
+{
+  double z;
+  std::string road_type = "";
+  std::string detection_type = "";
+  std::vector<Slice> detection_area_polygons;
+  std::vector<lanelet::BasicPolygon2d> partition_lanelets;
+  std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
+  std::vector<PossibleCollisionInfo> possible_collisions;
+  std::vector<geometry_msgs::msg::Point> occlusion_points;
+  PathWithLaneId path_raw;
+  PathWithLaneId interp_path;
+  void resetData()
+  {
+    detection_area_polygons.clear();
+    parked_vehicle_point.clear();
+    possible_collisions.clear();
+    occlusion_points.clear();
+  }
+};
+
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
-inline void handleCollisionOffset(
-  std::vector<PossibleCollisionInfo> & possible_collisions, double offset, double margin)
-{
-  for (auto & pc : possible_collisions) {
-    pc.arc_lane_dist_at_collision.length -= offset;
-    pc.arc_lane_dist_at_collision.length -= margin;
-  }
-}
-
-inline double offsetFromStartToEgo(
-  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx)
-{
-  double offset_from_ego_to_closest = 0;
-  for (int i = 0; i < closest_idx; i++) {
-    const auto & curr_p = path.points.at(i).point.pose.position;
-    const auto & next_p = path.points.at(i + 1).point.pose.position;
-    offset_from_ego_to_closest += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
-  }
-  const double offset_from_closest_to_target =
-    -planning_utils::transformRelCoordinate2D(ego_pose, path.points[closest_idx].point.pose)
-       .position.x;
-  return offset_from_ego_to_closest + offset_from_closest_to_target;
-}
-
-inline void clipPathByLength(
-  const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0)
-{
-  double length_sum = 0;
-  for (int i = 0; i < static_cast<int>(path.points.size()) - 1; i++) {
-    length_sum += tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
-    if (length_sum > max_length) return;
-    clipped.points.emplace_back(path.points.at(i));
-  }
-}
-
-inline bool isStuckVehicle(PredictedObject obj, const double min_vel)
-{
-  if (
-    obj.classification.at(0).label == ObjectClassification::CAR ||
-    obj.classification.at(0).label == ObjectClassification::TRUCK ||
-    obj.classification.at(0).label == ObjectClassification::BUS) {
-    if (std::abs(obj.kinematics.initial_twist_with_covariance.twist.linear.x) < min_vel) {
-      return true;
-    }
-  }
-  return false;
-}
-void filterCollisionByRoadType(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const DetectionAreaIdx road_type);
+void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);
+void clipPathByLength(
+  const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
+bool isStuckVehicle(PredictedObject obj, const double min_vel);
+double offsetFromStartToEgo(
+  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx);
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const std::vector<Slice> polys);
-bool splineInterpolate(
-  const PathWithLaneId & input, const double interval, PathWithLaneId * output,
-  const rclcpp::Logger logger);
+  std::vector<PredictedObject> & objs, const std::vector<Slice> & polys);
 std::vector<PredictedObject> getParkedVehicles(
   const PredictedObjects & dyn_objects, const PlannerParam & param,
   std::vector<Point> & debug_point);
@@ -253,21 +233,16 @@ void createPossibleCollisionBehindParkedVehicle(
 void calcSlowDownPointsForPossibleCollision(
   const int closest_idx, const PathWithLaneId & path, const double offset,
   std::vector<PossibleCollisionInfo> & possible_collisions);
-//!< @brief extract lanelet that includes target_road_type only
-DetectionAreaIdx extractTargetRoadArcLength(
-  const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
-  const ROAD_TYPE & target_road_type);
 //!< @brief convert a set of occlusion spots found on detection_area slice
 boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const double offset_from_start_to_ego, const BasicPoint2d basic_point,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param);
+  const double offset_from_start_to_ego, const BasicPoint2d base_point,
+  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 void createPossibleCollisionsInDetectionArea(
-  const std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
-  std::vector<Point> & debug_points);
+  DebugData & debug_data);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

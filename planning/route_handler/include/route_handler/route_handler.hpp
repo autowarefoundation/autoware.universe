@@ -73,7 +73,13 @@ public:
   bool isHandlerReady() const;
   lanelet::ConstPolygon3d getExtraDrivableAreaById(const lanelet::Id id) const;
   Header getRouteHeader() const;
-  lanelet::routing::RoutingGraphContainer getOverallGraph() const;
+
+  // for routing graph
+  bool isMapMsgReady() const;
+  lanelet::routing::RoutingGraphPtr getRoutingGraphPtr() const;
+  lanelet::traffic_rules::TrafficRulesPtr getTrafficRulesPtr() const;
+  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> getOverallGraphPtr() const;
+  lanelet::LaneletMapPtr getLaneletMapPtr() const;
 
   // for routing
   bool planPathLaneletsBetweenCheckpoints(
@@ -90,8 +96,8 @@ public:
   std::vector<lanelet::ConstLanelet> getLanesAfterGoal(const double vehicle_length) const;
 
   // for lanelet
-  bool getPreviousLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
+  bool getPreviousLaneletsWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const;
 
