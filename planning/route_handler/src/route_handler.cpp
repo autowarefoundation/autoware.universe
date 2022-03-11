@@ -1039,6 +1039,31 @@ lanelet::ConstLineString3d RouteHandler::getLeftMostLinestring(
   return {};
 }
 
+lanelet::ConstLineStrings3d RouteHandler::getFurthestLinestring(
+  const lanelet::ConstLanelet & lanelet, bool is_right, bool is_left,
+  bool is_opposite) const noexcept
+{
+  lanelet::ConstLineStrings3d linestrings;
+  linestrings.reserve(2);
+
+  if (is_right && is_opposite) {
+    linestrings.emplace_back(getRightMostLinestring(lanelet));
+  } else if (is_right && !is_opposite) {
+    linestrings.emplace_back(getRightMostSameDirectionLinestring(lanelet));
+  } else {
+    linestrings.emplace_back(lanelet.rightBound());
+  }
+
+  if (is_left && is_opposite) {
+    linestrings.emplace_back(getLeftMostLinestring(lanelet));
+  } else if (is_left && !is_opposite) {
+    linestrings.emplace_back(getLeftMostSameDirectionLinestring(lanelet));
+  } else {
+    linestrings.emplace_back(lanelet.leftBound());
+  }
+  return linestrings;
+}
+
 bool RouteHandler::getLaneChangeTarget(
   const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
 {

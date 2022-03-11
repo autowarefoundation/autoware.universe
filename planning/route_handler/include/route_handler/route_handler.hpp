@@ -203,6 +203,19 @@ public:
    */
   lanelet::ConstLineString3d getLeftMostLinestring(
     const lanelet::ConstLanelet & lanelet) const noexcept;
+
+  /**
+   * @brief Return furthest linestring on both side of the lanelet
+   * @param the lanelet of interest
+   * @param (optional) search furthest right side
+   * @param (optional) search furthest left side
+   * @param (optional) include opposite lane as well
+   * @return right and left linestrings
+   */
+  lanelet::ConstLineStrings3d getFurthestLinestring(
+    const lanelet::ConstLanelet & lanelet, bool is_right = true, bool is_left = true,
+    bool is_opposite = true) const noexcept;
+
   int getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;

@@ -241,38 +241,23 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
       lanelet::BasicPoint3d overhang_basic_pose(
         object_data.overhang_pose.position.x, object_data.overhang_pose.position.y,
         object_data.overhang_pose.position.z);
+      const bool get_left =
+        isOnRight(object_data) && parameters_.enable_avoidance_over_same_direction;
+      const bool get_right =
+        !isOnRight(object_data) && parameters_.enable_avoidance_over_same_direction;
+
+      const auto target_lines = rh->getFurthestLinestring(
+        overhang_lanelet, get_right, get_left,
+        parameters_.enable_avoidance_over_opposite_direction);
+
       if (isOnRight(object_data)) {
-        const auto & target_left_line = [this, &rh, &overhang_lanelet]() {
-          if (
-            parameters_.enable_avoidance_over_same_direction &&
-            parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getLeftMostLinestring(overhang_lanelet);
-          } else if (
-            parameters_.enable_avoidance_over_same_direction &&
-            !parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getLeftMostSameDirectionLinestring(overhang_lanelet);
-          }
-          return overhang_lanelet.leftBound();
-        }();
         object_data.to_road_shoulder_distance =
-          distance2d(to2D(overhang_basic_pose), to2D(target_left_line.basicLineString()));
-        debug_linestring.push_back(target_left_line);
+          distance2d(to2D(overhang_basic_pose), to2D(target_lines.back().basicLineString()));
+        debug_linestring.push_back(target_lines.back());
       } else {
-        const auto & target_right_line = [this, &rh, &overhang_lanelet]() {
-          if (
-            parameters_.enable_avoidance_over_same_direction &&
-            parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getRightMostLinestring(overhang_lanelet);
-          } else if (
-            parameters_.enable_avoidance_over_same_direction &&
-            !parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getRightMostSameDirectionLinestring(overhang_lanelet);
-          }
-          return overhang_lanelet.rightBound();
-        }();
         object_data.to_road_shoulder_distance =
-          distance2d(to2D(overhang_basic_pose), to2D(target_right_line.basicLineString()));
-        debug_linestring.push_back(target_right_line);
+          distance2d(to2D(overhang_basic_pose), to2D(target_lines.front().basicLineString()));
+        debug_linestring.push_back(target_lines.front());
       }
     }
 
