@@ -914,47 +914,47 @@ lanelet::Lanelets RouteHandler::getRightOppositeLanelets(
 lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(
   const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept
 {
-  lanelet::ConstLanelets shared;
+  lanelet::ConstLanelets linestring_shared;
   auto lanelet_at_left = getLeftLanelet(lane);
   auto lanelet_at_left_opposite = getLeftOppositeLanelets(lane);
   while (lanelet_at_left) {
-    shared.push_back(lanelet_at_left.get());
+    linestring_shared.push_back(lanelet_at_left.get());
     lanelet_at_left = getLeftLanelet(lanelet_at_left.get());
     lanelet_at_left_opposite = getLeftOppositeLanelets(lanelet_at_left.get());
   }
 
   if (!lanelet_at_left_opposite.empty() && include_opposite) {
-    shared.push_back(lanelet_at_left_opposite.front());
+    linestring_shared.push_back(lanelet_at_left_opposite.front());
     auto lanelet_at_right = getRightLanelet(lanelet_at_left_opposite.front());
     while (lanelet_at_right) {
-      shared.push_back(lanelet_at_right.get());
+      linestring_shared.push_back(lanelet_at_right.get());
       lanelet_at_right = getRightLanelet(lanelet_at_right.get());
     }
   }
-  return shared;
+  return linestring_shared;
 }
 
 lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
   const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept
 {
-  lanelet::ConstLanelets shared;
+  lanelet::ConstLanelets linestring_shared;
   auto lanelet_at_right = getRightLanelet(lane);
   auto lanelet_at_right_opposite = getRightOppositeLanelets(lane);
   while (lanelet_at_right) {
-    shared.push_back(lanelet_at_right.get());
+    linestring_shared.push_back(lanelet_at_right.get());
     lanelet_at_right = getRightLanelet(lanelet_at_right.get());
     lanelet_at_right_opposite = getRightOppositeLanelets(lanelet_at_right.get());
   }
 
   if (!lanelet_at_right_opposite.empty() && include_opposite) {
-    shared.push_back(lanelet_at_right_opposite.front());
+    linestring_shared.push_back(lanelet_at_right_opposite.front());
     auto lanelet_at_left = getLeftLanelet(lanelet_at_right_opposite.front());
     while (lanelet_at_left) {
-      shared.push_back(lanelet_at_left.get());
+      linestring_shared.push_back(lanelet_at_left.get());
       lanelet_at_left = getLeftLanelet(lanelet_at_left.get());
     }
   }
-  return shared;
+  return linestring_shared;
 }
 
 lanelet::ConstLanelets RouteHandler::getAllSharedLineStringLanelets(
