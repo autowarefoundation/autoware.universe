@@ -31,18 +31,18 @@ namespace
 // debug: 0, info: 1, warn: 2, error: 3
 template <int debug_level>
 void logThrottledNamed(
-  const std::string & logger_name, rclcpp::Clock clock, const double duration,
+  const std::string & logger_name, const rclcpp::Clock::SharedPtr clock, const double duration,
   const std::string & message)
 {
   static std::unordered_map<std::string, rclcpp::Time> last_output_time;
   if (last_output_time.count(logger_name) != 0) {
-    const auto time_from_last_output = clock.now() - last_output_time.at(logger_name);
+    const auto time_from_last_output = clock->now() - last_output_time.at(logger_name);
     if (time_from_last_output.seconds() * 1000.0 < duration) {
       return;
     }
   }
 
-  last_output_time[logger_name] = clock.now();
+  last_output_time[logger_name] = clock->now();
   if constexpr (debug_level == 0) {
     RCLCPP_DEBUG(rclcpp::get_logger(logger_name), message.c_str());
   } else if constexpr (debug_level == 1) {
@@ -138,13 +138,13 @@ diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
   }
   for (const auto & hazard_diag : hazard_status.diag_latent_fault) {
     const std::string logger_name = "system_error_monitor " + hazard_diag.name;
-    logThrottledNamed<2>(logger_name, *clock, 5000, "[Latent Fault]: " + hazard_diag.message);
+    logThrottledNamed<2>(logger_name, clock, 5000, "[Latent Fault]: " + hazard_diag.message);
 
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Latent Fault]"));
   }
   for (const auto & hazard_diag : hazard_status.diag_single_point_fault) {
     const std::string logger_name = "system_error_monitor " + hazard_diag.name;
-    logThrottledNamed<3>(logger_name, *clock, 5000, "[Single Point Fault]: " + hazard_diag.message);
+    logThrottledNamed<3>(logger_name, clock, 5000, "[Single Point Fault]: " + hazard_diag.message);
 
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Single Point Fault]"));
   }
