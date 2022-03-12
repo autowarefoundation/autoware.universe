@@ -28,18 +28,17 @@
 
 namespace
 {
-enum class DebugLevel { DEBUG = 0, INFO, WARN, ERROR };
+enum class DebugLevel { DEBUG, INFO, WARN, ERROR, FATAL };
 
-// debug: 0, info: 1, warn: 2, error: 3
 template <DebugLevel debug_level>
 void logThrottledNamed(
-  const std::string & logger_name, const rclcpp::Clock::SharedPtr clock, const double duration,
+  const std::string & logger_name, const rclcpp::Clock::SharedPtr clock, const double duration_ms,
   const std::string & message)
 {
   static std::unordered_map<std::string, rclcpp::Time> last_output_time;
   if (last_output_time.count(logger_name) != 0) {
     const auto time_from_last_output = clock->now() - last_output_time.at(logger_name);
-    if (time_from_last_output.seconds() * 1000.0 < duration) {
+    if (time_from_last_output.seconds() * 1000.0 < duration_ms) {
       return;
     }
   }
@@ -53,6 +52,8 @@ void logThrottledNamed(
     RCLCPP_WARN(rclcpp::get_logger(logger_name), message.c_str());
   } else if constexpr (debug_level == DebugLevel::ERROR) {
     RCLCPP_ERROR(rclcpp::get_logger(logger_name), message.c_str());
+  } else if constexpr (debug_level == DebugLevel::FATAL) {
+    RCLCPP_FATAL(rclcpp::get_logger(logger_name), message.c_str());
   }
 }
 
