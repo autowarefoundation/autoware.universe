@@ -26,8 +26,27 @@
 
 #include <fmt/format.h>
 
+#define DEFINE_TIER4_RCLCPP_LOG(LEVEL)                                                   \
+  void TIER4_RCLCPP_##LEVEL##_THROTTLE(                                                  \
+    const std::string & logger_name, rclcpp::Clock clock, const double duration,         \
+    const std::string & message)                                                         \
+  {                                                                                      \
+    static std::unordered_map<std::string, rclcpp::Time> last_output_time;               \
+    if (last_output_time.count(logger_name) != 0) {                                      \
+      const auto time_from_last_output = clock.now() - last_output_time.at(logger_name); \
+      if (time_from_last_output.seconds() * 1000.0 < duration) {                         \
+        return;                                                                          \
+      }                                                                                  \
+    }                                                                                    \
+    last_output_time[logger_name] = clock.now();                                         \
+    RCLCPP_##LEVEL(rclcpp::get_logger(logger_name), message.c_str());                    \
+  }
+
 namespace
 {
+DEFINE_TIER4_RCLCPP_LOG(ERROR);
+DEFINE_TIER4_RCLCPP_LOG(WARN);
+
 std::vector<std::string> split(const std::string & str, const char delim)
 {
   std::vector<std::string> elems;
@@ -111,15 +130,16 @@ diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Safe Fault]"));
   }
   for (const auto & hazard_diag : hazard_status.diag_latent_fault) {
-    RCLCPP_WARN_THROTTLE(
-      rclcpp::get_logger("system_error_monitor"), *clock, 5000, "[Latent Fault] %s: %s",
-      hazard_diag.name.c_str(), hazard_diag.message.c_str());
+    const std::string logger_name = "system_error_monitor " + hazard_diag.name;
+    TIER4_RCLCPP_WARN_THROTTLE(logger_name, *clock, 5000, "[Latent Fault]: " + hazard_diag.message);
+
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Latent Fault]"));
   }
   for (const auto & hazard_diag : hazard_status.diag_single_point_fault) {
-    RCLCPP_ERROR_THROTTLE(
-      rclcpp::get_logger("system_error_monitor"), *clock, 5000, "[Single Point Fault] %s: %s",
-      hazard_diag.name.c_str(), hazard_diag.message.c_str());
+    const std::string logger_name = "system_error_monitor " + hazard_diag.name;
+    TIER4_RCLCPP_ERROR_THROTTLE(
+      logger_name, *clock, 5000, "[Single Point Fault]: " + hazard_diag.message);
+
     diag_array.status.push_back(decorateDiag(hazard_diag, "[Single Point Fault]"));
   }
 
