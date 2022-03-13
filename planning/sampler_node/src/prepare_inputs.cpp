@@ -73,11 +73,11 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   sampling_parameters.target_durations = {};
   sampling_parameters.target_lateral_positions = {-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0};
   sampling_parameters.target_lateral_velocities = {-0.1, 0.0, 0.1};
-  sampling_parameters.target_lateral_accelerations = {0.0};
+  sampling_parameters.target_lateral_accelerations = {-0.1, 0.0, 0.1};
   // Unused when generating Path (i.e., without velocity profile)
   sampling_parameters.target_longitudinal_accelerations = {};
   sampling_parameters.target_longitudinal_velocities = {};
-  const auto target_lengths = {60};
+  const auto target_lengths = {60, 40};
   const auto max_s =
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
   for (const auto target_length : target_lengths) {
