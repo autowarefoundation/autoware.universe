@@ -39,10 +39,19 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   const autoware_auto_planning_msgs::msg::Path & path_msg,
   const sampler_common::Constraints & constraints, plot::Plotter & plotter)
 {
-  const auto sample_frenet = true;
-  const auto sample_bezier = false;
+  constexpr auto sample_frenet = true;
+  constexpr auto sample_bezier = false;
+  constexpr auto minimum_committed_length = 2.0;
+  constexpr auto reuse_max_length_max = 50.0;
+  constexpr auto reuse_length_step = reuse_max_length_max / 2.0;
+  constexpr auto reuse_max_deviation = 1.0;
+
   std::vector<sampler_common::Path> paths;
   sampler_common::Path base_path;
+  if(!previous_path.points.empty() && !sampler_common::tryToReusePath(
+          previous_path, initial_state.pose, minimum_committed_length, reuse_max_deviation, constraints,
+          base_path))
+    return {};
   const auto move_to_paths = [&](auto & paths_to_move) { paths.insert(paths.end(), std::make_move_iterator(paths_to_move.begin()), std::make_move_iterator(paths_to_move.end())); };
   if(sample_frenet) {
     auto frenet_paths = generateFrenetPaths(initial_state, base_path, path_msg, path_spline, constraints);
@@ -54,9 +63,6 @@ std::vector<sampler_common::Path> generateCandidatePaths(
     move_to_paths(bezier_paths);
   }
 
-  constexpr auto reuse_max_length_max = 50.0;  // TODO(Maxime CLEMENT): use length of previous_path
-  constexpr auto reuse_length_step = reuse_max_length_max / 2.0;
-  constexpr auto reuse_max_deviation = 1.0;
   for (auto reuse_max_length = reuse_length_step; reuse_max_length <= reuse_max_length_max;
        reuse_max_length += reuse_length_step) {
     if (sampler_common::tryToReusePath(
