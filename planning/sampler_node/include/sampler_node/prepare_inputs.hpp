@@ -29,6 +29,7 @@
 #include <nav_msgs/msg/detail/occupancy_grid__struct.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <lanelet2_core/LaneletMap.h>
 
 #include <string>
 #include <vector>
@@ -37,8 +38,8 @@ namespace sampler_node
 {
 /// @brief prepare constraints
 sampler_common::Constraints prepareConstraints(
-  const nav_msgs::msg::OccupancyGrid & drivable_area,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects);
+  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
+  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids, const lanelet::Ids & prefered_ids);
 /// @brief prepare sampling parameters to generate trajectories in Frenet frame
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const frenet_planner::FrenetState & initial_state,

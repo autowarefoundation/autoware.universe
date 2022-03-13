@@ -40,6 +40,7 @@ public:
   void plotTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories);
   void plotPaths(const std::vector<sampler_common::Path> & paths);
   void plotFrenetTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories);
+  void plotFrenetPaths(const std::vector<frenet_planner::Path> & paths);
   void plotCartesianTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories);
   void plotCartesianPaths(const std::vector<sampler_common::Path> & paths);
   void plotCommittedTrajectory(const frenet_planner::Trajectory & trajectory);
@@ -51,6 +52,7 @@ public:
   void pixelToCartesian(const QPoint p, double & graph_x, double & graph_y);
   void pixelToFrenet(const QPoint p, double & graph_s, double & graph_d);
   void replot(const bool fc, const bool poly, const bool rescale);
+  void clear();
 
 private:
   QCustomPlot * fcplot_;
@@ -70,8 +72,7 @@ private:
   QCPCurve * committed_frenet_curve_ = nullptr;
   QCPCurve * committed_cartesian_curve_ = nullptr;
 
-  static QCPCurve * toFrenetCurve(
-    const frenet_planner::Trajectory & trajectory, QCPAxisRect * axis_rect);
+  template <typename T> static QCPCurve * toFrenetCurve(const T & frenet, QCPAxisRect * axis_rect);
   static QCPCurve * toCartesianCurve(const sampler_common::Path & path, QCPAxisRect * axis_rect);
 };
 

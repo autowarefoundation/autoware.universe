@@ -235,6 +235,8 @@ struct Constraints
     double radius;
   } obstacles;
   std::vector<Polygon> obstacle_polygons;
+  std::vector<Polygon> drivable_polygons;
+  std::vector<Polygon> prefered_polygons;
 };
 }  // namespace sampler_common
 

@@ -32,7 +32,7 @@ std::vector<Trajectory> generateTrajectories(
   const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
   Debug & debug);
 /// @brief generate all paths
-std::vector<sampler_common::Path> generatePaths(
+std::vector<Path> generatePaths(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
   const SamplingParameters & sampling_parameters);
 /// @brief generate a candidate path

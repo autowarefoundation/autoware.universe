@@ -48,11 +48,11 @@ std::vector<Trajectory> generateTrajectories(
   return candidates;
 }
 
-std::vector<sampler_common::Path> generatePaths(
+std::vector<Path> generatePaths(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
   const SamplingParameters & sampling_parameters)
 {
-  std::vector<sampler_common::Path> candidates;
+  std::vector<Path> candidates;
   FrenetState target_state;
   const auto & sp = sampling_parameters;
   for (const auto target_s : sp.target_longitudinal_positions) {
@@ -130,14 +130,15 @@ Trajectory generateCandidate(
 Path generateCandidate(
   const FrenetState & initial_state, const FrenetState & target_state, const double s_resolution)
 {
+  const auto delta_s = target_state.position.s - initial_state.position.s;
   Path path;
   path.lateral_polynomial = Polynomial(
     initial_state.position.d, initial_state.lateral_velocity, initial_state.lateral_acceleration,
     target_state.position.d, target_state.lateral_velocity, target_state.lateral_acceleration,
-    target_state.position.s);
-  for (double s = initial_state.position.s; s <= target_state.position.s; s += s_resolution) {
+    delta_s);
+  for (double s = 0; s <= delta_s; s += s_resolution) {
     path.frenet_points.emplace_back(
-      s, path.lateral_polynomial->position(s - initial_state.position.s));
+      initial_state.position.s + s, path.lateral_polynomial->position(s));
   }
   return path;
 }
