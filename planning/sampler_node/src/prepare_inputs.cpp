@@ -29,8 +29,8 @@ namespace sampler_node
 {
 
 sampler_common::Constraints prepareConstraints(
-  const nav_msgs::msg::OccupancyGrid & drivable_area,
-  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
+  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids, const lanelet::Ids & prefered_ids)
 {
   sampler_common::Constraints constraints;
   constraints.hard.max_curvature = 0.3;
@@ -38,70 +38,30 @@ sampler_common::Constraints prepareConstraints(
   constraints.soft.lateral_deviation_weight = 0.1;
   constraints.soft.longitudinal_deviation_weight = 1.0;
   constraints.soft.jerk_weight = 1.0;
-  constraints.soft.length_weight = 1.0;
+  constraints.soft.length_weight = -1.0;  // negative weight to consider length as a reward
   constraints.soft.curvature_weight = 1.0;
 
-  if (false) {
-    for (const auto & occ_grid_polygon : utils::occupancyGridToPolygons(drivable_area)) {
-      constraints.obstacle_polygons.push_back(occ_grid_polygon);
-    }
-  }
   for (const auto & dynamic_obstacle_polygon :
        utils::predictedObjectsToPolygons(predicted_objects)) {
     constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
   }
+  for(const auto & drivable_id : drivable_ids) {
+    const auto lanelet = map.laneletLayer.get(drivable_id);
+    sampler_common::Polygon road_polygon;
+    for(const auto & point: lanelet.polygon2d().basicPolygon()) {
+      road_polygon.outer().push_back({point.x(), point.y()});
+    }
+    constraints.drivable_polygons.push_back(std::move(road_polygon));
+  }
+  for(const auto & prefered_id : prefered_ids) {
+    const auto lanelet = map.laneletLayer.get(prefered_id);
+    sampler_common::Polygon prefered_polygon;
+    for(const auto & point: lanelet.polygon2d().basicPolygon()) {
+      prefered_polygon.outer().push_back({point.x(), point.y()});
+    }
+    constraints.prefered_polygons.push_back(std::move(prefered_polygon));
+  }
   return constraints;
-}
-
-frenet_planner::SamplingParameters prepareSamplingParameters(
-  const frenet_planner::FrenetState & initial_state,
-  const autoware_auto_planning_msgs::msg::Path & path, const double base_duration,
-  const sampler_common::transform::Spline2D & path_spline)
-{
-  const auto max_s =
-    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
-  frenet_planner::SamplingParameters sampling_parameters;
-  sampling_parameters.time_resolution = 0.1;
-  for (auto d = 4; d <= 12; d += 2) {
-    const auto duration = std::max(0.0, d - base_duration);
-    sampling_parameters.target_durations.push_back(duration);
-    if (duration == 0.0) {
-      break;
-    }
-  }
-  sampling_parameters.target_lateral_positions = {-2.0, -1.0, 0.0, 1.0, 2.0};
-  sampling_parameters.target_longitudinal_accelerations = {0.0};
-  sampling_parameters.target_lateral_velocities = {-0.5, 0.0, 0.5};
-  sampling_parameters.target_lateral_accelerations = {0.0};
-  // TODO(Maxime CLEMENT): get target vel + target longitudinal pos based on the Path
-  const auto max_velocity =
-    std::max_element(path.points.begin(), path.points.end(), [](const auto & p1, const auto & p2) {
-      return p1.longitudinal_velocity_mps < p2.longitudinal_velocity_mps;
-    })->longitudinal_velocity_mps;
-  sampling_parameters.target_longitudinal_velocities = {max_velocity};
-  for (const auto target_duration : sampling_parameters.target_durations) {
-    for (const auto target_vel : sampling_parameters.target_longitudinal_velocities) {
-      const auto target_s = initial_state.position.s + target_duration * target_vel;
-      // Prevent target past the end
-      if (target_s < max_s) sampling_parameters.target_longitudinal_positions.push_back(target_s);
-    }
-  }
-  // Stopping
-  if (sampling_parameters.target_longitudinal_positions.empty()) {
-    sampling_parameters.target_longitudinal_positions = {max_s};
-    sampling_parameters.target_longitudinal_velocities = {0.0};
-    if (initial_state.longitudinal_velocity > 0) {
-      const auto const_decel_duration = std::min(
-        10.0,  // prevents very high values when driving at very low velocity
-        2 * (max_s - initial_state.position.s) / initial_state.longitudinal_velocity);
-      sampling_parameters.target_durations.clear();
-      for (auto offset = -2.0; offset <= 2.0; offset += 0.5) {
-        sampling_parameters.target_durations.push_back(const_decel_duration + offset);
-      }
-      sampling_parameters.target_longitudinal_accelerations = {-1.0, -0.5, 0.0};
-    }
-  }
-  return sampling_parameters;
 }
 
 frenet_planner::SamplingParameters prepareSamplingParameters(
@@ -112,12 +72,12 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   sampling_parameters.time_resolution = 0.1;
   sampling_parameters.target_durations = {};
   sampling_parameters.target_lateral_positions = {-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0};
-  sampling_parameters.target_lateral_velocities = {-0.5, 0.0, 0.5};
+  sampling_parameters.target_lateral_velocities = {-0.1, 0.0, 0.1};
   sampling_parameters.target_lateral_accelerations = {0.0};
   // Unused when generating Path (i.e., without velocity profile)
   sampling_parameters.target_longitudinal_accelerations = {};
   sampling_parameters.target_longitudinal_velocities = {};
-  const auto target_lengths = {20, 40, 60};
+  const auto target_lengths = {60};
   const auto max_s =
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
   for (const auto target_length : target_lengths) {
@@ -129,7 +89,7 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
     else
       break;
   }
-  // Stopping
+  // Stopping case
   if (sampling_parameters.target_longitudinal_positions.empty()) {
     sampling_parameters.target_longitudinal_positions = {max_s};
   }

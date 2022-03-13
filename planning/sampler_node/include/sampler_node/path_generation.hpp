@@ -19,6 +19,7 @@
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/plot/plotter.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/detail/twist__struct.hpp>
@@ -40,13 +41,14 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::Constraints & constraints);
+  const sampler_common::Constraints & constraints,
+  plot::Plotter & plotter);
 
 std::vector<sampler_common::Path> generateBezierPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
   const sampler_common::transform::Spline2D & path_spline);
-std::vector<sampler_common::Path> generateFrenetPaths(
+std::vector<frenet_planner::Path> generateFrenetPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
   const sampler_common::transform::Spline2D & path_spline,

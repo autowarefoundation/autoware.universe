@@ -13,6 +13,8 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>lanelet2_extension</depend>
   <depend>bezier_sampler</depend>
   <depend>frenet_planner</depend>
   <depend>geometry_msgs</depend>

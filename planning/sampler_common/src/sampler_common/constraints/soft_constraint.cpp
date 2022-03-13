@@ -34,7 +34,7 @@ void calculateCurvatureCost(Path & path, const Constraints & constraints)
 void calculateLengthCost(Path & path, const Constraints & constraints)
 {
   const auto length = std::accumulate(path.intervals.begin(), path.intervals.end(), 0.0);
-  path.cost += constraints.soft.length_weight * length;
+  path.cost -= constraints.soft.length_weight * length;
 }
 
 void calculateCost(
@@ -44,12 +44,10 @@ void calculateCost(
   calculateCurvatureCost(path, constraints);
   calculateLengthCost(path, constraints);
   (void)reference;
-  /* TODO(Maxime CLEMENT): lateral deviation is too expensive to compute
-  calculateLateralDeviationCost(path, constraints, reference);
+  // calculateLateralDeviationCost(path, constraints, reference);
   double lateral_deviation_sum = 0.0;
   const auto fp = reference.frenet(path.points.back());
   lateral_deviation_sum += std::abs(fp.d);
   path.cost += constraints.soft.lateral_deviation_weight * lateral_deviation_sum;
-  */
 }
 }  // namespace sampler_common::constraints

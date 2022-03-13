@@ -26,6 +26,7 @@ struct NumberOfViolations
 {
   uint32_t collision = 0;
   uint32_t curvature = 0;
+  uint32_t outside = 0;
 };
 /// @brief Check if the path satisfy the hard constraints
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints);

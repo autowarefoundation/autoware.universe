@@ -26,7 +26,10 @@
 #include <rclcpp/timer.hpp>
 #include <rclcpp/utilities.hpp>
 
+#include <autoware_auto_mapping_msgs/msg/detail/had_map_bin__struct.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -36,6 +39,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <qapplication.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -64,6 +68,9 @@ private:
   std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> in_objects_ptr_;
   sampler_common::Path prev_path_;
+  lanelet::LaneletMapPtr lanelet_map_ptr_;
+  lanelet::Ids drivable_ids_;
+  lanelet::Ids prefered_ids_;
 
   // TF
   tf2_ros::Buffer tf_buffer_;
@@ -76,6 +83,8 @@ private:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr steer_sub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     objects_sub_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
   rclcpp::TimerBase::SharedPtr gui_process_timer_;
 
@@ -83,6 +92,8 @@ private:
   void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
   void steerCallback(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr);
   void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr);
+  void routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr);
 
   // other functions
   void publishPath(

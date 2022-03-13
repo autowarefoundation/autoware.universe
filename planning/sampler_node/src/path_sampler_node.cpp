@@ -15,6 +15,7 @@
 #include "sampler_node/path_sampler_node.hpp"
 
 #include "frenet_planner/structures.hpp"
+#include "lanelet2_core/LaneletMap.h"
 #include "sampler_common/constraints/soft_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"
@@ -23,16 +24,14 @@
 #include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
-
+#include "sampler_node/debug.hpp"
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/utilities.hpp>
-
-#include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
@@ -67,6 +66,12 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
   objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
     "~/input/objects", rclcpp::QoS{10},
     std::bind(&PathSamplerNode::objectsCallback, this, std::placeholders::_1));
+  map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&PathSamplerNode::mapCallback, this, std::placeholders::_1));
+  route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
+    "~/input/route", rclcpp::QoS{1}.transient_local(),
+    std::bind(&PathSamplerNode::routeCallback, this, std::placeholders::_1));
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
 
@@ -78,8 +83,10 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
 // ROS callback functions
 void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr msg)
 {
-  frenet_planner::Debug debug;
+  w_.plotter_->clear();
+  sampler_node::debug::Debug debug;
   const auto current_state = getCurrentEgoState();
+  // TODO move to "validInputs(current_state, msg)"
   if (
     msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state ||
     !current_steer_ptr_) {
@@ -94,13 +101,14 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg);
-  const auto constraints = prepareConstraints(msg->drivable_area, *in_objects_ptr_);
+  const auto constraints = prepareConstraints(*in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
 
-  auto paths = generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, constraints);
+  auto paths = generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, constraints, *w_.plotter_);
   for (auto & path : paths) {
     const auto nb_violations = sampler_common::constraints::checkHardConstraints(path, constraints);
-    debug.nb_constraint_violations.collision += nb_violations.collision;
-    debug.nb_constraint_violations.curvature += nb_violations.curvature;
+    debug.violations.outside += nb_violations.outside;
+    debug.violations.collision += nb_violations.collision;
+    debug.violations.curvature += nb_violations.curvature;
     sampler_common::constraints::calculateCost(path, constraints, path_spline);
   }
   const auto selected_path = selectBestPath(paths);
@@ -110,9 +118,8 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
     prev_path_ = *selected_path;
   } else {
     RCLCPP_WARN(
-      get_logger(), "[PathSampler] All candidates rejected: lat_dev=%lu vel=%lu coll=%lu curv=%lu",
-      debug.nb_constraint_violations.lateral_deviation, debug.nb_constraint_violations.velocity,
-      debug.nb_constraint_violations.collision, debug.nb_constraint_violations.curvature);
+      get_logger(), "[PathSampler] All candidates rejected: out=%d coll=%d curv=%d",
+      debug.violations.outside, debug.violations.collision, debug.violations.curvature);
     publishPath(prev_path_, msg);
   }
   std::chrono::steady_clock::time_point calc_end = std::chrono::steady_clock::now();
@@ -120,6 +127,8 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   // Plot //
   const auto plot_begin = calc_end;
   w_.plotter_->plotPolygons(constraints.obstacle_polygons);
+  w_.plotter_->plotPolygons(constraints.drivable_polygons);
+  w_.plotter_->plotPolygons(constraints.prefered_polygons);
   std::vector<double> x;
   std::vector<double> y;
   x.reserve(msg->points.size());
@@ -130,7 +139,6 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   }
   w_.plotter_->plotReferencePath(x, y);
   w_.plotter_->plotPaths(paths);
-  // w_.plotter_->plotCommittedPath(base_trajectory); // TODO(Maxime CLEMENT): fix this
   if (selected_path) w_.plotter_->plotSelectedPath(*selected_path);
   w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
   w_.replot();
@@ -215,6 +223,23 @@ void PathSamplerNode::publishPath(
     traj_msg.points.push_back(point);
   }
   trajectory_pub_->publish(traj_msg);
+}
+
+void PathSamplerNode::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr map_msg) {
+  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
+  lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
+}
+void PathSamplerNode::routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr route_msg) {
+  prefered_ids_.clear();
+  drivable_ids_.clear();
+  if(lanelet_map_ptr_) {
+    for(const auto & segment : route_msg->segments) {
+      prefered_ids_.push_back(segment.preferred_primitive_id);
+      for(const auto & primitive : segment.primitives) {
+        drivable_ids_.push_back(primitive.id);
+      }
+    }
+  }
 }
 }  // namespace sampler_node
 

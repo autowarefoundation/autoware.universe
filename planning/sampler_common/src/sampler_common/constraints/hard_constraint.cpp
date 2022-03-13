@@ -16,9 +16,12 @@
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/core/cs.hpp>
 
 #include <algorithm>
+#include <csignal>
+#include <iostream>
 
 namespace sampler_common::constraints
 {
@@ -42,11 +45,31 @@ bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygon
   return false;
 }
 
+bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
+{
+  for (const auto & point : path.points) {
+    bool within_at_least_one_poly = false;
+    for (const auto & polygon : polygons) {
+      if (boost::geometry::within(point, polygon.outer())) {
+        within_at_least_one_poly = true;
+        break;
+      }
+    }
+    if(!within_at_least_one_poly)
+      return false;
+  }
+  return true;
+}
+
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints)
 {
   NumberOfViolations number_of_violations;
   if (collideWithPolygons(path, constraints.obstacle_polygons)) {
     ++number_of_violations.collision;
+    path.valid = false;
+  }
+  if (!withinPolygons(path, constraints.drivable_polygons)) {
+    ++number_of_violations.outside;
     path.valid = false;
   }
   if (!satisfyMinMax(

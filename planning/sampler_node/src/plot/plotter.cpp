@@ -116,10 +116,6 @@ void Plotter::plotPaths(const std::vector<sampler_common::Path> & paths)
 
 void Plotter::plotFrenetTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories)
 {
-  for (auto plottable : frenet_curves_) fcplot_->removePlottable(plottable);
-  polyplot_->clearGraphs();
-  frenet_curves_.clear();
-
   for (const auto & trajectory : trajectories) {
     if (trajectory.frenet_points.empty()) {
       continue;
@@ -147,6 +143,19 @@ void Plotter::plotFrenetTrajectories(const std::vector<frenet_planner::Trajector
   }
 }
 
+void Plotter::plotFrenetPaths(const std::vector<frenet_planner::Path> & paths)
+{
+
+  for (const auto & path: paths) {
+    if (path.frenet_points.empty()) {
+      continue;
+    }
+    auto * frenet_curve = toFrenetCurve(path, frenet_rect_);
+    frenet_curve->setPen(QPen(QColor(0, 0, 255, 100)));
+    frenet_curves_.push_back(frenet_curve);
+  }
+}
+
 void Plotter::plotCommittedTrajectory(const frenet_planner::Trajectory & trajectory)
 {
   if (committed_frenet_curve_ != nullptr) fcplot_->removePlottable(committed_frenet_curve_);
@@ -155,6 +164,13 @@ void Plotter::plotCommittedTrajectory(const frenet_planner::Trajectory & traject
   committed_cartesian_curve_ = toCartesianCurve(trajectory, cartesian_rect_);
   const auto committed_color = QColor(0, 255, 0);
   committed_frenet_curve_->setPen(QPen(committed_color));
+  committed_cartesian_curve_->setPen(QPen(committed_color));
+}
+
+void Plotter::plotCommittedPath(const sampler_common::Path & path)
+{
+  committed_cartesian_curve_ = toCartesianCurve(path, cartesian_rect_);
+  const auto committed_color = QColor(0, 255, 0);
   committed_cartesian_curve_->setPen(QPen(committed_color));
 }
 
@@ -183,8 +199,6 @@ void Plotter::plotCartesianTrajectories(
 {
   static const auto valid_pen = QPen(QColor(0, 0, 255, 100));
   static const auto invalid_pen = QPen(QColor(0, 0, 0, 100));
-  for (auto plottable : cartesian_curves_) fcplot_->removePlottable(plottable);
-  cartesian_curves_.clear();
 
   for (const auto & trajectory : trajectories) {
     if (trajectory.points.empty()) {
@@ -200,9 +214,6 @@ void Plotter::plotCartesianPaths(const std::vector<sampler_common::Path> & paths
 {
   static const auto valid_pen = QPen(QColor(0, 0, 255, 100));
   static const auto invalid_pen = QPen(QColor(0, 0, 0, 100));
-  for (auto plottable : cartesian_curves_) fcplot_->removePlottable(plottable);
-  cartesian_curves_.clear();
-
   for (const auto & path : paths) {
     if (path.points.empty()) {
       continue;
@@ -233,10 +244,6 @@ void Plotter::plotCurrentPose(const FrenetPoint & fp, const Point & p)
 
 void Plotter::plotPolygons(const std::vector<Polygon> & polygons)
 {
-  // clear previously drawn polygons
-  for (auto plottable : polygons_) fcplot_->removePlottable(plottable);
-  polygons_.clear();
-
   QVector<double> xs;
   QVector<double> ys;
   for (const auto & polygon : polygons) {
@@ -275,15 +282,15 @@ void Plotter::replot(const bool fc, const bool poly, const bool rescale)
   }
 }
 
-QCPCurve * Plotter::toFrenetCurve(
-  const frenet_planner::Trajectory & trajectory, QCPAxisRect * axis_rect)
+template <typename T> QCPCurve * Plotter::toFrenetCurve(
+  const T & frenet, QCPAxisRect * axis_rect)
 {
   auto curve = new QCPCurve(axis_rect->axis(QCPAxis::atBottom), axis_rect->axis(QCPAxis::atLeft));
   QVector<double> xs;
   QVector<double> ys;
-  xs.reserve(static_cast<int>(trajectory.frenet_points.size()));
-  ys.reserve(static_cast<int>(trajectory.frenet_points.size()));
-  for (const auto & p : trajectory.frenet_points) {
+  xs.reserve(static_cast<int>(frenet.frenet_points.size()));
+  ys.reserve(static_cast<int>(frenet.frenet_points.size()));
+  for (const auto & p : frenet.frenet_points) {
     xs.push_back(p.s);
     ys.push_back(p.d);
   }
@@ -304,6 +311,18 @@ QCPCurve * Plotter::toCartesianCurve(const sampler_common::Path & path, QCPAxisR
   }
   curve->setData(xs, ys);
   return curve;
+}
+
+void Plotter::clear() {
+  if (committed_frenet_curve_ != nullptr) fcplot_->removePlottable(committed_frenet_curve_);
+  if (committed_cartesian_curve_ != nullptr) fcplot_->removePlottable(committed_cartesian_curve_);
+  for (auto plottable : frenet_curves_) fcplot_->removePlottable(plottable);
+  frenet_curves_.clear();
+  for (auto plottable : cartesian_curves_) fcplot_->removePlottable(plottable);
+  cartesian_curves_.clear();
+  for (auto plottable : polygons_) fcplot_->removePlottable(plottable);
+  polygons_.clear();
+  polyplot_->clearGraphs();
 }
 
 }  // namespace sampler_node::plot
