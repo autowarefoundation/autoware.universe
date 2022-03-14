@@ -41,7 +41,7 @@ std::vector<sampler_common::Path> generateCandidatePaths(
 {
   constexpr auto sample_frenet = true;
   constexpr auto sample_bezier = false;
-  constexpr auto minimum_committed_length = 2.0;
+  constexpr auto minimum_committed_length = 5.0;
   constexpr auto reuse_max_length_max = 50.0;
   constexpr auto reuse_length_step = reuse_max_length_max / 2.0;
   constexpr auto reuse_max_deviation = 1.0;
