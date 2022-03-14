@@ -153,7 +153,6 @@ cv::Mat OccupancyGridBasedValidator::getMask(
   return mask;
 }
 
-
 cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid)
 {
@@ -164,7 +163,8 @@ cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
     size_t y = i / occupancy_grid.info.width;
     size_t x = i % occupancy_grid.info.width;
     const auto & data = occupancy_grid.data[i];
-    cv_occ_grid.at<unsigned char>(y, x) = std::min(std::max(data, static_cast<signed char>(0)), static_cast<signed char>(50)) * 2;
+    cv_occ_grid.at<unsigned char>(y, x) =
+      std::min(std::max(data, static_cast<signed char>(0)), static_cast<signed char>(50)) * 2;
   }
   return cv_occ_grid;
 }
