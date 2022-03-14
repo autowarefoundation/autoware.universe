@@ -206,6 +206,22 @@ void PathSamplerNode::publishPath(
   if (path.points.size() < 2) {
     return;
   }
+  std::vector<double> velocities(path.intervals.size());
+  double path_arc_length = 0.0;
+  double msg_arc_length = 0.0;
+  size_t msg_idx = 0;
+  for(size_t i = 0; i < path.intervals.size(); ++i) {
+    path_arc_length += path.intervals[i];
+    while(msg_arc_length < path_arc_length && msg_idx + 1 < path_msg->points.size()) {
+      const auto x0 = path_msg->points[msg_idx].pose.position.x;
+      const auto y0 = path_msg->points[msg_idx].pose.position.y;
+      const auto x1 = path_msg->points[msg_idx+1].pose.position.x;
+      const auto y1 = path_msg->points[msg_idx+1].pose.position.y;
+      msg_arc_length += std::hypot(x1 - x0, y1 - y0);
+      ++msg_idx;
+    }
+    velocities[i] = path_msg->points[msg_idx].longitudinal_velocity_mps;
+  }
   tf2::Quaternion q;  // to convert yaw angle to Quaternion orientation
   autoware_auto_planning_msgs::msg::Trajectory traj_msg;
   traj_msg.header.frame_id = path_msg->header.frame_id;
@@ -216,8 +232,7 @@ void PathSamplerNode::publishPath(
     point.pose.position.y = path.points[i].y();
     q.setRPY(0, 0, path.yaws[i]);
     point.pose.orientation = tf2::toMsg(q);
-    point.longitudinal_velocity_mps =
-      15.0;  // TODO(Maxime CLEMENT): reuse path_msg velocity profile
+    point.longitudinal_velocity_mps = static_cast<float>(velocities[i]);
     point.front_wheel_angle_rad = static_cast<float>(path.curvatures[i]);
     point.rear_wheel_angle_rad = 0.0f;
     traj_msg.points.push_back(point);
