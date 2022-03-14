@@ -48,6 +48,7 @@ if(BUILD_TESTING)
     test/test_fault_injection_node.test.py
     TARGET test_fault_injection_launch_test
   )
+  # TODO(KeisukeShima): Remove in Humble
   set_tests_properties(
     test_fault_injection_launch_test
     PROPERTIES
