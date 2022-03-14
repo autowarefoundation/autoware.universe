@@ -74,7 +74,6 @@ void SideShiftModule::initVariables()
   lateral_offset_ = 0.0;
   prev_output_ = ShiftedPath{};
   path_shifter_ = PathShifter{};
-  request_timer_ = SideShiftRequestTimer();
 }
 
 void SideShiftModule::onEntry()
@@ -114,6 +113,20 @@ bool SideShiftModule::isExecutionRequested() const
 bool SideShiftModule::isExecutionReady() const
 {
   return true;  // TODO(Horibe) is it ok to say "always safe"?
+}
+
+bool SideShiftModule::isReadyForNextRequest(
+  const double & min_request_time_sec, bool override_requests) const noexcept
+{
+  rclcpp::Time current_time = clock_->now();
+  const auto interval_from_last_request_sec = current_time - last_requested_shift_change_time_;
+
+  if (interval_from_last_request_sec.seconds() >= min_request_time_sec && !override_requests) {
+    last_requested_shift_change_time_ = current_time;
+    return true;
+  }
+
+  return false;
 }
 
 BT::NodeStatus SideShiftModule::updateState()
@@ -314,7 +327,7 @@ void SideShiftModule::onLateralOffset(const LateralOffset::ConstSharedPtr latera
       getLogger(), "Shift request time might be too low. Generated trajectory might be wavy");
   }
   // new offset is requested.
-  if (request_timer_.isRequestAllowed(parameters_.shift_request_time_limit)) {
+  if (isReadyForNextRequest(parameters_.shift_request_time_limit)) {
     lateral_offset_change_request_ = true;
 
     lateral_offset_ = new_lateral_offset;
