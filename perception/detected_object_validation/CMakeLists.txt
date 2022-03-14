@@ -22,6 +22,10 @@ find_package(ament_cmake_auto REQUIRED)
 ### Find OpenCV Dependencies
 find_package(OpenCV REQUIRED)
 
+### Find Eigen Dependencies
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+
 ### Find dependencies listed in the package.xml
 ament_auto_find_build_dependencies()
 
@@ -29,7 +33,6 @@ include_directories(
   include
   SYSTEM
   ${OpenCV_INCLUDE_DIRS}
-  ${GRID_MAP_INCLUDE_DIR}
 )
 
 # Generate exe file
@@ -37,17 +40,18 @@ set(OCCUPANCY_GRID_BASED_VALIDATOR_SRC
   src/occupancy_grid_based_validator.cpp
 )
 
-ament_auto_add_library(occupancy_grid_based_validator_node SHARED
+ament_auto_add_library(occupancy_grid_based_validator SHARED
   ${OCCUPANCY_GRID_BASED_VALIDATOR_SRC}
 )
 
-target_link_libraries(occupancy_grid_based_validator_node
+target_link_libraries(occupancy_grid_based_validator
   ${OpenCV_LIBRARIES}
+  Eigen3::Eigen
 )
 
-rclcpp_components_register_node(occupancy_grid_based_validator_node
-  PLUGIN "OccupancyGridBasedValidator"
-  EXECUTABLE occupancy_grid_based_validator
+rclcpp_components_register_node(occupancy_grid_based_validator
+  PLUGIN "occupancy_grid_based_validator::OccupancyGridBasedValidator"
+  EXECUTABLE occupancy_grid_based_validator_node
 )
 
 if(BUILD_TESTING)
@@ -55,6 +59,6 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-# ament_auto_package(INSTALL_TO_SHARE
-#   launch
-# )
+ament_auto_package(INSTALL_TO_SHARE
+  launch
+)

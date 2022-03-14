@@ -9,8 +9,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
-  <depend>grid_map_ros</depend>
-  <depend>libpcl-all-dev</depend>
+  <depend>autoware_auto_perception_msgs</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>

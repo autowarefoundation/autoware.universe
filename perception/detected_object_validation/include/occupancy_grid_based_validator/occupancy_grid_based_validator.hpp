@@ -15,7 +15,6 @@
 #ifndef OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
 #define OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
 
-#include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
@@ -24,8 +23,13 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace occupancy_grid_based_validator
 {
@@ -50,6 +54,17 @@ private:
   void onObjectsAndOccGrid(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
     const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & input_occ_grid);
+
+  cv::Mat fromOccupancyGrid(const nav_msgs::msg::OccupancyGrid & occupancy_grid);
+  cv::Mat getMask(
+    const nav_msgs::msg::OccupancyGrid & occupancy_grid,
+    const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  cv::Mat getMask(
+    const nav_msgs::msg::OccupancyGrid & occupancy_grid,
+    const autoware_auto_perception_msgs::msg::DetectedObject & object, cv::Mat mask);
+  void toPolygon2d(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    std::vector<cv::Point2f> & vertices);
 };
 }  // namespace occupancy_grid_based_validator
 

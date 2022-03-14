@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <arg name="input/detected_objects" default="/perception/object_recognition/detection/objects" />
+  <arg name="input/occupancy_grid_map" default="/perception/object_recognition/detection/validation/occupancy_grid_map" />
+  <arg name="output/object" default="/perception/object_recognition/detection/validated_objects" />
+
+
+  <node pkg="laserscan_to_occupancy_grid_map" exec="occupancy_grid_map_node" name="occupancy_grid_map_node" output="screen">
+    <remap from="~/input/laserscan" to="/perception/occupancy_grid_map/virtual_scan/laserscan" />
+    <remap from="~/output/occupancy_grid_map" to="$(var input/occupancy_grid_map)" />
+    <arg name="input_obstacle_pointcloud" value="false" />
+    <arg name="input_obstacle_and_raw_pointcloud" value="false" />
+    <arg name="map_resolution" value="0.25" />
+  </node>
+
+  <node pkg="detected_object_validation" exec="occupancy_grid_based_validator_node" name="occupancy_grid_based_validator_node" output="screen">
+    <remap from="~/input/detected_objects" to="$(var input/detected_objects)" />
+    <remap from="~/input/occupancy_grid_map" to="$(var input/occupancy_grid_map)" />
+    <remap from="~/output/object" to="$(var output/object)" />
+  </node>
+
+  <!-- <node pkg="detected_object_validation" exec="occupancy_grid_based_validator" name="occupancy_grid_based_validator_node" output="screen">
+    <remap from="~/input/detected_objects" to="/perception/object_recognition/detection/objects" />
+    <remap from="~/input/occupancy_grid_map" to="/perception/occupancy_grid_map/map" />
+    <remap from="~/output/objects" to="/perception/object_recognition/detection//validated_objects" />
+  </node> -->
+</launch>
