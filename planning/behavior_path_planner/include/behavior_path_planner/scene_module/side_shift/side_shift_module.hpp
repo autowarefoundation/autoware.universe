@@ -51,6 +51,27 @@ struct SideShiftParameters
   double shift_request_time_limit;
 };
 
+struct SideShiftRequestTimer
+{
+  time_point<high_resolution_clock> last_request_clock = high_resolution_clock::now();
+
+  bool override_request = true;
+
+  bool isRequestAllowed(const double & min_request_time_sec)
+  {
+    time_point<high_resolution_clock> current_request_clock = high_resolution_clock::now();
+    const auto interval_from_last_time_sec =
+      duration<double, std::milli>(current_request_clock - last_request_clock).count() * 0.001;
+
+    if (interval_from_last_time_sec >= min_request_time_sec && override_request) {
+      last_request_clock = current_request_clock;
+      return true;
+    } else {
+      return false;
+    }
+  }
+};
+
 class SideShiftModule : public SceneModuleInterface
 {
 public:
@@ -59,8 +80,6 @@ public:
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  bool isReadyForNextRequest(
-    const double & min_request_time_sec, bool override_requests = false) const noexcept;
   BT::NodeStatus updateState() override;
   void updateData() override;
   BehaviorModuleOutput plan() override;
@@ -115,7 +134,7 @@ private:
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
 
-  mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
+  SideShiftRequestTimer request_timer_;
 };
 
 }  // namespace behavior_path_planner
