@@ -17,6 +17,7 @@
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
 #include <utilization/path_utilization.hpp>
+#include <utilization/trajectory_utils.hpp>
 #include <utilization/util.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -73,9 +74,12 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId interp_path;
   splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
-  if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELCITY) {
+  if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELOCITY) {
     interp_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
+    if (!smoothPath(interp_path, interp_path, planner_data_)) {
+      // use max velocity in path if optimization failure
+    }
   }
   const geometry_msgs::msg::Point start_point = interp_path.points.at(0).point.pose.position;
   const auto offset = tier4_autoware_utils::calcSignedArcLength(

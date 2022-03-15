@@ -78,7 +78,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   //! never change this interpolation interval(will affect module accuracy)
   splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
   debug_data_.interp_path = interp_path;
-  if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELCITY) {
+  if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELOCITY) {
     interp_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
   }

@@ -53,7 +53,7 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   {
     const std::string pass_judge = node.declare_parameter(ns + ".pass_judge", "current_velocity");
     if (pass_judge == "current_velocity") {
-      pp.pass_judge = PASS_JUDGE::CURRENT_VELCITY;
+      pp.pass_judge = PASS_JUDGE::CURRENT_VELOCITY;
     } else {
       throw std::invalid_argument{
         "[behavior_velocity]: occlusion spot pass judge method has invalid argument"};
