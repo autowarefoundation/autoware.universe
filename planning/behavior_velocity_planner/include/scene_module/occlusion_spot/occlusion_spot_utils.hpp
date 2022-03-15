@@ -19,6 +19,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -40,6 +41,16 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+namespace tier4_autoware_utils
+{
+template <>
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  return p.point.pose;
+}
+}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -197,8 +208,6 @@ void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisi
 void clipPathByLength(
   const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
 bool isStuckVehicle(PredictedObject obj, const double min_vel);
-double offsetFromStartToEgo(
-  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx);
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
   std::vector<PredictedObject> & objs, const Polygons2d & polys);
 std::vector<PredictedObject> getParkedVehicles(

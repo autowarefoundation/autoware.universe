@@ -21,6 +21,8 @@
 #include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
+#include <boost/optional.hpp>
+
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <memory>
@@ -76,18 +78,15 @@ bool OcclusionSpotModule::modifyPathVelocity(
   //! never change this interpolation interval(will affect module accuracy)
   splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
   debug_data_.interp_path = interp_path;
-  int closest_idx = -1;
-  if (!planning_utils::calcClosestIndex<PathWithLaneId>(
-        interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
-    return true;
+  if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELCITY) {
+    interp_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
+  } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
   }
-  if (param.pass_judge == PASS_JUDGE::CURRENT_VELCITY) {
-    interp_path = utils::applyVelocityToPath(interp_path, param.v.v_ego);
-  } else if (param.pass_judge == PASS_JUDGE::SMOOTH_VELOCITY) {
-  }
-  // return if ego is final point of interpolated path
-  if (closest_idx == static_cast<int>(interp_path.points.size()) - 1) return true;
-  double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
+  const geometry_msgs::msg::Point start_point = interp_path.points.at(0).point.pose.position;
+  const auto offset = tier4_autoware_utils::calcSignedArcLength(
+    interp_path.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
+  if (offset == boost::none) return true;
+  const double offset_from_start_to_ego = -offset.get();
   auto & detection_area_polygons = debug_data_.detection_area_polygons;
   utils::buildDetectionAreaPolygon(
     detection_area_polygons, interp_path, offset_from_start_to_ego, param_);

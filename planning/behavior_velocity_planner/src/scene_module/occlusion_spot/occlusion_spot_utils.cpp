@@ -72,8 +72,7 @@ void buildDetectionAreaPolygon(
     da_range.min_longitudinal_distance;
   da_range.min_lateral_distance = p.half_vehicle_width;
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
-  // in most case lateral distance is much more effective for velocity planning
-  planning_utils::createDetectionAreaPolygons(slices, processed_path, da_range, p.pedestrian_vel);
+  planning_utils::createDetectionAreaPolygons(slices, path, da_range, p.pedestrian_vel);
   return;
 }
 
@@ -203,21 +202,6 @@ bool isStuckVehicle(PredictedObject obj, const double min_vel)
     }
   }
   return false;
-}
-
-double offsetFromStartToEgo(
-  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx)
-{
-  double offset_from_ego_to_closest = 0;
-  for (int i = 0; i < closest_idx; i++) {
-    const auto & curr_p = path.points.at(i).point.pose.position;
-    const auto & next_p = path.points.at(i + 1).point.pose.position;
-    offset_from_ego_to_closest += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
-  }
-  const double offset_from_closest_to_target =
-    -planning_utils::transformRelCoordinate2D(ego_pose, path.points[closest_idx].point.pose)
-       .position.x;
-  return offset_from_ego_to_closest + offset_from_closest_to_target;
 }
 
 std::vector<PredictedObject> getParkedVehicles(
