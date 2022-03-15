@@ -16,6 +16,7 @@
 
 #include <pcl/filters/voxel_grid_occlusion_estimation.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Vector3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <functional>
@@ -25,6 +26,28 @@
 #include <utility>
 #include <vector>
 
+pcl::PointXYZ getBaseLinkToPoint(
+  const tf2::Transform & tf_base_link2moved_object, double x, double y, double z)
+{
+  tf2::Transform tf_moved_object2point;
+  tf2::Transform tf_base_link2point;
+  geometry_msgs::msg::Transform ros_moved_object2point;
+  ros_moved_object2point.translation.x = x;
+  ros_moved_object2point.translation.y = y;
+  ros_moved_object2point.translation.z = z;
+  ros_moved_object2point.rotation.x = 0;
+  ros_moved_object2point.rotation.y = 0;
+  ros_moved_object2point.rotation.z = 0;
+  ros_moved_object2point.rotation.w = 1;
+  tf2::fromMsg(ros_moved_object2point, tf_moved_object2point);
+  tf_base_link2point = tf_base_link2moved_object * tf_moved_object2point;
+  pcl::PointXYZ point;
+  point.x = tf_base_link2point.getOrigin().x();
+  point.y = tf_base_link2point.getOrigin().y();
+  point.z = tf_base_link2point.getOrigin().z();
+  return point;
+};
+
 DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
 : Node("dummy_perception_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
@@ -32,6 +55,10 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
   detection_successful_rate_ = this->declare_parameter("detection_successful_rate", 0.8);
   enable_ray_tracing_ = this->declare_parameter("enable_ray_tracing", true);
   use_object_recognition_ = this->declare_parameter("use_object_recognition", true);
+  object_centric_pointcloud_ = this->declare_parameter("object_centric_pointcloud", false);
+
+  // parameters for vehicle centric point cloud generation
+  angle_increment_ = this->declare_parameter("angle_increment", 0.25 * M_PI / 180.0);
 
   std::random_device seed_gen;
   random_generator_.seed(seed_gen());
@@ -117,10 +144,17 @@ void DummyPerceptionPublisherNode::timerCallback()
 
     // pointcloud
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    createObjectPointcloud(
-      objects_.at(i).shape.dimensions.x, objects_.at(i).shape.dimensions.y,
-      objects_.at(i).shape.dimensions.z, std_dev_x, std_dev_y, std_dev_z,
-      tf_base_link2map * tf_map2moved_object, pointcloud_ptr);
+    if (object_centric_pointcloud_) {
+      createObjectPointcloudObjectCentric(
+        objects_.at(i).shape.dimensions.x, objects_.at(i).shape.dimensions.y,
+        objects_.at(i).shape.dimensions.z, std_dev_x, std_dev_y, std_dev_z,
+        tf_base_link2map * tf_map2moved_object, pointcloud_ptr);
+    } else {
+      createObjectPointcloudVehicleCentric(
+        objects_.at(i).shape.dimensions.x, objects_.at(i).shape.dimensions.y,
+        objects_.at(i).shape.dimensions.z, std_dev_x, std_dev_y, std_dev_z,
+        tf_base_link2map * tf_map2moved_object, pointcloud_ptr);
+    }
     v_pointcloud.push_back(pointcloud_ptr);
 
     // dynamic object
@@ -223,7 +257,7 @@ void DummyPerceptionPublisherNode::timerCallback()
   }
 }
 
-void DummyPerceptionPublisherNode::createObjectPointcloud(
+void DummyPerceptionPublisherNode::createObjectPointcloudObjectCentric(
   const double length, const double width, const double height, const double std_dev_x,
   const double std_dev_y, const double std_dev_z, const tf2::Transform & tf_base_link2moved_object,
   pcl::PointCloud<pcl::PointXYZ>::Ptr & pointcloud_ptr)
@@ -231,25 +265,6 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
   std::normal_distribution<> x_random(0.0, std_dev_x);
   std::normal_distribution<> y_random(0.0, std_dev_y);
   std::normal_distribution<> z_random(0.0, std_dev_z);
-  auto getBaseLinkTo2DPoint = [tf_base_link2moved_object](double x, double y) -> pcl::PointXYZ {
-    tf2::Transform tf_moved_object2point;
-    tf2::Transform tf_base_link2point;
-    geometry_msgs::msg::Transform ros_moved_object2point;
-    ros_moved_object2point.translation.x = x;
-    ros_moved_object2point.translation.y = y;
-    ros_moved_object2point.translation.z = 0.0;
-    ros_moved_object2point.rotation.x = 0;
-    ros_moved_object2point.rotation.y = 0;
-    ros_moved_object2point.rotation.z = 0;
-    ros_moved_object2point.rotation.w = 1;
-    tf2::fromMsg(ros_moved_object2point, tf_moved_object2point);
-    tf_base_link2point = tf_base_link2moved_object * tf_moved_object2point;
-    pcl::PointXYZ point;
-    point.x = tf_base_link2point.getOrigin().x();
-    point.y = tf_base_link2point.getOrigin().y();
-    point.z = tf_base_link2point.getOrigin().z();
-    return point;
-  };
   const double epsilon = 0.001;
   const double step = 0.05;
   const double vertical_theta_step = (1.0 / 180.0) * M_PI;
@@ -266,25 +281,29 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
   {
     const double y = -1.0 * (width / 2.0);
     for (double x = -1.0 * (length / 2.0); x <= ((length / 2.0) + epsilon); x += step) {
-      horizontal_candidate_pointcloud.push_back(getBaseLinkTo2DPoint(x, y));
+      horizontal_candidate_pointcloud.push_back(
+        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   {
     const double y = 1.0 * (width / 2.0);
     for (double x = -1.0 * (length / 2.0); x <= ((length / 2.0) + epsilon); x += step) {
-      horizontal_candidate_pointcloud.push_back(getBaseLinkTo2DPoint(x, y));
+      horizontal_candidate_pointcloud.push_back(
+        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   {
     const double x = -1.0 * (length / 2.0);
     for (double y = -1.0 * (width / 2.0); y <= ((width / 2.0) + epsilon); y += step) {
-      horizontal_candidate_pointcloud.push_back(getBaseLinkTo2DPoint(x, y));
+      horizontal_candidate_pointcloud.push_back(
+        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   {
     const double x = 1.0 * (length / 2.0);
     for (double y = -1.0 * (width / 2.0); y <= ((width / 2.0) + epsilon); y += step) {
-      horizontal_candidate_pointcloud.push_back(getBaseLinkTo2DPoint(x, y));
+      horizontal_candidate_pointcloud.push_back(
+        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   // 2D ray tracing
@@ -329,6 +348,71 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
           pointcloud_ptr->push_back(point);
         }
       }
+    }
+  }
+}
+
+void DummyPerceptionPublisherNode::createObjectPointcloudVehicleCentric(
+  const double length, const double width, const double height, const double std_dev_x,
+  const double std_dev_y, const double std_dev_z, const tf2::Transform & tf_base_link2moved_object,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr & pointcloud_ptr)
+{
+  const auto tf_moved_object2base_link = tf_base_link2moved_object.inverse();
+  const tf2::Transform tf_rotonly(tf_moved_object2base_link.getRotation());  // For vector rotation
+
+  const auto sdf_box = [&](tf2::Vector3 p) {
+    // As for signd distance field for a box, please refere:
+    // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+    const auto sd_val_x = std::abs(p.getX()) - 0.5 * length;
+    const auto sd_val_y = std::abs(p.getY()) - 0.5 * width;
+    const auto positive_dist_x = std::max(sd_val_x, 0.0);
+    const auto positive_dist_y = std::max(sd_val_y, 0.0);
+    const auto positive_dist = std::hypot(positive_dist_x, positive_dist_y);
+    const auto negative_dist = std::min(std::max(sd_val_x, sd_val_y), 0.0);
+    return positive_dist + negative_dist;
+  };
+
+  const auto compute_dist_by_spheretrace =
+    [&](const tf2::Vector3 & start, const tf2::Vector3 & direction) -> double {
+    // As for sphere tracing, please refere:
+    // https://computergraphics.stackexchange.com/questions/161/what-is-ray-marching-is-sphere-tracing-the-same-thing/163
+    const double eps = 1e-3;
+    const size_t max_iter = 20;
+
+    auto tip = start;
+    for (size_t itr = 0; itr < max_iter; ++itr) {
+      const double dist = sdf_box(tip);
+      tip = tip + dist * direction;
+      bool almost_on_surface = std::abs(dist) < eps;
+      if (almost_on_surface) {
+        return tf2::tf2Distance(tip, start);
+      }
+    }
+    // ray did not hit the surface.
+    return std::numeric_limits<double>::infinity();
+  };
+
+  std::normal_distribution<> x_random(0.0, std_dev_x);
+  std::normal_distribution<> y_random(0.0, std_dev_y);
+  std::normal_distribution<> z_random(0.0, std_dev_z);
+
+  double angle = 0.0;
+  const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / angle_increment_));
+  for (size_t i = 0; i < n_scan; ++i) {
+    angle += angle_increment_;
+
+    const tf2::Vector3 dir_wrt_car(cos(angle), sin(angle), 0.0);
+    const tf2::Vector3 dir_wrt_obj = tf_rotonly * dir_wrt_car;
+    const auto start_ray_pos = tf_moved_object2base_link.getOrigin();
+    const tf2::Vector3 pos_noise(
+      -x_random(random_generator_), -y_random(random_generator_), -z_random(random_generator_));
+    const auto start_ray_pos_with_noise = start_ray_pos + pos_noise;
+    const float ray_dist = compute_dist_by_spheretrace(start_ray_pos_with_noise, dir_wrt_obj);
+    if (std::isfinite(ray_dist)) {
+      const auto ray_tip = start_ray_pos_with_noise + ray_dist * dir_wrt_obj;
+      const auto point = getBaseLinkToPoint(
+        tf_base_link2moved_object, ray_tip.getX(), ray_tip.getY(), ray_tip.getZ());
+      pointcloud_ptr->push_back(point);
     }
   }
 }

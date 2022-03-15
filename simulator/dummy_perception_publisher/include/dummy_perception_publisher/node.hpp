@@ -52,9 +52,18 @@ private:
   bool enable_ray_tracing_;
   bool use_object_recognition_;
   bool use_real_param_;
+  bool object_centric_pointcloud_;
+
+  double angle_increment_;
+
   std::mt19937 random_generator_;
   void timerCallback();
-  void createObjectPointcloud(
+  void createObjectPointcloudObjectCentric(
+    const double length, const double width, const double height, const double std_dev_x,
+    const double std_dev_y, const double std_dev_z,
+    const tf2::Transform & tf_base_link2moved_object,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr & pointcloud_ptr);
+  void createObjectPointcloudVehicleCentric(
     const double length, const double width, const double height, const double std_dev_x,
     const double std_dev_y, const double std_dev_z,
     const tf2::Transform & tf_base_link2moved_object,
