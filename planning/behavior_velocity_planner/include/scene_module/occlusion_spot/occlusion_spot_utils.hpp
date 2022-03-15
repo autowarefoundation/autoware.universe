@@ -19,7 +19,6 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -67,7 +66,8 @@ using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 namespace occlusion_spot_utils
 {
 enum ROAD_TYPE { PRIVATE, PUBLIC, HIGHWAY, UNKNOWN };
-enum METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
+enum DETECTION_METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
+enum PASS_JUDGE { SMOOTH_VELOCITY, CURRENT_VELCITY };
 
 struct DetectionArea
 {
@@ -99,7 +99,8 @@ struct LatLon
 
 struct PlannerParam
 {
-  METHOD method;
+  DETECTION_METHOD detection_method;
+  PASS_JUDGE pass_judge;
   bool debug;                  // [-]
   bool use_partition_lanelet;  // [-]
   // parameters in yaml
@@ -184,7 +185,12 @@ struct DebugData
     occlusion_points.clear();
   }
 };
-
+// apply current velocity to path
+PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
+//!< @brief wrapper for detection area polygon generation
+void buildDetectionAreaPolygon(
+  Polygons2d & slices, const PathWithLaneId & path, const double offset,
+  const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
 void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);

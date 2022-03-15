@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
