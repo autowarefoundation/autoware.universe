@@ -35,7 +35,7 @@ Point2d calculateLateralOffsetPoint(const Point2d & p0, const Point2d & p1, cons
   return Point2d(offset_x, offset_y);
 }
 
-void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, Polygons2d & polys)
+void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons2d & polys)
 {
   const lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(ll);
   for (const auto & partition : partitions) {

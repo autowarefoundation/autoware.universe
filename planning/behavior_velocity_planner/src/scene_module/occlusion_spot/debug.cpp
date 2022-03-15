@@ -172,7 +172,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
 }
 
 visualization_msgs::msg::MarkerArray makeSlicePolygonMarker(
-  const BasicPolygons2d & slices, const std::string ns, const int id, const double z)
+  const Polygons2d & slices, const std::string ns, const int id, const double z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   visualization_msgs::msg::Marker debug_marker;
@@ -188,7 +188,7 @@ visualization_msgs::msg::MarkerArray makeSlicePolygonMarker(
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
   debug_marker.ns = ns;
   for (const auto & slice : slices) {
-    for (const auto & p : slice) {
+    for (const auto & p : slice.outer()) {
       geometry_msgs::msg::Point point =
         tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), 0.0);
       debug_marker.points.push_back(point);

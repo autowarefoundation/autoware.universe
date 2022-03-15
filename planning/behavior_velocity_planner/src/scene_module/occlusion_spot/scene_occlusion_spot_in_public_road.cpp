@@ -89,9 +89,9 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
     detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
   const auto filtered_obj = utils::filterDynamicObjectByDetectionArea(obj, detection_area_polygons);
   // Note: Don't consider offset from path start to ego here
-  std::vector<PossibleCollisionInfo> possible_collisions =
-    utils::generatePossibleCollisionBehindParkedVehicle(
-      interp_path, param_, offset_from_start_to_ego, filtered_obj);
+  std::vector<PossibleCollisionInfo> possible_collisions;  // =
+  //  utils::generatePossibleCollisionBehindParkedVehicle(
+  //    interp_path, param_, offset_from_start_to_ego, filtered_obj);
   utils::calcSlowDownPointsForPossibleCollision(0, interp_path, 0.0, possible_collisions);
   // Note: Consider offset from path start to ego here
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego);

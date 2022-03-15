@@ -338,7 +338,7 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
 }
 
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const BasicPolygons2d & polys)
+  std::vector<PredictedObject> & objs, const Polygons2d & polys)
 {
   std::vector<PredictedObject> filtered_obj;
   // stuck points by predicted objects
@@ -364,7 +364,8 @@ void createPossibleCollisionsInDetectionArea(
     return;
   }
   double distance_lower_bound = std::numeric_limits<double>::max();
-  for (const BasicPolygon2d & detection_area_slice : debug_data.detection_area_polygons) {
+  const Polygons2d & da_polygons = debug_data.detection_area_polygons;
+  for (const Polygon2d & detection_area_slice : da_polygons) {
     std::vector<grid_map::Position> occlusion_spot_positions;
     grid_utils::findOcclusionSpots(
       occlusion_spot_positions, grid, detection_area_slice,
@@ -378,7 +379,7 @@ void createPossibleCollisionsInDetectionArea(
     }
     if (occlusion_spot_positions.empty()) continue;
     // for each partition find nearest occlusion spot from polygon's origin
-    BasicPoint2d base_point = detection_area_slice.at(0);
+    const Point2d base_point = detection_area_slice.outer().at(0);
     const auto pc = generateOneNotableCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, base_point, path_lanelet, param,
       debug_data);
@@ -400,7 +401,7 @@ bool isNotBlockedByPartition(const LineString2d & direction, const BasicPolygons
 
 boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const double offset_from_start_to_ego, const BasicPoint2d base_point,
+  const double offset_from_start_to_ego, const Point2d base_point,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data)
 {
   const double baselink_to_front = param.baselink_to_front;
@@ -414,7 +415,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
     const lanelet::BasicPoint2d obstacle_point = {
       occlusion_spot_position[0], occlusion_spot_position[1]};
     const double dist =
-      std::hypot(base_point[0] - obstacle_point[0], base_point[1] - obstacle_point[1]);
+      std::hypot(base_point.x() - obstacle_point[0], base_point.y() - obstacle_point[1]);
     // skip if absolute distance is larger
     if (distance_lower_bound < dist) continue;
     lanelet::ArcCoordinates arc_coord_occlusion_point =

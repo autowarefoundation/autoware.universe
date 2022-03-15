@@ -18,6 +18,7 @@
 #include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -32,21 +33,8 @@ using lanelet::BasicPolygon2d;
 namespace bg = boost::geometry;
 namespace lg = lanelet::geometry;
 
-BasicPoint2d calculateLateralOffsetPoint(
-  const BasicPoint2d & p0, const BasicPoint2d & p1, const double offset)
-{
-  // translation
-  const double dy = p1[1] - p0[1];
-  const double dx = p1[0] - p0[0];
-  // rotation (use inverse matrix of rotation)
-  const double yaw = std::atan2(dy, dx);
-  const double offset_x = p1[0] - std::sin(yaw) * offset;
-  const double offset_y = p1[1] + std::cos(yaw) * offset;
-  return BasicPoint2d{offset_x, offset_y};
-}
-
 void buildSlices(
-  BasicPolygons2d & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
+  Polygons2d & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
   const bool is_on_right, const PlannerParam & param)
 {
   BasicLineString2d center_line = path_lanelet.centerline2d().basicLineString();
@@ -78,43 +66,42 @@ void buildSlices(
   for (int s = 0; s < max_index; s += num_step) {
     const double length = s * slice_length;
     if (max_length < length) continue;
-    BasicLineString2d inner_polygons;
-    BasicLineString2d outer_polygons;
+    LineString2d inner_polygons;
+    LineString2d outer_polygons;
     // build connected polygon for lateral
     for (int i = 0; i <= num_step; i++) {
       idx = s + i;
       const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx - min_length));
       if (arc_length_from_ego > max_length) break;
       if (idx >= max_index) break;
-      const auto & c0 = center_line.at(idx);
-      const auto & c1 = center_line.at(idx + 1);
+      const auto & c0 = Point2d(center_line.at(idx).x(), center_line.at(idx).y());
+      const auto & c1 = Point2d(center_line.at(idx + 1).x(), center_line.at(idx + 1).y());
       /**
        * @brief points
        * +--outer point (lateral distance obstacle can reach)
        * |
        * +--inner point(min distance)
        */
-      const BasicPoint2d inner_point = calculateLateralOffsetPoint(c0, c1, min_distance);
+      const Point2d inner_point = planning_utils::calculateLateralOffsetPoint(c0, c1, min_distance);
       double lateral_distance = calculateLateralDistanceFromTTC(arc_length_from_ego, param);
       if (is_on_right) lateral_distance *= -1;
-      const BasicPoint2d outer_point = calculateLateralOffsetPoint(c0, c1, lateral_distance);
+      const Point2d outer_point =
+        planning_utils::calculateLateralOffsetPoint(c0, c1, lateral_distance);
       inner_polygons.emplace_back(inner_point);
       outer_polygons.emplace_back(outer_point);
     }
     if (inner_polygons.empty()) continue;
     //  connect invert point
-    inner_polygons.insert(inner_polygons.end(), outer_polygons.rbegin(), outer_polygons.rend());
-    BasicPolygon2d slice = lanelet::BasicPolygon2d(inner_polygons);
+    Polygon2d slice = lines2polygon(inner_polygons, outer_polygons);
     slices.emplace_back(slice);
   }
 }
 
 void buildDetectionAreaPolygon(
-  BasicPolygons2d & slices, const PathWithLaneId & path, const double offset,
-  const PlannerParam & param)
+  Polygons2d & slices, const PathWithLaneId & path, const double offset, const PlannerParam & param)
 {
-  BasicPolygons2d left_slices;
-  BasicPolygons2d right_slices;
+  Polygons2d left_slices;
+  Polygons2d right_slices;
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   // in most case lateral distance is much more effective for velocity planning
   buildSlices(left_slices, path_lanelet, offset, false /*is_on_right*/, param);
@@ -122,7 +109,7 @@ void buildDetectionAreaPolygon(
   // Properly order slice from closest to furthest
   slices = left_slices;
   for (size_t i = 0; i < right_slices.size(); i++) {
-    left_slices.insert(left_slices.begin() + i * 2 + 1, right_slices.at(i));
+    slices.insert(slices.begin() + i * 2 + 1, right_slices.at(i));
   }
   return;
 }
