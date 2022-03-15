@@ -294,7 +294,7 @@ bool insertTargetVelocityPoint(
     }
     // ----------------
 
-    // insert target point
+    // insert target point or replace with 0 velocity if same points found
     planning_utils::insertVelocity(
       output, target_point_with_lane_id, velocity, insert_target_point_idx);
     return true;
