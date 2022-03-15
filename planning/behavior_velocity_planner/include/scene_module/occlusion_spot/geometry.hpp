@@ -28,13 +28,11 @@ namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
-namespace bg = boost::geometry;
-
 //!< @brief build slices all along the trajectory
 // using the given range and desired slice length and width
-void buildSlices(
-  Polygons2d & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
-  const bool is_on_right, const PlannerParam & param);
+void createDetectionAreaPolygons(
+  Polygons2d & slices, const PathWithLaneId & path, const DetectionRange da_range,
+  const double obstacle_vel_mps);
 //!< @brief build detection_area slice from path
 void buildDetectionAreaPolygon(
   Polygons2d & slices, const PathWithLaneId & path, const double offset,

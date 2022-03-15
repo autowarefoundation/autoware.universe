@@ -27,18 +27,11 @@ namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
-using lanelet::BasicLineString2d;
-using lanelet::BasicPoint2d;
-using lanelet::BasicPolygon2d;
-namespace bg = boost::geometry;
-namespace lg = lanelet::geometry;
-
-void buildSlices(
-  Polygons2d & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
-  const bool is_on_right, const PlannerParam & param)
+void createDetectionAreaPolygons(
+  Polygons2d & da_polys, const PathWithLaneId & path, const DetectionRange da_range,
+  const double obstacle_vel_mps)
 {
-  BasicLineString2d center_line = path_lanelet.centerline2d().basicLineString();
-  const auto & p = param;
+  using planning_utils::calculateLateralOffsetPoint2d;
   /**
    * @brief relationships for interpolated polygon
    *
@@ -46,72 +39,94 @@ void buildSlices(
    * |                                  |
    * +--------------------------+ - +---+(max_length,min_distance) = inner_polygons
    */
-  const double min_length = offset;  // + p.baselink_to_front;
-  // Note: min_detection_area_length is for occlusion spot visualization but not effective for
-  // planning
-  const double min_detection_area_length = 10.0;
-  const double max_length = std::max(
-    min_detection_area_length, std::min(p.detection_area_max_length, p.detection_area_length));
-  const double min_distance = (is_on_right) ? -p.half_vehicle_width : p.half_vehicle_width;
-  const double slice_length = p.detection_area.slice_length;
-  const int num_step = static_cast<int>(slice_length);
+  const double min_len = da_range.min_longitudinal_distance;
+  const double max_len = da_range.max_longitudinal_distance;
+  const double min_dst = da_range.min_lateral_distance;
+  const double max_dst = da_range.max_lateral_distance;
+  const double interval = da_range.interval;
   //! max index is the last index of path point
-  const int max_index = static_cast<int>(center_line.size() - 2);
-  int idx = 0;
-  /**
-   * Note: create polygon from path point is better than from ego offset to consider below
-   * - less computation cost and no need to recalculated interpolated point start from ego
-   * - less stable for localization noise
-   **/
-  for (int s = 0; s < max_index; s += num_step) {
-    const double length = s * slice_length;
-    if (max_length < length) continue;
-    LineString2d inner_polygons;
-    LineString2d outer_polygons;
-    // build connected polygon for lateral
-    for (int i = 0; i <= num_step; i++) {
-      idx = s + i;
-      const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx - min_length));
-      if (arc_length_from_ego > max_length) break;
-      if (idx >= max_index) break;
-      const auto & c0 = Point2d(center_line.at(idx).x(), center_line.at(idx).y());
-      const auto & c1 = Point2d(center_line.at(idx + 1).x(), center_line.at(idx + 1).y());
-      /**
-       * @brief points
-       * +--outer point (lateral distance obstacle can reach)
-       * |
-       * +--inner point(min distance)
-       */
-      const Point2d inner_point = planning_utils::calculateLateralOffsetPoint(c0, c1, min_distance);
-      double lateral_distance = calculateLateralDistanceFromTTC(arc_length_from_ego, param);
-      if (is_on_right) lateral_distance *= -1;
-      const Point2d outer_point =
-        planning_utils::calculateLateralOffsetPoint(c0, c1, lateral_distance);
-      inner_polygons.emplace_back(inner_point);
-      outer_polygons.emplace_back(outer_point);
+  const int max_index = static_cast<int>(path.points.size() - 1);
+  double dist_sum = -min_len;
+  double ttc = 0.0;
+  double length = dist_sum;
+  auto p0 = path.points.at(0).point;
+  // initial condition
+  LineString2d left_inner_bound;
+  LineString2d left_outer_bound;
+  LineString2d right_inner_bound;
+  LineString2d right_outer_bound;
+  for (int s = 0; s <= max_index; s++) {
+    const auto p1 = path.points.at(s).point;
+    const double ds = tier4_autoware_utils::calcDistance2d(p0, p1);
+    dist_sum += ds;
+    length += ds;
+    if (dist_sum <= 0) {
+      p0 = p1;
+      continue;
     }
-    if (inner_polygons.empty()) continue;
-    //  connect invert point
-    Polygon2d slice = lines2polygon(inner_polygons, outer_polygons);
-    slices.emplace_back(slice);
+    // calculate the distance that obstacles can move until ego reach the trajectory point
+    const double v_average = 0.5 * (p0.longitudinal_velocity_mps + p1.longitudinal_velocity_mps);
+    const double v = std::max(v_average, 0.3);
+    const double dt = ds / v;
+    ttc += dt;
+    //! avoid bug with same point polygon
+    const double eps = 1e-3;
+    // for offset calculation
+    const double max_lateral_distance = std::min(max_dst, min_dst + ttc * obstacle_vel_mps + eps);
+    // left bound
+    if (da_range.use_left) {
+      left_inner_bound.emplace_back(calculateLateralOffsetPoint2d(p0.pose, min_dst));
+      left_outer_bound.emplace_back(calculateLateralOffsetPoint2d(p0.pose, max_lateral_distance));
+    }
+    // right bound
+    if (da_range.use_right) {
+      right_inner_bound.emplace_back(calculateLateralOffsetPoint2d(p0.pose, -min_dst));
+      right_outer_bound.emplace_back(calculateLateralOffsetPoint2d(p0.pose, -max_lateral_distance));
+    }
+    // replace previous point with next point
+    p0 = p1;
+    // separate detection area polygon with fixed interval or at the end of detection max length
+    if (length > interval || max_len < dist_sum || s == max_index) {
+      if (left_inner_bound.size() > 1)
+        da_polys.emplace_back(lines2polygon(left_inner_bound, left_outer_bound));
+      if (right_inner_bound.size() > 1)
+        da_polys.emplace_back(lines2polygon(right_outer_bound, right_inner_bound));
+      left_inner_bound = {left_inner_bound.back()};
+      left_outer_bound = {left_outer_bound.back()};
+      right_inner_bound = {right_inner_bound.back()};
+      right_outer_bound = {right_outer_bound.back()};
+      length = 0;
+      continue;
+    }
   }
+}
+
+PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0)
+{
+  PathWithLaneId out;
+  for (size_t i = 0; i < path.points.size(); i++) {
+    PathPointWithLaneId p = path.points.at(i);
+    p.point.longitudinal_velocity_mps = std::max(v0, 1.0);
+    out.points.emplace_back(p);
+  }
+  return out;
 }
 
 void buildDetectionAreaPolygon(
   Polygons2d & slices, const PathWithLaneId & path, const double offset, const PlannerParam & param)
 {
-  Polygons2d left_slices;
-  Polygons2d right_slices;
-  lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
+  const auto & p = param;
+  [[maybe_unused]] const double min_len = offset + p.baselink_to_front;
+  [[maybe_unused]] const double max_len = 50;
+  //    std::min(p.detection_area_max_length, p.detection_area_length);
+  [[maybe_unused]] const double min_dst = p.half_vehicle_width;
+  [[maybe_unused]] const double max_dst = p.detection_area.max_lateral_distance;
+  DetectionRange da_range = {p.detection_area.slice_length, min_len, max_len, min_dst, max_dst};
+  PathWithLaneId applied_path = applyVelocityToPath(path, param.v.v_ego);
   // in most case lateral distance is much more effective for velocity planning
-  buildSlices(left_slices, path_lanelet, offset, false /*is_on_right*/, param);
-  buildSlices(right_slices, path_lanelet, offset, true /*is_on_right*/, param);
-  // Properly order slice from closest to furthest
-  slices = left_slices;
-  for (size_t i = 0; i < right_slices.size(); i++) {
-    slices.insert(slices.begin() + i * 2 + 1, right_slices.at(i));
-  }
+  createDetectionAreaPolygons(slices, path, da_range, p.pedestrian_vel);
   return;
 }
+
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

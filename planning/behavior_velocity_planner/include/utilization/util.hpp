@@ -63,6 +63,16 @@ struct SearchRangeIndex
   size_t min_idx;
   size_t max_idx;
 };
+struct DetectionRange
+{
+  bool use_right = true;
+  bool use_left = true;
+  double interval;
+  double min_longitudinal_distance;
+  double max_longitudinal_distance;
+  double min_lateral_distance;
+  double max_lateral_distance;
+};
 struct PointWithSearchRangeIndex
 {
   geometry_msgs::msg::Point point;
@@ -76,6 +86,7 @@ using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 using Polygons2d = std::vector<Polygon2d>;
 namespace planning_utils
 {
+using geometry_msgs::msg::Pose;
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) { return p; }
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) { return p.position; }
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
@@ -112,7 +123,7 @@ inline geometry_msgs::msg::Pose getPose(
   return traj.points.at(idx).pose;
 }
 
-Point2d calculateLateralOffsetPoint(const Point2d & p0, const Point2d & p1, const double offset);
+Point2d calculateLateralOffsetPoint2d(const Pose & p, const double offset);
 
 void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, Polygons2d & polys);
 void setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input);
