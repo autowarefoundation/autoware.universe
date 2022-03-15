@@ -14,7 +14,6 @@
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
@@ -29,8 +28,6 @@
 
 namespace behavior_velocity_planner
 {
-namespace bg = boost::geometry;
-namespace lg = lanelet::geometry;
 namespace utils = occlusion_spot_utils;
 
 OcclusionSpotModule::OcclusionSpotModule(
@@ -64,7 +61,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.a_ego = planner_data_->current_accel.get();
     param_.detection_area_max_length = planning_utils::calcJudgeLineDistWithJerkLimit(
       param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
-      0.0);
+      planner_data_->delay_response_time);
   }
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   const auto & occ_grid_ptr = planner_data_->occupancy_grid;
