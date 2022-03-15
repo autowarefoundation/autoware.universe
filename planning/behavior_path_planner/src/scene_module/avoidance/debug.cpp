@@ -570,7 +570,6 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
   marker.ns = "shared_linestring_lanelets";
   marker.lifetime = rclcpp::Duration::from_seconds(0.2);
 
-
   marker.type = Marker::LINE_STRIP;
   marker.action = Marker::ADD;
   marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
@@ -584,18 +583,18 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
   lefts.reserve(reserve_size);
   rights.reserve(reserve_size);
 
-  for (size_t idx = 1; idx < linestrings.size(); idx+=2) {
+  for (size_t idx = 1; idx < linestrings.size(); idx += 2) {
     lefts.emplace_back(linestrings.at(idx - 1));
     rights.emplace_back(linestrings.at(idx));
   }
 
   const auto & first_ls = linestrings.front().basicLineString();
-  for(const auto & ls:first_ls){
-  Point p;
-  p.x = ls.x();
-  p.y = ls.y();
-  p.z = ls.z();
-  marker.points.push_back(p);
+  for (const auto & ls : first_ls) {
+    Point p;
+    p.x = ls.x();
+    p.y = ls.y();
+    p.z = ls.z();
+    marker.points.push_back(p);
   }
 
   for (auto idx = lefts.cbegin() + 1; idx != lefts.cend(); ++idx) {
@@ -610,7 +609,8 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
     front_inverted.x = left_inverted_front.x();
     front_inverted.y = left_inverted_front.y();
     front_inverted.z = left_inverted_front.z();
-    const bool cond = tier4_autoware_utils::calcDistance2d(marker_back, front) < tier4_autoware_utils::calcDistance2d(marker_back, front_inverted);
+    const bool cond = tier4_autoware_utils::calcDistance2d(marker_back, front) <
+                      tier4_autoware_utils::calcDistance2d(marker_back, front_inverted);
     const auto & left_ls = (cond) ? idx->basicLineString() : idx->invert().basicLineString();
     for (auto ls = left_ls.cbegin(); ls != left_ls.cend(); ++ls) {
       Point p;
@@ -632,7 +632,8 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
     front_inverted.x = right_inverted_front.x();
     front_inverted.y = right_inverted_front.y();
     front_inverted.z = right_inverted_front.z();
-    const bool cond = tier4_autoware_utils::calcDistance2d(marker_back, front) > tier4_autoware_utils::calcDistance2d(marker_back, front_inverted);
+    const bool cond = tier4_autoware_utils::calcDistance2d(marker_back, front) >
+                      tier4_autoware_utils::calcDistance2d(marker_back, front_inverted);
     const auto & right_ls = (cond) ? idx->basicLineString() : idx->invert().basicLineString();
     for (auto ls = right_ls.crbegin(); ls != right_ls.crend(); ++ls) {
       Point p;
