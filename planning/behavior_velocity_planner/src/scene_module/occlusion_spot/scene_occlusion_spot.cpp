@@ -81,15 +81,19 @@ bool OcclusionSpotModule::modifyPathVelocity(
         interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
+  if (param.pass_judge == PASS_JUDGE::CURRENT_VELCITY) {
+    interp_path = utils::applyVelocityToPath(interp_path, param.v.v_ego);
+  } else if (param.pass_judge == PASS_JUDGE::SMOOTH_VELOCITY) {
+  }
   // return if ego is final point of interpolated path
   if (closest_idx == static_cast<int>(interp_path.points.size()) - 1) return true;
-  nav_msgs::msg::OccupancyGrid occ_grid = *occ_grid_ptr;
-  grid_map::GridMap grid_map;
-  grid_utils::denoiseOccupancyGridCV(occ_grid, grid_map, param_.grid);
   double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
   auto & detection_area_polygons = debug_data_.detection_area_polygons;
   utils::buildDetectionAreaPolygon(
     detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
+  nav_msgs::msg::OccupancyGrid occ_grid = *occ_grid_ptr;
+  grid_map::GridMap grid_map;
+  grid_utils::denoiseOccupancyGridCV(occ_grid, grid_map, param_.grid);
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // Note: Don't consider offset from path start to ego here
   utils::createPossibleCollisionsInDetectionArea(

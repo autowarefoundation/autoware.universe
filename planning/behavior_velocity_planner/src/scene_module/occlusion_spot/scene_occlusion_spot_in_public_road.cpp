@@ -78,14 +78,18 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
         interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
+  if (param.pass_judge == PASS_JUDGE::CURRENT_VELCITY) {
+    interp_path = utils::applyVelocityToPath(interp_path, param.v.v_ego);
+  } else if (param.pass_judge == PASS_JUDGE::SMOOTH_VELOCITY) {
+  }
   // return if ego is final point of interpolated path
   if (closest_idx == static_cast<int>(interp_path.points.size()) - 1) return true;
-  std::vector<PredictedObject> obj =
-    utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, debug_data_.parked_vehicle_point);
   double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
   auto & detection_area_polygons = debug_data_.detection_area_polygons;
   utils::buildDetectionAreaPolygon(
     detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
+  std::vector<PredictedObject> obj =
+    utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, debug_data_.parked_vehicle_point);
   const auto filtered_obj = utils::filterDynamicObjectByDetectionArea(obj, detection_area_polygons);
   // Note: Don't consider offset from path start to ego here
   std::vector<PossibleCollisionInfo> possible_collisions =

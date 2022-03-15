@@ -72,11 +72,6 @@ void buildDetectionAreaPolygon(
     da_range.min_longitudinal_distance;
   da_range.min_lateral_distance = p.half_vehicle_width;
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
-  PathWithLaneId processed_path;
-  if (param.pass_judge == PASS_JUDGE::CURRENT_VELCITY) {
-    processed_path = applyVelocityToPath(path, param.v.v_ego);
-  } else if (param.pass_judge == PASS_JUDGE::SMOOTH_VELOCITY) {
-  }
   // in most case lateral distance is much more effective for velocity planning
   planning_utils::createDetectionAreaPolygons(slices, processed_path, da_range, p.pedestrian_vel);
   return;
