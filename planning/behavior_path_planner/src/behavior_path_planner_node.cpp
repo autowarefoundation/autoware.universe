@@ -510,9 +510,8 @@ void BehaviorPathPlannerNode::run()
   publishDebugMarker(bt_manager_->getDebugMarkers());
 
   if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
-    const auto drivable_area_lines = marker_utils::createOvehangFurthestLineStringMarkerArray(
-      util::getDrivableAreaforAllSharedLinestringLanelets(planner_data_), "drivables", 0.984, 0.831,
-      0.725);
+    const auto drivable_area_lines = marker_utils::createFurthestLineStringMarkerArray(
+      util::getDrivableAreaforAllSharedLinestringLanelets(planner_data_));
     debug_drivable_area_lanelets_publisher_->publish(drivable_area_lines);
   }
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
