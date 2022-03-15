@@ -311,9 +311,11 @@ int BlindSpotModule::insertPoint(
     // copy from previous point
     inserted_point = inout_path->points.at(std::max(insert_idx - 1, 0));
     inserted_point.point.pose = path_ip.points[insert_idx_ip].point.pose;
+    constexpr double min_dist = 0.001;
     //! avoid to insert duplicated point
     if (
-      planning_utils::calcDist2d(inserted_point, inout_path->points.at(insert_idx).point) < 0.001) {
+      planning_utils::calcDist2d(inserted_point, inout_path->points.at(insert_idx).point) <
+      min_dist) {
       inout_path->points.at(insert_idx).point.longitudinal_velocity_mps = 0.0;
       return insert_idx;
     }
