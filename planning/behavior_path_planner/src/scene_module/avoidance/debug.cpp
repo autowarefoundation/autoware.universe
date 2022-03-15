@@ -584,11 +584,11 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
   rights.reserve(reserve_size);
 
   for (size_t idx = 1; idx < linestrings.size(); idx += 2) {
-    lefts.emplace_back(linestrings.at(idx - 1));
-    rights.emplace_back(linestrings.at(idx));
+    rights.emplace_back(linestrings.at(idx - 1));
+    lefts.emplace_back(linestrings.at(idx));
   }
 
-  const auto & first_ls = linestrings.front().basicLineString();
+  const auto & first_ls = lefts.front().basicLineString();
   for (const auto & ls : first_ls) {
     Point p;
     p.x = ls.x();
