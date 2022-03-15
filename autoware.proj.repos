@@ -76,10 +76,6 @@ repositories:
     url: git@github.com:tier4/autoware_ecu_system_setup.git
     version: main
   # vendor
-  vendor/quaternion_operation:
-    type: git
-    url: https://github.com/OUXT-Polaris/quaternion_operation.git
-    version: f08cd28b357f9feede55f1fb485cb21964f5d594
   # After https://github.com/ANYbotics/grid_map/pull/323 is merged, use upstream.
   vendor/grid_map:
     type: git
@@ -161,3 +157,8 @@ repositories:
     type: git
     url: https://github.com/tier4/image_pipeline.git
     version: 47964112293eb19f9f57254b2e6b68706954cc63
+  # removed by galactic sync at 2022/03/14
+  vendor/plotjuggler_ros:
+    type: git
+    url: https://github.com/PlotJuggler/plotjuggler-ros-plugins.git
+    version: galactic
