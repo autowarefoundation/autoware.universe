@@ -17,23 +17,13 @@
 
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 
-#include <boost/geometry.hpp>
-
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_core/geometry/Point.h>
-
 #include <vector>
 
 namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
-//!< @brief build slices all along the trajectory
-// using the given range and desired slice length and width
-void createDetectionAreaPolygons(
-  Polygons2d & slices, const PathWithLaneId & path, const DetectionRange da_range,
-  const double obstacle_vel_mps);
-//!< @brief build detection_area slice from path
+//!< @brief wrapper for detection area polygon generation
 void buildDetectionAreaPolygon(
   Polygons2d & slices, const PathWithLaneId & path, const double offset,
   const PlannerParam & param);

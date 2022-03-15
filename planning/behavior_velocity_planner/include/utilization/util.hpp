@@ -123,9 +123,14 @@ inline geometry_msgs::msg::Pose getPose(
   return traj.points.at(idx).pose;
 }
 
+// create detection area from given range
+void createDetectionAreaPolygons(
+  Polygons2d & slices, const PathWithLaneId & path, const DetectionRange da_range,
+  const double obstacle_vel_mps);
+
 Point2d calculateLateralOffsetPoint2d(const Pose & p, const double offset);
 
-void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, Polygons2d & polys);
+void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons2d & polys);
 void setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input);
 void insertVelocity(
   PathWithLaneId & path, const PathPointWithLaneId & path_point, const double v,
