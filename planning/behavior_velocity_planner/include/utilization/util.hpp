@@ -110,6 +110,9 @@ inline geometry_msgs::msg::Pose getPose(
 {
   return traj.points.at(idx).pose;
 }
+
+Point2d calculateLateralOffsetPoint(const Point2d & p0, const Point2d & p1, const double offset);
+
 void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, Polygons2d & polys);
 void setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input);
 void insertVelocity(

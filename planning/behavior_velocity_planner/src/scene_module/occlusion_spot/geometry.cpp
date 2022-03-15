@@ -46,7 +46,7 @@ BasicPoint2d calculateLateralOffsetPoint(
 }
 
 void buildSlices(
-  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
+  BasicPolygons2d & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
   const bool is_on_right, const PlannerParam & param)
 {
   BasicLineString2d center_line = path_lanelet.centerline2d().basicLineString();
@@ -77,9 +77,7 @@ void buildSlices(
    **/
   for (int s = 0; s < max_index; s += num_step) {
     const double length = s * slice_length;
-    const double next_length = static_cast<double>(s + num_step);
-    /// if (max_length < length) continue;
-    Slice slice;
+    if (max_length < length) continue;
     BasicLineString2d inner_polygons;
     BasicLineString2d outer_polygons;
     // build connected polygon for lateral
@@ -106,27 +104,26 @@ void buildSlices(
     if (inner_polygons.empty()) continue;
     //  connect invert point
     inner_polygons.insert(inner_polygons.end(), outer_polygons.rbegin(), outer_polygons.rend());
-    slice.polygon = lanelet::BasicPolygon2d(inner_polygons);
-    // add range info
-    slice.range.min_length = length;
-    slice.range.max_length = next_length;
+    BasicPolygon2d slice = lanelet::BasicPolygon2d(inner_polygons);
     slices.emplace_back(slice);
   }
 }
 
 void buildDetectionAreaPolygon(
-  std::vector<Slice> & slices, const PathWithLaneId & path, const double offset,
+  BasicPolygons2d & slices, const PathWithLaneId & path, const double offset,
   const PlannerParam & param)
 {
-  std::vector<Slice> left_slices;
-  std::vector<Slice> right_slices;
+  BasicPolygons2d left_slices;
+  BasicPolygons2d right_slices;
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   // in most case lateral distance is much more effective for velocity planning
   buildSlices(left_slices, path_lanelet, offset, false /*is_on_right*/, param);
   buildSlices(right_slices, path_lanelet, offset, true /*is_on_right*/, param);
-  // Properly order lanelets from closest to furthest
+  // Properly order slice from closest to furthest
   slices = left_slices;
-  slices.insert(slices.end(), right_slices.begin(), right_slices.end());
+  for (size_t i = 0; i < right_slices.size(); i++) {
+    left_slices.insert(left_slices.begin() + i * 2 + 1, right_slices.at(i));
+  }
   return;
 }
 }  // namespace occlusion_spot_utils

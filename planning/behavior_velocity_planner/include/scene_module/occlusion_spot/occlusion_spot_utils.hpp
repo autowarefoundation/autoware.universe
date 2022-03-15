@@ -127,22 +127,6 @@ struct SafeMotion
   double safe_velocity;
 };
 
-// @brief represent the range of a each polygon
-struct SliceRange
-{
-  double min_length{};
-  double max_length{};
-  double min_distance{};
-  double max_distance{};
-};
-
-// @brief representation of a polygon along a path
-struct Slice
-{
-  SliceRange range{};
-  lanelet::BasicPolygon2d polygon{};
-};
-
 struct ObstacleInfo
 {
   SafeMotion safe_motion;  // safe motion of velocity and stop point
@@ -185,7 +169,7 @@ struct DebugData
   double z;
   std::string road_type = "";
   std::string detection_type = "";
-  std::vector<Slice> detection_area_polygons;
+  BasicPolygons2d detection_area_polygons;
   std::vector<lanelet::BasicPolygon2d> partition_lanelets;
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;
@@ -210,7 +194,7 @@ bool isStuckVehicle(PredictedObject obj, const double min_vel);
 double offsetFromStartToEgo(
   const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx);
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const std::vector<Slice> & polys);
+  std::vector<PredictedObject> & objs, const BasicPolygons2d & polys);
 std::vector<PredictedObject> getParkedVehicles(
   const PredictedObjects & dyn_objects, const PlannerParam & param,
   std::vector<Point> & debug_point);

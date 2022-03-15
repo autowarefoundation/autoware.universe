@@ -29,7 +29,6 @@ namespace
 {
 using builtin_interfaces::msg::Time;
 using BasicPolygons = std::vector<lanelet::BasicPolygon2d>;
-using Slices = std::vector<occlusion_spot_utils::Slice>;
 
 visualization_msgs::msg::Marker makeArrowMarker(
   const occlusion_spot_utils::PossibleCollisionInfo & possible_collision, const int id)
@@ -173,7 +172,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
 }
 
 visualization_msgs::msg::MarkerArray makeSlicePolygonMarker(
-  const Slices & slices, const std::string ns, const int id, const double z)
+  const BasicPolygons2d & slices, const std::string ns, const int id, const double z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   visualization_msgs::msg::Marker debug_marker;
@@ -189,7 +188,7 @@ visualization_msgs::msg::MarkerArray makeSlicePolygonMarker(
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
   debug_marker.ns = ns;
   for (const auto & slice : slices) {
-    for (const auto & p : slice.polygon) {
+    for (const auto & p : slice) {
       geometry_msgs::msg::Point point =
         tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), 0.0);
       debug_marker.points.push_back(point);

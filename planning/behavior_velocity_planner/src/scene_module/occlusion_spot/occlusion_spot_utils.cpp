@@ -338,7 +338,7 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
 }
 
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const std::vector<Slice> & polys)
+  std::vector<PredictedObject> & objs, const BasicPolygons2d & polys)
 {
   std::vector<PredictedObject> filtered_obj;
   // stuck points by predicted objects
@@ -346,7 +346,7 @@ std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
     // check if the footprint is in the stuck detect area
     const Polygon2d obj_footprint = planning_utils::toFootprintPolygon(object);
     for (const auto & p : polys) {
-      if (!bg::disjoint(obj_footprint, p.polygon)) {
+      if (!bg::disjoint(obj_footprint, p)) {
         filtered_obj.emplace_back(object);
       }
     }
@@ -364,10 +364,10 @@ void createPossibleCollisionsInDetectionArea(
     return;
   }
   double distance_lower_bound = std::numeric_limits<double>::max();
-  for (const Slice & detection_area_slice : debug_data.detection_area_polygons) {
+  for (const BasicPolygon2d & detection_area_slice : debug_data.detection_area_polygons) {
     std::vector<grid_map::Position> occlusion_spot_positions;
     grid_utils::findOcclusionSpots(
-      occlusion_spot_positions, grid, detection_area_slice.polygon,
+      occlusion_spot_positions, grid, detection_area_slice,
       param.detection_area.min_occlusion_spot_size);
     if (param.debug) {
       for (const auto & op : occlusion_spot_positions) {
@@ -378,7 +378,7 @@ void createPossibleCollisionsInDetectionArea(
     }
     if (occlusion_spot_positions.empty()) continue;
     // for each partition find nearest occlusion spot from polygon's origin
-    BasicPoint2d base_point = detection_area_slice.polygon.at(0);
+    BasicPoint2d base_point = detection_area_slice.at(0);
     const auto pc = generateOneNotableCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, base_point, path_lanelet, param,
       debug_data);

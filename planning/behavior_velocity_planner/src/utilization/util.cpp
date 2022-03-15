@@ -23,6 +23,18 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
+Point2d calculateLateralOffsetPoint(const Point2d & p0, const Point2d & p1, const double offset)
+{
+  // translation
+  const double dy = p1.y() - p0.y();
+  const double dx = p1.x() - p0.x();
+  // rotation (use inverse matrix of rotation)
+  const double yaw = std::atan2(dy, dx);
+  const double offset_x = p1.x() - std::sin(yaw) * offset;
+  const double offset_y = p1.y() + std::cos(yaw) * offset;
+  return Point2d(offset_x, offset_y);
+}
+
 void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, Polygons2d & polys)
 {
   const lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(ll);
