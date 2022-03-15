@@ -60,9 +60,9 @@ SearchRangeIndex getPathIndexRangeIncludeLaneId(
   return search_range;
 }
 
-void setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input)
+void setVelocityFromIndex(const size_t begin_idx, const double vel, PathWithLaneId * input)
 {
-  for (size_t i = idx; i < input->points.size(); ++i) {
+  for (size_t i = begin_idx; i < input->points.size(); ++i) {
     input->points.at(i).point.longitudinal_velocity_mps =
       std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
   }
@@ -94,7 +94,7 @@ void insertVelocity(
     path.points.insert(path.points.begin() + insert_index, path_point);
   }
   // set zero velocity from insert index
-  setVelocityFrom(insert_index, v, &path);
+  setVelocityFromIndex(insert_index, v, &path);
 }
 
 Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object)
