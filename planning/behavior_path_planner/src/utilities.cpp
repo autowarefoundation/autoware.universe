@@ -1749,7 +1749,7 @@ bool checkLaneIsInIntersection(
   const lanelet::ConstLanelets & lanelet_sequence, const double & lane_change_buffer,
   double & additional_length_to_add)
 {
-  if(lanelet_sequence.empty()){
+  if (lanelet_sequence.empty()) {
     return false;
   }
   const auto & path_points = ref.points;
@@ -1785,7 +1785,7 @@ bool checkLaneIsInIntersection(
 
   const auto lanes = route_handler.getNextLanelets(prev_lanelets.back());
   if (isHaveNeighborWithTurnDirection(lanes)) {
-    lanelet::ConstLanelets lane_of_interest {check_lane};
+    lanelet::ConstLanelets lane_of_interest{check_lane};
     // additional_length_to_add = lanelet::utils::getLaneletLength2d(check_lane);
     for (auto itr = prev_lanelets.crbegin(); itr != prev_lanelets.crend(); ++itr) {
       if (!itr->hasAttribute(lanelet::AttributeNamesString::LaneChange)) {
