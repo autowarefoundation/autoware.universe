@@ -30,7 +30,7 @@ import pytest
 import rclpy
 from rclpy.node import Node
 import copy
-
+import struct
 
 @pytest.mark.launch_test
 
@@ -137,8 +137,11 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             self.node.destroy_subscription(sub)
             self.node.destroy_publisher(pub)
             self.assertEqual(tx_data.data,rx_data[0].data)
-    """
-    
+    """  
+
+    def point_to_list(self,x,y,z,i):
+        point_list=struct.pack('<f',x)+struct.pack('<f',y)+struct.pack('<f',z)+struct.pack('<f',i)
+        return point_list
 
     def trajectory_callback(self,msg):
         print("-------trajectory_callback------")
@@ -172,7 +175,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             pointcloud_msg.header.frame_id=base_link_frame
             pointcloud_msg.header.stamp=self.node.get_clock().now().to_msg()
             pointcloud_msg.height=1
-            pointcloud_msg.width=0
+            pointcloud_msg.width=10
             field=sensor_msgs.msg.PointField()
             field.name="x"
             field.offset=0
@@ -187,15 +190,16 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             pointcloud_msg.fields.append(copy.deepcopy(field))
             pointcloud_msg.is_bigendian=False
             pointcloud_msg.point_step=16
-            pointcloud_msg.row_step=0
+            pointcloud_msg.row_step=pointcloud_msg.width*pointcloud_msg.point_step
             pointcloud_msg.is_dense=True
-            pointcloud_msg.data=[]
+            for i in range(0,10):
+                pointcloud_msg.data=self.point_to_list(25.0,0.0,i/10,0.0)+pointcloud_msg.data
 
             #trajectory
             trajectory_msg=autoware_auto_planning_msgs.msg.Trajectory()
             trajectory_msg.header.frame_id=map_frame
             trajectory_msg.header.stamp=self.node.get_clock().now().to_msg()
-            for x in range(10):
+            for x in range(1000):
                 trajectory_point=autoware_auto_planning_msgs.msg.TrajectoryPoint()
                 trajectory_point.pose.position.x=x/10.0
                 trajectory_point.pose.orientation.w=1.0
@@ -208,7 +212,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             odom_msg.header.stamp=self.node.get_clock().now().to_msg()
             odom_msg.child_frame_id=base_link_frame
             odom_msg.pose.pose.orientation.w=1.0
-            odom_msg.twist.twist.linear.x=0.0
+            odom_msg.twist.twist.linear.x=10.0
 
             #object
             object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
