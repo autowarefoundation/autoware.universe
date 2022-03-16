@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,11 @@
 
 #include "pointcloud_preprocessor/blockage_diag/blockage_diag_nodelet.hpp"
 
-#include <std_msgs/msg/header.hpp>
+#include "pointcloud_preprocessor/pointcloud_return_type.hpp"
 
 #include <boost/thread/detail/platform_time.hpp>
 
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/segmentation/segment_differences.h>
-
 #include <algorithm>
-#include <string>
-#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -36,12 +30,10 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
   {
     // initialize params:
     horizontal_ring_id_ = static_cast<uint>(declare_parameter("horizontal_ring_id", 12));
-    ground_blockage_threshold_ =
-      static_cast<float>(declare_parameter("ground_blockage_threshold", 0.1));
-    sky_blockage_threshold_ = static_cast<float>(declare_parameter("sky_blockage_threshold", 0.2));
-    vertical_bins_ = static_cast<uint>(declare_parameter("vertical_bins", 64));
+    blockage_ratio_threshold_ =
+      static_cast<float>(declare_parameter("blockage_ratio_threshold", 0.1));
+    vertical_bins_ = static_cast<uint>(declare_parameter("vertical_bins", 40));
     angle_range_deg_ = declare_parameter("angle_range", std::vector<double>{0.0, 360.0});
-    distance_range_ = declare_parameter("distance_range", std::vector<double>{0.1, 200.0});
     lidar_model_ = static_cast<std::string>(declare_parameter("model", "Pandar40P"));
     blockage_count_threshold_ =
       static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
@@ -51,10 +43,6 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
   updater_.add(
     std::string(this->get_namespace()) + ": ground_blockage_validation", this,
     &BlockageDiagComponent::onBlockageChecker);
-  updater_.setPeriod(0.1);
-  updater_.add(
-    std::string(this->get_namespace()) + ": sky_blockage_validation", this,
-    &BlockageDiagComponent::onSkyBlockageChecker);
   updater_.setPeriod(0.1);
 
   lidar_depth_map_pub_ =
@@ -74,17 +62,24 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
 
 void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
 {
-  stat.add("ground_range_blockage_ratio", std::to_string(ground_blockage_ratio_));
+  stat.add("ground_blockage_ratio", std::to_string(ground_blockage_ratio_));
   stat.add("ground_blockage_count", std::to_string(ground_blockage_count_));
   stat.add(
     "ground_blockage_range_deg", "[" + std::to_string(ground_blockage_range_deg_[0]) + "," +
                                    std::to_string(ground_blockage_range_deg_[1]) + "]");
+  stat.add("sky_blockage_ratio", std::to_string(sky_blockage_ratio_));
+  stat.add("sky_blockage_count", std::to_string(sky_blockage_count_));
+  stat.add(
+    "sky_blockage_range_deg", "[" + std::to_string(sky_blockage_range_deg_[0]) + "," +
+                                std::to_string(sky_blockage_range_deg_[1]) + "]");
+
+  // TODO(badai-nguyen): consider sky_blockage_ratio_ for DiagnosticsStatus." [todo]
 
   auto level = DiagnosticStatus::OK;
   if (ground_blockage_ratio_ < 0) {
     level = DiagnosticStatus::STALE;
   } else if (
-    (ground_blockage_ratio_ > ground_blockage_threshold_) &&
+    (ground_blockage_ratio_ > blockage_ratio_threshold_) &&
     (ground_blockage_count_ > blockage_count_threshold_)) {
     level = DiagnosticStatus::ERROR;
   } else if (ground_blockage_ratio_ > 0.0f) {
@@ -100,34 +95,6 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
     msg = "WARNING: LiDAR ground blockage";
   } else if (level == DiagnosticStatus::ERROR) {
     msg = "ERROR: LiDAR ground blockage";
-  } else if (level == DiagnosticStatus::STALE) {
-    msg = "STALE";
-  }
-  stat.summary(level, msg);
-}
-
-void BlockageDiagComponent::onSkyBlockageChecker(DiagnosticStatusWrapper & stat)
-{
-  stat.add("sky_range_blockage_ratio", std::to_string(sky_blockage_ratio_));
-  stat.add("sky_blockage_count", std::to_string(sky_blockage_count_));
-  stat.add(
-    "sky_blockage_range_deg", "[" + std::to_string(sky_blockage_range_deg_[0]) + "," +
-                                std::to_string(sky_blockage_range_deg_[1]) + "]");
-
-  auto level = DiagnosticStatus::OK;
-  if (sky_blockage_ratio_ < 0) {
-    level = DiagnosticStatus::STALE;
-  } else if (sky_blockage_ratio_ > sky_blockage_threshold_) {
-    level = DiagnosticStatus::WARN;
-  } else {
-    level = DiagnosticStatus::OK;
-  }
-
-  std::string msg;
-  if (level == DiagnosticStatus::OK) {
-    msg = "OK";
-  } else if (level == DiagnosticStatus::WARN) {
-    msg = "WARNING: LiDAR sky blockage";
   } else if (level == DiagnosticStatus::STALE) {
     msg = "STALE";
   }
@@ -196,7 +163,7 @@ void BlockageDiagComponent::filter(
     sky_blockage_ratio_ = static_cast<float>(cv::countNonZero(sky_no_return_mask)) /
                           static_cast<float>(horizontal_bins * horizontal_ring_id_);
 
-    if (ground_blockage_ratio_ > ground_blockage_threshold_) {
+    if (ground_blockage_ratio_ > blockage_ratio_threshold_) {
       cv::Rect ground_blockage_bb = cv::boundingRect(ground_no_return_mask);
       ground_blockage_range_deg_[0] =
         static_cast<float>(ground_blockage_bb.x) + angle_range_deg_[0];
@@ -207,7 +174,7 @@ void BlockageDiagComponent::filter(
       ground_blockage_count_ = 0;
     }
 
-    if (sky_blockage_ratio_ > sky_blockage_threshold_) {
+    if (sky_blockage_ratio_ > blockage_ratio_threshold_) {
       cv::Rect sky_blockage_bx = cv::boundingRect(sky_no_return_mask);
       sky_blockage_range_deg_[0] = static_cast<float>(sky_blockage_bx.x) + angle_range_deg_[0];
       sky_blockage_range_deg_[1] =
@@ -249,13 +216,9 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
   const std::vector<rclcpp::Parameter> & p)
 {
   boost::mutex::scoped_lock lock(mutex_);
-  if (get_param(p, "ground_blockage_threshold", ground_blockage_threshold_)) {
+  if (get_param(p, "blockage_ratio_threshold", blockage_ratio_threshold_)) {
     RCLCPP_DEBUG(
-      get_logger(), "Setting new ground_blockage_threshold to: %f.", ground_blockage_threshold_);
-  }
-  if (get_param(p, "sky_blockage_threshold", sky_blockage_threshold_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting new sky_blockage_threshold to: %f.", sky_blockage_threshold_);
+      get_logger(), "Setting new blockage_ratio_threshold to: %f.", blockage_ratio_threshold_);
   }
   if (get_param(p, "horizontal_ring_id", horizontal_ring_id_)) {
     RCLCPP_DEBUG(get_logger(), "Setting new horizontal_ring_id to: %d.", horizontal_ring_id_);

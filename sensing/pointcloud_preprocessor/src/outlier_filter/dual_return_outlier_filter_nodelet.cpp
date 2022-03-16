@@ -14,6 +14,8 @@
 
 #include "pointcloud_preprocessor/outlier_filter/dual_return_outlier_filter_nodelet.hpp"
 
+#include "pointcloud_preprocessor/pointcloud_return_type.hpp"
+
 #include <std_msgs/msg/header.hpp>
 
 #include <pcl/kdtree/kdtree_flann.h>

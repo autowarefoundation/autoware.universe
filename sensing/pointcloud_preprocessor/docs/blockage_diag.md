@@ -28,20 +28,23 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Output
 
-| Name                                                 | Type                                    | Description                                       |
-| ---------------------------------------------------- | --------------------------------------- | ------------------------------------------------- |
-| `~/output/blockage_diag/debug/blockage_mask_image`   | `sensor_msgs::msg::Image`               | The mask image of detected blockage               |
-| `~/output/blockage_diag/debug/ground_blockage_ratio` | `tier4_debug_msgs::msg::Float32Stamped` | The area ratio of blockage region in ground range |
-| `~/output/blockage_diag/debug/sky_blockage_ratio`    | `tier4_debug_msgs::msg::Float32Stamped` | The area ratio of blockage region in sky range    |
-| `~/output/blockage_diag/debug/lidar_depth_map`       | `sensor_msgs::msg::Image`               | The depth map image of input point cloud          |
+| Name                                                 | Type                                    | Description                                        |
+| ---------------------------------------------------- | --------------------------------------- | -------------------------------------------------- |
+| `~/output/blockage_diag/debug/blockage_mask_image`   | `sensor_msgs::msg::Image`               | The mask image of detected blockage                |
+| `~/output/blockage_diag/debug/ground_blockage_ratio` | `tier4_debug_msgs::msg::Float32Stamped` | The area ratio of blockage region in ground region |
+| `~/output/blockage_diag/debug/sky_blockage_ratio`    | `tier4_debug_msgs::msg::Float32Stamped` | The area ratio of blockage region in sky region    |
+| `~/output/blockage_diag/debug/lidar_depth_map`       | `sensor_msgs::msg::Image`               | The depth map image of input point cloud           |
 
 ## Parameters
 
-| Name                        | Type  | Description                                       |
-| --------------------------- | ----- | ------------------------------------------------- |
-| `ground_blockage_threshold` | float | The threshold of ground-range blockage area ratio |
-| `sky_blockage_threshold`    | float | The threshold of sky-range blockage area ratio    |
-| `horizontal_ring_id`        | int   | The id of horizontal ring of the LiDAR            |
+| Name                       | Type   | Description                                        |
+| -------------------------- | ------ | -------------------------------------------------- |
+| `blockage_ratio_threshold` | float  | The threshold of blockage area ratio               |
+| `blockage_count_threshold` | float  | The threshold of number continuous blockage frames |
+| `horizontal_ring_id`       | int    | The id of horizontal ring of the LiDAR             |
+| `angle_range`              | vector | The effective range of LiDAR                       |
+| `vertical_bins`            | int    | The LiDAR channel number                           |
+| `model`                    | string | The LiDAR model                                    |
 
 ## Assumptions / Known limits
 
