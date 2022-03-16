@@ -14,7 +14,6 @@
 
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <utilization/marker_helper.hpp>
 #include <utilization/util.hpp>
@@ -282,24 +281,6 @@ visualization_msgs::msg::MarkerArray createOcclusionMarkerArray(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMarkerArray()
-{
-  const auto current_time = this->clock_->now();
-
-  visualization_msgs::msg::MarkerArray debug_marker_array;
-  if (!debug_data_.possible_collisions.empty()) {
-    appendMarkerArray(
-      createPossibleCollisionMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
-  }
-  if (!debug_data_.detection_area_polygons.empty()) {
-    appendMarkerArray(
-      makeSlicePolygonMarker(
-        debug_data_.detection_area_polygons, "detection_area", module_id_, debug_data_.z),
-      current_time, &debug_marker_array);
-  }
-
-  return debug_marker_array;
-}
 visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray()
 {
   const auto current_time = this->clock_->now();

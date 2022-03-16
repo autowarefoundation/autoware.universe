@@ -314,12 +314,12 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   return pc;
 }
 
-std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
-  const PathWithLaneId & path, const PlannerParam & param, const double offset_from_start_to_ego,
+bool generatePossibleCollisionBehindParkedVehicle(
+  std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
+  const PlannerParam & param, const double offset_from_start_to_ego,
   const std::vector<PredictedObject> & dyn_objects)
 {
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
-  std::vector<PossibleCollisionInfo> possible_collisions;
   auto ll = path_lanelet.centerline2d();
   for (const auto & dyn : dyn_objects) {
     ArcCoordinates arc_coord_occlusion = getOcclusionPoint(dyn, ll);
@@ -345,7 +345,8 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
     [](PossibleCollisionInfo pc1, PossibleCollisionInfo pc2) {
       return pc1.arc_lane_dist_at_collision.length < pc2.arc_lane_dist_at_collision.length;
     });
-  return possible_collisions;
+  if (possible_collisions.empty()) return false;
+  return true;
 }
 
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
@@ -365,14 +366,14 @@ std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
   return filtered_obj;
 }
 
-void createPossibleCollisionsInDetectionArea(
+bool createPossibleCollisionsInDetectionArea(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
   DebugData & debug_data)
 {
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {
-    return;
+    return true;
   }
   double distance_lower_bound = std::numeric_limits<double>::max();
   const Polygons2d & da_polygons = debug_data.detection_area_polygons;
@@ -400,6 +401,14 @@ void createPossibleCollisionsInDetectionArea(
     distance_lower_bound = lateral_distance;
     possible_collisions.emplace_back(pc.get());
   }
+  // sort by arc length
+  std::sort(
+    possible_collisions.begin(), possible_collisions.end(),
+    [](PossibleCollisionInfo pc1, PossibleCollisionInfo pc2) {
+      return pc1.arc_lane_dist_at_collision.length < pc2.arc_lane_dist_at_collision.length;
+    });
+  if (possible_collisions.empty()) return false;
+  return true;
 }
 
 bool isNotBlockedByPartition(const LineString2d & direction, const BasicPolygons2d & partitions)
