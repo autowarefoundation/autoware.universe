@@ -94,57 +94,76 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
     def tearDown(self):
         self.node.destroy_node()
 
-    """
-    
-    def test_simple_calc(self):
-        calc_result=5+5
-        self.assertEqual(10,calc_result) 
+    def init_messages(self,x,y):
+        #message init
+        #frame id
+        map_frame="map"
+        base_link_frame="base_link"
+        #pointcloud2 
+        pointcloud_msg=sensor_msgs.msg.PointCloud2()
+        pointcloud_msg.header.frame_id=base_link_frame
+        pointcloud_msg.header.stamp=self.node.get_clock().now().to_msg()
+        pointcloud_msg.height=1
+        pointcloud_msg.width=1
+        field=sensor_msgs.msg.PointField()
+        field.name="x"
+        field.offset=0
+        field.datatype=7
+        field.count=1
+        pointcloud_msg.fields.append(copy.deepcopy(field))
+        field.name="y"
+        field.offset=4
+        pointcloud_msg.fields.append(copy.deepcopy(field))
+        field.name="z"
+        field.offset=8
+        pointcloud_msg.fields.append(copy.deepcopy(field))
+        pointcloud_msg.is_bigendian=False
+        pointcloud_msg.point_step=16
+        pointcloud_msg.row_step=pointcloud_msg.width*pointcloud_msg.point_step
+        pointcloud_msg.is_dense=True
+        for i in range(0,pointcloud_msg.width):
+            pointcloud_msg.data=self.point_to_list(x,y,i/10,0.0)+pointcloud_msg.data
 
-    def test_simple_calc2(self):
-        calc_result=5+5
-        self.assertEqual(10,calc_result)
-    
-    def test_pubsub(self):
-        rx_data=[]
+        #trajectory
+        trajectory_msg=autoware_auto_planning_msgs.msg.Trajectory()
+        trajectory_msg.header.frame_id=map_frame
+        trajectory_msg.header.stamp=self.node.get_clock().now().to_msg()
+        for x in range(1000):
+            trajectory_point=autoware_auto_planning_msgs.msg.TrajectoryPoint()
+            trajectory_point.pose.position.x=x/10.0
+            trajectory_point.pose.orientation.w=1.0
+            trajectory_point.longitudinal_velocity_mps=25/3
+            trajectory_msg.points.append(copy.deepcopy(trajectory_point))
 
-        #publisher
-        pub = self.node.create_publisher(
-            std_msgs.msg.Int32,
-            'test_data',
-            10
-        )
+        #odometry
+        odom_msg=nav_msgs.msg.Odometry()
+        odom_msg.header.frame_id=map_frame
+        odom_msg.header.stamp=self.node.get_clock().now().to_msg()
+        odom_msg.child_frame_id=base_link_frame
+        odom_msg.pose.pose.orientation.w=1.0
+        odom_msg.twist.twist.linear.x=0.0
 
-        #subscliber
-        sub = self.node.create_subscription(
-            std_msgs.msg.Int32,
-            'test_data',
-            lambda msg: rx_data.append(msg),
-            10
-        )
-
-        try:
-            end_time = time.time() + 10
-
-            tx_data=std_msgs.msg.Int32()
-            tx_data.data=10
-            pub.publish(tx_data)
-            #timeout 10[s]
-            while time.time() < end_time:
-                rclpy.spin_once(self.node, timeout_sec=0.1)
-                if len(rx_data)>0:
-                    break
-        finally:
-            self.node.destroy_subscription(sub)
-            self.node.destroy_publisher(pub)
-            self.assertEqual(tx_data.data,rx_data[0].data)
-    """  
+        #object
+        object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
+        object_msg.header.frame_id=map_frame
+        object_msg.header.stamp=self.node.get_clock().now().to_msg()
+        return pointcloud_msg,trajectory_msg,odom_msg,object_msg
 
     def point_to_list(self,x,y,z,i):
         point_list=struct.pack('<f',x)+struct.pack('<f',y)+struct.pack('<f',z)+struct.pack('<f',i)
         return point_list
 
+    def trajectory_evaluation(self,x,y,trajectory):
+        return True
+
+    current_x=0
+    current_y=0
+    callback_flag=False
+
     def trajectory_callback(self,msg):
-        print("-------trajectory_callback------")
+        result_val=self.trajectory_evaluation(self.current_x,self.current_y,msg)
+        print("x:",self.current_x," , y:",self.current_y," , result:",result_val)
+        self.callback_flag=True
 
     def test_linear_trajectory(self):
         #publisher
@@ -155,77 +174,19 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
 
         #subscliber
         trajectory_sub = self.node.create_subscription(autoware_auto_planning_msgs.msg.Trajectory, 'output/trajectory', self.trajectory_callback, 10)
-        
-        #param
-        map_frame="map"
-        base_link_frame="base_link"
-
-        #object
-        object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
-        object_msg.header.frame_id=map_frame
-        object_msg.header.stamp=self.node.get_clock().now().to_msg()
-        object_pub.publish(object_msg)
-        rclpy.spin_once(self.node, timeout_sec=0.1)
-
-        while rclpy.ok():
-
-            #message init
-            #pointcloud2 
-            pointcloud_msg=sensor_msgs.msg.PointCloud2()
-            pointcloud_msg.header.frame_id=base_link_frame
-            pointcloud_msg.header.stamp=self.node.get_clock().now().to_msg()
-            pointcloud_msg.height=1
-            pointcloud_msg.width=10
-            field=sensor_msgs.msg.PointField()
-            field.name="x"
-            field.offset=0
-            field.datatype=7
-            field.count=1
-            pointcloud_msg.fields.append(copy.deepcopy(field))
-            field.name="y"
-            field.offset=4
-            pointcloud_msg.fields.append(copy.deepcopy(field))
-            field.name="z"
-            field.offset=8
-            pointcloud_msg.fields.append(copy.deepcopy(field))
-            pointcloud_msg.is_bigendian=False
-            pointcloud_msg.point_step=16
-            pointcloud_msg.row_step=pointcloud_msg.width*pointcloud_msg.point_step
-            pointcloud_msg.is_dense=True
-            for i in range(0,10):
-                pointcloud_msg.data=self.point_to_list(25.0,0.0,i/10,0.0)+pointcloud_msg.data
-
-            #trajectory
-            trajectory_msg=autoware_auto_planning_msgs.msg.Trajectory()
-            trajectory_msg.header.frame_id=map_frame
-            trajectory_msg.header.stamp=self.node.get_clock().now().to_msg()
-            for x in range(1000):
-                trajectory_point=autoware_auto_planning_msgs.msg.TrajectoryPoint()
-                trajectory_point.pose.position.x=x/10.0
-                trajectory_point.pose.orientation.w=1.0
-                trajectory_point.longitudinal_velocity_mps=25/3
-                trajectory_msg.points.append(copy.deepcopy(trajectory_point))
-
-            #odometry
-            odom_msg=nav_msgs.msg.Odometry()
-            odom_msg.header.frame_id=map_frame
-            odom_msg.header.stamp=self.node.get_clock().now().to_msg()
-            odom_msg.child_frame_id=base_link_frame
-            odom_msg.pose.pose.orientation.w=1.0
-            odom_msg.twist.twist.linear.x=10.0
-
-            #object
-            object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
-            object_msg.header.frame_id=map_frame
-            object_msg.header.stamp=self.node.get_clock().now().to_msg()
-        
-            #print("spin")
-            object_pub.publish(object_msg)
-            odom_pub.publish(odom_msg)
-            pointcloud_pub.publish(pointcloud_msg)
-            trajectory_pub.publish(trajectory_msg)
-
-            rclpy.spin_once(self.node, timeout_sec=0.1)
+            
+        for ix in range(0,10):
+            for iy in range(10):
+                self.current_x=ix*10.0
+                self.current_y=iy/2.0-2.5
+                pointcloud_msg,trajectory_msg,odom_msg,object_msg=self.init_messages(self.current_x,self.current_y)
+                object_pub.publish(object_msg)
+                odom_pub.publish(odom_msg)
+                pointcloud_pub.publish(pointcloud_msg)
+                trajectory_pub.publish(trajectory_msg)
+                self.callback_flag=False
+                while not self.callback_flag:
+                    rclpy.spin_once(self.node, timeout_sec=0.1)
         #self.assertEqual(10,9) 
 
 
