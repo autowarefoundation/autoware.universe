@@ -247,9 +247,24 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
   reference_path = util::getCenterLinePath(
     *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters);
-  reference_path = util::setDecelerationVelocity(
-    *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
-    lane_change_buffer);
+
+  double optional_lengths{0.0};
+  const auto isInIntersection = util::checkLaneIsInIntersection(
+    *route_handler, reference_path, current_lanes, lane_change_buffer, optional_lengths);
+
+  if (isInIntersection) {
+    reference_path = util::getCenterLinePath(
+      *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
+      common_parameters.forward_path_length, common_parameters, optional_lengths);
+    reference_path = util::setDecelerationVelocity(
+      *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
+      lane_change_buffer + optional_lengths);
+  } else {
+    reference_path = util::setDecelerationVelocity(
+      *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
+      lane_change_buffer);
+  }
+
   reference_path.drivable_area = util::generateDrivableArea(
     current_lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
     planner_data_);
