@@ -45,12 +45,14 @@ def generate_test_description():
             ('~/input/pointcloud', 'input/pointcloud'),
             ('~/input/trajectory', 'input/trajectory'),
             ('~/input/odometry', 'input/odometry'),
-            ('~/input/dynamic_objects', 'input/dynamic_objects'),
+            ('~/input/objects', 'input/objects'),
             ('~/output/trajectory', 'output/trajectory')
         ],
         parameters=[
             [FindPackageShare('vehicle_info_util'), '/config/vehicle_info.param.yaml'],
-            [FindPackageShare('obstacle_stop_planner'), '/config/obstacle_stop_planner.param.yaml']
+            [FindPackageShare('obstacle_stop_planner'), '/config/obstacle_stop_planner.param.yaml'],
+            [FindPackageShare('obstacle_stop_planner'), '/config/common.param.yaml'],
+            [FindPackageShare('obstacle_stop_planner'), '/config/adaptive_cruise_control.param.yaml']
         ],
     )
     static_transform_publisher_node = launch_ros.actions.Node(package = "tf2_ros", 
@@ -92,7 +94,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
     def tearDown(self):
         self.node.destroy_node()
 
-    
+    """
     
     def test_simple_calc(self):
         calc_result=5+5
@@ -135,18 +137,18 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             self.node.destroy_subscription(sub)
             self.node.destroy_publisher(pub)
             self.assertEqual(tx_data.data,rx_data[0].data)
-    
+    """
     
 
     def trajectory_callback(self,msg):
-        msg
+        print("-------trajectory_callback------")
 
     def test_linear_trajectory(self):
         #publisher
         pointcloud_pub = self.node.create_publisher(sensor_msgs.msg.PointCloud2, 'input/pointcloud', 10)
         trajectory_pub = self.node.create_publisher(autoware_auto_planning_msgs.msg.Trajectory, 'input/trajectory', 10)
         odom_pub = self.node.create_publisher(nav_msgs.msg.Odometry, 'input/odometry', 10)
-        object_pub = self.node.create_publisher(autoware_auto_perception_msgs.msg.PredictedObjects, 'input/dynamic_objects', 10)
+        object_pub = self.node.create_publisher(autoware_auto_perception_msgs.msg.PredictedObjects, 'input/objects', 10)
 
         #subscliber
         trajectory_sub = self.node.create_subscription(autoware_auto_planning_msgs.msg.Trajectory, 'output/trajectory', self.trajectory_callback, 10)
@@ -154,6 +156,13 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         #param
         map_frame="map"
         base_link_frame="base_link"
+
+        #object
+        object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
+        object_msg.header.frame_id=map_frame
+        object_msg.header.stamp=self.node.get_clock().now().to_msg()
+        object_pub.publish(object_msg)
+        rclpy.spin_once(self.node, timeout_sec=0.1)
 
         while rclpy.ok():
 
@@ -186,11 +195,11 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             trajectory_msg=autoware_auto_planning_msgs.msg.Trajectory()
             trajectory_msg.header.frame_id=map_frame
             trajectory_msg.header.stamp=self.node.get_clock().now().to_msg()
-            for x in range(100):
+            for x in range(10):
                 trajectory_point=autoware_auto_planning_msgs.msg.TrajectoryPoint()
                 trajectory_point.pose.position.x=x/10.0
                 trajectory_point.pose.orientation.w=1.0
-                trajectory_point.longitudinal_velocity_mps=8.0
+                trajectory_point.longitudinal_velocity_mps=25/3
                 trajectory_msg.points.append(copy.deepcopy(trajectory_point))
 
             #odometry
@@ -204,17 +213,12 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
             object_msg.header.frame_id=map_frame
             object_msg.header.stamp=self.node.get_clock().now().to_msg()
-
-
-
-
-
         
-            print("spin")
+            #print("spin")
+            object_pub.publish(object_msg)
             pointcloud_pub.publish(pointcloud_msg)
             trajectory_pub.publish(trajectory_msg)
             odom_pub.publish(odom_msg)
-            object_pub.publish(object_msg)
             rclpy.spin_once(self.node, timeout_sec=0.1)
         #self.assertEqual(10,9) 
 
