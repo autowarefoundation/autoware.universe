@@ -17,6 +17,8 @@
 #include <interpolation/spline_interpolation.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include <algorithm>
+
 namespace map_based_prediction
 {
 PathGenerator::PathGenerator(const double time_horizon, const double sampling_time_interval)
@@ -212,6 +214,9 @@ PosePath PathGenerator::interpolateReferencePath(
   std::vector<double> resampled_s(frenet_predicted_path.size());
   for (size_t i = 0; i < frenet_predicted_path.size(); ++i) {
     resampled_s.at(i) = frenet_predicted_path.at(i).s;
+  }
+  if (resampled_s.front() > resampled_s.back()) {
+    std::reverse(resampled_s.begin(), resampled_s.end());
   }
 
   // Spline Interpolation
