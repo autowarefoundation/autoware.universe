@@ -46,7 +46,7 @@ if(BUILD_TESTING)
   add_launch_test(test/test_obstacle_stop_planner_node.test.py)
 
   install(DIRECTORY
-    test/config
+    #test/config
     DESTINATION share/${PROJECT_NAME}/
   )
 endif()

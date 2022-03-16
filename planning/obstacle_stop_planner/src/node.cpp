@@ -560,6 +560,13 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     return;
   }
 
+  if(!object_ptr_){
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for object...");
+    return;
+  }
+
   PlannerData planner_data{};
 
   getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
