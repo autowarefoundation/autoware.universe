@@ -1332,7 +1332,8 @@ ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
 
   // calculate yaw from x and y
   // NOTE: We do not use spline interpolation to yaw in behavior path since the yaw is unstable.
-  fillYawInTrajectoryPoint(interpolated_traj_points);
+  //       Currently this implementation is removed since this calculation is heavy (~20ms)
+  // fillYawInTrajectoryPoint(interpolated_traj_points);
 
   // compensate last pose
   points_utils::compensateLastPose(
