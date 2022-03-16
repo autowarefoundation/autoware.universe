@@ -208,6 +208,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             odom_msg.header.stamp=self.node.get_clock().now().to_msg()
             odom_msg.child_frame_id=base_link_frame
             odom_msg.pose.pose.orientation.w=1.0
+            odom_msg.twist.twist.linear.x=0.0
 
             #object
             object_msg=autoware_auto_perception_msgs.msg.PredictedObjects()
@@ -216,9 +217,10 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         
             #print("spin")
             object_pub.publish(object_msg)
+            odom_pub.publish(odom_msg)
             pointcloud_pub.publish(pointcloud_msg)
             trajectory_pub.publish(trajectory_msg)
-            odom_pub.publish(odom_msg)
+
             rclpy.spin_once(self.node, timeout_sec=0.1)
         #self.assertEqual(10,9) 
 
