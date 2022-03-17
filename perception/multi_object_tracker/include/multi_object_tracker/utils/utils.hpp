@@ -28,8 +28,8 @@
 #include <geometry_msgs/msg/vector3.hpp>
 
 #include <cmath>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 namespace utils
 {
