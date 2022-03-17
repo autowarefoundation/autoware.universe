@@ -45,7 +45,8 @@ BlindSpotModule::BlindSpotModule(
   turn_direction_(TurnDirection::INVALID)
 {
   planner_param_ = planner_param;
-  const auto & assigned_lanelet = planner_data->lanelet_map->laneletLayer.get(lane_id);
+  const auto & assigned_lanelet =
+    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   const std::string turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
   if (!turn_direction.compare("left")) {
     turn_direction_ = TurnDirection::LEFT;
@@ -74,8 +75,8 @@ bool BlindSpotModule::modifyPathVelocity(
   geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
 
   /* get lanelet map */
-  const auto lanelet_map_ptr = planner_data_->lanelet_map;
-  const auto routing_graph_ptr = planner_data_->routing_graph;
+  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
+  const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
@@ -241,11 +242,13 @@ bool BlindSpotModule::generateStopLine(
   }
 
   /* insert judge point */
-  const int pass_judge_idx_ip = std::min(
+  // need to remove const because pass judge idx will be changed by insert stop point
+  int pass_judge_idx_ip = std::min(
     static_cast<int>(path_ip.points.size()) - 1, std::max(stop_idx_ip - pass_judge_idx_dist, 0));
   if (has_prior_stopline || stop_idx_ip == pass_judge_idx_ip) {
     *pass_judge_line_idx = *stop_line_idx;
   } else {
+    //! insertPoint check if there is no duplicated point
     *pass_judge_line_idx = insertPoint(pass_judge_idx_ip, path_ip, path);
     ++(*stop_line_idx);  // stop index is incremented by judge line insertion
   }
@@ -308,6 +311,14 @@ int BlindSpotModule::insertPoint(
     // copy from previous point
     inserted_point = inout_path->points.at(std::max(insert_idx - 1, 0));
     inserted_point.point.pose = path_ip.points[insert_idx_ip].point.pose;
+    constexpr double min_dist = 0.001;
+    //! avoid to insert duplicated point
+    if (
+      planning_utils::calcDist2d(inserted_point, inout_path->points.at(insert_idx).point) <
+      min_dist) {
+      inout_path->points.at(insert_idx).point.longitudinal_velocity_mps = 0.0;
+      return insert_idx;
+    }
     inout_path->points.insert(it, inserted_point);
   }
   return insert_idx;
@@ -518,7 +529,8 @@ bool BlindSpotModule::isTargetObjectType(
 boost::optional<geometry_msgs::msg::Point> BlindSpotModule::getStartPointFromLaneLet(
   const int lane_id) const
 {
-  lanelet::ConstLanelet lanelet = planner_data_->lanelet_map->laneletLayer.get(lane_id);
+  lanelet::ConstLanelet lanelet =
+    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   if (lanelet.centerline().empty()) {
     return boost::none;
   }
