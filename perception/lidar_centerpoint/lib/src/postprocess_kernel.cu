@@ -128,6 +128,9 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   // suppress by socre
   const auto num_det_boxes3d = thrust::count_if(
     thrust::device, boxes3d_d_.begin(), boxes3d_d_.end(), is_score_greater(score_threshold_));
+  if (num_det_boxes3d == 0) {
+    return cudaGetLastError();
+  }
   thrust::device_vector<Box3D> det_boxes3d_d(num_det_boxes3d);
   thrust::copy_if(
     thrust::device, boxes3d_d_.begin(), boxes3d_d_.end(), det_boxes3d_d.begin(),
