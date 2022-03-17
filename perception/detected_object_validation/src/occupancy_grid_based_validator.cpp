@@ -126,8 +126,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
     if (is_vehicle) {
       cv::Mat mask = getMask(*input_occ_grid, transformed_object);
       const float mean = cv::mean(occ_grid, mask)[0] * 0.01;
-      if (mean_threshold_ < mean)
-        output.objects.push_back(object);
+      if (mean_threshold_ < mean) output.objects.push_back(object);
     } else {
       output.objects.push_back(object);
     }
