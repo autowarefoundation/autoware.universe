@@ -160,7 +160,7 @@ std::tuple<double, std::vector<double>> calcVehicleCirclesInfo(
   return {radius, longitudinal_offsets};
 }
 
-void fillYawInTrajectoryPoint(
+[[maybe_unused]] void fillYawInTrajectoryPoint(
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points)
 {
   std::vector<geometry_msgs::msg::Point> points;
