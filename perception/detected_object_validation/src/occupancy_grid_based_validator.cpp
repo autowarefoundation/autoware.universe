@@ -95,12 +95,18 @@ OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptio
     std::bind(&OccupancyGridBasedValidator::onObjectsAndOccGrid, this, _1, _2));
   objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
+
+  mean_threshold_ = declare_parameter<float>("mean_threshold", 0.6);
+  enable_debug_ = declare_parameter<bool>("enable_debug", false);
 }
 
 void OccupancyGridBasedValidator::onObjectsAndOccGrid(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & input_occ_grid)
 {
+  autoware_auto_perception_msgs::msg::DetectedObjects output;
+  output.header = input_objects->header;
+
   // Transform to occ grid frame
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!transformDetectedObjects(
@@ -110,21 +116,55 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
   // Convert ros data type to cv::Mat
   cv::Mat occ_grid = fromOccupancyGrid(*input_occ_grid);
 
-  // Debug
-  cv::namedWindow("test2", cv::WINDOW_NORMAL);
-
   // Get vehicle mask image and calculate mean within mask.
-  for (const auto & object : transformed_objects.objects) {
+  for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
+    const auto & transformed_object = transformed_objects.objects.at(i);
+    const auto & object = input_objects->objects.at(i);
     const auto & label = object.classification.front().label;
     const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
                             Label::TRAILER == label;
     if (is_vehicle) {
-      cv::Mat mask = getMask(*input_occ_grid, object, occ_grid);
-      //  (int)cv::mean(occ_grid, mask)[0]);
-      cv::imshow("test2", occ_grid);
-      cv::waitKey(2);
+      cv::Mat mask = getMask(*input_occ_grid, transformed_object);
+      const float mean = cv::mean(occ_grid, mask)[0] * 0.01;
+      if (mean_threshold_ < mean)
+        output.objects.push_back(object);
+    } else {
+      output.objects.push_back(object);
     }
   }
+
+  objects_pub_->publish(output);
+
+  if (enable_debug_) showDebugImage(*input_occ_grid, transformed_objects, occ_grid);
+}
+
+void OccupancyGridBasedValidator::showDebugImage(
+  const nav_msgs::msg::OccupancyGrid & ros_occ_grid,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & objects, const cv::Mat & occ_grid)
+{
+  cv::namedWindow("removed_objects_image", cv::WINDOW_NORMAL);
+  cv::namedWindow("passed_objects_image", cv::WINDOW_NORMAL);
+  cv::Mat removed_objects_image = occ_grid.clone();
+  cv::Mat passed_objects_image = occ_grid.clone();
+
+  // Get vehicle mask image and calculate mean within mask.
+  for (size_t i = 0; i < objects.objects.size(); ++i) {
+    const auto & object = objects.objects.at(i);
+    const auto & label = object.classification.front().label;
+    const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
+                            Label::TRAILER == label;
+    if (is_vehicle) {
+      cv::Mat mask = getMask(ros_occ_grid, object);
+      const float mean = cv::mean(occ_grid, mask)[0] * 0.01;
+      if (mean_threshold_ < mean)
+        passed_objects_image = getMask(ros_occ_grid, object, passed_objects_image);
+      else
+        removed_objects_image = getMask(ros_occ_grid, object, removed_objects_image);
+    }
+  }
+  cv::imshow("removed_objects_image", removed_objects_image);
+  cv::imshow("passed_objects_image", passed_objects_image);
+  cv::waitKey(2);
 }
 
 cv::Mat OccupancyGridBasedValidator::getMask(
@@ -153,7 +193,6 @@ cv::Mat OccupancyGridBasedValidator::getMask(
   return mask;
 }
 
-
 cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid)
 {
@@ -164,7 +203,8 @@ cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
     size_t y = i / occupancy_grid.info.width;
     size_t x = i % occupancy_grid.info.width;
     const auto & data = occupancy_grid.data[i];
-    cv_occ_grid.at<unsigned char>(y, x) = std::min(std::max(data, static_cast<signed char>(0)), static_cast<signed char>(50)) * 2;
+    cv_occ_grid.at<unsigned char>(y, x) =
+      std::min(std::max(data, static_cast<signed char>(0)), static_cast<signed char>(50)) * 2;
   }
   return cv_occ_grid;
 }
