@@ -12,7 +12,7 @@
        0,       0,   0,     0,    0,       1,         1,      1]         #PEDESTRIAN
 
     max_dist_matrix:
-      #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN 
+      #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN
       [1.0,     1.0, 1.0,   1.0,  1.0,     1.0,       1.0,     1.0,       #UNKNOWN
        4.0,     2.0, 5.0,   5.0,  5.0,     1.0,       1.0,     1.0,       #CAR
        4.0,     2.0, 5.0,   5.0,  5.0,     1.0,       1.0,     1.0,       #TRUCK
@@ -53,7 +53,7 @@
        3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150]      #PEDESTRIAN
 
     min_iou_matrix:
-      #UNKNOWN, CAR,   TRUCK, BUS,    TRAILER,  MOTORBIKE, BICYCLE, PEDESTRIAN 
+      #UNKNOWN, CAR,   TRUCK, BUS,    TRAILER,  MOTORBIKE, BICYCLE, PEDESTRIAN
       [0.1,     0.1,   0.1,   0.1,    0.1,      0.1,       0.1,     0.1,       #UNKNOWN
        0.1,     0.3,   0.2,   0.2,    0.2,      0.1,       0.1,     0.1,       #CAR
        0.1,     0.2,   0.3,   0.3,    0.3,      0.1,       0.1,     0.1,       #TRUCK
