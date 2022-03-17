@@ -124,8 +124,8 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
     const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
                             Label::TRAILER == label;
     if (is_vehicle) {
-      cv::Mat mask = getMask(*input_occ_grid, transformed_object);
-      const float mean = cv::mean(occ_grid, mask)[0] * 0.01;
+      auto mask = getMask(*input_occ_grid, transformed_object);
+      const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
       if (mean_threshold_ < mean) output.objects.push_back(object);
     } else {
       output.objects.push_back(object);
@@ -137,36 +137,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
   if (enable_debug_) showDebugImage(*input_occ_grid, transformed_objects, occ_grid);
 }
 
-void OccupancyGridBasedValidator::showDebugImage(
-  const nav_msgs::msg::OccupancyGrid & ros_occ_grid,
-  const autoware_auto_perception_msgs::msg::DetectedObjects & objects, const cv::Mat & occ_grid)
-{
-  cv::namedWindow("removed_objects_image", cv::WINDOW_NORMAL);
-  cv::namedWindow("passed_objects_image", cv::WINDOW_NORMAL);
-  cv::Mat removed_objects_image = occ_grid.clone();
-  cv::Mat passed_objects_image = occ_grid.clone();
-
-  // Get vehicle mask image and calculate mean within mask.
-  for (size_t i = 0; i < objects.objects.size(); ++i) {
-    const auto & object = objects.objects.at(i);
-    const auto & label = object.classification.front().label;
-    const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
-                            Label::TRAILER == label;
-    if (is_vehicle) {
-      cv::Mat mask = getMask(ros_occ_grid, object);
-      const float mean = cv::mean(occ_grid, mask)[0] * 0.01;
-      if (mean_threshold_ < mean)
-        passed_objects_image = getMask(ros_occ_grid, object, passed_objects_image);
-      else
-        removed_objects_image = getMask(ros_occ_grid, object, removed_objects_image);
-    }
-  }
-  cv::imshow("removed_objects_image", removed_objects_image);
-  cv::imshow("passed_objects_image", passed_objects_image);
-  cv::waitKey(2);
-}
-
-cv::Mat OccupancyGridBasedValidator::getMask(
+std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
@@ -174,7 +145,7 @@ cv::Mat OccupancyGridBasedValidator::getMask(
   return getMask(occupancy_grid, object, mask);
 }
 
-cv::Mat OccupancyGridBasedValidator::getMask(
+std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const autoware_auto_perception_msgs::msg::DetectedObject & object, cv::Mat mask)
 {
@@ -184,12 +155,23 @@ cv::Mat OccupancyGridBasedValidator::getMask(
   std::vector<cv::Point> pixel_vertices;
   toPolygon2d(object, vertices);
 
+  bool is_polygon_within_image = true;  
   for (const auto & vertex : vertices) {
-    pixel_vertices.push_back(cv::Point2f(
-      (vertex.x - origin.position.x) / resolution, (vertex.y - origin.position.y) / resolution));
+    const float px = (vertex.x - origin.position.x) / resolution;
+    const float py = (vertex.y - origin.position.y) / resolution;
+    const bool is_point_within_image = (0 <= px && px < mask.cols && 0 <= py && py < mask.rows);
+
+    if (!is_point_within_image) is_polygon_within_image = false;
+
+    pixel_vertices.push_back(cv::Point2f(px, py));
   }
-  cv::fillConvexPoly(mask, pixel_vertices, cv::Scalar(255));
-  return mask;
+
+  if (is_polygon_within_image && !pixel_vertices.empty()) {
+    cv::fillConvexPoly(mask, pixel_vertices, cv::Scalar(255));
+    return mask;
+  } else {
+    return std::nullopt;
+  }
 }
 
 cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
@@ -238,6 +220,39 @@ void OccupancyGridBasedValidator::toPolygon2d(
       this->get_logger(), *this->get_clock(), 5, "POLYGON type is not supported");
   }
 }
+
+void OccupancyGridBasedValidator::showDebugImage(
+  const nav_msgs::msg::OccupancyGrid & ros_occ_grid,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & objects, const cv::Mat & occ_grid)
+{
+  cv::namedWindow("removed_objects_image", cv::WINDOW_NORMAL);
+  cv::namedWindow("passed_objects_image", cv::WINDOW_NORMAL);
+  cv::Mat removed_objects_image = occ_grid.clone();
+  cv::Mat passed_objects_image = occ_grid.clone();
+
+  // Get vehicle mask image and calculate mean within mask.
+  for (size_t i = 0; i < objects.objects.size(); ++i) {
+    const auto & object = objects.objects.at(i);
+    const auto & label = object.classification.front().label;
+    const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
+                            Label::TRAILER == label;
+    if (is_vehicle) {
+      auto mask = getMask(ros_occ_grid, object);
+      const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
+      if (mean_threshold_ < mean) {
+        auto mask = getMask(ros_occ_grid, object, passed_objects_image);
+        if (mask) passed_objects_image = mask.value();
+      } else {
+        auto mask = getMask(ros_occ_grid, object, removed_objects_image);
+        if (mask) removed_objects_image = mask.value();
+      }
+    }
+  }
+  cv::imshow("removed_objects_image", removed_objects_image);
+  cv::imshow("passed_objects_image", passed_objects_image);
+  cv::waitKey(2);
+}
+
 }  // namespace occupancy_grid_based_validator
 
 #include <rclcpp_components/register_node_macro.hpp>
