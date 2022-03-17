@@ -16,10 +16,10 @@ This package outputs a dummy diagnostic data for debugging and developing.
 
 ### Node Parameters
 
-| Name          | Type                           | Default Value | Explanation                             | Reconfigurable                               |
+| Name          | Type                           | Default Value | Explanation                             | Reconfigurable                        |
 | ------------- | ------------------------------ | ------------- | --------------------------------------- | ------------------------------------- |
-| `update_rate` | int                            | `10`          | Timer callback period [Hz]              |                                       |
-| `diag_name`   | string                         | `diag_name`   | Diag_name set by dummy diag publisher   |                                       |
+| `update_rate` | int                            | `10`          | Timer callback period [Hz]              | false                                 |
+| `diag_name`   | string                         | `diag_name`   | Diag_name set by dummy diag publisher   | false                                 |
 | `is_active`   | bool                           | `true`        | Force update or not                     | true |
 | `status`      | DummyDiagPublisherNode::Status | `0 (OK)`      | diag status set by dummy diag publisher | true |
 
