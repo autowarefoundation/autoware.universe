@@ -52,7 +52,6 @@
 #include <rviz_common/display_context.hpp>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <random>
 #include <string>
@@ -110,9 +109,8 @@ void InteractivePedestrian::update(const Ogre::Vector3 & point)
 {
   velocity_ = point - point_;
   point_ = point;
-  theta_ = velocity_.length() < std::numeric_limits<double>::epsilon()
-             ? theta_
-             : std::atan2(velocity_.y, velocity_.x);
+  theta_ =
+    (velocity_.x < 1.0e-3 && velocity_.y < 1.0e-3) ? theta_ : std::atan2(velocity_.y, velocity_.x);
 }
 
 double InteractivePedestrian::distance(const Ogre::Vector3 & point)
