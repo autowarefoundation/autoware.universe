@@ -124,6 +124,14 @@ InteractivePedestrianCollection::InteractivePedestrianCollection() { target_ = n
 
 void InteractivePedestrianCollection::reset() { target_ = nullptr; }
 
+void InteractivePedestrianCollection::select(const Ogre::Vector3 & point)
+{
+  const size_t index = nearest(point);
+  if (index != objects_.size()) {
+    target_ = objects_[index].get();
+  }
+}
+
 boost::optional<std::array<uint8_t, 16>> InteractivePedestrianCollection::create(
   const Ogre::Vector3 & point)
 {
@@ -145,18 +153,6 @@ boost::optional<std::array<uint8_t, 16>> InteractivePedestrianCollection::remove
     const auto removed_uuid = objects_[index].get()->uuid();
     objects_.erase(objects_.begin() + index);
     return removed_uuid;
-  }
-
-  return {};
-}
-
-boost::optional<std::array<uint8_t, 16>> InteractivePedestrianCollection::select(
-  const Ogre::Vector3 & point)
-{
-  const size_t index = nearest(point);
-  if (index != objects_.size()) {
-    target_ = objects_[index].get();
-    return target_->uuid();
   }
 
   return {};
@@ -414,7 +410,7 @@ int PedestrianInitialPoseTool::processMouseEvent(rviz_common::ViewportMouseEvent
         const auto uuid = objects_.remove(point.value());
         publishObjectMsg(uuid.get(), Object::DELETE);
       } else {
-        const auto uuid = objects_.select(point.value());
+        objects_.select(point.value());
       }
     }
     return 0;

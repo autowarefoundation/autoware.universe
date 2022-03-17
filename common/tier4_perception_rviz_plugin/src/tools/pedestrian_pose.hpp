@@ -104,9 +104,9 @@ public:
   ~InteractivePedestrianCollection() {}
 
   void reset();
+  void select(const Ogre::Vector3 & point);
   boost::optional<std::array<uint8_t, 16>> create(const Ogre::Vector3 & point);
   boost::optional<std::array<uint8_t, 16>> remove(const Ogre::Vector3 & point);
-  boost::optional<std::array<uint8_t, 16>> select(const Ogre::Vector3 & point);
   boost::optional<std::array<uint8_t, 16>> update(const Ogre::Vector3 & point);
   boost::optional<geometry_msgs::msg::Twist> twist(const std::array<uint8_t, 16> & uuid) const;
   boost::optional<tf2::Transform> transform(const std::array<uint8_t, 16> & uuid) const;
