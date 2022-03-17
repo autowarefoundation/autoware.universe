@@ -155,7 +155,7 @@ std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
   std::vector<cv::Point> pixel_vertices;
   toPolygon2d(object, vertices);
 
-  bool is_polygon_within_image = true;  
+  bool is_polygon_within_image = true;
   for (const auto & vertex : vertices) {
     const float px = (vertex.x - origin.position.x) / resolution;
     const float py = (vertex.y - origin.position.y) / resolution;
