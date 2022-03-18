@@ -31,10 +31,6 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   const std::string ns(getModuleName());
-  pub_debug_occupancy_grid_ =
-    node.create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/" + ns + "/occupancy_grid", 1);
-
-  // for crosswalk parameters
   auto & pp = planner_param_;
   // for detection type
   {
@@ -104,8 +100,8 @@ void OcclusionSpotModuleManager::launchNewModules(
   // general
   if (!isModuleRegistered(module_id_)) {
     registerModule(std::make_shared<OcclusionSpotModule>(
-      module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"), clock_,
-      pub_debug_occupancy_grid_));
+      module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"),
+      clock_));
   }
 }
 

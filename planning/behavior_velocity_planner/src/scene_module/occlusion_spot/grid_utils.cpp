@@ -168,7 +168,16 @@ void imageToOccupancyGrid(const cv::Mat & cv_image, nav_msgs::msg::OccupancyGrid
   for (int x = width - 1; x >= 0; x--) {
     for (int y = height - 1; y >= 0; y--) {
       const int idx = (height - 1 - y) + (width - 1 - x) * height;
-      const unsigned char intensity = cv_image.at<unsigned char>(y, x);
+      unsigned char intensity = cv_image.at<unsigned char>(y, x);
+      if (intensity == grid_utils::occlusion_cost_value::FREE_SPACE_IMAGE) {
+        intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
+      } else if (intensity == grid_utils::occlusion_cost_value::UNKNOWN_IMAGE) {
+        intensity = grid_utils::occlusion_cost_value::UNKNOWN;
+      } else if (intensity == grid_utils::occlusion_cost_value::OCCUPIED_IMAGE) {
+        intensity = grid_utils::occlusion_cost_value::OCCUPIED;
+      } else {
+        std::logic_error("behavior_velocity[occlusion_spot_grid]: invalid if clause");
+      }
       occupancy_grid->data.at(idx) = intensity;
     }
   }
@@ -181,13 +190,13 @@ void toQuantizedImage(
   for (int x = width - 1; x >= 0; x--) {
     for (int y = height - 1; y >= 0; y--) {
       const int idx = (height - 1 - y) + (width - 1 - x) * height;
-      int8_t intensity = occupancy_grid.data.at(idx);
-      if (0 <= intensity && intensity <= param.free_space_max) {
-        intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
+      unsigned char intensity = occupancy_grid.data.at(idx);
+      if (intensity <= param.free_space_max) {
+        intensity = grid_utils::occlusion_cost_value::FREE_SPACE_IMAGE;
       } else if (param.free_space_max < intensity && intensity < param.occupied_min) {
-        intensity = grid_utils::occlusion_cost_value::UNKNOWN;
+        intensity = grid_utils::occlusion_cost_value::UNKNOWN_IMAGE;
       } else if (param.occupied_min <= intensity) {
-        intensity = grid_utils::occlusion_cost_value::OCCUPIED;
+        intensity = grid_utils::occlusion_cost_value::OCCUPIED_IMAGE;
       } else {
         std::logic_error("behavior_velocity[occlusion_spot_grid]: invalid if clause");
       }
@@ -197,7 +206,7 @@ void toQuantizedImage(
 }
 void denoiseOccupancyGridCV(
   nav_msgs::msg::OccupancyGrid & occupancy_grid, grid_map::GridMap & grid_map,
-  const GridParam & param)
+  const GridParam & param, const bool is_show_debug_window)
 {
   cv::Mat cv_image(
     occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1,
@@ -205,8 +214,13 @@ void denoiseOccupancyGridCV(
   toQuantizedImage(occupancy_grid, &cv_image, param);
   constexpr int num_iter = 2;
   //!< @brief opening & closing to remove noise in occupancy grid
-  cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), num_iter);
-  cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), num_iter);
+  cv::morphologyEx(cv_image, cv_image, cv::MORPH_GRADIENT, cv::Mat(), cv::Point(-1, -1), num_iter);
+  // cv::Canny(cv_image, cv_image, 100,200,3,true);
+  if (is_show_debug_window) {
+    cv::namedWindow("occupancy grid", cv::WINDOW_NORMAL);
+    cv::imshow("occupancy grid", cv_image);
+    cv::waitKey(1);
+  }
   imageToOccupancyGrid(cv_image, &occupancy_grid);
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
 }

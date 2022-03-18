@@ -36,10 +36,12 @@ namespace grid_utils
 {
 namespace occlusion_cost_value
 {
-static constexpr int NO_INFORMATION = -1;
-static constexpr int FREE_SPACE = 0;
-static constexpr int UNKNOWN = 50;
-static constexpr int OCCUPIED = 100;
+static constexpr unsigned char FREE_SPACE = 0;
+static constexpr unsigned char UNKNOWN = 50;
+static constexpr unsigned char OCCUPIED = 100;
+static constexpr unsigned char FREE_SPACE_IMAGE = 0;
+static constexpr unsigned char UNKNOWN_IMAGE = 128;
+static constexpr unsigned char OCCUPIED_IMAGE = 255;
 }  // namespace occlusion_cost_value
 
 struct GridParam
@@ -81,7 +83,7 @@ void toQuantizedImage(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid, cv::Mat * cv_image, const GridParam & param);
 void denoiseOccupancyGridCV(
   nav_msgs::msg::OccupancyGrid & occupancy_grid, grid_map::GridMap & grid_map,
-  const GridParam & param);
+  const GridParam & param, const bool is_show_debug_window);
 }  // namespace grid_utils
 }  // namespace behavior_velocity_planner
 
