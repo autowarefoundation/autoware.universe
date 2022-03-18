@@ -71,31 +71,16 @@ Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
   return front_bounds_candidates.at(max_width_index);
 }
 
-double calcOverlappedBounds(
-  const geometry_msgs::msg::Pose & front_point, const Bounds & front_bounds_candidate,
-  const geometry_msgs::msg::Pose & prev_front_point, const Bounds & prev_front_continuous_bounds)
+double calcOverlappedBoundsSignedLength(
+  const Bounds & prev_front_continuous_bounds, const Bounds & front_bounds_candidate)
 {
-  const double avoiding_yaw =
-    tier4_autoware_utils::normalizeRadian(tf2::getYaw(front_point.orientation) + M_PI_2);
+  const double min_ub =
+    std::min(front_bounds_candidate.upper_bound, prev_front_continuous_bounds.upper_bound);
+  const double max_lb =
+    std::max(front_bounds_candidate.lower_bound, prev_front_continuous_bounds.lower_bound);
 
-  geometry_msgs::msg::Point ub_pos;
-  ub_pos.x = front_point.position.x + front_bounds_candidate.upper_bound * std::cos(avoiding_yaw);
-  ub_pos.y = front_point.position.y + front_bounds_candidate.upper_bound * std::sin(avoiding_yaw);
-
-  geometry_msgs::msg::Point lb_pos;
-  lb_pos.x = front_point.position.x + front_bounds_candidate.lower_bound * std::cos(avoiding_yaw);
-  lb_pos.y = front_point.position.y + front_bounds_candidate.lower_bound * std::sin(avoiding_yaw);
-
-  const double projected_ub_y =
-    geometry_utils::transformToRelativeCoordinate2D(ub_pos, prev_front_point).y;
-  const double projected_lb_y =
-    geometry_utils::transformToRelativeCoordinate2D(lb_pos, prev_front_point).y;
-
-  const double min_ub = std::min(projected_ub_y, prev_front_continuous_bounds.upper_bound);
-  const double max_lb = std::max(projected_lb_y, prev_front_continuous_bounds.lower_bound);
-
-  const double overlapped_length = min_ub - max_lb;
-  return overlapped_length;
+  const double overlapped_signed_length = min_ub - max_lb;
+  return overlapped_signed_length;
 }
 
 geometry_msgs::msg::Pose calcVehiclePose(
@@ -1352,13 +1337,12 @@ void MPTOptimizer::calcBounds(
 
       BoundsCandidates filtered_bounds_candidates;
       for (const auto & bounds_candidate : bounds_candidates) {
-        // Step 1. Bounds is continuous to the previous one.
-        //         Since there is distortion due to curvature, we just check if overlapped length is
-        //         positive.
-        const double overlapped_length = calcOverlappedBounds(
-          convertRefPointsToPose(ref_point), bounds_candidate,
-          convertRefPointsToPose(prev_ref_point), prev_continuous_bounds);
-        if (overlapped_length < 0) {
+        // Step 1. Bounds is continuous to the previous one,
+        //         and the overlapped signed length is longer than vehice width
+        //         overlapped_signed_length already considers vehicle width.
+        const double overlapped_signed_length =
+          calcOverlappedBoundsSignedLength(prev_continuous_bounds, bounds_candidate);
+        if (overlapped_signed_length < 0) {
           RCLCPP_INFO_EXPRESSION(
             rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
             "non-overlapped length bounds is ignored.");
