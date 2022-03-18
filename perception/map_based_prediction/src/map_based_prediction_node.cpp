@@ -412,7 +412,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   }
 
   // Step3. Calculate the angle difference between the lane angle and obstacle angle
-  double object_yaw = getObjectYaw(object);
+  const double object_yaw = getObjectYaw(object);
   const double lane_yaw = lanelet::utils::getLaneletAngle(
     lanelet.second, object.kinematics.pose_with_covariance.pose.position);
   const double delta_yaw = object_yaw - lane_yaw;
