@@ -199,7 +199,7 @@ struct DebugData
 // apply current velocity to path
 PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
 //!< @brief wrapper for detection area polygon generation
-void buildDetectionAreaPolygon(
+bool buildDetectionAreaPolygon(
   Polygons2d & slices, const PathWithLaneId & path, const double offset,
   const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);

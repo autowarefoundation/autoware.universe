@@ -66,9 +66,12 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
     param_.v.a_ego = planner_data_->current_accel.get();
-    param_.detection_area_max_length = planning_utils::calcJudgeLineDistWithJerkLimit(
-      param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
-      planner_data_->delay_response_time);
+    const double detection_area_offset = 5.0;  // for visualization and stability
+    param_.detection_area_max_length =
+      planning_utils::calcJudgeLineDistWithJerkLimit(
+        param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
+        planner_data_->delay_response_time) +
+      detection_area_offset;
   }
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   PathWithLaneId clipped_path;
@@ -87,8 +90,10 @@ bool OcclusionSpotModule::modifyPathVelocity(
   if (offset == boost::none) return true;
   const double offset_from_start_to_ego = -offset.get();
   auto & detection_area_polygons = debug_data_.detection_area_polygons;
-  utils::buildDetectionAreaPolygon(
-    detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
+  if (!utils::buildDetectionAreaPolygon(
+        detection_area_polygons, interp_path, offset_from_start_to_ego, param_)) {
+    return true;  // path point is not enough
+  }
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;

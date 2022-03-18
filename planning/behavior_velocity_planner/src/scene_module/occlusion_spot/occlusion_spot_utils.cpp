@@ -60,7 +60,7 @@ PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0)
   return out;
 }
 
-void buildDetectionAreaPolygon(
+bool buildDetectionAreaPolygon(
   Polygons2d & slices, const PathWithLaneId & path, const double offset, const PlannerParam & param)
 {
   const auto & p = param;
@@ -72,8 +72,7 @@ void buildDetectionAreaPolygon(
     da_range.min_longitudinal_distance;
   da_range.min_lateral_distance = p.half_vehicle_width;
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
-  planning_utils::createDetectionAreaPolygons(slices, path, da_range, p.pedestrian_vel);
-  return;
+  return planning_utils::createDetectionAreaPolygons(slices, path, da_range, p.pedestrian_vel);
 }
 
 ROAD_TYPE getCurrentRoadType(

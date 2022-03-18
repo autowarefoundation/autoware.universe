@@ -23,6 +23,7 @@
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
@@ -78,8 +79,9 @@ struct PointWithSearchRangeIndex
   geometry_msgs::msg::Point point;
   SearchRangeIndex index;
 };
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+
 using Point2d = boost::geometry::model::d2::point_xy<double>;
+using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
@@ -123,11 +125,11 @@ inline geometry_msgs::msg::Pose getPose(
   return traj.points.at(idx).pose;
 }
 
-// create detection area from given range
-void createDetectionAreaPolygons(
+// create detection area from given range return false if creation failure
+bool createDetectionAreaPolygons(
   Polygons2d & slices, const PathWithLaneId & path, const DetectionRange da_range,
   const double obstacle_vel_mps);
-
+PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, const double ratio);
 Point2d calculateLateralOffsetPoint2d(const Pose & p, const double offset);
 
 void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons2d & polys);
