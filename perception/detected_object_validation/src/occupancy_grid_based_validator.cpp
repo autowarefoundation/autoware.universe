@@ -177,7 +177,6 @@ std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
 cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid)
 {
-  const auto & resolution = occupancy_grid.info.resolution;
   cv::Mat cv_occ_grid =
     cv::Mat::zeros(occupancy_grid.info.height, occupancy_grid.info.width, CV_8UC1);
   for (size_t i = 0; i < occupancy_grid.data.size(); ++i) {
