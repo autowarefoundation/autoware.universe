@@ -1325,7 +1325,6 @@ void MPTOptimizer::calcBounds(
   for (size_t i = 0; i < sequential_bounds_candidates.size(); ++i) {
     // NOTE: back() is the front avoiding circle
     const auto & bounds_candidates = sequential_bounds_candidates.at(i);
-    const auto & ref_point = ref_points.at(i);
 
     // extract only continuous bounds;
     if (i == 0) {  // TODO(murooka) use previous bounds, not widest bounds
