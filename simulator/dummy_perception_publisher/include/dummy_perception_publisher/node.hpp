@@ -36,6 +36,28 @@
 #include <random>
 #include <vector>
 
+struct ObjectInfo
+{
+  ObjectInfo(
+    const dummy_perception_publisher::msg::Object & object, const rclcpp::Time & current_time);
+  double length;
+  double width;
+  double height;
+  double std_dev_x;
+  double std_dev_y;
+  double std_dev_z;
+  double std_dev_yaw;
+  tf2::Transform tf_map2moved_object;
+};
+
+void createObjectPointcloudObjectCentric(
+  const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
+  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
+
+void createObjectPointcloudVehicleCentric(
+  const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
+  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
+
 class DummyPerceptionPublisherNode : public rclcpp::Node
 {
 private:
@@ -58,16 +80,6 @@ private:
 
   std::mt19937 random_generator_;
   void timerCallback();
-  void createObjectPointcloudObjectCentric(
-    const double length, const double width, const double height, const double std_dev_x,
-    const double std_dev_y, const double std_dev_z,
-    const tf2::Transform & tf_base_link2moved_object,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr & pointcloud_ptr);
-  void createObjectPointcloudVehicleCentric(
-    const double length, const double width, const double height, const double std_dev_x,
-    const double std_dev_y, const double std_dev_z,
-    const tf2::Transform & tf_base_link2moved_object,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr & pointcloud_ptr);
   void objectCallback(const dummy_perception_publisher::msg::Object::ConstSharedPtr msg);
 
 public:
