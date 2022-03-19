@@ -34,7 +34,7 @@ If the percentage is low, it is deleted.
 
 | Name             | Type  | Description                                       |
 | ---------------- | ----- | ------------------------------------------------- |
-| `mean_threshold` | float | When what percentage of non-freespace is allowed? |
+| `mean_threshold` | float | The percentage threshold of allowed non-freespace. |
 | `enable_debug`   | bool  | Whether to display debug images or not?           |
 
 ## Assumptions / Known limits
