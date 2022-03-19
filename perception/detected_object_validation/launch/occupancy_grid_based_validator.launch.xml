@@ -15,7 +15,7 @@
     <param name="input_obstacle_and_raw_pointcloud" value="false" />
     <param name="map_resolution" value="0.2" />
     <param name="map_length" value="200.0" />
-    <param name="map_length" value="20.0" />
+    <param name="map_width" value="20.0" />
     <param name="map_frame" value="base_link" />
     <param name="enable_single_frame_mode" value="true" />
   </node>
