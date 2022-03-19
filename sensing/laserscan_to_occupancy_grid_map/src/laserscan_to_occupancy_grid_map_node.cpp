@@ -153,7 +153,7 @@ OccupancyGridMapNode::OccupancyGridMapNode(const rclcpp::NodeOptions & node_opti
 
   /* Occupancy grid */
   occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
-    map_width / map_resolution, map_length / map_resolution, map_resolution);
+    map_length / map_resolution, map_width / map_resolution, map_resolution);
 }
 
 PointCloud2::SharedPtr OccupancyGridMapNode::convertLaserscanToPointCLoud2(
