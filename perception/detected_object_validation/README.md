@@ -32,10 +32,10 @@ If the percentage is low, it is deleted.
 
 ## Parameters
 
-| Name             | Type  | Description                                       |
-| ---------------- | ----- | ------------------------------------------------- |
+| Name             | Type  | Description                                        |
+| ---------------- | ----- | -------------------------------------------------- |
 | `mean_threshold` | float | The percentage threshold of allowed non-freespace. |
-| `enable_debug`   | bool  | Whether to display debug images or not?           |
+| `enable_debug`   | bool  | Whether to display debug images or not?            |
 
 ## Assumptions / Known limits
 
