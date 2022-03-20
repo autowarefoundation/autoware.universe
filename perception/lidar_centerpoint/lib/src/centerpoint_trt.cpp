@@ -131,15 +131,18 @@ bool CenterPointTRT::preprocess(
     return false;
   }
 
-  // memcpy from host to device
+  const auto voxels_size =
+    num_voxels_ * Config::max_num_points_per_voxel * Config::point_feature_size;
+  const auto coordinates_size = num_voxels_ * Config::point_dim_size;
+  // memcpy from host to device (not copy empty voxels)
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    voxels_d_.get(), voxels_.data(), voxels_.size() * sizeof(float), cudaMemcpyHostToDevice));
+    voxels_d_.get(), voxels_.data(), voxels_size * sizeof(float), cudaMemcpyHostToDevice));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    coordinates_d_.get(), coordinates_.data(), coordinates_.size() * sizeof(int),
+    coordinates_d_.get(), coordinates_.data(), coordinates_size * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    num_points_per_voxel_d_.get(), num_points_per_voxel_.data(),
-    num_points_per_voxel_.size() * sizeof(float), cudaMemcpyHostToDevice));
+    num_points_per_voxel_d_.get(), num_points_per_voxel_.data(), num_voxels_ * sizeof(float),
+    cudaMemcpyHostToDevice));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   CHECK_CUDA_ERROR(generateFeatures_launch(
