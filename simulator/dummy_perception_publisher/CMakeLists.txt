@@ -46,6 +46,7 @@ set(${PROJECT_NAME}_DEPENDENCIES
 ament_auto_add_executable(dummy_perception_publisher_node
   src/main.cpp
   src/node.cpp
+  src/pointcloud_creator.cpp
 )
 
 ament_target_dependencies(dummy_perception_publisher_node ${${PROJECT_NAME}_DEPENDENCIES})

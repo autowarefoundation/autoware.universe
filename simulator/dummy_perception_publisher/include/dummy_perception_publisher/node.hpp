@@ -51,14 +51,6 @@ struct ObjectInfo
   tf2::Transform tf_map2moved_object;
 };
 
-void createObjectPointcloudObjectCentric(
-  const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
-  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
-
-void createObjectPointcloudVehicleCentric(
-  const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
-  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
-
 class PointCloudCreator
 {
 public:
