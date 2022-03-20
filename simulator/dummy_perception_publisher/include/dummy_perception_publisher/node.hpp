@@ -33,6 +33,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <memory>
 #include <random>
 #include <vector>
 
@@ -58,6 +59,29 @@ void createObjectPointcloudVehicleCentric(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
 
+class PointCloudCreator
+{
+public:
+  virtual ~PointCloudCreator() {}
+  virtual void create(
+    const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
+    std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const = 0;
+};
+
+class ObjectCentricPointCloudCreator : public PointCloudCreator
+{
+  void create(
+    const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
+    std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const override;
+};
+
+class VehicleCentricPointCloudCreator : public PointCloudCreator
+{
+  void create(
+    const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
+    std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const override;
+};
+
 class DummyPerceptionPublisherNode : public rclcpp::Node
 {
 private:
@@ -74,7 +98,7 @@ private:
   bool enable_ray_tracing_;
   bool use_object_recognition_;
   bool use_real_param_;
-  bool object_centric_pointcloud_;
+  std::unique_ptr<PointCloudCreator> pointcloud_creator_;
 
   double angle_increment_;
 
