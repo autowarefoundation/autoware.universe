@@ -18,6 +18,7 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/LineIterator.hpp>
 #include <grid_map_core/iterators/PolygonIterator.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
 #include <opencv2/opencv.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/util.hpp>

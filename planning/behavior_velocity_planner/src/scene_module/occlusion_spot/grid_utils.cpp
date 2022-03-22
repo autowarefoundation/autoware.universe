@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <grid_map_ros/GridMapRosConverter.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
 
 #include <algorithm>
@@ -44,15 +43,18 @@ void addObjectsToGridMap(const PredictedObjects & objs, grid_map::GridMap & grid
 {
   auto & grid_data = grid["layer"];
   for (const auto & obj : objs.objects) {
-    Polygon2d polygon = planning_utils::toFootprintPolygon(obj);
+    Polygon2d foot_print_polygon = planning_utils::toFootprintPolygon(obj);
     grid_map::Polygon grid_polygon;
+    const auto & pos = obj.kinematics.initial_pose_with_covariance.pose.position;
+    if (grid.isInside(grid_map::Position(pos.x, pos.y))) continue;
     try {
-      for (const auto & point : polygon.outer()) {
+      for (const auto & point : foot_print_polygon.outer()) {
         grid_polygon.addVertex({point.x(), point.y()});
       }
       for (grid_map::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
            ++iterator) {
         const grid_map::Index & index = *iterator;
+        if (!grid.isValid(index)) continue;
         grid_data(index.x(), index.y()) = grid_utils::occlusion_cost_value::OCCUPIED;
       }
     } catch (const std::invalid_argument & e) {
