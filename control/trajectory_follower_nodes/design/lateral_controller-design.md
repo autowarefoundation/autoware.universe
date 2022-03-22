@@ -17,7 +17,7 @@ when following a path.
     - How does it work? -->
 The node uses an implementation of linear model predictive control (MPC) for accurate path tracking.
 The MPC uses a model of the vehicle to simulate the trajectory resulting from the control command.
-The optimization of the control command is formulated as a Quadradic Program (QP).
+The optimization of the control command is formulated as a Quadratic Program (QP).
 
 These functionalities are implemented in the `trajectory_follower` package
 (see @subpage trajectory_follower-mpc-design)
