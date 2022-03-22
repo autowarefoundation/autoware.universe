@@ -47,6 +47,8 @@
 
 #include "car_pose.hpp"
 
+#include "util.hpp"
+
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -62,6 +64,12 @@ CarInitialPoseTool::CarInitialPoseTool()
 {
   shortcut_key_ = 'k';
 
+  enable_interactive_property_ = new rviz_common::properties::BoolProperty(
+    "Interactive", false, "Enable/Disable interactive action by manipulating mouse.",
+    getPropertyContainer());
+  property_frame_ = new rviz_common::properties::TfFrameProperty(
+    "Target Frame", rviz_common::properties::TfFrameProperty::FIXED_FRAME_STRING,
+    "The TF frame where the point cloud is output.", getPropertyContainer(), nullptr, true);
   topic_property_ = new rviz_common::properties::StringProperty(
     "Pose Topic", "/simulation/dummy_perception_publisher/object_info",
     "The topic on which to publish dummy object info.", getPropertyContainer(), SLOT(updateTopic()),
@@ -96,14 +104,19 @@ void CarInitialPoseTool::onInitialize()
 void CarInitialPoseTool::updateTopic()
 {
   rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
-  dummy_object_info_pub_ = raw_node->create_publisher<dummy_perception_publisher::msg::Object>(
-    topic_property_->getStdString(), 1);
+  dummy_object_info_pub_ = raw_node->create_publisher<Object>(topic_property_->getStdString(), 1);
   clock_ = raw_node->get_clock();
+  move_tool_.initialize(context_);
+  property_frame_->setFrameManager(context_->getFrameManager());
 }
 
 void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
 {
-  dummy_perception_publisher::msg::Object output_msg;
+  if (enable_interactive_property_->getBool()) {
+    return;
+  }
+
+  Object output_msg;
   std::string fixed_frame = context_->getFixedFrame().toStdString();
 
   // header
@@ -111,11 +124,11 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
   output_msg.header.stamp = clock_->now();
 
   // semantic
-  output_msg.classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+  output_msg.classification.label = ObjectClassification::CAR;
   output_msg.classification.probability = 1.0;
 
   // shape
-  output_msg.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_msg.shape.type = Shape::BOUNDING_BOX;
   const double width = 1.8;
   const double length = 4.0;
   output_msg.shape.dimensions.x = length;
@@ -150,7 +163,7 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
     velocity_->getFloat(), 0.0, 0.0, fixed_frame.c_str());
 
   // action
-  output_msg.action = dummy_perception_publisher::msg::Object::ADD;
+  output_msg.action = Object::ADD;
 
   // id
   std::mt19937 gen(std::random_device{}());
@@ -160,6 +173,108 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
   dummy_object_info_pub_->publish(output_msg);
 }
 
+void CarInitialPoseTool::publishObjectMsg(
+  const std::array<uint8_t, 16> & uuid, const uint32_t action)
+{
+  Object output_msg;
+  std::string fixed_frame = context_->getFixedFrame().toStdString();
+
+  // header
+  output_msg.header.frame_id = fixed_frame;
+  output_msg.header.stamp = clock_->now();
+
+  // action
+  output_msg.action = action;
+
+  // id
+  output_msg.id.uuid = uuid;
+
+  if (action == Object::DELETE) {
+    dummy_object_info_pub_->publish(output_msg);
+    return;
+  }
+
+  const auto object_tf = objects_.transform(uuid);
+  const auto object_twist = objects_.twist(uuid);
+
+  if (!object_tf || !object_twist) {
+    return;
+  }
+
+  // semantic
+  output_msg.classification.label = ObjectClassification::CAR;
+  output_msg.classification.probability = 1.0;
+
+  // shape
+  output_msg.shape.type = Shape::BOUNDING_BOX;
+  const double width = 1.8;
+  const double length = 4.0;
+  output_msg.shape.dimensions.x = length;
+  output_msg.shape.dimensions.y = width;
+  output_msg.shape.dimensions.z = 2.0;
+
+  // initial state
+  // pose
+  tf2::toMsg(object_tf.get(), output_msg.initial_state.pose_covariance.pose);
+  output_msg.initial_state.pose_covariance.pose.position.z = position_z_->getFloat();
+  output_msg.initial_state.pose_covariance.covariance[0] =
+    std_dev_x_->getFloat() * std_dev_x_->getFloat();
+  output_msg.initial_state.pose_covariance.covariance[7] =
+    std_dev_y_->getFloat() * std_dev_y_->getFloat();
+  output_msg.initial_state.pose_covariance.covariance[14] =
+    std_dev_z_->getFloat() * std_dev_z_->getFloat();
+  output_msg.initial_state.pose_covariance.covariance[35] =
+    std_dev_theta_->getFloat() * std_dev_theta_->getFloat();
+  // twist
+  output_msg.initial_state.twist_covariance.twist = object_twist.get();
+
+  dummy_object_info_pub_->publish(output_msg);
+}
+
+int CarInitialPoseTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
+{
+  if (!enable_interactive_property_->getBool()) {
+    return PoseTool::processMouseEvent(event);
+  }
+
+  if (event.rightDown()) {
+    const auto point = get_point_from_mouse(event);
+    if (point) {
+      if (event.shift()) {
+        const auto uuid = objects_.create(point.value());
+        publishObjectMsg(uuid.get(), Object::ADD);
+      } else if (event.alt()) {
+        const auto uuid = objects_.remove(point.value());
+        publishObjectMsg(uuid.get(), Object::DELETE);
+      } else {
+        objects_.select(point.value());
+      }
+    }
+    return 0;
+  }
+
+  if (event.rightUp()) {
+    objects_.reset();
+    return 0;
+  }
+
+  if (event.right()) {
+    const auto point = get_point_from_mouse(event);
+    if (point) {
+      const auto uuid = objects_.update(point.value());
+      publishObjectMsg(uuid.get(), Object::MODIFY);
+    }
+    return 0;
+  }
+
+  return move_tool_.processMouseEvent(event);
+}
+
+int CarInitialPoseTool::processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel)
+{
+  PoseTool::processKeyEvent(event, panel);
+  return move_tool_.processKeyEvent(event, panel);
+}
 }  // end namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
