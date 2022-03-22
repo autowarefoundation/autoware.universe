@@ -49,6 +49,8 @@
 
 #include "util.hpp"
 
+#include <rviz_common/display_context.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <random>
@@ -214,5 +216,113 @@ size_t InteractiveObjectCollection::nearest(const Ogre::Vector3 & point)
 
   const size_t index = indices[0];
   return distances[index] < 2.0 ? index : npos;
+}
+
+void InteractiveObjectTool::onInitialize()
+{
+  PoseTool::onInitialize();
+  setName("2D Dummy Object");
+  updateTopic();
+}
+
+void InteractiveObjectTool::updateTopic()
+{
+  rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
+  dummy_object_info_pub_ = raw_node->create_publisher<Object>(topic_property_->getStdString(), 1);
+  clock_ = raw_node->get_clock();
+  move_tool_.initialize(context_);
+  property_frame_->setFrameManager(context_->getFrameManager());
+}
+
+void InteractiveObjectTool::onPoseSet(double x, double y, double theta)
+{
+  if (enable_interactive_property_->getBool()) {
+    return;
+  }
+
+  tf2::Quaternion quat;
+  quat.setRPY(0.0, 0.0, theta);
+
+  auto output_msg = createObjectMsg();
+  output_msg.initial_state.pose_covariance.pose.position.x = x;
+  output_msg.initial_state.pose_covariance.pose.position.y = y;
+  output_msg.initial_state.pose_covariance.pose.position.z = position_z_->getFloat();
+  output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
+  output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
+  output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
+  output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
+  output_msg.action = Object::ADD;
+
+  dummy_object_info_pub_->publish(output_msg);
+}
+
+void InteractiveObjectTool::publishObjectMsg(
+  const std::array<uint8_t, 16> & uuid, const uint32_t action)
+{
+  auto output_msg = createObjectMsg();
+  output_msg.action = action;
+  output_msg.id.uuid = uuid;
+
+  if (action == Object::DELETE) {
+    dummy_object_info_pub_->publish(output_msg);
+    return;
+  }
+
+  const auto object_tf = objects_.transform(uuid);
+  const auto object_twist = objects_.twist(uuid);
+
+  if (!object_tf || !object_twist) {
+    return;
+  }
+
+  tf2::toMsg(object_tf.get(), output_msg.initial_state.pose_covariance.pose);
+  output_msg.initial_state.twist_covariance.twist = object_twist.get();
+
+  dummy_object_info_pub_->publish(output_msg);
+}
+
+int InteractiveObjectTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
+{
+  if (!enable_interactive_property_->getBool()) {
+    return PoseTool::processMouseEvent(event);
+  }
+
+  if (event.rightDown()) {
+    const auto point = get_point_from_mouse(event);
+    if (point) {
+      if (event.shift()) {
+        const auto uuid = objects_.create(point.value());
+        publishObjectMsg(uuid.get(), Object::ADD);
+      } else if (event.alt()) {
+        const auto uuid = objects_.remove(point.value());
+        publishObjectMsg(uuid.get(), Object::DELETE);
+      } else {
+        objects_.select(point.value());
+      }
+    }
+    return 0;
+  }
+
+  if (event.rightUp()) {
+    objects_.reset();
+    return 0;
+  }
+
+  if (event.right()) {
+    const auto point = get_point_from_mouse(event);
+    if (point) {
+      const auto uuid = objects_.update(point.value());
+      publishObjectMsg(uuid.get(), Object::MODIFY);
+    }
+    return 0;
+  }
+
+  return move_tool_.processMouseEvent(event);
+}
+
+int InteractiveObjectTool::processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel)
+{
+  PoseTool::processKeyEvent(event, panel);
+  return move_tool_.processKeyEvent(event, panel);
 }
 }  // end namespace rviz_plugins

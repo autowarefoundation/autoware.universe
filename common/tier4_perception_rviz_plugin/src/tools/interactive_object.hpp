@@ -60,6 +60,8 @@
 #include <rviz_default_plugins/tools/pose/pose_tool.hpp>
 #endif
 
+#include <dummy_perception_publisher/msg/object.hpp>
+
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <boost/optional.hpp>
@@ -73,6 +75,10 @@
 
 namespace rviz_plugins
 {
+
+using autoware_auto_perception_msgs::msg::ObjectClassification;
+using autoware_auto_perception_msgs::msg::Shape;
+using dummy_perception_publisher::msg::Object;
 
 class InteractiveObject
 {
@@ -111,6 +117,44 @@ private:
   size_t nearest(const Ogre::Vector3 & point);
   InteractiveObject * target_;
   std::vector<std::unique_ptr<InteractiveObject>> objects_;
+};
+
+class InteractiveObjectTool : public rviz_default_plugins::tools::PoseTool
+{
+  Q_OBJECT
+
+public:
+  virtual ~InteractiveObjectTool() = default;
+  virtual void onInitialize();
+  int processMouseEvent(rviz_common::ViewportMouseEvent & event) override;
+  int processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel) override;
+
+  virtual Object createObjectMsg() const = 0;
+
+protected Q_SLOTS:
+  virtual void updateTopic();
+
+protected:
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Publisher<Object>::SharedPtr dummy_object_info_pub_;
+
+  rviz_default_plugins::tools::MoveTool move_tool_;
+
+  rviz_common::properties::BoolProperty * enable_interactive_property_;
+  rviz_common::properties::StringProperty * topic_property_;
+  rviz_common::properties::FloatProperty * std_dev_x_;
+  rviz_common::properties::FloatProperty * std_dev_y_;
+  rviz_common::properties::FloatProperty * std_dev_z_;
+  rviz_common::properties::FloatProperty * std_dev_theta_;
+  rviz_common::properties::FloatProperty * position_z_;
+  rviz_common::properties::FloatProperty * velocity_;
+  rviz_common::properties::TfFrameProperty * property_frame_;
+
+private:
+  void publishObjectMsg(const std::array<uint8_t, 16> & uuid, const uint32_t action);
+  void onPoseSet(double x, double y, double theta);
+
+  InteractiveObjectCollection objects_;
 };
 }  // namespace rviz_plugins
 #endif  // TOOLS__INTERACTIVE_OBJECT_HPP_
