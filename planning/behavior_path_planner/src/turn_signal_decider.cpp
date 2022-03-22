@@ -69,24 +69,43 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   auto prev_point = path.points.front();
   auto prev_lane_id = lanelet::InvalId;
   for (const auto & path_point : path.points) {
-    accumulated_distance +=
-      tier4_autoware_utils::calcDistance3d(prev_point.point, path_point.point);
+    const double path_distance = tier4_autoware_utils::calcDistance3d(prev_point.point, path_point.point);
+    accumulated_distance += path_distance;
     prev_point = path_point;
     const double distance_from_vehicle_front =
       accumulated_distance - vehicle_pose_frenet.length - base_link2front_;
-    if (distance_from_vehicle_front < 0.0) {
-      continue;
+    if (distance_from_vehicle_front > intersection_search_distance_) {
+      return std::make_pair(turn_signal, distance);
     }
     // TODO(Horibe): Route Handler should be a library.
     for (const auto & lane : route_handler.getLaneletsFromIds(path_point.lane_ids)) {
+      if (lane.id() != path_point.lane_ids.back()) {
+        continue;
+      }
+      double turn_distance = lane.attributeOr("turn_signal_distance", intersection_search_distance_);
+      if (turn_distance < min_turn_signal_distance_) {
+        turn_distance = min_turn_signal_distance_;
+      }
+      double judge_distance = 0.0;
+      if (turn_distance < turn_signal_distance_threshold_) {
+        turn_distance = turn_signal_distance_threshold_;
+      }
+      if (turn_distance < path_distance) {
+        judge_distance = turn_distance - path_distance;
+        turn_distance += turn_signal_distance_threshold_;
+      }
+      else {
+        judge_distance = 0.0;
+      }
+      if (distance_from_vehicle_front < judge_distance) {
+        break;
+      }
       if (lane.id() == prev_lane_id) {
         continue;
       }
       prev_lane_id = lane.id();
 
-      if (
-        lane.attributeOr("turn_signal_distance", std::numeric_limits<double>::max()) <
-        distance_from_vehicle_front) {
+      if (turn_distance < distance_from_vehicle_front) {
         continue;
       }
       if (lane.attributeOr("turn_direction", std::string("none")) == "left") {
@@ -99,9 +118,6 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
         distance = distance_from_vehicle_front;
         return std::make_pair(turn_signal, distance);
       }
-    }
-    if (distance_from_vehicle_front > intersection_search_distance_) {
-      return std::make_pair(turn_signal, distance);
     }
   }
   return std::make_pair(turn_signal, distance);

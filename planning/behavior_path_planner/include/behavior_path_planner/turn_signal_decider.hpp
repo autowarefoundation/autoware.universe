@@ -55,6 +55,8 @@ private:
   // data
   double intersection_search_distance_{0.0};
   double base_link2front_{0.0};
+  double turn_signal_distance_threshold_{0.5};
+  double min_turn_signal_distance_{1.0};
 };
 }  // namespace behavior_path_planner
 
