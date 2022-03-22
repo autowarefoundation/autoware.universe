@@ -65,15 +65,6 @@ bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg
   return is_target_ahead;
 }
 
-bool setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input)
-{
-  for (size_t i = idx; i < input->points.size(); ++i) {
-    input->points.at(i).point.longitudinal_velocity_mps =
-      std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
-  }
-  return true;
-}
-
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
   PathWithLaneId * inout_path)
