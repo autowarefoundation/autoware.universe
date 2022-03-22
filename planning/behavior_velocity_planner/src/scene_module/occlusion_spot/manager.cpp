@@ -59,6 +59,7 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
     }
   }
   pp.debug = node.declare_parameter(ns + ".debug", false);
+  pp.use_object_info = node.declare_parameter(ns + ".use_object_info", false);
   pp.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", false);
   pp.pedestrian_vel = node.declare_parameter(ns + ".pedestrian_vel", 1.0);
   pp.detection_area_length = node.declare_parameter(ns + ".threshold.detection_area_length", 200.0);

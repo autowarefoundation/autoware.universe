@@ -113,6 +113,7 @@ struct PlannerParam
   DETECTION_METHOD detection_method;
   PASS_JUDGE pass_judge;
   bool debug;                  // [-]
+  bool use_object_info;        // [-]
   bool use_partition_lanelet;  // [-]
   // parameters in yaml
   double detection_area_length;      // [m]

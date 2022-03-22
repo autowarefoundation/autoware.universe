@@ -20,7 +20,10 @@
 #include <grid_map_core/iterators/PolygonIterator.hpp>
 #include <opencv2/opencv.hpp>
 #include <utilization/boost_geometry_helper.hpp>
+#include <utilization/util.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <boost/geometry.hpp>
@@ -34,13 +37,16 @@ namespace behavior_velocity_planner
 {
 namespace grid_utils
 {
+using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using nav_msgs::msg::OccupancyGrid;
 namespace occlusion_cost_value
 {
 static constexpr unsigned char FREE_SPACE = 0;
 static constexpr unsigned char UNKNOWN = 50;
 static constexpr unsigned char OCCUPIED = 100;
-static constexpr unsigned char FREE_SPACE_IMAGE = 0;
-static constexpr unsigned char UNKNOWN_IMAGE = 128;
+static constexpr unsigned char FREE_SPACE_IMAGE = 128;
+static constexpr unsigned char UNKNOWN_IMAGE = 0;
 static constexpr unsigned char OCCUPIED_IMAGE = 255;
 }  // namespace occlusion_cost_value
 
@@ -82,8 +88,9 @@ void imageToOccupancyGrid(const cv::Mat & cv_image, nav_msgs::msg::OccupancyGrid
 void toQuantizedImage(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid, cv::Mat * cv_image, const GridParam & param);
 void denoiseOccupancyGridCV(
-  nav_msgs::msg::OccupancyGrid & occupancy_grid, grid_map::GridMap & grid_map,
+  const nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid, grid_map::GridMap & grid_map,
   const GridParam & param, const bool is_show_debug_window);
+void addObjectsToGridMap(const PredictedObjects & objs, grid_map::GridMap & grid);
 }  // namespace grid_utils
 }  // namespace behavior_velocity_planner
 

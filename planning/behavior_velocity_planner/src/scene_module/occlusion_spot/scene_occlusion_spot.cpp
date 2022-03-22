@@ -33,11 +33,10 @@ namespace behavior_velocity_planner
 namespace utils = occlusion_spot_utils;
 
 OcclusionSpotModule::OcclusionSpotModule(
-  const int64_t module_id, [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock,
-  const rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr publisher)
-: SceneModuleInterface(module_id, logger, clock), publisher_(publisher), param_(planner_param)
+  const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
+  const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock), param_(planner_param)
 {
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     debug_data_.detection_type = "occupancy";
@@ -95,13 +94,21 @@ bool OcclusionSpotModule::modifyPathVelocity(
     return true;  // path point is not enough
   }
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
+  if (param_.debug) {
+    stop_watch_.tic("occlusion process time");
+    stop_watch_.tic("grid process time");
+  }
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
     if (!occ_grid_ptr) return true;  // mo data
-    nav_msgs::msg::OccupancyGrid occ_grid = *occ_grid_ptr;
     grid_map::GridMap grid_map;
-    grid_utils::denoiseOccupancyGridCV(occ_grid, grid_map, param_.grid);
-    if (param_.debug) publisher_->publish(occ_grid);  //
+    grid_utils::denoiseOccupancyGridCV(occ_grid_ptr, grid_map, param_.grid, param_.debug);
+    if (param_.use_object_info) {
+      grid_utils::addObjectsToGridMap(*planner_data_->predicted_objects, grid_map);
+    }
+    if (param_.debug) {
+      std::cout << "grid: " << stop_watch_.toc("grid process time", true) << std::endl;
+    }
     // Note: Don't consider offset from path start to ego here
     if (!utils::createPossibleCollisionsInDetectionArea(
           possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_,
@@ -122,6 +129,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
       // no occlusion spot
       return true;
     }
+  }
+  if (param_.debug) {
+    std::cout << "total: " << stop_watch_.toc("occlusion process time", true) << std::endl;
   }
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());

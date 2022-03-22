@@ -45,8 +45,8 @@ class OcclusionSpotModule : public SceneModuleInterface
 
 public:
   OcclusionSpotModule(
-    const int64_t module_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
+    const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
   /**
@@ -63,7 +63,7 @@ private:
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
 protected:
-  int64_t module_id_;
+  int64_t module_id_{};
 
   // Debug
   mutable DebugData debug_data_;
