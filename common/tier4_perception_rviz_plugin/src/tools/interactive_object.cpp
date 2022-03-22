@@ -105,10 +105,11 @@ void InteractiveObject::transform(tf2::Transform & tf_map2object) const
 
 void InteractiveObject::update(const Ogre::Vector3 & point)
 {
-  velocity_ = point - point_;
-  point_ = point;
-  theta_ =
-    (velocity_.x < 1.0e-3 && velocity_.y < 1.0e-3) ? theta_ : std::atan2(velocity_.y, velocity_.x);
+  velocity_ = (point - point_) * 0.05;
+  point_ += velocity_;
+  theta_ = (std::abs(velocity_.x) < 1.0e-6 && std::abs(velocity_.y) < 1.0e-6)
+             ? theta_
+             : std::atan2(velocity_.y, velocity_.x);
 }
 
 double InteractiveObject::distance(const Ogre::Vector3 & point) { return point_.distance(point); }
