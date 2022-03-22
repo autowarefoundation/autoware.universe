@@ -296,7 +296,9 @@ int get_ata_SMARTData(int fd, HDDInfo * info, const HDDDevice & device)
     } else if (
       data.attribute_entry_[i].attribute_id_ ==
       device.total_data_written_attribute_id_) {  // Total LBAs Written
-      info->total_data_written_ = (data.attribute_entry_[i].data_ | (static_cast<uint64_t>(data.attribute_entry_[i].attribute_specific_) << 32));
+      info->total_data_written_ =
+        (data.attribute_entry_[i].data_ |
+         (static_cast<uint64_t>(data.attribute_entry_[i].attribute_specific_) << 32));
       info->is_valid_total_data_written_ = true;
     }
   }
