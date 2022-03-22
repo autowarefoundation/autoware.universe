@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    time_safety_buffer: 0.5  # [s] required time without collision in forward simulation
+    dist_safety_buffer: 1.5  # [m] distance from obstacles to consider a collision
