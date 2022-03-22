@@ -290,8 +290,8 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
 
   // shape
   output_msg.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
-  const double width = 0.8;
-  const double length = 0.8;
+  const double width = 0.6;
+  const double length = 0.6;
   output_msg.shape.dimensions.x = length;
   output_msg.shape.dimensions.y = width;
   output_msg.shape.dimensions.z = 2.0;
