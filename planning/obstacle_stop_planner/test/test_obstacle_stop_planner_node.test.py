@@ -183,19 +183,21 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             self.pointcloud_msg.data=self.point_to_list(x,y,i/10,0.0)+self.pointcloud_msg.data 
 
     def point_to_list(self,x,y,z,i):
-        point_list=struct.pack('<f',x)+struct.pack('<f',y)+struct.pack('<f',z)+struct.pack('<f',i)
+        point_list=struct.pack('<f',float(x))+struct.pack('<f',float(y))+struct.pack('<f',float(z))+struct.pack('<f',float(i))
         return point_list
 
     def clip(self,val,min_val,max_val):
         return max(min(val,max_val),min_val)
 
     def trajectory_evaluation(self,x,y,trajectory):
-        if self.left_limit_line >= y and y >= -self.right_limit_line:
+        if self.left_limit_line > y and y > -self.right_limit_line:
+            # Inside the trajectory
             stop_line=self.clip(x-(self.stop_margin+self.base_link_to_front),0,self.trajectory_length)
             stop_element=int(stop_line/self.trajectory_resolution)+1
             check_vel=(trajectory.points[stop_element].longitudinal_velocity_mps == 0.0)
             return check_vel
         else:
+            # Outside the trajectory
             check_vel=math.isclose(trajectory.points[-1].longitudinal_velocity_mps,self.trajectory_msg.points[-1].longitudinal_velocity_mps,abs_tol=0.01)
             return check_vel
 
@@ -205,6 +207,8 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         self.callback_flag=True
         if result_val:
             self.true_count+=1
+        else:
+            print("Test failed at (x:",self.current_x,", y:",self.current_y,")")
 
     def test_linear_trajectory(self):
         #publisher
@@ -212,21 +216,35 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         trajectory_pub = self.node.create_publisher(autoware_auto_planning_msgs.msg.Trajectory, 'input/trajectory', 10)
         odom_pub = self.node.create_publisher(nav_msgs.msg.Odometry, 'input/odometry', 10)
         object_pub = self.node.create_publisher(autoware_auto_perception_msgs.msg.PredictedObjects, 'input/objects', 10)
-
         #subscliber
         trajectory_sub = self.node.create_subscription(autoware_auto_planning_msgs.msg.Trajectory, 'output/trajectory', self.trajectory_callback, 10)
 
         self.init_messages()
+
+        y_point_resolution=0.2
+        y_point_test_margin=0.5
+        x_point_resolution=10.0
+
         self.current_x=0.0
         self.current_y=0.0
         self.callback_flag=False
         self.true_count=0
 
+        #test points list 
+        test_point_x=list(range(0,int(self.trajectory_length/x_point_resolution),1))
+        test_point_x=[n*x_point_resolution for n in test_point_x]
+        test_point_y=list(range(-int((self.right_limit_line+y_point_test_margin)/y_point_resolution), int((self.left_limit_line+y_point_test_margin)/y_point_resolution), 1))
+        test_point_y=[n*y_point_resolution for n in test_point_y]
+        test_point_y.append(-self.right_limit_line)
+        test_point_y.append(self.left_limit_line)
+        test_point_x.sort()
+        test_point_y.sort()
+
         #while rclpy.ok():
-        for ix in range(0,10):
-            for iy in range(10):
-                self.current_x=ix*10.0
-                self.current_y=iy/2.0-2.5
+        for ix in test_point_x:
+            for iy in test_point_y:
+                self.current_x=float(ix)
+                self.current_y=float(iy)
                 self.set_pointcloud_messages(self.current_x,self.current_y)
                 
                 #update time stamp
@@ -243,7 +261,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
                 self.callback_flag=False
                 while not self.callback_flag:
                     rclpy.spin_once(self.node, timeout_sec=0.1)
-        self.assertEqual(self.true_count,100) 
+        self.assertEqual(self.true_count,len(test_point_x)*len(test_point_y)) 
 
 
 
