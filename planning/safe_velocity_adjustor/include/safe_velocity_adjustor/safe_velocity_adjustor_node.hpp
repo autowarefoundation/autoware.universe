@@ -19,8 +19,15 @@
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+#include <std_msgs/msg/detail/color_rgba__struct.hpp>
+#include <visualization_msgs/msg/detail/marker__struct.hpp>
+#include <visualization_msgs/msg/detail/marker_array__struct.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
-#include <iostream>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -31,6 +38,7 @@ namespace safe_velocity_adjustor
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
 
 class SafeVelocityAdjustorNode : public rclcpp::Node
 {
@@ -41,17 +49,28 @@ public:
     // TODO(Maxime CLEMENT): declare/get ROS parameters
     time_safety_buffer_ = 0.5;
     dist_safety_buffer_ = 1.5;
+
+    pub_trajectory_ = create_publisher<Trajectory>("~output/trajectory", 1);
+    pub_debug_markers_ =
+      create_publisher<visualization_msgs::msg::MarkerArray>("~output/debug_markers", 1);
+    sub_trajectory_ = create_subscription<Trajectory>(
+      "~input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
+
+    // set_param_res_ = add_on_set_parameters_callback([this](const auto &
+    // params){onParameter(params);});
   }
 
 private:
   rclcpp::Publisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
+    pub_debug_markers_;  //!< @brief publisher for debug markers
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
 
   // parameters
-  double time_safety_buffer_;
-  double dist_safety_buffer_;
+  Float time_safety_buffer_;
+  Float dist_safety_buffer_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -74,26 +93,55 @@ private:
   }
 
   // publish methods
-  std::optional<double> distanceToClosestCollision(const TrajectoryPoint & trajectory_point)
+  std::optional<Float> distanceToClosestCollision(const TrajectoryPoint & trajectory_point)
   {
     (void)trajectory_point;
     return {};
   }
 
-  double calculateSafeVelocity(
-    const TrajectoryPoint & trajectory_point, const double & dist_to_collision)
+  Float calculateSafeVelocity(
+    const TrajectoryPoint & trajectory_point, const Float & dist_to_collision) const
   {
     return std::min(
       trajectory_point.longitudinal_velocity_mps,
-      static_cast<decltype(trajectory_point.longitudinal_velocity_mps)>(
-        dist_to_collision / time_safety_buffer_));
+      static_cast<Float>(dist_to_collision / time_safety_buffer_));
+  }
+
+  static visualization_msgs::msg::Marker makeEnvelopeMarker(
+    const Trajectory & trajectory, const Float time_safety_buffer, const Float dist_safety_buffer)
+  {
+    visualization_msgs::msg::Marker envelope;
+    envelope.header = trajectory.header;
+    envelope.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    for (const auto & point : trajectory.points) {
+      const auto heading = tf2::getYaw(point.pose.orientation);
+      auto p = point.pose.position;
+      p.x += static_cast<Float>(
+               point.longitudinal_velocity_mps * std::cos(heading) * time_safety_buffer) +
+             dist_safety_buffer;
+      p.y += static_cast<Float>(
+               point.longitudinal_velocity_mps * std::sin(heading) * time_safety_buffer) +
+             dist_safety_buffer;
+      envelope.points.push_back(p);
+    }
+    return envelope;
   }
 
   void publishDebug(
     const Trajectory & original_trajectory, const Trajectory & safe_trajectory) const
   {
-    (void)original_trajectory;
-    (void)safe_trajectory;
+    visualization_msgs::msg::MarkerArray debug_markers;
+    auto unsafe_envelope =
+      makeEnvelopeMarker(original_trajectory, time_safety_buffer_, dist_safety_buffer_);
+    unsafe_envelope.color.r = 100;
+    unsafe_envelope.ns = "unsafe";
+    debug_markers.markers.push_back(unsafe_envelope);
+    auto safe_envelope =
+      makeEnvelopeMarker(safe_trajectory, time_safety_buffer_, dist_safety_buffer_);
+    safe_envelope.color.g = 100;
+    safe_envelope.ns = "safe";
+    debug_markers.markers.push_back(safe_envelope);
+    pub_debug_markers_->publish(debug_markers);
   }
 
   // debug

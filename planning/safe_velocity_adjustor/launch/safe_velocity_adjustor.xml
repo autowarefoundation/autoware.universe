@@ -1,0 +1,20 @@
+<launch>
+  <!-- input/output -->
+  <arg name="input_trajectory" default="/planning/scenario_planning/scenario_selector/trajectory"/>
+  <arg name="output_trajectory" default="/planning/scenario_planning/safe_velocity/trajectory"/>
+  <arg name="output_debug_markers" default="/planning/scenario_planning/safe_velocity/debug_markers"/>
+
+  <!-- debug flags -->
+  <arg name="publish_debug_markers" default="true"/>
+
+  <arg name="param_path" default="$(find-pkg-share safe_velocity_adjustor)/config/default_safe_velocity_adjustor.param.yaml" />
+
+  <node pkg="safe_velocity_adjustor" exec="safe_velocity_adjustor" name="safe_velocity_adjustor" output="screen">
+    <param from="$(var param_path)" />
+    <param name="publish_debug_trajs" value="$(var publish_debug_trajs)"/>
+    <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
+    <remap from="~/output/trajectory" to="$(var output_trajectory)"/>
+    <remap from="~/output/debug_markers" to="$(var output_debug_markers)"/>
+  </node>
+
+</launch>
