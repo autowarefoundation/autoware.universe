@@ -43,11 +43,17 @@
 #ifndef TOOLS__UNKNOWN_POSE_HPP_
 #define TOOLS__UNKNOWN_POSE_HPP_
 
+#include "interactive_object.hpp"
+
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
 #include <QObject>
 #include <rclcpp/node.hpp>
+#include <rviz_common/properties/bool_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/string_property.hpp>
+#include <rviz_common/properties/tf_frame_property.hpp>
+#include <rviz_common/viewport_mouse_event.hpp>
+#include <rviz_default_plugins/tools/move/move_tool.hpp>
 #include <rviz_default_plugins/tools/pose/pose_tool.hpp>
 #endif
 
@@ -55,6 +61,11 @@
 
 namespace rviz_plugins
 {
+
+using autoware_auto_perception_msgs::msg::ObjectClassification;
+using autoware_auto_perception_msgs::msg::Shape;
+using dummy_perception_publisher::msg::Object;
+
 class UnknownInitialPoseTool : public rviz_default_plugins::tools::PoseTool
 {
   Q_OBJECT
@@ -63,6 +74,8 @@ public:
   UnknownInitialPoseTool();
   virtual ~UnknownInitialPoseTool() {}
   virtual void onInitialize();
+  int processMouseEvent(rviz_common::ViewportMouseEvent & event) override;
+  int processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel) override;
 
 protected:
   virtual void onPoseSet(double x, double y, double theta);
@@ -72,8 +85,11 @@ private Q_SLOTS:
 
 private:
   rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Publisher<dummy_perception_publisher::msg::Object>::SharedPtr dummy_object_info_pub_;
+  rclcpp::Publisher<Object>::SharedPtr dummy_object_info_pub_;
 
+  rviz_default_plugins::tools::MoveTool move_tool_;
+
+  rviz_common::properties::BoolProperty * enable_interactive_property_;
   rviz_common::properties::StringProperty * topic_property_;
   rviz_common::properties::FloatProperty * std_dev_x_;
   rviz_common::properties::FloatProperty * std_dev_y_;
@@ -81,6 +97,11 @@ private:
   rviz_common::properties::FloatProperty * std_dev_theta_;
   rviz_common::properties::FloatProperty * position_z_;
   rviz_common::properties::FloatProperty * velocity_;
+  rviz_common::properties::TfFrameProperty * property_frame_;
+
+  InteractiveObjectCollection objects_;
+
+  void publishObjectMsg(const std::array<uint8_t, 16> & uuid, const uint32_t action);
 };
 
 }  // namespace rviz_plugins
