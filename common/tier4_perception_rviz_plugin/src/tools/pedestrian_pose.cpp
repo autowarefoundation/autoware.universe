@@ -58,167 +58,6 @@
 
 namespace rviz_plugins
 {
-InteractivePedestrian::InteractivePedestrian(const Ogre::Vector3 & point)
-{
-  velocity_ = Ogre::Vector3::ZERO;
-  point_ = point;
-  theta_ = 0.0;
-
-  std::mt19937 gen(std::random_device{}());
-  std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
-  std::generate(uuid_.begin(), uuid_.end(), bit_eng);
-}
-
-std::array<uint8_t, 16> InteractivePedestrian::uuid() const { return uuid_; }
-
-void InteractivePedestrian::twist(geometry_msgs::msg::Twist & twist) const
-{
-  twist.linear.x = velocity_.length();
-  twist.linear.y = 0.0;
-  twist.linear.z = 0.0;
-}
-
-void InteractivePedestrian::transform(tf2::Transform & tf_map2object) const
-{
-  tf2::Transform tf_object_origin2moved_object;
-  tf2::Transform tf_map2object_origin;
-
-  {
-    geometry_msgs::msg::Transform ros_object_origin2moved_object;
-    tf2::Quaternion quat;
-    quat.setRPY(0.0, 0.0, theta_);
-    ros_object_origin2moved_object.rotation = tf2::toMsg(quat);
-    tf2::fromMsg(ros_object_origin2moved_object, tf_object_origin2moved_object);
-  }
-
-  {
-    geometry_msgs::msg::Transform ros_object_map2object_origin;
-    tf2::Quaternion quat;
-    quat.setRPY(0.0, 0.0, 0.0);
-    ros_object_map2object_origin.rotation = tf2::toMsg(quat);
-    ros_object_map2object_origin.translation.x = point_.x;
-    ros_object_map2object_origin.translation.y = point_.y;
-    ros_object_map2object_origin.translation.z = point_.z;
-    tf2::fromMsg(ros_object_map2object_origin, tf_map2object_origin);
-  }
-
-  tf_map2object = tf_map2object_origin * tf_object_origin2moved_object;
-}
-
-void InteractivePedestrian::update(const Ogre::Vector3 & point)
-{
-  velocity_ = point - point_;
-  point_ = point;
-  theta_ =
-    (velocity_.x < 1.0e-3 && velocity_.y < 1.0e-3) ? theta_ : std::atan2(velocity_.y, velocity_.x);
-}
-
-double InteractivePedestrian::distance(const Ogre::Vector3 & point)
-{
-  return point_.distance(point);
-}
-
-InteractivePedestrianCollection::InteractivePedestrianCollection() { target_ = nullptr; }
-
-void InteractivePedestrianCollection::reset() { target_ = nullptr; }
-
-void InteractivePedestrianCollection::select(const Ogre::Vector3 & point)
-{
-  const size_t index = nearest(point);
-  if (index != objects_.size()) {
-    target_ = objects_[index].get();
-  }
-}
-
-boost::optional<std::array<uint8_t, 16>> InteractivePedestrianCollection::create(
-  const Ogre::Vector3 & point)
-{
-  objects_.emplace_back(std::make_unique<InteractivePedestrian>(point));
-  target_ = objects_.back().get();
-
-  if (target_) {
-    return target_->uuid();
-  }
-
-  return {};
-}
-
-boost::optional<std::array<uint8_t, 16>> InteractivePedestrianCollection::remove(
-  const Ogre::Vector3 & point)
-{
-  const size_t index = nearest(point);
-  if (index != objects_.size()) {
-    const auto removed_uuid = objects_[index].get()->uuid();
-    objects_.erase(objects_.begin() + index);
-    return removed_uuid;
-  }
-
-  return {};
-}
-
-boost::optional<std::array<uint8_t, 16>> InteractivePedestrianCollection::update(
-  const Ogre::Vector3 & point)
-{
-  if (target_) {
-    target_->update(point);
-    return target_->uuid();
-  }
-
-  return {};
-}
-
-boost::optional<geometry_msgs::msg::Twist> InteractivePedestrianCollection::twist(
-  const std::array<uint8_t, 16> & uuid) const
-{
-  for (const auto & object : objects_) {
-    if (object->uuid() != uuid) {
-      continue;
-    }
-
-    geometry_msgs::msg::Twist ret;
-    object->twist(ret);
-    return ret;
-  }
-
-  return {};
-}
-
-boost::optional<tf2::Transform> InteractivePedestrianCollection::transform(
-  const std::array<uint8_t, 16> & uuid) const
-{
-  for (const auto & object : objects_) {
-    if (object->uuid() != uuid) {
-      continue;
-    }
-
-    tf2::Transform ret;
-    object->transform(ret);
-    return ret;
-  }
-
-  return {};
-}
-
-size_t InteractivePedestrianCollection::nearest(const Ogre::Vector3 & point)
-{
-  const size_t npos = objects_.size();
-  if (objects_.empty()) {
-    return npos;
-  }
-
-  std::vector<double> distances;
-  for (const auto & object : objects_) {
-    distances.push_back(object->distance(point));
-  }
-
-  const auto compare = [&](int x, int y) { return distances[x] < distances[y]; };
-  std::vector<size_t> indices(distances.size());
-  std::iota(indices.begin(), indices.end(), 0);
-  std::sort(indices.begin(), indices.end(), compare);
-
-  const size_t index = indices[0];
-  return distances[index] < 2.0 ? index : npos;
-}
 PedestrianInitialPoseTool::PedestrianInitialPoseTool()
 {
   shortcut_key_ = 'l';
@@ -263,8 +102,7 @@ void PedestrianInitialPoseTool::onInitialize()
 void PedestrianInitialPoseTool::updateTopic()
 {
   rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
-  dummy_object_info_pub_ = raw_node->create_publisher<dummy_perception_publisher::msg::Object>(
-    topic_property_->getStdString(), 1);
+  dummy_object_info_pub_ = raw_node->create_publisher<Object>(topic_property_->getStdString(), 1);
   clock_ = raw_node->get_clock();
   move_tool_.initialize(context_);
   property_frame_->setFrameManager(context_->getFrameManager());
@@ -276,7 +114,7 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
     return;
   }
 
-  dummy_perception_publisher::msg::Object output_msg;
+  Object output_msg;
   std::string fixed_frame = context_->getFixedFrame().toStdString();
 
   // header
@@ -284,12 +122,11 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
   output_msg.header.stamp = clock_->now();
 
   // semantic
-  output_msg.classification.label =
-    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+  output_msg.classification.label = ObjectClassification::PEDESTRIAN;
   output_msg.classification.probability = 1.0;
 
   // shape
-  output_msg.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
+  output_msg.shape.type = Shape::CYLINDER;
   const double width = 0.8;
   const double length = 0.8;
   output_msg.shape.dimensions.x = length;
@@ -324,7 +161,7 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
     velocity_->getFloat(), 0.0, 0.0, fixed_frame.c_str());
 
   // action
-  output_msg.action = dummy_perception_publisher::msg::Object::ADD;
+  output_msg.action = Object::ADD;
 
   // id
   std::mt19937 gen(std::random_device{}());

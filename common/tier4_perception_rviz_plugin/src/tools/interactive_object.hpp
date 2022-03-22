@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,10 +45,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TOOLS__PEDESTRIAN_POSE_HPP_
-#define TOOLS__PEDESTRIAN_POSE_HPP_
-
-#include "interactive_object.hpp"
+#ifndef TOOLS__INTERACTIVE_OBJECT_HPP_
+#define TOOLS__INTERACTIVE_OBJECT_HPP_
 
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
 #include <QObject>
@@ -62,7 +60,7 @@
 #include <rviz_default_plugins/tools/pose/pose_tool.hpp>
 #endif
 
-#include <dummy_perception_publisher/msg/object.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 
 #include <boost/optional.hpp>
 
@@ -76,48 +74,43 @@
 namespace rviz_plugins
 {
 
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_perception_msgs::msg::Shape;
-using dummy_perception_publisher::msg::Object;
-
-class PedestrianInitialPoseTool : public rviz_default_plugins::tools::PoseTool
+class InteractiveObject
 {
-  Q_OBJECT
-
 public:
-  PedestrianInitialPoseTool();
-  virtual ~PedestrianInitialPoseTool() {}
-  virtual void onInitialize();
-  int processMouseEvent(rviz_common::ViewportMouseEvent & event) override;
-  int processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel) override;
+  explicit InteractiveObject(const Ogre::Vector3 & point);
+  ~InteractiveObject() {}
 
-protected:
-  virtual void onPoseSet(double x, double y, double theta);
-
-private Q_SLOTS:
-  void updateTopic();
+  std::array<uint8_t, 16> uuid() const;
+  void twist(geometry_msgs::msg::Twist & twist) const;
+  void transform(tf2::Transform & tf_map2object) const;
+  void update(const Ogre::Vector3 & point);
+  double distance(const Ogre::Vector3 & point);
 
 private:
-  rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Publisher<dummy_perception_publisher::msg::Object>::SharedPtr dummy_object_info_pub_;
-
-  rviz_default_plugins::tools::MoveTool move_tool_;
-
-  rviz_common::properties::BoolProperty * enable_interactive_property_;
-  rviz_common::properties::StringProperty * topic_property_;
-  rviz_common::properties::FloatProperty * std_dev_x_;
-  rviz_common::properties::FloatProperty * std_dev_y_;
-  rviz_common::properties::FloatProperty * std_dev_z_;
-  rviz_common::properties::FloatProperty * std_dev_theta_;
-  rviz_common::properties::FloatProperty * position_z_;
-  rviz_common::properties::FloatProperty * velocity_;
-  rviz_common::properties::TfFrameProperty * property_frame_;
-
-  InteractiveObjectCollection objects_;
-
-  void publishObjectMsg(const std::array<uint8_t, 16> & uuid, const uint32_t action);
+  std::array<uint8_t, 16> uuid_;
+  Ogre::Vector3 point_;
+  Ogre::Vector3 velocity_;
+  double theta_;
 };
 
-}  // namespace rviz_plugins
+class InteractiveObjectCollection
+{
+public:
+  InteractiveObjectCollection();
+  ~InteractiveObjectCollection() {}
 
-#endif  // TOOLS__PEDESTRIAN_POSE_HPP_
+  void reset();
+  void select(const Ogre::Vector3 & point);
+  boost::optional<std::array<uint8_t, 16>> create(const Ogre::Vector3 & point);
+  boost::optional<std::array<uint8_t, 16>> remove(const Ogre::Vector3 & point);
+  boost::optional<std::array<uint8_t, 16>> update(const Ogre::Vector3 & point);
+  boost::optional<geometry_msgs::msg::Twist> twist(const std::array<uint8_t, 16> & uuid) const;
+  boost::optional<tf2::Transform> transform(const std::array<uint8_t, 16> & uuid) const;
+
+private:
+  size_t nearest(const Ogre::Vector3 & point);
+  InteractiveObject * target_;
+  std::vector<std::unique_ptr<InteractiveObject>> objects_;
+};
+}  // namespace rviz_plugins
+#endif  // TOOLS__INTERACTIVE_OBJECT_HPP_
