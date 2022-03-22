@@ -112,9 +112,12 @@ struct PlannerParam
 {
   DETECTION_METHOD detection_method;
   PASS_JUDGE pass_judge;
-  bool debug;                  // [-]
-  bool use_object_info;        // [-]
-  bool use_partition_lanelet;  // [-]
+  bool is_show_occlusion;        // [-]
+  bool is_show_cv_window;        // [-]
+  bool is_show_processing_time;  // [-]
+  bool filter_occupancy_grid;    // [-]
+  bool use_object_info;          // [-]
+  bool use_partition_lanelet;    // [-]
   // parameters in yaml
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]

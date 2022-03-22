@@ -28,6 +28,10 @@
 #include <memory>
 #include <vector>
 
+// turn on only when debugging.
+#define DEBUG_PRINT(enable, x) \
+  if (enable) RCLCPP_INFO_STREAM_THROTTLE(logger_, *clock_, 3000, x);
+
 namespace behavior_velocity_planner
 {
 namespace utils = occlusion_spot_utils;
@@ -94,21 +98,18 @@ bool OcclusionSpotModule::modifyPathVelocity(
     return true;  // path point is not enough
   }
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
-  if (param_.debug) {
-    stop_watch_.tic("occlusion process time");
-    stop_watch_.tic("grid process time");
-  }
+  if (param_.is_show_processing_time) stop_watch_.tic("processing_time");
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
     if (!occ_grid_ptr) return true;  // mo data
     grid_map::GridMap grid_map;
-    grid_utils::denoiseOccupancyGridCV(occ_grid_ptr, grid_map, param_.grid, param_.debug);
+    grid_utils::denoiseOccupancyGridCV(
+      occ_grid_ptr, grid_map, param_.grid, param_.is_show_cv_window, param_.filter_occupancy_grid);
     if (param_.use_object_info) {
       grid_utils::addObjectsToGridMap(*planner_data_->predicted_objects, grid_map);
     }
-    if (param_.debug) {
-      std::cout << "grid: " << stop_watch_.toc("grid process time", true) << std::endl;
-    }
+    DEBUG_PRINT(
+      param_.is_show_processing_time, "grid [ms]: " << stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here
     if (!utils::createPossibleCollisionsInDetectionArea(
           possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_,
@@ -130,11 +131,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
       return true;
     }
   }
-  if (param_.debug) {
-    std::cout << "total: " << stop_watch_.toc("occlusion process time", true) << std::endl;
-  }
-  RCLCPP_DEBUG_STREAM_THROTTLE(
-    logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
+  DEBUG_PRINT(
+    param_.is_show_processing_time, "occlusion [ms]: " << stop_watch_.toc("processing_time", true));
+  DEBUG_PRINT(param_.is_show_occlusion, "num collision:" << possible_collisions.size());
   utils::calcSlowDownPointsForPossibleCollision(0, interp_path, 0.0, possible_collisions);
   // Note: Consider offset from path start to ego here
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego);

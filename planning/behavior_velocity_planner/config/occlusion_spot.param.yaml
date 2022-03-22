@@ -1,12 +1,16 @@
 /**:
   ros__parameters:
     occlusion_spot:
-      detection_method: "predicted_object" # [-] candidate is "occupancy_grid" or "predicted_object"
-      pass_judge: "current_velocity"       # [-] candidate is "current_velocity""
-      debug: false                         # [-] whether to publish debug markers. Note Default should be false for performance
-      use_object_info: false               # [-] whether to reflect object info to occupancy grid map or not
-      use_partition_lanelet: true          # [-] whether to use partition lanelet map data
-      pedestrian_vel: 1.0                  # [m/s] assume pedestrian is dashing from occlusion at this velocity
+      detection_method: "predicted_object"  # [-] candidate is "occupancy_grid" or "predicted_object"
+      pass_judge: "current_velocity"        # [-] candidate is "current_velocity"
+      filter_occupancy_grid: true           # [-] whether to filter occupancy grid by morphologyEx or not
+      use_object_info: true                 # [-] whether to reflect object info to occupancy grid map or not
+      use_partition_lanelet: true           # [-] whether to use partition lanelet map data
+      pedestrian_vel: 1.0                   # [m/s] assume pedestrian is dashing from occlusion at this velocity
+      debug:                                 # Note Default should be false for performance
+        is_show_occlusion: false            # [-] whether to show occlusion point markers.
+        is_show_cv_window: false       # [-] whether to show open_cv debug window
+        is_show_processing_time: false      # [-] whether to show processing time
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range
         stuck_vehicle_vel: 1.0              # [m/s] velocity below this value is assumed to stop

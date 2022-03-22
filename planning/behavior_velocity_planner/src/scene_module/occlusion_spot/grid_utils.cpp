@@ -253,8 +253,9 @@ void toQuantizedImage(
 }
 
 void denoiseOccupancyGridCV(
-  const OccupancyGrid::ConstSharedPtr occupancy_grid_ptr, grid_map::GridMap & grid_map,
-  const GridParam & param, const bool is_show_debug_window)
+  const nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid_ptr,
+  grid_map::GridMap & grid_map, const GridParam & param, const bool is_show_debug_window,
+  const bool filter_occupancy_grid)
 {
   OccupancyGrid occupancy_grid = *occupancy_grid_ptr;
   cv::Mat cv_image(
@@ -263,16 +264,12 @@ void denoiseOccupancyGridCV(
   toQuantizedImage(occupancy_grid, &cv_image, param);
   constexpr int num_iter = 2;
   //!< @brief opening & closing to remove noise in occupancy grid
-  cv::morphologyEx(cv_image, cv_image, cv::MORPH_CLOSE, cv::Mat(), cv::Point(-1, -1), num_iter);
+  if (filter_occupancy_grid) {
+    cv::morphologyEx(cv_image, cv_image, cv::MORPH_CLOSE, cv::Mat(), cv::Point(-1, -1), num_iter);
+  }
   if (is_show_debug_window) {
     cv::namedWindow("morph", cv::WINDOW_NORMAL);
     cv::imshow("morph", cv_image);
-    cv::Mat cv_canny(
-      occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1,
-      cv::Scalar(grid_utils::occlusion_cost_value::OCCUPIED));
-    cv::Canny(cv_image, cv_canny, 900, 1200);
-    cv::namedWindow("occupancy grid", cv::WINDOW_NORMAL);
-    cv::imshow("occupancy grid", cv_canny);
     cv::waitKey(1);
   }
   imageToOccupancyGrid(cv_image, &occupancy_grid);

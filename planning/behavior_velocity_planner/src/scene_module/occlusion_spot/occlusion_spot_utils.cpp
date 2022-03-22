@@ -381,7 +381,7 @@ bool createPossibleCollisionsInDetectionArea(
     grid_utils::findOcclusionSpots(
       occlusion_spot_positions, grid, detection_area_slice,
       param.detection_area.min_occlusion_spot_size);
-    if (param.debug) {
+    if (param.is_show_occlusion) {
       for (const auto & op : occlusion_spot_positions) {
         Point p =
           tier4_autoware_utils::createPoint(op[0], op[1], path.points.at(0).point.pose.position.z);
