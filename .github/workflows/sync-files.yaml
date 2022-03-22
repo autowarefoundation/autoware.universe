@@ -6,7 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  prevent-running-on-forks:
+    name: Prevent running on forks
+    runs-on: ubuntu-latest
+    if: ${{ (github.event_name != 'schedule') || (github.event_name == 'schedule' && github.repository_owner == 'autowarefoundation') }}
+    steps:
+      - run: "true"
+
   sync-files:
+    needs: prevent-running-on-forks
     runs-on: ubuntu-latest
     steps:
       - name: Generate token
