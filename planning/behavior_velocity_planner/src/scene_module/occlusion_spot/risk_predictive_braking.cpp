@@ -85,43 +85,17 @@ int insertSafeVelocityToPath(
   }
   PathPointWithLaneId inserted_point;
   inserted_point = inout_path->points.at(closest_idx);
-  int insert_idx = closest_idx;
+  size_t insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point
   // if original path has narrow points it's better to set higher distance threshold
-  if (planning_utils::calcDist2d(in_pose, inserted_point.point) > 0.3) {
-    if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
-      ++insert_idx;
-    }
-    // return if index is after the last path point
-    if (insert_idx == static_cast<int>(inout_path->points.size())) {
-      return -1;
-    }
-    auto it = inout_path->points.begin() + insert_idx;
-    inserted_point = inout_path->points.at(closest_idx);
-    inserted_point.point.pose = in_pose;
-    inout_path->points.insert(it, inserted_point);
+  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+    ++insert_idx;
+    if (insert_idx == static_cast<size_t>(inout_path->points.size())) return -1;
   }
-  setVelocityFrom(insert_idx, safe_vel, inout_path);
+  // return if index is after the last path point
+  inserted_point.point.pose = in_pose;
+  planning_utils::insertVelocity(*inout_path, inserted_point, safe_vel, insert_idx);
   return 0;
-}
-
-double calculateLateralDistanceFromTTC(
-  const double longitudinal_distance, const PlannerParam & param)
-{
-  const auto & v = param.v;
-  const auto & p = param;
-  double v_min = 1.0;
-  const double lateral_buffer = 0.5;
-  const double min_distance = p.half_vehicle_width + lateral_buffer;
-  const double max_distance = p.detection_area.max_lateral_distance;
-  if (longitudinal_distance <= 0) return min_distance;
-  if (v_min < param.v.min_allowed_velocity) v_min = param.v.min_allowed_velocity;
-  // use min velocity if ego velocity is below min allowed
-  const double v0 = (v.v_ego > v_min) ? v.v_ego : v_min;
-  // here is a part where ego t(ttc) can be replaced by calculation of velocity smoother or ?
-  double t = longitudinal_distance / v0;
-  double lateral_distance = t * param.pedestrian_vel + p.half_vehicle_width;
-  return std::min(max_distance, std::max(min_distance, lateral_distance));
 }
 
 SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)

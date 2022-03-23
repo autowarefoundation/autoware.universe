@@ -241,38 +241,23 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
       lanelet::BasicPoint3d overhang_basic_pose(
         object_data.overhang_pose.position.x, object_data.overhang_pose.position.y,
         object_data.overhang_pose.position.z);
+      const bool get_left =
+        isOnRight(object_data) && parameters_.enable_avoidance_over_same_direction;
+      const bool get_right =
+        !isOnRight(object_data) && parameters_.enable_avoidance_over_same_direction;
+
+      const auto target_lines = rh->getFurthestLinestring(
+        overhang_lanelet, get_right, get_left,
+        parameters_.enable_avoidance_over_opposite_direction);
+
       if (isOnRight(object_data)) {
-        const auto & target_left_line = [this, &rh, &overhang_lanelet]() {
-          if (
-            parameters_.enable_avoidance_over_same_direction &&
-            parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getLeftMostLinestring(overhang_lanelet);
-          } else if (
-            parameters_.enable_avoidance_over_same_direction &&
-            !parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getLeftMostSameDirectionLinestring(overhang_lanelet);
-          }
-          return overhang_lanelet.leftBound();
-        }();
         object_data.to_road_shoulder_distance =
-          distance2d(to2D(overhang_basic_pose), to2D(target_left_line.basicLineString()));
-        debug_linestring.push_back(target_left_line);
+          distance2d(to2D(overhang_basic_pose), to2D(target_lines.back().basicLineString()));
+        debug_linestring.push_back(target_lines.back());
       } else {
-        const auto & target_right_line = [this, &rh, &overhang_lanelet]() {
-          if (
-            parameters_.enable_avoidance_over_same_direction &&
-            parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getRightMostLinestring(overhang_lanelet);
-          } else if (
-            parameters_.enable_avoidance_over_same_direction &&
-            !parameters_.enable_avoidance_over_opposite_direction) {
-            return rh->getRightMostSameDirectionLinestring(overhang_lanelet);
-          }
-          return overhang_lanelet.rightBound();
-        }();
         object_data.to_road_shoulder_distance =
-          distance2d(to2D(overhang_basic_pose), to2D(target_right_line.basicLineString()));
-        debug_linestring.push_back(target_right_line);
+          distance2d(to2D(overhang_basic_pose), to2D(target_lines.front().basicLineString()));
+        debug_linestring.push_back(target_lines.front());
       }
     }
 
@@ -1675,35 +1660,20 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
   {
     // 0. Extend to right/left of objects
     for (const auto & obstacle : avoidance_data_.objects) {
+      lanelet::ConstLanelets search_lanelets;
       auto object_lanelet = obstacle.overhang_lanelet;
+      constexpr bool get_right = true;
+      constexpr bool get_left = true;
+      const bool include_opposite = parameters_.enable_avoidance_over_opposite_direction;
       if (isOnRight(obstacle)) {
-        auto lanelet_at_left = route_handler->getLeftLanelet(object_lanelet);
-        while (lanelet_at_left) {
-          extended_lanelets.push_back(lanelet_at_left.get());
-          lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
-        }
-        if (lanelet_at_left) {
-          auto lanelet_at_right =
-            planner_data_->route_handler->getRightLanelet(lanelet_at_left.get());
-          while (lanelet_at_right) {
-            extended_lanelets.push_back(lanelet_at_right.get());
-            lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
-          }
-        }
+        search_lanelets = route_handler->getAllSharedLineStringLanelets(
+          object_lanelet, !get_right, get_left, include_opposite);
       } else {
-        auto lanelet_at_right = route_handler->getRightLanelet(object_lanelet);
-        while (lanelet_at_right) {
-          extended_lanelets.push_back(lanelet_at_right.get());
-          lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
-        }
-        if (lanelet_at_right) {
-          auto lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_right.get());
-          while (lanelet_at_left) {
-            extended_lanelets.push_back(lanelet_at_left.get());
-            lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
-          }
-        }
+        search_lanelets = route_handler->getAllSharedLineStringLanelets(
+          object_lanelet, get_right, !get_left, include_opposite);
       }
+      extended_lanelets.insert(
+        extended_lanelets.end(), search_lanelets.begin(), search_lanelets.end());
     }
   }
 
@@ -1733,8 +1703,8 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
         }
 
         // get previous lane, and return false if previous lane does not exist
-        lanelet::ConstLanelet prev_lane;
-        if (!route_handler->getPreviousLaneletWithinRoute(lane, &prev_lane)) {
+        lanelet::ConstLanelets prev_lanes;
+        if (!route_handler->getPreviousLaneletsWithinRoute(lane, &prev_lanes)) {
           return false;
         }
 
@@ -2249,9 +2219,6 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
       ap.getRelativeLength(), ap.getRelativeLongitudinal(), getSharpAvoidanceEgoSpeed());
   };
 
-  // TODO(Horibe) maybe this value must be same with trimSmallShift's.
-  constexpr double NEW_POINT_THRESHOLD = 0.5 - 1.0e-3;
-
   for (size_t i = 0; i < candidates.size(); ++i) {
     const auto & candidate = candidates.at(i);
     std::stringstream ss;
@@ -2279,7 +2246,8 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
     // TODO(Horibe) test fails with this print. why?
     // DEBUG_PRINT("%s, shift current: %f, candidate: %f", pfx, current_shift, candidate.length);
 
-    if (std::abs(candidate.length - current_shift) > NEW_POINT_THRESHOLD) {
+    const auto new_point_threshold = parameters_.avoidance_execution_lateral_threshold;
+    if (std::abs(candidate.length - current_shift) > new_point_threshold) {
       DEBUG_PRINT(
         "%s, New shift point is found!!! shift change: %f -> %f", pfx, current_shift,
         candidate.length);

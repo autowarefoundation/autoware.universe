@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils.hpp"
+#ifndef TOOLS__UTIL_HPP_
+#define TOOLS__UTIL_HPP_
 
-#include <scene_module/occlusion_spot/geometry.hpp>
+#include <rviz_common/viewport_mouse_event.hpp>
 
-#include <gtest/gtest.h>
+#include <OgreVector3.h>
 
-#include <vector>
+#include <optional>
+
+std::optional<Ogre::Vector3> get_point_from_mouse(rviz_common::ViewportMouseEvent & event);
+
+#endif  // TOOLS__UTIL_HPP_

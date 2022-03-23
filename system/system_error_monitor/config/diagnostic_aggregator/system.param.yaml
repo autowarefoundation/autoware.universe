@@ -20,26 +20,6 @@
           contains: [": emergency_stop_operation"]
           timeout: 1.0
 
-        driving_recorder:
-          type: diagnostic_aggregator/AnalyzerGroup
-          path: driving_recorder
-          analyzers:
-            storage_error:
-              type: diagnostic_aggregator/GenericAnalyzer
-              path: storage_error
-              contains: ["bagkeeper"]
-              timeout: 3.0
-
-        debug_data_logger:
-          type: diagnostic_aggregator/AnalyzerGroup
-          path: debug_data_logger
-          analyzers:
-            storage_error:
-              type: diagnostic_aggregator/GenericAnalyzer
-              path: storage_error
-              contains: ["bagpacker"]
-              timeout: 3.0
-
         resource_monitoring:
           type: diagnostic_aggregator/AnalyzerGroup
           path: resource_monitoring
@@ -74,6 +54,18 @@
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: thermal_throttling
                   contains: [": CPU Thermal Throttling"]
+                  timeout: 3.0
+
+                frequency:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: frequency
+                  contains: [": CPU Frequency"]
+                  timeout: 3.0
+
+                load_average:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: load_average
+                  contains: [": CPU Load Average"]
                   timeout: 3.0
 
             gpu:
@@ -124,6 +116,12 @@
                   contains: [": Network Usage"]
                   timeout: 3.0
 
+                network_traffic:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: network_traffic
+                  contains: [": Network Traffic"]
+                  timeout: 3.0
+
             storage:
               type: diagnostic_aggregator/AnalyzerGroup
               path: storage
@@ -138,4 +136,26 @@
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: usage
                   contains: [": HDD Usage"]
+                  timeout: 3.0
+
+            process:
+              type: diagnostic_aggregator/AnalyzerGroup
+              path: process
+              analyzers:
+                high_load:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: high_load
+                  contains: [": High-load"]
+                  timeout: 3.0
+
+                high_mem:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: high_mem
+                  contains: [": High-mem"]
+                  timeout: 3.0
+
+                tasks_summary:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: tasks_summary
+                  contains: [": Tasks Summary"]
                   timeout: 3.0
