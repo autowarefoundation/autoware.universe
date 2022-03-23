@@ -66,7 +66,8 @@ private:
   void toPolygon2d(
     const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXY>::Ptr & polygon);
-  std::optional<float> getMaxRadius(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  std::optional<float> getMaxRadius(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object);
 };
 }  // namespace obstacle_pointcloud_based_validator
 

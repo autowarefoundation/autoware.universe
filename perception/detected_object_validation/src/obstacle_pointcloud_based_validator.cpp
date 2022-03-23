@@ -182,8 +182,8 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     std::vector<int> indices;
     std::vector<float> distances;
     kdtree->radiusSearch(
-      toPCL(transformed_object.kinematics.pose_with_covariance.pose.position), search_radius.value(),
-      indices, distances);
+      toPCL(transformed_object.kinematics.pose_with_covariance.pose.position),
+      search_radius.value(), indices, distances);
     for (const auto & index : indices) {
       neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
     }
