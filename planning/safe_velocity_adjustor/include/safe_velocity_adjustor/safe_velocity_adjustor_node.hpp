@@ -83,7 +83,7 @@ private:
       if (parameter.get_name() == "time_safety_buffer") {
         time_safety_buffer_ = static_cast<Float>(parameter.as_double());
       } else if (parameter.get_name() == "dist_safety_buffer") {
-        time_safety_buffer_ = static_cast<Float>(parameter.as_double());
+        dist_safety_buffer_ = static_cast<Float>(parameter.as_double());
         result.successful = true;
       } else {
         RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
