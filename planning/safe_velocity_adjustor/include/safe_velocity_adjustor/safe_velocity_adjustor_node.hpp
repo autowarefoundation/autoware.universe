@@ -15,6 +15,7 @@
 #ifndef SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
 #define SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
 
+#include <rcl_interfaces/msg/detail/set_parameters_result__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -46,18 +47,17 @@ public:
   explicit SafeVelocityAdjustorNode(const rclcpp::NodeOptions & node_options)
   : rclcpp::Node("safe_velocity_adjustor", node_options)
   {
-    // TODO(Maxime CLEMENT): declare/get ROS parameters
-    time_safety_buffer_ = 0.5;
-    dist_safety_buffer_ = 1.5;
+    time_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("time_safety_buffer"));
+    dist_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("dist_safety_buffer"));
 
-    pub_trajectory_ = create_publisher<Trajectory>("~output/trajectory", 1);
+    pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
     pub_debug_markers_ =
-      create_publisher<visualization_msgs::msg::MarkerArray>("~output/debug_markers", 1);
+      create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
     sub_trajectory_ = create_subscription<Trajectory>(
-      "~input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
+      "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
 
-    // set_param_res_ = add_on_set_parameters_callback([this](const auto &
-    // params){onParameter(params);});
+    set_param_res_ =
+      add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
   }
 
 private:
@@ -75,7 +75,25 @@ private:
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
-    const std::vector<rclcpp::Parameter> & parameters);
+    const std::vector<rclcpp::Parameter> & parameters)
+  {
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = false;
+    for (const auto & parameter : parameters) {
+      if (parameter.get_name() == "time_safety_buffer") {
+        time_safety_buffer_ = static_cast<Float>(parameter.as_double());
+      } else if (parameter.get_name() == "dist_safety_buffer") {
+        time_safety_buffer_ = static_cast<Float>(parameter.as_double());
+        result.successful = true;
+      } else {
+        RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
+      }
+    }
+    return result;
+  }
+
+  // cached inputs
+  Trajectory::ConstSharedPtr prev_input_trajectory_;
 
   // topic callback
   void onTrajectory(const Trajectory::ConstSharedPtr msg)
@@ -90,6 +108,7 @@ private:
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
     publishDebug(*msg, safe_trajectory);
+    prev_input_trajectory_ = msg;
   }
 
   // publish methods
@@ -113,6 +132,8 @@ private:
     visualization_msgs::msg::Marker envelope;
     envelope.header = trajectory.header;
     envelope.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    envelope.scale.x = 0.1;
+    envelope.color.a = 1.0;
     for (const auto & point : trajectory.points) {
       const auto heading = tf2::getYaw(point.pose.orientation);
       auto p = point.pose.position;
@@ -133,12 +154,12 @@ private:
     visualization_msgs::msg::MarkerArray debug_markers;
     auto unsafe_envelope =
       makeEnvelopeMarker(original_trajectory, time_safety_buffer_, dist_safety_buffer_);
-    unsafe_envelope.color.r = 100;
+    unsafe_envelope.color.r = 1.0;
     unsafe_envelope.ns = "unsafe";
     debug_markers.markers.push_back(unsafe_envelope);
     auto safe_envelope =
       makeEnvelopeMarker(safe_trajectory, time_safety_buffer_, dist_safety_buffer_);
-    safe_envelope.color.g = 100;
+    safe_envelope.color.g = 1.0;
     safe_envelope.ns = "safe";
     debug_markers.markers.push_back(safe_envelope);
     pub_debug_markers_->publish(debug_markers);
