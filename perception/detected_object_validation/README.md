@@ -1,10 +1,10 @@
-# detected_object_validation
+# detected_object_validation package
 
 ## Purpose
 
 The purpose of this package is to eliminate obvious false positives of DetectedObjects.
 
-# occupancy grid based validator
+## node: occupancy grid based validator
 
 ## Inner-workings / Algorithms
 
@@ -43,7 +43,7 @@ If the percentage is low, it is deleted.
 
 Currently, only vehicle represented as BoundingBox are supported.
 
-# obstacle pointcloud based validator
+## obstacle pointcloud based validator
 
 ## Inner-workings / Algorithms
 
