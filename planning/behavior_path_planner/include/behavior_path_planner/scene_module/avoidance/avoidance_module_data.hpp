@@ -147,10 +147,10 @@ struct AvoidanceParameters
   double avoidance_execution_lateral_threshold;
 
   // true by default
-  bool avoid_car{true};          // avoidance is performed for type object car
-  bool avoid_truck{true};        // avoidance is performed for type object truck
-  bool avoid_bus{true};          // avoidance is performed for type object bus
-  bool avoid_trailer{true};      // avoidance is performed for type object trailer
+  bool avoid_car{true};      // avoidance is performed for type object car
+  bool avoid_truck{true};    // avoidance is performed for type object truck
+  bool avoid_bus{true};      // avoidance is performed for type object bus
+  bool avoid_trailer{true};  // avoidance is performed for type object trailer
 
   // false by default
   bool avoid_unknown{false};     // avoidance is performed for type object unknown
