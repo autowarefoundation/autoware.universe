@@ -15,12 +15,12 @@
 #ifndef OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
 #define OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
 
+#include "obstacle_pointcloud_based_validator/debugger.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
-#include "obstacle_pointcloud_based_validator/debugger.hpp"
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -54,7 +54,6 @@ private:
   size_t min_pointcloud_num_;
 
   std::shared_ptr<Debugger> debugger_;
-
 
 private:
   void onObjectsAndObstaclePointCloud(

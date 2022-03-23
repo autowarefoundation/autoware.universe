@@ -33,7 +33,9 @@ namespace obstacle_pointcloud_based_validator
 class Debugger
 {
 public:
-  explicit Debugger(rclcpp::Node * node) : neighbor_pointcloud_(new pcl::PointCloud<pcl::PointXYZ>), pointcloud_within_polygon_(new pcl::PointCloud<pcl::PointXYZ>)
+  explicit Debugger(rclcpp::Node * node)
+  : neighbor_pointcloud_(new pcl::PointCloud<pcl::PointXYZ>),
+    pointcloud_within_polygon_(new pcl::PointCloud<pcl::PointXYZ>)
   {
     removed_objects_pub_ =
       node->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
@@ -57,7 +59,7 @@ public:
     neighbor_pointcloud_pub_->publish(output);
     neighbor_pointcloud_->clear();
   }
-  
+
   void publishPointcloudWithinPolygon(const std_msgs::msg::Header & header)
   {
     sensor_msgs::msg::PointCloud2 output;
