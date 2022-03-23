@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="input/detected_objects" default="/perception/object_recognition/detection/objects" />
-  <arg name="output/objects" default="/perception/object_recognition/detection/validattion/occupancy_grid_based/objects" />
+  <arg name="output/objects" default="/perception/object_recognition/detection/validation/occupancy_grid_based/objects" />
 
   <arg name="input/lasescan" default="/perception/occupancy_grid_map/virtual_scan/laserscan" />
   <arg name="input/occupancy_grid_map" default="/perception/object_recognition/detection/validation/occupancy_grid_based/single_frame_occupancy_grid_map" />
