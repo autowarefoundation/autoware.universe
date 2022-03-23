@@ -182,7 +182,7 @@ TEST(compareTime, polygon_vs_line_iterator)
       }
     }
     time = stop_watch.toc("processing_time", true);
-    if (i < 4) std::cout << "polygon iterator [ms]: " << time << " :num: " << count << std::endl;
+    // if (i < 4) std::cout << "polygon iterator [ms]: " << time << " :num: " << count << std::endl;
     count = 0;
     // line iterator
     {
@@ -211,7 +211,7 @@ TEST(compareTime, polygon_vs_line_iterator)
       }
     }
     time = stop_watch.toc("processing_time", true);
-    if (i < 4) std::cout << "line iterator [ms]: " << time << " :num: " << count << std::endl;
+    // if (i < 4) std::cout << "line iterator [ms]: " << time << " :num: " << count << std::endl;
     count = 0;
   }
 }
