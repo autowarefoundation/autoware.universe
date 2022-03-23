@@ -20,7 +20,7 @@
   <arg name="output/objects" default="objects"/>
   <arg name="model_name" default="default" description="options: `default` or `aip_x2`"/>
   <arg name="model_path" default="$(find-pkg-share pointpainting)/data"/>
-  <arg name="model_param_path" default="$(find-pkg-share pointpainting)/config/$(var model_name).param.yaml"/> 
+  <arg name="model_param_path" default="$(find-pkg-share pointpainting)/config/$(var model_name).param.yaml"/>
 
   <!-- for eval variable-->
   <arg name="input_rois_number" default="$(var input/rois_number)"/>
