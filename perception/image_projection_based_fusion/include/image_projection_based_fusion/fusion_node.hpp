@@ -1,0 +1,102 @@
+// Copyright 2021 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
+#define IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
+
+#include <message_filters/pass_through.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace image_projection_based_fusion
+{
+
+using autoware_auto_perception_msgs::msg::DetectedObjects;
+using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
+
+template <class T>
+using SyncPolicy = message_filters::sync_policies::ApproximateTime<
+  T, DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectsWithFeature,
+  DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectsWithFeature,
+  DetectedObjectsWithFeature, DetectedObjectsWithFeature>;
+template <class T>
+using Sync = message_filters::Synchronizer<SyncPolicy<T>>;
+
+template <class Msg>
+class FusionNode : public rclcpp::Node
+{
+public:
+  explicit FusionNode(const std::string & node_name, const rclcpp::NodeOptions & options);
+
+protected:
+  void cameraInfoCallback(
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int camera_id);
+
+  void fusionCallback(
+    typename Msg::ConstSharedPtr input_obstacle_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi3_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi4_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi5_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
+    DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg);
+
+  virtual void fusionOnSingleImage(const DetectedObjectsWithFeature & input_roi_msg) = 0;
+
+  void publish();
+
+  int rois_number_{0};
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  // camera_info
+  std::map<int, sensor_msgs::msg::CameraInfo> camera_info_map_;
+  std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
+
+  // fusion
+  typename message_filters::Subscriber<Msg> sub_;
+  message_filters::PassThrough<DetectedObjectsWithFeature> passthrough_;
+  std::vector<std::shared_ptr<message_filters::Subscriber<DetectedObjectsWithFeature>>> rois_subs_;
+  inline void dummyCallback(DetectedObjectsWithFeature::ConstSharedPtr input)
+  {
+    passthrough_.add(input);
+  }
+  typename std::shared_ptr<Sync<Msg>> sync_ptr_;
+
+  // output
+  // if the type of output message isn't Msg,
+  // overwrite output_msg_ and pub_ptr_ in derived class.
+  Msg output_msg_;
+  typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
+};
+
+}  // namespace image_projection_based_fusion
+
+#endif  // IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
