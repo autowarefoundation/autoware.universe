@@ -64,7 +64,8 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.filter_occupancy_grid = node.declare_parameter(ns + ".filter_occupancy_grid", false);
   pp.use_object_info = node.declare_parameter(ns + ".use_object_info", false);
   pp.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", false);
-  pp.pedestrian_vel = node.declare_parameter(ns + ".pedestrian_vel", 1.0);
+  pp.pedestrian_vel = node.declare_parameter(ns + ".pedestrian_vel", 1.5);
+  pp.pedestrian_radius = node.declare_parameter(ns + ".pedestrian_radius", 0.5);
   pp.detection_area_length = node.declare_parameter(ns + ".threshold.detection_area_length", 200.0);
   pp.stuck_vehicle_vel = node.declare_parameter(ns + ".threshold.stuck_vehicle_vel", 1.0);
   pp.lateral_distance_thr = node.declare_parameter(ns + ".threshold.lateral_distance", 10.0);
@@ -74,7 +75,6 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 
   // ego additional velocity config
   pp.v.safety_ratio = node.declare_parameter(ns + ".motion.safety_ratio", 1.0);
-  pp.v.delay_time = node.declare_parameter(ns + ".motion.delay_time", 0.1);
   pp.v.safe_margin = node.declare_parameter(ns + ".motion.safe_margin", 1.0);
   pp.v.max_slow_down_jerk = node.declare_parameter(ns + ".motion.max_slow_down_jerk", -0.7);
   pp.v.max_slow_down_accel = node.declare_parameter(ns + ".motion.max_slow_down_accel", -2.5);

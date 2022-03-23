@@ -124,6 +124,7 @@ struct PlannerParam
   double stuck_vehicle_vel;          // [m/s]
   double lateral_distance_thr;       // [m] lateral distance threshold to consider
   double pedestrian_vel;             // [m/s]
+  double pedestrian_radius;          // [m]
 
   double dist_thr;   // [m]
   double angle_thr;  // [rad]

@@ -6,10 +6,11 @@
       filter_occupancy_grid: true           # [-] whether to filter occupancy grid by morphologyEx or not
       use_object_info: true                 # [-] whether to reflect object info to occupancy grid map or not
       use_partition_lanelet: true           # [-] whether to use partition lanelet map data
-      pedestrian_vel: 1.0                   # [m/s] assume pedestrian is dashing from occlusion at this velocity
-      debug:                                 # Note Default should be false for performance
+      pedestrian_vel: 1.5                   # [m/s] assume pedestrian is dashing from occlusion at this velocity
+      pedestrian_radius: 0.5                # [m] assume pedestrian width(0.25m) + margin(0.25m)
+      debug:                                # !Note: default should be false for performance
         is_show_occlusion: false            # [-] whether to show occlusion point markers.
-        is_show_cv_window: false       # [-] whether to show open_cv debug window
+        is_show_cv_window: false            # [-] whether to show open_cv debug window
         is_show_processing_time: false      # [-] whether to show processing time
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range
@@ -22,8 +23,7 @@
         non_effective_jerk: -0.3            # [m/s^3] weak jerk for velocity planning.
         non_effective_acceleration: -1.0    # [m/s^2] weak deceleration for velocity planning.
         min_allowed_velocity: 1.0           # [m/s] minimum velocity allowed
-        delay_time: 0.1                     # [s] safety time buffer for delay system response
-        safe_margin: 1.0                    # [m] maximum safety distance for any error
+        safe_margin: 2.0                    # [m] margin for detection failure(0.5m) + pedestrian radius(0.5m) + safe margin(1.0m)
       detection_area:
         min_occlusion_spot_size: 1.0     # [m] occupancy grid must contain an UNKNOWN area of at least size NxN to be considered a hidden obstacle.
         slice_length: 10.0               # [m] size of slices in both length and distance relative to the ego path.

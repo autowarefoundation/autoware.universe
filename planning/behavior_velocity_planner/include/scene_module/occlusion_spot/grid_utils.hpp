@@ -80,7 +80,8 @@ void findOcclusionSpots(
   const Polygon2d & polygon, const double min_size);
 //!< @brief Return true if the path between the two given points is free of occupied cells
 bool isCollisionFree(
-  const grid_map::GridMap & grid, const grid_map::Position & p1, const grid_map::Position & p2);
+  const grid_map::GridMap & grid, const grid_map::Position & p1, const grid_map::Position & p2,
+  const double radius);
 //!< @brief get the corner positions of the square described by the given anchor
 void getCornerPositions(
   std::vector<grid_map::Position> & corner_positions, const grid_map::GridMap & grid,

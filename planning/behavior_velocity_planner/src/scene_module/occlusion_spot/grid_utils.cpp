@@ -23,11 +23,11 @@ namespace behavior_velocity_planner
 namespace grid_utils
 {
 
-Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double thickness)
+Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
 {
   LineString2d line = {p0, p1};
   const double angle = atan2(p0.y() - p1.y(), p0.x() - p1.x());
-  const double r = thickness;
+  const double r = radius;
   Polygon2d line_poly;
   // add polygon counter clockwise
   line_poly.outer().emplace_back(p0.x() + r * sin(angle), p0.y() - r * cos(angle));
@@ -145,13 +145,13 @@ void findOcclusionSpots(
 }
 
 bool isCollisionFree(
-  const grid_map::GridMap & grid, const grid_map::Position & p1, const grid_map::Position & p2)
+  const grid_map::GridMap & grid, const grid_map::Position & p1, const grid_map::Position & p2,
+  const double radius)
 {
   const grid_map::Matrix & grid_data = grid["layer"];
   Point2d occlusion_p = {p1.x(), p1.y()};
   Point2d collision_p = {p2.x(), p2.y()};
-  const double ray_thickness = 0.5;
-  Polygon2d polygon = pointsToPoly(occlusion_p, collision_p, ray_thickness);
+  Polygon2d polygon = pointsToPoly(occlusion_p, collision_p, radius);
   grid_map::Polygon grid_polygon;
   try {
     for (const auto & point : polygon.outer()) {
