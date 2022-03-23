@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>pointpainting</name>
+  <version>1.0.0</version>
+  <description>The pointpainting package</description>
+
+  <maintainer email="tao.zhong@tier4.jp">Tao Zhong</maintainer>
+
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>message_filters</depend>
+  <depend>pcl_conversions</depend>
+  <depend>autoware_auto_perception_msgs</depend>
+  <depend>pcl_ros</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tier4_autoware_utils</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_sensor_msgs</depend>
+  <depend>tier4_perception_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
