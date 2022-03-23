@@ -2534,7 +2534,7 @@ bool AvoidanceModule::isTargetObjectType(const PredictedObject & object) const
      (t == ObjectClassification::TRAILER && parameters_.avoid_trailer) ||
      (t == ObjectClassification::UNKNOWN && parameters_.avoid_unknown) ||
      (t == ObjectClassification::BICYCLE && parameters_.avoid_bicycle) ||
-     (t == ObjectClassification::MOTORCYCLE && parameters_.avoid_motorbike) ||
+     (t == ObjectClassification::MOTORCYCLE && parameters_.avoid_motorcycle) ||
      (t == ObjectClassification::PEDESTRIAN && parameters_.avoid_pedestrian));
   return is_object_type;
 }

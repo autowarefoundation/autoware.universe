@@ -258,7 +258,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.avoid_trailer = dp("target_object.trailer", true);
   p.avoid_unknown = dp("target_object.unknown", false);
   p.avoid_bicycle = dp("target_object.bicycle", false);
-  p.avoid_motorbike = dp("target_object.motorbike", false);
+  p.avoid_motorcycle = dp("target_object.motorcycle", false);
   p.avoid_pedestrian = dp("target_object.pedestrian", false);
 
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);

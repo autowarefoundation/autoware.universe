@@ -54,7 +54,7 @@
         trailer: true
         unknown: false
         bicycle: false
-        motorbike: false
+        motorcycle: false
         pedestrian: false
 
       # ---------- advanced parameters ----------

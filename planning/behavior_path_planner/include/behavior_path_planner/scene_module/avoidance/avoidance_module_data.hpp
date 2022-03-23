@@ -155,7 +155,7 @@ struct AvoidanceParameters
   // false by default
   bool avoid_unknown{false};     // avoidance is performed for type object unknown
   bool avoid_bicycle{false};     // avoidance is performed for type object bicycle
-  bool avoid_motorbike{false};   // avoidance is performed for type object motorbike
+  bool avoid_motorcycle{false};  // avoidance is performed for type object motorbike
   bool avoid_pedestrian{false};  // avoidance is performed for type object pedestrian
 
   // debug
