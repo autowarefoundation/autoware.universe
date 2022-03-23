@@ -89,7 +89,7 @@ bool BlindSpotModule::modifyPathVelocity(
     return false;
   }
 
-  if (stop_line_idx <= 0 || pass_judge_line_idx <= 0) {
+  if (stop_line_idx <= 0 || (planner_param_.use_pass_judge_line && pass_judge_line_idx <= 0)) {
     RCLCPP_DEBUG(
       logger_, "[Blind Spot] stop line or pass judge line is at path[0], ignore planning.");
     *path = input_path;  // reset path
@@ -472,7 +472,7 @@ boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
     const auto conflict_area = lanelet::utils::getPolygonFromArcLength(
       blind_spot_lanelets, current_arc.length, stop_line_arc.length);
     const auto detection_area = lanelet::utils::getPolygonFromArcLength(
-      blind_spot_lanelets, detection_area_start_length, current_arc.length);
+      blind_spot_lanelets, detection_area_start_length, stop_line_arc.length);
 
     BlindSpotPolygons blind_spot_polygons;
     blind_spot_polygons.conflict_area = conflict_area;
