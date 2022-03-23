@@ -171,14 +171,18 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
     const auto & transformed_object = transformed_objects.objects.at(i);
     const auto & object = input_objects->objects.at(i);
-    const float search_radius = getMaxRadius(transformed_object);
+    const auto search_radius = getMaxRadius(transformed_object);
+    if (!search_radius) {
+      output.objects.push_back(object);
+      continue;
+    }
 
     // Search neighbor pointcloud to reduce cost.
     pcl::PointCloud<pcl::PointXY>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXY>);
     std::vector<int> indices;
     std::vector<float> distances;
     kdtree->radiusSearch(
-      toPCL(transformed_object.kinematics.pose_with_covariance.pose.position), search_radius,
+      toPCL(transformed_object.kinematics.pose_with_covariance.pose.position), search_radius.value(),
       indices, distances);
     for (const auto & index : indices) {
       neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
@@ -282,7 +286,7 @@ void ObstaclePointCloudBasedValidator::toPolygon2d(
   }
 }
 
-float ObstaclePointCloudBasedValidator::getMaxRadius(
+std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   if (object.shape.type == Shape::BOUNDING_BOX) {
@@ -296,6 +300,9 @@ float ObstaclePointCloudBasedValidator::getMaxRadius(
       max_dist = max_dist < dist ? dist : max_dist;
     }
     return max_dist;
+  } else {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "unknown shape type");
+    return std::nullopt;
   }
 }
 
