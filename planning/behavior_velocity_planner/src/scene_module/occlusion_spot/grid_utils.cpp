@@ -46,6 +46,12 @@ void addObjectsToGridMap(const PredictedObjects & objs, grid_map::GridMap & grid
     Polygon2d foot_print_polygon = planning_utils::toFootprintPolygon(obj);
     grid_map::Polygon grid_polygon;
     const auto & pos = obj.kinematics.initial_pose_with_covariance.pose.position;
+    const auto & obj_label = obj.classification.at(0).label;
+    using autoware_auto_perception_msgs::msg::ObjectClassification;
+    if (
+      obj_label != ObjectClassification::CAR || obj_label != ObjectClassification::TRUCK ||
+      obj_label != ObjectClassification::BUS || obj_label != ObjectClassification::TRAILER)
+      continue;
     if (grid.isInside(grid_map::Position(pos.x, pos.y))) continue;
     try {
       for (const auto & point : foot_print_polygon.outer()) {

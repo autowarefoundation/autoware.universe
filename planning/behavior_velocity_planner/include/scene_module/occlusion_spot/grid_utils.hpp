@@ -23,6 +23,7 @@
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/util.hpp>
 
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -46,8 +47,8 @@ namespace occlusion_cost_value
 static constexpr unsigned char FREE_SPACE = 0;
 static constexpr unsigned char UNKNOWN = 50;
 static constexpr unsigned char OCCUPIED = 100;
-static constexpr unsigned char FREE_SPACE_IMAGE = 128;
-static constexpr unsigned char UNKNOWN_IMAGE = 0;
+static constexpr unsigned char FREE_SPACE_IMAGE = 0;
+static constexpr unsigned char UNKNOWN_IMAGE = 128;
 static constexpr unsigned char OCCUPIED_IMAGE = 255;
 }  // namespace occlusion_cost_value
 
