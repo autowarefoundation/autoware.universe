@@ -152,6 +152,7 @@ TEST(compareTime, polygon_vs_line_iterator)
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("processing_time");
   size_t count = 0;
+  double time = 0;
   for (size_t i = 0; i < 10; i++) {
     const double length = static_cast<double>(cell_size * i) * 0.005 * std::sqrt(2);
     std::cout << "length of polygon: " << length << std::endl;
@@ -180,8 +181,8 @@ TEST(compareTime, polygon_vs_line_iterator)
         std::cerr << e.what() << std::endl;
       }
     }
-    std::cout << "polygon iterator [ms]: " << stop_watch.toc("processing_time", true)
-              << " :num: " << count << std::endl;
+    time = stop_watch.toc("processing_time", true);
+    if (i < 4) std::cout << "polygon iterator [ms]: " << time << " :num: " << count << std::endl;
     count = 0;
     // line iterator
     {
@@ -209,8 +210,8 @@ TEST(compareTime, polygon_vs_line_iterator)
         std::cerr << e.what() << std::endl;
       }
     }
-    std::cout << "line iterator [ms]: " << stop_watch.toc("processing_time", true)
-              << " :num: " << count << std::endl;
+    time = stop_watch.toc("processing_time", true);
+    if (i < 4) std::cout << "line iterator [ms]: " << time << " :num: " << count << std::endl;
     count = 0;
   }
 }
