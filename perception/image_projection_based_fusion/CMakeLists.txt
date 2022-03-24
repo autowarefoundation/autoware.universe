@@ -24,6 +24,7 @@ include_directories(
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/fusion_node.cpp
+  src/debugger.cpp
   src/roi_cluster_fusion/node.cpp
   src/roi_detected_object_fusion/node.cpp
 )

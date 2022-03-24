@@ -15,6 +15,7 @@
 #ifndef IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 #define IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 
+#include <image_projection_based_fusion/debugger.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
@@ -35,7 +36,6 @@
 
 namespace image_projection_based_fusion
 {
-
 using autoware_auto_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 
@@ -68,7 +68,8 @@ protected:
     DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
     DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg);
 
-  virtual void fusionOnSingleImage(const DetectedObjectsWithFeature & input_roi_msg) = 0;
+  virtual void fusionOnSingleImage(
+    const int image_id, const DetectedObjectsWithFeature & input_roi_msg) = 0;
 
   void publish();
 
@@ -95,6 +96,9 @@ protected:
   // overwrite output_msg_ and pub_ptr_ in derived class.
   Msg output_msg_;
   typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
+
+  // debugger
+  std::shared_ptr<Debugger> debugger_;
 };
 
 }  // namespace image_projection_based_fusion

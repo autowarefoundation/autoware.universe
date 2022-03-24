@@ -81,10 +81,14 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
     &FusionNode::fusionCallback, this, std::placeholders::_1, std::placeholders::_2,
     std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
     std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
-  std::cout << "registerCallback" << std::endl;
 
   // publisher
   pub_ptr_ = this->create_publisher<Msg>("output/obstacle", rclcpp::QoS{1});
+
+  // debugger
+  if (declare_parameter("debug_mode", false)) {
+    debugger_ = std::make_shared<Debugger>(this, rois_number_);
+  }
 }
 
 template <class Msg>
@@ -110,6 +114,10 @@ void FusionNode<Msg>::fusionCallback(
   std::cout << "=== FusionNode<Msg>::fusionCallback ===" << std::endl;
 
   // if (get_subscription_count() < 1) { return; }
+
+  if (debugger_) {
+    debugger_->clear();
+  }
 
   output_msg_ = *input_obstacle_msg;
 
@@ -152,7 +160,7 @@ void FusionNode<Msg>::fusionCallback(
 
     std::cout << "camera: " << image_id << std::endl;
 
-    fusionOnSingleImage(*input_roi_msg);
+    fusionOnSingleImage(image_id, *input_roi_msg);
   }
 
   publish();

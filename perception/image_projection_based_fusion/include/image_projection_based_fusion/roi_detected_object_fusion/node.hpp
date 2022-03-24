@@ -28,7 +28,8 @@ public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void fusionOnSingleImage(const DetectedObjectsWithFeature & input_roi_msg) override;
+  void fusionOnSingleImage(
+    const int image_id, const DetectedObjectsWithFeature & input_roi_msg) override;
 };
 
 }  // namespace image_projection_based_fusion
