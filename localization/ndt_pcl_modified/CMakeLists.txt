@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
 project(ndt_pcl_modified)
 
-add_compile_options(-march=native)
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+  if(BUILD_WITH_MARCH_NATIVE)
+    add_compile_options(-march=native)
+  endif()
+else()
+  add_compile_options(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
+endif()
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
