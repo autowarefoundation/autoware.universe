@@ -69,7 +69,8 @@ protected:
     DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg);
 
   virtual void fusionOnSingleImage(
-    const int image_id, const DetectedObjectsWithFeature & input_roi_msg) = 0;
+    const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
+    const sensor_msgs::msg::CameraInfo & camera_info) = 0;
 
   void publish();
 
@@ -94,6 +95,7 @@ protected:
   // output
   // if the type of output message isn't Msg,
   // overwrite output_msg_ and pub_ptr_ in derived class.
+  Msg input_msg_;
   Msg output_msg_;
   typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
 

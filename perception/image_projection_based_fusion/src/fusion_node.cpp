@@ -73,6 +73,41 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
         SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), passthrough_, passthrough_, passthrough_,
         passthrough_, passthrough_, passthrough_, passthrough_);
       break;
+    case 2:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), passthrough_, passthrough_,
+        passthrough_, passthrough_, passthrough_, passthrough_);
+      break;
+    case 3:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+        passthrough_, passthrough_, passthrough_, passthrough_, passthrough_);
+      break;
+    case 4:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+        *rois_subs_.at(3), passthrough_, passthrough_, passthrough_, passthrough_);
+      break;
+    case 5:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+        *rois_subs_.at(3), *rois_subs_.at(4), passthrough_, passthrough_, passthrough_);
+      break;
+    case 6:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+        *rois_subs_.at(3), *rois_subs_.at(4), *rois_subs_.at(5), passthrough_, passthrough_);
+      break;
+    case 7:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+        *rois_subs_.at(3), *rois_subs_.at(4), *rois_subs_.at(5), *rois_subs_.at(6), passthrough_);
+      break;
+    case 8:
+      sync_ptr_ = std::make_shared<Sync<Msg>>(
+        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+        *rois_subs_.at(3), *rois_subs_.at(4), *rois_subs_.at(5), *rois_subs_.at(6),
+        *rois_subs_.at(7));
     default:
       return;
   }
@@ -119,6 +154,7 @@ void FusionNode<Msg>::fusionCallback(
     debugger_->clear();
   }
 
+  input_msg_ = *input_obstacle_msg;
   output_msg_ = *input_obstacle_msg;
 
   for (std::size_t image_id = 0; image_id < rois_subs_.size(); image_id++) {
@@ -160,7 +196,7 @@ void FusionNode<Msg>::fusionCallback(
 
     std::cout << "camera: " << image_id << std::endl;
 
-    fusionOnSingleImage(image_id, *input_roi_msg);
+    fusionOnSingleImage(image_id, *input_roi_msg, camera_info_map_.at(image_id));
   }
 
   publish();

@@ -24,7 +24,8 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
 }
 
 void RoiDetectedObjectFusionNode::fusionOnSingleImage(
-  const int image_id, const DetectedObjectsWithFeature & input_roi_msg)
+  const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
+  const sensor_msgs::msg::CameraInfo & camera_info)
 {
   std::cout << "RoiDetectedObjectFusionNode::fusionOnSingleImage" << std::endl;
 }

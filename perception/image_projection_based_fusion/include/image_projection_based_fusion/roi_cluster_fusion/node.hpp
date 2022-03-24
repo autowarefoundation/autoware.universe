@@ -29,7 +29,14 @@ public:
 
 protected:
   void fusionOnSingleImage(
-    const int image_id, const DetectedObjectsWithFeature & input_roi_msg) override;
+    const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
+    const sensor_msgs::msg::CameraInfo & camera_info) override;
+
+  bool use_iou_x_{false};
+  bool use_iou_y_{false};
+  bool use_iou_{false};
+  bool use_cluster_semantic_type_{false};
+  float iou_threshold_{0.0f};
 };
 
 }  // namespace image_projection_based_fusion
