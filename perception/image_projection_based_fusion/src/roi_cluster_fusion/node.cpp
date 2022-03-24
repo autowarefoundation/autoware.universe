@@ -14,6 +14,22 @@
 
 #include "image_projection_based_fusion/roi_cluster_fusion/node.hpp"
 
+namespace
+{
+
+using tier4_perception_msgs::msg::DetectedObjectWithFeature;
+
+void extractRois(
+  const std::vector<DetectedObjectWithFeature> & feature_objects,
+  std::vector<sensor_msgs::msg::RegionOfInterest> & rois)
+{
+  rois.reserve(feature_objects.size());
+  for (const auto & obj : feature_objects) {
+    rois.push_back(obj.feature.roi);
+  }
+}
+}  // namespace
+
 namespace image_projection_based_fusion
 {
 
@@ -22,9 +38,15 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 {
 }
 
-void RoiClusterFusionNode::fusionOnSingleImage(const DetectedObjectsWithFeature & input_roi_msg)
+void RoiClusterFusionNode::fusionOnSingleImage(
+  const int image_id, const DetectedObjectsWithFeature & input_roi_msg)
 {
   std::cout << "RoiClusterFusionNode::fusionOnSingleImage" << std::endl;
+
+  std::vector<sensor_msgs::msg::RegionOfInterest> rois;
+  extractRois(input_roi_msg.feature_objects, rois);
+  debugger_->image_rois_ = rois;
+  debugger_->publishImage(image_id, input_roi_msg.header.stamp);
 }
 
 }  // namespace image_projection_based_fusion
