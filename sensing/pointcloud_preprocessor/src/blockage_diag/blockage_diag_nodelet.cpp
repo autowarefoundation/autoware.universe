@@ -125,20 +125,25 @@ void BlockageDiagComponent::filter(
   } else {
     for (const auto & p : pcl_input->points) {
       if ((p.azimuth / 100.0 > angle_range_deg_[0]) && (p.azimuth / 100.0 < angle_range_deg_[1])) {
-        if (lidar_model_ == "Pandar40P") {
-          lidar_depth_map.at<uint16_t>(
-            p.ring, static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) +=
-            static_cast<uint16_t>(6250.0 / p.distance);  // make image clearly
-          lidar_depth_map_8u.at<uint8_t>(
-            p.ring, static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) = 255;
-        } else {
-          lidar_depth_map.at<uint16_t>(
-            vertical_bins - p.ring - 1,
-            static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) +=
-            static_cast<uint16_t>(6250.0 / p.distance);
-          lidar_depth_map_8u.at<uint8_t>(
-            vertical_bins - p.ring - 1,
-            static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) = 255;
+        switch (lidar_model_map_[lidar_model_]) {
+          case 0:  // Channel id increases from top to bottom: Pandar40P
+            lidar_depth_map.at<uint16_t>(
+              p.ring, static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) +=
+              static_cast<uint16_t>(6250.0 / p.distance);  // make image clearly
+            lidar_depth_map_8u.at<uint8_t>(
+              p.ring, static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) = 255;
+            break;
+          case 1:  // Channel id decreases from top to bottom: PandarQT
+            lidar_depth_map.at<uint16_t>(
+              vertical_bins - p.ring - 1,
+              static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) +=
+              static_cast<uint16_t>(6250.0 / p.distance);
+            lidar_depth_map_8u.at<uint8_t>(
+              vertical_bins - p.ring - 1,
+              static_cast<uint>((p.azimuth / 100.0 - angle_range_deg_[0]))) = 255;
+            break;
+          default:
+            break;
         }
       }
     }

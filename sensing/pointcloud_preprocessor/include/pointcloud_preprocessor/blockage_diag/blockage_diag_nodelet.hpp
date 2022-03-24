@@ -30,12 +30,18 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace pointcloud_preprocessor
 {
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
+
+std::unordered_map<std::string, uint8_t> lidar_model_map_ = {
+  {"Pandar40P", 0},
+  {"PandarQT", 1},
+};
 
 class BlockageDiagComponent : public pointcloud_preprocessor::Filter
 {
