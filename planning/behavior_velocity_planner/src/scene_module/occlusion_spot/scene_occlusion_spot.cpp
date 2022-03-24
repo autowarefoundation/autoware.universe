@@ -144,7 +144,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
 
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
-  debug_data_.path_raw = *path;
+  debug_data_.path_raw = clipped_path;
   return true;
 }
 
