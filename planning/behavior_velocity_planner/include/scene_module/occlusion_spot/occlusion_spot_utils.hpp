@@ -82,6 +82,7 @@ enum PASS_JUDGE { SMOOTH_VELOCITY, CURRENT_VELOCITY };
 
 struct DetectionArea
 {
+  double min_longitudinal_offset;  // [m] detection area safety buffer from front bumper
   double max_lateral_distance;     // [m] distance to care about occlusion spot
   double slice_length;             // [m] size of each slice
   double min_occlusion_spot_size;  // [m] minumum size to care about the occlusion spot

@@ -88,6 +88,8 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   // detection_area param
   pp.detection_area.min_occlusion_spot_size =
     node.declare_parameter(ns + ".detection_area.min_occlusion_spot_size", 2.0);
+  pp.detection_area.min_longitudinal_offset =
+    node.declare_parameter(ns + ".detection_area.min_longitudinal_offset", 1.0);
   pp.detection_area.max_lateral_distance =
     node.declare_parameter(ns + ".detection_area.max_lateral_distance", 4.0);
   pp.detection_area.slice_length = node.declare_parameter(ns + ".detection_area.slice_length", 1.5);

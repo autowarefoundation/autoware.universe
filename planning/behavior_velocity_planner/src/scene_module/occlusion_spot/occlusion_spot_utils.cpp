@@ -66,7 +66,8 @@ bool buildDetectionAreaPolygon(
   const auto & p = param;
   DetectionRange da_range;
   da_range.interval = p.detection_area.slice_length;
-  da_range.min_longitudinal_distance = offset + p.baselink_to_front;
+  da_range.min_longitudinal_distance =
+    offset + std::max(0.0, p.baselink_to_front - p.detection_area.min_longitudinal_offset);
   da_range.max_longitudinal_distance =
     std::min(p.detection_area_max_length, p.detection_area_length) +
     da_range.min_longitudinal_distance;
