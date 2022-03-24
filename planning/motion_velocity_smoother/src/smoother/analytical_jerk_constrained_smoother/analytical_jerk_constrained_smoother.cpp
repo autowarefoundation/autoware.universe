@@ -66,6 +66,30 @@ AnalyticalJerkConstrainedSmoother::AnalyticalJerkConstrainedSmoother(const Param
 : smoother_param_(smoother_param)
 {
 }
+
+AnalyticalJerkConstrainedSmoother::AnalyticalJerkConstrainedSmoother(rclcpp::Node & node)
+: SmootherBase(node)
+{
+  smoother_param_.resample.ds_resample = node.declare_parameter("resample.ds_resample", 0.1);
+  smoother_param_.resample.num_resample = node.declare_parameter("resample.num_resample", 1.0);
+  smoother_param_.resample.delta_yaw_threshold = node.declare_parameter("resample.delta_yaw_threshold", 0.785);
+  smoother_param_.latacc.enable_constant_velocity_while_turning =
+    node.declare_parameter("latacc.enable_constant_velocity_while_turning", false);
+  smoother_param_.latacc.constant_velocity_dist_threshold =
+    node.declare_parameter("latacc.constant_velocity_dist_threshold", 2.0);
+  smoother_param_.forward.max_acc = node.declare_parameter("forward.max_acc", 1.0);
+  smoother_param_.forward.min_acc = node.declare_parameter("forward.min_acc", -1.0);
+  smoother_param_.forward.max_jerk = node.declare_parameter("forward.max_jerk", 0.3);
+  smoother_param_.forward.min_jerk = node.declare_parameter("forward.min_jerk", -0.3);
+  smoother_param_.forward.kp = node.declare_parameter("forward.kp", 0.3);
+  smoother_param_.backward.start_jerk = node.declare_parameter("backward.start_jerk", -0.1);
+  smoother_param_.backward.min_jerk_mild_stop = node.declare_parameter("backward.min_jerk_mild_stop", -0.3);
+  smoother_param_.backward.min_jerk = node.declare_parameter("backward.min_jerk", -1.5);
+  smoother_param_.backward.min_acc_mild_stop = node.declare_parameter("backward.min_acc_mild_stop", -1.0);
+  smoother_param_.backward.min_acc = node.declare_parameter("backward.min_acc", -2.5);
+  smoother_param_.backward.span_jerk = node.declare_parameter("backward.span_jerk", -0.01);
+}
+
 void AnalyticalJerkConstrainedSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
