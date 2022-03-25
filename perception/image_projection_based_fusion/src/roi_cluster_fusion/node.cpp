@@ -35,6 +35,18 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
   iou_threshold_ = declare_parameter("iou_threshold", 0.1);
 }
 
+void RoiClusterFusionNode::preprocess()
+{
+  // reset cluster semantic type
+  if (!use_cluster_semantic_type_) {
+    for (auto & feature_object : output_msg_.feature_objects) {
+      feature_object.object.classification.front().label =
+        autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+      feature_object.object.existence_probability = 0.0;
+    }
+  }
+}
+
 void RoiClusterFusionNode::fusionOnSingleImage(
   const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info)

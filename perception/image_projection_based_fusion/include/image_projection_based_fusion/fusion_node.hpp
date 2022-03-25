@@ -70,6 +70,8 @@ protected:
     DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
     DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg);
 
+  virtual void preprocess();
+
   virtual void fusionOnSingleImage(
     const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info) = 0;
