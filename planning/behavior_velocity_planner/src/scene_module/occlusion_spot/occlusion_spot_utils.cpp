@@ -429,7 +429,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
   double distance_lower_bound = std::numeric_limits<double>::max();
   PossibleCollisionInfo candidate;
   bool has_collision = false;
-  const auto & partition_lanelets = debug_data.partition_lanelets;
+  const auto & partition_lanelets = debug_data.close_partition;
   for (const grid_map::Position & occlusion_spot_position : occlusion_spot_positions) {
     // arc intersection
     const lanelet::BasicPoint2d obstacle_point = {

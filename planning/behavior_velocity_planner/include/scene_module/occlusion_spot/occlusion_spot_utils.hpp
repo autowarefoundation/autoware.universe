@@ -188,6 +188,7 @@ struct DebugData
   std::string road_type = "";
   std::string detection_type = "";
   Polygons2d detection_area_polygons;
+  std::vector<lanelet::BasicPolygon2d> close_partition;
   std::vector<lanelet::BasicPolygon2d> partition_lanelets;
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;

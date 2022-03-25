@@ -99,6 +99,11 @@ bool OcclusionSpotModule::modifyPathVelocity(
     return true;  // path point is not enough
   }
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
+  // extract only close lanelet
+  if (param_.use_partition_lanelet) {
+    extractClosePartition(
+      ego_pose.position, debug_data_.partition_lanelets, debug_data_.close_partition);
+  }
   if (param_.is_show_processing_time) stop_watch_.tic("processing_time");
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
