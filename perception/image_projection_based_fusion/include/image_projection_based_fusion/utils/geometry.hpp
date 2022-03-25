@@ -15,8 +15,50 @@
 #ifndef IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
 #define IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
 
+#define EIGEN_MPL2_ONLY
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+#include <autoware_auto_perception_msgs/msg/shape.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <sensor_msgs/msg/region_of_interest.hpp>
+
+#include <vector>
+
 namespace image_projection_based_fusion
 {
+
+using autoware_auto_perception_msgs::msg::Shape;
+using geometry_msgs::msg::Pose;
+
+double calcIoU(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2);
+
+double calcIoUX(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2);
+
+double calcIoUY(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2);
+
+void objectToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+
+void boundingBoxToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+
+void cylinderToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+
+void polygonToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+
+void transformPoints(
+  const std::vector<Eigen::Vector3d> & input_points, const Eigen::Affine3d & affine_transform,
+  std::vector<Eigen::Vector3d> & output_points);
 
 }  // namespace image_projection_based_fusion
 

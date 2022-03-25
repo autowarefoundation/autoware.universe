@@ -20,16 +20,6 @@
 namespace image_projection_based_fusion
 {
 
-double calcIoU(
-  const sensor_msgs::msg::RegionOfInterest & roi_1,
-  const sensor_msgs::msg::RegionOfInterest & roi_2);
-double calcIoUX(
-  const sensor_msgs::msg::RegionOfInterest & roi_1,
-  const sensor_msgs::msg::RegionOfInterest & roi_2);
-double calcIoUY(
-  const sensor_msgs::msg::RegionOfInterest & roi_1,
-  const sensor_msgs::msg::RegionOfInterest & roi_2);
-
 }  // namespace image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__UTILS__MATH_HPP_

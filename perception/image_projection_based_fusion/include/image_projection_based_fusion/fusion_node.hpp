@@ -36,8 +36,10 @@
 
 namespace image_projection_based_fusion
 {
+using autoware_auto_perception_msgs::msg::DetectedObject;
 using autoware_auto_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
+using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 
 template <class T>
 using SyncPolicy = message_filters::sync_policies::ApproximateTime<
