@@ -60,8 +60,10 @@
     <set_remap if="$(eval &quot; '$(var input_rois_number)' >= '8' &quot;)" from="input/image_raw7" to="$(var input/image7)"/>
 
     <node pkg="image_projection_based_fusion" exec="roi_detected_object_fusion_node" name="roi_detected_object_fusion" output="screen">
-      <!-- <param name="use_iou" value="true"/> -->
-      <!-- <param name="iou_threshold" value="0.35"/> -->
+      <param name="use_iou" value="true"/>
+      <param name="use_iou_x" value="false"/>
+      <param name="use_iou_y" value="false"/>
+      <param name="iou_threshold" value="0.35"/>
       <param name="rois_number" value="$(var input/rois_number)" />
       <remap from="input/obstacle" to="$(var input/objects)"/>
       <remap from="output/obstacle" to="$(var output/objects)"/>
