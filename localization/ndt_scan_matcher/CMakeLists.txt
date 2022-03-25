@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 project(ndt_scan_matcher)
 
 # Compile flags for SIMD instructions
-# Be careful to change these options, especially when `ndt_omp` implementaiton is used.
+# Be careful to change these options, especially when `ndt_omp` implementation is used.
 # All packages linked to `ndt_omp` should use the same SIMD instruction set.
 # In case mismatched instruction set are used, program causes a crash at its initialization
-# because of a misaligned access to the `Eigen` librarie's data structure.
+# because of a misaligned access to the `Eigen` libraries' data structure.
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # For x86_64 architecture, SIMD instruction set is fixed below versions,
   # because the `ndt_omp` is optimized to these versions.
