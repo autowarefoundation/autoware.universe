@@ -136,7 +136,7 @@ repositories:
   vendor/mussp:
     type: git
     url: https://github.com/tier4/muSSP.git
-    version: f67f4df5b95fcb28634bb162e09cfeab2ed44d29
+    version: c79e98fd5e658f4f90c06d93472faa977bc873b9
   vendor/pointcloud_to_laserscan:
     type: git
     url: https://github.com/tier4/pointcloud_to_laserscan.git
