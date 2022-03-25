@@ -135,6 +135,12 @@ void FusionNode<Msg>::cameraInfoCallback(
 }
 
 template <class Msg>
+void FusionNode<Msg>::preprocess()
+{
+  // do nothing
+}
+
+template <class Msg>
 void FusionNode<Msg>::fusionCallback(
   typename Msg::ConstSharedPtr input_obstacle_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
@@ -156,6 +162,8 @@ void FusionNode<Msg>::fusionCallback(
 
   input_msg_ = *input_obstacle_msg;
   output_msg_ = *input_obstacle_msg;
+
+  preprocess();
 
   for (std::size_t image_id = 0; image_id < rois_subs_.size(); image_id++) {
     DetectedObjectsWithFeature::ConstSharedPtr input_roi_msg;

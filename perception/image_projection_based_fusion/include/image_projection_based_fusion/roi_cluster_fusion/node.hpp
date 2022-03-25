@@ -28,6 +28,8 @@ public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
+  void preprocess();
+
   void fusionOnSingleImage(
     const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info) override;
