@@ -41,12 +41,14 @@ protected:
     std::vector<sensor_msgs::msg::RegionOfInterest> & debug_object_rois,
     std::vector<Eigen::Vector2d> & debug_object_keypoints);
 
-  // void renameClassification(
-  //   const std::vector<DetectedObjectWithFeature> & input_rois,
-  //   const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
-  //   std::vector<DetectedObject> & output_objects);
+  void updateDetectedObjectClassification(
+    const std::vector<DetectedObjectWithFeature> & image_rois,
+    const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
+    std::vector<DetectedObject> & output_objects);
 
   bool use_iou_{false};
+  bool use_iou_x_{false};
+  bool use_iou_y_{false};
   float iou_threshold_{0.0f};
 };
 
