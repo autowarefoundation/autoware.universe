@@ -1745,14 +1745,14 @@ PathWithLaneId getCenterLinePath(
 }
 
 bool checkLaneIsInIntersection(
-  const RouteHandler & route_handler, const PathWithLaneId & ref,
+  const RouteHandler & route_handler, const PathWithLaneId & reference_path,
   const lanelet::ConstLanelets & lanelet_sequence, const double & lane_change_buffer,
   double & additional_length_to_add)
 {
   if (lanelet_sequence.empty()) {
     return false;
   }
-  const auto & path_points = ref.points;
+  const auto & path_points = reference_path.points;
   const auto last_arc_coordine =
     lanelet::utils::getArcCoordinates(lanelet_sequence, path_points.back().point.pose);
   const auto last_arc_length = last_arc_coordine.length;
