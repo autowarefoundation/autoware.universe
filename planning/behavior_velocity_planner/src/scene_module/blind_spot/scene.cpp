@@ -303,7 +303,7 @@ int BlindSpotModule::insertPoint(
   int insert_idx = -1;
   // initialize with epsilon so that comparison with insert_point_s = 0.0 would work
   constexpr double eps = 1e-4;
-  double accum_s = eps;
+  double accum_s = eps * 2.0;
   for (size_t i = 1; i < inout_path->points.size(); i++) {
     accum_s += planning_utils::calcDist2d(
       inout_path->points[i].point.pose.position, inout_path->points[i - 1].point.pose.position);
@@ -318,7 +318,7 @@ int BlindSpotModule::insertPoint(
     // copy from previous point
     inserted_point = inout_path->points.at(std::max(insert_idx - 1, 0));
     inserted_point.point.pose = path_ip.points[insert_idx_ip].point.pose;
-    constexpr double min_dist = eps * 2.0;  // to make sure path point is forward insert index
+    constexpr double min_dist = eps;  // to make sure path point is forward insert index
     //! avoid to insert duplicated point
     if (
       planning_utils::calcDist2d(inserted_point, inout_path->points.at(insert_idx).point) <
