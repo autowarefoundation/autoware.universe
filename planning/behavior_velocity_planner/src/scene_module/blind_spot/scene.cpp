@@ -232,8 +232,8 @@ bool BlindSpotModule::generateStopLine(
   }
 
   /* insert stop_point */
-  [[maybe_unused]] bool is_point_inserted = true;
-  *stop_line_idx = insertPoint(stop_idx_ip, path_ip, path, is_point_inserted);
+  [[maybe_unused]] bool is_stop_point_inserted = true;
+  *stop_line_idx = insertPoint(stop_idx_ip, path_ip, path, is_stop_point_inserted);
 
   /* if another stop point exist before intersection stop_line, disable judge_line. */
   bool has_prior_stopline = false;
@@ -251,9 +251,12 @@ bool BlindSpotModule::generateStopLine(
   if (has_prior_stopline || stop_idx_ip == pass_judge_idx_ip) {
     *pass_judge_line_idx = *stop_line_idx;
   } else {
+    bool is_pass_judge_point_inserted = true;
     //! insertPoint check if there is no duplicated point
-    *pass_judge_line_idx = insertPoint(pass_judge_idx_ip, path_ip, path, is_point_inserted);
-    if (is_point_inserted) ++(*stop_line_idx);  // stop index is incremented by judge line insertion
+    *pass_judge_line_idx =
+      insertPoint(pass_judge_idx_ip, path_ip, path, is_pass_judge_point_inserted);
+    if (is_pass_judge_point_inserted)
+      ++(*stop_line_idx);  // stop index is incremented by judge line insertion
   }
 
   RCLCPP_DEBUG(
@@ -299,7 +302,8 @@ int BlindSpotModule::insertPoint(
   }
   int insert_idx = -1;
   // initialize with epsilon so that comparison with insert_point_s = 0.0 would work
-  double accum_s = 1e-6;
+  constexpr double eps = 1e-4;
+  double accum_s = eps;
   for (size_t i = 1; i < inout_path->points.size(); i++) {
     accum_s += planning_utils::calcDist2d(
       inout_path->points[i].point.pose.position, inout_path->points[i - 1].point.pose.position);
@@ -314,7 +318,7 @@ int BlindSpotModule::insertPoint(
     // copy from previous point
     inserted_point = inout_path->points.at(std::max(insert_idx - 1, 0));
     inserted_point.point.pose = path_ip.points[insert_idx_ip].point.pose;
-    constexpr double min_dist = 1e-7;  // insert_point_s = 1e-6 accuracy
+    constexpr double min_dist = eps * 2.0;  // to make sure path point is forward insert index
     //! avoid to insert duplicated point
     if (
       planning_utils::calcDist2d(inserted_point, inout_path->points.at(insert_idx).point) <
