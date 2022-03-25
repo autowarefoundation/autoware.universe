@@ -18,22 +18,32 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_common/uniform_string_stream.hpp>
 
+#include <X11/Xlib.h>
+
 namespace rviz_plugins
 {
 TurnSignalDisplay::TurnSignalDisplay()
 {
+  const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
+
+  const bool large_screen = screen_info->height > 2000;
+  const auto left = large_screen ? 196 : 98;
+  const auto top = large_screen ? 350 : 175;
+  const auto width = large_screen ? 512 : 256;
+  const auto height = large_screen ? 256 : 128;
+
   property_left_ = new rviz_common::properties::IntProperty(
-    "Left", 128, "Left of the plotter window", this, SLOT(updateVisualization()), this);
+    "Left", left, "Left of the plotter window", this, SLOT(updateVisualization()), this);
   property_left_->setMin(0);
   property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 128, "Top of the plotter window", this, SLOT(updateVisualization()));
+    "Top", top, "Top of the plotter window", this, SLOT(updateVisualization()));
   property_top_->setMin(0);
 
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 256, "Width of the plotter window", this, SLOT(updateVisualization()), this);
+    "Width", width, "Width of the plotter window", this, SLOT(updateVisualization()), this);
   property_width_->setMin(10);
   property_height_ = new rviz_common::properties::IntProperty(
-    "Height", 256, "Height of the plotter window", this, SLOT(updateVisualization()), this);
+    "Height", height, "Height of the plotter window", this, SLOT(updateVisualization()), this);
   property_height_->setMin(10);
 }
 
