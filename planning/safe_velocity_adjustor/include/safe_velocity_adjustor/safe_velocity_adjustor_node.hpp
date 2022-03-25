@@ -15,15 +15,18 @@
 #ifndef SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
 #define SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
 
+#include "safe_velocity_adjustor/collision_distance.hpp"
+#include "safe_velocity_adjustor/pointcloud_processing.hpp"
+
 #include <rcl_interfaces/msg/detail/set_parameters_result__struct.hpp>
+#include <rclcpp/qos.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/transform_listener.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/detail/point__struct.hpp>
-#include <std_msgs/msg/detail/color_rgba__struct.hpp>
-#include <visualization_msgs/msg/detail/marker__struct.hpp>
-#include <visualization_msgs/msg/detail/marker_array__struct.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
@@ -38,6 +41,7 @@ namespace safe_velocity_adjustor
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using sensor_msgs::msg::PointCloud2;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
 
@@ -45,34 +49,43 @@ class SafeVelocityAdjustorNode : public rclcpp::Node
 {
 public:
   explicit SafeVelocityAdjustorNode(const rclcpp::NodeOptions & node_options)
-  : rclcpp::Node("safe_velocity_adjustor", node_options)
+  : rclcpp::Node("safe_velocity_adjustor", node_options), transform_listener_(this)
   {
     time_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("time_safety_buffer"));
     dist_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("dist_safety_buffer"));
 
+    sub_trajectory_ = create_subscription<Trajectory>(
+      "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
+    sub_obstacle_pointcloud_ = create_subscription<PointCloud2>(
+      "~/input/obstacle_pointcloud", rclcpp::QoS(1).best_effort().transient_local(),
+      [this](const PointCloud2::ConstSharedPtr msg) { obstacle_pointcloud_ptr_ = msg; });
+
     pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
     pub_debug_markers_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-    sub_trajectory_ = create_subscription<Trajectory>(
-      "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
 
     set_param_res_ =
       add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
   }
 
 private:
+  tier4_autoware_utils::TransformListener transform_listener_;
   rclcpp::Publisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     pub_debug_markers_;  //!< @brief publisher for debug markers
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
+  rclcpp::Subscription<PointCloud2>::SharedPtr
+    sub_obstacle_pointcloud_;  //!< @brief subscriber for obstacle pointcloud
+
+  // cached inputs
+  PointCloud2::ConstSharedPtr obstacle_pointcloud_ptr_;
 
   // parameters
   Float time_safety_buffer_;
   Float dist_safety_buffer_;
 
-  // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
     const std::vector<rclcpp::Parameter> & parameters)
@@ -92,30 +105,47 @@ private:
     return result;
   }
 
-  // cached inputs
-  Trajectory::ConstSharedPtr prev_input_trajectory_;
-
-  // topic callback
   void onTrajectory(const Trajectory::ConstSharedPtr msg)
   {
+    if (!obstacle_pointcloud_ptr_) {
+      RCLCPP_WARN(get_logger(), "Obstable pointcloud not yet received");
+      return;
+    }
+    std::vector<std::vector<geometry_msgs::msg::Point>> footprints;
     Trajectory safe_trajectory = *msg;
+    const auto max_vel = std::max_element(
+                           safe_trajectory.points.cbegin(), safe_trajectory.points.cend(),
+                           [](const auto & p1, const auto & p2) {
+                             return p1.longitudinal_velocity_mps < p2.longitudinal_velocity_mps;
+                           })
+                           ->longitudinal_velocity_mps;
+    const auto filtered_obstacle_pointcloud = transformAndFilterPointCloud(
+      safe_trajectory, *obstacle_pointcloud_ptr_, transform_listener_,
+      max_vel * time_safety_buffer_ + dist_safety_buffer_);
+
     for (auto & trajectory_point : safe_trajectory.points) {
-      const auto closest_collision_point = distanceToClosestCollision(trajectory_point);
-      if (closest_collision_point)
+      // TODO(Maxime CLEMENT): get vehicle width from vehicle parameters
+      const auto forward_simulated_footprint =
+        forwardSimulatedFootprint(trajectory_point, time_safety_buffer_, dist_safety_buffer_, 2.0);
+      std::vector<geometry_msgs::msg::Point> footprint_points;
+      for (const auto footprint_point : forward_simulated_footprint.outer()) {
+        geometry_msgs::msg::Point p;
+        p.x = footprint_point.x();
+        p.y = footprint_point.y();
+        p.z = trajectory_point.pose.position.z;
+        footprint_points.push_back(p);
+      }
+      footprints.push_back(footprint_points);
+      const auto dist_to_collision = distanceToClosestCollision(
+        trajectory_point, forward_simulated_footprint, filtered_obstacle_pointcloud);
+      if (dist_to_collision) {
         trajectory_point.longitudinal_velocity_mps =
-          calculateSafeVelocity(trajectory_point, *closest_collision_point);
+          calculateSafeVelocity(trajectory_point, static_cast<Float>(*dist_to_collision));
+      }
     }
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
-    publishDebug(*msg, safe_trajectory);
-    prev_input_trajectory_ = msg;
-  }
-
-  // publish methods
-  std::optional<Float> distanceToClosestCollision(const TrajectoryPoint & trajectory_point)
-  {
-    (void)trajectory_point;
-    return {};
+    publishDebug(*msg, safe_trajectory, footprints);
   }
 
   Float calculateSafeVelocity(
@@ -149,19 +179,36 @@ private:
   }
 
   void publishDebug(
-    const Trajectory & original_trajectory, const Trajectory & safe_trajectory) const
+    const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
+    const std::vector<std::vector<geometry_msgs::msg::Point>> & footprints) const
   {
     visualization_msgs::msg::MarkerArray debug_markers;
-    auto unsafe_envelope =
+    auto original_envelope =
       makeEnvelopeMarker(original_trajectory, time_safety_buffer_, dist_safety_buffer_);
-    unsafe_envelope.color.r = 1.0;
-    unsafe_envelope.ns = "unsafe";
-    debug_markers.markers.push_back(unsafe_envelope);
-    auto safe_envelope =
-      makeEnvelopeMarker(safe_trajectory, time_safety_buffer_, dist_safety_buffer_);
-    safe_envelope.color.g = 1.0;
-    safe_envelope.ns = "safe";
-    debug_markers.markers.push_back(safe_envelope);
+    original_envelope.color.r = 1.0;
+    original_envelope.ns = "original";
+    debug_markers.markers.push_back(original_envelope);
+    auto adjusted_envelope =
+      makeEnvelopeMarker(adjusted_trajectory, time_safety_buffer_, dist_safety_buffer_);
+    adjusted_envelope.color.g = 1.0;
+    adjusted_envelope.ns = "adjusted";
+    debug_markers.markers.push_back(adjusted_envelope);
+
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = now();
+    marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    marker.ns = "original_footprints";
+    for (const auto & footprint : footprints) {
+      marker.id++;
+      marker.scale.x = 0.1;
+      marker.color.a = 1.0;
+      marker.color.b = 1.0;
+      marker.color.g = 1.0;
+      marker.points = footprint;
+      debug_markers.markers.push_back(marker);
+    }
+
     pub_debug_markers_->publish(debug_markers);
   }
 

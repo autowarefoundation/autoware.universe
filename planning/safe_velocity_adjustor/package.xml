@@ -12,9 +12,13 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_planning_msgs</depend>
+  <depend>eigen</depend>
   <depend>libboost-dev</depend>
+  <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>visualization_msgs</depend>
 
