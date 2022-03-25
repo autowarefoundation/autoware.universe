@@ -307,9 +307,9 @@ void HDDMonitor::getHDDParams()
     if (boost::starts_with(device_name, "/dev/sd")) {
       const std::regex pattern("\\d+$");
       param.device_ = std::regex_replace(device_name, pattern, "");
-    } else {
-      const std::regex pattern("(\\d+).*");
-      param.device_ = std::regex_replace(device_name, pattern, "$1");
+    } else if (boost::starts_with(device_name, "/dev/nvme")) {
+      const std::regex pattern("p\\d+$");
+      param.device_ = std::regex_replace(device_name, pattern, "");
     }
     hdd_params_[device_name] = param;
 
