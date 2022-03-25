@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,5 +16,138 @@
 
 namespace image_projection_based_fusion
 {
+
+double calcIoU(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2)
+{
+  double s_1, s_2;
+  s_1 = static_cast<double>(roi_1.width * static_cast<double>(roi_1.height));
+  s_2 = static_cast<double>(roi_2.width * static_cast<double>(roi_2.height));
+
+  double overlap_s;
+  double overlap_max_x, overlap_max_y, overlap_min_x, overlap_min_y;
+  overlap_min_x = roi_1.x_offset < roi_2.x_offset ? roi_2.x_offset : roi_1.x_offset;
+  overlap_min_y = roi_1.y_offset < roi_2.y_offset ? roi_2.y_offset : roi_1.y_offset;
+  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width
+                    ? roi_1.x_offset + roi_1.width
+                    : roi_2.x_offset + roi_2.width;
+  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height
+                    ? roi_1.y_offset + roi_1.height
+                    : roi_2.y_offset + roi_2.height;
+  overlap_s = (overlap_max_x - overlap_min_x) * (overlap_max_y - overlap_min_y);
+  if (overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y) {
+    return 0.0;
+  }
+  return overlap_s / (s_1 + s_2 - overlap_s);
+}
+double calcIoUX(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2)
+{
+  double s_1, s_2;
+  s_1 = static_cast<double>(roi_1.width);
+  s_2 = static_cast<double>(roi_2.width);
+  double overlap_s;
+  double overlap_max_x, overlap_max_y, overlap_min_x, overlap_min_y;
+  overlap_min_x = roi_1.x_offset < roi_2.x_offset ? roi_2.x_offset : roi_1.x_offset;
+  overlap_min_y = roi_1.y_offset < roi_2.y_offset ? roi_2.y_offset : roi_1.y_offset;
+  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width
+                    ? roi_1.x_offset + roi_1.width
+                    : roi_2.x_offset + roi_2.width;
+  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height
+                    ? roi_1.y_offset + roi_1.height
+                    : roi_2.y_offset + roi_2.height;
+  overlap_s = (overlap_max_x - overlap_min_x);
+  if (overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y) {
+    return 0.0;
+  }
+  return overlap_s / (s_1 + s_2 - overlap_s);
+}
+double calcIoUY(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2)
+{
+  double s_1, s_2;
+  s_1 = static_cast<double>(roi_1.height);
+  s_2 = static_cast<double>(roi_2.height);
+  double overlap_s;
+  double overlap_max_x, overlap_max_y, overlap_min_x, overlap_min_y;
+  overlap_min_x = roi_1.x_offset < roi_2.x_offset ? roi_2.x_offset : roi_1.x_offset;
+  overlap_min_y = roi_1.y_offset < roi_2.y_offset ? roi_2.y_offset : roi_1.y_offset;
+  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width
+                    ? roi_1.x_offset + roi_1.width
+                    : roi_2.x_offset + roi_2.width;
+  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height
+                    ? roi_1.y_offset + roi_1.height
+                    : roi_2.y_offset + roi_2.height;
+  overlap_s = (overlap_max_y - overlap_min_y);
+  if (overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y) {
+    return 0.0;
+  }
+  return overlap_s / (s_1 + s_2 - overlap_s);
+}
+
+void objectToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & keypoints)
+{
+  if (shape.type == Shape::BOUNDING_BOX) {
+    boundingBoxToKeypoints(pose, shape, keypoints);
+  } else if (shape.type == Shape::CYLINDER) {
+    cylinderToKeypoints(pose, shape, keypoints);
+  } else if (shape.type == Shape::POLYGON) {
+    polygonToKeypoints(pose, shape, keypoints);
+  }
+}
+
+void boundingBoxToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & keypoints)
+{
+  std::vector<std::vector<double>> corners_template = {
+    // down surface
+    {1, 1, -1},
+    {1, -1, -1},
+    {-1, -1, -1},
+    {-1, 1, -1},
+    // up surface
+    {1, 1, 1},
+    {1, -1, 1},
+    {-1, -1, 1},
+    {-1, 1, 1},
+  };
+
+  auto position = Eigen::Vector3d(pose.position.x, pose.position.y, pose.position.z);
+  auto orientation = Eigen::Quaterniond(
+    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+
+  for (const auto & corner : corners_template) {
+    Eigen::Vector3d corner_point(
+      shape.dimensions.x * corner.at(0) / 2.0, shape.dimensions.y * corner.at(1) / 2.0,
+      shape.dimensions.z * corner.at(2) / 2.0);
+    keypoints.push_back(orientation * corner_point + position);
+  }
+}
+
+void cylinderToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points)
+{
+  // TODO(yukke42): impl cylinderToKeypoints
+}
+
+void polygonToKeypoints(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points)
+{
+  // TODO(yukke42): impl polygonToKeypoints
+}
+
+void transformPoints(
+  const std::vector<Eigen::Vector3d> & input_points, const Eigen::Affine3d & affine_transform,
+  std::vector<Eigen::Vector3d> & output_points)
+{
+  output_points.reserve(input_points.size());
+  for (const auto & point : input_points) {
+    output_points.push_back(affine_transform * point);
+  }
+}
 
 }  // namespace image_projection_based_fusion

@@ -17,7 +17,9 @@
 
 #include "image_projection_based_fusion/fusion_node.hpp"
 
+#include <map>
 #include <memory>
+#include <vector>
 
 namespace image_projection_based_fusion
 {
@@ -31,6 +33,21 @@ protected:
   void fusionOnSingleImage(
     const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info) override;
+
+  void generateDetectedObjectRois(
+    const double image_width, const double image_height,
+    const Eigen::Affine3d & object2camera_affine, const Eigen::Matrix4d & camera_projection,
+    std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
+    std::vector<sensor_msgs::msg::RegionOfInterest> & debug_object_rois,
+    std::vector<Eigen::Vector2d> & debug_object_keypoints);
+
+  // void renameClassification(
+  //   const std::vector<DetectedObjectWithFeature> & input_rois,
+  //   const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
+  //   std::vector<DetectedObject> & output_objects);
+
+  bool use_iou_{false};
+  float iou_threshold_{0.0f};
 };
 
 }  // namespace image_projection_based_fusion

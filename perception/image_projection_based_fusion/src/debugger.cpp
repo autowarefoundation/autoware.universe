@@ -71,7 +71,7 @@ void Debugger::clear()
 {
   image_rois_.clear();
   obstacle_rois_.clear();
-  obstacle_keypoints_.clear();
+  obstacle_points_.clear();
 }
 
 void Debugger::publishImage(const int image_id, const rclcpp::Time & stamp)
@@ -87,8 +87,8 @@ void Debugger::publishImage(const int image_id, const rclcpp::Time & stamp)
 
     auto cv_ptr = cv_bridge::toCvCopy(image_buffer.at(i), image_buffer.at(i)->encoding);
 
-    std::cout << "obstacle_keypoints_ " << obstacle_keypoints_.size() << std::endl;
-    for (const auto & point : obstacle_keypoints_) {
+    std::cout << "obstacle_points_ " << obstacle_points_.size() << std::endl;
+    for (const auto & point : obstacle_points_) {
       cv::circle(
         cv_ptr->image, cv::Point(static_cast<int>(point.x()), static_cast<int>(point.y())), 2,
         cv::Scalar(255, 255, 255), 3, 4);

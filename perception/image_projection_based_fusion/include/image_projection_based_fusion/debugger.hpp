@@ -46,7 +46,7 @@ public:
 
   std::vector<RegionOfInterest> image_rois_;
   std::vector<RegionOfInterest> obstacle_rois_;
-  std::vector<Eigen::Vector2d> obstacle_keypoints_;
+  std::vector<Eigen::Vector2d> obstacle_points_;
 
 private:
   void imageCallback(
