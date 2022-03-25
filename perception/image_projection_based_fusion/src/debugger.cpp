@@ -16,9 +16,6 @@
 
 #include <cv_bridge/cv_bridge.h>
 
-// to debug
-#include <iostream>
-
 namespace
 {
 
@@ -87,19 +84,17 @@ void Debugger::publishImage(const int image_id, const rclcpp::Time & stamp)
 
     auto cv_ptr = cv_bridge::toCvCopy(image_buffer.at(i), image_buffer.at(i)->encoding);
 
-    std::cout << "obstacle_points_ " << obstacle_points_.size() << std::endl;
     for (const auto & point : obstacle_points_) {
       cv::circle(
         cv_ptr->image, cv::Point(static_cast<int>(point.x()), static_cast<int>(point.y())), 2,
         cv::Scalar(255, 255, 255), 3, 4);
     }
-    std::cout << "obstacle_rois_ " << obstacle_rois_.size() << std::endl;
     for (const auto & roi : obstacle_rois_) {
       drawRoiOnImage(
         cv_ptr->image, roi, image_buffer.at(i)->width, image_buffer.at(i)->height,
         cv::Scalar(255, 0, 0));
     }
-    std::cout << "image_rois_ " << image_rois_.size() << std::endl;
+    // TODO(yukke42): show iou_score on image
     for (const auto & roi : image_rois_) {
       drawRoiOnImage(
         cv_ptr->image, roi, image_buffer.at(i)->width, image_buffer.at(i)->height,

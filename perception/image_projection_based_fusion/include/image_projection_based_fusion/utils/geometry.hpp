@@ -44,17 +44,17 @@ double calcIoUY(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
 
-void objectToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+void objectToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices);
 
-void boundingBoxToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+void boundingBoxToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices);
 
-void cylinderToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+void cylinderToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices);
 
-void polygonToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points);
+void polygonToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices);
 
 void transformPoints(
   const std::vector<Eigen::Vector3d> & input_points, const Eigen::Affine3d & affine_transform,

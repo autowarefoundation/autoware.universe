@@ -37,9 +37,7 @@ protected:
   void generateDetectedObjectRois(
     const double image_width, const double image_height,
     const Eigen::Affine3d & object2camera_affine, const Eigen::Matrix4d & camera_projection,
-    std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
-    std::vector<sensor_msgs::msg::RegionOfInterest> & debug_object_rois,
-    std::vector<Eigen::Vector2d> & debug_object_keypoints);
+    std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map);
 
   void updateDetectedObjectClassification(
     const std::vector<DetectedObjectWithFeature> & image_rois,

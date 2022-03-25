@@ -55,12 +55,9 @@ void RoiDetectedObjectFusionNode::fusionOnSingleImage(
     camera_info.p.at(11);
 
   std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> object_roi_map;
-  std::vector<sensor_msgs::msg::RegionOfInterest> debug_object_rois;
-  std::vector<Eigen::Vector2d> debug_object_keypoints;
   generateDetectedObjectRois(
     static_cast<double>(camera_info.width), static_cast<double>(camera_info.height),
-    object2camera_affine, camera_projection, object_roi_map, debug_object_rois,
-    debug_object_keypoints);
+    object2camera_affine, camera_projection, object_roi_map);
   updateDetectedObjectClassification(
     input_roi_msg.feature_objects, object_roi_map, output_msg_.objects);
 
@@ -69,8 +66,6 @@ void RoiDetectedObjectFusionNode::fusionOnSingleImage(
     for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); roi_i++) {
       debugger_->image_rois_.push_back(input_roi_msg.feature_objects.at(roi_i).feature.roi);
     }
-    debugger_->obstacle_rois_ = debug_object_rois;
-    debugger_->obstacle_points_ = debug_object_keypoints;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }
@@ -78,22 +73,20 @@ void RoiDetectedObjectFusionNode::fusionOnSingleImage(
 void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
   const double image_width, const double image_height, const Eigen::Affine3d & object2camera_affine,
   const Eigen::Matrix4d & camera_projection,
-  std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
-  std::vector<sensor_msgs::msg::RegionOfInterest> & debug_object_rois,
-  std::vector<Eigen::Vector2d> & debug_object_keypoints)
+  std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
 {
   for (std::size_t obj_i = 0; obj_i < input_msg_.objects.size(); obj_i++) {
-    std::vector<Eigen::Vector3d> keypoints_camera_coord;
+    std::vector<Eigen::Vector3d> vertices_camera_coord;
     {
       const auto & object = input_msg_.objects.at(obj_i);
-      std::vector<Eigen::Vector3d> keypoints;
-      objectToKeypoints(object.kinematics.pose_with_covariance.pose, object.shape, keypoints);
-      transformPoints(keypoints, object2camera_affine, keypoints_camera_coord);
+      std::vector<Eigen::Vector3d> vertices;
+      objectToVertices(object.kinematics.pose_with_covariance.pose, object.shape, vertices);
+      transformPoints(vertices, object2camera_affine, vertices_camera_coord);
     }
 
     double min_x(image_width), min_y(image_height), max_x(0.0), max_y(0.0);
     std::size_t point_on_image_cnt = 0;
-    for (const auto & point : keypoints_camera_coord) {
+    for (const auto & point : vertices_camera_coord) {
       if (point.z() <= 0.0) {
         continue;
       }
@@ -116,7 +109,9 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
         max_x = std::max(proj_point.x(), max_x);
         max_y = std::max(proj_point.y(), max_y);
 
-        debug_object_keypoints.push_back(proj_point);
+        if (debugger_) {
+          debugger_->obstacle_points_.push_back(proj_point);
+        }
       }
     }
     if (point_on_image_cnt == 0) {
@@ -131,7 +126,9 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
     roi.height = static_cast<std::uint32_t>(max_y - min_y);
     object_roi_map.insert(std::make_pair(obj_i, roi));
 
-    debug_object_rois.push_back(roi);
+    if (debugger_) {
+      debugger_->obstacle_rois_.push_back(roi);
+    }
   }
 }
 
