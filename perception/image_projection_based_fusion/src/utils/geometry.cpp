@@ -88,20 +88,20 @@ double calcIoUY(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 
-void objectToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & keypoints)
+void objectToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
 {
   if (shape.type == Shape::BOUNDING_BOX) {
-    boundingBoxToKeypoints(pose, shape, keypoints);
+    boundingBoxToVertices(pose, shape, vertices);
   } else if (shape.type == Shape::CYLINDER) {
-    cylinderToKeypoints(pose, shape, keypoints);
+    cylinderToVertices(pose, shape, vertices);
   } else if (shape.type == Shape::POLYGON) {
-    polygonToKeypoints(pose, shape, keypoints);
+    polygonToVertices(pose, shape, vertices);
   }
 }
 
-void boundingBoxToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & keypoints)
+void boundingBoxToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
 {
   std::vector<std::vector<double>> corners_template = {
     // down surface
@@ -124,20 +124,20 @@ void boundingBoxToKeypoints(
     Eigen::Vector3d corner_point(
       shape.dimensions.x * corner.at(0) / 2.0, shape.dimensions.y * corner.at(1) / 2.0,
       shape.dimensions.z * corner.at(2) / 2.0);
-    keypoints.push_back(orientation * corner_point + position);
+    vertices.push_back(orientation * corner_point + position);
   }
 }
 
-void cylinderToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points)
+void cylinderToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
 {
-  // TODO(yukke42): impl cylinderToKeypoints
+  // TODO(yukke42): impl cylinderToVertices
 }
 
-void polygonToKeypoints(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & points)
+void polygonToVertices(
+  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
 {
-  // TODO(yukke42): impl polygonToKeypoints
+  // TODO(yukke42): impl polygonToVertices
 }
 
 void transformPoints(

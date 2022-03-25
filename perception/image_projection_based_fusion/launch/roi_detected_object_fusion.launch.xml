@@ -65,8 +65,8 @@
       <param name="use_iou_y" value="false"/>
       <param name="iou_threshold" value="0.35"/>
       <param name="rois_number" value="$(var input/rois_number)" />
-      <remap from="input/obstacle" to="$(var input/objects)"/>
-      <remap from="output/obstacle" to="$(var output/objects)"/>
+      <remap from="input" to="$(var input/objects)"/>
+      <remap from="output" to="$(var output/objects)"/>
 
       <!-- debug -->
       <param name="debug_mode" value="$(var debug_mode)"/>

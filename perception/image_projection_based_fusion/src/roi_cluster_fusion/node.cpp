@@ -51,8 +51,6 @@ void RoiClusterFusionNode::fusionOnSingleImage(
   const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info)
 {
-  std::cout << "RoiClusterFusionNode::fusionOnSingleImage" << std::endl;
-
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_pointcloud_rois;
   std::vector<Eigen::Vector2d> debug_image_points;

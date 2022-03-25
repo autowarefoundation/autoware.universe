@@ -44,10 +44,9 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
       this->get_logger(), "maximum rois_number is 8. current rois_number is %d", rois_number_);
     rois_number_ = 8;
   }
-  std::cout << "rois_number: " << rois_number_ << std::endl;
 
   // subscribers
-  sub_.subscribe(this, "input/obstacle", rclcpp::QoS(1).get_rmw_qos_profile());
+  sub_.subscribe(this, "input", rclcpp::QoS(1).get_rmw_qos_profile());
 
   camera_info_subs_.resize(rois_number_);
   for (int roi_i = 0; roi_i < rois_number_; roi_i++) {
@@ -69,43 +68,43 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
     std::bind(&FusionNode::dummyCallback, this, std::placeholders::_1));
   switch (rois_number_) {
     case 1:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), passthrough_, passthrough_, passthrough_,
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), passthrough_, passthrough_, passthrough_,
         passthrough_, passthrough_, passthrough_, passthrough_);
       break;
     case 2:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), passthrough_, passthrough_,
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), passthrough_, passthrough_,
         passthrough_, passthrough_, passthrough_, passthrough_);
       break;
     case 3:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
-        passthrough_, passthrough_, passthrough_, passthrough_, passthrough_);
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2), passthrough_,
+        passthrough_, passthrough_, passthrough_, passthrough_);
       break;
     case 4:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
         *rois_subs_.at(3), passthrough_, passthrough_, passthrough_, passthrough_);
       break;
     case 5:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
         *rois_subs_.at(3), *rois_subs_.at(4), passthrough_, passthrough_, passthrough_);
       break;
     case 6:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
         *rois_subs_.at(3), *rois_subs_.at(4), *rois_subs_.at(5), passthrough_, passthrough_);
       break;
     case 7:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
         *rois_subs_.at(3), *rois_subs_.at(4), *rois_subs_.at(5), *rois_subs_.at(6), passthrough_);
       break;
     case 8:
-      sync_ptr_ = std::make_shared<Sync<Msg>>(
-        SyncPolicy<Msg>(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
+      sync_ptr_ = std::make_shared<Sync>(
+        SyncPolicy(10), sub_, *rois_subs_.at(0), *rois_subs_.at(1), *rois_subs_.at(2),
         *rois_subs_.at(3), *rois_subs_.at(4), *rois_subs_.at(5), *rois_subs_.at(6),
         *rois_subs_.at(7));
     default:
@@ -118,7 +117,7 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
     std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
 
   // publisher
-  pub_ptr_ = this->create_publisher<Msg>("output/obstacle", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<Msg>("output", rclcpp::QoS{1});
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
@@ -130,7 +129,6 @@ template <class Msg>
 void FusionNode<Msg>::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int camera_id)
 {
-  std::cout << "FusionNode::cameraInfoCallback" << std::endl;
   camera_info_map_[camera_id] = *input_camera_info_msg;
 }
 
@@ -142,7 +140,7 @@ void FusionNode<Msg>::preprocess()
 
 template <class Msg>
 void FusionNode<Msg>::fusionCallback(
-  typename Msg::ConstSharedPtr input_obstacle_msg,
+  typename Msg::ConstSharedPtr input_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
@@ -152,16 +150,16 @@ void FusionNode<Msg>::fusionCallback(
   DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg)
 {
-  std::cout << "=== FusionNode<Msg>::fusionCallback ===" << std::endl;
-
-  // if (get_subscription_count() < 1) { return; }
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
 
   if (debugger_) {
     debugger_->clear();
   }
 
-  input_msg_ = *input_obstacle_msg;
-  output_msg_ = *input_obstacle_msg;
+  input_msg_ = *input_msg;
+  output_msg_ = *input_msg;
 
   preprocess();
 
@@ -202,12 +200,18 @@ void FusionNode<Msg>::fusionCallback(
       continue;
     }
 
-    std::cout << "camera: " << image_id << std::endl;
-
     fusionOnSingleImage(image_id, *input_roi_msg, camera_info_map_.at(image_id));
   }
 
+  postprocess();
+
   publish();
+}
+
+template <class Msg>
+void FusionNode<Msg>::postprocess()
+{
+  // do nothing
 }
 
 template <class Msg>

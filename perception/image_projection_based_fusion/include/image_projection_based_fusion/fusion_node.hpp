@@ -41,14 +41,6 @@ using autoware_auto_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 
-template <class T>
-using SyncPolicy = message_filters::sync_policies::ApproximateTime<
-  T, DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectsWithFeature,
-  DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectsWithFeature,
-  DetectedObjectsWithFeature, DetectedObjectsWithFeature>;
-template <class T>
-using Sync = message_filters::Synchronizer<SyncPolicy<T>>;
-
 template <class Msg>
 class FusionNode : public rclcpp::Node
 {
@@ -60,7 +52,7 @@ protected:
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int camera_id);
 
   void fusionCallback(
-    typename Msg::ConstSharedPtr input_obstacle_msg,
+    typename Msg::ConstSharedPtr input_msg,
     DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
     DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
     DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
@@ -75,6 +67,8 @@ protected:
   virtual void fusionOnSingleImage(
     const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info) = 0;
+
+  virtual void postprocess();
 
   void publish();
 
@@ -94,7 +88,12 @@ protected:
   {
     passthrough_.add(input);
   }
-  typename std::shared_ptr<Sync<Msg>> sync_ptr_;
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<
+    Msg, DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectsWithFeature,
+    DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectsWithFeature,
+    DetectedObjectsWithFeature, DetectedObjectsWithFeature>;
+  using Sync = message_filters::Synchronizer<SyncPolicy>;
+  typename std::shared_ptr<Sync> sync_ptr_;
 
   // output
   // if the type of output message isn't Msg,
