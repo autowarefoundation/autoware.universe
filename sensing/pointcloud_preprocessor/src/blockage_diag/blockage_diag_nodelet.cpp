@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 #include "pointcloud_preprocessor/blockage_diag/blockage_diag_nodelet.hpp"
 
-#include "pointcloud_preprocessor/pointcloud_return_type.hpp"
+#include "autoware_point_types/types.hpp"
 
 #include <boost/thread/detail/platform_time.hpp>
 
@@ -22,6 +22,7 @@
 
 namespace pointcloud_preprocessor
 {
+using autoware_point_types::PointXYZIRADRT;
 using diagnostic_msgs::msg::DiagnosticStatus;
 
 BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options)
@@ -108,8 +109,7 @@ void BlockageDiagComponent::filter(
   boost::mutex::scoped_lock lock(mutex_);
   uint horizontal_bins = static_cast<uint>((angle_range_deg_[1] - angle_range_deg_[0]));
   uint vertical_bins = vertical_bins_;
-  pcl::PointCloud<return_type_cloud::PointXYZIRADT>::Ptr pcl_input(
-    new pcl::PointCloud<return_type_cloud::PointXYZIRADT>);
+  pcl::PointCloud<PointXYZIRADRT>::Ptr pcl_input(new pcl::PointCloud<PointXYZIRADRT>);
   pcl::fromROSMsg(*input, *pcl_input);
   cv::Mat lidar_depth_map(cv::Size(horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
   cv::Mat lidar_depth_map_8u(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
