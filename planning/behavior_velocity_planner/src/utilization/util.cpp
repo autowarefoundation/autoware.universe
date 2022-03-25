@@ -159,7 +159,7 @@ void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons
   const lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(ll);
   for (const auto & partition : partitions) {
     lanelet::BasicLineString2d line;
-    for (const auto p : partition) {
+    for (const auto & p : partition) {
       line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
     }
     // corect line to calculate distance accuratry

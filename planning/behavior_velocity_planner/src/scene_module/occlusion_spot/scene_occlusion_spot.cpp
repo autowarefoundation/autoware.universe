@@ -101,7 +101,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // extract only close lanelet
   if (param_.use_partition_lanelet) {
-    extractClosePartition(
+    planning_utils::extractClosePartition(
       ego_pose.position, debug_data_.partition_lanelets, debug_data_.close_partition);
   }
   if (param_.is_show_processing_time) stop_watch_.tic("processing_time");
