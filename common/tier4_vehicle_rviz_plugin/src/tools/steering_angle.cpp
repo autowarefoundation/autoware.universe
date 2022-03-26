@@ -34,7 +34,6 @@ SteeringAngleDisplay::SteeringAngleDisplay()
                   .c_str())
 {
   const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
-
   const bool large_screen = screen_info->height > 2000;
   const auto left = large_screen ? 128 : 64;
   const auto top = large_screen ? 128 : 64;
