@@ -39,6 +39,23 @@ Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
   return line_poly;
 }
 
+std::vector<std::pair<grid_map::Position, grid_map::Position>> pointsToRays(
+  const grid_map::Position p0, const grid_map::Position p1, const double radius)
+{
+  using grid_map::Position;
+  std::vector<std::pair<Position, Position>> lines;
+  const double angle = atan2(p0.y() - p1.y(), p0.x() - p1.x());
+  const double r = radius;
+  lines.emplace_back(std::make_pair(p0, p1));
+  lines.emplace_back(std::make_pair(
+    Position(p0.x() + r * sin(angle), p0.y() - r * cos(angle)),
+    Position(p1.x() + r * sin(angle), p1.y() - r * cos(angle))));
+  lines.emplace_back(std::make_pair(
+    Position(p1.x() - r * sin(angle), p1.y() + r * cos(angle)),
+    Position(p0.x() - r * sin(angle), p0.y() + r * cos(angle))));
+  return lines;
+}
+
 void addObjectsToGridMap(const PredictedObjects & objs, grid_map::GridMap & grid)
 {
   auto & grid_data = grid["layer"];
@@ -155,23 +172,39 @@ bool isCollisionFree(
   const double radius)
 {
   const grid_map::Matrix & grid_data = grid["layer"];
-  Point2d occlusion_p = {p1.x(), p1.y()};
-  Point2d collision_p = {p2.x(), p2.y()};
-  Polygon2d polygon = pointsToPoly(occlusion_p, collision_p, radius);
-  grid_map::Polygon grid_polygon;
+  bool polys = true;
   try {
-    for (const auto & point : polygon.outer()) {
-      grid_polygon.addVertex({point.x(), point.y()});
-    }
-    for (grid_map::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
-         ++iterator) {
-      const grid_map::Index & index = *iterator;
-      if (grid_data(index.x(), index.y()) == grid_utils::occlusion_cost_value::OCCUPIED) {
-        return false;
+    if (polys) {
+      Point2d occlusion_p = {p1.x(), p1.y()};
+      Point2d collision_p = {p2.x(), p2.y()};
+      Polygon2d polygon = pointsToPoly(occlusion_p, collision_p, radius);
+      grid_map::Polygon grid_polygon;
+      for (const auto & point : polygon.outer()) {
+        grid_polygon.addVertex({point.x(), point.y()});
       }
-    }
+      for (grid_map::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
+           ++iterator) {
+        const grid_map::Index & index = *iterator;
+        if (grid_data(index.x(), index.y()) == grid_utils::occlusion_cost_value::OCCUPIED) {
+          return false;
+        }
+      }
+    } else {
+      std::vector<std::pair<grid_map::Position, grid_map::Position>> lines =
+        pointsToRays(p1, p2, radius);
+      for (const auto & p : lines) {
+        for (grid_map::LineIterator iterator(grid, p.first, p.second); !iterator.isPastEnd();
+             ++iterator) {
+          const grid_map::Index & index = *iterator;
+          if (grid_data(index.x(), index.y()) == grid_utils::occlusion_cost_value::OCCUPIED) {
+            return false;
+          }
+        }
+      }
+    }  // polys or not
   } catch (const std::invalid_argument & e) {
     std::cerr << e.what() << std::endl;
+    return false;
   }
   return true;
 }
