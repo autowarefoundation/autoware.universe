@@ -83,8 +83,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
   PathWithLaneId interp_path;
   //! never change this interpolation interval(will affect module accuracy)
   splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
+  PathWithLaneId predicted_path;
   if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELOCITY) {
-    interp_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
+    predicted_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
   }
   debug_data_.interp_path = interp_path;
@@ -95,7 +96,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   const double offset_from_start_to_ego = -offset.get();
   auto & detection_area_polygons = debug_data_.detection_area_polygons;
   if (!utils::buildDetectionAreaPolygon(
-        detection_area_polygons, interp_path, offset_from_start_to_ego, param_)) {
+        detection_area_polygons, predicted_path, offset_from_start_to_ego, param_)) {
     return true;  // path point is not enough
   }
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
