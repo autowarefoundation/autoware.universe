@@ -73,6 +73,7 @@ bool buildDetectionAreaPolygon(
     da_range.min_longitudinal_distance;
   da_range.min_lateral_distance = p.half_vehicle_width;
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
+  slices.clear();
   return planning_utils::createDetectionAreaPolygons(slices, path, da_range, p.pedestrian_vel);
 }
 

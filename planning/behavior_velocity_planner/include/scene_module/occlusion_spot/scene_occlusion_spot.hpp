@@ -62,6 +62,7 @@ private:
   PlannerParam param_;
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
   std::vector<lanelet::BasicPolygon2d> partition_lanelets_;
+  std::vector<lanelet::BasicPolygon2d> close_partition_;
 
 protected:
   int64_t module_id_{};
