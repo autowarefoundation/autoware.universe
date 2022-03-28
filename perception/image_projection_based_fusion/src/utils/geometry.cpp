@@ -14,6 +14,8 @@
 
 #include "image_projection_based_fusion/utils/geometry.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 namespace image_projection_based_fusion
 {
 
@@ -96,14 +98,16 @@ void objectToVertices(
   } else if (shape.type == Shape::CYLINDER) {
     cylinderToVertices(pose, shape, vertices);
   } else if (shape.type == Shape::POLYGON) {
-    polygonToVertices(pose, shape, vertices);
+    // polygonToVertices(pose, shape, vertices);
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("image_projection_based_fusion"), "POLYGON is not supported");
   }
 }
 
 void boundingBoxToVertices(
   const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
 {
-  std::vector<std::vector<double>> corners_template = {
+  const std::vector<std::vector<double>> corners_template = {
     // down surface
     {1, 1, -1},
     {1, -1, -1},
@@ -116,8 +120,8 @@ void boundingBoxToVertices(
     {-1, 1, 1},
   };
 
-  auto position = Eigen::Vector3d(pose.position.x, pose.position.y, pose.position.z);
-  auto orientation = Eigen::Quaterniond(
+  const auto position = Eigen::Vector3d(pose.position.x, pose.position.y, pose.position.z);
+  const auto orientation = Eigen::Quaterniond(
     pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
 
   for (const auto & corner : corners_template) {
@@ -131,13 +135,21 @@ void boundingBoxToVertices(
 void cylinderToVertices(
   const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
 {
-  // TODO(yukke42): impl cylinderToVertices
-}
-
-void polygonToVertices(
-  const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices)
-{
-  // TODO(yukke42): impl polygonToVertices
+  const auto & center = pose.position;
+  const auto & radius = shape.dimensions.x * 0.5;
+  constexpr int n = 6;
+  vertices.reserve(n * 2);
+  for (int i = 0; i < n; i++) {
+    Eigen::Vector3d vertex;
+    const double theta = (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                         M_PI / static_cast<double>(n);
+    vertex.x() = std::cos(theta) * radius + center.x;
+    vertex.y() = std::sin(theta) * radius + center.y;
+    vertex.z() = shape.dimensions.z * 0.5 + center.z;
+    vertices.push_back(vertex);
+    vertex.z() = -shape.dimensions.z * 0.5 + center.z;
+    vertices.push_back(vertex);
+  }
 }
 
 void transformPoints(
