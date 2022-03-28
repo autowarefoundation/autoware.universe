@@ -107,7 +107,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   if (param_.is_show_processing_time) stop_watch_.tic("processing_time");
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
-    if (!occ_grid_ptr) return true;  // mo data
+    if (!occ_grid_ptr) return true;  // no data
     grid_map::GridMap grid_map;
     grid_utils::denoiseOccupancyGridCV(
       occ_grid_ptr, grid_map, param_.grid, param_.is_show_cv_window, param_.filter_occupancy_grid);
@@ -125,7 +125,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
   } else if (param_.detection_method == utils::DETECTION_METHOD::PREDICTED_OBJECT) {
     const auto & dynamic_obj_arr_ptr = planner_data_->predicted_objects;
-    if (!dynamic_obj_arr_ptr) return true;  // mo data
+    if (!dynamic_obj_arr_ptr) return true;  // no data
     std::vector<PredictedObject> obj =
       utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, debug_data_.parked_vehicle_point);
     const auto filtered_obj =
