@@ -76,7 +76,8 @@ protected:
 
 private:
   autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr last_msg_ptr_;
-  bool validateFloats(const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr);
+  bool validateFloats(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr);
 };
 
 }  // namespace rviz_plugins
