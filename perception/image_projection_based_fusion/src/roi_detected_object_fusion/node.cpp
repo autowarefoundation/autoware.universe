@@ -80,7 +80,8 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
       transformPoints(vertices, object2camera_affine, vertices_camera_coord);
     }
 
-    double min_x(image_width), min_y(image_height), max_x(0.0), max_y(0.0);
+    double min_x(std::numeric_limits<double>::max()), min_y(std::numeric_limits<double>::max()),
+      max_x(std::numeric_limits<double>::min()), max_y(std::numeric_limits<double>::min());
     std::size_t point_on_image_cnt = 0;
     for (const auto & point : vertices_camera_coord) {
       if (point.z() <= 0.0) {
@@ -94,16 +95,16 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
         proj_point = Eigen::Vector2d(
           proj_point_hom.x() / (proj_point_hom.z()), proj_point_hom.y() / (proj_point_hom.z()));
       }
-      // TODO(yukke42): consider the outside point of the object on image.
+
+      min_x = std::min(proj_point.x(), min_x);
+      min_y = std::min(proj_point.y(), min_y);
+      max_x = std::max(proj_point.x(), max_x);
+      max_y = std::max(proj_point.y(), max_y);
+
       if (
         proj_point.x() >= 0 && proj_point.x() <= image_width - 1 && proj_point.y() >= 0 &&
         proj_point.y() <= image_height - 1) {
         point_on_image_cnt++;
-
-        min_x = std::min(proj_point.x(), min_x);
-        min_y = std::min(proj_point.y(), min_y);
-        max_x = std::max(proj_point.x(), max_x);
-        max_y = std::max(proj_point.y(), max_y);
 
         if (debugger_) {
           debugger_->obstacle_points_.push_back(proj_point);
@@ -114,12 +115,17 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
       continue;
     }
 
+    min_x = std::max(min_x, 0.0);
+    min_y = std::max(min_y, 0.0);
+    max_x = std::min(max_x, image_width - 1);
+    max_y = std::min(max_y, image_height - 1);
+
     // build roi
     sensor_msgs::msg::RegionOfInterest roi;
     roi.x_offset = static_cast<std::uint32_t>(min_x);
     roi.y_offset = static_cast<std::uint32_t>(min_y);
-    roi.width = static_cast<std::uint32_t>(max_x - min_x);
-    roi.height = static_cast<std::uint32_t>(max_y - min_y);
+    roi.width = static_cast<std::uint32_t>(max_x) - static_cast<std::uint32_t>(min_x);
+    roi.height = static_cast<std::uint32_t>(max_y) - static_cast<std::uint32_t>(min_y);
     object_roi_map.insert(std::make_pair(obj_i, roi));
 
     if (debugger_) {
