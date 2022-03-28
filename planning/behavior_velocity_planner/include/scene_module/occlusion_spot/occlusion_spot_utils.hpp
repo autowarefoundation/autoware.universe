@@ -189,7 +189,6 @@ struct DebugData
   std::string detection_type = "";
   Polygons2d detection_area_polygons;
   std::vector<lanelet::BasicPolygon2d> close_partition;
-  std::vector<lanelet::BasicPolygon2d> partition_lanelets;
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;
   std::vector<geometry_msgs::msg::Point> occlusion_points;
@@ -197,6 +196,7 @@ struct DebugData
   PathWithLaneId interp_path;
   void resetData()
   {
+    close_partition.clear();
     detection_area_polygons.clear();
     parked_vehicle_point.clear();
     possible_collisions.clear();

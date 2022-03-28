@@ -275,7 +275,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   const ArcCoordinates & arc_coord_occlusion_with_offset,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
 {
-  auto setPose = [](const lanelet::ConstLanelet & pl, const ArcCoordinates & arc) {
+  auto calcPose = [](const lanelet::ConstLanelet & pl, const ArcCoordinates & arc) {
     const auto & ll = pl.centerline2d();
     BasicPoint2d bp = fromArcCoordinates(ll, arc);
     Pose pose;
@@ -306,11 +306,11 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   pc.arc_lane_dist_at_collision = {distance_to_stop, arc_coord_occlusion_with_offset.distance};
   pc.obstacle_info.safe_motion = sm;
   pc.obstacle_info.ttc = ttc;
-  pc.obstacle_info.position = setPose(path_lanelet, arc_coord_occlusion).position;
+  pc.obstacle_info.position = calcPose(path_lanelet, arc_coord_occlusion).position;
   pc.obstacle_info.max_velocity = param.pedestrian_vel;
-  pc.collision_pose = setPose(path_lanelet, {arc_coord_occlusion_with_offset.length, 0.0});
-  pc.collision_with_margin.pose = setPose(path_lanelet, {distance_to_stop, 0.0});
-  pc.intersection_pose = setPose(path_lanelet, {arc_coord_occlusion.length, 0.0});
+  pc.collision_pose = calcPose(path_lanelet, {arc_coord_occlusion_with_offset.length, 0.0});
+  pc.collision_with_margin.pose = calcPose(path_lanelet, {distance_to_stop, 0.0});
+  pc.intersection_pose = calcPose(path_lanelet, {arc_coord_occlusion.length, 0.0});
   return pc;
 }
 
@@ -339,12 +339,6 @@ bool generatePossibleCollisionBehindParkedVehicle(
       arc_coord_occlusion, arc_coord_occlusion_with_offset, path_lanelet, param);
     possible_collisions.emplace_back(pc);
   }
-  // sort by arc length
-  std::sort(
-    possible_collisions.begin(), possible_collisions.end(),
-    [](PossibleCollisionInfo pc1, PossibleCollisionInfo pc2) {
-      return pc1.arc_lane_dist_at_collision.length < pc2.arc_lane_dist_at_collision.length;
-    });
   if (possible_collisions.empty()) return false;
   return true;
 }
@@ -395,28 +389,22 @@ bool createPossibleCollisionsInDetectionArea(
     const auto pc = generateOneNotableCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, base_point, path_lanelet, param,
       debug_data);
-    if (!pc) continue;
+    if (pc == boost::none) continue;
     const double lateral_distance = std::abs(pc.get().arc_lane_dist_at_collision.distance);
     if (lateral_distance > distance_lower_bound) continue;
     distance_lower_bound = lateral_distance;
     possible_collisions.emplace_back(pc.get());
   }
-  // sort by arc length
-  std::sort(
-    possible_collisions.begin(), possible_collisions.end(),
-    [](PossibleCollisionInfo pc1, PossibleCollisionInfo pc2) {
-      return pc1.arc_lane_dist_at_collision.length < pc2.arc_lane_dist_at_collision.length;
-    });
   if (possible_collisions.empty()) return false;
   return true;
 }
 
-bool isNotBlockedByPartition(const LineString2d & direction, const BasicPolygons2d & partitions)
+bool isBlockedByPartition(const LineString2d & direction, const BasicPolygons2d & partitions)
 {
   for (const auto & p : partitions) {
-    if (bg::intersects(direction, p)) return false;
+    if (bg::intersects(direction, p)) return true;
   }
-  return true;
+  return false;
 }
 
 boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
@@ -453,14 +441,14 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
     const auto & ip = pc.intersection_pose.position;
     bool collision_free_at_intersection = grid_utils::isCollisionFree(
       grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y), param.pedestrian_radius);
-    bool obstacle_not_blocked_by_partition = true;
+    bool is_obstacle_blocked_by_partition = false;
     if (!collision_free_at_intersection) continue;
     if (param.use_partition_lanelet) {
       const auto & op = obstacle_point;
       const LineString2d obstacle_vec = {{op[0], op[1]}, {ip.x, ip.y}};
-      obstacle_not_blocked_by_partition = isNotBlockedByPartition(obstacle_vec, partition_lanelets);
+      is_obstacle_blocked_by_partition = isBlockedByPartition(obstacle_vec, partition_lanelets);
     }
-    if (!obstacle_not_blocked_by_partition) continue;
+    if (is_obstacle_blocked_by_partition) continue;
     distance_lower_bound = dist;
     candidate = pc;
     has_collision = true;
@@ -468,7 +456,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
   if (has_collision) {
     return candidate;
   } else {
-    return {};
+    return boost::none;
   }
 }
 

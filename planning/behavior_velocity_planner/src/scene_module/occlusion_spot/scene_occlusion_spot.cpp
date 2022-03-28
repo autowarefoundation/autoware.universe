@@ -51,7 +51,7 @@ OcclusionSpotModule::OcclusionSpotModule(
   }
   if (param_.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
-    planning_utils::getAllPartitionLanelets(ll, debug_data_.partition_lanelets);
+    planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
   }
 }
 
@@ -88,7 +88,6 @@ bool OcclusionSpotModule::modifyPathVelocity(
     predicted_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
   }
-  debug_data_.interp_path = interp_path;
   const geometry_msgs::msg::Point start_point = interp_path.points.at(0).point.pose.position;
   const auto offset = tier4_autoware_utils::calcSignedArcLength(
     interp_path.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
@@ -103,7 +102,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // extract only close lanelet
   if (param_.use_partition_lanelet) {
     planning_utils::extractClosePartition(
-      ego_pose.position, debug_data_.partition_lanelets, debug_data_.close_partition);
+      ego_pose.position, partition_lanelets_, debug_data_.close_partition);
   }
   if (param_.is_show_processing_time) stop_watch_.tic("processing_time");
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
@@ -150,6 +149,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
 
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
+  debug_data_.interp_path = interp_path;
   debug_data_.path_raw = clipped_path;
   return true;
 }
