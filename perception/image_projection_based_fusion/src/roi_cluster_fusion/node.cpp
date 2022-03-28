@@ -15,6 +15,7 @@
 #include "image_projection_based_fusion/roi_cluster_fusion/node.hpp"
 
 #include <image_projection_based_fusion/utils/geometry.hpp>
+#include <image_projection_based_fusion/utils/utils.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -62,13 +63,14 @@ void RoiClusterFusionNode::fusionOnSingleImage(
 
   // get transform from cluster frame id to camera optical frame id
   geometry_msgs::msg::TransformStamped transform_stamped;
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      /*target*/ camera_info.header.frame_id,
-      /*src*/ input_msg_.header.frame_id, tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    return;
+  {
+    const auto transform_stamped_optional = getTransformStamped(
+      tf_buffer_, /*target*/ camera_info.header.frame_id,
+      /*source*/ input_msg_.header.frame_id, camera_info.header.stamp);
+    if (!transform_stamped_optional) {
+      return;
+    }
+    transform_stamped = transform_stamped_optional.value();
   }
 
   std::map<std::size_t, RegionOfInterest> m_cluster_roi;
