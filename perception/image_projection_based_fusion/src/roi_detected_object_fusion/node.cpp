@@ -33,21 +33,17 @@ void RoiDetectedObjectFusionNode::fusionOnSingleImage(
   const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info)
 {
-  // TODO(yukke42): define getTransformStamped
-  // TODO(yukke42): set the transform stamp
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      /*target*/ camera_info.header.frame_id,
-      /*src*/ input_msg_.header.frame_id, tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    return;
+  Eigen::Affine3d object2camera_affine;
+  {
+    const auto transform_stamped_optional = getTransformStamped(
+      tf_buffer_, /*target*/ camera_info.header.frame_id,
+      /*source*/ input_msg_.header.frame_id, camera_info.header.stamp);
+    if (!transform_stamped_optional) {
+      return;
+    }
+    object2camera_affine = transformToEigen(transform_stamped_optional.value().transform);
   }
 
-  Eigen::Affine3d object2camera_affine = transformToEigen(transform_stamped.transform);
-
-  // TODO(yukke42): define getProjectionMatrix
   Eigen::Matrix4d camera_projection;
   camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
     camera_info.p.at(3), camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6),
