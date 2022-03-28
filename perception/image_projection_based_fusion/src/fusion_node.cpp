@@ -140,8 +140,7 @@ void FusionNode<Msg>::preprocess()
 
 template <class Msg>
 void FusionNode<Msg>::fusionCallback(
-  typename Msg::ConstSharedPtr input_msg,
-  DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
+  typename Msg::ConstSharedPtr input_msg, DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi3_msg,
