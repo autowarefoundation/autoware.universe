@@ -7,7 +7,7 @@
 
   <node pkg="detected_object_validation" exec="obstacle_pointcloud_based_validator_node" name="obstacle_pointcloud_based_validator_node" output="screen">
     <remap from="~/input/detected_objects" to="$(var input/detected_objects)" />
-    <remap from="~/input/obstacle_pointcloud" to="/perception/object_recognition/detection/map_filtered/pointcloud" />
+    <remap from="~/input/obstacle_pointcloud" to="$(var input/obstacle_pointcloud)" />
     <remap from="~/output/objects" to="$(var output/objects)" />
     <param name="enable_debugger" value="false" />
   </node>
