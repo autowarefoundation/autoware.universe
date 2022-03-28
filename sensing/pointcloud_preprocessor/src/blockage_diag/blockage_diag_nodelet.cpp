@@ -116,8 +116,12 @@ void BlockageDiagComponent::filter(
   if (pcl_input->points.empty()) {
     ground_blockage_ratio_ = 1.0f;
     sky_blockage_ratio_ = 1.0f;
-    ground_blockage_count_ += 1;
-    sky_blockage_count_ += 1;
+    if (ground_blockage_count_ <= 2 * blockage_count_threshold_) {
+      ground_blockage_count_ += 1;
+    }
+    if (sky_blockage_count_ <= 2 * blockage_count_threshold_) {
+      sky_blockage_count_ += 1;
+    }
     ground_blockage_range_deg_[0] = angle_range_deg_[0];
     ground_blockage_range_deg_[1] = angle_range_deg_[1];
     sky_blockage_range_deg_[0] = angle_range_deg_[0];
@@ -169,7 +173,10 @@ void BlockageDiagComponent::filter(
         static_cast<float>(ground_blockage_bb.x) + angle_range_deg_[0];
       ground_blockage_range_deg_[1] =
         static_cast<float>(ground_blockage_bb.x + ground_blockage_bb.width) + angle_range_deg_[0];
-      ground_blockage_count_ += 1;
+
+      if (ground_blockage_count_ <= 2 * blockage_count_threshold_) {
+        ground_blockage_count_ += 1;
+      }
     } else {
       ground_blockage_count_ = 0;
     }
@@ -179,7 +186,9 @@ void BlockageDiagComponent::filter(
       sky_blockage_range_deg_[0] = static_cast<float>(sky_blockage_bx.x) + angle_range_deg_[0];
       sky_blockage_range_deg_[1] =
         static_cast<float>(sky_blockage_bx.x + sky_blockage_bx.width) + angle_range_deg_[0];
-      sky_blockage_count_ += 1;
+      if (sky_blockage_count_ <= 2 * blockage_count_threshold_) {
+        sky_blockage_count_ += 1;
+      }
     } else {
       sky_blockage_count_ = 0;
     }
