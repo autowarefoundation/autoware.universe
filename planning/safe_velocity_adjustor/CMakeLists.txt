@@ -27,6 +27,13 @@ rclcpp_components_register_node(safe_velocity_adjustor_node
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_${PROJECT_NAME}
+    test/test_collision_distance.cpp
+  )
+  target_link_libraries(test_${PROJECT_NAME}
+    safe_velocity_adjustor_node
+  )
 endif()
 
 ament_auto_package(
