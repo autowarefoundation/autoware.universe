@@ -12,25 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DISPLAY_HPP_
-#define DISPLAY_HPP_
+#ifndef PATH_WITH_LANE_ID__DISPLAY_HPP_
+#define PATH_WITH_LANE_ID__DISPLAY_HPP_
 
-#include "OgreBillboardSet.h"
-#include "OgreManualObject.h"
-#include "OgreMaterialManager.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
-#include "rclcpp/rclcpp.hpp"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/frame_manager_iface.hpp"
-#include "rviz_common/message_filter_display.hpp"
-#include "rviz_common/properties/bool_property.hpp"
-#include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/float_property.hpp"
-#include "rviz_common/properties/parse_color.hpp"
-#include "rviz_common/validate_floats.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/frame_manager_iface.hpp>
+#include <rviz_common/message_filter_display.hpp>
+#include <rviz_common/properties/bool_property.hpp>
+#include <rviz_common/properties/color_property.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/parse_color.hpp>
+#include <rviz_common/validate_floats.hpp>
 
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <OgreBillboardSet.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
 
 #include <deque>
 #include <memory>
@@ -38,7 +39,7 @@
 namespace rviz_plugins
 {
 class AutowarePathWithLaneIdDisplay
-: public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::PathWithLaneId>
+: public rviz_common::MessageFilterDisplay<autoware_auto_planning_msgs::msg::PathWithLaneId>
 {
   Q_OBJECT
 
@@ -54,7 +55,7 @@ private Q_SLOTS:
 
 protected:
   void processMessage(
-    const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr) override;
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr) override;
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel);
   std::unique_ptr<Ogre::ColourValue> gradation(
@@ -74,10 +75,11 @@ protected:
   rviz_common::properties::FloatProperty * property_vel_max_;
 
 private:
-  autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr last_msg_ptr_;
-  bool validateFloats(const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr);
+  autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr last_msg_ptr_;
+  bool validateFloats(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr);
 };
 
 }  // namespace rviz_plugins
 
-#endif  // DISPLAY_HPP_
+#endif  // PATH_WITH_LANE_ID__DISPLAY_HPP_

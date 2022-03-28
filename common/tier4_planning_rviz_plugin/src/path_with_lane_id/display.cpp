@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "display.hpp"
+#include <path_with_lane_id/display.hpp>
 
 #include <memory>
 #define EIGEN_MPL2_ONLY
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace rviz_plugins
 {
@@ -118,10 +118,12 @@ void AutowarePathWithLaneIdDisplay::reset()
 }
 
 bool AutowarePathWithLaneIdDisplay::validateFloats(
-  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr)
 {
   for (auto && e : msg_ptr->points) {
-    if (!rviz_common::validateFloats(e.point.pose) && !rviz_common::validateFloats(e.point.twist)) {
+    if (
+      !rviz_common::validateFloats(e.point.pose) &&
+      !rviz_common::validateFloats(e.point.longitudinal_velocity_mps)) {
       return false;
     }
   }
@@ -129,7 +131,7 @@ bool AutowarePathWithLaneIdDisplay::validateFloats(
 }
 
 void AutowarePathWithLaneIdDisplay::processMessage(
-  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(
@@ -175,8 +177,8 @@ void AutowarePathWithLaneIdDisplay::processMessage(
           color = rviz_common::properties::qtToOgre(property_path_color_->getColor());
         } else {
           /* color change depending on velocity */
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_->getFloat(), e.point.twist.linear.x);
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+            property_vel_max_->getFloat(), e.point.longitudinal_velocity_mps);
           color = *dynamic_color_ptr;
         }
         color.a = property_path_alpha_->getFloat();
@@ -187,7 +189,7 @@ void AutowarePathWithLaneIdDisplay::processMessage(
           Eigen::Quaternionf quat(
             e.point.pose.orientation.w, e.point.pose.orientation.x, e.point.pose.orientation.y,
             e.point.pose.orientation.z);
-          if (e.point.twist.linear.x < 0) {
+          if (e.point.longitudinal_velocity_mps < 0) {
             quat *= quat_yaw_reverse;
           }
           vec_out = quat * vec_in;
@@ -201,7 +203,7 @@ void AutowarePathWithLaneIdDisplay::processMessage(
           Eigen::Quaternionf quat(
             e.point.pose.orientation.w, e.point.pose.orientation.x, e.point.pose.orientation.y,
             e.point.pose.orientation.z);
-          if (e.point.twist.linear.x < 0) {
+          if (e.point.longitudinal_velocity_mps < 0) {
             quat *= quat_yaw_reverse;
           }
           vec_out = quat * vec_in;
@@ -220,15 +222,16 @@ void AutowarePathWithLaneIdDisplay::processMessage(
           color = rviz_common::properties::qtToOgre(property_velocity_color_->getColor());
         } else {
           /* color change depending on velocity */
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_->getFloat(), e.point.twist.linear.x);
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+            property_vel_max_->getFloat(), e.point.longitudinal_velocity_mps);
           color = *dynamic_color_ptr;
         }
         color.a = property_velocity_alpha_->getFloat();
 
         velocity_manual_object_->position(
           e.point.pose.position.x, e.point.pose.position.y,
-          e.point.pose.position.z + e.point.twist.linear.x * property_velocity_scale_->getFloat());
+          e.point.pose.position.z +
+            e.point.longitudinal_velocity_mps * property_velocity_scale_->getFloat());
         velocity_manual_object_->colour(color);
       }
     }
