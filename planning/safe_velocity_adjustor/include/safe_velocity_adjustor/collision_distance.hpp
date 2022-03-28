@@ -43,24 +43,29 @@ namespace safe_velocity_adjustor
 {
 namespace bg = boost::geometry;
 using point_t = bg::model::d2::point_xy<double>;
-using points_t = bg::model::linestring<point_t>;
+using linestring_t = bg::model::linestring<point_t>;
 using polygon_t = bg::model::polygon<point_t>;
 using multipolygon_t = bg::model::multi_polygon<polygon_t>;
 
-inline polygon_t forwardSimulatedFootprint(
+inline linestring_t forwardSimulatedVector(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point,
-  const double time_safety_buffer, const double dist_safety_buffer, const double vehicle_width)
+  const double time_safety_buffer, const double dist_safety_buffer, const double vehicle_length)
 {
   const auto heading = tf2::getYaw(trajectory_point.pose.orientation);
   const auto velocity = trajectory_point.longitudinal_velocity_mps;
+  const auto length = velocity * time_safety_buffer + dist_safety_buffer + vehicle_length / 2;
   const auto from = point_t{trajectory_point.pose.position.x, trajectory_point.pose.position.y};
-  const auto to = point_t{
-    from.x() + std::cos(heading) * (velocity * time_safety_buffer + dist_safety_buffer),
-    from.y() + std::sin(heading) * (velocity * time_safety_buffer + dist_safety_buffer)};
+  const auto to =
+    point_t{from.x() + std::cos(heading) * length, from.y() + std::sin(heading) * length};
+  return linestring_t{from, to};
+}
+
+inline polygon_t forwardSimulatedFootprint(const linestring_t & vector, const double vehicle_width)
+{
   multipolygon_t footprint;
   namespace strategy = bg::strategy::buffer;
   bg::buffer(
-    points_t{from, to}, footprint, strategy::distance_symmetric<double>(vehicle_width / 2),
+    vector, footprint, strategy::distance_symmetric<double>(vehicle_width / 2),
     strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
     strategy::point_square());
   return footprint[0];
@@ -76,10 +81,13 @@ inline std::optional<double> distanceToClosestCollision(
   for (const auto & obstacle_point : obstacle_points) {
     const auto obs_point = point_t{obstacle_point.x, obstacle_point.y};
     if (bg::within(obs_point, footprint)) {
+      const auto footprint_heading = tf2::getYaw(trajectory_point.pose.orientation);
+      const auto collision_heading =
+        std::atan2(obs_point.y() - traj_point.y(), obs_point.x() - traj_point.x());
+      const auto angle = footprint_heading - collision_heading;
       const auto hypot_length = bg::distance(obs_point, traj_point);
-      // TODO(Maxime CLEMENT): more precise distance requires distance from central segment to the
-      // coll point const auto coll_dist = std::sqrt(hypot_length * hypot_length -
-      min_dist = std::min(min_dist, hypot_length);
+      const auto dist = std::abs(std::cos(angle)) * hypot_length;
+      min_dist = std::min(min_dist, dist);
     }
   }
   return (min_dist != std::numeric_limits<double>::infinity() ? min_dist : std::optional<double>());
