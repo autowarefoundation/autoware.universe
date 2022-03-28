@@ -85,6 +85,9 @@ private:
   // parameters
   Float time_safety_buffer_;
   Float dist_safety_buffer_;
+  // TODO(Maxime CLEMENT): get vehicle width and length from vehicle parameters
+  Float vehicle_width_ = 2.0;
+  Float vehicle_length_ = 4.0;
 
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
@@ -124,28 +127,22 @@ private:
       max_vel * time_safety_buffer_ + dist_safety_buffer_);
 
     for (auto & trajectory_point : safe_trajectory.points) {
-      // TODO(Maxime CLEMENT): get vehicle width from vehicle parameters
+      const auto forward_simulated_vector = forwardSimulatedVector(
+        trajectory_point, time_safety_buffer_, dist_safety_buffer_, vehicle_length_);
       const auto forward_simulated_footprint =
-        forwardSimulatedFootprint(trajectory_point, time_safety_buffer_, dist_safety_buffer_, 2.0);
-      std::vector<geometry_msgs::msg::Point> footprint_points;
-      for (const auto footprint_point : forward_simulated_footprint.outer()) {
-        geometry_msgs::msg::Point p;
-        p.x = footprint_point.x();
-        p.y = footprint_point.y();
-        p.z = trajectory_point.pose.position.z;
-        footprint_points.push_back(p);
-      }
-      footprints.push_back(footprint_points);
+        forwardSimulatedFootprint(forward_simulated_vector, vehicle_width_);
       const auto dist_to_collision = distanceToClosestCollision(
         trajectory_point, forward_simulated_footprint, filtered_obstacle_pointcloud);
       if (dist_to_collision) {
-        trajectory_point.longitudinal_velocity_mps =
-          calculateSafeVelocity(trajectory_point, static_cast<Float>(*dist_to_collision));
+        trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
+          trajectory_point,
+          std::max(
+            {}, static_cast<Float>(*dist_to_collision - vehicle_length_ - dist_safety_buffer_)));
       }
     }
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
-    publishDebug(*msg, safe_trajectory, footprints);
+    publishDebug(*msg, safe_trajectory);
   }
 
   Float calculateSafeVelocity(
@@ -179,8 +176,7 @@ private:
   }
 
   void publishDebug(
-    const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-    const std::vector<std::vector<geometry_msgs::msg::Point>> & footprints) const
+    const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory) const
   {
     visualization_msgs::msg::MarkerArray debug_markers;
     auto original_envelope =
@@ -194,25 +190,8 @@ private:
     adjusted_envelope.ns = "adjusted";
     debug_markers.markers.push_back(adjusted_envelope);
 
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = now();
-    marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-    marker.ns = "original_footprints";
-    for (const auto & footprint : footprints) {
-      marker.id++;
-      marker.scale.x = 0.1;
-      marker.color.a = 1.0;
-      marker.color.b = 1.0;
-      marker.color.g = 1.0;
-      marker.points = footprint;
-      debug_markers.markers.push_back(marker);
-    }
-
     pub_debug_markers_->publish(debug_markers);
   }
-
-  // debug
 };
 }  // namespace safe_velocity_adjustor
 
