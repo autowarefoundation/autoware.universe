@@ -69,7 +69,8 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   auto prev_point = path.points.front();
   auto prev_lane_id = lanelet::InvalId;
   for (const auto & path_point : path.points) {
-    const double path_distance = tier4_autoware_utils::calcDistance3d(prev_point.point, path_point.point);
+    const double path_distance =
+      tier4_autoware_utils::calcDistance3d(prev_point.point, path_point.point);
     accumulated_distance += path_distance;
     prev_point = path_point;
     const double distance_from_vehicle_front =
@@ -82,7 +83,8 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       if (lane.id() != path_point.lane_ids.back()) {
         continue;
       }
-      double turn_distance = lane.attributeOr("turn_signal_distance", intersection_search_distance_);
+      double turn_distance =
+        lane.attributeOr("turn_signal_distance", intersection_search_distance_);
       if (turn_distance < min_turn_signal_distance_) {
         turn_distance = min_turn_signal_distance_;
       }
@@ -93,8 +95,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       if (turn_distance < path_distance) {
         judge_distance = turn_distance - path_distance;
         turn_distance += turn_signal_distance_threshold_;
-      }
-      else {
+      } else {
         judge_distance = 0.0;
       }
       if (distance_from_vehicle_front < judge_distance) {
