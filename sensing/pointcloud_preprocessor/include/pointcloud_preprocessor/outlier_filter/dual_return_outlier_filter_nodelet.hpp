@@ -30,6 +30,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
 
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace pointcloud_preprocessor
@@ -37,15 +39,10 @@ namespace pointcloud_preprocessor
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 
-enum ReturnType : uint8_t {
-  INVALID = 0,
-  SINGLE_STRONGEST,
-  SINGLE_LAST,
-  DUAL_STRONGEST_FIRST,
-  DUAL_STRONGEST_LAST,
-  DUAL_WEAK_FIRST,
-  DUAL_WEAK_LAST,
-  DUAL_ONLY,
+std::unordered_map<std::string, uint8_t> roi_mode_map_ = {
+  {"No_ROI", 0},
+  {"Fixed_xyz_ROI", 1},
+  {"Fixed_azimuth_ROI", 2},
 };
 
 class DualReturnOutlierFilterComponent : public pointcloud_preprocessor::Filter
@@ -66,13 +63,25 @@ protected:
 private:
   void onVisibilityChecker(DiagnosticStatusWrapper & stat);
   Updater updater_{this};
-  double visibility_ = 1.f;
+  double visibility_ = -1.0f;
   double weak_first_distance_ratio_;
   double general_distance_ratio_;
   int weak_first_local_noise_threshold_;
-  double visibility_threshold_;
+  double visibility_error_threshold_;
+  double visibility_warn_threshold_;
   int vertical_bins_;
   float max_azimuth_diff_;
+  std::string roi_mode_;
+  float x_max_;
+  float x_min_;
+  float y_max_;
+  float y_min_;
+  float z_max_;
+  float z_min_;
+
+  float min_azimuth_deg_;
+  float max_azimuth_deg_;
+  float max_distance_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -80,27 +89,5 @@ public:
 };
 
 }  // namespace pointcloud_preprocessor
-
-namespace return_type_cloud
-{
-struct PointXYZIRADT
-{
-  PCL_ADD_POINT4D;
-  float intensity;
-  std::uint16_t ring;
-  float azimuth;
-  float distance;
-  std::uint8_t return_type;
-  double time_stamp;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
-
-}  // namespace return_type_cloud
-
-POINT_CLOUD_REGISTER_POINT_STRUCT(
-  return_type_cloud::PointXYZIRADT,
-  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
-    float, azimuth, azimuth)(float, distance, distance)(std::uint8_t, return_type, return_type)(
-    double, time_stamp, time_stamp))
 
 #endif  // POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__DUAL_RETURN_OUTLIER_FILTER_NODELET_HPP_

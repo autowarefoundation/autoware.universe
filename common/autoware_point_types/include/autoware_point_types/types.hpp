@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINT_TYPES__AUTOWARE_POINT_TYPES_HPP_
-#define AUTOWARE_POINT_TYPES__AUTOWARE_POINT_TYPES_HPP_
+#ifndef AUTOWARE_POINT_TYPES__TYPES_HPP_
+#define AUTOWARE_POINT_TYPES__TYPES_HPP_
 
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
+#include <pcl/point_types.h>
 
 #include <cmath>
 #include <tuple>
@@ -39,6 +41,17 @@ struct PointXYZI
     return float_eq<float>(p1.x, p2.x) && float_eq<float>(p1.y, p2.y) &&
            float_eq<float>(p1.z, p2.z) && float_eq<float>(p1.intensity, p2.intensity);
   }
+};
+
+enum ReturnType : uint8_t {
+  INVALID = 0,
+  SINGLE_STRONGEST,
+  SINGLE_LAST,
+  DUAL_STRONGEST_FIRST,
+  DUAL_STRONGEST_LAST,
+  DUAL_WEAK_FIRST,
+  DUAL_WEAK_LAST,
+  DUAL_ONLY,
 };
 
 struct PointXYZIRADRT
@@ -77,4 +90,10 @@ using PointXYZIRADRTGenerator = std::tuple<
 
 }  // namespace autoware_point_types
 
-#endif  // AUTOWARE_POINT_TYPES__AUTOWARE_POINT_TYPES_HPP_
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+  autoware_point_types::PointXYZIRADRT,
+  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
+    float, azimuth, azimuth)(float, distance, distance)(std::uint8_t, return_type, return_type)(
+    double, time_stamp, time_stamp))
+
+#endif  // AUTOWARE_POINT_TYPES__TYPES_HPP_

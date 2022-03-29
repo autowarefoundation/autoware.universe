@@ -17,8 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -45,17 +44,16 @@ public:
   const char * getModuleName() override { return "occlusion_spot"; }
 
 private:
-  enum class ModuleID { PRIVATE, PUBLIC };
+  enum class ModuleID { OCCUPANCY, OBJECT };
   using PlannerParam = occlusion_spot_utils::PlannerParam;
 
   PlannerParam planner_param_;
+  int64_t module_id_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
-
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_debug_occupancy_grid_;
 };
 }  // namespace behavior_velocity_planner
 

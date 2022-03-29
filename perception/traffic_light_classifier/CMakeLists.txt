@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(traffic_light_classifier)
 
 if(NOT CMAKE_CXX_STANDARD)
-	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD 17)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Werror)
@@ -132,9 +132,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${NVINFER_PLUGIN}
     ${CUDA_LIBRARIES}
     ${CUBLAS_LIBRARIES}
-    ${CUDA_curand_LIBRARY}
     ${CUDNN_LIBRARY}
-    ${Boost_LIBRARIES}
+    stdc++fs
   )
 
   ament_auto_add_library(traffic_light_classifier_nodelet SHARED

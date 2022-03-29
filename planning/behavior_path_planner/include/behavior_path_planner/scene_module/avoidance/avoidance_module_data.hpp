@@ -140,6 +140,24 @@ struct AvoidanceParameters
   // turn signal is not turned on.
   double avoidance_search_distance;
 
+  // The avoidance path generation is performed when the shift distance of the
+  // avoidance points is greater than this threshold.
+  // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
+  // avoidance path will be generated unless their lateral margin difference exceeds this value.
+  double avoidance_execution_lateral_threshold;
+
+  // true by default
+  bool avoid_car{true};      // avoidance is performed for type object car
+  bool avoid_truck{true};    // avoidance is performed for type object truck
+  bool avoid_bus{true};      // avoidance is performed for type object bus
+  bool avoid_trailer{true};  // avoidance is performed for type object trailer
+
+  // false by default
+  bool avoid_unknown{false};     // avoidance is performed for type object unknown
+  bool avoid_bicycle{false};     // avoidance is performed for type object bicycle
+  bool avoid_motorcycle{false};  // avoidance is performed for type object motorbike
+  bool avoid_pedestrian{false};  // avoidance is performed for type object pedestrian
+
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;

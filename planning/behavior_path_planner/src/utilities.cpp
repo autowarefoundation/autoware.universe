@@ -34,18 +34,19 @@ double quantize(const double val, const double resolution)
 }
 
 void updateMinMaxPosition(
-  const Eigen::Vector2d & point, double & min_x, double & min_y, double & max_x, double & max_y)
+  const Eigen::Vector2d & point, boost::optional<double> & min_x, boost::optional<double> & min_y,
+  boost::optional<double> & max_x, boost::optional<double> & max_y)
 {
-  min_x = std::min(min_x, point.x());
-  min_y = std::min(min_y, point.y());
-  max_x = std::max(max_x, point.x());
-  max_y = std::max(max_y, point.y());
+  min_x = min_x ? std::min(min_x.get(), point.x()) : point.x();
+  min_y = min_y ? std::min(min_y.get(), point.y()) : point.y();
+  max_x = max_x ? std::max(max_x.get(), point.x()) : point.x();
+  max_y = max_y ? std::max(max_y.get(), point.y()) : point.y();
 }
 
 bool sumLengthFromTwoPoints(
   const Eigen::Vector2d & base_point, const Eigen::Vector2d & target_point,
-  const double length_threshold, double & sum_length, double & min_x, double & min_y,
-  double & max_x, double & max_y)
+  const double length_threshold, double & sum_length, boost::optional<double> & min_x,
+  boost::optional<double> & min_y, boost::optional<double> & max_x, boost::optional<double> & max_y)
 {
   const double norm_length = (base_point - target_point).norm();
   sum_length += norm_length;
@@ -80,10 +81,10 @@ std::array<double, 4> getLaneletScope(
       }};
 
   // calculate min/max x and y
-  double min_x = current_pose.position.x;
-  double min_y = current_pose.position.y;
-  double max_x = current_pose.position.x;
-  double max_y = current_pose.position.y;
+  boost::optional<double> min_x;
+  boost::optional<double> min_y;
+  boost::optional<double> max_x;
+  boost::optional<double> max_y;
 
   for (const auto & get_bound_func : get_bound_funcs) {
     // search nearest point index to current pose
@@ -199,7 +200,13 @@ std::array<double, 4> getLaneletScope(
     }
   }
 
-  return {min_x, min_y, max_x, max_y};
+  if (!min_x || !min_y || !max_x || !max_y) {
+    const double x = current_pose.position.x;
+    const double y = current_pose.position.y;
+    return {x, y, x, y};
+  }
+
+  return {min_x.get(), min_y.get(), max_x.get(), max_y.get()};
 }
 }  // namespace drivable_area_utils
 
@@ -352,7 +359,7 @@ PredictedPath convertToPredictedPath(
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
-  predicted_path.path.reserve(path.points.size());
+  predicted_path.path.reserve(std::min(path.points.size(), static_cast<size_t>(100)));
   if (path.points.empty()) {
     return predicted_path;
   }
@@ -1607,6 +1614,34 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
     current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data);
 
   return centerline_path;
+}
+
+// TODO(Azu) Some parts of is the same with generateCenterLinePath. Therefore it might be better if
+// we can refactor some of the code for better readability
+lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & p = planner_data->parameters;
+  const auto & route_handler = planner_data->route_handler;
+  const auto & ego_pose = planner_data->self_pose->pose;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      "failed to find closest lanelet within route!!!");
+    return {};
+  }
+
+  const auto current_lanes = route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
+  lanelet::ConstLineStrings3d linestring_shared;
+  for (const auto & lane : current_lanes) {
+    lanelet::ConstLineStrings3d furthest_line = route_handler->getFurthestLinestring(lane);
+    linestring_shared.insert(linestring_shared.end(), furthest_line.begin(), furthest_line.end());
+  }
+
+  return linestring_shared;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)

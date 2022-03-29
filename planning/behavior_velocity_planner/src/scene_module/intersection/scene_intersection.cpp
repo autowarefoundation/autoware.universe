@@ -56,7 +56,8 @@ IntersectionModule::IntersectionModule(
 : SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
 {
   planner_param_ = planner_param;
-  const auto & assigned_lanelet = planner_data->lanelet_map->laneletLayer.get(lane_id);
+  const auto & assigned_lanelet =
+    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   turn_direction_ = assigned_lanelet.attributeOr("turn_direction", "else");
   has_traffic_light_ =
     !(assigned_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>().empty());
@@ -85,16 +86,16 @@ bool IntersectionModule::modifyPathVelocity(
   geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
 
   /* get lanelet map */
-  const auto lanelet_map_ptr = planner_data_->lanelet_map;
-  const auto routing_graph_ptr = planner_data_->routing_graph;
+  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
+  const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* get detection area and conflicting area */
   std::vector<lanelet::ConstLanelets> detection_area_lanelets;
   std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
 
   util::getObjectiveLanelets(
-    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &conflicting_area_lanelets,
-    &detection_area_lanelets, logger_);
+    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
+    &conflicting_area_lanelets, &detection_area_lanelets, logger_);
   std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
     conflicting_area_lanelets, planner_param_.detection_area_length);
   std::vector<lanelet::CompoundPolygon3d> detection_areas = util::getPolygon3dFromLaneletsVec(
@@ -115,8 +116,8 @@ bool IntersectionModule::modifyPathVelocity(
   int pass_judge_line_idx = -1;
   int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
-        lane_id_, conflicting_areas, planner_data_, planner_param_, path, *path, &stop_line_idx,
-        &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util"))) {
+        lane_id_, conflicting_areas, planner_data_, planner_param_.stop_line_margin, path, *path,
+        &stop_line_idx, &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util"))) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
@@ -603,7 +604,7 @@ bool IntersectionModule::checkAngleForTargetLanelets(
   const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids)
 {
   for (const int lanelet_id : target_lanelet_ids) {
-    const auto ll = planner_data_->lanelet_map->laneletLayer.get(lanelet_id);
+    const auto ll = planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lanelet_id);
     if (!lanelet::utils::isInLanelet(pose, ll, planner_param_.detection_area_margin)) {
       continue;
     }

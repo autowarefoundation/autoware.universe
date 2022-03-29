@@ -85,11 +85,39 @@ The maximum length of detection area depends on ego current vehicle velocity and
 
 ![brief](./docs/occlusion_spot/detection_area_poly.svg)
 
+##### Partition Lanelet
+
+By using lanelet information of "guard_rail", "fence", "wall" tag, it's possible to remove unwanted occlusion spot.
+![brief](./docs/occlusion_spot/occlusion_spot_partition.svg)
+
+##### Use Object Info
+
+use object info to make occupancy grid more accurate
+![brief](./docs/occlusion_spot/use_object_info.drawio.svg)
+
+##### Collision Free Judgement
+
+obstacle that can run out from occlusion should have free space until intersection from ego vehicle
+![brief](./docs/occlusion_spot/collision_free.drawio.svg)
+
 #### Module Parameters
 
-| Parameter        | Type   | Description                                                               |
-| ---------------- | ------ | ------------------------------------------------------------------------- |
-| `pedestrian_vel` | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
+| Parameter           | Type   | Description                                                                |
+| ------------------- | ------ | -------------------------------------------------------------------------- |
+| `pedestrian_vel`    | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point. |
+| `pedestrian_radius` | double | [m] assumed pedestrian radius which fits in occlusion spot.                |
+
+| Parameter               | Type | Description                                                      |
+| ----------------------- | ---- | ---------------------------------------------------------------- |
+| `filter_occupancy_grid` | bool | [-] whether to filter occupancy grid by morphologyEx or not.     |
+| `use_object_info`       | bool | [-] whether to reflect object info to occupancy grid map or not. |
+| `use_partition_lanelet` | bool | [-] whether to use partition lanelet map data.                   |
+
+| Parameter /debug          | Type | Description                                    |
+| ------------------------- | ---- | ---------------------------------------------- |
+| `is_show_occlusion`       | bool | [-] whether to show occlusion point markers.　 |
+| `is_show_cv_window`       | bool | [-] whether to show open_cv debug window.      |
+| `is_show_processing_time` | bool | [-] whether to show processing time.           |
 
 | Parameter /threshold    | Type   | Description                                               |
 | ----------------------- | ------ | --------------------------------------------------------- |
@@ -105,7 +133,6 @@ The maximum length of detection area depends on ego current vehicle velocity and
 | `non_effective_jerk`         | double | [m/s^3] weak jerk for velocity planning.                 |
 | `non_effective_acceleration` | double | [m/s^2] weak deceleration for velocity planning.         |
 | `min_allowed_velocity`       | double | [m/s] minimum velocity allowed                           |
-| `delay_time`                 | double | [m/s] time buffer for the system delay                   |
 | `safe_margin`                | double | [m] maximum error to stop with emergency braking system. |
 
 | Parameter /detection_area | Type   | Description                                                           |
@@ -125,7 +152,7 @@ The maximum length of detection area depends on ego current vehicle velocity and
 
 ```plantuml
 @startuml
-title modifyPathVelocity (Private/Public) Road
+title modifyPathVelocity (Occupancy/PredictedObject)
 start
 
 partition process_path {
@@ -135,16 +162,12 @@ note right
   using spline interpolation and interpolate (x,y,z,v)
 end note
 :calc closest path point from ego;
-:extract target road pair;
-note right
-extract target road type start and end pair and early return if none
-end note
 }
 
 partition process_sensor_data {
-if (road type is PUBLIC) then (yes)
+if (road type is PredictedObject) then (yes)
   :preprocess dynamic object;
-else if (road type is PRIVATE) then (yes)
+else if (road type is Occupancy) then (yes)
   :preprocess occupancy grid map info;
 else (no)
   stop
@@ -154,14 +177,14 @@ endif
 partition generate_detection_area_polygon {
 :convert path to path lanelet;
 :generate left/right slice of polygon that starts from path start;
-:generate interpolated polygon which is created from ego TTC and lateral distance that pedestrian can reach within ego TTC.;
+:generate interpolated polygon created from ego TTC and lateral distance that pedestrian can reach within ego TTC.;
 }
 partition find_possible_collision {
 :generate possible collision;
 :calculate collision path point and intersection point;
 note right
-  - occlusion spot is calculated by longitudinally closest point of unknown cells.
-  - intersection point is where ego front bumper and darting object will crash.
+  - occlusion spot is calculated by the longitudinally closest point of unknown cells.
+  - intersection point is where ego front bumper and the darting object will crash.
   - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
   - safe velocity and safe margin is calculated from performance of ego emergency braking system.
 end note
@@ -197,11 +220,11 @@ stop
 @enduml
 ```
 
-##### Detail process for public road
+##### Detail process for predicted object
 
 ```plantuml
 @startuml
-title modifyPathVelocity For Public Road
+title modifyPathVelocity
 start
 
 partition process_path {
@@ -253,7 +276,7 @@ stop
 
 ```plantuml
 @startuml
-title modifyPathVelocity For Private Road
+title modifyPathVelocity For Occupancy
 start
 
 partition process_path {
@@ -285,12 +308,19 @@ partition generate_possible_collision {
 :generate possible collision from occlusion spot;
 note right
   - occlusion spot candidate is N by N size unknown cells.
-  - consider occlusion which is nearer than `lateral_distance_threshold`.
+  - consider occlusion spot in detection area polygon.
+end note
+:filter occlusion spot by partition lanelets;
+note right
+  - filter occlusion spot by partition lanelets which prevent pedestrians come out.
 end note
 :calculate collision path point and intersection point;
+note right
+  - use pedestrian polygon to judge "collision_free" or not.
+end note
 :calculate safe velocity and safe margin for possible collision;
 note right
-  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
+  - safe velocity and safe margin is calculated from the performance of ego emergency braking system.
 end note
 }
 partition handle_possible_collision {

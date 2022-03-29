@@ -157,15 +157,9 @@ bool insertTargetVelocityPoint(
     }
     // ----------------
 
-    // insert target point
-    output.points.insert(
-      output.points.begin() + insert_target_point_idx, target_point_with_lane_id);
+    planning_utils::insertVelocity(
+      output, target_point_with_lane_id, velocity, insert_target_point_idx);
 
-    // insert 0 velocity after target point
-    for (size_t j = insert_target_point_idx; j < output.points.size(); ++j) {
-      output.points.at(j).point.longitudinal_velocity_mps =
-        std::min(static_cast<float>(velocity), output.points.at(j).point.longitudinal_velocity_mps);
-    }
     return true;
   }
   return false;
@@ -175,7 +169,8 @@ lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const int lane_id, const std::shared_ptr<const PlannerData> & planner_data,
   const std::string & attribute_name)
 {
-  lanelet::ConstLanelet lanelet = planner_data->lanelet_map->laneletLayer.get(lane_id);
+  lanelet::ConstLanelet lanelet =
+    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
   const auto road_markings = lanelet.regulatoryElementsAs<lanelet::autoware::RoadMarking>();
   lanelet::ConstLineStrings3d stop_line;
   for (const auto & road_marking : road_markings) {
@@ -299,15 +294,9 @@ bool insertTargetVelocityPoint(
     }
     // ----------------
 
-    // insert target point
-    output.points.insert(
-      output.points.begin() + insert_target_point_idx, target_point_with_lane_id);
-
-    // insert 0 velocity after target point
-    for (size_t j = insert_target_point_idx; j < output.points.size(); ++j) {
-      output.points.at(j).point.longitudinal_velocity_mps =
-        std::min(static_cast<float>(velocity), output.points.at(j).point.longitudinal_velocity_mps);
-    }
+    // insert target point or replace with 0 velocity if same points found
+    planning_utils::insertVelocity(
+      output, target_point_with_lane_id, velocity, insert_target_point_idx);
     return true;
   }
   return false;
