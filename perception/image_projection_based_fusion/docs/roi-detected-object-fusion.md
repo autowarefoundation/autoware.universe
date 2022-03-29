@@ -6,7 +6,7 @@ The `roi_detected_object_fusion` is a package to overwrite labels of detected ob
 
 ## Inner-workings / Algorithms
 
-The detected objects are projected onto image plnaes, and then if the ROIs of detected objects (3D ROIs) and from a 2D detector (2D ROIs) are overlapped, the labels of detected objects are overwritten with that of 2D ROIs. Intersection over Union (IoU) is used to determine if there are overlaps between them.
+The detected objects are projected onto image planes, and then if the ROIs of detected objects (3D ROIs) and from a 2D detector (2D ROIs) are overlapped, the labels of detected objects are overwritten with that of 2D ROIs. Intersection over Union (IoU) is used to determine if there are overlaps between them.
 
 The `DetectedObject` has three shape and the polygon vertices of a object are as below:
 
