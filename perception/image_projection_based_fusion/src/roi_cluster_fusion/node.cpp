@@ -48,7 +48,7 @@ void RoiClusterFusionNode::preprocess()
   }
 }
 
-void RoiClusterFusionNode::fusionOnSingleImage(
+void RoiClusterFusionNode::fuseOnSingleImage(
   const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info)
 {

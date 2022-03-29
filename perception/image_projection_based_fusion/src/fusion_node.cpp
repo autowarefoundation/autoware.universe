@@ -199,7 +199,7 @@ void FusionNode<Msg>::fusionCallback(
       continue;
     }
 
-    fusionOnSingleImage(image_id, *input_roi_msg, camera_info_map_.at(image_id));
+    fuseOnSingleImage(image_id, *input_roi_msg, camera_info_map_.at(image_id));
   }
 
   postprocess();

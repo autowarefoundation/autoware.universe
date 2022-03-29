@@ -30,7 +30,7 @@ public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void fusionOnSingleImage(
+  void fuseOnSingleImage(
     const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info) override;
 
