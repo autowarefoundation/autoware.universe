@@ -31,12 +31,14 @@ public:
 
 protected:
   void fuseOnSingleImage(
-    const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info) override;
+    const DetectedObjects & input_object_msg, const int image_id,
+    const DetectedObjectsWithFeature & input_roi_msg,
+    const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg) override;
 
   void generateDetectedObjectRois(
-    const double image_width, const double image_height,
-    const Eigen::Affine3d & object2camera_affine, const Eigen::Matrix4d & camera_projection,
+    const std::vector<DetectedObject> & input_objects, const double image_width,
+    const double image_height, const Eigen::Affine3d & object2camera_affine,
+    const Eigen::Matrix4d & camera_projection,
     std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map);
 
   void updateDetectedObjectClassification(

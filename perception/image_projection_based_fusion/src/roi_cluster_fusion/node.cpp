@@ -36,11 +36,11 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
   iou_threshold_ = declare_parameter("iou_threshold", 0.1);
 }
 
-void RoiClusterFusionNode::preprocess()
+void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
 {
   // reset cluster semantic type
   if (!use_cluster_semantic_type_) {
-    for (auto & feature_object : output_msg_.feature_objects) {
+    for (auto & feature_object : output_cluster_msg.feature_objects) {
       feature_object.object.classification.front().label =
         autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
       feature_object.object.existence_probability = 0.0;
@@ -49,8 +49,9 @@ void RoiClusterFusionNode::preprocess()
 }
 
 void RoiClusterFusionNode::fuseOnSingleImage(
-  const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
-  const sensor_msgs::msg::CameraInfo & camera_info)
+  const DetectedObjectsWithFeature & input_cluster_msg, const int image_id,
+  const DetectedObjectsWithFeature & input_roi_msg,
+  const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_pointcloud_rois;
@@ -66,7 +67,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   {
     const auto transform_stamped_optional = getTransformStamped(
       tf_buffer_, /*target*/ camera_info.header.frame_id,
-      /*source*/ input_msg_.header.frame_id, camera_info.header.stamp);
+      /*source*/ input_cluster_msg.header.frame_id, camera_info.header.stamp);
     if (!transform_stamped_optional) {
       return;
     }
@@ -74,14 +75,15 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   }
 
   std::map<std::size_t, RegionOfInterest> m_cluster_roi;
-  for (std::size_t i = 0; i < input_msg_.feature_objects.size(); ++i) {
-    if (input_msg_.feature_objects.at(i).feature.cluster.data.empty()) {
+  for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
+    if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
       continue;
     }
 
     sensor_msgs::msg::PointCloud2 transformed_cluster;
     tf2::doTransform(
-      input_msg_.feature_objects.at(i).feature.cluster, transformed_cluster, transform_stamped);
+      input_cluster_msg.feature_objects.at(i).feature.cluster, transformed_cluster,
+      transform_stamped);
 
     int min_x(camera_info.width), min_y(camera_info.height), max_x(0), max_y(0);
     std::vector<Eigen::Vector2d> projected_points;
@@ -150,11 +152,11 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     }
     if (
       iou_threshold_ < max_iou &&
-      output_msg_.feature_objects.at(index).object.existence_probability <=
+      output_cluster_msg.feature_objects.at(index).object.existence_probability <=
         input_roi_msg.feature_objects.at(i).object.existence_probability &&
       input_roi_msg.feature_objects.at(i).object.classification.front().label !=
         autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
-      output_msg_.feature_objects.at(index).object.classification =
+      output_cluster_msg.feature_objects.at(index).object.classification =
         input_roi_msg.feature_objects.at(i).object.classification;
     }
     debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);

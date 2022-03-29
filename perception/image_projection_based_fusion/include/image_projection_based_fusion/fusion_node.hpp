@@ -62,15 +62,16 @@ protected:
     DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
     DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg);
 
-  virtual void preprocess();
+  virtual void preprocess(Msg & output_msg);
 
   virtual void fuseOnSingleImage(
-    const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info) = 0;
+    const Msg & input_msg, const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
+    const sensor_msgs::msg::CameraInfo & camera_info, Msg & output_msg) = 0;
 
+  // set args if you need
   virtual void postprocess();
 
-  void publish();
+  void publish(const Msg & output_msg);
 
   int rois_number_{0};
   tf2_ros::Buffer tf_buffer_;
@@ -96,10 +97,6 @@ protected:
   typename std::shared_ptr<Sync> sync_ptr_;
 
   // output
-  // if the type of output message isn't Msg,
-  // overwrite output_msg_ and pub_ptr_ in derived class.
-  Msg input_msg_;
-  Msg output_msg_;
   typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
 
   // debugger
