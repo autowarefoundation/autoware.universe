@@ -25,13 +25,13 @@
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -57,7 +57,7 @@ public:
     sub_trajectory_ = create_subscription<Trajectory>(
       "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
     sub_obstacle_pointcloud_ = create_subscription<PointCloud2>(
-      "~/input/obstacle_pointcloud", rclcpp::QoS(1).best_effort().transient_local(),
+      "~/input/obstacle_pointcloud", rclcpp::QoS(1).best_effort(),
       [this](const PointCloud2::ConstSharedPtr msg) { obstacle_pointcloud_ptr_ = msg; });
 
     pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -114,21 +114,15 @@ private:
       RCLCPP_WARN(get_logger(), "Obstable pointcloud not yet received");
       return;
     }
-    std::vector<std::vector<geometry_msgs::msg::Point>> footprints;
     Trajectory safe_trajectory = *msg;
-    const auto max_vel = std::max_element(
-                           safe_trajectory.points.cbegin(), safe_trajectory.points.cend(),
-                           [](const auto & p1, const auto & p2) {
-                             return p1.longitudinal_velocity_mps < p2.longitudinal_velocity_mps;
-                           })
-                           ->longitudinal_velocity_mps;
+    const auto extra_vehicle_length = vehicle_length_ / 2 + dist_safety_buffer_;
     const auto filtered_obstacle_pointcloud = transformAndFilterPointCloud(
-      safe_trajectory, *obstacle_pointcloud_ptr_, transform_listener_,
-      max_vel * time_safety_buffer_ + dist_safety_buffer_);
+      safe_trajectory, *obstacle_pointcloud_ptr_, transform_listener_, time_safety_buffer_,
+      extra_vehicle_length);
 
     for (auto & trajectory_point : safe_trajectory.points) {
-      const auto forward_simulated_vector = forwardSimulatedVector(
-        trajectory_point, time_safety_buffer_, dist_safety_buffer_, vehicle_length_);
+      const auto forward_simulated_vector =
+        forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
       const auto forward_simulated_footprint =
         forwardSimulatedFootprint(forward_simulated_vector, vehicle_width_);
       const auto dist_to_collision = distanceToClosestCollision(
@@ -136,10 +130,10 @@ private:
       if (dist_to_collision) {
         trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
           trajectory_point,
-          std::max(
-            {}, static_cast<Float>(*dist_to_collision - vehicle_length_ - dist_safety_buffer_)));
+          std::max({}, static_cast<Float>(*dist_to_collision - extra_vehicle_length)));
       }
     }
+
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
     publishDebug(*msg, safe_trajectory);

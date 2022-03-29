@@ -13,12 +13,83 @@
 // limitations under the License.
 
 #include "safe_velocity_adjustor/collision_distance.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <pcl/impl/point_types.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+
+#include <autoware_auto_planning_msgs/msg/detail/trajectory_point__struct.hpp>
 
 #include <gtest/gtest.h>
 
+TEST(TestCollisionDistance, forwardSimulatedVector)
+{
+  using safe_velocity_adjustor::forwardSimulatedVector;
+  using safe_velocity_adjustor::linestring_t;
+  autoware_auto_planning_msgs::msg::TrajectoryPoint trajectory_point;
+
+  trajectory_point.pose.position.x = 0.0;
+  trajectory_point.pose.position.y = 0.0;
+
+  auto duration = 0.0;
+  auto extra_dist = 0.0;
+
+  const auto check_vector = [&](const auto vector_length) {
+    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
+    auto vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
+    EXPECT_DOUBLE_EQ(vector[1].x(), vector_length);
+    EXPECT_DOUBLE_EQ(vector[1].y(), 0.0);
+    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_2);
+    vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
+    EXPECT_NEAR(vector[1].x(), 0.0, 1e-9);
+    EXPECT_DOUBLE_EQ(vector[1].y(), vector_length);
+    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_4);
+    vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
+    EXPECT_DOUBLE_EQ(vector[1].x(), std::sqrt(0.5) * vector_length);
+    EXPECT_DOUBLE_EQ(vector[1].y(), std::sqrt(0.5) * vector_length);
+    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(-M_PI_2);
+    vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
+    EXPECT_NEAR(vector[1].x(), 0.0, 1e-9);
+    EXPECT_DOUBLE_EQ(vector[1].y(), -vector_length);
+  };
+
+  // 0 velocity: whatever the duration the vector length is always = to extra_dist
+  trajectory_point.longitudinal_velocity_mps = 0.0;
+
+  duration = 0.0;
+  extra_dist = 0.0;
+  check_vector(extra_dist);
+
+  duration = 5.0;
+  extra_dist = 2.0;
+  check_vector(extra_dist);
+
+  duration = -5.0;
+  extra_dist = 3.5;
+  check_vector(extra_dist);
+
+  // set non-zero velocities
+  trajectory_point.longitudinal_velocity_mps = 1.0;
+
+  duration = 1.0;
+  extra_dist = 0.0;
+  check_vector(1.0 + extra_dist);
+
+  duration = 5.0;
+  extra_dist = 2.0;
+  check_vector(5.0 + extra_dist);
+
+  duration = -5.0;
+  extra_dist = 3.5;
+  check_vector(-5.0 + extra_dist);
+}
 TEST(TestCollisionDistance, distanceToClosestCollision)
 {
   using safe_velocity_adjustor::distanceToClosestCollision;
