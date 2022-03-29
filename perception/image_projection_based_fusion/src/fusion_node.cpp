@@ -153,10 +153,6 @@ void FusionNode<Msg>::fusionCallback(
     return;
   }
 
-  if (debugger_) {
-    debugger_->clear();
-  }
-
   Msg output_msg = *input_msg;
 
   preprocess(output_msg);
@@ -196,6 +192,9 @@ void FusionNode<Msg>::fusionCallback(
     if (camera_info_map_.find(image_id) == camera_info_map_.end()) {
       RCLCPP_WARN(this->get_logger(), "no camera info. id is %zu", image_id);
       continue;
+    }
+    if (debugger_) {
+      debugger_->clear();
     }
 
     fuseOnSingleImage(
