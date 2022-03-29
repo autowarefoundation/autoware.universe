@@ -340,8 +340,7 @@ bool generatePossibleCollisionsFromObjects(
       arc_coord_occlusion, arc_coord_occlusion_with_offset, path_lanelet, param);
     possible_collisions.emplace_back(pc);
   }
-  if (possible_collisions.empty()) return false;
-  return true;
+  return !possible_collisions.empty();
 }
 
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
