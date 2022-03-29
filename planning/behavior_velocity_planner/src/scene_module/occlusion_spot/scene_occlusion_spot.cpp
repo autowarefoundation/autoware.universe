@@ -29,10 +29,10 @@
 #include <vector>
 
 // turn on only when debugging.
-#define DEBUG_PRINT(enable, n, x)                                   \
-  if (enable) {                                                     \
-    const double time = x;                                          \
-    RCLCPP_INFO_STREAM_THROTTLE(logger_, *clock_, 3000, n << time); \
+#define DEBUG_PRINT(enable, n, x)                                     \
+  if (enable) {                                                       \
+    const double time = x;                                            \
+    RCLCPP_INFO_STREAM_THROTTLE(logger_, *clock_, 3000, (n << time)); \
   }
 
 namespace behavior_velocity_planner
@@ -124,7 +124,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
     DEBUG_PRINT(show_time, "grid [ms]: ", stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here
-    if (!utils::createPossibleCollisionsInDetectionArea(
+    if (!utils::generatePossibleCollisionsFromGridMap(
           possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_,
           debug_data_)) {
       // no occlusion spot
@@ -138,7 +138,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     const auto filtered_obj =
       utils::filterDynamicObjectByDetectionArea(obj, debug_data_.detection_area_polygons);
     // Note: Don't consider offset from path start to ego here
-    if (!utils::generatePossibleCollisionBehindParkedVehicle(
+    if (!utils::generatePossibleCollisionsFromObjects(
           possible_collisions, interp_path, param_, offset_from_start_to_ego, filtered_obj)) {
       // no occlusion spot
       return true;

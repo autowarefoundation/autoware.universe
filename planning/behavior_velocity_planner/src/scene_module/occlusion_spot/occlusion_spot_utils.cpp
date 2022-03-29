@@ -315,7 +315,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   return pc;
 }
 
-bool generatePossibleCollisionBehindParkedVehicle(
+bool generatePossibleCollisionsFromObjects(
   std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
   const PlannerParam & param, const double offset_from_start_to_ego,
   const std::vector<PredictedObject> & dyn_objects)
@@ -361,7 +361,7 @@ std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
   return filtered_obj;
 }
 
-bool createPossibleCollisionsInDetectionArea(
+bool generatePossibleCollisionsFromGridMap(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
   DebugData & debug_data)
@@ -396,8 +396,7 @@ bool createPossibleCollisionsInDetectionArea(
     distance_lower_bound = lateral_distance;
     possible_collisions.emplace_back(pc.get());
   }
-  if (possible_collisions.empty()) return false;
-  return true;
+  return !possible_collisions.empty();
 }
 
 bool isBlockedByPartition(const LineString2d & direction, const BasicPolygons2d & partitions)
@@ -454,11 +453,8 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
     candidate = pc;
     has_collision = true;
   }
-  if (has_collision) {
-    return candidate;
-  } else {
-    return boost::none;
-  }
+  if (has_collision) return candidate;
+  return boost::none;
 }
 
 }  // namespace occlusion_spot_utils
