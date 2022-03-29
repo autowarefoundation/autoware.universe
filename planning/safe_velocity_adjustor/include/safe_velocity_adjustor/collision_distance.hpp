@@ -20,11 +20,9 @@
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
-#include <boost/geometry/algorithms/for_each.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/multi_point.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 #include <boost/geometry/strategies/agnostic/buffer_distance_symmetric.hpp>
@@ -32,7 +30,8 @@
 #include <boost/geometry/strategies/cartesian/buffer_point_square.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <tf2/utils.h>
 
 #include <algorithm>
@@ -47,19 +46,22 @@ using linestring_t = bg::model::linestring<point_t>;
 using polygon_t = bg::model::polygon<point_t>;
 using multipolygon_t = bg::model::multi_polygon<polygon_t>;
 
+/// @brief generate a segment to where the vehicle body would be after some duration assuming a
+/// constant velocity and heading
 inline linestring_t forwardSimulatedVector(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point,
-  const double time_safety_buffer, const double dist_safety_buffer, const double vehicle_length)
+  const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point, const double duration,
+  const double extra_distance)
 {
   const auto heading = tf2::getYaw(trajectory_point.pose.orientation);
   const auto velocity = trajectory_point.longitudinal_velocity_mps;
-  const auto length = velocity * time_safety_buffer + dist_safety_buffer + vehicle_length / 2;
+  const auto length = velocity * duration + extra_distance;
   const auto from = point_t{trajectory_point.pose.position.x, trajectory_point.pose.position.y};
   const auto to =
     point_t{from.x() + std::cos(heading) * length, from.y() + std::sin(heading) * length};
   return linestring_t{from, to};
 }
 
+/// @brief generate a footprint from a segment and a vehicle width
 inline polygon_t forwardSimulatedFootprint(const linestring_t & vector, const double vehicle_width)
 {
   multipolygon_t footprint;
@@ -71,6 +73,7 @@ inline polygon_t forwardSimulatedFootprint(const linestring_t & vector, const do
   return footprint[0];
 }
 
+/// @brief calculate the distance to the closest obstacle point colliding with the footprint
 inline std::optional<double> distanceToClosestCollision(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point,
   const polygon_t & footprint, const pcl::PointCloud<pcl::PointXYZ> & obstacle_points)
