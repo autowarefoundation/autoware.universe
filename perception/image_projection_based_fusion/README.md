@@ -8,7 +8,7 @@ The `image_projection_based_fusion` is a package to fuse detected obstacles (bou
 
 Detail description of each fusion's algorithm is in the following links.
 
-| Fusion Name                | Description                                                                                    | Detail                                       |
-| -------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| roi_cluster_fusion         | Overwrite a classfication label of clusters by that of ROIs from a 2D object detector.         | [link](./docs/roi-cluster-fusion.md)         |
-| roi_detected_object_fusion | Overwrite a classfication label of detected objects by that of ROIs from a 2D object detector. | [link](./docs/roi-detected-object-fusion.md) |
+| Fusion Name                | Description                                                                                     | Detail                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| roi_cluster_fusion         | Overwrite a classification label of clusters by that of ROIs from a 2D object detector.         | [link](./docs/roi-cluster-fusion.md)         |
+| roi_detected_object_fusion | Overwrite a classification label of detected objects by that of ROIs from a 2D object detector. | [link](./docs/roi-detected-object-fusion.md) |
