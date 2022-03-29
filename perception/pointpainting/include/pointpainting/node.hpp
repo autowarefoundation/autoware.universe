@@ -18,7 +18,8 @@
 #define EIGEN_MPL2_ONLY
 
 #include <Eigen/Core>
-// #include <config.hpp>
+#include <centerpoint_trt.hpp>
+#include <config.hpp>
 #include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -46,25 +47,25 @@
 
 namespace pointpainting
 {
-// class Debugger
-// {
-// public:
-//   explicit Debugger(rclcpp::Node * node, const int camera_num);
-//   ~Debugger() = default;
-//   rclcpp::Node * node_;
-//   void showImage(
-//     const int id, const rclcpp::Time & time,
-//     const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
-//     const std::vector<sensor_msgs::msg::RegionOfInterest> & pointcloud_rois,
-//     const std::vector<Eigen::Vector2d> & points);
+class Debugger
+{
+public:
+  explicit Debugger(rclcpp::Node * node, const int camera_num);
+  ~Debugger() = default;
+  rclcpp::Node * node_;
+  void showImage(
+    const int id, const rclcpp::Time & time,
+    const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
+    // const std::vector<sensor_msgs::msg::RegionOfInterest> & pointcloud_rois,
+    const std::vector<Eigen::Vector2d> & points);
 
-// private:
-//   void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int
-//   id); std::shared_ptr<image_transport::ImageTransport> image_transport_;
-//   std::vector<image_transport::Subscriber> image_subs_;
-//   std::vector<image_transport::Publisher> image_pubs_;
-//   std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
-// };
+private:
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int id);
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
+  std::vector<image_transport::Subscriber> image_subs_;
+  std::vector<image_transport::Publisher> image_pubs_;
+  std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
+};
 
 class PointPaintingNode : public rclcpp::Node
 {
@@ -95,6 +96,7 @@ private:
     message_filters::Subscriber<tier4_perception_msgs::msg::DetectedObjectsWithFeature>>>
     v_roi_sub_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr painted_pointcloud_pub_;
 
   message_filters::PassThrough<tier4_perception_msgs::msg::DetectedObjectsWithFeature> passthrough_;
   typedef message_filters::sync_policies::ApproximateTime<
@@ -118,23 +120,24 @@ private:
 
   int rois_number_;
   std::map<int, sensor_msgs::msg::CameraInfo> m_camera_info_;
+  std::shared_ptr<Debugger> debugger_;
 
   float score_threshold_{0.0};
-  // bool use_encoder_trt_{false};
-  // bool use_head_trt_{false};
-  // std::string trt_precision_;
+  bool use_encoder_trt_{false};
+  bool use_head_trt_{false};
+  std::string trt_precision_;
 
-  // std::string encoder_onnx_path_;
-  // std::string encoder_engine_path_;
-  // std::string encoder_pt_path_;
-  // std::string head_onnx_path_;
-  // std::string head_engine_path_;
-  // std::string head_pt_path_;
+  std::string encoder_onnx_path_;
+  std::string encoder_engine_path_;
+  std::string encoder_pt_path_;
+  std::string head_onnx_path_;
+  std::string head_engine_path_;
+  std::string head_pt_path_;
 
-  // std::vector<std::string> class_names_;
-  // bool rename_car_to_truck_and_bus_{false};
+  std::vector<std::string> class_names_;
+  bool rename_car_to_truck_and_bus_{false};
 
-  // std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
+  std::unique_ptr<centerpoint::CenterPointTRT> detector_ptr_{nullptr};
 };
 
 }  // namespace pointpainting
