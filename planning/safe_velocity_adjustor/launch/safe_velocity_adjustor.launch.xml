@@ -10,7 +10,10 @@
 
   <arg name="param_path" default="$(find-pkg-share safe_velocity_adjustor)/config/default_safe_velocity_adjustor.param.yaml" />
 
-  <node pkg="safe_velocity_adjustor" exec="safe_velocity_adjustor" name="safe_velocity_adjustor" output="screen" launch-prefix="konsole -e gdb -ex run --args">
+  <let name="callgrind-launch-prefix" value="valgrind --tool=callgrind --dump-instr=yes -v --instr-atstart=no" />
+  <let name="gdb-launch-prefix" value="konsole -e gdb -ex run --args" />
+  <node pkg="safe_velocity_adjustor" exec="safe_velocity_adjustor" name="safe_velocity_adjustor" output="screen"
+    launch-prefix="$(var gdb-launch-prefix)">
     <param from="$(var param_path)" />
     <param name="publish_debug_markers" value="$(var publish_debug_markers)"/>
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
