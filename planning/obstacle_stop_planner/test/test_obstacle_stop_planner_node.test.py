@@ -13,12 +13,8 @@
 # limitations under the License.
 
 import copy
-from dataclasses import field
-import imp
 import math
-from operator import truediv
 import struct
-import time
 import unittest
 
 import autoware_auto_perception_msgs.msg
@@ -30,10 +26,8 @@ import launch_testing
 import nav_msgs.msg
 import pytest
 import rclpy
-from rclpy.node import Node
 from ros2param.api import call_get_parameters
 import sensor_msgs.msg
-import std_msgs.msg
 
 
 @pytest.mark.launch_test
@@ -130,8 +124,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         # frame id
         map_frame = "map"
         base_link_frame = "base_link"
-        x = 0
-        y = 0
+
         # pointcloud2
         self.pointcloud_msg = sensor_msgs.msg.PointCloud2()
         self.pointcloud_msg.header.frame_id = base_link_frame
@@ -243,7 +236,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
             autoware_auto_perception_msgs.msg.PredictedObjects, "input/objects", 10
         )
         # subscliber
-        trajectory_sub = self.node.create_subscription(
+        self.node.create_subscription(
             autoware_auto_planning_msgs.msg.Trajectory,
             "output/trajectory",
             self.trajectory_callback,
