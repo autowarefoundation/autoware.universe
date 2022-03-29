@@ -133,9 +133,9 @@ void FusionNode<Msg>::cameraInfoCallback(
 }
 
 template <class Msg>
-void FusionNode<Msg>::preprocess()
+void FusionNode<Msg>::preprocess(Msg & ouput_msg __attribute__((unused)))
 {
-  // do nothing
+  // do nothing by default
 }
 
 template <class Msg>
@@ -157,10 +157,9 @@ void FusionNode<Msg>::fusionCallback(
     debugger_->clear();
   }
 
-  input_msg_ = *input_msg;
-  output_msg_ = *input_msg;
+  Msg output_msg = *input_msg;
 
-  preprocess();
+  preprocess(output_msg);
 
   for (std::size_t image_id = 0; image_id < rois_subs_.size(); image_id++) {
     DetectedObjectsWithFeature::ConstSharedPtr input_roi_msg;
@@ -199,24 +198,25 @@ void FusionNode<Msg>::fusionCallback(
       continue;
     }
 
-    fuseOnSingleImage(image_id, *input_roi_msg, camera_info_map_.at(image_id));
+    fuseOnSingleImage(
+      *input_msg, image_id, *input_roi_msg, camera_info_map_.at(image_id), output_msg);
   }
 
   postprocess();
 
-  publish();
+  publish(output_msg);
 }
 
 template <class Msg>
 void FusionNode<Msg>::postprocess()
 {
-  // do nothing
+  // do nothing by default
 }
 
 template <class Msg>
-void FusionNode<Msg>::publish()
+void FusionNode<Msg>::publish(const Msg & output_msg)
 {
-  pub_ptr_->publish(output_msg_);
+  pub_ptr_->publish(output_msg);
 }
 
 template class FusionNode<DetectedObjects>;

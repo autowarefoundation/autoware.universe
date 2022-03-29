@@ -30,14 +30,15 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
-  const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
-  const sensor_msgs::msg::CameraInfo & camera_info)
+  const DetectedObjects & input_object_msg, const int image_id,
+  const DetectedObjectsWithFeature & input_roi_msg,
+  const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg)
 {
   Eigen::Affine3d object2camera_affine;
   {
     const auto transform_stamped_optional = getTransformStamped(
       tf_buffer_, /*target*/ camera_info.header.frame_id,
-      /*source*/ input_msg_.header.frame_id, camera_info.header.stamp);
+      /*source*/ input_object_msg.header.frame_id, camera_info.header.stamp);
     if (!transform_stamped_optional) {
       return;
     }
@@ -52,10 +53,11 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
 
   std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> object_roi_map;
   generateDetectedObjectRois(
-    static_cast<double>(camera_info.width), static_cast<double>(camera_info.height),
-    object2camera_affine, camera_projection, object_roi_map);
+    input_object_msg.objects, static_cast<double>(camera_info.width),
+    static_cast<double>(camera_info.height), object2camera_affine, camera_projection,
+    object_roi_map);
   updateDetectedObjectClassification(
-    input_roi_msg.feature_objects, object_roi_map, output_msg_.objects);
+    input_roi_msg.feature_objects, object_roi_map, output_object_msg.objects);
 
   if (debugger_) {
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
@@ -67,14 +69,15 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
 }
 
 void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
-  const double image_width, const double image_height, const Eigen::Affine3d & object2camera_affine,
+  const std::vector<DetectedObject> & input_objects, const double image_width,
+  const double image_height, const Eigen::Affine3d & object2camera_affine,
   const Eigen::Matrix4d & camera_projection,
   std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
 {
-  for (std::size_t obj_i = 0; obj_i < input_msg_.objects.size(); obj_i++) {
+  for (std::size_t obj_i = 0; obj_i < input_objects.size(); obj_i++) {
     std::vector<Eigen::Vector3d> vertices_camera_coord;
     {
-      const auto & object = input_msg_.objects.at(obj_i);
+      const auto & object = input_objects.at(obj_i);
       std::vector<Eigen::Vector3d> vertices;
       objectToVertices(object.kinematics.pose_with_covariance.pose, object.shape, vertices);
       transformPoints(vertices, object2camera_affine, vertices_camera_coord);

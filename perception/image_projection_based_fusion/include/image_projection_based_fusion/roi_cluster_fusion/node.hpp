@@ -28,11 +28,13 @@ public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void preprocess();
+  void preprocess(DetectedObjectsWithFeature & output_cluster_msg) override;
 
   void fuseOnSingleImage(
-    const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info) override;
+    const DetectedObjectsWithFeature & input_cluster_msg, const int image_id,
+    const DetectedObjectsWithFeature & input_roi_msg,
+    const sensor_msgs::msg::CameraInfo & camera_info,
+    DetectedObjectsWithFeature & output_cluster_msg) override;
 
   bool use_iou_x_{false};
   bool use_iou_y_{false};
