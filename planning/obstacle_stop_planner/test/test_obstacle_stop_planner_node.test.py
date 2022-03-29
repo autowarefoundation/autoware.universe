@@ -38,7 +38,6 @@ from ros2param.api import call_get_parameters
 
 def generate_test_description():
     
-    print("==================== launch test start =====================")
     obstacle_stop_planner_node = launch_ros.actions.Node(
         package='obstacle_stop_planner',
         executable='obstacle_stop_planner_node',
@@ -180,7 +179,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         self.pointcloud_msg.row_step=self.pointcloud_msg.width*self.pointcloud_msg.point_step
         self.pointcloud_msg.data=[]
         for i in range(0,self.pointcloud_msg.width):
-            self.pointcloud_msg.data=self.point_to_list(x,y,i/10,0.0)+self.pointcloud_msg.data 
+            self.pointcloud_msg.data=self.point_to_list(x,y,i/2,0.0)+self.pointcloud_msg.data 
 
     def point_to_list(self,x,y,z,i):
         point_list=struct.pack('<f',float(x))+struct.pack('<f',float(y))+struct.pack('<f',float(z))+struct.pack('<f',float(i))
@@ -221,7 +220,8 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
 
         self.init_messages()
 
-        y_point_resolution=0.2
+        # param [m]
+        y_point_resolution=0.4
         y_point_test_margin=0.5
         x_point_resolution=10.0
 
@@ -237,7 +237,7 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         test_point_y=[n*y_point_resolution for n in test_point_y]
         test_point_y.append(-self.right_limit_line)
         test_point_y.append(self.left_limit_line)
-        test_point_x.sort()
+        #test_point_x.sort()
         test_point_y.sort()
 
         #while rclpy.ok():
@@ -264,17 +264,11 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
         self.assertEqual(self.true_count,len(test_point_x)*len(test_point_y)) 
 
 
-
-
-
-"""
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
 
     def test_exit_code(self, proc_info):
         # Check that all processes in the launch (in this case, there's just one) exit
         # with code 0
-        calc_result=5+5
-        self.assertEqual(10,calc_result) 
-        #launch_testing.asserts.assertExitCodes(proc_info)
-        """
+        launch_testing.asserts.assertExitCodes(proc_info)
+        
