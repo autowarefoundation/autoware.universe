@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     occlusion_spot:
-      detection_method: "occupancy_grid"    # [-] candidate is "occupancy_grid" or "predicted_object"
+      detection_method: "predicted_object"  # [-] candidate is "occupancy_grid" or "predicted_object"
       pass_judge: "current_velocity"        # [-] candidate is "current_velocity"
       filter_occupancy_grid: true           # [-] whether to filter occupancy grid by morphologyEx or not
       use_object_info: true                 # [-] whether to reflect object info to occupancy grid map or not
