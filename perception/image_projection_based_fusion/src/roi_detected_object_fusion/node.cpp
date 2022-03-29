@@ -29,7 +29,7 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
   iou_threshold_ = declare_parameter("iou_threshold", 0.1);
 }
 
-void RoiDetectedObjectFusionNode::fusionOnSingleImage(
+void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info)
 {

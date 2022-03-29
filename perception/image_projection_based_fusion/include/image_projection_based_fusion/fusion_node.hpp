@@ -64,7 +64,7 @@ protected:
 
   virtual void preprocess();
 
-  virtual void fusionOnSingleImage(
+  virtual void fuseOnSingleImage(
     const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info) = 0;
 
