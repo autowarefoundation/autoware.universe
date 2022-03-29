@@ -628,14 +628,13 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     return;
   }
 
-  if(!object_ptr_){
+  if (!object_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "waiting for object...");
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "waiting for object...");
     return;
   }
 
-    if(!current_velocity_ptr_){
+  if (!current_velocity_ptr_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
       "waiting for odometry...");
