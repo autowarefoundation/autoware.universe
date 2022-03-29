@@ -125,7 +125,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
     # ${CUDA_INCLUDE_DIRS}
     # ${TORCH_INCLUDE_DIRS}
   )
- 
+
   ### centerpoint ###
   # ament_auto_add_library(centerpoint SHARED
   #   lib/src/pointcloud_densification.cpp
@@ -160,7 +160,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
     PLUGIN "pointpainting::PointPaintingNode"
     EXECUTABLE pointpainting_node
   )
- 
+
   if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
