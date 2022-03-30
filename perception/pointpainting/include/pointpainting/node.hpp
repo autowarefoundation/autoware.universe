@@ -47,6 +47,7 @@
 
 namespace pointpainting
 {
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 class Debugger
 {
 public:
@@ -74,7 +75,7 @@ public:
 
 private:
   void fusionCallback(
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg,
     tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
     tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
     tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
@@ -117,10 +118,12 @@ private:
     auto dummy = input;
     passthrough_.add(dummy);
   }
+  static uint8_t getSemanticType(const std::string & class_name);
+  static bool isCarLikeVehicleLabel(const uint8_t label);
 
   int rois_number_;
   std::map<int, sensor_msgs::msg::CameraInfo> m_camera_info_;
-  std::shared_ptr<Debugger> debugger_;
+  // std::shared_ptr<Debugger> debugger_;
 
   float score_threshold_{0.0};
   bool use_encoder_trt_{false};
@@ -137,7 +140,7 @@ private:
   std::vector<std::string> class_names_;
   bool rename_car_to_truck_and_bus_{false};
 
-  std::unique_ptr<centerpoint::CenterPointTRT> detector_ptr_{nullptr};
+  std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
 };
 
 }  // namespace pointpainting

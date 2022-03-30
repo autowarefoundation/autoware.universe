@@ -24,6 +24,7 @@
 #include <rclcpp_components/register_node_macro.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <c10/cuda/CUDAStream.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.h>
@@ -32,6 +33,7 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#include <torch/script.h>
 
 #include <algorithm>
 #include <chrono>
@@ -47,83 +49,92 @@
 
 namespace pointpainting
 {
-Debugger::Debugger(rclcpp::Node * node, const int camera_num) : node_(node)
-{
-  image_buffers_.resize(camera_num);
-  for (int id = 0; id < camera_num; ++id) {
-    auto sub = image_transport::create_subscription(
-      node, "input/image_raw" + std::to_string(id),
-      boost::bind(&Debugger::imageCallback, this, _1, id), "raw", rmw_qos_profile_sensor_data);
-    image_subs_.push_back(sub);
-    if (node->has_parameter("format")) {
-      node->undeclare_parameter("format");
-    }
-    if (node->has_parameter("jpeg_quality")) {
-      node->undeclare_parameter("jpeg_quality");
-    }
-    if (node->has_parameter("png_level")) {
-      node->undeclare_parameter("png_level");
-    }
-    auto pub = image_transport::create_publisher(node, "output/image_raw" + std::to_string(id));
-    image_pubs_.push_back(pub);
-    image_buffers_.at(id).set_capacity(5);
-  }
-}
+// Debugger::Debugger(rclcpp::Node * node, const int camera_num) : node_(node)
+// {
+//   image_buffers_.resize(camera_num);
+//   for (int id = 0; id < camera_num; ++id) {
+//     auto sub = image_transport::create_subscription(
+//       node, "input/image_raw" + std::to_string(id),
+//       boost::bind(&Debugger::imageCallback, this, _1, id), "raw", rmw_qos_profile_sensor_data);
+//     image_subs_.push_back(sub);
+//     if (node->has_parameter("format")) {
+//       node->undeclare_parameter("format");
+//     }
+//     if (node->has_parameter("jpeg_quality")) {
+//       node->undeclare_parameter("jpeg_quality");
+//     }
+//     if (node->has_parameter("png_level")) {
+//       node->undeclare_parameter("png_level");
+//     }
+//     auto pub = image_transport::create_publisher(node, "output/image_raw" + std::to_string(id));
+//     image_pubs_.push_back(pub);
+//     image_buffers_.at(id).set_capacity(5);
+//   }
+// }
 
-void Debugger::imageCallback(
-  const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int id)
-{
-  image_buffers_.at(id).push_front(input_image_msg);
-}
+// void Debugger::imageCallback(
+//   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int id)
+// {
+//   image_buffers_.at(id).push_front(input_image_msg);
+// }
 
-void Debugger::showImage(
-  const int id, const rclcpp::Time & time,
-  const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
-  const std::vector<Eigen::Vector2d> & points)
-{
-  const boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr> & image_buffer =
-    image_buffers_.at(id);
-  const image_transport::Publisher & image_pub = image_pubs_.at(id);
-  for (size_t i = 0; i < image_buffer.size(); ++i) {
-    if (image_buffer.at(i)->header.stamp == time) {
-      cv_bridge::CvImagePtr cv_ptr;
-      cv_ptr = cv_bridge::toCvCopy(image_buffer.at(i), image_buffer.at(i)->encoding);
-      for (const auto & point : points) {
-        cv::circle(
-          cv_ptr->image, cv::Point(static_cast<int>(point.x()), static_cast<int>(point.y())), 2,
-          cv::Scalar(255, 255, 255), 3, 4);
-      }
-      for (const auto & image_roi : image_rois) {
-        cv::line(
-          cv_ptr->image, cv::Point(image_roi.x_offset, image_roi.y_offset),
-          cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset),
-          cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-        cv::line(
-          cv_ptr->image, cv::Point(image_roi.x_offset, image_roi.y_offset),
-          cv::Point(image_roi.x_offset, image_roi.y_offset + image_roi.height),
-          cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-        cv::line(
-          cv_ptr->image, cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset),
-          cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset + image_roi.height),
-          cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-        cv::line(
-          cv_ptr->image, cv::Point(image_roi.x_offset, image_roi.y_offset + image_roi.height),
-          cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset + image_roi.height),
-          cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-      }
-      image_pub.publish(cv_ptr->toImageMsg());
-      cv::imshow("ROI" + std::to_string(id), cv_ptr->image);
-      cv::waitKey(2);
+// void Debugger::showImage(
+//   const int id, const rclcpp::Time & time,
+//   const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
+//   const std::vector<Eigen::Vector2d> & points)
+// {
+//   const boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr> & image_buffer =
+//     image_buffers_.at(id);
+//   const image_transport::Publisher & image_pub = image_pubs_.at(id);
+//   for (size_t i = 0; i < image_buffer.size(); ++i) {
+//     if (image_buffer.at(i)->header.stamp == time) {
+//       cv_bridge::CvImagePtr cv_ptr;
+//       cv_ptr = cv_bridge::toCvCopy(image_buffer.at(i), image_buffer.at(i)->encoding);
+//       for (const auto & point : points) {
+//         cv::circle(
+//           cv_ptr->image, cv::Point(static_cast<int>(point.x()), static_cast<int>(point.y())), 2,
+//           cv::Scalar(255, 255, 255), 3, 4);
+//       }
+//       for (const auto & image_roi : image_rois) {
+//         cv::line(
+//           cv_ptr->image, cv::Point(image_roi.x_offset, image_roi.y_offset),
+//           cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset),
+//           cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+//         cv::line(
+//           cv_ptr->image, cv::Point(image_roi.x_offset, image_roi.y_offset),
+//           cv::Point(image_roi.x_offset, image_roi.y_offset + image_roi.height),
+//           cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+//         cv::line(
+//           cv_ptr->image, cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset),
+//           cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset + image_roi.height),
+//           cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+//         cv::line(
+//           cv_ptr->image, cv::Point(image_roi.x_offset, image_roi.y_offset + image_roi.height),
+//           cv::Point(image_roi.x_offset + image_roi.width, image_roi.y_offset + image_roi.height),
+//           cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+//       }
+//       image_pub.publish(cv_ptr->toImageMsg());
+//       cv::namedWindow("ROI" + std::to_string(id), cv::WINDOW_NORMAL);
+//       cv::imshow("ROI" + std::to_string(id), cv_ptr->image);
+//       cv::waitKey(2);
 
-      break;
-    }
-  }
-}
+//       break;
+//     }
+//   }
+// }
 
 PointPaintingNode::PointPaintingNode(const rclcpp::NodeOptions & node_options)
 : Node("pointpainting", node_options),
   tf_buffer_(this->get_clock())  //, tf_listener_ptr_(tf_buffer_)
 {
+  // c10::Device device_ = torch::kCUDA;
+  // torch::jit::script::Module encoder_pt_;
+  // std::cout << "torch::jit::script::Module" << std::endl;
+  // encoder_pt_ = torch::jit::load(
+  //   "/home/tzhong/workspace/autoware.proj/src/autoware/universe/perception/pointpainting/data/"
+  //   "pts_voxel_encoder_default.pt",
+  //   device_);
+
   pointcloud_sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
 
   int rois_number = declare_parameter("rois_number", 1);
@@ -213,13 +224,26 @@ PointPaintingNode::PointPaintingNode(const rclcpp::NodeOptions & node_options)
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
 
-  centerpoint::NetworkParam encoder_param(
+  NetworkParam encoder_param(
     encoder_onnx_path_, encoder_engine_path_, encoder_pt_path_, trt_precision_, use_encoder_trt_);
-  centerpoint::NetworkParam head_param(
+  NetworkParam head_param(
     head_onnx_path_, head_engine_path_, head_pt_path_, trt_precision_, use_head_trt_);
-  centerpoint::DensificationParam densification_param(
+  DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
-  detector_ptr_ = std::make_unique<centerpoint::CenterPointTRT>(
+  // std::cout << encoder_param.onnx_path() << encoder_onnx_path_ << std::endl;
+  //, encoder_param.engine_path(), encoder_param.pt_path(),
+  // ncoder_param.trt_precision() << std::endl;
+  // torch::Tensor tensor = torch::ones(5);
+  // std::cout << tensor << std::endl;
+  // c10::Device device_ = torch::kCUDA;
+  // torch::jit::script::Module encoder_pt_;
+  // std::cout << "torch::jit::script::Module" << std::endl;
+  // encoder_pt_ = torch::jit::load(
+  //   "/home/tzhong/workspace/autoware.proj/src/autoware/universe/perception/pointpainting/data/"
+  //   "pts_voxel_encoder_default.pt",
+  //   device_);
+  // std::cout << "torch load problem" << std::endl;
+  detector_ptr_ = std::make_unique<CenterPointTRT>(
     static_cast<int>(class_names_.size()), encoder_param, head_param, densification_param);
 
   sync_ptr_->registerCallback(std::bind(
@@ -231,10 +255,10 @@ PointPaintingNode::PointPaintingNode(const rclcpp::NodeOptions & node_options)
   painted_pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/debug/pointcloud_painted", rclcpp::QoS{1});  // rclcpp::SensorDataQoS{}.keep_last(1));
 
-  const bool debug_mode = declare_parameter("debug_mode", false);
-  if (debug_mode) {
-    debugger_ = std::make_shared<Debugger>(this, rois_number);
-  }
+  // const bool debug_mode = declare_parameter("debug_mode", true);
+  // if (debug_mode) {
+  //   debugger_ = std::make_shared<Debugger>(this, rois_number);
+  // }
 }
 
 void PointPaintingNode::cameraInfoCallback(
@@ -244,7 +268,7 @@ void PointPaintingNode::cameraInfoCallback(
 }
 
 void PointPaintingNode::fusionCallback(
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
@@ -278,8 +302,6 @@ void PointPaintingNode::fusionCallback(
   painted_pointcloud_msg.is_bigendian = input_pointcloud_msg->is_bigendian;
   painted_pointcloud_msg.point_step = 28;
   painted_pointcloud_msg.is_dense = input_pointcloud_msg->is_dense;
-  // std::cout << "painted_pointcloud_msg:" << painted_pointcloud_msg.width << " | "
-  //           << painted_pointcloud_msg.data.size() << std::endl;
 
   // filter points out of range
   const auto painted_point_step = painted_pointcloud_msg.point_step;
@@ -398,7 +420,7 @@ void PointPaintingNode::fusionCallback(
             autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
           switch (input_roi_msg->feature_objects.at(i).object.classification.front().label) {
             case autoware_auto_perception_msgs::msg::ObjectClassification::CAR:
-              *iter_painted_intensity = 1.0;
+              // *iter_painted_intensity = 1.0;
               *iter_car = 1.0;
               break;
             case autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN:
@@ -412,18 +434,107 @@ void PointPaintingNode::fusionCallback(
           debug_image_rois.push_back(input_roi_msg->feature_objects.at(i).feature.roi);
         }
       }
-
-      if (debugger_) {
-        debugger_->showImage(id, input_roi_msg->header.stamp, debug_image_rois, debug_image_points);
-      }
     }
+    // if (debugger_) {
+    //   debugger_->showImage(id, input_roi_msg->header.stamp, debug_image_rois,
+    //   debug_image_points);
+    // }
   }
   if (pointcloud_sub_count > 0) {
     painted_pointcloud_pub_->publish(painted_pointcloud_msg);  // painted_pointcloud_msg);
   }
   // // run centerpoint
-  // std::vector<float> boxes3d_vec = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_);
+  std::vector<float> boxes3d_vec = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_);
+
+  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
+  output_msg.header = input_pointcloud_msg->header;
+  for (size_t obj_i = 0; obj_i < boxes3d_vec.size() / Config::num_box_features; obj_i++) {
+    float score = boxes3d_vec[obj_i * Config::num_box_features + 0];
+    if (score < score_threshold_) {
+      continue;
+    }
+
+    int class_id = static_cast<int>(boxes3d_vec[obj_i * Config::num_box_features + 1]);
+    float x = boxes3d_vec[obj_i * Config::num_box_features + 2];
+    float y = boxes3d_vec[obj_i * Config::num_box_features + 3];
+    float z = boxes3d_vec[obj_i * Config::num_box_features + 4];
+    float w = boxes3d_vec[obj_i * Config::num_box_features + 5];
+    float l = boxes3d_vec[obj_i * Config::num_box_features + 6];
+    float h = boxes3d_vec[obj_i * Config::num_box_features + 7];
+    float yaw = boxes3d_vec[obj_i * Config::num_box_features + 8];
+    float vel_x = boxes3d_vec[obj_i * Config::num_box_features + 9];
+    float vel_y = boxes3d_vec[obj_i * Config::num_box_features + 10];
+
+    autoware_auto_perception_msgs::msg::DetectedObject obj;
+    // TODO(yukke42): the value of classification confidence of DNN, not probability.
+    obj.existence_probability = score;
+    autoware_auto_perception_msgs::msg::ObjectClassification classification;
+    classification.probability = 1.0f;
+    classification.label = getSemanticType(class_names_[class_id]);
+
+    if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
+      // Note: object size is referred from multi_object_tracker
+      if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
+        classification.label = Label::TRUCK;
+      } else if (w * l > 2.5 * 7.9) {
+        classification.label = Label::BUS;
+      }
+    }
+
+    if (isCarLikeVehicleLabel(classification.label)) {
+      obj.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
+    }
+
+    obj.classification.emplace_back(classification);
+
+    obj.kinematics.pose_with_covariance.pose.position = tier4_autoware_utils::createPoint(x, y, z);
+    obj.kinematics.pose_with_covariance.pose.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+    obj.shape.dimensions = tier4_autoware_utils::createTranslation(l, w, h);
+
+    geometry_msgs::msg::Twist twist;
+    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
+    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+    obj.kinematics.twist_with_covariance.twist = twist;
+    obj.kinematics.has_twist = true;
+
+    output_msg.objects.emplace_back(obj);
+  }
+
+  if (objects_sub_count > 0) {
+    objects_pub_->publish(output_msg);
+  }
 }
+
+uint8_t PointPaintingNode::getSemanticType(const std::string & class_name)
+{
+  if (class_name == "CAR") {
+    return Label::CAR;
+  } else if (class_name == "TRUCK") {
+    return Label::TRUCK;
+  } else if (class_name == "BUS") {
+    return Label::BUS;
+  } else if (class_name == "TRAILER") {
+    return Label::TRAILER;
+  } else if (class_name == "BICYCLE") {
+    return Label::BICYCLE;
+  } else if (class_name == "MOTORBIKE") {
+    return Label::MOTORCYCLE;
+  } else if (class_name == "PEDESTRIAN") {
+    return Label::PEDESTRIAN;
+  } else {
+    return Label::UNKNOWN;
+  }
+}
+
+bool PointPaintingNode::isCarLikeVehicleLabel(const uint8_t label)
+{
+  return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
+         label == Label::TRAILER;
+}
+
 }  // namespace pointpainting
 
 #include <rclcpp_components/register_node_macro.hpp>
