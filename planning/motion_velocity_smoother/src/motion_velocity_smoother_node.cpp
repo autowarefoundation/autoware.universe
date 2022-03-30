@@ -209,8 +209,6 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     }
     case AlgorithmType::ANALYTICAL: {
       auto & p = analytical_jerk_constrained_smoother_param_;
-      update_param("resample.ds_resample", p.resample.ds_resample);
-      update_param("resample.num_resample", p.resample.num_resample);
       update_param("resample.delta_yaw_threshold", p.resample.delta_yaw_threshold);
       update_param(
         "latacc.constant_velocity_dist_threshold", p.latacc.constant_velocity_dist_threshold);

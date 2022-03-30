@@ -38,7 +38,7 @@ public:
     struct
     {
       double ds_resample;
-      double num_resample;
+      int num_resample;
       double delta_yaw_threshold;
     } resample;
     struct

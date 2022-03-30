@@ -71,7 +71,7 @@ AnalyticalJerkConstrainedSmoother::AnalyticalJerkConstrainedSmoother(rclcpp::Nod
 : SmootherBase(node)
 {
   smoother_param_.resample.ds_resample = node.declare_parameter("resample.ds_resample", 0.1);
-  smoother_param_.resample.num_resample = node.declare_parameter("resample.num_resample", 1.0);
+  smoother_param_.resample.num_resample = node.declare_parameter("resample.num_resample", 1);
   smoother_param_.resample.delta_yaw_threshold = node.declare_parameter("resample.delta_yaw_threshold", 0.785);
   smoother_param_.latacc.enable_constant_velocity_while_turning =
     node.declare_parameter("latacc.enable_constant_velocity_while_turning", false);
@@ -251,7 +251,7 @@ boost::optional<TrajectoryPoints> AnalyticalJerkConstrainedSmoother::resampleTra
       continue;
     }
 
-    for (size_t j = 0; j < smoother_param_.resample.num_resample; ++j) {
+    for (size_t j = 0; j < static_cast<size_t>(smoother_param_.resample.num_resample); ++j) {
       auto tp = input.at(i);
 
       tp.pose = lerpByPose(tp0.pose, tp1.pose, s);
