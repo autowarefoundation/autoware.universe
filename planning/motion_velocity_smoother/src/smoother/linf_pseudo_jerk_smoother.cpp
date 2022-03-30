@@ -24,8 +24,7 @@
 
 namespace motion_velocity_smoother
 {
-LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node)
-: SmootherBase(node)
+LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
   auto & p = smoother_param_;
   p.pseudo_jerk_weight = node.declare_parameter("pseudo_jerk_weight", 200.0);

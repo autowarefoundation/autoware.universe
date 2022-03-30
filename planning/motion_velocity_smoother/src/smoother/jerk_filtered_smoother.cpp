@@ -26,8 +26,7 @@
 
 namespace motion_velocity_smoother
 {
-JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node)
-: SmootherBase(node)
+JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
   auto & p = smoother_param_;
   p.jerk_weight = node.declare_parameter("jerk_weight", 10.0);
