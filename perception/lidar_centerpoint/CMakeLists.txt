@@ -131,7 +131,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   cuda_add_library(centerpoint_cuda_libraries SHARED
-    lib/src/nms_kernel.cu
+    lib/src/circle_nms_kernel.cu
     lib/src/postprocess_kernel.cu
     lib/src/preprocess_kernel.cu
     lib/src/scatter_kernel.cu

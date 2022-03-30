@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <nms_kernel.hpp>
+#include <circle_nms_kernel.hpp>
 #include <postprocess_kernel.hpp>
 
 #include <thrust/count.h>

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NMS_KERNEL_HPP_
-#define NMS_KERNEL_HPP_
+#ifndef CIRCLE_NMS_KERNEL_HPP_
+#define CIRCLE_NMS_KERNEL_HPP_
 
 #include <utils.hpp>
 
@@ -29,4 +29,4 @@ std::size_t circleNMS(
 
 }  // namespace centerpoint
 
-#endif  // NMS_KERNEL_HPP_
+#endif  // CIRCLE_NMS_KERNEL_HPP_
