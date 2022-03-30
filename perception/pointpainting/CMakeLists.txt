@@ -93,7 +93,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
       execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
     endif()
   endfunction()
-  
+
   # default model
   download(pts_voxel_encoder_default.onnx 1_8OCQmrPm_R4ZVh70QsS9HZo6uGrlbgz 01b860612e497591c4375d90dff61ef7)
   download(pts_voxel_encoder_default.pt 1RZ7cuDnI-RBrDiWe-2vEs16mR_z0e9Uo 33136caa97e3bcef2cf3e04bbc93d1e4)
@@ -122,7 +122,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
     ${CUDA_INCLUDE_DIRS}
     ${TORCH_INCLUDE_DIRS}
   )
- 
+
   ### centerpoint ###
   ament_auto_add_library(pointpainting SHARED
     lib/src/pointcloud_densification.cpp
@@ -158,7 +158,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
     PLUGIN "pointpainting::PointPaintingNode"
     EXECUTABLE pointpainting_node
   )
- 
+
   if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
