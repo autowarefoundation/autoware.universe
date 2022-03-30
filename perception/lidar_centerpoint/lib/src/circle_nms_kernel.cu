@@ -21,8 +21,8 @@ Written by Shaoshuai Shi
 All Rights Reserved 2019-2020.
 */
 
-#include <cuda_utils.hpp>
 #include <circle_nms_kernel.hpp>
+#include <cuda_utils.hpp>
 
 #include <thrust/host_vector.h>
 
