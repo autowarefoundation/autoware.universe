@@ -24,7 +24,7 @@
 TEST(TestCollisionDistance, forwardSimulatedVector)
 {
   using safe_velocity_adjustor::forwardSimulatedVector;
-  using safe_velocity_adjustor::linestring_t;
+  using safe_velocity_adjustor::segment_t;
   autoware_auto_planning_msgs::msg::TrajectoryPoint trajectory_point;
 
   trajectory_point.pose.position.x = 0.0;
@@ -36,28 +36,28 @@ TEST(TestCollisionDistance, forwardSimulatedVector)
   const auto check_vector = [&](const auto vector_length) {
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
     auto vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
-    EXPECT_DOUBLE_EQ(vector[1].x(), vector_length);
-    EXPECT_DOUBLE_EQ(vector[1].y(), 0.0);
+    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
+    EXPECT_DOUBLE_EQ(vector.second.x(), vector_length);
+    EXPECT_DOUBLE_EQ(vector.second.y(), 0.0);
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_2);
     vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
-    EXPECT_NEAR(vector[1].x(), 0.0, 1e-9);
-    EXPECT_DOUBLE_EQ(vector[1].y(), vector_length);
+    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
+    EXPECT_NEAR(vector.second.x(), 0.0, 1e-9);
+    EXPECT_DOUBLE_EQ(vector.second.y(), vector_length);
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_4);
     vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
-    EXPECT_DOUBLE_EQ(vector[1].x(), std::sqrt(0.5) * vector_length);
-    EXPECT_DOUBLE_EQ(vector[1].y(), std::sqrt(0.5) * vector_length);
+    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
+    EXPECT_DOUBLE_EQ(vector.second.x(), std::sqrt(0.5) * vector_length);
+    EXPECT_DOUBLE_EQ(vector.second.y(), std::sqrt(0.5) * vector_length);
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(-M_PI_2);
     vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector[0].x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector[0].y(), trajectory_point.pose.position.y);
-    EXPECT_NEAR(vector[1].x(), 0.0, 1e-9);
-    EXPECT_DOUBLE_EQ(vector[1].y(), -vector_length);
+    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
+    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
+    EXPECT_NEAR(vector.second.x(), 0.0, 1e-9);
+    EXPECT_DOUBLE_EQ(vector.second.y(), -vector_length);
   };
 
   // 0 velocity: whatever the duration the vector length is always = to extra_dist
@@ -94,99 +94,91 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
 {
   using safe_velocity_adjustor::distanceToClosestCollision;
   using safe_velocity_adjustor::point_t;
-  using safe_velocity_adjustor::polygon_t;
-  autoware_auto_planning_msgs::msg::TrajectoryPoint trajectory_point;
-  trajectory_point.pose.position.x = 0;
-  trajectory_point.pose.position.y = 0;
-  trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
-  polygon_t footprint;
-  footprint.outer() = {point_t{0, 1}, point_t{5, 1}, point_t{5, -1}, point_t{0, -1}, point_t{0, 1}};
+  using safe_velocity_adjustor::segment_t;
+  segment_t vector = {point_t{0, 0}, point_t{5, 0}};
+  const auto vehicle_width = 2.0;
   pcl::PointCloud<pcl::PointXYZ> obstacle_points;
   obstacle_points.points.emplace_back(6, 2, 0);  // outside of the footprint
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_FALSE(dist.has_value());
   }
   obstacle_points.points.emplace_back(4, 0, 0);  // distance of 4
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 4.0);
   }
   obstacle_points.points.emplace_back(
     4.5, 0, 0);  // distance of 4.5, does not change the minimum distance
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 4.0);
   }
   obstacle_points.points.emplace_back(2.0, 0.5, 0);  // new minumum distance of 2.0
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 2.0);
   }
   obstacle_points.points.emplace_back(1.5, -0.75, 0);  // new minumum distance of 1.5
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 1.5);
   }
 
-  // Change footprint heading
-  trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_2);
-  footprint.outer() = {
-    point_t{-1, 0}, point_t{-1, 5}, point_t{1, 5}, point_t{1, 0}, point_t{-1, 0}};
+  // Change vector heading
+  vector = {point_t{0, 0}, point_t{0, 5}};
   obstacle_points.clear();
   obstacle_points.emplace_back(-2, 3, 0);  // outside of the footprint
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_FALSE(dist.has_value());
   }
   obstacle_points.points.emplace_back(-0.5, 4, 0);  // new minumum distance of 4
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 4);
   }
   obstacle_points.points.emplace_back(0, 4, 0);  // no change in the minimum distance
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 4);
   }
   obstacle_points.points.emplace_back(0.5, 0.5, 0);  // change the minimum distance
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, 0.5);
   }
 
-  // Change footprint heading
-  trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_4);
-  footprint.outer() = {
-    point_t{-0.5, 0.5}, point_t{2, 3}, point_t{3, 2}, point_t{0.5, -0.5}, point_t{-0.5, 0.5}};
+  // Change vector
+  vector = {point_t{0, 0}, point_t{2.5, 2.5}};
   obstacle_points.clear();
   obstacle_points.emplace_back(3, 3, 0);  // outside of the footprint
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_FALSE(dist.has_value());
   }
-  obstacle_points.points.emplace_back(2.25, 1.75, 0);  // new minumum distance of 4
+  obstacle_points.points.emplace_back(2.25, 1.75, 0);  // new minumum distance
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, std::sqrt(8));
   }
   obstacle_points.points.emplace_back(2, 2, 0);  // no change in the minimum distance
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, std::sqrt(8));
   }
   obstacle_points.points.emplace_back(0.25, 0.75, 0);  // change the minimum distance
   {
-    const auto dist = distanceToClosestCollision(trajectory_point, footprint, obstacle_points);
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, std::sqrt(0.5));
   }

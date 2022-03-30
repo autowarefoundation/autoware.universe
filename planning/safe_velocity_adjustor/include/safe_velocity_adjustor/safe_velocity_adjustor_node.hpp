@@ -123,10 +123,8 @@ private:
     for (auto & trajectory_point : safe_trajectory.points) {
       const auto forward_simulated_vector =
         forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
-      const auto forward_simulated_footprint =
-        forwardSimulatedFootprint(forward_simulated_vector, vehicle_width_);
       const auto dist_to_collision = distanceToClosestCollision(
-        trajectory_point, forward_simulated_footprint, filtered_obstacle_pointcloud);
+        forward_simulated_vector, vehicle_width_, filtered_obstacle_pointcloud);
       if (dist_to_collision) {
         trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
           trajectory_point,
