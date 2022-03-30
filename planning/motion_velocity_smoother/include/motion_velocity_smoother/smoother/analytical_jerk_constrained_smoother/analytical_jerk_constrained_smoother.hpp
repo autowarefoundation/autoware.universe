@@ -66,6 +66,7 @@ public:
   };
 
   explicit AnalyticalJerkConstrainedSmoother(const Param & p);
+  explicit AnalyticalJerkConstrainedSmoother(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
