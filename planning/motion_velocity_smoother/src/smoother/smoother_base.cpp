@@ -24,9 +24,7 @@
 namespace motion_velocity_smoother
 {
 SmootherBase::SmootherBase(rclcpp::Node & node) {
-  std::cout << "SmootherBase constructor!" << std::endl;
   base_param_.max_accel = node.declare_parameter("normal.max_acc", 2.0);
-  std::cout << "max_accel: " << base_param_.max_accel << std::endl;
   base_param_.min_decel = node.declare_parameter("normal.min_acc", -3.0);
   base_param_.stop_decel = node.declare_parameter("stop_decel", 0.0);
   base_param_.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
