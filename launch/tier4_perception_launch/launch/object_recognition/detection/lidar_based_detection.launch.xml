@@ -5,12 +5,14 @@
   <arg name="input_pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
 
   <!-- Pointcloud map filter -->
-  <include file="$(find-pkg-share compare_map_segmentation)/launch/voxel_based_compare_map_filter.launch.xml" if="$(var use_pointcloud_map)">
-    <arg name="input" value="$(var input_pointcloud)" />
-    <arg name="input_map" value="/map/pointcloud_map" />
-    <arg name="output" value="pointcloud_map_filtered/pointcloud" />
-    <arg name="distance_threshold" value="0.5" />
-  </include>
+  <group>
+    <include file="$(find-pkg-share compare_map_segmentation)/launch/voxel_based_compare_map_filter.launch.xml" if="$(var use_pointcloud_map)">
+      <arg name="input" value="$(var input_pointcloud)" />
+      <arg name="input_map" value="/map/pointcloud_map" />
+      <arg name="output" value="pointcloud_map_filtered/pointcloud" />
+      <arg name="distance_threshold" value="0.5" />
+    </include>
+  </group>
 
   <!-- Clustering -->
   <group>
