@@ -54,7 +54,7 @@
 enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
 enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
-  NEAREST_VOXEL_TRANSFORMATION_PROBABILITY = 1
+  NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
 };
 
 template <typename PointSource, typename PointTarget>
@@ -139,7 +139,7 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
-    nearest_voxel_transformation_probability_pub_;
+    nearest_voxel_transformation_likelihood_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     initial_to_result_distance_pub_;
@@ -168,7 +168,7 @@ private:
 
   ConvergedParamType converged_param_type_;
   double converged_param_transform_probability_;
-  double converged_param_nearest_voxel_transformation_probability_;
+  double converged_param_nearest_voxel_transformation_likelihood_;
 
   int initial_estimate_particles_num_;
   double initial_pose_timeout_sec_;

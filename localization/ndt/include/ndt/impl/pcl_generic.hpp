@@ -112,9 +112,9 @@ double NormalDistributionsTransformPCLGeneric<
 
 template <class PointSource, class PointTarget>
 double NormalDistributionsTransformPCLGeneric<
-  PointSource, PointTarget>::getNearestVoxelTransformationProbability() const
+  PointSource, PointTarget>::getNearestVoxelTransformationLikelihood() const
 {
-  // return ndt_ptr_->getTransformationProbability();
+  // return ndt_ptr_->getNearestVoxelTransformationLikelihood();
   return 0.0;
 }
 
@@ -178,10 +178,10 @@ double NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::
 
 template <class PointSource, class PointTarget>
 double NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::
-  calculateNearestVoxelTransformationProbability(
+  calculateNearestVoxelTransformationLikelihood(
     const pcl::PointCloud<PointSource> & trans_cloud) const
 {
-  // return ndt_ptr_->calculateNearestVoxelTransformationProbability(trans_cloud);
+  // return ndt_ptr_->calculateNearestVoxelTransformationLikelihood(trans_cloud);
   return 0.0;
 }
 

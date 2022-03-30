@@ -104,7 +104,7 @@ NDTScanMatcher::NDTScanMatcher()
   map_frame_("map"),
   converged_param_type_(ConvergedParamType::TRANSFORM_PROBABILITY),
   converged_param_transform_probability_(4.5),
-  converged_param_nearest_voxel_transformation_probability_(2.3),
+  converged_param_nearest_voxel_transformation_likelihood_(2.3),
   initial_estimate_particles_num_(100),
   initial_pose_timeout_sec_(1.0),
   initial_pose_distance_tolerance_m_(10.0),
@@ -171,19 +171,19 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
   if (
     ndt_implement_type_ != NDTImplementType::OMP &&
-    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
+    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
     RCLCPP_ERROR(
       get_logger(),
-      "ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY is only available when "
+      "ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD is only available when "
       "NDTImplementType::OMP is selected.");
     return;
   }
 
   converged_param_transform_probability_ = this->declare_parameter(
     "converged_param_transform_probability", converged_param_transform_probability_);
-  converged_param_nearest_voxel_transformation_probability_ = this->declare_parameter(
-    "converged_param_nearest_voxel_transformation_probability",
-    converged_param_nearest_voxel_transformation_probability_);
+  converged_param_nearest_voxel_transformation_likelihood_ = this->declare_parameter(
+    "converged_param_nearest_voxel_transformation_likelihood",
+    converged_param_nearest_voxel_transformation_likelihood_);
 
   initial_estimate_particles_num_ =
     this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
@@ -236,9 +236,9 @@ NDTScanMatcher::NDTScanMatcher()
   exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
-  nearest_voxel_transformation_probability_pub_ =
+  nearest_voxel_transformation_likelihood_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-      "nearest_voxel_transformation_probability", 10);
+      "nearest_voxel_transformation_likelihood", 10);
   iteration_num_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
   initial_to_result_distance_pub_ =
@@ -524,8 +524,8 @@ void NDTScanMatcher::callbackSensorPoints(
     1000.0;
 
   const float transform_probability = ndt_ptr_->getTransformationProbability();
-  const float nearest_voxel_transformation_probability =
-    ndt_ptr_->getNearestVoxelTransformationProbability();
+  const float nearest_voxel_transformation_likelihood =
+    ndt_ptr_->getNearestVoxelTransformationLikelihood();
 
   const int iteration_num = ndt_ptr_->getFinalNumIteration();
 
@@ -565,15 +565,15 @@ void NDTScanMatcher::callbackSensorPoints(
         transform_probability, converged_param_transform_probability_);
     }
   } else if (
-    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
-    is_ok_converged_param = nearest_voxel_transformation_probability >
-                            converged_param_nearest_voxel_transformation_probability_;
+    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
+    is_ok_converged_param = nearest_voxel_transformation_likelihood >
+                            converged_param_nearest_voxel_transformation_likelihood_;
     if (!is_ok_converged_param) {
       RCLCPP_WARN(
         get_logger(),
         "Nearest Voxel Transform Probability is below the threshold. Score: %lf, Threshold: %lf",
-        nearest_voxel_transformation_probability,
-        converged_param_nearest_voxel_transformation_probability_);
+        nearest_voxel_transformation_likelihood,
+        converged_param_nearest_voxel_transformation_likelihood_);
     }
   } else {
     is_ok_converged_param = false;
@@ -650,8 +650,8 @@ void NDTScanMatcher::callbackSensorPoints(
   exe_time_pub_->publish(makeFloat32Stamped(sensor_ros_time, exe_time));
 
   transform_probability_pub_->publish(makeFloat32Stamped(sensor_ros_time, transform_probability));
-  nearest_voxel_transformation_probability_pub_->publish(
-    makeFloat32Stamped(sensor_ros_time, nearest_voxel_transformation_probability));
+  nearest_voxel_transformation_likelihood_pub_->publish(
+    makeFloat32Stamped(sensor_ros_time, nearest_voxel_transformation_likelihood));
 
   iteration_num_pub_->publish(makeInt32Stamped(sensor_ros_time, iteration_num));
 
@@ -671,8 +671,8 @@ void NDTScanMatcher::callbackSensorPoints(
     makeFloat32Stamped(sensor_ros_time, initial_to_result_distance_new));
 
   key_value_stdmap_["transform_probability"] = std::to_string(transform_probability);
-  key_value_stdmap_["nearest_voxel_transformation_probability"] =
-    std::to_string(nearest_voxel_transformation_probability);
+  key_value_stdmap_["nearest_voxel_transformation_likelihood"] =
+    std::to_string(nearest_voxel_transformation_likelihood);
   key_value_stdmap_["iteration_num"] = std::to_string(iteration_num);
   key_value_stdmap_["skipping_publish_num"] = std::to_string(skipping_publish_num);
   if (is_local_optimal_solution_oscillation) {
