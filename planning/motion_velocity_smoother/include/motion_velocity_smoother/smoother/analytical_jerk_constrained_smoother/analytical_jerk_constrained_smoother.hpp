@@ -65,7 +65,6 @@ public:
     } backward;
   };
 
-  explicit AnalyticalJerkConstrainedSmoother(const Param & p);
   explicit AnalyticalJerkConstrainedSmoother(rclcpp::Node & node);
 
   bool apply(
