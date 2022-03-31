@@ -45,6 +45,15 @@
           <arg name="use_vector_map" value="true" />
         </include>
       </group>
+
+      <!-- publish empty objects instead of object recognition module -->
+      <group unless="$(var perception/enable_object_recognition)">
+        <push-ros-namespace namespace="object_recognition"/>
+        <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+          <remap from="~/output/objects" to="/perception/object_recognition/objects" />
+        </node>
+      </group>
+
     </group>
 
     <!-- object segmentation module -->
