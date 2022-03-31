@@ -20,6 +20,7 @@
 
 #include <Eigen/Core>
 #include <pcl_ros/transforms.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -92,14 +93,22 @@ inline pcl::PointCloud<pcl::PointXYZ> transformAndFilterPointCloud(
   tier4_autoware_utils::TransformListener & transform_listener, const double duration,
   const double distance)
 {
+  tier4_autoware_utils::StopWatch stopwatch;
   const auto & header = pointcloud.header;
   const auto transform = transform_listener.getTransform(
     trajectory.header.frame_id, header.frame_id, header.stamp,
     rclcpp::Duration::from_nanoseconds(0));
   const auto obstacle_pointcloud = getTransformedPointCloud(pointcloud, transform->transform);
+  std::cerr << "* pointcloud transform = " << stopwatch.toc() << " s\n";
+  stopwatch.tic("filterByTraj");
   const auto pointcloud_filtered_by_traj =
     filterPointCloudByTrajectory(obstacle_pointcloud, trajectory, duration, distance);
-  return filterPointCloudByObjects(pointcloud_filtered_by_traj, objects);
+  std::cerr << "* pointcloud filter traj = " << stopwatch.toc("filterByTraj") << " s\n";
+  stopwatch.tic("filterByObj");
+  auto final_pointcloud = filterPointCloudByObjects(pointcloud_filtered_by_traj, objects);
+  std::cerr << "* pointcloud filter obj = " << stopwatch.toc("filterByObj") << " s\n";
+  std::cerr << "** pointcloud total = " << stopwatch.toc() << " s\n";
+  return final_pointcloud;
 }
 
 }  // namespace safe_velocity_adjustor
