@@ -19,15 +19,23 @@
 #include "safe_velocity_adjustor/pointcloud_processing.hpp"
 
 #include <rcl_interfaces/msg/detail/set_parameters_result__struct.hpp>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 
+#include <autoware_auto_perception_msgs/msg/detail/predicted_object__struct.hpp>
+#include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <pcl_conversions/pcl_conversions.h>
+#include <rcutils/time.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
@@ -39,6 +47,7 @@
 
 namespace safe_velocity_adjustor
 {
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using sensor_msgs::msg::PointCloud2;
@@ -59,10 +68,14 @@ public:
     sub_obstacle_pointcloud_ = create_subscription<PointCloud2>(
       "~/input/obstacle_pointcloud", rclcpp::QoS(1).best_effort(),
       [this](const PointCloud2::ConstSharedPtr msg) { obstacle_pointcloud_ptr_ = msg; });
+    sub_objects_ = create_subscription<PredictedObjects>(
+      "~/input/dynamic_obstacles", 1,
+      [this](const PredictedObjects::ConstSharedPtr msg) { dynamic_obstacles_ptr_ = msg; });
 
     pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
     pub_debug_markers_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
+    pub_debug_pointcloud_ = create_publisher<PointCloud2>("~/output/pointcloud", 1);
 
     set_param_res_ =
       add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
@@ -74,13 +87,17 @@ private:
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     pub_debug_markers_;  //!< @brief publisher for debug markers
+  rclcpp::Publisher<PointCloud2>::SharedPtr
+    pub_debug_pointcloud_;  //!< @brief publisher for filtered pointcloud
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
   rclcpp::Subscription<PointCloud2>::SharedPtr
     sub_obstacle_pointcloud_;  //!< @brief subscriber for obstacle pointcloud
+  rclcpp::Subscription<PredictedObjects>::SharedPtr sub_objects_;
 
   // cached inputs
   PointCloud2::ConstSharedPtr obstacle_pointcloud_ptr_;
+  PredictedObjects::ConstSharedPtr dynamic_obstacles_ptr_;
 
   // parameters
   Float time_safety_buffer_;
@@ -110,15 +127,21 @@ private:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg)
   {
-    if (!obstacle_pointcloud_ptr_) {
-      RCLCPP_WARN(get_logger(), "Obstable pointcloud not yet received");
+    if (!obstacle_pointcloud_ptr_ || !dynamic_obstacles_ptr_) {
+      constexpr auto one_sec = rcutils_duration_value_t(10);
+      if (!obstacle_pointcloud_ptr_)
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), one_sec, "Obstable pointcloud not yet received");
+      if (!dynamic_obstacles_ptr_)
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
       return;
     }
     Trajectory safe_trajectory = *msg;
     const auto extra_vehicle_length = vehicle_length_ / 2 + dist_safety_buffer_;
     const auto filtered_obstacle_pointcloud = transformAndFilterPointCloud(
-      safe_trajectory, *obstacle_pointcloud_ptr_, transform_listener_, time_safety_buffer_,
-      extra_vehicle_length);
+      safe_trajectory, *obstacle_pointcloud_ptr_, *dynamic_obstacles_ptr_, transform_listener_,
+      time_safety_buffer_, extra_vehicle_length);
 
     for (auto & trajectory_point : safe_trajectory.points) {
       const auto forward_simulated_vector =
@@ -135,6 +158,11 @@ private:
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
     publishDebug(*msg, safe_trajectory);
+    PointCloud2 ros_pointcloud;
+    pcl::toROSMsg(filtered_obstacle_pointcloud, ros_pointcloud);
+    ros_pointcloud.header.stamp = now();
+    ros_pointcloud.header.frame_id = msg->header.frame_id;
+    pub_debug_pointcloud_->publish(ros_pointcloud);
   }
 
   Float calculateSafeVelocity(
