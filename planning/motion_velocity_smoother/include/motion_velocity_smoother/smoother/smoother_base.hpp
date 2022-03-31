@@ -50,7 +50,6 @@ public:
     resampling::ResampleParam resample_param;
   };
 
-  explicit SmootherBase() = default;
   explicit SmootherBase(rclcpp::Node & node);
   virtual ~SmootherBase() = default;
   virtual bool apply(
