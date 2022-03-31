@@ -15,11 +15,14 @@
 #ifndef SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
 #define SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
 
+#include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
+#include <boost/assign.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/length.hpp>
+#include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/segment.hpp>
 
@@ -30,11 +33,13 @@
 #include <algorithm>
 #include <limits>
 #include <optional>
+#include <vector>
 
 namespace safe_velocity_adjustor
 {
 namespace bg = boost::geometry;
 using point_t = bg::model::d2::point_xy<double>;
+using polygon_t = bg::model::polygon<point_t>;
 using segment_t = bg::model::segment<point_t>;
 
 /// @brief generate a segment to where the vehicle body would be after some duration assuming a
@@ -73,6 +78,52 @@ inline std::optional<double> distanceToClosestCollision(
     }
   }
   return (min_dist <= bg::length(vector) ? min_dist : std::optional<double>());
+}
+
+inline polygon_t createObjPolygon(
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
+{
+  // (objects.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
+  // rename
+  const double x = pose.position.x;
+  const double y = pose.position.y;
+  const double h = size.x;
+  const double w = size.y;
+  const double yaw = tf2::getYaw(pose.orientation);
+
+  // create base polygon
+  polygon_t obj_poly;
+  boost::geometry::exterior_ring(obj_poly) = boost::assign::list_of<point_t>(h / 2.0, w / 2.0)(
+    -h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
+
+  // rotate polygon(yaw)
+  boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
+    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
+  polygon_t rotate_obj_poly;
+  boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
+
+  // translate polygon(x, y)
+  boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
+  polygon_t translate_obj_poly;
+  boost::geometry::transform(rotate_obj_poly, translate_obj_poly, translate);
+  return translate_obj_poly;
+}
+
+inline std::vector<polygon_t> createObjPolygons(
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects)
+{
+  std::vector<polygon_t> polygons;
+  for (const auto & object : objects.objects)
+    polygons.push_back(createObjPolygon(
+      object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions));
+  return polygons;
+}
+
+inline bool inPolygons(const point_t & point, const std::vector<polygon_t> & polygons)
+{
+  for (const auto & polygon : polygons)
+    if (bg::distance(point, polygon) < 0.5) return true;
+  return false;
 }
 }  // namespace safe_velocity_adjustor
 

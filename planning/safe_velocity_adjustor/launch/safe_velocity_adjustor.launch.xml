@@ -2,6 +2,7 @@
   <!-- input/output -->
   <arg name="input_trajectory" default="/planning/scenario_planning/scenario_selector/trajectory"/>
   <arg name="input_obstacle_pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
+  <arg name="input_dynamic_obstacles" default="/perception/object_recognition/objects"/>
   <arg name="output_trajectory" default="/planning/scenario_planning/safe_velocity_adjustor/trajectory"/>
   <arg name="output_debug_markers" default="/planning/scenario_planning/safe_velocity_adjustor/debug_markers"/>
 
@@ -18,6 +19,7 @@
     <param name="publish_debug_markers" value="$(var publish_debug_markers)"/>
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/input/obstacle_pointcloud" to="$(var input_obstacle_pointcloud)"/>
+    <remap from="~/input/dynamic_obstacles" to="$(var input_dynamic_obstacles)"/>
     <remap from="~/output/trajectory" to="$(var output_trajectory)"/>
     <remap from="~/output/debug_markers" to="$(var output_debug_markers)"/>
   </node>

@@ -15,15 +15,18 @@
 #ifndef SAFE_VELOCITY_ADJUSTOR__POINTCLOUD_PROCESSING_HPP_
 #define SAFE_VELOCITY_ADJUSTOR__POINTCLOUD_PROCESSING_HPP_
 
+#include "safe_velocity_adjustor/collision_distance.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
 
 #include <Eigen/Core>
 #include <pcl_ros/transforms.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/transform.hpp>
 #include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 
+#include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_eigen/tf2_eigen.h>
 
@@ -67,21 +70,36 @@ inline pcl::PointCloud<pcl::PointXYZ> filterPointCloudByTrajectory(
   return filtered_pointcloud;
 }
 
+pcl::PointCloud<pcl::PointXYZ> filterPointCloudByObjects(
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud,
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects)
+{
+  pcl::PointCloud<pcl::PointXYZ> filtered_pointcloud;
+  const auto object_polygons = createObjPolygons(objects);
+  for (const auto & point : pointcloud.points) {
+    if (!inPolygons({point.x, point.y}, object_polygons))
+      filtered_pointcloud.points.push_back(point);
+  }
+  return filtered_pointcloud;
+}
+
 /// @brief returns the pointcloud transformed to the trajectory frame and in PCL format with only
 /// points that are within range of the trajectory
 inline pcl::PointCloud<pcl::PointXYZ> transformAndFilterPointCloud(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
   const sensor_msgs::msg::PointCloud2 & pointcloud,
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   tier4_autoware_utils::TransformListener & transform_listener, const double duration,
   const double distance)
 {
-  // TODO(Maxime CLEMENT): we may need to remove dynamic obstacles from the point cloud
   const auto & header = pointcloud.header;
   const auto transform = transform_listener.getTransform(
     trajectory.header.frame_id, header.frame_id, header.stamp,
     rclcpp::Duration::from_nanoseconds(0));
   const auto obstacle_pointcloud = getTransformedPointCloud(pointcloud, transform->transform);
-  return filterPointCloudByTrajectory(obstacle_pointcloud, trajectory, duration, distance);
+  const auto pointcloud_filtered_by_traj =
+    filterPointCloudByTrajectory(obstacle_pointcloud, trajectory, duration, distance);
+  return filterPointCloudByObjects(pointcloud_filtered_by_traj, objects);
 }
 
 }  // namespace safe_velocity_adjustor

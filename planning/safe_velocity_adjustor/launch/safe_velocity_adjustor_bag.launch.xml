@@ -57,7 +57,7 @@
   </group>
 
   <!-- Rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png">
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor_bag.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png">
   </node>
 
   <!-- Velocity Visualization Script-->
