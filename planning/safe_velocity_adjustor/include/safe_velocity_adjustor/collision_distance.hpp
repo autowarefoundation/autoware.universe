@@ -15,6 +15,8 @@
 #ifndef SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
 #define SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
 
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 

@@ -24,6 +24,7 @@
 #include <rclcpp/qos.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detail/predicted_object__struct.hpp>
 #include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
@@ -137,23 +138,40 @@ private:
           get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
       return;
     }
+
+    double pointcloud_d{};
+    double vector_d{};
+    double dist_d{};
+    double vel_d{};
+    tier4_autoware_utils::StopWatch stopwatch;
     Trajectory safe_trajectory = *msg;
     const auto extra_vehicle_length = vehicle_length_ / 2 + dist_safety_buffer_;
+    stopwatch.tic("pointcloud_d");
     const auto filtered_obstacle_pointcloud = transformAndFilterPointCloud(
       safe_trajectory, *obstacle_pointcloud_ptr_, *dynamic_obstacles_ptr_, transform_listener_,
       time_safety_buffer_, extra_vehicle_length);
+    pointcloud_d += stopwatch.toc("pointcloud_d");
 
     for (auto & trajectory_point : safe_trajectory.points) {
+      stopwatch.tic("vector_d");
       const auto forward_simulated_vector =
         forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
+      vector_d += stopwatch.toc("vector_d");
+      stopwatch.tic("dist_d");
       const auto dist_to_collision = distanceToClosestCollision(
         forward_simulated_vector, vehicle_width_, filtered_obstacle_pointcloud);
+      dist_d += stopwatch.toc("dist_d");
       if (dist_to_collision) {
+        stopwatch.tic("vel_d");
         trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
           trajectory_point,
           std::max({}, static_cast<Float>(*dist_to_collision - extra_vehicle_length)));
+        vel_d += stopwatch.toc("vel_d");
       }
     }
+    RCLCPP_WARN(get_logger(), "pointcloud = %2.2fs", pointcloud_d);
+    RCLCPP_WARN(get_logger(), "dist = %2.2fs", dist_d);
+    RCLCPP_WARN(get_logger(), "*** Total = %2.2fs", stopwatch.toc());
 
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
