@@ -41,6 +41,9 @@
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
+  <!-- temporary -->
+  <depend>motion_velocity_smoother</depend>
+
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

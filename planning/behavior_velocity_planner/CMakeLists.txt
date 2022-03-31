@@ -261,6 +261,25 @@ ament_target_dependencies(scene_module_occlusion_spot ${BEHAVIOR_VELOCITY_PLANNE
 
 target_link_libraries(scene_module_occlusion_spot scene_module_lib occlusion_spot_lib)
 
+# Scene Module: Dynamic Obstacle Stop
+ament_auto_add_library(scene_module_dynamic_obstacle_stop SHARED
+  src/scene_module/dynamic_obstacle_stop/manager.cpp
+  src/scene_module/dynamic_obstacle_stop/scene.cpp
+  src/scene_module/dynamic_obstacle_stop/dynamic_obstacle.cpp
+  src/scene_module/dynamic_obstacle_stop/debug.cpp
+  src/scene_module/dynamic_obstacle_stop/utils.cpp
+)
+
+target_include_directories(scene_module_dynamic_obstacle_stop
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_dynamic_obstacle_stop ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_dynamic_obstacle_stop scene_module_lib)
+
 # Scene Module Manager
 ament_auto_add_library(scene_module_manager SHARED
   src/planner_manager.cpp
@@ -302,6 +321,7 @@ target_link_libraries(behavior_velocity_planner
   scene_module_no_stopping_area
   scene_module_virtual_traffic_light
   scene_module_manager
+  scene_module_dynamic_obstacle_stop
 )
 
 ament_export_dependencies(${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
