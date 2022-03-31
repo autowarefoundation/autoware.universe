@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+  <arg name="input" default="/perception/object_recognition/detection/objects"/>
+  <arg name="output" default="objects"/>
+  <arg name="world_frame_id" default="map"/>
+
+  <node pkg="simple_object_tracker" exec="simple_object_tracker" name="simple_object_tracker" output="screen">
+    <remap from="input" to="$(var input)"/>
+    <remap from="output" to="$(var output)"/>
+    <param name="world_frame_id" value="$(var world_frame_id)" />
+  </node>
+</launch>

@@ -36,7 +36,7 @@ boost::optional<geometry_msgs::msg::Transform> getTransform(
       rclcpp::Duration::from_seconds(0.5));
     return self_transform_stamped.transform;
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("simple_object_tracker"), ex.what());
     return boost::none;
   }
 }
