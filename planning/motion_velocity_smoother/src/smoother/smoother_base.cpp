@@ -32,15 +32,11 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
   p.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
   p.min_jerk = node.declare_parameter("normal.min_jerk", -0.1);
   p.max_lateral_accel = node.declare_parameter("max_lateral_accel", 0.2);
-  p.decel_distance_before_curve =
-    node.declare_parameter("decel_distance_before_curve", 3.5);
-  p.decel_distance_after_curve =
-    node.declare_parameter("decel_distance_after_curve", 0.0);
+  p.decel_distance_before_curve = node.declare_parameter("decel_distance_before_curve", 3.5);
+  p.decel_distance_after_curve = node.declare_parameter("decel_distance_after_curve", 0.0);
   p.min_curve_velocity = node.declare_parameter("min_curve_velocity", 1.38);
-  p.resample_param.max_trajectory_length =
-    node.declare_parameter("max_trajectory_length", 200.0);
-  p.resample_param.min_trajectory_length =
-    node.declare_parameter("min_trajectory_length", 30.0);
+  p.resample_param.max_trajectory_length = node.declare_parameter("max_trajectory_length", 200.0);
+  p.resample_param.min_trajectory_length = node.declare_parameter("min_trajectory_length", 30.0);
   p.resample_param.resample_time = node.declare_parameter("resample_time", 10.0);
   p.resample_param.dense_resample_dt = node.declare_parameter("dense_resample_dt", 0.1);
   p.resample_param.dense_min_interval_distance =
