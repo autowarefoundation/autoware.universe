@@ -40,7 +40,7 @@ public:
     double jerk_filter_ds;
   };
 
-  explicit JerkFilteredSmoother(rclcpp::Node & node);
+  explicit JerkFilteredSmoother(const Param & p);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,

@@ -38,7 +38,7 @@ public:
     double over_a_weight;
   };
 
-  explicit L2PseudoJerkSmoother(rclcpp::Node & node);
+  explicit L2PseudoJerkSmoother(const Param & smoother_param);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
