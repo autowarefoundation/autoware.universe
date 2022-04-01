@@ -174,6 +174,8 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     "/accel_brake_map_calibrator/output/updated_map_error", durable_qos);
   map_error_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "/accel_brake_map_calibrator/output/map_error_ratio", durable_qos);
+  calibration_status_pub_ = create_publisher<tier4_external_api_msgs::msg::CalibrationStatus>(
+    "/accel_brake_map_calibrator/output/calibration_status", durable_qos);
 
   // subscriber
   using std::placeholders::_1;
@@ -193,7 +195,9 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   update_map_dir_server_ = create_service<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>(
     "~/input/update_map_dir",
     std::bind(&AccelBrakeMapCalibrator::callbackUpdateMapService, this, _1, _2, _3));
-
+  calibration_data_server_ = create_service<tier4_external_api_msgs::srv::GetAccelBrakeMapCalibrationData>(
+    "~/input/calibration_data_request",
+    std::bind(&AccelBrakeMapCalibrator::callbackUpdateCalibrationDataService, this, _1, _2, _3));
   // timer
   initTimer(1.0 / update_hz_);
   initOutputCSVTimer(30.0);
@@ -546,6 +550,35 @@ bool AccelBrakeMapCalibrator::callbackUpdateMapService(
   }
   return true;
 }
+
+bool AccelBrakeMapCalibrator::callbackUpdateCalibrationDataService(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    tier4_vehicle_msgs::srv::GetAccelBrakeMapCalibrationData::Request::SharedPtr req,
+    tier4_vehicle_msgs::srv::GetAccelBrakeMapCalibrationData::Response::SharedPtr res)
+  {
+    /* 処理の内容メモ(リクエストを受けたら)
+    ・グラフを作成
+    ・グラフを変数に格納
+    ・マップをCSVに書き込み(または書き込まずにそのまま)
+    ・CSVに書き込んだ場合は読み込む
+    ・読み込んだCSVを変数に格納
+    ・
+    */
+    uint8 graph_image;
+    string accel_map;
+    string brake_map;
+    std::string update_map_dir = "";
+    std::string graph_dir = "";
+    const auto accel_map_file = update_map_dir + "/accel_map.csv";
+    const auto brake_map_file = update_map_dir + "/brake_map.csv";
+    drawCalibrationGraph(graph_dir);
+    writeMapToCSV(accel_vel_index_, accel_pedal_index_, update_accel_map_value_, accel_map_file);
+    writeMapToCSV(brake_vel_index_, brake_pedal_index_, update_brake_map_value_, brake_map_file);
+    // writeMapToCSVの処理を変えて、入れている値を文字に変換しながら string に詰める方が良い
+
+
+    return true;
+  } 
 
 double AccelBrakeMapCalibrator::lowpass(
   const double original, const double current, const double gain)
@@ -1083,10 +1116,15 @@ void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticS
   int8_t level = DiagStatus::OK;
   std::string msg = "OK";
 
+  using CalibrationStatus = tier4_external_api_msgs::msg::CalibrationStatus;
+  CalibrationStatus accel_brake_map_status;
+  accel_brake_map_status.target = CalibrationStatus::ACCEL_BRAKE_MAP;
+  accel_brake_map_status.status = CalibrationStatus::NORMAL;
+
   if (new_accel_mse_que_.size() < part_mse_que_size_ / 2) {
     // lack of data
     stat.summary(level, msg);
-
+    calibration_status_pub_->publish(accel_brake_map_status);
     return;
   }
 
@@ -1096,9 +1134,11 @@ void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticS
     // Suggest to update accel brake map
     level = DiagStatus::WARN;
     msg = "Accel/brake map Calibration is required.";
+    accel_brake_map_status.status = CalibrationStatus::WARNING;
   }
 
   stat.summary(level, msg);
+  calibration_status_pub_->publish(accel_brake_map_status);
 }
 
 // function for debug

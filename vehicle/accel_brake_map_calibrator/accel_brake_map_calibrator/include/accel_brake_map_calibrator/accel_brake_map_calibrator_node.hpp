@@ -37,6 +37,9 @@
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"
 #include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
 #include "tier4_vehicle_msgs/srv/update_accel_brake_map.hpp"
+#include "tier4_external_api_msgs/msg/calibration_status.hpp"
+#include "tier4_external_api_msgs/msg/calibration_status_array.hpp"
+#include "tier4_external_api_msgs/srv/get_accel_brake_map_calibration_data.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -77,6 +80,8 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr current_map_error_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr updated_map_error_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr map_error_ratio_pub_;
+  rclcpp::Publisher<tier4_external_api_msgs::msg::CalibrationStatus>::SharedPtr 
+    calibration_status_pub_;
 
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr velocity_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr steer_sub_;
@@ -85,6 +90,8 @@ private:
 
   // Service
   rclcpp::Service<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
+  rclcpp::Service<tier4_external_api_msgs::srv::GetAccelBrakeMapCalibrationData>::SharedPtr 
+    calibration_data_server_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_output_csv_;
@@ -212,6 +219,10 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     tier4_vehicle_msgs::srv::UpdateAccelBrakeMap::Request::SharedPtr req,
     tier4_vehicle_msgs::srv::UpdateAccelBrakeMap::Response::SharedPtr res);
+  bool callbackUpdateCalibrationDataService(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    tier4_vehicle_msgs::srv::GetAccelBrakeMapCalibrationData::Request::SharedPtr req,
+    tier4_vehicle_msgs::srv::GetAccelBrakeMapCalibrationData::Response::SharedPtr res);  
   bool getAccFromMap(const double velocity, const double pedal);
   double lowpass(const double original, const double current, const double gain = 0.8);
   double getPedalSpeed(
