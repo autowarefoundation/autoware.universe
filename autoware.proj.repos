@@ -157,8 +157,3 @@ repositories:
     type: git
     url: https://github.com/tier4/image_pipeline.git
     version: 47964112293eb19f9f57254b2e6b68706954cc63
-  # removed by galactic sync at 2022/03/14
-  vendor/plotjuggler_ros:
-    type: git
-    url: https://github.com/PlotJuggler/plotjuggler-ros-plugins.git
-    version: galactic
