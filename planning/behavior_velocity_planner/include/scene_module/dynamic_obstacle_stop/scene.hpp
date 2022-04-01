@@ -191,19 +191,15 @@ private:
     const boost::optional<geometry_msgs::msg::Pose> stop_point,
     autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
-  void insertZeroVelocityWithJerkConstraint(
-    const boost::optional<DynamicObstacle> & dynamic_obstacle,
-    const geometry_msgs::msg::Pose & current_pose, const float closest_vel, const float closest_acc,
-    Trajectory & output_trajectory) const;
-
   void insertVelocityWithApproaching(
     const boost::optional<DynamicObstacle> & dynamic_obstacle,
-    const geometry_msgs::msg::Pose & current_pose, const float closest_vel, const float closest_acc,
-    Trajectory & output_trajectory);
+    const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
+    const Trajectory & trajectory, autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-    const float approaching_vel, const float stop_margin, Trajectory & output_trajectory) const;
+    const float approaching_vel, const float stop_margin, const Trajectory & trajectory,
+    autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
   void addPointsBehindBase(
     const Trajectory & input_traj, const geometry_msgs::msg::Pose & current_pose,

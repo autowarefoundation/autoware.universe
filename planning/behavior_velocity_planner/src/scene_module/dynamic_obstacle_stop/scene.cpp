@@ -126,23 +126,19 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   const auto t2 = std::chrono::system_clock::now();
   const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
 
-  const auto stop_point =
-    calcStopPoint(dynamic_obstacle, trim_trajectory, current_pose, current_vel, current_acc);
-
-  insertStopPoint(stop_point, *path);
+  if (planner_param_.approaching.enable) {
+    insertVelocityWithApproaching(
+      dynamic_obstacle, current_pose, current_vel, current_acc, trim_trajectory, *path);
+  } else {
+    const auto stop_point =
+      calcStopPoint(dynamic_obstacle, trim_trajectory, current_pose, current_vel, current_acc);
+    insertStopPoint(stop_point, *path);
+  }
 
   // debug
   for (const auto & p : path->points) {
     debug_ptr_->pushDebugPoints(p.point.pose.position);
   }
-
-  // if (planner_param_.approaching.enable) {
-  //   insertVelocityWithApproaching(
-  //     dynamic_obstacle, current_pose, current_vel, current_acc, output_trajectory);
-  // } else {
-  //   insertZeroVelocityWithJerkConstraint(
-  //     dynamic_obstacle, current_pose, current_vel, current_acc, output_trajectory);
-  // }
 
   // debug
   {
@@ -903,86 +899,6 @@ size_t DynamicObstacleStopModule::calcTrajectoryIndexByLengthReverse(
   return 0;
 }
 
-// insert velocity into trajectory to stop for dynamic obstacles
-void DynamicObstacleStopModule::insertZeroVelocityWithJerkConstraint(
-  const boost::optional<DynamicObstacle> & dynamic_obstacle,
-  const geometry_msgs::msg::Pose & current_pose, const float closest_vel, const float closest_acc,
-  Trajectory & output_trajectory) const
-{
-  // no obstacles
-  if (!dynamic_obstacle) {
-    return;
-  }
-
-  // calculate distance to collision with the obstacle
-  float dist_to_collision;
-  const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
-    output_trajectory.points, current_pose.position, dynamic_obstacle->nearest_collision_point_);
-  dist_to_collision = dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
-
-  // calculate distance needed to stop with jerk and acc constraints
-  const float current_vel = closest_vel;
-  const float target_vel = 0.0;
-  const float current_acc = closest_acc;
-  const float jerk_dec = planner_param_.dynamic_obstacle_stop.stop_start_jerk_dec;
-  const float jerk_acc = std::abs(jerk_dec);
-  const float planning_dec = jerk_dec < planner_param_.common.normal_min_jerk
-                               ? planner_param_.common.limit_min_acc
-                               : planner_param_.common.normal_min_acc;
-  auto stop_dist = dynamic_obstacle_stop_utils::calcDecelDistWithJerkAndAccConstraints(
-    current_vel, target_vel, current_acc, planning_dec, jerk_acc, jerk_dec);
-  if (!stop_dist) {
-    RCLCPP_WARN_STREAM(logger_, "failed to calculate stop distance.");
-
-    // force to insert zero velocity
-    stop_dist = boost::make_optional<double>(dist_to_collision);
-  }
-
-  // debug
-  {
-    debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, dist_to_collision);
-    debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
-
-    const auto vehicle_stop_idx = calcTrajectoryIndexByLength(
-      output_trajectory, current_pose,
-      stop_dist.get() + planner_param_.vehicle_param.base_to_front);
-
-    const auto & p = output_trajectory.points.at(vehicle_stop_idx).pose;
-    debug_ptr_->pushDebugPoints(p.position, PointType::Yellow);
-
-    std::stringstream sstream;
-    sstream << std::setprecision(4) << *stop_dist << "m";
-    debug_ptr_->pushDebugTexts(
-      dynamic_obstacle_stop_utils::createDebugText(sstream.str(), p, /* lateral_offset */ -3.0));
-  }
-
-  // vehicle have to decelerate if there is not enough distance with stop_start_jerk_dec
-  const bool deceleration_needed =
-    *stop_dist > dist_to_collision - planner_param_.dynamic_obstacle_stop.stop_margin;
-  // avoid acceleration when ego is decelerating
-  const bool is_speed_low =
-    closest_vel < planner_param_.dynamic_obstacle_stop.min_vel_ego_kmph / 3.6;
-  if (!deceleration_needed && !is_speed_low) {
-    return;
-  }
-
-  const float collision_point_to_base =
-    planner_param_.dynamic_obstacle_stop.stop_margin + planner_param_.vehicle_param.base_to_front;
-  const size_t stop_index = calcTrajectoryIndexByLengthReverse(
-    output_trajectory, dynamic_obstacle->nearest_collision_point_, collision_point_to_base);
-
-  // debug
-  {
-    const auto & p_stop = output_trajectory.points.at(stop_index).pose.position;
-    debug_ptr_->pushDebugPoints(p_stop);
-  }
-
-  // just add points of zero velocity because smoother will smooth velocity
-  for (size_t i = stop_index; i < output_trajectory.points.size(); i++) {
-    output_trajectory.points.at(i).longitudinal_velocity_mps = 0.0;
-  }
-}
-
 boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoint(
   const boost::optional<DynamicObstacle> & dynamic_obstacle, const Trajectory & trajectory,
   const geometry_msgs::msg::Pose & current_pose, const float current_vel,
@@ -1099,8 +1015,8 @@ void DynamicObstacleStopModule::insertStopPoint(
 
 void DynamicObstacleStopModule::insertVelocityWithApproaching(
   const boost::optional<DynamicObstacle> & dynamic_obstacle,
-  const geometry_msgs::msg::Pose & current_pose, const float closest_vel, const float closest_acc,
-  Trajectory & output_trajectory)
+  const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
+  const Trajectory & trajectory, autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   // no obstacles
   if (!dynamic_obstacle) {
@@ -1110,7 +1026,7 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
   const auto longitudinal_offset_to_collision_point =
     tier4_autoware_utils::calcSignedArcLength(
-      output_trajectory.points, current_pose.position, dynamic_obstacle->nearest_collision_point_) -
+      trajectory.points, current_pose.position, dynamic_obstacle->nearest_collision_point_) -
     planner_param_.vehicle_param.base_to_front;
   // enough distance to the obstacle
   if (
@@ -1121,14 +1037,15 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
   switch (state_) {
     case State::GO: {
-      if (closest_vel < planner_param_.approaching.stop_thresh) {
+      if (current_vel < planner_param_.approaching.stop_thresh) {
         RCLCPP_DEBUG_STREAM(logger_, "transit to STOP state.");
         stop_time_ = clock_->now();
         state_ = State::STOP;
       }
 
-      insertZeroVelocityWithJerkConstraint(
-        dynamic_obstacle, current_pose, closest_vel, closest_acc, output_trajectory);
+      const auto stop_point =
+        calcStopPoint(dynamic_obstacle, trajectory, current_pose, current_vel, current_acc);
+      insertStopPoint(stop_point, path);
       break;
     }
 
@@ -1139,8 +1056,9 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
         elapsed_time > planner_param_.approaching.stop_time_thresh ? State::APPROACH : State::STOP;
       RCLCPP_DEBUG_STREAM(logger_, "elapsed time: " << elapsed_time);
 
-      insertZeroVelocityWithJerkConstraint(
-        dynamic_obstacle, current_pose, closest_vel, closest_acc, output_trajectory);
+      const auto stop_point =
+        calcStopPoint(dynamic_obstacle, trajectory, current_pose, current_vel, current_acc);
+      insertStopPoint(stop_point, path);
       break;
     }
 
@@ -1148,7 +1066,7 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
       RCLCPP_DEBUG_STREAM(logger_, "APPROACH state");
       insertApproachingVelocity(
         *dynamic_obstacle, current_pose, planner_param_.approaching.limit_vel_kmph / 3.6,
-        planner_param_.approaching.margin, output_trajectory);
+        planner_param_.approaching.margin, trajectory, path);
       break;
     }
 
@@ -1161,25 +1079,87 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
 void DynamicObstacleStopModule::insertApproachingVelocity(
   const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-  const float approaching_vel, const float stop_margin, Trajectory & output_trajectory) const
+  const float approaching_vel, const float stop_margin, const Trajectory & trajectory,
+  autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
+  // insert nearest point as the beginning of slow down
   const auto nearest_idx =
-    tier4_autoware_utils::findNearestIndex(output_trajectory.points, current_pose.position);
+    tier4_autoware_utils::findNearestIndex(trajectory.points, current_pose.position);
+  const auto & nearest_point = trajectory.points.at(nearest_idx).pose;
 
+  // if path already has the same point, insert zero velocity from that point
+  const auto same_point_nearest_idx =
+    dynamic_obstacle_stop_utils::haveSamePoint(path.points, nearest_point.position);
+  if (same_point_nearest_idx) {
+    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
+
+    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+      *same_point_nearest_idx, approaching_vel, path.points);
+
+    const auto & p = path.points.at(*same_point_nearest_idx).point.pose;
+    debug_ptr_->pushDebugPoints(p.position, PointType::Yellow);
+  } else {
+    // find nearest point index behind the stop point
+    const auto nearest_seg_idx =
+      dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, nearest_point.position);
+
+    // insert new point as stop point
+    const auto insert_idx = nearest_seg_idx + 1;
+
+    // to PathPointWithLaneId
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId nearest_point_with_lane_id;
+    nearest_point_with_lane_id = path.points.at(insert_idx);
+    nearest_point_with_lane_id.point.pose = nearest_point;
+
+    // insert stop point
+    path.points.insert(path.points.begin() + insert_idx, nearest_point_with_lane_id);
+
+    // fill with 0 velocity
+    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+      insert_idx, approaching_vel, path.points);
+  }
+
+  // insert stop point
   const float collision_point_to_base = stop_margin + planner_param_.vehicle_param.base_to_front;
   const auto stop_idx = calcTrajectoryIndexByLengthReverse(
-    output_trajectory, dynamic_obstacle.nearest_collision_point_, collision_point_to_base);
+    trajectory, dynamic_obstacle.nearest_collision_point_, collision_point_to_base);
+  const auto & stop_point = trajectory.points.at(stop_idx).pose;
 
-  // insert velocity for approaching
-  for (size_t i = nearest_idx; i < stop_idx; i++) {
-    const auto & traj_vel = output_trajectory.points.at(i).longitudinal_velocity_mps;
-    output_trajectory.points.at(i).longitudinal_velocity_mps = std::min(approaching_vel, traj_vel);
+  // if path already has the same point, insert zero velocity from that point
+  const auto same_point_idx =
+    dynamic_obstacle_stop_utils::haveSamePoint(path.points, stop_point.position);
+  if (same_point_idx) {
+    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
+
+    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+      *same_point_idx, /* velocity = */ 0.0, path.points);
+
+    const auto & p = path.points.at(*same_point_idx).point.pose;
+    debug_ptr_->pushStopPose(p);
+    first_stop_path_point_index_ = static_cast<int>(same_point_idx.get());
+
+    return;
   }
 
-  // insert velocity for stopping
-  for (size_t i = stop_idx; i < output_trajectory.points.size(); i++) {
-    output_trajectory.points.at(i).longitudinal_velocity_mps = 0.0;
-  }
+  // find nearest point index behind the stop point
+  const auto nearest_seg_idx =
+    dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, stop_point.position);
+
+  // insert new point as stop point
+  const auto insert_idx = nearest_seg_idx + 1;
+  first_stop_path_point_index_ = static_cast<int>(insert_idx);
+
+  // to PathPointWithLaneId
+  autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
+  stop_point_with_lane_id = path.points.at(insert_idx);
+  stop_point_with_lane_id.point.pose = stop_point;
+
+  // insert stop point
+  path.points.insert(path.points.begin() + insert_idx, stop_point_with_lane_id);
+
+  // fill with 0 velocity
+  dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+    insert_idx, /* velocity = */ 0.0, path.points);
 }
 
 void DynamicObstacleStopModule::addPointsBehindBase(

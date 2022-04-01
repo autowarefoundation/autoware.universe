@@ -385,7 +385,8 @@ void fillPathVelocityFromIndex(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points)
 {
   for (size_t i = start_idx; i < path_points.size(); i++) {
-    path_points.at(i).point.longitudinal_velocity_mps = velocity_mps;
+    const auto current_path_vel = path_points.at(i).point.longitudinal_velocity_mps;
+    path_points.at(i).point.longitudinal_velocity_mps = std::min(velocity_mps, current_path_vel);
   }
 }
 
