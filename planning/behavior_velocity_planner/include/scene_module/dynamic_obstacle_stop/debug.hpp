@@ -48,6 +48,7 @@ public:
     LONGITUDINAL_DIST_COLLISION = 3,
     COLLISION_POS_FROM_EGO_FRONT = 4,
     STOP_DISTANCE = 5,
+    TEMP = 6,
     SIZE,  // this is the number of enum elements
   };
 
@@ -105,7 +106,8 @@ public:
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
 
 private:
-  visualization_msgs::msg::MarkerArray createVisualizationMarkerArrayFromDebugData(const builtin_interfaces::msg::Time & current_time);
+  visualization_msgs::msg::MarkerArray createVisualizationMarkerArrayFromDebugData(
+    const builtin_interfaces::msg::Time & current_time);
   void clearDebugMarker();
 
   rclcpp::Node & node_;
