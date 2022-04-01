@@ -354,8 +354,16 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
 {
   // Initialize
   setInfrastructureCommand({});
-  *stop_reason = planning_utils::initializeStopReason(
+  if(command_.type == "intersection_coordination")
+  {
+    *stop_reason = planning_utils::initializeStopReason(
+    tier4_planning_msgs::msg::StopReason::INTERSECTION_COORDINATION);
+  }
+  else
+  {
+    *stop_reason = planning_utils::initializeStopReason(
     tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
+  }
   module_data_ = {};
 
   // Copy data
