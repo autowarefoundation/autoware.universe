@@ -109,6 +109,7 @@ inline pcl::PointCloud<pcl::PointXYZ> transformAndFilterPointCloud(
   std::cerr << "* pointcloud filter obj = " << stopwatch.toc("filterByObj") << " s\n";
   std::cerr << "** pointcloud total = " << stopwatch.toc() << " s\n";
   return final_pointcloud;
+  // return pointcloud_filtered_by_traj;
 }
 
 }  // namespace safe_velocity_adjustor
