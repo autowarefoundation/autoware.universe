@@ -31,7 +31,7 @@ repositories:
   autoware/individual_params:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
-    version: c67ba5a2b5181f5ce0262d695c0596c7baf00456
+    version: main
   autoware/calibration_tools:
     type: git
     url: git@github.com:tier4/calibration_tools.git
@@ -39,12 +39,12 @@ repositories:
   # description
   description/sensor/sensor_component_description:
     type: git
-    url: https://github.com/tier4/sensor_description.iv.git
-    version: ca3db56426c80f579a79c2c310c2ef59e93e76c2
+    url: https://github.com/tier4/sensor_component_description.git
+    version: main
   description/sensor/aip_description:
     type: git
     url: https://github.com/tier4/aip_description.iv.git
-    version: 094dce484cea799fbf6f95f00da708cfbc1d1f21
+    version: main
   description/vehicle/lexus_description:
     type: git
     url: https://github.com/tier4/lexus_description.iv.git
