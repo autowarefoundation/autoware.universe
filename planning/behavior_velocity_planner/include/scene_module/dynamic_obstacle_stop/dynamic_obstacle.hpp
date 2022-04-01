@@ -50,7 +50,6 @@ public:
 
   //  obstacle information
   geometry_msgs::msg::Pose pose_;
-  geometry_msgs::msg::Pose vehicle_stop_pose_;
   std::vector<geometry_msgs::msg::Point> collision_points_;
   geometry_msgs::msg::Point nearest_collision_point_;
   float min_velocity_mps_;

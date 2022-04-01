@@ -138,11 +138,6 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   }
 
   // debug
-  for (const auto & p : path->points) {
-    debug_ptr_->pushDebugPoints(p.point.pose.position);
-  }
-
-  // debug
   {
     if (dynamic_obstacle) {
       const auto lateral_dist = std::abs(tier4_autoware_utils::calcLateralOffset(
