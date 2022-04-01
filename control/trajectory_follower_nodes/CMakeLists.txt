@@ -58,9 +58,15 @@ if(BUILD_TESTING)
   target_link_libraries(${TRAJECTORY_FOLLOWER_NODES_TEST} ${LATLON_MUXER_NODE} ${LATERAL_CONTROLLER_NODE} ${LONGITUDINAL_CONTROLLER_NODE})
 
   find_package(autoware_testing REQUIRED)
-  add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe PARAM_FILENAME latlon_muxer_defaults.param.yaml)
-  add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe PARAM_FILENAME lateral_controller_defaults.param.yaml)
-  add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe PARAM_FILENAME longitudinal_controller_defaults.param.yaml)
+  add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe
+    PARAM_FILENAMES "latlon_muxer_defaults.param.yaml"
+  )
+  add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "lateral_controller_defaults.param.yaml test_vehicle_info.param.yaml"
+  )
+  add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "longitudinal_controller_defaults.param.yaml test_vehicle_info.param.yaml"
+  )
 endif()
 
 ament_auto_package(

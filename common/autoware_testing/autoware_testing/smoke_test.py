@@ -30,19 +30,20 @@ import rclpy
 
 
 def resolve_node(context, *args, **kwargs):
+    parameters = [
+        os.path.join(
+            get_package_share_directory(LaunchConfiguration('arg_package').perform(context)),
+            "param",
+            file_name
+        ) for file_name in shlex.split(LaunchConfiguration('arg_param_filenames').perform(context))
+    ]
 
     smoke_test_node = Node(
-        package=LaunchConfiguration("arg_package"),
-        executable=LaunchConfiguration("arg_package_exe"),
-        namespace="test",
-        parameters=[
-            os.path.join(
-                get_package_share_directory(LaunchConfiguration("arg_package").perform(context)),
-                "param",
-                LaunchConfiguration("arg_param_filename").perform(context),
-            )
-        ],
-        arguments=shlex.split(LaunchConfiguration("arg_executable_arguments").perform(context)),
+        package=LaunchConfiguration('arg_package'),
+        executable=LaunchConfiguration('arg_package_exe'),
+        namespace='test',
+        parameters=parameters,
+        arguments=shlex.split(LaunchConfiguration('arg_executable_arguments').perform(context))
     )
     return [smoke_test_node]
 
@@ -56,22 +57,22 @@ def generate_test_description():
     arg_package_exe = DeclareLaunchArgument(
         "arg_package_exe", default_value=["default"], description="Tested executable"
     )
-    arg_param_filename = DeclareLaunchArgument(
-        "arg_param_filename", default_value=["test.param.yaml"], description="Test param file"
+    arg_param_filenames = DeclareLaunchArgument(
+        'arg_param_filenames',
+        default_value=['test.param.yaml'],
+        description='Test param file'
     )
     arg_executable_arguments = DeclareLaunchArgument(
         "arg_executable_arguments", default_value=[""], description="Tested executable arguments"
     )
 
-    return LaunchDescription(
-        [
-            arg_package,
-            arg_package_exe,
-            arg_param_filename,
-            arg_executable_arguments,
-            OpaqueFunction(function=resolve_node),
-            launch_testing.actions.ReadyToTest(),
-        ]
+    return LaunchDescription([
+        arg_package,
+        arg_package_exe,
+        arg_param_filenames,
+        arg_executable_arguments,
+        OpaqueFunction(function=resolve_node),
+        launch_testing.actions.ReadyToTest()]
     )
 
 
