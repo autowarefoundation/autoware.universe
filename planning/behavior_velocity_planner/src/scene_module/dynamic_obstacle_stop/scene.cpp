@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "scene_module/dynamic_obstacle_stop/scene.hpp"
+
 #include "utilization/util.hpp"
 
 #include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
@@ -121,7 +122,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   // timer starts
   const auto t1 = std::chrono::system_clock::now();
 
-  const auto dynamic_obstacle = detectCollision(dynamic_obstacles, trim_trajectory, current_pose);
+  const auto dynamic_obstacle = detectCollision(dynamic_obstacles, trim_trajectory);
 
   // timer ends
   const auto t2 = std::chrono::system_clock::now();
@@ -154,6 +155,12 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
       debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, lateral_dist);
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, longitudinal_dist_to_obstacle);
+    } else {
+      // max value
+      constexpr float max_val = 50.0;
+      debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, max_val);
+      debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, max_val);
+      debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, max_val);
     }
 
     debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
@@ -412,8 +419,7 @@ pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::pointsWithinPolygon(
 }
 
 boost::optional<DynamicObstacle> DynamicObstacleStopModule::detectCollision(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
-  const geometry_msgs::msg::Pose & current_pose) const
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory) const
 {
   if (trajectory.points.size() < 2) {
     RCLCPP_WARN_STREAM(logger_, "trajectory doesn't have enough points.");
@@ -425,7 +431,6 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::detectCollision(
   // TODO(Tomohito Ando): parameter
   float travel_time = 0.0;
   float dist_sum = 0.0;
-  geometry_msgs::msg::Pose prev_vehicle_pose = trajectory.points.front().pose;
   for (size_t idx = 1; idx < trajectory.points.size(); idx++) {
     const auto & p1 = trajectory.points.at(idx - 1);
     const auto & p2 = trajectory.points.at(idx);
@@ -444,58 +449,85 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::detectCollision(
     dist_sum = 0.0;
 
     const auto vehicle_poly = createVehiclePolygon(p2.pose);
+
     debug_ptr_->pushDebugPolygons(vehicle_poly);
+    std::stringstream sstream;
+    sstream << std::setprecision(4) << travel_time << "s";
+    debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
+      sstream.str(), p2.pose, /* lateral_offset */ 3.0));
 
-    {  // debug
-      std::stringstream sstream;
-      sstream << std::setprecision(4) << travel_time << "s";
-      debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
-        sstream.str(), p2.pose, /* lateral_offset */ 3.0));
-    }
-
-    const auto obstacles_collision =
+    auto obstacles_collision =
       checkCollisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time);
     if (obstacles_collision.empty()) {
-      prev_vehicle_pose = p2.pose;
       continue;
     }
 
-    auto obstacle_collision =
-      findLongitudinalNearestObstacle(obstacles_collision, trajectory, current_pose);
-
-    // select collision point that is the same side as obstacle and nearest from ego
-    const auto collision_point =
-      selectCollisionPoint(obstacle_collision, p2.pose, trajectory, current_pose);
-    const auto collision_position_from_ego_front =
-      calcCollisionPositionOfVehicleSide(collision_point, p2.pose);
+    const auto obstacle_selected =
+      findNearestCollisionObstacle(trajectory, p2.pose, obstacles_collision);
+    if (!obstacle_selected) {
+      continue;
+    }
 
     // debug
     {
-      debug_ptr_->setDebugValues(
-        DebugValues::TYPE::COLLISION_POS_FROM_EGO_FRONT, collision_position_from_ego_front);
-      debug_ptr_->pushDebugPoints(obstacle_collision.collision_points_);
-    }
-
-    // pass the obstacle if it collides to vehicle side
-    if (collision_position_from_ego_front > planner_param_.dynamic_obstacle_stop.passing_margin) {
-      continue;
-    }
-
-    {  // debug
       std::stringstream sstream;
       sstream << std::setprecision(4) << "ttc: " << std::to_string(travel_time) << "s";
-      debug_ptr_->pushDebugTexts(
-        dynamic_obstacle_stop_utils::createDebugText(sstream.str(), collision_point));
+      debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
+        sstream.str(), obstacle_selected->nearest_collision_point_));
 
-      debug_ptr_->pushDebugPoints(collision_point, PointType::Red);
+      debug_ptr_->pushDebugPoints(obstacle_selected->collision_points_);
+      debug_ptr_->pushDebugPoints(obstacle_selected->nearest_collision_point_, PointType::Red);
     }
 
-    obstacle_collision.vehicle_stop_pose_ = prev_vehicle_pose;
-    obstacle_collision.nearest_collision_point_ = collision_point;
-    return obstacle_collision;
+    return obstacle_selected;
   }
 
   // no collision detected
+  return {};
+}
+
+boost::optional<DynamicObstacle> DynamicObstacleStopModule::findNearestCollisionObstacle(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & base_pose,
+  std::vector<DynamicObstacle> & dynamic_obstacles) const
+{
+  // sort obstacles with distance from ego
+  std::sort(
+    dynamic_obstacles.begin(), dynamic_obstacles.end(),
+    [&trajectory, &base_pose](const auto & lhs, const auto & rhs) -> bool {
+      const auto dist_lhs = tier4_autoware_utils::calcSignedArcLength(
+        trajectory.points, base_pose.position, lhs.pose_.position);
+      const auto dist_rhs = tier4_autoware_utils::calcSignedArcLength(
+        trajectory.points, base_pose.position, rhs.pose_.position);
+
+      return dist_lhs < dist_rhs;
+    });
+
+  // select obstacle to decelerate from the nearest obstacle
+  DynamicObstacle obstacle_collision;
+  for (const auto & obstacle : dynamic_obstacles) {
+    const auto obstacle_same_side_points = dynamic_obstacle_stop_utils::findLateralSameSidePoints(
+      obstacle.collision_points_, base_pose, obstacle.pose_.position);
+
+    const auto nearest_collision_point = dynamic_obstacle_stop_utils::findLongitudinalNearestPoint(
+      trajectory, base_pose.position, obstacle_same_side_points);
+
+    const auto collision_position_from_ego_front =
+      calcCollisionPositionOfVehicleSide(nearest_collision_point, base_pose);
+
+    // if position of collision on ego side is less than passing margin,
+    // which is considered to be collision
+    // TODO(Tomohito Ando): calculate collision position more precisely
+    if (collision_position_from_ego_front < planner_param_.dynamic_obstacle_stop.passing_margin) {
+      debug_ptr_->setDebugValues(
+        DebugValues::TYPE::COLLISION_POS_FROM_EGO_FRONT, collision_position_from_ego_front);
+
+      obstacle_collision = obstacle;
+      obstacle_collision.nearest_collision_point_ = nearest_collision_point;
+      return obstacle_collision;
+    }
+  }
+
+  // no collision points
   return {};
 }
 

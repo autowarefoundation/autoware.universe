@@ -122,8 +122,7 @@ private:
     const pcl::PointCloud<pcl::PointXYZ> & candidate_points) const;
 
   boost::optional<DynamicObstacle> detectCollision(
-    const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
-    const geometry_msgs::msg::Pose & current_pose) const;
+    const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory) const;
 
   float calcCollisionPositionOfVehicleSide(
     const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & base_pose) const;
@@ -138,6 +137,10 @@ private:
   std::vector<DynamicObstacle> checkCollisionWithObstacles(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
     std::vector<geometry_msgs::msg::Point> poly, const float travel_time) const;
+
+  boost::optional<DynamicObstacle> findNearestCollisionObstacle(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & base_pose,
+    std::vector<DynamicObstacle> & dynamic_obstacles) const;
 
   DynamicObstacle findLongitudinalNearestObstacle(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
