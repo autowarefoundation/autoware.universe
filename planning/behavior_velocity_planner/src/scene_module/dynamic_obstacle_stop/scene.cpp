@@ -37,7 +37,6 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), planner_param_(planner_param)
 {
-  RCLCPP_WARN_STREAM(logger, "Dynamic Obstacle Stop Scene Module!!!");
 }
 
 DynamicObstacleStopModule::DynamicObstacleStopModule(
@@ -49,12 +48,11 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   smoother_(smoother),
   debug_ptr_(debug_ptr)
 {
-  RCLCPP_WARN_STREAM(logger, "Dynamic Obstacle Stop Scene Module!!!");
 }
 
 bool DynamicObstacleStopModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   if (!planner_param_.dynamic_obstacle_stop.enable_dynamic_obstacle_stop) {
     return true;
@@ -77,7 +75,6 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   const auto & current_pose = planner_data_->current_pose.pose;
 
   // temporary convert to trajectory
-  const auto & original_path = *path;
   const auto input_traj = dynamic_obstacle_stop_utils::convertPathToTrajectory(*path);
 
   // extend trajectory to consider obstacles after the goal
@@ -90,11 +87,6 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   if (!smoothed_trajectory) {
     RCLCPP_WARN_STREAM(logger_, "failed to apply smoother.");
     return true;
-  }
-
-  // debug
-  for (const auto & p : input_traj.points) {
-    debug_ptr_->pushDebugPoints(p.pose.position);
   }
 
   // TODO(Tomohito Ando): parameter
@@ -120,8 +112,8 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     visualizePassingArea(trim_trajectory, current_pose);
 
     // todo: replace with compare map filtered
-    const auto extracted_points = extractObstaclePointsWithRectangle(
-      *planner_data_->no_ground_pointcloud, trim_trajectory.header.frame_id, current_pose);
+    const auto extracted_points =
+      extractObstaclePointsWithRectangle(*planner_data_->no_ground_pointcloud, current_pose);
     dynamic_obstacles = createDynamicObstaclesFromPoints(extracted_points, input_traj);
   }
 
@@ -138,6 +130,11 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     calcStopPoint(dynamic_obstacle, trim_trajectory, current_pose, current_vel, current_acc);
 
   insertStopPoint(stop_point, *path);
+
+  // debug
+  for (const auto & p : path->points) {
+    debug_ptr_->pushDebugPoints(p.point.pose.position);
+  }
 
   // if (planner_param_.approaching.enable) {
   //   insertVelocityWithApproaching(
@@ -216,7 +213,7 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::createDynamicObstaclesFr
 }
 
 pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::extractObstaclePointsWithRectangle(
-  const pcl::PointCloud<pcl::PointXYZ> & input_points, const std::string trajectory_frame,
+  const pcl::PointCloud<pcl::PointXYZ> & input_points,
   const geometry_msgs::msg::Pose & current_pose) const
 {
   const auto detection_area_polygon =
@@ -688,8 +685,7 @@ bool DynamicObstacleStopModule::checkCollisionWithShape(
       break;
 
     case Shape::POLYGON:
-      collision_detected = checkCollisionWithPolygon(
-        vehicle_polygon, pose_with_range, shape.footprint, collision_points);
+      collision_detected = checkCollisionWithPolygon();
       break;
 
     default:
@@ -790,12 +786,9 @@ bool DynamicObstacleStopModule::checkCollisionWithBoundingBox(
   return true;
 }
 
-bool DynamicObstacleStopModule::checkCollisionWithPolygon(
-  const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-  const geometry_msgs::msg::Polygon obstacle_polygon,
-  std::vector<geometry_msgs::msg::Point> & collision_points) const
+bool DynamicObstacleStopModule::checkCollisionWithPolygon() const
 {
-  RCLCPP_WARN_STREAM(logger_, "detection for POLYGON type is not inpelemented yet.");
+  RCLCPP_WARN_STREAM(logger_, "detection for POLYGON type is not implemented yet.");
 
   return false;
 }
@@ -1049,17 +1042,37 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   const size_t stop_index = calcTrajectoryIndexByLengthReverse(
     trajectory, dynamic_obstacle->nearest_collision_point_, base_to_collision_point);
   const auto & stop_point = trajectory.points.at(stop_index).pose;
-  debug_ptr_->pushDebugPoints(stop_point.position);
+
+  // debug
+  debug_ptr_->pushStopPose(stop_point);
 
   return stop_point;
 }
 
 void DynamicObstacleStopModule::insertStopPoint(
   const boost::optional<geometry_msgs::msg::Pose> stop_point,
-  autoware_auto_planning_msgs::msg::PathWithLaneId & path) const
+  autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   // no stop point
   if (!stop_point) {
+    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
+    return;
+  }
+
+  // if path already has the same point, insert zero velocity from that point
+  const auto same_point_idx =
+    dynamic_obstacle_stop_utils::haveSamePoint(path.points, stop_point->position);
+  if (same_point_idx) {
+    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
+
+    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+      *same_point_idx, /* velocity = */ 0.0, path.points);
+
+    const auto & p = path.points.at(*same_point_idx).point.pose;
+    debug_ptr_->pushStopPose(p);
+
+    first_stop_path_point_index_ = static_cast<int>(same_point_idx.get());
+
     return;
   }
 
@@ -1067,21 +1080,9 @@ void DynamicObstacleStopModule::insertStopPoint(
   const auto nearest_seg_idx =
     dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, stop_point->position);
 
-  // if path already has the same point, insert zero velocity from that point
-  const auto same_point_idx =
-    dynamic_obstacle_stop_utils::haveSamePoint(path.points, stop_point->position);
-  if (same_point_idx) {
-    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-      *same_point_idx, /* velocity = */ 0.0, path.points);
-
-    const auto & p = path.points.at(*same_point_idx).point.pose;
-    debug_ptr_->pushStopPose(p);
-
-    return;
-  }
-
   // insert new point as stop point
   const auto insert_idx = nearest_seg_idx + 1;
+  first_stop_path_point_index_ = static_cast<int>(insert_idx);
 
   // to PathPointWithLaneId
   autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
@@ -1094,10 +1095,6 @@ void DynamicObstacleStopModule::insertStopPoint(
   // fill with 0 velocity
   dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
     insert_idx, /* velocity = */ 0.0, path.points);
-
-  // debug
-  const auto & p = path.points.at(insert_idx).point.pose;
-  debug_ptr_->pushStopPose(p);
 }
 
 void DynamicObstacleStopModule::insertVelocityWithApproaching(

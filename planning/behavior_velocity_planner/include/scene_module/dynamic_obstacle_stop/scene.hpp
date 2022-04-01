@@ -94,7 +94,7 @@ private:
     const Trajectory & trajectory) const;
 
   pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithRectangle(
-    const pcl::PointCloud<pcl::PointXYZ> & input_points, const std::string trajectory_frame,
+    const pcl::PointCloud<pcl::PointXYZ> & input_points,
     const geometry_msgs::msg::Pose & current_pose) const;
 
   std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
@@ -160,10 +160,7 @@ private:
     const geometry_msgs::msg::Vector3 & dimension,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithPolygon(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-    const geometry_msgs::msg::Polygon obstacle_polygon,
-    std::vector<geometry_msgs::msg::Point> & collision_points) const;
+  bool checkCollisionWithPolygon() const;
 
   std::vector<geometry_msgs::msg::Point> createBoundingBoxForRangedPoints(
     const PoseWithRange & pose_with_range, const float x_offset, const float y_offset) const;
@@ -192,7 +189,7 @@ private:
 
   void insertStopPoint(
     const boost::optional<geometry_msgs::msg::Pose> stop_point,
-    autoware_auto_planning_msgs::msg::PathWithLaneId & path) const;
+    autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
   void insertZeroVelocityWithJerkConstraint(
     const boost::optional<DynamicObstacle> & dynamic_obstacle,
