@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <scene_module/dynamic_obstacle_stop/scene.hpp>
+#include "scene_module/dynamic_obstacle_stop/scene.hpp"
+#include "utilization/util.hpp"
+
 #include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
-// #include <utilization/util.hpp>
 
 #include <tf2_eigen/tf2_eigen.h>
 
@@ -157,10 +158,6 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
 
     debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
     debug_ptr_->publishDebugValue();
-
-    // Trajectory debug_traj{trim_trajectory};
-    // addPointsBehindBase(smoothed_trajectory.get(), current_pose, debug_traj);
-    // debug_path_pub_->publish(debug_traj);
   }
 
   return true;
@@ -975,42 +972,17 @@ void DynamicObstacleStopModule::insertStopPoint(
     return;
   }
 
-  // if path already has the same point, insert zero velocity from that point
-  const auto same_point_idx =
-    dynamic_obstacle_stop_utils::haveSamePoint(path.points, stop_point->position);
-  if (same_point_idx) {
-    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
-
-    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-      *same_point_idx, /* velocity = */ 0.0, path.points);
-
-    const auto & p = path.points.at(*same_point_idx).point.pose;
-    debug_ptr_->pushStopPose(p);
-
-    first_stop_path_point_index_ = static_cast<int>(same_point_idx.get());
-
-    return;
-  }
-
   // find nearest point index behind the stop point
   const auto nearest_seg_idx =
     dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, stop_point->position);
-
-  // insert new point as stop point
-  const auto insert_idx = nearest_seg_idx + 1;
-  first_stop_path_point_index_ = static_cast<int>(insert_idx);
+  auto insert_idx = nearest_seg_idx + 1;
 
   // to PathPointWithLaneId
   autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
-  stop_point_with_lane_id = path.points.at(insert_idx);
+  stop_point_with_lane_id = path.points.at(nearest_seg_idx);
   stop_point_with_lane_id.point.pose = *stop_point;
 
-  // insert stop point
-  path.points.insert(path.points.begin() + insert_idx, stop_point_with_lane_id);
-
-  // fill with 0 velocity
-  dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-    insert_idx, /* velocity = */ 0.0, path.points);
+  planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
 }
 
 void DynamicObstacleStopModule::insertVelocityWithApproaching(
@@ -1079,87 +1051,40 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
 void DynamicObstacleStopModule::insertApproachingVelocity(
   const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-  const float approaching_vel, const float stop_margin, const Trajectory & trajectory,
+  const float approaching_vel, const float approach_margin, const Trajectory & trajectory,
   autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  // insert nearest point as the beginning of slow down
-  const auto nearest_idx =
-    tier4_autoware_utils::findNearestIndex(trajectory.points, current_pose.position);
-  const auto & nearest_point = trajectory.points.at(nearest_idx).pose;
+  // isnert slow down velocity from nearest segment point
+  const auto nearest_seg_idx =
+    dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, current_pose.position);
+  dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+    nearest_seg_idx, approaching_vel, path.points);
 
-  // if path already has the same point, insert zero velocity from that point
-  const auto same_point_nearest_idx =
-    dynamic_obstacle_stop_utils::haveSamePoint(path.points, nearest_point.position);
-  if (same_point_nearest_idx) {
-    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
+  // debug
+  debug_ptr_->pushDebugPoints(
+    path.points.at(nearest_seg_idx).point.pose.position, PointType::Yellow);
 
-    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-      *same_point_nearest_idx, approaching_vel, path.points);
-
-    const auto & p = path.points.at(*same_point_nearest_idx).point.pose;
-    debug_ptr_->pushDebugPoints(p.position, PointType::Yellow);
-  } else {
-    // find nearest point index behind the stop point
-    const auto nearest_seg_idx =
-      dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, nearest_point.position);
-
-    // insert new point as stop point
-    const auto insert_idx = nearest_seg_idx + 1;
-
-    // to PathPointWithLaneId
-    autoware_auto_planning_msgs::msg::PathPointWithLaneId nearest_point_with_lane_id;
-    nearest_point_with_lane_id = path.points.at(insert_idx);
-    nearest_point_with_lane_id.point.pose = nearest_point;
-
-    // insert stop point
-    path.points.insert(path.points.begin() + insert_idx, nearest_point_with_lane_id);
-
-    // fill with 0 velocity
-    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-      insert_idx, approaching_vel, path.points);
-  }
-
-  // insert stop point
-  const float collision_point_to_base = stop_margin + planner_param_.vehicle_param.base_to_front;
+  // calculate stop point to insert 0 velocity
+  const float base_to_collision_point =
+    approach_margin + planner_param_.vehicle_param.base_to_front;
   const auto stop_idx = calcTrajectoryIndexByLengthReverse(
-    trajectory, dynamic_obstacle.nearest_collision_point_, collision_point_to_base);
+    trajectory, dynamic_obstacle.nearest_collision_point_, base_to_collision_point);
   const auto & stop_point = trajectory.points.at(stop_idx).pose;
 
-  // if path already has the same point, insert zero velocity from that point
-  const auto same_point_idx =
-    dynamic_obstacle_stop_utils::haveSamePoint(path.points, stop_point.position);
-  if (same_point_idx) {
-    RCLCPP_DEBUG_STREAM(logger_, "already has same point");
+  // debug
+  debug_ptr_->pushStopPose(stop_point);
 
-    dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-      *same_point_idx, /* velocity = */ 0.0, path.points);
-
-    const auto & p = path.points.at(*same_point_idx).point.pose;
-    debug_ptr_->pushStopPose(p);
-    first_stop_path_point_index_ = static_cast<int>(same_point_idx.get());
-
-    return;
-  }
-
-  // find nearest point index behind the stop point
-  const auto nearest_seg_idx =
+  const auto nearest_seg_idx_stop =
     dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, stop_point.position);
-
-  // insert new point as stop point
-  const auto insert_idx = nearest_seg_idx + 1;
-  first_stop_path_point_index_ = static_cast<int>(insert_idx);
+  auto insert_idx_stop = nearest_seg_idx_stop + 1;
 
   // to PathPointWithLaneId
+  // use lane id of point behind inserted point
   autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
-  stop_point_with_lane_id = path.points.at(insert_idx);
+  stop_point_with_lane_id = path.points.at(nearest_seg_idx_stop);
   stop_point_with_lane_id.point.pose = stop_point;
 
-  // insert stop point
-  path.points.insert(path.points.begin() + insert_idx, stop_point_with_lane_id);
-
-  // fill with 0 velocity
-  dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
-    insert_idx, /* velocity = */ 0.0, path.points);
+  planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx_stop);
 }
 
 void DynamicObstacleStopModule::addPointsBehindBase(

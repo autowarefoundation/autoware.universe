@@ -198,7 +198,7 @@ private:
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-    const float approaching_vel, const float stop_margin, const Trajectory & trajectory,
+    const float approaching_vel, const float approach_margin, const Trajectory & trajectory,
     autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
   void addPointsBehindBase(
