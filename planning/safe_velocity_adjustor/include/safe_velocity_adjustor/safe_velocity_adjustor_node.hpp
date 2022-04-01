@@ -18,7 +18,6 @@
 #include "safe_velocity_adjustor/collision_distance.hpp"
 #include "safe_velocity_adjustor/pointcloud_processing.hpp"
 
-#include <rcl_interfaces/msg/detail/set_parameters_result__struct.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
@@ -26,13 +25,12 @@
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detail/predicted_object__struct.hpp>
-#include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
+#include <geometry_msgs/msg/point.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -63,6 +61,7 @@ public:
   {
     time_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("time_safety_buffer"));
     dist_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("dist_safety_buffer"));
+    downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
 
     sub_trajectory_ = create_subscription<Trajectory>(
       "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
@@ -103,6 +102,7 @@ private:
   // parameters
   Float time_safety_buffer_;
   Float dist_safety_buffer_;
+  int downsample_factor_;
   // TODO(Maxime CLEMENT): get vehicle width and length from vehicle parameters
   Float vehicle_width_ = 2.0;
   Float vehicle_length_ = 4.0;
@@ -118,6 +118,9 @@ private:
         time_safety_buffer_ = static_cast<Float>(parameter.as_double());
       } else if (parameter.get_name() == "dist_safety_buffer") {
         dist_safety_buffer_ = static_cast<Float>(parameter.as_double());
+        result.successful = true;
+      } else if (parameter.get_name() == "downsample_factor") {
+        downsample_factor_ = static_cast<int>(parameter.as_int());
         result.successful = true;
       } else {
         RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
@@ -139,6 +142,13 @@ private:
       return;
     }
 
+    // Downsample trajectory
+    Trajectory in_traj;
+    in_traj.header = msg->header;
+    in_traj.points.reserve(msg->points.size() / downsample_factor_);
+    for (size_t i = 0; i < msg->points.size(); i += downsample_factor_)
+      in_traj.points.push_back(msg->points[i]);
+
     double pointcloud_d{};
     double vector_d{};
     double dist_d{};
@@ -148,11 +158,11 @@ private:
     const auto extra_vehicle_length = vehicle_length_ / 2 + dist_safety_buffer_;
     stopwatch.tic("pointcloud_d");
     const auto filtered_obstacle_pointcloud = transformAndFilterPointCloud(
-      safe_trajectory, *obstacle_pointcloud_ptr_, *dynamic_obstacles_ptr_, transform_listener_,
+      in_traj, *obstacle_pointcloud_ptr_, *dynamic_obstacles_ptr_, transform_listener_,
       time_safety_buffer_, extra_vehicle_length);
     pointcloud_d += stopwatch.toc("pointcloud_d");
 
-    for (auto & trajectory_point : safe_trajectory.points) {
+    for (auto & trajectory_point : in_traj.points) {
       stopwatch.tic("vector_d");
       const auto forward_simulated_vector =
         forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
@@ -169,9 +179,13 @@ private:
         vel_d += stopwatch.toc("vel_d");
       }
     }
+
+    for (size_t i = 0; i < safe_trajectory.points.size(); ++i) {
+      safe_trajectory.points[i].longitudinal_velocity_mps =
+        in_traj.points[i / downsample_factor_].longitudinal_velocity_mps;
+    }
     RCLCPP_WARN(get_logger(), "pointcloud = %2.2fs", pointcloud_d);
     RCLCPP_WARN(get_logger(), "dist = %2.2fs", dist_d);
-    RCLCPP_WARN(get_logger(), "*** Total = %2.2fs", stopwatch.toc());
 
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
@@ -179,8 +193,10 @@ private:
     PointCloud2 ros_pointcloud;
     pcl::toROSMsg(filtered_obstacle_pointcloud, ros_pointcloud);
     ros_pointcloud.header.stamp = now();
-    ros_pointcloud.header.frame_id = msg->header.frame_id;
+    ros_pointcloud.header.frame_id = in_traj.header.frame_id;
     pub_debug_pointcloud_->publish(ros_pointcloud);
+
+    RCLCPP_WARN(get_logger(), "*** Total = %2.2fs", stopwatch.toc());
   }
 
   Float calculateSafeVelocity(
@@ -191,8 +207,7 @@ private:
       static_cast<Float>(dist_to_collision / time_safety_buffer_));
   }
 
-  static visualization_msgs::msg::Marker makeEnvelopeMarker(
-    const Trajectory & trajectory, const Float time_safety_buffer, const Float dist_safety_buffer)
+  visualization_msgs::msg::Marker makeEnvelopeMarker(const Trajectory & trajectory) const
   {
     visualization_msgs::msg::Marker envelope;
     envelope.header = trajectory.header;
@@ -200,14 +215,12 @@ private:
     envelope.scale.x = 0.1;
     envelope.color.a = 1.0;
     for (const auto & point : trajectory.points) {
-      const auto heading = tf2::getYaw(point.pose.orientation);
-      auto p = point.pose.position;
-      p.x += static_cast<Float>(
-               point.longitudinal_velocity_mps * std::cos(heading) * time_safety_buffer) +
-             dist_safety_buffer;
-      p.y += static_cast<Float>(
-               point.longitudinal_velocity_mps * std::sin(heading) * time_safety_buffer) +
-             dist_safety_buffer;
+      const auto vector = forwardSimulatedVector(
+        point, time_safety_buffer_, dist_safety_buffer_ + vehicle_length_ / 2);
+      geometry_msgs::msg::Point p;
+      p.x = vector.second.x();
+      p.y = vector.second.y();
+      p.z = point.pose.position.z;
       envelope.points.push_back(p);
     }
     return envelope;
@@ -217,13 +230,11 @@ private:
     const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory) const
   {
     visualization_msgs::msg::MarkerArray debug_markers;
-    auto original_envelope =
-      makeEnvelopeMarker(original_trajectory, time_safety_buffer_, dist_safety_buffer_);
+    auto original_envelope = makeEnvelopeMarker(original_trajectory);
     original_envelope.color.r = 1.0;
     original_envelope.ns = "original";
     debug_markers.markers.push_back(original_envelope);
-    auto adjusted_envelope =
-      makeEnvelopeMarker(adjusted_trajectory, time_safety_buffer_, dist_safety_buffer_);
+    auto adjusted_envelope = makeEnvelopeMarker(adjusted_trajectory);
     adjusted_envelope.color.g = 1.0;
     adjusted_envelope.ns = "adjusted";
     debug_markers.markers.push_back(adjusted_envelope);

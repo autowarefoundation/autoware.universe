@@ -4,15 +4,11 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Map1
-        - /Map1/PointCloudMap1
+        - /System1/Vehicle1
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
         - /Perception1
-        - /Planning1
-        - /Planning1/ScenarioPlanning1
-        - /MarkerArray1
-        - /FilteredPointCloud1
-        - /FilteredPointCloud1/Status1
+        - /Perception1/ObjectRecognition1
+        - /Perception1/ObjectRecognition1/Prediction1
       Splitter Ratio: 0.557669460773468
     Tree Height: 289
   - Class: rviz_common/Selection
@@ -73,7 +69,7 @@ Visualization Manager:
         - Class: rviz_common/Group
           Displays:
             - Class: rviz_plugins/SteeringAngle
-              Enabled: true
+              Enabled: false
               Left: 128
               Length: 256
               Name: SteeringAngle
@@ -86,11 +82,11 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/steering_status
-              Value: true
+              Value: false
               Value Scale: 0.14999249577522278
               Value height offset: 0
             - Class: rviz_plugins/ConsoleMeter
-              Enabled: true
+              Enabled: false
               Left: 512
               Length: 256
               Name: ConsoleMeter
@@ -102,7 +98,7 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/velocity_status
-              Value: true
+              Value: false
               Value Scale: 0.14999249577522278
               Value height offset: 0
             - Alpha: 0.9990000128746033
@@ -297,7 +293,7 @@ Visualization Manager:
             - Class: rviz_plugins/PolarGridDisplay
               Color: 255; 255; 255
               Delta Range: 10
-              Enabled: true
+              Enabled: false
               Max Alpha: 0.5
               Max Range: 100
               Max Wave Alpha: 0.5
@@ -305,21 +301,21 @@ Visualization Manager:
               Min Wave Alpha: 0.009999999776482582
               Name: PolarGridDisplay
               Reference Frame: base_link
-              Value: true
+              Value: false
               Wave Color: 255; 255; 255
               Wave Velocity: 40
             - Class: rviz_plugins/MaxVelocity
-              Enabled: true
+              Enabled: false
               Left: 595
               Length: 96
               Name: MaxVelocity
               Text Color: 255; 255; 255
               Top: 280
               Topic: /planning/scenario_planning/current_max_velocity
-              Value: true
+              Value: false
               Value Scale: 0.25
             - Class: rviz_plugins/TurnSignal
-              Enabled: true
+              Enabled: false
               Height: 256
               Left: 196
               Name: TurnSignal
@@ -330,7 +326,7 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /vehicle/status/turn_indicators_status
-              Value: true
+              Value: false
               Width: 512
           Enabled: true
           Name: Vehicle
@@ -827,27 +823,20 @@ Visualization Manager:
                     Color: 119; 11; 32
                   Class: autoware_auto_perception_rviz_plugin/PredictedObjects
                   Display 3d polygon: true
-                  Display Label: true
-                  Display PoseWithCovariance: true
-                  Display Predicted Path Confidence: true
-                  Display Predicted Paths: true
-                  Display Twist: true
-                  Display UUID: true
-                  Display Velocity: true
+                  Display Label: false
+                  Display PoseWithCovariance: false
+                  Display Predicted Path Confidence: false
+                  Display Predicted Paths: false
+                  Display Twist: false
+                  Display UUID: false
+                  Display Velocity: false
                   Enabled: true
                   MOTORCYCLE:
                     Alpha: 0.9990000128746033
                     Color: 119; 11; 32
                   Name: PredictedObjects
                   Namespaces:
-                    label: true
-                    path: true
-                    path confidence: true
-                    position covariance: true
-                    shape: true
-                    twist: true
-                    uuid: true
-                    velocity: true
+                    {}
                   PEDESTRIAN:
                     Alpha: 0.9990000128746033
                     Color: 255; 192; 203
@@ -971,7 +960,7 @@ Visualization Manager:
           Displays:
             - Class: rviz_plugins/Trajectory
               Color Border Vel Max: 3
-              Enabled: true
+              Enabled: false
               Name: ScenarioTrajectory
               Topic:
                 Depth: 5
@@ -980,7 +969,7 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /planning/scenario_planning/trajectory
-              Value: true
+              Value: false
               View Path:
                 Alpha: 0.9990000128746033
                 Color: 0; 0; 0
@@ -1332,7 +1321,7 @@ Visualization Manager:
               Name: Parking
           Enabled: true
           Name: ScenarioPlanning
-      Enabled: true
+      Enabled: false
       Name: Planning
     - Class: rviz_common/Group
       Displays:
@@ -1509,11 +1498,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 1.4263962507247925
+      Scale: 12.543999671936035
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 7.768266201019287
-      Y: 6.952993869781494
+      X: 0
+      Y: 0
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18
