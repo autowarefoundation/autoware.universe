@@ -45,6 +45,8 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
       smoother_ = std::make_shared<JerkFilteredSmoother>(*this);
+      jerk_filtered_smoother_param_ =
+        std::dynamic_pointer_cast<JerkFilteredSmoother>(smoother_)->getParam();
 
       // Set Publisher for jerk filtered algorithm
       pub_forward_filtered_trajectory_ =
@@ -59,19 +61,26 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     }
     case AlgorithmType::L2: {
       smoother_ = std::make_shared<L2PseudoJerkSmoother>(*this);
+      l2_pseudo_jerk_smoother_param_ =
+        std::dynamic_pointer_cast<L2PseudoJerkSmoother>(smoother_)->getParam();
       break;
     }
     case AlgorithmType::LINF: {
       smoother_ = std::make_shared<LinfPseudoJerkSmoother>(*this);
+      linf_pseudo_jerk_smoother_param_ =
+        std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->getParam();
       break;
     }
     case AlgorithmType::ANALYTICAL: {
       smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(*this);
+      analytical_jerk_constrained_smoother_param_ =
+        std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->getParam();
       break;
     }
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
+  base_param_ = smoother_->getBaseParam();
 
   // publishers, subscribers
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
