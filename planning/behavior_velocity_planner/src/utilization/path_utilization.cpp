@@ -205,7 +205,7 @@ autoware_auto_planning_msgs::msg::Path interpolatePath(
   const auto y_interp = interpolation::slerp(s_in, y, s_out);
   const auto z_interp = interpolation::slerp(s_in, z, s_out);
 
-  // Find a nearest segment for each point in s_out and use the velocity of the segment's begining
+  // Find a nearest segment for each point in s_out and use the velocity of the segment's beginning
   // point. Note that if s_out is almost the same value as s_in within DOUBLE_EPSILON range, the
   // velocity of s_out should be same as the one of s_in.
   std::vector<double> v_interp;
