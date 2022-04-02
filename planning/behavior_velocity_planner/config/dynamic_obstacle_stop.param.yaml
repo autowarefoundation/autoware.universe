@@ -1,0 +1,42 @@
+/**:
+  ros__parameters:
+    dynamic_obstacle_stop:
+      use_objects: true #  if this is false, use points instead of dynamic objects
+      use_predicted_path: false # if this is false, create path of objects to run straight to lane
+      extend_distance: 5.0 # extend trajectory to consider after goal obstacle in the extend_distance
+      stop_margin: 2.5 # the vehicle decelerates to be able to stop with this margin [m]
+      passing_margin: 1.0 # the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin [m]
+      stop_start_jerk_dec: -0.3 # the vehicle begins to decelerate if the vehicle can't stop for the obstacle with this jerk [m/s^3]
+      obstacle_velocity_kph: 5.0 # assumption for obstacle velocity [km/h]
+      detection_distance: 45.0 # [m]
+      detection_span: 1.0 # [m]
+      min_vel_ego_kmph: 3.6 # [km/h]
+      calc_collision_from_point: true
+
+      detection_area_size:
+        dist_ahead: 50.0
+        dist_behind: 5.0
+        dist_right: 7.0
+        dist_left: 0.1
+      
+      dynamic_obstacle:
+        min_vel_kmph: 0.0 # [km/h]
+        max_vel_kmph: 5.0 # [km/h]
+        diameter: 0.1 # [m]
+        height: 2.0 # [m]
+        path_size: 20
+        time_step: 0.5 # [sec]
+
+      # approach if ego has stopped in the front of the obstacle for a certain amount of time
+      approaching:
+        enable: true
+        margin: 0.0 # distance on how close ego approaches the obstacle [m]
+        limit_vel_kmph: 5.0 # limit velocity for approaching after stopping [km/h]
+        stop_thresh: 0.01 # threshold to decide if ego is stopping [m/s]
+        stop_time_thresh: 3.0 # threshold for stopping time to transit to approaching state [sec]
+        dist_thresh: 0.5 # end the approaching state if distance to the obstacle is longer than stop_margin + dist_thresh [m]
+
+      slow_down_limit:
+        enable: false
+        max_jerk: -0.7 # [m/s^3] minimum jerk deceleration for safe brake.
+        max_acc : -2.0  # [m/s^2] minimum accel deceleration for safe brake.
