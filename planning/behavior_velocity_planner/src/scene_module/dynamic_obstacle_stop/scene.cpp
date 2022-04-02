@@ -138,7 +138,9 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   }
 
   // apply max jerk limit if the ego can't stop with specified max jerk and acc
-  applyMaxJerkLimit(trim_trajectory, current_pose, current_vel, current_acc, *path);
+  if (planner_param_.slow_down_limit.enable) {
+    applyMaxJerkLimit(trim_trajectory, current_pose, current_vel, current_acc, *path);
+  }
 
   // debug
   {
@@ -1258,7 +1260,7 @@ void DynamicObstacleStopModule::applyMaxJerkLimit(
 
   // calculate desired velocity with limited jerk
   const auto jerk_limited_vel = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
-    planner_param_.motion.max_slow_down_jerk, planner_param_.motion.max_slow_down_acc, current_acc,
+    planner_param_.slow_down_limit.max_jerk, planner_param_.slow_down_limit.max_acc, current_acc,
     current_vel, dist_to_stop_point);
 
   // overwrite velocity with limited velocity

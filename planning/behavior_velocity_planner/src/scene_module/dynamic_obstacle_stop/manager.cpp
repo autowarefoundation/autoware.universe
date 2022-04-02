@@ -101,10 +101,11 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   }
 
   {
-    auto & p = planner_param_.motion;
-    const std::string ns_m = ns + ".motion";
-    p.max_slow_down_jerk = node.declare_parameter(ns_m + ".max_slow_down_jerk", -0.7);
-    p.max_slow_down_acc = node.declare_parameter(ns_m + ".max_slow_down_acc", -2.0);
+    auto & p = planner_param_.slow_down_limit;
+    const std::string ns_m = ns + ".slow_down_limit";
+    p.enable = node.declare_parameter(ns_m + ".enable", true);
+    p.max_jerk = node.declare_parameter(ns_m + ".max_jerk", -0.7);
+    p.max_acc = node.declare_parameter(ns_m + ".max_acc", -2.0);
   }
 
   initSmootherParam(node);

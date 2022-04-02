@@ -112,10 +112,11 @@ struct DynamicObstacleParam
   float time_step{0.5};  // [sec]
 };
 
-struct Motion
+struct SlowDownLimit
 {
-  float max_slow_down_jerk;
-  float max_slow_down_acc;
+  bool enable;
+  float max_jerk;
+  float max_acc;
 };
 
 struct PlannerParam
@@ -126,7 +127,7 @@ struct PlannerParam
   DetectionAreaSize detection_area;
   ApproachingParam approaching;
   DynamicObstacleParam dynamic_obstacle;
-  Motion motion;
+  SlowDownLimit slow_down_limit;
 };
 
 struct TextWithPosition
