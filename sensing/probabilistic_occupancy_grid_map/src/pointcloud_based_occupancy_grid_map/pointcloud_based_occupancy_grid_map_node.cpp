@@ -95,7 +95,8 @@ using costmap_2d::OccupancyGridMap;
 using costmap_2d::OccupancyGridMapBBFUpdater;
 using geometry_msgs::msg::Pose;
 
-PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(const rclcpp::NodeOptions & node_options)
+PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(
+  const rclcpp::NodeOptions & node_options)
 : Node("pointcloud_based_occupancy_grid_map_node", node_options)
 {
   using std::placeholders::_1;
@@ -115,8 +116,7 @@ PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(const rcl
     rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
   raw_pointcloud_sub_.subscribe(
     this, "~/input/raw_pointcloud", rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
-    sync_ptr_ = std::make_shared<Sync>(
-      SyncPolicy(5), obstacle_pointcloud_sub_, raw_pointcloud_sub_);
+  sync_ptr_ = std::make_shared<Sync>(SyncPolicy(5), obstacle_pointcloud_sub_, raw_pointcloud_sub_);
 
   sync_ptr_->registerCallback(
     std::bind(&PoincloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw, this, _1, _2));
@@ -126,7 +126,6 @@ PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(const rcl
   occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
     map_length / map_resolution, map_length / map_resolution, map_resolution);
 }
-
 
 void PoincloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   const PointCloud2::ConstSharedPtr & input_obstacle_msg,
