@@ -51,6 +51,7 @@ using dynamic_obstacle_stop_utils::PredictedPath;
 using dynamic_obstacle_stop_utils::State;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using tier4_debug_msgs::msg::Float32Stamped;
+using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
 class DynamicObstacleStopModule : public SceneModuleInterface
 {
