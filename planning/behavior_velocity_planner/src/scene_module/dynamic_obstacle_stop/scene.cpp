@@ -91,12 +91,12 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     return true;
   }
 
-  // TODO(Tomohito Ando): parameter
   // trim trajectory ahead of the base_link
   const double trim_distance = planner_param_.dynamic_obstacle_stop.detection_distance;
   const auto trim_trajectory =
     trimTrajectoryFromSelfPose(smoothed_trajectory.get(), current_pose, trim_distance);
 
+  // TODO(Tomohito Ando): make options easier to understand
   std::vector<DynamicObstacle> dynamic_obstacles;
   if (
     planner_param_.dynamic_obstacle_stop.use_objects &&
@@ -136,6 +136,9 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
       calcStopPoint(dynamic_obstacle, trim_trajectory, current_pose, current_vel, current_acc);
     insertStopPoint(stop_point, *path);
   }
+
+  // apply max jerk limit if the ego can't stop with specified max jerk and acc
+  applyMaxJerkLimit(trim_trajectory, current_pose, current_vel, current_acc, *path);
 
   // debug
   {
@@ -1084,7 +1087,7 @@ void DynamicObstacleStopModule::insertApproachingVelocity(
   // isnert slow down velocity from nearest segment point
   const auto nearest_seg_idx =
     dynamic_obstacle_stop_utils::findNearestSegmentIndex(path.points, current_pose.position);
-  dynamic_obstacle_stop_utils::fillPathVelocityFromIndex(
+  dynamic_obstacle_stop_utils::insertPathVelocityFromIndexLimited(
     nearest_seg_idx, approaching_vel, path.points);
 
   // debug
@@ -1237,6 +1240,30 @@ bool DynamicObstacleStopModule::smoothVelocity(
   // insertBehindVelocity(*traj_resampled_closest, type, traj_smoothed);
 
   return true;
+}
+
+void DynamicObstacleStopModule::applyMaxJerkLimit(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+  const float current_vel, const float current_acc,
+  autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+{
+  const auto stop_point_idx = dynamic_obstacle_stop_utils::findFirstStopPointIdx(path.points);
+  if (!stop_point_idx) {
+    return;
+  }
+
+  const auto stop_point = path.points.at(stop_point_idx.get()).point.pose.position;
+  const auto dist_to_stop_point =
+    tier4_autoware_utils::calcSignedArcLength(trajectory.points, current_pose.position, stop_point);
+
+  // calculate desired velocity with limited jerk
+  const auto jerk_limited_vel = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
+    planner_param_.motion.max_slow_down_jerk, planner_param_.motion.max_slow_down_acc, current_acc,
+    current_vel, dist_to_stop_point);
+
+  // overwrite velocity with limited velocity
+  dynamic_obstacle_stop_utils::insertPathVelocityFromIndex(
+    stop_point_idx.get(), jerk_limited_vel, path.points);
 }
 
 }  // namespace behavior_velocity_planner

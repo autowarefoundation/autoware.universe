@@ -112,6 +112,12 @@ struct DynamicObstacleParam
   float time_step{0.5};  // [sec]
 };
 
+struct Motion
+{
+  float max_slow_down_jerk;
+  float max_slow_down_acc;
+};
+
 struct PlannerParam
 {
   CommonParam common;
@@ -120,8 +126,7 @@ struct PlannerParam
   DetectionAreaSize detection_area;
   ApproachingParam approaching;
   DynamicObstacleParam dynamic_obstacle;
-
-  double lowpass_gain;
+  Motion motion;
 };
 
 struct TextWithPosition
@@ -241,7 +246,13 @@ boost::optional<size_t> haveSamePoint(
 
 bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
-void fillPathVelocityFromIndex(const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
+void insertPathVelocityFromIndexLimited(
+  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
+
+void insertPathVelocityFromIndex(
+  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
+
+boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points);
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
 #endif  // DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_

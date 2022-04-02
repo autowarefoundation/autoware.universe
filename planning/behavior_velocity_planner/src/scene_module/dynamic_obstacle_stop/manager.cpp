@@ -100,6 +100,13 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.dist_thresh = node.declare_parameter(ns_a + ".dist_thresh", 0.5);
   }
 
+  {
+    auto & p = planner_param_.motion;
+    const std::string ns_m = ns + ".motion";
+    p.max_slow_down_jerk = node.declare_parameter(ns_m + ".max_slow_down_jerk", -0.7);
+    p.max_slow_down_acc = node.declare_parameter(ns_m + ".max_slow_down_acc", -2.0);
+  }
+
   initSmootherParam(node);
 
   // // Set parameter callback

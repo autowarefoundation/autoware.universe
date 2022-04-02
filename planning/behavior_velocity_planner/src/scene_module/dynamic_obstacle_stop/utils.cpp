@@ -381,7 +381,8 @@ bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg:
   return false;
 }
 
-void fillPathVelocityFromIndex(
+// insert path velocity which doesn't exceed original velocity
+void insertPathVelocityFromIndexLimited(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points)
 {
   for (size_t i = start_idx; i < path_points.size(); i++) {
@@ -390,5 +391,24 @@ void fillPathVelocityFromIndex(
   }
 }
 
+void insertPathVelocityFromIndex(
+  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points)
+{
+  for (size_t i = start_idx; i < path_points.size(); i++) {
+    path_points.at(i).point.longitudinal_velocity_mps = velocity_mps;
+  }
+}
+
+boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points)
+{
+  for (size_t i = 0; i < path_points.size(); i++) {
+    const auto vel = path_points.at(i).point.longitudinal_velocity_mps;
+    if (vel < std::numeric_limits<float>::epsilon()) {
+      return i;
+    }
+  }
+
+  return {};
+}
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner

@@ -218,6 +218,11 @@ private:
   bool smoothVelocity(
     const TrajectoryPoints & input, const geometry_msgs::msg::Pose & current_pose,
     const double initial_vel, const double initial_acc, TrajectoryPoints & traj_smoothed) const;
+
+  void applyMaxJerkLimit(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    const float current_vel, const float current_acc,
+    autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 };
 }  // namespace behavior_velocity_planner
 
