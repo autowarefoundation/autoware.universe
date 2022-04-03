@@ -95,7 +95,8 @@ using costmap_2d::OccupancyGridMap;
 using costmap_2d::OccupancyGridMapBBFUpdater;
 using geometry_msgs::msg::Pose;
 
-LaserscanBasedOccupancyGridMapNode::LaserscanBasedOccupancyGridMapNode(const rclcpp::NodeOptions & node_options)
+LaserscanBasedOccupancyGridMapNode::LaserscanBasedOccupancyGridMapNode(
+  const rclcpp::NodeOptions & node_options)
 : Node("laserscan_based_occupancy_grid_map_node", node_options)
 {
   using std::placeholders::_1;
@@ -123,7 +124,8 @@ LaserscanBasedOccupancyGridMapNode::LaserscanBasedOccupancyGridMapNode(const rcl
   raw_pointcloud_sub_.subscribe(
     this, "~/input/raw_pointcloud", rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
   // add dummy callback to enable passthrough filter
-  laserscan_sub_.registerCallback(std::bind(&LaserscanBasedOccupancyGridMapNode::onDummyPointCloud2, this, _1));
+  laserscan_sub_.registerCallback(
+    std::bind(&LaserscanBasedOccupancyGridMapNode::onDummyPointCloud2, this, _1));
   if (input_obstacle_and_raw_pointcloud) {
     sync_ptr_ = std::make_shared<Sync>(
       SyncPolicy(5), laserscan_sub_, obstacle_pointcloud_sub_, raw_pointcloud_sub_);
@@ -134,8 +136,9 @@ LaserscanBasedOccupancyGridMapNode::LaserscanBasedOccupancyGridMapNode(const rcl
     sync_ptr_ = std::make_shared<Sync>(SyncPolicy(3), laserscan_sub_, passthrough_, passthrough_);
   }
 
-  sync_ptr_->registerCallback(
-    std::bind(&LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw, this, _1, _2, _3));
+  sync_ptr_->registerCallback(std::bind(
+    &LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw, this, _1, _2,
+    _3));
   occupancy_grid_map_pub_ = create_publisher<OccupancyGrid>("~/output/occupancy_grid_map", 1);
 
   /* Occupancy grid */
