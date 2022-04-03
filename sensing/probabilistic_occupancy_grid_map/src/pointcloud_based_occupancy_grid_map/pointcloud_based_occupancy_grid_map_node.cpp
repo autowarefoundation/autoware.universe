@@ -106,8 +106,7 @@ PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(const rcl
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
   use_height_filter_ = declare_parameter("use_height_filter", true);
   const double map_length{declare_parameter("map_length", 100.0)};
-  // const double map_resolution{declare_parameter("map_resolution", 0.5)};
-  const double map_resolution{0.1};
+  const double map_resolution{declare_parameter("map_resolution", 0.5)};
 
   /* Subscriber and publisher */
   obstacle_pointcloud_sub_.subscribe(
@@ -136,7 +135,7 @@ void PoincloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   PointCloud2 cropped_obstacle_pc{};
   PointCloud2 cropped_raw_pc{};
   if (use_height_filter_) {
-    constexpr float min_height = -2.0, max_height = 2.0;
+    constexpr float min_height = -1.0, max_height = 2.0;
     if (!cropPointcloudByHeight(
           *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height,
           cropped_obstacle_pc)) {
