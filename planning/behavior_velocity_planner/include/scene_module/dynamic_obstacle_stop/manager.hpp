@@ -20,11 +20,10 @@
 #include "scene_module/dynamic_obstacle_stop/utils.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
+#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-// temporary
-#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 
 #include <functional>
 #include <memory>
@@ -41,7 +40,6 @@ public:
 private:
   dynamic_obstacle_stop_utils::PlannerParam planner_param_;
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
-  // temporary
   std::shared_ptr<motion_velocity_smoother::SmootherBase> smoother_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
@@ -54,9 +52,6 @@ private:
   // OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   // rcl_interfaces::msg::SetParametersResult paramCallback(
   //   const std::vector<rclcpp::Parameter> & parameters);
-
-  // todo: remove after smoother can be loaded in behavior velocity planner
-  void initSmootherParam(rclcpp::Node & node);
 };
 }  // namespace behavior_velocity_planner
 

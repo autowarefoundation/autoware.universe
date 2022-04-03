@@ -52,7 +52,10 @@ visualization_msgs::msg::Marker createStopLineMarker(
 
 DynamicObstacleStopDebug::DynamicObstacleStopDebug(rclcpp::Node & node) : node_(node)
 {
-  pub_debug_values_ = node.create_publisher<Float32MultiArrayStamped>("~/debug/debug_values", 1);
+  pub_debug_values_ = node.create_publisher<Float32MultiArrayStamped>(
+    "~/dynamic_obstacle_stop/debug/debug_values", 1);
+  pub_debug_trajectory_ =
+    node.create_publisher<Trajectory>("~/dynamic_obstacle_stop/debug/trajectory", 1);
 }
 
 void DynamicObstacleStopDebug::pushDebugPoints(const pcl::PointXYZ & debug_point)
@@ -245,6 +248,11 @@ void DynamicObstacleStopDebug::publishDebugValue()
     debug_msg.data.push_back(v);
   }
   pub_debug_values_->publish(debug_msg);
+}
+
+void DynamicObstacleStopDebug::publishDebugTrajectory(const Trajectory & trajectory)
+{
+  pub_debug_trajectory_->publish(trajectory);
 }
 
 // scene module

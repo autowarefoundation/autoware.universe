@@ -19,8 +19,8 @@
 #include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 
-#include <tf2_eigen/tf2_eigen.h>
 #include <pcl/filters/voxel_grid.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 #include <algorithm>
 #include <memory>
@@ -177,6 +177,8 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
     debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
     debug_ptr_->publishDebugValue();
+
+    debug_ptr_->publishDebugTrajectory(*smoothed_trajectory);
   }
 
   return true;

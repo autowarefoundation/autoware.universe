@@ -14,6 +14,7 @@
 #ifndef DYNAMIC_OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 #define DYNAMIC_OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 
+#include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 #include "scene_module/dynamic_obstacle_stop/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -48,7 +49,7 @@ public:
     LONGITUDINAL_DIST_COLLISION = 3,
     COLLISION_POS_FROM_EGO_FRONT = 4,
     STOP_DISTANCE = 5,
-    TEMP = 6,
+    NUM_OBSTACLES = 6,
     SIZE,  // this is the number of enum elements
   };
 
@@ -103,6 +104,7 @@ public:
   void pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon);
   void pushDebugTexts(const TextWithPosition & debug_text);
   void publishDebugValue();
+  void publishDebugTrajectory(const Trajectory & trajectory);
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
 
 private:
@@ -112,6 +114,7 @@ private:
 
   rclcpp::Node & node_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_debug_trajectory_;
   std::vector<geometry_msgs::msg::Point> debug_points_;
   std::vector<geometry_msgs::msg::Point> debug_points_red_;
   std::vector<geometry_msgs::msg::Point> debug_points_yellow_;

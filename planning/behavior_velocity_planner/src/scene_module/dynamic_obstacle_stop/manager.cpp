@@ -109,71 +109,12 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.max_acc = node.declare_parameter(ns_m + ".max_acc", -2.0);
   }
 
-  initSmootherParam(node);
+  smoother_ = std::make_shared<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(node);
+  debug_ptr_ = std::make_shared<DynamicObstacleStopDebug>(node);
 
   // // Set parameter callback
   // set_param_res_ = this->add_on_set_parameters_callback(
   //   std::bind(&DynamicObstacleStopPlannerNode::paramCallback, this, std::placeholders::_1));
-
-  // Initializer
-  debug_ptr_ = std::make_shared<DynamicObstacleStopDebug>(node);
-}
-
-void DynamicObstacleStopModuleManager::initSmootherParam(rclcpp::Node & node)
-{
-  motion_velocity_smoother::SmootherBase::BaseParam base_param;
-  {
-    auto & p = base_param;
-    p.min_decel = planner_param_.common.normal_min_acc;
-    p.min_jerk = planner_param_.common.normal_min_jerk;
-    p.max_accel = node.declare_parameter("normal.max_acc", 2.0);
-    p.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
-    p.stop_decel = node.declare_parameter("stop_decel", 0.0);
-    p.max_lateral_accel = node.declare_parameter("max_lateral_accel", 0.2);
-    p.decel_distance_before_curve = node.declare_parameter("decel_distance_before_curve", 3.5);
-    p.decel_distance_after_curve = node.declare_parameter("decel_distance_after_curve", 0.0);
-    p.min_curve_velocity = node.declare_parameter("min_curve_velocity", 1.38);
-    p.resample_param.max_trajectory_length = node.declare_parameter("max_trajectory_length", 200.0);
-    p.resample_param.min_trajectory_length = node.declare_parameter("min_trajectory_length", 30.0);
-    p.resample_param.resample_time = node.declare_parameter("resample_time", 10.0);
-    p.resample_param.dense_resample_dt = node.declare_parameter("dense_resample_dt", 0.1);
-    p.resample_param.dense_min_interval_distance =
-      node.declare_parameter("dense_min_interval_distance", 0.1);
-    p.resample_param.sparse_resample_dt = node.declare_parameter("sparse_resample_dt", 0.5);
-    p.resample_param.sparse_min_interval_distance =
-      node.declare_parameter("sparse_min_interval_distance", 4.0);
-  }
-
-  motion_velocity_smoother::AnalyticalJerkConstrainedSmoother::Param
-    analytical_jerk_constrained_smoother_param;
-  {
-    auto & p = analytical_jerk_constrained_smoother_param;
-    p.resample.ds_resample = node.declare_parameter("resample.ds_resample", 0.1);
-    p.resample.num_resample = node.declare_parameter("resample.num_resample", 1);
-    p.resample.delta_yaw_threshold = node.declare_parameter("resample.delta_yaw_threshold", 0.785);
-
-    p.latacc.enable_constant_velocity_while_turning =
-      node.declare_parameter("latacc.enable_constant_velocity_while_turning", false);
-    p.latacc.constant_velocity_dist_threshold =
-      node.declare_parameter("latacc.constant_velocity_dist_threshold", 2.0);
-
-    p.forward.max_acc = node.declare_parameter("forward.max_acc", 1.0);
-    p.forward.min_acc = node.declare_parameter("forward.min_acc", -1.0);
-    p.forward.max_jerk = node.declare_parameter("forward.max_jerk", 0.3);
-    p.forward.min_jerk = node.declare_parameter("forward.min_jerk", -0.3);
-    p.forward.kp = node.declare_parameter("forward.kp", 0.3);
-
-    p.backward.start_jerk = node.declare_parameter("backward.start_jerk", -0.1);
-    p.backward.min_jerk_mild_stop = node.declare_parameter("backward.min_jerk_mild_stop", -0.3);
-    p.backward.min_jerk = node.declare_parameter("backward.min_jerk", -1.5);
-    p.backward.min_acc_mild_stop = node.declare_parameter("backward.min_acc_mild_stop", -1.0);
-    p.backward.min_acc = node.declare_parameter("backward.min_acc", -2.5);
-    p.backward.span_jerk = node.declare_parameter("backward.span_jerk", -0.01);
-  }
-
-  smoother_ = std::make_shared<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(
-    analytical_jerk_constrained_smoother_param);
-  smoother_->setParam(base_param);
 }
 
 void DynamicObstacleStopModuleManager::launchNewModules(
