@@ -67,6 +67,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.detection_distance = node.declare_parameter(ns + ".detection_distance", 45.0);
     p.detection_span = node.declare_parameter(ns + ".detection_span", 1.0);
     p.min_vel_ego_kmph = node.declare_parameter(ns + ".min_vel_ego_kmph", 5.0);
+    p.velocity_limit_kmph = node.declare_parameter(ns + ".velocity_limit_kmph", 20.0);
     p.calc_collision_from_point = node.declare_parameter(ns + ".calc_collision_from_point", true);
   }
 

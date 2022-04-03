@@ -12,6 +12,7 @@
       detection_distance: 45.0 # [m]
       detection_span: 1.0 # [m]
       min_vel_ego_kmph: 3.6 # [km/h]
+      velocity_limit_kmph: 20.0 # [km/h]
       calc_collision_from_point: true
 
       detection_area_size:

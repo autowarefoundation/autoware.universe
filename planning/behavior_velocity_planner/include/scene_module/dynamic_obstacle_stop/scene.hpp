@@ -79,7 +79,6 @@ private:
   rclcpp::Time stop_time_;
   BasicPolygons2d partition_lanelets_;
   std::shared_ptr<motion_velocity_smoother::SmootherBase> smoother_;
-  double velocity_limit_mps_{15.0 / 3.6};  // todo
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
 
   // Function
