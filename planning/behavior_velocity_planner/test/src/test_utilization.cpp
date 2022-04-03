@@ -99,7 +99,7 @@ TEST(specialInterpolation, specialInterpolation)
   const auto genPath = [](const auto p, const auto v) {
     if (p.size() != v.size()) throw std::invalid_argument("different size is not expected");
     Path path;
-    for (int i = 0; i < p.size(); ++i) {
+    for (size_t i = 0; i < p.size(); ++i) {
       PathPoint pp;
       pp.pose.position.x = p.at(i);
       pp.longitudinal_velocity_mps = v.at(i);
@@ -111,7 +111,7 @@ TEST(specialInterpolation, specialInterpolation)
   constexpr auto length = 5.0;
   constexpr auto interval = 1.0;
 
-  const auto calcStopDist = [&](const auto & px, const auto & vx) {
+  const auto calcInterpolatedStopDist = [&](const auto & px, const auto & vx) {
     const auto path = genPath(px, vx);
     const auto res = interpolatePath(path, length, interval);
     // DEBUG_PRINT_PATH(path);
@@ -123,7 +123,7 @@ TEST(specialInterpolation, specialInterpolation)
   {
     const std::vector<double> px{0.0, 1.0, 2.0, 3.0};
     const std::vector<double> vx{5.5, 5.5, 0.0, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), 2.0);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), 2.0);
   }
 
   // expected stop position: s=2.1
@@ -131,7 +131,7 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 2.1;
     const std::vector<double> px{0.0, 1.0, 2.1, 3.0};
     const std::vector<double> vx{5.5, 5.5, 0.0, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 
   // expected stop position: s=2.001
@@ -139,7 +139,7 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 2.001;
     const std::vector<double> px{0.0, 1.0, 2.001, 3.0};
     const std::vector<double> vx{5.5, 5.5, 0.000, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 
   // expected stop position: s=2.001
@@ -147,7 +147,7 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 2.001;
     const std::vector<double> px{0.0, 1.0, 1.999, 2.0, 2.001, 3.0};
     const std::vector<double> vx{5.5, 5.5, 5.555, 5.5, 0.000, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 
   // expected stop position: s=2.0
@@ -155,7 +155,7 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 2.0;
     const std::vector<double> px{0.0, 1.0, 1.999, 2.0, 2.001, 3.0};
     const std::vector<double> vx{5.5, 5.5, 5.555, 0.0, 0.000, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 
   // expected stop position: s=1.999
@@ -163,7 +163,7 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 1.999;
     const std::vector<double> px{0.0, 1.0, 1.999, 3.0};
     const std::vector<double> vx{5.5, 5.5, 0.000, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 
   // expected stop position: s=0.2
@@ -171,7 +171,7 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 0.2;
     const std::vector<double> px{0.0, 0.1, 0.2, 0.3, 0.4};
     const std::vector<double> vx{5.5, 5.5, 0.0, 0.0, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 
   // expected stop position: s=0.4
@@ -179,6 +179,6 @@ TEST(specialInterpolation, specialInterpolation)
     constexpr auto expected = 0.4;
     const std::vector<double> px{0.0, 0.1, 0.2, 0.3, 0.4};
     const std::vector<double> vx{5.5, 5.5, 5.5, 5.5, 0.0};
-    EXPECT_DOUBLE_EQ(calcStopDist(px, vx), expected);
+    EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 }
