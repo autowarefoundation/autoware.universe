@@ -1266,10 +1266,11 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::excludeObstaclesOutSideO
     return dynamic_obstacles;
   }
 
-  // default threshold of distance for close partitions is 30.0
+  // extract partitions within detection distance
   BasicPolygons2d close_partitions;
   planning_utils::extractClosePartition(
-    current_pose.position, partition_lanelets_, close_partitions);
+    current_pose.position, partition_lanelets_, close_partitions,
+    planner_param_.dynamic_obstacle_stop.detection_distance);
 
   // decimate trajectory to reduce calculation time
   constexpr float decimate_step = 1.0;
