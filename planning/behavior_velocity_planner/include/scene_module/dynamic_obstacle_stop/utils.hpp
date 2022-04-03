@@ -15,6 +15,9 @@
 #ifndef DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_
 #define DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_
 
+#include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
+
+#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -45,6 +48,7 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using tier4_autoware_utils::Box2d;
+using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_debug_msgs::msg::Float32Stamped;
@@ -64,6 +68,7 @@ struct DynamicObstacleStopParam
   bool enable_dynamic_obstacle_stop;
   bool use_objects;
   bool use_predicted_path;
+  bool use_partition_lanelet;
   double extend_distance;
   double stop_margin;
   double passing_margin;
@@ -100,18 +105,6 @@ struct ApproachingParam
   float dist_thresh;
 };
 
-struct DynamicObstacleParam
-{
-  float min_vel_kmph{0.0};
-  float max_vel_kmph{5.0};
-
-  // parameter to convert points to dynamic obstacle
-  float diameter{0.1};  // [m]
-  float height{2.0};    // [m]
-  size_t path_size{20};
-  float time_step{0.5};  // [sec]
-};
-
 struct SlowDownLimit
 {
   bool enable;
@@ -134,20 +127,6 @@ struct TextWithPosition
 {
   std::string text;
   geometry_msgs::msg::Point position;
-};
-
-// since we use the minimum and maximum velocity,
-// define the PredictedPath without time_step
-struct PredictedPath
-{
-  std::vector<geometry_msgs::msg::Pose> path;
-  float confidence;
-};
-
-struct PoseWithRange
-{
-  geometry_msgs::msg::Pose pose_min;
-  geometry_msgs::msg::Pose pose_max;
 };
 
 enum class State {
@@ -213,7 +192,7 @@ Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
 std::vector<geometry_msgs::msg::Pose> getHighestConfidencePath(
-  const std::vector<PredictedPath> & predicted_paths);
+  const std::vector<DynamicObstacle::PredictedPath> & predicted_paths);
 
 // apply linear interpolation to position
 geometry_msgs::msg::Pose lerpByPose(
@@ -254,6 +233,14 @@ void insertPathVelocityFromIndex(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
 
 boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points);
+
+std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+  const lanelet::BasicPolygon2d & partition);
+
+Trajectory decimateTrajectory(const Trajectory & input_traj, const float step);
+
+LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly);
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
 #endif  // DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_

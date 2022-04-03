@@ -3,6 +3,7 @@
     dynamic_obstacle_stop:
       use_objects: true #  if this is false, use points instead of dynamic objects
       use_predicted_path: false # if this is false, create path of objects to run straight to lane
+      use_partition_lanelet: true # whether to use partition lanelet map data
       extend_distance: 5.0 # extend trajectory to consider after goal obstacle in the extend_distance
       stop_margin: 2.5 # the vehicle decelerates to be able to stop with this margin [m]
       passing_margin: 1.0 # the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin [m]

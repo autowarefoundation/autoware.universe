@@ -15,8 +15,6 @@
 #ifndef DYNAMIC_OBSTACLE_HPP
 #define DYNAMIC_OBSTACLE_HPP
 
-#include "scene_module/dynamic_obstacle_stop/utils.hpp"
-
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -32,13 +30,39 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Trajectory;
-using dynamic_obstacle_stop_utils::DynamicObstacleParam;
-using dynamic_obstacle_stop_utils::PoseWithRange;
-using dynamic_obstacle_stop_utils::PredictedPath;
+// using dynamic_obstacle_stop_utils::DynamicObstacleParam;
+// using dynamic_obstacle_stop_utils::PoseWithRange;
+// using dynamic_obstacle_stop_utils::PredictedPath;
+
+struct DynamicObstacleParam
+{
+  float min_vel_kmph{0.0};
+  float max_vel_kmph{5.0};
+
+  // parameter to convert points to dynamic obstacle
+  float diameter{0.1};  // [m]
+  float height{2.0};    // [m]
+  size_t path_size{20};
+  float time_step{0.5};  // [sec]
+};
+
+struct PoseWithRange
+{
+  geometry_msgs::msg::Pose pose_min;
+  geometry_msgs::msg::Pose pose_max;
+};
 
 class DynamicObstacle
 {
 public:
+  // since we use the minimum and maximum velocity,
+  // define the PredictedPath without time_step
+  struct PredictedPath
+  {
+    std::vector<geometry_msgs::msg::Pose> path;
+    float confidence;
+  };
+
   DynamicObstacle();
   explicit DynamicObstacle(const DynamicObstacleParam & param);
   void createDynamicObstacle(

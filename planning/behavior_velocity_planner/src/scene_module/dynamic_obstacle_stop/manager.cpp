@@ -58,6 +58,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
       node.declare_parameter(ns + ".enable_dynamic_obstacle_stop", true);
     p.use_objects = node.declare_parameter(ns + ".use_objects", true);
     p.use_predicted_path = node.declare_parameter(ns + ".use_predicted_path", false);
+    p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
     p.extend_distance = node.declare_parameter(ns + ".extend_distance", 5.0);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
@@ -116,61 +117,6 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
 
   // Initializer
   debug_ptr_ = std::make_shared<DynamicObstacleStopDebug>(node);
-
-  // // Publishers
-  // path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
-  // // stop_reason_diag_pub_ =
-  // //   this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
-  // debug_path_pub_ = this->create_publisher<Trajectory>("~/debug/trajectory", 1);
-  // debug_value_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/debug_value", 1);
-  // lateral_distance_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/lateral_distance", 1);
-  // longitudinal_distance_obstacle_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-  //     "~/debug/longitudinal_distance_obstacle", 1);
-  // longitudinal_distance_collision_point_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-  //     "~/debug/longitudinal_distance_collision_point", 1);
-  // vehicle_side_collision_dist_pub_ =
-  // this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-  //   "~/debug/vehicle_side_collision_dist", 1);
-  // dist_to_collision_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/dist_to_collision",
-  //   1);
-  // stop_dist_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/stop_dist", 1);
-  // insert_vel_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/insert_vel", 1);
-  // calculation_time_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/calculation_time", 1);
-
-  // // Subscribers
-  // obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-  //   "~/input/pointcloud", rclcpp::SensorDataQoS(),
-  //   std::bind(
-  //     &DynamicObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1));
-  // path_sub_ = this->create_subscription<Trajectory>(
-  //   "~/input/trajectory", 1,
-  //   std::bind(&DynamicObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1));
-  // current_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-  //   "~/input/odometry", 1,
-  //   std::bind(
-  //     &DynamicObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1));
-  // dynamic_object_sub_ = this->create_subscription<PredictedObjects>(
-  //   "~/input/objects", 1,
-  //   std::bind(&DynamicObstacleStopPlannerNode::dynamicObjectCallback, this,
-  //   std::placeholders::_1));
-
-  // // TODO(Tomohito Ando): temporary for experiments
-  // smoothed_trajectory_sub_ = this->create_subscription<Trajectory>(
-  //   "/planning/scenario_planning/trajectory", 1,
-  //   std::bind(
-  //     &DynamicObstacleStopPlannerNode::smoothedTrajectoryCallback, this, std::placeholders::_1));
-  // velocity_limit_sub_ = this->create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
-  //   "/planning/scenario_planning/max_velocity", 1,
-  //   std::bind(&DynamicObstacleStopPlannerNode::velocityLimitCallback, this,
-  //   std::placeholders::_1));
 }
 
 void DynamicObstacleStopModuleManager::initSmootherParam(rclcpp::Node & node)
@@ -241,8 +187,8 @@ void DynamicObstacleStopModuleManager::launchNewModules(
   constexpr int64_t module_id = 0;
   if (!isModuleRegistered(module_id)) {
     registerModule(std::make_shared<DynamicObstacleStopModule>(
-      module_id, planner_param_, logger_.get_child("dynamic_obstacle_stop_module"), smoother_,
-      debug_ptr_, clock_));
+      module_id, planner_data_, planner_param_, logger_.get_child("dynamic_obstacle_stop_module"),
+      smoother_, debug_ptr_, clock_));
   }
 }
 

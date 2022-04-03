@@ -46,8 +46,6 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using dynamic_obstacle_stop_utils::DetectionAreaSize;
 using dynamic_obstacle_stop_utils::PlannerParam;
-using dynamic_obstacle_stop_utils::PoseWithRange;
-using dynamic_obstacle_stop_utils::PredictedPath;
 using dynamic_obstacle_stop_utils::State;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using tier4_debug_msgs::msg::Float32Stamped;
@@ -61,7 +59,8 @@ public:
     const rclcpp::Clock::SharedPtr clock);
 
   DynamicObstacleStopModule(
-    const int64_t module_id, const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
     const std::shared_ptr<motion_velocity_smoother::SmootherBase> & smoother,
     const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr,
     const rclcpp::Clock::SharedPtr clock);
@@ -79,6 +78,7 @@ private:
   // Variable
   State state_{State::GO};
   rclcpp::Time stop_time_;
+  BasicPolygons2d partition_lanelets_;
   std::shared_ptr<motion_velocity_smoother::SmootherBase> smoother_;
   double velocity_limit_mps_{15.0 / 3.6};  // todo
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
@@ -143,12 +143,8 @@ private:
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & base_pose,
     std::vector<DynamicObstacle> & dynamic_obstacles) const;
 
-  DynamicObstacle findLongitudinalNearestObstacle(
-    const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
-    const geometry_msgs::msg::Pose & current_pose) const;
-
   boost::optional<geometry_msgs::msg::Pose> calcPredictedObstaclePose(
-    const std::vector<PredictedPath> & predicted_paths, const float travel_time,
+    const std::vector<DynamicObstacle::PredictedPath> & predicted_paths, const float travel_time,
     const float velocity_mps) const;
 
   bool checkCollisionWithShape(
@@ -224,6 +220,10 @@ private:
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
     const float current_vel, const float current_acc,
     autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+
+  std::vector<DynamicObstacle> excludeObstaclesOutSideOfPartition(
+    const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+    const geometry_msgs::msg::Pose & current_pose) const;
 };
 }  // namespace behavior_velocity_planner
 

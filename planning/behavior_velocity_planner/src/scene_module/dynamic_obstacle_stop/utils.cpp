@@ -221,7 +221,7 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
 }
 
 std::vector<geometry_msgs::msg::Pose> getHighestConfidencePath(
-  const std::vector<PredictedPath> & predicted_paths)
+  const std::vector<DynamicObstacle::PredictedPath> & predicted_paths)
 {
   std::vector<geometry_msgs::msg::Pose> predicted_path{};
   float highest_confidence = 0.0;
@@ -410,5 +410,73 @@ boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points
 
   return {};
 }
+
+std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+  const lanelet::BasicPolygon2d & partition)
+{
+  std::vector<DynamicObstacle> extracted_dynamic_obstacle;
+  for (const auto & obstacle : dynamic_obstacles) {
+    const auto obstacle_nearest_idx =
+      tier4_autoware_utils::findNearestIndex(trajectory.points, obstacle.pose_.position);
+    const auto & obstacle_nearest_traj_point =
+      trajectory.points.at(obstacle_nearest_idx).pose.position;
+
+    // create linestring from traj point to obstacle
+    const LineString2d traj_p_to_obstacle{
+      {obstacle_nearest_traj_point.x, obstacle_nearest_traj_point.y},
+      {obstacle.pose_.position.x, obstacle.pose_.position.y}};
+
+    // create linestring for partition
+    const LineString2d partition_bg = createLineString2d(partition);
+
+    // ignore obstacle outside of partition
+    if (bg::intersects(traj_p_to_obstacle, partition_bg)) {
+      continue;
+    }
+    extracted_dynamic_obstacle.emplace_back(obstacle);
+  }
+
+  return extracted_dynamic_obstacle;
+}
+
+Trajectory decimateTrajectory(const Trajectory & input_traj, const float step)
+{
+  if (input_traj.points.empty()) {
+    return Trajectory();
+  }
+
+  float dist_sum = 0.0;
+  Trajectory decimate_traj;
+  decimate_traj.header = input_traj.header;
+  // push first point
+  decimate_traj.points.emplace_back(input_traj.points.front());
+
+  for (size_t i = 1; i < input_traj.points.size(); i++) {
+    const auto p1 = input_traj.points.at(i - 1);
+    const auto p2 = input_traj.points.at(i);
+    const auto dist = tier4_autoware_utils::calcDistance2d(p1.pose.position, p2.pose.position);
+    dist_sum += dist;
+
+    if (dist_sum > step) {
+      decimate_traj.points.emplace_back(p2);
+      dist_sum = 0.0;
+    }
+  }
+
+  return decimate_traj;
+}
+
+LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly)
+{
+  LineString2d line_string;
+  for (const auto & p : poly) {
+    Point2d bg_point{p.x(), p.y()};
+    line_string.push_back(bg_point);
+  }
+
+  return line_string;
+}
+
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner

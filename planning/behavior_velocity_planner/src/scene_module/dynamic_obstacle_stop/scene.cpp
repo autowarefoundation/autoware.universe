@@ -42,7 +42,8 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
 }
 
 DynamicObstacleStopModule::DynamicObstacleStopModule(
-  const int64_t module_id, const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
+  const PlannerParam & planner_param, const rclcpp::Logger logger,
   const std::shared_ptr<motion_velocity_smoother::SmootherBase> & smoother,
   const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
@@ -50,6 +51,10 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   smoother_(smoother),
   debug_ptr_(debug_ptr)
 {
+  if (planner_param.dynamic_obstacle_stop.use_partition_lanelet) {
+    const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
+    planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
+  }
 }
 
 bool DynamicObstacleStopModule::modifyPathVelocity(
@@ -119,10 +124,13 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     dynamic_obstacles = createDynamicObstaclesFromPoints(extracted_points, input_traj);
   }
 
+  const auto partition_excluded_obstacles =
+    excludeObstaclesOutSideOfPartition(dynamic_obstacles, trim_trajectory, current_pose);
+
   // timer starts
   const auto t1 = std::chrono::system_clock::now();
 
-  const auto dynamic_obstacle = detectCollision(dynamic_obstacles, trim_trajectory);
+  const auto dynamic_obstacle = detectCollision(partition_excluded_obstacles, trim_trajectory);
 
   // timer ends
   const auto t2 = std::chrono::system_clock::now();
@@ -163,6 +171,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
       debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, max_val);
     }
 
+    debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
     debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
     debug_ptr_->publishDebugValue();
   }
@@ -531,25 +540,6 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::findNearestCollision
   return {};
 }
 
-DynamicObstacle DynamicObstacleStopModule::findLongitudinalNearestObstacle(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
-  const geometry_msgs::msg::Pose & current_pose) const
-{
-  // TODO(Tomohito Ando): error handling
-  DynamicObstacle min_dist_obstacle;
-  float min_dist = std::numeric_limits<float>::max();
-  for (const auto & obstacle : dynamic_obstacles) {
-    const auto dist = tier4_autoware_utils::calcSignedArcLength(
-      trajectory.points, current_pose.position, obstacle.pose_.position);
-    if (dist < min_dist) {
-      min_dist = dist;
-      min_dist_obstacle = obstacle;
-    }
-  }
-
-  return min_dist_obstacle;
-}
-
 geometry_msgs::msg::Point DynamicObstacleStopModule::selectCollisionPoint(
   const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & base_pose,
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const
@@ -652,7 +642,7 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::checkCollisionWithObstac
 // calculate the predicted pose of the obstacle on the predicted path with given travel time
 // assume that the obstacle moves with constant velocity
 boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcPredictedObstaclePose(
-  const std::vector<PredictedPath> & predicted_paths, const float travel_time,
+  const std::vector<DynamicObstacle::PredictedPath> & predicted_paths, const float travel_time,
   const float velocity_mps) const
 {
   // use the path that has highest confidence for now
@@ -1266,6 +1256,34 @@ void DynamicObstacleStopModule::applyMaxJerkLimit(
   // overwrite velocity with limited velocity
   dynamic_obstacle_stop_utils::insertPathVelocityFromIndex(
     stop_point_idx.get(), jerk_limited_vel, path.points);
+}
+
+std::vector<DynamicObstacle> DynamicObstacleStopModule::excludeObstaclesOutSideOfPartition(
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+  const geometry_msgs::msg::Pose & current_pose) const
+{
+  if (!planner_param_.dynamic_obstacle_stop.use_partition_lanelet || partition_lanelets_.empty()) {
+    return dynamic_obstacles;
+  }
+
+  // default threshold of distance for close partitions is 30.0
+  BasicPolygons2d close_partitions;
+  planning_utils::extractClosePartition(
+    current_pose.position, partition_lanelets_, close_partitions);
+
+  // decimate trajectory to reduce calculation time
+  constexpr float decimate_step = 1.0;
+  const auto decimate_traj =
+    dynamic_obstacle_stop_utils::decimateTrajectory(trajectory, decimate_step);
+
+  // exclude obstacles outside of partition
+  std::vector<DynamicObstacle> extracted_obstacles = dynamic_obstacles;
+  for (const auto & partition : close_partitions) {
+    extracted_obstacles = dynamic_obstacle_stop_utils::excludeObstaclesOutSideOfLine(
+      extracted_obstacles, decimate_traj, partition);
+  }
+
+  return extracted_obstacles;
 }
 
 }  // namespace behavior_velocity_planner
