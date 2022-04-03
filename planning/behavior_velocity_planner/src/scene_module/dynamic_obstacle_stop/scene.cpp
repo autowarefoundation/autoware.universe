@@ -20,6 +20,7 @@
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 
 #include <tf2_eigen/tf2_eigen.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <algorithm>
 #include <memory>
@@ -116,12 +117,14 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     // debug
     visualizePassingArea(trim_trajectory, current_pose);
   } else {
-    visualizePassingArea(trim_trajectory, current_pose);
-
+    const auto voxel_grid_filtered_points =
+      applyVoxelGridFilter(planner_data_->no_ground_pointcloud);
     // todo: replace with compare map filtered
     const auto extracted_points =
-      extractObstaclePointsWithRectangle(*planner_data_->no_ground_pointcloud, current_pose);
+      extractObstaclePointsWithRectangle(voxel_grid_filtered_points, current_pose);
     dynamic_obstacles = createDynamicObstaclesFromPoints(extracted_points, input_traj);
+
+    visualizePassingArea(trim_trajectory, current_pose);
   }
 
   const auto partition_excluded_obstacles =
@@ -219,6 +222,25 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::createDynamicObstaclesFr
   }
 
   return dynamic_obstacles;
+}
+
+pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::applyVoxelGridFilter(
+  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_points) const
+{
+  auto no_height_points = *input_points;
+  for (auto & p : no_height_points) {
+    p.z = 0.0;
+  }
+
+  // use boost::makeshared instead of std beacause filter.setInputCloud requires boost shared ptr
+  pcl::VoxelGrid<pcl::PointXYZ> filter;
+  filter.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
+  filter.setLeafSize(0.05f, 0.05f, 100000.0f);
+
+  pcl::PointCloud<pcl::PointXYZ> output_points;
+  filter.filter(output_points);
+
+  return output_points;
 }
 
 pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::extractObstaclePointsWithRectangle(

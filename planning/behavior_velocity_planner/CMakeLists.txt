@@ -16,7 +16,7 @@ find_package(ament_cmake REQUIRED)
 find_package(Boost REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(PCL REQUIRED COMPONENTS common)
+find_package(PCL REQUIRED COMPONENTS common filters)
 find_package(OpenCV REQUIRED)
 
 find_package(ament_cmake_auto REQUIRED)
@@ -274,11 +274,12 @@ target_include_directories(scene_module_dynamic_obstacle_stop
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${PCL_INCLUDE_DIRS}
 )
 
 ament_target_dependencies(scene_module_dynamic_obstacle_stop ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
-target_link_libraries(scene_module_dynamic_obstacle_stop scene_module_lib)
+target_link_libraries(scene_module_dynamic_obstacle_stop scene_module_lib ${PCL_LIBRARIES})
 
 # Scene Module Manager
 ament_auto_add_library(scene_module_manager SHARED

@@ -33,7 +33,6 @@
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
-// #include <utilization/boost_geometry_helper.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <tf2/LinearMath/Transform.h>
@@ -93,6 +92,9 @@ private:
   std::vector<DynamicObstacle> createDynamicObstaclesFromPoints(
     const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
     const Trajectory & trajectory) const;
+
+  pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
+    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_points) const;
 
   pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithRectangle(
     const pcl::PointCloud<pcl::PointXYZ> & input_points,
