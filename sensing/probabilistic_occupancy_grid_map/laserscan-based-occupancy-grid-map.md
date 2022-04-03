@@ -1,4 +1,5 @@
 # laserscan based occupancy grid map
+
 ![laserscan_based_occupancy_grid_map_sample_image](./image/laserscan_based_occupancy_grid_map_sample_image.png)
 
 ## Inner-workings / Algorithms

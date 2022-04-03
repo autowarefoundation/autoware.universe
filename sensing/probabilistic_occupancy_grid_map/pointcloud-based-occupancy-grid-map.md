@@ -1,4 +1,5 @@
 # pointcloud based occupancy grid map
+
 ![pointcloud_based_occupancy_grid_map_sample_image](./image/pointcloud_based_occupancy_grid_map_sample_image.gif)
 
 ## Inner-workings / Algorithms
@@ -41,13 +42,13 @@ The basic idea is to take a 2D laserscan and ray trace it to create a time-serie
 
 ### Node Parameters
 
-| Name                                | Type   | Description                                                                                                                                                    |
-| ----------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `map_frame`                         | string | map frame                                                                                                                                                      |
-| `base_link_frame`                   | string | base_link frame                                                                                                                                                |
-| `use_height_filter`                 | bool   | whether to height filter for `~/input/obstacle_pointcloud` and `~/input/raw_pointcloud`? By default, the height is set to -1~2m.                               |
-| `map_length`                        | double | The length of the map. -100 if it is 50~50[m]                                                                                                                  |
-| `map_resolution`                    | double | The map cell resolution [m]                                                                                                                                    |
+| Name                | Type   | Description                                                                                                                      |
+| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `map_frame`         | string | map frame                                                                                                                        |
+| `base_link_frame`   | string | base_link frame                                                                                                                  |
+| `use_height_filter` | bool   | whether to height filter for `~/input/obstacle_pointcloud` and `~/input/raw_pointcloud`? By default, the height is set to -1~2m. |
+| `map_length`        | double | The length of the map. -100 if it is 50~50[m]                                                                                    |
+| `map_resolution`    | double | The map cell resolution [m]                                                                                                      |
 
 ## Assumptions / Known limits
 
