@@ -27,8 +27,6 @@ void applySafeVelocityConsideringPossibleCollision(
   PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
   const PlannerParam & param)
 {
-  const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
-  rclcpp::Clock clock{RCL_ROS_TIME};
   // return nullptr or too few points
   if (!inout_path || inout_path->points.size() < 2) {
     return;
@@ -58,22 +56,6 @@ void applySafeVelocityConsideringPossibleCollision(
   }
 }
 
-bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
-{
-  geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
-  bool is_target_ahead = (p.position.x > 0.0);
-  return is_target_ahead;
-}
-
-bool setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input)
-{
-  for (size_t i = idx; i < input->points.size(); ++i) {
-    input->points.at(i).point.longitudinal_velocity_mps =
-      std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
-  }
-  return true;
-}
-
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
   PathWithLaneId * inout_path)
@@ -88,7 +70,7 @@ int insertSafeVelocityToPath(
   size_t insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point
   // if original path has narrow points it's better to set higher distance threshold
-  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
     if (insert_idx == static_cast<size_t>(inout_path->points.size())) return -1;
   }

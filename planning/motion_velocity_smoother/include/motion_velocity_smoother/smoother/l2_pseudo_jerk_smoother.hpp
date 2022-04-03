@@ -38,7 +38,7 @@ public:
     double over_a_weight;
   };
 
-  explicit L2PseudoJerkSmoother(const Param & smoother_param);
+  explicit L2PseudoJerkSmoother(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -48,6 +48,7 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & smoother_param);
+  Param getParam() const;
 
 private:
   Param smoother_param_;

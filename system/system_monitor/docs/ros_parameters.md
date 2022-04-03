@@ -4,15 +4,17 @@
 
 cpu_monitor:
 
-| Name            | Type  |  Unit   | Default | Notes                                                                         |
-| :-------------- | :---: | :-----: | :-----: | :---------------------------------------------------------------------------- |
-| temp_warn       | float |  DegC   |  90.0   | Generates warning when CPU temperature reaches a specified value or higher.   |
-| temp_error      | float |  DegC   |  95.0   | Generates error when CPU temperature reaches a specified value or higher.     |
-| usage_warn      | float | %(1e-2) |  0.90   | Generates warning when CPU usage reaches a specified value or higher.         |
-| usage_error     | float | %(1e-2) |  1.00   | Generates error when CPU usage reaches a specified value or higher.           |
-| load1_warn      | float | %(1e-2) |  0.90   | Generates warning when load average 1min reaches a specified value or higher. |
-| load5_warn      | float | %(1e-2) |  0.80   | Generates warning when load average 5min reaches a specified value or higher. |
-| msr_reader_port |  int  |   n/a   |  7634   | Port number to connect to msr_reader.                                         |
+| Name              | Type  |  Unit   | Default | Notes                                                                                                      |
+| :---------------- | :---: | :-----: | :-----: | :--------------------------------------------------------------------------------------------------------- |
+| temp_warn         | float |  DegC   |  90.0   | Generates warning when CPU temperature reaches a specified value or higher.                                |
+| temp_error        | float |  DegC   |  95.0   | Generates error when CPU temperature reaches a specified value or higher.                                  |
+| usage_warn        | float | %(1e-2) |  0.90   | Generates warning when CPU usage reaches a specified value or higher and last for usage_warn_count counts. |
+| usage_error       | float | %(1e-2) |  1.00   | Generates error when CPU usage reaches a specified value or higher and last for usage_error_count counts.  |
+| usage_warn_count  |  int  |   n/a   |    2    | Generates warning when CPU usage reaches usage_warn value or higher and last for a specified counts.       |
+| usage_error_count |  int  |   n/a   |    2    | Generates error when CPU usage reaches usage_error value or higher and last for a specified counts.        |
+| load1_warn        | float | %(1e-2) |  0.90   | Generates warning when load average 1min reaches a specified value or higher.                              |
+| load5_warn        | float | %(1e-2) |  0.80   | Generates warning when load average 5min reaches a specified value or higher.                              |
+| msr_reader_port   |  int  |   n/a   |  7634   | Port number to connect to msr_reader.                                                                      |
 
 ## <u>HDD Monitor</u>
 
@@ -20,11 +22,15 @@ hdd_monitor:
 
 &nbsp;&nbsp;disks:
 
-| Name       |  Type  | Unit | Default | Notes                                                                       |
-| :--------- | :----: | :--: | :-----: | :-------------------------------------------------------------------------- |
-| name       | string | n/a  |  none   | The disk name to monitor temperature. (e.g. /dev/sda)                       |
-| temp_error | float  | DegC |  55.0   | Generates warning when HDD temperature reaches a specified value or higher. |
-| temp_error | float  | DegC |  70.0   | Generates error when HDD temperature reaches a specified value or higher.   |
+| Name                             |  Type  |       Unit        | Default | Notes                                                                              |
+| :------------------------------- | :----: | :---------------: | :-----: | :--------------------------------------------------------------------------------- |
+| name                             | string |        n/a        |  none   | The disk name to monitor temperature. (e.g. /dev/sda)                              |
+| temp_warn                        | float  |       DegC        |  55.0   | Generates warning when HDD temperature reaches a specified value or higher.        |
+| temp_error                       | float  |       DegC        |  70.0   | Generates error when HDD temperature reaches a specified value or higher.          |
+| power_on_hours_warn              |  int   |       Hour        | 3000000 | Generates warning when HDD power-on hours reaches a specified value or higher.     |
+| total_data_written_attribute_id  |  int   |        n/a        |  0xF1   | S.M.A.R.T attribute ID of total data written.                                      |
+| total_data_written_warn          |  int   | depends on device | 4915200 | Generates warning when HDD total data written reaches a specified value or higher. |
+| total_data_written_safety_factor |  int   |      %(1e-2)      |  0.05   | Safety factor of HDD total data written.                                           |
 
 hdd_monitor:
 
