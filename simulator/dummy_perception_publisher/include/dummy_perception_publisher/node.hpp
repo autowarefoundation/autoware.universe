@@ -58,13 +58,31 @@ public:
   virtual void create(
     const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
     std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const = 0;
+
+  virtual void create_multi(
+    const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
+    std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const = 0;
 };
 
 class ObjectCentricPointCloudCreator : public PointCloudCreator
 {
+public:
+  explicit ObjectCentricPointCloudCreator(bool enable_ray_tracing)
+  : enable_ray_tracing_(enable_ray_tracing)
+  {
+  }
+
   void create(
     const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
     std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const override;
+
+  void create_multi(
+    const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
+    std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const override;
+
+  bool enable_ray_tracing_;
 };
 
 class VehicleCentricPointCloudCreator : public PointCloudCreator
@@ -72,6 +90,11 @@ class VehicleCentricPointCloudCreator : public PointCloudCreator
   void create(
     const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
     std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const override;
+
+  void create_multi(
+    const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
+    std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const override;
 };
 
 class DummyPerceptionPublisherNode : public rclcpp::Node

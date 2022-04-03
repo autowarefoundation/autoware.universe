@@ -67,7 +67,8 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     this->declare_parameter("object_centric_pointcloud", false);
 
   if (object_centric_pointcloud) {
-    pointcloud_creator_ = std::unique_ptr<PointCloudCreator>(new ObjectCentricPointCloudCreator());
+    pointcloud_creator_ =
+      std::unique_ptr<PointCloudCreator>(new ObjectCentricPointCloudCreator(enable_ray_tracing_));
   } else {
     pointcloud_creator_ = std::unique_ptr<PointCloudCreator>(new VehicleCentricPointCloudCreator());
   }
@@ -134,21 +135,18 @@ void DummyPerceptionPublisherNode::timerCallback()
     }
   }
 
+  std::vector<ObjectInfo> obj_infos;
   for (const auto selected_idx : selected_indices) {
     const auto obj_info = ObjectInfo(objects_.at(selected_idx), current_time);
     tf2::toMsg(obj_info.tf_map2moved_object, output_moved_object_pose.pose);
+    obj_infos.push_back(obj_info);
   }
 
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> v_pointcloud;
-  for (const auto selected_idx : selected_indices) {
-    const auto obj_info = ObjectInfo(objects_.at(selected_idx), current_time);
-    tf2::toMsg(obj_info.tf_map2moved_object, output_moved_object_pose.pose);
-    //
-    // pointcloud
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    pointcloud_creator_->create(obj_info, tf_base_link2map, random_generator_, pointcloud_ptr);
-    v_pointcloud.push_back(pointcloud_ptr);
-  }
+  pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  pointcloud_creator_->create_multi(
+    obj_infos, tf_base_link2map, random_generator_, v_pointcloud, merged_pointcloud_ptr);
+  pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
 
   std::vector<size_t> delete_idxs;
   for (size_t i = 0; i < selected_indices.size(); ++i) {
@@ -193,50 +191,6 @@ void DummyPerceptionPublisherNode::timerCallback()
   // delete
   for (int delete_idx = delete_idxs.size() - 1; 0 <= delete_idx; --delete_idx) {
     objects_.erase(objects_.begin() + delete_idxs.at(delete_idx));
-  }
-
-  // merge all pointcloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  for (size_t i = 0; i < v_pointcloud.size(); ++i) {
-    for (size_t j = 0; j < v_pointcloud.at(i)->size(); ++j) {
-      merged_pointcloud_ptr->push_back(v_pointcloud.at(i)->at(j));
-    }
-  }
-  // no ground
-  pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
-
-  // ray tracing
-  if (enable_ray_tracing_) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_merged_pointcloud_ptr(
-      new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::VoxelGridOcclusionEstimation<pcl::PointXYZ> ray_tracing_filter;
-    ray_tracing_filter.setInputCloud(merged_pointcloud_ptr);
-    ray_tracing_filter.setLeafSize(0.25, 0.25, 0.25);
-    ray_tracing_filter.initializeVoxelGrid();
-    for (size_t i = 0; i < v_pointcloud.size(); ++i) {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_pointcloud_ptr(
-        new pcl::PointCloud<pcl::PointXYZ>);
-      for (size_t j = 0; j < v_pointcloud.at(i)->size(); ++j) {
-        Eigen::Vector3i grid_coordinates = ray_tracing_filter.getGridCoordinates(
-          v_pointcloud.at(i)->at(j).x, v_pointcloud.at(i)->at(j).y, v_pointcloud.at(i)->at(j).z);
-        int grid_state;
-        if (ray_tracing_filter.occlusionEstimation(grid_state, grid_coordinates) != 0) {
-          RCLCPP_ERROR(get_logger(), "ray tracing failed");
-        }
-        if (grid_state == 1) {  // occluded
-          continue;
-        } else {  // not occluded
-          ray_traced_pointcloud_ptr->push_back(v_pointcloud.at(i)->at(j));
-          ray_traced_merged_pointcloud_ptr->push_back(v_pointcloud.at(i)->at(j));
-        }
-      }
-      pcl::toROSMsg(
-        *ray_traced_pointcloud_ptr,
-        output_dynamic_object_msg.feature_objects.at(i).feature.cluster);
-      output_dynamic_object_msg.feature_objects.at(i).feature.cluster.header.frame_id = "base_link";
-      output_dynamic_object_msg.feature_objects.at(i).feature.cluster.header.stamp = current_time;
-    }
-    pcl::toROSMsg(*ray_traced_merged_pointcloud_ptr, output_pointcloud_msg);
   }
 
   // create output header

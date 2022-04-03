@@ -14,6 +14,12 @@
 
 #include "dummy_perception_publisher/node.hpp"
 
+#include <pcl/filters/voxel_grid_occlusion_estimation.h>
+#include <tf2/LinearMath/Vector3.h>
+
+#include <functional>
+#include <limits>
+
 pcl::PointXYZ getBaseLinkToPoint(
   const tf2::Transform & tf_base_link2moved_object, double x, double y, double z)
 {
@@ -137,6 +143,106 @@ void ObjectCentricPointCloudCreator::create(
   }
 }
 
+void ObjectCentricPointCloudCreator::create_multi(
+  const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
+  std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
+{
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds_tmp;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZ>);
+
+  for (const auto & obj_info : obj_infos) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_shared_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    this->create(obj_info, tf_base_link2map, random_generator, pointcloud_shared_ptr);
+    pointclouds_tmp.push_back(pointcloud_shared_ptr);
+  }
+
+  for (size_t i = 0; i < pointclouds_tmp.size(); ++i) {
+    for (size_t j = 0; j < pointclouds_tmp.at(i)->size(); ++j) {
+      merged_pointcloud_tmp->push_back(pointclouds_tmp.at(i)->at(j));
+    }
+  }
+
+  if (!enable_ray_tracing_) {
+    pointclouds = pointclouds_tmp;
+    merged_pointcloud = merged_pointcloud_tmp;
+    return;
+  }
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_merged_pointcloud_ptr(
+    new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::VoxelGridOcclusionEstimation<pcl::PointXYZ> ray_tracing_filter;
+  ray_tracing_filter.setInputCloud(merged_pointcloud_tmp);
+  ray_tracing_filter.setLeafSize(0.25, 0.25, 0.25);
+  ray_tracing_filter.initializeVoxelGrid();
+  for (size_t i = 0; i < pointclouds_tmp.size(); ++i) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_pointcloud_ptr(
+      new pcl::PointCloud<pcl::PointXYZ>);
+    for (size_t j = 0; j < pointclouds_tmp.at(i)->size(); ++j) {
+      Eigen::Vector3i grid_coordinates = ray_tracing_filter.getGridCoordinates(
+        pointclouds_tmp.at(i)->at(j).x, pointclouds_tmp.at(i)->at(j).y,
+        pointclouds_tmp.at(i)->at(j).z);
+      int grid_state;
+      if (ray_tracing_filter.occlusionEstimation(grid_state, grid_coordinates) != 0) {
+        RCLCPP_ERROR(rclcpp::get_logger("dummy_perception_publisher"), "ray tracing failed");
+      }
+      if (grid_state == 1) {  // occluded
+        continue;
+      } else {  // not occluded
+        ray_traced_pointcloud_ptr->push_back(pointclouds_tmp.at(i)->at(j));
+        ray_traced_merged_pointcloud_ptr->push_back(pointclouds_tmp.at(i)->at(j));
+      }
+    }
+    pointclouds.push_back(ray_traced_pointcloud_ptr);
+  }
+  merged_pointcloud = ray_traced_merged_pointcloud_ptr;
+}
+
+double compute_box_signed_distance(const tf2::Vector3 & p, const ObjectInfo & obj_info)
+{
+  // As for signd distance field for a box, please refere:
+  // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+  const auto sd_val_x = std::abs(p.getX()) - 0.5 * obj_info.length;
+  const auto sd_val_y = std::abs(p.getY()) - 0.5 * obj_info.width;
+  const auto positive_dist_x = std::max(sd_val_x, 0.0);
+  const auto positive_dist_y = std::max(sd_val_y, 0.0);
+  const auto positive_dist = std::hypot(positive_dist_x, positive_dist_y);
+  const auto negative_dist = std::min(std::max(sd_val_x, sd_val_y), 0.0);
+  return positive_dist + negative_dist;
+}
+
+double compute_boxes_signed_distance(
+  const tf2::Vector3 & p, const std::vector<ObjectInfo> & obj_infos)
+{
+  double min_dist = std::numeric_limits<double>::max();
+  for (const auto & obj_info : obj_infos) {
+    min_dist = std::min(min_dist, compute_box_signed_distance(p, obj_info));
+  }
+  return min_dist;
+}
+
+double compute_dist_by_spheretrace(
+  const tf2::Vector3 & start, const tf2::Vector3 & direction,
+  const std::function<double(const tf2::Vector3 & p)> & sd_func)
+{
+  // As for sphere tracing, please refere:
+  // https://computergraphics.stackexchange.com/questions/161/what-is-ray-marching-is-sphere-tracing-the-same-thing/163
+  const double eps = 1e-3;
+  const size_t max_iter = 20;
+
+  auto tip = start;
+  for (size_t itr = 0; itr < max_iter; ++itr) {
+    const double dist = sd_func(tip);
+    tip = tip + dist * direction;
+    bool almost_on_surface = std::abs(dist) < eps;
+    if (almost_on_surface) {
+      return tf2::tf2Distance(tip, start);
+    }
+  }
+  // ray did not hit the surface.
+  return std::numeric_limits<double>::infinity();
+};
+
 void VehicleCentricPointCloudCreator::create(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const
@@ -146,41 +252,13 @@ void VehicleCentricPointCloudCreator::create(
   const auto tf_moved_object2base_link = tf_base_link2moved_object.inverse();
   const tf2::Transform tf_rotonly(tf_moved_object2base_link.getRotation());  // For vector rotation
 
-  const auto sdf_box = [&](tf2::Vector3 p) {
-    // As for signd distance field for a box, please refere:
-    // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
-    const auto sd_val_x = std::abs(p.getX()) - 0.5 * obj_info.length;
-    const auto sd_val_y = std::abs(p.getY()) - 0.5 * obj_info.width;
-    const auto positive_dist_x = std::max(sd_val_x, 0.0);
-    const auto positive_dist_y = std::max(sd_val_y, 0.0);
-    const auto positive_dist = std::hypot(positive_dist_x, positive_dist_y);
-    const auto negative_dist = std::min(std::max(sd_val_x, sd_val_y), 0.0);
-    return positive_dist + negative_dist;
-  };
-
-  const auto compute_dist_by_spheretrace =
-    [&](const tf2::Vector3 & start, const tf2::Vector3 & direction) -> double {
-    // As for sphere tracing, please refere:
-    // https://computergraphics.stackexchange.com/questions/161/what-is-ray-marching-is-sphere-tracing-the-same-thing/163
-    const double eps = 1e-3;
-    const size_t max_iter = 20;
-
-    auto tip = start;
-    for (size_t itr = 0; itr < max_iter; ++itr) {
-      const double dist = sdf_box(tip);
-      tip = tip + dist * direction;
-      bool almost_on_surface = std::abs(dist) < eps;
-      if (almost_on_surface) {
-        return tf2::tf2Distance(tip, start);
-      }
-    }
-    // ray did not hit the surface.
-    return std::numeric_limits<double>::infinity();
-  };
-
   std::normal_distribution<> x_random(0.0, obj_info.std_dev_x);
   std::normal_distribution<> y_random(0.0, obj_info.std_dev_y);
   std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
+
+  const auto sd_func = [&](const tf2::Vector3 & p) {
+    return compute_box_signed_distance(p, obj_info);
+  };
 
   double angle = 0.0;
   const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
@@ -193,12 +271,31 @@ void VehicleCentricPointCloudCreator::create(
     const tf2::Vector3 pos_noise(
       -x_random(random_generator), -y_random(random_generator), -z_random(random_generator));
     const auto start_ray_pos_with_noise = start_ray_pos + pos_noise;
-    const float ray_dist = compute_dist_by_spheretrace(start_ray_pos_with_noise, dir_wrt_obj);
+    const double ray_dist =
+      compute_dist_by_spheretrace(start_ray_pos_with_noise, dir_wrt_obj, sd_func);
     if (std::isfinite(ray_dist)) {
       const auto ray_tip = start_ray_pos_with_noise + ray_dist * dir_wrt_obj;
       const auto point = getBaseLinkToPoint(
         tf_base_link2moved_object, ray_tip.getX(), ray_tip.getY(), ray_tip.getZ());
       pointcloud->push_back(point);
+    }
+  }
+}
+
+void VehicleCentricPointCloudCreator::create_multi(
+  const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
+  std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
+{
+  for (const auto & obj_info : obj_infos) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_shared_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    this->create(obj_info, tf_base_link2map, random_generator, pointcloud_shared_ptr);
+    pointclouds.push_back(pointcloud_shared_ptr);
+  }
+
+  for (size_t i = 0; i < pointclouds.size(); ++i) {
+    for (size_t j = 0; j < pointclouds.at(i)->size(); ++j) {
+      merged_pointcloud->push_back(pointclouds.at(i)->at(j));
     }
   }
 }
