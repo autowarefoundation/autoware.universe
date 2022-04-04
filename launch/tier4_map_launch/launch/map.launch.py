@@ -31,7 +31,8 @@ import yaml
 def generate_launch_description():
 
     lanelet2_map_origin_path = os.path.join(
-        get_package_share_directory("map_loader"), "config/lanelet2_map_loader.param.yaml")
+        get_package_share_directory("map_loader"), "config/lanelet2_map_loader.param.yaml"
+    )
 
     with open(lanelet2_map_origin_path, "r") as f:
         lanelet2_map_origin_param = yaml.safe_load(f)["/**"]["ros__parameters"]
