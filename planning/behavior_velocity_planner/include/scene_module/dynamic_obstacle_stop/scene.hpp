@@ -70,6 +70,8 @@ public:
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
+  void setPlannerParam(const PlannerParam & planner_param);
+
 private:
   // Parameter
   PlannerParam planner_param_;

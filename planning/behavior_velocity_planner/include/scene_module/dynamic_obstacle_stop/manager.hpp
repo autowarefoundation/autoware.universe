@@ -22,6 +22,7 @@
 
 #include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -47,11 +48,11 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
-  // todo: how to do dynamic reconfigure?
-  // // Dynamic Reconfigure
-  // OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-  // rcl_interfaces::msg::SetParametersResult paramCallback(
-  //   const std::vector<rclcpp::Parameter> & parameters);
+  // todo: declare here is ok?
+  // Dynamic Reconfigure
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+  rcl_interfaces::msg::SetParametersResult paramCallback(
+    const std::vector<rclcpp::Parameter> & parameters);
 };
 }  // namespace behavior_velocity_planner
 

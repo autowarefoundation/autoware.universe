@@ -58,6 +58,11 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   }
 }
 
+void DynamicObstacleStopModule::setPlannerParam(const PlannerParam & planner_param)
+{
+  planner_param_ = planner_param;
+}
+
 bool DynamicObstacleStopModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
