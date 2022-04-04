@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 
+from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -23,14 +25,13 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
-from ament_index_python.packages import get_package_share_directory
 import yaml
-import os
+
 
 def generate_launch_description():
 
     lanelet2_map_origin_path = os.path.join(
-        get_package_share_directory('map_loader'), 'config/lanelet2_map_loader.param.yaml')
+        get_package_share_directory("map_loader"), "config/lanelet2_map_loader.param.yaml")
 
     with open(lanelet2_map_origin_path, "r") as f:
         lanelet2_map_origin_param = yaml.safe_load(f)["/**"]["ros__parameters"]

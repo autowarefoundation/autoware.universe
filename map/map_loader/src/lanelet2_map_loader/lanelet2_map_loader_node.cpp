@@ -40,7 +40,6 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
