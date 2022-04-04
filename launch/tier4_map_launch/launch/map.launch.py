@@ -61,7 +61,6 @@ def generate_launch_description():
                 "lanelet2_map_projector_type": "MGRS",
             },
             lanelet2_map_origin_param,
-
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -118,7 +117,6 @@ def generate_launch_description():
     def add_launch_arg(name: str, default_value=None, description=None):
         return DeclareLaunchArgument(name, default_value=default_value, description=description)
 
-
     return launch.LaunchDescription(
         [
             add_launch_arg("map_path", "", "path to map directory"),
@@ -127,7 +125,6 @@ def generate_launch_description():
                 [LaunchConfiguration("map_path"), "/lanelet2_map.osm"],
                 "path to lanelet2 map file",
             ),
-
             add_launch_arg(
                 "pointcloud_map_path",
                 [LaunchConfiguration("map_path"), "/pointcloud_map.pcd"],
