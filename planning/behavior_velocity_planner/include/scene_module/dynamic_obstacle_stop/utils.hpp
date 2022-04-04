@@ -136,6 +136,15 @@ enum class State {
   STOP,
 };
 
+  enum class AccelReason
+  {
+    STOP = 0,
+    NO_OBSTACLE = 1,
+    PASS = 2,
+    LOW_JERK = 3,
+  };
+
+
 bool validCheckDecelPlan(
   const double v_end, const double a_end, const double v_target, const double a_target,
   const double v_margin, const double a_margin);

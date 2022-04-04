@@ -179,9 +179,14 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
       debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, max_val);
     }
 
+    if (partition_excluded_obstacles.empty()) {
+      debug_ptr_->setAccelReason(AccelReason::NO_OBSTACLE);
+    }
+
     debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
     debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
-    debug_ptr_->publishDebugValue();
+
+    debug_ptr_->publish();
 
     debug_ptr_->publishDebugTrajectory(*smoothed_trajectory);
   }
@@ -563,6 +568,9 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::findNearestCollision
       obstacle_collision.nearest_collision_point_ = nearest_collision_point;
       return obstacle_collision;
     }
+
+    // the obstacle is considered to be able to pass
+    debug_ptr_->setAccelReason(AccelReason::PASS);
   }
 
   // no collision points
@@ -997,6 +1005,7 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   const bool is_stopping =
     current_vel < planner_param_.dynamic_obstacle_stop.min_vel_ego_kmph / 3.6 && current_acc < 0;
   if (!deceleration_needed && !is_stopping) {
+    debug_ptr_->setAccelReason(AccelReason::LOW_JERK);
     return {};
   }
 
@@ -1008,6 +1017,7 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   const auto & stop_point = trajectory.points.at(stop_index).pose;
 
   // debug
+  debug_ptr_->setAccelReason(AccelReason::STOP);
   debug_ptr_->pushStopPose(stop_point);
 
   return stop_point;
@@ -1090,6 +1100,7 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
       insertApproachingVelocity(
         *dynamic_obstacle, current_pose, planner_param_.approaching.limit_vel_kmph / 3.6,
         planner_param_.approaching.margin, trajectory, path);
+      debug_ptr_->setAccelReason(AccelReason::STOP);
       break;
     }
 

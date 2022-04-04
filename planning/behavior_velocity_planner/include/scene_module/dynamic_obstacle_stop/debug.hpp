@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -30,8 +31,10 @@
 #include <vector>
 namespace behavior_velocity_planner
 {
+using dynamic_obstacle_stop_utils::AccelReason;
 using dynamic_obstacle_stop_utils::TextWithPosition;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
+using tier4_debug_msgs::msg::Int32Stamped;
 
 enum class PointType : int8_t {
   Blue = 0,
@@ -103,6 +106,8 @@ public:
   void pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line);
   void pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon);
   void pushDebugTexts(const TextWithPosition & debug_text);
+  void setAccelReason(const AccelReason & accel_reason);
+  void publish();
   void publishDebugValue();
   void publishDebugTrajectory(const Trajectory & trajectory);
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
@@ -114,6 +119,7 @@ private:
 
   rclcpp::Node & node_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
+  rclcpp::Publisher<Int32Stamped>::SharedPtr pub_accel_reason_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_debug_trajectory_;
   std::vector<geometry_msgs::msg::Point> debug_points_;
   std::vector<geometry_msgs::msg::Point> debug_points_red_;
@@ -123,6 +129,7 @@ private:
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_polygons_;
   std::vector<TextWithPosition> debug_texts_;
   DebugValues debug_values_;
+  AccelReason accel_reason_;
 };
 
 }  // namespace behavior_velocity_planner

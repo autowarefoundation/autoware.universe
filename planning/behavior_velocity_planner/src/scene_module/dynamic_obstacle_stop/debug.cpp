@@ -54,6 +54,8 @@ DynamicObstacleStopDebug::DynamicObstacleStopDebug(rclcpp::Node & node) : node_(
 {
   pub_debug_values_ = node.create_publisher<Float32MultiArrayStamped>(
     "~/dynamic_obstacle_stop/debug/debug_values", 1);
+  pub_accel_reason_ =
+    node.create_publisher<Int32Stamped>("~/dynamic_obstacle_stop/debug/accel_reason", 1);
   pub_debug_trajectory_ =
     node.create_publisher<Trajectory>("~/dynamic_obstacle_stop/debug/trajectory", 1);
 }
@@ -237,6 +239,20 @@ DynamicObstacleStopDebug::createVisualizationMarkerArrayFromDebugData(
   }
 
   return msg;
+}
+void DynamicObstacleStopDebug::setAccelReason(const AccelReason & accel_reason)
+{
+  accel_reason_ = accel_reason;
+}
+
+void DynamicObstacleStopDebug::publish()
+{
+  publishDebugValue();
+
+  Int32Stamped accel_reason;
+  accel_reason.stamp = node_.now();
+  accel_reason.data = static_cast<int>(accel_reason_);
+  pub_accel_reason_->publish(accel_reason);
 }
 
 void DynamicObstacleStopDebug::publishDebugValue()
