@@ -1,5 +1,7 @@
 <launch>
   <arg name="lanelet2_map_path"/>
+  <arg name="param_file" default="$(find-pkg-share map_loader)/config/lanelet2_map_loader.param.yaml"
+  <arg name="lanelet2_map_path"/>
   <arg name="lanelet2_map_topic" default="vector_map"/>
   <arg name="lanelet2_map_marker_topic" default="vector_map_marker"/>
   <arg name="center_line_resolution" default="5.0"/>
@@ -12,6 +14,8 @@
     <remap from="output/lanelet2_map" to="$(var lanelet2_map_topic)"/>
     <param name="center_line_resolution" value="$(var center_line_resolution)"/>
     <param name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
+    <param name="lanelet2_map_projector_type" value="MGRS"/> <!-- UTM or MGRS -->
+    <param from="$(var param_file)"/>
   </node>
 
   <node pkg="map_loader" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
