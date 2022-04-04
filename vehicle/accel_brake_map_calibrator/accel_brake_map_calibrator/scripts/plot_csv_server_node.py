@@ -17,6 +17,7 @@
 
 import argparse
 import math
+import rospy
 
 from ament_index_python.packages import get_package_share_directory
 from calc_utils import CalcUtils
@@ -31,10 +32,13 @@ from tier4_autoware_msgs.tier4_external_api_msgs.srv import GetAccelBrakeMapCali
 
 
 class DrawGraph(Node):
+    calibrated_map_dir=''
     def __init__(self, args):
-        super().__init__("plot_viewer")
+        super().__init__("plot_server")
+        self.srv=self.create_service(CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback)
+
         default_map_dir = args.default_map_dir
-        calibrated_map_dir = args.calibrated_map_dir
+        self.calibrated_map_dir = args.calibrated_map_dir
         scatter_only = args.scatter_only
         log_file = args.log_file
         min_vel_thr = args.min_vel_thr
@@ -56,19 +60,19 @@ class DrawGraph(Node):
                 .string_value
             )
 
-        if calibrated_map_dir is None:
+        if self.calibrated_map_dir is None:
             package_path = get_package_share_directory("accel_brake_map_calibrator")
             self.declare_parameter(
                 "/accel_brake_map_calibrator/csv_calibrated_map_dir", package_path + "/config/"
             )
-            calibrated_map_dir = (
+            self.calibrated_map_dir = (
                 self.get_parameter("/accel_brake_map_calibrator/csv_calibrated_map_dir")
                 .get_parameter_value()
                 .string_value
             )
 
         print("default map dir: {}".format(default_map_dir))
-        print("calibrated map dir: {}".format(calibrated_map_dir))
+        print("calibrated map dir: {}".format(self.calibrated_map_dir))
 
         # read csv
         self.cr = CSVReader(log_file, csv_type="file")
@@ -106,10 +110,10 @@ class DrawGraph(Node):
         if len(default_pedal_list) == 0 or len(default_acc_list) == 0:
             self.get_logger().warning("No default map file was found in {}".format(default_map_dir))
 
-        calibrated_pedal_list, calibrated_acc_list = self.load_map(calibrated_map_dir)
+        calibrated_pedal_list, calibrated_acc_list = self.load_map(DrawGraph.calibrated_map_dir)
         if len(calibrated_pedal_list) == 0 or len(calibrated_acc_list) == 0:
             self.get_logger().warning(
-                "No calibrated map file was found in {}".format(calibrated_map_dir)
+                "No calibrated map file was found in {}".format(DrawGraph.calibrated_map_dir)
             )
 
         # visualize point from data
@@ -133,17 +137,27 @@ class DrawGraph(Node):
             )
         plt.savefig("plot.svg")
 
-        svg = open('plot.svg', 'r')
-        while True:
-            data = svg.readline()
+    def get_data_callback(self, response):
+        with open('plot.svg', 'r') as svg:
+        
+            for data in svg
             # stringにした場合は以下のfor文を消して下記の処理を行う
             # Calib.graph_image.append(data)
-            for c in data:
-                CalibData.graph_image.append(ord(c))
+                for c in data:
+                    response.graph_image.append(ord(c))
                 
-            if data == '':
-                break
+                    if data == '':
+                      break
 
+        with open(self.calibrated_map_dir+"accel_map.csv", 'r') as calibrated_accel_map:
+            for accel_data  in calibrated_accel_map: 
+                response.accel_map.append(accel_data)
+
+        with open(self.calibrated_map_dir+"brake_map.csv", 'r') as calibrated_brake_map:
+            for brake_data in calibrated_brake_map : 
+                response.brake_map.append(brake_data)
+        
+        return response
 
     def plotter_function(self):
         return self.plotter
