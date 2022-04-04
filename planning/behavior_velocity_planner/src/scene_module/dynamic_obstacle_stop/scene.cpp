@@ -1002,8 +1002,10 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   const bool deceleration_needed =
     *stop_dist > dist_to_collision - planner_param_.dynamic_obstacle_stop.stop_margin;
   // avoid acceleration when ego is decelerating
+  constexpr float epsilon = 1.0e-2;
   const bool is_stopping =
-    current_vel < planner_param_.dynamic_obstacle_stop.min_vel_ego_kmph / 3.6 && current_acc < 0;
+    current_vel < planner_param_.dynamic_obstacle_stop.min_vel_ego_kmph / 3.6 &&
+    current_acc < epsilon;
   if (!deceleration_needed && !is_stopping) {
     debug_ptr_->setAccelReason(AccelReason::LOW_JERK);
     return {};
