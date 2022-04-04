@@ -3,16 +3,48 @@
 
 ## Inner-workings / Algorithms
 
-The basic idea is to take a 2D laserscan and ray trace it to create a time-series processed occupancy grid map.
 
-1. the node take a laserscan and make an occupancy grid map with one frame. ray trace is done by Bresenham's line algorithm.
-   ![Bresenham's line algorithm](./image/bresenham.svg)
-2. Optionally, obstacle point clouds and raw point clouds can be received and reflected in the occupancy grid map. The reason is that laserscan only uses the most foreground point in the polar coordinate system, so it throws away a lot of information. As a result, the occupancy grid map is almost an UNKNOWN cell.
-   Therefore, the obstacle point cloud and the raw point cloud are used to reflect what is judged to be the ground and what is judged to be an obstacle in the occupancy grid map.
-   ![Bresenham's line algorithm](./image/update_with_pointcloud.svg)
-   The black and red dots represent raw point clouds, and the red dots represent obstacle point clouds. In other words, the black points are determined as the ground, and the red point cloud is the points determined as obstacles. The gray cells are represented as UNKNOWN cells.
+### 1st step
+First of all, obstacle and raw pointcloud as input are transformed into a polar coordinate system and divided into bin per angle_increment.
+At this time, each point belonging to each bin is stored as range data. In addition, the x,y information in the map coordinate is also stored for ray trace on map coordinate.
+The bin contains the following information for each point
+- range data from origin of raytrace
+- x on map coordinate
+- y on map coordinate
 
-3. Using the previous occupancy grid map, update the existence probability using a binary Bayesian filter (1). Also, the unobserved cells are time-decayed like the system noise of the Kalman filter (2).
+
+![pointcloud_based_occupancy_grid_map_bev](./image/pointcloud_based_occupancy_grid_map_bev.svg)
+
+
+The following figure shows each of the bins from side view.
+![pointcloud_based_occupancy_grid_map_side_view](./image/pointcloud_based_occupancy_grid_map_side_view.svg)
+
+
+### 2nd step
+The ray trace is performed in three steps for each cell.
+The ray trace is done by Bresenham's line algorithm.
+![Bresenham's line algorithm](./image/bresenham.svg)
+
+1. Initialize freespace to the farthest point of each bin.
+![pointcloud_based_occupancy_grid_map_side_view_1st](./image/pointcloud_based_occupancy_grid_map_side_view_1st.svg)
+
+2. Fill in the unknown cells.
+Assume that unknown is behind the obstacle, since the back of the obstacle is a blind spot.
+Therefore, the unknown are assumed to be the cells that are more than a distance margin from each obstacle point.
+There are three reasons for setting a distance margin.
+- It is unlikely that a point on the ground will be immediately behind an obstacle.
+- The obstacle point cloud is processed and may not match the raw pointcloud.
+- The input may be inaccurate and obstacle points may not be determined as obstacles.
+![pointcloud_based_occupancy_grid_map_side_view_2nd](./image/pointcloud_based_occupancy_grid_map_side_view_2nd.svg)
+
+3. Fill in the occupied cells.
+Fill in the point where the obstacle point is located with occupied.
+In addition, If the distance between obstacle points is less than or equal to the distance margin, it is filled with occupied because the input may be inaccurate and obstacle points may not be determined as obstacles.
+![pointcloud_based_occupancy_grid_map_side_view_3rd](./image/pointcloud_based_occupancy_grid_map_side_view_3rd.svg)
+
+
+### 3rd step
+Using the previous occupancy grid map, update the existence probability using a binary Bayesian filter (1). Also, the unobserved cells are time-decayed like the system noise of the Kalman filter (2).
 
 ```math
     \hat{P_{o}} = \frac{(P_{o} * P_{z})}{(P_{o} * P_{z} + (1 - P_{o}) * \bar{P_{z}})} \tag{1}
