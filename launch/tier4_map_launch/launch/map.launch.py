@@ -23,9 +23,18 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
-
+from ament_index_python.packages import get_package_share_directory
+import yaml
+import os
 
 def generate_launch_description():
+
+    lanelet2_map_origin_path = os.path.join(
+        get_package_share_directory('map_loader'), 'config/lanelet2_map_loader.param.yaml')
+
+    with open(lanelet2_map_origin_path, "r") as f:
+        lanelet2_map_origin_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     map_hash_generator = Node(
         package="map_loader",
         executable="map_hash_generator",
@@ -47,7 +56,10 @@ def generate_launch_description():
             {
                 "center_line_resolution": 5.0,
                 "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
-            }
+                "lanelet2_map_projector_type": "MGRS",
+            },
+            lanelet2_map_origin_param,
+
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -104,6 +116,7 @@ def generate_launch_description():
     def add_launch_arg(name: str, default_value=None, description=None):
         return DeclareLaunchArgument(name, default_value=default_value, description=description)
 
+
     return launch.LaunchDescription(
         [
             add_launch_arg("map_path", "", "path to map directory"),
@@ -112,6 +125,7 @@ def generate_launch_description():
                 [LaunchConfiguration("map_path"), "/lanelet2_map.osm"],
                 "path to lanelet2 map file",
             ),
+
             add_launch_arg(
                 "pointcloud_map_path",
                 [LaunchConfiguration("map_path"), "/pointcloud_map.pcd"],
@@ -140,3 +154,4 @@ def generate_launch_description():
             ),
         ]
     )
+
