@@ -14,7 +14,6 @@
 
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <utilization/marker_helper.hpp>
 #include <utilization/util.hpp>
@@ -29,7 +28,6 @@ namespace
 {
 using builtin_interfaces::msg::Time;
 using BasicPolygons = std::vector<lanelet::BasicPolygon2d>;
-using Slices = std::vector<occlusion_spot_utils::Slice>;
 
 visualization_msgs::msg::Marker makeArrowMarker(
   const occlusion_spot_utils::PossibleCollisionInfo & possible_collision, const int id)
@@ -153,16 +151,16 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
   debug_marker.id = planning_utils::bitShift(id);
   debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   debug_marker.action = visualization_msgs::msg::Marker::ADD;
-  debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, z);
+  debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, 0);
   debug_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
   debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
   debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.5);
-  debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
+  debug_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
   debug_marker.ns = ns;
   for (const auto & poly : polygons) {
     for (const auto & p : poly) {
       geometry_msgs::msg::Point point =
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), 0.0);
+        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z + 0.5);
       debug_marker.points.push_back(point);
     }
     debug_markers.markers.push_back(debug_marker);
@@ -173,7 +171,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
 }
 
 visualization_msgs::msg::MarkerArray makeSlicePolygonMarker(
-  const Slices & slices, const std::string ns, const int id, const double z)
+  const Polygons2d & slices, const std::string ns, const int id, const double z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   visualization_msgs::msg::Marker debug_marker;
@@ -182,16 +180,15 @@ visualization_msgs::msg::MarkerArray makeSlicePolygonMarker(
   debug_marker.id = planning_utils::bitShift(id);
   debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   debug_marker.action = visualization_msgs::msg::Marker::ADD;
-  debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, z);
+  debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, 0);
   debug_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
   debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
   debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 1.0, 0.3);
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
   debug_marker.ns = ns;
   for (const auto & slice : slices) {
-    for (const auto & p : slice.polygon) {
-      geometry_msgs::msg::Point point =
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), 0.0);
+    for (const auto & p : slice.outer()) {
+      geometry_msgs::msg::Point point = tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), z);
       debug_marker.points.push_back(point);
     }
     debug_markers.markers.push_back(debug_marker);
@@ -283,24 +280,6 @@ visualization_msgs::msg::MarkerArray createOcclusionMarkerArray(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMarkerArray()
-{
-  const auto current_time = this->clock_->now();
-
-  visualization_msgs::msg::MarkerArray debug_marker_array;
-  if (!debug_data_.possible_collisions.empty()) {
-    appendMarkerArray(
-      createPossibleCollisionMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
-  }
-  if (!debug_data_.detection_area_polygons.empty()) {
-    appendMarkerArray(
-      makeSlicePolygonMarker(
-        debug_data_.detection_area_polygons, "detection_area", module_id_, debug_data_.z),
-      current_time, &debug_marker_array);
-  }
-
-  return debug_marker_array;
-}
 visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray()
 {
   const auto current_time = this->clock_->now();
@@ -316,9 +295,9 @@ visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray
         debug_data_.detection_area_polygons, "detection_area", module_id_, debug_data_.z),
       current_time, &debug_marker_array);
   }
-  if (!debug_data_.partition_lanelets.empty()) {
+  if (!debug_data_.close_partition.empty()) {
     appendMarkerArray(
-      makePolygonMarker(debug_data_.partition_lanelets, "partition", module_id_, debug_data_.z),
+      makePolygonMarker(debug_data_.close_partition, "close_partition", module_id_, debug_data_.z),
       current_time, &debug_marker_array);
   }
   if (!debug_data_.interp_path.points.empty()) {

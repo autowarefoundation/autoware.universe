@@ -27,8 +27,6 @@ void applySafeVelocityConsideringPossibleCollision(
   PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
   const PlannerParam & param)
 {
-  const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
-  rclcpp::Clock clock{RCL_ROS_TIME};
   // return nullptr or too few points
   if (!inout_path || inout_path->points.size() < 2) {
     return;
@@ -58,22 +56,6 @@ void applySafeVelocityConsideringPossibleCollision(
   }
 }
 
-bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
-{
-  geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
-  bool is_target_ahead = (p.position.x > 0.0);
-  return is_target_ahead;
-}
-
-bool setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input)
-{
-  for (size_t i = idx; i < input->points.size(); ++i) {
-    input->points.at(i).point.longitudinal_velocity_mps =
-      std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
-  }
-  return true;
-}
-
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
   PathWithLaneId * inout_path)
@@ -88,7 +70,7 @@ int insertSafeVelocityToPath(
   size_t insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point
   // if original path has narrow points it's better to set higher distance threshold
-  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
     if (insert_idx == static_cast<size_t>(inout_path->points.size())) return -1;
   }
@@ -96,25 +78,6 @@ int insertSafeVelocityToPath(
   inserted_point.point.pose = in_pose;
   planning_utils::insertVelocity(*inout_path, inserted_point, safe_vel, insert_idx);
   return 0;
-}
-
-double calculateLateralDistanceFromTTC(
-  const double longitudinal_distance, const PlannerParam & param)
-{
-  const auto & v = param.v;
-  const auto & p = param;
-  double v_min = 1.0;
-  const double lateral_buffer = 0.5;
-  const double min_distance = p.half_vehicle_width + lateral_buffer;
-  const double max_distance = p.detection_area.max_lateral_distance;
-  if (longitudinal_distance <= 0) return min_distance;
-  if (v_min < param.v.min_allowed_velocity) v_min = param.v.min_allowed_velocity;
-  // use min velocity if ego velocity is below min allowed
-  const double v0 = (v.v_ego > v_min) ? v.v_ego : v_min;
-  // here is a part where ego t(ttc) can be replaced by calculation of velocity smoother or ?
-  double t = longitudinal_distance / v0;
-  double lateral_distance = t * param.pedestrian_vel + p.half_vehicle_width;
-  return std::min(max_distance, std::max(min_distance, lateral_distance));
 }
 
 SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)

@@ -19,7 +19,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -41,6 +41,16 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+namespace tier4_autoware_utils
+{
+template <>
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  return p.point.pose;
+}
+}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -67,10 +77,12 @@ using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 namespace occlusion_spot_utils
 {
 enum ROAD_TYPE { PRIVATE, PUBLIC, HIGHWAY, UNKNOWN };
-enum METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
+enum DETECTION_METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
+enum PASS_JUDGE { SMOOTH_VELOCITY, CURRENT_VELOCITY };
 
 struct DetectionArea
 {
+  double min_longitudinal_offset;  // [m] detection area safety buffer from front bumper
   double max_lateral_distance;     // [m] distance to care about occlusion spot
   double slice_length;             // [m] size of each slice
   double min_occlusion_spot_size;  // [m] minumum size to care about the occlusion spot
@@ -99,15 +111,21 @@ struct LatLon
 
 struct PlannerParam
 {
-  METHOD method;
-  bool debug;                  // [-]
-  bool use_partition_lanelet;  // [-]
+  DETECTION_METHOD detection_method;
+  PASS_JUDGE pass_judge;
+  bool is_show_occlusion;        // [-]
+  bool is_show_cv_window;        // [-]
+  bool is_show_processing_time;  // [-]
+  bool filter_occupancy_grid;    // [-]
+  bool use_object_info;          // [-]
+  bool use_partition_lanelet;    // [-]
   // parameters in yaml
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
   double stuck_vehicle_vel;          // [m/s]
   double lateral_distance_thr;       // [m] lateral distance threshold to consider
   double pedestrian_vel;             // [m/s]
+  double pedestrian_radius;          // [m]
 
   double dist_thr;   // [m]
   double angle_thr;  // [rad]
@@ -125,22 +143,6 @@ struct SafeMotion
 {
   double stop_dist;
   double safe_velocity;
-};
-
-// @brief represent the range of a each polygon
-struct SliceRange
-{
-  double min_length{};
-  double max_length{};
-  double min_distance{};
-  double max_distance{};
-};
-
-// @brief representation of a polygon along a path
-struct Slice
-{
-  SliceRange range{};
-  lanelet::BasicPolygon2d polygon{};
 };
 
 struct ObstacleInfo
@@ -185,8 +187,8 @@ struct DebugData
   double z;
   std::string road_type = "";
   std::string detection_type = "";
-  std::vector<Slice> detection_area_polygons;
-  std::vector<lanelet::BasicPolygon2d> partition_lanelets;
+  Polygons2d detection_area_polygons;
+  std::vector<lanelet::BasicPolygon2d> close_partition;
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;
   std::vector<geometry_msgs::msg::Point> occlusion_points;
@@ -194,28 +196,33 @@ struct DebugData
   PathWithLaneId interp_path;
   void resetData()
   {
+    close_partition.clear();
     detection_area_polygons.clear();
     parked_vehicle_point.clear();
     possible_collisions.clear();
     occlusion_points.clear();
   }
 };
-
+// apply current velocity to path
+PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
+//!< @brief wrapper for detection area polygon generation
+bool buildDetectionAreaPolygon(
+  Polygons2d & slices, const PathWithLaneId & path, const double offset,
+  const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
 void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);
 void clipPathByLength(
   const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
 bool isStuckVehicle(PredictedObject obj, const double min_vel);
-double offsetFromStartToEgo(
-  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx);
 std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const std::vector<Slice> & polys);
+  std::vector<PredictedObject> & objs, const Polygons2d & polys);
 std::vector<PredictedObject> getParkedVehicles(
   const PredictedObjects & dyn_objects, const PlannerParam & param,
   std::vector<Point> & debug_point);
-std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
-  const PathWithLaneId & path, const PlannerParam & param, const double offset_from_start_to_ego,
+bool generatePossibleCollisionsFromObjects(
+  std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
+  const PlannerParam & param, const double offset_from_start_to_ego,
   const std::vector<PredictedObject> & dyn_objects);
 ROAD_TYPE getCurrentRoadType(
   const lanelet::ConstLanelet & current_lanelet, const LaneletMapPtr & lanelet_map_ptr);
@@ -236,10 +243,10 @@ void calcSlowDownPointsForPossibleCollision(
 //!< @brief convert a set of occlusion spots found on detection_area slice
 boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const double offset_from_start_to_ego, const BasicPoint2d base_point,
+  const double offset_from_start_to_ego, const Point2d base_point,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
-void createPossibleCollisionsInDetectionArea(
+bool generatePossibleCollisionsFromGridMap(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
   DebugData & debug_data);

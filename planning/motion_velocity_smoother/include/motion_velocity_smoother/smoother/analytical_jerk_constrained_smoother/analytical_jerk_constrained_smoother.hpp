@@ -38,7 +38,7 @@ public:
     struct
     {
       double ds_resample;
-      double num_resample;
+      int num_resample;
       double delta_yaw_threshold;
     } resample;
     struct
@@ -65,7 +65,7 @@ public:
     } backward;
   };
 
-  explicit AnalyticalJerkConstrainedSmoother(const Param & p);
+  explicit AnalyticalJerkConstrainedSmoother(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -78,6 +78,7 @@ public:
     const TrajectoryPoints & input) const override;
 
   void setParam(const Param & param);
+  Param getParam() const;
 
 private:
   Param smoother_param_;
