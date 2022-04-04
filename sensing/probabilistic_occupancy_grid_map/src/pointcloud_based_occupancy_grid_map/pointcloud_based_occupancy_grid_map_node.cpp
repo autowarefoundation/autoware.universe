@@ -95,7 +95,7 @@ using costmap_2d::OccupancyGridMap;
 using costmap_2d::OccupancyGridMapBBFUpdater;
 using geometry_msgs::msg::Pose;
 
-PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(
+PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
   const rclcpp::NodeOptions & node_options)
 : Node("pointcloud_based_occupancy_grid_map_node", node_options)
 {
@@ -118,7 +118,7 @@ PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(
   sync_ptr_ = std::make_shared<Sync>(SyncPolicy(5), obstacle_pointcloud_sub_, raw_pointcloud_sub_);
 
   sync_ptr_->registerCallback(
-    std::bind(&PoincloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw, this, _1, _2));
+    std::bind(&PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw, this, _1, _2));
   occupancy_grid_map_pub_ = create_publisher<OccupancyGrid>("~/output/occupancy_grid_map", 1);
 
   /* Occupancy grid */
@@ -126,7 +126,7 @@ PoincloudBasedOccupancyGridMapNode::PoincloudBasedOccupancyGridMapNode(
     map_length / map_resolution, map_length / map_resolution, map_resolution);
 }
 
-void PoincloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
+void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   const PointCloud2::ConstSharedPtr & input_obstacle_msg,
   const PointCloud2::ConstSharedPtr & input_raw_msg)
 {
@@ -176,7 +176,7 @@ void PoincloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     map_frame_, input_raw_msg->header.stamp, pose.position.z, *occupancy_grid_map_updater_ptr_));
 }
 
-OccupancyGrid::UniquePtr PoincloudBasedOccupancyGridMapNode::OccupancyGridMapToMsgPtr(
+OccupancyGrid::UniquePtr PointcloudBasedOccupancyGridMapNode::OccupancyGridMapToMsgPtr(
   const std::string & frame_id, const Time & stamp, const float & robot_pose_z,
   const Costmap2D & occupancy_grid_map)
 {
@@ -209,4 +209,4 @@ OccupancyGrid::UniquePtr PoincloudBasedOccupancyGridMapNode::OccupancyGridMapToM
 }  // namespace occupancy_grid_map
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_map::PoincloudBasedOccupancyGridMapNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_map::PointcloudBasedOccupancyGridMapNode)

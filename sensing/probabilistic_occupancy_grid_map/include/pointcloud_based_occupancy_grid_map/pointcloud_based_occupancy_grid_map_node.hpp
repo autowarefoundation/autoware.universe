@@ -48,10 +48,10 @@ using sensor_msgs::msg::PointCloud2;
 using tf2_ros::Buffer;
 using tf2_ros::TransformListener;
 
-class PoincloudBasedOccupancyGridMapNode : public rclcpp::Node
+class PointcloudBasedOccupancyGridMapNode : public rclcpp::Node
 {
 public:
-  explicit PoincloudBasedOccupancyGridMapNode(const rclcpp::NodeOptions & node_options);
+  explicit PointcloudBasedOccupancyGridMapNode(const rclcpp::NodeOptions & node_options);
 
 private:
   void onPointcloudWithObstacleAndRaw(
