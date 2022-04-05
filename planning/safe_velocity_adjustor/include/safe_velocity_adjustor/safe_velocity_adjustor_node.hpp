@@ -17,18 +17,20 @@
 
 #include "safe_velocity_adjustor/collision_distance.hpp"
 #include "safe_velocity_adjustor/pointcloud_processing.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <geometry_msgs/msg/point.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -57,10 +59,11 @@ class SafeVelocityAdjustorNode : public rclcpp::Node
 {
 public:
   explicit SafeVelocityAdjustorNode(const rclcpp::NodeOptions & node_options)
-  : rclcpp::Node("safe_velocity_adjustor", node_options), transform_listener_(this)
+  : rclcpp::Node("safe_velocity_adjustor", node_options)
   {
     time_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("time_safety_buffer"));
     dist_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("dist_safety_buffer"));
+    start_distance_ = static_cast<Float>(declare_parameter<Float>("start_distance"));
     downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
 
     sub_trajectory_ = create_subscription<Trajectory>(
@@ -79,10 +82,13 @@ public:
 
     set_param_res_ =
       add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
+
+    self_pose_listener_.waitForFirstPose();
   }
 
 private:
-  tier4_autoware_utils::TransformListener transform_listener_;
+  tier4_autoware_utils::TransformListener transform_listener_{this};
+  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   rclcpp::Publisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
@@ -102,6 +108,7 @@ private:
   // parameters
   Float time_safety_buffer_;
   Float dist_safety_buffer_;
+  Float start_distance_;
   int downsample_factor_;
   // TODO(Maxime CLEMENT): get vehicle width and length from vehicle parameters
   Float vehicle_width_ = 2.0;
@@ -122,6 +129,9 @@ private:
       } else if (parameter.get_name() == "downsample_factor") {
         downsample_factor_ = static_cast<int>(parameter.as_int());
         result.successful = true;
+      } else if (parameter.get_name() == "start_distance") {
+        start_distance_ = static_cast<Float>(parameter.as_double());
+        result.successful = true;
       } else {
         RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       }
@@ -131,23 +141,29 @@ private:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg)
   {
-    if (!obstacle_pointcloud_ptr_ || !dynamic_obstacles_ptr_) {
-      constexpr auto one_sec = rcutils_duration_value_t(10);
+    const auto ego_idx = tier4_autoware_utils::findNearestIndex(
+      msg->points, self_pose_listener_.getCurrentPose()->pose);
+    if (!obstacle_pointcloud_ptr_ || !dynamic_obstacles_ptr_ || !ego_idx) {
+      constexpr auto one_sec = rcutils_duration_value_t(1000);
       if (!obstacle_pointcloud_ptr_)
         RCLCPP_WARN_THROTTLE(
           get_logger(), *get_clock(), one_sec, "Obstable pointcloud not yet received");
       if (!dynamic_obstacles_ptr_)
         RCLCPP_WARN_THROTTLE(
           get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
+      if (!ego_idx)
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
       return;
     }
-
+    const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
     // Downsample trajectory
-    Trajectory in_traj;
-    in_traj.header = msg->header;
-    in_traj.points.reserve(msg->points.size() / downsample_factor_);
-    for (size_t i = 0; i < msg->points.size(); i += downsample_factor_)
-      in_traj.points.push_back(msg->points[i]);
+    const size_t downsample_step = downsample_factor_;
+    Trajectory downsampled_traj;
+    downsampled_traj.header = msg->header;
+    downsampled_traj.points.reserve(msg->points.size() / downsample_step);
+    for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
+      downsampled_traj.points.push_back(msg->points[i]);
 
     double pointcloud_d{};
     double vector_d{};
@@ -158,11 +174,11 @@ private:
     const auto extra_vehicle_length = vehicle_length_ / 2 + dist_safety_buffer_;
     stopwatch.tic("pointcloud_d");
     const auto filtered_obstacle_pointcloud = transformAndFilterPointCloud(
-      in_traj, *obstacle_pointcloud_ptr_, *dynamic_obstacles_ptr_, transform_listener_,
+      downsampled_traj, *obstacle_pointcloud_ptr_, *dynamic_obstacles_ptr_, transform_listener_,
       time_safety_buffer_, extra_vehicle_length);
     pointcloud_d += stopwatch.toc("pointcloud_d");
 
-    for (auto & trajectory_point : in_traj.points) {
+    for (auto & trajectory_point : downsampled_traj.points) {
       stopwatch.tic("vector_d");
       const auto forward_simulated_vector =
         forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
@@ -180,9 +196,9 @@ private:
       }
     }
 
-    for (size_t i = 0; i < safe_trajectory.points.size(); ++i) {
-      safe_trajectory.points[i].longitudinal_velocity_mps =
-        in_traj.points[i / downsample_factor_].longitudinal_velocity_mps;
+    for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
+      safe_trajectory.points[start_idx + i * downsample_step].longitudinal_velocity_mps =
+        downsampled_traj.points[i].longitudinal_velocity_mps;
     }
     RCLCPP_WARN(get_logger(), "pointcloud = %2.2fs", pointcloud_d);
     RCLCPP_WARN(get_logger(), "dist = %2.2fs", dist_d);
@@ -193,7 +209,7 @@ private:
     PointCloud2 ros_pointcloud;
     pcl::toROSMsg(filtered_obstacle_pointcloud, ros_pointcloud);
     ros_pointcloud.header.stamp = now();
-    ros_pointcloud.header.frame_id = in_traj.header.frame_id;
+    ros_pointcloud.header.frame_id = downsampled_traj.header.frame_id;
     pub_debug_pointcloud_->publish(ros_pointcloud);
 
     RCLCPP_WARN(get_logger(), "*** Total = %2.2fs", stopwatch.toc());
@@ -240,6 +256,19 @@ private:
     debug_markers.markers.push_back(adjusted_envelope);
 
     pub_debug_markers_->publish(debug_markers);
+  }
+
+  static size_t calculateStartIndex(
+    const Trajectory & trajectory, const size_t ego_idx, const Float start_distance)
+  {
+    auto dist = 0.0;
+    auto idx = ego_idx;
+    while (idx + 1 < trajectory.points.size() && dist < start_distance) {
+      dist +=
+        tier4_autoware_utils::calcDistance2d(trajectory.points[idx], trajectory.points[idx + 1]);
+      ++idx;
+    }
+    return idx;
   }
 };
 }  // namespace safe_velocity_adjustor
