@@ -106,6 +106,7 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
   use_height_filter_ = declare_parameter("use_height_filter", true);
+  enable_single_frame_mode_ = declare_parameter("enable_single_frame_mode", false);
   const double map_length{declare_parameter("map_length", 100.0)};
   const double map_resolution{declare_parameter("map_resolution", 0.5)};
 
@@ -158,22 +159,29 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     return;
   }
 
-  // Create oneshot occupancy grid map
-  OccupancyGridMap oneshot_occupancy_grid_map(
+  // Create single frame occupancy grid map
+  OccupancyGridMap single_frame_occupancy_grid_map(
     occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
     occupancy_grid_map_updater_ptr_->getSizeInCellsY(),
     occupancy_grid_map_updater_ptr_->getResolution());
-  oneshot_occupancy_grid_map.updateOrigin(
-    pose.position.x - oneshot_occupancy_grid_map.getSizeInMetersX() / 2,
-    pose.position.y - oneshot_occupancy_grid_map.getSizeInMetersY() / 2);
-  oneshot_occupancy_grid_map.updateWithPointCloud(filtered_raw_pc, filtered_obstacle_pc, pose);
+  single_frame_occupancy_grid_map.updateOrigin(
+    pose.position.x - single_frame_occupancy_grid_map.getSizeInMetersX() / 2,
+    pose.position.y - single_frame_occupancy_grid_map.getSizeInMetersY() / 2);
+  single_frame_occupancy_grid_map.updateWithPointCloud(filtered_raw_pc, filtered_obstacle_pc, pose);
 
-  // Update with bayes filter
-  occupancy_grid_map_updater_ptr_->update(oneshot_occupancy_grid_map);
+  if (enable_single_frame_mode_) {
+    // publish
+    occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
+      map_frame_, input_raw_msg->header.stamp, pose.position.z,
+      single_frame_occupancy_grid_map));
+  } else {
+    // Update with bayes filter
+    occupancy_grid_map_updater_ptr_->update(single_frame_occupancy_grid_map);
 
-  // publish
-  occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
-    map_frame_, input_raw_msg->header.stamp, pose.position.z, *occupancy_grid_map_updater_ptr_));
+    // publish
+    occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
+      map_frame_, input_raw_msg->header.stamp, pose.position.z, *occupancy_grid_map_updater_ptr_));
+  }
 }
 
 OccupancyGrid::UniquePtr PointcloudBasedOccupancyGridMapNode::OccupancyGridMapToMsgPtr(
