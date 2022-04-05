@@ -954,7 +954,7 @@ size_t DynamicObstacleStopModule::calcTrajectoryIndexByLengthReverse(
     const auto length_sum =
       std::abs(tier4_autoware_utils::calcSignedArcLength(trajectory.points, src_point, i));
     if (length_sum > target_length) {
-      return i;
+      return i + 1;
     }
   }
 
