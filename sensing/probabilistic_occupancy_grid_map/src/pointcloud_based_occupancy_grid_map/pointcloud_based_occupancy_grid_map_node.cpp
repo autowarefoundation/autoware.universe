@@ -172,8 +172,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   if (enable_single_frame_mode_) {
     // publish
     occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
-      map_frame_, input_raw_msg->header.stamp, pose.position.z,
-      single_frame_occupancy_grid_map));
+      map_frame_, input_raw_msg->header.stamp, pose.position.z, single_frame_occupancy_grid_map));
   } else {
     // Update with bayes filter
     occupancy_grid_map_updater_ptr_->update(single_frame_occupancy_grid_map);
