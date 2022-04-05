@@ -162,7 +162,8 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   {
     if (dynamic_obstacle) {
       const auto lateral_dist = std::abs(tier4_autoware_utils::calcLateralOffset(
-        trim_trajectory.points, dynamic_obstacle->pose_.position));
+                                  trim_trajectory.points, dynamic_obstacle->pose_.position)) -
+                                planner_param_.vehicle_param.width / 2.0;
       const auto longitudinal_dist_to_obstacle =
         tier4_autoware_utils::calcSignedArcLength(
           trim_trajectory.points, current_pose.position, dynamic_obstacle->pose_.position) -
