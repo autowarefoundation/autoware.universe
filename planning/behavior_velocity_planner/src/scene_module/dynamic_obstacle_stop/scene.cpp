@@ -169,6 +169,12 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
           trim_trajectory.points, current_pose.position, dynamic_obstacle->pose_.position) -
         planner_param_.vehicle_param.base_to_front;
 
+      const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
+        trim_trajectory.points, current_pose.position, dynamic_obstacle->nearest_collision_point_);
+      const auto dist_to_collision =
+        dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
+
+      debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, dist_to_collision);
       debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, lateral_dist);
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, longitudinal_dist_to_obstacle);
@@ -990,7 +996,6 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
 
   // debug
   {
-    debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, dist_to_collision);
     debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
 
     const auto vehicle_stop_idx = calcTrajectoryIndexByLength(
