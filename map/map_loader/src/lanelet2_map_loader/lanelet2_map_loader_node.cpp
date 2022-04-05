@@ -58,7 +58,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
     map = lanelet::load(lanelet2_filename, projector, &errors);
   } else if (lanelet2_map_projector_type == "UTM") {
     double map_origin_lat = this->declare_parameter("latitude", 0.0);
-    double map_origin_lon = declare_parameter("longitude", 0.0);
+    double map_origin_lon = this->declare_parameter("longitude", 0.0);
     lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
