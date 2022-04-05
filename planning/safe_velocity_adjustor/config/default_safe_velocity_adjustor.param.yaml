@@ -2,4 +2,5 @@
   ros__parameters:
     time_safety_buffer: 1.5  # [s] required time without collision in forward simulation
     dist_safety_buffer: 1.5  # [m] distance from obstacles to consider a collision
+    start_distance: 2.0  # [m] distance ahead of ego from which to start modifying the trajectory
     downsample_factor: 10  # factor by which to downsample the input trajectory for calculation
