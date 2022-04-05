@@ -255,9 +255,8 @@ If neither, then:
     value: OK
 ```
 
-
-If the battery voltage drops below voltage_error or voltage_warn,It will be a warning.
-If the CMOS battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
+If the CMOS battery voltage drops less than voltage_error or voltage_warn,It will be a warning.
+If the battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
 It can be determined by the value of "Low Battery" or "Battery Died".
 
 ## UML diagrams
