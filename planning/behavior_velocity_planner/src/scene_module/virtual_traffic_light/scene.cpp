@@ -359,6 +359,12 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
     *stop_reason = planning_utils::initializeStopReason(
     tier4_planning_msgs::msg::StopReason::INTERSECTION_COORDINATION);
   }
+  // The name "eva_beacon_system" should be changed because of its project specific name
+  // else if (command_.type == "eva_beacon_system")
+  // {
+  //   *stop_reason = planning_utils::initializeStopReason(
+  //   tier4_planning_msgs::msg::StopReason::EVA_BEACON_SYSTEM);
+  // }
   else
   {
     *stop_reason = planning_utils::initializeStopReason(
