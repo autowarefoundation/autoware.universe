@@ -1078,7 +1078,8 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
   switch (state_) {
     case State::GO: {
-      if (current_vel < planner_param_.approaching.stop_thresh) {
+      if (
+        planner_data_->current_velocity->twist.linear.x < planner_param_.approaching.stop_thresh) {
         RCLCPP_DEBUG_STREAM(logger_, "transit to STOP state.");
         stop_time_ = clock_->now();
         state_ = State::STOP;
