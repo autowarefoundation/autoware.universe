@@ -97,7 +97,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
     endif()
   endfunction()
-  
+
   # default model
   download(pts_voxel_encoder_default.onnx 1KFhmA4oFT6CtZx5806QeMzn5H2tKa3oD 410f730c537968cb27fbd70c941849a8)
   download(pts_backbone_neck_head_default.onnx 1iyk5VoQ4uNBGPZwypVZIMjSuSYAI1RxP e97c165c7877222c0e27e44409a07517)
@@ -122,7 +122,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${CUDA_INCLUDE_DIRS}
     ${TORCH_INCLUDE_DIRS}
   )
- 
+
   ### centerpoint ###
   ament_auto_add_library(pointpainting SHARED
     lib/src/centerpoint_trt.cpp
@@ -167,7 +167,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     PLUGIN "pointpainting::PointPaintingNode"
     EXECUTABLE pointpainting_node
   )
- 
+
   if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
