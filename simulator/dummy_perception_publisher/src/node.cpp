@@ -70,7 +70,7 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     pointcloud_creator_ =
       std::unique_ptr<PointCloudCreator>(new ObjectCentricPointCloudCreator(enable_ray_tracing_));
   } else {
-    pointcloud_creator_ = std::unique_ptr<PointCloudCreator>(new VehicleCentricPointCloudCreator());
+    pointcloud_creator_ = std::unique_ptr<PointCloudCreator>(new EgoCentricPointCloudCreator());
   }
 
   // parameters for vehicle centric point cloud generation

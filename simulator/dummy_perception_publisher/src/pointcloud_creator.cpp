@@ -189,8 +189,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ObjectCentricPointCloudCreator:
   return pointclouds;
 }
 
-std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>
-VehicleCentricPointCloudCreator::create_pointclouds(
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::create_pointclouds(
   const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
 {

@@ -83,7 +83,7 @@ private:
   bool enable_ray_tracing_;
 };
 
-class VehicleCentricPointCloudCreator : public PointCloudCreator
+class EgoCentricPointCloudCreator : public PointCloudCreator
 {
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> create_pointclouds(
     const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
