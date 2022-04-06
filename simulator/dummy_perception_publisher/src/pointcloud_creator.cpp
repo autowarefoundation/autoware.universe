@@ -199,7 +199,7 @@ void VehicleCentricPointCloudCreator::create(
   std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
 
   const auto box_sdf = signed_distance_function::BoxSDF(
-    obj_info.length, obj_info.width, (tf_base_link2map * obj_info.tf_map2moved_object).inverse());
+    obj_info.length, obj_info.width, tf_base_link2map * obj_info.tf_map2moved_object);
 
   double angle = 0.0;
   const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
@@ -222,7 +222,7 @@ VehicleCentricPointCloudCreator::create_pointclouds(
   std::vector<std::shared_ptr<signed_distance_function::AbstractSignedDistnaceFunction>> sdf_ptrs;
   for (const auto & obj_info : obj_infos) {
     const auto sdf_ptr = std::make_shared<signed_distance_function::BoxSDF>(
-      obj_info.length, obj_info.width, (tf_base_link2map * obj_info.tf_map2moved_object).inverse());
+      obj_info.length, obj_info.width, tf_base_link2map * obj_info.tf_map2moved_object);
     sdf_ptrs.push_back(sdf_ptr);
   }
   const auto composite_sdf = signed_distance_function::CompisiteSDF(sdf_ptrs);

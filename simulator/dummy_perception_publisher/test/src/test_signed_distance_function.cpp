@@ -49,8 +49,7 @@ TEST(SignedDistanceFunctionTest, BoxSDF)
   {
     // test with rotation (90 deg) and translation
     const auto q = tf2::Quaternion(tf2::Vector3(0, 0, 1.0), M_PI * 0.5);
-    const auto tf_local2global = tf2::Transform(q, tf2::Vector3(1.0, 1.0, 0.0));
-    const auto tf_global2local = tf_local2global.inverse();
+    const auto tf_global2local = tf2::Transform(q, tf2::Vector3(1.0, 1.0, 0.0));
     const auto func = sdf::BoxSDF(1., 2., tf_global2local);
     ASSERT_NEAR(func(1.0, 1.0), -0.5, eps);
     ASSERT_NEAR(func(0.0, 0.0), 0.5, eps);
@@ -63,10 +62,10 @@ TEST(SignedDistanceFunctionTest, CompositeSDF)
 {
   const double eps = 1e-5;
   const auto q_identity = tf2::Quaternion(tf2::Vector3(0, 0, 1.0), 0.0);
-  const auto f1 = std::make_shared<sdf::BoxSDF>(
-    1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 0, 0)).inverse());
-  const auto f2 = std::make_shared<sdf::BoxSDF>(
-    1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 2.0, 0)).inverse());
+  const auto f1 =
+    std::make_shared<sdf::BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 0, 0)));
+  const auto f2 =
+    std::make_shared<sdf::BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 2.0, 0)));
   const auto func =
     sdf::CompisiteSDF(std::vector<std::shared_ptr<sdf::AbstractSignedDistnaceFunction>>{f1, f2});
   ASSERT_NEAR(func(0.0, 0.9), 0.4, eps);

@@ -46,6 +46,8 @@ public:
 private:
   double length_;
   double width_;
+  // tf_global_to_local_ is NOT a transfrom of basis, rather just a coordinate of local w.r.t.
+  // global
   tf2::Transform tf_global_to_local_;
 };
 

@@ -48,7 +48,7 @@ double AbstractSignedDistnaceFunction::getSphereTracingDist(
 double BoxSDF::operator()(double x, double y) const
 {
   const auto vec_gloabl = tf2::Vector3(x, y, 0.0);
-  const auto vec_local = tf_global_to_local_(vec_gloabl);
+  const auto vec_local = tf_global_to_local_.inverse()(vec_gloabl);
 
   // As for signd distance field for a box, please refere:
   // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
