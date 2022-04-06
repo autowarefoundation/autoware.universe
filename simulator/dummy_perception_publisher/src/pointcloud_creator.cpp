@@ -227,12 +227,6 @@ VehicleCentricPointCloudCreator::create_pointclouds(
   }
   const auto composite_sdf = signed_distance_function::CompisiteSDF(sdf_ptrs);
 
-  /*
-  std::normal_distribution<> x_random(0.0, obj_info.std_dev_x);
-  std::normal_distribution<> y_random(0.0, obj_info.std_dev_y);
-  std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
-  */
-
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds;
   for (const auto & obj_info : obj_infos) {
     pointclouds.push_back(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
@@ -249,8 +243,13 @@ VehicleCentricPointCloudCreator::create_pointclouds(
       const auto x_hit = dist * cos(angle);
       const auto y_hit = dist * sin(angle);
       const auto idx_hit = composite_sdf.nearest_sdf_index(x_hit, y_hit);
-      pointclouds.at(idx_hit)->push_back(pcl::PointXYZ(x_hit, y_hit, 0.0));
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("ishida"), "hit");
+
+      std::normal_distribution<> x_random(0.0, obj_infos.at(idx_hit).std_dev_x);
+      std::normal_distribution<> y_random(0.0, obj_infos.at(idx_hit).std_dev_y);
+      std::normal_distribution<> z_random(0.0, obj_infos.at(idx_hit).std_dev_z);
+      pointclouds.at(idx_hit)->push_back(pcl::PointXYZ(
+        x_hit + x_random(random_generator), y_hit + y_random(random_generator),
+        z_random(random_generator)));
     }
   }
 
