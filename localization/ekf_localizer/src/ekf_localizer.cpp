@@ -118,8 +118,7 @@ void EKFLocalizer::updatePredictFrequency()
   if (last_predict_time_) {
     if (get_clock()->now() < *last_predict_time_) {
       RCLCPP_WARN(get_logger(), "Detected jump back in time");
-    }
-    else {
+    } else {
       ekf_rate_ = 1.0 / (get_clock()->now() - *last_predict_time_).seconds();
       DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", ekf_rate_);
       ekf_dt_ = 1.0 / std::max(ekf_rate_, 0.1);
