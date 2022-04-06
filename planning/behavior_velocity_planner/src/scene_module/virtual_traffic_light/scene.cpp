@@ -363,7 +363,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   // else if (command_.type == "eva_beacon_system")
   // {
   //   *stop_reason = planning_utils::initializeStopReason(
-  //   tier4_planning_msgs::msg::StopReason::EVA_BEACON_SYSTEM);
+  //   tier4_planning_msgs::msg::StopReason::V2X_SYSTEM);
   // }
   else
   {
