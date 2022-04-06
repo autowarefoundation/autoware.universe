@@ -53,6 +53,7 @@ public:
     COLLISION_POS_FROM_EGO_FRONT = 4,
     STOP_DISTANCE = 5,
     NUM_OBSTACLES = 6,
+    LATERAL_PASS_DIST = 7,
     SIZE,  // this is the number of enum elements
   };
 

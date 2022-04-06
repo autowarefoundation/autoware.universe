@@ -312,6 +312,16 @@ void DynamicObstacleStopModule::visualizePassingArea(
 
   const auto passing_lines = calcPassingLines(trajectory, passing_dist);
 
+  const size_t passing_dist_idx = std::min(*deceleration_line_idx, passing_lines.at(0).size() - 1);
+  std::stringstream sstream;
+  sstream << std::setprecision(4) << passing_dist.at(passing_dist_idx) << "m";
+  debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
+    sstream.str(), passing_lines.at(0).at(passing_dist_idx)));
+  debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
+    sstream.str(), passing_lines.at(1).at(passing_dist_idx)));
+  debug_ptr_->setDebugValues(
+    DebugValues::TYPE::LATERAL_PASS_DIST, passing_dist.at(passing_dist_idx));
+
   const auto detection_area_polygon =
     createDetectionAreaPolygon(passing_lines, *deceleration_line_idx);
   if (!detection_area_polygon) {
