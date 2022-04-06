@@ -147,10 +147,9 @@ void ObjectCentricPointCloudCreator::create(
   }
 }
 
-void ObjectCentricPointCloudCreator::create_multi(
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ObjectCentricPointCloudCreator::create_pointclouds(
   const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
-  std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
+  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
 {
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds_tmp;
   pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_tmp(new pcl::PointCloud<pcl::PointXYZ>);
@@ -168,9 +167,8 @@ void ObjectCentricPointCloudCreator::create_multi(
   }
 
   if (!enable_ray_tracing_) {
-    pointclouds = pointclouds_tmp;
     merged_pointcloud = merged_pointcloud_tmp;
-    return;
+    return pointclouds_tmp;
   }
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_merged_pointcloud_ptr(
@@ -179,6 +177,7 @@ void ObjectCentricPointCloudCreator::create_multi(
   ray_tracing_filter.setInputCloud(merged_pointcloud_tmp);
   ray_tracing_filter.setLeafSize(0.25, 0.25, 0.25);
   ray_tracing_filter.initializeVoxelGrid();
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds;
   for (size_t i = 0; i < pointclouds_tmp.size(); ++i) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_pointcloud_ptr(
       new pcl::PointCloud<pcl::PointXYZ>);
@@ -200,6 +199,7 @@ void ObjectCentricPointCloudCreator::create_multi(
     pointclouds.push_back(ray_traced_pointcloud_ptr);
   }
   merged_pointcloud = ray_traced_merged_pointcloud_ptr;
+  return pointclouds;
 }
 
 void VehicleCentricPointCloudCreator::create(
@@ -228,11 +228,12 @@ void VehicleCentricPointCloudCreator::create(
   }
 }
 
-void VehicleCentricPointCloudCreator::create_multi(
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>
+VehicleCentricPointCloudCreator::create_pointclouds(
   const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
-  std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
+  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
 {
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds;
   for (const auto & obj_info : obj_infos) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_shared_ptr(new pcl::PointCloud<pcl::PointXYZ>);
     this->create(obj_info, tf_base_link2map, random_generator, pointcloud_shared_ptr);
@@ -244,4 +245,5 @@ void VehicleCentricPointCloudCreator::create_multi(
       merged_pointcloud->push_back(pointclouds.at(i)->at(j));
     }
   }
+  return pointclouds;
 }

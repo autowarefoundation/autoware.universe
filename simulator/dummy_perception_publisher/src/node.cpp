@@ -142,15 +142,14 @@ void DummyPerceptionPublisherNode::timerCallback()
     obj_infos.push_back(obj_info);
   }
 
-  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> v_pointcloud;
   pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pointcloud_creator_->create_multi(
-    obj_infos, tf_base_link2map, random_generator_, v_pointcloud, merged_pointcloud_ptr);
+  const auto pointclouds = pointcloud_creator_->create_pointclouds(
+    obj_infos, tf_base_link2map, random_generator_, merged_pointcloud_ptr);
   pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
 
   std::vector<size_t> delete_idxs;
   for (size_t i = 0; i < selected_indices.size(); ++i) {
-    const auto pointcloud = v_pointcloud[i];
+    const auto pointcloud = pointclouds[i];
     const size_t selected_idx = selected_indices[i];
     const auto & object = objects_.at(selected_idx);
     const auto object_info = ObjectInfo(object, current_time);

@@ -59,9 +59,9 @@ public:
     const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
     std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const = 0;
 
-  virtual void create_multi(
+  virtual std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> create_pointclouds(
     const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
-    std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+    std::mt19937 & random_generator,
     pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const = 0;
 };
 
@@ -77,9 +77,9 @@ public:
     const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
     std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const override;
 
-  void create_multi(
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> create_pointclouds(
     const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
-    std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+    std::mt19937 & random_generator,
     pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const override;
 
   bool enable_ray_tracing_;
@@ -91,9 +91,9 @@ class VehicleCentricPointCloudCreator : public PointCloudCreator
     const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
     std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const override;
 
-  void create_multi(
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> create_pointclouds(
     const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
-    std::mt19937 & random_generator, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> & pointclouds,
+    std::mt19937 & random_generator,
     pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const override;
 };
 
