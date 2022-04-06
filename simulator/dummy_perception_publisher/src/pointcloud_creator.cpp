@@ -147,9 +147,9 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ObjectCentricPointCloudCreator:
     pointclouds_tmp.push_back(pointcloud_shared_ptr);
   }
 
-  for (size_t i = 0; i < pointclouds_tmp.size(); ++i) {
-    for (size_t j = 0; j < pointclouds_tmp.at(i)->size(); ++j) {
-      merged_pointcloud_tmp->push_back(pointclouds_tmp.at(i)->at(j));
+  for (const auto & cloud : pointclouds_tmp) {
+    for (const auto & pt : *cloud) {
+      merged_pointcloud_tmp->push_back(pt);
     }
   }
 
@@ -201,14 +201,14 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
   }
   const auto composite_sdf = signed_distance_function::CompisiteSDF(sdf_ptrs);
 
-  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds;
-  for (const auto & obj_info : obj_infos) {
-    pointclouds.push_back(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds(obj_infos.size());
+  for (size_t i = 0; i < obj_infos.size(); ++i) {
+    pointclouds.at(i) = (pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
   }
 
   const double horizontal_theta_step = 0.25 * M_PI / 180.0;
   double angle = 0.0;
-  const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
+  const auto n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
   for (size_t i = 0; i < n_scan; ++i) {
     angle += horizontal_theta_step;
     const auto dist = composite_sdf.getSphereTracingDist(0.0, 0.0, angle);
@@ -227,9 +227,9 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
     }
   }
 
-  for (size_t i = 0; i < pointclouds.size(); ++i) {
-    for (size_t j = 0; j < pointclouds.at(i)->size(); ++j) {
-      merged_pointcloud->push_back(pointclouds.at(i)->at(j));
+  for (const auto & cloud : pointclouds) {
+    for (const auto & pt : *cloud) {
+      merged_pointcloud->push_back(pt);
     }
   }
   return pointclouds;
