@@ -11,7 +11,7 @@ comment:
   show_carryforward_flags: true
 
 flag_management:
-  default_rules: # the rules that will be followed for any flag added, generally
+  default_rules:
     carryforward: true
     statuses:
       - name_prefix: project-
