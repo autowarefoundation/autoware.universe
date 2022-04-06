@@ -24,26 +24,11 @@
 #include <functional>
 #include <limits>
 
-pcl::PointXYZ getBaseLinkToPoint(
+pcl::PointXYZ getPointWrtBaseLink(
   const tf2::Transform & tf_base_link2moved_object, double x, double y, double z)
 {
-  tf2::Transform tf_moved_object2point;
-  tf2::Transform tf_base_link2point;
-  geometry_msgs::msg::Transform ros_moved_object2point;
-  ros_moved_object2point.translation.x = x;
-  ros_moved_object2point.translation.y = y;
-  ros_moved_object2point.translation.z = z;
-  ros_moved_object2point.rotation.x = 0;
-  ros_moved_object2point.rotation.y = 0;
-  ros_moved_object2point.rotation.z = 0;
-  ros_moved_object2point.rotation.w = 1;
-  tf2::fromMsg(ros_moved_object2point, tf_moved_object2point);
-  tf_base_link2point = tf_base_link2moved_object * tf_moved_object2point;
-  pcl::PointXYZ point;
-  point.x = tf_base_link2point.getOrigin().x();
-  point.y = tf_base_link2point.getOrigin().y();
-  point.z = tf_base_link2point.getOrigin().z();
-  return point;
+  const auto p_wrt_base = tf_base_link2moved_object(tf2::Vector3(x, y, z));
+  return pcl::PointXYZ(p_wrt_base.x(), p_wrt_base.y(), p_wrt_base.z());
 };
 
 void ObjectCentricPointCloudCreator::create(
@@ -73,7 +58,7 @@ void ObjectCentricPointCloudCreator::create(
     for (double x = -1.0 * (obj_info.length / 2.0); x <= ((obj_info.length / 2.0) + epsilon);
          x += step) {
       horizontal_candidate_pointcloud.push_back(
-        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
+        getPointWrtBaseLink(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   {
@@ -81,7 +66,7 @@ void ObjectCentricPointCloudCreator::create(
     for (double x = -1.0 * (obj_info.length / 2.0); x <= ((obj_info.length / 2.0) + epsilon);
          x += step) {
       horizontal_candidate_pointcloud.push_back(
-        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
+        getPointWrtBaseLink(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   {
@@ -89,7 +74,7 @@ void ObjectCentricPointCloudCreator::create(
     for (double y = -1.0 * (obj_info.width / 2.0); y <= ((obj_info.width / 2.0) + epsilon);
          y += step) {
       horizontal_candidate_pointcloud.push_back(
-        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
+        getPointWrtBaseLink(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   {
@@ -97,7 +82,7 @@ void ObjectCentricPointCloudCreator::create(
     for (double y = -1.0 * (obj_info.width / 2.0); y <= ((obj_info.width / 2.0) + epsilon);
          y += step) {
       horizontal_candidate_pointcloud.push_back(
-        getBaseLinkToPoint(tf_base_link2moved_object, x, y, 0.0));
+        getPointWrtBaseLink(tf_base_link2moved_object, x, y, 0.0));
     }
   }
   // 2D ray tracing
