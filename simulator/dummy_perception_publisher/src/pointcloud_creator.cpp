@@ -23,6 +23,7 @@
 
 #include <functional>
 #include <limits>
+#include <memory>
 
 pcl::PointXYZ getPointWrtBaseLink(
   const tf2::Transform & tf_base_link2moved_object, double x, double y, double z)
@@ -218,11 +219,39 @@ VehicleCentricPointCloudCreator::create_pointclouds(
   const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
 {
+  std::vector<std::shared_ptr<signed_distance_function::AbstractSignedDistnaceFunction>> sdf_ptrs;
+  for (const auto & obj_info : obj_infos) {
+    const auto sdf_ptr = std::make_shared<signed_distance_function::BoxSDF>(
+      obj_info.length, obj_info.width, (tf_base_link2map * obj_info.tf_map2moved_object).inverse());
+    sdf_ptrs.push_back(sdf_ptr);
+  }
+  const auto composite_sdf = signed_distance_function::CompisiteSDF(sdf_ptrs);
+
+  /*
+  std::normal_distribution<> x_random(0.0, obj_info.std_dev_x);
+  std::normal_distribution<> y_random(0.0, obj_info.std_dev_y);
+  std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
+  */
+
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds;
   for (const auto & obj_info : obj_infos) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_shared_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    this->create(obj_info, tf_base_link2map, random_generator, pointcloud_shared_ptr);
-    pointclouds.push_back(pointcloud_shared_ptr);
+    pointclouds.push_back(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
+  }
+
+  const double horizontal_theta_step = 0.25 * M_PI / 180.0;
+  double angle = 0.0;
+  const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
+  for (size_t i = 0; i < n_scan; ++i) {
+    angle += horizontal_theta_step;
+    const auto dist = composite_sdf.getSphereTracingDist(0.0, 0.0, angle);
+
+    if (std::isfinite(dist)) {
+      const auto x_hit = dist * cos(angle);
+      const auto y_hit = dist * sin(angle);
+      const auto idx_hit = composite_sdf.nearest_sdf_index(x_hit, y_hit);
+      pointclouds.at(idx_hit)->push_back(pcl::PointXYZ(x_hit, y_hit, 0.0));
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("ishida"), "hit");
+    }
   }
 
   for (size_t i = 0; i < pointclouds.size(); ++i) {
