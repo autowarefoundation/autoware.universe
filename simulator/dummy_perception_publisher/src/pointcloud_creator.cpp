@@ -202,58 +202,6 @@ void ObjectCentricPointCloudCreator::create_multi(
   merged_pointcloud = ray_traced_merged_pointcloud_ptr;
 }
 
-double compute_box_signed_distance(const tf2::Vector3 & p, const ObjectInfo & obj_info)
-{
-  // As for signd distance field for a box, please refere:
-  // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
-  const auto sd_val_x = std::abs(p.getX()) - 0.5 * obj_info.length;
-  const auto sd_val_y = std::abs(p.getY()) - 0.5 * obj_info.width;
-  const auto positive_dist_x = std::max(sd_val_x, 0.0);
-  const auto positive_dist_y = std::max(sd_val_y, 0.0);
-  const auto positive_dist = std::hypot(positive_dist_x, positive_dist_y);
-  const auto negative_dist = std::min(std::max(sd_val_x, sd_val_y), 0.0);
-  return positive_dist + negative_dist;
-}
-
-double compute_boxes_signed_distance(
-  const tf2::Vector3 & p, const std::vector<ObjectInfo> & obj_infos)
-{
-  double min_dist = std::numeric_limits<double>::max();
-  for (const auto & obj_info : obj_infos) {
-    min_dist = std::min(min_dist, compute_box_signed_distance(p, obj_info));
-  }
-  return min_dist;
-}
-
-double compute_dist_by_spheretrace(
-  const tf2::Vector3 & start, const tf2::Vector3 & direction,
-  const std::function<double(const tf2::Vector3 & p)> & sd_func)
-{
-  // As for sphere tracing, please refere:
-  // https://computergraphics.stackexchange.com/questions/161/what-is-ray-marching-is-sphere-tracing-the-same-thing/163
-  const double eps = 1e-3;
-  const size_t max_iter = 20;
-
-  auto tip = start;
-  for (size_t itr = 0; itr < max_iter; ++itr) {
-    const double dist = sd_func(tip);
-    tip = tip + dist * direction;
-    bool almost_on_surface = std::abs(dist) < eps;
-    if (almost_on_surface) {
-      return tf2::tf2Distance(tip, start);
-    }
-  }
-  // ray did not hit the surface.
-  return std::numeric_limits<double>::infinity();
-};
-
-void show_transform(tf2::Transform tf)
-{
-  RCLCPP_INFO_STREAM(
-    rclcpp::get_logger("ishida_origin"), tf.getOrigin().getX() << ", " << tf.getOrigin().getY());
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("ishida"), tf.getRotation().getAngle());
-}
-
 void VehicleCentricPointCloudCreator::create(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const
