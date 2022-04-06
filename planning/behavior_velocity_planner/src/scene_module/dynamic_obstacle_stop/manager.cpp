@@ -191,6 +191,14 @@ rcl_interfaces::msg::SetParametersResult DynamicObstacleStopModuleManager::param
       parameters, ns + "stop_time_thresh", planner_param_.approaching.stop_time_thresh);
     tier4_autoware_utils::updateParam(
       parameters, ns + "dist_thresh", planner_param_.approaching.dist_thresh);
+
+    ns = "dynamic_obstacle_stop.slow_down_limit.";
+    tier4_autoware_utils::updateParam(
+      parameters, ns + "enable", planner_param_.slow_down_limit.enable);
+    tier4_autoware_utils::updateParam(
+      parameters, ns + "max_jerk", planner_param_.slow_down_limit.max_jerk);
+    tier4_autoware_utils::updateParam(
+      parameters, ns + "max_acc", planner_param_.slow_down_limit.max_acc);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
