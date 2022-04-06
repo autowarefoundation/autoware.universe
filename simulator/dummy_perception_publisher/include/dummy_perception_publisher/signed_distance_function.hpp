@@ -18,6 +18,7 @@
 #include <tf2/LinearMath/Transform.h>
 
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -54,6 +55,9 @@ public:
   explicit CompisiteSDF(std::vector<std::shared_ptr<AbstractSignedDistnaceFunction>> sdf_ptrs)
   : sdf_ptrs_(std::move(sdf_ptrs))
   {
+    if (sdf_ptrs_.empty()) {
+      throw std::runtime_error("sdf_ptrs must not be empty");
+    }
   }
   double operator()(double x, double y) const override;
 

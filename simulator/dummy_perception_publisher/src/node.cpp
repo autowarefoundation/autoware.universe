@@ -135,6 +135,10 @@ void DummyPerceptionPublisherNode::timerCallback()
     }
   }
 
+  if (selected_indices.empty()) {
+    return;
+  }
+
   std::vector<ObjectInfo> obj_infos;
   for (const auto selected_idx : selected_indices) {
     const auto obj_info = ObjectInfo(objects_.at(selected_idx), current_time);
