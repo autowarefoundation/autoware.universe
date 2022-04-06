@@ -15,6 +15,7 @@
 #ifndef SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
 #define SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
 
+#include <Eigen/Core>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
@@ -28,6 +29,7 @@
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/segment.hpp>
 
+#include <Eigen/src/Core/util/Constants.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <tf2/utils.h>
@@ -59,6 +61,48 @@ inline segment_t forwardSimulatedVector(
   return segment_t{from, to};
 }
 
+static double a{};
+static double b{};
+static double c{};
+static double d{};
+static double e{};
+static double f{};
+/// @brief calculate the distance to the closest obstacle point colliding with the footprint
+inline std::optional<double> distanceToClosestCollision_Eigen(
+  const segment_t & vector, const double vehicle_width,
+  const pcl::PointCloud<pcl::PointXYZ> & obstacle_points)
+{
+  tier4_autoware_utils::StopWatch watch;
+  watch.tic("a");
+  Eigen::ArrayX2d dist_array(obstacle_points.size(), 2);
+  const auto dist_matrix = obstacle_points.getMatrixXfMap(3, 4, 0).cast<double>();
+  dist_array.col(0) = dist_matrix.row(0).array() - vector.first.x();
+  dist_array.col(1) = dist_matrix.row(1).array() - vector.first.y();
+  a += watch.toc("a");
+  watch.tic("b");
+  auto collision_headings = Eigen::ArrayXd(dist_array.rows());
+  for (auto row_idx = 0; row_idx < dist_array.rows(); ++row_idx)
+    collision_headings(row_idx) = std::atan2(dist_array(row_idx, 1), dist_array(row_idx, 0));
+  b += watch.toc("b");
+  watch.tic("c");
+  const auto traj_heading =
+    std::atan2(vector.second.y() - vector.first.y(), vector.second.x() - vector.first.x());
+  c += watch.toc("c");
+  watch.tic("d");
+  const auto angles = traj_heading - collision_headings;
+  const auto hypot_lengths =
+    (dist_array.col(0).array().square() + dist_array.col(1).array().square()).sqrt();
+  d += watch.toc("d");
+  watch.tic("e");
+  const auto long_dists = angles.cos().abs() * hypot_lengths;
+  const auto lat_dists = (hypot_lengths.square() - long_dists.square()).sqrt();
+  e += watch.toc("e");
+  watch.tic("f");
+  const auto min_dist =
+    (long_dists + bg::length(vector) * (lat_dists > vehicle_width / 2).cast<double>()).minCoeff();
+  f += watch.toc("f");
+  return (min_dist <= bg::length(vector) ? min_dist : std::optional<double>());
+}
 /// @brief calculate the distance to the closest obstacle point colliding with the footprint
 inline std::optional<double> distanceToClosestCollision(
   const segment_t & vector, const double vehicle_width,

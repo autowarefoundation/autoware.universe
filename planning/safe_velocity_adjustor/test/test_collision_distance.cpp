@@ -14,12 +14,14 @@
 
 #include "safe_velocity_adjustor/collision_distance.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
-
-#include <pcl/impl/point_types.hpp>
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <autoware_auto_planning_msgs/msg/detail/trajectory_point__struct.hpp>
 
 #include <gtest/gtest.h>
+#include <pcl/common/generate.h>
+#include <pcl/common/random.h>
+#include <pcl/point_cloud.h>
 
 TEST(TestCollisionDistance, forwardSimulatedVector)
 {
@@ -182,4 +184,58 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
     ASSERT_TRUE(dist.has_value());
     EXPECT_DOUBLE_EQ(*dist, std::sqrt(0.5));
   }
+}
+
+TEST(TestCollisionDistance, distanceToClosestCollisionBench)
+{
+  using pcl::common::CloudGenerator;
+  using pcl::common::UniformGenerator;
+  using safe_velocity_adjustor::distanceToClosestCollision;
+  using safe_velocity_adjustor::distanceToClosestCollision_Eigen;
+  safe_velocity_adjustor::segment_t vector = {
+    safe_velocity_adjustor::point_t{0, 0}, safe_velocity_adjustor::point_t{5, 0}};
+  const auto vehicle_width = 2.0;
+  tier4_autoware_utils::StopWatch watch;
+
+  pcl::PointCloud<pcl::PointXYZ> obstacle_points;
+  constexpr auto size = 10000;
+  constexpr auto min = -5.0;
+  constexpr auto max = 15.0;
+  CloudGenerator<pcl::PointXYZ, UniformGenerator<float> > generator;
+  double gen{};
+  double baseline{};
+  double eigen{};
+  for (auto i = 0; i < 100; ++i) {
+    watch.tic("gen");
+    obstacle_points.clear();
+    UniformGenerator<float>::Parameters x_params(min, max, i);
+    generator.setParametersForX(x_params);
+    UniformGenerator<float>::Parameters y_params(min, max, i);
+    generator.setParametersForY(y_params);
+    UniformGenerator<float>::Parameters z_params(min, max, i);
+    generator.setParametersForZ(z_params);
+    generator.fill(size, 1, obstacle_points);
+    gen += watch.toc("gen");
+    watch.tic("baseline");
+    const auto dist = distanceToClosestCollision(vector, vehicle_width, obstacle_points);
+    baseline += watch.toc("baseline");
+    watch.tic("eigen");
+    const auto dist_eigen =
+      distanceToClosestCollision_Eigen(vector, vehicle_width, obstacle_points);
+    eigen += watch.toc("eigen");
+    if (dist && dist_eigen)
+      EXPECT_EQ(*dist, *dist_eigen);
+    else
+      EXPECT_EQ(dist.has_value(), dist_eigen.has_value());
+  }
+  std::cerr << "Cloud gen: " << gen << std::endl;
+  std::cerr << "Baseline : " << baseline << std::endl;
+  std::cerr << "Eigen: " << eigen << std::endl;
+
+  std::cerr << "\na: " << safe_velocity_adjustor::a << std::endl;
+  std::cerr << "b: " << safe_velocity_adjustor::b << std::endl;
+  std::cerr << "c: " << safe_velocity_adjustor::c << std::endl;
+  std::cerr << "d: " << safe_velocity_adjustor::d << std::endl;
+  std::cerr << "e: " << safe_velocity_adjustor::e << std::endl;
+  std::cerr << "f: " << safe_velocity_adjustor::f << std::endl;
 }
