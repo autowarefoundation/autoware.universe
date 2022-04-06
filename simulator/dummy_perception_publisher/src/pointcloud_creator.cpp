@@ -32,7 +32,7 @@ pcl::PointXYZ getPointWrtBaseLink(
   return pcl::PointXYZ(p_wrt_base.x(), p_wrt_base.y(), p_wrt_base.z());
 };
 
-void ObjectCentricPointCloudCreator::create(
+void ObjectCentricPointCloudCreator::create_object_pointcloud(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const
 {
@@ -142,7 +142,8 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ObjectCentricPointCloudCreator:
 
   for (const auto & obj_info : obj_infos) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_shared_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    this->create(obj_info, tf_base_link2map, random_generator, pointcloud_shared_ptr);
+    this->create_object_pointcloud(
+      obj_info, tf_base_link2map, random_generator, pointcloud_shared_ptr);
     pointclouds_tmp.push_back(pointcloud_shared_ptr);
   }
 
@@ -186,32 +187,6 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ObjectCentricPointCloudCreator:
   }
   merged_pointcloud = ray_traced_merged_pointcloud_ptr;
   return pointclouds;
-}
-
-void VehicleCentricPointCloudCreator::create(
-  const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
-  std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const
-{
-  const double horizontal_theta_step = 0.25 * M_PI / 180.0;
-
-  std::normal_distribution<> x_random(0.0, obj_info.std_dev_x);
-  std::normal_distribution<> y_random(0.0, obj_info.std_dev_y);
-  std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
-
-  const auto box_sdf = signed_distance_function::BoxSDF(
-    obj_info.length, obj_info.width, tf_base_link2map * obj_info.tf_map2moved_object);
-
-  double angle = 0.0;
-  const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
-  for (size_t i = 0; i < n_scan; ++i) {
-    angle += horizontal_theta_step;
-    const auto dist = box_sdf.getSphereTracingDist(0.0, 0.0, angle);
-
-    if (std::isfinite(dist)) {
-      pcl::PointXYZ point(dist * cos(angle), dist * sin(angle), 0.0);
-      pointcloud->push_back(point);
-    }
-  }
 }
 
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>
