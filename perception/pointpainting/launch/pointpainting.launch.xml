@@ -72,7 +72,7 @@
       <param name="head_onnx_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"/>
       <param name="head_engine_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"/>
       <param from="$(var model_param_path)"/>
-      <param name="rois_number" value="$(var input/rois_number)" />
+      <param name="rois_number" value="$(var input/rois_number)"/>
 
       <!-- debug -->
       <!-- <param name="debug_mode" value="$(var debug_mode)"/> -->
