@@ -101,8 +101,8 @@ bool OcclusionSpotModule::modifyPathVelocity(
     predicted_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
     if (!smoothPath(interp_path, predicted_path, planner_data_)) {
-      predicted_path = interp_path;
-      // return true; use max velocity in path if optimization failure
+      predicted_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
+      // use current ego velocity in path if optimization failure
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));

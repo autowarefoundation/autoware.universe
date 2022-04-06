@@ -129,11 +129,11 @@ inline bool smoothPath(
   const std::shared_ptr<const PlannerData> & planner_data)
 {
   using tier4_autoware_utils::findNearestIndex;
-  geometry_msgs::msg::Pose current_pose = planner_data->current_pose.pose;
+  const geometry_msgs::msg::Pose current_pose = planner_data->current_pose.pose;
   const double v0 = planner_data->current_velocity->twist.linear.x;
   const double a0 = planner_data->current_accel.get();
   const auto & external_v_limit = planner_data->external_velocity_limit;
-  auto & smoother = planner_data->velocity_smoother_;
+  const auto & smoother = planner_data->velocity_smoother_;
   const double max = std::numeric_limits<double>::max();
 
   auto trajectory = convertPathToTrajectoryPoints(in_path);
