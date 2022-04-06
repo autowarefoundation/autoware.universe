@@ -30,7 +30,7 @@ class AbstractSignedDistnaceFunction
 public:
   virtual double operator()(double x, double y) const = 0;
   double getSphereTracingDist(
-    double x_start, double y_start, double angle, double eps = 1e-3) const;
+    double x_start, double y_start, double angle, double eps = 1e-2) const;
   virtual ~AbstractSignedDistnaceFunction() {}
 };
 

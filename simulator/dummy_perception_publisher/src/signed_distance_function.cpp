@@ -28,7 +28,7 @@ double AbstractSignedDistnaceFunction::getSphereTracingDist(
   // https://computergraphics.stackexchange.com/questions/161/what-is-ray-marching-is-sphere-tracing-the-same-thing/163
   tf2::Vector3 direction(cos(angle), sin(angle), 0.0);
 
-  const size_t max_iter = 20;
+  const size_t max_iter = 40;
 
   const auto pos_start = tf2::Vector3(x_start, y_start, 0.0);
 
