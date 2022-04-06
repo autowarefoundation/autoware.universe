@@ -13,8 +13,12 @@
 // limitations under the License.
 
 #include "dummy_perception_publisher/node.hpp"
+#include "dummy_perception_publisher/signed_distance_function.hpp"
+
+#include <pcl/impl/point_types.hpp>
 
 #include <pcl/filters/voxel_grid_occlusion_estimation.h>
+#include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
 
 #include <functional>
@@ -243,40 +247,34 @@ double compute_dist_by_spheretrace(
   return std::numeric_limits<double>::infinity();
 };
 
+void show_transform(tf2::Transform tf)
+{
+  RCLCPP_INFO_STREAM(
+    rclcpp::get_logger("ishida_origin"), tf.getOrigin().getX() << ", " << tf.getOrigin().getY());
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("ishida"), tf.getRotation().getAngle());
+}
+
 void VehicleCentricPointCloudCreator::create(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud) const
 {
   const double horizontal_theta_step = 0.25 * M_PI / 180.0;
-  const auto tf_base_link2moved_object = tf_base_link2map * obj_info.tf_map2moved_object;
-  const auto tf_moved_object2base_link = tf_base_link2moved_object.inverse();
-  const tf2::Transform tf_rotonly(tf_moved_object2base_link.getRotation());  // For vector rotation
 
   std::normal_distribution<> x_random(0.0, obj_info.std_dev_x);
   std::normal_distribution<> y_random(0.0, obj_info.std_dev_y);
   std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
 
-  const auto sd_func = [&](const tf2::Vector3 & p) {
-    return compute_box_signed_distance(p, obj_info);
-  };
+  const auto box_sdf = signed_distance_function::BoxSDF(
+    obj_info.length, obj_info.width, (tf_base_link2map * obj_info.tf_map2moved_object).inverse());
 
   double angle = 0.0;
   const size_t n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
   for (size_t i = 0; i < n_scan; ++i) {
     angle += horizontal_theta_step;
+    const auto dist = box_sdf.getSphereTracingDist(0.0, 0.0, angle);
 
-    const tf2::Vector3 dir_wrt_car(cos(angle), sin(angle), 0.0);
-    const tf2::Vector3 dir_wrt_obj = tf_rotonly * dir_wrt_car;
-    const auto start_ray_pos = tf_moved_object2base_link.getOrigin();
-    const tf2::Vector3 pos_noise(
-      -x_random(random_generator), -y_random(random_generator), -z_random(random_generator));
-    const auto start_ray_pos_with_noise = start_ray_pos + pos_noise;
-    const double ray_dist =
-      compute_dist_by_spheretrace(start_ray_pos_with_noise, dir_wrt_obj, sd_func);
-    if (std::isfinite(ray_dist)) {
-      const auto ray_tip = start_ray_pos_with_noise + ray_dist * dir_wrt_obj;
-      const auto point = getBaseLinkToPoint(
-        tf_base_link2moved_object, ray_tip.getX(), ray_tip.getY(), ray_tip.getZ());
+    if (std::isfinite(dist)) {
+      pcl::PointXYZ point(dist * cos(angle), dist * sin(angle), 0.0);
       pointcloud->push_back(point);
     }
   }

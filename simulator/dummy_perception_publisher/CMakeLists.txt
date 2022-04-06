@@ -53,6 +53,10 @@ ament_auto_add_executable(dummy_perception_publisher_node
   src/pointcloud_creator.cpp
 )
 
+target_link_libraries(dummy_perception_publisher_node
+  signed_distance_function
+)
+
 ament_target_dependencies(dummy_perception_publisher_node ${${PROJECT_NAME}_DEPENDENCIES})
 
 target_include_directories(dummy_perception_publisher_node
