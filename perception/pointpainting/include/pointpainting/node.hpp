@@ -48,25 +48,25 @@
 namespace pointpainting
 {
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-class Debugger
-{
-public:
-  explicit Debugger(rclcpp::Node * node, const int camera_num);
-  ~Debugger() = default;
-  rclcpp::Node * node_;
-  void showImage(
-    const int id, const rclcpp::Time & time,
-    const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
-    // const std::vector<sensor_msgs::msg::RegionOfInterest> & pointcloud_rois,
-    const std::vector<Eigen::Vector2d> & points);
+// class Debugger
+// {
+// public:
+//   explicit Debugger(rclcpp::Node * node, const int camera_num);
+//   ~Debugger() = default;
+//   rclcpp::Node * node_;
+//   void showImage(
+//     const int id, const rclcpp::Time & time,
+//     const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
+//     // const std::vector<sensor_msgs::msg::RegionOfInterest> & pointcloud_rois,
+//     const std::vector<Eigen::Vector2d> & points);
 
-private:
-  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int id);
-  std::shared_ptr<image_transport::ImageTransport> image_transport_;
-  std::vector<image_transport::Subscriber> image_subs_;
-  std::vector<image_transport::Publisher> image_pubs_;
-  std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
-};
+// private:
+//   void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int
+//   id); std::shared_ptr<image_transport::ImageTransport> image_transport_;
+//   std::vector<image_transport::Subscriber> image_subs_;
+//   std::vector<image_transport::Publisher> image_pubs_;
+//   std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
+// };
 
 class PointPaintingNode : public rclcpp::Node
 {
@@ -118,6 +118,9 @@ private:
     auto dummy = input;
     passthrough_.add(dummy);
   }
+
+  void box3DToDetectedObject(
+    const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj);
   static uint8_t getSemanticType(const std::string & class_name);
   static bool isCarLikeVehicleLabel(const uint8_t label);
 
@@ -126,16 +129,12 @@ private:
   // std::shared_ptr<Debugger> debugger_;
 
   float score_threshold_{0.0};
-  bool use_encoder_trt_{false};
-  bool use_head_trt_{false};
   std::string trt_precision_;
 
   std::string encoder_onnx_path_;
   std::string encoder_engine_path_;
-  std::string encoder_pt_path_;
   std::string head_onnx_path_;
   std::string head_engine_path_;
-  std::string head_pt_path_;
 
   std::vector<std::string> class_names_;
   bool rename_car_to_truck_and_bus_{false};

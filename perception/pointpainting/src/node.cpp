@@ -23,8 +23,8 @@
 #include <pointcloud_densification.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/constants.hpp>
 
-#include <c10/cuda/CUDAStream.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/msg/point_cloud2.h>
@@ -33,7 +33,6 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
-#include <torch/script.h>
 
 #include <algorithm>
 #include <chrono>
@@ -127,14 +126,6 @@ PointPaintingNode::PointPaintingNode(const rclcpp::NodeOptions & node_options)
 : Node("pointpainting", node_options),
   tf_buffer_(this->get_clock())  //, tf_listener_ptr_(tf_buffer_)
 {
-  // c10::Device device_ = torch::kCUDA;
-  // torch::jit::script::Module encoder_pt_;
-  // std::cout << "torch::jit::script::Module" << std::endl;
-  // encoder_pt_ = torch::jit::load(
-  //   "/home/tzhong/workspace/autoware.proj/src/autoware/universe/perception/pointpainting/data/"
-  //   "pts_voxel_encoder_default.pt",
-  //   device_);
-
   pointcloud_sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
 
   int rois_number = declare_parameter("rois_number", 1);
@@ -208,43 +199,25 @@ PointPaintingNode::PointPaintingNode(const rclcpp::NodeOptions & node_options)
       return;
   }
 
-  score_threshold_ = this->declare_parameter("score_threshold", 0.4);
+  score_threshold_ = this->declare_parameter("score_threshold", 0.8);
   std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
-  int densification_num_past_frames = this->declare_parameter("densification_num_past_frames", 1);
-  use_encoder_trt_ = this->declare_parameter("use_encoder_trt", false);
-  use_head_trt_ = this->declare_parameter("use_head_trt", true);
+  int densification_num_past_frames = this->declare_parameter("densification_num_past_frames", 0);
   trt_precision_ = this->declare_parameter("trt_precision", "fp16");
   encoder_onnx_path_ = this->declare_parameter("encoder_onnx_path", "");
   encoder_engine_path_ = this->declare_parameter("encoder_engine_path", "");
-  encoder_pt_path_ = this->declare_parameter("encoder_pt_path", "");
   head_onnx_path_ = this->declare_parameter("head_onnx_path", "");
   head_engine_path_ = this->declare_parameter("head_engine_path", "");
-  head_pt_path_ = this->declare_parameter("head_pt_path", "");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
 
-  NetworkParam encoder_param(
-    encoder_onnx_path_, encoder_engine_path_, encoder_pt_path_, trt_precision_, use_encoder_trt_);
-  NetworkParam head_param(
-    head_onnx_path_, head_engine_path_, head_pt_path_, trt_precision_, use_head_trt_);
+  NetworkParam encoder_param(encoder_onnx_path_, encoder_engine_path_, trt_precision_);
+  NetworkParam head_param(head_onnx_path_, head_engine_path_, trt_precision_);
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
-  // std::cout << encoder_param.onnx_path() << encoder_onnx_path_ << std::endl;
-  //, encoder_param.engine_path(), encoder_param.pt_path(),
-  // ncoder_param.trt_precision() << std::endl;
-  // torch::Tensor tensor = torch::ones(5);
-  // std::cout << tensor << std::endl;
-  // c10::Device device_ = torch::kCUDA;
-  // torch::jit::script::Module encoder_pt_;
-  // std::cout << "torch::jit::script::Module" << std::endl;
-  // encoder_pt_ = torch::jit::load(
-  //   "/home/tzhong/workspace/autoware.proj/src/autoware/universe/perception/pointpainting/data/"
-  //   "pts_voxel_encoder_default.pt",
-  //   device_);
-  // std::cout << "torch load problem" << std::endl;
+  std::cout << encoder_param.onnx_path() << encoder_onnx_path_ << std::endl;
   detector_ptr_ = std::make_unique<CenterPointTRT>(
-    static_cast<int>(class_names_.size()), encoder_param, head_param, densification_param);
+    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param);
 
   sync_ptr_->registerCallback(std::bind(
     &PointPaintingNode::fusionCallback, this, std::placeholders::_1, std::placeholders::_2,
@@ -253,7 +226,7 @@ PointPaintingNode::PointPaintingNode(const rclcpp::NodeOptions & node_options)
   objects_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
   painted_pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/debug/pointcloud_painted", rclcpp::QoS{1});  // rclcpp::SensorDataQoS{}.keep_last(1));
+    "~/debug/pointcloud_painted", rclcpp::QoS{1});
 
   // const bool debug_mode = declare_parameter("debug_mode", true);
   // if (debug_mode) {
@@ -314,9 +287,7 @@ void PointPaintingNode::fusionCallback(
        iter_y(*input_pointcloud_msg, "y"), iter_z(*input_pointcloud_msg, "z");
        iter_x != iter_x.end();
        ++iter_x, ++iter_y, ++iter_z, ++iter_painted_x, ++iter_painted_y, ++iter_painted_z) {
-    if (
-      *iter_z <= 0.0 || *iter_x <= -76.8 || *iter_x >= 76.8 || *iter_y <= -76.8 ||
-      *iter_y >= 76.8) {  //|| *iter_z >= 6) {
+    if (*iter_x <= -76.8 || *iter_x >= 76.8 || *iter_y <= -76.8 || *iter_y >= 76.8) {
       cnt_range_filtered++;
       continue;
     } else {
@@ -336,8 +307,8 @@ void PointPaintingNode::fusionCallback(
   // iterate rois
   for (int id = 0; id < static_cast<int>(v_roi_sub_.size()); ++id) {
     // debug variable
-    std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
-    std::vector<Eigen::Vector2d> debug_image_points;
+    // std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
+    // std::vector<Eigen::Vector2d> debug_image_points;
     // check camera info
     if (m_camera_info_.find(id) == m_camera_info_.end()) {
       RCLCPP_WARN(this->get_logger(), "no camera info. id is %d", id);
@@ -420,7 +391,6 @@ void PointPaintingNode::fusionCallback(
             autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
           switch (input_roi_msg->feature_objects.at(i).object.classification.front().label) {
             case autoware_auto_perception_msgs::msg::ObjectClassification::CAR:
-              // *iter_painted_intensity = 1.0;
               *iter_car = 1.0;
               break;
             case autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN:
@@ -430,8 +400,8 @@ void PointPaintingNode::fusionCallback(
               *iter_bic = 1.0;
               break;
           }
-          debug_image_points.push_back(normalized_projected_point);
-          debug_image_rois.push_back(input_roi_msg->feature_objects.at(i).feature.roi);
+          // debug_image_points.push_back(normalized_projected_point);
+          // debug_image_rois.push_back(input_roi_msg->feature_objects.at(i).feature.roi);
         }
       }
     }
@@ -441,71 +411,84 @@ void PointPaintingNode::fusionCallback(
     // }
   }
   if (pointcloud_sub_count > 0) {
-    painted_pointcloud_pub_->publish(painted_pointcloud_msg);  // painted_pointcloud_msg);
+    painted_pointcloud_pub_->publish(painted_pointcloud_msg);
   }
-  // // run centerpoint
-  std::vector<float> boxes3d_vec = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_);
+
+  // run centerpoint
+  std::vector<Box3D> det_boxes3d;
+  bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
+  if (!is_success) {
+    return;
+  }
 
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_pointcloud_msg->header;
-  for (size_t obj_i = 0; obj_i < boxes3d_vec.size() / Config::num_box_features; obj_i++) {
-    float score = boxes3d_vec[obj_i * Config::num_box_features + 0];
-    if (score < score_threshold_) {
+  for (const auto & box3d : det_boxes3d) {
+    if (box3d.score < score_threshold_) {
       continue;
     }
-
-    int class_id = static_cast<int>(boxes3d_vec[obj_i * Config::num_box_features + 1]);
-    float x = boxes3d_vec[obj_i * Config::num_box_features + 2];
-    float y = boxes3d_vec[obj_i * Config::num_box_features + 3];
-    float z = boxes3d_vec[obj_i * Config::num_box_features + 4];
-    float w = boxes3d_vec[obj_i * Config::num_box_features + 5];
-    float l = boxes3d_vec[obj_i * Config::num_box_features + 6];
-    float h = boxes3d_vec[obj_i * Config::num_box_features + 7];
-    float yaw = boxes3d_vec[obj_i * Config::num_box_features + 8];
-    float vel_x = boxes3d_vec[obj_i * Config::num_box_features + 9];
-    float vel_y = boxes3d_vec[obj_i * Config::num_box_features + 10];
-
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    // TODO(yukke42): the value of classification confidence of DNN, not probability.
-    obj.existence_probability = score;
-    autoware_auto_perception_msgs::msg::ObjectClassification classification;
-    classification.probability = 1.0f;
-    classification.label = getSemanticType(class_names_[class_id]);
-
-    if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
-      // Note: object size is referred from multi_object_tracker
-      if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-        classification.label = Label::TRUCK;
-      } else if (w * l > 2.5 * 7.9) {
-        classification.label = Label::BUS;
-      }
-    }
-
-    if (isCarLikeVehicleLabel(classification.label)) {
-      obj.kinematics.orientation_availability =
-        autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
-    }
-
-    obj.classification.emplace_back(classification);
-
-    obj.kinematics.pose_with_covariance.pose.position = tier4_autoware_utils::createPoint(x, y, z);
-    obj.kinematics.pose_with_covariance.pose.orientation =
-      tier4_autoware_utils::createQuaternionFromYaw(yaw);
-    obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-    obj.shape.dimensions = tier4_autoware_utils::createTranslation(l, w, h);
-
-    geometry_msgs::msg::Twist twist;
-    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
-    obj.kinematics.twist_with_covariance.twist = twist;
-    obj.kinematics.has_twist = true;
-
+    box3DToDetectedObject(box3d, obj);
     output_msg.objects.emplace_back(obj);
   }
 
   if (objects_sub_count > 0) {
     objects_pub_->publish(output_msg);
   }
+}
+
+void PointPaintingNode::box3DToDetectedObject(
+  const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj)
+{
+  // TODO(yukke42): the value of classification confidence of DNN, not probability.
+  obj.existence_probability = box3d.score;
+
+  // classification
+  autoware_auto_perception_msgs::msg::ObjectClassification classification;
+  classification.probability = 1.0f;
+  if (box3d.label >= 0 && static_cast<size_t>(box3d.label) < class_names_.size()) {
+    classification.label = getSemanticType(class_names_[box3d.label]);
+  } else {
+    classification.label = Label::UNKNOWN;
+  }
+
+  float l = box3d.length;
+  float w = box3d.width;
+  if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
+    // Note: object size is referred from multi_object_tracker
+    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
+      classification.label = Label::TRUCK;
+    } else if (w * l > 2.5 * 7.9) {
+      classification.label = Label::BUS;
+    }
+  }
+
+  if (isCarLikeVehicleLabel(classification.label)) {
+    obj.kinematics.orientation_availability =
+      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
+  }
+
+  obj.classification.emplace_back(classification);
+
+  // pose and shape
+  // mmdet3d yaw format to ros yaw format
+  float yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
+  obj.kinematics.pose_with_covariance.pose.position =
+    tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
+  obj.kinematics.pose_with_covariance.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  obj.shape.dimensions =
+    tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
+
+  // twist
+  float vel_x = box3d.vel_x;
+  float vel_y = box3d.vel_y;
+  geometry_msgs::msg::Twist twist;
+  twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
+  twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+  obj.kinematics.twist_with_covariance.twist = twist;
+  obj.kinematics.has_twist = true;
 }
 
 uint8_t PointPaintingNode::getSemanticType(const std::string & class_name)
