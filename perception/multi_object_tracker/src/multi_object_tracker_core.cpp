@@ -266,7 +266,6 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
   const rclcpp::Time & time) const
 {
   if (use_pass_through_tracker_) {
-    std::cerr << "use pass through tracker" << std::endl;
     return std::make_shared<PassThroughTracker>(time, object);
   }
 
