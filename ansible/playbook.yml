@@ -4,7 +4,7 @@
   become: no
   vars_prompt:
     - name: yn_gpu
-      prompt: "Would you like to install the optional GPU modules (cuda: 11.1, cudnn: 8.0.5, TensorRT: 7.2.1)? (y/n)"
+      prompt: "Would you like to install the optional GPU modules (cuda: 11.4, cudnn: 8.2.4, TensorRT: 8.2.4)? (y/n)"
       default: "y"
       private: no
   pre_tasks:
