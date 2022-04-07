@@ -33,7 +33,7 @@
       approaching:
         enable: true
         margin: 0.0 # distance on how close ego approaches the obstacle [m]
-        limit_vel_kmph: 5.0 # limit velocity for approaching after stopping [km/h]
+        limit_vel_kmph: 3.0 # limit velocity for approaching after stopping [km/h]
         stop_thresh: 0.01 # threshold to decide if ego is stopping [m/s]
         stop_time_thresh: 3.0 # threshold for stopping time to transit to approaching state [sec]
         dist_thresh: 0.5 # end the approaching state if distance to the obstacle is longer than stop_margin + dist_thresh [m]
