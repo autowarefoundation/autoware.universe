@@ -57,7 +57,6 @@ TrafficLightPublishPanel::TrafficLightPublishPanel(QWidget * parent) : rviz_comm
 
   // Publish Traffic Signals Button
   publish_button_ = new QPushButton("PUBLISH");
-  publish_button_->setCheckable(true);
 
   auto vertical_header = new QHeaderView(Qt::Vertical);
   vertical_header->hide();
@@ -73,6 +72,7 @@ TrafficLightPublishPanel::TrafficLightPublishPanel(QWidget * parent) : rviz_comm
   connect(publishing_rate_input_, SIGNAL(valueChanged(int)), this, SLOT(onRateChanged(int)));
   connect(set_button_, SIGNAL(clicked()), SLOT(onSetTrafficLightState()));
   connect(reset_button_, SIGNAL(clicked()), SLOT(onResetTrafficLightState()));
+  connect(publish_button_, SIGNAL(clicked()), SLOT(onPublishTrafficLightState()));
 
   auto * h_layout_1 = new QHBoxLayout;
   h_layout_1->addWidget(new QLabel("Rate: "));
@@ -149,6 +149,18 @@ void TrafficLightPublishPanel::onSetTrafficLightState()
 void TrafficLightPublishPanel::onResetTrafficLightState()
 {
   extra_traffic_signals_.signals.clear();
+  enable_publish_ = false;
+
+  publish_button_->setText("PUBLISH");
+  publish_button_->setStyleSheet("background-color: #FFFFFF");
+}
+
+void TrafficLightPublishPanel::onPublishTrafficLightState()
+{
+  enable_publish_ = true;
+
+  publish_button_->setText("PUBLISHING...");
+  publish_button_->setStyleSheet("background-color: #FFBF00");
 }
 
 void TrafficLightPublishPanel::onInitialize()
@@ -159,6 +171,8 @@ void TrafficLightPublishPanel::onInitialize()
     "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS(1));
 
   createWallTimer();
+
+  enable_publish_ = false;
 }
 
 void TrafficLightPublishPanel::onRateChanged(int new_rate)
@@ -178,6 +192,11 @@ void TrafficLightPublishPanel::createWallTimer()
 
 void TrafficLightPublishPanel::onTimer()
 {
+  if (enable_publish_) {
+    extra_traffic_signals_.header.stamp = rclcpp::Clock().now();
+    pub_traffic_signals_->publish(extra_traffic_signals_);
+  }
+
   traffic_table_->setRowCount(extra_traffic_signals_.signals.size());
 
   if (extra_traffic_signals_.signals.empty()) {
@@ -254,13 +273,6 @@ void TrafficLightPublishPanel::onTimer()
     traffic_table_->setCellWidget(i, 0, id_label);
     traffic_table_->setCellWidget(i, 1, color_label);
   }
-
-  if (!publish_button_->isChecked()) {
-    return;
-  }
-
-  extra_traffic_signals_.header.stamp = rclcpp::Clock().now();
-  pub_traffic_signals_->publish(extra_traffic_signals_);
 }
 
 }  // namespace rviz_plugins

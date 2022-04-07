@@ -48,6 +48,7 @@ public Q_SLOTS:
   void onRateChanged(int new_rate);
   void onSetTrafficLightState();
   void onResetTrafficLightState();
+  void onPublishTrafficLightState();
 
 protected:
   void onTimer();
@@ -66,6 +67,8 @@ protected:
   QTableWidget * traffic_table_;
 
   TrafficSignalArray extra_traffic_signals_;
+
+  bool enable_publish_;
 };
 
 }  // namespace rviz_plugins
