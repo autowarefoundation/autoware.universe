@@ -25,10 +25,10 @@
     repo: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /
     state: present
 
-- name: CUDA (install CUDA 11.1)
+- name: CUDA (install CUDA 11.4)
   become: yes
   apt:
-    name: cuda-11-1 # nvidia-driver should be greater than 455
+    name: cuda-11-4 # nvidia-driver should be greater than 455
     update_cache: yes
 
 - name: CUDA (add path >> bashrc)
