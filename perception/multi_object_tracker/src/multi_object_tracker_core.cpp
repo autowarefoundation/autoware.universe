@@ -175,6 +175,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
   bool enable_delay_compensation{declare_parameter("enable_delay_compensation", false)};
+  use_pass_through_tracker_ = declare_parameter("use_pass_through_tracker", false);
 
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -264,6 +265,11 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const rclcpp::Time & time) const
 {
+  if (use_pass_through_tracker_) {
+    std::cerr << "use pass through tracker" << std::endl;
+    return std::make_shared<PassThroughTracker>(time, object);
+  }
+
   const std::uint8_t label = utils::getHighestProbLabel(object.classification);
   if (label == Label::CAR || label == Label::TRUCK || label == Label::BUS) {
     return std::make_shared<MultipleVehicleTracker>(time, object);
