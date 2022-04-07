@@ -71,7 +71,8 @@ __global__ void generateFeatures_kernel(
   }
 
   for (std::size_t i = 0; i < POINT_FEATURE_SIZE; ++i) {
-    pillarSM[pillar_idx_inBlock][point_idx][i] = voxel_features[POINT_FEATURE_SIZE * pillar_idx * WARP_SIZE + POINT_FEATURE_SIZE * point_idx + i];
+    pillarSM[pillar_idx_inBlock][point_idx][i] = voxel_features
+      [POINT_FEATURE_SIZE * pillar_idx * WARP_SIZE + POINT_FEATURE_SIZE * point_idx + i];
   }
   __syncthreads();
 
@@ -80,7 +81,6 @@ __global__ void generateFeatures_kernel(
     atomicAdd(&(pillarSumSM[pillar_idx_inBlock].x), pillarSM[pillar_idx_inBlock][point_idx][0]);
     atomicAdd(&(pillarSumSM[pillar_idx_inBlock].y), pillarSM[pillar_idx_inBlock][point_idx][1]);
     atomicAdd(&(pillarSumSM[pillar_idx_inBlock].z), pillarSM[pillar_idx_inBlock][point_idx][2]);
-
   }
   __syncthreads();
 
