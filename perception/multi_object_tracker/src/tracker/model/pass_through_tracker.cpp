@@ -31,30 +31,42 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 PassThroughTracker::PassThroughTracker(
-	const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PassThroughTracker")),
   last_update_time_(time)
 {
   object_ = object;
+  prev_observed_object_ = object;
 }
 
 bool PassThroughTracker::predict(const rclcpp::Time & time)
 {
-  last_update_time_ = time;
+  if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
+    RCLCPP_WARN(
+      logger_, "There is a large gap between predicted time and measurement time. (%f)",
+      (time - last_update_time_).seconds());
+  }
+
   return true;
 }
 
 bool PassThroughTracker::measure(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
 {
+  prev_observed_object_ = object_;
   object_ = object;
 
-  if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
-    RCLCPP_WARN(
-      logger_, "There is a large gap between predicted time and measurement time. (%f)",
-      (time - last_update_time_).seconds());
+  // Update Velocity if the observed object does not have twist information
+  const double dt = (time - last_update_time_).seconds();
+  if (!object_.kinematics.has_twist && dt > 1e-6) {
+    const double dx = object_.kinematics.pose_with_covariance.pose.position.x -
+                      prev_observed_object_.kinematics.pose_with_covariance.pose.position.x;
+    const double dy = object_.kinematics.pose_with_covariance.pose.position.y -
+                      prev_observed_object_.kinematics.pose_with_covariance.pose.position.y;
+    object_.kinematics.twist_with_covariance.twist.linear.x = std::hypot(dx, dy) / dt;
   }
+  last_update_time_ = time;
 
   return true;
 }
@@ -65,7 +77,7 @@ bool PassThroughTracker::getTrackedObject(
   object = utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
-	object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;
   object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y] = 0.0;
   object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X] = 0.0;
   object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = 0.0;

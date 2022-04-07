@@ -265,7 +265,8 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const rclcpp::Time & time) const
 {
-  if(use_pass_through_tracker_) {
+  if (use_pass_through_tracker_) {
+    std::cerr << "use pass through tracker" << std::endl;
     return std::make_shared<PassThroughTracker>(time, object);
   }
 

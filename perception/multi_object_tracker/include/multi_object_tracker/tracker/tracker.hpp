@@ -23,10 +23,10 @@
 #include "model/big_vehicle_tracker.hpp"
 #include "model/multiple_vehicle_tracker.hpp"
 #include "model/normal_vehicle_tracker.hpp"
+#include "model/pass_through_tracker.hpp"
 #include "model/pedestrian_and_bicycle_tracker.hpp"
 #include "model/pedestrian_tracker.hpp"
 #include "model/tracker_base.hpp"
 #include "model/unknown_tracker.hpp"
-#include "model/pass_through_tracker.hpp"
 
 #endif  // MULTI_OBJECT_TRACKER__TRACKER__TRACKER_HPP_
