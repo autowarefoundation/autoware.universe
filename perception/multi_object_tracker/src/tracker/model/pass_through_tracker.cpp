@@ -42,7 +42,7 @@ PassThroughTracker::PassThroughTracker(
 
 bool PassThroughTracker::predict(const rclcpp::Time & time)
 {
-  if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
+  if (0.5 /*500msec*/ < std::fabs((time - last_update_time_).seconds())) {
     RCLCPP_WARN(
       logger_, "There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
@@ -95,7 +95,7 @@ bool PassThroughTracker::getTrackedObject(
   object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = 0.0;
 
   const double dt = (time - last_update_time_).seconds();
-  if (0.01 /*10msec*/ < dt) {
+  if (0.5 /*500msec*/ < dt) {
     RCLCPP_WARN(
       logger_, "There is a large gap between last updated time and current time. (%f)",
       (time - last_update_time_).seconds());
