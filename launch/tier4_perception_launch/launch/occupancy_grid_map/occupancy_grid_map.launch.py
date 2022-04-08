@@ -76,8 +76,8 @@ def generate_launch_description():
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         ),
         ComposableNode(
-            package="laserscan_to_occupancy_grid_map",
-            plugin="occupancy_grid_map::OccupancyGridMapNode",
+            package="probabilistic_occupancy_grid_map",
+            plugin="occupancy_grid_map::LaserscanBasedOccupancyGridMapNode",
             name="occupancy_grid_map_node",
             remappings=[
                 ("~/input/laserscan", LaunchConfiguration("output/laserscan")),
