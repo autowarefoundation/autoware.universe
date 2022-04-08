@@ -282,28 +282,20 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
   const auto tracker = tracker_map_.at(label);
 
   if (tracker == "bicycle_tracker") {
-    std::cerr << "bicycle tracker" << std::endl;
     return std::make_shared<BicycleTracker>(time, object);
   } else if (tracker == "big_vehicle_tracker") {
-    std::cerr << "big vehicle tracker" << std::endl;
     return std::make_shared<BigVehicleTracker>(time, object);
   } else if (tracker == "multi_vehicle_tracker") {
-    std::cerr << "multi vehicle tracker" << std::endl;
     return std::make_shared<MultipleVehicleTracker>(time, object);
   } else if (tracker == "normal_vehicle_tracker") {
-    std::cerr << "normal vehicle" << std::endl;
     return std::make_shared<NormalVehicleTracker>(time, object);
   } else if (tracker == "pass_through_tracker") {
-    std::cerr << "pass through" << std::endl;
     return std::make_shared<PassThroughTracker>(time, object);
   } else if (tracker == "pedestrian_and_bicycle_tracker") {
-    std::cerr << "pedestrian and bicycle" << std::endl;
     return std::make_shared<PedestrianAndBicycleTracker>(time, object);
   } else if (tracker == "pedestrian_tracker") {
-    std::cerr << "pedestrian tracker" << std::endl;
     return std::make_shared<PedestrianTracker>(time, object);
   } else {
-    std::cerr << "unknown" << std::endl;
     return std::make_shared<UnknownTracker>(time, object);
   }
 }
