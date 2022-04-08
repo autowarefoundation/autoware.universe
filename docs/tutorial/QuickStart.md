@@ -54,7 +54,7 @@
 
 5. Engage the ego vehicle.
 
-   - a) Open the [autoware_web_controller](http://localhost:8085/autoware_web_controller/) in a browser.
+   - a) Open the [web_controller](http://localhost:8085/web_controller/) in a browser.
    - b) Click the `Engage` button.
 
 ### Note

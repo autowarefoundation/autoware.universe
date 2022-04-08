@@ -88,7 +88,7 @@ Autoware provides two types of simulation:
 
 5. Engage the ego vehicle.
 
-   - a) Open the [autoware_web_controller](http://localhost:8085/autoware_web_controller/) in a browser.
+   - a) Open the [web_controller](http://localhost:8085/web_controller/) in a browser.
    - b) Click the `Engage` button.
 
    ![engage](https://user-images.githubusercontent.com/10920881/79714298-4db7ee00-830b-11ea-9ac4-11e126d7a7c4.png)
