@@ -33,15 +33,15 @@ template <class Msg>
 FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  rois_number_ = declare_parameter("rois_number", 1);
+  rois_number_ = static_cast<std::size_t>(declare_parameter("rois_number", 1));
   if (rois_number_ < 1) {
     RCLCPP_WARN(
-      this->get_logger(), "minimum rois_number is 1. current rois_number is %d", rois_number_);
+      this->get_logger(), "minimum rois_number is 1. current rois_number is %zu", rois_number_);
     rois_number_ = 1;
   }
   if (rois_number_ > 8) {
     RCLCPP_WARN(
-      this->get_logger(), "maximum rois_number is 8. current rois_number is %d", rois_number_);
+      this->get_logger(), "maximum rois_number is 8. current rois_number is %zu", rois_number_);
     rois_number_ = 8;
   }
 
@@ -49,7 +49,7 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
   sub_.subscribe(this, "input", rclcpp::QoS(1).get_rmw_qos_profile());
 
   camera_info_subs_.resize(rois_number_);
-  for (int roi_i = 0; roi_i < rois_number_; roi_i++) {
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     std::function<void(const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg)> fnc =
       std::bind(&FusionNode::cameraInfoCallback, this, std::placeholders::_1, roi_i);
     camera_info_subs_.at(roi_i) = this->create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -57,7 +57,7 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
   }
 
   rois_subs_.resize(rois_number_);
-  for (int roi_i = 0; roi_i < rois_number_; roi_i++) {
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     rois_subs_.at(roi_i) =
       std::make_shared<message_filters::Subscriber<DetectedObjectsWithFeature>>(
         this, "input/rois" + std::to_string(roi_i), rclcpp::QoS{1}.get_rmw_qos_profile());
@@ -127,7 +127,8 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
 
 template <class Msg>
 void FusionNode<Msg>::cameraInfoCallback(
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int camera_id)
+  const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
+  const std::size_t camera_id)
 {
   camera_info_map_[camera_id] = *input_camera_info_msg;
 }
@@ -157,7 +158,7 @@ void FusionNode<Msg>::fusionCallback(
 
   preprocess(output_msg);
 
-  for (std::size_t image_id = 0; image_id < rois_subs_.size(); image_id++) {
+  for (std::size_t image_id = 0; image_id < rois_subs_.size(); ++image_id) {
     DetectedObjectsWithFeature::ConstSharedPtr input_roi_msg;
     switch (image_id) {
       case 0:

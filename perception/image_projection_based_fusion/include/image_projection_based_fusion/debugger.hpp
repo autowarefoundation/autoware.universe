@@ -38,9 +38,9 @@ using sensor_msgs::msg::RegionOfInterest;
 class Debugger
 {
 public:
-  explicit Debugger(rclcpp::Node * node_ptr, const int image_num);
+  explicit Debugger(rclcpp::Node * node_ptr, const std::size_t image_num);
 
-  void publishImage(const int image_id, const rclcpp::Time & stamp);
+  void publishImage(const std::size_t image_id, const rclcpp::Time & stamp);
 
   void clear();
 
@@ -50,7 +50,7 @@ public:
 
 private:
   void imageCallback(
-    const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const int image_id);
+    const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const std::size_t image_id);
 
   rclcpp::Node * node_ptr_;
   std::shared_ptr<image_transport::ImageTransport> image_transport_;

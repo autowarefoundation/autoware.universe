@@ -30,7 +30,7 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
-  const DetectedObjects & input_object_msg, const int image_id,
+  const DetectedObjects & input_object_msg, const std::size_t image_id,
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg)
 {
@@ -61,7 +61,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
 
   if (debugger_) {
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
-    for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); roi_i++) {
+    for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); ++roi_i) {
       debugger_->image_rois_.push_back(input_roi_msg.feature_objects.at(roi_i).feature.roi);
     }
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
@@ -74,7 +74,7 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
   const Eigen::Matrix4d & camera_projection,
   std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
 {
-  for (std::size_t obj_i = 0; obj_i < input_objects.size(); obj_i++) {
+  for (std::size_t obj_i = 0; obj_i < input_objects.size(); ++obj_i) {
     std::vector<Eigen::Vector3d> vertices_camera_coord;
     {
       const auto & object = input_objects.at(obj_i);
@@ -142,21 +142,20 @@ void RoiDetectedObjectFusionNode::updateDetectedObjectClassification(
   const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
   std::vector<DetectedObject> & output_objects)
 {
-  for (std::size_t roi_i = 0; roi_i < image_rois.size(); roi_i++) {
-    const auto & roi = image_rois.at(roi_i).feature.roi;
+  for (const auto & image_roi : image_rois) {
     std::size_t object_i = 0;
     double max_iou = 0.0;
     for (auto object_itr = object_roi_map.begin(); object_itr != object_roi_map.end();
-         object_itr++) {
+         ++object_itr) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       if (use_iou_) {
-        iou = calcIoU(object_itr->second, roi);
+        iou = calcIoU(object_itr->second, image_roi.feature.roi);
       }
       if (use_iou_x_) {
-        iou_x = calcIoUX(object_itr->second, roi);
+        iou_x = calcIoUX(object_itr->second, image_roi.feature.roi);
       }
       if (use_iou_y_) {
-        iou_y = calcIoUY(object_itr->second, roi);
+        iou_y = calcIoUY(object_itr->second, image_roi.feature.roi);
       }
 
       if (iou + iou_x + iou_y > max_iou) {
@@ -166,9 +165,9 @@ void RoiDetectedObjectFusionNode::updateDetectedObjectClassification(
     }
 
     if (
-      max_iou > iou_threshold_ && output_objects.at(object_i).existence_probability <=
-                                    image_rois.at(roi_i).object.existence_probability) {
-      output_objects.at(object_i).classification = image_rois.at(roi_i).object.classification;
+      max_iou > iou_threshold_ &&
+      output_objects.at(object_i).existence_probability <= image_roi.object.existence_probability) {
+      output_objects.at(object_i).classification = image_roi.object.classification;
     }
   }
 }

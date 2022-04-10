@@ -31,7 +31,7 @@ public:
 
 protected:
   void fuseOnSingleImage(
-    const DetectedObjects & input_object_msg, const int image_id,
+    const DetectedObjects & input_object_msg, const std::size_t image_id,
     const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg) override;
 

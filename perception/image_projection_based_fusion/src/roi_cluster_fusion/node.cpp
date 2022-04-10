@@ -49,7 +49,7 @@ void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluste
 }
 
 void RoiClusterFusionNode::fuseOnSingleImage(
-  const DetectedObjectsWithFeature & input_cluster_msg, const int image_id,
+  const DetectedObjectsWithFeature & input_cluster_msg, const std::size_t image_id,
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
