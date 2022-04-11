@@ -128,38 +128,35 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     debug_pointcloud_rois.push_back(roi);
   }
 
-  for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
+  for (const auto & feature_obj : input_roi_msg.feature_objects) {
     int index = 0;
     double max_iou = 0.0;
-    for (auto m_cluster_roi_itr = m_cluster_roi.begin(); m_cluster_roi_itr != m_cluster_roi.end();
-         ++m_cluster_roi_itr) {
+    for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       if (use_iou_) {
-        iou = calcIoU(m_cluster_roi_itr->second, input_roi_msg.feature_objects.at(i).feature.roi);
+        iou = calcIoU(cluster_map.second, feature_obj.feature.roi);
       }
       if (use_iou_x_) {
-        iou_x =
-          calcIoUX(m_cluster_roi_itr->second, input_roi_msg.feature_objects.at(i).feature.roi);
+        iou_x = calcIoUX(cluster_map.second, feature_obj.feature.roi);
       }
       if (use_iou_y_) {
-        iou_y =
-          calcIoUY(m_cluster_roi_itr->second, input_roi_msg.feature_objects.at(i).feature.roi);
+        iou_y = calcIoUY(cluster_map.second, feature_obj.feature.roi);
       }
       if (max_iou < iou + iou_x + iou_y) {
-        index = m_cluster_roi_itr->first;
+        index = cluster_map.first;
         max_iou = iou + iou_x + iou_y;
       }
     }
     if (
       iou_threshold_ < max_iou &&
       output_cluster_msg.feature_objects.at(index).object.existence_probability <=
-        input_roi_msg.feature_objects.at(i).object.existence_probability &&
-      input_roi_msg.feature_objects.at(i).object.classification.front().label !=
+        feature_obj.object.existence_probability &&
+      feature_obj.object.classification.front().label !=
         autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
       output_cluster_msg.feature_objects.at(index).object.classification =
-        input_roi_msg.feature_objects.at(i).object.classification;
+        feature_obj.object.classification;
     }
-    debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
+    debug_image_rois.push_back(feature_obj.feature.roi);
   }
 
   if (debugger_) {

@@ -145,21 +145,20 @@ void RoiDetectedObjectFusionNode::updateDetectedObjectClassification(
   for (const auto & image_roi : image_rois) {
     std::size_t object_i = 0;
     double max_iou = 0.0;
-    for (auto object_itr = object_roi_map.begin(); object_itr != object_roi_map.end();
-         ++object_itr) {
+    for (const auto & object_map : object_roi_map) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       if (use_iou_) {
-        iou = calcIoU(object_itr->second, image_roi.feature.roi);
+        iou = calcIoU(object_map.second, image_roi.feature.roi);
       }
       if (use_iou_x_) {
-        iou_x = calcIoUX(object_itr->second, image_roi.feature.roi);
+        iou_x = calcIoUX(object_map.second, image_roi.feature.roi);
       }
       if (use_iou_y_) {
-        iou_y = calcIoUY(object_itr->second, image_roi.feature.roi);
+        iou_y = calcIoUY(object_map.second, image_roi.feature.roi);
       }
 
       if (iou + iou_x + iou_y > max_iou) {
-        object_i = object_itr->first;
+        object_i = object_map.first;
         max_iou = iou + iou_x + iou_y;
       }
     }
