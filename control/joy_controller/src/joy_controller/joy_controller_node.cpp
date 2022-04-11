@@ -15,6 +15,7 @@
 #include "joy_controller/joy_controller.hpp"
 #include "joy_controller/joy_converter/ds4_joy_converter.hpp"
 #include "joy_controller/joy_converter/g29_joy_converter.hpp"
+#include "joy_controller/joy_converter/p65_joy_converter.hpp"
 
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
@@ -151,8 +152,10 @@ void AutowareJoyControllerNode::onJoy(const sensor_msgs::msg::Joy::ConstSharedPt
   last_joy_received_time_ = msg->header.stamp;
   if (joy_type_ == "G29") {
     joy_ = std::make_shared<const G29JoyConverter>(*msg);
-  } else {
+  } else if (joy_type_ == "DS4") {
     joy_ = std::make_shared<const DS4JoyConverter>(*msg);
+  } else {
+    joy_ = std::make_shared<const P65JoyConverter>(*msg);
   }
 
   if (joy_->shift_up() || joy_->shift_down() || joy_->shift_drive() || joy_->shift_reverse()) {
@@ -382,7 +385,7 @@ void AutowareJoyControllerNode::sendEmergencyRequest(bool emergency)
 
   client_emergency_stop_->async_send_request(
     request, [this, emergency](
-               rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
+      rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
       auto response = result.get();
       if (tier4_api_utils::is_success(response->status)) {
         RCLCPP_INFO(get_logger(), "service succeeded");
@@ -482,10 +485,10 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   // Publisher
   pub_control_command_ =
     this->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-      "output/control_command", 1);
+    "output/control_command", 1);
   pub_external_control_command_ =
     this->create_publisher<tier4_external_api_msgs::msg::ControlCommandStamped>(
-      "output/external_control_command", 1);
+    "output/external_control_command", 1);
   pub_shift_ =
     this->create_publisher<tier4_external_api_msgs::msg::GearShiftStamped>("output/shift", 1);
   pub_turn_signal_ = this->create_publisher<tier4_external_api_msgs::msg::TurnSignalStamped>(
