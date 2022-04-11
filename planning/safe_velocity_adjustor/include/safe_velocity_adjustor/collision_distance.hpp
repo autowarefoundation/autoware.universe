@@ -23,10 +23,14 @@
 
 #include <boost/assign.hpp>
 #include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/detail/intersects/interface.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/length.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/multi_linestring.hpp>
+#include <boost/geometry/geometries/multi_point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
 
 #include <Eigen/src/Core/util/Constants.h>
@@ -44,7 +48,10 @@ namespace safe_velocity_adjustor
 namespace bg = boost::geometry;
 using point_t = bg::model::d2::point_xy<double>;
 using polygon_t = bg::model::polygon<point_t>;
+using multipolygon_t = bg::model::multi_polygon<polygon_t>;
 using segment_t = bg::model::segment<point_t>;
+using linestring_t = bg::model::linestring<point_t>;
+using multilinestring_t = bg::model::multi_linestring<linestring_t>;
 
 /// @brief generate a segment to where the vehicle body would be after some duration assuming a
 /// constant velocity and heading
@@ -59,6 +66,18 @@ inline segment_t forwardSimulatedVector(
   const auto to =
     point_t{from.x() + std::cos(heading) * length, from.y() + std::sin(heading) * length};
   return segment_t{from, to};
+}
+
+/// @brief generate a footprint from a segment and a vehicle width
+inline polygon_t forwardSimulatedFootprint(const segment_t & vector, const double vehicle_width)
+{
+  multipolygon_t footprint;
+  namespace strategy = bg::strategy::buffer;
+  bg::buffer(
+    linestring_t{vector.first, vector.second}, footprint,
+    strategy::distance_symmetric<double>(vehicle_width / 2), strategy::side_straight(),
+    strategy::join_miter(), strategy::end_flat(), strategy::point_square());
+  return footprint[0];
 }
 
 static double a{};
@@ -126,6 +145,25 @@ inline std::optional<double> distanceToClosestCollision(
   return (min_dist <= bg::length(vector) ? min_dist : std::optional<double>());
 }
 
+inline std::optional<double> distanceToClosestCollision(
+  const segment_t & vector, const polygon_t & footprint, const multilinestring_t & obstacles)
+{
+  double min_dist = std::numeric_limits<double>::max();
+  multilinestring_t intersection_lines;
+  for (const auto & obstacle : obstacles) {
+    if (bg::intersection(footprint, obstacle, intersection_lines)) {
+      for (const auto & intersection_line : intersection_lines) {
+        for (const auto & point : intersection_line) {
+          min_dist = std::min(min_dist, bg::distance(vector.first, point));
+        }
+      }
+    }
+  }
+  std::optional<double> distance;
+  if (min_dist != std::numeric_limits<double>::max()) distance = min_dist;
+  return distance;
+}
+
 inline polygon_t createObjPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
 {
@@ -155,21 +193,14 @@ inline polygon_t createObjPolygon(
   return translate_obj_poly;
 }
 
-inline std::vector<polygon_t> createObjPolygons(
+inline multipolygon_t createObjPolygons(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects)
 {
-  std::vector<polygon_t> polygons;
+  multipolygon_t polygons;
   for (const auto & object : objects.objects)
     polygons.push_back(createObjPolygon(
       object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions));
   return polygons;
-}
-
-inline bool inPolygons(const point_t & point, const std::vector<polygon_t> & polygons)
-{
-  for (const auto & polygon : polygons)
-    if (bg::distance(point, polygon) < 0.5) return true;
-  return false;
 }
 }  // namespace safe_velocity_adjustor
 

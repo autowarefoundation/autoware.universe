@@ -16,7 +16,7 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include <autoware_auto_planning_msgs/msg/detail/trajectory_point__struct.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
 #include <gtest/gtest.h>
 #include <pcl/common/generate.h>
