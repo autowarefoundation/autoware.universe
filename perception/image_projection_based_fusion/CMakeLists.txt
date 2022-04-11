@@ -29,6 +29,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/utils/utils.cpp
   src/roi_cluster_fusion/node.cpp
   src/roi_detected_object_fusion/node.cpp
+  src/pointpainting_fusion/node.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBRARIES}
@@ -43,6 +44,11 @@ rclcpp_components_register_node(${PROJECT_NAME}
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "image_projection_based_fusion::RoiDetectedObjectFusionNode"
   EXECUTABLE roi_detected_object_fusion_node
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "image_projection_based_fusion::PointpaintingFusionNode"
+  EXECUTABLE pointpainting_fusion_node
 )
 
 if(BUILD_TESTING)

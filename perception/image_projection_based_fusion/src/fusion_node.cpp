@@ -26,6 +26,7 @@
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <typeinfo>
 namespace image_projection_based_fusion
 {
 
@@ -46,7 +47,8 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
   }
 
   // subscribers
-  sub_.subscribe(this, "input", rclcpp::QoS(1).get_rmw_qos_profile());
+  // sub_.subscribe(this, "input", rclcpp::QoS(1).get_rmw_qos_profile());
+  sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
 
   camera_info_subs_.resize(rois_number_);
   for (int roi_i = 0; roi_i < rois_number_; roi_i++) {
@@ -117,7 +119,7 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
     std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
 
   // publisher
-  pub_ptr_ = this->create_publisher<Msg>("output", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<Msg>("~/debug/pointcloud_painted", rclcpp::QoS{1});
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
@@ -201,13 +203,13 @@ void FusionNode<Msg>::fusionCallback(
       *input_msg, image_id, *input_roi_msg, camera_info_map_.at(image_id), output_msg);
   }
 
-  postprocess();
+  // postprocess();
 
-  publish(output_msg);
+  // publish(output_msg);
 }
 
 template <class Msg>
-void FusionNode<Msg>::postprocess()
+void FusionNode<Msg>::postprocess(Msg & output_msg)
 {
   // do nothing by default
 }
@@ -220,4 +222,5 @@ void FusionNode<Msg>::publish(const Msg & output_msg)
 
 template class FusionNode<DetectedObjects>;
 template class FusionNode<DetectedObjectsWithFeature>;
+template class FusionNode<sensor_msgs::msg::PointCloud2>;
 }  // namespace image_projection_based_fusion
