@@ -518,7 +518,7 @@ void BehaviorPathPlannerNode::run()
   }
 
   // update planner data
-  updateCurrentPose();
+  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 
   // NOTE: planner_data must not be referenced for multithreading
   const auto planner_data = planner_data_;
@@ -528,8 +528,8 @@ void BehaviorPathPlannerNode::run()
   const auto output = bt_manager_->run(planner_data);
 
   // path handling
-  const auto path = getPath(output);
-  const auto path_candidate = getPathCandidate(output);
+  const auto path = getPath(output, planner_data);
+  const auto path_candidate = getPathCandidate(output, planner_data);
 
   // update planner data
   mutex_.lock();  // for planner_data_
@@ -569,7 +569,7 @@ void BehaviorPathPlannerNode::run()
   }
 
   // for remote operation
-  publishModuleStatus(bt_manager_->getModulesStatus());
+  publishModuleStatus(bt_manager_->getModulesStatus(), planner_data);
 
   publishDebugMarker(bt_manager_->getDebugMarkers());
 
@@ -582,12 +582,13 @@ void BehaviorPathPlannerNode::run()
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
-PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(const BehaviorModuleOutput & bt_output)
+PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
+  const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> planner_data)
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = bt_output.path ? bt_output.path : planner_data_->prev_output_path;
-  path->header = planner_data_->route_handler->getRouteHeader();
+  auto path = bt_output.path ? bt_output.path : planner_data->prev_output_path;
+  path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
@@ -595,11 +596,11 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(const BehaviorModuleO
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
-  const BehaviorModuleOutput & bt_output)
+  const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> planner_data)
 {
   auto path_candidate =
     bt_output.path_candidate ? bt_output.path_candidate : std::make_shared<PathWithLaneId>();
-  path_candidate->header = planner_data_->route_handler->getRouteHeader();
+  path_candidate->header = planner_data->route_handler->getRouteHeader();
   path_candidate->header.stamp = this->now();
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: path candidate is %s.",
@@ -608,7 +609,8 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
 }
 
 void BehaviorPathPlannerNode::publishModuleStatus(
-  const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses)
+  const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses,
+  const std::shared_ptr<PlannerData> planner_data)
 {
   auto getModuleType = [](std::string name) {
     if (name == "LaneChange") {
@@ -640,7 +642,7 @@ void BehaviorPathPlannerNode::publishModuleStatus(
       running_modules.modules.push_back(module);
     }
     if (status->module_name == "LaneChange") {
-      const auto force_approval = planner_data_->approval.is_force_approved;
+      const auto force_approval = planner_data->approval.is_force_approved;
       if (
         force_approval.module_name == "ForceLaneChange" &&
         (now - force_approval.stamp).seconds() < 0.5) {
@@ -688,12 +690,6 @@ void BehaviorPathPlannerNode::publishDebugMarker(const std::vector<MarkerArray> 
     tier4_autoware_utils::appendMarkerArray(markers, &msg);
   }
   debug_marker_publisher_->publish(msg);
-}
-
-void BehaviorPathPlannerNode::updateCurrentPose()
-{
-  auto self_pose = self_pose_listener_.getCurrentPose();
-  planner_data_->self_pose = self_pose;
 }
 
 void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
