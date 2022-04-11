@@ -116,6 +116,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // behavior tree manager
   {
+    mutex_bt_.lock();
+
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
 
     auto side_shift_module =
@@ -149,6 +151,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_->registerSceneModule(pull_out_module);
 
     bt_manager_->createBehaviorTree();
+
+    mutex_bt_.unlock();
   }
 
   // turn signal decider
@@ -510,6 +514,7 @@ void BehaviorPathPlannerNode::waitForData()
 void BehaviorPathPlannerNode::run()
 {
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
+  mutex_bt_.lock();  // for bt_manager_
   mutex_pd_.lock();  // for planner_data_
 
   // behavior_path_planner runs only in LANE DRIVING scenario.
@@ -579,6 +584,7 @@ void BehaviorPathPlannerNode::run()
     debug_drivable_area_lanelets_publisher_->publish(drivable_area_lines);
   }
 
+  mutex_bt_.unlock();
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
