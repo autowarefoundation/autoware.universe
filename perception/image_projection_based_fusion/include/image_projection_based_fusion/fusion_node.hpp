@@ -72,7 +72,7 @@ protected:
     const sensor_msgs::msg::CameraInfo & camera_info, Msg & output_msg) = 0;
 
   // set args if you need
-  virtual void postprocess();
+  virtual void postprocess(Msg & output_msg);
 
   void publish(const Msg & output_msg);
 
