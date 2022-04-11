@@ -1,5 +1,5 @@
 <launch>
-  <arg name="param_file" default="$(find-pkg-share map_loader)/config/lanelet2_map_loader.param.yaml"
+  <arg name="param_file" default="$(find-pkg-share map_loader)/config/lanelet2_map_loader.param.yaml"/>
   <arg name="lanelet2_map_path"/>
   <arg name="lanelet2_map_topic" default="vector_map"/>
   <arg name="lanelet2_map_marker_topic" default="vector_map_marker"/>
