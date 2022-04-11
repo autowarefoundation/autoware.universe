@@ -14,7 +14,10 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>eigen</depend>
+  <depend>grid_map_msgs</depend>
+  <depend>grid_map_ros</depend>
   <depend>libboost-dev</depend>
+  <depend>nav_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

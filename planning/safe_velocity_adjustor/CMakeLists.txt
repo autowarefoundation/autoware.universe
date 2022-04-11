@@ -30,6 +30,7 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_${PROJECT_NAME}
     test/test_collision_distance.cpp
+    test/test_occupancy_grid_utils.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     safe_velocity_adjustor_node

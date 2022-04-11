@@ -7,7 +7,6 @@ Panels:
         - /System1/Vehicle1
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
         - /Perception1
-        - /Perception1/ObjectRecognition1
         - /Perception1/ObjectRecognition1/Prediction1
       Splitter Ratio: 0.557669460773468
     Tree Height: 289
@@ -28,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: FilteredPointCloud
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -914,7 +913,7 @@ Visualization Manager:
                 Value: /perception/occupancy_grid_map/map_updates
               Use Timestamp: false
               Value: true
-          Enabled: false
+          Enabled: true
           Name: OccupancyGrid
       Enabled: true
       Name: Perception
@@ -1380,10 +1379,9 @@ Visualization Manager:
       Name: Control
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: MarkerArray
+      Name: Envelope
       Namespaces:
-        adjusted: true
-        original: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -1391,39 +1389,17 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /planning/scenario_planning/safe_velocity_adjustor/debug_markers
       Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz_default_plugins/PointCloud2
-      Color: 103; 103; 103
-      Color Transformer: FlatColor
-      Decay Time: 0
+    - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: FilteredPointCloud
-      Position Transformer: XYZ
-      Selectable: false
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Points
+      Name: Polygons
+      Namespaces:
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
-        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /safe_velocity_adjustor/output/pointcloud
-      Use Fixed Frame: true
-      Use rainbow: true
+        Value: /safe_velocity_adjustor/output/debug_polygons
       Value: true
   Enabled: true
   Global Options:
@@ -1498,11 +1474,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 12.543999671936035
+      Scale: 8.44149112701416
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 0
-      Y: 0
+      X: 6.502593994140625
+      Y: -9.435478210449219
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18
