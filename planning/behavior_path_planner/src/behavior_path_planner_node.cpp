@@ -448,13 +448,13 @@ void BehaviorPathPlannerNode::waitForData()
 {
   // wait until mandatory data is ready
   while (!current_scenario_ && rclcpp::ok()) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for scenario topic");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for scenario topic");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
   }
 
   while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for route to be ready");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
@@ -464,7 +464,7 @@ void BehaviorPathPlannerNode::waitForData()
     if (planner_data_->dynamic_object && planner_data_->self_odometry) {
       break;
     }
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "waiting for vehicle pose, vehicle_velocity, and obstacles");
     rclcpp::spin_some(this->get_node_base_interface());
