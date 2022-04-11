@@ -579,7 +579,6 @@ void BehaviorPathPlannerNode::run()
     debug_drivable_area_lanelets_publisher_->publish(drivable_area_lines);
   }
 
-  mutex_.unlock();
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
