@@ -23,10 +23,10 @@
 #include <rviz_common/panel.hpp>
 
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_control_msgs/msg/external_command_selector_mode.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
-#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 
 namespace rviz_plugins
