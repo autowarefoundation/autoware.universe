@@ -17,7 +17,6 @@
 
 import argparse
 import math
-import rospy
 
 from ament_index_python.packages import get_package_share_directory
 from calc_utils import CalcUtils
@@ -28,7 +27,7 @@ from plotter import Plotter
 import rclpy
 from rclpy.node import Node
 import matplotlib.pyplot as plt
-from tier4_autoware_msgs.tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
+from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
 
 
 class DrawGraph(Node):
@@ -110,10 +109,10 @@ class DrawGraph(Node):
         if len(default_pedal_list) == 0 or len(default_acc_list) == 0:
             self.get_logger().warning("No default map file was found in {}".format(default_map_dir))
 
-        calibrated_pedal_list, calibrated_acc_list = self.load_map(DrawGraph.calibrated_map_dir)
+        calibrated_pedal_list, calibrated_acc_list = self.load_map(self.calibrated_map_dir)
         if len(calibrated_pedal_list) == 0 or len(calibrated_acc_list) == 0:
             self.get_logger().warning(
-                "No calibrated map file was found in {}".format(DrawGraph.calibrated_map_dir)
+                "No calibrated map file was found in {}".format(self.calibrated_map_dir)
             )
 
         # visualize point from data
@@ -137,25 +136,39 @@ class DrawGraph(Node):
             )
         plt.savefig("plot.svg")
 
-    def get_data_callback(self, response):
+    def get_data_callback(self, request, response):
         with open('plot.svg', 'r') as svg:
+            count=0
         
-            for data in svg
+            for data in svg:
             # stringにした場合は以下のfor文を消して下記の処理を行う
             # Calib.graph_image.append(data)
+                data = str(data)
                 for c in data:
-                    response.graph_image.append(ord(c))
+                    # for debug
+                    count += 1
+                    print("%d, %s, %s", count, c, type(c))
+                    
+                    # data processing
+                    # response.graph_image.append(ord(c))
                 
                     if data == '':
-                      break
+                        print("Data end")
+                        break
+
+        print("svg data end") #for debug
 
         with open(self.calibrated_map_dir+"accel_map.csv", 'r') as calibrated_accel_map:
             for accel_data  in calibrated_accel_map: 
-                response.accel_map.append(accel_data)
+                response.accel_map += accel_data
+
+        print("accel map end") #for debug
 
         with open(self.calibrated_map_dir+"brake_map.csv", 'r') as calibrated_brake_map:
             for brake_data in calibrated_brake_map : 
-                response.brake_map.append(brake_data)
+                response.brake_map += brake_data
+
+        print("brake map end") #for debug
         
         return response
 

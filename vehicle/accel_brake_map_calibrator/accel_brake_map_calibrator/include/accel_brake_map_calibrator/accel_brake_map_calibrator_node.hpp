@@ -41,6 +41,7 @@
 #include "tier4_external_api_msgs/msg/calibration_status_array.hpp"
 #include "tier4_external_api_msgs/srv/get_accel_brake_map_calibration_data.hpp"
 
+
 #include <fstream>
 #include <iomanip>
 #include <memory>
@@ -90,8 +91,6 @@ private:
 
   // Service
   rclcpp::Service<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
-  rclcpp::Service<tier4_external_api_msgs::srv::GetAccelBrakeMapCalibrationData>::SharedPtr 
-    calibration_data_server_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_output_csv_;
@@ -218,11 +217,7 @@ private:
   bool callbackUpdateMapService(
     const std::shared_ptr<rmw_request_id_t> request_header,
     tier4_vehicle_msgs::srv::UpdateAccelBrakeMap::Request::SharedPtr req,
-    tier4_vehicle_msgs::srv::UpdateAccelBrakeMap::Response::SharedPtr res);
-  bool callbackUpdateCalibrationDataService(
-    const std::shared_ptr<rmw_request_id_t> request_header,
-    tier4_vehicle_msgs::srv::GetAccelBrakeMapCalibrationData::Request::SharedPtr req,
-    tier4_vehicle_msgs::srv::GetAccelBrakeMapCalibrationData::Response::SharedPtr res);  
+    tier4_vehicle_msgs::srv::UpdateAccelBrakeMap::Response::SharedPtr res); 
   bool getAccFromMap(const double velocity, const double pedal);
   double lowpass(const double original, const double current, const double gain = 0.8);
   double getPedalSpeed(
