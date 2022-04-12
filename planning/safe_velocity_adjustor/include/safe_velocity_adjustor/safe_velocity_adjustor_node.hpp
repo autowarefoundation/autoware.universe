@@ -28,6 +28,7 @@
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -84,6 +85,10 @@ public:
       create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_polygons", 1);
     pub_debug_occupancy_grid_ = create_publisher<OccupancyGrid>("~/output/occupancy_grid", 1);
 
+    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+    vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
+    vehicle_front_offset_ = static_cast<Float>(vehicle_info.max_longitudinal_offset_m);
+
     set_param_res_ =
       add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
 
@@ -123,10 +128,8 @@ private:
     static_cast<int8_t>(declare_parameter<int>("occupancy_grid_obstacle_threshold"));
   Float dynamic_obstacles_buffer_ =
     static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_buffer"));
-
-  // TODO(Maxime CLEMENT): get vehicle width and length from vehicle parameters
-  Float vehicle_width_ = 2.0;
-  Float vehicle_length_ = 4.0;
+  Float vehicle_lateral_offset_;
+  Float vehicle_front_offset_;
 
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
@@ -218,12 +221,13 @@ private:
       pub_debug_polygons_->publish(polygon_markers);
 
       Trajectory safe_trajectory = *msg;
-      const auto extra_vehicle_length = vehicle_length_ / 2 + dist_safety_buffer_;
+      const auto extra_vehicle_length = vehicle_front_offset_ + dist_safety_buffer_;
       for (auto & trajectory_point : downsampled_traj.points) {
         const auto forward_simulated_vector =
           forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
         stopwatch.tic("footprint_d");
-        const auto footprint = forwardSimulatedFootprint(forward_simulated_vector, vehicle_width_);
+        const auto footprint =
+          forwardSimulatedFootprint(forward_simulated_vector, vehicle_lateral_offset_);
         footprint_d += stopwatch.toc("footprint_d");
         stopwatch.tic("dist_poly_d");
         const auto dist_to_collision =
@@ -288,7 +292,7 @@ private:
     envelope.color.a = 1.0;
     for (const auto & point : trajectory.points) {
       const auto vector = forwardSimulatedVector(
-        point, time_safety_buffer_, dist_safety_buffer_ + vehicle_length_ / 2);
+        point, time_safety_buffer_, dist_safety_buffer_ + vehicle_front_offset_);
       geometry_msgs::msg::Point p;
       p.x = vector.second.x();
       p.y = vector.second.y();

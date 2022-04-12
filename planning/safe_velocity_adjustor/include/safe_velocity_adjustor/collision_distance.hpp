@@ -69,13 +69,13 @@ inline segment_t forwardSimulatedVector(
 }
 
 /// @brief generate a footprint from a segment and a vehicle width
-inline polygon_t forwardSimulatedFootprint(const segment_t & vector, const double vehicle_width)
+inline polygon_t forwardSimulatedFootprint(const segment_t & vector, const double lateral_offset)
 {
   multipolygon_t footprint;
   namespace strategy = bg::strategy::buffer;
   bg::buffer(
     linestring_t{vector.first, vector.second}, footprint,
-    strategy::distance_symmetric<double>(vehicle_width / 2), strategy::side_straight(),
+    strategy::distance_symmetric<double>(lateral_offset), strategy::side_straight(),
     strategy::join_miter(), strategy::end_flat(), strategy::point_square());
   return footprint[0];
 }
