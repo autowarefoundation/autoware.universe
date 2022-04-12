@@ -37,7 +37,7 @@ public:
     return std::max(0.0f, -((L2() - 1.0f) / 2.0f));
   }
 
-  float steer() const {return -LStickLeftRight();}
+  float steer() const {return LStickLeftRight();}
 
   bool shift_up() const {return CursorUpDown() == 1.0f;}
   bool shift_down() const {return CursorUpDown() == -1.0f;}
