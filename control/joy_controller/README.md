@@ -45,7 +45,7 @@
 ## P65 Joystick Key Map
 
 | Acceleration         | R2                    |
-|----------------------|-----------------------|
+| -------------------- | --------------------- |
 | Brake                | L2                    |
 | Steering             | Left Stick Left Right |
 | Shift up             | Cursor Up             |

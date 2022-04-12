@@ -385,7 +385,7 @@ void AutowareJoyControllerNode::sendEmergencyRequest(bool emergency)
 
   client_emergency_stop_->async_send_request(
     request, [this, emergency](
-      rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
+               rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
       auto response = result.get();
       if (tier4_api_utils::is_success(response->status)) {
         RCLCPP_INFO(get_logger(), "service succeeded");
@@ -485,10 +485,10 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   // Publisher
   pub_control_command_ =
     this->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-    "output/control_command", 1);
+      "output/control_command", 1);
   pub_external_control_command_ =
     this->create_publisher<tier4_external_api_msgs::msg::ControlCommandStamped>(
-    "output/external_control_command", 1);
+      "output/external_control_command", 1);
   pub_shift_ =
     this->create_publisher<tier4_external_api_msgs::msg::GearShiftStamped>("output/shift", 1);
   pub_turn_signal_ = this->create_publisher<tier4_external_api_msgs::msg::TurnSignalStamped>(
