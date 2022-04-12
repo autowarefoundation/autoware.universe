@@ -35,6 +35,8 @@ install(
   scripts/csv_reader.py
   scripts/log_analyzer.py
   scripts/view_plot.py
+  scripts/plot_csv_client_node.py
+  scripts/plot_csv_server_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
