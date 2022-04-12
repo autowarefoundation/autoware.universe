@@ -116,6 +116,8 @@ private:
   Float time_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("time_safety_buffer"));
   Float dist_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("dist_safety_buffer"));
   Float start_distance_ = static_cast<Float>(declare_parameter<Float>("start_distance"));
+  Float min_adjusted_velocity_ =
+    static_cast<Float>(declare_parameter<Float>("min_adjusted_velocity"));
   int downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
   int8_t occupancy_grid_obstacle_threshold_ =
     static_cast<int8_t>(declare_parameter<int>("occupancy_grid_obstacle_threshold"));
@@ -145,6 +147,8 @@ private:
         occupancy_grid_obstacle_threshold_ = static_cast<int8_t>(parameter.as_int());
       } else if (parameter.get_name() == "dynamic_obstacles_buffer") {
         dynamic_obstacles_buffer_ = static_cast<Float>(parameter.as_double());
+      } else if (parameter.get_name() == "min_adjusted_velocity") {
+        min_adjusted_velocity_ = static_cast<Float>(parameter.as_double());
       } else {
         RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
         result.successful = false;
@@ -227,8 +231,7 @@ private:
         dist_poly_d += stopwatch.toc("dist_poly_d");
         if (dist_to_collision) {
           trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
-            trajectory_point,
-            std::max({}, static_cast<Float>(*dist_to_collision - extra_vehicle_length)));
+            trajectory_point, static_cast<Float>(*dist_to_collision - extra_vehicle_length));
         }
       }
 
@@ -253,7 +256,8 @@ private:
   {
     return std::min(
       trajectory_point.longitudinal_velocity_mps,
-      static_cast<Float>(dist_to_collision / time_safety_buffer_));
+      std::max(
+        min_adjusted_velocity_, static_cast<Float>(dist_to_collision / time_safety_buffer_)));
   }
 
   static visualization_msgs::msg::Marker makePolygonMarker(
