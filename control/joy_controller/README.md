@@ -60,5 +60,5 @@
 | Clear Emergency Stop | Start                 |
 | Autoware Engage      | X                     |
 | Autoware Disengage   | Y                     |
-| Vehicle Engage       | X                     |
-| Vehicle Disengage    | Y                     |
+| Vehicle Engage       | PS                    |
+| Vehicle Disengage    | Right Trigger         |

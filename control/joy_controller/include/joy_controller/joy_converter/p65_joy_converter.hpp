@@ -56,8 +56,8 @@ public:
   bool autoware_engage() const {return X();}
   bool autoware_disengage() const {return Y();}
 
-  bool vehicle_engage() const {return X();}
-  bool vehicle_disengage() const {return Y();}
+  bool vehicle_engage() const {return PS();}
+  bool vehicle_disengage() const {return RTrigger();}
 
 private:
   float LStickLeftRight() const {return j_.axes.at(0);}
