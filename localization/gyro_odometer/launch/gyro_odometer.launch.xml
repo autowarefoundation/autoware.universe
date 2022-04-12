@@ -14,6 +14,9 @@
 
     <remap from="imu" to="$(var input_imu_topic)"/>
 
+    <remap from="twist_raw" to="$(var output_twist_raw_topic)"/>
+    <remap from="twist_with_covariance_raw" to="$(var output_twist_with_covariance_raw_topic)"/>
+
     <remap from="twist" to="$(var output_twist_topic)"/>
     <remap from="twist_with_covariance" to="$(var output_twist_with_covariance_topic)"/>
 
