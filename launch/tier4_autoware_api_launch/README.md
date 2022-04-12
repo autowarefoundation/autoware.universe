@@ -13,7 +13,7 @@ Please see `<exec_depend>` in `package.xml`.
 You can include as follows in `*.launch.xml` to use `control.launch.py`.
 
 ```xml
-  <include file="$(find-pkg-share autoware_api_launch)/launch/tier4_autoware_api.launch.xml">
+  <include file="$(find-pkg-share tier4_autoware_api_launch)/launch/autoware_api.launch.xml">
     <arg name="init_simulator_pose" value="true"/>
     <arg name="init_localization_pose" value="false"/>
   </include>
