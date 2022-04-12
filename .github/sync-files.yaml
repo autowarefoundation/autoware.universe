@@ -10,7 +10,6 @@
     - source: .github/workflows/sync-files.yaml
     # - source: .github/workflows/vcs-import.yaml # TODO: Sync after renaming to autoware.repos
     - source: .clang-format
-    - source: .markdown-link-check.json
     - source: .markdownlint.yaml
     # - source: .pre-commit-config.yaml # TODO: Sync after yamllint and ansible-lint have passed
     - source: .pre-commit-config-ansible.yaml

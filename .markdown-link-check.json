@@ -2,7 +2,11 @@
   "aliveStatusCodes": [200, 206, 403],
   "ignorePatterns": [
     {
-      "pattern": "^http://localhost"
+      "pattern": "^https://github.com/tier4/*",
+      "reason": "This repos is private so skip checking."
+    },
+    {
+      "pattern": "^http://localhost*"
     }
   ],
   "retryOn429": true,
