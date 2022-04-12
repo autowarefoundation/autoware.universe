@@ -119,6 +119,8 @@ private:
   int downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
   int8_t occupancy_grid_obstacle_threshold_ =
     static_cast<int8_t>(declare_parameter<int>("occupancy_grid_obstacle_threshold"));
+  Float dynamic_obstacles_buffer_ =
+    static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_buffer"));
 
   // TODO(Maxime CLEMENT): get vehicle width and length from vehicle parameters
   Float vehicle_width_ = 2.0;
@@ -129,24 +131,23 @@ private:
     const std::vector<rclcpp::Parameter> & parameters)
   {
     rcl_interfaces::msg::SetParametersResult result;
-    result.successful = false;
+    result.successful = true;
     for (const auto & parameter : parameters) {
       if (parameter.get_name() == "time_safety_buffer") {
         time_safety_buffer_ = static_cast<Float>(parameter.as_double());
       } else if (parameter.get_name() == "dist_safety_buffer") {
         dist_safety_buffer_ = static_cast<Float>(parameter.as_double());
-        result.successful = true;
       } else if (parameter.get_name() == "start_distance") {
         start_distance_ = static_cast<Float>(parameter.as_double());
-        result.successful = true;
       } else if (parameter.get_name() == "downsample_factor") {
         downsample_factor_ = static_cast<int>(parameter.as_int());
-        result.successful = true;
       } else if (parameter.get_name() == "occupancy_grid_obstacle_threshold") {
         occupancy_grid_obstacle_threshold_ = static_cast<int8_t>(parameter.as_int());
-        result.successful = true;
+      } else if (parameter.get_name() == "dynamic_obstacles_buffer") {
+        dynamic_obstacles_buffer_ = static_cast<Float>(parameter.as_double());
       } else {
         RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
+        result.successful = false;
       }
     }
     return result;
@@ -179,7 +180,8 @@ private:
       for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
         downsampled_traj.points.push_back(msg->points[i]);
 
-      const auto dynamic_obstacle_polygons = createObjPolygons(*dynamic_obstacles_ptr_);
+      const auto dynamic_obstacle_polygons =
+        createObjPolygons(*dynamic_obstacles_ptr_, dynamic_obstacles_buffer_);
 
       double footprint_d{};
       double dist_poly_d{};

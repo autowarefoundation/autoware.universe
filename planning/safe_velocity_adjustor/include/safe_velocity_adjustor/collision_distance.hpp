@@ -165,14 +165,15 @@ inline std::optional<double> distanceToClosestCollision(
 }
 
 inline polygon_t createObjPolygon(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size,
+  const double buffer)
 {
   // (objects.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
   // rename
   const double x = pose.position.x;
   const double y = pose.position.y;
-  const double h = size.x;
-  const double w = size.y;
+  const double h = size.x + buffer;
+  const double w = size.y + buffer;
   const double yaw = tf2::getYaw(pose.orientation);
 
   // create base polygon
@@ -194,12 +195,12 @@ inline polygon_t createObjPolygon(
 }
 
 inline multipolygon_t createObjPolygons(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer)
 {
   multipolygon_t polygons;
   for (const auto & object : objects.objects)
     polygons.push_back(createObjPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions));
+      object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions, buffer));
   return polygons;
 }
 }  // namespace safe_velocity_adjustor
