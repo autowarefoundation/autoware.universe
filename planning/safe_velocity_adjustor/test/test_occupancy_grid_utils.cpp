@@ -41,5 +41,4 @@ TEST(TestOccupancyGridUtils, extractStaticObstaclePolygons)
     for (auto j = 1; j < 4; ++j) occupancy_grid.data[j + i * occupancy_grid.info.width] = 10;
   polygons = extractStaticObstaclePolygons(occupancy_grid, {}, occupied_threshold);
   EXPECT_EQ(polygons.size(), 1ul);
-  std::cerr << boost::geometry::wkt(polygons) << std::endl;
 }
