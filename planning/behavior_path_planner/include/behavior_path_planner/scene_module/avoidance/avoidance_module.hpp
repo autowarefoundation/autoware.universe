@@ -25,6 +25,11 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <tier4_planning_msgs/msg/avoidance_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_info.hpp>
+#include <tier4_planning_msgs/msg/avoidance_info_array.hpp>
+
+#include <fmt/format.h>
 
 #include <memory>
 #include <string>

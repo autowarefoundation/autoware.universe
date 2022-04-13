@@ -74,6 +74,12 @@ bool AvoidanceModule::isExecutionReady() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionReady");
 
+  {
+    DebugData debug;
+    static_cast<void>(calcAvoidancePlanningData(debug));
+    *avoidance_info_array_ptr_ = debug.avoidance_info_array;
+  }
+
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }
@@ -88,6 +94,7 @@ BT::NodeStatus AvoidanceModule::updateState()
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
   const bool has_avoidance_target = !avoid_data.objects.empty();
+  *avoidance_info_array_ptr_ = debug.avoidance_info_array;
 
   if (!is_plan_running && !has_avoidance_target) {
     current_state_ = BT::NodeStatus::SUCCESS;
@@ -191,11 +198,14 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
   debug_linestring.clear();
   // for filtered objects
   ObjectDataArray target_objects;
+  AvoidanceInfoArray avoidance_info_array;
+  std::vector<std::string> avoidance_factors;
   for (const auto & i : lane_filtered_objects_index) {
     const auto & object = objects_candidate.objects.at(i);
     const auto & object_pos = object.kinematics.initial_pose_with_covariance.pose.position;
 
     if (!isTargetObjectType(object)) {
+      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_NOT_TYPE);
       DEBUG_PRINT("Ignore object: (isTargetObjectType is false)");
       continue;
     }
@@ -208,16 +218,19 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
 
     // object is behind ego or too far.
     if (object_data.longitudinal < -parameters_.object_check_backward_distance) {
+      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_BEHIND_THRESHOLD);
       DEBUG_PRINT("Ignore object: (object < -backward_distance threshold)");
       continue;
     }
     if (object_data.longitudinal > parameters_.object_check_forward_distance) {
+      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_INFRONT_THRESHOLD);
       DEBUG_PRINT("Ignore object: (object > forward_distance threshold)");
       continue;
     }
 
     // Target object is behind the path goal -> ignore.
     if (object_data.longitudinal > dist_to_goal) {
+      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_BEHIND_PATH_GOAL);
       DEBUG_PRINT("Ignore object: (object is behind the path goal)");
       continue;
     }
@@ -269,16 +282,25 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
 
     // Object is on center line -> ignore.
     if (std::abs(object_data.lateral) < parameters_.threshold_distance_object_is_on_center) {
+      avoidance_factors.emplace_back(AvoidanceFactor::TOO_NEAR_TO_CENTERLINE);
       DEBUG_PRINT("Ignore object: (object is on center line)");
       continue;
     }
 
     // set data
     target_objects.push_back(object_data);
+    AvoidanceInfo avoidance_info;
+    avoidance_info.object_id = object_data.object.object_id;
+    avoidance_info.avoidance_factors = avoidance_factors;
+    avoidance_info.allow_avoidance = (avoidance_factors.empty()) ? true : false;
+    avoidance_info.lateral_distance_from_centerline = object_data.lateral;
+    avoidance_info.to_furthest_linestring_distance = object_data.to_road_shoulder_distance;
+    avoidance_info_array.avoidance_info.push_back(avoidance_info);
   }
 
   // debug
   {
+    debug.avoidance_info_array = std::move(avoidance_info_array);
     debug.farthest_linestring_from_overhang =
       std::make_shared<lanelet::ConstLineStrings3d>(debug_linestring);
     debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(current_lanes);
@@ -2346,6 +2368,9 @@ void AvoidanceModule::updateData()
 {
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
+  const auto avoidance_infos = debug_data_.avoidance_info_array.avoidance_info;
+  avoidance_info_array_ptr_ =
+    std::make_shared<AvoidanceInfoArray>(debug_data_.avoidance_info_array);
 
   // TODO(Horibe): this is not tested yet, disable now.
   updateRegisteredObject(avoidance_data_.objects);
@@ -2508,6 +2533,7 @@ void AvoidanceModule::initVariables()
   prev_reference_ = PathWithLaneId();
   path_shifter_ = PathShifter{};
 
+  avoidance_info_array_ptr_.reset();
   debug_data_ = DebugData();
 
   registered_raw_shift_points_ = {};

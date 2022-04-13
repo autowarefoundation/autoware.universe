@@ -39,6 +39,9 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
+#include <tier4_planning_msgs/msg/avoidance_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_info.hpp>
+#include <tier4_planning_msgs/msg/avoidance_info_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
@@ -67,6 +70,9 @@ using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
+using tier4_planning_msgs::msg::AvoidanceFactor;
+using tier4_planning_msgs::msg::AvoidanceInfo;
+using tier4_planning_msgs::msg::AvoidanceInfoArray;
 using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::PathChangeModuleArray;
 using tier4_planning_msgs::msg::Scenario;
@@ -163,6 +169,7 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
+  rclcpp::Publisher<AvoidanceInfoArray>::SharedPtr debug_avoidance_info_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
 };
