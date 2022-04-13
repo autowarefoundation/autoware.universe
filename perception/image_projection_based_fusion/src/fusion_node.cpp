@@ -203,13 +203,13 @@ void FusionNode<Msg>::fusionCallback(
       *input_msg, image_id, *input_roi_msg, camera_info_map_.at(image_id), output_msg);
   }
 
-  // postprocess();
+  postprocess(output_msg);
 
-  // publish(output_msg);
+  publish(output_msg);
 }
 
 template <class Msg>
-void FusionNode<Msg>::postprocess(Msg & output_msg)
+void FusionNode<Msg>::postprocess(Msg & output_msg __attribute__((unused)))
 {
   // do nothing by default
 }
