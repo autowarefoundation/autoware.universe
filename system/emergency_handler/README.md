@@ -8,7 +8,7 @@ Emergency Handler is a node to select proper MRM from from system failure state 
 
 ### State Transitions
 
-![fail-safe-state](https://github.com/tier4/AutowareArchitectureProposal.proj/blob/main/docs/design/apis/image/fail-safe-state.drawio.svg)
+![fail-safe-state](image/fail-safe-state.drawio.svg)
 
 ## Inputs / Outputs
 
