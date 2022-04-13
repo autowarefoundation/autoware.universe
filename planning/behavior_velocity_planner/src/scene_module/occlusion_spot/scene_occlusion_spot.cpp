@@ -128,13 +128,17 @@ bool OcclusionSpotModule::modifyPathVelocity(
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
     if (!occ_grid_ptr) return true;  // no data
     grid_map::GridMap grid_map;
+    Polygons2d foot_prints;
+    for (const auto & p : vehicles) {
+      foot_prints.emplace_back(planning_utils::toFootprintPolygon(p));
+    }
+    // occ -> image
     grid_utils::denoiseOccupancyGridCV(
-      occ_grid_ptr, grid_map, param_.grid, param_.is_show_cv_window, param_.filter_occupancy_grid);
+      occ_grid_ptr, foot_prints, grid_map, param_.grid, param_.is_show_cv_window,
+      param_.filter_occupancy_grid, param_.use_moving_object_ray_cast);
+    // add object foot print to image
     if (param_.use_object_info) {
       grid_utils::addObjectsToGridMap(filtered_vehicles, grid_map);
-    }
-    if (param_.use_moving_object_ray_cast) {
-      // grid_utils::addObjectsToGridMap(filtered_vehicles, grid_map);
     }
     DEBUG_PRINT(show_time, "grid [ms]: ", stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here

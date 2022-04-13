@@ -1,8 +1,8 @@
 /**:
   ros__parameters:
     occlusion_spot:
-      detection_method: "predicted_object"  # [-] candidate is "occupancy_grid" or "predicted_object"
-      pass_judge: "smooth_velocity"         # [-] candidate is "smooth_velocity" or "current_velocity"
+      detection_method: "occupancy_grid"  # [-] candidate is "occupancy_grid" or "predicted_object"
+      pass_judge: "current_velocity"        # [-] candidate is "current_velocity"
       filter_occupancy_grid: true           # [-] whether to filter occupancy grid by morphologyEx or not
       use_object_info: true                 # [-] whether to reflect object info to occupancy grid map or not
       use_moving_object_ray_cast: true      # [-] whether to reflect moving object ray_cast to occupancy grid map or not
@@ -11,7 +11,7 @@
       pedestrian_radius: 0.3                # [m] assume pedestrian width(0.2m) + margin(0.1m)
       debug:                                # !Note: default should be false for performance
         is_show_occlusion: false            # [-] whether to show occlusion point markers.
-        is_show_cv_window: false            # [-] whether to show open_cv debug window
+        is_show_cv_window: true            # [-] whether to show open_cv debug window
         is_show_processing_time: false      # [-] whether to show processing time
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range

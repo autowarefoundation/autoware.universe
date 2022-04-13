@@ -241,6 +241,174 @@ void getCornerPositions(
     corner_positions.emplace_back(corner_position);
   }
 }
+
+boost::optional<Polygon2d> generateOcclusionPolygon(
+  const Polygon2d & occupancy_poly, const Point2d & origin, const Point2d & min_theta_pos,
+  const Point2d & max_theta_pos, const double ray_max_length = 100.0)
+{
+  const double origin_x = origin.x();
+  const double origin_y = origin.y();
+  const double min_theta = std::atan2(min_theta_pos.y() - origin_y, min_theta_pos.x() - origin_x);
+  const double max_theta = std::atan2(max_theta_pos.y() - origin_y, max_theta_pos.x() - origin_x);
+  LineString2d theta_min_ray = {
+    origin,
+    {origin_x + ray_max_length * std::cos(min_theta),
+     origin_y + ray_max_length * std::sin(min_theta)}};
+  LineString2d theta_max_ray = {
+    origin,
+    {origin_x + ray_max_length * std::cos(max_theta),
+     origin_y + ray_max_length * std::sin(max_theta)}};
+  Polygon2d occlusion_poly;
+  occlusion_poly.outer() = {min_theta_pos, max_theta_pos};
+  std::vector<Point2d> min_intersections;
+  std::vector<Point2d> max_intersections;
+  boost::geometry::intersection(occupancy_poly, theta_min_ray, min_intersections);
+  boost::geometry::intersection(occupancy_poly, theta_max_ray, max_intersections);
+  if (!min_intersections.empty()) {
+    // has min theta intersection
+    occlusion_poly.outer().emplace_back(min_intersections.front());
+  }
+  if (!max_intersections.empty()) {
+    // has max theta intersection
+    occlusion_poly.outer().emplace_back(max_intersections.front());
+  }
+  //! case outside detection area
+  if (occlusion_poly.outer().size() == 2) return boost::none;
+  boost::geometry::correct(occlusion_poly);
+  Polygon2d hull_poly;
+  boost::geometry::convex_hull(occlusion_poly, hull_poly);
+  return hull_poly;
+}
+
+Polygon2d generateOccupancyPolygon(const nav_msgs::msg::MapMetaData & info, const double r = 100)
+{
+  using tier4_autoware_utils::calcOffsetPose;
+  // generate occupancy polygon from grid origin
+  Polygon2d poly;  // create counter clockwise poly
+  poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, 0, 0, 0).position));
+  poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, r, 0, 0).position));
+  poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, r, r, 0).position));
+  poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, 0, r, 0).position));
+  return poly;
+}
+
+std::pair<size_t, size_t> calcEdgePoint(const Polygon2d & foot_print, const Point2d & origin)
+{
+  size_t min_idx = 0;
+  size_t max_idx = 0;
+  double min_theta = std::numeric_limits<double>::max();
+  double max_theta = -std::numeric_limits<double>::max();
+  for (size_t i = 0; i < foot_print.outer().size(); i++) {
+    const auto & f = foot_print.outer().at(i);
+    PolarCoordinates polar = toPolarCoordinates(origin, f);
+    const double theta_norm = tier4_autoware_utils::normalizeRadian(polar.theta, 0.0);
+    if (theta_norm < min_theta) {
+      min_theta = theta_norm;
+      min_idx = i;
+    }
+    if (theta_norm > max_theta) {
+      max_theta = theta_norm;
+      max_idx = i;
+    }
+  }
+  return std::make_pair(min_idx, max_idx);
+}
+
+boost::optional<Polygon2d> generateOccupiedPolygon(
+  const Polygon2d & occupancy_poly, const Polygon2d & foot_print, const Point & position)
+{
+  Point2d origin = {position.x, position.y};
+  const auto & edge_pair = calcEdgePoint(foot_print, origin);
+  const size_t min_idx = edge_pair.first;
+  const size_t max_idx = edge_pair.second;
+  Polygon2d occupied_polygon;
+  const auto & poly = generateOcclusionPolygon(
+    occupancy_poly, origin, foot_print.outer().at(min_idx), foot_print.outer().at(max_idx));
+  return poly;
+}
+
+Point transformFromMap2Grid(const TransformStamped & geom_tf_map2grid, const Point2d & p)
+{
+  Point geom_pt = tier4_autoware_utils::createPoint(p.x(), p.y(), 0);
+  Point transformed_geom_pt;
+  // from map coordinate to occupancy grid corrdinate
+  tf2::doTransform(geom_pt, transformed_geom_pt, geom_tf_map2grid);
+  return transformed_geom_pt;
+}
+
+void generateOccupiedImage(
+  const OccupancyGrid & occ_grid, cv::Mat & inout_image, const Polygons2d & foot_prints)
+{
+  const auto & occ = occ_grid;
+  OccupancyGrid occupancy_grid;
+  PoseStamped grid_origin;
+  const double width = occ.info.width * occ.info.resolution;
+  const double height = occ.info.height * occ.info.resolution;
+  Point scan_origin = occ.info.origin.position;
+  scan_origin.x += 0.5 * width;
+  scan_origin.y += 0.5 * height;
+
+  // calculate grid origin
+  {
+    grid_origin.header = occ.header;
+    grid_origin.pose.position.x = occ.info.origin.position.x;
+    grid_origin.pose.position.y = occ.info.origin.position.y;
+    grid_origin.pose.position.z = 0.0;  // same z as foot print polygon
+  }
+
+  // header
+  {
+    occupancy_grid.header.stamp = occ.header.stamp;
+    occupancy_grid.header.frame_id = "map";
+  }
+
+  // info
+  {
+    occupancy_grid.info.map_load_time = occ.header.stamp;
+    occupancy_grid.info.resolution = occ.info.resolution;
+    occupancy_grid.info.width = occ.info.width;
+    occupancy_grid.info.height = occ.info.height;
+    occupancy_grid.info.origin = grid_origin.pose;
+  }
+
+  constexpr uint8_t occupied_space = occlusion_cost_value::OCCUPIED_IMAGE;
+  // get transform
+  tf2::Stamped<tf2::Transform> tf_grid2map;
+  tf2::Stamped<tf2::Transform> tf_map2grid;
+  tf2::fromMsg(grid_origin, tf_grid2map);
+  tf_map2grid.setData(tf_grid2map.inverse());
+  const auto geom_tf_map2grid = tf2::toMsg(tf_map2grid);
+
+  // create not Detection Area using opencv
+  std::vector<std::vector<cv::Point>> cv_polygons;
+  std::vector<cv::Point> cv_polygon;
+  Polygon2d occupancy_poly = generateOccupancyPolygon(occupancy_grid.info);
+  for (const auto & foot_print : foot_prints) {
+    // calculate occlusion polygon from moving vehicle
+    const auto polys = generateOccupiedPolygon(occupancy_poly, foot_print, scan_origin);
+    if (polys == boost::none) continue;
+    // transform to cv point and stuck it to cv polygon
+    for (const auto & p : polys.get().outer()) {
+      const Point transformed_geom_pt = transformFromMap2Grid(geom_tf_map2grid, p);
+      cv_polygon.emplace_back(
+        toCVPoint(transformed_geom_pt, width, height, occupancy_grid.info.resolution));
+    }
+    cv_polygons.push_back(cv_polygon);
+    // clear previously addeed points
+    cv_polygon.clear();
+  }
+  // fill in occlusion area and copy to occupancy grid
+  cv::fillPoly(inout_image, cv_polygons, cv::Scalar(occupied_space));
+}
+
+cv::Point toCVPoint(
+  const Point & geom_point, const double width_m, const double height_m, const double resolution)
+{
+  return cv::Point(
+    static_cast<int>((height_m - geom_point.y) / resolution),
+    static_cast<int>((width_m - geom_point.x) / resolution));
+}
+
 void imageToOccupancyGrid(const cv::Mat & cv_image, nav_msgs::msg::OccupancyGrid * occupancy_grid)
 {
   const int width = cv_image.cols;
@@ -251,7 +419,7 @@ void imageToOccupancyGrid(const cv::Mat & cv_image, nav_msgs::msg::OccupancyGrid
     for (int y = height - 1; y >= 0; y--) {
       const int idx = (height - 1 - y) + (width - 1 - x) * height;
       unsigned char intensity = cv_image.at<unsigned char>(y, x);
-      if (intensity == grid_utils::occlusion_cost_value::FREE_SPACE_IMAGE) {
+      if (intensity == grid_utils::occlusion_cost_value::FREE_SPACE) {
         intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
       } else if (intensity == grid_utils::occlusion_cost_value::UNKNOWN_IMAGE) {
         intensity = grid_utils::occlusion_cost_value::UNKNOWN;
@@ -274,7 +442,7 @@ void toQuantizedImage(
       const int idx = (height - 1 - y) + (width - 1 - x) * height;
       unsigned char intensity = occupancy_grid.data.at(idx);
       if (intensity <= param.free_space_max) {
-        intensity = grid_utils::occlusion_cost_value::FREE_SPACE_IMAGE;
+        intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
       } else if (param.free_space_max < intensity && intensity < param.occupied_min) {
         intensity = grid_utils::occlusion_cost_value::UNKNOWN_IMAGE;
       } else if (param.occupied_min <= intensity) {
@@ -288,24 +456,42 @@ void toQuantizedImage(
 }
 
 void denoiseOccupancyGridCV(
-  const nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid_ptr,
+  const OccupancyGrid::ConstSharedPtr occupancy_grid_ptr, const Polygons2d & foot_prints,
   grid_map::GridMap & grid_map, const GridParam & param, const bool is_show_debug_window,
-  const bool filter_occupancy_grid)
+  const bool filter_occupancy_grid, const bool use_moving_object_ray_cast)
 {
   OccupancyGrid occupancy_grid = *occupancy_grid_ptr;
   cv::Mat cv_image(
     occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1,
     cv::Scalar(grid_utils::occlusion_cost_value::OCCUPIED));
   toQuantizedImage(occupancy_grid, &cv_image, param);
-  constexpr int num_iter = 2;
+
+  //! show orignal occupancy grid to compare difference
+  if (is_show_debug_window) {
+    cv::namedWindow("original", cv::WINDOW_NORMAL);
+    cv::imshow("original", cv_image);
+    cv::waitKey(1);
+  }
+
+  //! raycast object shadow using vehicle
+  if (use_moving_object_ray_cast) {
+    generateOccupiedImage(occupancy_grid, cv_image, foot_prints);
+    if (is_show_debug_window) {
+      cv::namedWindow("object ray shadow", cv::WINDOW_NORMAL);
+      cv::imshow("object ray shadow", cv_image);
+      cv::waitKey(1);
+    }
+  }
+
   //!< @brief opening & closing to remove noise in occupancy grid
   if (filter_occupancy_grid) {
+    constexpr int num_iter = 2;
     cv::morphologyEx(cv_image, cv_image, cv::MORPH_CLOSE, cv::Mat(), cv::Point(-1, -1), num_iter);
-  }
-  if (is_show_debug_window) {
-    cv::namedWindow("morph", cv::WINDOW_NORMAL);
-    cv::imshow("morph", cv_image);
-    cv::waitKey(1);
+    if (is_show_debug_window) {
+      cv::namedWindow("morph", cv::WINDOW_NORMAL);
+      cv::imshow("morph", cv_image);
+      cv::waitKey(1);
+    }
   }
   imageToOccupancyGrid(cv_image, &occupancy_grid);
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);

@@ -195,28 +195,23 @@ void clipPathByLength(
 bool isVehicle(const PredictedObject & obj)
 {
   const auto & label = obj.classification.at(0).label;
-  if (
+  return (
     label == ObjectClassification::CAR || label == ObjectClassification::TRUCK ||
-    label == ObjectClassification::BUS || label == ObjectClassification::TRAILER) {
-    return true;
-  }
-  return false;
+    label == ObjectClassification::BUS || label == ObjectClassification::TRAILER);
 }
 
 bool isStuckVehicle(const PredictedObject & obj, const double min_vel)
 {
   if (!isVehicle(obj)) return false;
   const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
-  if (std::abs(obj_vel) > min_vel) return false;
-  return true;
+  return std::abs(obj_vel) <= min_vel;
 }
 
-bool isMovingVehicle(PredictedObject obj, const double min_vel)
+bool isMovingVehicle(const PredictedObject & obj, const double min_vel)
 {
   if (!isVehicle(obj)) return false;
   const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
-  if (std::abs(obj_vel) > min_vel) return false;
-  return true;
+  return std::abs(obj_vel) > min_vel;
 }
 std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstSharedPtr objects_ptr)
 {
