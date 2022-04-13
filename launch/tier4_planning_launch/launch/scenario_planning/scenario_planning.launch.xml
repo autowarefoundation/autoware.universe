@@ -19,6 +19,15 @@
     <arg name="is_parking_completed" value="/planning/scenario_planning/parking/is_completed"/>
   </include>
 
+  <!-- safe velocity adjustor -->
+  <group>
+    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
+    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/safe_velocity_adjustor/trajectory"/>
+    <include file="$(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor.launch.xml">
+      <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+    </include>
+  </group>
+
   <!-- velocity planning with max velocity, acceleration, jerk, stop point constraint -->
   <group>
     <arg name="param_path" default="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/common/motion_velocity_smoother/motion_velocity_smoother.param.yaml"/>
@@ -29,10 +38,10 @@
     </include>
     <!-- motion velocity smoother -->
     <arg name="smoother_type" default="JerkFiltered" description="options: JerkFiltered, L2, Analytical, Linf(Unstable)"/>
-    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
-    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory"/>
+    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/safe_velocity_adjustor/trajectory" />
+    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory" />
     <include file="$(find-pkg-share motion_velocity_smoother)/launch/motion_velocity_smoother.launch.xml">
-      <arg name="smoother_type" value="$(var smoother_type)"/>
+      <arg name="smoother_type" value="$(var smoother_type)" />
       <arg name="common_param_path" value="$(var common_param_path)"/>
       <arg name="param_path" value="$(var param_path)"/>
       <arg name="smoother_param_path" value="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/common/motion_velocity_smoother/$(var smoother_type).param.yaml"/>
