@@ -15,7 +15,6 @@
 #ifndef CENTERPOINT_TRT_HPP_
 #define CENTERPOINT_TRT_HPP_
 
-#include <config.hpp>
 #include <cuda_utils.hpp>
 #include <network_trt.hpp>
 #include <postprocess_kernel.hpp>
@@ -83,6 +82,7 @@ private:
   cudaStream_t stream_{nullptr};
 
   bool verbose_{false};
+  CenterPointConfig config_;
   std::size_t num_class_{0};
   std::size_t num_voxels_{0};
   std::size_t encoder_in_feature_size_{0};

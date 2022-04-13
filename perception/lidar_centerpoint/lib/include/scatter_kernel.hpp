@@ -22,7 +22,9 @@ namespace centerpoint
 {
 cudaError_t scatterFeatures_launch(
   const float * pillar_features, const int * coords, const std::size_t num_pillars,
-  float * scattered_features, cudaStream_t stream);
+  const std::size_t max_num_voxels, const std::size_t encoder_out_feature_size,
+  const std::size_t grid_size_x, const std::size_t grid_size_y, float * scattered_features,
+  cudaStream_t stream);
 
 }  // namespace centerpoint
 

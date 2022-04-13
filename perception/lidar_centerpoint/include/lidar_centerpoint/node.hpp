@@ -16,7 +16,6 @@
 #define LIDAR_CENTERPOINT__NODE_HPP_
 
 #include <centerpoint_trt.hpp>
-#include <config.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>

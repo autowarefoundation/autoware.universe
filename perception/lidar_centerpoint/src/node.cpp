@@ -14,7 +14,6 @@
 
 #include "lidar_centerpoint/node.hpp"
 
-#include <config.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <pointcloud_densification.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>

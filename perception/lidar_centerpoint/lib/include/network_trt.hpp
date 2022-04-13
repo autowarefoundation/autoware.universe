@@ -15,7 +15,10 @@
 #ifndef NETWORK_TRT_HPP_
 #define NETWORK_TRT_HPP_
 
+#include <centerpoint_config.hpp>
 #include <tensorrt_wrapper.hpp>
+
+#include <vector>
 
 namespace centerpoint
 {
@@ -35,7 +38,9 @@ class HeadTRT : public TensorRTWrapper
 public:
   using TensorRTWrapper::TensorRTWrapper;
 
-  HeadTRT(const std::size_t num_class, const bool verbose);
+  HeadTRT(
+    const std::size_t num_class, const std::vector<std::size_t> & out_channel_sizes,
+    const CenterPointConfig & config, const bool verbose);
 
 protected:
   bool setProfile(
@@ -43,6 +48,7 @@ protected:
     nvinfer1::IBuilderConfig & config) override;
 
   std::size_t num_class_{0};
+  std::vector<std::size_t> out_channel_sizes_;
 };
 
 }  // namespace centerpoint

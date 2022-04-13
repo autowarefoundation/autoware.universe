@@ -22,7 +22,10 @@
 
 namespace centerpoint
 {
-TensorRTWrapper::TensorRTWrapper(bool verbose) : logger_(Logger(verbose)) {}
+TensorRTWrapper::TensorRTWrapper(const CenterPointConfig & config, const bool verbose)
+: config_(config), logger_(Logger(verbose))
+{
+}
 
 bool TensorRTWrapper::init(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision)

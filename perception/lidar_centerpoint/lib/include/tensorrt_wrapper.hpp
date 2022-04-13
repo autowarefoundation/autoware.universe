@@ -15,6 +15,8 @@
 #ifndef TENSORRT_WRAPPER_HPP_
 #define TENSORRT_WRAPPER_HPP_
 
+#include <centerpoint_config.hpp>
+
 #include <NvInfer.h>
 
 #include <iostream>
@@ -56,7 +58,7 @@ private:
 class TensorRTWrapper
 {
 public:
-  explicit TensorRTWrapper(bool verbose);
+  explicit TensorRTWrapper(const CenterPointConfig & config, const bool verbose);
 
   bool init(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
@@ -68,6 +70,7 @@ protected:
     nvinfer1::IBuilder & builder, nvinfer1::INetworkDefinition & network,
     nvinfer1::IBuilderConfig & config) = 0;
 
+  CenterPointConfig config_;
   Logger logger_;
 
 private:
