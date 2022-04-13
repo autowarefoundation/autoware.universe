@@ -34,6 +34,7 @@ None
 | Name                         | Type   | Description                                             |
 | ---------------------------- | ------ | ------------------------------------------------------- |
 | `update_rate`                | double | timer's update rate                                     |
+| `activate_by_scenario`       | bool   | if true, activate by scenario = parking. Otherwise, activate if vehicle is inside parking lot. |
 | `use_objects`                | bool   | whether using `~input/objects` or not                   |
 | `use_points`                 | bool   | whether using `~input/points_no_ground` or not          |
 | `use_wayarea`                | bool   | whether using `wayarea` from `~input/vector_map` or not |
