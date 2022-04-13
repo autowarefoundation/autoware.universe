@@ -116,6 +116,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   ament_auto_find_build_dependencies()
 
   include_directories(
+    include
     lib/include
     ${CUDA_INCLUDE_DIRS}
   )

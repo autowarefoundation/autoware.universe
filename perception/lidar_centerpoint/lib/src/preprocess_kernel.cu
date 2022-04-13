@@ -28,16 +28,14 @@
  * limitations under the License.
  */
 
-#include <config.hpp>
 #include <preprocess_kernel.hpp>
 #include <utils.hpp>
 
 namespace
 {
-const std::size_t WARP_SIZE = 32;
+const std::size_t WARP_SIZE = 32;  // max_num_points_per_voxel or encoder_out_feature_size
 const std::size_t WARPS_PER_BLOCK = 4;
-const std::size_t FEATURE_SIZE = 9;  // same as `box_feature_size` in config.hpp
-
+const std::size_t FEATURE_SIZE = 9;  // the same as encoder_in_feature_size in config.hpp
 }  // namespace
 
 namespace centerpoint
@@ -52,7 +50,7 @@ __global__ void generateFeatures_kernel(
   // coords (int): (max_num_voxels, point_dim_size)
   int pillar_idx = blockIdx.x * WARPS_PER_BLOCK + threadIdx.x / WARP_SIZE;
   int point_idx = threadIdx.x % WARP_SIZE;
-  int pillar_idx_inBlock = threadIdx.x / WARP_SIZE;
+  int pillar_idx_inBlock = threadIdx.x / WARP_SIZE;  // max_num_points_per_voxel
 
   if (pillar_idx >= num_voxels) return;
 
@@ -142,14 +140,15 @@ __global__ void generateFeatures_kernel(
 
 cudaError_t generateFeatures_launch(
   const float * voxel_features, const float * voxel_num_points, const int * coords,
-  const std::size_t num_voxels, float * features, cudaStream_t stream)
+  const std::size_t num_voxels, const std::size_t max_num_voxels, const float voxel_size_x,
+  const float voxel_size_y, const float voxel_size_z, const float range_min_x,
+  const float range_min_y, const float range_min_z, float * features, cudaStream_t stream)
 {
-  dim3 blocks(divup(Config::max_num_voxels, WARPS_PER_BLOCK));
+  dim3 blocks(divup(max_num_voxels, WARPS_PER_BLOCK));
   dim3 threads(WARPS_PER_BLOCK * WARP_SIZE);
   generateFeatures_kernel<<<blocks, threads, 0, stream>>>(
-    voxel_features, voxel_num_points, coords, num_voxels, Config::voxel_size_x,
-    Config::voxel_size_y, Config::voxel_size_z, Config::range_min_x, Config::range_min_y,
-    Config::range_min_z, features);
+    voxel_features, voxel_num_points, coords, num_voxels, voxel_size_x, voxel_size_y, voxel_size_z,
+    range_min_x, range_min_y, range_min_z, features);
 
   return cudaGetLastError();
 }

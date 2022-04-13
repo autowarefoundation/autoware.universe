@@ -103,10 +103,11 @@ __global__ void generateBoxes3D_kernel(
   det_boxes3d[idx].vel_y = vel_y;
 }
 
-PostProcessCUDA::PostProcessCUDA(const std::size_t num_class, const float score_threshold)
-: num_class_(num_class), score_threshold_(score_threshold)
+PostProcessCUDA::PostProcessCUDA(
+  const std::size_t num_class, const float score_threshold, const CenterPointConfig & config)
+: num_class_(num_class), score_threshold_(score_threshold), config_(config)
 {
-  const auto num_raw_boxes3d = Config::down_grid_size_y * Config::down_grid_size_x;
+  const auto num_raw_boxes3d = config.down_grid_size_y_ * config.down_grid_size_x_;
   boxes3d_d_ = thrust::device_vector<Box3D>(num_raw_boxes3d);
 }
 
@@ -116,13 +117,13 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   cudaStream_t stream)
 {
   dim3 blocks(
-    divup(Config::down_grid_size_y, THREADS_PER_BLOCK),
-    divup(Config::down_grid_size_x, THREADS_PER_BLOCK));
+    divup(config_.down_grid_size_y_, THREADS_PER_BLOCK),
+    divup(config_.down_grid_size_x_, THREADS_PER_BLOCK));
   dim3 threads(THREADS_PER_BLOCK, THREADS_PER_BLOCK);
   generateBoxes3D_kernel<<<blocks, threads, 0, stream>>>(
-    out_heatmap, out_offset, out_z, out_dim, out_rot, out_vel, Config::voxel_size_x,
-    Config::voxel_size_y, Config::range_min_x, Config::range_min_y, Config::down_grid_size_x,
-    Config::down_grid_size_y, Config::downsample_factor, num_class_,
+    out_heatmap, out_offset, out_z, out_dim, out_rot, out_vel, config_.voxel_size_x_,
+    config_.voxel_size_y_, config_.range_min_x_, config_.range_min_y_, config_.down_grid_size_x_,
+    config_.down_grid_size_y_, config_.downsample_factor_, num_class_,
     thrust::raw_pointer_cast(boxes3d_d_.data()));
 
   // suppress by socre
