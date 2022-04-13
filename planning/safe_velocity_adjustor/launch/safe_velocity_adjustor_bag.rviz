@@ -8,6 +8,7 @@ Panels:
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
         - /Perception1
         - /Perception1/ObjectRecognition1/Prediction1
+        - /Polygons1
       Splitter Ratio: 0.557669460773468
     Tree Height: 289
   - Class: rviz_common/Selection
@@ -835,7 +836,7 @@ Visualization Manager:
                     Color: 119; 11; 32
                   Name: PredictedObjects
                   Namespaces:
-                    {}
+                    shape: true
                   PEDESTRIAN:
                     Alpha: 0.9990000128746033
                     Color: 255; 192; 203
@@ -1381,7 +1382,8 @@ Visualization Manager:
       Enabled: true
       Name: Envelope
       Namespaces:
-        {}
+        adjusted: true
+        original: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -1393,13 +1395,13 @@ Visualization Manager:
       Enabled: true
       Name: Polygons
       Namespaces:
-        {}
+        obstacle_polygons: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /safe_velocity_adjustor/output/debug_polygons
+        Value: /planning/scenario_planning/safe_velocity_adjustor/output/debug_polygons
       Value: true
   Enabled: true
   Global Options:
@@ -1443,7 +1445,9 @@ Visualization Manager:
       Z position: 1
       Z std deviation: 0.029999999329447746
     - Class: rviz_plugins/CarInitialPoseTool
+      Interactive: false
       Pose Topic: /simulation/dummy_perception_publisher/object_info
+      Target Frame: <Fixed Frame>
       Theta std deviation: 0.0872664600610733
       Velocity: 3
       X std deviation: 0.029999999329447746
@@ -1474,7 +1478,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 8.44149112701416
+      Scale: 18.127866744995117
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
       X: 6.502593994140625
