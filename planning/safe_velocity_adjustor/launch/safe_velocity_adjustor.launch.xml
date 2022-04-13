@@ -6,20 +6,18 @@
   <arg name="output_trajectory" default="/planning/scenario_planning/safe_velocity_adjustor/trajectory"/>
   <arg name="output_debug_markers" default="/planning/scenario_planning/safe_velocity_adjustor/debug_markers"/>
 
-  <arg name="param_path" default="$(find-pkg-share safe_velocity_adjustor)/config/default_safe_velocity_adjustor.param.yaml" />
-  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml" />
+  <arg name="param_path" default="$(find-pkg-share safe_velocity_adjustor)/config/default_safe_velocity_adjustor.param.yaml"/>
+  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
 
-  <let name="callgrind-launch-prefix" value="valgrind --tool=callgrind --dump-instr=yes -v --instr-atstart=no" />
-  <let name="gdb-launch-prefix" value="konsole -e gdb -ex run --args" />
-  <node pkg="safe_velocity_adjustor" exec="safe_velocity_adjustor" name="safe_velocity_adjustor" output="screen"
-    launch-prefix="$(var gdb-launch-prefix)">
-    <param from="$(var param_path)" />
-    <param from="$(var vehicle_info_param_file)" />
-    <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)" />
+  <let name="callgrind-launch-prefix" value="valgrind --tool=callgrind --dump-instr=yes -v --instr-atstart=no"/>
+  <let name="gdb-launch-prefix" value="konsole -e gdb -ex run --args"/>
+  <node pkg="safe_velocity_adjustor" exec="safe_velocity_adjustor" name="safe_velocity_adjustor" output="screen" launch-prefix="$(var gdb-launch-prefix)">
+    <param from="$(var param_path)"/>
+    <param from="$(var vehicle_info_param_file)"/>
+    <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/input/dynamic_obstacles" to="$(var input_dynamic_obstacles)"/>
     <remap from="~/output/trajectory" to="$(var output_trajectory)"/>
     <remap from="~/output/debug_markers" to="$(var output_debug_markers)"/>
   </node>
-
 </launch>
