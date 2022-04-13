@@ -118,7 +118,6 @@ bool OcclusionSpotModule::modifyPathVelocity(
       ego_pose.position, partition_lanelets_, debug_data_.close_partition);
   }
   DEBUG_PRINT(show_time, "extract[ms]: ", stop_watch_.toc("processing_time", true));
-  std::vector<geometry_msgs::msg::Point> vehicle_positions;
   const auto objects_ptr = planner_data_->predicted_objects;
   const auto vehicles = utils::extractVehicles(objects_ptr);
   const std::vector<PredictedObject> filtered_vehicles =
@@ -162,7 +161,6 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // apply safe velocity using ebs and pbs deceleration
   utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
   // these debug topics needs computation resource
-  debug_data_.parked_vehicle_point = vehicle_positions;
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
   debug_data_.interp_path = interp_path;

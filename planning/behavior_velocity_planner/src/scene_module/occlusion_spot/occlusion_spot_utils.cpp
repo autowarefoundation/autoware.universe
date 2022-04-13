@@ -452,16 +452,16 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
     PossibleCollisionInfo pc = calculateCollisionPathPointFromOcclusionSpot(
       arc_coord_occlusion_point, arc_coord_collision_point, path_lanelet, param);
     const auto & ip = pc.intersection_pose.position;
-    bool collision_free_at_intersection = grid_utils::isCollisionFree(
-      grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y), param.pedestrian_radius);
     bool is_obstacle_blocked_by_partition = false;
-    if (!collision_free_at_intersection) continue;
     if (param.use_partition_lanelet) {
       const auto & op = obstacle_point;
       const LineString2d obstacle_vec = {{op[0], op[1]}, {ip.x, ip.y}};
       is_obstacle_blocked_by_partition = isBlockedByPartition(obstacle_vec, partition_lanelets);
     }
     if (is_obstacle_blocked_by_partition) continue;
+    bool collision_free_at_intersection = grid_utils::isCollisionFree(
+      grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y), param.pedestrian_radius);
+    if (!collision_free_at_intersection) continue;
     distance_lower_bound = dist;
     candidate = pc;
     has_collision = true;

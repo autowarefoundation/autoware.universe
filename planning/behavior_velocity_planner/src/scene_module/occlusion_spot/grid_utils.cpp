@@ -149,13 +149,8 @@ void findOcclusionSpots(
     OcclusionSpotSquare occlusion_spot_square;
     if (isOcclusionSpotSquare(
           occlusion_spot_square, grid_data, *iterator, min_occlusion_spot_size, grid.getSize())) {
-      if (!grid.getPosition(occlusion_spot_square.index, occlusion_spot_square.position)) {
-        continue;
-      }
-      std::vector<grid_map::Position> corner_positions;
-      getCornerPositions(corner_positions, grid, occlusion_spot_square);
-      for (const grid_map::Position & corner : corner_positions) {
-        occlusion_spot_positions.emplace_back(corner);
+      if (grid.getPosition(occlusion_spot_square.index, occlusion_spot_square.position)) {
+        occlusion_spot_positions.emplace_back(occlusion_spot_square.position);
       }
     }
   }
