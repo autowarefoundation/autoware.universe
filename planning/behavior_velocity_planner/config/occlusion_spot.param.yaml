@@ -11,7 +11,7 @@
       pedestrian_radius: 0.3                # [m] assume pedestrian width(0.2m) + margin(0.1m)
       debug:                                # !Note: default should be false for performance
         is_show_occlusion: false            # [-] whether to show occlusion point markers.
-        is_show_cv_window: true            # [-] whether to show open_cv debug window
+        is_show_cv_window: false            # [-] whether to show open_cv debug window
         is_show_processing_time: false      # [-] whether to show processing time
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range

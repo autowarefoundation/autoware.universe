@@ -216,12 +216,15 @@ void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisi
 void clipPathByLength(
   const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
 //!< @brief extract target vehicles
-bool isStuckVehicle(const PredictedObject obj, const double min_vel);
+bool isStuckVehicle(const PredictedObject & obj, const double min_vel);
 bool isMovingVehicle(const PredictedObject & obj, const double min_vel);
 std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstSharedPtr objects_ptr);
 std::vector<PredictedObject> filterVehiclesByDetectionArea(
   const std::vector<PredictedObject> & objs, const Polygons2d & polys);
 bool isVehicle(const ObjectClassification & obj_class);
+void categorizeVehicles(
+  const std::vector<PredictedObject> & vehicles, Polygons2d & stuck_vehicle_foot_prints,
+  Polygons2d & moving_vehicle_foot_prints, const double stuck_vehicle_vel);
 bool generatePossibleCollisionsFromObjects(
   std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
   const PlannerParam & param, const double offset_from_start_to_ego,

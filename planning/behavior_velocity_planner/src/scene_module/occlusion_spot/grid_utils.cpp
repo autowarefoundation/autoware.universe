@@ -337,7 +337,9 @@ Point transformFromMap2Grid(const TransformStamped & geom_tf_map2grid, const Poi
 }
 
 void generateOccupiedImage(
-  const OccupancyGrid & occ_grid, cv::Mat & inout_image, const Polygons2d & foot_prints)
+  const OccupancyGrid & occ_grid, cv::Mat & inout_image,
+  const Polygons2d & stuck_vehicle_foot_prints, const Polygons2d & moving_vehicle_foot_prints,
+  const bool use_object_foot_print, const bool use_object_raycast)
 {
   const auto & occ = occ_grid;
   OccupancyGrid occupancy_grid;
@@ -383,22 +385,38 @@ void generateOccupiedImage(
   std::vector<std::vector<cv::Point>> cv_polygons;
   std::vector<cv::Point> cv_polygon;
   Polygon2d occupancy_poly = generateOccupancyPolygon(occupancy_grid.info);
-  for (const auto & foot_print : foot_prints) {
-    // calculate occlusion polygon from moving vehicle
-    const auto polys = generateOccupiedPolygon(occupancy_poly, foot_print, scan_origin);
-    if (polys == boost::none) continue;
-    // transform to cv point and stuck it to cv polygon
-    for (const auto & p : polys.get().outer()) {
-      const Point transformed_geom_pt = transformFromMap2Grid(geom_tf_map2grid, p);
-      cv_polygon.emplace_back(
-        toCVPoint(transformed_geom_pt, width, height, occupancy_grid.info.resolution));
+  if (use_object_raycast) {
+    for (const auto & foot_print : moving_vehicle_foot_prints) {
+      // calculate occlusion polygon from moving vehicle
+      const auto polys = generateOccupiedPolygon(occupancy_poly, foot_print, scan_origin);
+      if (polys == boost::none) continue;
+      // transform to cv point and stuck it to cv polygon
+      for (const auto & p : polys.get().outer()) {
+        const Point transformed_geom_pt = transformFromMap2Grid(geom_tf_map2grid, p);
+        cv_polygon.emplace_back(
+          toCVPoint(transformed_geom_pt, width, height, occupancy_grid.info.resolution));
+      }
+      cv_polygons.push_back(cv_polygon);
+      // clear previously addeed points
+      cv_polygon.clear();
     }
-    cv_polygons.push_back(cv_polygon);
-    // clear previously addeed points
-    cv_polygon.clear();
   }
-  // fill in occlusion area and copy to occupancy grid
-  cv::fillPoly(inout_image, cv_polygons, cv::Scalar(occupied_space));
+  if (use_object_foot_print) {
+    for (const auto & foot_print : stuck_vehicle_foot_prints) {
+      for (const auto & p : foot_print.outer()) {
+        const Point transformed_geom_pt = transformFromMap2Grid(geom_tf_map2grid, p);
+        cv_polygon.emplace_back(
+          toCVPoint(transformed_geom_pt, width, height, occupancy_grid.info.resolution));
+      }
+      cv_polygons.push_back(cv_polygon);
+      // clear previously addeed points
+      cv_polygon.clear();
+    }
+  }
+  for (const auto & p : cv_polygons) {
+    // fill in occlusion area and copy to occupancy grid
+    cv::fillConvexPoly(inout_image, p, cv::Scalar(occupied_space));
+  }
 }
 
 cv::Point toCVPoint(
@@ -456,9 +474,11 @@ void toQuantizedImage(
 }
 
 void denoiseOccupancyGridCV(
-  const OccupancyGrid::ConstSharedPtr occupancy_grid_ptr, const Polygons2d & foot_prints,
+  const OccupancyGrid::ConstSharedPtr occupancy_grid_ptr,
+  const Polygons2d & stuck_vehicle_foot_prints, const Polygons2d & moving_vehicle_foot_prints,
   grid_map::GridMap & grid_map, const GridParam & param, const bool is_show_debug_window,
-  const bool filter_occupancy_grid, const bool use_moving_object_ray_cast)
+  const bool filter_occupancy_grid, const bool use_object_footprints,
+  const bool use_object_ray_casts)
 {
   OccupancyGrid occupancy_grid = *occupancy_grid_ptr;
   cv::Mat cv_image(
@@ -474,8 +494,10 @@ void denoiseOccupancyGridCV(
   }
 
   //! raycast object shadow using vehicle
-  if (use_moving_object_ray_cast) {
-    generateOccupiedImage(occupancy_grid, cv_image, foot_prints);
+  if (use_object_footprints || use_object_ray_casts) {
+    generateOccupiedImage(
+      occupancy_grid, cv_image, stuck_vehicle_foot_prints, moving_vehicle_foot_prints,
+      use_object_footprints, use_object_ray_casts);
     if (is_show_debug_window) {
       cv::namedWindow("object ray shadow", cv::WINDOW_NORMAL);
       cv::imshow("object ray shadow", cv_image);

@@ -157,19 +157,24 @@ void getCornerPositions(
   std::vector<grid_map::Position> & corner_positions, const grid_map::GridMap & grid,
   const OcclusionSpotSquare & occlusion_spot_square);
 boost::optional<Polygon2d> generateOccupiedPolygon(
-  const Polygon2d & occupancy_poly, const Polygon2d & foot_print, const Point & position);
+  const Polygon2d & occupancy_poly, const Polygons2d & stuck_vehicle_foot_prints,
+  const Polygons2d & moving_vehicle_foot_prints, const Point & position);
 //!< @brief generate occupied polygon from foot print
 void generateOccupiedImage(
-  const OccupancyGrid & occupancy_grid, cv::Mat & out_image, const Polygons2d & foot_prints);
+  const OccupancyGrid & occ_grid, cv::Mat & inout_image,
+  const Polygons2d & stuck_vehicle_foot_prints, const Polygons2d & moving_vehicle_foot_prints,
+  const bool use_object_foot_print, const bool use_object_raycast);
 cv::Point toCVPoint(
   const Point & geom_point, const double width_m, const double height_m, const double resolution);
 void imageToOccupancyGrid(const cv::Mat & cv_image, nav_msgs::msg::OccupancyGrid * occupancy_grid);
 void toQuantizedImage(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid, cv::Mat * cv_image, const GridParam & param);
 void denoiseOccupancyGridCV(
-  const OccupancyGrid::ConstSharedPtr occupancy_grid_ptr, const Polygons2d & foot_prints,
+  const OccupancyGrid::ConstSharedPtr occupancy_grid_ptr,
+  const Polygons2d & stuck_vehicle_foot_prints, const Polygons2d & moving_vehicle_foot_prints,
   grid_map::GridMap & grid_map, const GridParam & param, const bool is_show_debug_window,
-  const bool filter_occupancy_grid, const bool use_moving_object_ray_cast);
+  const bool filter_occupancy_grid, const bool use_object_footprints,
+  const bool use_object_ray_casts);
 void addObjectsToGridMap(const std::vector<PredictedObject> & objs, grid_map::GridMap & grid);
 }  // namespace grid_utils
 }  // namespace behavior_velocity_planner

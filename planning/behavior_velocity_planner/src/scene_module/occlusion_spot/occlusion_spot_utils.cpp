@@ -213,6 +213,7 @@ bool isMovingVehicle(const PredictedObject & obj, const double min_vel)
   const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
   return std::abs(obj_vel) > min_vel;
 }
+
 std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstSharedPtr objects_ptr)
 {
   std::vector<PredictedObject> vehicles;
@@ -222,6 +223,22 @@ std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstShared
     }
   }
   return vehicles;
+}
+
+void categorizeVehicles(
+  const std::vector<PredictedObject> & vehicles, Polygons2d & stuck_vehicle_foot_prints,
+  Polygons2d & moving_vehicle_foot_prints, const double stuck_vehicle_vel)
+{
+  moving_vehicle_foot_prints.clear();
+  stuck_vehicle_foot_prints.clear();
+  for (const auto & vehicle : vehicles) {
+    if (isMovingVehicle(vehicle, stuck_vehicle_vel)) {
+      moving_vehicle_foot_prints.emplace_back(planning_utils::toFootprintPolygon(vehicle));
+    } else if (isStuckVehicle(vehicle, stuck_vehicle_vel)) {
+      stuck_vehicle_foot_prints.emplace_back(planning_utils::toFootprintPolygon(vehicle));
+    }
+  }
+  return;
 }
 
 ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
