@@ -135,40 +135,28 @@ class DrawGraph(Node):
                 scatter_only,
             )
         plt.savefig("plot.svg")
+        print("svg saved")
 
     def get_data_callback(self, request, response):
-        with open('plot.svg', 'r') as svg:
-            count=0
-        
-            for data in svg:
-            # stringにした場合は以下のfor文を消して下記の処理を行う
-            # Calib.graph_image.append(data)
-                data = str(data)
-                for c in data:
-                    # for debug
-                    count += 1
-                    print("%d, %s, %s", count, c, type(c))
-                    
-                    # data processing
-                    # response.graph_image.append(ord(c))
-                
-                    if data == '':
-                        print("Data end")
-                        break
-
-        print("svg data end") #for debug
+        with open('plot.svg', 'r') as f:
+            svg = f.read()
+            for c in svg:
+                # The character "-" (minus) in graph label is saved as the unicode letter U+2212 for some reason. 
+                # U+2212 is changed to minus here for packing data 
+                if c == '−': 
+                    c = '-'  
+                response.graph_image.append(ord(c))
+        print("svg data packed") 
 
         with open(self.calibrated_map_dir+"accel_map.csv", 'r') as calibrated_accel_map:
             for accel_data  in calibrated_accel_map: 
                 response.accel_map += accel_data
-
-        print("accel map end") #for debug
-
+        print("accel map packed")
+        
         with open(self.calibrated_map_dir+"brake_map.csv", 'r') as calibrated_brake_map:
             for brake_data in calibrated_brake_map : 
                 response.brake_map += brake_data
-
-        print("brake map end") #for debug
+        print("brake map packed") 
         
         return response
 

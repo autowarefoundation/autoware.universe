@@ -59,10 +59,12 @@ def main(args=None):
 
                 print(svg_name) #for debug
 
-                # f_svg = open(svg_name, "w")
-                # f_svg.write(response.graph_image) 
+                f_svg = open(svg_name, "w")
+                for i in response.graph_image:
+                    c = chr(i)
+                    f_svg.write(c) 
 
-                # print("svg done") #for debug
+                print("svg done") #for debug
 
                 acc_map_name = save_dir + "/accel_map.csv"
                 f_acc = open(acc_map_name, "w")
