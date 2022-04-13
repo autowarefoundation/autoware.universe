@@ -1,0 +1,6 @@
+---
+autoware_ad_api_msgs/ResponseStatus status
+string version
+uint32 major
+uint32 minor
+uint32 patch
