@@ -129,7 +129,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     if (!occ_grid_ptr) return true;  // no data
     grid_map::GridMap grid_map;
     Polygons2d foot_prints;
-    for (const auto & p : vehicles) {
+    for (const auto & p : filtered_vehicles) {
       foot_prints.emplace_back(planning_utils::toFootprintPolygon(p));
     }
     // occ -> image
