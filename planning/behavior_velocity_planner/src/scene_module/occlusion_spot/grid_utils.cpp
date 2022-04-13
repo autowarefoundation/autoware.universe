@@ -56,19 +56,13 @@ std::vector<std::pair<grid_map::Position, grid_map::Position>> pointsToRays(
   return lines;
 }
 
-void addObjectsToGridMap(const PredictedObjects & objs, grid_map::GridMap & grid)
+void addObjectsToGridMap(const std::vector<PredictedObject> & objs, grid_map::GridMap & grid)
 {
   auto & grid_data = grid["layer"];
-  for (const auto & obj : objs.objects) {
+  for (const auto & obj : objs) {
     Polygon2d foot_print_polygon = planning_utils::toFootprintPolygon(obj);
     grid_map::Polygon grid_polygon;
     const auto & pos = obj.kinematics.initial_pose_with_covariance.pose.position;
-    const auto & obj_label = obj.classification.at(0).label;
-    using autoware_auto_perception_msgs::msg::ObjectClassification;
-    if (
-      obj_label != ObjectClassification::CAR || obj_label != ObjectClassification::TRUCK ||
-      obj_label != ObjectClassification::BUS || obj_label != ObjectClassification::TRAILER)
-      continue;
     if (grid.isInside(grid_map::Position(pos.x, pos.y))) continue;
     try {
       for (const auto & point : foot_print_polygon.outer()) {

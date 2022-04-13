@@ -192,39 +192,41 @@ void clipPathByLength(
   }
 }
 
-bool isStuckVehicle(PredictedObject obj, const double min_vel)
+bool isVehicle(const PredictedObject & obj)
 {
+  const auto & label = obj.classification.at(0).label;
   if (
-    obj.classification.at(0).label == ObjectClassification::CAR ||
-    obj.classification.at(0).label == ObjectClassification::TRUCK ||
-    obj.classification.at(0).label == ObjectClassification::BUS) {
-    if (std::abs(obj.kinematics.initial_twist_with_covariance.twist.linear.x) < min_vel) {
-      return true;
-    }
+    label == ObjectClassification::CAR || label == ObjectClassification::TRUCK ||
+    label == ObjectClassification::BUS || label == ObjectClassification::TRAILER) {
+    return true;
   }
   return false;
 }
 
-std::vector<PredictedObject> getParkedVehicles(
-  const PredictedObjects & dyn_objects, const PlannerParam & param,
-  std::vector<Point> & debug_point)
+bool isStuckVehicle(const PredictedObject & obj, const double min_vel)
 {
-  std::vector<PredictedObject> parked_vehicles;
-  std::vector<Point> points;
-  for (const auto & obj : dyn_objects.objects) {
-    bool is_parked_vehicle = true;
-    if (!occlusion_spot_utils::isStuckVehicle(obj, param.stuck_vehicle_vel)) {
-      continue;
-    }
-    const geometry_msgs::msg::Point & p = obj.kinematics.initial_pose_with_covariance.pose.position;
-    BasicPoint2d obj_point(p.x, p.y);
-    if (is_parked_vehicle) {
-      parked_vehicles.emplace_back(obj);
-      points.emplace_back(p);
+  if (!isVehicle(obj)) return false;
+  const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
+  if (std::abs(obj_vel) > min_vel) return false;
+  return true;
+}
+
+bool isMovingVehicle(PredictedObject obj, const double min_vel)
+{
+  if (!isVehicle(obj)) return false;
+  const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
+  if (std::abs(obj_vel) > min_vel) return false;
+  return true;
+}
+std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstSharedPtr objects_ptr)
+{
+  std::vector<PredictedObject> vehicles;
+  for (const auto & obj : objects_ptr->objects) {
+    if (occlusion_spot_utils::isVehicle(obj)) {
+      vehicles.emplace_back(obj);
     }
   }
-  debug_point = points;
-  return parked_vehicles;
+  return vehicles;
 }
 
 ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
@@ -343,8 +345,8 @@ bool generatePossibleCollisionsFromObjects(
   return !possible_collisions.empty();
 }
 
-std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const Polygons2d & polys)
+std::vector<PredictedObject> filterVehiclesByDetectionArea(
+  const std::vector<PredictedObject> & objs, const Polygons2d & polys)
 {
   std::vector<PredictedObject> filtered_obj;
   // stuck points by predicted objects

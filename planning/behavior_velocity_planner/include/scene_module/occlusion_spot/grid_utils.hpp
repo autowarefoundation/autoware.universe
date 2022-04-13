@@ -94,7 +94,7 @@ void denoiseOccupancyGridCV(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid_ptr,
   grid_map::GridMap & grid_map, const GridParam & param, const bool is_show_debug_window,
   const bool filter_occupancy_grid);
-void addObjectsToGridMap(const PredictedObjects & objs, grid_map::GridMap & grid);
+void addObjectsToGridMap(const std::vector<PredictedObject> & objs, grid_map::GridMap & grid);
 }  // namespace grid_utils
 }  // namespace behavior_velocity_planner
 

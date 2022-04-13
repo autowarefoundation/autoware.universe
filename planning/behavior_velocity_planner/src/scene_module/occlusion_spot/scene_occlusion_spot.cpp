@@ -118,7 +118,12 @@ bool OcclusionSpotModule::modifyPathVelocity(
       ego_pose.position, partition_lanelets_, debug_data_.close_partition);
   }
   DEBUG_PRINT(show_time, "extract[ms]: ", stop_watch_.toc("processing_time", true));
-  std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
+  std::vector<geometry_msgs::msg::Point> vehicle_positions;
+  const auto objects_ptr = planner_data_->predicted_objects;
+  const auto vehicles = utils::extractVehicles(objects_ptr);
+  const std::vector<PredictedObject> filtered_vehicles =
+    utils::filterVehiclesByDetectionArea(vehicles, debug_data_.detection_area_polygons);
+  DEBUG_PRINT(show_time, "filter obj[ms]: ", stop_watch_.toc("processing_time", true));
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
     if (!occ_grid_ptr) return true;  // no data
@@ -126,7 +131,10 @@ bool OcclusionSpotModule::modifyPathVelocity(
     grid_utils::denoiseOccupancyGridCV(
       occ_grid_ptr, grid_map, param_.grid, param_.is_show_cv_window, param_.filter_occupancy_grid);
     if (param_.use_object_info) {
-      grid_utils::addObjectsToGridMap(*planner_data_->predicted_objects, grid_map);
+      grid_utils::addObjectsToGridMap(filtered_vehicles, grid_map);
+    }
+    if (param_.use_moving_object_ray_cast) {
+      // grid_utils::addObjectsToGridMap(filtered_vehicles, grid_map);
     }
     DEBUG_PRINT(show_time, "grid [ms]: ", stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here
@@ -137,15 +145,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
       return true;
     }
   } else if (param_.detection_method == utils::DETECTION_METHOD::PREDICTED_OBJECT) {
-    const auto & dynamic_obj_arr_ptr = planner_data_->predicted_objects;
-    if (!dynamic_obj_arr_ptr) return true;  // no data
-    std::vector<PredictedObject> obj =
-      utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, parked_vehicle_point);
-    const auto filtered_obj =
-      utils::filterDynamicObjectByDetectionArea(obj, debug_data_.detection_area_polygons);
     // Note: Don't consider offset from path start to ego here
     if (!utils::generatePossibleCollisionsFromObjects(
-          possible_collisions, interp_path, param_, offset_from_start_to_ego, filtered_obj)) {
+          possible_collisions, interp_path, param_, offset_from_start_to_ego, filtered_vehicles)) {
       // no occlusion spot
       return true;
     }
@@ -158,7 +160,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // apply safe velocity using ebs and pbs deceleration
   utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
   // these debug topics needs computation resource
-  debug_data_.parked_vehicle_point = parked_vehicle_point;
+  debug_data_.parked_vehicle_point = vehicle_positions;
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
   debug_data_.interp_path = interp_path;
