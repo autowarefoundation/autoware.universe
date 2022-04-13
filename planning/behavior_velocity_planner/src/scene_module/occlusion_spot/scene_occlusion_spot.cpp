@@ -36,6 +36,23 @@
     RCLCPP_INFO_STREAM_THROTTLE(logger_, *clock_, 3000, time_msg); \
   }
 
+namespace
+{
+namespace utils = behavior_velocity_planner::occlusion_spot_utils;
+using autoware_auto_perception_msgs::msg::PredictedObject;
+std::vector<PredictedObject> extractStuckVehicle(
+  const std::vector<PredictedObject> & vehicles, const double stop_velocity)
+{
+  std::vector<PredictedObject> stuck_vehicles;
+  for (const auto & obj : vehicles) {
+    if (utils::isStuckVehicle(obj, stop_velocity)) {
+      stuck_vehicles.emplace_back(obj);
+    }
+  }
+  return stuck_vehicles;
+}
+}  // namespace
+
 namespace behavior_velocity_planner
 {
 namespace utils = occlusion_spot_utils;
@@ -75,7 +92,8 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
     param_.v.a_ego = planner_data_->current_accel.get();
-    param_.v.delay_time = planner_data_->delay_response_time;
+    // introduce delay ratio until system delay param will introduce
+    param_.v.delay_time = 0.5;
     const double detection_area_offset = 5.0;  // for visualization and stability
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
@@ -146,9 +164,10 @@ bool OcclusionSpotModule::modifyPathVelocity(
       return true;
     }
   } else if (param_.detection_method == utils::DETECTION_METHOD::PREDICTED_OBJECT) {
+    const auto stuck_vehicles = extractStuckVehicle(filtered_vehicles, param_.stuck_vehicle_vel);
     // Note: Don't consider offset from path start to ego here
     if (!utils::generatePossibleCollisionsFromObjects(
-          possible_collisions, interp_path, param_, offset_from_start_to_ego, filtered_vehicles)) {
+          possible_collisions, interp_path, param_, offset_from_start_to_ego, stuck_vehicles)) {
       // no occlusion spot
       return true;
     }
