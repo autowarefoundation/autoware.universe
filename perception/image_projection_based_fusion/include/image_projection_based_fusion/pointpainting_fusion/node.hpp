@@ -17,6 +17,8 @@
 
 #include "image_projection_based_fusion/fusion_node.hpp"
 
+#include <centerpoint_trt.hpp>
+#include <config.hpp>
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 
@@ -26,7 +28,7 @@
 
 namespace image_projection_based_fusion
 {
-
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 class PointpaintingFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2>
 {
 public:
@@ -48,32 +50,20 @@ protected:
     const Eigen::Matrix4d & camera_projection,
     sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg);
 
-  //   void fuseOnSingleImage(
-  //     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const int image_id,
-  //     const DetectedObjectsWithFeature & input_roi_msg,
-  //     const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_msg) override;
-
-  // void fuseOnSingleImage(
-  //   const DetectedObjects & input_pointcloud_msg, const int image_id,
-  //   const DetectedObjectsWithFeature & input_roi_msg,
-  //   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_msg) override;
-
-  //   void generateDetectedObjectRois(
-  //     const std::vector<DetectedObject> & input_objects, const double image_width,
-  //     const double image_height, const Eigen::Affine3d & object2camera_affine,
-  //     const Eigen::Matrix4d & camera_projection,
-  //     std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map);
-
-  //   void updateDetectedObjectClassification(
-  //     const std::vector<DetectedObjectWithFeature> & image_rois,
-  //     const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
-  //     std::vector<DetectedObject> & output_objects);
   void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
-  //   bool use_iou_{false};
-  //   bool use_iou_x_{false};
-  //   bool use_iou_y_{false};
-  //   float iou_threshold_{0.0f};
+  void box3DToDetectedObject(
+    const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj);
+  static uint8_t getSemanticType(const std::string & class_name);
+  static bool isCarLikeVehicleLabel(const uint8_t label);
+
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr obj_pub_ptr_;
+
+  float score_threshold_{0.0};
+  std::vector<std::string> class_names_;
+  bool rename_car_to_truck_and_bus_{false};
+
+  std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
 };
 
 }  // namespace image_projection_based_fusion

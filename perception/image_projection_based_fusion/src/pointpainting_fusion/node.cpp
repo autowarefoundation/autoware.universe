@@ -16,6 +16,8 @@
 
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/constants.hpp>
 
 namespace image_projection_based_fusion
 {
@@ -23,10 +25,27 @@ namespace image_projection_based_fusion
 PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<sensor_msgs::msg::PointCloud2>("pointpainting_fusion", options)
 {
-  //   use_iou_x_ = declare_parameter("use_iou_x", false);
-  //   use_iou_y_ = declare_parameter("use_iou_y", false);
-  //   use_iou_ = declare_parameter("use_iou", false);
-  //   iou_threshold_ = declare_parameter("iou_threshold", 0.1);
+  score_threshold_ = this->declare_parameter("score_threshold", 0.4);
+  std::string densification_world_frame_id =
+    this->declare_parameter("densification_world_frame_id", "map");
+  int densification_num_past_frames = this->declare_parameter("densification_num_past_frames", 1);
+  std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
+  std::string encoder_onnx_path = this->declare_parameter("encoder_onnx_path", "");
+  std::string encoder_engine_path = this->declare_parameter("encoder_engine_path", "");
+  std::string head_onnx_path = this->declare_parameter("head_onnx_path", "");
+  std::string head_engine_path = this->declare_parameter("head_engine_path", "");
+  class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
+  rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
+
+  NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
+  NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
+  DensificationParam densification_param(
+    densification_world_frame_id, densification_num_past_frames);
+  detector_ptr_ = std::make_unique<CenterPointTRT>(
+    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param);
+
+  obj_pub_ptr_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+    "~/output/objects", rclcpp::QoS{1});
 }
 
 void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
@@ -71,8 +90,6 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     painted_pointcloud_msg.point_step);
   painted_pointcloud_msg.row_step =
     static_cast<uint32_t>(painted_pointcloud_msg.data.size() / painted_pointcloud_msg.height);
-
-  // pub_ptr_->publish(painted_pointcloud_msg);
 }
 
 void PointpaintingFusionNode::fuseOnSingleImage(
@@ -113,7 +130,6 @@ void PointpaintingFusionNode::fuseOnSingleImage(
     camera_info.p.at(3), camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6),
     camera_info.p.at(7), camera_info.p.at(8), camera_info.p.at(9), camera_info.p.at(10),
     camera_info.p.at(11);
-  // std::cout << camera_projection << std::endl;
 
   // transform
   sensor_msgs::msg::PointCloud2 transformed_pointcloud;
@@ -162,24 +178,126 @@ void PointpaintingFusionNode::fuseOnSingleImage(
             *iter_bic = 1.0;
             break;
         }
-        projected_points.push_back(normalized_projected_point);
-        debug_image_points.push_back(normalized_projected_point);
-        // debug_image_points.push_back(normalized_projected_point);
+        if (debugger_) {
+          projected_points.push_back(normalized_projected_point);
+          debug_image_points.push_back(normalized_projected_point);
+        }
       }
-      debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
     }
   }
 
-  // pub_ptr_->publish(painted_pointcloud_msg);
-
   if (debugger_) {
+    for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
+      debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
+    }
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }
 
-void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) {}
+void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+{
+  std::vector<Box3D> det_boxes3d;
+  bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
+  if (!is_success) {
+    return;
+  }
+
+  autoware_auto_perception_msgs::msg::DetectedObjects output_obj_msg;
+  output_obj_msg.header = painted_pointcloud_msg.header;
+  for (const auto & box3d : det_boxes3d) {
+    if (box3d.score < score_threshold_) {
+      continue;
+    }
+    autoware_auto_perception_msgs::msg::DetectedObject obj;
+    box3DToDetectedObject(box3d, obj);
+    output_obj_msg.objects.emplace_back(obj);
+  }
+
+  obj_pub_ptr_->publish(output_obj_msg);
+}
+
+void PointpaintingFusionNode::box3DToDetectedObject(
+  const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj)
+{
+  // TODO(yukke42): the value of classification confidence of DNN, not probability.
+  obj.existence_probability = box3d.score;
+
+  // classification
+  autoware_auto_perception_msgs::msg::ObjectClassification classification;
+  classification.probability = 1.0f;
+  if (box3d.label >= 0 && static_cast<size_t>(box3d.label) < class_names_.size()) {
+    classification.label = getSemanticType(class_names_[box3d.label]);
+  } else {
+    classification.label = Label::UNKNOWN;
+  }
+
+  float l = box3d.length;
+  float w = box3d.width;
+  if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
+    // Note: object size is referred from multi_object_tracker
+    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
+      classification.label = Label::TRUCK;
+    } else if (w * l > 2.5 * 7.9) {
+      classification.label = Label::BUS;
+    }
+  }
+
+  if (isCarLikeVehicleLabel(classification.label)) {
+    obj.kinematics.orientation_availability =
+      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
+  }
+
+  obj.classification.emplace_back(classification);
+
+  // pose and shape
+  // mmdet3d yaw format to ros yaw format
+  float yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
+  obj.kinematics.pose_with_covariance.pose.position =
+    tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
+  obj.kinematics.pose_with_covariance.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  obj.shape.dimensions =
+    tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
+
+  // twist
+  float vel_x = box3d.vel_x;
+  float vel_y = box3d.vel_y;
+  geometry_msgs::msg::Twist twist;
+  twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
+  twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+  obj.kinematics.twist_with_covariance.twist = twist;
+  obj.kinematics.has_twist = true;
+}
+
+uint8_t PointpaintingFusionNode::getSemanticType(const std::string & class_name)
+{
+  if (class_name == "CAR") {
+    return Label::CAR;
+  } else if (class_name == "TRUCK") {
+    return Label::TRUCK;
+  } else if (class_name == "BUS") {
+    return Label::BUS;
+  } else if (class_name == "TRAILER") {
+    return Label::TRAILER;
+  } else if (class_name == "BICYCLE") {
+    return Label::BICYCLE;
+  } else if (class_name == "MOTORBIKE") {
+    return Label::MOTORCYCLE;
+  } else if (class_name == "PEDESTRIAN") {
+    return Label::PEDESTRIAN;
+  } else {
+    return Label::UNKNOWN;
+  }
+}
+
+bool PointpaintingFusionNode::isCarLikeVehicleLabel(const uint8_t label)
+{
+  return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
+         label == Label::TRAILER;
+}
 
 }  // namespace image_projection_based_fusion
 

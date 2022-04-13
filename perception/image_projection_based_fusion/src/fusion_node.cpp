@@ -220,9 +220,9 @@ void FusionNode<Msg, Obj>::fusionCallback(
       *input_msg, image_id, *input_roi_msg, camera_info_map_.at(image_id), output_msg);
   }
 
-  // postprocess();
+  postprocess(output_msg);
 
-  // publish(output_msg);
+  publish(output_msg);
 }
 
 template <class Msg, class Obj>
