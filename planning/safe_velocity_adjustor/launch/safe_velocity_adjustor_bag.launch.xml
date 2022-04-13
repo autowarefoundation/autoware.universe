@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <set_parameter name="use_sim_time" value="true" />
-  <arg name="vehicle_model" description="vehicle model name" default="lexus"/>
-  <arg name="sensor_model" default="aip_xx1"/>
+  <set_parameter name="use_sim_time" value="true"/>
+  <arg name="vehicle_model" description="vehicle model name" default="sample_vehicle"/>
+  <arg name="sensor_model" default="sample_sensor_kit"/>
   <arg name="vehicle_id" default="$(env VEHICLE_ID default)" description="vehicle specific ID"/>
   <arg name="vehicle_simulation" default="false" description="use vehicle simulation"/>
 
@@ -11,55 +11,66 @@
 
   <!-- Global parameters -->
   <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
-    <arg name="use_sim_time" value="true" />
+    <arg name="use_sim_time" value="true"/>
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
   </include>
 
   <!-- Vehicle -->
   <group>
-    <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
+    <include file="$(find-pkg-share tier4_vehicle_launch)/launch/vehicle.launch.xml">
       <arg name="vehicle_model" value="$(var vehicle_model)"/>
       <arg name="sensor_model" value="$(var sensor_model)"/>
       <arg name="vehicle_id" value="$(var vehicle_id)"/>
-      <arg name="simulation" value="$(var vehicle_simulation)"/>
+      <arg name="launch_vehicle_interface" value="false"/>
     </include>
   </group>
 
-  <!-- Pointcloud container -->
-  <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py" if="$(var use_pointcloud_container)">
-    <arg name="use_multithread" value="true" />
-    <arg name="container_name" value="$(var pointcloud_container_name)"/>
-  </include>
   <!-- Sensing -->
   <group>
-    <include file="$(find-pkg-share sensing_launch)/launch/sensing.launch.xml">
+    <include file="$(find-pkg-share tier4_sensing_launch)/launch/sensing.launch.xml">
       <arg name="launch_driver" value="false"/>
       <arg name="sensor_model" value="$(var sensor_model)"/>
+      <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
       <arg name="vehicle_mirror_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/mirror.param.yaml"/>
-      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)" />
+      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
     </include>
   </group>
+
   <!-- Perception -->
   <group>
-    <include file="$(find-pkg-share perception_launch)/launch/perception.launch.xml">
-      <!-- options for mode: camera_lidar_fusion, lidar, camera -->
-      <arg name="mode" value="camera_lidar_fusion" />
-      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)" />
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/perception.launch.xml">
+      <arg name="mode" value="lidar"/>
+      <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+    </include>
+  </group>
+  <!-- occupancy grid map module -->
+  <group>
+    <push-ros-namespace namespace="occupancy_grid_map"/>
+    <include file="$(find-pkg-share probabilistic_occupancy_grid_map)/launch/laserscan_based_occupancy_grid_map.launch.py">
+      <arg name="input_obstacle_pointcloud" value="true"/>
+      <arg name="input_obstacle_and_raw_pointcloud" value="false"/>
+      <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
+      <arg name="output" value="/perception/occupancy_grid_map/map"/>
     </include>
   </group>
 
   <!-- Safe Velocity Adjustor -->
   <group>
-    <include file="$(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor.launch.xml">
-    </include>
+    <include file="$(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor.launch.xml"/>
   </group>
 
   <!-- Rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor_bag.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png">
-  </node>
+  <node
+    pkg="rviz2"
+    exec="rviz2"
+    name="rviz2"
+    output="screen"
+    args="-d $(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor_bag.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png"
+  />
 
   <!-- Velocity Visualization Script-->
-  <executable cmd="velocity_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-share safe_velocity_adjustor)/script/" />
+  <executable cmd="velocity_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-share safe_velocity_adjustor)/script/"/>
 </launch>
