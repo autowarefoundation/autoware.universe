@@ -128,6 +128,8 @@ private:
     static_cast<int8_t>(declare_parameter<int>("occupancy_grid_obstacle_threshold"));
   Float dynamic_obstacles_buffer_ =
     static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_buffer"));
+  Float dynamic_obstacles_min_vel_ =
+    static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_min_vel"));
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
 
@@ -150,6 +152,8 @@ private:
         occupancy_grid_obstacle_threshold_ = static_cast<int8_t>(parameter.as_int());
       } else if (parameter.get_name() == "dynamic_obstacles_buffer") {
         dynamic_obstacles_buffer_ = static_cast<Float>(parameter.as_double());
+      } else if (parameter.get_name() == "dynamic_obstacles_min_vel") {
+        dynamic_obstacles_min_vel_ = static_cast<Float>(parameter.as_double());
       } else if (parameter.get_name() == "min_adjusted_velocity") {
         min_adjusted_velocity_ = static_cast<Float>(parameter.as_double());
       } else {
@@ -187,8 +191,8 @@ private:
       for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
         downsampled_traj.points.push_back(msg->points[i]);
 
-      const auto dynamic_obstacle_polygons =
-        createObjPolygons(*dynamic_obstacles_ptr_, dynamic_obstacles_buffer_);
+      const auto dynamic_obstacle_polygons = createObjPolygons(
+        *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
 
       double footprint_d{};
       double dist_poly_d{};

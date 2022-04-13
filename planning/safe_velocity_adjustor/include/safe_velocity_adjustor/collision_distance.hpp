@@ -82,6 +82,7 @@ inline std::optional<double> distanceToClosestCollision(
     if (bg::intersection(footprint, obstacle, intersection_lines)) {
       for (const auto & intersection_line : intersection_lines) {
         for (const auto & obs_point : intersection_line) {
+          // Calculate longitudinal distance to the collision point along the segment
           const auto collision_heading =
             std::atan2(obs_point.y() - vector.first.y(), obs_point.x() - vector.first.x());
           const auto angle = vector_heading - collision_heading;
@@ -128,12 +129,18 @@ inline polygon_t createObjPolygon(
 }
 
 inline multipolygon_t createObjPolygons(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
+  const double min_velocity)
 {
   multipolygon_t polygons;
-  for (const auto & object : objects.objects)
-    polygons.push_back(createObjPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions, buffer));
+  for (const auto & object : objects.objects) {
+    if (
+      object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_velocity ||
+      object.kinematics.initial_twist_with_covariance.twist.linear.x <= -min_velocity) {
+      polygons.push_back(createObjPolygon(
+        object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions, buffer));
+    }
+  }
   return polygons;
 }
 }  // namespace safe_velocity_adjustor

@@ -7,3 +7,4 @@
     downsample_factor: 1  # factor by which to downsample the input trajectory for calculation
     occupancy_grid_obstacle_threshold: 60 # occupancy grid values higher than this are considered to be obstacles
     dynamic_obstacles_buffer: 1.0 # [m] extra distance around dynamic obstacles used to mask the occupancy grid and avoid false obstacle detection
+    dynamic_obstacles_min_vel: 0.5 # [m/s] velocity above which a dynamic obstacle is ignored by the module
