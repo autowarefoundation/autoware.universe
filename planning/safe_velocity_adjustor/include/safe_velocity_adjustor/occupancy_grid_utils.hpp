@@ -39,6 +39,9 @@
 namespace safe_velocity_adjustor
 {
 
+/// @brief mask gridmap cells that are inside the given polygons
+/// @param[in, out] grid_map the grid map to modify
+/// @param[in] polygons the polygons to mask from the grid map
 inline void maskPolygons(grid_map::GridMap & grid_map, const multipolygon_t & polygons)
 {
   for (const auto & polygon : polygons) {
@@ -53,11 +56,14 @@ inline void maskPolygons(grid_map::GridMap & grid_map, const multipolygon_t & po
   }
 }
 
-inline void threshold(grid_map::GridMap & grid_map, const float occupied_threshold)
+/// @brief apply a threshold to the grid map
+/// @param[in, out] grid_map the grid map to modify
+/// @param[in] threshold cells above this value are set to the max value, the other are set to 0
+inline void threshold(grid_map::GridMap & grid_map, const float threshold)
 {
   for (grid_map::GridMapIterator iter(grid_map); !iter.isPastEnd(); ++iter) {
     auto & val = grid_map.at("layer", *iter);
-    if (val < occupied_threshold) {
+    if (val < threshold) {
       val = 0.0;
     } else {
       val = 127;
@@ -65,12 +71,20 @@ inline void threshold(grid_map::GridMap & grid_map, const float occupied_thresho
   }
 }
 
+/// @brief apply a threshold to the grid map
+/// @param[in, out] cv_image opencv image to modify
+/// @param[in] num_iter optional parameter for the number of iteration performed for noise removal
 inline void denoise(cv::Mat & cv_image, const int num_iter = 2)
 {
   cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), num_iter);
   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), num_iter);
 }
 
+/// @brief extract from an occupancy grid the lines representing static obstacles
+/// @param[in] occupancy_grid input occupancy grid
+/// @param[in] dynamic_obstacle_polygons polygons to mask away from the occupancy grid
+/// @param[in] occupied_threshold threshold to use for identifying obstacles in the occupancy grid
+/// @return multiple linestrings each representing an obstacle
 inline multilinestring_t extractStaticObstaclePolygons(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const multipolygon_t & dynamic_obstacle_polygons, const int8_t occupied_threshold)

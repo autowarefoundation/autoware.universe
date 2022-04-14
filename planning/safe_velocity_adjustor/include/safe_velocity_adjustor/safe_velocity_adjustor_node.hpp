@@ -88,9 +88,6 @@ public:
     vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
     vehicle_front_offset_ = static_cast<Float>(vehicle_info.max_longitudinal_offset_m);
 
-    set_param_res_ =
-      add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
-
     self_pose_listener_.waitForFirstPose();
   }
 
@@ -130,7 +127,11 @@ private:
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
 
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_ =
+    add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
+
+  /// @brief callback for parameter updates
+  /// @param[in] parameters updated parameters and their new values
   rcl_interfaces::msg::SetParametersResult onParameter(
     const std::vector<rclcpp::Parameter> & parameters)
   {
@@ -161,6 +162,8 @@ private:
     return result;
   }
 
+  /// @brief callback for input trajectories. Publishes a trajectory with updated velocities
+  /// @param[in] msg input trajectory message
   void onTrajectory(const Trajectory::ConstSharedPtr msg)
   {
     const auto ego_idx = tier4_autoware_utils::findNearestIndex(
@@ -187,7 +190,7 @@ private:
     for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
       downsampled_traj.points.push_back(msg->points[i]);
 
-    const auto dynamic_obstacle_polygons = createObjPolygons(
+    const auto dynamic_obstacle_polygons = createObjectPolygons(
       *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
 
     // TODO(Maxime CLEMENT): used for debugging, remove before merging
@@ -208,7 +211,7 @@ private:
     const auto extra_vehicle_length = vehicle_front_offset_ + dist_safety_buffer_;
     for (auto & trajectory_point : downsampled_traj.points) {
       const auto forward_simulated_vector =
-        forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
+        forwardSimulatedSegment(trajectory_point, time_safety_buffer_, extra_vehicle_length);
       stopwatch.tic("footprint_duration");
       const auto footprint =
         forwardSimulatedFootprint(forward_simulated_vector, vehicle_lateral_offset_);
@@ -230,7 +233,7 @@ private:
 
     safe_trajectory.header.stamp = now();
     pub_trajectory_->publish(safe_trajectory);
-    publishDebug(*msg, safe_trajectory, obstacle_polygons);
+    publishDebugMarkers(*msg, safe_trajectory, obstacle_polygons);
     RCLCPP_WARN(get_logger(), "Runtimes");
     RCLCPP_WARN(get_logger(), "  obstacle_polygons    = %2.2fms", obs_poly_duration);
     RCLCPP_WARN(get_logger(), "  footprint generation = %2.2fms", footprint_duration);
@@ -238,6 +241,10 @@ private:
     RCLCPP_WARN(get_logger(), "**************** Total = %2.2fms", stopwatch.toc());
   }
 
+  /// @brief calculate the apparent safe velocity
+  /// @param[in] trajectory_point trajectory point for which to calculate the apparent safe velocity
+  /// @param[in] dist_to_collision distance from the trajectory point to the apparent collision
+  /// @return apparent safe velocity
   Float calculateSafeVelocity(
     const TrajectoryPoint & trajectory_point, const Float & dist_to_collision) const
   {
@@ -247,6 +254,10 @@ private:
         min_adjusted_velocity_, static_cast<Float>(dist_to_collision / time_safety_buffer_)));
   }
 
+  /// @brief make the visualization Marker of the given polygon
+  /// @param[in] polygon polygon to turn into a marker
+  /// @param[in] id id of the marker
+  /// @return marker representing the polygon
   visualization_msgs::msg::Marker makePolygonMarker(
     const linestring_t & polygon, const int id) const
   {
@@ -266,6 +277,10 @@ private:
     }
     return marker;
   }
+
+  /// @brief make the Marker showing the apparent safety envelope of the given trajectory
+  /// @param[in] trajectory trajectory for which to make the apparent safety envelope
+  /// @return marker representing the apparent safety envelope of the trajectory
   visualization_msgs::msg::Marker makeEnvelopeMarker(const Trajectory & trajectory) const
   {
     visualization_msgs::msg::Marker envelope;
@@ -274,7 +289,7 @@ private:
     envelope.scale.x = 0.1;
     envelope.color.a = 1.0;
     for (const auto & point : trajectory.points) {
-      const auto vector = forwardSimulatedVector(
+      const auto vector = forwardSimulatedSegment(
         point, time_safety_buffer_, dist_safety_buffer_ + vehicle_front_offset_);
       geometry_msgs::msg::Point p;
       p.x = vector.second.x();
@@ -285,7 +300,11 @@ private:
     return envelope;
   }
 
-  void publishDebug(
+  /// @brief create and publish debug markers for the given trajectories and polygons
+  /// @param[in] original_trajectory original input trajectory
+  /// @param[in] adjusted_trajectory trajectory adjusted for apparent safety
+  /// @param[in] polygons polygons to publish as markers
+  void publishDebugMarkers(
     const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
     const multilinestring_t & polygons) const
   {
@@ -318,6 +337,11 @@ private:
     pub_debug_markers_->publish(debug_markers);
   }
 
+  /// @brief calculate trajectory index that is ahead of the given index by the given distance
+  /// @param[in] trajectory trajectory
+  /// @param[in] ego_idx index closest to the current ego position in the trajectory
+  /// @param[in] start_distance desired distance ahead of the ego_idx
+  /// @return trajectory index ahead of ego_idx by the start_distance
   static size_t calculateStartIndex(
     const Trajectory & trajectory, const size_t ego_idx, const Float start_distance)
   {

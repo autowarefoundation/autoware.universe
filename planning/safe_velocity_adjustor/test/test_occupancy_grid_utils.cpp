@@ -17,8 +17,6 @@
 
 #include <gtest/gtest.h>
 
-TEST(TestOccupancyGridUtils, maskPolygons) {}
-
 TEST(TestOccupancyGridUtils, extractStaticObstaclePolygons)
 {
   using safe_velocity_adjustor::extractStaticObstaclePolygons;

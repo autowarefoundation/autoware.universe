@@ -27,9 +27,9 @@
 
 #include <algorithm>
 
-TEST(TestCollisionDistance, forwardSimulatedVector)
+TEST(TestCollisionDistance, forwardSimulatedSegment)
 {
-  using safe_velocity_adjustor::forwardSimulatedVector;
+  using safe_velocity_adjustor::forwardSimulatedSegment;
   using safe_velocity_adjustor::segment_t;
   autoware_auto_planning_msgs::msg::TrajectoryPoint trajectory_point;
 
@@ -41,25 +41,25 @@ TEST(TestCollisionDistance, forwardSimulatedVector)
 
   const auto check_vector = [&](const auto vector_length) {
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
-    auto vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    auto vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
     EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
     EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
     EXPECT_DOUBLE_EQ(vector.second.x(), vector_length);
     EXPECT_DOUBLE_EQ(vector.second.y(), 0.0);
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_2);
-    vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
     EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
     EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
     EXPECT_NEAR(vector.second.x(), 0.0, 1e-9);
     EXPECT_DOUBLE_EQ(vector.second.y(), vector_length);
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_4);
-    vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
     EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
     EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
     EXPECT_DOUBLE_EQ(vector.second.x(), std::sqrt(0.5) * vector_length);
     EXPECT_DOUBLE_EQ(vector.second.y(), std::sqrt(0.5) * vector_length);
     trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(-M_PI_2);
-    vector = forwardSimulatedVector(trajectory_point, duration, extra_dist);
+    vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
     EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
     EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
     EXPECT_NEAR(vector.second.x(), 0.0, 1e-9);
@@ -221,11 +221,11 @@ TEST(TestCollisionDistance, createObjPolygons)
 {
   using autoware_auto_perception_msgs::msg::PredictedObject;
   using autoware_auto_perception_msgs::msg::PredictedObjects;
-  using safe_velocity_adjustor::createObjPolygons;
+  using safe_velocity_adjustor::createObjectPolygons;
 
   PredictedObjects objects;
 
-  auto polygons = createObjPolygons(objects, 0.0, 0.0);
+  auto polygons = createObjectPolygons(objects, 0.0, 0.0);
   EXPECT_TRUE(polygons.empty());
 
   PredictedObject object1;
@@ -238,17 +238,17 @@ TEST(TestCollisionDistance, createObjPolygons)
   object1.shape.dimensions.y = 1.0;
   objects.objects.push_back(object1);
 
-  polygons = createObjPolygons(objects, 0.0, 1.0);
+  polygons = createObjectPolygons(objects, 0.0, 1.0);
   EXPECT_TRUE(polygons.empty());
 
-  polygons = createObjPolygons(objects, 0.0, 0.0);
+  polygons = createObjectPolygons(objects, 0.0, 0.0);
   ASSERT_EQ(polygons.size(), 1ul);
   EXPECT_TRUE(point_in_polygon(0.5, 0.5, polygons[0]));
   EXPECT_TRUE(point_in_polygon(0.5, -0.5, polygons[0]));
   EXPECT_TRUE(point_in_polygon(-0.5, 0.5, polygons[0]));
   EXPECT_TRUE(point_in_polygon(-0.5, -0.5, polygons[0]));
 
-  polygons = createObjPolygons(objects, 1.0, 0.0);
+  polygons = createObjectPolygons(objects, 1.0, 0.0);
   ASSERT_EQ(polygons.size(), 1ul);
   EXPECT_TRUE(point_in_polygon(1.0, 1.0, polygons[0]));
   EXPECT_TRUE(point_in_polygon(1.0, -1.0, polygons[0]));
@@ -265,14 +265,13 @@ TEST(TestCollisionDistance, createObjPolygons)
   object2.shape.dimensions.y = 1.0;
   objects.objects.push_back(object2);
 
-  polygons = createObjPolygons(objects, 0.0, 2.0);
+  polygons = createObjectPolygons(objects, 0.0, 2.0);
   ASSERT_EQ(polygons.size(), 1ul);
-  std::cout << boost::geometry::wkt(polygons) << std::endl;
   EXPECT_TRUE(point_in_polygon(10.5, 11.0, polygons[0]));
   EXPECT_TRUE(point_in_polygon(10.5, 9.0, polygons[0]));
   EXPECT_TRUE(point_in_polygon(9.5, 11.0, polygons[0]));
   EXPECT_TRUE(point_in_polygon(9.5, 9.0, polygons[0]));
 
-  polygons = createObjPolygons(objects, 0.0, 0.0);
+  polygons = createObjectPolygons(objects, 0.0, 0.0);
   EXPECT_EQ(polygons.size(), 2ul);
 }
