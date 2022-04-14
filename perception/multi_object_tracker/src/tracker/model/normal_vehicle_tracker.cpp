@@ -232,7 +232,8 @@ bool NormalVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
-  const int dim_y = object.kinematics.has_twist ? 4 : 3;  // pos x, pos y, yaw, vx depending on Pose output
+  const int dim_y =
+    object.kinematics.has_twist ? 4 : 3;  // pos x, pos y, yaw, vx depending on Pose output
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   {
@@ -252,13 +253,14 @@ bool NormalVehicleTracker::measureWithPose(
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
 
-  if(object.kinematics.has_twist) {
+  if (object.kinematics.has_twist) {
     Y << object.kinematics.pose_with_covariance.pose.position.x,
-      object.kinematics.pose_with_covariance.pose.position.y, measurement_yaw, object.kinematics.twist_with_covariance.twist.linear.x;
+      object.kinematics.pose_with_covariance.pose.position.y, measurement_yaw,
+      object.kinematics.twist_with_covariance.twist.linear.x;
     C(0, IDX::X) = 1.0;    // for pos x
     C(1, IDX::Y) = 1.0;    // for pos y
     C(2, IDX::YAW) = 1.0;  // for yaw
-    C(3, IDX::VX) = 1.0;  // for vx
+    C(3, IDX::VX) = 1.0;   // for vx
 
     /* Set measurement noise covariance */
     if (
@@ -300,7 +302,7 @@ bool NormalVehicleTracker::measureWithPose(
       !ekf_params_.use_measurement_covariance ||
       object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
       object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0 ) {
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
       const double cos_yaw = std::cos(measurement_yaw);
       const double sin_yaw = std::sin(measurement_yaw);
       const double sin_2yaw = std::sin(2.0f * measurement_yaw);
@@ -321,7 +323,6 @@ bool NormalVehicleTracker::measureWithPose(
       R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
     }
   }
-
 
   // update
   if (!ekf_.update(Y, C, R)) {
