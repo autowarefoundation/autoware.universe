@@ -14,6 +14,7 @@
 
 #include "lidar_centerpoint/node.hpp"
 
+#include <centerpoint_config.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <pointcloud_densification.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -36,23 +37,49 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
 : Node("lidar_center_point", node_options), tf_buffer_(this->get_clock())
 {
   score_threshold_ = this->declare_parameter("score_threshold", 0.4);
-  std::string densification_world_frame_id =
+  const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
-  int densification_num_past_frames = this->declare_parameter("densification_num_past_frames", 1);
-  std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
-  std::string encoder_onnx_path = this->declare_parameter("encoder_onnx_path", "");
-  std::string encoder_engine_path = this->declare_parameter("encoder_engine_path", "");
-  std::string head_onnx_path = this->declare_parameter("head_onnx_path", "");
-  std::string head_engine_path = this->declare_parameter("head_engine_path", "");
+  const int densification_num_past_frames =
+    this->declare_parameter("densification_num_past_frames", 1);
+  const std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
+  const std::string encoder_onnx_path = this->declare_parameter<std::string>("encoder_onnx_path");
+  const std::string encoder_engine_path =
+    this->declare_parameter<std::string>("encoder_engine_path");
+  const std::string head_onnx_path = this->declare_parameter<std::string>("head_onnx_path");
+  const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
+  const std::size_t point_feature_size =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
+  const std::size_t max_num_voxels =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_num_voxels"));
+  const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
+  const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
+  const std::size_t downsample_factor =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
+  const std::size_t encoder_in_feature_size =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("encoder_in_feature_size"));
 
   NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
   NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
+
+  if (point_cloud_range.size() != 6) {
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("lidar_centerpoint"),
+      "The size of point_cloud_range != 6: use the default parameters.");
+  }
+  if (voxel_size.size() != 3) {
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("lidar_centerpoint"),
+      "The size of voxel_size != 3: use the default parameters.");
+  }
+  CenterPointConfig config(
+    point_feature_size, max_num_voxels, point_cloud_range, voxel_size, downsample_factor,
+    encoder_in_feature_size);
   detector_ptr_ = std::make_unique<CenterPointTRT>(
-    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param);
+    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param, config);
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),

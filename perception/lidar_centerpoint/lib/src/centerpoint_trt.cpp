@@ -27,8 +27,9 @@ namespace centerpoint
 {
 CenterPointTRT::CenterPointTRT(
   const std::size_t num_class, const float score_threshold, const NetworkParam & encoder_param,
-  const NetworkParam & head_param, const DensificationParam & densification_param)
-: num_class_(num_class)
+  const NetworkParam & head_param, const DensificationParam & densification_param,
+  const CenterPointConfig & config)
+: num_class_(num_class), config_(config)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param, config_);
   post_proc_ptr_ = std::make_unique<PostProcessCUDA>(num_class, score_threshold, config_);
