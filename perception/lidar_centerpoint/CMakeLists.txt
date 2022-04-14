@@ -121,7 +121,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   ### centerpoint ###
-  ament_auto_add_library(centerpoint SHARED
+  ament_auto_add_library(centerpoint_lib SHARED
     lib/centerpoint_trt.cpp
     lib/utils.cpp
     lib/network/network_trt.cpp
@@ -130,21 +130,29 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     lib/preprocess/voxel_generator.cpp
   )
 
-  cuda_add_library(centerpoint_cuda_libraries SHARED
+  cuda_add_library(centerpoint_cuda_lib SHARED
     lib/postprocess/circle_nms_kernel.cu
     lib/postprocess/postprocess_kernel.cu
     lib/network/scatter_kernel.cu
     lib/preprocess/preprocess_kernel.cu
   )
 
-  target_link_libraries(centerpoint
+  target_link_libraries(centerpoint_lib
     ${NVINFER}
     ${NVONNXPARSER}
     ${CUDA_LIBRARIES}
     ${CUBLAS_LIBRARIES}
     ${CUDA_curand_LIBRARY}
     ${CUDNN_LIBRARY}
-    centerpoint_cuda_libraries
+    centerpoint_cuda_lib
+  )
+
+  target_include_directories(centerpoint_lib
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
   ## node ##
@@ -153,7 +161,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   target_link_libraries(lidar_centerpoint_component
-    centerpoint
+    centerpoint_lib
   )
 
   # workaround to allow deprecated header to build on both galactic and rolling
