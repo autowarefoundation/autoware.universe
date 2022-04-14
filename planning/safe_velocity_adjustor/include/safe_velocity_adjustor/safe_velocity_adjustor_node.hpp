@@ -48,6 +48,7 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <chrono>
 #include <exception>
 #include <memory>
 #include <optional>
@@ -81,8 +82,6 @@ public:
     pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
     pub_debug_markers_ =
       create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-    pub_debug_polygons_ =
-      create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_polygons", 1);
     pub_debug_occupancy_grid_ = create_publisher<OccupancyGrid>("~/output/occupancy_grid", 1);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -104,8 +103,6 @@ private:
     pub_debug_markers_;  //!< @brief publisher for debug markers
   rclcpp::Publisher<OccupancyGrid>::SharedPtr
     pub_debug_occupancy_grid_;  //!< @brief publisher for filtered occupancy grid
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
-    pub_debug_polygons_;  //!< @brief publisher for filtered occupancy grid
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
   rclcpp::Subscription<PredictedObjects>::SharedPtr
@@ -166,97 +163,79 @@ private:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg)
   {
-    try {
-      const auto ego_idx = tier4_autoware_utils::findNearestIndex(
-        msg->points, self_pose_listener_.getCurrentPose()->pose);
-      if (!occupancy_grid_ptr_ || !dynamic_obstacles_ptr_ || !ego_idx) {
-        constexpr auto one_sec = rcutils_duration_value_t(1000);
-        if (!occupancy_grid_ptr_)
-          RCLCPP_WARN_THROTTLE(
-            get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
-        if (!dynamic_obstacles_ptr_)
-          RCLCPP_WARN_THROTTLE(
-            get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
-        if (!ego_idx)
-          RCLCPP_WARN_THROTTLE(
-            get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
-        return;
-      }
-      const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
-      // Downsample trajectory
-      const size_t downsample_step = downsample_factor_;
-      Trajectory downsampled_traj;
-      downsampled_traj.header = msg->header;
-      downsampled_traj.points.reserve(msg->points.size() / downsample_step);
-      for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
-        downsampled_traj.points.push_back(msg->points[i]);
-
-      const auto dynamic_obstacle_polygons = createObjPolygons(
-        *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
-
-      double footprint_d{};
-      double dist_poly_d{};
-      tier4_autoware_utils::StopWatch stopwatch;
-
-      // Obstacle Polygon from Occupancy Grid
-      stopwatch.tic("obs_poly_d");
-      nav_msgs::msg::OccupancyGrid debug_occ_grid;
-      const auto obstacle_polygons = extractStaticObstaclePolygons(
-        *occupancy_grid_ptr_, dynamic_obstacle_polygons, occupancy_grid_obstacle_threshold_);
-      pub_debug_occupancy_grid_->publish(debug_occ_grid);
-      RCLCPP_WARN(get_logger(), "obstacle_polygons = %2.2fs", stopwatch.toc("obs_poly_d"));
-      visualization_msgs::msg::MarkerArray polygon_markers;
-      static auto max_id = 0;
-      auto id = 0;
-      for (const auto & poly : obstacle_polygons) {
-        auto marker = makePolygonMarker(poly, id++);
-        marker.header.frame_id = occupancy_grid_ptr_->header.frame_id;
-        marker.header.stamp = now();
-        polygon_markers.markers.push_back(marker);
-      }
-      max_id = std::max(id, max_id);
-      while (id <= max_id) {
-        visualization_msgs::msg::Marker marker;
-        marker.action = visualization_msgs::msg::Marker::DELETE;
-        marker.ns = "obstacle_polygons";
-        marker.id = id++;
-        polygon_markers.markers.push_back(marker);
-      }
-      pub_debug_polygons_->publish(polygon_markers);
-
-      Trajectory safe_trajectory = *msg;
-      const auto extra_vehicle_length = vehicle_front_offset_ + dist_safety_buffer_;
-      for (auto & trajectory_point : downsampled_traj.points) {
-        const auto forward_simulated_vector =
-          forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
-        stopwatch.tic("footprint_d");
-        const auto footprint =
-          forwardSimulatedFootprint(forward_simulated_vector, vehicle_lateral_offset_);
-        footprint_d += stopwatch.toc("footprint_d");
-        stopwatch.tic("dist_poly_d");
-        const auto dist_to_collision =
-          distanceToClosestCollision(forward_simulated_vector, footprint, obstacle_polygons);
-        dist_poly_d += stopwatch.toc("dist_poly_d");
-        if (dist_to_collision) {
-          trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
-            trajectory_point, static_cast<Float>(*dist_to_collision - extra_vehicle_length));
-        }
-      }
-
-      for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
-        safe_trajectory.points[start_idx + i * downsample_step].longitudinal_velocity_mps =
-          downsampled_traj.points[i].longitudinal_velocity_mps;
-      }
-      RCLCPP_WARN(get_logger(), "footprint = %2.2fs", footprint_d);
-      RCLCPP_WARN(get_logger(), "dist_poly = %2.2fs", dist_poly_d);
-
-      safe_trajectory.header.stamp = now();
-      pub_trajectory_->publish(safe_trajectory);
-      publishDebug(*msg, safe_trajectory);
-      RCLCPP_WARN(get_logger(), "*** Total = %2.2fs", stopwatch.toc());
-    } catch (const std::exception & e) {
-      RCLCPP_WARN(get_logger(), "%s", e.what());
+    const auto ego_idx = tier4_autoware_utils::findNearestIndex(
+      msg->points, self_pose_listener_.getCurrentPose()->pose);
+    if (!occupancy_grid_ptr_ || !dynamic_obstacles_ptr_ || !ego_idx) {
+      constexpr auto one_sec = rcutils_duration_value_t(1000);
+      if (!occupancy_grid_ptr_)
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
+      if (!dynamic_obstacles_ptr_)
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
+      if (!ego_idx)
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
+      return;
     }
+    const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
+    // Downsample trajectory
+    const size_t downsample_step = downsample_factor_;
+    Trajectory downsampled_traj;
+    downsampled_traj.header = msg->header;
+    downsampled_traj.points.reserve(msg->points.size() / downsample_step);
+    for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
+      downsampled_traj.points.push_back(msg->points[i]);
+
+    const auto dynamic_obstacle_polygons = createObjPolygons(
+      *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
+
+    // TODO(Maxime CLEMENT): used for debugging, remove before merging
+    double obs_poly_duration{};
+    double footprint_duration{};
+    double dist_poly_duration{};
+    tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
+
+    // Obstacle Polygon from Occupancy Grid
+    nav_msgs::msg::OccupancyGrid debug_occ_grid;
+    stopwatch.tic("obs_poly_duration");
+    const auto obstacle_polygons = extractStaticObstaclePolygons(
+      *occupancy_grid_ptr_, dynamic_obstacle_polygons, occupancy_grid_obstacle_threshold_);
+    obs_poly_duration = stopwatch.toc("obs_poly_duration");
+    pub_debug_occupancy_grid_->publish(debug_occ_grid);
+
+    Trajectory safe_trajectory = *msg;
+    const auto extra_vehicle_length = vehicle_front_offset_ + dist_safety_buffer_;
+    for (auto & trajectory_point : downsampled_traj.points) {
+      const auto forward_simulated_vector =
+        forwardSimulatedVector(trajectory_point, time_safety_buffer_, extra_vehicle_length);
+      stopwatch.tic("footprint_duration");
+      const auto footprint =
+        forwardSimulatedFootprint(forward_simulated_vector, vehicle_lateral_offset_);
+      footprint_duration += stopwatch.toc("footprint_duration");
+      stopwatch.tic("dist_poly_duration");
+      const auto dist_to_collision =
+        distanceToClosestCollision(forward_simulated_vector, footprint, obstacle_polygons);
+      dist_poly_duration += stopwatch.toc("dist_poly_duration");
+      if (dist_to_collision) {
+        trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
+          trajectory_point, static_cast<Float>(*dist_to_collision - extra_vehicle_length));
+      }
+    }
+
+    for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
+      safe_trajectory.points[start_idx + i * downsample_step].longitudinal_velocity_mps =
+        downsampled_traj.points[i].longitudinal_velocity_mps;
+    }
+
+    safe_trajectory.header.stamp = now();
+    pub_trajectory_->publish(safe_trajectory);
+    publishDebug(*msg, safe_trajectory, obstacle_polygons);
+    RCLCPP_WARN(get_logger(), "Runtimes");
+    RCLCPP_WARN(get_logger(), "  obstacle_polygons    = %2.2fms", obs_poly_duration);
+    RCLCPP_WARN(get_logger(), "  footprint generation = %2.2fms", footprint_duration);
+    RCLCPP_WARN(get_logger(), "  distance to obstacle = %2.2fms", dist_poly_duration);
+    RCLCPP_WARN(get_logger(), "**************** Total = %2.2fms", stopwatch.toc());
   }
 
   Float calculateSafeVelocity(
@@ -268,8 +247,8 @@ private:
         min_adjusted_velocity_, static_cast<Float>(dist_to_collision / time_safety_buffer_)));
   }
 
-  static visualization_msgs::msg::Marker makePolygonMarker(
-    const linestring_t & polygon, const int id)
+  visualization_msgs::msg::Marker makePolygonMarker(
+    const linestring_t & polygon, const int id) const
   {
     visualization_msgs::msg::Marker marker;
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -282,7 +261,7 @@ private:
       geometry_msgs::msg::Point p;
       p.x = point.x();
       p.y = point.y();
-      p.z = 100;
+      p.z = occupancy_grid_ptr_->info.origin.position.z;
       marker.points.push_back(p);
     }
     return marker;
@@ -307,7 +286,8 @@ private:
   }
 
   void publishDebug(
-    const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory) const
+    const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
+    const multilinestring_t & polygons) const
   {
     visualization_msgs::msg::MarkerArray debug_markers;
     auto original_envelope = makeEnvelopeMarker(original_trajectory);
@@ -319,6 +299,22 @@ private:
     adjusted_envelope.ns = "adjusted";
     debug_markers.markers.push_back(adjusted_envelope);
 
+    static auto max_id = 0;
+    auto id = 0;
+    for (const auto & poly : polygons) {
+      auto marker = makePolygonMarker(poly, id++);
+      marker.header.frame_id = occupancy_grid_ptr_->header.frame_id;
+      marker.header.stamp = now();
+      debug_markers.markers.push_back(marker);
+    }
+    max_id = std::max(id, max_id);
+    while (id <= max_id) {
+      visualization_msgs::msg::Marker marker;
+      marker.action = visualization_msgs::msg::Marker::DELETE;
+      marker.ns = "obstacle_polygons";
+      marker.id = id++;
+      debug_markers.markers.push_back(marker);
+    }
     pub_debug_markers_->publish(debug_markers);
   }
 
