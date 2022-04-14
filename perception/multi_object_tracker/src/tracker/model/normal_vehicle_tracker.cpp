@@ -49,6 +49,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   float r_stddev_x = 1.0;                                     // object coordinate [m]
   float r_stddev_y = 0.3;                                     // object coordinate [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // map coordinate [rad]
+  float r_stddev_vx = 1.0;                                    // object coordinate [m/s]
   float p0_stddev_x = 1.0;                                    // object coordinate [m/s]
   float p0_stddev_y = 0.3;                                    // object coordinate [m/s]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(30);    // map coordinate [rad]
@@ -62,6 +63,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
+  ekf_params_.r_cov_vx = std::pow(r_stddev_vx, 2.0);
   ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
   ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
@@ -230,7 +232,7 @@ bool NormalVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
-  constexpr int dim_y = 3;  // pos x, pos y, yaw, depending on Pose output
+  const int dim_y = object.kinematics.has_twist ? 4 : 3;  // pos x, pos y, yaw, vx depending on Pose output
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   {
@@ -245,43 +247,83 @@ bool NormalVehicleTracker::measureWithPose(
     }
   }
 
-  /* Set measurement matrix */
+  /* Set measurement matrix and noise covariance*/
   Eigen::MatrixXd Y(dim_y, 1);
-  Y << object.kinematics.pose_with_covariance.pose.position.x,
-    object.kinematics.pose_with_covariance.pose.position.y, measurement_yaw;
-
-  /* Set measurement matrix */
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
-  C(0, IDX::X) = 1.0;    // for pos x
-  C(1, IDX::Y) = 1.0;    // for pos y
-  C(2, IDX::YAW) = 1.0;  // for yaw
-
-  /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  if (
-    !ekf_params_.use_measurement_covariance ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
-    const double cos_yaw = std::cos(measurement_yaw);
-    const double sin_yaw = std::sin(measurement_yaw);
-    const double sin_2yaw = std::sin(2.0f * measurement_yaw);
-    R(0, 0) = r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;  // x - x
-    R(0, 1) = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;                      // x - y
-    R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
-    R(1, 0) = R(0, 1);                                                    // y - x
-    R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
+
+  if(object.kinematics.has_twist) {
+    Y << object.kinematics.pose_with_covariance.pose.position.x,
+      object.kinematics.pose_with_covariance.pose.position.y, measurement_yaw, object.kinematics.twist_with_covariance.twist.linear.x;
+    C(0, IDX::X) = 1.0;    // for pos x
+    C(1, IDX::Y) = 1.0;    // for pos y
+    C(2, IDX::YAW) = 1.0;  // for yaw
+    C(3, IDX::VX) = 1.0;  // for vx
+
+    /* Set measurement noise covariance */
+    if (
+      !ekf_params_.use_measurement_covariance ||
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0 ||
+      object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0) {
+      const double cos_yaw = std::cos(measurement_yaw);
+      const double sin_yaw = std::sin(measurement_yaw);
+      const double sin_2yaw = std::sin(2.0f * measurement_yaw);
+      R(0, 0) = r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;  // x - x
+      R(0, 1) = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;                      // x - y
+      R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
+      R(1, 0) = R(0, 1);                                                    // y - x
+      R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
+      R(3, 3) = ekf_params_.r_cov_vx;                                       // vx -vx
+    } else {
+      R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+      R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
+      R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
+      R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
+      R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+      R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
+      R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
+      R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
+      R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+      R(3, 3) = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+    }
   } else {
-    R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
-    R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-    R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
-    R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
-    R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
-    R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    Y << object.kinematics.pose_with_covariance.pose.position.x,
+      object.kinematics.pose_with_covariance.pose.position.y, measurement_yaw;
+    C(0, IDX::X) = 1.0;    // for pos x
+    C(1, IDX::Y) = 1.0;    // for pos y
+    C(2, IDX::YAW) = 1.0;  // for yaw
+
+    /* Set measurement noise covariance */
+    if (
+      !ekf_params_.use_measurement_covariance ||
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0 ) {
+      const double cos_yaw = std::cos(measurement_yaw);
+      const double sin_yaw = std::sin(measurement_yaw);
+      const double sin_2yaw = std::sin(2.0f * measurement_yaw);
+      R(0, 0) = r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;  // x - x
+      R(0, 1) = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;                      // x - y
+      R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
+      R(1, 0) = R(0, 1);                                                    // y - x
+      R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
+    } else {
+      R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+      R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
+      R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
+      R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
+      R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+      R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
+      R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
+      R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
+      R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    }
   }
+
+
+  // update
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
