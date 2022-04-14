@@ -16,12 +16,16 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
+#include <autoware_auto_perception_msgs/msg/detail/predicted_object__struct.hpp>
+#include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
 #include <gtest/gtest.h>
 #include <pcl/common/generate.h>
 #include <pcl/common/random.h>
 #include <pcl/point_cloud.h>
+
+#include <algorithm>
 
 TEST(TestCollisionDistance, forwardSimulatedVector)
 {
@@ -91,6 +95,35 @@ TEST(TestCollisionDistance, forwardSimulatedVector)
   duration = -5.0;
   extra_dist = 3.5;
   check_vector(-5.0 + extra_dist);
+}
+
+const auto point_in_polygon = [](const auto x, const auto y, const auto & polygon) {
+  return std::find_if(polygon.outer().begin(), polygon.outer().end(), [=](const auto & pt) {
+           return pt.x() == x && pt.y() == y;
+         }) != polygon.outer().end();
+};
+
+TEST(TestCollisionDistance, forwardSimulatedFootprint)
+{
+  using safe_velocity_adjustor::forwardSimulatedFootprint;
+
+  auto footprint = forwardSimulatedFootprint({{0.0, 0.0}, {1.0, 0.0}}, 1.0);
+  EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(0.0, -1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(1.0, 1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(1.0, -1.0, footprint));
+
+  footprint = forwardSimulatedFootprint({{0.0, 0.0}, {0.0, -1.0}}, 0.5);
+  EXPECT_TRUE(point_in_polygon(0.5, 0.0, footprint));
+  EXPECT_TRUE(point_in_polygon(0.5, -1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-0.5, 0.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-0.5, -1.0, footprint));
+
+  footprint = forwardSimulatedFootprint({{-2.5, 5.0}, {2.5, 0.0}}, std::sqrt(2));
+  EXPECT_TRUE(point_in_polygon(3.5, 1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(1.5, -1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-3.5, 4.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-1.5, 6.0, footprint));
 }
 
 TEST(TestCollisionDistance, distanceToClosestCollision)
@@ -182,4 +215,64 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
   result = distanceToClosestCollision(vector, footprint, obstacles);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.121, 1e-3);
+}
+
+TEST(TestCollisionDistance, createObjPolygons)
+{
+  using autoware_auto_perception_msgs::msg::PredictedObject;
+  using autoware_auto_perception_msgs::msg::PredictedObjects;
+  using safe_velocity_adjustor::createObjPolygons;
+
+  PredictedObjects objects;
+
+  auto polygons = createObjPolygons(objects, 0.0, 0.0);
+  EXPECT_TRUE(polygons.empty());
+
+  PredictedObject object1;
+  object1.kinematics.initial_pose_with_covariance.pose.position.x = 0.0;
+  object1.kinematics.initial_pose_with_covariance.pose.position.y = 0.0;
+  object1.kinematics.initial_pose_with_covariance.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(0.0);
+  object1.kinematics.initial_twist_with_covariance.twist.linear.x = 0.0;
+  object1.shape.dimensions.x = 1.0;
+  object1.shape.dimensions.y = 1.0;
+  objects.objects.push_back(object1);
+
+  polygons = createObjPolygons(objects, 0.0, 1.0);
+  EXPECT_TRUE(polygons.empty());
+
+  polygons = createObjPolygons(objects, 0.0, 0.0);
+  ASSERT_EQ(polygons.size(), 1ul);
+  EXPECT_TRUE(point_in_polygon(0.5, 0.5, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(0.5, -0.5, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(-0.5, 0.5, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(-0.5, -0.5, polygons[0]));
+
+  polygons = createObjPolygons(objects, 1.0, 0.0);
+  ASSERT_EQ(polygons.size(), 1ul);
+  EXPECT_TRUE(point_in_polygon(1.0, 1.0, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(1.0, -1.0, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(-1.0, 1.0, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(-1.0, -1.0, polygons[0]));
+
+  PredictedObject object2;
+  object2.kinematics.initial_pose_with_covariance.pose.position.x = 10.0;
+  object2.kinematics.initial_pose_with_covariance.pose.position.y = 10.0;
+  object2.kinematics.initial_pose_with_covariance.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(M_PI_2);
+  object2.kinematics.initial_twist_with_covariance.twist.linear.x = 2.0;
+  object2.shape.dimensions.x = 2.0;
+  object2.shape.dimensions.y = 1.0;
+  objects.objects.push_back(object2);
+
+  polygons = createObjPolygons(objects, 0.0, 2.0);
+  ASSERT_EQ(polygons.size(), 1ul);
+  std::cout << boost::geometry::wkt(polygons) << std::endl;
+  EXPECT_TRUE(point_in_polygon(10.5, 11.0, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(10.5, 9.0, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(9.5, 11.0, polygons[0]));
+  EXPECT_TRUE(point_in_polygon(9.5, 9.0, polygons[0]));
+
+  polygons = createObjPolygons(objects, 0.0, 0.0);
+  EXPECT_EQ(polygons.size(), 2ul);
 }
