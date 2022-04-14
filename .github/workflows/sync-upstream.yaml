@@ -2,7 +2,7 @@ name: sync-upstream
 
 on:
   schedule:
-    - cron: 0 0 * * 0
+    - cron: 0 0 * * *
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           base-branch: tier4/universe
           sync-pr-branch: sync-upstream
-          sync-target-repository: https://github.com/tier4/autoware.proj.git
+          sync-target-repository: https://github.com/tier4/pilot-auto.git
           sync-target-branch: tier4/universe
           pr-title: "chore: sync upstream"
           pr-labels: |
