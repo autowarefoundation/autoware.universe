@@ -13,7 +13,8 @@
     <remap from="output/lanelet2_map" to="$(var lanelet2_map_topic)"/>
     <param name="center_line_resolution" value="$(var center_line_resolution)"/>
     <param name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
-    <param name="lanelet2_map_projector_type" value="MGRS"/> <!-- UTM or MGRS -->
+    <param name="lanelet2_map_projector_type" value="MGRS"/>
+    <!-- UTM or MGRS -->
     <param from="$(var param_file)"/>
   </node>
 
