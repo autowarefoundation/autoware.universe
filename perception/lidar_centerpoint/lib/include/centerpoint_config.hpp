@@ -16,12 +16,46 @@
 #define CENTERPOINT_CONFIG_HPP_
 
 #include <cstddef>
+#include <vector>
 
 namespace centerpoint
 {
 class CenterPointConfig
 {
 public:
+  explicit CenterPointConfig(
+    const float point_feature_size, const std::size_t max_num_voxels,
+    const std::vector<double> & point_cloud_range, const std::vector<double> & voxel_size,
+    const std::size_t downsample_factor, const std::size_t encoder_in_feature_size)
+  {
+    point_feature_size_ = point_feature_size;
+    max_num_voxels_ = max_num_voxels;
+    if (point_cloud_range.size() == 6) {
+      range_min_x_ = static_cast<float>(point_cloud_range[0]);
+      range_min_y_ = static_cast<float>(point_cloud_range[1]);
+      range_min_z_ = static_cast<float>(point_cloud_range[2]);
+      range_max_x_ = static_cast<float>(point_cloud_range[3]);
+      range_max_y_ = static_cast<float>(point_cloud_range[4]);
+      range_max_z_ = static_cast<float>(point_cloud_range[5]);
+    }
+    if (voxel_size.size() == 3) {
+      voxel_size_x_ = static_cast<float>(voxel_size[0]);
+      voxel_size_y_ = static_cast<float>(voxel_size[1]);
+      voxel_size_z_ = static_cast<float>(voxel_size[2]);
+    }
+    downsample_factor_ = downsample_factor;
+    encoder_in_feature_size_ = encoder_in_feature_size;
+
+    grid_size_x_ = static_cast<std::size_t>((range_max_x_ - range_min_x_) / voxel_size_x_);
+    grid_size_y_ = static_cast<std::size_t>((range_max_y_ - range_min_y_) / voxel_size_y_);
+    grid_size_z_ = static_cast<std::size_t>((range_max_z_ - range_min_z_) / voxel_size_z_);
+    offset_x_ = range_min_x_ + voxel_size_x_ / 2;
+    offset_y_ = range_min_y_ + voxel_size_y_ / 2;
+    offset_z_ = range_min_z_ + voxel_size_z_ / 2;
+    down_grid_size_x_ = grid_size_x_ / downsample_factor_;
+    down_grid_size_y_ = grid_size_y_ / downsample_factor_;
+  };
+
   // input params
   const std::size_t point_dim_size_{3};  // x, y and z
   std::size_t point_feature_size_{4};    // x, y, z and timelag
