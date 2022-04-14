@@ -14,12 +14,12 @@
 
 #include "lidar_centerpoint/node.hpp"
 
-#include <centerpoint_config.hpp>
+#include <lidar_centerpoint/centerpoint_config.hpp>
+#include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
+#include <lidar_centerpoint/utils.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <pointcloud_densification.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
-#include <utils.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 

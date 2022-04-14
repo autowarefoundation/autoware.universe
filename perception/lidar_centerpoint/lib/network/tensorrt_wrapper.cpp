@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tensorrt_wrapper.hpp>
+#include "lidar_centerpoint/network/tensorrt_wrapper.hpp"
 
 #include <NvOnnxParser.h>
 

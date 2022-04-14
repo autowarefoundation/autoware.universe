@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VOXEL_GENERATOR_HPP_
-#define VOXEL_GENERATOR_HPP_
+#ifndef LIDAR_CENTERPOINT__PREPROCESS__VOXEL_GENERATOR_HPP_
+#define LIDAR_CENTERPOINT__PREPROCESS__VOXEL_GENERATOR_HPP_
 
-#include <centerpoint_config.hpp>
-#include <pointcloud_densification.hpp>
+#include <lidar_centerpoint/centerpoint_config.hpp>
+#include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -59,4 +59,4 @@ public:
 
 }  // namespace centerpoint
 
-#endif  // VOXEL_GENERATOR_HPP_
+#endif  // LIDAR_CENTERPOINT__PREPROCESS__VOXEL_GENERATOR_HPP_

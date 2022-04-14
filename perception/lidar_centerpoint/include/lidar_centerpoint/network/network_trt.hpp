@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NETWORK_TRT_HPP_
-#define NETWORK_TRT_HPP_
+#ifndef LIDAR_CENTERPOINT__NETWORK__NETWORK_TRT_HPP_
+#define LIDAR_CENTERPOINT__NETWORK__NETWORK_TRT_HPP_
 
-#include <centerpoint_config.hpp>
-#include <tensorrt_wrapper.hpp>
+#include <lidar_centerpoint/centerpoint_config.hpp>
+#include <lidar_centerpoint/network/tensorrt_wrapper.hpp>
 
 #include <vector>
 
@@ -53,4 +53,4 @@ protected:
 
 }  // namespace centerpoint
 
-#endif  // NETWORK_TRT_HPP_
+#endif  // LIDAR_CENTERPOINT__NETWORK__NETWORK_TRT_HPP_

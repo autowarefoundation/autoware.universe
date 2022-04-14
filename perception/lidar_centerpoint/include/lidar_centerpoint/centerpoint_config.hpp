@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CENTERPOINT_CONFIG_HPP_
-#define CENTERPOINT_CONFIG_HPP_
+#ifndef LIDAR_CENTERPOINT__CENTERPOINT_CONFIG_HPP_
+#define LIDAR_CENTERPOINT__CENTERPOINT_CONFIG_HPP_
 
 #include <cstddef>
 #include <vector>
@@ -96,4 +96,4 @@ public:
 
 }  // namespace centerpoint
 
-#endif  // CENTERPOINT_CONFIG_HPP_
+#endif  // LIDAR_CENTERPOINT__CENTERPOINT_CONFIG_HPP_

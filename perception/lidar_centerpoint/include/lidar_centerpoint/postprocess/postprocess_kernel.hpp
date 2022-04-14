@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSTPROCESS_KERNEL_HPP_
-#define POSTPROCESS_KERNEL_HPP_
+#ifndef LIDAR_CENTERPOINT__POSTPROCESS__POSTPROCESS_KERNEL_HPP_
+#define LIDAR_CENTERPOINT__POSTPROCESS__POSTPROCESS_KERNEL_HPP_
 
-#include <centerpoint_config.hpp>
-#include <utils.hpp>
+#include <lidar_centerpoint/centerpoint_config.hpp>
+#include <lidar_centerpoint/utils.hpp>
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -47,4 +47,4 @@ private:
 
 }  // namespace centerpoint
 
-#endif  // POSTPROCESS_KERNEL_HPP_
+#endif  // LIDAR_CENTERPOINT__POSTPROCESS__POSTPROCESS_KERNEL_HPP_

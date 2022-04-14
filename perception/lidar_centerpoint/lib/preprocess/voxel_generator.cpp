@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <voxel_generator.hpp>
+#include "lidar_centerpoint/preprocess/voxel_generator.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 

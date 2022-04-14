@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CIRCLE_NMS_KERNEL_HPP_
-#define CIRCLE_NMS_KERNEL_HPP_
+#include "lidar_centerpoint/utils.hpp"
 
-#include <utils.hpp>
-
-#include <thrust/device_vector.h>
+#include <stdexcept>
 
 namespace centerpoint
 {
-// Non-maximum suppression (NMS) uses the distance on the xy plane instead of
-// intersection over union (IoU) to suppress overlapped objects.
-std::size_t circleNMS(
-  thrust::device_vector<Box3D> & boxes3d, const float distance_threshold,
-  thrust::device_vector<bool> & keep_mask, cudaStream_t stream);
+std::size_t divup(const std::size_t a, const std::size_t b)
+{
+  if (a == 0) {
+    throw std::runtime_error("A dividend of divup isn't positive.");
+  }
+  if (b == 0) {
+    throw std::runtime_error("A divisor of divup isn't positive.");
+  }
+
+  return (a + b - 1) / b;
+}
 
 }  // namespace centerpoint
-
-#endif  // CIRCLE_NMS_KERNEL_HPP_
