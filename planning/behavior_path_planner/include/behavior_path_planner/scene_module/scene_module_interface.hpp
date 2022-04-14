@@ -194,7 +194,7 @@ public:
 
   MarkerArray getDebugMarker() { return debug_marker_; }
 
-  AvoidanceInfoArray::SharedPtr getAvoidanceInfoArray() { return avoidance_info_array_ptr_; }
+  AvoidanceInfoArray::SharedPtr getAvoidanceInfoArray() { return debug_avoidance_info_array_ptr_; }
 
 private:
   std::string name_;
@@ -203,7 +203,7 @@ private:
 protected:
   MarkerArray debug_marker_;
   rclcpp::Clock::SharedPtr clock_;
-  mutable AvoidanceInfoArray::SharedPtr avoidance_info_array_ptr_{};
+  mutable AvoidanceInfoArray::SharedPtr debug_avoidance_info_array_ptr_{};
 
 public:
   ApprovalHandler approval_handler_;
