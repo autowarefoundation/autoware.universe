@@ -489,9 +489,12 @@ bool TrafficLightModule::hasTrafficLightColor(
   const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
   const uint8_t & lamp_color) const
 {
-  const auto it_lamp = std::find_if(
-    tl_state.lights.begin(), tl_state.lights.end(),
-    [&lamp_color](const auto & x) { return x.color == lamp_color; });
+  using autoware_auto_perception_msgs::msg::TrafficLight;
+
+  const auto it_lamp =
+    std::find_if(tl_state.lights.begin(), tl_state.lights.end(), [&lamp_color](const auto & x) {
+      return x.shape == TrafficLight::CIRCLE && x.color == lamp_color;
+    });
 
   return it_lamp != tl_state.lights.end();
 }
