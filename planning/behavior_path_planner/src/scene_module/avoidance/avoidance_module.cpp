@@ -77,7 +77,7 @@ bool AvoidanceModule::isExecutionReady() const
   {
     DebugData debug;
     static_cast<void>(calcAvoidancePlanningData(debug));
-    *avoidance_info_array_ptr_ = debug.avoidance_info_array;
+    avoidance_info_array_ptr_ = std::make_shared<AvoidanceInfoArray>(debug.avoidance_info_array);
   }
 
   if (current_state_ == BT::NodeStatus::RUNNING) {
@@ -94,8 +94,7 @@ BT::NodeStatus AvoidanceModule::updateState()
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
   const bool has_avoidance_target = !avoid_data.objects.empty();
-  *avoidance_info_array_ptr_ = debug.avoidance_info_array;
-
+  avoidance_info_array_ptr_ = std::make_shared<AvoidanceInfoArray>(debug.avoidance_info_array);
   if (!is_plan_running && !has_avoidance_target) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
@@ -2369,8 +2368,7 @@ void AvoidanceModule::updateData()
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
   const auto avoidance_infos = debug_data_.avoidance_info_array.avoidance_info;
-  avoidance_info_array_ptr_ =
-    std::make_shared<AvoidanceInfoArray>(debug_data_.avoidance_info_array);
+  avoidance_info_array_ptr_ = std::make_shared<AvoidanceInfoArray>(debug_data_.avoidance_info_array);
 
   // TODO(Horibe): this is not tested yet, disable now.
   updateRegisteredObject(avoidance_data_.objects);
