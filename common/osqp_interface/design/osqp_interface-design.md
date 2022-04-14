@@ -27,21 +27,21 @@ C-style Compressed-Column-Sparse matrices and dynamic arrays, loads the data int
 
 The interface can be used in several ways:
 
-1.  Initialize the interface WITHOUT data. Load the problem formulation at the optimization call.
+1. Initialize the interface WITHOUT data. Load the problem formulation at the optimization call.
 
 ```
      osqp_interface = OSQPInterface();
      osqp_interface.optimize(P, A, q, l, u);
 ```
 
-2.  Initialize the interface WITH data.
+2. Initialize the interface WITH data.
 
 ```
      osqp_interface = OSQPInterface(P, A, q, l, u);
      osqp_interface.optimize();
 ```
 
-3.  WARM START OPTIMIZATION by modifying the problem formulation between optimization runs.
+3. WARM START OPTIMIZATION by modifying the problem formulation between optimization runs.
 
 ```
      osqp_interface = OSQPInterface(P, A, q, l, u);
