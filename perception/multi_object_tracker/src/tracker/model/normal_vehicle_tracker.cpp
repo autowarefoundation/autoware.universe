@@ -288,11 +288,12 @@ bool NormalVehicleTracker::measureWithPose(
 
   if (object.kinematics.has_twist) {
     Y(IDX::VX, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
-    C(3, IDX::VX) = 1.0;   // for vx
+    C(3, IDX::VX) = 1.0;  // for vx
 
-    if(!ekf_params_.use_measurement_covariance ||
+    if (
+      !ekf_params_.use_measurement_covariance ||
       object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0) {
-      R(3, 3) = ekf_params_.r_cov_vx;                                       // vx -vx
+      R(3, 3) = ekf_params_.r_cov_vx;  // vx -vx
     } else {
       R(3, 3) = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     }
