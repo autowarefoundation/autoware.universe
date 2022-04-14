@@ -40,13 +40,16 @@ CrosswalkModule::CrosswalkModule(
 
 bool CrosswalkModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::CROSSWALK);
+  *stop_reason_2 =
+    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::CROSSWALK);
 
   const auto input = *path;
 
@@ -91,6 +94,10 @@ bool CrosswalkModule::modifyPathVelocity(
       stop_factor.stop_pose = debug_data_.first_stop_pose;
       stop_factor.stop_factor_points = debug_data_.stop_factor_points;
       planning_utils::appendStopReason(stop_factor, stop_reason);
+      stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+      stop_reason_2->stop_line = debug_data_.first_stop_pose;
+      stop_reason_2->stop_factor_points = debug_data_.stop_factor_points;
+
     }
   }
   return true;

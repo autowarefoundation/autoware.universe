@@ -22,6 +22,7 @@
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_planning_msgs/msg/stop_reason2.hpp>
+#include <tier4_planning_msgs/msg/stop_reason2_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 
 #include <memory>
@@ -47,7 +48,8 @@ public:
 
   virtual bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason) = 0;
+    tier4_planning_msgs::msg::StopReason * stop_reason,
+    tier4_planning_msgs::msg::StopReason2 * stop_reason_2) = 0;
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
 
   int64_t getModuleId() const { return module_id_; }
@@ -92,7 +94,7 @@ public:
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
         "~/output/infrastructure_commands", 20);
     pub_stop_reason2_ =
-      node.create_publisher<tier4_planning_msgs::msg::StopReason2>("~/output/stop_reason2", 20);
+      node.create_publisher<tier4_planning_msgs::msg::StopReason2Array>("~/output/stop_reason2", 20);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -115,8 +117,11 @@ public:
   {
     visualization_msgs::msg::MarkerArray debug_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+    tier4_planning_msgs::msg::StopReason2Array stop_reason2_array;
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
+    stop_reason2_array.header.frame_id = "map";
+    stop_reason2_array.header.stamp = clock_->now();
 
     tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
     infrastructure_command_array.stamp = clock_->now();
@@ -124,9 +129,11 @@ public:
     first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
       tier4_planning_msgs::msg::StopReason stop_reason;
+      tier4_planning_msgs::msg::StopReason2 stop_reason_2;
       scene_module->setPlannerData(planner_data_);
-      scene_module->modifyPathVelocity(path, &stop_reason);
+      scene_module->modifyPathVelocity(path, &stop_reason, &stop_reason_2);
       stop_reason_array.stop_reasons.emplace_back(stop_reason);
+      stop_reason2_array.stop_reasons.emplace_back(stop_reason_2);
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
         infrastructure_command_array.commands.push_back(*command);
@@ -144,8 +151,12 @@ public:
     if (!stop_reason_array.stop_reasons.empty()) {
       pub_stop_reason_->publish(stop_reason_array);
     }
+    if (!stop_reason2_array.stop_reasons.empty()) {
+      pub_stop_reason2_->publish(stop_reason2_array);
+    }
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
+    
   }
 
 protected:
@@ -203,6 +214,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::StopReason2Array>::SharedPtr pub_stop_reason2_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
 };

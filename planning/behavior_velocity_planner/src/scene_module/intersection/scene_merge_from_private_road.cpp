@@ -45,11 +45,14 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 
 bool MergeFromPrivateRoadModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
 {
   debug_data_ = DebugData();
   *stop_reason = planning_utils::initializeStopReason(
     tier4_planning_msgs::msg::StopReason::MERGE_FROM_PRIVATE_ROAD);
+  *stop_reason_2 = planning_utils::initializeStopReason2(
+    tier4_planning_msgs::msg::StopReason2::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -118,6 +121,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
       stop_factor.stop_pose = debug_data_.stop_point_pose;
       stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
       planning_utils::appendStopReason(stop_factor, stop_reason);
+      stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+      stop_reason_2->stop_line = debug_data_.stop_point_pose;
+      stop_reason_2->stop_factor_points.emplace_back(debug_data_.first_collision_point);
     }
 
     const double signed_arc_dist_to_stop_point = tier4_autoware_utils::calcSignedArcLength(

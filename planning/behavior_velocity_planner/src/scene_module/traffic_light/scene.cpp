@@ -202,7 +202,8 @@ TrafficLightModule::TrafficLightModule(
 
 bool TrafficLightModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
 {
   looking_tl_state_ = initializeTrafficSignal(path->header.stamp);
   debug_data_ = DebugData();
@@ -211,6 +212,8 @@ bool TrafficLightModule::modifyPathVelocity(
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
+  *stop_reason_2 =
+    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::TRAFFIC_LIGHT);  
 
   const auto input_path = *path;
 
@@ -258,7 +261,7 @@ bool TrafficLightModule::modifyPathVelocity(
 
     // Decide whether to stop or pass even if a stop signal is received.
     if (!isPassthrough(signed_arc_length_to_stop_point)) {
-      *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
+      *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason, stop_reason_2);
       is_prev_state_stop_ = true;
     }
     return true;
@@ -460,7 +463,8 @@ bool TrafficLightModule::getHighestConfidenceTrafficSignal(
 autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
@@ -487,6 +491,11 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   stop_factor.stop_factor_points =
     std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
   planning_utils::appendStopReason(stop_factor, stop_reason);
+
+  stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+  stop_reason_2->stop_line = debug_data_.first_stop_pose;
+  stop_reason_2->stop_factor_points =
+    std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
 
   return modified_path;
 }

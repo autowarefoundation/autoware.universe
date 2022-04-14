@@ -66,7 +66,8 @@ IntersectionModule::IntersectionModule(
 
 bool IntersectionModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
 {
   const bool external_go = isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::GO);
   const bool external_stop =
@@ -75,6 +76,8 @@ bool IntersectionModule::modifyPathVelocity(
   debug_data_ = DebugData();
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::INTERSECTION);
+  *stop_reason_2 = 
+    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::INTERSECTION);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -190,6 +193,10 @@ bool IntersectionModule::modifyPathVelocity(
       stop_factor.stop_factor_points =
         planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
       planning_utils::appendStopReason(stop_factor, stop_reason);
+      stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+      stop_reason_2->stop_line = debug_data_.stop_point_pose;
+      stop_reason_2->stop_factor_points =
+        planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
 
     } else {
       debug_data_.stop_required = false;

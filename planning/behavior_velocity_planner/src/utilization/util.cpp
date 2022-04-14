@@ -547,6 +547,14 @@ tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & st
   return stop_reason_msg;
 }
 
+tier4_planning_msgs::msg::StopReason2 initializeStopReason2(const uint8_t stop_reason)
+{
+  tier4_planning_msgs::msg::StopReason2 stop_reason_msg;
+  stop_reason_msg.stop_reason = stop_reason;
+  stop_reason_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_FALSE;
+  return stop_reason_msg;
+}
+
 void appendStopReason(
   const tier4_planning_msgs::msg::StopFactor stop_factor,
   tier4_planning_msgs::msg::StopReason * stop_reason)
