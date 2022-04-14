@@ -14,6 +14,7 @@
 
 #include "scene_module/dynamic_obstacle_stop/scene.hpp"
 
+#include "utilization/trajectory_utils.hpp"
 #include "utilization/util.hpp"
 
 #include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
@@ -36,20 +37,11 @@ namespace
 }  // namespace
 
 DynamicObstacleStopModule::DynamicObstacleStopModule(
-  const int64_t module_id, const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), planner_param_(planner_param)
-{
-}
-
-DynamicObstacleStopModule::DynamicObstacleStopModule(
   const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const std::shared_ptr<motion_velocity_smoother::SmootherBase> & smoother,
   const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   planner_param_(planner_param),
-  smoother_(smoother),
   debug_ptr_(debug_ptr)
 {
   if (planner_param.dynamic_obstacle_stop.use_partition_lanelet) {
@@ -101,6 +93,15 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     RCLCPP_WARN_STREAM(logger_, "failed to apply smoother.");
     return true;
   }
+
+  // PathWithLaneId smoothed_path;
+  // if (!smoothPath(*path, smoothed_path, planner_data_)) {
+  //   return true;
+  // }
+
+  // //! temporary
+  // const auto smoothed_trajectory =
+  //   dynamic_obstacle_stop_utils::convertPathToTrajectory(smoothed_path);
 
   // trim trajectory ahead of the base_link
   const double trim_distance = planner_param_.dynamic_obstacle_stop.detection_distance;
@@ -195,7 +196,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
 
     debug_ptr_->publish();
 
-    debug_ptr_->publishDebugTrajectory(*smoothed_trajectory);
+    // debug_ptr_->publishDebugTrajectory(*smoothed_trajectory);
   }
 
   return true;
@@ -1218,7 +1219,8 @@ bool DynamicObstacleStopModule::smoothVelocity(
   const double initial_vel, const double initial_acc, TrajectoryPoints & traj_smoothed) const
 {
   // Lateral acceleration limit
-  const auto traj_lateral_acc_filtered = smoother_->applyLateralAccelerationFilter(input);
+  const auto traj_lateral_acc_filtered =
+    planner_data_->velocity_smoother_->applyLateralAccelerationFilter(input);
   if (!traj_lateral_acc_filtered) {
     return false;
   }
@@ -1234,7 +1236,7 @@ bool DynamicObstacleStopModule::smoothVelocity(
     return false;
   }
 
-  auto traj_resampled = smoother_->resampleTrajectory(
+  auto traj_resampled = planner_data_->velocity_smoother_->resampleTrajectory(
     *traj_lateral_acc_filtered, planner_data_->current_velocity->twist.linear.x,
     *traj_pre_resampled_closest);
   if (!traj_resampled) {
@@ -1267,7 +1269,8 @@ bool DynamicObstacleStopModule::smoothVelocity(
     clipped.end(), traj_resampled->begin() + *traj_resampled_closest, traj_resampled->end());
 
   std::vector<TrajectoryPoints> debug_trajectories;
-  if (!smoother_->apply(initial_vel, initial_acc, clipped, traj_smoothed, debug_trajectories)) {
+  if (!planner_data_->velocity_smoother_->apply(
+        initial_vel, initial_acc, clipped, traj_smoothed, debug_trajectories)) {
     RCLCPP_WARN(logger_, "Fail to solve optimization.");
   }
 

@@ -110,7 +110,6 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.max_acc = node.declare_parameter(ns_m + ".max_acc", -2.0);
   }
 
-  smoother_ = std::make_shared<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(node);
   debug_ptr_ = std::make_shared<DynamicObstacleStopDebug>(node);
 
   // Set parameter callback
@@ -224,7 +223,7 @@ void DynamicObstacleStopModuleManager::launchNewModules(
   if (!isModuleRegistered(module_id)) {
     registerModule(std::make_shared<DynamicObstacleStopModule>(
       module_id, planner_data_, planner_param_, logger_.get_child("dynamic_obstacle_stop_module"),
-      smoother_, debug_ptr_, clock_));
+      debug_ptr_, clock_));
   }
 }
 

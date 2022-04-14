@@ -16,6 +16,25 @@
 
 namespace behavior_velocity_planner
 {
+namespace
+{
+// create quaternion facing to the nearest trajectory point
+template <class T>
+geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
+  const T & points, const geometry_msgs::msg::Point & point)
+{
+  const auto nearest_idx = tier4_autoware_utils::findNearestIndex(points, point);
+  const auto & nearest_pose = points.at(nearest_idx).pose;
+
+  const auto longitudinal_offset =
+    tier4_autoware_utils::calcLongitudinalDeviation(nearest_pose, point);
+  const auto vertical_point =
+    tier4_autoware_utils::calcOffsetPose(nearest_pose, longitudinal_offset, 0, 0).position;
+  const auto azimuth_angle = tier4_autoware_utils::calcAzimuthAngle(point, vertical_point);
+
+  return tier4_autoware_utils::createQuaternionFromYaw(azimuth_angle);
+}
+}  // namespace
 
 DynamicObstacle::DynamicObstacle() {}
 DynamicObstacle::DynamicObstacle(const DynamicObstacleParam & param) { param_ = param; }
@@ -25,7 +44,7 @@ void DynamicObstacle::createDynamicObstacle(
 {
   // create pose facing the direction of the lane
   pose_.position = point;
-  pose_.orientation = createQuaternionFacingToTrajectory(pose_.position, trajectory);
+  pose_.orientation = createQuaternionFacingToTrajectory(trajectory.points, pose_.position);
 
   min_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
   max_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
@@ -58,7 +77,7 @@ void DynamicObstacle::createDynamicObstacle(
 
   // create pose facing the direction of the lane
   pose_.position = object_pose.position;
-  pose_.orientation = createQuaternionFacingToTrajectory(pose_.position, trajectory);
+  pose_.orientation = createQuaternionFacingToTrajectory(trajectory.points, pose_.position);
 
   // assume min and max velocity is value specified in param
   min_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
@@ -98,22 +117,6 @@ void DynamicObstacle::createDynamicObstacle(
 
     predicted_paths_.emplace_back(predicted_path);
   }
-}
-
-// create quaternion facing to the nearest trajectory point
-geometry_msgs::msg::Quaternion DynamicObstacle::createQuaternionFacingToTrajectory(
-  const geometry_msgs::msg::Point & point, const Trajectory & trajectory) const
-{
-  const auto nearest_idx = tier4_autoware_utils::findNearestIndex(trajectory.points, point);
-  const auto & nearest_pose = trajectory.points.at(nearest_idx).pose;
-
-  const auto longitudinal_offset =
-    tier4_autoware_utils::calcLongitudinalDeviation(nearest_pose, point);
-  const auto vertical_point =
-    tier4_autoware_utils::calcOffsetPose(nearest_pose, longitudinal_offset, 0, 0).position;
-  const auto azimuth_angle = tier4_autoware_utils::calcAzimuthAngle(point, vertical_point);
-
-  return tier4_autoware_utils::createQuaternionFromYaw(azimuth_angle);
 }
 
 // create predicted path assuming that obstacles move with constant velocity

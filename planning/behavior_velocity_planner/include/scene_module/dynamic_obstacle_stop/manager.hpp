@@ -20,7 +20,6 @@
 #include "scene_module/dynamic_obstacle_stop/utils.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
-#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/update_param.hpp>
 
@@ -41,7 +40,6 @@ public:
 private:
   dynamic_obstacle_stop_utils::PlannerParam planner_param_;
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
-  std::shared_ptr<motion_velocity_smoother::SmootherBase> smoother_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 

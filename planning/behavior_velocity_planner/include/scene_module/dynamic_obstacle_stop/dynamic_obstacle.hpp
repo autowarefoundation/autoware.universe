@@ -18,7 +18,8 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <geometry_msgs/msg/twist.h>
 
@@ -30,10 +31,6 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Trajectory;
-// using dynamic_obstacle_stop_utils::DynamicObstacleParam;
-// using dynamic_obstacle_stop_utils::PoseWithRange;
-// using dynamic_obstacle_stop_utils::PredictedPath;
-
 struct DynamicObstacleParam
 {
   float min_vel_kmph{0.0};
@@ -83,9 +80,6 @@ public:
   std::vector<PredictedPath> predicted_paths_;
 
 private:
-  geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
-    const geometry_msgs::msg::Point & point, const Trajectory & trajectory) const;
-
   std::vector<geometry_msgs::msg::Pose> createPredictedPath(
     const geometry_msgs::msg::Pose & initial_pose, const float time_step,
     const float max_velocity_mps, const size_t path_size) const;

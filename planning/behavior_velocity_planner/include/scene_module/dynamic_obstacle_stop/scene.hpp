@@ -19,7 +19,8 @@
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 #include "scene_module/dynamic_obstacle_stop/utils.hpp"
 
-#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/optional.hpp>
 
@@ -54,13 +55,8 @@ class DynamicObstacleStopModule : public SceneModuleInterface
 {
 public:
   DynamicObstacleStopModule(
-    const int64_t module_id, const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
-
-  DynamicObstacleStopModule(
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const std::shared_ptr<motion_velocity_smoother::SmootherBase> & smoother,
     const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr,
     const rclcpp::Clock::SharedPtr clock);
 
@@ -80,7 +76,6 @@ private:
   State state_{State::GO};
   rclcpp::Time stop_time_;
   BasicPolygons2d partition_lanelets_;
-  std::shared_ptr<motion_velocity_smoother::SmootherBase> smoother_;
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
 
   // Function
