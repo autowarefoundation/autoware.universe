@@ -110,25 +110,25 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   ament_auto_find_build_dependencies()
 
   include_directories(
+    include
     ${CUDA_INCLUDE_DIRS}
-    lib/include
   )
 
   ### centerpoint ###
   ament_auto_add_library(centerpoint SHARED
-    lib/src/centerpoint_trt.cpp
-    lib/src/pointcloud_densification.cpp
-    lib/src/voxel_generator.cpp
-    lib/src/tensorrt_wrapper.cpp
-    lib/src/network_trt.cpp
-    lib/src/utils.cpp
+    lib/centerpoint_trt.cpp
+    lib/utils.cpp
+    lib/network/network_trt.cpp
+    lib/network/tensorrt_wrapper.cpp
+    lib/preprocess/pointcloud_densification.cpp
+    lib/preprocess/voxel_generator.cpp
   )
 
   cuda_add_library(centerpoint_cuda_libraries SHARED
-    lib/src/circle_nms_kernel.cu
-    lib/src/postprocess_kernel.cu
-    lib/src/preprocess_kernel.cu
-    lib/src/scatter_kernel.cu
+    lib/postprocess/circle_nms_kernel.cu
+    lib/postprocess/postprocess_kernel.cu
+    lib/network/scatter_kernel.cu
+    lib/preprocess/preprocess_kernel.cu
   )
 
   target_link_libraries(centerpoint

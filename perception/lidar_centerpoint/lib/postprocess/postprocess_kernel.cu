@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <circle_nms_kernel.hpp>
-#include <postprocess_kernel.hpp>
+#include "lidar_centerpoint/postprocess/circle_nms_kernel.hpp"
+
+#include <lidar_centerpoint/postprocess/postprocess_kernel.hpp>
 
 #include <thrust/count.h>
 #include <thrust/sort.h>

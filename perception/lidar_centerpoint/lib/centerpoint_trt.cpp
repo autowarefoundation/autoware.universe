@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <centerpoint_config.hpp>
-#include <centerpoint_trt.hpp>
-#include <preprocess_kernel.hpp>
-#include <scatter_kernel.hpp>
+#include "lidar_centerpoint/centerpoint_trt.hpp"
+
+#include <lidar_centerpoint/centerpoint_config.hpp>
+#include <lidar_centerpoint/network/scatter_kernel.hpp>
+#include <lidar_centerpoint/preprocess/preprocess_kernel.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 
 #include <iostream>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <network_trt.hpp>
+#include "lidar_centerpoint/network/network_trt.hpp"
 
 namespace centerpoint
 {

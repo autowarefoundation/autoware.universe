@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCATTER_KERNEL_HPP_
-#define SCATTER_KERNEL_HPP_
+#ifndef LIDAR_CENTERPOINT__NETWORK__SCATTER_KERNEL_HPP_
+#define LIDAR_CENTERPOINT__NETWORK__SCATTER_KERNEL_HPP_
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -28,4 +28,4 @@ cudaError_t scatterFeatures_launch(
 
 }  // namespace centerpoint
 
-#endif  // SCATTER_KERNEL_HPP_
+#endif  // LIDAR_CENTERPOINT__NETWORK__SCATTER_KERNEL_HPP_

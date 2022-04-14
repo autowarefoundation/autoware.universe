@@ -12,22 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <utils.hpp>
+#ifndef LIDAR_CENTERPOINT__UTILS_HPP_
+#define LIDAR_CENTERPOINT__UTILS_HPP_
 
-#include <stdexcept>
+#include <cstddef>
 
 namespace centerpoint
 {
-std::size_t divup(const std::size_t a, const std::size_t b)
+struct Box3D
 {
-  if (a == 0) {
-    throw std::runtime_error("A dividend of divup isn't positive.");
-  }
-  if (b == 0) {
-    throw std::runtime_error("A divisor of divup isn't positive.");
-  }
+  // initializer not allowed for __shared__ variable
+  int label;
+  float score;
+  float x;
+  float y;
+  float z;
+  float length;
+  float width;
+  float height;
+  float yaw;
+  float vel_x;
+  float vel_y;
+};
 
-  return (a + b - 1) / b;
-}
-
+std::size_t divup(const std::size_t a, const std::size_t b);
 }  // namespace centerpoint
+
+#endif  // LIDAR_CENTERPOINT__UTILS_HPP_

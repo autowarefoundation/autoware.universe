@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_WRAPPER_HPP_
-#define TENSORRT_WRAPPER_HPP_
+#ifndef LIDAR_CENTERPOINT__NETWORK__TENSORRT_WRAPPER_HPP_
+#define LIDAR_CENTERPOINT__NETWORK__TENSORRT_WRAPPER_HPP_
 
-#include <centerpoint_config.hpp>
+#include <lidar_centerpoint/centerpoint_config.hpp>
 
 #include <NvInfer.h>
 
@@ -91,4 +91,4 @@ private:
 
 }  // namespace centerpoint
 
-#endif  // TENSORRT_WRAPPER_HPP_
+#endif  // LIDAR_CENTERPOINT__NETWORK__TENSORRT_WRAPPER_HPP_

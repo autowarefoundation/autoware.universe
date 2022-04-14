@@ -28,8 +28,9 @@
  * limitations under the License.
  */
 
-#include <preprocess_kernel.hpp>
-#include <utils.hpp>
+#include "lidar_centerpoint/preprocess/preprocess_kernel.hpp"
+
+#include <lidar_centerpoint/utils.hpp>
 
 namespace
 {
