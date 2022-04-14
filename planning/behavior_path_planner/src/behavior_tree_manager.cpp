@@ -126,7 +126,7 @@ std::vector<MarkerArray> BehaviorTreeManager::getDebugMarkers()
 
 AvoidanceInfoArray BehaviorTreeManager::getAvoidanceInfoArray()
 {
- const auto avoidance_module = std::find_if(
+  const auto avoidance_module = std::find_if(
     scene_modules_.begin(), scene_modules_.end(),
     [](const std::shared_ptr<SceneModuleInterface> & module_ptr) {
       return module_ptr->current_state_ == BT::NodeStatus::SUCCESS;

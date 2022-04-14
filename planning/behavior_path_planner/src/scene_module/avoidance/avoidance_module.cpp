@@ -2368,7 +2368,8 @@ void AvoidanceModule::updateData()
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
   const auto avoidance_infos = debug_data_.avoidance_info_array.avoidance_info;
-  avoidance_info_array_ptr_ = std::make_shared<AvoidanceInfoArray>(debug_data_.avoidance_info_array);
+  avoidance_info_array_ptr_ =
+    std::make_shared<AvoidanceInfoArray>(debug_data_.avoidance_info_array);
 
   // TODO(Horibe): this is not tested yet, disable now.
   updateRegisteredObject(avoidance_data_.objects);

@@ -203,7 +203,7 @@ private:
 protected:
   MarkerArray debug_marker_;
   rclcpp::Clock::SharedPtr clock_;
-  mutable AvoidanceInfoArray::SharedPtr avoidance_info_array_ptr_ {};
+  mutable AvoidanceInfoArray::SharedPtr avoidance_info_array_ptr_{};
 
 public:
   ApprovalHandler approval_handler_;
