@@ -1,5 +1,4 @@
-Comparisons {#helper-comparisons}
-===========
+# Comparisons {#helper-comparisons}
 
 The `float_comparisons.hpp` library is a simple set of functions for performing approximate numerical comparisons.
 There are separate functions for performing comparisons using absolute bounds and relative bounds. Absolute comparison checks are prefixed with `abs_` and relative checks are prefixed with `rel_`.
@@ -15,10 +14,10 @@ The `exclusive_or` function will test whether two values cast to different boole
 
 # Assumptions
 
-* The approximate comparisons all take an `epsilon` parameter.
-The value of this parameter must be >= 0.
-* The library is only intended to be used with floating point types.
-A static assertion will be thrown if the library is used with a non-floating point type.
+- The approximate comparisons all take an `epsilon` parameter.
+  The value of this parameter must be >= 0.
+- The library is only intended to be used with floating point types.
+  A static assertion will be thrown if the library is used with a non-floating point type.
 
 # Example Usage
 

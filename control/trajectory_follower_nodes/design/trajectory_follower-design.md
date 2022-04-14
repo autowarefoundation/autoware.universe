@@ -1,5 +1,4 @@
-Trajectory Follower Nodes {#trajectory_follower_nodes-package-design}
-=============================================
+# Trajectory Follower Nodes {#trajectory_follower_nodes-package-design}
 
 # Purpose
 
@@ -8,10 +7,11 @@ Generate control commands to follow a given Trajectory.
 # Design
 
 This functionality is decomposed into three nodes.
+
 - @subpage lateral-controller-design : generates lateral control messages.
 - @subpage longitudinal-controller-design : generates longitudinal control messages.
 - @subpage latlon-muxer-design : combines the lateral and longitudinal control commands
-into a single control command.
+  into a single control command.
 
 Core functionalities are implemented in the @subpage trajectory_follower-package-design package.
 

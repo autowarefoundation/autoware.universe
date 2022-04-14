@@ -57,6 +57,6 @@ Overwrite prediction results with tracking results.
 
 ## References/External links
 
-[1] https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/tree/master/src/tools/visualization/autoware_rviz_plugins
+[1] <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/tree/master/src/tools/visualization/autoware_rviz_plugins>
 
 ## Future extensions / Unimplemented parts

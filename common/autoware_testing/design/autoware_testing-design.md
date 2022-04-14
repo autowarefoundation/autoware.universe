@@ -1,11 +1,11 @@
-autoware_testing {#autoware_testing-package-design}
-===========
+# autoware_testing {#autoware_testing-package-design}
 
 This is the design document for the `autoware_testing` package.
 
 # Purpose / Use cases
 
 The package aims to provide a unified way to add standard testing functionality to the package, currently supporting:
+
 - Smoke testing (`add_smoke_test`): launch a node with default configuration and ensure that it starts up and does not crash.
 
 # Design
@@ -32,7 +32,7 @@ find_package(autoware_testing REQUIRED)
 add_smoke_test(<package_name> <executable_name> [PARAM_FILENAME <param_filename>] [EXECUTABLE_ARGUMENTS <arguments>])
 ```
 
-Where 
+Where
 
 `<package_name>` - [required] tested node package name.
 
@@ -52,14 +52,16 @@ build/<package_name>/test_results/<package_name>/<executable_name>_smoke_test.xu
 ```
 
 # References / External links
-- https://en.wikipedia.org/wiki/Smoke_testing_(software)
-- https://github.com/ros2/ros_testing
-- https://github.com/ros2/launch/blob/master/launch_testing
+
+- <https://en.wikipedia.org/wiki/Smoke_testing_(software>)
+- <https://github.com/ros2/ros_testing>
+- <https://github.com/ros2/launch/blob/master/launch_testing>
 
 # Future extensions / Unimplemented parts
 
 - Adding more types of standard tests.
 
 # Related issues
+
 - Issue #700: add smoke test
 - Issue #1224: Port other packages with smoke tests to use `autoware_testing`

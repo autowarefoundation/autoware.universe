@@ -1,5 +1,4 @@
-Lateral/Longitudinal Control Muxer {#latlon-muxer-design}
-=============================================
+# Lateral/Longitudinal Control Muxer {#latlon-muxer-design}
 
 # Purpose
 
@@ -9,17 +8,21 @@ this node combines the resulting messages into a single control command message.
 # Design
 
 Inputs.
+
 - `AckermannLateralCommand`: lateral command.
 - `LongitudinalCommand`: longitudinal command.
 
 Output.
+
 - `AckermannControlCommand`: message containing both lateral and longitudinal commands.
 
 Parameter.
+
 - `timeout_thr_sec`: duration in second after which input messages are discarded.
 
 Each time the node receives an input message it publishes an `AckermannControlCommand`
 if the following two conditions are met.
+
 1. Both inputs have been received.
 2. The last received input messages are not older than defined by `timeout_thr_sec`.
 

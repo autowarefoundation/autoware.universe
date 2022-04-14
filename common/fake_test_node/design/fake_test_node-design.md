@@ -1,5 +1,4 @@
-Fake Test Node {#fake-test-node-design}
-=====================
+# Fake Test Node {#fake-test-node-design}
 
 # What this package provides
 
@@ -10,6 +9,7 @@ fixture.
 
 This package contains a library that introduces two utility classes that can be used in place of
 custom fixtures described above to write integration tests for a node:
+
 - `autoware::tools::testing::FakeTestNode` - to use as a custom test fixture with `TEST_F` tests
 - `autoware::tools::testing::FakeTestNodeParametrized` - to use a custom test fixture with the
   parametrized `TEST_P` tests (accepts a template parameter that gets forwarded to
@@ -20,10 +20,12 @@ subscribers and publishers have a match, thus reducing the amount of boilerplate
 needs to write.
 
 # How to use this library
+
 After including the relevant header the user can use a typedef to use a custom fixture name and use
 the provided classes as fixtures in `TEST_F` and `TEST_P` tests directly.
 
 ## Example usage
+
 Let's say there is a node `NodeUnderTest` that requires testing. It just
 subscribes to `std_msgs::msg::Int32` messages and publishes a
 `std_msgs::msg::Bool` to indicate that the input is positive. To test such a
