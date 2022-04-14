@@ -205,7 +205,6 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
 
     if (!isTargetObjectType(object)) {
       avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_NOT_TYPE);
-      DEBUG_PRINT("Ignore object: (isTargetObjectType is false)");
       continue;
     }
 
@@ -218,19 +217,16 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     // object is behind ego or too far.
     if (object_data.longitudinal < -parameters_.object_check_backward_distance) {
       avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_BEHIND_THRESHOLD);
-      DEBUG_PRINT("Ignore object: (object < -backward_distance threshold)");
       continue;
     }
     if (object_data.longitudinal > parameters_.object_check_forward_distance) {
       avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_INFRONT_THRESHOLD);
-      DEBUG_PRINT("Ignore object: (object > forward_distance threshold)");
       continue;
     }
 
     // Target object is behind the path goal -> ignore.
     if (object_data.longitudinal > dist_to_goal) {
       avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_BEHIND_PATH_GOAL);
-      DEBUG_PRINT("Ignore object: (object is behind the path goal)");
       continue;
     }
 
@@ -282,7 +278,6 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     // Object is on center line -> ignore.
     if (std::abs(object_data.lateral) < parameters_.threshold_distance_object_is_on_center) {
       avoidance_factors.emplace_back(AvoidanceFactor::TOO_NEAR_TO_CENTERLINE);
-      DEBUG_PRINT("Ignore object: (object is on center line)");
       continue;
     }
 
