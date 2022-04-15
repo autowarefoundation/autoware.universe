@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef apparent_safe_velocity_limiter__OCCUPANCY_GRID_UTILS_HPP_
-#define apparent_safe_velocity_limiter__OCCUPANCY_GRID_UTILS_HPP_
+#ifndef APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_
+#define APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_
 
+#include "apparent_safe_velocity_limiter/collision_distance.hpp"
 #include "grid_map_core/Polygon.hpp"
 #include "grid_map_core/TypeDefs.hpp"
 #include "grid_map_core/iterators/GridMapIterator.hpp"
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
 
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/LineIterator.hpp>
@@ -113,4 +113,4 @@ inline multilinestring_t extractStaticObstaclePolygons(
 }
 }  // namespace apparent_safe_velocity_limiter
 
-#endif  // apparent_safe_velocity_limiter__OCCUPANCY_GRID_UTILS_HPP_
+#endif  // APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_

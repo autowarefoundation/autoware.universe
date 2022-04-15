@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef apparent_safe_velocity_limiter__COLLISION_DISTANCE_HPP_
-#define apparent_safe_velocity_limiter__COLLISION_DISTANCE_HPP_
+#ifndef APPARENT_SAFE_VELOCITY_LIMITER__COLLISION_DISTANCE_HPP_
+#define APPARENT_SAFE_VELOCITY_LIMITER__COLLISION_DISTANCE_HPP_
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
@@ -166,4 +166,4 @@ inline multipolygon_t createObjectPolygons(
 }
 }  // namespace apparent_safe_velocity_limiter
 
-#endif  // apparent_safe_velocity_limiter__COLLISION_DISTANCE_HPP_
+#endif  // APPARENT_SAFE_VELOCITY_LIMITER__COLLISION_DISTANCE_HPP_

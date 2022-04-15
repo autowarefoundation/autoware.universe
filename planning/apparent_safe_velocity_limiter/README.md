@@ -62,8 +62,8 @@ that can be checked for intersection with the footprint polygon using
 
 | Name                                | Type  | Description                                                                                                         |
 | ----------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------- |
-| `time_buffer`                | float | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity. |
-| `distance_buffer`                | float | [m] required distance buffer with the obstacles.                                                                    |
+| `time_buffer`                       | float | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity. |
+| `distance_buffer`                   | float | [m] required distance buffer with the obstacles.                                                                    |
 | `min_adjusted_velocity`             | float | [m/s] limit how much the node can reduce the target velocity.                                                       |
 | `start_distance`                    | float | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.         |
 | `downsample_factor`                 | int   | trajectory downsampling factor to allow tradeoff between precision and performance.                                 |
