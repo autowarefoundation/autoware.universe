@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
-#define SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
+#ifndef apparent_safe_velocity_limiter__COLLISION_DISTANCE_HPP_
+#define apparent_safe_velocity_limiter__COLLISION_DISTANCE_HPP_
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
@@ -34,7 +34,7 @@
 #include <optional>
 #include <vector>
 
-namespace safe_velocity_adjustor
+namespace apparent_safe_velocity_limiter
 {
 namespace bg = boost::geometry;
 using point_t = bg::model::d2::point_xy<double>;
@@ -164,6 +164,6 @@ inline multipolygon_t createObjectPolygons(
   }
   return polygons;
 }
-}  // namespace safe_velocity_adjustor
+}  // namespace apparent_safe_velocity_limiter
 
-#endif  // SAFE_VELOCITY_ADJUSTOR__COLLISION_DISTANCE_HPP_
+#endif  // apparent_safe_velocity_limiter__COLLISION_DISTANCE_HPP_

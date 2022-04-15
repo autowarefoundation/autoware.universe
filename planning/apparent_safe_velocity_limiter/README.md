@@ -1,4 +1,4 @@
-# Safe Velocity Adjustor
+# Apparent Safe Velocity Limiter
 
 ## Purpose
 
@@ -6,8 +6,8 @@ This node reduces the velocity of a trajectory around obstacles in order to conv
 
 ## Inner-workings / Algorithms
 
-Using a parameter `time_safety_buffer`, the feeling of apparent safety is defined as
-"no collision with an obstacle even if the vehicle keeps going straight for a duration of `time_safety_buffer`".
+Using a parameter `time_buffer`, the feeling of apparent safety is defined as
+"no collision with an obstacle even if the vehicle keeps going straight for a duration of `time_buffer`".
 
 In this node, a simple particle model is used to simulated the motion of the ego vehicle at each point of the trajectory.
 A corresponding footprint polygon is constructed and checked for collision with obstacles.
@@ -15,7 +15,7 @@ A corresponding footprint polygon is constructed and checked for collision with 
 ![footprint_image](./media/footprint.png)
 
 If a collision is found, the velocity at the trajectory point is adjusted such that the resulting footprint would no longer collide with an obstacle:
-$velocity = \frac{dist\_to\_collision}{time\_safety\_buffer}$
+$velocity = \frac{dist\_to\_collision}{time\_buffer}$
 
 To avoid reducing the velocity too much, a parameter `min_adjusted_velocity`
 provides a lower bound on the modified velocity.
@@ -62,8 +62,8 @@ that can be checked for intersection with the footprint polygon using
 
 | Name                                | Type  | Description                                                                                                         |
 | ----------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------- |
-| `time_safety_buffer`                | float | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity. |
-| `dist_safety_buffer`                | float | [m] required distance buffer with the obstacles.                                                                    |
+| `time_buffer`                | float | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity. |
+| `distance_buffer`                | float | [m] required distance buffer with the obstacles.                                                                    |
 | `min_adjusted_velocity`             | float | [m/s] limit how much the node can reduce the target velocity.                                                       |
 | `start_distance`                    | float | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.         |
 | `downsample_factor`                 | int   | trajectory downsampling factor to allow tradeoff between precision and performance.                                 |
@@ -80,7 +80,7 @@ This velocity profile should only be used as an upper bound on the actual veloci
 ## (Optional) Error detection and handling
 
 The critical case for this node is when an obstacle is falsely detected very close to the trajectory such that
-the corresponding safe velocity is calculated to be `0`.
+the corresponding apparent safe velocity is calculated to be `0`.
 
 Parameter `min_adjusted_velocity` allow to prevent completely stopping the vehicle in such cases.
 

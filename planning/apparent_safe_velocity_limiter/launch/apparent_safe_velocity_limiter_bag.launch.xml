@@ -81,9 +81,9 @@
     exec="rviz2"
     name="rviz2"
     output="screen"
-    args="-d $(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor_bag.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png"
+    args="-d $(find-pkg-share apparent_safe_velocity_limiter)/launch/apparent_safe_velocity_limiter_bag.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png"
   />
 
   <!-- Velocity Visualization Scripts-->
-  <executable cmd="velocity_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-share safe_velocity_adjustor)/script/"/>
+  <executable cmd="velocity_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-share apparent_safe_velocity_limiter)/script/"/>
 </launch>

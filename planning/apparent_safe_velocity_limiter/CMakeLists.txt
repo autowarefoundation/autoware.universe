@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(safe_velocity_adjustor)
+project(apparent_safe_velocity_limiter)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -15,13 +15,13 @@ ament_auto_find_build_dependencies()
 
 find_package(Boost REQUIRED)
 
-ament_auto_add_library(safe_velocity_adjustor_node SHARED
+ament_auto_add_library(apparent_safe_velocity_limiter_node SHARED
   DIRECTORY src
 )
 
-rclcpp_components_register_node(safe_velocity_adjustor_node
-  PLUGIN "safe_velocity_adjustor::SafeVelocityAdjustorNode"
-  EXECUTABLE safe_velocity_adjustor
+rclcpp_components_register_node(apparent_safe_velocity_limiter_node
+  PLUGIN "apparent_safe_velocity_limiter::ApparentSafeVelocityLimiterNode"
+  EXECUTABLE apparent_safe_velocity_limiter
 )
 
 if(BUILD_TESTING)
@@ -33,7 +33,7 @@ if(BUILD_TESTING)
     test/test_occupancy_grid_utils.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
-    safe_velocity_adjustor_node
+    apparent_safe_velocity_limiter_node
   )
 endif()
 

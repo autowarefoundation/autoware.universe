@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "safe_velocity_adjustor/safe_velocity_adjustor_node.hpp"
+#include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter_node.hpp"
 
-namespace safe_velocity_adjustor
+namespace apparent_safe_velocity_limiter
 {
-}  // namespace safe_velocity_adjustor
+}  // namespace apparent_safe_velocity_limiter
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(safe_velocity_adjustor::SafeVelocityAdjustorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(apparent_safe_velocity_limiter::ApparentSafeVelocityLimiterNode)

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "safe_velocity_adjustor/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/collision_distance.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
@@ -29,8 +29,8 @@
 
 TEST(TestCollisionDistance, forwardSimulatedSegment)
 {
-  using safe_velocity_adjustor::forwardSimulatedSegment;
-  using safe_velocity_adjustor::segment_t;
+  using apparent_safe_velocity_limiter::forwardSimulatedSegment;
+  using apparent_safe_velocity_limiter::segment_t;
   autoware_auto_planning_msgs::msg::TrajectoryPoint trajectory_point;
 
   trajectory_point.pose.position.x = 0.0;
@@ -105,7 +105,7 @@ const auto point_in_polygon = [](const auto x, const auto y, const auto & polygo
 
 TEST(TestCollisionDistance, forwardSimulatedFootprint)
 {
-  using safe_velocity_adjustor::forwardSimulatedFootprint;
+  using apparent_safe_velocity_limiter::forwardSimulatedFootprint;
 
   auto footprint = forwardSimulatedFootprint({{0.0, 0.0}, {1.0, 0.0}}, 1.0);
   EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
@@ -128,13 +128,13 @@ TEST(TestCollisionDistance, forwardSimulatedFootprint)
 
 TEST(TestCollisionDistance, distanceToClosestCollision)
 {
-  using safe_velocity_adjustor::distanceToClosestCollision;
+  using apparent_safe_velocity_limiter::distanceToClosestCollision;
 
-  safe_velocity_adjustor::segment_t vector = {{0.0, 0.0}, {5.0, 0.0}};
-  safe_velocity_adjustor::polygon_t footprint;
+  apparent_safe_velocity_limiter::segment_t vector = {{0.0, 0.0}, {5.0, 0.0}};
+  apparent_safe_velocity_limiter::polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
-  safe_velocity_adjustor::multilinestring_t obstacles;
+  apparent_safe_velocity_limiter::multilinestring_t obstacles;
 
   std::optional<double> result = distanceToClosestCollision(vector, footprint, obstacles);
   ASSERT_FALSE(result.has_value());
@@ -221,7 +221,7 @@ TEST(TestCollisionDistance, createObjPolygons)
 {
   using autoware_auto_perception_msgs::msg::PredictedObject;
   using autoware_auto_perception_msgs::msg::PredictedObjects;
-  using safe_velocity_adjustor::createObjectPolygons;
+  using apparent_safe_velocity_limiter::createObjectPolygons;
 
   PredictedObjects objects;
 

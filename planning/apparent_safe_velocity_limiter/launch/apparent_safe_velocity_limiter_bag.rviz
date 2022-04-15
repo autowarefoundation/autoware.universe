@@ -1389,19 +1389,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /planning/scenario_planning/safe_velocity_adjustor/debug_markers
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: Polygons
-      Namespaces:
-        obstacle_polygons: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /planning/scenario_planning/safe_velocity_adjustor/output/debug_polygons
+        Value: /planning/scenario_planning/apparent_safe_velocity_limiter/debug_markers
       Value: true
   Enabled: true
   Global Options:

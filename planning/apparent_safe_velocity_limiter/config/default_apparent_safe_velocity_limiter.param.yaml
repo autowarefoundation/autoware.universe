@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
-    time_safety_buffer: 1.5  # [s] required time without collision in forward simulation
-    dist_safety_buffer: 1.5  # [m] distance from obstacles to consider a collision
+    time_buffer: 1.5  # [s] required time without collision in forward simulation
+    distance_buffer: 1.5  # [m] distance from obstacles to consider a collision
     min_adjusted_velocity: 1.5  # [m/s] minimum velocity that the module can set
     start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
     downsample_factor: 1  # factor by which to downsample the input trajectory for calculation

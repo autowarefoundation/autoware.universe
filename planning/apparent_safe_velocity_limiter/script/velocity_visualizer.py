@@ -36,7 +36,7 @@ class TrajectoryVisualizer(Node):
         )
         self.sub_adjusted_traj = self.create_subscription(
             Trajectory,
-            "/planning/scenario_planning/safe_velocity_adjustor/trajectory",
+            "/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory",
             self.plotAdjustedTrajectory,
             1,
         )
