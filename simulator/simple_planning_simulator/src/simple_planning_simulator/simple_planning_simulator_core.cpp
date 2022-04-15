@@ -31,7 +31,7 @@
 #include <string>
 #include <utility>
 
-using namespace std::chrono_literals;
+using namespace std::literals::chrono_literals;
 
 namespace
 {
@@ -314,7 +314,7 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
   using autoware_auto_vehicle_msgs::msg::GearCommand;
   Eigen::VectorXd input(vehicle_model_ptr_->getDimU());
 
-  // TODO (Watanabe): The definition of the sign of acceleration in REVERSE mode is different
+  // TODO(Watanabe): The definition of the sign of acceleration in REVERSE mode is different
   // between .auto and proposal.iv, and will be discussed later.
   float acc = accel;
   if (!current_gear_cmd_ptr_) {

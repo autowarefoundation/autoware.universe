@@ -34,7 +34,7 @@ namespace trajectory_follower_nodes
 {
 namespace
 {
-using namespace std::chrono_literals;
+using namespace std::literals::chrono_literals;
 
 template <typename T>
 void update_param(

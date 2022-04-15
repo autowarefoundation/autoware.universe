@@ -56,5 +56,7 @@ f << dot(v) == ((-u * omega) + ((F_f + F_r) / m));
 f << dot(omega) == (((L_f * F_f) - (L_r * F_r)) / I);
 f << dot(delta) == delta_dot;
 f << dot(ax) == jx;
-#endif  // COMMON__MOTION_COMMON__SCRIPTS__AUTOGENERATION_CODE_SNIPPETS__LINEAR_TIRE_SNIPPET_HPP_
-        // NOLINT
+
+// clang-format off
+#endif  // COMMON__MOTION_COMMON__SCRIPTS__AUTOGENERATION_CODE_SNIPPETS__LINEAR_TIRE_SNIPPET_HPP_  // NOLINT
+// clang-format on

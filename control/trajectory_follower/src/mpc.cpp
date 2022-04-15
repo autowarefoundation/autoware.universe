@@ -33,7 +33,7 @@ namespace control
 {
 namespace trajectory_follower
 {
-using namespace std::chrono_literals;
+using namespace std::literals::chrono_literals;
 using ::motion::motion_common::to_angle;
 
 bool8_t MPC::calculateMPC(

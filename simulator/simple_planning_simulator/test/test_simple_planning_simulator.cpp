@@ -260,7 +260,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   rclcpp::shutdown();
 }
 
-const std::string VEHICLE_MODEL_LIST[] = {
+const char VEHICLE_MODEL_LIST[] = {
   "IDEAL_STEER_VEL", "IDEAL_STEER_ACC", "IDEAL_STEER_ACC_GEARED",
   "DELAY_STEER_VEL", "DELAY_STEER_ACC", "DELAY_STEER_ACC_GEARED",
 };
