@@ -144,13 +144,13 @@ inline bool smoothPath(
   const auto traj_lateral_acc_filtered = smoother->applyLateralAccelerationFilter(trajectory);
   auto nearest_idx =
     tier4_autoware_utils::findNearestIndex(*traj_lateral_acc_filtered, current_pose.position);
-  const auto dist_to_neraest = tier4_autoware_utils::calcSignedArcLength(
+  const auto dist_to_nearest = tier4_autoware_utils::calcSignedArcLength(
     *traj_lateral_acc_filtered, current_pose.position, nearest_idx);
 
   // if trajectory has the almost same point as ego, don't insert the ego point
   constexpr double epsilon = 1e-2;
   TrajectoryPoints traj_with_ego_point_on_path = *traj_lateral_acc_filtered;
-  if (std::fabs(dist_to_neraest) > epsilon) {
+  if (std::fabs(dist_to_nearest) > epsilon) {
     // calc ego internal division point on path
     const auto traj_with_ego_point_with_idx =
       getLerpTrajectoryPointWithIdx(*traj_lateral_acc_filtered, current_pose.position);
