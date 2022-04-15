@@ -100,7 +100,13 @@ TrajectoryPointWithIdx getLerpTrajectoryPointWithIdx(
     tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, nearest_seg_idx, point);
   const double len_segment =
     tier4_autoware_utils::calcSignedArcLength(points, nearest_seg_idx, nearest_seg_idx + 1);
-  const double interpolate_ratio = std::clamp(len_to_interpolated / len_segment, 0.0, 1.0);
+
+  // avoid to insert the same point
+  constexpr double epsilon = 1e-3;
+  const double ratio_min = epsilon;
+  const double ratio_max = 1.0 - epsilon;
+  const double interpolate_ratio =
+    std::clamp(len_to_interpolated / len_segment, ratio_min, ratio_max);
   {
     const size_t i = nearest_seg_idx;
     const auto & pos0 = points.at(i).pose.position;
