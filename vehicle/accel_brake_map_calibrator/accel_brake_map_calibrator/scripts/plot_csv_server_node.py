@@ -143,7 +143,6 @@ class DrawGraph(Node):
         text = Path("plot.svg").read_text()
         byte = text.encode()
         for b in byte:
-            print(b, chr(b))
             response.graph_image.append(b)
         print("svg data packed") 
 
