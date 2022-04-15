@@ -583,8 +583,7 @@ LongitudinalController::Motion LongitudinalController::calcCtrlCmd(
   } else if (current_control_state == ControlState::STOPPED) {
     // This acceleration is without slope compensation
     const auto & p = m_stopped_state_params;
-    raw_ctrl_cmd.vel = trajectory_follower::longitudinal_utils::applyDiffLimitFilter(
-      p.vel, m_prev_raw_ctrl_cmd.vel, control_data.dt, p.acc);
+    raw_ctrl_cmd.vel = p.vel;
     raw_ctrl_cmd.acc = trajectory_follower::longitudinal_utils::applyDiffLimitFilter(
       p.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, p.jerk);
 
