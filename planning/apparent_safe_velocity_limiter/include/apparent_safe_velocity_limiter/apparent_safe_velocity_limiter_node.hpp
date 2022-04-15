@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
-#define SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
+#ifndef apparent_safe_velocity_limiter__apparent_safe_velocity_limiter_NODE_HPP_
+#define apparent_safe_velocity_limiter__apparent_safe_velocity_limiter_NODE_HPP_
 
-#include "safe_velocity_adjustor/collision_distance.hpp"
-#include "safe_velocity_adjustor/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <grid_map_ros/GridMapRosConverter.hpp>
@@ -55,7 +55,7 @@
 #include <string>
 #include <vector>
 
-namespace safe_velocity_adjustor
+namespace apparent_safe_velocity_limiter
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
@@ -64,11 +64,11 @@ using nav_msgs::msg::OccupancyGrid;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
 
-class SafeVelocityAdjustorNode : public rclcpp::Node
+class ApparentSafeVelocityLimiterNode : public rclcpp::Node
 {
 public:
-  explicit SafeVelocityAdjustorNode(const rclcpp::NodeOptions & node_options)
-  : rclcpp::Node("safe_velocity_adjustor", node_options)
+  explicit ApparentSafeVelocityLimiterNode(const rclcpp::NodeOptions & node_options)
+  : rclcpp::Node("apparent_safe_velocity_limiter", node_options)
   {
     sub_trajectory_ = create_subscription<Trajectory>(
       "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
@@ -113,8 +113,8 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
 
   // parameters
-  Float time_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("time_safety_buffer"));
-  Float dist_safety_buffer_ = static_cast<Float>(declare_parameter<Float>("dist_safety_buffer"));
+  Float time_buffer_ = static_cast<Float>(declare_parameter<Float>("time_buffer"));
+  Float distance_buffer_ = static_cast<Float>(declare_parameter<Float>("distance_buffer"));
   Float start_distance_ = static_cast<Float>(declare_parameter<Float>("start_distance"));
   Float min_adjusted_velocity_ =
     static_cast<Float>(declare_parameter<Float>("min_adjusted_velocity"));
@@ -138,10 +138,10 @@ private:
     rcl_interfaces::msg::SetParametersResult result;
     result.successful = true;
     for (const auto & parameter : parameters) {
-      if (parameter.get_name() == "time_safety_buffer") {
-        time_safety_buffer_ = static_cast<Float>(parameter.as_double());
-      } else if (parameter.get_name() == "dist_safety_buffer") {
-        dist_safety_buffer_ = static_cast<Float>(parameter.as_double());
+      if (parameter.get_name() == "time_buffer") {
+        time_buffer_ = static_cast<Float>(parameter.as_double());
+      } else if (parameter.get_name() == "distance_buffer") {
+        distance_buffer_ = static_cast<Float>(parameter.as_double());
       } else if (parameter.get_name() == "start_distance") {
         start_distance_ = static_cast<Float>(parameter.as_double());
       } else if (parameter.get_name() == "downsample_factor") {
@@ -208,10 +208,10 @@ private:
     pub_debug_occupancy_grid_->publish(debug_occ_grid);
 
     Trajectory safe_trajectory = *msg;
-    const auto extra_vehicle_length = vehicle_front_offset_ + dist_safety_buffer_;
+    const auto extra_vehicle_length = vehicle_front_offset_ + distance_buffer_;
     for (auto & trajectory_point : downsampled_traj.points) {
       const auto forward_simulated_vector =
-        forwardSimulatedSegment(trajectory_point, time_safety_buffer_, extra_vehicle_length);
+        forwardSimulatedSegment(trajectory_point, time_buffer_, extra_vehicle_length);
       stopwatch.tic("footprint_duration");
       const auto footprint =
         forwardSimulatedFootprint(forward_simulated_vector, vehicle_lateral_offset_);
@@ -251,7 +251,7 @@ private:
     return std::min(
       trajectory_point.longitudinal_velocity_mps,
       std::max(
-        min_adjusted_velocity_, static_cast<Float>(dist_to_collision / time_safety_buffer_)));
+        min_adjusted_velocity_, static_cast<Float>(dist_to_collision / time_buffer_)));
   }
 
   /// @brief make the visualization Marker of the given polygon
@@ -290,7 +290,7 @@ private:
     envelope.color.a = 1.0;
     for (const auto & point : trajectory.points) {
       const auto vector = forwardSimulatedSegment(
-        point, time_safety_buffer_, dist_safety_buffer_ + vehicle_front_offset_);
+        point, time_buffer_, distance_buffer_ + vehicle_front_offset_);
       geometry_msgs::msg::Point p;
       p.x = vector.second.x();
       p.y = vector.second.y();
@@ -355,6 +355,6 @@ private:
     return idx;
   }
 };
-}  // namespace safe_velocity_adjustor
+}  // namespace apparent_safe_velocity_limiter
 
-#endif  // SAFE_VELOCITY_ADJUSTOR__SAFE_VELOCITY_ADJUSTOR_NODE_HPP_
+#endif  // apparent_safe_velocity_limiter__apparent_safe_velocity_limiter_NODE_HPP_

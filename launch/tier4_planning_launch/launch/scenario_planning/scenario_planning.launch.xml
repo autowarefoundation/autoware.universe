@@ -19,11 +19,11 @@
     <arg name="is_parking_completed" value="/planning/scenario_planning/parking/is_completed"/>
   </include>
 
-  <!-- safe velocity adjustor -->
+  <!-- apparent safe velocity limiter -->
   <group>
     <set_remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
-    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/safe_velocity_adjustor/trajectory"/>
-    <include file="$(find-pkg-share safe_velocity_adjustor)/launch/safe_velocity_adjustor.launch.xml">
+    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory"/>
+    <include file="$(find-pkg-share apparent_safe_velocity_limiter)/launch/apparent_safe_velocity_limiter.launch.xml">
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
     </include>
   </group>
@@ -38,7 +38,7 @@
     </include>
     <!-- motion velocity smoother -->
     <arg name="smoother_type" default="JerkFiltered" description="options: JerkFiltered, L2, Analytical, Linf(Unstable)"/>
-    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/safe_velocity_adjustor/trajectory" />
+    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory" />
     <set_remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory" />
     <include file="$(find-pkg-share motion_velocity_smoother)/launch/motion_velocity_smoother.launch.xml">
       <arg name="smoother_type" value="$(var smoother_type)" />

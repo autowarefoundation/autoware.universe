@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>safe_velocity_adjustor</name>
+  <name>apparent_safe_velocity_limiter</name>
   <version>0.1.0</version>
   <description>Package to adjust velocities of a trajectory in order for the ride to feel safe</description>
 

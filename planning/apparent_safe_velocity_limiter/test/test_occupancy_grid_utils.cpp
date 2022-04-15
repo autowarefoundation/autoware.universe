@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "safe_velocity_adjustor/collision_distance.hpp"
-#include "safe_velocity_adjustor/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 
 #include <gtest/gtest.h>
 
 TEST(TestOccupancyGridUtils, extractStaticObstaclePolygons)
 {
-  using safe_velocity_adjustor::extractStaticObstaclePolygons;
-  using safe_velocity_adjustor::polygon_t;
+  using apparent_safe_velocity_limiter::extractStaticObstaclePolygons;
+  using apparent_safe_velocity_limiter::polygon_t;
   constexpr int8_t occupied_thr = 10;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
   occupancy_grid.info.height = 5;

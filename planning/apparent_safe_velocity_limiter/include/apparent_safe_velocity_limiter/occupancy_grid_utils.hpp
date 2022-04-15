@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAFE_VELOCITY_ADJUSTOR__OCCUPANCY_GRID_UTILS_HPP_
-#define SAFE_VELOCITY_ADJUSTOR__OCCUPANCY_GRID_UTILS_HPP_
+#ifndef apparent_safe_velocity_limiter__OCCUPANCY_GRID_UTILS_HPP_
+#define apparent_safe_velocity_limiter__OCCUPANCY_GRID_UTILS_HPP_
 
 #include "grid_map_core/Polygon.hpp"
 #include "grid_map_core/TypeDefs.hpp"
 #include "grid_map_core/iterators/GridMapIterator.hpp"
-#include "safe_velocity_adjustor/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/collision_distance.hpp"
 
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/LineIterator.hpp>
@@ -36,7 +36,7 @@
 
 #include <opencv2/imgproc/types_c.h>
 
-namespace safe_velocity_adjustor
+namespace apparent_safe_velocity_limiter
 {
 
 /// @brief mask gridmap cells that are inside the given polygons
@@ -111,6 +111,6 @@ inline multilinestring_t extractStaticObstaclePolygons(
   }
   return polygons;
 }
-}  // namespace safe_velocity_adjustor
+}  // namespace apparent_safe_velocity_limiter
 
-#endif  // SAFE_VELOCITY_ADJUSTOR__OCCUPANCY_GRID_UTILS_HPP_
+#endif  // apparent_safe_velocity_limiter__OCCUPANCY_GRID_UTILS_HPP_
