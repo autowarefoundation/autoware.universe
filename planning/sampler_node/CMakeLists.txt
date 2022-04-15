@@ -45,6 +45,17 @@ rclcpp_components_register_node(sampler_node
   EXECUTABLE path_sampler_node_exe
 )
 
+# Demos
+add_executable(acc_velocity_demo
+  src/demos/acc_velocity_profile.cpp
+)
+target_link_libraries(acc_velocity_demo
+  Qt5::Widgets
+  ${QCustomPlot_LIBRARIES}
+  sampler_node
+)
+
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
