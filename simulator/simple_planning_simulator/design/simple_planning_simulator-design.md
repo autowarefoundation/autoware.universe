@@ -1,10 +1,10 @@
 # simple_planning_simulator {#simple_planning_simulator-package-design}
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 This node simulates the vehicle motion for a vehicle command in 2D using a simple vehicle model.
 
-# Design
+## Design
 
 The purpose of this simulator is for the integration test of planning and control modules. This does not simulate sensing or perception, but is implemented in pure c++ only and works without GPU.
 
@@ -15,14 +15,14 @@ The purpose of this simulator is for the integration test of planning and contro
 
 ## Inputs / Outputs / API
 
-**input**
+### input
 
 - input/vehicle_control_command [`autoware_auto_msgs/msg/VehicleControlCommand`] : target command to drive a vehicle.
 - input/ackermann_control_command [`autoware_auto_msgs/msg/AckermannControlCommand`] : target command to drive a vehicle.
 - input/vehicle_state_command [`autoware_auto_msgs/msg/VehicleStateCommand`] : target state command (e.g. gear).
 - /initialpose [`geometry_msgs/msg/PoseWithCovarianceStamped`] : for initial pose
 
-**output**
+### output
 
 - /tf [`tf2_msgs/msg/TFMessage`] : simulated vehicle pose (base_link)
 - /vehicle/vehicle_kinematic_state [`autoware_auto_msgs/msg/VehicleKinematicState`] : simulated kinematic state (defined in CoM)
@@ -46,7 +46,7 @@ The purpose of this simulator is for the integration test of planning and contro
 
 ### Vehicle Model Parameters
 
-**vehicle_model_type options**
+#### vehicle_model_type options
 
 - `IDEAL_STEER_VEL`
 - `IDEAL_STEER_ACC`
@@ -84,7 +84,7 @@ In the simple_planning_simulator.launch.py, the node that outputs the `map`->`od
 
 The only validation on inputs being done is testing for a valid vehicle model type.
 
-# Security considerations
+## Security considerations
 
 <!-- Required -->
 <!-- Things to consider:
@@ -95,17 +95,17 @@ The only validation on inputs being done is testing for a valid vehicle model ty
 - Denial of Service (How do you handle spamming?).
 - Elevation of Privilege (Do you need to change permission levels during execution?) -->
 
-# References / External links
+## References / External links
 
 This is originally developed in the Autoware.AI. See the link below.
 
 <https://github.com/Autoware-AI/simulation/tree/master/wf_simulator>
 
-# Future extensions / Unimplemented parts
+## Future extensions / Unimplemented parts
 
 - Improving the accuracy of vehicle models (e.g., adding steering dead zones and slip behavior)
 - Cooperation with modules that output pseudo pointcloud or pseudo perception results
 
-# Related issues
+## Related issues
 
 - #1142: Follow-up to #570 - Integrate simple_planning_simulator Into CI

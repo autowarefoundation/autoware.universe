@@ -2,7 +2,7 @@
 
 This is the design document for the `autoware_auto_tf2` package.
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 In general, users of ROS rely on tf (and its successor, tf2) for publishing and utilizing coordinate
 frame transforms. This is true even to the extent that the tf2 contains the packages
@@ -13,7 +13,7 @@ The `autoware_auto_tf2` package aims to provide developers with tools to transfo
 `autoware_auto_msgs` types. In addition to this, this package also provides transform tools for
 messages types in `geometry_msgs` missing in `tf2_geometry_msgs`.
 
-# Design
+## Design
 
 While writing `tf2_some_msgs` or contributing to `tf2_geometry_msgs`, compatibility and design
 intent was ensured with the following files in the existing tf2 framework:
@@ -23,13 +23,13 @@ intent was ensured with the following files in the existing tf2 framework:
 
 For example:
 
-```
+```cpp
 void tf2::convert( const A & a,B & b)
 ```
 
 The method `tf2::convert` is dependent on the following:
 
-```
+```cpp
 template<typename A, typename B>
   B tf2::toMsg(const A& a);
 template<typename A, typename B>
@@ -41,7 +41,7 @@ tf2_ros::BufferInterface::transform(...)
 
 Which, in turn, is dependent on the following:
 
-```
+```cpp
 void tf2::convert( const A & a,B & b)
 const std::string& tf2::getFrameId(const T& t)
 const ros::Time& tf2::getTimestamp(const T& t);
@@ -83,7 +83,7 @@ Due to conflicts in a function signatures, the predefined template of `convert.h
 `transform_functions.h` is not followed and compatibility with `tf2::convert(..)` is broken and
 `toMsg` is written differently.
 
-```
+```cpp
 // Old style
 geometry_msgs::Vector3 toMsg(const tf2::Vector3& in)
 geometry_msgs::Point& toMsg(const tf2::Vector3& in)
@@ -103,7 +103,7 @@ for the following data types:
 
 - `Point32`
 
-```
+```cpp
 inline void doTransform(
   const geometry_msgs::msg::Point32 & t_in,
   geometry_msgs::msg::Point32 & t_out,
@@ -112,7 +112,7 @@ inline void doTransform(
 
 - `Quarternion32` (`autoware_auto_msgs`)
 
-```
+```cpp
 inline void doTransform(
   const autoware_auto_geometry_msgs::msg::Quaternion32 & t_in,
   autoware_auto_geometry_msgs::msg::Quaternion32 & t_out,
@@ -121,7 +121,7 @@ inline void doTransform(
 
 - `BoundingBox` (`autoware_auto_msgs`)
 
-```
+```cpp
 inline void doTransform(
   const BoundingBox & t_in, BoundingBox & t_out,
   const geometry_msgs::msg::TransformStamped & transform)
@@ -129,7 +129,7 @@ inline void doTransform(
 
 - `BoundingBoxArray`
 
-```
+```cpp
 inline void doTransform(
   const BoundingBoxArray & t_in,
   BoundingBoxArray & t_out,
@@ -140,7 +140,7 @@ In addition, the following helper methods are also added:
 
 - `BoundingBoxArray`
 
-```
+```cpp
 inline tf2::TimePoint getTimestamp(const BoundingBoxArray & t)
 
 inline std::string getFrameId(const BoundingBoxArray & t)
@@ -165,7 +165,7 @@ inline std::string getFrameId(const BoundingBoxArray & t)
 <!-- # References / External links -->
 <!-- Optional -->
 
-# Future extensions / Unimplemented parts
+## Future extensions / Unimplemented parts
 
 ## Challenges
 

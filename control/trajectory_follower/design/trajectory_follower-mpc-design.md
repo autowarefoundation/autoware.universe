@@ -2,7 +2,7 @@
 
 This is the design document for the MPC implemented in the `trajectory_follower` package.
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 <!-- Required -->
 <!-- Things to consider:
@@ -18,7 +18,7 @@ This implementation differs from the one in the `mpc_controller` package in seve
 - The optimization problem solved by the linear MPC is simpler, making it less likely to fail.
 - Tuning of the linear MPC is easier.
 
-# Design
+## Design
 
 <!-- Required -->
 <!-- Things to consider:
@@ -61,14 +61,14 @@ Once a vehicle model, a QP solver, and the reference trajectory to follow have b
 (using `setVehicleModel()`, `setQPSolver()`, `setReferenceTrajectory()`), a lateral control command
 can be calculated by providing the current steer, velocity, and pose to function `calculateMPC()`.
 
-# References / External links
+## References / External links
 
 <!-- Optional -->
 
 - [1] Jarrod M. Snider, "Automatic Steering Methods for Autonomous Automobile Path Tracking",
   Robotics Institute, Carnegie Mellon University, February 2009.
 
-# Related issues
+## Related issues
 
 <!-- Required -->
 

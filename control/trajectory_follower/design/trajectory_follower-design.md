@@ -2,7 +2,7 @@
 
 This is the design document for the `trajectory_follower` package.
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 <!-- Required -->
 <!-- Things to consider:
@@ -16,7 +16,7 @@ Mainly, it implements two algorithms:
 - PID control for the computation of velocity and acceleration commands.
   - @subpage trajectory_follower-pid-design
 
-# Related issues
+## Related issues
 
 <!-- Required -->
 

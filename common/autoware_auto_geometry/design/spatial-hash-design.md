@@ -41,9 +41,9 @@ this was to avoid if statements in tight loops. The configuration class speciali
 use CRTP (Curiously Recurring Template Patterns) to do "static polymorphism", and avoid
 a dispatching call.
 
-# Performance characterization
+## Performance characterization
 
-## Time
+### Time
 
 Insertion is `O(n)` because lookup time for the underlying hashmap is `O(n)` for
 hashmaps. In practice, lookup time for hashmaps and thus insertion time should
@@ -55,7 +55,7 @@ direct reference to a node.
 Finding `k` near-neighbors is worst case `O(n)` in the case of an adversarial
 example, but in practice `O(k)`.
 
-## Space
+### Space
 
 The module consists of the following components:
 
@@ -65,7 +65,7 @@ The module consists of the following components:
 
 This results in `O(n)` space complexity.
 
-# States
+## States
 
 The spatial hash's state is dictated by the status of the underlying unordered_multimap.
 
@@ -73,12 +73,12 @@ The data structure is wholly configured by a
 [config](@ref autoware::common::geometry::spatial_hash::Config) class. The constructor
 of the class determines in the data structure accepts strictly 2D or strictly 3D queries.
 
-# Inputs
+## Inputs
 
 The primary method of introducing data into the data structure is via the
 [insert](@ref autoware::common::geometry::spatial_hash::SpatialHashBase::insert) method.
 
-# Outputs
+## Outputs
 
 The primary method of retrieving data from the data structure is via the
 [near](@ref autoware::common::geometry::spatial_hash::SpatialHash<PointT, Config2d>::near)\(2D

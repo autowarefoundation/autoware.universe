@@ -7,19 +7,19 @@ The `bool_comparisons.hpp` library additionally contains an XOR operator.
 
 The intent of the library is to improve readability of code and reduce likelihood of typographical errors when using numerical and boolean comparisons.
 
-# Target use cases
+## Target use cases
 
 The approximate comparisons are intended to be used to check whether two numbers lie within some absolute or relative interval.
 The `exclusive_or` function will test whether two values cast to different boolean values.
 
-# Assumptions
+## Assumptions
 
 - The approximate comparisons all take an `epsilon` parameter.
   The value of this parameter must be >= 0.
 - The library is only intended to be used with floating point types.
   A static assertion will be thrown if the library is used with a non-floating point type.
 
-# Example Usage
+## Example Usage
 
 ```c++
 #include "common/bool_comparisons.hpp"

@@ -4,13 +4,13 @@ Two convex polygon's intersection can be visualized on the image below as the bl
 
 <img src="convex_polygon_intersection.png">
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 Computing the intersection between two polygons can be useful in many applications of scene
 understanding. It can be used to estimate collision detection, shape alignment, shape
 association and in any application that deals with the objects around the perceiving agent.
 
-# Design
+## Design
 
 [\(Livermore, Calif, 1977\)](https://www.osti.gov/servlets/purl/7309916/) mention the following
 observations about convex polygon intersection:
@@ -23,7 +23,7 @@ observations about convex polygon intersection:
 - Edge intersections between two polygons are vertices in the intersection shape. (Vertices B,
   E in the shape above.)
 
-## Inner-workings / Algorithms
+### Inner-workings / Algorithms
 
 With the observation mentioned above, the current algorithm operates in the following way:
 
@@ -32,7 +32,7 @@ With the observation mentioned above, the current algorithm operates in the foll
 - Compute and find the intersection points between each polygon (Verties B, E)
 - Compute the convex hull shaped by these vertices by ordering them CCW.
 
-## Inputs / Outputs / API
+### Inputs / Outputs / API
 
 Inputs:
 

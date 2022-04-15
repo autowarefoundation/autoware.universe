@@ -3,7 +3,7 @@
 This is the design document for the lateral controller node
 in the `trajectory_follower_nodes` package.
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 <!-- Required -->
 <!-- Things to consider:
@@ -12,7 +12,7 @@ in the `trajectory_follower_nodes` package.
 This node is used to general lateral control commands (steering angle and steering rate)
 when following a path.
 
-# Design
+## Design
 
 <!-- Required -->
 <!-- Things to consider:
@@ -25,7 +25,7 @@ The optimization of the control command is formulated as a Quadratic Program (QP
 These functionalities are implemented in the `trajectory_follower` package
 (see @subpage trajectory_follower-mpc-design)
 
-## Assumptions / Known limits
+### Assumptions / Known limits
 
 <!-- Required -->
 
@@ -33,7 +33,7 @@ The tracking is not accurate if the first point of the reference trajectory is a
 
 - Issue to add points behind ego: <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1273>
 
-## Inputs / Outputs / API
+### Inputs / Outputs / API
 
 <!-- Required -->
 <!-- Things to consider:
@@ -46,7 +46,7 @@ Inputs
   Output
 - `output/lateral_control_cmd`: generated lateral control command.
 
-## Parameter description
+### Parameter description
 
 The default parameters defined in `param/lateral_controller_defaults.yaml` are adjusted to the
 AutonomouStuff Lexus RX 450h for under 40 km/h driving.
@@ -69,7 +69,7 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 (\*1) To prevent unnecessary steering movement, the steering command is fixed to the previous value in the stop state.
 
-### MPC algorithm
+#### MPC algorithm
 
 | Name                                    | Type   | Description                                                                                     | Default value     |
 | :-------------------------------------- | :----- | :---------------------------------------------------------------------------------------------- | :---------------- |
@@ -87,7 +87,7 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | weight_terminal_heading_error           | double | terminal cost weight for heading error                                                          | 0.1               |
 | zero_ff_steer_deg                       | double | threshold of feedforward angle [deg]. feedforward angle smaller than this value is set to zero. | 2.0               |
 
-### Vehicle
+#### Vehicle
 
 | Name          | Type   | Description                                                                        | Default value |
 | :------------ | :----- | :--------------------------------------------------------------------------------- | :------------ |
@@ -102,7 +102,7 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | steering_tau  | double | steering dynamics time constant (1d approximation) for vehicle model [s]           | 0.3           |
 | steer_lim_deg | double | steering angle limit for vehicle model [deg]. This is also used for QP constraint. | 35.0          |
 
-## How to tune MPC parameters
+### How to tune MPC parameters
 
 1. Set appropriate vehicle kinematics parameters for distance to front and rear axle, and `steer_lim_deg`.
    Also check that the input `VehicleKinematicState` has appropriate values (speed: vehicle rear-wheels-center velocity [km/h], angle: steering (tire) angle [rad]).
@@ -130,7 +130,7 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 - `weight_terminal_lat_error`: Preferable to set a higher value than normal lateral weight `weight_lat_error` for stability.
 - `weight_terminal_heading_error`: Preferable to set a higher value than normal heading weight `weight_heading_error` for stability.
 
-# Related issues
+## Related issues
 
 <!-- Required -->
 

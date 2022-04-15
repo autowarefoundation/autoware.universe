@@ -2,7 +2,7 @@
 
 This is the design document for the `osqp_interface` package.
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 <!-- Required -->
 <!-- Things to consider:
@@ -10,7 +10,7 @@ This is the design document for the `osqp_interface` package.
 
 This packages provides a C++ interface for the [OSQP library](https://osqp.org/docs/solver/index.html).
 
-# Design
+## Design
 
 <!-- Required -->
 <!-- Things to consider:
@@ -29,43 +29,43 @@ The interface can be used in several ways:
 
 1. Initialize the interface WITHOUT data. Load the problem formulation at the optimization call.
 
-```
-     osqp_interface = OSQPInterface();
-     osqp_interface.optimize(P, A, q, l, u);
-```
+   ```cpp
+       osqp_interface = OSQPInterface();
+       osqp_interface.optimize(P, A, q, l, u);
+   ```
 
 2. Initialize the interface WITH data.
 
-```
-     osqp_interface = OSQPInterface(P, A, q, l, u);
-     osqp_interface.optimize();
-```
+   ```cpp
+       osqp_interface = OSQPInterface(P, A, q, l, u);
+       osqp_interface.optimize();
+   ```
 
 3. WARM START OPTIMIZATION by modifying the problem formulation between optimization runs.
 
-```
-     osqp_interface = OSQPInterface(P, A, q, l, u);
-     osqp_interface.optimize();
-     osqp.initializeProblem(P_new, A_new, q_new, l_new, u_new);
-     osqp_interface.optimize();
-```
+   ```cpp
+       osqp_interface = OSQPInterface(P, A, q, l, u);
+       osqp_interface.optimize();
+       osqp.initializeProblem(P_new, A_new, q_new, l_new, u_new);
+       osqp_interface.optimize();
+   ```
 
-The optimization results are returned as a vector by the optimization function.
+   The optimization results are returned as a vector by the optimization function.
 
-```
- std::tuple<std::vector<double>, std::vector<double>> result = osqp_interface.optimize();
- std::vector<double> param = std::get<0>(result);
- double x_0 = param[0];
- double x_1 = param[1];
-```
+   ```cpp
+   std::tuple<std::vector<double>, std::vector<double>> result = osqp_interface.optimize();
+   std::vector<double> param = std::get<0>(result);
+   double x_0 = param[0];
+   double x_1 = param[1];
+   ```
 
-# References / External links
+## References / External links
 
 <!-- Optional -->
 
 - OSQP library: <https://osqp.org/>
 
-# Related issues
+## Related issues
 
 <!-- Required -->
 

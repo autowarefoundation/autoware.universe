@@ -2,7 +2,7 @@
 
 This is the design document for the `autoware_auto_cmake` package.
 
-# Purpose
+## Purpose
 
 Provide common CMake variables and functions to Autoware packages.
 
@@ -14,13 +14,13 @@ Those include:
   - set compiler flags
   - turn off optimizations
 
-# Design
+## Design
 
-## Usage
+### Usage
 
 Add `autoware_auto_cmake` as a "build_depend" in the dependent packages.
 
-### CMake variables {#cmake-config-variables}
+#### CMake variables {#cmake-config-variables}
 
 | Name                 | Type   | Descritpion                                | Default |
 | -------------------- | ------ | ------------------------------------------ | ------- |

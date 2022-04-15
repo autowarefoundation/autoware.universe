@@ -5,13 +5,13 @@ The class implements a representation and operations on the interval type and gu
 Basic operations and accessors are implemented, as well as other common operations.
 See 'Example Usage' below.
 
-# Target use cases
+## Target use cases
 
 - Range or containment checks.
   The interval class simplifies code that involves checking membership of a value to a range, or intersecting two ranges.
   It also provides consistent behavior and consistent handling of edge cases.
 
-# Properties
+## Properties
 
 - **empty**: An empty interval is equivalent to an empty set.
   It contains no elements.
@@ -24,19 +24,19 @@ See 'Example Usage' below.
   An attempt to construct an invalid interval results in a runtime_error exception being thrown.
 - **pseudo-immutable**: Once constructed the only way to change the value of an interval is to overwrite it with a new one; an existing object cannot be modified.
 
-# Conventions
+## Conventions
 
 - All operations on interval objects are defined as static class methods on the interval class.
   This is a functional-style of programming that basically turns the class into a namespace that grants functions access to private member variables of the object they operate on.
 
-# Assumptions
+## Assumptions
 
 - The interval is only intended for floating point types.
   This is enforced via static assertion.
 - The constructor for non-empty intervals takes two arguments 'min' and 'max', and they must be ordered (i.e., min <= max).
   If this assumption is violated, an exception is emitted and construction fails.
 
-# Example Usage
+## Example Usage
 
 ```c++
 #include "geometry/interval.hpp"

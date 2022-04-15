@@ -2,7 +2,7 @@
 
 This is the design document for the `vehicle_constants_manager` package.
 
-# Purpose / Use cases
+## Purpose / Use cases
 
 <!-- Required -->
 <!-- Things to consider:
@@ -12,7 +12,7 @@ This library provides a struct for holding vehicle specific constants. It also
 provides a helper method to declare vehicle specific constants which have
 already been passed into a node and provide a `VehicleConstants` object.
 
-# Design
+## Design
 
 <!-- Required -->
 <!-- Things to consider:
@@ -119,7 +119,7 @@ It will throw `std::runtime_error` in case certain parameters are negative or
 cg_to_rear is larger than wheel_base (to ensure center of gravity is within
 front and rear axles.)
 
-# Security considerations
+## Security considerations
 
 <!-- Required -->
 <!-- Things to consider:
@@ -132,19 +132,19 @@ front and rear axles.)
 
 To Be Determined.
 
-# References / External links
+## References / External links
 
 <!-- Optional -->
 
 Not Available.
 
-# Future extensions / Unimplemented parts
+## Future extensions / Unimplemented parts
 
 <!-- Optional -->
 
 Not Available.
 
-# Related issues
+## Related issues
 
 <!-- Required -->
 

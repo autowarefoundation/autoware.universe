@@ -1,11 +1,11 @@
 # Lateral/Longitudinal Control Muxer {#latlon-muxer-design}
 
-# Purpose
+## Purpose
 
 When using controllers that independently compute lateral and longitudinal commands,
 this node combines the resulting messages into a single control command message.
 
-# Design
+## Design
 
 Inputs.
 
@@ -26,7 +26,7 @@ if the following two conditions are met.
 1. Both inputs have been received.
 2. The last received input messages are not older than defined by `timeout_thr_sec`.
 
-# Implementation Details
+## Implementation Details
 
 Callbacks `latCtrlCmdCallback` and `lonCtrlCmdCallback` are defined for each input message.
 Upon reception, the message is stored and function `publishCmd` is called.
