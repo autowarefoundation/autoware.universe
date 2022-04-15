@@ -57,26 +57,24 @@ def main(args=None):
                     os.makedirs(save_dir)
                 svg_name = save_dir + "/graph.svg"
 
-                print(svg_name) #for debug
-
                 f_svg = open(svg_name, "w")
-                for i in response.graph_image:
-                    c = chr(i)
-                    f_svg.write(c) 
+                svg_byte = bytes(response.graph_image)
+                text = svg_byte.decode()
+                f_svg.write(text)
 
-                print("svg done") #for debug
+                print("svg done") 
 
                 acc_map_name = save_dir + "/accel_map.csv"
                 f_acc = open(acc_map_name, "w")
                 f_acc.write(response.accel_map)
 
-                print("accel map done") #for debug
+                print("accel map done") 
 
                 brk_map_name = save_dir + "/brake_map.csv"
                 f_brk = open(brk_map_name, "w")
                 f_brk.write(response.brake_map)
 
-                print("brake map done") #for debug
+                print("brake map done") 
 
             except Exception as e:
                 client.get_logger().info(
