@@ -88,6 +88,7 @@ public:
     vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
     vehicle_front_offset_ = static_cast<Float>(vehicle_info.max_longitudinal_offset_m);
 
+    set_param_res_ = add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
     self_pose_listener_.waitForFirstPose();
   }
 
@@ -127,8 +128,7 @@ private:
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
 
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_ =
-    add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   /// @brief callback for parameter updates
   /// @param[in] parameters updated parameters and their new values
