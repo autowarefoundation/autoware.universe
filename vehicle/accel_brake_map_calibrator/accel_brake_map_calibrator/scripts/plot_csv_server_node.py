@@ -145,15 +145,6 @@ class DrawGraph(Node):
         for b in byte:
             print(b, chr(b))
             response.graph_image.append(b)
-        # 成功している手順
-        # with open('plot.svg', 'r') as f:
-        #     svg = f.read()
-        #     for c in svg:
-        #         # The character "-" (minus) in graph label is saved as the unicode letter U+2212 for some reason. 
-        #         # U+2212 is changed to minus here for packing data 
-        #         if c == '−': 
-        #             c = '-'  
-        #         response.graph_image.append(ord(c))
         print("svg data packed") 
 
         with open(self.calibrated_map_dir+"accel_map.csv", 'r') as calibrated_accel_map:
