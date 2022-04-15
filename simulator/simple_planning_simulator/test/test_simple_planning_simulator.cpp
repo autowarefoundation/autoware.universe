@@ -260,10 +260,12 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   rclcpp::shutdown();
 }
 
-const char VEHICLE_MODEL_LIST[] = {
+// clang-format off
+const std::string VEHICLE_MODEL_LIST[] = {   // NOLINT
   "IDEAL_STEER_VEL", "IDEAL_STEER_ACC", "IDEAL_STEER_ACC_GEARED",
   "DELAY_STEER_VEL", "DELAY_STEER_ACC", "DELAY_STEER_ACC_GEARED",
 };
+// clang-format on
 
 INSTANTIATE_TEST_CASE_P(
   TestForEachVehicleModel, TestSimplePlanningSimulator, ::testing::ValuesIn(VEHICLE_MODEL_LIST));
