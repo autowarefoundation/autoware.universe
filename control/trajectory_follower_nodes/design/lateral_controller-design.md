@@ -48,7 +48,7 @@ Inputs
 
 ### Parameter description
 
-The default parameters defined in `param/lateral_controller_defaults.yaml` are adjusted to the
+The default parameters defined in `param/lateral_controller_defaults.param.yaml` are adjusted to the
 AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 | Name                                         | Type   | Description                                                                                                                                       | Default value |
