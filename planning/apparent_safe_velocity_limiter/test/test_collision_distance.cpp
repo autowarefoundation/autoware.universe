@@ -219,9 +219,9 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
 
 TEST(TestCollisionDistance, createObjPolygons)
 {
+  using apparent_safe_velocity_limiter::createObjectPolygons;
   using autoware_auto_perception_msgs::msg::PredictedObject;
   using autoware_auto_perception_msgs::msg::PredictedObjects;
-  using apparent_safe_velocity_limiter::createObjectPolygons;
 
   PredictedObjects objects;
 
