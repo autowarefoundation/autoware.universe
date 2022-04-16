@@ -8,9 +8,6 @@
 
 using namespace std::chrono_literals;
 
-/* This example creates a subclass of Node and uses std::bind() to register a
-* member function as a callback from the timer. */
-
 class MinimalPublisher : public rclcpp::Node
 {
 public:
@@ -35,27 +32,24 @@ private:
   size_t count_;
 };
 
-// #include <lsd/lsd.hpp>
-// #include <opencv4/opencv2/opencv.hpp>
-#include "lib/a.hpp"
+#include <lsd/lsd.hpp>
+#include <opencv4/opencv2/opencv.hpp>
 
-int main(int, char*[])
+int main(int argc, char* argv[])
 {
-  // cv::Mat image = cv::imread("image.jpg");
-  // cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-  // cv::Ptr<cv::lsd::LineSegmentDetector> lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
-  // cv::Mat lines;
-  // lsd->detect(image, lines);
-  // lsd->drawSegments(image, lines);
-  // cv::imshow("show", image);
-  // cv::waitKey(0);
-  // cv::destroyAllWindows();
+  cv::Mat image = cv::imread("image.jpg");
+  cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+  cv::Ptr<cv::lsd::LineSegmentDetector> lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
+  cv::Mat lines;
+  lsd->detect(image, lines);
+  lsd->drawSegments(image, lines);
+  cv::imshow("show", image);
+  cv::waitKey(0);
+  cv::destroyAllWindows();
 
-  // rclcpp::init(argc, argv);
-  // rclcpp::spin(std::make_shared<MinimalPublisher>());
-  // rclcpp::shutdown();
-
-  lib::f();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<MinimalPublisher>());
+  rclcpp::shutdown();
 
   return 0;
 }
