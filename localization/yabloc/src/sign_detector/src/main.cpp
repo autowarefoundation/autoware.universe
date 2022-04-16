@@ -35,10 +35,27 @@ private:
   size_t count_;
 };
 
-int main(int argc, char* argv[])
+// #include <lsd/lsd.hpp>
+// #include <opencv4/opencv2/opencv.hpp>
+#include "lib/a.hpp"
+
+int main(int, char*[])
 {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalPublisher>());
-  rclcpp::shutdown();
+  // cv::Mat image = cv::imread("image.jpg");
+  // cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+  // cv::Ptr<cv::lsd::LineSegmentDetector> lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
+  // cv::Mat lines;
+  // lsd->detect(image, lines);
+  // lsd->drawSegments(image, lines);
+  // cv::imshow("show", image);
+  // cv::waitKey(0);
+  // cv::destroyAllWindows();
+
+  // rclcpp::init(argc, argv);
+  // rclcpp::spin(std::make_shared<MinimalPublisher>());
+  // rclcpp::shutdown();
+
+  lib::f();
+
   return 0;
 }
