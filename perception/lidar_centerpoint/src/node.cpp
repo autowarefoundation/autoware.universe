@@ -16,10 +16,9 @@
 
 #include <lidar_centerpoint/centerpoint_config.hpp>
 #include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
+#include <lidar_centerpoint/ros_utils.hpp>
 #include <lidar_centerpoint/utils.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/constants.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -45,6 +44,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
+  has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
   const std::size_t max_num_voxels =
@@ -106,94 +106,13 @@ void LidarCenterPointNode::pointCloudCallback(
       continue;
     }
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(box3d, obj);
+    box3DToDetectedObject(box3d, class_names_, rename_car_to_truck_and_bus_, has_twist_, obj);
     output_msg.objects.emplace_back(obj);
   }
 
   if (objects_sub_count > 0) {
     objects_pub_->publish(output_msg);
   }
-}
-
-void LidarCenterPointNode::box3DToDetectedObject(
-  const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj)
-{
-  // TODO(yukke42): the value of classification confidence of DNN, not probability.
-  obj.existence_probability = box3d.score;
-
-  // classification
-  autoware_auto_perception_msgs::msg::ObjectClassification classification;
-  classification.probability = 1.0f;
-  if (box3d.label >= 0 && static_cast<size_t>(box3d.label) < class_names_.size()) {
-    classification.label = getSemanticType(class_names_[box3d.label]);
-  } else {
-    classification.label = Label::UNKNOWN;
-  }
-
-  float l = box3d.length;
-  float w = box3d.width;
-  if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
-    // Note: object size is referred from multi_object_tracker
-    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-      classification.label = Label::TRUCK;
-    } else if (w * l > 2.5 * 7.9) {
-      classification.label = Label::BUS;
-    }
-  }
-
-  if (isCarLikeVehicleLabel(classification.label)) {
-    obj.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
-  }
-
-  obj.classification.emplace_back(classification);
-
-  // pose and shape
-  // mmdet3d yaw format to ros yaw format
-  float yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
-  obj.kinematics.pose_with_covariance.pose.position =
-    tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
-  obj.kinematics.pose_with_covariance.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(yaw);
-  obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-  obj.shape.dimensions =
-    tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
-
-  // twist
-  float vel_x = box3d.vel_x;
-  float vel_y = box3d.vel_y;
-  geometry_msgs::msg::Twist twist;
-  twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-  twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
-  obj.kinematics.twist_with_covariance.twist = twist;
-  obj.kinematics.has_twist = true;
-}
-
-uint8_t LidarCenterPointNode::getSemanticType(const std::string & class_name)
-{
-  if (class_name == "CAR") {
-    return Label::CAR;
-  } else if (class_name == "TRUCK") {
-    return Label::TRUCK;
-  } else if (class_name == "BUS") {
-    return Label::BUS;
-  } else if (class_name == "TRAILER") {
-    return Label::TRAILER;
-  } else if (class_name == "BICYCLE") {
-    return Label::BICYCLE;
-  } else if (class_name == "MOTORBIKE") {
-    return Label::MOTORCYCLE;
-  } else if (class_name == "PEDESTRIAN") {
-    return Label::PEDESTRIAN;
-  } else {
-    return Label::UNKNOWN;
-  }
-}
-
-bool LidarCenterPointNode::isCarLikeVehicleLabel(const uint8_t label)
-{
-  return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
-         label == Label::TRAILER;
 }
 
 }  // namespace centerpoint

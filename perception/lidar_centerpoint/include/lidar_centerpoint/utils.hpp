@@ -36,6 +36,7 @@ struct Box3D
 };
 
 std::size_t divup(const std::size_t a, const std::size_t b);
+
 }  // namespace centerpoint
 
 #endif  // LIDAR_CENTERPOINT__UTILS_HPP_
