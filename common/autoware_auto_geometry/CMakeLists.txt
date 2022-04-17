@@ -30,6 +30,10 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/spatial_hash.cpp
   src/bounding_box.cpp)
 autoware_set_compile_options(${PROJECT_NAME})
+# workaround to allow deprecated header to build on both galactic and rolling
+target_compile_options(${PROJECT_NAME} PUBLIC
+  -Wno-error
+)
 
 if(BUILD_TESTING)
   # run linters
