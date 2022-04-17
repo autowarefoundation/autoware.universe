@@ -38,7 +38,6 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/tracker/model/pedestrian_tracker.cpp
   src/tracker/model/pedestrian_and_bicycle_tracker.cpp
   src/tracker/model/unknown_tracker.cpp
-  src/tracker/model/pass_through_tracker.cpp
   src/data_association/data_association.cpp
 )
 
