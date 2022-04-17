@@ -15,10 +15,10 @@
 #define DYNAMIC_OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
-#include "scene_module/dynamic_obstacle_stop/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
@@ -31,8 +31,7 @@
 #include <vector>
 namespace behavior_velocity_planner
 {
-using dynamic_obstacle_stop_utils::AccelReason;
-using dynamic_obstacle_stop_utils::TextWithPosition;
+using autoware_auto_planning_msgs::msg::Trajectory;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Int32Stamped;
 
@@ -89,6 +88,19 @@ private:
 class DynamicObstacleStopDebug
 {
 public:
+  enum class AccelReason {
+    STOP = 0,
+    NO_OBSTACLE = 1,
+    PASS = 2,
+    LOW_JERK = 3,
+  };
+
+  struct TextWithPosition
+  {
+    std::string text;
+    geometry_msgs::msg::Point position;
+  };
+
   explicit DynamicObstacleStopDebug(rclcpp::Node & node);
   ~DynamicObstacleStopDebug() {}
 
@@ -107,6 +119,9 @@ public:
   void pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line);
   void pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon);
   void pushDebugTexts(const TextWithPosition & debug_text);
+  void pushDebugTexts(
+    const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset);
+  void pushDebugTexts(const std::string text, const geometry_msgs::msg::Point position);
   void setAccelReason(const AccelReason & accel_reason);
   void publish();
   void publishDebugValue();

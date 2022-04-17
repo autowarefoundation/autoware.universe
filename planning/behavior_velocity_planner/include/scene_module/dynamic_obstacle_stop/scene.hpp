@@ -42,12 +42,11 @@ namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using dynamic_obstacle_stop_utils::DetectionAreaSize;
 using dynamic_obstacle_stop_utils::PlannerParam;
 using dynamic_obstacle_stop_utils::State;
-using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using tier4_debug_msgs::msg::Float32Stamped;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
@@ -82,12 +81,11 @@ private:
   std::vector<DynamicObstacle> createDynamicObstaclesFromObjects(
     const PredictedObjects & predicted_objects) const;
 
-  std::vector<DynamicObstacle> createDynamicObstaclesFromObjects(
-    const PredictedObjects & predicted_objects, const Trajectory & trajectory) const;
-
   std::vector<DynamicObstacle> createDynamicObstaclesFromPoints(
-    const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
-    const Trajectory & trajectory) const;
+    const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud, const PathWithLaneId & path) const;
+
+  std::vector<DynamicObstacle> createDynamicObstaclesFromObjects(
+    const PredictedObjects & predicted_objects, const PathWithLaneId & path) const;
 
   pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_points) const;
@@ -96,39 +94,28 @@ private:
     const pcl::PointCloud<pcl::PointXYZ> & input_points,
     const geometry_msgs::msg::Pose & current_pose) const;
 
-  std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
-    const geometry_msgs::msg::Pose & current_pose,
-    const DetectionAreaSize detection_area_size) const;
+  // void visualizePassingArea(
+  //   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
 
-  void visualizePassingArea(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
+  // std::vector<float> calcPassingDistanceForEachPoint(
+  //   const Trajectory & trajectory, const float obstacle_vel_mps, const float dist_max) const;
 
-  std::vector<float> calcPassingDistanceForEachPoint(
-    const Trajectory & trajectory, const float obstacle_vel_mps, const float dist_max) const;
+  // boost::optional<size_t> calcDecelerationLineIndex(
+  //   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
 
-  boost::optional<size_t> calcDecelerationLineIndex(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
-
-  std::vector<std::vector<geometry_msgs::msg::Point>> calcPassingLines(
-    const Trajectory & trajectory, const std::vector<float> & lateral_passing_dist) const;
-
-  boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
-    const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
-    const size_t deceleration_line_idx) const;
+  // std::vector<std::vector<geometry_msgs::msg::Point>> calcPassingLines(
+  //   const Trajectory & trajectory, const std::vector<float> & lateral_passing_dist) const;
 
   pcl::PointCloud<pcl::PointXYZ> pointsWithinPolygon(
     const std::vector<geometry_msgs::msg::Point> & polygon,
     const pcl::PointCloud<pcl::PointXYZ> & candidate_points) const;
 
   boost::optional<DynamicObstacle> detectCollision(
-    const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory) const;
+    const std::vector<DynamicObstacle> & dynamic_obstacles,
+    const PathWithLaneId & path_points) const;
 
   float calcCollisionPositionOfVehicleSide(
     const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & base_pose) const;
-
-  geometry_msgs::msg::Point selectCollisionPoint(
-    const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & base_pose,
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
 
   std::vector<geometry_msgs::msg::Point> createVehiclePolygon(
     const geometry_msgs::msg::Pose & base_pose) const;
@@ -138,7 +125,7 @@ private:
     std::vector<geometry_msgs::msg::Point> poly, const float travel_time) const;
 
   boost::optional<DynamicObstacle> findNearestCollisionObstacle(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & base_pose,
+    const PathWithLaneId & path, const geometry_msgs::msg::Pose & base_pose,
     std::vector<DynamicObstacle> & dynamic_obstacles) const;
 
   boost::optional<geometry_msgs::msg::Pose> calcPredictedObstaclePose(
@@ -163,25 +150,17 @@ private:
   std::vector<geometry_msgs::msg::Point> createBoundingBoxForRangedPoints(
     const PoseWithRange & pose_with_range, const float x_offset, const float y_offset) const;
 
-  Trajectory trimTrajectoryFromSelfPose(
-    const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
-    const double trim_distance) const;
+  // Trajectory trimTrajectoryFromSelfPose(
+  //   const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
+  //   const double trim_distance) const;
 
-  Trajectory extendTrajectory(const Trajectory & input, const double extend_distance) const;
+  // Trajectory extendTrajectory(const Trajectory & input, const double extend_distance) const;
 
-  TrajectoryPoint createExtendTrajectoryPoint(
-    double extend_distance, const TrajectoryPoint & goal_point) const;
-
-  size_t calcTrajectoryIndexByLength(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
-    const double length) const;
-
-  size_t calcTrajectoryIndexByLengthReverse(
-    const Trajectory & trajectory, const geometry_msgs::msg::Point & src_point,
-    const float target_length) const;
+  // TrajectoryPoint createExtendTrajectoryPoint(
+  //   double extend_distance, const TrajectoryPoint & goal_point) const;
 
   boost::optional<geometry_msgs::msg::Pose> calcStopPoint(
-    const boost::optional<DynamicObstacle> & dynamic_obstacle, const Trajectory & trajectory,
+    const boost::optional<DynamicObstacle> & dynamic_obstacle, const PathWithLaneId & path,
     const geometry_msgs::msg::Pose & current_pose, const float current_vel,
     const float current_acc) const;
 
@@ -192,35 +171,19 @@ private:
   void insertVelocityWithApproaching(
     const boost::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-    const Trajectory & trajectory, autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+    const PathWithLaneId & resampled_path, PathWithLaneId & output_path);
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-    const float approaching_vel, const float approach_margin, const Trajectory & trajectory,
-    autoware_auto_planning_msgs::msg::PathWithLaneId & path);
-
-  void addPointsBehindBase(
-    const Trajectory & input_traj, const geometry_msgs::msg::Pose & current_pose,
-    Trajectory & output_traj) const;
-
-  Trajectory toTrajectoryMsg(
-    const TrajectoryPoints & points, const std_msgs::msg::Header & header) const;
-
-  boost::optional<Trajectory> applySmoother(
-    const Trajectory & input_trajectory, const geometry_msgs::msg::Pose & current_pose,
-    const double initial_vel, const double initial_acc) const;
-
-  bool smoothVelocity(
-    const TrajectoryPoints & input, const geometry_msgs::msg::Pose & current_pose,
-    const double initial_vel, const double initial_acc, TrajectoryPoints & traj_smoothed) const;
+    const float approaching_vel, const float approach_margin, const PathWithLaneId & resampled_path,
+    PathWithLaneId & output_path);
 
   void applyMaxJerkLimit(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
-    const float current_vel, const float current_acc,
-    autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+    const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
+    PathWithLaneId & path) const;
 
   std::vector<DynamicObstacle> excludeObstaclesOutSideOfPartition(
-    const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+    const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
     const geometry_msgs::msg::Pose & current_pose) const;
 };
 }  // namespace behavior_velocity_planner

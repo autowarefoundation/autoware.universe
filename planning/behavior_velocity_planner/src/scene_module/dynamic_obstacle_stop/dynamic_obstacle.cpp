@@ -19,12 +19,11 @@ namespace behavior_velocity_planner
 namespace
 {
 // create quaternion facing to the nearest trajectory point
-template <class T>
 geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
-  const T & points, const geometry_msgs::msg::Point & point)
+  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point)
 {
-  const auto nearest_idx = tier4_autoware_utils::findNearestIndex(points, point);
-  const auto & nearest_pose = points.at(nearest_idx).pose;
+  const auto nearest_idx = tier4_autoware_utils::findNearestIndex(path_points, point);
+  const auto & nearest_pose = path_points.at(nearest_idx).point.pose;
 
   const auto longitudinal_offset =
     tier4_autoware_utils::calcLongitudinalDeviation(nearest_pose, point);
@@ -40,11 +39,11 @@ DynamicObstacle::DynamicObstacle() {}
 DynamicObstacle::DynamicObstacle(const DynamicObstacleParam & param) { param_ = param; }
 
 void DynamicObstacle::createDynamicObstacle(
-  const geometry_msgs::msg::Point & point, const Trajectory & trajectory)
+  const geometry_msgs::msg::Point & point, const PathWithLaneId & path)
 {
   // create pose facing the direction of the lane
   pose_.position = point;
-  pose_.orientation = createQuaternionFacingToTrajectory(trajectory.points, pose_.position);
+  pose_.orientation = createQuaternionFacingToTrajectory(path.points, pose_.position);
 
   min_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
   max_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
@@ -71,13 +70,13 @@ void DynamicObstacle::createDynamicObstacle(
 
 // overwrite path of objects to run straight to the lane
 void DynamicObstacle::createDynamicObstacle(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const Trajectory & trajectory)
+  const autoware_auto_perception_msgs::msg::PredictedObject & object, const PathWithLaneId & path)
 {
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
 
   // create pose facing the direction of the lane
   pose_.position = object_pose.position;
-  pose_.orientation = createQuaternionFacingToTrajectory(trajectory.points, pose_.position);
+  pose_.orientation = createQuaternionFacingToTrajectory(path.points, pose_.position);
 
   // assume min and max velocity is value specified in param
   min_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);

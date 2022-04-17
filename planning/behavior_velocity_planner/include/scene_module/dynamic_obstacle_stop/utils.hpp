@@ -25,7 +25,6 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
 #include <boost/geometry.hpp>
@@ -44,9 +43,7 @@ namespace dynamic_obstacle_stop_utils
 namespace bg = boost::geometry;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::Box2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
@@ -54,7 +51,6 @@ using tier4_autoware_utils::Polygon2d;
 using tier4_debug_msgs::msg::Float32Stamped;
 using vehicle_info_util::VehicleInfo;
 using PathPointsWithLaneId = std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>;
-
 struct CommonParam
 {
   double normal_min_jerk;  // min jerk limit for mild stop [m/sss]
@@ -62,7 +58,6 @@ struct CommonParam
   double limit_min_jerk;   // min jerk limit [m/sss]
   double limit_min_acc;    // min deceleration limit [m/ss]
 };
-
 struct DynamicObstacleStopParam
 {
   bool enable_dynamic_obstacle_stop;
@@ -124,23 +119,10 @@ struct PlannerParam
   SlowDownLimit slow_down_limit;
 };
 
-struct TextWithPosition
-{
-  std::string text;
-  geometry_msgs::msg::Point position;
-};
-
 enum class State {
   GO = 0,
   APPROACH,
   STOP,
-};
-
-enum class AccelReason {
-  STOP = 0,
-  NO_OBSTACLE = 1,
-  PASS = 2,
-  LOW_JERK = 3,
 };
 
 bool validCheckDecelPlan(
@@ -193,8 +175,6 @@ boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
   const double current_vel, const double target_vel, const double current_acc, const double acc_min,
   const double jerk_acc, const double jerk_dec);
 
-void applyMaximumVelocityLimit(const double max_vel_mps, Trajectory & trajectory);
-
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly);
 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
@@ -206,34 +186,17 @@ std::vector<geometry_msgs::msg::Pose> getHighestConfidencePath(
 geometry_msgs::msg::Pose lerpByPose(
   const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, const float t);
 
-geometry_msgs::msg::Point findLongitudinalNearestPoint(
-  const Trajectory & trajectory, const geometry_msgs::msg::Point & src_point,
-  const std::vector<geometry_msgs::msg::Point> & target_points);
-
 std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & base_pose,
   const geometry_msgs::msg::Point & target_point);
 
-TextWithPosition createDebugText(
-  const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset);
-
-TextWithPosition createDebugText(const std::string text, const geometry_msgs::msg::Point position);
-
-Trajectory convertPathToTrajectory(const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
-
-std::vector<geometry_msgs::msg::Point> toRosPoints(const PathPointsWithLaneId & path_points);
-
-size_t findNearestIndex(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point);
-
-size_t findNearestSegmentIndex(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point);
-
-boost::optional<size_t> haveSamePoint(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point);
-
 bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
+// if path points have the same point as target_point, return the index
+boost::optional<size_t> haveSamePoint(
+  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point);
+
+// insert path velocity which doesn't exceed original velocity
 void insertPathVelocityFromIndexLimited(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
 
@@ -242,13 +205,29 @@ void insertPathVelocityFromIndex(
 
 boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points);
 
+LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly);
+
 std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathPointsWithLaneId & path_points,
   const lanelet::BasicPolygon2d & partition);
 
-Trajectory decimateTrajectory(const Trajectory & input_traj, const float step);
+PathPointsWithLaneId decimatePathPoints(
+  const PathPointsWithLaneId & input_path_points, const float step);
 
-LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly);
+// trim path from self_pose to trim_distance
+PathWithLaneId trimPathFromSelfPose(
+  const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
+  const double trim_distance);
+
+std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
+  const geometry_msgs::msg::Pose & current_pose, const DetectionAreaSize detection_area_size);
+
+// create polygon for passing lines and deceleration line calculated by stopping jerk
+// note that this polygon is not closed
+boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
+  const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
+  const size_t deceleration_line_idx);
+
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
 #endif  // DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_

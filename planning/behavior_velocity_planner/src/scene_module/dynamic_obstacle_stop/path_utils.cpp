@@ -252,6 +252,24 @@ geometry_msgs::msg::Pose lerpByPose(
   return pose;
 }
 
+geometry_msgs::msg::Point findLongitudinalNearestPoint(
+  const Trajectory & trajectory, const geometry_msgs::msg::Point & src_point,
+  const std::vector<geometry_msgs::msg::Point> & target_points)
+{
+  float min_dist = std::numeric_limits<float>::max();
+  geometry_msgs::msg::Point min_dist_point{};
+
+  for (const auto & p : target_points) {
+    const float dist = tier4_autoware_utils::calcSignedArcLength(trajectory.points, src_point, p);
+    if (dist < min_dist) {
+      min_dist = dist;
+      min_dist_point = p;
+    }
+  }
+
+  return min_dist_point;
+}
+
 std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & base_pose,
   const geometry_msgs::msg::Point & target_point)
@@ -278,13 +296,66 @@ std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
   return same_side_points;
 }
 
-bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
+TextWithPosition createDebugText(
+  const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
 {
-  if (tier4_autoware_utils::calcDistance2d(p1, p2) < std::numeric_limits<float>::epsilon()) {
-    return true;
+  const auto offset_pose = tier4_autoware_utils::calcOffsetPose(pose, 0, lateral_offset, 0);
+
+  TextWithPosition text_with_position;
+  text_with_position.text = text;
+  text_with_position.position = offset_pose.position;
+
+  return text_with_position;
+}
+
+TextWithPosition createDebugText(const std::string text, const geometry_msgs::msg::Point position)
+{
+  TextWithPosition text_with_position;
+  text_with_position.text = text;
+  text_with_position.position = position;
+
+  return text_with_position;
+}
+
+Trajectory convertPathToTrajectory(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+{
+  Trajectory trajectory;
+  trajectory.header = path.header;
+  for (const auto & p : path.points) {
+    autoware_auto_planning_msgs::msg::TrajectoryPoint tmp_point;
+    tmp_point.pose = p.point.pose;
+    tmp_point.longitudinal_velocity_mps = p.point.longitudinal_velocity_mps;
+    trajectory.points.push_back(tmp_point);
   }
 
-  return false;
+  return trajectory;
+}
+
+std::vector<geometry_msgs::msg::Point> toRosPoints(const PathPointsWithLaneId & path_points)
+{
+  std::vector<geometry_msgs::msg::Point> ros_points;
+  for (const auto & p : path_points) {
+    ros_points.push_back(tier4_autoware_utils::createPoint(
+      p.point.pose.position.x, p.point.pose.position.y, p.point.pose.position.z));
+  }
+
+  return ros_points;
+}
+
+size_t findNearestIndex(
+  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point)
+{
+  const auto points = toRosPoints(path_points);
+
+  return tier4_autoware_utils::findNearestIndex(points, point);
+}
+
+size_t findNearestSegmentIndex(
+  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point)
+{
+  const auto points = toRosPoints(path_points);
+
+  return tier4_autoware_utils::findNearestSegmentIndex(points, point);
 }
 
 // if path points have the same point as target_point, return the index
@@ -299,6 +370,15 @@ boost::optional<size_t> haveSamePoint(
   }
 
   return {};
+}
+
+bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
+{
+  if (tier4_autoware_utils::calcDistance2d(p1, p2) < std::numeric_limits<float>::epsilon()) {
+    return true;
+  }
+
+  return false;
 }
 
 // insert path velocity which doesn't exceed original velocity
@@ -331,6 +411,62 @@ boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points
   return {};
 }
 
+std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const Trajectory & trajectory,
+  const lanelet::BasicPolygon2d & partition)
+{
+  std::vector<DynamicObstacle> extracted_dynamic_obstacle;
+  for (const auto & obstacle : dynamic_obstacles) {
+    const auto obstacle_nearest_idx =
+      tier4_autoware_utils::findNearestIndex(trajectory.points, obstacle.pose_.position);
+    const auto & obstacle_nearest_traj_point =
+      trajectory.points.at(obstacle_nearest_idx).pose.position;
+
+    // create linestring from traj point to obstacle
+    const LineString2d traj_p_to_obstacle{
+      {obstacle_nearest_traj_point.x, obstacle_nearest_traj_point.y},
+      {obstacle.pose_.position.x, obstacle.pose_.position.y}};
+
+    // create linestring for partition
+    const LineString2d partition_bg = createLineString2d(partition);
+
+    // ignore obstacle outside of partition
+    if (bg::intersects(traj_p_to_obstacle, partition_bg)) {
+      continue;
+    }
+    extracted_dynamic_obstacle.emplace_back(obstacle);
+  }
+
+  return extracted_dynamic_obstacle;
+}
+
+Trajectory decimateTrajectory(const Trajectory & input_traj, const float step)
+{
+  if (input_traj.points.empty()) {
+    return Trajectory();
+  }
+
+  float dist_sum = 0.0;
+  Trajectory decimate_traj;
+  decimate_traj.header = input_traj.header;
+  // push first point
+  decimate_traj.points.emplace_back(input_traj.points.front());
+
+  for (size_t i = 1; i < input_traj.points.size(); i++) {
+    const auto p1 = input_traj.points.at(i - 1);
+    const auto p2 = input_traj.points.at(i);
+    const auto dist = tier4_autoware_utils::calcDistance2d(p1.pose.position, p2.pose.position);
+    dist_sum += dist;
+
+    if (dist_sum > step) {
+      decimate_traj.points.emplace_back(p2);
+      dist_sum = 0.0;
+    }
+  }
+
+  return decimate_traj;
+}
+
 LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly)
 {
   LineString2d line_string;
@@ -342,73 +478,20 @@ LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly)
   return line_string;
 }
 
-std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathPointsWithLaneId & path_points,
-  const lanelet::BasicPolygon2d & partition)
-{
-  std::vector<DynamicObstacle> extracted_dynamic_obstacle;
-  for (const auto & obstacle : dynamic_obstacles) {
-    const auto obstacle_nearest_idx =
-      tier4_autoware_utils::findNearestIndex(path_points, obstacle.pose_.position);
-    const auto & obstacle_nearest_path_point =
-      path_points.at(obstacle_nearest_idx).point.pose.position;
-
-    // create linestring from traj point to obstacle
-    const LineString2d path_point_to_obstacle{
-      {obstacle_nearest_path_point.x, obstacle_nearest_path_point.y},
-      {obstacle.pose_.position.x, obstacle.pose_.position.y}};
-
-    // create linestring for partition
-    const LineString2d partition_bg = createLineString2d(partition);
-
-    // ignore obstacle outside of partition
-    if (bg::intersects(path_point_to_obstacle, partition_bg)) {
-      continue;
-    }
-    extracted_dynamic_obstacle.emplace_back(obstacle);
-  }
-
-  return extracted_dynamic_obstacle;
-}
-
-PathPointsWithLaneId decimatePathPoints(
-  const PathPointsWithLaneId & input_path_points, const float step)
-{
-  if (input_path_points.empty()) {
-    return PathPointsWithLaneId();
-  }
-
-  float dist_sum = 0.0;
-  PathPointsWithLaneId decimate_path_points;
-  // push first point
-  decimate_path_points.emplace_back(input_path_points.front());
-
-  for (size_t i = 1; i < input_path_points.size(); i++) {
-    const auto p1 = input_path_points.at(i - 1);
-    const auto p2 = input_path_points.at(i);
-    const auto dist = tier4_autoware_utils::calcDistance2d(p1, p2);
-    dist_sum += dist;
-
-    if (dist_sum > step) {
-      decimate_path_points.emplace_back(p2);
-      dist_sum = 0.0;
-    }
-  }
-
-  return decimate_path_points;
-}
-
 // trim path from self_pose to trim_distance
 PathWithLaneId trimPathFromSelfPose(
   const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
-  const double trim_distance)
+  const double trim_distance) const
 {
+  // findNearestSegmentIndex finds the index behind of the specified point
+  // so add 1 to the index to get the nearest point ahead of the ego
+  // const size_t nearest_idx =
+  //   tier4_autoware_utils::findNearestSegmentIndex(input.points, self_pose.position) + 1;
+
   const size_t nearest_idx =
     tier4_autoware_utils::findNearestIndex(input.points, self_pose.position);
 
-  PathWithLaneId output{};
-  output.header = input.header;
-  output.drivable_area = input.drivable_area;
+  Trajectory output{};
   double dist_sum = 0;
   for (size_t i = nearest_idx; i < input.points.size(); ++i) {
     output.points.push_back(input.points.at(i));
@@ -421,57 +504,9 @@ PathWithLaneId trimPathFromSelfPose(
       break;
     }
   }
+  output.header = input.header;
 
   return output;
-}
-
-std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
-  const geometry_msgs::msg::Pose & current_pose, const DetectionAreaSize detection_area_size)
-{
-  const auto & d = detection_area_size;
-  const auto p1 = tier4_autoware_utils::calcOffsetPose(current_pose, d.dist_ahead, d.dist_left, 0);
-  const auto p2 =
-    tier4_autoware_utils::calcOffsetPose(current_pose, d.dist_ahead, -d.dist_right, 0);
-  const auto p3 =
-    tier4_autoware_utils::calcOffsetPose(current_pose, -d.dist_behind, -d.dist_right, 0);
-  const auto p4 =
-    tier4_autoware_utils::calcOffsetPose(current_pose, -d.dist_behind, d.dist_left, 0);
-
-  std::vector<geometry_msgs::msg::Point> detection_area;
-  detection_area.emplace_back(p1.position);
-  detection_area.emplace_back(p2.position);
-  detection_area.emplace_back(p3.position);
-  detection_area.emplace_back(p4.position);
-
-  return detection_area;
-}
-
-// create polygon for passing lines and deceleration line calculated by stopping jerk
-// note that this polygon is not closed
-boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
-  const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
-  const size_t deceleration_line_idx)
-{
-  if (passing_lines.size() != 2) {
-    return {};
-  }
-
-  std::vector<geometry_msgs::msg::Point> detection_area_polygon;
-  const auto & line1 = passing_lines.at(0);
-  const int poly_corner_idx = std::min(deceleration_line_idx, line1.size() - 1);
-  for (int i = 0; i <= poly_corner_idx; i++) {
-    const auto & p = line1.at(i);
-    detection_area_polygon.push_back(p);
-  }
-
-  // push points from the end to create the polygon
-  const auto & line2 = passing_lines.at(1);
-  for (int i = poly_corner_idx; i >= 0; i--) {
-    const auto & p = line2.at(i);
-    detection_area_polygon.push_back(p);
-  }
-
-  return detection_area_polygon;
 }
 
 }  // namespace dynamic_obstacle_stop_utils

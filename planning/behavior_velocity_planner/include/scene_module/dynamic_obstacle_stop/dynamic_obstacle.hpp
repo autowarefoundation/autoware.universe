@@ -15,6 +15,8 @@
 #ifndef DYNAMIC_OBSTACLE_HPP
 #define DYNAMIC_OBSTACLE_HPP
 
+#include "utilization/util.hpp"
+
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -30,7 +32,10 @@ namespace behavior_velocity_planner
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::Shape;
-using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using PathPointsWithLaneId = std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>;
+
 struct DynamicObstacleParam
 {
   float min_vel_kmph{0.0};
@@ -62,12 +67,17 @@ public:
 
   DynamicObstacle();
   explicit DynamicObstacle(const DynamicObstacleParam & param);
+  // void createDynamicObstacle(
+  //   const geometry_msgs::msg::Point & point, const Trajectory & trajectory);
   void createDynamicObstacle(
-    const geometry_msgs::msg::Point & point, const Trajectory & trajectory);
+    const geometry_msgs::msg::Point & point, const PathWithLaneId & trajectory);
   void createDynamicObstacle(const autoware_auto_perception_msgs::msg::PredictedObject & object);
+  // void createDynamicObstacle(
+  //   const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  //   const Trajectory & trajectory);
   void createDynamicObstacle(
     const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const Trajectory & trajectory);
+    const PathWithLaneId & trajectory);
 
   //  obstacle information
   geometry_msgs::msg::Pose pose_;

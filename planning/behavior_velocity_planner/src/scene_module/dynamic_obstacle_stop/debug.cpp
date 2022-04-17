@@ -48,6 +48,29 @@ visualization_msgs::msg::Marker createStopLineMarker(
 
   return marker;
 }
+
+DynamicObstacleStopDebug::TextWithPosition createDebugText(
+  const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
+{
+  const auto offset_pose = tier4_autoware_utils::calcOffsetPose(pose, 0, lateral_offset, 0);
+
+  DynamicObstacleStopDebug::TextWithPosition text_with_position;
+  text_with_position.text = text;
+  text_with_position.position = offset_pose.position;
+
+  return text_with_position;
+}
+
+DynamicObstacleStopDebug::TextWithPosition createDebugText(
+  const std::string text, const geometry_msgs::msg::Point position)
+{
+  DynamicObstacleStopDebug::TextWithPosition text_with_position;
+  text_with_position.text = text;
+  text_with_position.position = position;
+
+  return text_with_position;
+}
+
 }  // namespace
 
 DynamicObstacleStopDebug::DynamicObstacleStopDebug(rclcpp::Node & node) : node_(node)
@@ -124,6 +147,18 @@ void DynamicObstacleStopDebug::pushDebugPolygons(
 void DynamicObstacleStopDebug::pushDebugTexts(const TextWithPosition & debug_text)
 {
   debug_texts_.push_back(debug_text);
+}
+
+void DynamicObstacleStopDebug::pushDebugTexts(
+  const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
+{
+  debug_texts_.push_back(createDebugText(text, pose, lateral_offset));
+}
+
+void DynamicObstacleStopDebug::pushDebugTexts(
+  const std::string text, const geometry_msgs::msg::Point position)
+{
+  debug_texts_.push_back(createDebugText(text, position));
 }
 
 void DynamicObstacleStopDebug::clearDebugMarker()
