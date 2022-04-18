@@ -25,4 +25,9 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+install(
+  PROGRAMS script/server.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_auto_package()

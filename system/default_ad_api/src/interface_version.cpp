@@ -27,9 +27,9 @@ InterfaceVersionNode::InterfaceVersionNode(const rclcpp::NodeOptions & options)
 void InterfaceVersionNode::onInterfaceVersion(
   const InterfaceVersion::Request::SharedPtr, const InterfaceVersion::Response::SharedPtr response)
 {
-  response->version = "0.5.0";
+  response->version = "0.0.0";
   response->major = 0;
-  response->minor = 5;
+  response->minor = 0;
   response->patch = 0;
 
   response->status.summary = interface_utils::response::success();
