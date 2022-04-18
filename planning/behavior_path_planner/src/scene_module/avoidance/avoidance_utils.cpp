@@ -192,4 +192,24 @@ void setStartData(
   ap.start_longitudinal = start_dist;
 }
 
+std::string getUuidStr(const ObjectData & obj)
+{
+  std::stringstream hex_value;
+  for (std::size_t idx = 0; idx < 4; ++idx) {
+    hex_value << std::hex << std::setfill('0') << std::setw(2)
+              << +obj.object.object_id.uuid.at(idx);
+  }
+  return hex_value.str();
+}
+
+std::vector<std::string> getUuidStr(const ObjectDataArray & objs)
+{
+  std::vector<std::string> uuids;
+  uuids.reserve(objs.size());
+  for (const auto & o : objs) {
+    uuids.push_back(getUuidStr(o));
+  }
+  return uuids;
+}
+
 }  // namespace behavior_path_planner

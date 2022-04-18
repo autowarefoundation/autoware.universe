@@ -286,7 +286,8 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     // set data
     target_objects.push_back(object_data);
     AvoidanceInfo avoidance_info;
-    avoidance_info.object_id = object_data.object.object_id;
+
+    avoidance_info.object_id = getUuidStr(object_data);
     avoidance_info.avoidance_factors = avoidance_factors;
     avoidance_info.allow_avoidance = (avoidance_factors.empty()) ? true : false;
     avoidance_info.lateral_distance_from_centerline = object_data.lateral;
@@ -2390,22 +2391,6 @@ void AvoidanceModule::updateData()
   if (prev_reference_.points.empty()) {
     prev_reference_ = avoidance_data_.reference_path;
   }
-}
-
-std::string getUuidStr(const ObjectData & obj)
-{
-  return std::to_string(obj.object.object_id.uuid.at(0)) +
-         std::to_string(obj.object.object_id.uuid.at(1)) +
-         std::to_string(obj.object.object_id.uuid.at(2));
-}
-
-std::string getUuidStr(const ObjectDataArray & objs)
-{
-  std::stringstream ss;
-  for (const auto & o : objs) {
-    ss << getUuidStr(o) << ", ";
-  }
-  return ss.str();
 }
 
 /*
