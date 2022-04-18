@@ -195,9 +195,8 @@ void setStartData(
 std::string getUuidStr(const ObjectData & obj)
 {
   std::stringstream hex_value;
-  for (std::size_t idx = 0; idx < 4; ++idx) {
-    hex_value << std::hex << std::setfill('0') << std::setw(2)
-              << +obj.object.object_id.uuid.at(idx);
+  for (const auto & uuid : obj.object.object_id.uuid) {
+    hex_value << std::hex << std::setfill('0') << std::setw(2) << +uuid;
   }
   return hex_value.str();
 }
