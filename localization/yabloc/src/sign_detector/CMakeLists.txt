@@ -14,6 +14,9 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
+
 # ===================================================
 # OpenCV
 find_package(OpenCV REQUIRED)
@@ -31,4 +34,14 @@ ament_auto_add_executable(main src/main.cpp)
 target_include_directories(main PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd include)
 target_link_libraries(main  ${OpenCV_LIBS} cv_lsd)
 
+
+# ===================================================
+# Python
+ament_python_install_package(scripts)
+install(PROGRAMS
+  scripts/hello.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# ===================================================
 ament_auto_package(INSTALL_TO_SHARE  launch)
