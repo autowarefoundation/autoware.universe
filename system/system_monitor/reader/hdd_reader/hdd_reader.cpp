@@ -285,6 +285,7 @@ int get_ata_SMARTData(int fd, HDDInfo * info, const HDDDevice & device)
 
   std::bitset<static_cast<uint8_t>(ATAAttributeIDs::SIZE)> found_flag;
   info->is_valid_total_data_written_ = false;
+  info->is_valid_recovered_error_ = false;
   // Retrieve S.M.A.R.T. Informations
   for (int i = 0; i < 30; ++i) {
     if (data.attribute_entry_[i].attribute_id_ == 0xC2) {  // Temperature - Device Internal
@@ -300,6 +301,11 @@ int get_ata_SMARTData(int fd, HDDInfo * info, const HDDDevice & device)
         (data.attribute_entry_[i].data_ |
          (static_cast<uint64_t>(data.attribute_entry_[i].attribute_specific_) << 32));
       info->is_valid_total_data_written_ = true;
+    } else if (
+      data.attribute_entry_[i].attribute_id_ ==
+      device.recovered_error_attribute_id_) {  // Hardware ECC Recovered
+      info->recovered_error_ = data.attribute_entry_[i].data_;
+      info->is_valid_recovered_error_ = true;
     }
   }
 
@@ -398,6 +404,9 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
 
   // Bytes 143:128 Power On Hours
   info->power_on_hours_ = *(reinterpret_cast<uint64_t *>(&data[128]));
+
+  // NVMe S.M.A.R.T has no information of recovered error count
+  info->is_valid_recovered_error_ = false;
 
   return EXIT_SUCCESS;
 }

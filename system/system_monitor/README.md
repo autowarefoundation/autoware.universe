@@ -61,7 +61,12 @@ Every topic is published in 1 minute interval.
 |                 | CPU Thermal Throttling |   ✓   |      -       |      ✓       |                                                               |
 |                 | CPU Frequency          |   ✓   |      ✓       |      ✓       | Notification of frequency only, normally error not generated. |
 | HDD Monitor     | HDD Temperature        |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD RecoveredError     |   ✓   |      ✓       |      ✓       |                                                               |
 |                 | HDD Usage              |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD ReadDataRate       |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD WriteDataRate      |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD ReadIOPS           |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD WriteIOPS          |   ✓   |      ✓       |      ✓       |                                                               |
 | Memory Monitor  | Memory Usage           |   ✓   |      ✓       |      ✓       |                                                               |
 | Net Monitor     | Network Usage          |   ✓   |      ✓       |      ✓       |                                                               |
 | NTP Monitor     | NTP Offset             |   ✓   |      ✓       |      ✓       |                                                               |

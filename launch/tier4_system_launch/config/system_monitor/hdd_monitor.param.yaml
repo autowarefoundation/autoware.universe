@@ -7,5 +7,10 @@
         name: /dev/sda3
         temp_warn: 55.0
         temp_error: 70.0
+        recovered_error_warn: 1
         free_warn: 5120 # MB(8hour)
         free_error: 100 # MB(last 1 minute)
+        read_data_rate_warn: 360.0 # MB/s
+        write_data_rate_warn: 103.5 # MB/s
+        read_iops_warn: 63360.0 # IOPS
+        write_iops_warn: 24120.0 # IOPS
