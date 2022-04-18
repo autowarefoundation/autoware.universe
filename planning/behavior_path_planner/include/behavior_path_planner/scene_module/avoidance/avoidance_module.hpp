@@ -29,8 +29,6 @@
 #include <tier4_planning_msgs/msg/avoidance_info.hpp>
 #include <tier4_planning_msgs/msg/avoidance_info_array.hpp>
 
-#include <fmt/format.h>
-
 #include <memory>
 #include <string>
 #include <tuple>
