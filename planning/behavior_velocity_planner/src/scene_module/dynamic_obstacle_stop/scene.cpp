@@ -54,20 +54,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
-  // TODO: remove
   if (!planner_param_.dynamic_obstacle_stop.enable_dynamic_obstacle_stop) {
-    return true;
-  }
-
-  if (!planner_data_->current_velocity || !planner_data_->current_accel) {
-    return true;
-  }
-
-  if (!planner_data_->predicted_objects) {
-    return true;
-  }
-
-  if (!planner_data_->no_ground_pointcloud) {
     return true;
   }
 
