@@ -29,8 +29,7 @@ namespace centerpoint
 class PostProcessCUDA
 {
 public:
-  explicit PostProcessCUDA(
-    const std::size_t num_class, const float score_threshold, const CenterPointConfig & config);
+  explicit PostProcessCUDA(const CenterPointConfig & config);
 
   cudaError_t generateDetectedBoxes3D_launch(
     const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
@@ -38,9 +37,6 @@ public:
     cudaStream_t stream);
 
 private:
-  std::size_t num_class_{0};
-  float score_threshold_{0.0f};
-  float dist_threshold_{1.5f};  // TODO(yukke42): temporary value
   CenterPointConfig config_;
   thrust::device_vector<Box3D> boxes3d_d_;
 };

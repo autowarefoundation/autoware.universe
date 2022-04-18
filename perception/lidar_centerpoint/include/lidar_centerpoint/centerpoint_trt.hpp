@@ -56,9 +56,8 @@ class CenterPointTRT
 {
 public:
   explicit CenterPointTRT(
-    const std::size_t num_class, const float score_threshold, const NetworkParam & encoder_param,
-    const NetworkParam & head_param, const DensificationParam & densification_param,
-    const CenterPointConfig & config);
+    const NetworkParam & encoder_param, const NetworkParam & head_param,
+    const DensificationParam & densification_param, const CenterPointConfig & config);
 
   ~CenterPointTRT();
 
@@ -83,7 +82,7 @@ private:
   cudaStream_t stream_{nullptr};
 
   bool verbose_{false};
-  std::size_t num_class_{0};
+  std::size_t class_size_{0};
   CenterPointConfig config_;
   std::size_t num_voxels_{0};
   std::size_t encoder_in_feature_size_{0};

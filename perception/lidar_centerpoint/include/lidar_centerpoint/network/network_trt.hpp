@@ -39,15 +39,14 @@ public:
   using TensorRTWrapper::TensorRTWrapper;
 
   HeadTRT(
-    const std::size_t num_class, const std::vector<std::size_t> & out_channel_sizes,
-    const CenterPointConfig & config, const bool verbose);
+    const std::vector<std::size_t> & out_channel_sizes, const CenterPointConfig & config,
+    const bool verbose);
 
 protected:
   bool setProfile(
     nvinfer1::IBuilder & builder, nvinfer1::INetworkDefinition & network,
     nvinfer1::IBuilderConfig & config) override;
 
-  std::size_t num_class_{0};
   std::vector<std::size_t> out_channel_sizes_;
 };
 
