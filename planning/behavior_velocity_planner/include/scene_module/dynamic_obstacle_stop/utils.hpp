@@ -61,7 +61,6 @@ struct CommonParam
 struct DynamicObstacleStopParam
 {
   std::string detection_method;
-  bool enable_dynamic_obstacle_stop;
   bool use_partition_lanelet;
   double stop_margin;
   double passing_margin;

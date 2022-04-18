@@ -54,10 +54,6 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
-  if (!planner_param_.dynamic_obstacle_stop.enable_dynamic_obstacle_stop) {
-    return true;
-  }
-
   const auto current_vel = planner_data_->current_velocity->twist.linear.x;
   const auto current_acc = planner_data_->current_accel.get();
   const auto & current_pose = planner_data_->current_pose.pose;

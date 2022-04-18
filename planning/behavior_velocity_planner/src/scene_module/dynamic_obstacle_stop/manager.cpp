@@ -53,8 +53,6 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
 
   {
     auto & p = planner_param_.dynamic_obstacle_stop;
-    p.enable_dynamic_obstacle_stop =
-      node.declare_parameter(ns + ".enable_dynamic_obstacle_stop", true);
     p.detection_method = node.declare_parameter(ns + ".detection_method", "Object");
     p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
@@ -120,9 +118,6 @@ rcl_interfaces::msg::SetParametersResult DynamicObstacleStopModuleManager::param
   result.reason = "success";
 
   try {
-    // tier4_autoware_utils::updateParam(
-    //   parameters, "dynamic_obstacle_stop_planner.enable_dynamic_obstacle_stop",
-    //   planner_param_.dynamic_obstacle_stop.enable_dynamic_obstacle_stop);
     std::string ns = "dynamic_obstacle_stop.";
     tier4_autoware_utils::updateParam(
       parameters, ns + "detection_method", planner_param_.dynamic_obstacle_stop.detection_method);
