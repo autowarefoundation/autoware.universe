@@ -67,27 +67,22 @@ public:
 
   DynamicObstacle();
   explicit DynamicObstacle(const DynamicObstacleParam & param);
-  // void createDynamicObstacle(
-  //   const geometry_msgs::msg::Point & point, const Trajectory & trajectory);
   void createDynamicObstacle(
     const geometry_msgs::msg::Point & point, const PathWithLaneId & trajectory);
   void createDynamicObstacle(const autoware_auto_perception_msgs::msg::PredictedObject & object);
-  // void createDynamicObstacle(
-  //   const autoware_auto_perception_msgs::msg::PredictedObject & object,
-  //   const Trajectory & trajectory);
   void createDynamicObstacle(
     const autoware_auto_perception_msgs::msg::PredictedObject & object,
     const PathWithLaneId & trajectory);
 
   //  obstacle information
-  geometry_msgs::msg::Pose pose_;
-  std::vector<geometry_msgs::msg::Point> collision_points_;
-  geometry_msgs::msg::Point nearest_collision_point_;
-  float min_velocity_mps_;
-  float max_velocity_mps_;
-  std::vector<ObjectClassification> classification_;
-  Shape shape_;
-  std::vector<PredictedPath> predicted_paths_;
+  geometry_msgs::msg::Pose pose;
+  std::vector<geometry_msgs::msg::Point> collision_points;
+  geometry_msgs::msg::Point nearest_collision_point;
+  float min_velocity_mps;
+  float max_velocity_mps;
+  std::vector<ObjectClassification> classifications;
+  Shape shape;
+  std::vector<PredictedPath> predicted_paths;
 
 private:
   std::vector<geometry_msgs::msg::Pose> createPredictedPath(

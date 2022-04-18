@@ -349,14 +349,14 @@ std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
   std::vector<DynamicObstacle> extracted_dynamic_obstacle;
   for (const auto & obstacle : dynamic_obstacles) {
     const auto obstacle_nearest_idx =
-      tier4_autoware_utils::findNearestIndex(path_points, obstacle.pose_.position);
+      tier4_autoware_utils::findNearestIndex(path_points, obstacle.pose.position);
     const auto & obstacle_nearest_path_point =
       path_points.at(obstacle_nearest_idx).point.pose.position;
 
     // create linestring from traj point to obstacle
     const LineString2d path_point_to_obstacle{
       {obstacle_nearest_path_point.x, obstacle_nearest_path_point.y},
-      {obstacle.pose_.position.x, obstacle.pose_.position.y}};
+      {obstacle.pose.position.x, obstacle.pose.position.y}};
 
     // create linestring for partition
     const LineString2d partition_bg = createLineString2d(partition);

@@ -42,30 +42,30 @@ void DynamicObstacle::createDynamicObstacle(
   const geometry_msgs::msg::Point & point, const PathWithLaneId & path)
 {
   // create pose facing the direction of the lane
-  pose_.position = point;
-  pose_.orientation = createQuaternionFacingToTrajectory(path.points, pose_.position);
+  pose.position = point;
+  pose.orientation = createQuaternionFacingToTrajectory(path.points, pose.position);
 
-  min_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
-  max_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
+  min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
+  max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
 
   // create classification of points as pedestrian
   ObjectClassification classification;
   classification.label = ObjectClassification::PEDESTRIAN;
   classification.probability = 1.0;
-  classification_.emplace_back(classification);
+  classifications.emplace_back(classification);
 
   // create shape of points as cylinder
-  shape_.type = Shape::CYLINDER;
-  shape_.dimensions.x = param_.diameter;
-  shape_.dimensions.y = param_.diameter;
-  shape_.dimensions.z = param_.height;
+  shape.type = Shape::CYLINDER;
+  shape.dimensions.x = param_.diameter;
+  shape.dimensions.y = param_.diameter;
+  shape.dimensions.z = param_.height;
 
   // create predicted path of points
   PredictedPath predicted_path;
   predicted_path.path =
-    createPredictedPath(pose_, param_.time_step, max_velocity_mps_, param_.path_size);
+    createPredictedPath(pose, param_.time_step, max_velocity_mps, param_.path_size);
   predicted_path.confidence = 1.0;
-  predicted_paths_.emplace_back(predicted_path);
+  predicted_paths.emplace_back(predicted_path);
 }
 
 // overwrite path of objects to run straight to the lane
@@ -75,37 +75,37 @@ void DynamicObstacle::createDynamicObstacle(
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
 
   // create pose facing the direction of the lane
-  pose_.position = object_pose.position;
-  pose_.orientation = createQuaternionFacingToTrajectory(path.points, pose_.position);
+  pose.position = object_pose.position;
+  pose.orientation = createQuaternionFacingToTrajectory(path.points, pose.position);
 
   // assume min and max velocity is value specified in param
-  min_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
-  max_velocity_mps_ = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
+  min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
+  max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
 
   // use classification of objects
-  classification_ = object.classification;
+  classifications = object.classification;
 
   // use shape of objects
-  shape_ = object.shape;
+  shape = object.shape;
 
   // replace predicted path with path that runs straight to lane
   PredictedPath predicted_path;
   predicted_path.path =
-    createPredictedPath(pose_, param_.time_step, max_velocity_mps_, param_.path_size);
+    createPredictedPath(pose, param_.time_step, max_velocity_mps, param_.path_size);
   predicted_path.confidence = 1.0;
-  predicted_paths_.emplace_back(predicted_path);
+  predicted_paths.emplace_back(predicted_path);
 }
 
 void DynamicObstacle::createDynamicObstacle(
   const autoware_auto_perception_msgs::msg::PredictedObject & object)
 {
-  pose_ = object.kinematics.initial_pose_with_covariance.pose;
+  pose = object.kinematics.initial_pose_with_covariance.pose;
 
   // TODO(Tomohito Ando): calculate from velocity and covariance of object
-  min_velocity_mps_ = param_.min_vel_kmph / 3.6;
-  max_velocity_mps_ = param_.max_vel_kmph / 3.6;
-  classification_ = object.classification;
-  shape_ = object.shape;
+  min_velocity_mps = param_.min_vel_kmph / 3.6;
+  max_velocity_mps = param_.max_vel_kmph / 3.6;
+  classifications = object.classification;
+  shape = object.shape;
 
   // get predicted paths of objects
   for (const auto & path : object.kinematics.predicted_paths) {
@@ -114,7 +114,7 @@ void DynamicObstacle::createDynamicObstacle(
     predicted_path.path.resize(path.path.size());
     std::copy(path.path.cbegin(), path.path.cend(), predicted_path.path.begin());
 
-    predicted_paths_.emplace_back(predicted_path);
+    predicted_paths.emplace_back(predicted_path);
   }
 }
 

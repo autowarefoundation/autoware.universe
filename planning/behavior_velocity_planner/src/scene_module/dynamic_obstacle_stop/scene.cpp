@@ -131,16 +131,16 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   {
     if (dynamic_obstacle) {
       const auto lateral_dist = std::abs(tier4_autoware_utils::calcLateralOffset(
-                                  trim_smoothed_path.points, dynamic_obstacle->pose_.position)) -
+                                  trim_smoothed_path.points, dynamic_obstacle->pose.position)) -
                                 planner_param_.vehicle_param.width / 2.0;
       const auto longitudinal_dist_to_obstacle =
         tier4_autoware_utils::calcSignedArcLength(
-          trim_smoothed_path.points, current_pose.position, dynamic_obstacle->pose_.position) -
+          trim_smoothed_path.points, current_pose.position, dynamic_obstacle->pose.position) -
         planner_param_.vehicle_param.base_to_front;
 
       const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
         trim_smoothed_path.points, current_pose.position,
-        dynamic_obstacle->nearest_collision_point_);
+        dynamic_obstacle->nearest_collision_point);
       const auto dist_to_collision =
         dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
 
@@ -451,10 +451,10 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::detectCollision(
     {
       std::stringstream sstream;
       sstream << std::setprecision(4) << "ttc: " << std::to_string(travel_time) << "s";
-      debug_ptr_->pushDebugTexts(sstream.str(), obstacle_selected->nearest_collision_point_);
+      debug_ptr_->pushDebugTexts(sstream.str(), obstacle_selected->nearest_collision_point);
 
-      debug_ptr_->pushDebugPoints(obstacle_selected->collision_points_);
-      debug_ptr_->pushDebugPoints(obstacle_selected->nearest_collision_point_, PointType::Red);
+      debug_ptr_->pushDebugPoints(obstacle_selected->collision_points);
+      debug_ptr_->pushDebugPoints(obstacle_selected->nearest_collision_point, PointType::Red);
     }
 
     return obstacle_selected;
@@ -473,9 +473,9 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::findNearestCollision
     dynamic_obstacles.begin(), dynamic_obstacles.end(),
     [&path, &base_pose](const auto & lhs, const auto & rhs) -> bool {
       const auto dist_lhs = tier4_autoware_utils::calcSignedArcLength(
-        path.points, base_pose.position, lhs.pose_.position);
+        path.points, base_pose.position, lhs.pose.position);
       const auto dist_rhs = tier4_autoware_utils::calcSignedArcLength(
-        path.points, base_pose.position, rhs.pose_.position);
+        path.points, base_pose.position, rhs.pose.position);
 
       return dist_lhs < dist_rhs;
     });
@@ -484,7 +484,7 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::findNearestCollision
   DynamicObstacle obstacle_collision;
   for (const auto & obstacle : dynamic_obstacles) {
     const auto obstacle_same_side_points = dynamic_obstacle_stop_utils::findLateralSameSidePoints(
-      obstacle.collision_points_, base_pose, obstacle.pose_.position);
+      obstacle.collision_points, base_pose, obstacle.pose.position);
 
     const auto nearest_collision_point = dynamic_obstacle_stop_utils::findLongitudinalNearestPoint(
       path.points, base_pose.position, obstacle_same_side_points);
@@ -500,7 +500,7 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::findNearestCollision
         DebugValues::TYPE::COLLISION_POS_FROM_EGO_FRONT, collision_position_from_ego_front);
 
       obstacle_collision = obstacle;
-      obstacle_collision.nearest_collision_point_ = nearest_collision_point;
+      obstacle_collision.nearest_collision_point = nearest_collision_point;
       return obstacle_collision;
     }
 
@@ -563,7 +563,7 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::checkCollisionWithObstac
   for (const auto & obstacle : dynamic_obstacles) {
     // get classification that has highest probability
     const auto classification =
-      dynamic_obstacle_stop_utils::getHighestProbLabel(obstacle.classification_);
+      dynamic_obstacle_stop_utils::getHighestProbLabel(obstacle.classifications);
 
     // detect only pedestrian and bicycle
     if (
@@ -574,9 +574,9 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::checkCollisionWithObstac
 
     // calculate predicted obstacle pose for min velocity and max veloicty
     const auto predicted_obstacle_pose_min_vel =
-      calcPredictedObstaclePose(obstacle.predicted_paths_, travel_time, obstacle.min_velocity_mps_);
+      calcPredictedObstaclePose(obstacle.predicted_paths, travel_time, obstacle.min_velocity_mps);
     const auto predicted_obstacle_pose_max_vel =
-      calcPredictedObstaclePose(obstacle.predicted_paths_, travel_time, obstacle.max_velocity_mps_);
+      calcPredictedObstaclePose(obstacle.predicted_paths, travel_time, obstacle.max_velocity_mps);
     if (!predicted_obstacle_pose_min_vel || !predicted_obstacle_pose_max_vel) {
       continue;
     }
@@ -585,14 +585,14 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::checkCollisionWithObstac
 
     std::vector<geometry_msgs::msg::Point> collision_points;
     const bool collision_detected =
-      checkCollisionWithShape(bg_poly_vehicle, pose_with_range, obstacle.shape_, collision_points);
+      checkCollisionWithShape(bg_poly_vehicle, pose_with_range, obstacle.shape, collision_points);
 
     if (!collision_detected) {
       continue;
     }
 
     DynamicObstacle obstacle_collision = obstacle;
-    obstacle_collision.collision_points_ = collision_points;
+    obstacle_collision.collision_points = collision_points;
     obstacles_collision.emplace_back(obstacle_collision);
   }
 
@@ -781,7 +781,7 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   // calculate distance to collision with the obstacle
   float dist_to_collision;
   const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
-    path.points, current_pose.position, dynamic_obstacle->nearest_collision_point_);
+    path.points, current_pose.position, dynamic_obstacle->nearest_collision_point);
   dist_to_collision = dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
 
   // calculate distance needed to stop with jerk and acc constraints
@@ -827,7 +827,7 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   const float base_to_collision_point =
     planner_param_.dynamic_obstacle_stop.stop_margin + planner_param_.vehicle_param.base_to_front;
   const size_t stop_index = dynamic_obstacle_stop_utils::calcIndexByLengthReverse(
-    path.points, dynamic_obstacle->nearest_collision_point_, base_to_collision_point);
+    path.points, dynamic_obstacle->nearest_collision_point, base_to_collision_point);
   const auto & stop_point = path.points.at(stop_index).point.pose;
 
   // debug
@@ -873,7 +873,7 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
   const auto longitudinal_offset_to_collision_point =
     tier4_autoware_utils::calcSignedArcLength(
-      resampled_path.points, current_pose.position, dynamic_obstacle->nearest_collision_point_) -
+      resampled_path.points, current_pose.position, dynamic_obstacle->nearest_collision_point) -
     planner_param_.vehicle_param.base_to_front;
   // enough distance to the obstacle
   if (
@@ -945,7 +945,7 @@ void DynamicObstacleStopModule::insertApproachingVelocity(
   const float base_to_collision_point =
     approach_margin + planner_param_.vehicle_param.base_to_front;
   const auto stop_idx = dynamic_obstacle_stop_utils::calcIndexByLengthReverse(
-    resampled_path.points, dynamic_obstacle.nearest_collision_point_, base_to_collision_point);
+    resampled_path.points, dynamic_obstacle.nearest_collision_point, base_to_collision_point);
   const auto & stop_point = resampled_path.points.at(stop_idx).point.pose;
 
   // debug
