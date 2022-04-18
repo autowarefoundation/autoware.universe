@@ -195,7 +195,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   update_map_dir_server_ = create_service<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>(
     "~/input/update_map_dir",
     std::bind(&AccelBrakeMapCalibrator::callbackUpdateMapService, this, _1, _2, _3));
- 
+
   // timer
   initTimer(1.0 / update_hz_);
   initOutputCSVTimer(30.0);

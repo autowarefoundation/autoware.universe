@@ -16,11 +16,13 @@
 # limitations under the License.
 
 import argparse
+
 # from http import client
 # import math
 import os
 
 from ament_index_python.packages import get_package_share_directory
+
 # from calc_utils import CalcUtils
 # import config as CF
 # from csv_reader import CSVReader
@@ -30,18 +32,20 @@ import rclpy
 from rclpy.node import Node
 from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
 
+
 class CalibrationDataRelay(Node):
     def __init__(self, args):
         super().__init__("plot_server")
-        self.cli=self.create_client(CalibData, "/accel_brake_map_calibrator/get_data_service")
+        self.cli = self.create_client(CalibData, "/accel_brake_map_calibrator/get_data_service")
 
         while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
+            self.get_logger().info("service not available, waiting again...")
 
         self.request = CalibData.Request()
 
     def send_request(self):
-         self.future = self.cli.call_async(self.request)
+        self.future = self.cli.call_async(self.request)
+
 
 def main(args=None):
     rclpy.init(args=None)
@@ -62,24 +66,22 @@ def main(args=None):
                 text = svg_byte.decode()
                 f_svg.write(text)
 
-                print("svg done") 
+                print("svg done")
 
                 acc_map_name = save_dir + "/accel_map.csv"
                 f_acc = open(acc_map_name, "w")
                 f_acc.write(response.accel_map)
 
-                print("accel map done") 
+                print("accel map done")
 
                 brk_map_name = save_dir + "/brake_map.csv"
                 f_brk = open(brk_map_name, "w")
                 f_brk.write(response.brake_map)
 
-                print("brake map done") 
+                print("brake map done")
 
             except Exception as e:
-                client.get_logger().info(
-                    'Service call failed %r' % (e,))
-                
+                client.get_logger().info("Service call failed %r" % (e,))
 
             break
 

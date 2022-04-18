@@ -17,25 +17,28 @@
 
 import argparse
 import math
+from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
 from calc_utils import CalcUtils
 import config as CF
 from csv_reader import CSVReader
+import matplotlib.pyplot as plt
 import numpy as np
 from plotter import Plotter
 import rclpy
 from rclpy.node import Node
-import matplotlib.pyplot as plt
-from pathlib import Path
 from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
 
 
 class DrawGraph(Node):
-    calibrated_map_dir=''
+    calibrated_map_dir = ""
+
     def __init__(self, args):
         super().__init__("plot_server")
-        self.srv=self.create_service(CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback)
+        self.srv = self.create_service(
+            CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback
+        )
 
         default_map_dir = args.default_map_dir
         self.calibrated_map_dir = args.calibrated_map_dir
@@ -144,18 +147,18 @@ class DrawGraph(Node):
         byte = text.encode()
         for b in byte:
             response.graph_image.append(b)
-        print("svg data packed") 
+        print("svg data packed")
 
-        with open(self.calibrated_map_dir+"accel_map.csv", 'r') as calibrated_accel_map:
-            for accel_data  in calibrated_accel_map: 
+        with open(self.calibrated_map_dir + "accel_map.csv", "r") as calibrated_accel_map:
+            for accel_data in calibrated_accel_map:
                 response.accel_map += accel_data
         print("accel map packed")
-        
-        with open(self.calibrated_map_dir+"brake_map.csv", 'r') as calibrated_brake_map:
-            for brake_data in calibrated_brake_map : 
+
+        with open(self.calibrated_map_dir + "brake_map.csv", "r") as calibrated_brake_map:
+            for brake_data in calibrated_brake_map:
                 response.brake_map += brake_data
-        print("brake map packed") 
-        
+        print("brake map packed")
+
         return response
 
     def plotter_function(self):
@@ -276,7 +279,7 @@ class DrawGraph(Node):
             ), np.hstack([np.fliplr(np.array(accel_acc_list).T), np.array(brake_acc_list).T])
         except OSError as e:
             print(e)
-            return [], []    
+            return [], []
 
 
 def main(args=None):
