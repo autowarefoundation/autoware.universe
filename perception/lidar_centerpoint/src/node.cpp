@@ -31,7 +31,10 @@ namespace centerpoint
 LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_options)
 : Node("lidar_center_point", node_options), tf_buffer_(this->get_clock())
 {
-  score_threshold_ = this->declare_parameter("score_threshold", 0.4);
+  const float score_threshold =
+    static_cast<float>(this->declare_parameter<double>("score_threshold", 0.4));
+  const float circle_nms_dist_threshold =
+    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", 1.5));
   const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
   const int densification_num_past_frames =
@@ -72,10 +75,10 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
       "The size of voxel_size != 3: use the default parameters.");
   }
   CenterPointConfig config(
-    point_feature_size, max_voxel_size, point_cloud_range, voxel_size, downsample_factor,
-    encoder_in_feature_size);
-  detector_ptr_ = std::make_unique<CenterPointTRT>(
-    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param, config);
+    class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
+    downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold);
+  detector_ptr_ =
+    std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -102,9 +105,6 @@ void LidarCenterPointNode::pointCloudCallback(
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_pointcloud_msg->header;
   for (const auto & box3d : det_boxes3d) {
-    if (box3d.score < score_threshold_) {
-      continue;
-    }
     autoware_auto_perception_msgs::msg::DetectedObject obj;
     box3DToDetectedObject(box3d, class_names_, rename_car_to_truck_and_bus_, has_twist_, obj);
     output_msg.objects.emplace_back(obj);

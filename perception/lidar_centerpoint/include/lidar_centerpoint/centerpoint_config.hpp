@@ -24,10 +24,12 @@ class CenterPointConfig
 {
 public:
   explicit CenterPointConfig(
-    const float point_feature_size, const std::size_t max_voxel_size,
+    const std::size_t class_size, const float point_feature_size, const std::size_t max_voxel_size,
     const std::vector<double> & point_cloud_range, const std::vector<double> & voxel_size,
-    const std::size_t downsample_factor, const std::size_t encoder_in_feature_size)
+    const std::size_t downsample_factor, const std::size_t encoder_in_feature_size,
+    const float score_threshold, const float circle_nms_dist_threshold)
   {
+    class_size_ = class_size;
     point_feature_size_ = point_feature_size;
     max_voxel_size_ = max_voxel_size;
     if (point_cloud_range.size() == 6) {
@@ -46,6 +48,14 @@ public:
     downsample_factor_ = downsample_factor;
     encoder_in_feature_size_ = encoder_in_feature_size;
 
+    if (score_threshold > 0 && score_threshold < 1) {
+      score_threshold_ = score_threshold;
+    }
+
+    if (circle_nms_dist_threshold > 0) {
+      circle_nms_dist_threshold_ = circle_nms_dist_threshold;
+    }
+
     grid_size_x_ = static_cast<std::size_t>((range_max_x_ - range_min_x_) / voxel_size_x_);
     grid_size_y_ = static_cast<std::size_t>((range_max_y_ - range_min_y_) / voxel_size_y_);
     grid_size_z_ = static_cast<std::size_t>((range_max_z_ - range_min_z_) / voxel_size_z_);
@@ -57,6 +67,7 @@ public:
   };
 
   // input params
+  std::size_t class_size_{3};
   const std::size_t point_dim_size_{3};  // x, y and z
   std::size_t point_feature_size_{4};    // x, y, z and timelag
   std::size_t max_point_in_voxel_size_{32};
@@ -82,6 +93,10 @@ public:
   const std::size_t head_out_dim_size_{3};
   const std::size_t head_out_rot_size_{2};
   const std::size_t head_out_vel_size_{2};
+
+  // post-process params
+  float score_threshold_{0.4f};
+  float circle_nms_dist_threshold_{1.5f};
 
   // calculated params
   std::size_t grid_size_x_ = (range_max_x_ - range_min_x_) / voxel_size_x_;
