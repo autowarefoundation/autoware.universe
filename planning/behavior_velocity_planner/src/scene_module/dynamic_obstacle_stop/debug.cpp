@@ -144,6 +144,16 @@ void DynamicObstacleStopDebug::pushDebugPolygons(
   debug_polygons_.push_back(debug_polygon);
 }
 
+void DynamicObstacleStopDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
+{
+  std::vector<geometry_msgs::msg::Point> ros_points;
+  for (const auto & p : debug_polygon.outer()) {
+    ros_points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0));
+  }
+
+  detection_area_polygons_.push_back(ros_points);
+}
+
 void DynamicObstacleStopDebug::pushDebugTexts(const TextWithPosition & debug_text)
 {
   debug_texts_.push_back(debug_text);
@@ -168,6 +178,7 @@ void DynamicObstacleStopDebug::clearDebugMarker()
   debug_points_yellow_.clear();
   debug_lines_.clear();
   debug_polygons_.clear();
+  detection_area_polygons_.clear();
   debug_texts_.clear();
   stop_pose_.reset();
 }
@@ -246,6 +257,23 @@ DynamicObstacleStopDebug::createVisualizationMarkerArrayFromDebugData(
       createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
 
     for (const auto & poly : debug_polygons_) {
+      for (size_t i = 0; i < poly.size() - 1; i++) {
+        marker.points.push_back(poly.at(i));
+        marker.points.push_back(poly.at(i + 1));
+      }
+      marker.points.push_back(poly.back());
+      marker.points.push_back(poly.front());
+    }
+
+    msg.markers.push_back(marker);
+  }
+
+  if (!detection_area_polygons_.empty()) {
+    auto marker = createDefaultMarker(
+      "map", current_time, "detection_area_polygon", 0, visualization_msgs::msg::Marker::LINE_LIST,
+      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999));
+
+    for (const auto & poly : detection_area_polygons_) {
       for (size_t i = 0; i < poly.size() - 1; i++) {
         marker.points.push_back(poly.at(i));
         marker.points.push_back(poly.at(i + 1));

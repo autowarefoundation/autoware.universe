@@ -94,17 +94,7 @@ private:
     const pcl::PointCloud<pcl::PointXYZ> & input_points,
     const geometry_msgs::msg::Pose & current_pose) const;
 
-  // void visualizePassingArea(
-  //   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
-
-  // std::vector<float> calcPassingDistanceForEachPoint(
-  //   const Trajectory & trajectory, const float obstacle_vel_mps, const float dist_max) const;
-
-  // boost::optional<size_t> calcDecelerationLineIndex(
-  //   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const;
-
-  // std::vector<std::vector<geometry_msgs::msg::Point>> calcPassingLines(
-  //   const Trajectory & trajectory, const std::vector<float> & lateral_passing_dist) const;
+  void visualizeDetectionArea(const PathWithLaneId & smoothed_path);
 
   pcl::PointCloud<pcl::PointXYZ> pointsWithinPolygon(
     const std::vector<geometry_msgs::msg::Point> & polygon,
@@ -149,15 +139,6 @@ private:
 
   std::vector<geometry_msgs::msg::Point> createBoundingBoxForRangedPoints(
     const PoseWithRange & pose_with_range, const float x_offset, const float y_offset) const;
-
-  // Trajectory trimTrajectoryFromSelfPose(
-  //   const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
-  //   const double trim_distance) const;
-
-  // Trajectory extendTrajectory(const Trajectory & input, const double extend_distance) const;
-
-  // TrajectoryPoint createExtendTrajectoryPoint(
-  //   double extend_distance, const TrajectoryPoint & goal_point) const;
 
   boost::optional<geometry_msgs::msg::Pose> calcStopPoint(
     const boost::optional<DynamicObstacle> & dynamic_obstacle, const PathWithLaneId & path,

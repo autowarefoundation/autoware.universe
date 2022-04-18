@@ -118,6 +118,7 @@ public:
   void pushStopPose(const geometry_msgs::msg::Pose & pose);
   void pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line);
   void pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon);
+  void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushDebugTexts(const TextWithPosition & debug_text);
   void pushDebugTexts(
     const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset);
@@ -143,6 +144,7 @@ private:
   boost::optional<geometry_msgs::msg::Pose> stop_pose_{};
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_lines_;
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_polygons_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
   std::vector<TextWithPosition> debug_texts_;
   DebugValues debug_values_;
   AccelReason accel_reason_;

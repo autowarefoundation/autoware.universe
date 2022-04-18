@@ -87,9 +87,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     !planner_param_.dynamic_obstacle_stop.use_predicted_path) {
     dynamic_obstacles =
       createDynamicObstaclesFromObjects(*planner_data_->predicted_objects, trim_smoothed_path);
-
-    // TODO: replace with util
-    // visualizePassingArea(trim_trajectory, current_pose);
+    visualizeDetectionArea(trim_smoothed_path);
   } else {
     const auto voxel_grid_filtered_points =
       applyVoxelGridFilter(planner_data_->no_ground_pointcloud);
@@ -97,8 +95,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     const auto extracted_points =
       extractObstaclePointsWithRectangle(voxel_grid_filtered_points, current_pose);
     dynamic_obstacles = createDynamicObstaclesFromPoints(extracted_points, trim_smoothed_path);
-
-    // visualizePassingArea(trim_trajectory, current_pose);
+    visualizeDetectionArea(trim_smoothed_path);
   }
 
   const auto partition_excluded_obstacles =
@@ -246,136 +243,43 @@ pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::extractObstaclePointsW
   return extracted_points;
 }
 
-// void DynamicObstacleStopModule::visualizePassingArea(
-//   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const
-// {
-//   // TODO(Tomohito Ando): parameter
-//   constexpr float dist_max = 50.0;
-//   const auto passing_dist = calcPassingDistanceForEachPoint(
-//     trajectory, planner_param_.dynamic_obstacle_stop.obstacle_velocity_kph / 3.6, dist_max);
+void DynamicObstacleStopModule::visualizeDetectionArea(const PathWithLaneId & smoothed_path)
+{
+  // calculate distance needed to stop with jerk and acc constraints
+  const float initial_vel = planner_data_->current_velocity->twist.linear.x;
+  const float initial_acc = planner_data_->current_accel.get();
+  const float target_vel = 0.0;
+  const float jerk_dec = planner_param_.dynamic_obstacle_stop.stop_start_jerk_dec;
+  const float jerk_acc = std::abs(jerk_dec);
+  const float planning_dec = jerk_dec < planner_param_.common.normal_min_jerk
+                               ? planner_param_.common.limit_min_acc
+                               : planner_param_.common.normal_min_acc;
+  auto stop_dist = dynamic_obstacle_stop_utils::calcDecelDistWithJerkAndAccConstraints(
+    initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
-//   const auto deceleration_line_idx = calcDecelerationLineIndex(trajectory, current_pose);
-//   if (!deceleration_line_idx) {
-//     return;
-//   }
+  if (!stop_dist) {
+    stop_dist = boost::make_optional<double>(0.0);
+  }
 
-//   const auto passing_lines = calcPassingLines(trajectory, passing_dist);
+  DetectionRange da_range;
+  const float obstacle_vel_mps = planner_param_.dynamic_obstacle.max_vel_kmph / 3.6;
+  const float predict_time_max =
+    planner_param_.dynamic_obstacle.time_step * planner_param_.dynamic_obstacle.path_size;
+  da_range.interval = planner_param_.dynamic_obstacle_stop.detection_distance;
+  da_range.min_longitudinal_distance = planner_param_.vehicle_param.base_to_front;
+  da_range.max_longitudinal_distance = *stop_dist + planner_param_.vehicle_param.base_to_front +
+                                       planner_param_.dynamic_obstacle_stop.stop_margin;
+  da_range.min_lateral_distance = planner_param_.vehicle_param.width / 2.0;
+  da_range.max_lateral_distance = obstacle_vel_mps * predict_time_max;
+  Polygons2d detection_area_poly;
+  planning_utils::createDetectionAreaPolygons(
+    detection_area_poly, smoothed_path, da_range,
+    planner_param_.dynamic_obstacle.max_vel_kmph / 3.6);
 
-//   const size_t passing_dist_idx = std::min(*deceleration_line_idx, passing_lines.at(0).size() -
-//   1); std::stringstream sstream; sstream << std::setprecision(4) <<
-//   passing_dist.at(passing_dist_idx) << "m";
-//   debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
-//     sstream.str(), passing_lines.at(0).at(passing_dist_idx)));
-//   debug_ptr_->pushDebugTexts(dynamic_obstacle_stop_utils::createDebugText(
-//     sstream.str(), passing_lines.at(1).at(passing_dist_idx)));
-//   debug_ptr_->setDebugValues(
-//     DebugValues::TYPE::LATERAL_PASS_DIST, passing_dist.at(passing_dist_idx));
-
-//   const auto detection_area_polygon =
-//     createDetectionAreaPolygon(passing_lines, *deceleration_line_idx);
-//   if (!detection_area_polygon) {
-//     return;
-//   }
-
-//   debug_ptr_->pushDebugLines(*detection_area_polygon);
-// }
-
-// std::vector<float> DynamicObstacleStopModule::calcPassingDistanceForEachPoint(
-//   const Trajectory & trajectory, const float obstacle_vel_mps, const float dist_max) const
-// {
-//   std::vector<float> lateral_passing_dist{};
-
-//   if (trajectory.points.size() < 2) {
-//     return lateral_passing_dist;
-//   }
-
-//   // calculate transition time from base_link for each point
-//   float transition_time = 0;
-//   float dist_sum = 0;
-//   for (size_t i = 0; i < trajectory.points.size(); i++) {
-//     // assume that transition time to the nearest point is zero
-//     if (i == 0) {
-//       lateral_passing_dist.push_back(0.0);
-//       continue;
-//     }
-
-//     const float ds =
-//       tier4_autoware_utils::calcDistance2d(trajectory.points.at(i - 1), trajectory.points.at(i));
-//     dist_sum += ds;
-//     if (dist_sum > dist_max) {
-//       return lateral_passing_dist;
-//     }
-
-//     // calculate the distance that obstacles can move until ego reach the trajectory point
-//     // assume that obstacles move with constant velocity (specified in parameter)
-//     const float vel_mps = trajectory.points.at(i - 1).longitudinal_velocity_mps;
-//     const float dt = ds / std::max(vel_mps, 1.0f);
-//     transition_time += dt;
-//     lateral_passing_dist.push_back(transition_time * obstacle_vel_mps);
-//   }
-
-//   return lateral_passing_dist;
-// }
-
-// boost::optional<size_t> DynamicObstacleStopModule::calcDecelerationLineIndex(
-//   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose) const
-// {
-//   if (trajectory.points.empty()) {
-//     return {};
-//   }
-
-//   // calculate distance needed to stop with jerk and acc constraints
-//   const float initial_vel = planner_data_->current_velocity->twist.linear.x;
-//   const float initial_acc = planner_data_->current_accel.get();
-//   const float target_vel = 0.0;
-//   const float jerk_dec = planner_param_.dynamic_obstacle_stop.stop_start_jerk_dec;
-//   const float jerk_acc = std::abs(jerk_dec);
-//   const float planning_dec = jerk_dec < planner_param_.common.normal_min_jerk
-//                                ? planner_param_.common.limit_min_acc
-//                                : planner_param_.common.normal_min_acc;
-//   const auto stop_dist = dynamic_obstacle_stop_utils::calcDecelDistWithJerkAndAccConstraints(
-//     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
-
-//   rclcpp::Clock clock{RCL_ROS_TIME};
-//   if (!stop_dist) {
-//     RCLCPP_WARN_THROTTLE(
-//       logger_, clock, std::chrono::milliseconds(1000).count(), "failed to calculate stop
-//       distance");
-//     return {};
-//   }
-
-//   // calculate the index of stop position of base_link
-//   const size_t deceleration_line_idx = dynamic_obstacle_stop_utils::calcIndexByLength(
-//     trajectory, current_pose, stop_dist.get() +
-//     planner_param_.dynamic_obstacle_stop.stop_margin);
-
-//   return deceleration_line_idx;
-// }
-
-// std::vector<std::vector<geometry_msgs::msg::Point>> DynamicObstacleStopModule::calcPassingLines(
-//   const Trajectory & trajectory, const std::vector<float> & lateral_passing_dist) const
-// {
-//   std::vector<geometry_msgs::msg::Point> passing_line_left;
-//   std::vector<geometry_msgs::msg::Point> passing_line_right;
-//   for (size_t idx = 0; idx < lateral_passing_dist.size(); idx++) {
-//     const auto & traj_point = trajectory.points.at(idx).pose;
-//     const float lateral_offset =
-//       lateral_passing_dist.at(idx) + planner_param_.vehicle_param.width / 2.0;
-//     const auto offset_pose_left = tier4_autoware_utils::calcOffsetPose(
-//       traj_point, planner_param_.vehicle_param.base_to_front, lateral_offset, 0);
-//     const auto offset_pose_right = tier4_autoware_utils::calcOffsetPose(
-//       traj_point, planner_param_.vehicle_param.base_to_front, -lateral_offset, 0);
-
-//     passing_line_left.push_back(offset_pose_left.position);
-//     passing_line_right.push_back(offset_pose_right.position);
-//   }
-
-//   std::vector<std::vector<geometry_msgs::msg::Point>> passing_lines;
-//   passing_lines.push_back(passing_line_left);
-//   passing_lines.push_back(passing_line_right);
-
-//   return passing_lines;
-// }
+  for (const auto & poly : detection_area_poly) {
+    debug_ptr_->pushDetectionAreaPolygons(poly);
+  }
+}
 
 pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::pointsWithinPolygon(
   const std::vector<geometry_msgs::msg::Point> & polygon,
