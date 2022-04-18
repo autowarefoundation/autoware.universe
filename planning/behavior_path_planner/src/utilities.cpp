@@ -1773,10 +1773,10 @@ bool checkLaneIsInIntersection(
   const auto prohibited_arc_coordinate =
     lanelet::utils::getArcCoordinates(lane_change_prohibited_lanes, end_of_route_pose);
 
-  constexpr double small_earliear_stopping_buffer = 0.2;
+  constexpr double small_earlier_stopping_buffer = 0.2;
   additional_length_to_add =
     prohibited_arc_coordinate.length +
-    small_earliear_stopping_buffer;  // additional a slight "buffer so that vehicle stop earlier"
+    small_earlier_stopping_buffer;  // additional a slight "buffer so that vehicle stop earlier"
 
   return true;
 }
