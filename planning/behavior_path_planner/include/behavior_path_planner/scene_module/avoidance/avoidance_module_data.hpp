@@ -25,7 +25,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_hash.hpp>>
+#include <boost/uuid/uuid_hash.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
 #include <memory>

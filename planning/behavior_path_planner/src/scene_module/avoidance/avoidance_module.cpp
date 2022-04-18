@@ -327,7 +327,7 @@ void AvoidanceModule::updateRegisteredRawShiftPoints()
       boost::uuids::uuid uuid_to_map_key;
       std::copy(ap_uuid.cbegin(), ap_uuid.cend(), uuid_to_map_key.begin());
 
-      bool less_than_equal_deadline = ap.end_idx <= deadline;
+      bool less_than_equal_deadline = !(ap.end_idx > deadline);
       bool is_not_in_registered_object =
         registered_objects_map_.find(uuid_to_map_key) == registered_objects_map_.end();
       return (less_than_equal_deadline || is_not_in_registered_object);
@@ -370,10 +370,11 @@ AvoidPointArray AvoidanceModule::calcShiftPoints(
   // Remove unwanted shift
   const auto remove_iter =
     std::remove_if(shifts.begin(), shifts.end(), [this](const ShiftPoint & sp) {
-      return (
-        (avoidance_data_.mapped_objects.find(sp.associated_object_uuid) ==
-         avoidance_data_.mapped_objects.cend()) &&
-        (std::abs(sp.length) > 0));
+      const auto & mapped = avoidance_data_.mapped_objects;
+      const auto & uuid = sp.associated_object_uuid;
+      const auto is_object_in_map = (mapped.find(uuid) == mapped.cend());
+      const auto is_shift_point_no_zero = (std::abs(sp.length) > 0);
+      return (is_object_in_map && is_shift_point_no_zero);
     });
   shifts.erase(remove_iter, shifts.end());
 
