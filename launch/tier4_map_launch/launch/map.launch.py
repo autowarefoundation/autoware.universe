@@ -58,7 +58,7 @@ def generate_launch_description():
             {
                 "center_line_resolution": 5.0,
                 "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
-                "lanelet2_map_projector_type": "MGRS", # Options: MGRS, UTM
+                "lanelet2_map_projector_type": "MGRS",  # Options: MGRS, UTM
             },
             lanelet2_map_origin_param,
         ],
