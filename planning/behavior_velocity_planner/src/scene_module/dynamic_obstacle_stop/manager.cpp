@@ -58,7 +58,6 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.use_objects = node.declare_parameter(ns + ".use_objects", true);
     p.use_predicted_path = node.declare_parameter(ns + ".use_predicted_path", false);
     p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
-    p.extend_distance = node.declare_parameter(ns + ".extend_distance", 5.0);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
     p.stop_start_jerk_dec = node.declare_parameter(ns + ".stop_start_jerk_dec", -0.3);
@@ -66,8 +65,6 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.detection_distance = node.declare_parameter(ns + ".detection_distance", 45.0);
     p.detection_span = node.declare_parameter(ns + ".detection_span", 1.0);
     p.min_vel_ego_kmph = node.declare_parameter(ns + ".min_vel_ego_kmph", 5.0);
-    p.velocity_limit_kmph = node.declare_parameter(ns + ".velocity_limit_kmph", 20.0);
-    p.calc_collision_from_point = node.declare_parameter(ns + ".calc_collision_from_point", true);
   }
 
   {
@@ -150,9 +147,6 @@ rcl_interfaces::msg::SetParametersResult DynamicObstacleStopModuleManager::param
       parameters, ns + "detection_span", planner_param_.dynamic_obstacle_stop.detection_span);
     tier4_autoware_utils::updateParam(
       parameters, ns + "min_vel_ego_kmph", planner_param_.dynamic_obstacle_stop.min_vel_ego_kmph);
-    tier4_autoware_utils::updateParam(
-      parameters, ns + "calc_collision_from_point",
-      planner_param_.dynamic_obstacle_stop.calc_collision_from_point);
 
     ns = "dynamic_obstacle_stop.detection_area_size.";
     tier4_autoware_utils::updateParam(

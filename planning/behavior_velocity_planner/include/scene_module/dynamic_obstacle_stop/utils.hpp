@@ -64,7 +64,6 @@ struct DynamicObstacleStopParam
   bool use_objects;
   bool use_predicted_path;
   bool use_partition_lanelet;
-  double extend_distance;
   double stop_margin;
   double passing_margin;
   double stop_start_jerk_dec;
@@ -72,8 +71,6 @@ struct DynamicObstacleStopParam
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
-  float velocity_limit_kmph;  // temporary
-  bool calc_collision_from_point;
 };
 
 struct VehicleParam
