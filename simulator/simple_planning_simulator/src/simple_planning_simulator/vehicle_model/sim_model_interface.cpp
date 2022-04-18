@@ -14,8 +14,7 @@
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-SimModelInterface::SimModelInterface(int dim_x, int dim_u)
-: dim_x_(dim_x), dim_u_(dim_u)
+SimModelInterface::SimModelInterface(int dim_x, int dim_u) : dim_x_(dim_x), dim_u_(dim_u)
 {
   state_ = Eigen::VectorXd::Zero(dim_x_);
   input_ = Eigen::VectorXd::Zero(dim_u_);
@@ -34,46 +33,8 @@ void SimModelInterface::updateEuler(const float64_t & dt, const Eigen::VectorXd 
 {
   state_ += calcModel(state_, input) * dt;
 }
-void SimModelInterface::getState(Eigen::VectorXd & state) {state = state_;}
-void SimModelInterface::getInput(Eigen::VectorXd & input) {input = input_;}
-void SimModelInterface::setState(const Eigen::VectorXd & state) {state_ = state;}
-void SimModelInterface::setInput(const Eigen::VectorXd & input) {input_ = input;}
-void SimModelInterface::setGear(const uint8_t gear) {gear_ = gear;}
-
-std::pair<double, double> SimModelInterface::getSteerTimeDelayDisturbanceInputs()
-{
-  return disturbance_collection_.steering_inputDisturbance_time_delay_ptr_
-    ->getOriginalAndDelayedInputs();
-}
-
-double SimModelInterface::getCurrentSteerTimeDelay()
-{
-  return disturbance_collection_.steering_inputDisturbance_time_delay_ptr_
-    ->getCurrentTimeDelayValue();
-}
-
-std::pair<double, double> SimModelInterface::getAccTimeDelayDisturbanceInputs()
-{
-  return disturbance_collection_.acc_inputDisturbance_time_delay_ptr_
-    ->getOriginalAndDelayedInputs();
-}
-
-double SimModelInterface::getCurrentAccTimeDelay()
-{
-  return disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getCurrentTimeDelayValue();
-}
-
-double SimModelInterface::getCurrentRoadSlopeAccDisturbance()
-{
-  return disturbance_collection_.road_slope_outputDisturbance_ptr_->getDisturbedOutput();
-}
-
-std::array<double, 4> SimModelInterface::getCurrentDeadzoneParams()
-{
-  return disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
-}
-
-std::pair<double, double> SimModelInterface::getCurrentDeadzoneDisturbanceInputs()
-{
-  return disturbance_collection_.steering_dedzone_ptr_->getOriginalAndDeadzonedInputs();
-}
+void SimModelInterface::getState(Eigen::VectorXd & state) { state = state_; }
+void SimModelInterface::getInput(Eigen::VectorXd & input) { input = input_; }
+void SimModelInterface::setState(const Eigen::VectorXd & state) { state_ = state; }
+void SimModelInterface::setInput(const Eigen::VectorXd & input) { input_ = input; }
+void SimModelInterface::setGear(const uint8_t gear) { gear_ = gear; }

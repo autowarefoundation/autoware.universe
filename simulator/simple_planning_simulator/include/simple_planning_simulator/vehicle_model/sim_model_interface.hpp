@@ -16,17 +16,13 @@
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
 
 #include "common/types.hpp"
-#include "disturbance_generators/disturbance_generators.hpp"
 #include "eigen3/Eigen/Core"
 
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 
-#include <limits>
-
+using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
-using autoware::common::types::bool8_t;
-constexpr double EPS = std::numeric_limits<double>::epsilon();
 
 /**
  * @class SimModelInterface
@@ -42,14 +38,6 @@ protected:
 
   //!< @brief gear command defined in autoware_auto_msgs/GearCommand
   uint8_t gear_ = autoware_auto_vehicle_msgs::msg::GearCommand::DRIVE;
-
-  // DISTURBANCE Generator Set
-  IDisturbanceCollection disturbance_collection_{};
-
-  void setDisturbance(IDisturbanceCollection const & dist_collection)
-  {
-    disturbance_collection_ = dist_collection;
-  }
 
 public:
   /**
@@ -157,12 +145,12 @@ public:
   /**
    * @brief get state vector dimension
    */
-  inline int getDimX() {return dim_x_;}
+  inline int getDimX() { return dim_x_; }
 
   /**
    * @brief get input vector demension
    */
-  inline int getDimU() {return dim_u_;}
+  inline int getDimU() { return dim_u_; }
 
   /**
    * @brief calculate derivative of states with vehicle model
@@ -171,26 +159,6 @@ public:
    */
   virtual Eigen::VectorXd calcModel(
     const Eigen::VectorXd & state, const Eigen::VectorXd & input) = 0;
-
-  /**
-   * @return original non-modified and delayed inputs
-   * */
-
-  std::pair<double, double> getSteerTimeDelayDisturbanceInputs();
-
-  double getCurrentSteerTimeDelay();
-
-  std::pair<double, double> getAccTimeDelayDisturbanceInputs();
-
-  double getCurrentAccTimeDelay();
-
-  double getCurrentRoadSlopeAccDisturbance();
-
-  // returns [ml, bl, mr, br]
-  std::array<double, 4> getCurrentDeadzoneParams();
-
-  // returns original and deadzoned inputs
-  std::pair<double, double> getCurrentDeadzoneDisturbanceInputs();
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
