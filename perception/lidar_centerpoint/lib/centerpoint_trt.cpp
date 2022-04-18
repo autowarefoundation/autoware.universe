@@ -40,9 +40,9 @@ CenterPointTRT::CenterPointTRT(
   encoder_trt_ptr_->init(
     encoder_param.onnx_path(), encoder_param.engine_path(), encoder_param.trt_precision());
   encoder_trt_ptr_->context_->setBindingDimensions(
-    0, nvinfer1::Dims3(
-         config_.max_num_voxels_, config_.max_num_points_per_voxel_,
-         config_.encoder_in_feature_size_));
+    0,
+    nvinfer1::Dims3(
+      config_.max_voxel_size_, config_.max_point_in_voxel_size_, config_.encoder_in_feature_size_));
 
   // head
   std::vector<std::size_t> out_channel_sizes = {
@@ -75,11 +75,11 @@ CenterPointTRT::~CenterPointTRT()
 void CenterPointTRT::initPtr()
 {
   const auto voxels_size =
-    config_.max_num_voxels_ * config_.max_num_points_per_voxel_ * config_.point_feature_size_;
-  const auto coordinates_size = config_.max_num_voxels_ * config_.point_dim_size_;
+    config_.max_voxel_size_ * config_.max_point_in_voxel_size_ * config_.point_feature_size_;
+  const auto coordinates_size = config_.max_voxel_size_ * config_.point_dim_size_;
   encoder_in_feature_size_ =
-    config_.max_num_voxels_ * config_.max_num_points_per_voxel_ * config_.encoder_in_feature_size_;
-  const auto pillar_features_size = config_.max_num_voxels_ * config_.encoder_out_feature_size_;
+    config_.max_voxel_size_ * config_.max_point_in_voxel_size_ * config_.encoder_in_feature_size_;
+  const auto pillar_features_size = config_.max_voxel_size_ * config_.encoder_out_feature_size_;
   spatial_features_size_ =
     config_.grid_size_x_ * config_.grid_size_y_ * config_.encoder_out_feature_size_;
   const auto grid_xy_size = config_.down_grid_size_x_ * config_.down_grid_size_y_;
@@ -87,12 +87,12 @@ void CenterPointTRT::initPtr()
   // host
   voxels_.resize(voxels_size);
   coordinates_.resize(coordinates_size);
-  num_points_per_voxel_.resize(config_.max_num_voxels_);
+  num_points_per_voxel_.resize(config_.max_voxel_size_);
 
   // device
   voxels_d_ = cuda::make_unique<float[]>(voxels_size);
   coordinates_d_ = cuda::make_unique<int[]>(coordinates_size);
-  num_points_per_voxel_d_ = cuda::make_unique<float[]>(config_.max_num_voxels_);
+  num_points_per_voxel_d_ = cuda::make_unique<float[]>(config_.max_voxel_size_);
   encoder_in_features_d_ = cuda::make_unique<float[]>(encoder_in_feature_size_);
   pillar_features_d_ = cuda::make_unique<float[]>(pillar_features_size);
   spatial_features_d_ = cuda::make_unique<float[]>(spatial_features_size_);
@@ -142,7 +142,7 @@ bool CenterPointTRT::preprocess(
   }
 
   const auto voxels_size =
-    num_voxels_ * config_.max_num_points_per_voxel_ * config_.point_feature_size_;
+    num_voxels_ * config_.max_point_in_voxel_size_ * config_.point_feature_size_;
   const auto coordinates_size = num_voxels_ * config_.point_dim_size_;
   // memcpy from host to device (not copy empty voxels)
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
@@ -157,7 +157,7 @@ bool CenterPointTRT::preprocess(
 
   CHECK_CUDA_ERROR(generateFeatures_launch(
     voxels_d_.get(), num_points_per_voxel_d_.get(), coordinates_d_.get(), num_voxels_,
-    config_.max_num_voxels_, config_.voxel_size_x_, config_.voxel_size_y_, config_.voxel_size_z_,
+    config_.max_voxel_size_, config_.voxel_size_x_, config_.voxel_size_y_, config_.voxel_size_z_,
     config_.range_min_x_, config_.range_min_y_, config_.range_min_z_, encoder_in_features_d_.get(),
     stream_));
 
@@ -176,7 +176,7 @@ void CenterPointTRT::inference()
 
   // scatter
   CHECK_CUDA_ERROR(scatterFeatures_launch(
-    pillar_features_d_.get(), coordinates_d_.get(), num_voxels_, config_.max_num_voxels_,
+    pillar_features_d_.get(), coordinates_d_.get(), num_voxels_, config_.max_voxel_size_,
     config_.encoder_out_feature_size_, config_.grid_size_x_, config_.grid_size_y_,
     spatial_features_d_.get(), stream_));
 
