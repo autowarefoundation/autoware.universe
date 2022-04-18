@@ -222,7 +222,7 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
       continue;
     }
     if (object_data.longitudinal > parameters_.object_check_forward_distance) {
-      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_INFRONT_THRESHOLD);
+      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_IN_FRONT_THRESHOLD);
       continue;
     }
 
