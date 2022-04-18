@@ -60,9 +60,8 @@ struct CommonParam
 };
 struct DynamicObstacleStopParam
 {
+  std::string detection_method;
   bool enable_dynamic_obstacle_stop;
-  bool use_objects;
-  bool use_predicted_path;
   bool use_partition_lanelet;
   double stop_margin;
   double passing_margin;
@@ -120,6 +119,13 @@ enum class State {
   GO = 0,
   APPROACH,
   STOP,
+};
+
+enum class DetectionMethod {
+  Object = 0,
+  ObjectWithoutPath,
+  Points,
+  Unknown,
 };
 
 bool validCheckDecelPlan(
@@ -229,6 +235,7 @@ boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolyg
 PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance);
 PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
 
+DetectionMethod toEnum(const std::string & detection_method);
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
 #endif  // DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_

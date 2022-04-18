@@ -55,8 +55,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     auto & p = planner_param_.dynamic_obstacle_stop;
     p.enable_dynamic_obstacle_stop =
       node.declare_parameter(ns + ".enable_dynamic_obstacle_stop", true);
-    p.use_objects = node.declare_parameter(ns + ".use_objects", true);
-    p.use_predicted_path = node.declare_parameter(ns + ".use_predicted_path", false);
+    p.detection_method = node.declare_parameter(ns + ".detection_method", "Object");
     p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
@@ -126,10 +125,7 @@ rcl_interfaces::msg::SetParametersResult DynamicObstacleStopModuleManager::param
     //   planner_param_.dynamic_obstacle_stop.enable_dynamic_obstacle_stop);
     std::string ns = "dynamic_obstacle_stop.";
     tier4_autoware_utils::updateParam(
-      parameters, ns + "use_objects", planner_param_.dynamic_obstacle_stop.use_objects);
-    tier4_autoware_utils::updateParam(
-      parameters, ns + "use_predicted_path",
-      planner_param_.dynamic_obstacle_stop.use_predicted_path);
+      parameters, ns + "detection_method", planner_param_.dynamic_obstacle_stop.detection_method);
     tier4_autoware_utils::updateParam(
       parameters, ns + "stop_margin", planner_param_.dynamic_obstacle_stop.stop_margin);
     tier4_autoware_utils::updateParam(

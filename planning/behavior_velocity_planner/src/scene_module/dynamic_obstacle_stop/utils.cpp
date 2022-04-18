@@ -501,5 +501,19 @@ PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_dist
 
   return output;
 }
+
+DetectionMethod toEnum(const std::string & detection_method)
+{
+  if (detection_method == "Object") {
+    return DetectionMethod::Object;
+  } else if (detection_method == "ObjectWithoutPath") {
+    return DetectionMethod::ObjectWithoutPath;
+  } else if (detection_method == "Points") {
+    return DetectionMethod::Points;
+  } else {
+    return DetectionMethod::Unknown;
+  }
+}
+
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner

@@ -78,6 +78,11 @@ private:
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
 
   // Function
+  boost::optional<std::vector<DynamicObstacle>> createDynamicObstacles(
+    const PredictedObjects & predicted_objects,
+    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & points, const PathWithLaneId & path,
+    const geometry_msgs::msg::Pose & current_pose, const std::string & detection_method) const;
+
   std::vector<DynamicObstacle> createDynamicObstaclesFromObjects(
     const PredictedObjects & predicted_objects) const;
 
@@ -94,7 +99,7 @@ private:
     const pcl::PointCloud<pcl::PointXYZ> & input_points,
     const geometry_msgs::msg::Pose & current_pose) const;
 
-  void visualizeDetectionArea(const PathWithLaneId & smoothed_path);
+  void visualizeDetectionArea(const PathWithLaneId & smoothed_path) const;
 
   pcl::PointCloud<pcl::PointXYZ> pointsWithinPolygon(
     const std::vector<geometry_msgs::msg::Point> & polygon,
