@@ -308,16 +308,6 @@ void DynamicObstacleStopDebug::setAccelReason(const AccelReason & accel_reason)
   accel_reason_ = accel_reason;
 }
 
-void DynamicObstacleStopDebug::publish()
-{
-  publishDebugValue();
-
-  Int32Stamped accel_reason;
-  accel_reason.stamp = node_.now();
-  accel_reason.data = static_cast<int>(accel_reason_);
-  pub_accel_reason_->publish(accel_reason);
-}
-
 void DynamicObstacleStopDebug::publishDebugValue()
 {
   // publish debug values
@@ -327,6 +317,11 @@ void DynamicObstacleStopDebug::publishDebugValue()
     debug_msg.data.push_back(v);
   }
   pub_debug_values_->publish(debug_msg);
+
+  Int32Stamped accel_reason;
+  accel_reason.stamp = node_.now();
+  accel_reason.data = static_cast<int>(accel_reason_);
+  pub_accel_reason_->publish(accel_reason);
 }
 
 void DynamicObstacleStopDebug::publishDebugTrajectory(const Trajectory & trajectory)

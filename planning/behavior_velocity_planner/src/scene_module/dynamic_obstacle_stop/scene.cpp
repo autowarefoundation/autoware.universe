@@ -79,6 +79,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   if (!dynamic_obstacles) {
     return true;
   }
+  debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles->size());
 
   const auto partition_excluded_obstacles =
     excludeObstaclesOutSideOfPartition(dynamic_obstacles.get(), trim_smoothed_path, current_pose);
@@ -91,6 +92,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   // timer ends
   const auto t2 = std::chrono::system_clock::now();
   const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+  debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
 
   if (planner_param_.approaching.enable) {
     insertVelocityWithApproaching(
@@ -106,46 +108,8 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     applyMaxJerkLimit(current_pose, current_vel, current_acc, *path);
   }
 
-  // debug
-  {
-    if (dynamic_obstacle) {
-      const auto lateral_dist = std::abs(tier4_autoware_utils::calcLateralOffset(
-                                  trim_smoothed_path.points, dynamic_obstacle->pose.position)) -
-                                planner_param_.vehicle_param.width / 2.0;
-      const auto longitudinal_dist_to_obstacle =
-        tier4_autoware_utils::calcSignedArcLength(
-          trim_smoothed_path.points, current_pose.position, dynamic_obstacle->pose.position) -
-        planner_param_.vehicle_param.base_to_front;
-
-      const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
-        trim_smoothed_path.points, current_pose.position,
-        dynamic_obstacle->nearest_collision_point);
-      const auto dist_to_collision =
-        dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
-
-      debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, dist_to_collision);
-      debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, lateral_dist);
-      debug_ptr_->setDebugValues(
-        DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, longitudinal_dist_to_obstacle);
-    } else {
-      // max value
-      constexpr float max_val = 50.0;
-      debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, max_val);
-      debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, max_val);
-      debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, max_val);
-    }
-
-    if (partition_excluded_obstacles.empty()) {
-      debug_ptr_->setAccelReason(DynamicObstacleStopDebug::AccelReason::NO_OBSTACLE);
-    }
-
-    debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles->size());
-    debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
-
-    debug_ptr_->publish();
-
-    // debug_ptr_->publishDebugTrajectory(*smoothed_trajectory);
-  }
+  publishDebugValue(
+    trim_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
 
   return true;
 }
@@ -358,10 +322,13 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::detectCollision(
 
     const auto vehicle_poly = createVehiclePolygon(p2.pose);
 
-    debug_ptr_->pushDebugPolygons(vehicle_poly);
-    std::stringstream sstream;
-    sstream << std::setprecision(4) << travel_time << "s";
-    debug_ptr_->pushDebugTexts(sstream.str(), p2.pose, /* lateral_offset */ 3.0);
+    // debug
+    {
+      debug_ptr_->pushDebugPolygons(vehicle_poly);
+      std::stringstream sstream;
+      sstream << std::setprecision(4) << travel_time << "s";
+      debug_ptr_->pushDebugTexts(sstream.str(), p2.pose, /* lateral_offset */ 3.0);
+    }
 
     auto obstacles_collision =
       checkCollisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time);
@@ -379,7 +346,6 @@ boost::optional<DynamicObstacle> DynamicObstacleStopModule::detectCollision(
       std::stringstream sstream;
       sstream << std::setprecision(4) << "ttc: " << std::to_string(travel_time) << "s";
       debug_ptr_->pushDebugTexts(sstream.str(), obstacle_selected->nearest_collision_point);
-
       debug_ptr_->pushDebugPoints(obstacle_selected->collision_points);
       debug_ptr_->pushDebugPoints(obstacle_selected->nearest_collision_point, PointType::Red);
     }
@@ -942,6 +908,44 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::excludeObstaclesOutSideO
   }
 
   return extracted_obstacles;
+}
+
+void DynamicObstacleStopModule::publishDebugValue(
+  const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles,
+  const boost::optional<DynamicObstacle> & dynamic_obstacle,
+  const geometry_msgs::msg::Pose & current_pose) const
+{
+  if (dynamic_obstacle) {
+    const auto lateral_dist = std::abs(tier4_autoware_utils::calcLateralOffset(
+                                path.points, dynamic_obstacle->pose.position)) -
+                              planner_param_.vehicle_param.width / 2.0;
+    const auto longitudinal_dist_to_obstacle =
+      tier4_autoware_utils::calcSignedArcLength(
+        path.points, current_pose.position, dynamic_obstacle->pose.position) -
+      planner_param_.vehicle_param.base_to_front;
+
+    const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
+      path.points, current_pose.position, dynamic_obstacle->nearest_collision_point);
+    const auto dist_to_collision =
+      dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
+
+    debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, dist_to_collision);
+    debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, lateral_dist);
+    debug_ptr_->setDebugValues(
+      DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, longitudinal_dist_to_obstacle);
+  } else {
+    // max value
+    constexpr float max_val = 50.0;
+    debug_ptr_->setDebugValues(DebugValues::TYPE::LATERAL_DIST, max_val);
+    debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_COLLISION, max_val);
+    debug_ptr_->setDebugValues(DebugValues::TYPE::LONGITUDINAL_DIST_OBSTACLE, max_val);
+  }
+
+  if (extracted_obstacles.empty()) {
+    debug_ptr_->setAccelReason(DynamicObstacleStopDebug::AccelReason::NO_OBSTACLE);
+  }
+
+  debug_ptr_->publishDebugValue();
 }
 
 }  // namespace behavior_velocity_planner

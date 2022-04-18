@@ -124,7 +124,6 @@ public:
     const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset);
   void pushDebugTexts(const std::string text, const geometry_msgs::msg::Point position);
   void setAccelReason(const AccelReason & accel_reason);
-  void publish();
   void publishDebugValue();
   void publishDebugTrajectory(const Trajectory & trajectory);
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
