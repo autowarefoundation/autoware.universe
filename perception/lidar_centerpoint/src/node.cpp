@@ -51,8 +51,8 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
-  const std::size_t max_num_voxels =
-    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_num_voxels"));
+  const std::size_t max_voxel_size =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_voxel_size"));
   const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
   const std::size_t downsample_factor =
@@ -76,7 +76,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
       "The size of voxel_size != 3: use the default parameters.");
   }
   CenterPointConfig config(
-    point_feature_size, max_num_voxels, point_cloud_range, voxel_size, downsample_factor,
+    point_feature_size, max_voxel_size, point_cloud_range, voxel_size, downsample_factor,
     encoder_in_feature_size);
   detector_ptr_ = std::make_unique<CenterPointTRT>(
     class_names_.size(), score_threshold_, encoder_param, head_param, densification_param, config);

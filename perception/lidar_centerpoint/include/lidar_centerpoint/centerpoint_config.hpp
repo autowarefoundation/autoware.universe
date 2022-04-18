@@ -24,12 +24,12 @@ class CenterPointConfig
 {
 public:
   explicit CenterPointConfig(
-    const float point_feature_size, const std::size_t max_num_voxels,
+    const float point_feature_size, const std::size_t max_voxel_size,
     const std::vector<double> & point_cloud_range, const std::vector<double> & voxel_size,
     const std::size_t downsample_factor, const std::size_t encoder_in_feature_size)
   {
     point_feature_size_ = point_feature_size;
-    max_num_voxels_ = max_num_voxels;
+    max_voxel_size_ = max_voxel_size;
     if (point_cloud_range.size() == 6) {
       range_min_x_ = static_cast<float>(point_cloud_range[0]);
       range_min_y_ = static_cast<float>(point_cloud_range[1]);
@@ -59,8 +59,8 @@ public:
   // input params
   const std::size_t point_dim_size_{3};  // x, y and z
   std::size_t point_feature_size_{4};    // x, y, z and timelag
-  std::size_t max_num_points_per_voxel_{32};
-  std::size_t max_num_voxels_{40000};
+  std::size_t max_point_in_voxel_size_{32};
+  std::size_t max_voxel_size_{40000};
   float range_min_x_{-89.6f};
   float range_min_y_{-89.6f};
   float range_min_z_{-3.0f};

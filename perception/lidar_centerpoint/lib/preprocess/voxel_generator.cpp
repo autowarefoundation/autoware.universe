@@ -47,9 +47,9 @@ std::size_t VoxelGenerator::pointsToVoxels(
   std::vector<float> & voxels, std::vector<int> & coordinates,
   std::vector<float> & num_points_per_voxel)
 {
-  // voxels (float): (max_num_voxels * max_num_points_per_voxel * point_feature_size)
-  // coordinates (int): (max_num_voxels * point_dim_size)
-  // num_points_per_voxel (float): (max_num_voxels)
+  // voxels (float): (max_voxel_size * max_point_in_voxel_size * point_feature_size)
+  // coordinates (int): (max_voxel_size * point_dim_size)
+  // num_points_per_voxel (float): (max_voxel_size)
 
   const std::size_t grid_size = config_.grid_size_z_ * config_.grid_size_y_ * config_.grid_size_x_;
   std::vector<int> coord_to_voxel_idx(grid_size, -1);
@@ -101,7 +101,7 @@ std::size_t VoxelGenerator::pointsToVoxels(
       voxel_idx = coord_to_voxel_idx[coord_idx];
       if (voxel_idx == -1) {
         voxel_idx = voxel_cnt;
-        if (voxel_cnt >= config_.max_num_voxels_) {
+        if (voxel_cnt >= config_.max_voxel_size_) {
           continue;
         }
 
@@ -113,10 +113,10 @@ std::size_t VoxelGenerator::pointsToVoxels(
       }
 
       point_cnt = num_points_per_voxel[voxel_idx];
-      if (point_cnt < config_.max_num_points_per_voxel_) {
+      if (point_cnt < config_.max_point_in_voxel_size_) {
         for (std::size_t fi = 0; fi < config_.point_feature_size_; fi++) {
           voxels
-            [voxel_idx * config_.max_num_points_per_voxel_ * config_.point_feature_size_ +
+            [voxel_idx * config_.max_point_in_voxel_size_ * config_.point_feature_size_ +
              point_cnt * config_.point_feature_size_ + fi] = point[fi];
         }
         num_points_per_voxel[voxel_idx]++;

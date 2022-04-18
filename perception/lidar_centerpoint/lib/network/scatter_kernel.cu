@@ -50,12 +50,12 @@ __global__ void scatterFeatures_kernel(
 
 cudaError_t scatterFeatures_launch(
   const float * pillar_features, const int * coords, const std::size_t num_pillars,
-  const std::size_t max_num_voxels, const std::size_t encoder_out_feature_size,
+  const std::size_t max_voxel_size, const std::size_t encoder_out_feature_size,
   const std::size_t grid_size_x, const std::size_t grid_size_y, float * scattered_features,
   cudaStream_t stream)
 {
   dim3 blocks(
-    divup(max_num_voxels, THREADS_PER_BLOCK), divup(encoder_out_feature_size, THREADS_PER_BLOCK));
+    divup(max_voxel_size, THREADS_PER_BLOCK), divup(encoder_out_feature_size, THREADS_PER_BLOCK));
   dim3 threads(THREADS_PER_BLOCK, THREADS_PER_BLOCK);
   scatterFeatures_kernel<<<blocks, threads, 0, stream>>>(
     pillar_features, coords, num_pillars, encoder_out_feature_size, grid_size_x, grid_size_y,

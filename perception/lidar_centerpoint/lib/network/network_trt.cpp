@@ -23,13 +23,13 @@ bool VoxelEncoderTRT::setProfile(
   auto profile = builder.createOptimizationProfile();
   auto in_name = network.getInput(0)->getName();
   auto in_dims = nvinfer1::Dims3(
-    config_.max_num_voxels_, config_.max_num_points_per_voxel_, config_.encoder_in_feature_size_);
+    config_.max_voxel_size_, config_.max_point_in_voxel_size_, config_.encoder_in_feature_size_);
   profile->setDimensions(in_name, nvinfer1::OptProfileSelector::kMIN, in_dims);
   profile->setDimensions(in_name, nvinfer1::OptProfileSelector::kOPT, in_dims);
   profile->setDimensions(in_name, nvinfer1::OptProfileSelector::kMAX, in_dims);
 
   auto out_name = network.getOutput(0)->getName();
-  auto out_dims = nvinfer1::Dims2(config_.max_num_voxels_, config_.encoder_out_feature_size_);
+  auto out_dims = nvinfer1::Dims2(config_.max_voxel_size_, config_.encoder_out_feature_size_);
   profile->setDimensions(out_name, nvinfer1::OptProfileSelector::kMIN, out_dims);
   profile->setDimensions(out_name, nvinfer1::OptProfileSelector::kOPT, out_dims);
   profile->setDimensions(out_name, nvinfer1::OptProfileSelector::kMAX, out_dims);
