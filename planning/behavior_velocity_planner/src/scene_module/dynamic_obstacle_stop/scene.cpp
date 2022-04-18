@@ -67,14 +67,14 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     return true;
   }
 
-  // TODO: extend path
+  // extend path to consider obstacles after the goal
+  const auto extended_smoothed_path = dynamic_obstacle_stop_utils::extendPath(
+    smoothed_path, planner_param_.vehicle_param.base_to_front);
 
-  // trim trajectory ahead of the base_link
+  // trim path ahead of the base_link
   const double trim_distance = planner_param_.dynamic_obstacle_stop.detection_distance;
-  // const auto trim_trajectory =
-  //   trimTrajectoryFromSelfPose(smoothed_trajectory, current_pose, trim_distance);
-  const auto trim_smoothed_path =
-    dynamic_obstacle_stop_utils::trimPathFromSelfPose(smoothed_path, current_pose, trim_distance);
+  const auto trim_smoothed_path = dynamic_obstacle_stop_utils::trimPathFromSelfPose(
+    extended_smoothed_path, current_pose, trim_distance);
 
   // TODO(Tomohito Ando): make options easier to understand
   std::vector<DynamicObstacle> dynamic_obstacles;

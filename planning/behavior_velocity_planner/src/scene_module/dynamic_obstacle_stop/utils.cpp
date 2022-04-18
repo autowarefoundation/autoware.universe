@@ -474,5 +474,32 @@ boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolyg
   return detection_area_polygon;
 }
 
+PathPointWithLaneId createExtendPathPoint(
+  const double extend_distance, const PathPointWithLaneId & goal_point)
+{
+  PathPointWithLaneId extend_path_point = goal_point;
+  extend_path_point.point.pose =
+    tier4_autoware_utils::calcOffsetPose(goal_point.point.pose, extend_distance, 0.0, 0.0);
+  return extend_path_point;
+}
+
+PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance)
+{
+  PathWithLaneId output = input;
+  if (extend_distance < std::numeric_limits<double>::epsilon() || input.points.empty()) {
+    return output;
+  }
+
+  const auto goal_point = input.points.back();
+  constexpr double interpolation_interval = 0.1;
+  double extend_sum = interpolation_interval;
+  while (extend_sum < extend_distance) {
+    const auto extend_path_point = createExtendPathPoint(extend_sum, goal_point);
+    output.points.push_back(extend_path_point);
+    extend_sum += interpolation_interval;
+  }
+
+  return output;
+}
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner

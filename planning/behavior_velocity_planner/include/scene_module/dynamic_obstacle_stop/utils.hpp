@@ -228,6 +228,10 @@ boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolyg
   const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
   const size_t deceleration_line_idx);
 
+// extend path to the pose of goal
+PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance);
+PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
+
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
 #endif  // DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_
