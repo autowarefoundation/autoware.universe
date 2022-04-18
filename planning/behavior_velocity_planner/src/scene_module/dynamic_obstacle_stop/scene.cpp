@@ -706,12 +706,13 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
 
   // debug
   {
-    debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
-
+    const float base_to_obstacle =
+      planner_param_.vehicle_param.base_to_front + planner_param_.dynamic_obstacle_stop.stop_margin;
     const auto vehicle_stop_idx = dynamic_obstacle_stop_utils::calcIndexByLength(
-      path.points, current_pose, stop_dist.get() + planner_param_.vehicle_param.base_to_front);
+      path.points, current_pose, stop_dist.get() + base_to_obstacle);
     const auto & p = path.points.at(vehicle_stop_idx).point.pose.position;
     debug_ptr_->pushDebugPoints(p, PointType::Yellow);
+    debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
   }
 
   // vehicle have to decelerate if there is not enough distance with stop_start_jerk_dec
