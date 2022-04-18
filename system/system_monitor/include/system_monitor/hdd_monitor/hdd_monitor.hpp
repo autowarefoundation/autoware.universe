@@ -69,10 +69,10 @@ struct HDDParam
  */
 struct SysfsDevStat
 {
-  unsigned long rd_ios_;      //!< @brief number of read operations issued to the device
-  unsigned long rd_sectors_;  //!< @brief number of sectors read
-  unsigned long wr_ios_;      //!< @brief number of write operations issued to the device
-  unsigned long wr_sectors_;  //!< @brief number of sectors written
+  uint64_t rd_ios_;      //!< @brief number of read operations issued to the device
+  uint64_t rd_sectors_;  //!< @brief number of sectors read
+  uint64_t wr_ios_;      //!< @brief number of write operations issued to the device
+  uint64_t wr_sectors_;  //!< @brief number of sectors written
 
   SysfsDevStat() : rd_ios_(0), rd_sectors_(0), wr_ios_(0), wr_sectors_(0) {}
 };
@@ -279,7 +279,7 @@ protected:
    * @return increment value
    */
   double getIncreaseSysfsDeviceStatValuePerSec(
-    unsigned long cur_val, unsigned long last_val, double duration_sec);
+    uint64_t cur_val, uint64_t last_val, double duration_sec);
 
   /**
    * @brief read stats for current whole device using /sys/block/ directory

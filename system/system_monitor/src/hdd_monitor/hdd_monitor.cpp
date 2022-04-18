@@ -631,7 +631,7 @@ void HDDMonitor::updateHDDStatistics()
 }
 
 double HDDMonitor::getIncreaseSysfsDeviceStatValuePerSec(
-  unsigned long cur_val, unsigned long last_val, double duration_sec)
+  uint64_t cur_val, uint64_t last_val, double duration_sec)
 {
   if (cur_val > last_val && duration_sec > 0.0) {
     return static_cast<double>(cur_val - last_val) / duration_sec;
@@ -643,9 +643,9 @@ int HDDMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
 {
   int ret = -1;
   unsigned int ios_pgr, tot_ticks, rq_ticks, wr_ticks;
-  unsigned long rd_ios, rd_merges_or_rd_sec, wr_ios, wr_merges;
-  unsigned long rd_sec_or_wr_ios, wr_sec, rd_ticks_or_wr_sec;
-  unsigned long dc_ios, dc_merges, dc_sec, dc_ticks;
+  uint64_t rd_ios, rd_merges_or_rd_sec, wr_ios, wr_merges;
+  uint64_t rd_sec_or_wr_ios, wr_sec, rd_ticks_or_wr_sec;
+  uint64_t dc_ios, dc_merges, dc_sec, dc_ticks;
 
   std::string filename("/sys/block/");
   filename += device + "/stat";
