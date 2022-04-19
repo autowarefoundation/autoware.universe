@@ -200,35 +200,42 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
   // for filtered objects
   ObjectDataArray target_objects;
   AvoidanceInfoArray avoidance_info_array;
-  std::vector<std::string> avoidance_factors;
   for (const auto & i : lane_filtered_objects_index) {
     const auto & object = objects_candidate.objects.at(i);
     const auto & object_pos = object.kinematics.initial_pose_with_covariance.pose.position;
+    AvoidanceInfo avoidance_info;
 
     if (!isTargetObjectType(object)) {
-      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_NOT_TYPE);
+      avoidance_info.avoidance_factor = AvoidanceFactor::OBJECT_IS_NOT_TYPE;
       continue;
     }
 
     ObjectData object_data;
     object_data.object = object;
-
+    avoidance_info.object_id = getUuidStr(object_data);
     // calc longitudinal distance from ego to closest target object footprint point.
     object_data.longitudinal = calcDistanceToClosestFootprintPoint(reference_path, object, ego_pos);
+    avoidance_info.longitudinal_distance = object_data.longitudinal;
 
     // object is behind ego or too far.
     if (object_data.longitudinal < -parameters_.object_check_backward_distance) {
-      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_BEHIND_THRESHOLD);
+      avoidance_info.allow_avoidance = false;
+      avoidance_info.avoidance_factor = AvoidanceFactor::OBJECT_IS_BEHIND_THRESHOLD;
+      avoidance_info_array.avoidance_info.push_back(avoidance_info);
       continue;
     }
     if (object_data.longitudinal > parameters_.object_check_forward_distance) {
-      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_IS_IN_FRONT_THRESHOLD);
+      avoidance_info.allow_avoidance = false;
+      avoidance_info.avoidance_factor = AvoidanceFactor::OBJECT_IS_IN_FRONT_THRESHOLD;
+      avoidance_info_array.avoidance_info.push_back(avoidance_info);
       continue;
     }
 
     // Target object is behind the path goal -> ignore.
     if (object_data.longitudinal > dist_to_goal) {
-      avoidance_factors.emplace_back(AvoidanceFactor::OBJECT_BEHIND_PATH_GOAL);
+      avoidance_info.allow_avoidance = false;
+      avoidance_info.avoidance_factor = AvoidanceFactor::OBJECT_BEHIND_PATH_GOAL;
+      avoidance_info_array.avoidance_info.push_back(avoidance_info);
       continue;
     }
 
@@ -278,21 +285,16 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
       object_data.to_road_shoulder_distance);
 
     // Object is on center line -> ignore.
+    avoidance_info.lateral_distance_from_centerline = object_data.lateral;
     if (std::abs(object_data.lateral) < parameters_.threshold_distance_object_is_on_center) {
-      avoidance_factors.emplace_back(AvoidanceFactor::TOO_NEAR_TO_CENTERLINE);
+      avoidance_info.allow_avoidance = false;
+      avoidance_info.avoidance_factor = AvoidanceFactor::TOO_NEAR_TO_CENTERLINE;
+      avoidance_info_array.avoidance_info.push_back(avoidance_info);
       continue;
     }
 
     // set data
     target_objects.push_back(object_data);
-    AvoidanceInfo avoidance_info;
-
-    avoidance_info.object_id = getUuidStr(object_data);
-    avoidance_info.avoidance_factors = avoidance_factors;
-    avoidance_info.allow_avoidance = (avoidance_factors.empty()) ? true : false;
-    avoidance_info.lateral_distance_from_centerline = object_data.lateral;
-    avoidance_info.to_furthest_linestring_distance = object_data.to_road_shoulder_distance;
-    avoidance_info_array.avoidance_info.push_back(avoidance_info);
   }
 
   // debug
@@ -469,7 +471,21 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
 
   AvoidPointArray avoid_points;
+  std::vector<AvoidanceInfo> avoidance_info_array;
+  avoidance_info_array.reserve(objects.size());
   for (auto & o : objects) {
+    AvoidanceInfo avoidance_info;
+
+    avoidance_info.object_id = getUuidStr(o);
+    avoidance_info.longitudinal_distance = o.longitudinal;
+    avoidance_info.lateral_distance_from_centerline = o.lateral;
+    avoidance_info.to_furthest_linestring_distance = o.to_road_shoulder_distance;
+
+    if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
+      avoidance_info.allow_avoidance = false;
+      avoidance_info.avoidance_factor = AvoidanceFactor::INSUFFICIENT_LATERAL_MARGIN;
+    }
+
     const auto max_shift_length =
       o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
     const auto max_left_shift_limit = [&o, &max_allowable_lateral_distance, &max_shift_length,
@@ -511,7 +527,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
         // TODO(Horibe) Even if there is no enough distance for avoidance shift, the
         // return-to-center shift must be considered for each object if the current_shift
         // is not zero.
-        DEBUG_PRINT("object is ignored since remaining_distance <= 0");
+        avoidance_info.allow_avoidance = false;
+        avoidance_info.avoidance_factor = AvoidanceFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
+        avoidance_info_array.push_back(avoidance_info);
         continue;
       }
 
@@ -519,6 +537,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       const auto required_jerk = path_shifter_.calcJerkFromLatLonDistance(
         avoiding_shift, remaining_distance, getSharpAvoidanceEgoSpeed());
       if (required_jerk > parameters_.max_lateral_jerk) {
+        avoidance_info.allow_avoidance = false;
+        avoidance_info.avoidance_factor = AvoidanceFactor::JERK_TOO_LARGE;
+        avoidance_info_array.push_back(avoidance_info);
         DEBUG_PRINT(
           "object is ignored required_jerk is too large (req: %f, max: %f)", required_jerk,
           parameters_.max_lateral_jerk);
@@ -567,8 +588,12 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       avoiding_shift, return_shift, ap_avoid.start_longitudinal, ap_avoid.end_longitudinal,
       ap_return.end_longitudinal, nominal_avoid_distance, avoiding_distance, avoid_margin,
       nominal_return_distance);
+    avoidance_info.allow_avoidance = true;
+    avoidance_info_array.push_back(avoidance_info);
   }
 
+  auto & debug = debug_data_.avoidance_info_array.avoidance_info;
+  debug.insert(debug.end(), avoidance_info_array.begin(), avoidance_info_array.end());
   fillAdditionalInfoFromLongitudinal(avoid_points);
 
   return avoid_points;
@@ -2143,6 +2168,8 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  debug_avoidance_info_array_ptr_ =
+    std::make_shared<AvoidanceInfoArray>(debug_data_.avoidance_info_array);
   return out;
 }
 
