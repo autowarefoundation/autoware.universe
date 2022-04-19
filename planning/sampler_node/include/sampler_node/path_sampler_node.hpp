@@ -20,6 +20,7 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/plot/debug_window.hpp"
+#include "sampler_node/path_generation.hpp"
 
 #include <QApplication>
 #include <rclcpp/rclcpp.hpp>
@@ -50,6 +51,7 @@
 
 namespace sampler_node
 {
+
 class PathSamplerNode : public rclcpp::Node
 {
 private:
@@ -62,6 +64,8 @@ private:
   plot::MainWindow w_;
 
   // Parameters
+  Parameters params_;
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // Cached data
   std::shared_ptr<autoware_auto_vehicle_msgs::msg::SteeringReport> current_steer_ptr_{};
@@ -89,6 +93,7 @@ private:
   rclcpp::TimerBase::SharedPtr gui_process_timer_;
 
   // callback functions
+  rcl_interfaces::msg::SetParametersResult onParameter(const std::vector<rclcpp::Parameter> & parameters);
   void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
   void steerCallback(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr);
   void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);

@@ -37,13 +37,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent)
   plotter_ = std::make_shared<Plotter>(main_plot);
 
   // Signals
-  /// Replot when tab is changed
   connect(ui->tabWidget, &QTabWidget::currentChanged, [&](const auto) { replot(); });
-  /// Generate paths when button is clicked
   connect(ui->autoscale_toggle_button, &QPushButton::clicked, [&]() { replot(); });
-  /// Regenerate paths whenever the inputs are changed
-  auto input_list = ui->initial_states_box->findChildren<QDoubleSpinBox *>();
-  input_list.append(ui->target_states_box->findChildren<QDoubleSpinBox *>());
 }
 
 void MainWindow::setStatus(

@@ -17,6 +17,7 @@
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/path_generation.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -66,21 +67,16 @@ sampler_common::Constraints prepareConstraints(
 
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
-  const double base_length, const sampler_common::transform::Spline2D & path_spline)
+  const double base_length, const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   frenet_planner::SamplingParameters sampling_parameters;
-  sampling_parameters.time_resolution = 0.1;
-  sampling_parameters.target_durations = {};
-  sampling_parameters.target_lateral_positions = {-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0};
-  sampling_parameters.target_lateral_velocities = {-0.1, 0.0, 0.1};
-  sampling_parameters.target_lateral_accelerations = {-0.1, 0.0, 0.1};
-  // Unused when generating Path (i.e., without velocity profile)
-  sampling_parameters.target_longitudinal_accelerations = {};
-  sampling_parameters.target_longitudinal_velocities = {};
-  const auto target_lengths = {60, 40};
+  sampling_parameters.time_resolution = params.sampling.resolution;
+  sampling_parameters.target_lateral_positions = params.sampling.frenet.target_lateral_positions;
+  sampling_parameters.target_lateral_velocities = params.sampling.frenet.target_lateral_velocities;
+  sampling_parameters.target_lateral_accelerations = params.sampling.frenet.target_lateral_accelerations;
   const auto max_s =
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
-  for (const auto target_length : target_lengths) {
+  for (const auto target_length : params.sampling.target_lengths) {
     const auto target_s =
       path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length - base_length);
     // Prevent a target past the end of the reference path

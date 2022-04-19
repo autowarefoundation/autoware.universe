@@ -18,7 +18,6 @@
 #include "sampler_common/structures.hpp"
 
 #include <qcustomplot.h>
-#include <qevent.h>
 
 #include <vector>
 

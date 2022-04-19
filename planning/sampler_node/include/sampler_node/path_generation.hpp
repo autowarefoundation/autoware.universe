@@ -15,6 +15,7 @@
 #ifndef SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_
 #define SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_
 
+#include "bezier_sampler/bezier_sampling.hpp"
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/structures.hpp"
@@ -28,6 +29,39 @@
 
 namespace sampler_node
 {
+struct Parameters {
+  struct {
+    struct {
+      double max_curvature{};
+      double min_curvature{};
+    } hard;
+    struct {
+      double min_curvature{};
+      double lateral_deviation_weight{};
+      double longitudinal_deviation_weight{};
+      double jerk_weight{};
+      double length_weight{};
+      double curvature_weight{};
+    } soft;
+  } constraints;
+  struct {
+    bool enable_frenet{};
+    bool enable_bezier{};
+    double resolution{};
+    double minimum_committed_length{};
+    double reuse_max_length_max{};
+    int reuse_samples{};
+    double reuse_max_deviation{};
+    std::vector<double> target_lengths{};
+    struct {
+      std::vector<double> target_lateral_positions{};
+      std::vector<double> target_lateral_velocities{};
+      std::vector<double> target_lateral_accelerations{};
+    } frenet;
+    bezier_sampler::SamplingParameters bezier{};
+  } sampling;
+};
+
 /**
  * @brief generate candidate paths for the given problem inputs
  * @param [in] initial_state initial ego state
@@ -42,17 +76,17 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::transform::Spline2D & path_spline,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
   const sampler_common::Constraints & constraints,
-  plot::Plotter & plotter);
+  plot::Plotter & plotter, const Parameters & params);
 
 std::vector<sampler_common::Path> generateBezierPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::transform::Spline2D & path_spline);
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 std::vector<frenet_planner::Path> generateFrenetPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
   const sampler_common::transform::Spline2D & path_spline,
-  const sampler_common::Constraints & constraints);
+  const sampler_common::Constraints & constraints, const Parameters & params);
 }  // namespace sampler_node
 
 #endif  // SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_

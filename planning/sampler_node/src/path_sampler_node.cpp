@@ -20,7 +20,6 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
-#include "sampler_node/path_generation.hpp"
 #include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
@@ -75,10 +74,100 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
 
+  params_.constraints.hard.max_curvature = declare_parameter<double>("constraints.hard.max_curvature");
+  params_.constraints.hard.min_curvature = declare_parameter<double>("constraints.hard.min_curvature");
+  params_.constraints.soft.lateral_deviation_weight = declare_parameter<double>("constraints.soft.lateral_deviation_weight");
+  params_.constraints.soft.longitudinal_deviation_weight = declare_parameter<double>("constraints.soft.longitudinal_deviation_weight");
+  params_.constraints.soft.jerk_weight = declare_parameter<double>("constraints.soft.jerk_weight");
+  params_.constraints.soft.length_weight = declare_parameter<double>("constraints.soft.length_weight");
+  params_.constraints.soft.curvature_weight = declare_parameter<double>("constraints.soft.curvature_weight");
+  params_.sampling.enable_frenet = declare_parameter<bool>("sampling.enable_frenet");
+  params_.sampling.enable_bezier = declare_parameter<bool>("sampling.enable_bezier");
+  params_.sampling.resolution = declare_parameter<double>("sampling.resolution");
+  params_.sampling.minimum_committed_length = declare_parameter<double>("sampling.minimum_committed_length");
+  params_.sampling.reuse_max_length_max = declare_parameter<double>("sampling.reuse_max_length_max");
+  params_.sampling.reuse_samples = declare_parameter<int>("sampling.reuse_samples");
+  params_.sampling.reuse_max_deviation = declare_parameter<double>("sampling.reuse_max_deviation");
+  params_.sampling.target_lengths = declare_parameter<std::vector<double>>("sampling.target_lengths");
+  params_.sampling.frenet.target_lateral_positions = declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_positions");
+  params_.sampling.frenet.target_lateral_velocities = declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_velocities");
+  params_.sampling.frenet.target_lateral_accelerations = declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_accelerations");
+  params_.sampling.bezier.nb_k = declare_parameter<int>("sampling.bezier.nb_k");
+  params_.sampling.bezier.mk_min = declare_parameter<double>("sampling.bezier.mk_min");
+  params_.sampling.bezier.mk_max = declare_parameter<double>("sampling.bezier.mk_max");
+  params_.sampling.bezier.nb_t = declare_parameter<int>("sampling.bezier.nb_t");
+  params_.sampling.bezier.mt_min = declare_parameter<double>("sampling.bezier.mt_min");
+  params_.sampling.bezier.mt_max = declare_parameter<double>("sampling.bezier.mt_max");
+
+  set_param_res_ =
+    add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
   // This is necessary to interact with the GUI even when we are not generating trajectories
   gui_process_timer_ =
     create_wall_timer(std::chrono::milliseconds(100), []() { QCoreApplication::processEvents(); });
 }
+
+rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  for (const auto & parameter : parameters) {
+    if (parameter.get_name() == "constraints.hard.max_curvature") {
+      params_.constraints.hard.max_curvature = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.min_curvature") {
+      params_.constraints.hard.min_curvature = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.lateral_deviation_weight") {
+      params_.constraints.soft.lateral_deviation_weight = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.longitudinal_deviation_weight") {
+      params_.constraints.soft.longitudinal_deviation_weight = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.jerk_weight") {
+      params_.constraints.soft.jerk_weight = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.length_weight") {
+      params_.constraints.soft.length_weight = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.curvature_weight") {
+      params_.constraints.soft.curvature_weight = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.enable_frenet") {
+      params_.sampling.enable_frenet = parameter.as_bool();
+    } else if (parameter.get_name() == "sampling.enable_bezier") {
+      params_.sampling.enable_bezier = parameter.as_bool();
+    } else if (parameter.get_name() == "sampling.resolution") {
+      params_.sampling.resolution = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.minimum_committed_length") {
+      params_.sampling.minimum_committed_length = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.reuse_max_length_max") {
+      params_.sampling.reuse_max_length_max = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.reuse_samples") {
+      params_.sampling.reuse_samples = parameter.as_int();
+    } else if (parameter.get_name() == "sampling.reuse_max_deviation") {
+      params_.sampling.reuse_max_deviation = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.target_lengths") {
+      params_.sampling.target_lengths = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.target_lateral_positions") {
+      params_.sampling.frenet.target_lateral_positions = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.target_lateral_velocities") {
+      params_.sampling.frenet.target_lateral_velocities = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.target_lateral_accelerations") {
+      params_.sampling.frenet.target_lateral_accelerations = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.bezier.nb_k") {
+      params_.sampling.bezier.nb_k = parameter.as_int();
+    } else if (parameter.get_name() == "sampling.bezier.mk_min") {
+      params_.sampling.bezier.mk_min = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.bezier.mk_max") {
+      params_.sampling.bezier.mk_max = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.bezier.nb_t") {
+      params_.sampling.bezier.nb_t = parameter.as_int();
+    } else if (parameter.get_name() == "sampling.bezier.mt_min") {
+      params_.sampling.bezier.mt_min = parameter.as_double();
+    } else if (parameter.get_name() == "sampling.bezier.mt_max") {
+      params_.sampling.bezier.mt_max = parameter.as_double();
+    } else {
+      RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
+      result.successful = false;
+    }
+  }
+  return result;
+}
+
 
 // ROS callback functions
 void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr msg)
@@ -103,7 +192,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   const auto path_spline = preparePathSpline(*msg);
   const auto constraints = prepareConstraints(*in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
 
-  auto paths = generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, constraints, *w_.plotter_);
+  auto paths = generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, constraints, *w_.plotter_, params_);
   for (auto & path : paths) {
     const auto nb_violations = sampler_common::constraints::checkHardConstraints(path, constraints);
     debug.violations.outside += nb_violations.outside;
