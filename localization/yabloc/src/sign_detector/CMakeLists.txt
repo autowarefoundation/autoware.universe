@@ -30,7 +30,7 @@ target_link_libraries(cv_lsd ${OpenCV_LIBS})
 
 # ===================================================
 # Executable
-ament_auto_add_executable(main src/main.cpp)
+ament_auto_add_executable(main src/main.cpp src/lsd.cpp)
 target_include_directories(main PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd include)
 target_link_libraries(main  ${OpenCV_LIBS} cv_lsd)
 
