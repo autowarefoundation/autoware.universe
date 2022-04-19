@@ -54,10 +54,12 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
+  // set planner data
   const auto current_vel = planner_data_->current_velocity->twist.linear.x;
   const auto current_acc = planner_data_->current_accel.get();
   const auto & current_pose = planner_data_->current_pose.pose;
 
+  // smooth velocity of the path to calcute time to collision accurately
   PathWithLaneId smoothed_path;
   if (!smoothPath(*path, smoothed_path, planner_data_)) {
     return true;
@@ -67,7 +69,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   const auto extended_smoothed_path = dynamic_obstacle_stop_utils::extendPath(
     smoothed_path, planner_param_.vehicle_param.base_to_front);
 
-  // trim path ahead of the base_link
+  // trim path ahead of the base_link to make calculation easier
   const double trim_distance = planner_param_.dynamic_obstacle_stop.detection_distance;
   const auto trim_smoothed_path = dynamic_obstacle_stop_utils::trimPathFromSelfPose(
     extended_smoothed_path, current_pose, trim_distance);
@@ -81,12 +83,14 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   }
   debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles->size());
 
+  // extract obstacles using lanelet information
   const auto partition_excluded_obstacles =
     excludeObstaclesOutSideOfPartition(dynamic_obstacles.get(), trim_smoothed_path, current_pose);
 
   // timer starts
   const auto t1 = std::chrono::system_clock::now();
 
+  // detect collision with dynamic obstacles using velocity planning of ego
   const auto dynamic_obstacle = detectCollision(partition_excluded_obstacles, trim_smoothed_path);
 
   // timer ends
@@ -94,7 +98,9 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
   const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
   debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
 
+  // insert stop point for the detected obstacle
   if (planner_param_.approaching.enable) {
+    // approach the obstacle with slow velocity after stopping
     insertVelocityWithApproaching(
       dynamic_obstacle, current_pose, current_vel, current_acc, trim_smoothed_path, *path);
   } else {
