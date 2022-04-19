@@ -49,7 +49,7 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 
 bool createDetectionAreaPolygons(
   Polygons2d & da_polys, const PathWithLaneId & path, const DetectionRange da_range,
-  const double obstacle_vel_mps)
+  const double obstacle_vel_mps, const double min_velocity)
 {
   /**
    * @brief relationships for interpolated polygon
@@ -63,7 +63,6 @@ bool createDetectionAreaPolygons(
   const double min_dst = da_range.min_lateral_distance;
   const double max_dst = da_range.max_lateral_distance;
   const double interval = da_range.interval;
-  const double min_velocity = 0.5;  // min velocity that autoware can cruise stably
 
   //! max index is the last index of path point
   const size_t max_index = static_cast<size_t>(path.points.size() - 1);
