@@ -37,57 +37,52 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::Constraints & constraints, plot::Plotter & plotter)
+  const sampler_common::Constraints & constraints, plot::Plotter & plotter, const Parameters & params)
 {
-  constexpr auto sample_frenet = true;
-  constexpr auto sample_bezier = false;
-  constexpr auto minimum_committed_length = 5.0;
-  constexpr auto reuse_max_length_max = 50.0;
-  constexpr auto reuse_length_step = reuse_max_length_max / 2.0;
-  constexpr auto reuse_max_deviation = 1.0;
+  const auto reuse_length_step = params.sampling.reuse_max_length_max / 2.0;
 
   std::vector<sampler_common::Path> paths;
   sampler_common::Path base_path;
   if(!previous_path.points.empty() && !sampler_common::tryToReusePath(
-          previous_path, initial_state.pose, minimum_committed_length, reuse_max_deviation, constraints,
+          previous_path, initial_state.pose, params.sampling.minimum_committed_length, params.sampling.reuse_max_deviation, constraints,
           base_path))
     return {};
   const auto move_to_paths = [&](auto & paths_to_move) { paths.insert(paths.end(), std::make_move_iterator(paths_to_move.begin()), std::make_move_iterator(paths_to_move.end())); };
-  if(sample_frenet) {
-    auto frenet_paths = generateFrenetPaths(initial_state, base_path, path_msg, path_spline, constraints);
+  if(params.sampling.enable_frenet) {
+    auto frenet_paths = generateFrenetPaths(initial_state, base_path, path_msg, path_spline, constraints, params);
     plotter.plotFrenetPaths(frenet_paths);
     move_to_paths(frenet_paths);
   }
-  if(sample_bezier){
-    const auto bezier_paths = generateBezierPaths(initial_state, base_path, path_msg, path_spline);
+  if(params.sampling.enable_bezier){
+    const auto bezier_paths = generateBezierPaths(initial_state, base_path, path_msg, path_spline, params);
     move_to_paths(bezier_paths);
   }
 
-  for (auto reuse_max_length = reuse_length_step; reuse_max_length <= reuse_max_length_max;
+  for (auto reuse_max_length = reuse_length_step; reuse_max_length <= params.sampling.reuse_max_length_max;
        reuse_max_length += reuse_length_step) {
     if (sampler_common::tryToReusePath(
-          previous_path, initial_state.pose, reuse_max_length, reuse_max_deviation, constraints,
+          previous_path, initial_state.pose, reuse_max_length, params.sampling.reuse_max_deviation, constraints,
           base_path)) {
       plotter.plotCommittedPath(base_path);
-      const auto cost_mult = 1.0 - 0.3 * reuse_length_step / reuse_max_length_max;
+      const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
       sampler_common::State end_of_reused_path;
       end_of_reused_path.pose = base_path.points.back();
       end_of_reused_path.heading = base_path.yaws.back();
       end_of_reused_path.curvature = base_path.curvatures.back();
-      if(sample_frenet)
+      if(params.sampling.enable_frenet)
       {
         const auto paths_from_prev_path =
-          generateFrenetPaths(end_of_reused_path, base_path, path_msg, path_spline, constraints);
+          generateFrenetPaths(end_of_reused_path, base_path, path_msg, path_spline, constraints, params);
         plotter.plotFrenetPaths(paths_from_prev_path);
         for (const auto & path : paths_from_prev_path) {
           paths.push_back(base_path.extend(path));
           paths.back().cost *= cost_mult;
         }
       }
-      if(sample_bezier)
+      if(params.sampling.enable_bezier)
       {
         const auto paths_from_prev_path =
-          generateBezierPaths(end_of_reused_path, base_path, path_msg, path_spline);
+          generateBezierPaths(end_of_reused_path, base_path, path_msg, path_spline, params);
         for (const auto & path : paths_from_prev_path) {
           paths.push_back(base_path.extend(path));
           paths.back().cost *= cost_mult;
@@ -103,17 +98,10 @@ std::vector<sampler_common::Path> generateCandidatePaths(
 std::vector<sampler_common::Path> generateBezierPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::transform::Spline2D & path_spline)
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   const auto base_path_length =
     std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0);
-  bezier_sampler::SamplingParameters sampling_params{};
-  sampling_params.nb_k = 3;
-  sampling_params.mk_min = 0.0;
-  sampling_params.mk_max = 10.0;
-  sampling_params.nb_t = 10;
-  sampling_params.mt_min = 0.3;
-  sampling_params.mt_max = 1.7;
 
   const double initial_s = path_spline.frenet(initial_state.pose).s;
   const double max_s =
@@ -130,9 +118,9 @@ std::vector<sampler_common::Path> generateBezierPaths(
     target_state.pose = path_spline.cartesian({target_s, 0});
     target_state.curvature = path_spline.curvature(target_s);
     target_state.heading = path_spline.yaw(target_s);
-    const auto beziers = bezier_sampler::sample(initial_state, target_state, sampling_params);
+    const auto beziers = bezier_sampler::sample(initial_state, target_state, params.sampling.bezier);
 
-    constexpr double step = 0.01;
+    constexpr double step = 0.01;  // TODO(Maxime CLEMENT): calculate from params.sampling.resolution
     for (const auto & bezier : beziers) {
       sampler_common::Path path;
       for (double t = 0.0; t <= 1.0; t += step) {
@@ -156,12 +144,12 @@ std::vector<frenet_planner::Path> generateFrenetPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path,
   const sampler_common::transform::Spline2D & path_spline,
-  const sampler_common::Constraints & constraints)
+  const sampler_common::Constraints & constraints, const Parameters & params)
 {
   (void)constraints;
   const auto sampling_parameters = prepareSamplingParameters(
     initial_state, path,
-    std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0), path_spline);
+    std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0), path_spline, params);
 
   frenet_planner::FrenetState initial_frenet_state;
   initial_frenet_state.position = path_spline.frenet(initial_state.pose);
