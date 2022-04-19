@@ -41,6 +41,7 @@ ament_python_install_package(scripts)
 install(DIRECTORY
   scripts/
   DESTINATION lib/${PROJECT_NAME}
+  FILES_MATCHING PATTERN "*.py"
 )
 
 # ===================================================

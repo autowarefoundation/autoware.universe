@@ -1,0 +1,3 @@
+[submodule "src/sign_detector/scripts/lib/advanced_lane_finding"]
+	path = src/sign_detector/scripts/lib/advanced_lane_finding
+	url = https://github.com/windowsub0406/Advanced-lane-finding.git

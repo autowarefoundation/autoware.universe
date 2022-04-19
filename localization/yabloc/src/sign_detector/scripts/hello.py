@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
-from lib.module import test
+from lib.advanced_lane_finding.module import test
 
 class MinimalPublisher(Node):
 
