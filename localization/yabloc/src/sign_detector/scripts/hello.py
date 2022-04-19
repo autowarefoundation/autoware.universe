@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
-
+from lib.module import test
 
 class MinimalPublisher(Node):
 
@@ -15,6 +15,7 @@ class MinimalPublisher(Node):
         self.i = 0
 
     def timer_callback(self):
+        test()
         msg = String()
         msg.data = 'Hello World: %d' % self.i
         self.publisher_.publish(msg)

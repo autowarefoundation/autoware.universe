@@ -38,8 +38,8 @@ target_link_libraries(main  ${OpenCV_LIBS} cv_lsd)
 # ===================================================
 # Python
 ament_python_install_package(scripts)
-install(PROGRAMS
-  scripts/hello.py
+install(DIRECTORY
+  scripts/
   DESTINATION lib/${PROJECT_NAME}
 )
 
