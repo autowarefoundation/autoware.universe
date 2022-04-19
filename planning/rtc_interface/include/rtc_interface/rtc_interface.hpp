@@ -12,43 +12,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RTC_INTERFACE_HPP_
-#define RTC_INTERFACE_HPP_
+#ifndef RTC_INTERFACE__RTC_INTERFACE_HPP_
+#define RTC_INTERFACE__RTC_INTERFACE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "tier4_rtc_msgs/msg/command.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status.hpp"
+#include "tier4_rtc_msgs/msg/cooperate_status_array.hpp"
 #include "tier4_rtc_msgs/msg/module.hpp"
 #include "tier4_rtc_msgs/srv/cooperate_command.hpp"
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace rtc_interface
 {
 using tier4_rtc_msgs::msg::Command;
 using tier4_rtc_msgs::msg::CooperateStatus;
+using tier4_rtc_msgs::msg::CooperateStatusArray;
 using tier4_rtc_msgs::msg::Module;
 using tier4_rtc_msgs::srv::CooperateCommand;
+using unique_identifier_msgs::msg::UUID;
 
 class RTCInterface
 {
 public:
-  RTCInterface(rclcpp::Node & node, const std::string & name);
-  void addCooperateStatus(const CooperateStatus & status);
-  void publishCooperateStatus() const;
-  std::vector<bool> isActivated() const;
+  RTCInterface(rclcpp::Node & node, const std::string & name, const Module & module);
+  void publishCooperateStatus();
+  void updateCooperateStatus(const UUID & uuid, const bool safe, const double distance);
+  void removeCooperateStatus(const UUID & uuid);
+  bool isActivated(const UUID & uuid) const;
 
 private:
   void onCooperateCommandService(
-    CooperateCommand::Request::ConstSharedPtr request,
-    CooperateCommand::Response::ConstSharedPtr response);
+    const CooperateCommand::Request::SharedPtr request,
+    const CooperateCommand::Response::SharedPtr response);
 
-  rclcpp::Publisher<CooperateStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<CooperateStatusArray>::SharedPtr pub_status_;
   rclcpp::Service<CooperateCommand>::SharedPtr srv_command_;
+
+  mutable rclcpp::Clock clock_;
+  Module module_;
+  CooperateStatusArray registered_status_;
 };
 
 }  // namespace rtc_interface
 
-#endif  // RTC_INTERFACE_HPP_
+#endif  // RTC_INTERFACE__RTC_INTERFACE_HPP_
