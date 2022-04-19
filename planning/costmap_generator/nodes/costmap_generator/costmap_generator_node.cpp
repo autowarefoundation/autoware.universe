@@ -182,6 +182,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   use_objects_ = this->declare_parameter<bool>("use_objects", true);
   use_points_ = this->declare_parameter<bool>("use_points", true);
   use_wayarea_ = this->declare_parameter<bool>("use_wayarea", true);
+  use_extra_occgrid_ = this->declare_parameter<bool>("use_extra_occgrid", false);
   expand_polygon_size_ = this->declare_parameter<double>("expand_polygon_size", 1.0);
   size_of_expansion_kernel_ = this->declare_parameter<int>("size_of_expansion_kernel", 9);
 
@@ -209,6 +210,8 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
   sub_scenario_ = this->create_subscription<tier4_planning_msgs::msg::Scenario>(
     "~/input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
+  sub_extra_occgrid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
+    "~/input/extra_occgrid", 1, std::bind(&CostmapGenerator::onOccgrid, this, _1));
 
   // Publishers
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
@@ -293,6 +296,11 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
   scenario_ = msg;
 }
 
+void CostmapGenerator::onOccgrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
+{
+  extra_occgrid_ = msg;
+}
+
 void CostmapGenerator::onTimer()
 {
   if (!isActive()) {
@@ -325,6 +333,18 @@ void CostmapGenerator::onTimer()
 
   if (use_points_ && points_) {
     costmap_[LayerName::points] = generatePointsCostmap(points_);
+  }
+
+  if (use_extra_occgrid_ && extra_occgrid_) {
+    grid_map::GridMap extra_gridmap;
+    grid_map::GridMapRosConverter::fromOccupancyGrid(*extra_occgrid_, "extra", extra_gridmap);
+    auto & mat = extra_gridmap.get("extra");
+    for (int i = 0; i < mat.cols(); ++i) {
+      for (int j = 0; j < mat.rows(); ++j) {
+        mat(i, j) = (mat(i, j) > 1.0 ? 1.0 : 0.0);
+      }
+    }
+    costmap_.addDataFrom(extra_gridmap, false, true, true);
   }
 
   costmap_[LayerName::combined] = generateCombinedCostmap();
@@ -360,6 +380,7 @@ void CostmapGenerator::initGridmap()
   costmap_.add(LayerName::points, grid_min_value_);
   costmap_.add(LayerName::objects, grid_min_value_);
   costmap_.add(LayerName::wayarea, grid_min_value_);
+  costmap_.add(LayerName::extra, grid_min_value_);
   costmap_.add(LayerName::combined, grid_min_value_);
 }
 
@@ -448,6 +469,9 @@ grid_map::Matrix CostmapGenerator::generateCombinedCostmap()
 
   combined_costmap[LayerName::combined] =
     combined_costmap[LayerName::combined].cwiseMax(combined_costmap[LayerName::objects]);
+
+  combined_costmap[LayerName::combined] =
+    combined_costmap[LayerName::combined].cwiseMax(combined_costmap[LayerName::extra]);
 
   return combined_costmap[LayerName::combined];
 }
