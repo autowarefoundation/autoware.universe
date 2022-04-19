@@ -7,11 +7,10 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from sensor_msgs.msg import CompressedImage
 from sensor_msgs.msg import CameraInfo
-# from lib.advanced_lane_finding.module import test
+from lib.bridge import test
 
 
 class Subscriber(Node):
-
     def __init__(self):
         super().__init__('lane_finding')
         self.sub_image= self.create_subscription(CompressedImage, '/sensing/camera/traffic_light/image_raw/compressed',self.callback, 10)
@@ -40,7 +39,9 @@ class Subscriber(Node):
         undist_image = cv2.undistort(image, K, D, None, K)
         undist_image = cv2.resize(undist_image, size, fx=0, fy=0, interpolation=cv2.INTER_AREA)
 
-        cv2.imshow('result',undist_image)
+        result=test(undist_image)
+
+        cv2.imshow('result',result)
         cv2.waitKey(10)
 
 
