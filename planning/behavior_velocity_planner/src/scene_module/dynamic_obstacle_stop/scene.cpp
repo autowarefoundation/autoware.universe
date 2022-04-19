@@ -74,8 +74,8 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
 
   // create abstracted dynamic obstacles from objects or points
   const auto dynamic_obstacles = createDynamicObstacles(
-    *planner_data_->predicted_objects, planner_data_->no_ground_pointcloud, trim_smoothed_path,
-    current_pose, planner_param_.dynamic_obstacle_stop.detection_method);
+    *planner_data_->predicted_objects, planner_data_->compare_map_filtered_pointcloud,
+    trim_smoothed_path, current_pose, planner_param_.dynamic_obstacle_stop.detection_method);
   if (!dynamic_obstacles) {
     return true;
   }
@@ -141,7 +141,6 @@ boost::optional<std::vector<DynamicObstacle>> DynamicObstacleStopModule::createD
     case DetectionMethod::Points: {
       visualizeDetectionArea(path);
       const auto voxel_grid_filtered_points = applyVoxelGridFilter(points);
-      // todo: replace with compare map filtered
       // todo: extract points with triangle shaped detection area
       const auto extracted_points =
         extractObstaclePointsWithRectangle(voxel_grid_filtered_points, current_pose);

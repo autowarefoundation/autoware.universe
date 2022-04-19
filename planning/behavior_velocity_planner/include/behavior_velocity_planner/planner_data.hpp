@@ -74,6 +74,7 @@ struct PlannerData
   std::deque<geometry_msgs::msg::TwistStamped> velocity_buffer;
   autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
+  pcl::PointCloud<pcl::PointXYZ>::ConstPtr compare_map_filtered_pointcloud;
   // occupancy grid
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
 
