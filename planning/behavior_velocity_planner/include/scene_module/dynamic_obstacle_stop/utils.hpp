@@ -65,7 +65,7 @@ struct DynamicObstacleStopParam
   bool specify_decel_jerk;
   double stop_margin;
   double passing_margin;
-  double stop_start_jerk_dec;
+  double deceleration_jerk;
   double obstacle_velocity_kph;
   float detection_distance;
   float detection_span;

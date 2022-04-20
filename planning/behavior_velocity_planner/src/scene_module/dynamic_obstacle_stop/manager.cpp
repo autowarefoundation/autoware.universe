@@ -58,7 +58,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.specify_decel_jerk = node.declare_parameter(ns + ".specify_decel_jerk", false);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
-    p.stop_start_jerk_dec = node.declare_parameter(ns + ".stop_start_jerk_dec", -0.3);
+    p.deceleration_jerk = node.declare_parameter(ns + ".deceleration_jerk", -0.3);
     p.obstacle_velocity_kph = node.declare_parameter(ns + ".obstacle_velocity_kph", 5.0);
     p.detection_distance = node.declare_parameter(ns + ".detection_distance", 45.0);
     p.detection_span = node.declare_parameter(ns + ".detection_span", 1.0);
@@ -127,8 +127,7 @@ rcl_interfaces::msg::SetParametersResult DynamicObstacleStopModuleManager::param
     tier4_autoware_utils::updateParam(
       parameters, ns + "passing_margin", planner_param_.dynamic_obstacle_stop.passing_margin);
     tier4_autoware_utils::updateParam(
-      parameters, ns + "stop_start_jerk_dec",
-      planner_param_.dynamic_obstacle_stop.stop_start_jerk_dec);
+      parameters, ns + "deceleration_jerk", planner_param_.dynamic_obstacle_stop.deceleration_jerk);
     tier4_autoware_utils::updateParam(
       parameters, ns + "obstacle_velocity_kph",
       planner_param_.dynamic_obstacle_stop.obstacle_velocity_kph);

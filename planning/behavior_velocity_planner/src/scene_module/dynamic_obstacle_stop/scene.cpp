@@ -241,7 +241,7 @@ void DynamicObstacleStopModule::visualizeDetectionArea(const PathWithLaneId & sm
   const float initial_vel = planner_data_->current_velocity->twist.linear.x;
   const float initial_acc = planner_data_->current_accel.get();
   const float target_vel = 0.0;
-  const float jerk_dec = planner_param_.dynamic_obstacle_stop.stop_start_jerk_dec;
+  const float jerk_dec = planner_param_.dynamic_obstacle_stop.deceleration_jerk;
   const float jerk_acc = std::abs(jerk_dec);
   const float planning_dec = jerk_dec < planner_param_.common.normal_min_jerk
                                ? planner_param_.common.limit_min_acc
@@ -701,7 +701,7 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
 
   // calculate distance needed to stop with jerk and acc constraints
   const float target_vel = 0.0;
-  const float jerk_dec = planner_param_.dynamic_obstacle_stop.stop_start_jerk_dec;
+  const float jerk_dec = planner_param_.dynamic_obstacle_stop.deceleration_jerk;
   const float jerk_acc = std::abs(jerk_dec);
   const float planning_dec = jerk_dec < planner_param_.common.normal_min_jerk
                                ? planner_param_.common.limit_min_acc
@@ -726,7 +726,7 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
     debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
   }
 
-  // vehicle have to decelerate if there is not enough distance with stop_start_jerk_dec
+  // vehicle have to decelerate if there is not enough distance with deceleration_jerk
   const bool deceleration_needed =
     *stop_dist > dist_to_collision - planner_param_.dynamic_obstacle_stop.stop_margin;
   // avoid acceleration when ego is decelerating
