@@ -184,15 +184,6 @@ boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
   return {};
 }
 
-// void applyMaximumVelocityLimit(const double max_vel_mps, Trajectory & trajectory)
-// {
-//   for (size_t idx = 0; idx < trajectory.points.size(); ++idx) {
-//     if (trajectory.points.at(idx).longitudinal_velocity_mps > max_vel_mps) {
-//       trajectory.points.at(idx).longitudinal_velocity_mps = max_vel_mps;
-//     }
-//   }
-// }
-
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly)
 {
   Polygon2d bg_poly;
