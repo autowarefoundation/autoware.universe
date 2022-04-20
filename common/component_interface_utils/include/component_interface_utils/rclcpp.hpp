@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_UTILS__INTERFACE_UTILS_HPP_
-#define INTERFACE_UTILS__INTERFACE_UTILS_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
+#define COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
 
-#include <interface_utils/rclcpp/create_interface.hpp>
-#include <interface_utils/rclcpp/service_server.hpp>
+#include <component_interface_utils/rclcpp/create_interface.hpp>
+#include <component_interface_utils/rclcpp/service_server.hpp>
 
-#endif  // INTERFACE_UTILS__INTERFACE_UTILS_HPP_
+#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_

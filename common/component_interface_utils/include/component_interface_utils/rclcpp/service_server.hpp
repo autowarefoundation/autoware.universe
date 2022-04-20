@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
-#define INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
+#define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace interface_utils
+namespace component_interface_utils
 {
 
 template <class SpecT>
@@ -54,6 +54,6 @@ private:
   typename rclcpp::Service<typename SpecT::Service>::SharedPtr service_;
 };
 
-}  // namespace interface_utils
+}  // namespace component_interface_utils
 
-#endif  // INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
+#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_

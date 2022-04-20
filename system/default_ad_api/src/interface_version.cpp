@@ -20,7 +20,7 @@ namespace default_ad_api
 InterfaceVersionNode::InterfaceVersionNode(const rclcpp::NodeOptions & options)
 : Node("interface_version", options)
 {
-  srv_ = interface_utils::create_service<ad_api::interface::version::T>(
+  srv_ = component_interface_utils::create_service<ad_api::interface::version::T>(
     this, &InterfaceVersionNode::onInterfaceVersion);
 }
 
@@ -28,7 +28,7 @@ void InterfaceVersionNode::onInterfaceVersion(
   const InterfaceVersion::Request::SharedPtr, const InterfaceVersion::Response::SharedPtr response)
 {
   response->major = 0;
-  response->minor = 0;
+  response->minor = 1;
   response->patch = 0;
 }
 

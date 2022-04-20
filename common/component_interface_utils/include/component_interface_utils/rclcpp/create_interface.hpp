@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
-#define INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
+#define COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 
-#include <interface_utils/rclcpp/service_server.hpp>
+#include <component_interface_utils/rclcpp/service_server.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <utility>
 
-namespace interface_utils
+namespace component_interface_utils
 {
 
 // Use a node pointer because shared_from_this cannot be used in constructor.
@@ -51,6 +51,6 @@ typename Service<SpecT>::SharedPtr create_service(
   return create_service_impl<SpecT>(node, std::bind(callback, node, _1, _2), group);
 }
 
-}  // namespace interface_utils
+}  // namespace component_interface_utils
 
-#endif  // INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
+#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
