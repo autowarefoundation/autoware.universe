@@ -108,9 +108,8 @@ std::vector<sampler_common::Path> generateBezierPaths(
     path_spline
       .frenet({path_msg.points.back().pose.position.x, path_msg.points.back().pose.position.y})
       .s;
-  const auto target_lengths = {20, 30, 40};
   std::vector<sampler_common::Path> bezier_paths;
-  for (const auto target_length : target_lengths) {
+  for (const auto target_length : params.sampling.target_lengths) {
     if (target_length <= base_path_length) continue;
     const auto target_s = std::min(max_s, initial_s + target_length - base_path_length);
     if (target_s == max_s) break;

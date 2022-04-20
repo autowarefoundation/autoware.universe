@@ -22,6 +22,7 @@
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <boost/geometry/algorithms/correct.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -42,8 +43,9 @@ sampler_common::Constraints prepareConstraints(
   constraints.soft.length_weight = -1.0;  // negative weight to consider length as a reward
   constraints.soft.curvature_weight = 1.0;
 
-  for (const auto & dynamic_obstacle_polygon :
+  for (auto & dynamic_obstacle_polygon :
        utils::predictedObjectsToPolygons(predicted_objects)) {
+    boost::geometry::correct(dynamic_obstacle_polygon);
     constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
   }
   for(const auto & drivable_id : drivable_ids) {
@@ -52,6 +54,7 @@ sampler_common::Constraints prepareConstraints(
     for(const auto & point: lanelet.polygon2d().basicPolygon()) {
       road_polygon.outer().push_back({point.x(), point.y()});
     }
+    boost::geometry::correct(road_polygon);
     constraints.drivable_polygons.push_back(std::move(road_polygon));
   }
   for(const auto & prefered_id : prefered_ids) {
@@ -60,6 +63,7 @@ sampler_common::Constraints prepareConstraints(
     for(const auto & point: lanelet.polygon2d().basicPolygon()) {
       prefered_polygon.outer().push_back({point.x(), point.y()});
     }
+    boost::geometry::correct(prefered_polygon);
     constraints.prefered_polygons.push_back(std::move(prefered_polygon));
   }
   return constraints;

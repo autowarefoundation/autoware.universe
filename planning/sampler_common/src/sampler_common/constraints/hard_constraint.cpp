@@ -49,7 +49,7 @@ bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
 {
   for (const auto & point : path.points) {
     bool within_at_least_one_poly = false;
-    for (const auto & polygon : polygons) {
+    for (auto polygon : polygons) {
       if (boost::geometry::within(point, polygon.outer())) {
         within_at_least_one_poly = true;
         break;
