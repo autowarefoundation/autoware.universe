@@ -55,6 +55,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     auto & p = planner_param_.dynamic_obstacle_stop;
     p.detection_method = node.declare_parameter(ns + ".detection_method", "Object");
     p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
+    p.specify_decel_jerk = node.declare_parameter(ns + ".specify_decel_jerk", false);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
     p.stop_start_jerk_dec = node.declare_parameter(ns + ".stop_start_jerk_dec", -0.3);

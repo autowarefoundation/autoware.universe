@@ -62,6 +62,7 @@ struct DynamicObstacleStopParam
 {
   std::string detection_method;
   bool use_partition_lanelet;
+  bool specify_decel_jerk;
   double stop_margin;
   double passing_margin;
   double stop_start_jerk_dec;

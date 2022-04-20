@@ -677,10 +677,27 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
   }
 
   // calculate distance to collision with the obstacle
-  float dist_to_collision;
   const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
     path.points, current_pose.position, dynamic_obstacle->nearest_collision_point);
-  dist_to_collision = dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
+  const float dist_to_collision =
+    dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
+
+  // insert the stop point without considering the distance from the obstacle
+  // smoother will calculate appropriate jerk for deceleration
+  if (!planner_param_.dynamic_obstacle_stop.specify_decel_jerk) {
+    // calculate index of stop point
+    const float base_to_collision_point =
+      planner_param_.dynamic_obstacle_stop.stop_margin + planner_param_.vehicle_param.base_to_front;
+    const size_t stop_index = dynamic_obstacle_stop_utils::calcIndexByLengthReverse(
+      path.points, dynamic_obstacle->nearest_collision_point, base_to_collision_point);
+    const auto & stop_point = path.points.at(stop_index).point.pose;
+
+    // debug
+    debug_ptr_->setAccelReason(DynamicObstacleStopDebug::AccelReason::STOP);
+    debug_ptr_->pushStopPose(stop_point);
+
+    return stop_point;
+  }
 
   // calculate distance needed to stop with jerk and acc constraints
   const float target_vel = 0.0;
