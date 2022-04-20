@@ -113,17 +113,6 @@ void PointpaintingFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
-  // get transform from pointcloud frame id to camera optical frame id
-  // geometry_msgs::msg::TransformStamped transform_stamped;
-  // try {
-  //   transform_stamped = tf_buffer_.lookupTransform(
-  //     /*target*/ camera_info.header.frame_id,
-  //     /*src*/ painted_pointcloud_msg.header.frame_id, tf2::TimePointZero);
-  // } catch (tf2::TransformException & ex) {
-  //   RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-  //   return;
-  // }
-
   // projection matrix
   Eigen::Matrix4d camera_projection;
   camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
@@ -149,6 +138,9 @@ void PointpaintingFusionNode::fuseOnSingleImage(
        iter_y(transformed_pointcloud, "y"), iter_z(transformed_pointcloud, "z");
        iter_x != iter_x.end();
        ++iter_x, ++iter_y, ++iter_z, ++iter_painted_intensity, ++iter_car, ++iter_ped, ++iter_bic) {
+    if (*iter_z < 0) {
+      continue;
+    }
     // project
     Eigen::Vector4d projected_point =
       camera_projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
@@ -168,7 +160,15 @@ void PointpaintingFusionNode::fuseOnSingleImage(
           autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
         switch (input_roi_msg.feature_objects.at(i).object.classification.front().label) {
           case autoware_auto_perception_msgs::msg::ObjectClassification::CAR:
-            // std::cout << "car" << std::endl;
+            *iter_car = 1.0;
+            break;
+          case autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK:
+            *iter_car = 1.0;
+            break;
+          case autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER:
+            *iter_car = 1.0;
+            break;
+          case autoware_auto_perception_msgs::msg::ObjectClassification::BUS:
             *iter_car = 1.0;
             break;
           case autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN:
@@ -177,15 +177,16 @@ void PointpaintingFusionNode::fuseOnSingleImage(
           case autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE:
             *iter_bic = 1.0;
             break;
+          case autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE:
+            *iter_bic = 1.0;
+            break;
         }
         if (debugger_) {
-          projected_points.push_back(normalized_projected_point);
           debug_image_points.push_back(normalized_projected_point);
         }
       }
     }
   }
-
   if (debugger_) {
     for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
       debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
