@@ -144,12 +144,12 @@ class TrajectoryVisualizer(Node):
         self.sub9 = message_filters.Subscriber(self, Trajectory, lane_driving + "/trajectory")
 
         self.ts1 = message_filters.ApproximateTimeSynchronizer(
-            [self.sub1, self.sub2, self.sub3, self.sub4, self.sub5], 30, 0.5
+            [self.sub1, self.sub2, self.sub3, self.sub4], 30, 0.5
         )
         self.ts1.registerCallback(self.CallbackMotionVelOptTraj)
 
         self.ts2 = message_filters.ApproximateTimeSynchronizer(
-            [self.sub6, self.sub7, self.sub8, self.sub9], 30, 1, 0
+            [self.sub5, self.sub6, self.sub7, self.sub8, self.sub9], 30, 1, 0
         )
         self.ts2.registerCallback(self.CallBackLaneDrivingTraj)
 
@@ -178,13 +178,12 @@ class TrajectoryVisualizer(Node):
     def CallbackVehicleTwist(self, cmd):
         self.vehicle_vx = cmd.longitudinal_velocity
 
-    def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4, cmd5):
+    def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4):
         print("CallbackMotionVelOptTraj called")
         self.CallBackTrajExVelLim(cmd1)
         self.CallBackTrajLatAccFiltered(cmd2)
         self.CallBackTrajRaw(cmd3)
         self.CallBackTrajTimeResampled(cmd4)
-        self.CallBackTrajFinal(cmd5)
 
     def CallBackTrajExVelLim(self, cmd):
         self.trajectory_external_velocity_limited = cmd
@@ -206,8 +205,9 @@ class TrajectoryVisualizer(Node):
         self.trajectory_final = cmd
         self.update_traj_final = True
 
-    def CallBackLaneDrivingTraj(self, cmd6, cmd7, cmd8, cmd9):
+    def CallBackLaneDrivingTraj(self, cmd5, cmd6, cmd7, cmd8, cmd9):
         print("CallBackLaneDrivingTraj called")
+        self.CallBackTrajFinal(cmd5)
         self.CallBackLaneChangePath(cmd6)
         self.CallBackBehaviorPath(cmd7)
         self.CallbackObstacleAvoidTraj(cmd8)
