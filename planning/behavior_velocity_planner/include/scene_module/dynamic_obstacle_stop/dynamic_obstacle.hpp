@@ -19,12 +19,6 @@
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_point.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-
-#include <geometry_msgs/msg/twist.h>
-
 #include <vector>
 
 namespace behavior_velocity_planner

@@ -17,24 +17,7 @@
 
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 
-#include <lanelet2_extension/utility/query.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
-
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-
-#include <boost/geometry.hpp>
-
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace behavior_velocity_planner
 {

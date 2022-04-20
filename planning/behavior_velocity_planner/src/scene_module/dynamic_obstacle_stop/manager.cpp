@@ -12,16 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <scene_module/dynamic_obstacle_stop/manager.hpp>
-
-#include <tf2/utils.h>
-
-#include <memory>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include "scene_module/dynamic_obstacle_stop/manager.hpp"
 
 namespace behavior_velocity_planner
 {

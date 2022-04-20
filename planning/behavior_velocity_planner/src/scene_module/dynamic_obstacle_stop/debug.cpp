@@ -16,10 +16,6 @@
 
 #include "scene_module/dynamic_obstacle_stop/scene.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;

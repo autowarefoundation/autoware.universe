@@ -18,25 +18,11 @@
 #include "scene_module/dynamic_obstacle_stop/debug.hpp"
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 #include "scene_module/dynamic_obstacle_stop/utils.hpp"
-
-#include <autoware_auto_planning_msgs/msg/path_point.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-
-#include <boost/optional.hpp>
+#include "scene_module/scene_module_interface.hpp"
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
-
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <lanelet2_extension/regulatory_elements/detection_area.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <scene_module/scene_module_interface.hpp>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <tf2/LinearMath/Transform.h>
 
 namespace behavior_velocity_planner
 {

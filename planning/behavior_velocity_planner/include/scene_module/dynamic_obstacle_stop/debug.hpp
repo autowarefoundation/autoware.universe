@@ -16,17 +16,6 @@
 
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
-#include <tier4_debug_msgs/msg/int32_stamped.hpp>
-#include <visualization_msgs/msg/marker.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
-
-#include <pcl/point_types.h>
-
-#include <memory>
 #include <string>
 #include <vector>
 namespace behavior_velocity_planner

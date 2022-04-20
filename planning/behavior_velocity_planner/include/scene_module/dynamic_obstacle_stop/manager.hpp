@@ -18,11 +18,6 @@
 #include "scene_module/dynamic_obstacle_stop/scene.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-
-#include <functional>
 #include <memory>
 
 namespace behavior_velocity_planner

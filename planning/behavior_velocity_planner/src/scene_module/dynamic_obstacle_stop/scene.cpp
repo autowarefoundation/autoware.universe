@@ -15,17 +15,10 @@
 #include "scene_module/dynamic_obstacle_stop/scene.hpp"
 
 #include "scene_module/dynamic_obstacle_stop/path_utils.hpp"
-#include "scene_module/dynamic_obstacle_stop/utils.hpp"
 #include "utilization/trajectory_utils.hpp"
 #include "utilization/util.hpp"
 
 #include <pcl/filters/voxel_grid.h>
-#include <tf2_eigen/tf2_eigen.h>
-
-#include <algorithm>
-#include <memory>
-#include <utility>
-#include <vector>
 
 namespace behavior_velocity_planner
 {
