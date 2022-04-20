@@ -25,16 +25,16 @@
 namespace signed_distance_function
 {
 
-class AbstractSignedDistnaceFunction
+class AbstractSignedDistanceFunction
 {
 public:
   virtual double operator()(double x, double y) const = 0;
   double getSphereTracingDist(
     double x_start, double y_start, double angle, double eps = 1e-2) const;
-  virtual ~AbstractSignedDistnaceFunction() {}
+  virtual ~AbstractSignedDistanceFunction() {}
 };
 
-class BoxSDF : public AbstractSignedDistnaceFunction
+class BoxSDF : public AbstractSignedDistanceFunction
 {
 public:
   BoxSDF(double length, double width, tf2::Transform tf_global_to_local)
@@ -51,10 +51,10 @@ private:
   tf2::Transform tf_global_to_local_;
 };
 
-class CompisiteSDF : public AbstractSignedDistnaceFunction
+class CompisiteSDF : public AbstractSignedDistanceFunction
 {
 public:
-  explicit CompisiteSDF(std::vector<std::shared_ptr<AbstractSignedDistnaceFunction>> sdf_ptrs)
+  explicit CompisiteSDF(std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs)
   : sdf_ptrs_(std::move(sdf_ptrs))
   {
     if (sdf_ptrs_.empty()) {
@@ -66,7 +66,7 @@ public:
   size_t nearest_sdf_index(double x, double y) const;
 
 private:
-  std::vector<std::shared_ptr<AbstractSignedDistnaceFunction>> sdf_ptrs_;
+  std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs_;
 };
 
 }  // namespace signed_distance_function

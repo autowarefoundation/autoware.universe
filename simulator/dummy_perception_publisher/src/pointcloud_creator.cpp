@@ -193,7 +193,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
   const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
 {
-  std::vector<std::shared_ptr<signed_distance_function::AbstractSignedDistnaceFunction>> sdf_ptrs;
+  std::vector<std::shared_ptr<signed_distance_function::AbstractSignedDistanceFunction>> sdf_ptrs;
   for (const auto & obj_info : obj_infos) {
     const auto sdf_ptr = std::make_shared<signed_distance_function::BoxSDF>(
       obj_info.length, obj_info.width, tf_base_link2map * obj_info.tf_map2moved_object);

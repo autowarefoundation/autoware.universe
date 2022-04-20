@@ -67,7 +67,7 @@ TEST(SignedDistanceFunctionTest, CompositeSDF)
   const auto f2 =
     std::make_shared<sdf::BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 2.0, 0)));
   const auto func =
-    sdf::CompisiteSDF(std::vector<std::shared_ptr<sdf::AbstractSignedDistnaceFunction>>{f1, f2});
+    sdf::CompisiteSDF(std::vector<std::shared_ptr<sdf::AbstractSignedDistanceFunction>>{f1, f2});
   ASSERT_NEAR(func(0.0, 0.9), 0.4, eps);
   ASSERT_NEAR(func(0.0, 1.1), 0.4, eps);
   ASSERT_NEAR(func(0.0, 0.1), -0.4, eps);
