@@ -172,9 +172,10 @@ private:
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
     const geometry_msgs::msg::Pose & current_pose) const;
 
-void publishDebugValue(
-  const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles, const boost::optional<DynamicObstacle> & dynamic_obstacle,
-  const geometry_msgs::msg::Pose & current_pose) const;
+  void publishDebugValue(
+    const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles,
+    const boost::optional<DynamicObstacle> & dynamic_obstacle,
+    const geometry_msgs::msg::Pose & current_pose) const;
 };
 }  // namespace behavior_velocity_planner
 
