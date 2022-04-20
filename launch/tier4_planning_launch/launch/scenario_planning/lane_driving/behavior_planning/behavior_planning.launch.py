@@ -188,6 +188,39 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    # smoother param
+    common_param_path = os.path.join(
+        get_package_share_directory("tier4_planning_launch"),
+        "config",
+        "scenario_planning",
+        "common",
+        "common.param.yaml",
+    )
+    with open(common_param_path, "r") as f:
+        common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    base_param_path = os.path.join(
+        get_package_share_directory("tier4_planning_launch"),
+        "config",
+        "scenario_planning",
+        "common",
+        "motion_velocity_smoother",
+        "motion_velocity_smoother.param.yaml",
+    )
+    with open(base_param_path, "r") as f:
+        base_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    smoother_param_path = os.path.join(
+        get_package_share_directory("tier4_planning_launch"),
+        "config",
+        "scenario_planning",
+        "common",
+        "motion_velocity_smoother",
+        "Analytical.param.yaml",
+    )
+    with open(smoother_param_path, "r") as f:
+        smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     # behavior velocity planner
     blind_spot_param_path = os.path.join(
         get_package_share_directory("tier4_planning_launch"),
@@ -297,6 +330,18 @@ def launch_setup(context, *args, **kwargs):
     with open(no_stopping_area_param_path, "r") as f:
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    dynamic_obstacle_stop_param_path = os.path.join(
+        get_package_share_directory("tier4_planning_launch"),
+        "config",
+        "scenario_planning",
+        "lane_driving",
+        "behavior_planning",
+        "behavior_velocity_planner",
+        "dynamic_obstacle_stop.param.yaml",
+    )
+    with open(dynamic_obstacle_stop_param_path, "r") as f:
+        dynamic_obstacle_stop_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
         plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode",
@@ -312,12 +357,20 @@ def launch_setup(context, *args, **kwargs):
                 "/perception/obstacle_segmentation/pointcloud",
             ),
             (
+                "~/input/compare_map_filtered_pointcloud",
+                "compare_map_filtered/pointcloud",
+            ),
+            (
                 "~/input/traffic_signals",
                 "/perception/traffic_light_recognition/traffic_signals",
             ),
             (
                 "~/input/external_traffic_signals",
                 "/external/traffic_light_recognition/traffic_signals",
+            ),
+            (
+                "~/input/external_velocity_limit_mps",
+                "/planning/scenario_planning/max_velocity_default",
             ),
             ("~/input/virtual_traffic_light_states", "/awapi/tmp/virtual_traffic_light_states"),
             (
@@ -342,12 +395,16 @@ def launch_setup(context, *args, **kwargs):
                 "launch_detection_area": True,
                 "launch_virtual_traffic_light": True,
                 "launch_occlusion_spot": True,
+                "launch_dynamic_obstacle_stop": True,
                 "launch_no_stopping_area": True,
                 "forward_path_length": 1000.0,
                 "backward_path_length": 5.0,
                 "max_accel": -2.8,
                 "delay_response_time": 1.3,
             },
+            common_param,
+            base_param,
+            smoother_param,
             blind_spot_param,
             crosswalk_param,
             detection_area_param,
@@ -358,6 +415,7 @@ def launch_setup(context, *args, **kwargs):
             occlusion_spot_param,
             no_stopping_area_param,
             vehicle_info_param,
+            dynamic_obstacle_stop_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
