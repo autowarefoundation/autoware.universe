@@ -1,2 +1,0 @@
-autoware_ad_api_msgs/ResponseStatusDetail   summary
-autoware_ad_api_msgs/ResponseStatusDetail[] details

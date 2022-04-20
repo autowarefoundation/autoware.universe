@@ -6,8 +6,6 @@ ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   srv/InterfaceVersion.srv
-  msg/ResponseStatus.msg
-  msg/ResponseStatusDetail.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs

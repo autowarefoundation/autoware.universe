@@ -17,6 +17,5 @@
 
 #include "./rclcpp/create_interface.hpp"
 #include "./rclcpp/service_server.hpp"
-#include "./response.hpp"
 
 #endif  // INTERFACE_UTILS__INTERFACE_UTILS_HPP_
