@@ -84,8 +84,8 @@ class TrajectoryVisualizer(Node):
         self.update_traj_raw = False
         self.update_traj_resample = False
         self.update_traj_final = False
-        self.update_lanechange_path = False
-        self.update_behavior_velocity_path = False
+        self.update_behavior_path_planner_path = False
+        self.update_behavior_velocity_planner_path = False
         self.update_traj_ob_avoid = False
         self.update_traj_ob_stop = False
 
@@ -104,8 +104,8 @@ class TrajectoryVisualizer(Node):
         self.trajectory_time_resampled = Trajectory()
         self.trajectory_final = Trajectory()
 
-        self.behavior_path_path = PathWithLaneId()
-        self.behavior_velocity_path = Path()
+        self.behavior_path_planner_path = PathWithLaneId()
+        self.behavior_velocity_planner_path = Path()
         self.obstacle_avoid_traj = Trajectory()
         self.obstacle_stop_traj = Trajectory()
 
@@ -217,18 +217,18 @@ class TrajectoryVisualizer(Node):
     def CallBackLaneDrivingTraj(self, cmd5, cmd6, cmd7, cmd8, cmd9):
         print("CallBackLaneDrivingTraj called")
         self.CallBackTrajFinal(cmd5)
-        self.CallBackLBehaviorPathPath(cmd6)
-        self.CallBackBehaviorVelocityPath(cmd7)
+        self.CallBackLBehaviorPathPlannerPath(cmd6)
+        self.CallBackBehaviorVelocityPlannerPath(cmd7)
         self.CallbackObstacleAvoidTraj(cmd8)
         self.CallbackObstacleStopTraj(cmd9)
 
-    def CallBackLBehaviorPathPath(self, cmd):
-        self.behavior_path_path = cmd
-        self.update_lanechange_path = True
+    def CallBackLBehaviorPathPlannerPath(self, cmd):
+        self.behavior_path_planner_path = cmd
+        self.update_behavior_path_planner_path = True
 
-    def CallBackBehaviorVelocityPath(self, cmd):
-        self.behavior_velocity_path = cmd
-        self.update_behavior_velocity_path = True
+    def CallBackBehaviorVelocityPlannerPath(self, cmd):
+        self.behavior_velocity_planner_path = cmd
+        self.update_behavior_velocity_planner_path = True
 
     def CallbackObstacleAvoidTraj(self, cmd):
         self.obstacle_avoid_traj = cmd
@@ -240,8 +240,8 @@ class TrajectoryVisualizer(Node):
 
     def setPlotTrajectoryVelocity(self):
         self.ax1 = plt.subplot(1, 1, 1)  # row, col, index(<raw*col)
-        (self.im1,) = self.ax1.plot([], [], label="0: behavior_path_path", marker="")
-        (self.im2,) = self.ax1.plot([], [], label="1: behavior_velocity_path", marker="", ls="--")
+        (self.im1,) = self.ax1.plot([], [], label="0: behavior_path_planner_path", marker="")
+        (self.im2,) = self.ax1.plot([], [], label="1: behavior_velocity_planner_path", marker="", ls="--")
         (self.im3,) = self.ax1.plot([], [], label="2: obstacle_avoid_traj", marker="", ls="-.")
         (self.im4,) = self.ax1.plot([], [], label="3: obstacle_stop_traj", marker="", ls="--")
         (self.im5,) = self.ax1.plot([], [], label="4-1: opt input", marker="", ls="--")
@@ -302,8 +302,8 @@ class TrajectoryVisualizer(Node):
         print("plot start")
 
         # copy
-        behavior_path_path = self.behavior_path_path
-        behavior_velocity_path = self.behavior_velocity_path
+        behavior_path_planner_path = self.behavior_path_planner_path
+        behavior_velocity_planner_path = self.behavior_velocity_planner_path
         obstacle_avoid_traj = self.obstacle_avoid_traj
         obstacle_stop_traj = self.obstacle_stop_traj
         trajectory_raw = self.trajectory_raw
@@ -312,20 +312,20 @@ class TrajectoryVisualizer(Node):
         trajectory_time_resampled = self.trajectory_time_resampled
         trajectory_final = self.trajectory_final
 
-        if self.update_lanechange_path:
-            x = self.CalcArcLengthPathWLid(behavior_path_path)
-            y = self.ToVelListPathWLid(behavior_path_path)
+        if self.update_behavior_path_planner_path:
+            x = self.CalcArcLengthPathWLid(behavior_path_planner_path)
+            y = self.ToVelListPathWLid(behavior_path_planner_path)
             self.im1.set_data(x, y)
-            self.update_lanechange_path = False
+            self.update_behavior_path_planner_path = False
             if len(y) != 0:
                 self.max_vel = max(10.0, np.max(y))
                 self.min_vel = np.min(y)
 
-        if self.update_behavior_velocity_path:
-            x = self.CalcArcLengthPath(behavior_velocity_path)
-            y = self.ToVelListPath(behavior_velocity_path)
+        if self.update_behavior_velocity_planner_path:
+            x = self.CalcArcLengthPath(behavior_velocity_planner_path)
+            y = self.ToVelListPath(behavior_velocity_planner_path)
             self.im2.set_data(x, y)
-            self.update_behavior_velocity_path = False
+            self.update_behavior_velocity_planner_path = False
 
         if self.update_traj_ob_avoid:
             x = self.CalcArcLength(obstacle_avoid_traj)
