@@ -49,7 +49,7 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 
 bool createDetectionAreaPolygons(
   Polygons2d & da_polys, const PathWithLaneId & path, const size_t nearest_idx,
-  const DetectionRange da_range, const double obstacle_vel_mps, const double min_velocity)
+  const DetectionRange & da_range, const double obstacle_vel_mps, const double min_velocity)
 {
   /**
    * @brief relationships for interpolated polygon
