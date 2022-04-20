@@ -15,12 +15,10 @@
 #ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__MANAGER_HPP_
 #define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__MANAGER_HPP_
 
-// #include "scene_module/dynamic_obstacle_stop/debug.hpp"
 #include "scene_module/dynamic_obstacle_stop/scene.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/update_param.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -44,12 +42,6 @@ private:
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
-
-  // todo: declare here is ok?
-  // Dynamic Reconfigure
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-  rcl_interfaces::msg::SetParametersResult paramCallback(
-    const std::vector<rclcpp::Parameter> & parameters);
 };
 }  // namespace behavior_velocity_planner
 
