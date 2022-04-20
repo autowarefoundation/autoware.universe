@@ -48,8 +48,8 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 }
 
 bool createDetectionAreaPolygons(
-  Polygons2d & da_polys, const PathWithLaneId & path, const DetectionRange da_range,
-  const double obstacle_vel_mps, const double min_velocity)
+  Polygons2d & da_polys, const PathWithLaneId & path, const size_t nearest_idx,
+  const DetectionRange da_range, const double obstacle_vel_mps, const double min_velocity)
 {
   /**
    * @brief relationships for interpolated polygon
@@ -68,8 +68,8 @@ bool createDetectionAreaPolygons(
   const size_t max_index = static_cast<size_t>(path.points.size() - 1);
   //! avoid bug with same point polygon
   const double eps = 1e-3;
-  if (path.points.size() < 2) return false;  // case of path point is only one
-  auto p0 = path.points.front().point;
+  if (max_index == nearest_idx) return false;  // case of path point is not enough size
+  auto p0 = path.points.at(nearest_idx).point;
   double ttc = 0.0;
   double dist_sum = 0.0;
   double length = 0;
@@ -78,7 +78,7 @@ bool createDetectionAreaPolygons(
   LineString2d left_outer_bound = {calculateOffsetPoint2d(p0.pose, min_len, min_dst + eps)};
   LineString2d right_inner_bound = {calculateOffsetPoint2d(p0.pose, min_len, -min_dst)};
   LineString2d right_outer_bound = {calculateOffsetPoint2d(p0.pose, min_len, -min_dst - eps)};
-  for (size_t s = 1; s <= max_index; s++) {
+  for (size_t s = nearest_idx + 1; s <= max_index; s++) {
     const auto p1 = path.points.at(s).point;
     const double ds = tier4_autoware_utils::calcDistance2d(p0, p1);
     dist_sum += ds;

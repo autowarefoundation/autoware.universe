@@ -124,8 +124,10 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
+  const size_t nearest_idx = tier4_autoware_utils::findNearestIndex(
+    predicted_path.points, planner_data_->current_pose.pose.position);
   if (!utils::buildDetectionAreaPolygon(
-        debug_data_.detection_area_polygons, predicted_path, offset_from_start_to_ego, param_)) {
+        debug_data_.detection_area_polygons, predicted_path, nearest_idx, param_)) {
     return true;  // path point is not enough
   }
   DEBUG_PRINT(show_time, "generate poly[ms]: ", stop_watch_.toc("processing_time", true));
