@@ -135,65 +135,66 @@ void DummyPerceptionPublisherNode::timerCallback()
     }
   }
 
-  if (selected_indices.empty()) {
-    return;
-  }
-
-  std::vector<ObjectInfo> obj_infos;
-  for (const auto selected_idx : selected_indices) {
-    const auto obj_info = ObjectInfo(objects_.at(selected_idx), current_time);
-    tf2::toMsg(obj_info.tf_map2moved_object, output_moved_object_pose.pose);
-    obj_infos.push_back(obj_info);
-  }
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  const auto pointclouds = pointcloud_creator_->create_pointclouds(
-    obj_infos, tf_base_link2map, random_generator_, merged_pointcloud_ptr);
-  pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
-
-  std::vector<size_t> delete_idxs;
-  for (size_t i = 0; i < selected_indices.size(); ++i) {
-    const auto pointcloud = pointclouds[i];
-    const size_t selected_idx = selected_indices[i];
-    const auto & object = objects_.at(selected_idx);
-    const auto object_info = ObjectInfo(object, current_time);
-    // dynamic object
-    std::normal_distribution<> x_random(0.0, object_info.std_dev_x);
-    std::normal_distribution<> y_random(0.0, object_info.std_dev_y);
-    std::normal_distribution<> yaw_random(0.0, object_info.std_dev_yaw);
-    tf2::Quaternion noised_quat;
-    noised_quat.setRPY(0, 0, yaw_random(random_generator_));
-    tf2::Transform tf_moved_object2noised_moved_object(
-      noised_quat, tf2::Vector3(x_random(random_generator_), y_random(random_generator_), 0.0));
-    tf2::Transform tf_base_link2noised_moved_object;
-    tf_base_link2noised_moved_object =
-      tf_base_link2map * object_info.tf_map2moved_object * tf_moved_object2noised_moved_object;
-    tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
-    feature_object.object.classification.push_back(object.classification);
-    feature_object.object.kinematics.pose_with_covariance = object.initial_state.pose_covariance;
-    feature_object.object.kinematics.twist_with_covariance = object.initial_state.twist_covariance;
-    feature_object.object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
-    feature_object.object.kinematics.has_twist = false;
-    tf2::toMsg(
-      tf_base_link2noised_moved_object, feature_object.object.kinematics.pose_with_covariance.pose);
-    feature_object.object.shape = object.shape;
-    pcl::toROSMsg(*pointcloud, feature_object.feature.cluster);
-    output_dynamic_object_msg.feature_objects.push_back(feature_object);
-
-    // check delete idx
-    tf2::Transform tf_base_link2moved_object;
-    tf_base_link2moved_object = tf_base_link2map * object_info.tf_map2moved_object;
-    double dist = std::sqrt(
-      tf_base_link2moved_object.getOrigin().x() * tf_base_link2moved_object.getOrigin().x() +
-      tf_base_link2moved_object.getOrigin().y() * tf_base_link2moved_object.getOrigin().y());
-    if (visible_range_ < dist) {
-      delete_idxs.push_back(selected_idx);
+  if (!selected_indices.empty()) {
+    std::vector<ObjectInfo> obj_infos;
+    for (const auto selected_idx : selected_indices) {
+      const auto obj_info = ObjectInfo(objects_.at(selected_idx), current_time);
+      tf2::toMsg(obj_info.tf_map2moved_object, output_moved_object_pose.pose);
+      obj_infos.push_back(obj_info);
     }
-  }
-  // delete
-  for (int delete_idx = delete_idxs.size() - 1; 0 <= delete_idx; --delete_idx) {
-    objects_.erase(objects_.begin() + delete_idxs.at(delete_idx));
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    const auto pointclouds = pointcloud_creator_->create_pointclouds(
+      obj_infos, tf_base_link2map, random_generator_, merged_pointcloud_ptr);
+    pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
+
+    std::vector<size_t> delete_idxs;
+    for (size_t i = 0; i < selected_indices.size(); ++i) {
+      const auto pointcloud = pointclouds[i];
+      const size_t selected_idx = selected_indices[i];
+      const auto & object = objects_.at(selected_idx);
+      const auto object_info = ObjectInfo(object, current_time);
+      // dynamic object
+      std::normal_distribution<> x_random(0.0, object_info.std_dev_x);
+      std::normal_distribution<> y_random(0.0, object_info.std_dev_y);
+      std::normal_distribution<> yaw_random(0.0, object_info.std_dev_yaw);
+      tf2::Quaternion noised_quat;
+      noised_quat.setRPY(0, 0, yaw_random(random_generator_));
+      tf2::Transform tf_moved_object2noised_moved_object(
+        noised_quat, tf2::Vector3(x_random(random_generator_), y_random(random_generator_), 0.0));
+      tf2::Transform tf_base_link2noised_moved_object;
+      tf_base_link2noised_moved_object =
+        tf_base_link2map * object_info.tf_map2moved_object * tf_moved_object2noised_moved_object;
+      tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
+      feature_object.object.classification.push_back(object.classification);
+      feature_object.object.kinematics.pose_with_covariance = object.initial_state.pose_covariance;
+      feature_object.object.kinematics.twist_with_covariance =
+        object.initial_state.twist_covariance;
+      feature_object.object.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+      feature_object.object.kinematics.has_twist = false;
+      tf2::toMsg(
+        tf_base_link2noised_moved_object,
+        feature_object.object.kinematics.pose_with_covariance.pose);
+      feature_object.object.shape = object.shape;
+      pcl::toROSMsg(*pointcloud, feature_object.feature.cluster);
+      output_dynamic_object_msg.feature_objects.push_back(feature_object);
+
+      // check delete idx
+      tf2::Transform tf_base_link2moved_object;
+      tf_base_link2moved_object = tf_base_link2map * object_info.tf_map2moved_object;
+      double dist = std::sqrt(
+        tf_base_link2moved_object.getOrigin().x() * tf_base_link2moved_object.getOrigin().x() +
+        tf_base_link2moved_object.getOrigin().y() * tf_base_link2moved_object.getOrigin().y());
+      if (visible_range_ < dist) {
+        delete_idxs.push_back(selected_idx);
+      }
+    }
+
+    // delete
+    for (int delete_idx = delete_idxs.size() - 1; 0 <= delete_idx; --delete_idx) {
+      objects_.erase(objects_.begin() + delete_idxs.at(delete_idx));
+    }
   }
 
   // create output header
