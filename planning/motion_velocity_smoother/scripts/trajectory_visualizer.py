@@ -241,7 +241,9 @@ class TrajectoryVisualizer(Node):
     def setPlotTrajectoryVelocity(self):
         self.ax1 = plt.subplot(1, 1, 1)  # row, col, index(<raw*col)
         (self.im1,) = self.ax1.plot([], [], label="0: behavior_path_planner_path", marker="")
-        (self.im2,) = self.ax1.plot([], [], label="1: behavior_velocity_planner_path", marker="", ls="--")
+        (self.im2,) = self.ax1.plot(
+            [], [], label="1: behavior_velocity_planner_path", marker="", ls="--"
+        )
         (self.im3,) = self.ax1.plot([], [], label="2: obstacle_avoid_traj", marker="", ls="-.")
         (self.im4,) = self.ax1.plot([], [], label="3: obstacle_stop_traj", marker="", ls="--")
         (self.im5,) = self.ax1.plot([], [], label="4-1: opt input", marker="", ls="--")
