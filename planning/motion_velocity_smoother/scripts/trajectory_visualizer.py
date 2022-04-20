@@ -85,7 +85,7 @@ class TrajectoryVisualizer(Node):
         self.update_traj_resample = False
         self.update_traj_final = False
         self.update_lanechange_path = False
-        self.update_behavior_path = False
+        self.update_behavior_velocity_path = False
         self.update_traj_ob_avoid = False
         self.update_traj_ob_stop = False
 
@@ -105,7 +105,7 @@ class TrajectoryVisualizer(Node):
         self.trajectory_final = Trajectory()
 
         self.lane_change_path = PathWithLaneId()
-        self.behavior_path = Path()
+        self.behavior_velocity_path = Path()
         self.obstacle_avoid_traj = Trajectory()
         self.obstacle_stop_traj = Trajectory()
 
@@ -218,7 +218,7 @@ class TrajectoryVisualizer(Node):
         print("CallBackLaneDrivingTraj called")
         self.CallBackTrajFinal(cmd5)
         self.CallBackLaneChangePath(cmd6)
-        self.CallBackBehaviorPath(cmd7)
+        self.CallBackBehaviorVelocityPath(cmd7)
         self.CallbackObstacleAvoidTraj(cmd8)
         self.CallbackObstacleStopTraj(cmd9)
 
@@ -226,9 +226,9 @@ class TrajectoryVisualizer(Node):
         self.lane_change_path = cmd
         self.update_lanechange_path = True
 
-    def CallBackBehaviorPath(self, cmd):
-        self.behavior_path = cmd
-        self.update_behavior_path = True
+    def CallBackBehaviorVelocityPath(self, cmd):
+        self.behavior_velocity_path = cmd
+        self.update_behavior_velocity_path = True
 
     def CallbackObstacleAvoidTraj(self, cmd):
         self.obstacle_avoid_traj = cmd
@@ -241,7 +241,7 @@ class TrajectoryVisualizer(Node):
     def setPlotTrajectoryVelocity(self):
         self.ax1 = plt.subplot(1, 1, 1)  # row, col, index(<raw*col)
         (self.im1,) = self.ax1.plot([], [], label="0: lane_change_path", marker="")
-        (self.im2,) = self.ax1.plot([], [], label="1: behavior_path", marker="", ls="--")
+        (self.im2,) = self.ax1.plot([], [], label="1: behavior_velocity_path", marker="", ls="--")
         (self.im3,) = self.ax1.plot([], [], label="2: obstacle_avoid_traj", marker="", ls="-.")
         (self.im4,) = self.ax1.plot([], [], label="3: obstacle_stop_traj", marker="", ls="--")
         (self.im5,) = self.ax1.plot([], [], label="4-1: opt input", marker="", ls="--")
@@ -303,7 +303,7 @@ class TrajectoryVisualizer(Node):
 
         # copy
         lane_change_path = self.lane_change_path
-        behavior_path = self.behavior_path
+        behavior_velocity_path = self.behavior_velocity_path
         obstacle_avoid_traj = self.obstacle_avoid_traj
         obstacle_stop_traj = self.obstacle_stop_traj
         trajectory_raw = self.trajectory_raw
@@ -321,11 +321,11 @@ class TrajectoryVisualizer(Node):
                 self.max_vel = max(10.0, np.max(y))
                 self.min_vel = np.min(y)
 
-        if self.update_behavior_path:
-            x = self.CalcArcLengthPath(behavior_path)
-            y = self.ToVelListPath(behavior_path)
+        if self.update_behavior_velocity_path:
+            x = self.CalcArcLengthPath(behavior_velocity_path)
+            y = self.ToVelListPath(behavior_velocity_path)
             self.im2.set_data(x, y)
-            self.update_behavior_path = False
+            self.update_behavior_velocity_path = False
 
         if self.update_traj_ob_avoid:
             x = self.CalcArcLength(obstacle_avoid_traj)
