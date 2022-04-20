@@ -20,7 +20,6 @@ from autoware_auto_planning_msgs.msg import Path
 from autoware_auto_planning_msgs.msg import PathWithLaneId
 from autoware_auto_planning_msgs.msg import Trajectory
 from autoware_auto_vehicle_msgs.msg import VelocityReport
-from tier4_planning_msgs.msg import VelocityLimit
 from geometry_msgs.msg import Pose
 from matplotlib import animation
 import matplotlib.pyplot as plt
@@ -32,6 +31,7 @@ from rclpy.node import Node
 import tf2_ros
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from tier4_planning_msgs.msg import VelocityLimit
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--length", help="max arclength in plot")
@@ -258,8 +258,7 @@ class TrajectoryVisualizer(Node):
             [], [], label="vehicle twist vx", color="k", marker="+", ls=":", markersize=10
         )
 
-        (self.im12,) = self.ax1.plot(
-            [], [], label="external velocity limit", color="k", marker="")
+        (self.im12,) = self.ax1.plot([], [], label="external velocity limit", color="k", marker="")
 
         self.ax1.set_title("trajectory's velocity")
         self.ax1.legend()
@@ -378,7 +377,7 @@ class TrajectoryVisualizer(Node):
             if self.velocity_limit is not None:
                 x = [0, PLOT_MAX_ARCLENGTH]
                 y = [self.velocity_limit, self.velocity_limit]
-                self.im12.set_data(x,y)
+                self.im12.set_data(x, y)
 
         # change y-range
         self.ax1.set_ylim([self.min_vel - 1.0, self.max_vel + 1.0])
