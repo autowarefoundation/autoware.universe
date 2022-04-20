@@ -2,13 +2,34 @@
 
 ## InterfaceVersion
 
-This service provides an interface version based on [Semantic Versioning](SemVer).
-Unlike others, this interface must be backwards and forwards compatible across major versions.
+The interface should be stable, but it also needs to be improved on demand. This requires version control.
+The application needs to check compatibility with the interface version and to switch the processing depending on that.
+For that, this service provides an interface version based on [Semantic Versioning][semver].
+Unlike others, this interface should be especially stable because it needs to be backwards and forwards compatible across major versions.
 
 ## ResponseStatus
 
 This status is commonly used in software to unify error handling. The field `summary` is the overall result and processing is based on it.
 The field `details` is used to pass the result of the interface used internally. This is for analysis and is mainly used by developers.
+
+Below is a sample response status. The user knows that an parameter error has occurred in `sample/module2`, so contacting the developer with this information will facilitate the analysis.
+
+```yaml
+summary:
+  code: ERROR
+  component: sample
+  message: ...
+  description: ...
+details:
+  - code: SUCCESS
+    component: sample/module1
+    message: ...
+    description: ...
+  - code: ERROR
+    component: sample/module2
+    message: unknown parameter
+    description: ...
+```
 
 ## ResponseStatusDetail
 
