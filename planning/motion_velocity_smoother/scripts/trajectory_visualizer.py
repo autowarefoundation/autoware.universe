@@ -20,6 +20,7 @@ from autoware_auto_planning_msgs.msg import Path
 from autoware_auto_planning_msgs.msg import PathWithLaneId
 from autoware_auto_planning_msgs.msg import Trajectory
 from autoware_auto_vehicle_msgs.msg import VelocityReport
+from tier4_planning_msgs.msg import VelocityLimit
 from geometry_msgs.msg import Pose
 from matplotlib import animation
 import matplotlib.pyplot as plt
@@ -95,6 +96,7 @@ class TrajectoryVisualizer(Node):
         self.self_pose_received = False
         self.localization_vx = 0.0
         self.vehicle_vx = 0.0
+        self.velocity_limit = None
 
         self.trajectory_external_velocity_limited = Trajectory()
         self.trajectory_lateral_acc_filtered = Trajectory()
@@ -113,6 +115,10 @@ class TrajectoryVisualizer(Node):
         )
         self.sub_vehicle_twist = self.create_subscription(
             VelocityReport, "/vehicle/status/velocity_status", self.CallbackVehicleTwist, 1
+        )
+
+        self.sub_external_velocity_limit = self.create_subscription(
+            VelocityLimit, "/planning/scenario_planning/max_velocity", self.CallbackVelocityLimit, 1
         )
 
         # BUFFER_SIZE = 65536*100
@@ -177,6 +183,9 @@ class TrajectoryVisualizer(Node):
 
     def CallbackVehicleTwist(self, cmd):
         self.vehicle_vx = cmd.longitudinal_velocity
+
+    def CallbackVelocityLimit(self, cmd):
+        self.velocity_limit = cmd.max_velocity
 
     def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4):
         print("CallbackMotionVelOptTraj called")
@@ -248,6 +257,10 @@ class TrajectoryVisualizer(Node):
         (self.im11,) = self.ax1.plot(
             [], [], label="vehicle twist vx", color="k", marker="+", ls=":", markersize=10
         )
+
+        (self.im12,) = self.ax1.plot(
+            [], [], label="external velocity limit", color="k", marker="")
+
         self.ax1.set_title("trajectory's velocity")
         self.ax1.legend()
         self.ax1.set_xlim([0, PLOT_MAX_ARCLENGTH])
@@ -265,6 +278,7 @@ class TrajectoryVisualizer(Node):
             self.im9,
             self.im10,
             self.im11,
+            self.im12,
         )
 
     def plotTrajectoryVelocity(self, data):
@@ -283,6 +297,7 @@ class TrajectoryVisualizer(Node):
                 self.im9,
                 self.im10,
                 self.im11,
+                self.im12,
             )
         print("plot start")
 
@@ -360,6 +375,11 @@ class TrajectoryVisualizer(Node):
                 self.im10.set_data(x_closest, self.localization_vx)
                 self.im11.set_data(x_closest, self.vehicle_vx)
 
+            if self.velocity_limit is not None:
+                x = [0, PLOT_MAX_ARCLENGTH]
+                y = [self.velocity_limit, self.velocity_limit]
+                self.im12.set_data(x,y)
+
         # change y-range
         self.ax1.set_ylim([self.min_vel - 1.0, self.max_vel + 1.0])
 
@@ -375,6 +395,7 @@ class TrajectoryVisualizer(Node):
             self.im9,
             self.im10,
             self.im11,
+            self.im12,
         )
 
     def CalcArcLength(self, traj):
