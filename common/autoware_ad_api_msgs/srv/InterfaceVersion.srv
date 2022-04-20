@@ -1,4 +1,4 @@
 ---
-uint32 major
-uint32 minor
-uint32 patch
+uint16 major
+uint16 minor
+uint16 patch
