@@ -15,8 +15,7 @@
 #ifndef INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 #define INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 
-#include "./service_server.hpp"
-
+#include <interface_utils/rclcpp/service_server.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <utility>
