@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../src/obstacle_collision_checker_node/obstacle_collision_checker.cpp"
+#include "../src/obstacle_collision_checker_node/obstacle_collision_checker.cpp"  // NOLINT
 #include "gtest/gtest.h"
 
 TEST(test_obstacle_collision_checker, filterPointCloudByTrajectory)
