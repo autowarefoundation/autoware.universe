@@ -27,7 +27,7 @@
   <group>
     <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
       <arg name="image_raw0" value="/front_image"/>
-<!--      <arg name="image_raw0" value="$(var image_raw0)"/>-->
+      <!--      <arg name="image_raw0" value="$(var image_raw0)"/>-->
       <arg name="image_raw1" value="$(var image_raw1)"/>
       <arg name="image_raw2" value="$(var image_raw2)"/>
       <arg name="image_raw3" value="$(var image_raw3)"/>
@@ -38,11 +38,9 @@
       <arg name="image_number" value="$(var image_number)"/>
     </include>
   </group>
-<!--  <group>-->
-<!--    <include file="$(find-pkg-share tensorrt_yolo)/launch/tensorrt_yolo.launch.xml"></include>-->
-<!--  </group>-->
-
-
+  <!--  <group>-->
+  <!--    <include file="$(find-pkg-share tensorrt_yolo)/launch/tensorrt_yolo.launch.xml"></include>-->
+  <!--  </group>-->
 
   <!-- Pointcloud map filter -->
   <group>

@@ -44,6 +44,4 @@
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
     </include>
   </group>
-
-
 </launch>
