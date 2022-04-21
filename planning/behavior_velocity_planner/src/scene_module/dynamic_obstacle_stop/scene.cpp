@@ -687,7 +687,8 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
 
     // debug
     debug_ptr_->setAccelReason(DynamicObstacleStopDebug::AccelReason::STOP);
-    debug_ptr_->pushStopPose(stop_point);
+    debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
+      stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
     return stop_point;
   }
@@ -741,7 +742,8 @@ boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcStopPoi
 
   // debug
   debug_ptr_->setAccelReason(DynamicObstacleStopDebug::AccelReason::STOP);
-  debug_ptr_->pushStopPose(stop_point);
+  debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
+    stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
   return stop_point;
 }
@@ -858,7 +860,8 @@ void DynamicObstacleStopModule::insertApproachingVelocity(
   const auto & stop_point = resampled_path.points.at(stop_idx).point.pose;
 
   // debug
-  debug_ptr_->pushStopPose(stop_point);
+  debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
+    stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
   const auto nearest_seg_idx_stop =
     tier4_autoware_utils::findNearestSegmentIndex(output_path.points, stop_point.position);

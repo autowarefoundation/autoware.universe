@@ -34,9 +34,9 @@ visualization_msgs::msg::Marker createStopLineMarker(
   constexpr int32_t marker_id = 0;
   auto marker = createDefaultMarker(
     "map", current_time, "stop_line", marker_id, visualization_msgs::msg::Marker::LINE_STRIP,
-    createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 0, 0, 0.999));
+    createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0, 0.999));
 
-  constexpr float line_length = 7.0;
+  constexpr float line_length = 6.0;
   const auto p1 = tier4_autoware_utils::calcOffsetPose(pose, 0, line_length / 2.0, 0);
   const auto p2 = tier4_autoware_utils::calcOffsetPose(pose, 0, -line_length / 2.0, 0);
   marker.points.push_back(p1.position);
