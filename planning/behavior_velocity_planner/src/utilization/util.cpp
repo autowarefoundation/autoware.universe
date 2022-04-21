@@ -48,7 +48,7 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 }
 
 bool createDetectionAreaPolygons(
-  Polygons2d & da_polys, const PathWithLaneId & path, const size_t nearest_idx,
+  Polygons2d & da_polys, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
   const DetectionRange & da_range, const double obstacle_vel_mps, const double min_velocity)
 {
   /**
@@ -68,8 +68,32 @@ bool createDetectionAreaPolygons(
   const size_t max_index = static_cast<size_t>(path.points.size() - 1);
   //! avoid bug with same point polygon
   const double eps = 1e-3;
+  auto nearest_idx = tier4_autoware_utils::findNearestIndex(path.points, pose.position);
   if (max_index == nearest_idx) return false;  // case of path point is not enough size
   auto p0 = path.points.at(nearest_idx).point;
+  auto first_idx = nearest_idx + 1;
+
+  // use ego point as start point if same point as ego is not in the path
+  const auto dist_to_nearest =
+    std::fabs(tier4_autoware_utils::calcSignedArcLength(path.points, pose.position, nearest_idx));
+  if (dist_to_nearest > eps) {
+    const auto nearest_seg_idx =
+      tier4_autoware_utils::findNearestSegmentIndex(path.points, pose.position);
+
+    // interpolate ego point
+    const auto & pp = path.points;
+    const double ds =
+      tier4_autoware_utils::calcDistance2d(pp.at(nearest_seg_idx), pp.at(nearest_seg_idx + 1));
+    const double dist_to_nearest_seg =
+      tier4_autoware_utils::calcSignedArcLength(path.points, nearest_seg_idx, pose.position);
+    const double ratio = dist_to_nearest_seg / ds;
+    p0 = getLerpPathPointWithLaneId(
+      pp.at(nearest_seg_idx).point, pp.at(nearest_seg_idx + 1).point, ratio);
+
+    // new first index should be ahead of p0
+    first_idx = nearest_seg_idx + 1;
+  }
+
   double ttc = 0.0;
   double dist_sum = 0.0;
   double length = 0;
@@ -78,7 +102,7 @@ bool createDetectionAreaPolygons(
   LineString2d left_outer_bound = {calculateOffsetPoint2d(p0.pose, min_len, min_dst + eps)};
   LineString2d right_inner_bound = {calculateOffsetPoint2d(p0.pose, min_len, -min_dst)};
   LineString2d right_outer_bound = {calculateOffsetPoint2d(p0.pose, min_len, -min_dst - eps)};
-  for (size_t s = nearest_idx + 1; s <= max_index; s++) {
+  for (size_t s = first_idx; s <= max_index; s++) {
     const auto p1 = path.points.at(s).point;
     const double ds = tier4_autoware_utils::calcDistance2d(p0, p1);
     dist_sum += ds;
