@@ -132,6 +132,7 @@ private:
     // stopping
     float64_t stopping_state_stop_dist;
     // stop
+    float64_t stopped_state_entry_duration_time;
     float64_t stopped_state_entry_vel;
     float64_t stopped_state_entry_acc;
     // emergency

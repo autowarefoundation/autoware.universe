@@ -62,6 +62,8 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
     // stopping
     p.stopping_state_stop_dist =
       declare_parameter<float64_t>("stopping_state_stop_dist");  // [m]
+    p.stopped_state_entry_duration_time =
+      declare_parameter<float64_t>("stopped_state_entry_duration_time");  // [s]
     // stop
     p.stopped_state_entry_vel =
       declare_parameter<float64_t>("stopped_state_entry_vel");  // [m/s]
@@ -255,6 +257,7 @@ rcl_interfaces::msg::SetParametersResult LongitudinalController::paramCallback(
     auto & p = m_state_transition_params;
     update_param("drive_state_stop_dist", p.drive_state_stop_dist);
     update_param("stopping_state_stop_dist", p.stopping_state_stop_dist);
+    update_param("stopped_state_entry_duration_time", p.stopped_state_entry_duration_time);
     update_param("stopped_state_entry_vel", p.stopped_state_entry_vel);
     update_param("stopped_state_entry_acc", p.stopped_state_entry_acc);
     update_param("emergency_state_overshoot_stop_dist", p.emergency_state_overshoot_stop_dist);
@@ -489,7 +492,9 @@ LongitudinalController::ControlState LongitudinalController::updateControlState(
     m_last_running_time = std::make_shared<rclcpp::Time>(this->now());
   }
   const bool8_t stopped_condition =
-    m_last_running_time ? (this->now() - *m_last_running_time).seconds() > 0.5 : false;
+    m_last_running_time
+      ? (this->now() - *m_last_running_time).seconds() > p.stopped_state_entry_duration_time
+      : false;
 
   const bool8_t emergency_condition =
     m_enable_overshoot_emergency && stop_dist < -p.emergency_state_overshoot_stop_dist;
@@ -597,10 +602,7 @@ LongitudinalController::Motion LongitudinalController::calcCtrlCmd(
   } else if (current_control_state == ControlState::STOPPED) {
     // This acceleration is without slope compensation
     const auto & p = m_stopped_state_params;
-    raw_ctrl_cmd.vel = trajectory_follower::longitudinal_utils::applyDiffLimitFilter(
-      p.vel,
-      m_prev_raw_ctrl_cmd.vel,
-      control_data.dt, p.acc);
+    raw_ctrl_cmd.vel = p.vel;
     raw_ctrl_cmd.acc = trajectory_follower::longitudinal_utils::applyDiffLimitFilter(
       p.acc,
       m_prev_raw_ctrl_cmd.acc,
