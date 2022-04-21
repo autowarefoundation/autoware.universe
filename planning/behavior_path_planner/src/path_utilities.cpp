@@ -290,7 +290,6 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
     right_end_point.position.y += std::cos(end_yaw) * (-shift_to_outside);
   }
 
-  /*
   bool left_start_point_is_in_lane = false;
   bool right_start_point_is_in_lane = false;
   bool left_end_point_is_in_lane = false;
@@ -313,17 +312,21 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   }
 
   bool cross_line = false;
-  if (
-    left_start_point_is_in_lane != left_end_point_is_in_lane ||
-    right_start_point_is_in_lane != right_end_point_is_in_lane) {
+  bool TEMPORARY_SET_CROSSLINE_TRUE =
+    true;  // due to a bug. See link:
+           // https://github.com/autowarefoundation/autoware.universe/pull/748
+  if (TEMPORARY_SET_CROSSLINE_TRUE) {
     cross_line = true;
+  } else {
+    cross_line =
+      (left_start_point_is_in_lane != left_end_point_is_in_lane ||
+       right_start_point_is_in_lane != right_end_point_is_in_lane);
   }
-  */
 
   if (time_to_shift_start < prev_sec || distance_to_shift_start < tl_on_threshold_long) {
-    if (diff > tl_on_threshold_lat) {
+    if (diff > tl_on_threshold_lat && cross_line) {
       turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-    } else if (diff < -tl_on_threshold_lat) {
+    } else if (diff < -tl_on_threshold_lat && cross_line) {
       turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     }
   }
