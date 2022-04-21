@@ -105,7 +105,6 @@ void DynamicObstacleStopModuleManager::launchNewModules(
     return;
   }
 
-  // TODO(Tomohito Ando): appropreate id
   constexpr int64_t module_id = 0;
   if (!isModuleRegistered(module_id)) {
     registerModule(std::make_shared<DynamicObstacleStopModule>(
