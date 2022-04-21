@@ -24,6 +24,13 @@
       <arg name="use_object_recognition" value="$(var perception/enable_object_recognition)"/>
       <arg name="visible_range" value="$(var sensing/visible_range)"/>
     </include>
+
+    <!-- replay points to compare map filtered -->
+    <node pkg="topic_tools" exec="relay" name="dummy_perception_to_compare_map_points" output="log">
+      <param name="input_topic" value="/perception/obstacle_segmentation/pointcloud"/>
+      <param name="output_topic" value="/planning/scenario_planning/lane_driving/behavior_planning/compare_map_filtered/pointcloud"/>
+      <param name="type" value="sensor_msgs/msg/PointCloud2"/>
+    </node>
   </group>
 
   <!-- perception module -->
