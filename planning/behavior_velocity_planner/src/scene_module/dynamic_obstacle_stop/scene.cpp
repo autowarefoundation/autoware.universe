@@ -252,13 +252,13 @@ void DynamicObstacleStopModule::visualizeDetectionArea(const PathWithLaneId & sm
     planner_param_.dynamic_obstacle.time_step * planner_param_.dynamic_obstacle.path_size;
   da_range.interval = planner_param_.dynamic_obstacle_stop.detection_distance;
   da_range.min_longitudinal_distance = planner_param_.vehicle_param.base_to_front;
-  da_range.max_longitudinal_distance = *stop_dist + planner_param_.vehicle_param.base_to_front +
-                                       planner_param_.dynamic_obstacle_stop.stop_margin;
+  da_range.max_longitudinal_distance =
+    *stop_dist + planner_param_.dynamic_obstacle_stop.stop_margin;
   da_range.min_lateral_distance = planner_param_.vehicle_param.width / 2.0;
   da_range.max_lateral_distance = obstacle_vel_mps * predict_time_max;
   Polygons2d detection_area_poly;
   planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, smoothed_path, da_range,
+    detection_area_poly, smoothed_path, planner_data_->current_pose.pose, da_range,
     planner_param_.dynamic_obstacle.max_vel_kmph / 3.6);
 
   for (const auto & poly : detection_area_poly) {
