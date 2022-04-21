@@ -26,6 +26,9 @@
     <include file="$(find-pkg-share apparent_safe_velocity_limiter)/launch/apparent_safe_velocity_limiter.launch.xml">
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
     </include>
+    <!-- Velocity Visualization Scripts-->
+    <executable cmd="velocity_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-share apparent_safe_velocity_limiter)/script/"/>
+    <executable cmd="trajectory_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-prefix motion_velocity_smoother)/lib/motion_velocity_smoother/"/>
   </group>
 
   <!-- velocity planning with max velocity, acceleration, jerk, stop point constraint -->
