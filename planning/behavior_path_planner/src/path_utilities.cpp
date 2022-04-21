@@ -258,7 +258,6 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   // Turn signal on when conditions below are satisfied
   //  1. lateral offset is larger than tl_on_threshold_lat for left signal
   //                      smaller than tl_on_threshold_lat for right signal
-  //  2. side point at shift start/end point cross the line
   double distance_to_shift_start;
   {
     const auto arc_position_shift_start =
@@ -291,6 +290,7 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
     right_end_point.position.y += std::cos(end_yaw) * (-shift_to_outside);
   }
 
+  /*
   bool left_start_point_is_in_lane = false;
   bool right_start_point_is_in_lane = false;
   bool left_end_point_is_in_lane = false;
@@ -318,11 +318,12 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
     right_start_point_is_in_lane != right_end_point_is_in_lane) {
     cross_line = true;
   }
+  */
 
   if (time_to_shift_start < prev_sec || distance_to_shift_start < tl_on_threshold_long) {
-    if (diff > tl_on_threshold_lat && cross_line) {
+    if (diff > tl_on_threshold_lat) {
       turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-    } else if (diff < -tl_on_threshold_lat && cross_line) {
+    } else if (diff < -tl_on_threshold_lat) {
       turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     }
   }
