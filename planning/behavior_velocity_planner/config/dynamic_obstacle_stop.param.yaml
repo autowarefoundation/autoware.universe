@@ -1,44 +1,45 @@
 /**:
   ros__parameters:
     dynamic_obstacle_stop:
-      use_objects: true #  if this is false, use points instead of dynamic objects
-      use_predicted_path: false # if this is false, create path of objects to run straight to lane
-      use_partition_lanelet: true # whether to use partition lanelet map data
-      extend_distance: 5.0 # extend trajectory to consider after goal obstacle in the extend_distance
-      stop_margin: 2.5 # the vehicle decelerates to be able to stop with this margin [m]
-      passing_margin: 1.0 # the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin [m]
-      stop_start_jerk_dec: -0.3 # the vehicle begins to decelerate if the vehicle can't stop for the obstacle with this jerk [m/s^3]
-      obstacle_velocity_kph: 5.0 # assumption for obstacle velocity [km/h]
-      detection_distance: 45.0 # [m]
-      detection_span: 1.0 # [m]
-      min_vel_ego_kmph: 3.6 # [km/h]
-      velocity_limit_kmph: 20.0 # [km/h]
-      calc_collision_from_point: true
+      detection_method: "Object"  # [-] candidate: Object, ObjectWithoutPath, Points
+      use_partition_lanelet: true # [-] whether to use partition lanelet map data
+      specify_decel_jerk: false   # [-] whether to specify jerk when ego decelerates
+      stop_margin: 2.5            # [m] the vehicle decelerates to be able to stop with this margin
+      passing_margin: 1.1         # [m] the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin
+      deceleration_jerk: -0.3     # [m/s^3] ego decelerates with this jerk when stopping for obstacles
+      obstacle_velocity_kph: 5.0  # [km/h] assumption for obstacle velocity
+      detection_distance: 45.0    # [m] ahead distance from ego to detect the obstacles
+      detection_span: 1.0         # [m] calculate collision with this span to reduce calculation time 
+      min_vel_ego_kmph: 3.6       # [km/h] min velocity to calculate time to collision
 
+      # rectangle detection area for Points method
+      # this will be replaced with more appropriate detection area
       detection_area_size:
-        dist_ahead: 50.0
-        dist_behind: 5.0
-        dist_right: 7.0
-        dist_left: 0.1
+        dist_ahead: 50.0 # [m] ahead distance from ego position
+        dist_behind: 5.0 # [m] behind distance from ego position
+        dist_right: 7.0  # [m] right distance from ego position
+        dist_left: 7.0   # [m] left distance from ego position
       
+      # parameter to create abstracted dynamic obstacles
       dynamic_obstacle:
-        min_vel_kmph: 0.0 # [km/h]
-        max_vel_kmph: 5.0 # [km/h]
-        diameter: 0.1 # [m]
-        height: 2.0 # [m]
-        path_size: 20
-        time_step: 0.5 # [sec]
+        min_vel_kmph: 0.0 # [km/h] minimum velocity for dynamic obstacles
+        max_vel_kmph: 5.0 # [km/h] maximum velocity for dynamic obstacles
+        diameter: 0.1     # [m] diameter of obstacles. used for creating dynamic obstacles from points
+        height: 2.0       # [m] height of obstacles. used for creating dynamic obstacles from points
+        path_size: 20     # [-] create the predicted path of this size. used for creating dynamic obstacles from points or objects without path
+        time_step: 0.5    # [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path
 
       # approach if ego has stopped in the front of the obstacle for a certain amount of time
       approaching:
-        enable: true
-        margin: 0.0 # distance on how close ego approaches the obstacle [m]
-        limit_vel_kmph: 3.0 # limit velocity for approaching after stopping [km/h]
-        stop_thresh: 0.01 # threshold to decide if ego is stopping [m/s]
-        stop_time_thresh: 3.0 # threshold for stopping time to transit to approaching state [sec]
-        dist_thresh: 0.5 # end the approaching state if distance to the obstacle is longer than stop_margin + dist_thresh [m]
-
-      slow_down_limit:
         enable: false
-        max_jerk: -0.7 # [m/s^3] minimum jerk deceleration for safe brake.
+        margin: 0.0           # [m] distance on how close ego approaches the obstacle
+        limit_vel_kmph: 3.0   # [km/h] limit velocity for approaching after stopping
+        stop_thresh: 0.01     # [m/s] threshold to decide if ego is stopping
+        stop_time_thresh: 3.0 # [sec] threshold for stopping time to transit to approaching state
+        dist_thresh: 0.5      # [m] end the approaching state if distance to the obstacle is longer than stop_margin + dist_thresh
+
+      # parameter to avoid sudden stopping
+      slow_down_limit:
+        enable: true
+        max_jerk: -0.7  # [m/s^3] minimum jerk deceleration for safe brake.
         max_acc : -2.0  # [m/s^2] minimum accel deceleration for safe brake.
