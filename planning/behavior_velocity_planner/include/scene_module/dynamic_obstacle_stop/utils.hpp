@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_
-#define DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_
+#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__UTILS_HPP_
+#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__UTILS_HPP_
 
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 
@@ -221,4 +221,4 @@ PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & 
 DetectionMethod toEnum(const std::string & detection_method);
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
-#endif  // DYNAMIC_OBSTACLE_STOP_PLANNER_UTILS_HPP_
+#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__UTILS_HPP_

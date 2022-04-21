@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef DYNAMIC_OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
-#define DYNAMIC_OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
+#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DEBUG_HPP_
+#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DEBUG_HPP_
 
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 
@@ -140,4 +140,4 @@ private:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // DYNAMIC_OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
+#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DEBUG_HPP_

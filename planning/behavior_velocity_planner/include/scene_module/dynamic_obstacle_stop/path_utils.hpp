@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
-#define DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
+#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
+#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -92,4 +92,4 @@ size_t calcIndexByLengthReverse(
 
 }  // namespace dynamic_obstacle_stop_utils
 }  // namespace behavior_velocity_planner
-#endif  // DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
+#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
