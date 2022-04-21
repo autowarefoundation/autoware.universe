@@ -12,7 +12,7 @@
   <let name="callgrind-launch-prefix" value="valgrind --tool=callgrind --dump-instr=yes -v --instr-atstart=no"/>
   <let name="gdb-launch-prefix" value="konsole -e gdb -ex run --args"/>
   <let name="gdb-gnome-launch-prefix" value="gnome-terminal -- gdb -ex run --args"/>
-  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="$(var gdb-launch-prefix)">
+  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="">
     <param from="$(var param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>

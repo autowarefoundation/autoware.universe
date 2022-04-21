@@ -86,4 +86,5 @@
 
   <!-- Velocity Visualization Scripts-->
   <executable cmd="velocity_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-share apparent_safe_velocity_limiter)/script/"/>
+  <executable cmd="trajectory_visualizer.py" launch-prefix="python3" cwd="$(find-pkg-prefix motion_velocity_smoother)/lib/motion_velocity_smoother/"/>
 </launch>
