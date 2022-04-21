@@ -23,17 +23,19 @@
 namespace component_interface_utils
 {
 
-// Use a node pointer because shared_from_this cannot be used in constructor.
+/// Create a service wrapper for logging. This is a private implementation.
 template <class SpecT, class NodeT, class CallbackT>
 typename Service<SpecT>::SharedPtr create_service_impl(
   NodeT * node, CallbackT && callback, rclcpp::CallbackGroup::SharedPtr group = nullptr)
 {
+  // Use a node pointer because shared_from_this cannot be used in constructor.
   auto wrapped = Service<SpecT>::wrap(callback, node->get_logger());
   auto service = node->template create_service<typename SpecT::Service>(
     SpecT::name, wrapped, rmw_qos_profile_services_default, group);
   return Service<SpecT>::make_shared(service);
 }
 
+/// Create a service wrapper for logging. This is for lambda or bound function.
 template <class SpecT, class NodeT, class CallbackT>
 typename Service<SpecT>::SharedPtr create_service(
   NodeT * node, CallbackT && callback, rclcpp::CallbackGroup::SharedPtr group = nullptr)
@@ -41,6 +43,7 @@ typename Service<SpecT>::SharedPtr create_service(
   return create_service_impl<SpecT>(node, std::forward<CallbackT>(callback), group);
 }
 
+/// Create a service wrapper for logging. This is for member function of node.
 template <class SpecT, class NodeT>
 typename Service<SpecT>::SharedPtr create_service(
   NodeT * node, typename Service<SpecT>::template CallbackType<NodeT> callback,

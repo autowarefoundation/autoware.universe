@@ -20,6 +20,7 @@
 namespace component_interface_utils
 {
 
+/// The wrapper class of rclcpp::Service for logging.
 template <class SpecT>
 class Service
 {
@@ -30,11 +31,13 @@ public:
   using CallbackType = void (NodeT::*)(
     typename SpecT::Service::Request::SharedPtr, typename SpecT::Service::Response::SharedPtr);
 
+  /// Constructor.
   explicit Service(typename rclcpp::Service<typename SpecT::Service>::SharedPtr service)
   {
     service_ = service;
   }
 
+  /// Create a service callback with logging added.
   template <class CallbackT>
   static auto wrap(CallbackT && callback, const rclcpp::Logger & logger)
   {
