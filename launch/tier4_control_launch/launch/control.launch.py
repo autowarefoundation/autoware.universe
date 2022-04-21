@@ -270,7 +270,6 @@ def launch_setup(context, *args, **kwargs):
             # condition=LaunchConfigurationEquals("lateral_controller_mode", "mpc"),
         )
 
-
     group = GroupAction(
         [
             PushRosNamespace("control"),
@@ -298,8 +297,11 @@ def generate_launch_description():
     #     "lateral controller mode: `mpc_follower` or `pure_pursuit`",
     # )
 
-    add_launch_arg("lateral_controller_mode", "mpc_follower", "lateral controller mode: `mpc_follower` or `pure_pursuit`")
-
+    add_launch_arg(
+        "lateral_controller_mode",
+        "mpc_follower",
+        "lateral controller mode: `mpc_follower` or `pure_pursuit`",
+    )
 
     add_launch_arg(
         "vehicle_info_param_file",
