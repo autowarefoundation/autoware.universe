@@ -23,7 +23,7 @@ namespace ad_api::interface::version
 struct T
 {
   using Service = autoware_ad_api_msgs::srv::InterfaceVersion;
-  static constexpr char name[] = "/api/interface/version";
+  static constexpr char name[] = "/api/v0/interface/version";
 };
 
 }  // namespace ad_api::interface::version
