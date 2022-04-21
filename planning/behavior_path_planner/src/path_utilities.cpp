@@ -258,6 +258,7 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   // Turn signal on when conditions below are satisfied
   //  1. lateral offset is larger than tl_on_threshold_lat for left signal
   //                      smaller than tl_on_threshold_lat for right signal
+  //  2. side point at shift start/end point cross the line
   double distance_to_shift_start;
   {
     const auto arc_position_shift_start =
