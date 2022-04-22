@@ -28,12 +28,21 @@ ament_auto_add_library(cv_lsd SHARED  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd
 target_include_directories(cv_lsd PUBLIC  3rd/opencv_lsd)
 target_link_libraries(cv_lsd ${OpenCV_LIBS})
 
+
+file(GLOB RE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/3rd/regulatory_elements/lib/*.cpp)
+ament_auto_add_library(regulatory_elements SHARED ${RE_SOURCE})
+target_include_directories(regulatory_elements PUBLIC  3rd/regulatory_elements/include)
+target_link_libraries(regulatory_elements ${OpenCV_LIBS})
+
 # ===================================================
 # Executable
-ament_auto_add_executable(main src/main.cpp src/lsd.cpp)
-target_include_directories(main PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd include)
-target_link_libraries(main  ${OpenCV_LIBS} cv_lsd)
+ament_auto_add_executable(lsd_node src/lsd_node.cpp src/lsd.cpp)
+target_include_directories(lsd_node PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd include)
+target_link_libraries(lsd_node ${OpenCV_LIBS} cv_lsd)
 
+ament_auto_add_executable(map_node src/map_node.cpp)
+target_include_directories(map_node PUBLIC include 3rd/regulatory_elements/include)
+target_link_libraries(map_node  regulatory_elements )
 
 # ===================================================
 # Python
