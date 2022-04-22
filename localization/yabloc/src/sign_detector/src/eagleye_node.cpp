@@ -1,4 +1,5 @@
 #include <GeographicLib/Geocentric.hpp>
+#include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -41,7 +42,7 @@ private:
     double local_x = std::stoi(mgrs.substr(5, 6)) * 0.1;
     double local_y = std::stoi(mgrs.substr(11, 6)) * 0.1;
 
-    RCLCPP_INFO_STREAM(this->get_logger(), mgrs.substr(0, 5) << " " << local_x << " " << local_y << " ( " << msg.latitude << ", " << msg.longitude << " )");
+    RCLCPP_INFO_STREAM(this->get_logger(), mgrs.substr(0, 5) << " " << local_x << " " << local_y << " (" << msg.latitude << ", " << msg.longitude << ")");
 
     path_.header.frame_id = "map";
     path_.header.stamp = this->get_clock()->now();

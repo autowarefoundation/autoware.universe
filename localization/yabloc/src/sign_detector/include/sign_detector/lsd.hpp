@@ -18,6 +18,7 @@ public:
   {
     sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(image_topic, 10, std::bind(&LineDetector::imageCallback, this, std::placeholders::_1));
     sub_info_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(info_topic, 10, std::bind(&LineDetector::infoCallback, this, std::placeholders::_1));
+    pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/lsd", 10);
     lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
   }
 
@@ -46,14 +47,24 @@ private:
     cv::Mat lines;
     lsd->detect(image, lines);
     lsd->drawSegments(image, lines);
-    cv::imshow("show", image);
-    cv::waitKey(1);
+    // cv::imshow("show", image);
+    // cv::waitKey(1);
+
+    {
+      cv_bridge::CvImage raw_image;
+      raw_image.header = msg.header;
+      raw_image.header.frame_id = "map";
+      raw_image.encoding = "bgr8";
+      raw_image.image = image;
+      pub_image_->publish(*raw_image.toImageMsg());
+    }
   }
 
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd;
   std::optional<sensor_msgs::msg::CameraInfo> info_;
   rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub_image_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_info_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
 
   sensor_msgs::msg::Image::ConstSharedPtr decompressImage(const sensor_msgs::msg::CompressedImage& compressed_img) const
   {
