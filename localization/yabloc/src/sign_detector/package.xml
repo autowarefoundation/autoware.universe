@@ -13,8 +13,11 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
 
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>lanelet2_core</depend>
