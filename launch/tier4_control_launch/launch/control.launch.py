@@ -291,11 +291,8 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    # add_launch_arg(
-    #     "lateral_controller_mode",
-    #     "mpc_follower",
-    #     "lateral controller mode: `mpc_follower` or `pure_pursuit`",
-    # )
+
+    # lateral controller
 
     add_launch_arg(
         "lateral_controller_mode",
@@ -365,7 +362,6 @@ def generate_launch_description():
     )
     add_launch_arg("enable_pub_debug", "true", "enable to publish debug information")
 
-    # lateral controller
 
     # vehicle cmd gate
     add_launch_arg("use_emergency_handling", "false", "use emergency handling")
