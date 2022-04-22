@@ -463,7 +463,7 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::checkCollisionWithObstac
       continue;
     }
 
-    // calculate predicted obstacle pose for min velocity and max veloicty
+    // calculate predicted obstacle pose for min velocity and max velocity
     const auto predicted_obstacle_pose_min_vel =
       calcPredictedObstaclePose(obstacle.predicted_paths, travel_time, obstacle.min_velocity_mps);
     const auto predicted_obstacle_pose_max_vel =
@@ -842,7 +842,7 @@ void DynamicObstacleStopModule::insertApproachingVelocity(
   const float approaching_vel, const float approach_margin, const PathWithLaneId & resampled_path,
   PathWithLaneId & output_path)
 {
-  // isnert slow down velocity from nearest segment point
+  // insert slow down velocity from nearest segment point
   const auto nearest_seg_idx =
     tier4_autoware_utils::findNearestSegmentIndex(output_path.points, current_pose.position);
   dynamic_obstacle_stop_utils::insertPathVelocityFromIndexLimited(
