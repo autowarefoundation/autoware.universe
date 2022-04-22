@@ -183,7 +183,7 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
   // Timer
   {
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<float64_t>(m_longitudinal_ctrl_period));
+      std::chrono::duration<float64_t>(m_longitudinal_ctrl_period));
     m_timer_control = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&LongitudinalController::callbackTimerControl, this));
   }
