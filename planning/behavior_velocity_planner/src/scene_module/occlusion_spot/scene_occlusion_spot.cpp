@@ -167,7 +167,8 @@ bool OcclusionSpotModule::modifyPathVelocity(
     const auto stuck_vehicles = extractStuckVehicle(filtered_vehicles, param_.stuck_vehicle_vel);
     // Note: Don't consider offset from path start to ego here
     if (!utils::generatePossibleCollisionsFromObjects(
-          possible_collisions, path_interpolated, param_, offset_from_start_to_ego, stuck_vehicles)) {
+          possible_collisions, path_interpolated, param_, offset_from_start_to_ego,
+          stuck_vehicles)) {
       // no occlusion spot
       return true;
     }
