@@ -194,7 +194,11 @@ public:
 
   MarkerArray getDebugMarker() { return debug_marker_; }
 
-  AvoidanceInfoArray::SharedPtr getAvoidanceInfoArray() { return debug_avoidance_info_array_ptr_; }
+  AvoidanceInfoArray::SharedPtr getAvoidanceInfoArray()
+  {
+    debug_avoidance_info_array_ptr_->header.stamp = clock_->now();
+    return debug_avoidance_info_array_ptr_;
+  }
 
 private:
   std::string name_;
