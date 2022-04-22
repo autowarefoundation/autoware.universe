@@ -291,7 +291,6 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-
     # lateral controller
 
     add_launch_arg(
@@ -361,7 +360,6 @@ def generate_launch_description():
         "enable_smooth_stop", "true", "enable smooth stop (in velocity controller state)"
     )
     add_launch_arg("enable_pub_debug", "true", "enable to publish debug information")
-
 
     # vehicle cmd gate
     add_launch_arg("use_emergency_handling", "false", "use emergency handling")
