@@ -26,7 +26,7 @@ while (...) {
   // Update status
   rtc_interface.updateCooperateStatus(uuid, safe, distance);
 
-  if (rtc_interface.isActivated()) {
+  if (rtc_interface.isActivated(uuid)) {
     // Execute planning
   } else {
     // Stop planning
