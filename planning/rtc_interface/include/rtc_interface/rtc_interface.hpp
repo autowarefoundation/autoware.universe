@@ -18,23 +18,26 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "tier4_rtc_msgs/msg/command.hpp"
+#include "tier4_rtc_msgs/msg/cooperate_command.hpp"
+#include "tier4_rtc_msgs/msg/cooperate_response.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status_array.hpp"
 #include "tier4_rtc_msgs/msg/module.hpp"
-#include "tier4_rtc_msgs/srv/cooperate_command.hpp"
+#include "tier4_rtc_msgs/srv/cooperate_commands.hpp"
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace rtc_interface
 {
 using tier4_rtc_msgs::msg::Command;
+using tier4_rtc_msgs::msg::CooperateCommand;
+using tier4_rtc_msgs::msg::CooperateResponse;
 using tier4_rtc_msgs::msg::CooperateStatus;
 using tier4_rtc_msgs::msg::CooperateStatusArray;
 using tier4_rtc_msgs::msg::Module;
-using tier4_rtc_msgs::srv::CooperateCommand;
+using tier4_rtc_msgs::srv::CooperateCommands;
 using unique_identifier_msgs::msg::UUID;
 
 class RTCInterface
@@ -48,13 +51,15 @@ public:
 
 private:
   void onCooperateCommandService(
-    const CooperateCommand::Request::SharedPtr request,
-    const CooperateCommand::Response::SharedPtr response);
+    const CooperateCommands::Request::SharedPtr request,
+    const CooperateCommands::Response::SharedPtr responses);
+  rclcpp::Logger getLogger() const;
 
-  rclcpp::Publisher<CooperateStatusArray>::SharedPtr pub_status_;
-  rclcpp::Service<CooperateCommand>::SharedPtr srv_command_;
+  rclcpp::Publisher<CooperateStatusArray>::SharedPtr pub_statuses_;
+  rclcpp::Service<CooperateCommands>::SharedPtr srv_commands_;
 
   mutable rclcpp::Clock clock_;
+  rclcpp::Logger logger_;
   Module module_;
   CooperateStatusArray registered_status_;
 };

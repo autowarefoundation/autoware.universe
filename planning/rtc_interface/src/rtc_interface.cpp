@@ -14,47 +14,68 @@
 
 #include "rtc_interface/rtc_interface.hpp"
 
+namespace
+{
+std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
+{
+  std::stringstream ss;
+  for (auto i = 0; i < 16; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << +uuid.uuid[i];
+  }
+  return ss.str();
+}
+}  // namespace
+
 namespace rtc_interface
 {
 RTCInterface::RTCInterface(rclcpp::Node & node, const std::string & name, const Module & module)
-: clock_{*node.get_clock()}, module_(module)
+: clock_{*node.get_clock()},
+  logger_{node.get_logger().get_child("RTCInterface[" + name + "]")},
+  module_{module}
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
 
   // Publisher
-  pub_status_ = node.create_publisher<CooperateStatusArray>(name + "/status", 1);
+  pub_statuses_ = node.create_publisher<CooperateStatusArray>("~/" + name + "/cooperate_status", 1);
 
   // Service
-  srv_command_ = node.create_service<CooperateCommand>(
-    name + "/command", std::bind(&RTCInterface::onCooperateCommandService, this, _1, _2));
+  srv_commands_ = node.create_service<CooperateCommands>(
+    "~/" + name + "/cooperate_commands",
+    std::bind(&RTCInterface::onCooperateCommandService, this, _1, _2));
 }
 
 void RTCInterface::publishCooperateStatus()
 {
   registered_status_.stamp = clock_.now();
-  pub_status_->publish(registered_status_);
+  pub_statuses_->publish(registered_status_);
 }
 
 void RTCInterface::onCooperateCommandService(
-  const CooperateCommand::Request::SharedPtr request,
-  const CooperateCommand::Response::SharedPtr response)
+  const CooperateCommands::Request::SharedPtr request,
+  const CooperateCommands::Response::SharedPtr responses)
 {
-  const auto itr = std::find_if(
-    registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [request](auto & s) { return s.uuid == request->uuid; });
+  for (const auto & command : request->commands) {
+    CooperateResponse response;
+    response.uuid = command.uuid;
+    response.module = command.module;
 
-  // Update command if the command has been already received
-  if (itr != registered_status_.statuses.end()) {
-    itr->command_status = request->command;
-    response->success = true;
-    return;
+    const auto itr = std::find_if(
+      registered_status_.statuses.begin(), registered_status_.statuses.end(),
+      [command](auto & s) { return s.uuid == command.uuid; });
+
+    // Update command if the command has been already received
+    if (itr != registered_status_.statuses.end()) {
+      itr->command_status = command.command;
+      response.success = true;
+    } else {
+      RCLCPP_WARN_STREAM(
+        getLogger(), "[onCooperateCommandService] uuid : " << to_string(command.uuid)
+                                                           << " is not found." << std::endl);
+      response.success = false;
+    }
+    responses->responses.push_back(response);
   }
-
-  // Status with same uuid is not registered
-  response->success = false;
-
-  return;
 }
 
 void RTCInterface::updateCooperateStatus(const UUID & uuid, const bool safe, const double distance)
@@ -64,7 +85,7 @@ void RTCInterface::updateCooperateStatus(const UUID & uuid, const bool safe, con
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
     [uuid](auto & s) { return s.uuid == uuid; });
 
-  // If there is no registered status, add it.
+  // If there is no registered status, add it
   if (itr == registered_status_.statuses.end()) {
     CooperateStatus status;
     status.stamp = clock_.now();
@@ -95,7 +116,9 @@ void RTCInterface::removeCooperateStatus(const UUID & uuid)
     return;
   }
 
-  std::cout << "Something wrong" << std::endl;
+  RCLCPP_WARN_STREAM(
+    getLogger(),
+    "[removeCooperateStatus] uuid : " << to_string(uuid) << " is not found." << std::endl);
 }
 
 bool RTCInterface::isActivated(const UUID & uuid) const
@@ -108,8 +131,11 @@ bool RTCInterface::isActivated(const UUID & uuid) const
     return itr->command_status.type == Command::ACTIVATE;
   }
 
-  std::cout << "Something wrong" << std::endl;
+  RCLCPP_WARN_STREAM(
+    getLogger(), "[isActivated] uuid : " << to_string(uuid) << " is not found." << std::endl);
   return false;
 }
+
+rclcpp::Logger RTCInterface::getLogger() const { return logger_; }
 
 }  // namespace rtc_interface
