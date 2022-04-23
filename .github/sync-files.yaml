@@ -2,6 +2,7 @@
   files:
     - source: .github/dependabot.yaml
     # - source: .github/workflows/build.yaml # TODO: Sync after renaming to autoware.repos
+    - source: .github/workflows/github-release.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/pre-commit-ansible.yaml
     - source: .github/workflows/pre-commit-optional.yaml
