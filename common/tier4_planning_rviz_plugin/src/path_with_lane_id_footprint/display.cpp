@@ -188,15 +188,15 @@ void AutowarePathWithLaneIdFootprintDisplay::updateVisualization()
 
 void AutowarePathWithLaneIdFootprintDisplay::updateVehicleInfo()
 {
-  float length{property_vehicle_length_->getFloat()};
-  float width{property_vehicle_width_->getFloat()};
-  float rear_overhang{property_rear_overhang_->getFloat()};
-
   if (vehicle_info_) {
     vehicle_footprint_info_ = std::make_shared<VehicleFootprintInfo>(
       vehicle_info_->vehicle_length_m, vehicle_info_->vehicle_width_m,
       vehicle_info_->rear_overhang_m);
   } else {
+    const float length{property_vehicle_length_->getFloat()};
+    const float width{property_vehicle_width_->getFloat()};
+    const float rear_overhang{property_rear_overhang_->getFloat()};
+
     vehicle_footprint_info_ = std::make_shared<VehicleFootprintInfo>(length, width, rear_overhang);
   }
 }
