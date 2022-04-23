@@ -34,6 +34,7 @@ def generate_launch_description():
                     ("input/vector_map", "/map/vector_map"),
                     ("input/goal_pose", "/planning/mission_planning/goal"),
                     ("input/checkpoint", "/planning/mission_planning/checkpoint"),
+                    ("input/loop", "/planning/mission_planning/loop"),
                     ("output/route", "/planning/mission_planning/route"),
                     ("debug/route_marker", "/planning/mission_planning/route_marker"),
                 ],

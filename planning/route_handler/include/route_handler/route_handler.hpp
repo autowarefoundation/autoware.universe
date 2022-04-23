@@ -96,8 +96,6 @@ public:
   std::vector<lanelet::ConstLanelet> getLanesAfterGoal(const double vehicle_length) const;
 
   // for lanelet
-  bool getPreviousLaneletsWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const;
 
@@ -121,6 +119,8 @@ public:
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
     const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
+  bool getPreviousLaneletsWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
 
   /**
    * @brief Check if opposite-direction lane is available at the right side of the lanelet
@@ -218,6 +218,8 @@ public:
 
   int getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   bool getClosestLaneletWithinRoute(
+    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
+  bool getClosestPreferredLanelet(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids ids) const;

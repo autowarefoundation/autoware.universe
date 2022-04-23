@@ -61,7 +61,12 @@ private:
 
   // virtual functions
   bool isRoutingGraphReady() const;
-  autoware_auto_planning_msgs::msg::HADMapRoute planRoute();
+  autoware_auto_planning_msgs::msg::HADMapRoute planRoute(
+    const std::vector<geometry_msgs::msg::PoseStamped> & pass_points, const bool is_looped_route);
+  boost::optional<size_t> getClosestRouteSectionIndex(
+    const autoware_auto_planning_msgs::msg::HADMapRoute & route,
+    const geometry_msgs::msg::PoseStamped & pose, geometry_msgs::msg::Pose & goal_pose);
+
   void visualizeRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const;
 };
 }  // namespace mission_planner

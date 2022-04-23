@@ -246,18 +246,19 @@ bool MissionPlannerLanelet2::isGoalValid(const geometry_msgs::msg::Pose & goal_p
   return false;
 }
 
-autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute()
+autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
+  const std::vector<geometry_msgs::msg::PoseStamped> & pass_points, const bool is_looped_route)
 {
-  const geometry_msgs::msg::Pose goal_pose = checkpoints_.back().pose;
+  const geometry_msgs::msg::Pose goal_pose = pass_points.back().pose;
 
   std::stringstream ss;
-  for (const auto & checkpoint : checkpoints_) {
+  for (const auto & checkpoint : pass_points) {
     ss << "x: " << checkpoint.pose.position.x << " "
        << "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    get_logger(), "start planning route with checkpoints_: " << std::endl
-                                                             << ss.str());
+    get_logger(), "start planning route with pass_points: " << std::endl
+                                                            << ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
@@ -267,9 +268,9 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
     return route_msg;
   }
 
-  for (std::size_t i = 1; i < checkpoints_.size(); i++) {
-    const auto start_checkpoint = checkpoints_.at(i - 1);
-    const auto goal_checkpoint = checkpoints_.at(i);
+  for (std::size_t i = 1; i < pass_points.size(); i++) {
+    const auto start_checkpoint = pass_points.at(i - 1);
+    const auto goal_checkpoint = pass_points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
           start_checkpoint.pose, goal_checkpoint.pose, &path_lanelets)) {
@@ -291,9 +292,64 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   route_msg.segments = route_sections;
   route_msg.goal_pose = goal_pose;
 
+  if (is_looped_route) {
+    // ignore overlapped route where the initial ego pose locates
+    route_msg.segments.pop_back();
+
+    route_handler_.setRoute(route_msg);
+  }
+
   return route_msg;
 }
 
+boost::optional<size_t> MissionPlannerLanelet2::getClosestRouteSectionIndex(
+  const autoware_auto_planning_msgs::msg::HADMapRoute & route,
+  const geometry_msgs::msg::PoseStamped & pose, geometry_msgs::msg::Pose & goal_pose)
+{
+  if (!route_handler_.isHandlerReady()) {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("po"), "Route handler is not ready.");
+    return {};
+  }
+
+  lanelet::ConstLanelet lanelet;
+  if (!route_handler_.getClosestPreferredLanelet(pose.pose, &lanelet)) {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("po"), "Closest preferred lanelet to ego was not found.");
+    return {};
+  }
+
+  // set closest index
+  for (size_t i = 0; i < route.segments.size(); ++i) {
+    if (lanelet.id() == route.segments.at(i).preferred_primitive_id) {
+      // set goal pose
+      const size_t goal_idx = (i + route.segments.size() - 3) %
+                              route.segments.size();  // TODO(murooka) not too close to ego
+      lanelet::ConstLanelet goal_lanelet =
+        route_handler_.getLaneletsFromId(route.segments.at(goal_idx).primitives.front().id);
+      const Eigen::Vector2d back_pose = (goal_lanelet.rightBound().back().basicPoint2d() +
+                                         goal_lanelet.leftBound().back().basicPoint2d()) /
+                                        2.0;
+      goal_pose.position.x = back_pose.x();
+      goal_pose.position.y = back_pose.y();
+
+      const size_t size = goal_lanelet.leftBound().size();
+      if (size > 1) {
+        const Eigen::Vector2d front_pose = (goal_lanelet.rightBound()[size - 2].basicPoint2d() +
+                                            goal_lanelet.leftBound()[size - 2].basicPoint2d()) /
+                                           2.0;
+        goal_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(
+          std::atan2(back_pose.y() - front_pose.y(), back_pose.x() - front_pose.x()));
+      }
+
+      // return index
+      return i;
+    }
+  }
+
+  RCLCPP_ERROR_STREAM(
+    rclcpp::get_logger("po"), "Closest preferred lanelet was not found in route.");
+  return {};
+}
 }  // namespace mission_planner
 
 #include <rclcpp_components/register_node_macro.hpp>

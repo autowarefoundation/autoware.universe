@@ -747,6 +747,13 @@ bool RouteHandler::getClosestLaneletWithinRoute(
   return lanelet::utils::query::getClosestLanelet(route_lanelets_, search_pose, closest_lanelet);
 }
 
+bool RouteHandler::getClosestPreferredLanelet(
+  const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
+{
+  return lanelet::utils::query::getClosestLanelet(
+    preferred_lanelets_, search_pose, closest_lanelet);
+}
+
 bool RouteHandler::getNextLaneletWithinRoute(
   const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const
 {

@@ -15,6 +15,8 @@
 #ifndef MISSION_PLANNER__MISSION_PLANNER_BASE_HPP_
 #define MISSION_PLANNER__MISSION_PLANNER_BASE_HPP_
 
+#include <boost/optional.hpp>
+
 #include <string>
 #include <vector>
 
@@ -32,6 +34,7 @@
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 namespace mission_planner
 {
@@ -44,12 +47,18 @@ protected:
 
   std::string map_frame_;
 
+  boost::optional<geometry_msgs::msg::PoseStamped> goal_pose_;
   std::vector<geometry_msgs::msg::PoseStamped> checkpoints_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
 
   virtual bool isRoutingGraphReady() const = 0;
-  virtual autoware_auto_planning_msgs::msg::HADMapRoute planRoute() = 0;
+  virtual autoware_auto_planning_msgs::msg::HADMapRoute planRoute(
+    const std::vector<geometry_msgs::msg::PoseStamped> & pass_points,
+    const bool is_looped_route = false) = 0;
+  virtual boost::optional<size_t> getClosestRouteSectionIndex(
+    const autoware_auto_planning_msgs::msg::HADMapRoute & route,
+    const geometry_msgs::msg::PoseStamped & pose, geometry_msgs::msg::Pose & goal_pose) = 0;
 
   virtual void visualizeRoute(
     const autoware_auto_planning_msgs::msg::HADMapRoute & route) const = 0;
@@ -59,15 +68,24 @@ private:
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_publisher_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_subscriber_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr checkpoint_subscriber_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr loop_subscriber_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+  bool is_looped_route_{false};
 
-  bool transformPose(
-    const geometry_msgs::msg::PoseStamped & input_pose,
-    geometry_msgs::msg::PoseStamped * output_pose, const std::string & target_frame);
+  autoware_auto_planning_msgs::msg::HADMapRoute route_;
+  boost::optional<size_t> loop_idx_;
+
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  boost::optional<geometry_msgs::msg::PoseStamped> transformPose(
+    const geometry_msgs::msg::PoseStamped & input_pose, const std::string & target_frame);
+
+  void run();
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr);
   void checkpointCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr);
+  void loopCallback(const std_msgs::msg::Bool::ConstSharedPtr msg);
 };
 
 }  // namespace mission_planner

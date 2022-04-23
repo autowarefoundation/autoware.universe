@@ -34,6 +34,8 @@ MissionPlanner::MissionPlanner(
 
   using std::placeholders::_1;
 
+  loop_subscriber_ = create_subscription<std_msgs::msg::Bool>(
+    "input/loop", 10, std::bind(&MissionPlanner::loopCallback, this, _1));
   goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/goal_pose", 10, std::bind(&MissionPlanner::goalPoseCallback, this, _1));
   checkpoint_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -47,72 +49,138 @@ MissionPlanner::MissionPlanner(
     create_publisher<visualization_msgs::msg::MarkerArray>("debug/route_marker", durable_qos);
 
   self_pose_listener_.waitForFirstPose();
+
+  const auto planning_hz = declare_parameter("planning_hz", 1);
+  const auto period_ns = rclcpp::Rate(planning_hz).period();
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&MissionPlanner::run, this));
 }
 
-bool MissionPlanner::transformPose(
-  const geometry_msgs::msg::PoseStamped & input_pose, geometry_msgs::msg::PoseStamped * output_pose,
-  const std::string & target_frame)
+boost::optional<geometry_msgs::msg::PoseStamped> MissionPlanner::transformPose(
+  const geometry_msgs::msg::PoseStamped & input_pose, const std::string & target_frame)
 {
+  geometry_msgs::msg::PoseStamped output_pose;
+
   geometry_msgs::msg::TransformStamped transform;
   try {
     transform =
       tf_buffer_.lookupTransform(target_frame, input_pose.header.frame_id, tf2::TimePointZero);
-    tf2::doTransform(input_pose, *output_pose, transform);
-    return true;
+    tf2::doTransform(input_pose, output_pose, transform);
+    return output_pose;
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(get_logger(), "%s", ex.what());
-    return false;
+    return {};
   }
+}
+
+void MissionPlanner::run()
+{
+  if (!is_looped_route_ || route_.segments.empty()) {
+    return;
+  }
+
+  const auto start_pose = *self_pose_listener_.getCurrentPose();
+
+  // publish new route if the ego's closest lanelet moves forward
+  geometry_msgs::msg::Pose goal_pose;
+  const auto final_idx = getClosestRouteSectionIndex(route_, start_pose, goal_pose);
+  if (!loop_idx_ || loop_idx_.get() != final_idx.get()) {
+    auto route = route_;
+    route.segments.clear();
+    route.segments.insert(
+      route.segments.end(), route_.segments.begin() + final_idx.get(), route_.segments.end());
+    route.segments.insert(
+      route.segments.end(), route_.segments.begin(),
+      route_.segments.end() - (route_.segments.size() - final_idx.get()));
+    route.goal_pose = goal_pose;
+
+    publishRoute(route);
+
+    loop_idx_ = final_idx.get();
+  }
+}
+
+void MissionPlanner::loopCallback(const std_msgs::msg::Bool::ConstSharedPtr msg)
+{
+  if (msg->data) {
+    RCLCPP_INFO(get_logger(), "Route will be looped.");
+  } else {
+    RCLCPP_INFO(get_logger(), "Route will not be looped.");
+  }
+  is_looped_route_ = msg->data;
 }
 
 void MissionPlanner::goalPoseCallback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr)
 {
-  const auto & start_pose = *self_pose_listener_.getCurrentPose();
+  const auto start_pose = *self_pose_listener_.getCurrentPose();
 
   // set goal pose
-  geometry_msgs::msg::PoseStamped goal_pose;
-  if (!transformPose(*goal_msg_ptr, &goal_pose, map_frame_)) {
+  goal_pose_ = transformPose(*goal_msg_ptr, map_frame_);
+  if (!goal_pose_) {
     RCLCPP_ERROR(get_logger(), "Failed to get goal pose in map frame. Aborting mission planning");
     return;
   }
-  RCLCPP_INFO(get_logger(), "New goal pose is set. Reset checkpoints.");
+  RCLCPP_INFO(get_logger(), "New goal pose is set.");
 
-  checkpoints_.clear();
-  checkpoints_.push_back(start_pose);
-  checkpoints_.push_back(goal_pose);
+  std::vector<geometry_msgs::msg::PoseStamped> pass_points;
+  pass_points.push_back(start_pose);
+  pass_points.push_back(goal_pose_.get());
 
   if (!isRoutingGraphReady()) {
     RCLCPP_ERROR(get_logger(), "RoutingGraph is not ready. Aborting mission planning");
     return;
   }
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
+  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute(pass_points);
   publishRoute(route);
 }
 
 void MissionPlanner::checkpointCallback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr)
 {
-  if (checkpoints_.size() < 2) {
-    RCLCPP_ERROR(
-      get_logger(),
-      "You must set start and goal before setting checkpoints. Aborting mission planning");
-    return;
-  }
-
-  geometry_msgs::msg::PoseStamped transformed_checkpoint;
-  if (!transformPose(*checkpoint_msg_ptr, &transformed_checkpoint, map_frame_)) {
+  const auto transformed_checkpoint = transformPose(*checkpoint_msg_ptr, map_frame_);
+  if (!transformed_checkpoint) {
     RCLCPP_ERROR(
       get_logger(), "Failed to get checkpoint pose in map frame. Aborting mission planning");
     return;
   }
 
-  // insert checkpoint before goal
-  checkpoints_.insert(checkpoints_.end() - 1, transformed_checkpoint);
+  const auto start_pose = *self_pose_listener_.getCurrentPose();
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
-  publishRoute(route);
+  if (!isRoutingGraphReady()) {
+    RCLCPP_ERROR(get_logger(), "RoutingGraph is not ready. Aborting mission planning");
+    return;
+  }
+
+  if (is_looped_route_) {
+    checkpoints_.push_back(transformed_checkpoint.get());
+
+    std::vector<geometry_msgs::msg::PoseStamped> pass_points;
+    pass_points.push_back(start_pose);
+    pass_points.insert(pass_points.end(), checkpoints_.begin(), checkpoints_.end());
+    pass_points.push_back(start_pose);
+
+    route_ = planRoute(pass_points, true);
+    // route_.segments.pop_back();
+  } else {
+    if (!goal_pose_) {
+      RCLCPP_ERROR(
+        get_logger(),
+        "You must set start and goal before setting checkpoints. Aborting mission planning");
+      return;
+    }
+
+    checkpoints_.push_back(transformed_checkpoint.get());
+
+    std::vector<geometry_msgs::msg::PoseStamped> pass_points;
+    pass_points.push_back(start_pose);
+    pass_points.insert(pass_points.end(), checkpoints_.begin(), checkpoints_.end());
+    pass_points.push_back(goal_pose_.get());
+
+    autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute(pass_points);
+    publishRoute(route);
+  }
 }
 
 void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
