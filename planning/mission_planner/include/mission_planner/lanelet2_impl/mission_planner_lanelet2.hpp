@@ -57,7 +57,7 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  bool isGoalValid() const;
+  bool isGoalValid(const geometry_msgs::msg::Pose & goal_pose) const;
 
   // virtual functions
   bool isRoutingGraphReady() const;

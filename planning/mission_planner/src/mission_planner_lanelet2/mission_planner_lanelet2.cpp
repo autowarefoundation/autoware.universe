@@ -192,19 +192,17 @@ void MissionPlannerLanelet2::visualizeRoute(
   marker_publisher_->publish(route_marker_array);
 }
 
-bool MissionPlannerLanelet2::isGoalValid() const
+bool MissionPlannerLanelet2::isGoalValid(const geometry_msgs::msg::Pose & goal_pose) const
 {
   lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(
-        road_lanelets_, goal_pose_.pose, &closest_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose, &closest_lanelet)) {
     return false;
   }
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose_.pose.position);
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
 
   if (isInLane(closest_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw =
-      lanelet::utils::getLaneletAngle(closest_lanelet, goal_pose_.pose.position);
-    const auto goal_yaw = tf2::getYaw(goal_pose_.pose.orientation);
+    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal_pose.position);
+    const auto goal_yaw = tf2::getYaw(goal_pose.orientation);
     const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
@@ -229,14 +227,14 @@ bool MissionPlannerLanelet2::isGoalValid() const
   // check if goal is in shoulder lanelet
   lanelet::Lanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        shoulder_lanelets_, goal_pose_.pose, &closest_shoulder_lanelet)) {
+        shoulder_lanelets_, goal_pose, &closest_shoulder_lanelet)) {
     return false;
   }
   // check if goal pose is in shoulder lane
   if (isInLane(closest_shoulder_lanelet, goal_lanelet_pt)) {
     const auto lane_yaw =
-      lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal_pose_.pose.position);
-    const auto goal_yaw = tf2::getYaw(goal_pose_.pose.orientation);
+      lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal_pose.position);
+    const auto goal_yaw = tf2::getYaw(goal_pose.orientation);
     const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
@@ -250,19 +248,21 @@ bool MissionPlannerLanelet2::isGoalValid() const
 
 autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute()
 {
+  const geometry_msgs::msg::Pose goal_pose = checkpoints_.back().pose;
+
   std::stringstream ss;
   for (const auto & checkpoint : checkpoints_) {
     ss << "x: " << checkpoint.pose.position.x << " "
        << "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    get_logger(), "start planning route with checkpoints: " << std::endl
-                                                            << ss.str());
+    get_logger(), "start planning route with checkpoints_: " << std::endl
+                                                             << ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
 
-  if (!isGoalValid()) {
+  if (!isGoalValid(goal_pose)) {
     RCLCPP_WARN(get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
@@ -289,7 +289,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   route_msg.header.stamp = this->now();
   route_msg.header.frame_id = map_frame_;
   route_msg.segments = route_sections;
-  route_msg.goal_pose = goal_pose_.pose;
+  route_msg.goal_pose = goal_pose;
 
   return route_msg;
 }

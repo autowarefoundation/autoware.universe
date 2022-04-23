@@ -27,6 +27,8 @@
 #include <tf2_ros/transform_listener.h>
 
 // Autoware
+#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
+
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -38,17 +40,17 @@ class MissionPlanner : public rclcpp::Node
 protected:
   MissionPlanner(const std::string & node_name, const rclcpp::NodeOptions & node_options);
 
-  geometry_msgs::msg::PoseStamped goal_pose_;
-  geometry_msgs::msg::PoseStamped start_pose_;
-  std::vector<geometry_msgs::msg::PoseStamped> checkpoints_;
+  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
-  std::string base_link_frame_;
   std::string map_frame_;
+
+  std::vector<geometry_msgs::msg::PoseStamped> checkpoints_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
 
   virtual bool isRoutingGraphReady() const = 0;
   virtual autoware_auto_planning_msgs::msg::HADMapRoute planRoute() = 0;
+
   virtual void visualizeRoute(
     const autoware_auto_planning_msgs::msg::HADMapRoute & route) const = 0;
   virtual void publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const;
@@ -61,12 +63,11 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  bool getEgoVehiclePose(geometry_msgs::msg::PoseStamped * ego_vehicle_pose);
-  void goalPoseCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr);
-  void checkpointCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr);
   bool transformPose(
     const geometry_msgs::msg::PoseStamped & input_pose,
-    geometry_msgs::msg::PoseStamped * output_pose, const std::string target_frame);
+    geometry_msgs::msg::PoseStamped * output_pose, const std::string & target_frame);
+  void goalPoseCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr);
+  void checkpointCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr);
 };
 
 }  // namespace mission_planner
