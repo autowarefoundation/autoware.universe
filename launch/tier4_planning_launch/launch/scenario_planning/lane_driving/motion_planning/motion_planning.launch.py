@@ -26,7 +26,6 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
-from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
@@ -180,7 +179,6 @@ def launch_setup(context, *args, **kwargs):
             obstacle_stop_planner_param,
             obstacle_stop_planner_acc_param,
             vehicle_info_param,
-            {"enable_slow_down": False},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -221,26 +219,14 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    # vehicle information parameter file
-    add_launch_arg(
-        "vehicle_info_param_file",
-        [
-            FindPackageShare("vehicle_info_util"),
-            "/config/vehicle_info.param.yaml",
-        ],
-        "path to the parameter file of vehicle information",
-    )
-
-    # obstacle_avoidance_planner
+    # input of motion
     add_launch_arg(
         "input_path_topic",
         "/planning/scenario_planning/lane_driving/behavior_planning/path",
         "input path topic of obstacle_avoidance_planner",
     )
 
-    # surround obstacle checker
-    add_launch_arg("use_surround_obstacle_check", "true", "launch surround_obstacle_checker or not")
-
+    # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 

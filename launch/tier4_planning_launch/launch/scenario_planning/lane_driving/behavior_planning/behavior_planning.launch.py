@@ -26,7 +26,6 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
@@ -36,6 +35,9 @@ def launch_setup(context, *args, **kwargs):
     vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    # parameters for each behavior package
+    bt_tree_config_path = LaunchConfiguration("bt_tree_config_file").perform(context)
 
     # behavior path planner
     side_shift_param_path = os.path.join(
@@ -178,10 +180,7 @@ def launch_setup(context, *args, **kwargs):
             behavior_path_planner_param,
             vehicle_info_param,
             {
-                "bt_tree_config_path": [
-                    FindPackageShare("behavior_path_planner"),
-                    "/config/behavior_path_planner_tree.xml",
-                ],
+                "bt_tree_config_path": bt_tree_config_path,
                 "planning_hz": 10.0,
             },
         ],
@@ -404,15 +403,7 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    add_launch_arg(
-        "vehicle_info_param_file",
-        [
-            FindPackageShare("vehicle_info_util"),
-            "/config/vehicle_info.param.yaml",
-        ],
-        "path to the parameter file of vehicle information",
-    )
-
+    # input of behavior
     add_launch_arg(
         "input_route_topic_name", "/planning/mission_planning/route", "input topic of route"
     )
