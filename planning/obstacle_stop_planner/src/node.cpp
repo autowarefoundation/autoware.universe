@@ -440,23 +440,23 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   // Parameters
   {
     auto & p = node_param_;
-    p.enable_slow_down = declare_parameter("enable_slow_down", false);
-    p.max_velocity = declare_parameter("max_velocity", 20.0);
-    p.hunting_threshold = declare_parameter("hunting_threshold", 0.5);
-    p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
+    p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
+    p.max_velocity = declare_parameter<double>("max_velocity");
+    p.hunting_threshold = declare_parameter<double>("hunting_threshold");
+    p.lowpass_gain = declare_parameter<double>("lowpass_gain");
     lpf_acc_ = std::make_shared<LowpassFilter1d>(0.0, p.lowpass_gain);
-    const double max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 90.0);
+    const double max_yaw_deviation_deg = declare_parameter<double>("max_yaw_deviation_deg");
     p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(max_yaw_deviation_deg);
   }
 
   {
     auto & p = stop_param_;
     const std::string ns = "stop_planner.";
-    p.stop_margin = declare_parameter(ns + "stop_margin", 5.0);
-    p.min_behavior_stop_margin = declare_parameter(ns + "min_behavior_stop_margin", 2.0);
-    p.expand_stop_range = declare_parameter(ns + "expand_stop_range", 0.0);
-    p.extend_distance = declare_parameter(ns + "extend_distance", 0.0);
-    p.step_length = declare_parameter(ns + "step_length", 1.0);
+    p.stop_margin = declare_parameter<double>(ns + "stop_margin");
+    p.min_behavior_stop_margin = declare_parameter<double>(ns + "min_behavior_stop_margin");
+    p.expand_stop_range = declare_parameter<double>(ns + "expand_stop_range");
+    p.extend_distance = declare_parameter<double>(ns + "extend_distance");
+    p.step_length = declare_parameter<double>(ns + "step_length");
     p.stop_margin += i.max_longitudinal_offset_m;
     p.min_behavior_stop_margin += i.max_longitudinal_offset_m;
     p.stop_search_radius =
@@ -468,28 +468,28 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     auto & p = slow_down_param_;
     const std::string ns = "slow_down_planner.";
     // common param
-    p.normal_min_jerk = declare_parameter("normal.min_jerk", -0.3);
-    p.normal_min_acc = declare_parameter("normal.min_acc", -1.0);
-    p.limit_min_jerk = declare_parameter("limit.min_jerk", -1.5);
-    p.limit_min_acc = declare_parameter("limit.min_acc", -2.5);
+    p.normal_min_jerk = declare_parameter<double>("normal.min_jerk");
+    p.normal_min_acc = declare_parameter<double>("normal.min_acc");
+    p.limit_min_jerk = declare_parameter<double>("limit.min_jerk");
+    p.limit_min_acc = declare_parameter<double>("limit.min_acc");
     // slow down planner specific parameters
-    p.forward_margin = declare_parameter(ns + "forward_margin", 5.0);
-    p.backward_margin = declare_parameter(ns + "backward_margin", 5.0);
-    p.expand_slow_down_range = declare_parameter(ns + "expand_slow_down_range", 1.0);
-    p.max_slow_down_vel = declare_parameter(ns + "max_slow_down_vel", 4.0);
-    p.min_slow_down_vel = declare_parameter(ns + "min_slow_down_vel", 2.0);
+    p.forward_margin = declare_parameter<double>(ns + "forward_margin");
+    p.backward_margin = declare_parameter<double>(ns + "backward_margin");
+    p.expand_slow_down_range = declare_parameter<double>(ns + "expand_slow_down_range");
+    p.max_slow_down_vel = declare_parameter<double>(ns + "max_slow_down_vel");
+    p.min_slow_down_vel = declare_parameter<double>(ns + "min_slow_down_vel");
     // consider jerk/dec constraints in slow down
-    p.consider_constraints = declare_parameter(ns + "consider_constraints", false);
-    p.forward_margin_min = declare_parameter(ns + "forward_margin_min", 1.0);
-    p.forward_margin_span = declare_parameter(ns + "forward_margin_span", -0.1);
-    p.slow_down_min_jerk = declare_parameter(ns + "jerk_min_slow_down", -0.3);
-    p.jerk_start = declare_parameter(ns + "jerk_start", -0.1);
-    p.jerk_span = declare_parameter(ns + "jerk_span", -0.01);
-    p.slow_down_vel = declare_parameter(ns + "slow_down_vel", 1.39);
+    p.consider_constraints = declare_parameter<bool>(ns + "consider_constraints");
+    p.forward_margin_min = declare_parameter<double>(ns + "forward_margin_min");
+    p.forward_margin_span = declare_parameter<double>(ns + "forward_margin_span");
+    p.slow_down_min_jerk = declare_parameter<double>(ns + "jerk_min_slow_down");
+    p.jerk_start = declare_parameter<double>(ns + "jerk_start");
+    p.jerk_span = declare_parameter<double>(ns + "jerk_span");
+    p.slow_down_vel = declare_parameter<double>(ns + "slow_down_vel");
     p.vel_threshold_reset_velocity_limit_ =
-      declare_parameter(ns + "vel_threshold_reset_velocity_limit_", 0.2);
+      declare_parameter<double>(ns + "vel_threshold_reset_velocity_limit");
     p.dec_threshold_reset_velocity_limit_ =
-      declare_parameter(ns + "dec_threshold_reset_velocity_limit_", 0.1);
+      declare_parameter<double>(ns + "dec_threshold_reset_velocity_limit");
     p.forward_margin += i.max_longitudinal_offset_m;
     p.forward_margin_min += i.wheel_base_m + i.front_overhang_m;
     p.backward_margin += i.rear_overhang_m;
