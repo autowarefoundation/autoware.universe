@@ -33,7 +33,7 @@ None
 
 ## Assumptions / Known limits
 
-TBD.
+web_controller needs `rosbrdige` which is automatically launched in [tier4_autoware_api_launch](https://github.com/autowarefoundation/autoware.universe/pull/779/files) along with launching Autoware.
 
 ## Usage
 
