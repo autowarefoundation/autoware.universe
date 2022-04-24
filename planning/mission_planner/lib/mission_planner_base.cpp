@@ -113,6 +113,8 @@ void MissionPlanner::loopCallback(const std_msgs::msg::Bool::ConstSharedPtr msg)
 void MissionPlanner::goalPoseCallback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr)
 {
+  is_looped_route_ = false;
+
   const auto start_pose = *self_pose_listener_.getCurrentPose();
 
   // set goal pose
