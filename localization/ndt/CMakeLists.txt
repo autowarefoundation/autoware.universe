@@ -30,7 +30,6 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io registration)
-find_package(Eigen3 REQUIRED)
 find_package(ndt_omp REQUIRED)
 find_package(ndt_pcl_modified REQUIRED)
 
