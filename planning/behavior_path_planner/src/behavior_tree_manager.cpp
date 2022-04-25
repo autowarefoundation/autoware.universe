@@ -124,7 +124,7 @@ std::vector<MarkerArray> BehaviorTreeManager::getDebugMarkers()
   return data;
 }
 
-AvoidanceInfoArray BehaviorTreeManager::getAvoidanceInfoArray()
+AvoidanceDebugMsgArray BehaviorTreeManager::getAvoidanceDebugMsgArray()
 {
   const auto avoidance_module = std::find_if(
     scene_modules_.begin(), scene_modules_.end(),
@@ -132,12 +132,12 @@ AvoidanceInfoArray BehaviorTreeManager::getAvoidanceInfoArray()
       return module_ptr->current_state_ == BT::NodeStatus::SUCCESS;
     });
   if (avoidance_module != scene_modules_.end()) {
-    const auto & ptr = avoidance_module->get()->getAvoidanceInfoArray();
+    const auto & ptr = avoidance_module->get()->getAvoidanceDebugMsgArray();
     if (ptr) {
       return *ptr;
     }
   }
-  return AvoidanceInfoArray();
+  return AvoidanceDebugMsgArray();
 }
 
 BT::NodeStatus BehaviorTreeManager::checkForceApproval(const std::string & name)

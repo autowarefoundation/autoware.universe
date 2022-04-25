@@ -25,9 +25,9 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <tier4_planning_msgs/msg/avoidance_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_info.hpp>
-#include <tier4_planning_msgs/msg/avoidance_info_array.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <memory>
 #include <string>
@@ -157,8 +157,8 @@ private:
   // debug
   mutable DebugData debug_data_;
   void setDebugData(const PathShifter & shifter, const DebugData & debug);
-  mutable std::vector<AvoidanceInfo> debug_avoidance_initializer_for_object;
-  mutable std::vector<AvoidanceInfo> debug_avoidance_initializer_for_shift_point;
+  mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_object;
+  mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_point;
   // =====================================
   // ========= helper functions ==========
   // =====================================

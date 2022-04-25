@@ -25,9 +25,9 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <tier4_planning_msgs/msg/avoidance_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_info.hpp>
-#include <tier4_planning_msgs/msg/avoidance_info_array.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <boost/optional.hpp>
 
@@ -46,7 +46,7 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using route_handler::LaneChangeDirection;
 using route_handler::PullOutDirection;
 using route_handler::PullOverDirection;
-using tier4_planning_msgs::msg::AvoidanceInfoArray;
+using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
 
@@ -194,10 +194,10 @@ public:
 
   MarkerArray getDebugMarker() { return debug_marker_; }
 
-  AvoidanceInfoArray::SharedPtr getAvoidanceInfoArray()
+  AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
   {
-    debug_avoidance_info_array_ptr_->header.stamp = clock_->now();
-    return debug_avoidance_info_array_ptr_;
+    debug_avoidance_msg_array_ptr_->header.stamp = clock_->now();
+    return debug_avoidance_msg_array_ptr_;
   }
 
 private:
@@ -207,7 +207,7 @@ private:
 protected:
   MarkerArray debug_marker_;
   rclcpp::Clock::SharedPtr clock_;
-  mutable AvoidanceInfoArray::SharedPtr debug_avoidance_info_array_ptr_{};
+  mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
 
 public:
   ApprovalHandler approval_handler_;
