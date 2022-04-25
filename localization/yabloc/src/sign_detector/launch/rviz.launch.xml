@@ -1,0 +1,9 @@
+<launch>
+    <!-- ========================================= -->
+    <!-- default parameters -->
+    <arg name="path" default="$(find-pkg-share sign_detector)/config/"/>
+
+    <!-- ========================================= -->
+    <!-- rviz -->
+    <node name="rviz2" pkg="rviz2" exec="rviz2" output="log" args="-d $(var path)/default.rviz"/>
+</launch>

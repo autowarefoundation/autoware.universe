@@ -1,0 +1,13 @@
+<launch>
+    <arg name="log_level" default="warn"/>
+    
+    <node name="eagleye_path" pkg="sign_detector" exec="eagleye_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="fix_topic" value="/eagleye/fix"/>
+        <param name="path_topic" value="/eagleye/path"/>
+    </node>
+
+    <node name="raw_path" pkg="sign_detector" exec="eagleye_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="fix_topic" value="/sensing/gnss/ublox/nav_sat_fix"/>
+        <param name="path_topic" value="/ublox/path"/>
+    </node>
+</launch>

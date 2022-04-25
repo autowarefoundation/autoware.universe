@@ -13,11 +13,13 @@
 class EagleyeSubscriber : public rclcpp::Node
 {
 public:
-  EagleyeSubscriber(const std::string& fix_topic, const std::string& twist_topic) : Node("eagleye_subscriber")
+  EagleyeSubscriber(const std::string& node_name) : Node(node_name)
   {
+    std::string fix_topic = declare_parameter("fix_topic", "/eagleye/fix");
+    std::string path_topic = declare_parameter("path_topic", "/eagleye/path");
+
     sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(fix_topic, 10, std::bind(&EagleyeSubscriber::fixCallback, this, std::placeholders::_1));
-    sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(twist_topic, 10, std::bind(&EagleyeSubscriber::twistCallback, this, std::placeholders::_1));
-    pub_path_ = this->create_publisher<nav_msgs::msg::Path>("/path", 10);
+    pub_path_ = this->create_publisher<nav_msgs::msg::Path>(path_topic, 10);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
   }
@@ -25,7 +27,6 @@ public:
 private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_path_;
   nav_msgs::msg::Path path_;
 
@@ -54,6 +55,8 @@ private:
     path_.poses.push_back(ps);
     pub_path_->publish(path_);
 
+    std::cout << "hoge" << std::endl;
+
     publishTf(ps);
   }
 
@@ -70,19 +73,12 @@ private:
 
     tf_broadcaster_->sendTransform(t);
   }
-
-  void twistCallback(const geometry_msgs::msg::TwistStamped&) const
-  {
-    // std::cout << msg.header.frame_id << std::endl;
-  }
 };
 
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
-  const std::string fix_topic = "/eagleye/fix";
-  const std::string twist_topic = "/eagleye/twist";
-  rclcpp::spin(std::make_shared<EagleyeSubscriber>(fix_topic, twist_topic));
+  rclcpp::spin(std::make_shared<EagleyeSubscriber>("eagleye_node"));
   rclcpp::shutdown();
   return 0;
 }
