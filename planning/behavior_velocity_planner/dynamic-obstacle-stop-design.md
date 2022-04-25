@@ -4,6 +4,8 @@
 
 `dynamic_obstacle_stop` is the module that decelerates and stops for dynamic obstacles such as pedestrians and bicycles.
 
+![brief](./docs/dynamic_obstacle_stop/dynamic_obstacle_stop_overview.svg)
+
 ### Activation Timing
 
 This module is activated if `launch_dynamic_obstacle_stop` becomes true
@@ -19,17 +21,8 @@ start
 
 partition preprocess_path {
 :calculate predicted path for ego vehicle;
-' note right
-'   predicted path is needed to calculate time to collision with obstacles.
-' end note
 :extend predicted path;
-' note right
-'   extend path to consider obstacles after the goal
-' end note
 :trim path from ego position;
-' note right
-'   for reducing calculation cost
-' end note
 }
 
 partition preprocess_obstacles {
@@ -70,11 +63,14 @@ Trimmed distance is specified by parameter of `detection_distance`.
 
 #### preprocess obstacles
 
-##### create data of abstracted dynamic obstacles
+##### create data of abstracted dynamic obstacle
 
-This module can handle multiple types of input type of obstacles by creating abstracted dynamic obstacle data from input data. Currently we have 3 types of method (Object, ObjectWithoutPath, Points) to create abstracted obstacle data.
-abstracted obstacle data has following information.
-In method of Points, we should specify the velocity that is enough large for safety, but obstacles are likely to pass through the lane and not being detected. So we use min and max velocity.
+This module can handle multiple types of input type of obstacles by creating abstracted dynamic obstacle data from input data. Currently we have 3 types of detection method (Object, ObjectWithoutPath, Points) to create abstracted obstacle data.
+
+###### abstracted dynamic obstacle
+
+Abstracted obstacle data has following information.
+In method of Points, we should specify the velocity that is enough large for safety, but if velocity is large, obstacles are likely to pass through the lane and not being detected. So we use min and max velocity instead.
 Min and max velocity are specified by parameter of `dynamic_obstacle.min_vel_kmph` and `dynamic_obstacle.max_vel_kmph`. (In case of Object method, we also use this parameter, but in the future it will be replaced with velocity calculated by twist with covariance that predicted object has.)
 
 | Name             | Type                                                                    | Description                                                                                                            |
@@ -85,6 +81,19 @@ Min and max velocity are specified by parameter of `dynamic_obstacle.min_vel_kmp
 | predicted_paths  | `std::vector<DynamicObstacle::PredictedPath>`                           | predicted paths with confidence. this data doesn't have time step because we use minimum and maximum velocity instead. |
 | min_velocity_mps | `float`                                                                 | minimum velocity of the obstacle. specified by parameter of `dynamic_osbtacle.min_vel_kmph`                            |
 | max_velocity_mps | `float`                                                                 | maximum velocity of the obstacle. specified by parameter of `dynamic_osbtacle.max_vel_kmph`                            |
+
+###### 3 types of detection method
+
+We have 3 types of detection method to meet different safety and availability requirements. The characteristics of them are shown in the table below.
+Method of `Object` has high availability (less false positive) because it detects only objects whose predicted path is on the lane. However, sometimes it is not safe because perception may fail to detect obstacles or generate incorrect predicted paths.
+On the other hand, method of `Points` has high safety (less false negative) because it uses pointcloud as input. However, without proper adjustment of filter of points, it may detect a lot of points and it will result in very low availability.
+Method of `ObjectWithoutPath` has the characteristics of an intermediate of `Object` and `Points`.
+
+| Method            | Description                                                                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Object            | use an object with the predicted path for collision detection.                                                                                                        |
+| ObjectWithoutPath | use an object but not use the predicted path for collision detection. replace the path assuming that an object jumps out to the lane at specified velocity.           |
+| Points            | use filtered points for collision detection. the path is created assuming that points jump out to the lane. points are regarded as an small circular shaped obstacle. |
 
 ![brief](./docs/dynamic_obstacle_stop/create_dynamic_obstacle.svg)
 
