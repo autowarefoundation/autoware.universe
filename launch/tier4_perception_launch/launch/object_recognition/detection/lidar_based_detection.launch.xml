@@ -87,7 +87,7 @@
   <group>
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
       <!-- <arg name="input/object0" value="$(var lidar_detection_model)/validation/objects"/> -->
-      <arg name="input/object0" value="/perception/object_recognition/detection/clustring/clusters_without_feature"/>
+      <arg name="input/object0" value="/perception/object_recognition/detection/clustering/clusters_without_feature"/>
       <arg name="input/object1" value="detection_by_tracker/objects"/>
       <arg name="output/object" value="objects"/>
     </include>
