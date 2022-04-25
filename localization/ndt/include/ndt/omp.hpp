@@ -19,7 +19,6 @@
 
 #include <pcl/common/io.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/memory.h>
 #include <pcl/point_types.h>
 #include <pclomp/ndt_omp.h>
 
