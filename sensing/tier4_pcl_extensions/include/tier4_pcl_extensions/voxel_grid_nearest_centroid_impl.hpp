@@ -57,7 +57,6 @@
 #include <Eigen/Dense>
 
 #include <pcl/common/common.h>
-
 #include <pcl/pcl_config.h>
 
 #if PCL_VERSION < PCL_VERSION_CALC(1, 12, 0)
