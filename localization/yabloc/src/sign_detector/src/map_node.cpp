@@ -7,6 +7,7 @@
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "sign_detector/fix2mgrs.hpp"
 #include <pcl-1.10/pcl/kdtree/kdtree_flann.h>
 #include <pcl-1.10/pcl/point_cloud.h>
 
@@ -21,9 +22,42 @@ public:
   }
 
 private:
-  void fixCallback(const sensor_msgs::msg::NavSatFix&) const
+  void fixCallback(const sensor_msgs::msg::NavSatFix& msg)
   {
     if (!kdtree_) return;
+
+    Eigen::Vector3d mgrs = fix2Mgrs(msg);
+    pcl::PointXYZ p;
+    p.x = mgrs.x();
+    p.y = mgrs.y();
+    p.z = mgrs.z();
+
+    constexpr int K = 10;
+    std::vector<int> indices;
+    std::vector<float> distances;
+    kdtree_->nearestKSearch(p, K, indices, distances);
+
+    float height = std::numeric_limits<float>::max();
+    for (int index : indices) {
+      Eigen::Vector3f v = cloud_->at(index).getVector3fMap();
+      height = std::min(height, v.z());
+    }
+    RCLCPP_INFO_STREAM(this->get_logger(), "height: " << height);
+
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = this->get_clock()->now();
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.scale.x = 1;
+    marker.scale.y = 1;
+    marker.scale.z = 1;
+    marker.pose.position.x = p.x;
+    marker.pose.position.y = p.y;
+    marker.pose.position.z = height;
+    marker.pose.orientation.w = 1;
+    marker.color.r = 1.0;
+    marker.color.a = 1.0;
+    pub_ground_->publish(marker);
   }
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin& msg)
@@ -45,19 +79,16 @@ private:
       return q;
     };
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+    cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
     for (lanelet::LineString3d& line : viz_lanelet_map->lineStringLayer) {
       if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
       lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
       if (attr.value() != "line_thin") continue;
 
       for (const lanelet::ConstPoint3d& p : line)
-        cloud->push_back(toPointXYZ(p));
+        cloud_->push_back(toPointXYZ(p));
     }
-
-    std::cout << "cloud: " << cloud->size() << std::endl;
-
-    kdtree_->setInputCloud(cloud);
+    kdtree_->setInputCloud(cloud_);
   }
 
   void fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapBin& msg, lanelet::LaneletMapPtr map) const
@@ -81,6 +112,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_ground_;
 
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
 };
 

@@ -58,7 +58,7 @@ target_link_libraries(lsd_node ${OpenCV_LIBS} cv_lsd)
 
 ament_auto_add_executable(map_node src/map_node.cpp)
 target_include_directories(map_node PUBLIC include 3rd/regulatory_elements/include)
-target_link_libraries(map_node  regulatory_elements ${PCL_LIBRARIES})
+target_link_libraries(map_node  regulatory_elements ${PCL_LIBRARIES} Geographic)
 
 ament_auto_add_executable(eagleye_node src/eagleye_node.cpp)
 target_include_directories(eagleye_node PUBLIC include )
