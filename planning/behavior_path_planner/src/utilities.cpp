@@ -1100,7 +1100,8 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 // input lanes must be in sequence
 OccupancyGrid generateDrivableArea(
   const lanelet::ConstLanelets & lanes, const double resolution, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data)
+  const std::shared_ptr<const PlannerData> planner_data,
+  const std::vector<Polygon2d> & obj_with_offset_polygons)
 {
   const auto & params = planner_data->parameters;
   const auto route_handler = planner_data->route_handler;
@@ -1212,6 +1213,25 @@ OccupancyGrid generateDrivableArea(
       cv_polygons.push_back(cv_polygon);
       // fill in drivable area and copy to occupancy grid
       cv::fillPoly(cv_image, cv_polygons, cv::Scalar(free_space));
+    }
+
+    // convert object polygons into cv type
+    for (const auto & obj_polygon : obj_with_offset_polygons) {
+      std::vector<cv::Point> cv_polygon;
+
+      for (const auto & pt : obj_polygon.outer()) {
+        geometry_msgs::msg::Point geom_pt;
+        geom_pt.x = pt(0);
+        geom_pt.y = pt(1);
+
+        geometry_msgs::msg::Point transformed_geom_pt;
+        tf2::doTransform(geom_pt, transformed_geom_pt, geom_tf_map2grid);
+
+        cv_polygon.push_back(toCVPoint(transformed_geom_pt, width, height, resolution));
+      }
+      std::vector<std::vector<cv::Point>> cv_polygons = {cv_polygon};
+
+      cv::fillPoly(cv_image, cv_polygons, cv::Scalar(occupied_space));
     }
 
     // Closing

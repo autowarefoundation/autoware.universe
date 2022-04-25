@@ -256,7 +256,8 @@ cv::Point toCVPoint(
 
 OccupancyGrid generateDrivableArea(
   const lanelet::ConstLanelets & lanes, const double resolution, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data);
+  const std::shared_ptr<const PlannerData> planner_data,
+  const std::vector<Polygon2d> & obj_with_offset_polygons = {});
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const std::shared_ptr<const PlannerData> & planner_data);

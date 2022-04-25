@@ -1842,10 +1842,49 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
     }
   }
 
+  // add offset to object
+  std::vector<tier4_autoware_utils::Polygon2d> obj_with_offset_polygons;
+  {
+    // convert object dynamic array to multi polygon 2d
+    boost::geometry::model::multi_polygon<tier4_autoware_utils::Polygon2d> obj_multipolygon;
+    for (const auto & object_data : avoidance_data_.objects) {
+      const auto & object = object_data.object;
+
+      tier4_autoware_utils::Polygon2d obj_polygon;
+      if (!util::calcObjectPolygon(object, &obj_polygon)) {
+        continue;
+      }
+
+      boost::geometry::correct(obj_polygon);
+      obj_multipolygon.push_back(obj_polygon);
+    }
+
+    // declare strategies for boost::geometry::buffer to add offset to object
+    const double buffer_distance = 1.5;  // TODO(murooka) magic number: 1.5m away from objects
+    boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(
+      buffer_distance);
+    boost::geometry::strategy::buffer::join_miter join_strategy;
+    boost::geometry::strategy::buffer::end_flat end_strategy;
+    boost::geometry::strategy::buffer::point_circle point_strategy;
+    boost::geometry::strategy::buffer::side_straight side_strategy;
+    boost::geometry::model::multi_polygon<tier4_autoware_utils::Polygon2d>
+      obj_with_offset_multipolygon;
+
+    // add offset to object
+    boost::geometry::buffer(
+      obj_multipolygon, obj_with_offset_multipolygon, distance_strategy, side_strategy,
+      join_strategy, end_strategy, point_strategy);
+
+    for (const auto & polygon : obj_with_offset_multipolygon) {
+      obj_with_offset_polygons.push_back(polygon);
+    }
+  }
+
   {
     const auto & p = planner_data_->parameters;
     shifted_path->path.drivable_area = util::generateDrivableArea(
-      extended_lanelets, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+      extended_lanelets, p.drivable_area_resolution, p.vehicle_length, planner_data_,
+      obj_with_offset_polygons);
   }
 }
 
