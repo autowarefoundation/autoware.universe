@@ -26,8 +26,8 @@ if not client.wait_for_service(timeout_sec=3.0):
 request = InterfaceVersion.Request()
 future = client.call_async(request)
 rclpy.spin_until_future_complete(node, future)
-
 response = future.result()
+
 if response.major != 0:
     exit(1)
 if response.minor != 1:
