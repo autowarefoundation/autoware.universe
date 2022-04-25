@@ -67,11 +67,16 @@ target_include_directories(scene_module_lib
     $<INSTALL_INTERFACE:include>
 )
 
+target_include_directories(scene_module_lib
+  SYSTEM PUBLIC
+    ${PCL_INCLUDE_DIRS}
+)
+
 ament_target_dependencies(scene_module_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
 # workaround to allow deprecated header to build on both galactic and rolling
 if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_lib PUBLIC
+  target_compile_definitions(scene_module_lib PRIVATE
     USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
   )
 endif()
@@ -92,6 +97,13 @@ target_include_directories(scene_module_stop_line
 ament_target_dependencies(scene_module_stop_line ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
 target_link_libraries(scene_module_stop_line scene_module_lib)
+
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(scene_module_stop_line PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
 
 
 # Scene Module: Crosswalk
@@ -133,6 +145,13 @@ ament_target_dependencies(scene_module_intersection ${BEHAVIOR_VELOCITY_PLANNER_
 
 target_link_libraries(scene_module_intersection scene_module_lib)
 
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(scene_module_intersection PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
+
 
 # Scene Module: Traffic Light
 ament_auto_add_library(scene_module_traffic_light SHARED
@@ -150,6 +169,13 @@ target_include_directories(scene_module_traffic_light
 ament_target_dependencies(scene_module_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
 target_link_libraries(scene_module_traffic_light scene_module_lib)
+
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(scene_module_traffic_light PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
 
 
 # Scene Module: Blind Spot
@@ -169,6 +195,13 @@ ament_target_dependencies(scene_module_blind_spot ${BEHAVIOR_VELOCITY_PLANNER_DE
 
 target_link_libraries(scene_module_blind_spot scene_module_lib)
 
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(scene_module_blind_spot PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
+
 
 # Scene Module: Detection Area
 ament_auto_add_library(scene_module_detection_area SHARED
@@ -187,6 +220,13 @@ ament_target_dependencies(scene_module_detection_area ${BEHAVIOR_VELOCITY_PLANNE
 
 target_link_libraries(scene_module_detection_area scene_module_lib)
 
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(scene_module_detection_area PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
+
 # Scene Module: No Stopping Area
 ament_auto_add_library(scene_module_no_stopping_area SHARED
   src/scene_module/no_stopping_area/manager.cpp
@@ -203,6 +243,13 @@ target_include_directories(scene_module_no_stopping_area
 ament_target_dependencies(scene_module_no_stopping_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
 target_link_libraries(scene_module_no_stopping_area scene_module_lib)
+
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(scene_module_no_stopping_area PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
 
 
 # Scene Module: Virtual Traffic Light
