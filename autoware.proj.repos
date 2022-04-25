@@ -105,10 +105,6 @@ repositories:
     type: git
     url: https://github.com/tier4/septentrio_gnss_driver.git
     version: d6da33824df8cf5d00cd7762fbe27e8dd5566500
-  vendor/livox-driver:
-    type: git
-    url: https://github.com/tier4/livox_ros2_driver.git
-    version: ef18bb868d92db70b541c21d188961ee6bcac024
   vendor/lidar-driver:
     type: git
     url: git@github.com:tier4/lidar_driver.git
