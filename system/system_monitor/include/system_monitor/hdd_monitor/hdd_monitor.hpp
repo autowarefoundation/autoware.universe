@@ -297,7 +297,9 @@ protected:
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HDDParam> hdd_params_;  //!< @brief list of error and warning levels
   std::vector<HDDDevice> hdd_devices_;          //!< @brief list of devices
-  std::map<std::string, HDDStat> hdd_stats_;
+  std::map<std::string, uint32_t>
+    initial_recovered_errors_;                //!< @brief list of initial recovered error count
+  std::map<std::string, HDDStat> hdd_stats_;  //!< @brief list of HDD statistics
   //!< @brief diagnostic of connection
   diagnostic_updater::DiagnosticStatusWrapper connect_diag_;
   HDDInfoList hdd_info_list_;               //!< @brief list of HDD information

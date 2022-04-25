@@ -175,6 +175,10 @@ void HDDMonitor::checkSMART(
       } break;
       case HDDSMARTInfoItem::RECOVERED_ERROR: {
         int32_t recovered_error = static_cast<int32_t>(hdd_itr->second.recovered_error_);
+        if (initial_recovered_errors_.find(itr->first) == initial_recovered_errors_.end()) {
+          initial_recovered_errors_[itr->first] = recovered_error;
+        }
+        recovered_error -= initial_recovered_errors_[itr->first];
 
         level = DiagStatus::OK;
         if (recovered_error >= itr->second.recovered_error_warn_) {
