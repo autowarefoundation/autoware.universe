@@ -69,7 +69,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   auto prev_point = path.points.front();
   auto lane_attribute = std::string("none");
   for (const auto & path_point : path.points) {
-    const double path_point_distance = 
+    const double path_point_distance =
       tier4_autoware_utils::calcDistance3d(prev_point.point, path_point.point);
     accumulated_distance += path_point_distance;
     prev_point = path_point;
@@ -83,16 +83,16 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       // judgement of lighting of turn_signal
       bool lighting_turn_signal = false;
       if (lane.attributeOr("turn_direction", std::string("none")) != lane_attribute) {
-        if (distance_from_vehicle_front < 
-          lane.attributeOr("turn_signal_distance", intersection_search_distance_) &&
+        if (
+          distance_from_vehicle_front <
+            lane.attributeOr("turn_signal_distance", intersection_search_distance_) &&
           path_point_distance > 0.0) {
           lighting_turn_signal = true;
         }
-      }
-      else {
-        if (lane.hasAttribute("turn_direction") &&
-          distance_from_vehicle_front < path_point_distance &&
-          distance_from_vehicle_front > 0) {
+      } else {
+        if (
+          lane.hasAttribute("turn_direction") &&
+          distance_from_vehicle_front < path_point_distance && distance_from_vehicle_front > 0) {
           lighting_turn_signal = true;
         }
       }
@@ -101,8 +101,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       if (lighting_turn_signal == true) {
         if (lane_attribute == std::string("left")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-        }
-        else if (lane_attribute == std::string("right")) {
+        } else if (lane_attribute == std::string("right")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
         }
         distance = distance_from_vehicle_front;
