@@ -29,6 +29,8 @@ typename Service<SpecT>::SharedPtr create_service_impl(
   NodeT * node, CallbackT && callback, rclcpp::CallbackGroup::SharedPtr group = nullptr)
 {
   // Use a node pointer because shared_from_this cannot be used in constructor.
+  // This function is a wrapper for the following.
+  // https://github.com/ros2/rclcpp/blob/galactic/rclcpp/include/rclcpp/node.hpp#L267-L281
   auto wrapped = Service<SpecT>::wrap(callback, node->get_logger());
   auto service = node->template create_service<typename SpecT::Service>(
     SpecT::name, wrapped, rmw_qos_profile_services_default, group);
