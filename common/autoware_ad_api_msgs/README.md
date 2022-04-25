@@ -2,10 +2,15 @@
 
 ## InterfaceVersion
 
-The interface should be stable, but it also needs to be improved on demand. This requires version control.
-The application needs to check compatibility with the interface version and to switch the processing depending on that.
-For that, this service provides an interface version based on [Semantic Versioning][semver].
-Unlike others, this interface should be especially stable because it needs to be backwards and forwards compatible across major versions.
+This API provides the interface version of the set of AD APIs.
+It follows [Semantic Versioning][semver] in order to provide an intuitive understanding of the changes between versions.
+
+### Use cases
+
+Considering the product life cycle, there will be multiple vehicles that use different versions of the AD API due to changes in requirements or some improvements.
+For example, a vehicle uses `v1` for stability and another vehicle uses `v2` for more functionality.
+
+In that situation, the AD API users such as developers of a Web service have to switch the application behavior based on the version that each vehicle uses.
 
 <!-- link -->
 
