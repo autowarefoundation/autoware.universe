@@ -23,6 +23,8 @@ rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersi
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  find_package(launch_testing_ament_cmake)
+  add_launch_test(test/main.test.py)
 endif()
 
 install(
@@ -30,4 +32,4 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE launch test)
