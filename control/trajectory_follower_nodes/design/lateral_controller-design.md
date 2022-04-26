@@ -48,12 +48,11 @@ Inputs
 
 ### Parameter description
 
-The default parameters defined in `param/lateral_controller_defaults.param.yaml` are adjusted to the
+The default parameters defined in `config/lateral_controller_defaults.param.yaml` are adjusted to the
 AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 | Name                                         | Type   | Description                                                                                                                                       | Default value |
 | :------------------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
-| show_debug_info                              | bool   | display debug info                                                                                                                                | false         |
 | ctrl_period                                  | double | control period [s]                                                                                                                                | 0.03          |
 | traj_resample_dist                           | double | distance of waypoints in resampling [m]                                                                                                           | 0.1           |
 | enable_path_smoothing                        | bool   | path smoothing flag. This should be true when uses path resampling to reduce resampling noise.                                                    | true          |

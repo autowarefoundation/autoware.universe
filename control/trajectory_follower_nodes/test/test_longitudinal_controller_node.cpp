@@ -47,8 +47,8 @@ std::shared_ptr<LongitudinalController> makeLongitudinalNode()
   rclcpp::NodeOptions node_options;
   node_options.arguments(
     {"--ros-args", "--params-file",
-     share_dir + "/param/longitudinal_controller_defaults.param.yaml", "--params-file",
-     share_dir + "/param/test_vehicle_info.param.yaml"});
+     share_dir + "/config/longitudinal_controller_defaults.param.yaml", "--params-file",
+     share_dir + "/config/test_vehicle_info.param.yaml"});
   std::shared_ptr<LongitudinalController> node =
     std::make_shared<LongitudinalController>(node_options);
 

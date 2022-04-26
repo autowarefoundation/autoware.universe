@@ -112,10 +112,7 @@ def launch_setup(context, *args, **kwargs):
             lon_controller_param,
             vehicle_info_param,
             {
-                "control_rate": LaunchConfiguration("control_rate"),
-                "show_debug_info": LaunchConfiguration("show_debug_info"),
                 "enable_smooth_stop": LaunchConfiguration("enable_smooth_stop"),
-                "enable_pub_debug": LaunchConfiguration("enable_pub_debug"),
             },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -261,13 +258,11 @@ def launch_setup(context, *args, **kwargs):
         lat_controller_loader = LoadComposableNodes(
             composable_node_descriptions=[lat_controller_component],
             target_container=container,
-            # condition=LaunchConfigurationEquals("lateral_controller_mode", "mpc"),
         )
     elif lateral_controller_mode == "pure_pursuit":
         lat_controller_loader = LoadComposableNodes(
             composable_node_descriptions=[pure_pursuit_component],
             target_container=container,
-            # condition=LaunchConfigurationEquals("lateral_controller_mode", "mpc"),
         )
 
     group = GroupAction(
@@ -312,7 +307,7 @@ def generate_launch_description():
         "lat_controller_param_path",
         [
             FindPackageShare("tier4_control_launch"),
-            "/config/trajectory_follower/lateral_controller.param.yaml",
+            "/config/trajectory_follower_nodes/lateral_controller.param.yaml",
         ],
         "path to the parameter file of lateral controller",
     )
@@ -328,7 +323,7 @@ def generate_launch_description():
         "lon_controller_param_path",
         [
             FindPackageShare("tier4_control_launch"),
-            "/config/trajectory_follower/longitudinal_controller.param.yaml",
+            "/config/trajectory_follower_nodes/longitudinal_controller.param.yaml",
         ],
         "path to the parameter file of longitudinal controller",
     )
@@ -336,7 +331,7 @@ def generate_launch_description():
         "latlon_muxer_param_path",
         [
             FindPackageShare("tier4_control_launch"),
-            "/config/trajectory_follower/latlon_muxer.param.yaml",
+            "/config/trajectory_follower_nodes/latlon_muxer.param.yaml",
         ],
         "path to the parameter file of latlon muxer",
     )
@@ -354,12 +349,9 @@ def generate_launch_description():
     )
 
     # velocity controller
-    add_launch_arg("control_rate", "30.0", "control rate")
-    add_launch_arg("show_debug_info", "false", "show debug information")
     add_launch_arg(
         "enable_smooth_stop", "true", "enable smooth stop (in velocity controller state)"
     )
-    add_launch_arg("enable_pub_debug", "true", "enable to publish debug information")
 
     # vehicle cmd gate
     add_launch_arg("use_emergency_handling", "false", "use emergency handling")
