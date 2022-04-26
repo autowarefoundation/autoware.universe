@@ -70,22 +70,19 @@ ament_auto_add_library(scene_module_lib SHARED
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
 )
-
 target_include_directories(scene_module_lib
   SYSTEM PUBLIC
     ${BOOST_INCLUDE_DIRS}
     ${tf2_geometry_msgs_INCLUDE_DIRS}
 )
-
 target_behavior_velocity_include(scene_module_lib)
-
 target_include_directories(scene_module_lib
   SYSTEM PUBLIC
     ${PCL_INCLUDE_DIRS}
 )
-
 ament_target_dependencies(scene_module_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 allow_deprecated_tf2_geometry_msgs(scene_module_lib)
+
 
 # Scene Module: Stop Line
 ament_auto_add_library(scene_module_stop_line SHARED
@@ -93,11 +90,8 @@ ament_auto_add_library(scene_module_stop_line SHARED
   src/scene_module/stop_line/scene.cpp
   src/scene_module/stop_line/debug.cpp
 )
-
 target_behavior_velocity_include(scene_module_stop_line)
-
 ament_target_dependencies(scene_module_stop_line ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_stop_line scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_stop_line)
 
@@ -110,13 +104,11 @@ ament_auto_add_library(scene_module_crosswalk SHARED
   src/scene_module/crosswalk/debug.cpp
   src/scene_module/crosswalk/util.cpp
 )
-
 target_behavior_velocity_include(scene_module_crosswalk)
-
 ament_target_dependencies(scene_module_crosswalk ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_crosswalk scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_crosswalk)
+
 
 # Scene Module: Intersection
 ament_auto_add_library(scene_module_intersection SHARED
@@ -126,11 +118,8 @@ ament_auto_add_library(scene_module_intersection SHARED
   src/scene_module/intersection/debug.cpp
   src/scene_module/intersection/util.cpp
 )
-
 target_behavior_velocity_include(scene_module_intersection)
-
 ament_target_dependencies(scene_module_intersection ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_intersection scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_intersection)
 
@@ -142,9 +131,7 @@ ament_auto_add_library(scene_module_traffic_light SHARED
   src/scene_module/traffic_light/debug.cpp
 )
 target_behavior_velocity_include(scene_module_traffic_light)
-
 ament_target_dependencies(scene_module_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_traffic_light scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_traffic_light)
 
@@ -155,11 +142,8 @@ ament_auto_add_library(scene_module_blind_spot SHARED
   src/scene_module/blind_spot/scene.cpp
   src/scene_module/blind_spot/debug.cpp
 )
-
 target_behavior_velocity_include(scene_module_blind_spot)
-
 ament_target_dependencies(scene_module_blind_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_blind_spot scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_blind_spot)
 
@@ -171,11 +155,10 @@ ament_auto_add_library(scene_module_detection_area SHARED
   src/scene_module/detection_area/debug.cpp
 )
 target_behavior_velocity_include(scene_module_detection_area)
-
 ament_target_dependencies(scene_module_detection_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_detection_area scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_detection_area)
+
 
 # Scene Module: No Stopping Area
 ament_auto_add_library(scene_module_no_stopping_area SHARED
@@ -183,11 +166,8 @@ ament_auto_add_library(scene_module_no_stopping_area SHARED
   src/scene_module/no_stopping_area/scene_no_stopping_area.cpp
   src/scene_module/no_stopping_area/debug.cpp
 )
-
 target_behavior_velocity_include(scene_module_no_stopping_area)
-
 ament_target_dependencies(scene_module_no_stopping_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_no_stopping_area scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_no_stopping_area)
 
@@ -198,11 +178,8 @@ ament_auto_add_library(scene_module_virtual_traffic_light SHARED
   src/scene_module/virtual_traffic_light/scene.cpp
   src/scene_module/virtual_traffic_light/debug.cpp
 )
-
 target_behavior_velocity_include(scene_module_virtual_traffic_light)
-
 ament_target_dependencies(scene_module_virtual_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_virtual_traffic_light scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_virtual_traffic_light)
 
@@ -214,15 +191,12 @@ ament_auto_add_library(occlusion_spot_lib SHARED
   src/scene_module/occlusion_spot/occlusion_spot_utils.cpp
   src/scene_module/occlusion_spot/risk_predictive_braking.cpp
 )
-
 target_include_directories(occlusion_spot_lib
   SYSTEM PUBLIC
     ${BOOST_INCLUDE_DIRS}
     ${tf2_geometry_msgs_INCLUDE_DIRS}
 )
-
 target_behavior_velocity_include(occlusion_spot_lib)
-
 ament_target_dependencies(occlusion_spot_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 allow_deprecated_tf2_geometry_msgs(occlusion_spot_lib)
 
@@ -231,35 +205,28 @@ ament_auto_add_library(scene_module_occlusion_spot SHARED
   src/scene_module/occlusion_spot/debug.cpp
   src/scene_module/occlusion_spot/scene_occlusion_spot.cpp
 )
-
 target_behavior_velocity_include(scene_module_occlusion_spot)
-
 ament_target_dependencies(scene_module_occlusion_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_occlusion_spot scene_module_lib occlusion_spot_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_occlusion_spot)
+
 
 # Scene Module Manager
 ament_auto_add_library(scene_module_manager SHARED
   src/planner_manager.cpp
 )
-
 target_behavior_velocity_include(scene_module_manager)
-
 ament_target_dependencies(scene_module_manager ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(scene_module_manager scene_module_lib)
 allow_deprecated_tf2_geometry_msgs(scene_module_manager)
+
 
 # Node
 ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
 )
-
 target_behavior_velocity_include(behavior_velocity_planner)
-
 ament_target_dependencies(behavior_velocity_planner ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
 target_link_libraries(behavior_velocity_planner
   scene_module_lib
   scene_module_stop_line
@@ -273,7 +240,6 @@ target_link_libraries(behavior_velocity_planner
   scene_module_virtual_traffic_light
   scene_module_manager
 )
-
 ament_export_dependencies(${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 allow_deprecated_tf2_geometry_msgs(behavior_velocity_planner)
 
