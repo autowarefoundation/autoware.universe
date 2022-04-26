@@ -51,7 +51,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
-  debug_image_pub_ = image_transport::create_publisher(this,"blockage_diag/debug/debug_image");
+    time_series_blockage_mask_pub_ = image_transport::create_publisher(this, "blockage_diag/debug/time_series_blockage_mask");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
@@ -223,7 +223,7 @@ void BlockageDiagComponent::filter(
     sensor_msgs::msg::Image::SharedPtr time_series_blockage_mask_msg =
            cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", time_series_blockage_mask_colorized).toImageMsg();
       time_series_blockage_mask_msg->header = input->header;
-    debug_image_pub_.publish(time_series_blockage_mask_msg);
+    time_series_blockage_mask_pub_.publish(time_series_blockage_mask_msg);
   }
 
   tier4_debug_msgs::msg::Float32Stamped ground_blockage_ratio_msg;
