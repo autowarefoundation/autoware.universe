@@ -106,10 +106,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     createSubscriptionOptions(this));
 
   // route_handler
-    auto qos_transient_local = rclcpp::QoS{1}.transient_local();
+  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
   vector_map_subscriber_ = create_subscription<HADMapBin>(
-    "~/input/vector_map", qos_transient_local,
-    std::bind(&BehaviorPathPlannerNode::onMap, this, _1), createSubscriptionOptions(this));
+    "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
+    createSubscriptionOptions(this));
   route_subscriber_ = create_subscription<HADMapRoute>(
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
