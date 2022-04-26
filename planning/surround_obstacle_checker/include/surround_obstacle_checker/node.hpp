@@ -48,6 +48,7 @@
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 using Polygon2d =
   boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
@@ -62,8 +63,7 @@ public:
 private:
   void pathCallback(const Trajectory::ConstSharedPtr input_msg);
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
-  void dynamicObjectCallback(
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_msg);
+  void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
   void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
   void insertStopVelocity(const size_t closest_idx, TrajectoryPoints * traj);
   bool convertPose(
@@ -95,8 +95,7 @@ private:
   // publisher and subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
-    dynamic_object_sub_;
+  rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
   rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
@@ -107,7 +106,7 @@ private:
   // parameter
   nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_;
   sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_ptr_;
-  autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr_;
+  PredictedObjects::ConstSharedPtr object_ptr_;
   vehicle_info_util::VehicleInfo vehicle_info_;
   Polygon2d self_poly_;
   bool use_pointcloud_;
