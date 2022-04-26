@@ -24,6 +24,13 @@ ament_auto_add_library(${LATERAL_CONTROLLER_NODE} SHARED
   src/lateral_controller_node.cpp
 )
 
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(${LATERAL_CONTROLLER_NODE} PUBLIC
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
+
 autoware_set_compile_options(${LATERAL_CONTROLLER_NODE})
 # TODO(lateral_controller) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 # TODO(lateral_controller) : Temporary workaround until this is fixed.
@@ -79,9 +86,9 @@ if(BUILD_TESTING)
   target_link_libraries(${TRAJECTORY_FOLLOWER_NODES_TEST} ${LATLON_MUXER_NODE} ${LATERAL_CONTROLLER_NODE} ${LONGITUDINAL_CONTROLLER_NODE})
 
   #find_package(autoware_testing REQUIRED)
-  #add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe PARAM_FILENAME latlon_muxer_defaults.yaml)
-  #add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe PARAM_FILENAME lateral_controller_defaults.yaml)
-  #add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe PARAM_FILENAME longitudinal_controller_defaults.yaml)
+  #add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe PARAM_FILENAME latlon_muxer_defaults.param.yaml)
+  #add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe PARAM_FILENAME lateral_controller_defaults.param.yaml)
+  #add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe PARAM_FILENAME longitudinal_controller_defaults.param.yaml)
 endif()
 
 ament_auto_package(
