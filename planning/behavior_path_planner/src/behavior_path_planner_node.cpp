@@ -30,6 +30,20 @@
 #include <utility>
 #include <vector>
 
+namespace
+{
+rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
+{
+  rclcpp::CallbackGroup::SharedPtr callback_group =
+    node_ptr->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  auto sub_opt = rclcpp::SubscriptionOptions();
+  sub_opt.callback_group = callback_group;
+
+  return sub_opt;
+}
+}  // namespace
+
 namespace behavior_path_planner
 {
 using tier4_planning_msgs::msg::PathChangeModuleId;
@@ -46,28 +60,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_data_ = std::make_shared<PlannerData>();
     planner_data_->parameters = getCommonParam();
   }
-
-  velocity_subscriber_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1));
-  perception_subscriber_ = create_subscription<PredictedObjects>(
-    "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1));
-  scenario_subscriber_ = create_subscription<Scenario>(
-    "~/input/scenario", 1, [this](const Scenario::ConstSharedPtr msg) {
-      current_scenario_ = std::make_shared<Scenario>(*msg);
-    });
-  external_approval_subscriber_ = create_subscription<ApprovalMsg>(
-    "~/input/external_approval", 1,
-    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1));
-  force_approval_subscriber_ = create_subscription<PathChangeModule>(
-    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1));
-
-  // route_handler
-  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
-  vector_map_subscriber_ = create_subscription<HADMapBin>(
-    "~/input/vector_map", qos_transient_local,
-    std::bind(&BehaviorPathPlannerNode::onMap, this, _1));
-  route_subscriber_ = create_subscription<HADMapRoute>(
-    "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1));
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
@@ -91,6 +83,36 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     debug_drivable_area_lanelets_publisher_ =
       create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
   }
+
+  // subscriber
+  velocity_subscriber_ = create_subscription<Odometry>(
+    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
+    createSubscriptionOptions(this));
+  perception_subscriber_ = create_subscription<PredictedObjects>(
+    "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1),
+    createSubscriptionOptions(this));
+  scenario_subscriber_ = create_subscription<Scenario>(
+    "~/input/scenario", 1,
+    [this](const Scenario::ConstSharedPtr msg) {
+      current_scenario_ = std::make_shared<Scenario>(*msg);
+    },
+    createSubscriptionOptions(this));
+  external_approval_subscriber_ = create_subscription<ApprovalMsg>(
+    "~/input/external_approval", 1,
+    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1),
+    createSubscriptionOptions(this));
+  force_approval_subscriber_ = create_subscription<PathChangeModule>(
+    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1),
+    createSubscriptionOptions(this));
+
+  // route_handler
+    auto qos_transient_local = rclcpp::QoS{1}.transient_local();
+  vector_map_subscriber_ = create_subscription<HADMapBin>(
+    "~/input/vector_map", qos_transient_local,
+    std::bind(&BehaviorPathPlannerNode::onMap, this, _1), createSubscriptionOptions(this));
+  route_subscriber_ = create_subscription<HADMapRoute>(
+    "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
+    createSubscriptionOptions(this));
 
   // behavior tree manager
   {
@@ -456,31 +478,39 @@ void BehaviorPathPlannerNode::waitForData()
     rclcpp::Rate(100).sleep();
   }
 
+  mutex_.lock();  // for planner_data_
   while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
+    mutex_.unlock();
     RCLCPP_INFO_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for route to be ready");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
+    mutex_.lock();
   }
 
   while (rclcpp::ok()) {
     if (planner_data_->dynamic_object && planner_data_->self_odometry) {
       break;
     }
+
+    mutex_.unlock();
     RCLCPP_INFO_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "waiting for vehicle pose, vehicle_velocity, and obstacles");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
+    mutex_.lock();
   }
 
   self_pose_listener_.waitForFirstPose();
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
+  mutex_.unlock();
 }
 
 void BehaviorPathPlannerNode::run()
 {
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
+  mutex_.lock();  // for planner_data_
 
   // behavior_path_planner runs only in LANE DRIVING scenario.
   if (current_scenario_->current_scenario != Scenario::LANEDRIVING) {
@@ -540,6 +570,8 @@ void BehaviorPathPlannerNode::run()
       util::getDrivableAreaForAllSharedLinestringLanelets(planner_data_));
     debug_drivable_area_lanelets_publisher_->publish(drivable_area_lines);
   }
+
+  mutex_.unlock();
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
@@ -659,20 +691,24 @@ void BehaviorPathPlannerNode::updateCurrentPose()
 
 void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   planner_data_->self_odometry = msg;
 }
 void BehaviorPathPlannerNode::onPerception(const PredictedObjects::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   planner_data_->dynamic_object = msg;
 }
 void BehaviorPathPlannerNode::onExternalApproval(const ApprovalMsg::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   planner_data_->approval.is_approved.data = msg->approval;
   // TODO(wep21): Replace msg stamp after {stamp: now} is implemented in ros2 topic pub
   planner_data_->approval.is_approved.stamp = this->now();
 }
 void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   auto getModuleName = [](PathChangeModuleId module) {
     if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
       return "ForceLaneChange";
@@ -685,10 +721,12 @@ void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstShare
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   planner_data_->route_handler->setMap(*msg);
 }
 void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
 
   planner_data_->route_handler->setRoute(*msg);

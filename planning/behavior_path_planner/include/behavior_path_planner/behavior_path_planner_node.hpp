@@ -50,6 +50,7 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -102,6 +103,9 @@ private:
   std::string prev_ready_module_name_ = "NONE";
 
   TurnSignalDecider turn_signal_decider_;
+
+  // mutex for planner_data_
+  std::mutex mutex_;
 
   // setup
   void waitForData();
