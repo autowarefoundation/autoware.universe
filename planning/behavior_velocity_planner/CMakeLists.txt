@@ -57,6 +57,14 @@ function(allow_deprecated_tf2_geometry_msgs target)
   endif()
 endfunction(allow_deprecated_tf2_geometry_msgs)
 
+function(add_behavior_velocity_include target)
+  target_include_directories(${target} PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+  )
+endfunction(target_behavior_velocity_include)
+
+
 # Common
 ament_auto_add_library(scene_module_lib SHARED
   src/utilization/path_utilization.cpp
@@ -69,11 +77,7 @@ target_include_directories(scene_module_lib
     ${tf2_geometry_msgs_INCLUDE_DIRS}
 )
 
-target_include_directories(scene_module_lib
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_lib)
 
 target_include_directories(scene_module_lib
   SYSTEM PUBLIC
@@ -90,11 +94,7 @@ ament_auto_add_library(scene_module_stop_line SHARED
   src/scene_module/stop_line/debug.cpp
 )
 
-target_include_directories(scene_module_stop_line
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_stop_line)
 
 ament_target_dependencies(scene_module_stop_line ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -111,11 +111,7 @@ ament_auto_add_library(scene_module_crosswalk SHARED
   src/scene_module/crosswalk/util.cpp
 )
 
-target_include_directories(scene_module_crosswalk
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_crosswalk)
 
 ament_target_dependencies(scene_module_crosswalk ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -131,11 +127,7 @@ ament_auto_add_library(scene_module_intersection SHARED
   src/scene_module/intersection/util.cpp
 )
 
-target_include_directories(scene_module_intersection
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_intersection)
 
 ament_target_dependencies(scene_module_intersection ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -149,12 +141,7 @@ ament_auto_add_library(scene_module_traffic_light SHARED
   src/scene_module/traffic_light/scene.cpp
   src/scene_module/traffic_light/debug.cpp
 )
-
-target_include_directories(scene_module_traffic_light
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_traffic_light)
 
 ament_target_dependencies(scene_module_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -169,11 +156,7 @@ ament_auto_add_library(scene_module_blind_spot SHARED
   src/scene_module/blind_spot/debug.cpp
 )
 
-target_include_directories(scene_module_blind_spot
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_blind_spot)
 
 ament_target_dependencies(scene_module_blind_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -187,12 +170,7 @@ ament_auto_add_library(scene_module_detection_area SHARED
   src/scene_module/detection_area/scene.cpp
   src/scene_module/detection_area/debug.cpp
 )
-
-target_include_directories(scene_module_detection_area
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_detection_area)
 
 ament_target_dependencies(scene_module_detection_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -206,11 +184,7 @@ ament_auto_add_library(scene_module_no_stopping_area SHARED
   src/scene_module/no_stopping_area/debug.cpp
 )
 
-target_include_directories(scene_module_no_stopping_area
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_no_stopping_area)
 
 ament_target_dependencies(scene_module_no_stopping_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -225,11 +199,7 @@ ament_auto_add_library(scene_module_virtual_traffic_light SHARED
   src/scene_module/virtual_traffic_light/debug.cpp
 )
 
-target_include_directories(scene_module_virtual_traffic_light
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_virtual_traffic_light)
 
 ament_target_dependencies(scene_module_virtual_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -251,11 +221,7 @@ target_include_directories(occlusion_spot_lib
     ${tf2_geometry_msgs_INCLUDE_DIRS}
 )
 
-target_include_directories(occlusion_spot_lib
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(occlusion_spot_lib)
 
 ament_target_dependencies(occlusion_spot_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 allow_deprecated_tf2_geometry_msgs(occlusion_spot_lib)
@@ -266,11 +232,7 @@ ament_auto_add_library(scene_module_occlusion_spot SHARED
   src/scene_module/occlusion_spot/scene_occlusion_spot.cpp
 )
 
-target_include_directories(scene_module_occlusion_spot
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_occlusion_spot)
 
 ament_target_dependencies(scene_module_occlusion_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -282,11 +244,7 @@ ament_auto_add_library(scene_module_manager SHARED
   src/planner_manager.cpp
 )
 
-target_include_directories(scene_module_manager
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(scene_module_manager)
 
 ament_target_dependencies(scene_module_manager ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
@@ -298,11 +256,7 @@ ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
 )
 
-target_include_directories(behavior_velocity_planner
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+target_behavior_velocity_include(behavior_velocity_planner)
 
 ament_target_dependencies(behavior_velocity_planner ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
