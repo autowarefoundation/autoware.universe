@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2021 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <utils.hpp>
+#ifndef IMAGE_PROJECTION_BASED_FUSION__VOXEL_GENERATOR_HPP_
+#define IMAGE_PROJECTION_BASED_FUSION__VOXEL_GENERATOR_HPP_
 
-#include <stdexcept>
+#include <lidar_centerpoint/preprocess/voxel_generator.hpp>
 
 namespace image_projection_based_fusion
 {
-std::size_t divup(const std::size_t a, const std::size_t b)
+class VoxelGenerator : public centerpoint::VoxelGenerator
 {
-  if (a == 0) {
-    throw std::runtime_error("A dividend of divup isn't positive.");
-  }
-  if (b == 0) {
-    throw std::runtime_error("A divisor of divup isn't positive.");
-  }
+public:
+  using centerpoint::VoxelGenerator::VoxelGenerator;
 
-  return (a + b - 1) / b;
-}
-
+  std::size_t pointsToVoxels(
+    std::vector<float> & voxels, std::vector<int> & coordinates,
+    std::vector<float> & num_points_per_voxel) override;
+};
 }  // namespace image_projection_based_fusion
+
+#endif  // IMAGE_PROJECTION_BASED_FUSION__VOXEL_GENERATOR_HPP_
