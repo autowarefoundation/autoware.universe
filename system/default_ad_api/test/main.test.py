@@ -27,7 +27,7 @@ import pytest
 @launch_testing.markers.keep_alive
 def generate_test_description():
     path = get_package_share_directory("default_ad_api") + "/launch/default_ad_api.launch.py"
-    specification = importlib.util.spec_from_file_location("temp", path)
+    specification = importlib.util.spec_from_file_location("launch_script", path)
     launch_script = importlib.util.module_from_spec(specification)
     specification.loader.exec_module(launch_script)
     return launch.LaunchDescription(
