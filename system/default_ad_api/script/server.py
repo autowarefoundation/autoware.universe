@@ -51,7 +51,7 @@ def spin_ros_node():
     global cli
     rclpy.init(args=sys.argv)
     node = Node("ad_api_default_web_server")
-    cli = create_service(node, InterfaceVersion, "/api/v0/interface/version")
+    cli = create_service(node, InterfaceVersion, "/api/interface/version")
     rclpy.spin(node)
 
 

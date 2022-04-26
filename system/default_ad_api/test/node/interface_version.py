@@ -19,7 +19,7 @@ import rclpy.node
 rclpy.init()
 node = rclpy.node.Node("test_client")
 
-client = node.create_client(InterfaceVersion, "/api/v0/interface/version")
+client = node.create_client(InterfaceVersion, "/api/interface/version")
 if not client.wait_for_service(timeout_sec=3.0):
     exit(1)
 
