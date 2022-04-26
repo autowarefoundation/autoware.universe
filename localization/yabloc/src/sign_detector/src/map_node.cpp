@@ -10,6 +10,7 @@
 #include "sign_detector/fix2mgrs.hpp"
 #include <pcl-1.10/pcl/kdtree/kdtree_flann.h>
 #include <pcl-1.10/pcl/point_cloud.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 class MapSubscriber : public rclcpp::Node
 {
@@ -19,12 +20,32 @@ public:
     sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local(), std::bind(&MapSubscriber::mapCallback, this, std::placeholders::_1));
     sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("eagleye/fix", 10, std::bind(&MapSubscriber::fixCallback, this, std::placeholders::_1));
     pub_ground_ = this->create_publisher<visualization_msgs::msg::Marker>("ground", 10);
+
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
   }
 
 private:
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
+  void publishTf(const geometry_msgs::msg::Pose& pose, const rclcpp::Time&)
+  {
+    geometry_msgs::msg::TransformStamped t;
+
+    t.header.stamp = this->get_clock()->now();
+    t.header.frame_id = "map";
+    t.child_frame_id = "base_link";
+    t.transform.translation.x = pose.position.x;
+    t.transform.translation.y = pose.position.y;
+    t.transform.translation.z = pose.position.z;
+    t.transform.rotation.w = 1;
+
+    tf_broadcaster_->sendTransform(t);
+  }
+
   void fixCallback(const sensor_msgs::msg::NavSatFix& msg)
   {
     if (!kdtree_) return;
+
 
     Eigen::Vector3d mgrs = fix2Mgrs(msg);
     pcl::PointXYZ p;
@@ -42,8 +63,19 @@ private:
       Eigen::Vector3f v = cloud_->at(index).getVector3fMap();
       height = std::min(height, v.z());
     }
+
     RCLCPP_INFO_STREAM(this->get_logger(), "height: " << height);
 
+    geometry_msgs::msg::Pose pose;
+    pose.position.x = p.x;
+    pose.position.y = p.y;
+    pose.position.z = height;
+    publishVisMarker(pose);
+    publishTf(pose, msg.header.stamp);
+  }
+
+  void publishVisMarker(const geometry_msgs::msg::Pose& pose)
+  {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = this->get_clock()->now();
@@ -51,9 +83,9 @@ private:
     marker.scale.x = 1;
     marker.scale.y = 1;
     marker.scale.z = 1;
-    marker.pose.position.x = p.x;
-    marker.pose.position.y = p.y;
-    marker.pose.position.z = height;
+    marker.pose.position.x = pose.position.x;
+    marker.pose.position.y = pose.position.y;
+    marker.pose.position.z = pose.position.z;
     marker.pose.orientation.w = 1;
     marker.color.r = 1.0;
     marker.color.a = 1.0;

@@ -7,9 +7,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <string>
-
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
+
 class EagleyeSubscriber : public rclcpp::Node
 {
 public:
