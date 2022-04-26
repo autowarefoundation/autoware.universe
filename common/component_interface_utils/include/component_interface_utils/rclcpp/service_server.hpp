@@ -34,7 +34,7 @@ public:
   /// Constructor.
   explicit Service(typename rclcpp::Service<typename SpecT::Service>::SharedPtr service)
   {
-    service_ = service;
+    service_ = service;  // to keep the reference count
   }
 
   /// Create a service callback with logging added.
