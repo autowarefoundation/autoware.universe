@@ -166,12 +166,14 @@ void BlockageDiagComponent::filter(
       .copyTo(ground_no_return_mask);
     cv::Mat time_series_blockage_mask(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     // TODO(yusuke-mizoguchi):  to adjust the number of frames" [todo]
+    cv::Mat no_return_mask_normalized(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     static boost::circular_buffer<cv::Mat> no_return_mask_buffer(10);
-    no_return_mask_buffer.push_back(no_return_mask);
+      no_return_mask_normalized= no_return_mask / no_return_mask_buffer.size();
+    no_return_mask_buffer.push_back(no_return_mask_normalized);
       for (const auto& mask:no_return_mask_buffer) {
           time_series_blockage_mask +=mask;
       }
-    time_series_blockage_mask = time_series_blockage_mask*255/no_return_mask_buffer.size();
+//    time_series_blockage_mask = time_series_blockage_mask*(255/no_return_mask_buffer.size());
     ground_blockage_ratio_ =
       static_cast<float>(cv::countNonZero(ground_no_return_mask)) /
       static_cast<float>(horizontal_bins * (vertical_bins - horizontal_ring_id_));
