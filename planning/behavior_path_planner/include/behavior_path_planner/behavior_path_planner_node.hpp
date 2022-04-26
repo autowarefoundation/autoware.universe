@@ -105,7 +105,7 @@ private:
   TurnSignalDecider turn_signal_decider_;
 
   // mutex for planner_data_
-  std::mutex mutex_;
+  std::mutex mutex_pd_;
 
   // setup
   void waitForData();
