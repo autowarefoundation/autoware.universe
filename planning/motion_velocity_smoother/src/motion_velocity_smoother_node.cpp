@@ -714,14 +714,23 @@ MotionVelocitySmootherNode::calcInitialMotion(
 void MotionVelocitySmootherNode::overwriteStopPoint(
   const TrajectoryPoints & input, TrajectoryPoints & output) const
 {
-  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(input);
-  if (!stop_idx) {
+  // Search 0 velocity point after the previous point of the closest point of ego
+  const auto closest_idx = tier4_autoware_utils::findNearestIndex(
+    input, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
+  if (!closest_idx || *closest_idx == 0) {
     return;
   }
+  TrajectoryPoints points_after_ego{input.begin() + *closest_idx - 1, input.end()};
+  const auto stop_idx_after_ego = tier4_autoware_utils::searchZeroVelocityIndex(points_after_ego);
+  if (!stop_idx_after_ego) {
+    return;
+  }
+  const auto stop_idx = *stop_idx_after_ego + *closest_idx - 1;
 
   // Get Closest Point from Output
   const auto nearest_output_point_idx = tier4_autoware_utils::findNearestIndex(
-    output, input.at(*stop_idx).pose, std::numeric_limits<double>::max(),
+    output, input.at(stop_idx).pose, std::numeric_limits<double>::max(),
     node_param_.delta_yaw_threshold);
 
   // check over velocity
