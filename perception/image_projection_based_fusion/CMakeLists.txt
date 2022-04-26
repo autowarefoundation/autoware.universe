@@ -82,39 +82,10 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 
   include_directories(
     include
-    lib/include
     ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${PCL_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
-    ${TORCH_INCLUDE_DIRS}
-  )
-
-  ### pointpainting_fusion ###
-  ament_auto_add_library(pointpainting_fusion SHARED
-    lib/src/centerpoint_trt.cpp
-    lib/src/pointcloud_densification.cpp
-    lib/src/voxel_generator.cpp
-    lib/src/tensorrt_wrapper.cpp
-    lib/src/network_trt.cpp
-    lib/src/utils.cpp
-  )
-
-  cuda_add_library(pointpainting_fusion_cuda_libraries SHARED
-    lib/src/circle_nms_kernel.cu
-    lib/src/postprocess_kernel.cu
-    lib/src/preprocess_kernel.cu
-    lib/src/scatter_kernel.cu
-  )
-
-  target_link_libraries(pointpainting_fusion
-    ${NVINFER}
-    ${NVONNXPARSER}
-    ${CUDA_LIBRARIES}
-    ${CUBLAS_LIBRARIES}
-    ${CUDA_curand_LIBRARY}
-    ${CUDNN_LIBRARY}
-    pointpainting_fusion_cuda_libraries
   )
 
   ### node ###
@@ -126,13 +97,24 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     src/roi_cluster_fusion/node.cpp
     src/roi_detected_object_fusion/node.cpp
     src/pointpainting_fusion/node.cpp
+    src/pointpainting_fusion/pointpainting_trt.cpp
+    src/pointpainting_fusion/voxel_generator.cpp
   )
 
+  cuda_add_library(pointpainting_cuda_lib SHARED
+    src/pointpainting_fusion/preprocess_kernel.cu
+  )
+  
   target_link_libraries(${PROJECT_NAME}
-    pointpainting_fusion
     ${OpenCV_LIBRARIES}
     ${EIGEN3_LIBRARIES}
     ${PCL_LIBRARIES}
+    ${NVINFER}
+    ${CUDA_LIBRARIES}
+    ${CUBLAS_LIBRARIES}
+    ${CUDA_curand_LIBRARY}
+    ${CUDNN_LIBRARY}
+    pointpainting_cuda_lib
   )
 
   rclcpp_components_register_node(${PROJECT_NAME}
