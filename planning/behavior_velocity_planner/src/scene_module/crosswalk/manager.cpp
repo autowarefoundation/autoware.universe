@@ -105,6 +105,31 @@ std::set<int64_t> CrosswalkModuleManager::getCrosswalkIdSetOnPath(
   return crosswalk_id_set;
 }
 
+}  // namespace
+
+CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
+: SceneModuleManagerInterface(node, getModuleName()), rtc_interface_(node, "crosswalk")
+{
+  const std::string ns(getModuleName());
+
+  // for crosswalk parameters
+  auto & cp = crosswalk_planner_param_;
+  cp.stop_line_distance = node.declare_parameter(ns + ".crosswalk.stop_line_distance", 1.5);
+  cp.stop_margin = node.declare_parameter(ns + ".crosswalk.stop_margin", 1.0);
+  cp.slow_margin = node.declare_parameter(ns + ".crosswalk.slow_margin", 2.0);
+  cp.slow_velocity = node.declare_parameter(ns + ".crosswalk.slow_velocity", 5.0 / 3.6);
+  cp.stop_predicted_object_prediction_time_margin =
+    node.declare_parameter(ns + ".crosswalk.stop_predicted_object_prediction_time_margin", 3.0);
+  cp.external_input_timeout = node.declare_parameter(ns + ".crosswalk.external_input_timeout", 1.0);
+
+  // for walkway parameters
+  auto & wp = walkway_planner_param_;
+  wp.stop_margin = node.declare_parameter(ns + ".walkway.stop_margin", 1.0);
+  wp.stop_line_distance = node.declare_parameter(ns + ".walkway.stop_line_distance", 1.0);
+  wp.stop_duration_sec = node.declare_parameter(ns + ".walkway.stop_duration_sec", 1.0);
+  wp.external_input_timeout = node.declare_parameter(ns + ".walkway.external_input_timeout", 1.0);
+}
+
 void CrosswalkModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
@@ -123,6 +148,7 @@ void CrosswalkModuleManager::launchNewModules(
           module_id, crosswalk, walkway_planner_param_, logger_.get_child("walkway_module"),
           clock_));
       }
+      generateUUID(module_id);
     }
   }
 }
@@ -139,4 +165,23 @@ CrosswalkModuleManager::getModuleExpiredFunction(
     return crosswalk_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
+
+bool CrosswalkModuleManager::getActivation(const UUID & uuid)
+{
+  return rtc_interface_.isActivated(uuid);
+}
+
+void CrosswalkModuleManager::updateRTCStatus(
+  const UUID & uuid, const bool safe, const double distance)
+{
+  rtc_interface_.updateCooperateStatus(uuid, safe, distance);
+}
+
+void CrosswalkModuleManager::removeRTCStatus(const UUID & uuid)
+{
+  rtc_interface_.removeCooperateStatus(uuid);
+}
+
+void CrosswalkModuleManager::publishRTCStatus() { rtc_interface_.publishCooperateStatus(); }
+
 }  // namespace behavior_velocity_planner

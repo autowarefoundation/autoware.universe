@@ -84,7 +84,7 @@ bool CrosswalkModule::modifyPathVelocity(
     }
     // stop_path = slow_path;
     *path = stop_path;
-
+    distance_ = 0.1;
     if (insert_stop) {
       /* get stop point and stop factor */
       tier4_planning_msgs::msg::StopFactor stop_factor;
@@ -197,8 +197,10 @@ bool CrosswalkModule::checkStopArea(
     stop = true;
   }
 
+  safe_ = !stop;
+
   // insert stop point
-  if (stop) {
+  if (!isActivated()) {
     lanelet::Optional<lanelet::ConstLineString3d> stop_line_opt =
       getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
     if (!!stop_line_opt) {

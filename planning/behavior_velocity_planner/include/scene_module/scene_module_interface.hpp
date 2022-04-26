@@ -24,10 +24,14 @@
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
+#include <algorithm>
 #include <memory>
+#include <random>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>
@@ -36,12 +40,13 @@
 
 namespace behavior_velocity_planner
 {
+using unique_identifier_msgs::msg::UUID;
 class SceneModuleInterface
 {
 public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
-  : module_id_(module_id), logger_(logger), clock_(clock)
+  : module_id_(module_id), safe_(false), distance_(0.0), logger_(logger), clock_(clock)
   {
   }
   virtual ~SceneModuleInterface() = default;
@@ -69,10 +74,21 @@ public:
     infrastructure_command_ = command;
   }
 
+  bool isActivated() const { return activated_; }
+
+  bool isSafe() const { return safe_; }
+
+  double getDistance() const { return distance_; }
+
+  void setActivation(const bool activated) { activated_ = activated; }
+
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
 protected:
   const int64_t module_id_;
+  bool activated_;
+  bool safe_;
+  double distance_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
@@ -126,6 +142,10 @@ public:
 
     first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
+      const UUID uuid = getUUID(scene_module->getModuleId());
+
+      scene_module->setActivation(getActivation(uuid));
+
       tier4_planning_msgs::msg::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason);
@@ -133,6 +153,8 @@ public:
       if (stop_reason.reason != "") {
         stop_reason_array.stop_reasons.emplace_back(stop_reason);
       }
+
+      updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance());
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
         infrastructure_command_array.commands.push_back(*command);
@@ -157,6 +179,7 @@ public:
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
     pub_virtual_wall_->publish(virtual_wall_marker_array);
+    publishRTCStatus();
   }
 
 protected:
@@ -164,6 +187,19 @@ protected:
 
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
   getModuleExpiredFunction(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
+
+  virtual bool getActivation([[maybe_unused]] const UUID & uuid) { return false; }
+
+  virtual void updateRTCStatus(
+    [[maybe_unused]] const UUID & uuid, [[maybe_unused]] const bool safe,
+    [[maybe_unused]] const double distance)
+  {
+    return;
+  }
+
+  virtual void removeRTCStatus([[maybe_unused]] const UUID & uuid) { return; }
+
+  virtual void publishRTCStatus() { return; }
 
   void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
   {
@@ -175,6 +211,8 @@ protected:
 
     for (const auto & scene_module : copied_scene_modules) {
       if (isModuleExpired(scene_module)) {
+        removeRTCStatus(getUUID(scene_module->getModuleId()));
+        removeUUID(scene_module->getModuleId());
         unregisterModule(scene_module);
       }
     }
@@ -203,8 +241,37 @@ protected:
     scene_modules_.erase(scene_module);
   }
 
+  UUID getUUID(const int64_t & module_id) const
+  {
+    if (map_uuid_.count(module_id) == 0) {
+      const UUID uuid;
+      return uuid;
+    }
+    return map_uuid_.at(module_id);
+  }
+
+  void generateUUID(const int64_t & module_id)
+  {
+    // Generate random number
+    UUID uuid;
+    std::mt19937 gen(std::random_device{}());
+    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
+    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
+    map_uuid_.insert({module_id, uuid});
+  }
+
+  void removeUUID(const int64_t & module_id)
+  {
+    const auto result = map_uuid_.erase(module_id);
+    if (result == 0) {
+      RCLCPP_WARN_STREAM(
+        logger_, "[removeUUID] module_id = " << module_id << " is not registered.");
+    }
+  }
+
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
   std::set<int64_t> registered_module_id_set_;
+  std::unordered_map<int64_t, UUID> map_uuid_;
 
   std::shared_ptr<const PlannerData> planner_data_;
 
