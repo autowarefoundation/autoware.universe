@@ -355,25 +355,21 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
 {
   // Initialize
   setInfrastructureCommand({});
- 
-  *stop_reason = planning_utils::initializeStopReason(
-  tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
 
-  if(command_.type == "intersection_coordination")
-  {
+  *stop_reason = planning_utils::initializeStopReason(
+    tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
+
+  if (command_.type == "intersection_coordination") {
     *stop_reason_2 = planning_utils::initializeStopReason2(
-    tier4_planning_msgs::msg::StopReason2::INTERSECTION_COORDINATION);
+      tier4_planning_msgs::msg::StopReason2::INTERSECTION_COORDINATION);
   }
   // The name "eva_beacon_system" should be changed because of its project specific name
-  else if (command_.type == "eva_beacon_system")
-  {
+  else if (command_.type == "eva_beacon_system") {
     *stop_reason_2 = planning_utils::initializeStopReason2(
-    tier4_planning_msgs::msg::StopReason2::EVA_BEACON_SYSTEM);
-  }
-  else
-  {
+      tier4_planning_msgs::msg::StopReason2::EVA_BEACON_SYSTEM);
+  } else {
     *stop_reason_2 = planning_utils::initializeStopReason2(
-    tier4_planning_msgs::msg::StopReason2::VIRTUAL_TRAFFIC_LIGHT);
+      tier4_planning_msgs::msg::StopReason2::VIRTUAL_TRAFFIC_LIGHT);
   }
 
   module_data_ = {};

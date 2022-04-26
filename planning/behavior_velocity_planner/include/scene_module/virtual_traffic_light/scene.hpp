@@ -101,7 +101,8 @@ private:
     const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason * stop_reason);
 
   void setStopReason2(
-    const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason2 * stop_reason_2);
+    const geometry_msgs::msg::Pose & stop_pose,
+    tier4_planning_msgs::msg::StopReason2 * stop_reason_2);
 
   bool isBeforeStartLine();
 

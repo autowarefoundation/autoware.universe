@@ -23,6 +23,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+#include <tier4_planning_msgs/msg/stop_reason2_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -101,6 +102,7 @@ public:
   bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
   visualization_msgs::msg::MarkerArray makeVisualizationMarker();
   tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
+  tier4_planning_msgs::msg::StopReason2Array makeStopReason2Array();
 
   void setDebugValues(const DebugValues::TYPE type, const double val)
   {
@@ -111,6 +113,7 @@ public:
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::StopReason2Array>::SharedPtr stop_reason2_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   rclcpp::Node * node_;
   double base_link2front_;

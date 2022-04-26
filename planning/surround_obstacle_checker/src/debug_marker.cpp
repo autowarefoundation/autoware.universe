@@ -25,6 +25,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
+  stop_reason2_pub_ =
+    node.create_publisher<tier4_planning_msgs::msg::StopReason2Array>("~/output/stop_reason2", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
@@ -60,6 +62,10 @@ void SurroundObstacleCheckerDebugNode::publish()
   /* publish stop reason for autoware api */
   const auto stop_reason_msg = makeStopReasonArray();
   stop_reason_pub_->publish(stop_reason_msg);
+
+    /* publish stop reason for autoware api */
+  const auto stop_reason2_msg = makeStopReason2Array();
+  stop_reason2_pub_->publish(stop_reason2_msg);
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;
@@ -179,4 +185,30 @@ tier4_planning_msgs::msg::StopReasonArray SurroundObstacleCheckerDebugNode::make
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;
+}
+
+tier4_planning_msgs::msg::StopReason2Array SurroundObstacleCheckerDebugNode::makeStopReason2Array()
+{
+  // create header
+  std_msgs::msg::Header header;
+  header.frame_id = "map";
+  header.stamp = this->clock_->now();
+
+  // create stop reason stamped
+  tier4_planning_msgs::msg::StopReason2 stop_reason2_msg;
+  stop_reason2_msg.stop_reason = tier4_planning_msgs::msg::StopReason2::SURROUND_OBSTACLE_CHECK;
+  stop_reason2_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+
+  if (stop_pose_ptr_ != nullptr) {
+    stop_reason2_msg.stop_line = *stop_pose_ptr_;
+    if (stop_obstacle_point_ptr_ != nullptr) {
+      stop_reason2_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
+    }
+  }
+
+  // create stop reason array
+  tier4_planning_msgs::msg::StopReason2Array stop_reason2_array;
+  stop_reason2_array.header = header;
+  stop_reason2_array.stop_reasons.emplace_back(stop_reason2_msg);
+  return stop_reason2_array;
 }

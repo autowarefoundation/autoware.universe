@@ -188,7 +188,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(
       planning_utils::appendStopReason(stop_factor, stop_reason);
     }
 
-    // Create StopReason2 
+    // Create StopReason2
     {
       stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
       stop_reason_2->stop_line = stop_point->second;

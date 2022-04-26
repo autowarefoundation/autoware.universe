@@ -97,7 +97,6 @@ bool CrosswalkModule::modifyPathVelocity(
       stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
       stop_reason_2->stop_line = debug_data_.first_stop_pose;
       stop_reason_2->stop_factor_points = debug_data_.stop_factor_points;
-
     }
   }
   return true;

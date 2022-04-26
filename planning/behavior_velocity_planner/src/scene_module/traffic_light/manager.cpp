@@ -118,7 +118,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
   if (!stop_reason_array.stop_reasons.empty()) {
     pub_stop_reason_->publish(stop_reason_array);
   }
-   if (!stop_reason2_array.stop_reasons.empty()) {
+  if (!stop_reason2_array.stop_reasons.empty()) {
     pub_stop_reason2_->publish(stop_reason2_array);
   }
   pub_debug_->publish(debug_marker_array);

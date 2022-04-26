@@ -150,8 +150,9 @@ bool BlindSpotModule::modifyPathVelocity(
     planning_utils::appendStopReason(stop_factor, stop_reason);
     stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
     stop_reason_2->stop_line = debug_data_.stop_point_pose;
-    stop_reason_2->stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
-    
+    stop_reason_2->stop_factor_points =
+      planning_utils::toRosPoints(debug_data_.conflicting_targets);
+
   } else {
     *path = input_path;  // reset path
   }

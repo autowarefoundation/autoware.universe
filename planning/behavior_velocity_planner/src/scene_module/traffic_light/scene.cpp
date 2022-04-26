@@ -213,7 +213,7 @@ bool TrafficLightModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
   *stop_reason_2 =
-    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::TRAFFIC_LIGHT);  
+    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::TRAFFIC_LIGHT);
 
   const auto input_path = *path;
 
@@ -261,7 +261,8 @@ bool TrafficLightModule::modifyPathVelocity(
 
     // Decide whether to stop or pass even if a stop signal is received.
     if (!isPassthrough(signed_arc_length_to_stop_point)) {
-      *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason, stop_reason_2);
+      *path = insertStopPose(
+        input_path, stop_line_point_idx, stop_line_point, stop_reason, stop_reason_2);
       is_prev_state_stop_ = true;
     }
     return true;

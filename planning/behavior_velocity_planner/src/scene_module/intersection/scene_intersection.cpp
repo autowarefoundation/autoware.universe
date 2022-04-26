@@ -76,7 +76,7 @@ bool IntersectionModule::modifyPathVelocity(
   debug_data_ = DebugData();
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::INTERSECTION);
-  *stop_reason_2 = 
+  *stop_reason_2 =
     planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::INTERSECTION);
 
   const auto input_path = *path;
