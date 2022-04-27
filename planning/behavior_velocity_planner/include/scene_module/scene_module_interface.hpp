@@ -82,6 +82,10 @@ public:
 
   void setActivation(const bool activated) { activated_ = activated; }
 
+  void setSafe(const bool safe) { safe_ = safe; }
+
+  void setDistance(const double distance) { distance_ = distance; }
+
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
 protected:
