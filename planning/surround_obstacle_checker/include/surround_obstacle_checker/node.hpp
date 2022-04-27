@@ -44,6 +44,7 @@ namespace surround_obstacle_checker
 {
 
 using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_planning_msgs::msg::VelocityLimit;

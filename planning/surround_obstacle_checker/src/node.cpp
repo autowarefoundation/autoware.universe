@@ -175,10 +175,9 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   sub_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&SurroundObstacleCheckerNode::onPointCloud, this, std::placeholders::_1));
-  sub_dynamic_objects_ =
-    this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
-      "~/input/objects", 1,
-      std::bind(&SurroundObstacleCheckerNode::onDynamicObjects, this, std::placeholders::_1));
+  sub_dynamic_objects_ = this->create_subscription<PredictedObjects>(
+    "~/input/objects", 1,
+    std::bind(&SurroundObstacleCheckerNode::onDynamicObjects, this, std::placeholders::_1));
   sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1,
     std::bind(&SurroundObstacleCheckerNode::onOdometry, this, std::placeholders::_1));
@@ -288,16 +287,14 @@ void SurroundObstacleCheckerNode::onPointCloud(
   pointcloud_ptr_ = msg;
 }
 
-void SurroundObstacleCheckerNode::onDynamicObjects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_msg)
+void SurroundObstacleCheckerNode::onDynamicObjects(const PredictedObjects::ConstSharedPtr msg)
 {
-  object_ptr_ = input_msg;
+  object_ptr_ = msg;
 }
 
-void SurroundObstacleCheckerNode::onOdometry(
-  const nav_msgs::msg::Odometry::ConstSharedPtr input_msg)
+void SurroundObstacleCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  odometry_ptr_ = input_msg;
+  odometry_ptr_ = msg;
 }
 
 bool SurroundObstacleCheckerNode::convertPose(
@@ -390,7 +387,7 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
 
     // create obj polygon
     Polygon2d obj_poly;
-    if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    if (obj.shape.type == Shape::POLYGON) {
       obj_poly = createObjPolygon(pose_baselink, obj.shape.footprint);
     } else {
       obj_poly = createObjPolygon(pose_baselink, obj.shape.dimensions);
