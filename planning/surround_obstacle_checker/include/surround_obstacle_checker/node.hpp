@@ -16,9 +16,9 @@
 #define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
 #include "surround_obstacle_checker/debug_marker.hpp"
-#include "tier4_autoware_utils/trajectory/tmp_conversion.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -31,13 +31,13 @@
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace surround_obstacle_checker
@@ -50,6 +50,8 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using vehicle_info_util::VehicleInfo;
+
+using Obstacle = std::pair<double /* distance */, geometry_msgs::msg::Point>;
 
 enum class State { PASS, STOP };
 
@@ -81,22 +83,23 @@ private:
 
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
-  bool convertPose(
-    const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
-    const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose);
-  void getNearestObstacle(double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
-  void getNearestObstacleByPointCloud(
-    double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
-  void getNearestObstacleByDynamicObject(
-    double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
-  bool isObstacleFound(const double min_dist_to_obj);
+  boost::optional<Obstacle> getNearestObstacle() const;
+
+  boost::optional<Obstacle> getNearestObstacleByPointCloud() const;
+
+  boost::optional<Obstacle> getNearestObstacleByDynamicObject() const;
+
+  boost::optional<geometry_msgs::msg::TransformStamped> getTransform(
+    const std::string & source, const std::string & target, const rclcpp::Time & stamp,
+    double duration_sec) const;
+
   bool isStopRequired(const bool is_obstacle_found, const bool is_stopped);
 
   bool isVehicleStopped();
 
   // ros
-  tf2_ros::Buffer tf_buffer_{get_clock()};
-  tf2_ros::TransformListener tf_listener_{tf_buffer_};
+  mutable tf2_ros::Buffer tf_buffer_{get_clock()};
+  mutable tf2_ros::TransformListener tf_listener_{tf_buffer_};
   rclcpp::TimerBase::SharedPtr timer_;
 
   // publisher and subscriber

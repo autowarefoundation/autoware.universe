@@ -23,7 +23,6 @@
 
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -47,6 +46,7 @@ namespace surround_obstacle_checker
 namespace bg = boost::geometry;
 using Point2d = bg::model::d2::point_xy<double>;
 using Polygon2d = bg::model::polygon<Point2d, false, false>;  // counter-clockwise, open
+using tier4_autoware_utils::createPoint;
 
 namespace
 {
@@ -86,15 +86,15 @@ Polygon2d createObjPolygon(
   const double yaw = tf2::getYaw(pose.orientation);
 
   // create base polygon
-  Polygon2d obj_poly;
-  boost::geometry::exterior_ring(obj_poly) = boost::assign::list_of<Point2d>(h / 2.0, w / 2.0)(
-    -h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
+  Polygon2d object_polygon;
+  boost::geometry::exterior_ring(object_polygon) = boost::assign::list_of<Point2d>(
+    h / 2.0, w / 2.0)(-h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
     rotate(-yaw);  // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
-  boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
+  boost::geometry::transform(object_polygon, rotate_obj_poly, rotate);
 
   // translate polygon(x, y)
   boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
@@ -112,17 +112,17 @@ Polygon2d createObjPolygon(
   const double yaw = tf2::getYaw(pose.orientation);
 
   // create base polygon
-  Polygon2d obj_poly;
+  Polygon2d object_polygon;
   for (const auto point : footprint.points) {
     const Point2d point2d(point.x, point.y);
-    obj_poly.outer().push_back(point2d);
+    object_polygon.outer().push_back(point2d);
   }
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
     rotate(-yaw);  // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
-  boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
+  boost::geometry::transform(object_polygon, rotate_obj_poly, rotate);
 
   // translate polygon(x, y)
   boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
@@ -213,21 +213,16 @@ void SurroundObstacleCheckerNode::onTimer()
     return;
   }
 
-  // get nearest object
-  double min_dist_to_obj = std::numeric_limits<double>::max();
-  geometry_msgs::msg::Point nearest_obj_point;
-  getNearestObstacle(&min_dist_to_obj, &nearest_obj_point);
-
-  // check current obstacle status (exist or not)
-  const auto is_obstacle_found = isObstacleFound(min_dist_to_obj);
-  // check current stop status (stop or not)
-  const auto is_stopped = isVehicleStopped();
-
-  const auto is_stop_required = isStopRequired(is_obstacle_found, is_stopped);
+  const auto nearest_obstacle = getNearestObstacle();
+  const auto is_vehicle_stopped = isVehicleStopped();
 
   switch (state_) {
     case State::PASS: {
-      if (!is_stop_required) {
+      const auto is_obstacle_found =
+        !nearest_obstacle ? false
+                          : nearest_obstacle.get().first < node_param_.surround_check_distance;
+
+      if (!isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
         break;
       }
 
@@ -242,15 +237,18 @@ void SurroundObstacleCheckerNode::onTimer()
       pub_velocity_limit_->publish(*velocity_limit);
 
       // do not start when there is a obstacle near the ego vehicle.
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *this->get_clock(), 500 /* ms */,
-        "do not start because there is obstacle near the ego vehicle.");
+      RCLCPP_WARN(get_logger(), "do not start because there is obstacle near the ego vehicle.");
 
       break;
     }
 
     case State::STOP: {
-      if (is_stop_required) {
+      const auto is_obstacle_found =
+        !nearest_obstacle
+          ? false
+          : nearest_obstacle.get().first < node_param_.surround_check_recover_distance;
+
+      if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
         break;
       }
 
@@ -270,9 +268,12 @@ void SurroundObstacleCheckerNode::onTimer()
       break;
   }
 
+  if (nearest_obstacle) {
+    debug_ptr_->pushObstaclePoint(nearest_obstacle.get().second, PointType::NoStart);
+  }
+
   diagnostic_msgs::msg::DiagnosticStatus no_start_reason_diag;
   if (state_ == State::STOP) {
-    debug_ptr_->pushObstaclePoint(nearest_obj_point, PointType::NoStart);
     debug_ptr_->pushPose(odometry_ptr_->pose.pose, PoseType::NoStart);
     no_start_reason_diag = makeStopReasonDiag("obstacle", odometry_ptr_->pose.pose);
   }
@@ -297,135 +298,130 @@ void SurroundObstacleCheckerNode::onOdometry(const nav_msgs::msg::Odometry::Cons
   odometry_ptr_ = msg;
 }
 
-bool SurroundObstacleCheckerNode::convertPose(
-  const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
-  const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose)
+boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacle() const
 {
-  tf2::Transform src2tgt;
-  try {
-    // get transform from source to target
-    geometry_msgs::msg::TransformStamped ros_src2tgt =
-      tf_buffer_.lookupTransform(source, target, time, tf2::durationFromSec(0.1));
-    tf2::fromMsg(ros_src2tgt.transform, src2tgt);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 500 /* ms */,
-      "cannot get tf from " << source << " to " << target);
-    return false;
-  }
+  boost::optional<Obstacle> nearest_pointcloud{boost::none};
+  boost::optional<Obstacle> nearest_object{boost::none};
 
-  tf2::Transform src2obj;
-  tf2::fromMsg(pose, src2obj);
-  tf2::Transform tgt2obj = src2tgt.inverse() * src2obj;
-  tf2::toMsg(tgt2obj, conv_pose);
-  return true;
-}
-
-void SurroundObstacleCheckerNode::getNearestObstacle(
-  double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point)
-{
   if (node_param_.use_pointcloud) {
-    getNearestObstacleByPointCloud(min_dist_to_obj, nearest_obj_point);
+    nearest_pointcloud = getNearestObstacleByPointCloud();
   }
 
   if (node_param_.use_dynamic_object) {
-    getNearestObstacleByDynamicObject(min_dist_to_obj, nearest_obj_point);
+    nearest_object = getNearestObstacleByDynamicObject();
   }
+
+  if (!nearest_pointcloud && !nearest_object) {
+    return {};
+  }
+
+  if (!nearest_pointcloud) {
+    return nearest_object;
+  }
+
+  if (!nearest_object) {
+    return nearest_pointcloud;
+  }
+
+  return nearest_pointcloud.get().first < nearest_object.get().first ? nearest_pointcloud
+                                                                     : nearest_object;
 }
 
-void SurroundObstacleCheckerNode::getNearestObstacleByPointCloud(
-  double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point)
+boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCloud() const
 {
-  // wait to transform pointcloud
+  const auto transform_stamped =
+    getTransform("base_link", pointcloud_ptr_->header.frame_id, pointcloud_ptr_->header.stamp, 0.5);
+
+  geometry_msgs::msg::Point nearest_point;
+  auto minimum_distance = std::numeric_limits<double>::max();
+
+  if (!transform_stamped) {
+    return {};
+  }
+
+  Eigen::Affine3f isometry = tf2::transformToEigen(transform_stamped.get().transform).cast<float>();
+  pcl::PointCloud<pcl::PointXYZ> transformed_pointcloud;
+  pcl::fromROSMsg(*pointcloud_ptr_, transformed_pointcloud);
+  pcl::transformPointCloud(transformed_pointcloud, transformed_pointcloud, isometry);
+
+  const auto ego_polygon = createSelfPolygon(vehicle_info_);
+
+  for (const auto & p : transformed_pointcloud) {
+    Point2d boost_point(p.x, p.y);
+
+    const auto distance_to_object = bg::distance(ego_polygon, boost_point);
+
+    if (distance_to_object < minimum_distance) {
+      nearest_point = createPoint(p.x, p.y, p.z);
+      minimum_distance = distance_to_object;
+    }
+  }
+
+  return std::make_pair(minimum_distance, nearest_point);
+}
+
+boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject() const
+{
+  const auto transform_stamped =
+    getTransform(object_ptr_->header.frame_id, "base_link", object_ptr_->header.stamp, 0.5);
+
+  geometry_msgs::msg::Point nearest_point;
+  auto minimum_distance = std::numeric_limits<double>::max();
+
+  if (!transform_stamped) {
+    return {};
+  }
+
+  tf2::Transform tf_src2target;
+  tf2::fromMsg(transform_stamped.get().transform, tf_src2target);
+
+  const auto ego_polygon = createSelfPolygon(vehicle_info_);
+
+  for (const auto & object : object_ptr_->objects) {
+    const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
+
+    tf2::Transform tf_src2object;
+    tf2::fromMsg(object_pose, tf_src2object);
+
+    geometry_msgs::msg::Pose transformed_object_pose;
+    tf2::toMsg(tf_src2target.inverse() * tf_src2object, transformed_object_pose);
+
+    const auto object_polygon =
+      object.shape.type == Shape::POLYGON
+        ? createObjPolygon(transformed_object_pose, object.shape.footprint)
+        : createObjPolygon(transformed_object_pose, object.shape.dimensions);
+
+    const auto distance_to_object = bg::distance(ego_polygon, object_polygon);
+
+    if (distance_to_object < minimum_distance) {
+      nearest_point = object_pose.position;
+      minimum_distance = distance_to_object;
+    }
+  }
+
+  return std::make_pair(minimum_distance, nearest_point);
+}
+
+boost::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNode::getTransform(
+  const std::string & source, const std::string & target, const rclcpp::Time & stamp,
+  double duration_sec) const
+{
   geometry_msgs::msg::TransformStamped transform_stamped;
+
   try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", pointcloud_ptr_->header.frame_id, pointcloud_ptr_->header.stamp,
-      tf2::durationFromSec(0.5));
+    transform_stamped =
+      tf_buffer_.lookupTransform(source, target, stamp, tf2::durationFromSec(duration_sec));
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 500 /* ms */,
-      "failed to get base_link to " << pointcloud_ptr_->header.frame_id << " transform.");
-    return;
+    return {};
   }
 
-  Eigen::Affine3f isometry = tf2::transformToEigen(transform_stamped.transform).cast<float>();
-  pcl::PointCloud<pcl::PointXYZ> pcl;
-  pcl::fromROSMsg(*pointcloud_ptr_, pcl);
-  pcl::transformPointCloud(pcl, pcl, isometry);
-  for (const auto & p : pcl) {
-    // create boost point
-    Point2d boost_p(p.x, p.y);
-
-    // calc distance
-    const auto self_poly = createSelfPolygon(vehicle_info_);
-    const double dist_to_obj = boost::geometry::distance(self_poly, boost_p);
-
-    // get minimum distance to obj
-    if (dist_to_obj < *min_dist_to_obj) {
-      *min_dist_to_obj = dist_to_obj;
-      nearest_obj_point->x = p.x;
-      nearest_obj_point->y = p.y;
-      nearest_obj_point->z = p.z;
-    }
-  }
-}
-
-void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
-  double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point)
-{
-  const auto obj_frame = object_ptr_->header.frame_id;
-  const auto obj_time = object_ptr_->header.stamp;
-  for (const auto & obj : object_ptr_->objects) {
-    // change frame of obj_pose to base_link
-    geometry_msgs::msg::Pose pose_baselink;
-    if (!convertPose(
-          obj.kinematics.initial_pose_with_covariance.pose, obj_frame, "base_link", obj_time,
-          pose_baselink)) {
-      return;
-    }
-
-    // create obj polygon
-    Polygon2d obj_poly;
-    if (obj.shape.type == Shape::POLYGON) {
-      obj_poly = createObjPolygon(pose_baselink, obj.shape.footprint);
-    } else {
-      obj_poly = createObjPolygon(pose_baselink, obj.shape.dimensions);
-    }
-
-    // calc distance
-    const auto self_poly = createSelfPolygon(vehicle_info_);
-    const double dist_to_obj = boost::geometry::distance(self_poly, obj_poly);
-
-    // get minimum distance to obj
-    if (dist_to_obj < *min_dist_to_obj) {
-      *min_dist_to_obj = dist_to_obj;
-      *nearest_obj_point = obj.kinematics.initial_pose_with_covariance.pose.position;
-    }
-  }
-}
-
-bool SurroundObstacleCheckerNode::isObstacleFound(const double min_dist_to_obj)
-{
-  const auto is_obstacle_inside_range = min_dist_to_obj < node_param_.surround_check_distance;
-  const auto is_obstacle_outside_range =
-    min_dist_to_obj > node_param_.surround_check_recover_distance;
-
-  if (state_ == State::PASS) {
-    return is_obstacle_inside_range;
-  }
-
-  if (state_ == State::STOP) {
-    return !is_obstacle_outside_range;
-  }
-
-  throw std::runtime_error("invalid state");
+  return transform_stamped;
 }
 
 bool SurroundObstacleCheckerNode::isStopRequired(
-  const bool is_obstacle_found, const bool is_stopped)
+  const bool is_obstacle_found, const bool is_vehicle_stopped)
 {
-  if (!is_stopped) {
+  if (!is_vehicle_stopped) {
     return false;
   }
 
