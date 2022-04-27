@@ -100,8 +100,8 @@ void AutowareStateMonitorNode::onRoute(
   }
 
   if (disengage_on_route_ && isEngaged()) {
-    RCLCPP_INFO(this->get_logger(), "new route received and disengage Autoware");
-    setDisengage();
+    // RCLCPP_INFO(this->get_logger(), "new route received and disengage Autoware");
+    // setDisengage();
   }
 }
 

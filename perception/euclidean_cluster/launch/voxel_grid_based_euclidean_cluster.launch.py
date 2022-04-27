@@ -87,7 +87,7 @@ def launch_setup(context, *args, **kwargs):
         plugin="euclidean_cluster::VoxelGridBasedEuclideanClusterNode",
         name="euclidean_cluster",
         remappings=[
-            ("input", "outlier_filter/pointcloud"),
+            ("input", LaunchConfiguration("input_pointcloud")),
             ("output", LaunchConfiguration("output_clusters")),
         ],
         parameters=[load_composable_node_param("voxel_grid_based_euclidean_param_path")],
@@ -98,7 +98,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         namespace=ns,
         executable="component_container",
-        composable_node_descriptions=[outlier_filter_component, euclidean_cluster_component],
+        composable_node_descriptions=[euclidean_cluster_component],
         output="screen",
     )
 

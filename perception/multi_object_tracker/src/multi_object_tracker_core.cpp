@@ -394,14 +394,19 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   output_msg.header.stamp = time;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     if (!shouldTrackerPublish(*itr)) {
+      //RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), "aaaaa");
       continue;
     }
     autoware_auto_perception_msgs::msg::TrackedObject object;
+    
     (*itr)->getTrackedObject(time, object);
+    //RCLCPP_INFO(rclcpp::get_logger("multi_object_tracker"), object.shape.dimensions.x.);
+
     output_msg.objects.push_back(object);
   }
 
   // Publish
+  //RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), "%s\n", output_msg.objects.c_str());
   tracked_objects_pub_->publish(output_msg);
 }
 
