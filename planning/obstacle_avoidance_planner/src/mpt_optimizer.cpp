@@ -1376,7 +1376,7 @@ void MPTOptimizer::calcBounds(
       BoundsCandidates filtered_bounds_candidates;
       for (const auto & bounds_candidate : bounds_candidates) {
         // Step 1. Bounds is continuous to the previous one,
-        //         and the overlapped signed length is longer than vehice width
+        //         and the overlapped signed length is longer than vehicle width
         //         overlapped_signed_length already considers vehicle width.
         const double overlapped_signed_length =
           calcOverlappedBoundsSignedLength(prev_continuous_bounds, bounds_candidate);
