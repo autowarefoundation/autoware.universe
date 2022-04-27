@@ -545,12 +545,12 @@ bool MotionVelocitySmootherNode::smoothVelocity(
     RCLCPP_WARN(get_logger(), "Fail to solve optimization.");
   }
 
+  // Set 0 velocity after input-stop-point
+  overwriteStopPoint(clipped, traj_smoothed);
+
   traj_smoothed.insert(
     traj_smoothed.begin(), traj_resampled->begin(),
     traj_resampled->begin() + *traj_resampled_closest);
-
-  // Set 0 velocity after input-stop-point
-  overwriteStopPoint(*traj_resampled, traj_smoothed);
 
   // For the endpoint of the trajectory
   if (!traj_smoothed.empty()) {
@@ -714,23 +714,14 @@ MotionVelocitySmootherNode::calcInitialMotion(
 void MotionVelocitySmootherNode::overwriteStopPoint(
   const TrajectoryPoints & input, TrajectoryPoints & output) const
 {
-  // Search 0 velocity point after the previous point of the closest point of ego
-  const auto closest_idx = tier4_autoware_utils::findNearestIndex(
-    input, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
-    node_param_.delta_yaw_threshold);
-  if (!closest_idx || *closest_idx == 0) {
+  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(input);
+  if (!stop_idx) {
     return;
   }
-  TrajectoryPoints points_after_ego{input.begin() + *closest_idx - 1, input.end()};
-  const auto stop_idx_after_ego = tier4_autoware_utils::searchZeroVelocityIndex(points_after_ego);
-  if (!stop_idx_after_ego) {
-    return;
-  }
-  const auto stop_idx = *stop_idx_after_ego + *closest_idx - 1;
 
   // Get Closest Point from Output
   const auto nearest_output_point_idx = tier4_autoware_utils::findNearestIndex(
-    output, input.at(stop_idx).pose, std::numeric_limits<double>::max(),
+    output, input.at(*stop_idx).pose, std::numeric_limits<double>::max(),
     node_param_.delta_yaw_threshold);
 
   // check over velocity
