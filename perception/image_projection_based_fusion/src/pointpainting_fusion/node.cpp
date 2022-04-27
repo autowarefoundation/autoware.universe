@@ -16,6 +16,10 @@
 
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
+#include <lidar_centerpoint/centerpoint_config.hpp>
+#include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
+#include <lidar_centerpoint/ros_utils.hpp>
+#include <lidar_centerpoint/utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 
@@ -25,25 +29,48 @@ namespace image_projection_based_fusion
 PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<sensor_msgs::msg::PointCloud2>("pointpainting_fusion", options)
 {
-  score_threshold_ = this->declare_parameter("score_threshold", 0.4);
-  std::string densification_world_frame_id =
+  const float score_threshold =
+    static_cast<float>(this->declare_parameter<double>("score_threshold", 0.4));
+  const float circle_nms_dist_threshold =
+    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", 1.5));
+  // densification param
+  const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
-  int densification_num_past_frames = this->declare_parameter("densification_num_past_frames", 1);
-  std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
-  std::string encoder_onnx_path = this->declare_parameter("encoder_onnx_path", "");
-  std::string encoder_engine_path = this->declare_parameter("encoder_engine_path", "");
-  std::string head_onnx_path = this->declare_parameter("head_onnx_path", "");
-  std::string head_engine_path = this->declare_parameter("head_engine_path", "");
+  const int densification_num_past_frames =
+    this->declare_parameter("densification_num_past_frames", 1);
+  // network param
+  const std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
+  const std::string encoder_onnx_path = this->declare_parameter("encoder_onnx_path", "");
+  const std::string encoder_engine_path = this->declare_parameter("encoder_engine_path", "");
+  const std::string head_onnx_path = this->declare_parameter("head_onnx_path", "");
+  const std::string head_engine_path = this->declare_parameter("head_engine_path", "");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
+  has_twist_ = this->declare_parameter("has_twist", false);
+  const std::size_t point_feature_size =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
+  const std::size_t max_voxel_size =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_voxel_size"));
+  const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
+  const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
+  const std::size_t downsample_factor =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
+  const std::size_t encoder_in_feature_size =
+    static_cast<std::size_t>(this->declare_parameter<std::int64_t>("encoder_in_feature_size"));
 
-  NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
-  NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
-  DensificationParam densification_param(
+  centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
+  centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
+  centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
-  detector_ptr_ = std::make_unique<CenterPointTRT>(
-    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param);
+  centerpoint::CenterPointConfig config(
+    class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
+    downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold);
+  // create detector
+  detector_ptr_ = std::make_unique<centerpoint::PointPaintingTRT>(
+    encoder_param, head_param, densification_param, config);
 
+  // sub and pub
+  sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
   obj_pub_ptr_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
 }
@@ -113,6 +140,17 @@ void PointpaintingFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
+  // get transform from pointcloud frame id to camera optical frame id
+  // geometry_msgs::msg::TransformStamped transform_stamped;
+  // try {
+  //   transform_stamped = tf_buffer_.lookupTransform(
+  //     /*target*/ camera_info.header.frame_id,
+  //     /*src*/ painted_pointcloud_msg.header.frame_id, tf2::TimePointZero);
+  // } catch (tf2::TransformException & ex) {
+  //   RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+  //   return;
+  // }
+
   // projection matrix
   Eigen::Matrix4d camera_projection;
   camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
@@ -124,10 +162,6 @@ void PointpaintingFusionNode::fuseOnSingleImage(
   sensor_msgs::msg::PointCloud2 transformed_pointcloud;
   tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
-  // projection
-  std::vector<Eigen::Vector2d> projected_points;
-  projected_points.reserve(painted_pointcloud_msg.data.size());
-
   // iterate points
   sensor_msgs::PointCloud2Iterator<float> iter_painted_intensity(
     painted_pointcloud_msg, "intensity");
@@ -138,7 +172,7 @@ void PointpaintingFusionNode::fuseOnSingleImage(
        iter_y(transformed_pointcloud, "y"), iter_z(transformed_pointcloud, "z");
        iter_x != iter_x.end();
        ++iter_x, ++iter_y, ++iter_z, ++iter_painted_intensity, ++iter_car, ++iter_ped, ++iter_bic) {
-    if (*iter_z < 0) {
+    if (*iter_z <= 0.0) {
       continue;
     }
     // project
@@ -181,16 +215,15 @@ void PointpaintingFusionNode::fuseOnSingleImage(
             *iter_bic = 1.0;
             break;
         }
-        if (debugger_) {
-          debug_image_points.push_back(normalized_projected_point);
-        }
+        debug_image_points.push_back(normalized_projected_point);
       }
     }
   }
+  for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
+    debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
+  }
+
   if (debugger_) {
-    for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
-      debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
-    }
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
@@ -199,7 +232,7 @@ void PointpaintingFusionNode::fuseOnSingleImage(
 
 void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
-  std::vector<Box3D> det_boxes3d;
+  std::vector<centerpoint::Box3D> det_boxes3d;
   bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
@@ -212,92 +245,12 @@ void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
       continue;
     }
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(box3d, obj);
+    centerpoint::box3DToDetectedObject(
+      box3d, class_names_, rename_car_to_truck_and_bus_, has_twist_, obj);
     output_obj_msg.objects.emplace_back(obj);
   }
 
   obj_pub_ptr_->publish(output_obj_msg);
-}
-
-void PointpaintingFusionNode::box3DToDetectedObject(
-  const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj)
-{
-  // TODO(yukke42): the value of classification confidence of DNN, not probability.
-  obj.existence_probability = box3d.score;
-
-  // classification
-  autoware_auto_perception_msgs::msg::ObjectClassification classification;
-  classification.probability = 1.0f;
-  if (box3d.label >= 0 && static_cast<size_t>(box3d.label) < class_names_.size()) {
-    classification.label = getSemanticType(class_names_[box3d.label]);
-  } else {
-    classification.label = Label::UNKNOWN;
-  }
-
-  float l = box3d.length;
-  float w = box3d.width;
-  if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
-    // Note: object size is referred from multi_object_tracker
-    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-      classification.label = Label::TRUCK;
-    } else if (w * l > 2.5 * 7.9) {
-      classification.label = Label::BUS;
-    }
-  }
-
-  if (isCarLikeVehicleLabel(classification.label)) {
-    obj.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
-  }
-
-  obj.classification.emplace_back(classification);
-
-  // pose and shape
-  // mmdet3d yaw format to ros yaw format
-  float yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
-  obj.kinematics.pose_with_covariance.pose.position =
-    tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
-  obj.kinematics.pose_with_covariance.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(yaw);
-  obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-  obj.shape.dimensions =
-    tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
-
-  // twist
-  float vel_x = box3d.vel_x;
-  float vel_y = box3d.vel_y;
-  geometry_msgs::msg::Twist twist;
-  twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-  twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
-  obj.kinematics.twist_with_covariance.twist = twist;
-  obj.kinematics.has_twist = true;
-}
-
-uint8_t PointpaintingFusionNode::getSemanticType(const std::string & class_name)
-{
-  if (class_name == "CAR") {
-    return Label::CAR;
-  } else if (class_name == "TRUCK") {
-    return Label::TRUCK;
-  } else if (class_name == "BUS") {
-    return Label::BUS;
-  } else if (class_name == "TRAILER") {
-    return Label::TRAILER;
-  } else if (class_name == "BICYCLE") {
-    return Label::BICYCLE;
-  } else if (class_name == "MOTORBIKE") {
-    return Label::MOTORCYCLE;
-  } else if (class_name == "PEDESTRIAN") {
-    return Label::PEDESTRIAN;
-  } else {
-    return Label::UNKNOWN;
-  }
-}
-
-bool PointpaintingFusionNode::isCarLikeVehicleLabel(const uint8_t label)
-{
-  return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
-         label == Label::TRAILER;
 }
 
 }  // namespace image_projection_based_fusion
