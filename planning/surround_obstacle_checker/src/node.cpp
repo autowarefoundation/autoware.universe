@@ -146,23 +146,23 @@ Polygon2d createSelfPolygon(const VehicleInfo & vehicle_info)
 }  // namespace
 
 SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options)
-: Node("surround_obstacle_checker_node", node_options),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_),
-  vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
+: Node("surround_obstacle_checker_node", node_options)
 {
   // Parameters
-  use_pointcloud_ = this->declare_parameter("use_pointcloud", true);
-  use_dynamic_object_ = this->declare_parameter("use_dynamic_object", true);
-  surround_check_distance_ = this->declare_parameter("surround_check_distance", 2.0);
-  surround_check_recover_distance_ =
-    this->declare_parameter("surround_check_recover_distance", 2.5);
-  state_clear_time_ = this->declare_parameter("state_clear_time", 2.0);
-  stop_state_ego_speed_ = this->declare_parameter("stop_state_ego_speed", 0.1);
-  stopped_state_entry_duration_time_ =
-    this->declare_parameter("stopped_state_entry_duration_time_", 0.1);
-  debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
-    vehicle_info_.max_longitudinal_offset_m, this->get_clock(), *this);
+  {
+    auto & p = node_param_;
+    p.use_pointcloud = this->declare_parameter("use_pointcloud", true);
+    p.use_dynamic_object = this->declare_parameter("use_dynamic_object", true);
+    p.surround_check_distance = this->declare_parameter("surround_check_distance", 2.0);
+    p.surround_check_recover_distance =
+      this->declare_parameter("surround_check_recover_distance", 2.5);
+    p.state_clear_time = this->declare_parameter("state_clear_time", 2.0);
+    p.stop_state_ego_speed = this->declare_parameter("stop_state_ego_speed", 0.1);
+    p.stopped_state_entry_duration_time =
+      this->declare_parameter("stopped_state_entry_duration_time_", 0.1);
+  }
+
+  vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
 
   // Publishers
   pub_stop_reason_ =
@@ -171,7 +171,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     this->create_publisher<VelocityLimitClearCommand>("~/output/velocity_limit_clear_command", 1);
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>("~/output/max_velocity", 1);
 
-  // Subscriber
+  // Subscribers
   sub_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&SurroundObstacleCheckerNode::onPointCloud, this, std::placeholders::_1));
@@ -188,17 +188,21 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     this, get_clock(), 100ms, std::bind(&SurroundObstacleCheckerNode::onTimer, this));
 
   last_running_time_ = std::make_shared<rclcpp::Time>(this->now());
+
+  // Debug
+  debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
+    vehicle_info_.max_longitudinal_offset_m, this->get_clock(), *this);
 }
 
 void SurroundObstacleCheckerNode::onTimer()
 {
-  if (use_pointcloud_ && !pointcloud_ptr_) {
+  if (node_param_.use_pointcloud && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for pointcloud info...");
     return;
   }
 
-  if (use_dynamic_object_ && !object_ptr_) {
+  if (node_param_.use_dynamic_object && !object_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for dynamic object info...");
     return;
@@ -323,11 +327,11 @@ bool SurroundObstacleCheckerNode::convertPose(
 void SurroundObstacleCheckerNode::getNearestObstacle(
   double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point)
 {
-  if (use_pointcloud_) {
+  if (node_param_.use_pointcloud) {
     getNearestObstacleByPointCloud(min_dist_to_obj, nearest_obj_point);
   }
 
-  if (use_dynamic_object_) {
+  if (node_param_.use_dynamic_object) {
     getNearestObstacleByDynamicObject(min_dist_to_obj, nearest_obj_point);
   }
 }
@@ -406,8 +410,9 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
 
 bool SurroundObstacleCheckerNode::isObstacleFound(const double min_dist_to_obj)
 {
-  const auto is_obstacle_inside_range = min_dist_to_obj < surround_check_distance_;
-  const auto is_obstacle_outside_range = min_dist_to_obj > surround_check_recover_distance_;
+  const auto is_obstacle_inside_range = min_dist_to_obj < node_param_.surround_check_distance;
+  const auto is_obstacle_outside_range =
+    min_dist_to_obj > node_param_.surround_check_recover_distance;
 
   if (state_ == State::PASS) {
     return is_obstacle_inside_range;
@@ -439,7 +444,7 @@ bool SurroundObstacleCheckerNode::isStopRequired(
   // Keep stop state
   if (last_obstacle_found_time_) {
     const auto elapsed_time = this->now() - *last_obstacle_found_time_;
-    if (elapsed_time.seconds() <= state_clear_time_) {
+    if (elapsed_time.seconds() <= node_param_.state_clear_time) {
       return true;
     }
   }
@@ -452,11 +457,12 @@ bool SurroundObstacleCheckerNode::isVehicleStopped()
 {
   const auto current_velocity = std::abs(odometry_ptr_->twist.twist.linear.x);
 
-  if (stop_state_ego_speed_ < current_velocity) {
+  if (node_param_.stop_state_ego_speed < current_velocity) {
     last_running_time_ = std::make_shared<rclcpp::Time>(this->now());
   }
 
-  return stopped_state_entry_duration_time_ < (this->now() - *last_running_time_).seconds();
+  return node_param_.stopped_state_entry_duration_time <
+         (this->now() - *last_running_time_).seconds();
 }
 
 }  // namespace surround_obstacle_checker

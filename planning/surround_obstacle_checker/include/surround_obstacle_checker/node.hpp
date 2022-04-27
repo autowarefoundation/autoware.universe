@@ -57,6 +57,20 @@ class SurroundObstacleCheckerNode : public rclcpp::Node
 public:
   explicit SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options);
 
+  struct NodeParam
+  {
+    bool use_pointcloud;
+    bool use_dynamic_object;
+    bool is_surround_obstacle;
+    // For preventing chattering,
+    // surround_check_recover_distance_ must be  bigger than surround_check_distance_
+    double surround_check_recover_distance;
+    double surround_check_distance;
+    double state_clear_time;
+    double stop_state_ego_speed;
+    double stopped_state_entry_duration_time;
+  };
+
 private:
   void onTimer();
 
@@ -80,8 +94,8 @@ private:
   bool isVehicleStopped();
 
   // ros
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  tf2_ros::Buffer tf_buffer_{get_clock()};
+  tf2_ros::TransformListener tf_listener_{tf_buffer_};
   rclcpp::TimerBase::SharedPtr timer_;
 
   // publisher and subscriber
@@ -96,20 +110,13 @@ private:
   std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
 
   // parameter
+  NodeParam node_param_;
+  vehicle_info_util::VehicleInfo vehicle_info_;
+
+  // data
   nav_msgs::msg::Odometry::ConstSharedPtr odometry_ptr_;
   sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_ptr_;
   PredictedObjects::ConstSharedPtr object_ptr_;
-  vehicle_info_util::VehicleInfo vehicle_info_;
-  bool use_pointcloud_;
-  bool use_dynamic_object_;
-  double surround_check_distance_;
-  // For preventing chattering,
-  // surround_check_recover_distance_ must be  bigger than surround_check_distance_
-  double surround_check_recover_distance_;
-  double state_clear_time_;
-  double stop_state_ego_speed_;
-  double stopped_state_entry_duration_time_;
-  bool is_surround_obstacle_;
 
   // State Machine
   State state_ = State::PASS;
