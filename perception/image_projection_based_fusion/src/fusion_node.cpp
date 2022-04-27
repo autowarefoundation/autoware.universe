@@ -121,8 +121,9 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
-    std::size_t image_buffer_size = static_cast<std::size_t>(declare_parameter("image_buffer_size", 15));
-    debugger_ = std::make_shared<Debugger>(this, rois_number_,image_buffer_size);
+    std::size_t image_buffer_size =
+      static_cast<std::size_t>(declare_parameter("image_buffer_size", 15));
+    debugger_ = std::make_shared<Debugger>(this, rois_number_, image_buffer_size);
   }
 }
 
