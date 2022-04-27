@@ -19,55 +19,55 @@ This module is activated if `launch_dynamic_obstacle_stop` becomes true
 title modifyPathVelocity
 start
 
-partition preprocess_path {
-:calculate predicted path for ego vehicle;
-:extend predicted path;
-:trim path from ego position;
+partition "Preprocess path" {
+:Calculate predicted path for ego vehicle;
+:Extend predicted path;
+:Trim path from ego position;
 }
 
-partition preprocess_obstacles {
-:create data of abstracted dynamic obstacles;
-:exclude obstacles outside of partition lanelet;
+partition "Preprocess obstacles" {
+:Create data of abstracted dynamic obstacles;
+:Exclude obstacles outside of partition lanelet;
 }
 
-partition collision_detection {
-:detect collision with dynamic obstacles;
+partition "Collision_detection" {
+:Detect collision with dynamic obstacles;
 }
 
-partition insert_velocity {
-:insert velocity to decelerate for obstacles;
+partition "Insert velocity" {
+:Insert velocity to decelerate for obstacles;
 
-:limit velocity with specified jerk and acc limit;
+:Limit velocity with specified jerk and acc limit;
 }
 stop
 @enduml
 ```
 
-#### preprocess path
+#### Preprocess path
 
-##### calculate predicted path for ego vehicle
+##### Calculate predicted path for ego vehicle
 
-calculate predicted path to predict collisions with obstacles more precisely.
-predicted path is calculated from motion velocity smoother module by using current velocity, current acceleration, and velocity in map.
+Calculate predicted path to predict collisions with obstacles more precisely.
+Predicted path is calculated from motion velocity smoother module by using current velocity, current acceleration, and velocity in map.
 
 ![brief](./docs/dynamic_obstacle_stop/calculate_predicted_path.svg)
 
-##### extend predicted path
+##### Extend predicted path
 
-Predicted Path is extended by the length of base link to front to consider obstacles after the goal.
+Predicted path is extended by the length of base link to front to consider obstacles after the goal.
 
-##### trim path from ego position
+##### Trim path from ego position
 
-Predicted Path is trimmed from ego position to a certain distance to reduce calculation time.
+Predicted path is trimmed from ego position to a certain distance to reduce calculation time.
 Trimmed distance is specified by parameter of `detection_distance`.
 
-#### preprocess obstacles
+#### Preprocess obstacles
 
-##### create data of abstracted dynamic obstacle
+##### Create data of abstracted dynamic obstacle
 
 This module can handle multiple types of input type of obstacles by creating abstracted dynamic obstacle data from input data. Currently we have 3 types of detection method (Object, ObjectWithoutPath, Points) to create abstracted obstacle data.
 
-###### abstracted dynamic obstacle
+###### Abstracted dynamic obstacle
 
 Abstracted obstacle data has following information.
 In method of Points, we should specify the velocity that is enough large for safety, but if velocity is large, obstacles are likely to pass through the lane and not being detected. So we use min and max velocity instead.
@@ -97,7 +97,7 @@ Method of `ObjectWithoutPath` has the characteristics of an intermediate of `Obj
 
 ![brief](./docs/dynamic_obstacle_stop/create_dynamic_obstacle.svg)
 
-##### exclude obstacles outside of partition
+##### Exclude obstacles outside of partition
 
 This module can exclude the obstacles outside of partition such as guardrail, fence, and wall.
 We need lanelet map that has the information of partition to use this feature.
@@ -106,19 +106,19 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 ![brief](./docs/dynamic_obstacle_stop/exclude_obstacles_by_partition.svg)
 
-#### collision detection
+#### Collision detection
 
-##### detect collision with dynamic obstacles
+##### Detect collision with dynamic obstacles
 
-to detect collision with obstacles, we calculate the travel time to the forward path points from the predicted path.
+To detect collision with obstacles, we calculate the travel time to the forward path points from the predicted path.
 Then, create the polygon of vehicle shape on each path point, and detect collision for each polygon.
 Interval of polygon creation is specified by the parameter of `detection_span`. We use this parameter to reduce calculation time.
 
 ![brief](./docs/dynamic_obstacle_stop/create_polygon_on_path_point.svg)
 
 For each created polygon, obstacle collision possibility is calculated.
-obstacles are described as rectangle or polygon that has range from min velocity to max velocity.
-For Points, the obstacles is defined as a small cylinder object.
+The obstacles is described as rectangle or polygon that has range from min velocity to max velocity.
+For Points, the obstacle is defined as a small cylinder object.
 
 ![brief](./docs/dynamic_obstacle_stop/collision_detection_for_shape.svg)
 
@@ -127,15 +127,15 @@ So we select the point that is on the same side as the obstacle and close to ego
 
 ![brief](./docs/dynamic_obstacle_stop/collision_points.svg)
 
-#### insert velocity
+#### Insert velocity
 
-##### insert velocity to decelerate for obstacles
+##### Insert velocity to decelerate for obstacles
 
-If the collision is detected, stop point is inserted on distance of base link to front + stop margin from the selected collision point. The base link to front means the distance between base_link (center of rear-wheel axis) and front of the car. stop margin is determined by the parameter of `stop_margin`.
+If the collision is detected, stop point is inserted on distance of base link to front + stop margin from the selected collision point. The base link to front means the distance between base_link (center of rear-wheel axis) and front of the car. Stop margin is determined by the parameter of `stop_margin`.
 
 ![brief](./docs/dynamic_obstacle_stop/insert_velocity.svg)
 
-##### limit velocity with specified jerk and acc limit
+##### Limit velocity with specified jerk and acc limit
 
 The maximum slowdown velocity is calculated in order not to slowdown too much.
 See the [Occlusion Spot document](./occlusion-spot-design.md#maximum-slowdown-velocity) for more details.
@@ -189,5 +189,5 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 
 ### Future extensions / Unimplemented parts
 
-- to calculate obstacle's min velocity and max velocity from covariance
-- to detect collisions with polygon object
+- Calculate obstacle's min velocity and max velocity from covariance
+- Detect collisions with polygon object
