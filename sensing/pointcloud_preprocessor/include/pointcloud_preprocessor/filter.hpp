@@ -128,6 +128,7 @@ public:
   using ApproximateTimeSyncPolicy =
     message_filters::Synchronizer<sync_policies::ApproximateTime<PointCloud2, PointIndices>>;
 
+  PCL_MAKE_ALIGNED_OPERATOR_NEW
   explicit Filter(
     const std::string & filter_name = "pointcloud_preprocessor_filter",
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -272,9 +273,6 @@ private:
   void input_indices_callback(const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
 
   void setupTF();
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 }  // namespace pointcloud_preprocessor
 
