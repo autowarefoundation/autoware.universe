@@ -20,8 +20,8 @@ title modifyPathVelocity
 start
 
 partition "Preprocess path" {
-:Calculate predicted path for ego vehicle;
-:Extend predicted path;
+:Calculate smoothed path for ego vehicle;
+:Extend smoothed path;
 :Trim path from ego position;
 }
 
@@ -45,20 +45,20 @@ stop
 
 #### Preprocess path
 
-##### Calculate predicted path for ego vehicle
+##### Calculate smoothed path for ego vehicle
 
-Calculate predicted path to predict collisions with obstacles more precisely.
-Predicted path is calculated from motion velocity smoother module by using current velocity, current acceleration, and velocity in map.
+Calculate velocity smoothed path to calculate time to collision with obstacles more precisely.
+Smoothed path is calculated from motion velocity smoother module by using current velocity, current acceleration, and velocity in map.
 
-![brief](./docs/dynamic_obstacle_stop/calculate_predicted_path.svg)
+![brief](./docs/dynamic_obstacle_stop/calculate_smoothed_path.svg)
 
-##### Extend predicted path
+##### Extend smoothed path
 
-Predicted path is extended by the length of base link to front to consider obstacles after the goal.
+Smoothed path is extended by the length of base link to front to consider obstacles after the goal.
 
 ##### Trim path from ego position
 
-Predicted path is trimmed from ego position to a certain distance to reduce calculation time.
+Smoothed path is trimmed from ego position to a certain distance to reduce calculation time.
 Trimmed distance is specified by parameter of `detection_distance`.
 
 #### Preprocess obstacles
