@@ -286,9 +286,14 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
         // interpolate and crop backward
         const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
           smoothed_points, mpt_param_.delta_arc_length_for_mpt_points);
-        const auto cropped_interpolated_points = points_utils::clipBackwardPoints(
-          interpolated_points, current_ego_pose_.position, traj_param_.backward_fixing_distance,
-          mpt_param_.delta_arc_length_for_mpt_points);
+        const auto interpolated_points_with_yaw =
+          points_utils::convertToPosesWithYawEstimation(interpolated_points);
+        const auto cropped_interpolated_points_with_yaw = points_utils::clipBackwardPoints(
+          interpolated_points_with_yaw, current_ego_pose_, traj_param_.backward_fixing_distance,
+          mpt_param_.delta_arc_length_for_mpt_points,
+          traj_param_.delta_yaw_threshold_for_closest_point);
+        const auto cropped_interpolated_points =
+          points_utils::convertToPoints(cropped_interpolated_points_with_yaw);
 
         return points_utils::convertToReferencePoints(cropped_interpolated_points);
       }
