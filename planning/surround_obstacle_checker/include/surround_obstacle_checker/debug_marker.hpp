@@ -18,8 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_planning_msgs/msg/stop_reason2_array.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 

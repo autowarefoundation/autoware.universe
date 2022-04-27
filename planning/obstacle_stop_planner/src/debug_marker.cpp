@@ -145,7 +145,7 @@ void ObstacleStopPlannerDebugNode::publish()
   const auto stop_reason_msg = makeStopReasonArray();
   stop_reason_pub_->publish(stop_reason_msg);
 
-    /* publish stop reason2 for autoware api */
+  /* publish stop reason2 for autoware api */
   const auto stop_reason2_msg = makeStopReason2Array();
   stop_reason2_pub_->publish(stop_reason2_msg);
 
