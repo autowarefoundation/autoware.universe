@@ -299,8 +299,19 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
       }
 
       // calc non fixed traj points
-      const size_t seg_idx =
-        tier4_autoware_utils::findNearestSegmentIndex(smoothed_points, fixed_ref_points.back().p);
+      const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
+        points_utils::convertToPoints(fixed_ref_points));
+      const auto seg_idx_optional = tier4_autoware_utils::findNearestSegmentIndex(
+        smoothed_points, fixed_ref_points_with_yaw.back(), std::numeric_limits<double>::max(),
+        traj_param_.delta_yaw_threshold_for_closest_point);
+
+      if (!seg_idx_optional) {
+        RCLCPP_INFO_EXPRESSION(
+          rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+          "cannot find nearest segment index in getReferencePoints");
+        return std::vector<ReferencePoint>{};
+      }
+      const auto seg_idx = *seg_idx_optional;
       const auto non_fixed_traj_points =
         std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{
           smoothed_points.begin() + seg_idx, smoothed_points.end()};
