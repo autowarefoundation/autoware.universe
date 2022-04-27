@@ -174,6 +174,10 @@ bool Spline::isConvergeL1(
 Spline2D::Spline2D(const std::vector<double> & x, const std::vector<double> & y)
 : s_(arcLength(x, y)), x_spline_{s_, x}, y_spline_{s_, y}
 {
+  original_points_.reserve(x.size());
+  for (size_t i = 0; i < x.size(); ++i) {
+    original_points_.emplace_back(x[i], y[i]);
+  }
 }
 
 // @brief Calculate the distances of the points along the path
@@ -192,11 +196,10 @@ std::vector<double> Spline2D::arcLength(
 }
 
 // @brief Convert the given point to the Frenet frame of this spline
-FrenetPoint Spline2D::frenet(const Point & p) const
+FrenetPoint Spline2D::frenet_naive(const Point & p, double precision) const
 {
   // TODO(Maxime CLEMENT) Implement fast algorithm from https://hal.inria.fr/inria-00518379/document
   // Naive approach: sample points along the splines and return the closest one
-  constexpr float precision = 0.01;  // 1cm precision
   double closest_d = std::numeric_limits<double>::max();
   double arc_length = std::numeric_limits<double>::min();
   for (double s = s_.front(); s < s_.back(); s += precision) {
@@ -218,6 +221,66 @@ FrenetPoint Spline2D::frenet(const Point & p) const
     closest_d *= -1.0;
   }
   return {arc_length, closest_d};
+}
+
+FrenetPoint Spline2D::frenet(const Point & p, const double precision) const
+{
+  const auto distance = [&](const Point & p2) {
+    return std::hypot(p.x() - p2.x(), p.y() - p2.y());
+  };
+  size_t min_i{};
+  auto min_dist = std::numeric_limits<double>::max();
+  // find closest point in the lookup table
+  // /!\ can fail if the original points are not smooth or if some points are very far apart
+  for (size_t i = 0; i < original_points_.size(); ++i) {
+    const auto dist = distance(original_points_[i]);
+    if (dist <= min_dist) {
+      min_dist = dist;
+      min_i = i;
+    }
+  }
+  auto lb_i = min_i == 0 ? min_i : min_i - 1;
+  auto ub_i = min_i + 1 == original_points_.size() ? min_i : min_i + 1;
+  auto best_s = s_[min_i];
+  // real closest s is either in interval [lb_i:min_i] or interval [min_i:ub]
+  // continue exploring the interval whose middle point is closest to the input point
+  std::vector<double> s_interval = {s_[lb_i], {}, s_[min_i], {}, s_[ub_i]};
+  std::vector<double> d_interval = {
+    distance(original_points_[lb_i]),
+    {},
+    distance(original_points_[min_i]),
+    {},
+    distance(original_points_[ub_i])};
+  while (s_interval[4] - s_interval[0] > precision) {
+    s_interval[1] = s_interval[0] + (s_interval[2] - s_interval[0]) / 2;
+    s_interval[3] = s_interval[2] + (s_interval[4] - s_interval[2]) / 2;
+    d_interval[1] =
+      distance({x_spline_.value(s_interval[1], s_), y_spline_.value(s_interval[1], s_)});
+    d_interval[3] =
+      distance({x_spline_.value(s_interval[3], s_), y_spline_.value(s_interval[3], s_)});
+
+    for (auto i = 0; i < 5; ++i) {
+      if (d_interval[i] <= min_dist) {
+        min_dist = d_interval[i];
+        min_i = i;
+      }
+    }
+
+    best_s = s_interval[min_i];
+    lb_i = min_i == 0 ? min_i : min_i - 1;
+    ub_i = min_i == 4 ? min_i : min_i + 1;
+    s_interval = {s_interval[lb_i], {}, s_interval[min_i], {}, s_interval[ub_i]};
+    d_interval = {d_interval[lb_i], {}, d_interval[min_i], {}, d_interval[ub_i]};
+  }
+  // check sign of d
+  const double x0 = x_spline_.value(best_s, s_);
+  const double y0 = y_spline_.value(best_s, s_);
+  const double x1 = x_spline_.value(best_s + precision, s_);
+  const double y1 = y_spline_.value(best_s + precision, s_);
+  if ((x1 - x0) * (p.y() - y0) - (y1 - y0) * (p.x() - x0) < 0) {
+    min_dist *= -1.0;
+  }
+  return {best_s, min_dist};
 }
 
 Point Spline2D::cartesian(const double s) const

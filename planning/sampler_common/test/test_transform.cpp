@@ -16,6 +16,10 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <random>
+#include <ratio>
+
 constexpr auto TOL = 1E-6;  // 1µm tolerance
 
 TEST(splineTransform, makeSpline2D)
@@ -65,4 +69,43 @@ TEST(splineTransform, toCartesian)
   auto cart = spline.cartesian({1.0, 0.0});
   EXPECT_NEAR(cart.x(), 1.0, TOL);
   EXPECT_NEAR(cart.y(), 0.0, TOL);
+}
+
+TEST(splineTransform, benchFrenet)
+{
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  constexpr auto precision = 1e-2;
+  for (auto size = 100; size <= 1000; size += 100) {
+    std::chrono::nanoseconds naive{0};
+    std::chrono::nanoseconds lut{0};
+    std::vector<double> xs(size);
+    std::vector<double> ys(size);
+    auto x = 0.0;
+    auto y = 0.0;
+    std::generate(xs.begin(), xs.end(), [&]() { return ++x; });
+    std::generate(ys.begin(), ys.end(), [&]() { return ++y; });
+    sampler_common::transform::Spline2D spline(xs, ys);
+    auto points_distribution = std::uniform_real_distribution(0.0, static_cast<double>(size));
+    constexpr auto nb_iter = 1e3;
+    for (auto iter = 0; iter < nb_iter; ++iter) {
+      double x = points_distribution(gen);
+      double y = points_distribution(gen);
+      auto naive_start = std::chrono::steady_clock::now();
+      auto frenet_naive = spline.frenet_naive({x, y}, precision);
+      auto naive_end = std::chrono::steady_clock::now();
+      naive += naive_end - naive_start;
+      auto lut_start = std::chrono::steady_clock::now();
+      auto frenet_lut = spline.frenet({x, y}, precision);
+      auto lut_end = std::chrono::steady_clock::now();
+      lut += lut_end - lut_start;
+      EXPECT_NEAR(frenet_naive.s, frenet_lut.s, precision);
+      EXPECT_NEAR(frenet_naive.d, frenet_lut.d, precision);
+    }
+    std::cout << "size = " << size << std::endl;
+    std::cout << "\tnaive: " << std::chrono::duration_cast<std::chrono::milliseconds>(naive).count()
+              << "ms\n";
+    std::cout << "\tlut  : " << std::chrono::duration_cast<std::chrono::milliseconds>(lut).count()
+              << "ms\n";
+  }
 }

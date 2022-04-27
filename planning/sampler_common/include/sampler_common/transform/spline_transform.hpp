@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP
-#define SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP
+#ifndef SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
+#define SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
 
 #include "sampler_common/structures.hpp"
 
@@ -63,9 +63,12 @@ class Spline2D
   Spline x_spline_;
   Spline y_spline_;
 
+  std::vector<Point> original_points_;
+
 public:
   Spline2D(const std::vector<double> & x, const std::vector<double> & y);
-  [[nodiscard]] FrenetPoint frenet(const Point & p) const;
+  [[nodiscard]] FrenetPoint frenet_naive(const Point & p, const double precision = 0.01) const;
+  [[nodiscard]] FrenetPoint frenet(const Point & p, const double precision = 0.01) const;
   [[nodiscard]] Point cartesian(const double s) const;
   [[nodiscard]] Point cartesian(const FrenetPoint & fp) const;
   [[nodiscard]] double curvature(const double s) const;
@@ -77,4 +80,4 @@ private:
 };
 }  // namespace sampler_common::transform
 
-#endif  // SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP
+#endif  // SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
