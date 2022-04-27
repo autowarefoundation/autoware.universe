@@ -98,7 +98,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       }
       lane_attribute = lane.attributeOr("turn_direction", std::string("none"));
 
-      if (lighting_turn_signal == true) {
+      if (lighting_turn_signal) {
         if (lane_attribute == std::string("left")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
         } else if (lane_attribute == std::string("right")) {
