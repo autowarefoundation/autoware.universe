@@ -327,7 +327,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
     // set some information to reference points considering fix kinematics
     trimPoints(ref_points);
     calcOrientation(ref_points);
-    calcVelocity(ref_points, smoothed_points);
+    calcVelocity(ref_points, smoothed_points, traj_param_.delta_yaw_threshold_for_closest_point);
     calcCurvature(ref_points);
     calcArcLength(ref_points);
     calcPlanningFromEgo(
@@ -390,8 +390,9 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
     */
 
     // assign fix kinematics
-    const size_t nearest_ref_idx =
-      tier4_autoware_utils::findNearestIndex(ref_points, current_ego_pose_.position);
+    const size_t nearest_ref_idx = findNearestIndexWithSoftYawConstraints(
+      points_utils::convertToPoints(ref_points), current_ego_pose_,
+      traj_param_.delta_yaw_threshold_for_closest_point);
 
     // calculate cropped_ref_points.at(nearest_ref_idx) with yaw
     const geometry_msgs::msg::Pose nearest_ref_pose = [&]() -> geometry_msgs::msg::Pose {
@@ -427,8 +428,9 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   }
 
   const auto & prev_ref_points = prev_trajs->mpt_ref_points;
-  const int nearest_prev_ref_idx =
-    tier4_autoware_utils::findNearestIndex(prev_ref_points, current_ego_pose_.position);
+  const int nearest_prev_ref_idx = static_cast<int>(findNearestIndexWithSoftYawConstraints(
+    points_utils::convertToPoints(prev_ref_points), current_ego_pose_,
+    traj_param_.delta_yaw_threshold_for_closest_point));
 
   // calculate begin_prev_ref_idx
   const int begin_prev_ref_idx = [&]() {
@@ -1179,6 +1181,19 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
   return traj_points;
 }
 
+size_t MPTOptimizer::findNearestIndexWithSoftYawConstraints(
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
+  const double yaw_threshold) const
+{
+  const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
+
+  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
+    points_with_yaw, pose, std::numeric_limits<double>::max(), yaw_threshold);
+  return nearest_idx_optional
+           ? *nearest_idx_optional
+           : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
+}
+
 void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) const
 {
   const auto yaw_angles = slerpYawFromReferencePoints(ref_points);
@@ -1193,11 +1208,16 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) con
 
 void MPTOptimizer::calcVelocity(
   std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points) const
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const double yaw_thresh) const
 {
+  const auto ref_points_with_yaw =
+    points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
   for (size_t i = 0; i < ref_points.size(); i++) {
-    ref_points.at(i).v = points[tier4_autoware_utils::findNearestIndex(points, ref_points.at(i).p)]
-                           .longitudinal_velocity_mps;
+    ref_points.at(i).v =
+      points[findNearestIndexWithSoftYawConstraints(
+               points_utils::convertToPoints(points), ref_points_with_yaw.at(i), yaw_thresh)]
+        .longitudinal_velocity_mps;
   }
 }
 
@@ -1282,8 +1302,11 @@ void MPTOptimizer::calcExtraPoints(
     if (prev_trajs && !prev_trajs->mpt_ref_points.empty()) {
       const auto & prev_ref_points = prev_trajs->mpt_ref_points;
 
-      const size_t prev_idx =
-        tier4_autoware_utils::findNearestIndex(prev_ref_points, ref_points.at(i).p);
+      const auto ref_points_with_yaw =
+        points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
+      const size_t prev_idx = findNearestIndexWithSoftYawConstraints(
+        points_utils::convertToPoints(prev_ref_points), ref_points_with_yaw.at(i),
+        traj_param_.delta_yaw_threshold_for_closest_point);
       const double dist_to_nearest_prev_ref =
         tier4_autoware_utils::calcDistance2d(prev_ref_points.at(prev_idx), ref_points.at(i));
       if (dist_to_nearest_prev_ref < 1.0 && prev_ref_points.at(prev_idx).near_objects) {
