@@ -49,7 +49,8 @@ public:
 
 protected:
   void cameraInfoCallback(
-    const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int camera_id);
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
+    const std::size_t camera_id);
 
   void fusionCallback(
     typename Msg::ConstSharedPtr input_msg,
@@ -65,7 +66,8 @@ protected:
   virtual void preprocess(Msg & output_msg);
 
   virtual void fuseOnSingleImage(
-    const Msg & input_msg, const int image_id, const DetectedObjectsWithFeature & input_roi_msg,
+    const Msg & input_msg, const std::size_t image_id,
+    const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info, Msg & output_msg) = 0;
 
   // set args if you need
@@ -78,7 +80,7 @@ protected:
   tf2_ros::TransformListener tf_listener_;
 
   // camera_info
-  std::map<int, sensor_msgs::msg::CameraInfo> camera_info_map_;
+  std::map<std::size_t, sensor_msgs::msg::CameraInfo> camera_info_map_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
 
   // fusion

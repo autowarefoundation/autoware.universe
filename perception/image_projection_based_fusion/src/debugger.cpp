@@ -34,10 +34,10 @@ void drawRoiOnImage(
 
 namespace image_projection_based_fusion
 {
-Debugger::Debugger(rclcpp::Node * node_ptr, const int image_num) : node_ptr_(node_ptr)
+Debugger::Debugger(rclcpp::Node * node_ptr, const std::size_t image_num) : node_ptr_(node_ptr)
 {
   image_buffers_.resize(image_num);
-  for (int img_i = 0; img_i < image_num; img_i++) {
+  for (std::size_t img_i = 0; img_i < image_num; ++img_i) {
     auto sub = image_transport::create_subscription(
       node_ptr, "input/image_raw" + std::to_string(img_i),
       std::bind(&Debugger::imageCallback, this, std::placeholders::_1, img_i), "raw",
@@ -59,7 +59,11 @@ Debugger::Debugger(rclcpp::Node * node_ptr, const int image_num) : node_ptr_(nod
 }
 
 void Debugger::imageCallback(
+<<<<<<< HEAD
   const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const int image_id)
+=======
+  const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const std::size_t image_id)
+>>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
 {
   image_buffers_.at(image_id).push_front(input_image_msg);
 }
@@ -71,7 +75,11 @@ void Debugger::clear()
   obstacle_points_.clear();
 }
 
+<<<<<<< HEAD
 void Debugger::publishImage(const int image_id, const rclcpp::Time & stamp)
+=======
+void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & stamp)
+>>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
 {
   const boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr> & image_buffer =
     image_buffers_.at(image_id);

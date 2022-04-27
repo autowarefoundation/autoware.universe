@@ -137,9 +137,9 @@ void cylinderToVertices(
 {
   const auto & center = pose.position;
   const auto & radius = shape.dimensions.x * 0.5;
-  constexpr int n = 6;
+  constexpr std::size_t n = 6;
   vertices.reserve(n * 2);
-  for (int i = 0; i < n; i++) {
+  for (std::size_t i = 0; i < n; ++i) {
     Eigen::Vector3d vertex;
     const double theta = (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
                          M_PI / static_cast<double>(n);
