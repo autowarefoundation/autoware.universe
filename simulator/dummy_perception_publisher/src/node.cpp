@@ -135,7 +135,10 @@ void DummyPerceptionPublisherNode::timerCallback()
     }
   }
 
-  if (!selected_indices.empty()) {
+  if (selected_indices.empty()) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
+  } else {
     std::vector<ObjectInfo> obj_infos;
     for (const auto selected_idx : selected_indices) {
       const auto obj_info = ObjectInfo(objects_.at(selected_idx), current_time);
