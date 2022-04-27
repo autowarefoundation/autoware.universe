@@ -165,23 +165,23 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     vehicle_info_.max_longitudinal_offset_m, this->get_clock(), *this);
 
   // Publishers
-  stop_reason_diag_pub_ =
+  pub_stop_reason_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/no_start_reason", 1);
   pub_clear_velocity_limit_ =
     this->create_publisher<VelocityLimitClearCommand>("~/output/velocity_limit_clear_command", 1);
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>("~/output/max_velocity", 1);
 
   // Subscriber
-  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  sub_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&SurroundObstacleCheckerNode::pointCloudCallback, this, std::placeholders::_1));
-  dynamic_object_sub_ =
+    std::bind(&SurroundObstacleCheckerNode::onPointCloud, this, std::placeholders::_1));
+  sub_dynamic_objects_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
       "~/input/objects", 1,
-      std::bind(&SurroundObstacleCheckerNode::dynamicObjectCallback, this, std::placeholders::_1));
-  current_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+      std::bind(&SurroundObstacleCheckerNode::onDynamicObjects, this, std::placeholders::_1));
+  sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1,
-    std::bind(&SurroundObstacleCheckerNode::currentVelocityCallback, this, std::placeholders::_1));
+    std::bind(&SurroundObstacleCheckerNode::onOdometry, this, std::placeholders::_1));
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
@@ -274,23 +274,23 @@ void SurroundObstacleCheckerNode::onTimer()
     no_start_reason_diag = makeStopReasonDiag("obstacle", odometry_ptr_->pose.pose);
   }
 
-  stop_reason_diag_pub_->publish(no_start_reason_diag);
+  pub_stop_reason_->publish(no_start_reason_diag);
   debug_ptr_->publish();
 }
 
-void SurroundObstacleCheckerNode::pointCloudCallback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg)
+void SurroundObstacleCheckerNode::onPointCloud(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
-  pointcloud_ptr_ = input_msg;
+  pointcloud_ptr_ = msg;
 }
 
-void SurroundObstacleCheckerNode::dynamicObjectCallback(
+void SurroundObstacleCheckerNode::onDynamicObjects(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_msg)
 {
   object_ptr_ = input_msg;
 }
 
-void SurroundObstacleCheckerNode::currentVelocityCallback(
+void SurroundObstacleCheckerNode::onOdometry(
   const nav_msgs::msg::Odometry::ConstSharedPtr input_msg)
 {
   odometry_ptr_ = input_msg;

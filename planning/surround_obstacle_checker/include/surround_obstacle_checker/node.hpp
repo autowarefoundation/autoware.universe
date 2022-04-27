@@ -60,9 +60,12 @@ public:
 private:
   void onTimer();
 
-  void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
-  void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
-  void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
+  void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+
+  void onDynamicObjects(const PredictedObjects::ConstSharedPtr msg);
+
+  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+
   bool convertPose(
     const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
     const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose);
@@ -73,24 +76,24 @@ private:
     double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
   bool isObstacleFound(const double min_dist_to_obj);
   bool isStopRequired(const bool is_obstacle_found, const bool is_stopped);
-  bool checkStop(const TrajectoryPoint & closest_point);
 
   bool isVehicleStopped();
 
-  /*
-   * ROS
-   */
-  // publisher and subscriber
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
-  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
-  rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
-  rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
-  std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
+  // ros
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  // publisher and subscriber
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pointcloud_;
+  rclcpp::Subscription<PredictedObjects>::SharedPtr sub_dynamic_objects_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
+  rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
+  rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
+
+  // debug
+  std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
 
   // parameter
   nav_msgs::msg::Odometry::ConstSharedPtr odometry_ptr_;
