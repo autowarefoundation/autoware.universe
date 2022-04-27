@@ -27,14 +27,9 @@
 #include <diagnostic_msgs/msg/key_value.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-
-#include <boost/assert.hpp>
-#include <boost/assign/list_of.hpp>
-#include <boost/format.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2/utils.h>
@@ -45,13 +40,15 @@
 #include <string>
 #include <vector>
 
-using Point2d = boost::geometry::model::d2::point_xy<double>;
-using Polygon2d =
-  boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
+namespace surround_obstacle_checker
+{
+
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using tier4_planning_msgs::msg::VelocityLimit;
+using tier4_planning_msgs::msg::VelocityLimitClearCommand;
+using vehicle_info_util::VehicleInfo;
 
 enum class State { PASS, STOP };
 
@@ -61,16 +58,14 @@ public:
   explicit SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void pathCallback(const Trajectory::ConstSharedPtr input_msg);
+  void onTimer();
+
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
   void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
   void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
-  void insertStopVelocity(const size_t closest_idx, TrajectoryPoints * traj);
   bool convertPose(
     const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
     const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose);
-  bool getPose(
-    const std::string & source, const std::string & target, geometry_msgs::msg::Pose & pose);
   void getNearestObstacle(double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
   void getNearestObstacleByPointCloud(
     double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
@@ -78,37 +73,30 @@ private:
     double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
   bool isObstacleFound(const double min_dist_to_obj);
   bool isStopRequired(const bool is_obstacle_found, const bool is_stopped);
-  size_t getClosestIdx(const TrajectoryPoints & traj, const geometry_msgs::msg::Pose current_pose);
   bool checkStop(const TrajectoryPoint & closest_point);
-  Polygon2d createSelfPolygon();
-  Polygon2d createObjPolygon(
-    const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size);
-  Polygon2d createObjPolygon(
-    const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Polygon & footprint);
-  diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
-    const std::string no_start_reason, const geometry_msgs::msg::Pose & stop_pose);
-  std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose);
+
+  bool isVehicleStopped();
 
   /*
    * ROS
    */
   // publisher and subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
+  rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
+  rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
+  rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
   std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   // parameter
-  nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_;
+  nav_msgs::msg::Odometry::ConstSharedPtr odometry_ptr_;
   sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_ptr_;
   PredictedObjects::ConstSharedPtr object_ptr_;
   vehicle_info_util::VehicleInfo vehicle_info_;
-  Polygon2d self_poly_;
   bool use_pointcloud_;
   bool use_dynamic_object_;
   double surround_check_distance_;
@@ -117,11 +105,14 @@ private:
   double surround_check_recover_distance_;
   double state_clear_time_;
   double stop_state_ego_speed_;
+  double stopped_state_entry_duration_time_;
   bool is_surround_obstacle_;
 
   // State Machine
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
+  std::shared_ptr<const rclcpp::Time> last_running_time_;
 };
+}  // namespace surround_obstacle_checker
 
 #endif  // SURROUND_OBSTACLE_CHECKER__NODE_HPP_
