@@ -14,6 +14,8 @@
 
 #include "surround_obstacle_checker/node.hpp"
 
+#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
+
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/format.hpp>
@@ -45,8 +47,9 @@ namespace surround_obstacle_checker
 
 namespace bg = boost::geometry;
 using Point2d = bg::model::d2::point_xy<double>;
-using Polygon2d = bg::model::polygon<Point2d, false, false>;  // counter-clockwise, open
+using Polygon2d = bg::model::polygon<Point2d>;
 using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::pose2transform;
 
 namespace
 {
@@ -75,73 +78,65 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
   return no_start_reason_diag;
 }
 
-Polygon2d createObjPolygon(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
+geometry_msgs::msg::Point32 createPoint32(const double x, const double y, const double z)
 {
-  // rename
-  const double x = pose.position.x;
-  const double y = pose.position.y;
-  const double h = size.x;
-  const double w = size.y;
-  const double yaw = tf2::getYaw(pose.orientation);
-
-  // create base polygon
-  Polygon2d object_polygon;
-  boost::geometry::exterior_ring(object_polygon) = boost::assign::list_of<Point2d>(
-    h / 2.0, w / 2.0)(-h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
-
-  // rotate polygon(yaw)
-  boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
-  Polygon2d rotate_obj_poly;
-  boost::geometry::transform(object_polygon, rotate_obj_poly, rotate);
-
-  // translate polygon(x, y)
-  boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
-  Polygon2d translate_obj_poly;
-  boost::geometry::transform(rotate_obj_poly, translate_obj_poly, translate);
-  return translate_obj_poly;
+  geometry_msgs::msg::Point32 p;
+  p.x = x;
+  p.y = y;
+  p.z = z;
+  return p;
 }
 
 Polygon2d createObjPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Polygon & footprint)
 {
-  // rename
-  const double x = pose.position.x;
-  const double y = pose.position.y;
-  const double yaw = tf2::getYaw(pose.orientation);
+  geometry_msgs::msg::Polygon transformed_polygon{};
+  geometry_msgs::msg::TransformStamped geometry_tf{};
+  geometry_tf.transform = pose2transform(pose);
+  tf2::doTransform(footprint, transformed_polygon, geometry_tf);
 
-  // create base polygon
   Polygon2d object_polygon;
-  for (const auto point : footprint.points) {
-    const Point2d point2d(point.x, point.y);
-    object_polygon.outer().push_back(point2d);
+  for (const auto & p : transformed_polygon.points) {
+    object_polygon.outer().push_back(Point2d(p.x, p.y));
   }
 
-  // rotate polygon(yaw)
-  boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
-  Polygon2d rotate_obj_poly;
-  boost::geometry::transform(object_polygon, rotate_obj_poly, rotate);
+  bg::correct(object_polygon);
 
-  // translate polygon(x, y)
-  boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
-  Polygon2d translate_obj_poly;
-  boost::geometry::transform(rotate_obj_poly, translate_obj_poly, translate);
-  return translate_obj_poly;
+  return object_polygon;
+}
+
+Polygon2d createObjPolygon(
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
+{
+  const double & length_m = size.x / 2.0;
+  const double & width_m = size.y / 2.0;
+
+  geometry_msgs::msg::Polygon polygon{};
+
+  polygon.points.push_back(createPoint32(length_m, -width_m, 0.0));
+  polygon.points.push_back(createPoint32(length_m, width_m, 0.0));
+  polygon.points.push_back(createPoint32(-length_m, width_m, 0.0));
+  polygon.points.push_back(createPoint32(-length_m, -width_m, 0.0));
+
+  return createObjPolygon(pose, polygon);
 }
 
 Polygon2d createSelfPolygon(const VehicleInfo & vehicle_info)
 {
-  const double front = vehicle_info.max_longitudinal_offset_m;
-  const double rear = vehicle_info.min_longitudinal_offset_m;
-  const double left = vehicle_info.max_lateral_offset_m;
-  const double right = vehicle_info.min_lateral_offset_m;
+  const double & front_m = vehicle_info.max_longitudinal_offset_m;
+  const double & width_m = vehicle_info.min_lateral_offset_m;
+  const double & rear_m = vehicle_info.min_longitudinal_offset_m;
 
-  Polygon2d poly;
-  boost::geometry::exterior_ring(poly) = boost::assign::list_of<Point2d>(front, left)(front, right)(
-    rear, right)(rear, left)(front, left);
-  return poly;
+  Polygon2d ego_polygon;
+
+  ego_polygon.outer().push_back(Point2d(front_m, -width_m));
+  ego_polygon.outer().push_back(Point2d(front_m, width_m));
+  ego_polygon.outer().push_back(Point2d(-rear_m, width_m));
+  ego_polygon.outer().push_back(Point2d(-rear_m, -width_m));
+
+  bg::correct(ego_polygon);
+
+  return ego_polygon;
 }
 }  // namespace
 
@@ -158,8 +153,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
       this->declare_parameter("surround_check_recover_distance", 2.5);
     p.state_clear_time = this->declare_parameter("state_clear_time", 2.0);
     p.stop_state_ego_speed = this->declare_parameter("stop_state_ego_speed", 0.1);
-    p.stopped_state_entry_duration_time =
-      this->declare_parameter("stopped_state_entry_duration_time_", 0.1);
+    p.stop_state_entry_duration_time =
+      this->declare_parameter("stop_state_entry_duration_time", 0.1);
   }
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -454,8 +449,7 @@ bool SurroundObstacleCheckerNode::isVehicleStopped()
     last_running_time_ = std::make_shared<rclcpp::Time>(this->now());
   }
 
-  return node_param_.stopped_state_entry_duration_time <
-         (this->now() - *last_running_time_).seconds();
+  return node_param_.stop_state_entry_duration_time < (this->now() - *last_running_time_).seconds();
 }
 
 }  // namespace surround_obstacle_checker

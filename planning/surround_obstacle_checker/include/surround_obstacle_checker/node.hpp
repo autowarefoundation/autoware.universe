@@ -71,7 +71,7 @@ public:
     double surround_check_distance;
     double state_clear_time;
     double stop_state_ego_speed;
-    double stopped_state_entry_duration_time;
+    double stop_state_entry_duration_time;
   };
 
 private:
