@@ -58,19 +58,31 @@ bool isInLane(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const geometry_msgs::msg::Point & current_pos)
 {
-  const auto & p = current_pos;
-  const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
+  using lanelet::BasicPoint2d;
+  using lanelet::BoundingBox2d;
 
-  std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelets =
-    lanelet::geometry::findNearest(lanelet_map_ptr->laneletLayer, search_point.basicPoint2d(), 1);
+  const lanelet::Point3d search_point(
+    lanelet::InvalId, current_pos.x, current_pos.y, current_pos.z);
 
-  if (nearest_lanelets.empty()) {
-    return false;
+  const double search_width = 5;  // [m]
+  const auto search_box = BoundingBox2d(
+    BasicPoint2d(current_pos.x - search_width, current_pos.y - search_width),
+    BasicPoint2d(current_pos.x + search_width, current_pos.y + search_width));
+  const lanelet::Lanelets llts_near =
+    lanelet_map_ptr->laneletLayer.search(search_box);  // NOTE not ConstLanelets
+
+  // NOTE that checking nearest lanelet is insufficient. so..
+  for (const lanelet::Lanelet & llt : llts_near) {
+    if (llt.hasAttribute(lanelet::AttributeName::Subtype)) {
+      lanelet::Attribute attr = llt.attribute(lanelet::AttributeName::Subtype);
+      if (attr.value() == lanelet::AttributeValueString::Road) {
+        if (lanelet::geometry::within(search_point, llt.polygon3d())) {
+          return true;
+        }
+      }
+    }
   }
-
-  const auto nearest_lanelet = nearest_lanelets.front().second;
-
-  return lanelet::geometry::within(search_point, nearest_lanelet.polygon3d());
+  return false;
 }
 
 bool isInParkingLot(
