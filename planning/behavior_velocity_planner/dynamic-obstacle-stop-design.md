@@ -20,8 +20,8 @@ title modifyPathVelocity
 start
 
 partition "Preprocess path" {
-:Calculate smoothed path for ego vehicle;
-:Extend smoothed path;
+:Calculate the expected target velocity for ego vehicle;
+:Extend path;
 :Trim path from ego position;
 }
 
@@ -45,33 +45,31 @@ stop
 
 #### Preprocess path
 
-##### Calculate smoothed path for ego vehicle
+##### Calculate the expected target velocity for ego vehicle
 
-Calculate velocity smoothed path to calculate time to collision with obstacles more precisely.
-Smoothed path is calculated from motion velocity smoother module by using current velocity, current acceleration, and velocity in map.
+Calculate the expected target velocity for the path to calculate time to collision with obstacles more precisely.
+The expected target velocity is calculated with [motion velocity smoother module](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/motion_velocity_smoother) by using current velocity, current acceleration and velocity limits directed by the map and external API.
 
 ![brief](./docs/dynamic_obstacle_stop/calculate_smoothed_path.svg)
 
 ##### Extend smoothed path
 
-Smoothed path is extended by the length of base link to front to consider obstacles after the goal.
+The path is extended by the length of base link to front to consider obstacles after the goal.
 
 ##### Trim path from ego position
 
-Smoothed path is trimmed from ego position to a certain distance to reduce calculation time.
+The path is trimmed from ego position to a certain distance to reduce calculation time.
 Trimmed distance is specified by parameter of `detection_distance`.
 
 #### Preprocess obstacles
 
 ##### Create data of abstracted dynamic obstacle
 
-This module can handle multiple types of input type of obstacles by creating abstracted dynamic obstacle data from input data. Currently we have 3 types of detection method (Object, ObjectWithoutPath, Points) to create abstracted obstacle data.
+This module can handle multiple types of obstacles by creating abstracted dynamic obstacle data layer. Currently we have 3 types of detection method (Object, ObjectWithoutPath, Points) to create abstracted obstacle data.
 
 ###### Abstracted dynamic obstacle
 
 Abstracted obstacle data has following information.
-In method of Points, we should specify the velocity that is enough large for safety, but if velocity is large, obstacles are likely to pass through the lane and not being detected. So we use min and max velocity instead.
-Min and max velocity are specified by parameter of `dynamic_obstacle.min_vel_kmph` and `dynamic_obstacle.max_vel_kmph`. (In case of Object method, we also use this parameter, but in the future it will be replaced with velocity calculated by twist with covariance that predicted object has.)
 
 | Name             | Type                                                                    | Description                                                                                                            |
 | ---------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -82,11 +80,15 @@ Min and max velocity are specified by parameter of `dynamic_obstacle.min_vel_kmp
 | min_velocity_mps | `float`                                                                 | minimum velocity of the obstacle. specified by parameter of `dynamic_osbtacle.min_vel_kmph`                            |
 | max_velocity_mps | `float`                                                                 | maximum velocity of the obstacle. specified by parameter of `dynamic_osbtacle.max_vel_kmph`                            |
 
+Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](#Collision detection).
+
+Future work: Determine the maximum/minimum velocity from the estimated velocity with covariance of the object
+
 ###### 3 types of detection method
 
 We have 3 types of detection method to meet different safety and availability requirements. The characteristics of them are shown in the table below.
 Method of `Object` has high availability (less false positive) because it detects only objects whose predicted path is on the lane. However, sometimes it is not safe because perception may fail to detect obstacles or generate incorrect predicted paths.
-On the other hand, method of `Points` has high safety (less false negative) because it uses pointcloud as input. However, without proper adjustment of filter of points, it may detect a lot of points and it will result in very low availability.
+On the other hand, method of `Points` has high safety (less false negative) because it uses pointcloud as input. Since points don't have a predicted path, the path that moves in the direction normal to the path of ego vehicle is considered to be the predicted path of abstracted dynamic obstacle data. However, without proper adjustment of filter of points, it may detect a lot of points and it will result in very low availability.
 Method of `ObjectWithoutPath` has the characteristics of an intermediate of `Object` and `Points`.
 
 | Method            | Description                                                                                                                                                           |
@@ -110,15 +112,15 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 ##### Detect collision with dynamic obstacles
 
-To detect collision with obstacles, we calculate the travel time to the forward path points from the predicted path.
-Then, create the polygon of vehicle shape on each path point, and detect collision for each polygon.
-Interval of polygon creation is specified by the parameter of `detection_span`. We use this parameter to reduce calculation time.
+Along the ego vehicle path, determine the points where collision detection is to be performed for each `detection_span`.
+
+The travel times to the each points are calculated from [the expected target velocity](#Calculate the expected target velocity for ego vehicle).
 
 ![brief](./docs/dynamic_obstacle_stop/create_polygon_on_path_point.svg)
 
-For each created polygon, obstacle collision possibility is calculated.
-The obstacles is described as rectangle or polygon that has range from min velocity to max velocity.
-For Points, the obstacle is defined as a small cylinder object.
+For the each points, collision detection is performed using the footprint polygon of the ego vehicle and the polygon of the predicted location of the obstacles.
+The predicted location of the obstacles is described as rectangle or polygon that has the range calculated by min velocity, max velocity and the ego vehicle's travel time to the point.
+If the input type of the dynamic obstacle is `Points`, the obstacle shape is defined as a small cylinder.
 
 ![brief](./docs/dynamic_obstacle_stop/collision_detection_for_shape.svg)
 
