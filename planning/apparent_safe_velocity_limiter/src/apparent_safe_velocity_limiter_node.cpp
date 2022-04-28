@@ -89,7 +89,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
         get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
     return;
   }
+  const auto extra_vehicle_length = vehicle_front_offset_ + distance_buffer_;
   const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
+
   // Downsample trajectory
   const size_t downsample_step = downsample_factor_;
   Trajectory downsampled_traj;
@@ -100,6 +102,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 
   // TODO(Maxime CLEMENT): used for debugging, remove before merging
   double obs_poly_duration{};
+  double obs_footprint_duration{};
+  double obs_envelope_duration{};
+  double obs_filter_duration{};
   double footprint_duration{};
   double dist_poly_duration{};
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
@@ -110,17 +115,33 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   auto polygon_masks = createObjectPolygons(
     *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
   linestring_t trajectory_linestring;
-  for (size_t i = start_idx; i < msg->points.size(); ++i)
+  for (size_t i = start_idx; i < msg->points.size(); ++i) {
     trajectory_linestring.push_back(
       {msg->points[i].pose.position.x, msg->points[i].pose.position.y});
-  polygon_masks.push_back(generateFootprint(trajectory_linestring, vehicle_lateral_offset_));
-  const auto obstacle_polygons = extractStaticObstaclePolygons(
-    *occupancy_grid_ptr_, polygon_masks, occupancy_grid_obstacle_threshold_);
+  }
   obs_poly_duration = stopwatch.toc("obs_poly_duration");
+  stopwatch.tic("obs_footprint_duration");
+  polygon_masks.push_back(generateFootprint(trajectory_linestring, vehicle_lateral_offset_));
+  obs_footprint_duration += stopwatch.toc("obs_footprint_duration");
+  // Calculate envelope polygon
+  stopwatch.tic("obs_envelope_duration");
+  polygon_t envelope_polygon;
+  for (const auto & point : trajectory_linestring) envelope_polygon.outer().push_back(point);
+  for (auto it = msg->points.rbegin(); it != msg->points.rend(); ++it) {
+    const auto forward_simulated_vector =
+      forwardSimulatedSegment(*it, time_buffer_, extra_vehicle_length);
+    envelope_polygon.outer().push_back(forward_simulated_vector.second);
+  }
+  bg::correct(envelope_polygon);
+  obs_envelope_duration += stopwatch.toc("obs_envelope_duration");
+  stopwatch.tic("obs_filter_duration");
+  // Filter obstacles outside the envelope polygon
+  const auto obstacles = extractStaticObstaclePolygons(
+    *occupancy_grid_ptr_, polygon_masks, envelope_polygon, occupancy_grid_obstacle_threshold_);
+  obs_filter_duration += stopwatch.toc("obs_filter_duration");
   pub_debug_occupancy_grid_->publish(debug_occ_grid);
 
   Trajectory safe_trajectory = *msg;
-  const auto extra_vehicle_length = vehicle_front_offset_ + distance_buffer_;
   for (auto & trajectory_point : downsampled_traj.points) {
     const auto forward_simulated_vector =
       forwardSimulatedSegment(trajectory_point, time_buffer_, extra_vehicle_length);
@@ -129,7 +150,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     footprint_duration += stopwatch.toc("footprint_duration");
     stopwatch.tic("dist_poly_duration");
     const auto dist_to_collision =
-      distanceToClosestCollision(forward_simulated_vector, footprint, obstacle_polygons);
+      distanceToClosestCollision(forward_simulated_vector, footprint, obstacles);
     dist_poly_duration += stopwatch.toc("dist_poly_duration");
     if (dist_to_collision) {
       trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
@@ -144,10 +165,13 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 
   safe_trajectory.header.stamp = now();
   pub_trajectory_->publish(safe_trajectory);
-  publishDebugMarkers(*msg, safe_trajectory, obstacle_polygons);
+  publishDebugMarkers(*msg, safe_trajectory, obstacles);
   // TODO(Maxime CLEMENT): removes or change to RCLCPP_DEBUG before merging
   RCLCPP_WARN(get_logger(), "Runtimes");
-  RCLCPP_WARN(get_logger(), "  obstacle_polygons    = %2.2fms", obs_poly_duration);
+  RCLCPP_WARN(get_logger(), "  obstacles poly       = %2.2fms", obs_poly_duration);
+  RCLCPP_WARN(get_logger(), "  obstacles footprint  = %2.2fms", obs_footprint_duration);
+  RCLCPP_WARN(get_logger(), "  obstacles envelope   = %2.2fms", obs_envelope_duration);
+  RCLCPP_WARN(get_logger(), "  obstacles filter     = %2.2fms", obs_filter_duration);
   RCLCPP_WARN(get_logger(), "  footprint generation = %2.2fms", footprint_duration);
   RCLCPP_WARN(get_logger(), "  distance to obstacle = %2.2fms", dist_poly_duration);
   RCLCPP_WARN(get_logger(), "**************** Total = %2.2fms", stopwatch.toc());
@@ -170,7 +194,7 @@ visualization_msgs::msg::Marker ApparentSafeVelocityLimiterNode::makePolygonMark
   marker.color.b = 1.0;
   marker.color.a = 1.0;
   marker.id = id;
-  marker.ns = "obstacle_polygons";
+  marker.ns = "obstacles";
   for (const auto & point : polygon) {
     geometry_msgs::msg::Point p;
     p.x = point.x();
@@ -227,7 +251,7 @@ void ApparentSafeVelocityLimiterNode::publishDebugMarkers(
   while (id <= max_id) {
     visualization_msgs::msg::Marker marker;
     marker.action = visualization_msgs::msg::Marker::DELETE;
-    marker.ns = "obstacle_polygons";
+    marker.ns = "obstacles";
     marker.id = id++;
     debug_markers.markers.push_back(marker);
   }

@@ -16,16 +16,33 @@
 
 namespace apparent_safe_velocity_limiter
 {
-void maskPolygons(grid_map::GridMap & grid_map, const multipolygon_t & polygons)
+void maskPolygons(
+  grid_map::GridMap & grid_map, const multipolygon_t & polygon_in_masks,
+  const polygon_t & polygon_out_mask)
 {
-  for (const auto & polygon : polygons) {
-    grid_map::Polygon grid_map_poly;
-    for (const auto & point : polygon.outer()) {
-      grid_map_poly.addVertex(grid_map::Position(point.x(), point.y()));
+  constexpr auto convert = [](const polygon_t & in) {
+    grid_map::Polygon out;
+    for (const auto & p : in.outer()) {
+      out.addVertex(grid_map::Position(p.x(), p.y()));
     }
-    for (grid_map::PolygonIterator iterator(grid_map, grid_map_poly); !iterator.isPastEnd();
-         ++iterator) {
-      grid_map.at("layer", *iterator) = 0;
+    return out;
+  };
+
+  const auto layer_copy = grid_map["layer"];
+  auto & layer = grid_map["layer"];
+  layer.setConstant(0.0);
+
+  std::vector<grid_map::Polygon> in_masks;
+  in_masks.reserve(polygon_in_masks.size());
+  for (const auto & poly : polygon_in_masks) in_masks.push_back(convert(poly));
+  grid_map::Position position;
+  for (grid_map::PolygonIterator iterator(grid_map, convert(polygon_out_mask));
+       !iterator.isPastEnd(); ++iterator) {
+    grid_map.getPosition(*iterator, position);
+    if (std::find_if(in_masks.begin(), in_masks.end(), [&](const auto & mask) {
+          return mask.isInside(position);
+        }) == in_masks.end()) {
+      layer((*iterator)(0), (*iterator)(1)) = layer_copy((*iterator)(0), (*iterator)(1));
     }
   }
 }
@@ -49,13 +66,13 @@ void denoise(cv::Mat & cv_image, const int num_iter)
 }
 
 multilinestring_t extractStaticObstaclePolygons(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_masks,
-  const int8_t occupied_threshold)
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_in_masks,
+  const polygon_t & polygon_out_mask, const int8_t occupied_threshold)
 {
   cv::Mat cv_image;
   grid_map::GridMap grid_map;
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
-  maskPolygons(grid_map, polygon_masks);
+  maskPolygons(grid_map, polygon_in_masks, polygon_out_mask);
   threshold(grid_map, occupied_threshold);
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, cv_image);
   denoise(cv_image);
