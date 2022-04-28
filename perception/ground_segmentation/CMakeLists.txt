@@ -32,11 +32,12 @@ ament_auto_find_build_dependencies()
 
 include_directories(
   include
-  ${Boost_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
-  ${GRID_MAP_INCLUDE_DIR}
+  SYSTEM
+    ${Boost_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${GRID_MAP_INCLUDE_DIR}
 )
 
 ament_auto_add_library(ground_segmentation SHARED
@@ -50,6 +51,13 @@ target_link_libraries(ground_segmentation
   ${OpenCV_LIBRARIES}
   ${PCL_LIBRARIES}
 )
+
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(ground_segmentation PUBLIC
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
 
 if(OPENMP_FOUND)
   set_target_properties(ground_segmentation PROPERTIES

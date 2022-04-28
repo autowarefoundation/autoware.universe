@@ -42,12 +42,9 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     declare_parameter("over_stop_velocity_warn_thr", tier4_autoware_utils::kmph2mps(5.0));
 
   // create smoother
-  initSmootherBaseParam();
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
-      initJerkFilteredSmootherParam();
-      smoother_ = std::make_shared<JerkFilteredSmoother>(jerk_filtered_smoother_param_);
-      smoother_->setParam(base_param_);
+      smoother_ = std::make_shared<JerkFilteredSmoother>(*this);
 
       // Set Publisher for jerk filtered algorithm
       pub_forward_filtered_trajectory_ =
@@ -61,22 +58,15 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
       break;
     }
     case AlgorithmType::L2: {
-      initL2PseudoJerkSmootherParam();
-      smoother_ = std::make_shared<L2PseudoJerkSmoother>(l2_pseudo_jerk_smoother_param_);
-      smoother_->setParam(base_param_);
+      smoother_ = std::make_shared<L2PseudoJerkSmoother>(*this);
       break;
     }
     case AlgorithmType::LINF: {
-      initLinfPseudoJerkSmootherParam();
-      smoother_ = std::make_shared<LinfPseudoJerkSmoother>(linf_pseudo_jerk_smoother_param_);
-      smoother_->setParam(base_param_);
+      smoother_ = std::make_shared<LinfPseudoJerkSmoother>(*this);
       break;
     }
     case AlgorithmType::ANALYTICAL: {
-      initAnalyticalJerkConstrainedSmootherParam();
-      smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(
-        analytical_jerk_constrained_smoother_param_);
-      smoother_->setParam(base_param_);
+      smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(*this);
       break;
     }
     default:
@@ -160,7 +150,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
   }
 
   {
-    auto & p = base_param_;
+    auto p = smoother_->getBaseParam();
     update_param("normal.max_acc", p.max_accel);
     update_param("normal.min_acc", p.min_decel);
     update_param("stop_decel", p.stop_decel);
@@ -182,7 +172,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
-      auto & p = jerk_filtered_smoother_param_;
+      auto p = std::dynamic_pointer_cast<JerkFilteredSmoother>(smoother_)->getParam();
       update_param("jerk_weight", p.jerk_weight);
       update_param("over_v_weight", p.over_v_weight);
       update_param("over_a_weight", p.over_a_weight);
@@ -192,7 +182,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
       break;
     }
     case AlgorithmType::L2: {
-      auto & p = l2_pseudo_jerk_smoother_param_;
+      auto p = std::dynamic_pointer_cast<L2PseudoJerkSmoother>(smoother_)->getParam();
       update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
       update_param("over_v_weight", p.over_v_weight);
       update_param("over_a_weight", p.over_a_weight);
@@ -200,7 +190,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
       break;
     }
     case AlgorithmType::LINF: {
-      auto & p = linf_pseudo_jerk_smoother_param_;
+      auto p = std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->getParam();
       update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
       update_param("over_v_weight", p.over_v_weight);
       update_param("over_a_weight", p.over_a_weight);
@@ -208,9 +198,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
       break;
     }
     case AlgorithmType::ANALYTICAL: {
-      auto & p = analytical_jerk_constrained_smoother_param_;
-      update_param("resample.ds_resample", p.resample.ds_resample);
-      update_param("resample.num_resample", p.resample.num_resample);
+      auto p = std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->getParam();
       update_param("resample.delta_yaw_threshold", p.resample.delta_yaw_threshold);
       update_param(
         "latacc.constant_velocity_dist_threshold", p.latacc.constant_velocity_dist_threshold);
@@ -270,81 +258,6 @@ void MotionVelocitySmootherNode::initCommonParam()
   p.algorithm_type = getAlgorithmType(declare_parameter("algorithm_type", "JerkFiltered"));
 }
 
-void MotionVelocitySmootherNode::initSmootherBaseParam()
-{
-  auto & p = base_param_;
-  p.max_accel = declare_parameter("normal.max_acc", 2.0);   // 0.11G
-  p.min_decel = declare_parameter("normal.min_acc", -3.0);  // -0.2G
-  p.stop_decel = declare_parameter("stop_decel", 0.0);
-  p.max_jerk = declare_parameter("normal.max_jerk", 0.3);
-  p.min_jerk = declare_parameter("normal.min_jerk", -0.1);
-  p.max_lateral_accel = declare_parameter("max_lateral_accel", 0.2);
-  p.decel_distance_before_curve = declare_parameter("decel_distance_before_curve", 3.5);
-  p.decel_distance_after_curve = declare_parameter("decel_distance_after_curve", 0.0);
-  p.min_curve_velocity = declare_parameter("min_curve_velocity", 1.38);
-  p.resample_param.max_trajectory_length = declare_parameter("max_trajectory_length", 200.0);
-  p.resample_param.min_trajectory_length = declare_parameter("min_trajectory_length", 30.0);
-  p.resample_param.resample_time = declare_parameter("resample_time", 10.0);
-  p.resample_param.dense_resample_dt = declare_parameter("dense_resample_dt", 0.1);
-  p.resample_param.dense_min_interval_distance =
-    declare_parameter("dense_min_interval_distance", 0.1);
-  p.resample_param.sparse_resample_dt = declare_parameter("sparse_resample_dt", 0.5);
-  p.resample_param.sparse_min_interval_distance =
-    declare_parameter("sparse_min_interval_distance", 4.0);
-}
-
-void MotionVelocitySmootherNode::initJerkFilteredSmootherParam()
-{
-  auto & p = jerk_filtered_smoother_param_;
-  p.jerk_weight = declare_parameter("jerk_weight", 10.0);
-  p.over_v_weight = declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = declare_parameter("over_a_weight", 5000.0);
-  p.over_j_weight = declare_parameter("over_j_weight", 2000.0);
-  p.jerk_filter_ds = declare_parameter("jerk_filter_ds", 0.1);
-}
-
-void MotionVelocitySmootherNode::initL2PseudoJerkSmootherParam()
-{
-  auto & p = l2_pseudo_jerk_smoother_param_;
-  p.pseudo_jerk_weight = declare_parameter("pseudo_jerk_weight", 100.0);
-  p.over_v_weight = declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = declare_parameter("over_a_weight", 1000.0);
-}
-
-void MotionVelocitySmootherNode::initLinfPseudoJerkSmootherParam()
-{
-  auto & p = linf_pseudo_jerk_smoother_param_;
-  p.pseudo_jerk_weight = declare_parameter("pseudo_jerk_weight", 200.0);
-  p.over_v_weight = declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = declare_parameter("over_a_weight", 5000.0);
-}
-
-void MotionVelocitySmootherNode::initAnalyticalJerkConstrainedSmootherParam()
-{
-  auto & p = analytical_jerk_constrained_smoother_param_;
-  p.resample.ds_resample = declare_parameter("resample.ds_resample", 0.1);
-  p.resample.num_resample = declare_parameter("resample.num_resample", 1);
-  p.resample.delta_yaw_threshold = declare_parameter("resample.delta_yaw_threshold", 0.785);
-
-  p.latacc.enable_constant_velocity_while_turning =
-    declare_parameter("latacc.enable_constant_velocity_while_turning", false);
-  p.latacc.constant_velocity_dist_threshold =
-    declare_parameter("latacc.constant_velocity_dist_threshold", 2.0);
-
-  p.forward.max_acc = declare_parameter("forward.max_acc", 1.0);
-  p.forward.min_acc = declare_parameter("forward.min_acc", -1.0);
-  p.forward.max_jerk = declare_parameter("forward.max_jerk", 0.3);
-  p.forward.min_jerk = declare_parameter("forward.min_jerk", -0.3);
-  p.forward.kp = declare_parameter("forward.kp", 0.3);
-
-  p.backward.start_jerk = declare_parameter("backward.start_jerk", -0.1);
-  p.backward.min_jerk_mild_stop = declare_parameter("backward.min_jerk_mild_stop", -0.3);
-  p.backward.min_jerk = declare_parameter("backward.min_jerk", -1.5);
-  p.backward.min_acc_mild_stop = declare_parameter("backward.min_acc_mild_stop", -1.0);
-  p.backward.min_acc = declare_parameter("backward.min_acc", -2.5);
-  p.backward.span_jerk = declare_parameter("backward.span_jerk", -0.01);
-}
-
 void MotionVelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory) const
 {
   Trajectory publishing_trajectory = tier4_autoware_utils::convertToTrajectory(trajectory);
@@ -373,7 +286,7 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
         const double a0 = prev_closest_point_->acceleration_mps2;
 
         if (isEngageStatus(v0)) {
-          max_velocity_with_deceleration_ = external_velocity_limit_;
+          max_velocity_with_deceleration_ = msg->max_velocity;
           external_velocity_limit_dist_ = 0.0;
         } else {
           const double a_min =

@@ -18,7 +18,11 @@
 
 #include <boost/optional.hpp>
 
+#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
@@ -213,10 +217,10 @@ void OccupancyGridBasedValidator::toPolygon2d(
     vertices.push_back(cv::Point2f(pose.position.x + offset3.x(), pose.position.y + offset3.y()));
   } else if (object.shape.type == Shape::CYLINDER) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5, "CYLINDER type is not supported");
+      this->get_logger(), *this->get_clock(), 5000, "CYLINDER type is not supported");
   } else if (object.shape.type == Shape::POLYGON) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5, "POLYGON type is not supported");
+      this->get_logger(), *this->get_clock(), 5000, "POLYGON type is not supported");
   }
 }
 

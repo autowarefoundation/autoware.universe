@@ -40,7 +40,7 @@ public:
     double jerk_filter_ds;
   };
 
-  explicit JerkFilteredSmoother(const Param & p);
+  explicit JerkFilteredSmoother(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -50,6 +50,7 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & param);
+  Param getParam() const;
 
 private:
   Param smoother_param_;

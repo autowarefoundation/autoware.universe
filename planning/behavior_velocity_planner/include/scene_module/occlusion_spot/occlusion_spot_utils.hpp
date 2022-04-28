@@ -34,7 +34,12 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
+
+#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -113,12 +118,13 @@ struct PlannerParam
 {
   DETECTION_METHOD detection_method;
   PASS_JUDGE pass_judge;
-  bool is_show_occlusion;        // [-]
-  bool is_show_cv_window;        // [-]
-  bool is_show_processing_time;  // [-]
-  bool filter_occupancy_grid;    // [-]
-  bool use_object_info;          // [-]
-  bool use_partition_lanelet;    // [-]
+  bool is_show_occlusion;           // [-]
+  bool is_show_cv_window;           // [-]
+  bool is_show_processing_time;     // [-]
+  bool filter_occupancy_grid;       // [-]
+  bool use_object_info;             // [-]
+  bool use_moving_object_ray_cast;  // [-]
+  bool use_partition_lanelet;       // [-]
   // parameters in yaml
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
@@ -193,7 +199,7 @@ struct DebugData
   std::vector<PossibleCollisionInfo> possible_collisions;
   std::vector<geometry_msgs::msg::Point> occlusion_points;
   PathWithLaneId path_raw;
-  PathWithLaneId interp_path;
+  PathWithLaneId path_interpolated;
   void resetData()
   {
     close_partition.clear();
@@ -207,19 +213,25 @@ struct DebugData
 PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
 //!< @brief wrapper for detection area polygon generation
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const double offset,
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
   const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
 void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);
 void clipPathByLength(
   const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
-bool isStuckVehicle(PredictedObject obj, const double min_vel);
-std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const Polygons2d & polys);
-std::vector<PredictedObject> getParkedVehicles(
-  const PredictedObjects & dyn_objects, const PlannerParam & param,
-  std::vector<Point> & debug_point);
+//!< @brief extract target vehicles
+bool isStuckVehicle(const PredictedObject & obj, const double min_vel);
+bool isMovingVehicle(const PredictedObject & obj, const double min_vel);
+std::vector<PredictedObject> extractVehicles(
+  const PredictedObjects::ConstSharedPtr objects_ptr, const Point ego_position,
+  const double distance);
+std::vector<PredictedObject> filterVehiclesByDetectionArea(
+  const std::vector<PredictedObject> & objs, const Polygons2d & polys);
+bool isVehicle(const ObjectClassification & obj_class);
+void categorizeVehicles(
+  const std::vector<PredictedObject> & vehicles, Polygons2d & stuck_vehicle_foot_prints,
+  Polygons2d & moving_vehicle_foot_prints, const double stuck_vehicle_vel);
 bool generatePossibleCollisionsFromObjects(
   std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
   const PlannerParam & param, const double offset_from_start_to_ego,
@@ -231,11 +243,6 @@ void calculateCollisionPathPointFromOcclusionSpot(
   PossibleCollisionInfo & pc, const lanelet::BasicPoint2d & obstacle_point,
   const double offset_from_ego_to_target, const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param);
-//!< @brief create hidden collision behind parked car
-void createPossibleCollisionBehindParkedVehicle(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
-  const PlannerParam & param, const double offset_from_ego_to_target,
-  const PredictedObjects::ConstSharedPtr & dyn_obj_arr);
 //!< @brief set velocity and orientation to collision point based on previous Path with laneId
 void calcSlowDownPointsForPossibleCollision(
   const int closest_idx, const PathWithLaneId & path, const double offset,

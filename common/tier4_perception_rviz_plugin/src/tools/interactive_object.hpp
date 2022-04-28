@@ -66,7 +66,12 @@
 
 #include <boost/optional.hpp>
 
+#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
@@ -90,6 +95,7 @@ public:
   void twist(geometry_msgs::msg::Twist & twist) const;
   void transform(tf2::Transform & tf_map2object) const;
   void update(const Ogre::Vector3 & point);
+  void reset();
   double distance(const Ogre::Vector3 & point);
 
 private:
@@ -105,8 +111,8 @@ public:
   InteractiveObjectCollection();
   ~InteractiveObjectCollection() {}
 
-  void reset();
   void select(const Ogre::Vector3 & point);
+  boost::optional<std::array<uint8_t, 16>> reset();
   boost::optional<std::array<uint8_t, 16>> create(const Ogre::Vector3 & point);
   boost::optional<std::array<uint8_t, 16>> remove(const Ogre::Vector3 & point);
   boost::optional<std::array<uint8_t, 16>> update(const Ogre::Vector3 & point);
