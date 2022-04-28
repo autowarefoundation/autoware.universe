@@ -78,6 +78,7 @@ private:
   bool use_points_;
   bool use_wayarea_;
   bool use_extra_occgrid_;
+  float extra_occgrid_thres_;
 
   lanelet::LaneletMapPtr lanelet_map_;
   autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_;

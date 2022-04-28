@@ -183,6 +183,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   use_points_ = this->declare_parameter<bool>("use_points", true);
   use_wayarea_ = this->declare_parameter<bool>("use_wayarea", true);
   use_extra_occgrid_ = this->declare_parameter<bool>("use_extra_occgrid", false);
+  extra_occgrid_thres_ = this->declare_parameter<float>("extra_occgrid_thres", 1.0);
   expand_polygon_size_ = this->declare_parameter<double>("expand_polygon_size", 1.0);
   size_of_expansion_kernel_ = this->declare_parameter<int>("size_of_expansion_kernel", 9);
 
@@ -341,7 +342,7 @@ void CostmapGenerator::onTimer()
     auto & mat = extra_gridmap.get("extra");
     for (int i = 0; i < mat.cols(); ++i) {
       for (int j = 0; j < mat.rows(); ++j) {
-        mat(i, j) = (mat(i, j) > 1.0 ? 1.0 : 0.0);
+        mat(i, j) = (mat(i, j) > extra_occgrid_thres_ ? grid_max_value_ : grid_min_value_);
       }
     }
     costmap_.addDataFrom(extra_gridmap, false, true, true);
