@@ -67,6 +67,7 @@ Every topic is published in 1 minute interval.
 |                 | HDD WriteDataRate      |   ✓   |      ✓       |      ✓       |                                                               |
 |                 | HDD ReadIOPS           |   ✓   |      ✓       |      ✓       |                                                               |
 |                 | HDD WriteIOPS          |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD Connection         |   ✓   |      ✓       |      ✓       |                                                               |
 | Memory Monitor  | Memory Usage           |   ✓   |      ✓       |      ✓       |                                                               |
 | Net Monitor     | Network Usage          |   ✓   |      ✓       |      ✓       |                                                               |
 | NTP Monitor     | NTP Offset             |   ✓   |      ✓       |      ✓       |                                                               |

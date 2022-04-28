@@ -233,6 +233,15 @@ protected:
     HDDStatItem item);  // NOLINT(runtime/references)
 
   /**
+   * @brief check HDD connection
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
+   * to pass diagnostic message updated in this function to diagnostic publish calls.
+   */
+  void checkConnection(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+
+  /**
    * @brief human readable size string to MB
    * @param [in] human readable size string
    * @return Megabyte
@@ -289,6 +298,11 @@ protected:
    */
   int readSysfsDeviceStat(const std::string & device, SysfsDevStat & sfdevstat);
 
+  /**
+   * @brief update HDD connections
+   */
+  void updateHDDConnections();
+
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get HDD information from HDDReader
 
@@ -297,6 +311,8 @@ protected:
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HDDParam> hdd_params_;  //!< @brief list of error and warning levels
   std::vector<HDDDevice> hdd_devices_;          //!< @brief list of devices
+  std::map<std::string, bool>
+    hdd_connected_flags_;  //!< @brief list of flag whether HDD is connected
   std::map<std::string, uint32_t>
     initial_recovered_errors_;                //!< @brief list of initial recovered error count
   std::map<std::string, HDDStat> hdd_stats_;  //!< @brief list of HDD statistics
@@ -350,6 +366,12 @@ protected:
      {DiagStatus::WARN, "high IOPS of write"},
      {DiagStatus::ERROR, "unused"}},
   };
+
+  /**
+   * @brief HDD connection status messages
+   */
+  const std::map<int, const char *> connection_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "unused"}, {DiagStatus::ERROR, "not connected"}};
 };
 
 #endif  // SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_

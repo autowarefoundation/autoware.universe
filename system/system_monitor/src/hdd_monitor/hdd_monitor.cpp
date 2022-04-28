@@ -60,6 +60,10 @@ HDDMonitor::HDDMonitor(const rclcpp::NodeOptions & options)
   updater_.add("HDD WriteDataRate", this, &HDDMonitor::checkWriteDataRate);
   updater_.add("HDD ReadIOPS", this, &HDDMonitor::checkReadIOPS);
   updater_.add("HDD WriteIOPS", this, &HDDMonitor::checkWriteIOPS);
+  updater_.add("HDD Connection", this, &HDDMonitor::checkConnection);
+
+  // get HDD connection status
+  updateHDDConnections();
 
   // get HDD information from HDD reader for the first time
   updateHDDInfoList();
@@ -118,6 +122,10 @@ void HDDMonitor::checkSMART(
   std::string val_str = "";
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++index) {
+    if (!hdd_connected_flags_[itr->first]) {
+      continue;
+    }
+
     // Retrieve HDD information
     auto hdd_itr = hdd_info_list_.find(itr->second.device_);
     if (hdd_itr == hdd_info_list_.end()) {
@@ -147,7 +155,11 @@ void HDDMonitor::checkSMART(
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: temperature", index);
-        val_str = fmt::format("{:.1f} DegC", temp);
+        if (hdd_itr->second.is_valid_temp_) {
+          val_str = fmt::format("{:.1f} DegC", temp);
+        } else {
+          val_str = "not available";
+        }
       } break;
       case HDDSMARTInfoItem::POWER_ON_HOURS: {
         int64_t power_on_hours = static_cast<int64_t>(hdd_itr->second.power_on_hours_);
@@ -157,7 +169,11 @@ void HDDMonitor::checkSMART(
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: power on hours", index);
-        val_str = fmt::format("{} Hours", hdd_itr->second.power_on_hours_);
+        if (hdd_itr->second.is_valid_power_on_hours_) {
+          val_str = fmt::format("{} Hours", hdd_itr->second.power_on_hours_);
+        } else {
+          val_str = "not available";
+        }
       } break;
       case HDDSMARTInfoItem::TOTAL_DATA_WRITTEN: {
         uint64_t total_data_written = static_cast<uint64_t>(hdd_itr->second.total_data_written_);
@@ -230,6 +246,10 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::string error_str = "";
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
+    if (!hdd_connected_flags_[itr->first]) {
+      continue;
+    }
+
     // Get summary of disk space usage of ext4
     bp::ipstream is_out;
     bp::ipstream is_err;
@@ -348,6 +368,10 @@ void HDDMonitor::checkStatistics(
   std::string val_str = "";
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
+    if (!hdd_connected_flags_[itr->first]) {
+      continue;
+    }
+
     int level = DiagStatus::OK;
 
     switch (item) {
@@ -415,18 +439,44 @@ void HDDMonitor::checkStatistics(
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
+void HDDMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  if (hdd_params_.empty()) {
+    stat.summary(DiagStatus::ERROR, "invalid disk parameter");
+    return;
+  }
+
+  int hdd_index = 0;
+  int whole_level = DiagStatus::OK;
+
+  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
+    int level = DiagStatus::OK;
+
+    if (!hdd_connected_flags_[itr->first]) {
+      level = DiagStatus::ERROR;
+    }
+
+    stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.device_.c_str());
+    stat.add(fmt::format("HDD {}: status", hdd_index), connection_dict_.at(level));
+
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, connection_dict_.at(whole_level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
+}
+
 void HDDMonitor::getHDDParams()
 {
   const auto num_disks = this->declare_parameter("num_disks", 0);
   for (auto i = 0; i < num_disks; ++i) {
     const auto prefix = "disks.disk" + std::to_string(i);
-    const auto name = declare_parameter<std::string>(prefix + ".name", "/");
-
-    // Get device name from mount point
-    const auto device_name = getDeviceFromMountPoint(name);
-    if (device_name.empty()) {
-      continue;
-    }
+    const auto device_name = declare_parameter<std::string>(prefix + ".name", "/");
 
     HDDParam param;
     param.temp_warn_ = declare_parameter<float>(prefix + ".temp_warn", 55.0f);
@@ -458,6 +508,10 @@ void HDDMonitor::getHDDParams()
 
     HDDDevice device;
     device.name_ = param.device_;
+    device.temp_attribute_id_ =
+      static_cast<uint8_t>(declare_parameter<int>(prefix + ".temp_attribute_id", 0xC2));
+    device.power_on_hours_attribute_id_ =
+      static_cast<uint8_t>(declare_parameter<int>(prefix + ".power_on_hours_attribute_id", 0x09));
     device.total_data_written_attribute_id_ = static_cast<uint8_t>(
       declare_parameter<int>(prefix + ".total_data_written_attribute_id", 0xF1));
     device.recovered_error_attribute_id_ =
@@ -497,6 +551,7 @@ std::string HDDMonitor::getDeviceFromMountPoint(const std::string & mount_point)
 
 void HDDMonitor::onTimer()
 {
+  updateHDDConnections();
   updateHDDInfoList();
   updateHDDStatistics();
 }
@@ -595,8 +650,10 @@ void HDDMonitor::updateHDDInfoList()
 void HDDMonitor::startHDDTransferMeasurement()
 {
   for (auto & hdd_stat : hdd_stats_) {
+    hdd_stat.second.error_str_ = "";
     SysfsDevStat sfdevstat;
     if (readSysfsDeviceStat(hdd_stat.second.device_, sfdevstat)) {
+      hdd_stat.second.error_str_ = "stat file read error";
       continue;
     }
     hdd_stat.second.last_sfdevstat_ = sfdevstat;
@@ -610,8 +667,10 @@ void HDDMonitor::updateHDDStatistics()
   double duration_sec = (this->now() - last_hdd_stat_update_time_).seconds();
 
   for (auto & hdd_stat : hdd_stats_) {
+    hdd_stat.second.error_str_ = "";
     SysfsDevStat sfdevstat;
     if (readSysfsDeviceStat(hdd_stat.second.device_, sfdevstat)) {
+      hdd_stat.second.error_str_ = "stat file read error";
       continue;
     }
 
@@ -673,6 +732,17 @@ int HDDMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
 
   fclose(fp);
   return ret;
+}
+
+void HDDMonitor::updateHDDConnections()
+{
+  for (const auto & hdd_param : hdd_params_) {
+    if (!getDeviceFromMountPoint(hdd_param.first).empty()) {
+      hdd_connected_flags_[hdd_param.first] = true;
+    } else {
+      hdd_connected_flags_[hdd_param.first] = false;
+    }
+  }
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

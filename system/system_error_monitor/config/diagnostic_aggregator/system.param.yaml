@@ -168,6 +168,12 @@
                   contains: [": HDD Usage"]
                   timeout: 3.0
 
+                connection:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: connection
+                  contains: [": HDD Connection"]
+                  timeout: 3.0
+
             process:
               type: diagnostic_aggregator/AnalyzerGroup
               path: process
