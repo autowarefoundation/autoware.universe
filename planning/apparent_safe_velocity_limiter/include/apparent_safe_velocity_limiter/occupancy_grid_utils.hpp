@@ -56,12 +56,12 @@ void denoise(cv::Mat & cv_image, const int num_iter = 2);
 
 /// @brief extract from an occupancy grid the lines representing static obstacles
 /// @param[in] occupancy_grid input occupancy grid
-/// @param[in] dynamic_obstacle_polygons polygons to mask away from the occupancy grid
+/// @param[in] polygon_masks polygons to mask away from the occupancy grid
 /// @param[in] occupied_threshold threshold to use for identifying obstacles in the occupancy grid
 /// @return multiple linestrings each representing an obstacle
 multilinestring_t extractStaticObstaclePolygons(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const multipolygon_t & dynamic_obstacle_polygons, const int8_t occupied_threshold);
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_masks,
+  const int8_t occupied_threshold);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_

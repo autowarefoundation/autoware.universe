@@ -98,9 +98,6 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
     downsampled_traj.points.push_back(msg->points[i]);
 
-  const auto dynamic_obstacle_polygons = createObjectPolygons(
-    *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
-
   // TODO(Maxime CLEMENT): used for debugging, remove before merging
   double obs_poly_duration{};
   double footprint_duration{};
@@ -110,8 +107,15 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   // Obstacle Polygon from Occupancy Grid
   nav_msgs::msg::OccupancyGrid debug_occ_grid;
   stopwatch.tic("obs_poly_duration");
+  auto polygon_masks = createObjectPolygons(
+    *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
+  linestring_t trajectory_linestring;
+  for (size_t i = start_idx; i < msg->points.size(); ++i)
+    trajectory_linestring.push_back(
+      {msg->points[i].pose.position.x, msg->points[i].pose.position.y});
+  polygon_masks.push_back(generateFootprint(trajectory_linestring, vehicle_lateral_offset_));
   const auto obstacle_polygons = extractStaticObstaclePolygons(
-    *occupancy_grid_ptr_, dynamic_obstacle_polygons, occupancy_grid_obstacle_threshold_);
+    *occupancy_grid_ptr_, polygon_masks, occupancy_grid_obstacle_threshold_);
   obs_poly_duration = stopwatch.toc("obs_poly_duration");
   pub_debug_occupancy_grid_->publish(debug_occ_grid);
 
@@ -121,8 +125,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     const auto forward_simulated_vector =
       forwardSimulatedSegment(trajectory_point, time_buffer_, extra_vehicle_length);
     stopwatch.tic("footprint_duration");
-    const auto footprint =
-      forwardSimulatedFootprint(forward_simulated_vector, vehicle_lateral_offset_);
+    const auto footprint = generateFootprint(forward_simulated_vector, vehicle_lateral_offset_);
     footprint_duration += stopwatch.toc("footprint_duration");
     stopwatch.tic("dist_poly_duration");
     const auto dist_to_collision =
