@@ -53,6 +53,7 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
