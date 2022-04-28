@@ -105,21 +105,38 @@ const auto point_in_polygon = [](const auto x, const auto y, const auto & polygo
 
 TEST(TestCollisionDistance, forwardSimulatedFootprint)
 {
-  using apparent_safe_velocity_limiter::forwardSimulatedFootprint;
+  using apparent_safe_velocity_limiter::generateFootprint;
+  using apparent_safe_velocity_limiter::linestring_t;
+  using apparent_safe_velocity_limiter::segment_t;
 
-  auto footprint = forwardSimulatedFootprint({{0.0, 0.0}, {1.0, 0.0}}, 1.0);
+  auto footprint = generateFootprint(linestring_t{{0.0, 0.0}, {1.0, 0.0}}, 1.0);
+  EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(0.0, -1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(1.0, 1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(1.0, -1.0, footprint));
+  footprint = generateFootprint(segment_t{{0.0, 0.0}, {1.0, 0.0}}, 1.0);
   EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
   EXPECT_TRUE(point_in_polygon(0.0, -1.0, footprint));
   EXPECT_TRUE(point_in_polygon(1.0, 1.0, footprint));
   EXPECT_TRUE(point_in_polygon(1.0, -1.0, footprint));
 
-  footprint = forwardSimulatedFootprint({{0.0, 0.0}, {0.0, -1.0}}, 0.5);
+  footprint = generateFootprint(linestring_t{{0.0, 0.0}, {0.0, -1.0}}, 0.5);
+  EXPECT_TRUE(point_in_polygon(0.5, 0.0, footprint));
+  EXPECT_TRUE(point_in_polygon(0.5, -1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-0.5, 0.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-0.5, -1.0, footprint));
+  footprint = generateFootprint(segment_t{{0.0, 0.0}, {0.0, -1.0}}, 0.5);
   EXPECT_TRUE(point_in_polygon(0.5, 0.0, footprint));
   EXPECT_TRUE(point_in_polygon(0.5, -1.0, footprint));
   EXPECT_TRUE(point_in_polygon(-0.5, 0.0, footprint));
   EXPECT_TRUE(point_in_polygon(-0.5, -1.0, footprint));
 
-  footprint = forwardSimulatedFootprint({{-2.5, 5.0}, {2.5, 0.0}}, std::sqrt(2));
+  footprint = generateFootprint(linestring_t{{-2.5, 5.0}, {2.5, 0.0}}, std::sqrt(2));
+  EXPECT_TRUE(point_in_polygon(3.5, 1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(1.5, -1.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-3.5, 4.0, footprint));
+  EXPECT_TRUE(point_in_polygon(-1.5, 6.0, footprint));
+  footprint = generateFootprint(segment_t{{-2.5, 5.0}, {2.5, 0.0}}, std::sqrt(2));
   EXPECT_TRUE(point_in_polygon(3.5, 1.0, footprint));
   EXPECT_TRUE(point_in_polygon(1.5, -1.0, footprint));
   EXPECT_TRUE(point_in_polygon(-3.5, 4.0, footprint));

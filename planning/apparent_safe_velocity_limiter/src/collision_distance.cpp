@@ -29,14 +29,19 @@ segment_t forwardSimulatedSegment(
   return segment_t{from, to};
 }
 
-polygon_t forwardSimulatedFootprint(const segment_t & segment, const double lateral_offset)
+polygon_t generateFootprint(const segment_t & segment, const double lateral_offset)
+{
+  return generateFootprint(linestring_t{segment.first, segment.second}, lateral_offset);
+}
+
+polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset)
 {
   multipolygon_t footprint;
   namespace strategy = bg::strategy::buffer;
   bg::buffer(
-    linestring_t{segment.first, segment.second}, footprint,
-    strategy::distance_symmetric<double>(lateral_offset), strategy::side_straight(),
-    strategy::join_miter(), strategy::end_flat(), strategy::point_square());
+    linestring, footprint, strategy::distance_symmetric<double>(lateral_offset),
+    strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
+    strategy::point_square());
   return footprint[0];
 }
 

@@ -49,13 +49,13 @@ void denoise(cv::Mat & cv_image, const int num_iter)
 }
 
 multilinestring_t extractStaticObstaclePolygons(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const multipolygon_t & dynamic_obstacle_polygons, const int8_t occupied_threshold)
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_masks,
+  const int8_t occupied_threshold)
 {
   cv::Mat cv_image;
   grid_map::GridMap grid_map;
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
-  maskPolygons(grid_map, dynamic_obstacle_polygons);
+  maskPolygons(grid_map, polygon_masks);
   threshold(grid_map, occupied_threshold);
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, cv_image);
   denoise(cv_image);

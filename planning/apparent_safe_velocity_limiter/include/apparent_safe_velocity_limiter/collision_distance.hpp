@@ -57,7 +57,13 @@ segment_t forwardSimulatedSegment(
 /// @param [in] segment segment from which to create the footprint
 /// @param [in] lateral_offset offset around the segment used to create the footprint
 /// @return footprint polygon
-polygon_t forwardSimulatedFootprint(const segment_t & segment, const double lateral_offset);
+polygon_t generateFootprint(const segment_t & segment, const double lateral_offset);
+
+/// @brief generate a footprint from a linestring and a lateral offset
+/// @param [in] linestring linestring from which to create the footprint
+/// @param [in] lateral_offset offset around the segment used to create the footprint
+/// @return footprint polygon
+polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset);
 
 /// @brief calculate the closest distance to a collision
 /// @param [in] segment forard projection of a trajectory point
