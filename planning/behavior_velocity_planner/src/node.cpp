@@ -15,6 +15,7 @@
 #include "behavior_velocity_planner/node.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <tier4_autoware_utils/ros/wait_for_param.hpp>
 #include <utilization/path_utilization.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -22,7 +23,12 @@
 
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
+
+#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <functional>
 #include <memory>
@@ -122,8 +128,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   sub_external_intersection_states_ =
     this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
       "~/input/external_intersection_states", 10,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1),
-      createSubscriptionOptions(this));
+      std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
+  sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
+    "~/input/external_velocity_limit_mps", 1,
+    std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
       "~/input/external_traffic_signals", 10,
@@ -137,6 +145,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     "~/input/occupancy_grid", 1, std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
     createSubscriptionOptions(this));
+
+  // set velocity smoother param
+  onParam();
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
@@ -172,9 +183,6 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_virtual_traffic_light", true)) {
     planner_manager_.launchSceneModule(std::make_shared<VirtualTrafficLightModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_occlusion_spot", true)) {
-    planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
-  }
   // this module requires all the stop line.Therefore this modules should be placed at the bottom.
   if (this->declare_parameter("launch_no_stopping_area", true)) {
     planner_manager_.launchSceneModule(std::make_shared<NoStoppingAreaModuleManager>(*this));
@@ -182,6 +190,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // permanent stop line module should be after no stopping area
   if (this->declare_parameter("launch_stop_line", true)) {
     planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
+  }
+  // to calculate ttc it's better to be after stop line
+  if (this->declare_parameter("launch_occlusion_spot", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
   }
 }
 
@@ -214,7 +226,9 @@ bool BehaviorVelocityPlannerNode::isDataReady(const PlannerData planner_data) co
   if (!d.route_handler_->isMapMsgReady()) {
     return false;
   }
-
+  if (!d.velocity_smoother_) {
+    return false;
+  }
   return true;
 }
 
@@ -286,6 +300,13 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
   }
 }
 
+void BehaviorVelocityPlannerNode::onParam()
+{
+  planner_data_.velocity_smoother_ =
+    std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
+  return;
+}
+
 void BehaviorVelocityPlannerNode::onLaneletMap(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
@@ -320,6 +341,11 @@ void BehaviorVelocityPlannerNode::onExternalIntersectionStates(
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_intersection_status_input = *msg;
+}
+
+void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
+{
+  planner_data_.external_velocity_limit = *msg;
 }
 
 void BehaviorVelocityPlannerNode::onExternalTrafficSignals(

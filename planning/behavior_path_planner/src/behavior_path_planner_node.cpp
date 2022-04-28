@@ -51,6 +51,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1));
   perception_subscriber_ = create_subscription<PredictedObjects>(
     "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1));
+  scenario_subscriber_ = create_subscription<Scenario>(
+    "~/input/scenario", 1, [this](const Scenario::ConstSharedPtr msg) {
+      current_scenario_ = std::make_shared<Scenario>(*msg);
+    });
   external_approval_subscriber_ = create_subscription<ApprovalMsg>(
     "~/input/external_approval", 1,
     std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1));
@@ -58,11 +62,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1));
 
   // route_handler
+  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
   vector_map_subscriber_ = create_subscription<HADMapBin>(
-    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
+    "~/input/vector_map", qos_transient_local,
     std::bind(&BehaviorPathPlannerNode::onMap, this, _1));
   route_subscriber_ = create_subscription<HADMapRoute>(
-    "~/input/route", 1, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1));
+    "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1));
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
@@ -445,8 +450,15 @@ BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
 void BehaviorPathPlannerNode::waitForData()
 {
   // wait until mandatory data is ready
+  while (!current_scenario_ && rclcpp::ok()) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for scenario topic");
+    rclcpp::spin_some(this->get_node_base_interface());
+    rclcpp::Rate(100).sleep();
+  }
+
   while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route to be ready");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting for route to be ready");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
   }
@@ -455,7 +467,7 @@ void BehaviorPathPlannerNode::waitForData()
     if (planner_data_->dynamic_object && planner_data_->self_odometry) {
       break;
     }
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "waiting for vehicle pose, vehicle_velocity, and obstacles");
     rclcpp::spin_some(this->get_node_base_interface());
@@ -469,6 +481,11 @@ void BehaviorPathPlannerNode::waitForData()
 void BehaviorPathPlannerNode::run()
 {
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
+
+  // behavior_path_planner runs only in LANE DRIVING scenario.
+  if (current_scenario_->current_scenario != Scenario::LANEDRIVING) {
+    return;
+  }
 
   // update planner data
   updateCurrentPose();

@@ -19,6 +19,7 @@
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/path_utilization.hpp>
+#include <utilization/trajectory_utils.hpp>
 #include <utilization/util.hpp>
 
 #include <boost/optional.hpp>
@@ -34,6 +35,23 @@
     const std::string time_msg = n + std::to_string(x);            \
     RCLCPP_INFO_STREAM_THROTTLE(logger_, *clock_, 3000, time_msg); \
   }
+
+namespace
+{
+namespace utils = behavior_velocity_planner::occlusion_spot_utils;
+using autoware_auto_perception_msgs::msg::PredictedObject;
+std::vector<PredictedObject> extractStuckVehicle(
+  const std::vector<PredictedObject> & vehicles, const double stop_velocity)
+{
+  std::vector<PredictedObject> stuck_vehicles;
+  for (const auto & obj : vehicles) {
+    if (utils::isStuckVehicle(obj, stop_velocity)) {
+      stuck_vehicles.emplace_back(obj);
+    }
+  }
+  return stuck_vehicles;
+}
+}  // namespace
 
 namespace behavior_velocity_planner
 {
@@ -74,7 +92,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
     param_.v.a_ego = planner_data_->current_accel.get();
-    param_.v.delay_time = planner_data_->delay_response_time;
+    param_.v.delay_time = planner_data_->system_delay;
     const double detection_area_offset = 5.0;  // for visualization and stability
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
@@ -85,24 +103,28 @@ bool OcclusionSpotModule::modifyPathVelocity(
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
-  PathWithLaneId interp_path;
+  PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
-  const geometry_msgs::msg::Point start_point = interp_path.points.at(0).point.pose.position;
+  splineInterpolate(clipped_path, 1.0, &path_interpolated, logger_);
+  const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
   const auto offset = tier4_autoware_utils::calcSignedArcLength(
-    interp_path.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
+    path_interpolated.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
   if (offset == boost::none) return true;
   const double offset_from_start_to_ego = -offset.get();
   const bool show_time = param_.is_show_processing_time;
   if (show_time) stop_watch_.tic("processing_time");
   PathWithLaneId predicted_path;
   if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELOCITY) {
-    predicted_path = utils::applyVelocityToPath(interp_path, param_.v.v_ego);
+    predicted_path = utils::applyVelocityToPath(path_interpolated, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
+    if (!smoothPath(path_interpolated, predicted_path, planner_data_)) {
+      predicted_path = utils::applyVelocityToPath(path_interpolated, param_.v.v_ego);
+      // use current ego velocity in path if optimization failure
+    }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
   if (!utils::buildDetectionAreaPolygon(
-        debug_data_.detection_area_polygons, predicted_path, offset_from_start_to_ego, param_)) {
+        debug_data_.detection_area_polygons, predicted_path, ego_pose, param_)) {
     return true;  // path point is not enough
   }
   DEBUG_PRINT(show_time, "generate poly[ms]: ", stop_watch_.toc("processing_time", true));
@@ -113,50 +135,55 @@ bool OcclusionSpotModule::modifyPathVelocity(
       ego_pose.position, partition_lanelets_, debug_data_.close_partition);
   }
   DEBUG_PRINT(show_time, "extract[ms]: ", stop_watch_.toc("processing_time", true));
-  std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
+  const auto objects_ptr = planner_data_->predicted_objects;
+  const auto vehicles =
+    utils::extractVehicles(objects_ptr, ego_pose.position, param_.detection_area_length);
+  const std::vector<PredictedObject> filtered_vehicles =
+    utils::filterVehiclesByDetectionArea(vehicles, debug_data_.detection_area_polygons);
+  DEBUG_PRINT(show_time, "filter obj[ms]: ", stop_watch_.toc("processing_time", true));
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     const auto & occ_grid_ptr = planner_data_->occupancy_grid;
     if (!occ_grid_ptr) return true;  // no data
     grid_map::GridMap grid_map;
+    Polygons2d stuck_vehicle_foot_prints;
+    Polygons2d moving_vehicle_foot_prints;
+    utils::categorizeVehicles(
+      filtered_vehicles, stuck_vehicle_foot_prints, moving_vehicle_foot_prints,
+      param_.stuck_vehicle_vel);
+    // occ -> image
     grid_utils::denoiseOccupancyGridCV(
-      occ_grid_ptr, grid_map, param_.grid, param_.is_show_cv_window, param_.filter_occupancy_grid);
-    if (param_.use_object_info) {
-      grid_utils::addObjectsToGridMap(*planner_data_->predicted_objects, grid_map);
-    }
+      occ_grid_ptr, stuck_vehicle_foot_prints, moving_vehicle_foot_prints, grid_map, param_.grid,
+      param_.is_show_cv_window, param_.filter_occupancy_grid, param_.use_object_info,
+      param_.use_moving_object_ray_cast);
     DEBUG_PRINT(show_time, "grid [ms]: ", stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here
     if (!utils::generatePossibleCollisionsFromGridMap(
-          possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_,
+          possible_collisions, grid_map, path_interpolated, offset_from_start_to_ego, param_,
           debug_data_)) {
       // no occlusion spot
       return true;
     }
   } else if (param_.detection_method == utils::DETECTION_METHOD::PREDICTED_OBJECT) {
-    const auto & dynamic_obj_arr_ptr = planner_data_->predicted_objects;
-    if (!dynamic_obj_arr_ptr) return true;  // no data
-    std::vector<PredictedObject> obj =
-      utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, parked_vehicle_point);
-    const auto filtered_obj =
-      utils::filterDynamicObjectByDetectionArea(obj, debug_data_.detection_area_polygons);
+    const auto stuck_vehicles = extractStuckVehicle(filtered_vehicles, param_.stuck_vehicle_vel);
     // Note: Don't consider offset from path start to ego here
     if (!utils::generatePossibleCollisionsFromObjects(
-          possible_collisions, interp_path, param_, offset_from_start_to_ego, filtered_obj)) {
+          possible_collisions, path_interpolated, param_, offset_from_start_to_ego,
+          stuck_vehicles)) {
       // no occlusion spot
       return true;
     }
   }
   DEBUG_PRINT(show_time, "occlusion [ms]: ", stop_watch_.toc("processing_time", true));
   DEBUG_PRINT(show_time, "num collision:", possible_collisions.size());
-  utils::calcSlowDownPointsForPossibleCollision(0, interp_path, 0.0, possible_collisions);
+  utils::calcSlowDownPointsForPossibleCollision(0, path_interpolated, 0.0, possible_collisions);
   // Note: Consider offset from path start to ego here
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego);
   // apply safe velocity using ebs and pbs deceleration
   utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
   // these debug topics needs computation resource
-  debug_data_.parked_vehicle_point = parked_vehicle_point;
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
-  debug_data_.interp_path = interp_path;
+  debug_data_.path_interpolated = path_interpolated;
   debug_data_.path_raw = clipped_path;
   DEBUG_PRINT(show_time, "total [ms]: ", stop_watch_.toc("total_processing_time", true));
   return true;
