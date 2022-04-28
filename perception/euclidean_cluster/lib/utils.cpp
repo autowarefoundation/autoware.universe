@@ -56,8 +56,8 @@ void convertPointCloudClusters2Msg(
     feature_object.object.kinematics.pose_with_covariance.pose.position =
       getCentroid(ros_pointcloud);
     autoware_auto_perception_msgs::msg::ObjectClassification classification;
-    //classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN; // removed by koji.minoda
-    classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+    classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN; // removed by koji.minoda
+    //classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
     classification.probability = 1.0f;
     feature_object.object.classification.emplace_back(classification);
     msg.feature_objects.push_back(feature_object);

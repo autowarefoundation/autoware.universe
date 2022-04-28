@@ -246,7 +246,10 @@ void MultiObjectTracker::onMeasurement(
   int tracker_idx = 0;
   for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
        ++tracker_itr, ++tracker_idx) {
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), direct_assignment.find(tracker_idx).c_str());
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), direct_assignment.end().c_str());
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), "bbbb");
       (*(tracker_itr))
         ->updateWithMeasurement(
           transformed_objects.objects.at(direct_assignment.find(tracker_idx)->second),
@@ -375,7 +378,8 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
   const std::shared_ptr<const Tracker> tracker) const
 {
   constexpr int measurement_count_threshold = 3;
-  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {
+  
+  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {   
     return false;
   }
   return true;
@@ -399,8 +403,9 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     }
     autoware_auto_perception_msgs::msg::TrackedObject object;
     
+    
     (*itr)->getTrackedObject(time, object);
-    //RCLCPP_INFO(rclcpp::get_logger("multi_object_tracker"), object.shape.dimensions.x.);
+    
 
     output_msg.objects.push_back(object);
   }
