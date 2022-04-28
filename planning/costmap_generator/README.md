@@ -32,7 +32,7 @@ None
 ### Parameters
 
 | Name                         | Type   | Description                                                                                    |
-| ---------------------------- | ------ | -----------------------------------------------------------------------------------------------|
+| ---------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
 | `update_rate`                | double | timer's update rate                                                                            |
 | `activate_by_scenario`       | bool   | if true, activate by scenario = parking. Otherwise, activate if vehicle is inside parking lot. |
 | `use_objects`                | bool   | whether using `~input/objects` or not                                                          |
