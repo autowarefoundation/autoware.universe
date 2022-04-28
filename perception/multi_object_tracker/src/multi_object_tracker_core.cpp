@@ -246,10 +246,7 @@ void MultiObjectTracker::onMeasurement(
   int tracker_idx = 0;
   for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
        ++tracker_itr, ++tracker_idx) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), direct_assignment.find(tracker_idx).c_str());
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), direct_assignment.end().c_str());
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), "bbbb");
       (*(tracker_itr))
         ->updateWithMeasurement(
           transformed_objects.objects.at(direct_assignment.find(tracker_idx)->second),
