@@ -77,6 +77,8 @@ bool AvoidanceModule::isExecutionReady() const
   {
     DebugData debug;
     static_cast<void>(calcAvoidancePlanningData(debug));
+    debug_avoidance_msg_array_ptr_ =
+      std::make_shared<AvoidanceDebugMsgArray>(debug.avoidance_debug_msg_array);
   }
 
   if (current_state_ == BT::NodeStatus::RUNNING) {
@@ -93,6 +95,8 @@ BT::NodeStatus AvoidanceModule::updateState()
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
   const bool has_avoidance_target = !avoid_data.objects.empty();
+  debug_avoidance_msg_array_ptr_ =
+    std::make_shared<AvoidanceDebugMsgArray>(debug.avoidance_debug_msg_array);
   if (!is_plan_running && !has_avoidance_target) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
@@ -294,21 +298,8 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
 
   // debug
   {
-    debug_data_.avoidance_debug_msg_array.avoidance_info.clear();
-    auto & debug_data_avoidance = debug_data_.avoidance_debug_msg_array.avoidance_info;
-    debug_data_avoidance = avoidance_debug_msg_array;
-    if (!debug_avoidance_initializer_for_shift_point_.empty()) {
-      const bool is_info_old_ =
-        (clock_->now() - debug_avoidance_initializer_for_shift_point_time_).seconds() > 1.0;
-      if (!is_info_old_) {
-        debug_data_avoidance.insert(
-          debug_data_avoidance.end(), debug_avoidance_initializer_for_shift_point_.begin(),
-          debug_avoidance_initializer_for_shift_point_.end());
-      }
-    }
-
-    debug_avoidance_msg_array_ptr_ =
-      std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
+    debug_avoidance_initializer_for_object = avoidance_debug_msg_array;
+    debug.avoidance_debug_msg_array.avoidance_info = std::move(avoidance_debug_msg_array);
     debug.farthest_linestring_from_overhang =
       std::make_shared<lanelet::ConstLineStrings3d>(debug_linestring);
     debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(current_lanes);
@@ -464,7 +455,6 @@ void AvoidanceModule::registerRawShiftPoints(const AvoidPointArray & future)
 AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
   const ObjectDataArray & objects) const
 {
-  debug_avoidance_initializer_for_shift_point_.clear();
   const auto prepare_distance = getNominalPrepareDistance();
 
   // To be consistent with changes in the ego position, the current shift length is considered.
@@ -605,8 +595,14 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     avoidance_debug_msg_array.push_back(avoidance_debug_msg);
   }
 
-  debug_avoidance_initializer_for_shift_point_ = std::move(avoidance_debug_msg_array);
-  debug_avoidance_initializer_for_shift_point_time_ = clock_->now();
+  {
+    debug_avoidance_initializer_for_shift_point = std::move(avoidance_debug_msg_array);
+    auto & debug_data_avoidance = debug_data_.avoidance_debug_msg_array.avoidance_info;
+    debug_data_avoidance = debug_avoidance_initializer_for_object;
+    debug_data_avoidance.insert(
+      debug_data_avoidance.end(), debug_avoidance_initializer_for_shift_point.begin(),
+      debug_avoidance_initializer_for_shift_point.end());
+  }
   fillAdditionalInfoFromLongitudinal(avoid_points);
 
   return avoid_points;
@@ -2181,6 +2177,8 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  debug_avoidance_msg_array_ptr_ =
+    std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
   return out;
 }
 
@@ -2403,6 +2401,9 @@ void AvoidanceModule::updateData()
 {
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
+  const auto avoidance_debug_msgs = debug_data_.avoidance_debug_msg_array.avoidance_info;
+  debug_avoidance_msg_array_ptr_ =
+    std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
 
   // TODO(Horibe): this is not tested yet, disable now.
   updateRegisteredObject(avoidance_data_.objects);

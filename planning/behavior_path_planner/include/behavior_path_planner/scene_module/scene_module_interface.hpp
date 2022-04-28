@@ -196,9 +196,7 @@ public:
 
   AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
   {
-    if (debug_avoidance_msg_array_ptr_) {
-      debug_avoidance_msg_array_ptr_->header.stamp = clock_->now();
-    }
+    debug_avoidance_msg_array_ptr_->header.stamp = clock_->now();
     return debug_avoidance_msg_array_ptr_;
   }
 
