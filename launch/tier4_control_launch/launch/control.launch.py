@@ -140,9 +140,6 @@ def launch_setup(context, *args, **kwargs):
             lon_controller_common_param,
             lon_controller_individual_param,
             vehicle_info_param,
-            {
-                "enable_smooth_stop": LaunchConfiguration("enable_smooth_stop"),
-            },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -235,11 +232,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             vehicle_cmd_gate_param,
             vehicle_info_param,
-            {
-                "use_emergency_handling": LaunchConfiguration("use_emergency_handling"),
-                "use_external_emergency_stop": LaunchConfiguration("use_external_emergency_stop"),
-                "use_start_request": LaunchConfiguration("use_start_request"),
-            },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -409,16 +401,6 @@ def generate_launch_description():
         "lane_departure_checker_param_path",
         [FindPackageShare("lane_departure_checker"), "/config/lane_departure_checker.param.yaml"],
     )
-
-    # velocity controller
-    add_launch_arg(
-        "enable_smooth_stop", "true", "enable smooth stop (in velocity controller state)"
-    )
-
-    # vehicle cmd gate
-    add_launch_arg("use_emergency_handling", "false", "use emergency handling")
-    add_launch_arg("use_external_emergency_stop", "true", "use external emergency stop")
-    add_launch_arg("use_start_request", "false", "use start request service")
 
     # external cmd selector
     add_launch_arg("initial_selector_mode", "remote", "local or remote")
