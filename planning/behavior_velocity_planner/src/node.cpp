@@ -263,7 +263,7 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
 
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-  if (pc.width > 0) {
+  if (!pc.empty()) {
     pcl::transformPointCloud(pc, *pc_transformed, affine);
   }
 
