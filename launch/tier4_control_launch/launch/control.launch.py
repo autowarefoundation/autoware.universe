@@ -31,22 +31,47 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    lateral_controller_mode = LaunchConfiguration("lateral_controller_mode").perform(context)
     vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    lat_controller_param_path = LaunchConfiguration("lat_controller_param_path").perform(context)
-    with open(lat_controller_param_path, "r") as f:
-        lat_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    lon_controller_param_path = LaunchConfiguration("lon_controller_param_path").perform(context)
-    with open(lon_controller_param_path, "r") as f:
-        lon_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    lateral_controller_mode = LaunchConfiguration("lateral_controller_mode").perform(context)
+    lat_controller_common_param_path = LaunchConfiguration(
+        "lat_controller_common_param_path"
+    ).perform(context)
+    with open(lat_controller_common_param_path, "r") as f:
+        lat_controller_common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    lat_controller_individual_param_path = LaunchConfiguration(
+        "lat_controller_individual_param_path"
+    ).perform(context)
+    with open(lat_controller_individual_param_path, "r") as f:
+        lat_controller_individual_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    lon_controller_common_param_path = LaunchConfiguration(
+        "lon_controller_common_param_path"
+    ).perform(context)
+    with open(lon_controller_common_param_path, "r") as f:
+        lon_controller_common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    lon_controller_individual_param_path = LaunchConfiguration(
+        "lon_controller_individual_param_path"
+    ).perform(context)
+    with open(lon_controller_individual_param_path, "r") as f:
+        lon_controller_individual_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    pure_pursuit_common_param_path = LaunchConfiguration("pure_pursuit_common_param_path").perform(
+        context
+    )
+    with open(pure_pursuit_common_param_path, "r") as f:
+        pure_pursuit_common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    # pure_pursuit_individual_param_path = LaunchConfiguration(
+    #     "pure_pursuit_individual_param_path"
+    # ).perform(context)
+    # with open(pure_pursuit_individual_param_path, "r") as f:
+    #     pure_pursuit_individual_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     latlon_muxer_param_path = LaunchConfiguration("latlon_muxer_param_path").perform(context)
     with open(latlon_muxer_param_path, "r") as f:
         latlon_muxer_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    pure_pursuit_param_path = LaunchConfiguration("pure_pursuit_param_path").perform(context)
-    with open(pure_pursuit_param_path, "r") as f:
-        pure_pursuit_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     vehicle_cmd_gate_param_path = LaunchConfiguration("vehicle_cmd_gate_param_path").perform(
         context
     )
@@ -73,7 +98,8 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/diagnostic", "lateral/diagnostic"),
         ],
         parameters=[
-            lat_controller_param,
+            lat_controller_common_param,
+            lat_controller_individual_param,
             vehicle_info_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -90,7 +116,9 @@ def launch_setup(context, *args, **kwargs):
             ("output/control_raw", "lateral/control_cmd"),
         ],
         parameters=[
-            pure_pursuit_param,
+            pure_pursuit_common_param,
+            # pure_pursuit_individual_param,
+            # Commented out since there is no individual parameters of pure pursuit for now.
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -109,7 +137,8 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/diagnostic", "longitudinal/diagnostic"),
         ],
         parameters=[
-            lon_controller_param,
+            lon_controller_common_param,
+            lon_controller_individual_param,
             vehicle_info_param,
             {
                 "enable_smooth_stop": LaunchConfiguration("enable_smooth_stop"),
@@ -286,14 +315,7 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    # lateral controller
-
-    add_launch_arg(
-        "lateral_controller_mode",
-        "mpc_follower",
-        "lateral controller mode: `mpc_follower` or `pure_pursuit`",
-    )
-
+    # vehicle info
     add_launch_arg(
         "vehicle_info_param_file",
         [
@@ -303,30 +325,66 @@ def generate_launch_description():
         "path to the parameter file of vehicle information",
     )
 
+    # lateral controller
     add_launch_arg(
-        "lat_controller_param_path",
+        "lateral_controller_mode",
+        "mpc_follower",
+        "lateral controller mode: `mpc_follower` or `pure_pursuit`",
+    )
+    add_launch_arg(
+        "lat_controller_common_param_path",
         [
             FindPackageShare("trajectory_follower_nodes"),
-            "/config/lateral_controller.param.yaml",
+            "/config/lateral_controller_commonparam.yaml",
         ],
         "path to the parameter file of lateral controller",
     )
     add_launch_arg(
-        "pure_pursuit_param_path",
+        "lat_controller_individual_param_path",
         [
-            FindPackageShare("pure_pursuit"),
-            "/config/pure_pursuit.param.yaml",
+            FindPackageShare("trajectory_follower_nodes"),
+            "/config/lateral_controller_individual.param.yaml",
         ],
         "path to the parameter file of lateral controller",
     )
+
+    # longitudinal controller
     add_launch_arg(
-        "lon_controller_param_path",
+        "lon_controller_common_param_path",
         [
             FindPackageShare("trajectory_follower_nodes"),
-            "/config/longitudinal_controller.param.yaml",
+            "/config/longitudinal_controller_common.param.yaml",
         ],
         "path to the parameter file of longitudinal controller",
     )
+    add_launch_arg(
+        "lon_controller_individual_param_path",
+        [
+            FindPackageShare("trajectory_follower_nodes"),
+            "/config/longitudinal_controller_individual.param.yaml",
+        ],
+        "path to the parameter file of longitudinal controller",
+    )
+
+    # pure pursuit
+    add_launch_arg(
+        "pure_pursuit_common_param_path",
+        [
+            FindPackageShare("pure_pursuit"),
+            "/config/pure_pursuit_common.param.yaml",
+        ],
+        "path to the parameter file of lateral controller",
+    )
+    add_launch_arg(
+        "pure_pursuit_individual_param_path",
+        [
+            FindPackageShare("pure_pursuit"),
+            "/config/pure_pursuit_individual.param.yaml",
+        ],
+        "path to the parameter file of lateral controller",
+    )
+
+    # latlon muxer
     add_launch_arg(
         "latlon_muxer_param_path",
         [
@@ -335,6 +393,8 @@ def generate_launch_description():
         ],
         "path to the parameter file of latlon muxer",
     )
+
+    # vehicle cmd gate
     add_launch_arg(
         "vehicle_cmd_gate_param_path",
         [
@@ -343,6 +403,8 @@ def generate_launch_description():
         ],
         "path to the parameter file of vehicle_cmd_gate",
     )
+
+    # lane departure checker
     add_launch_arg(
         "lane_departure_checker_param_path",
         [FindPackageShare("lane_departure_checker"), "/config/lane_departure_checker.param.yaml"],
