@@ -72,17 +72,8 @@ protected:
   void publishCropBoxPolygon();
 
 private:
-  struct CropBoxParam
-  {
-    float min_x;
-    float max_x;
-    float min_y;
-    float max_y;
-    float min_z;
-    float max_z;
-    bool negative{false};
-  } param_;
-
+  /** \brief The PCL filter implementation used. */
+  pcl::CropBox<pcl::PCLPointCloud2> impl_;
   rclcpp::Publisher<geometry_msgs::msg::PolygonStamped>::SharedPtr crop_box_polygon_pub_;
 
   /** \brief Parameter service callback result : needed to be hold */
@@ -92,7 +83,7 @@ private:
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
 public:
-  PCL_MAKE_ALIGNED_OPERATOR_NEW
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit CropBoxFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
