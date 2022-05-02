@@ -26,6 +26,7 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 import yaml
@@ -161,7 +162,7 @@ def launch_setup(context, *args, **kwargs):
             ),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),
-            ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
+            ("~/input/trajectory", "sampling_planner/trajectory"),
         ],
         parameters=[
             common_param,
@@ -191,7 +192,7 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_cruise_planner",
         namespace="",
         remappings=[
-            ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
+            ("~/input/trajectory", "sampling_planner/trajectory"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
@@ -212,11 +213,47 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_cruise_planner_relay",
         namespace="",
         parameters=[
-            {"input_topic": "obstacle_avoidance_planner/trajectory"},
+            {"input_topic": "sampling_planner/trajectory"},
             {"output_topic": "/planning/scenario_planning/lane_driving/trajectory"},
             {"type": "autoware_auto_planning_msgs/msg/Trajectory"},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    sampler_node_param_path = os.path.join(
+        get_package_share_directory("sampler_node"),
+        "config",
+        "sampler_node.param.yaml",
+    )
+    with open(sampler_node_param_path, "r") as f:
+        sampler_node_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    sampler_node = Node(
+        package="sampler_node",
+        # plugin='sampler_node::PathSamplerNode',
+        executable="path_sampler_node_exe",
+        name="path_sampler_node",
+        namespace="",
+        remappings=[
+            ("~/output/trajectory", "sampling_planner/trajectory"),
+            ("~/input/objects", "/perception/object_recognition/objects"),
+            ("~/input/steer", "/vehicle/status/steering_status"),
+            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/vector_map", LaunchConfiguration("input_map_topic")),
+            ("~/input/route", LaunchConfiguration("input_route_topic")),
+        ],
+        parameters=[
+            common_param,
+            sampler_node_param,
+        ],
+        # prefix=["konsole -e gdb -ex run --args"],  # for debugging
+        # prefix=['valgrind --tool=callgrind'],  # for profiling
+        # prefix=['valgrind --leak-check=full \
+        #  --show-leak-kinds=all \
+        #  --track-origins=yes \
+        #  --verbose \
+        #  --log-file=valgrind-out.txt'],
+        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     container = ComposableNodeContainer(
@@ -225,7 +262,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
-            obstacle_avoidance_planner_component,
+            # obstacle_avoidance_planner_component,
         ],
     )
 
@@ -260,6 +297,7 @@ def launch_setup(context, *args, **kwargs):
             obstacle_cruise_planner_loader,
             obstacle_cruise_planner_relay_loader,
             surround_obstacle_checker_loader,
+            sampler_node,
         ]
     )
     return [group]
@@ -298,6 +336,8 @@ def generate_launch_description():
 
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
+    add_launch_arg("input_map_topic", "/map/vector_map", "vector map topic"),
+    add_launch_arg("input_route_topic", "/planning/mission_planning/route", "route topic"),
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
