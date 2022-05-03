@@ -1,20 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(fault_injection)
 
-## Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-## Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
 
 ## Targets
 ament_auto_add_library(fault_injection_node_component SHARED
@@ -35,10 +24,6 @@ rclcpp_components_register_node(fault_injection_node_component
 
 ## Tests
 if(BUILD_TESTING)
-  # Linter
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
   # gtest
   ament_add_gtest(test_fault_injection_node_component
     test/src/main.cpp
