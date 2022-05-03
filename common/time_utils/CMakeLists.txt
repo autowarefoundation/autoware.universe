@@ -8,7 +8,6 @@ ament_auto_find_build_dependencies()
 
 ### Build
 ament_auto_add_library(${PROJECT_NAME} SHARED src/time_utils/time_utils.cpp)
-autoware_set_compile_options(${PROJECT_NAME})
 
 ### Test
 if(BUILD_TESTING)

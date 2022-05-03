@@ -31,7 +31,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   ${OSQP_INTERFACE_LIB_SRC}
   ${OSQP_INTERFACE_LIB_HEADERS}
 )
-autoware_set_compile_options(${PROJECT_NAME})
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-error=old-style-cast -Wno-error=useless-cast)
 
 target_include_directories(osqp_interface
@@ -61,7 +60,6 @@ if(BUILD_TESTING)
   )
   set(TEST_OSQP_INTERFACE_EXE test_osqp_interface)
   ament_add_gtest(${TEST_OSQP_INTERFACE_EXE} ${TEST_SOURCES})
-  autoware_set_compile_options(${TEST_OSQP_INTERFACE_EXE})
   target_link_libraries(${TEST_OSQP_INTERFACE_EXE} ${PROJECT_NAME})
 endif()
 

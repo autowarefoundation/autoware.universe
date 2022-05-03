@@ -16,7 +16,6 @@ set(VEHICLE_CONSTANTS_MANAGER_LIB_HEADERS
 ament_auto_add_library(${PROJECT_NAME} SHARED
   ${VEHICLE_CONSTANTS_MANAGER_LIB_SRC}
   ${VEHICLE_CONSTANTS_MANAGER_LIB_HEADERS})
-autoware_set_compile_options(${PROJECT_NAME})
 
 # Testing
 # if(BUILD_TESTING)
@@ -27,7 +26,6 @@ autoware_set_compile_options(${PROJECT_NAME})
 #   set(TEST_SOURCES test/test_vehicle_constants_manager.cpp)
 #   set(TEST_VEHICLE_CONSTANTS_MANAGER_EXE test_vehicle_constants_manager)
 #   ament_add_gtest(${TEST_VEHICLE_CONSTANTS_MANAGER_EXE} ${TEST_SOURCES})
-#   autoware_set_compile_options(${TEST_VEHICLE_CONSTANTS_MANAGER_EXE})
 #   target_link_libraries(${TEST_VEHICLE_CONSTANTS_MANAGER_EXE} ${PROJECT_NAME})
 # endif()
 

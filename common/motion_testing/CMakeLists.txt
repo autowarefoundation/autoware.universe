@@ -8,7 +8,6 @@ ament_auto_find_build_dependencies()
 
 ### Build
 ament_auto_add_library(${PROJECT_NAME} SHARED src/motion_testing/motion_testing.cpp)
-autoware_set_compile_options(${PROJECT_NAME})
 
 # workaround to allow deprecated header to build on both galactic and rolling
 if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
@@ -27,7 +26,6 @@ if(BUILD_TESTING)
     test/gtest_main.cpp
     test/constant_trajectory.cpp
     test/trajectory_checks.cpp)
-  autoware_set_compile_options(motion_testing_unit_tests)
   target_compile_options(motion_testing_unit_tests PRIVATE -Wno-sign-conversion)
   target_link_libraries(motion_testing_unit_tests ${PROJECT_NAME})
   add_dependencies(motion_testing_unit_tests ${PROJECT_NAME})

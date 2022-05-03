@@ -8,9 +8,6 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <buildtool_depend>autoware_auto_cmake</buildtool_depend>
-
-  <buildtool_export_depend>autoware_auto_cmake</buildtool_export_depend>
 
   <depend>autoware_auto_common</depend>
   <depend>autoware_auto_geometry</depend>

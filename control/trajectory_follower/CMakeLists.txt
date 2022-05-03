@@ -45,7 +45,6 @@ ament_auto_add_library(${LATERAL_CONTROLLER_LIB} SHARED
   ${LATERAL_CONTROLLER_LIB_SRC}
   ${LATERAL_CONTROLLER_LIB_HEADERS}
 )
-autoware_set_compile_options(${LATERAL_CONTROLLER_LIB})
 target_compile_options(${LATERAL_CONTROLLER_LIB} PRIVATE -Wno-error=old-style-cast)
 
 # workaround to allow deprecated header to build on both galactic and rolling
@@ -75,7 +74,6 @@ ament_auto_add_library(${LONGITUDINAL_CONTROLLER_LIB} SHARED
   ${LONGITUDINAL_CONTROLLER_LIB_SRC}
   ${LONGITUDINAL_CONTROLLER_LIB_HEADERS}
 )
-autoware_set_compile_options(${LONGITUDINAL_CONTROLLER_LIB})
 target_compile_options(${LONGITUDINAL_CONTROLLER_LIB} PRIVATE -Wno-error=old-style-cast)
 
 # workaround to allow deprecated header to build on both galactic and rolling
@@ -100,7 +98,6 @@ if(BUILD_TESTING)
   )
   set(TEST_LATERAL_CONTROLLER_EXE test_lateral_controller)
   ament_add_gtest(${TEST_LATERAL_CONTROLLER_EXE} ${TEST_LAT_SOURCES})
-  autoware_set_compile_options(${TEST_LATERAL_CONTROLLER_EXE})
   target_link_libraries(${TEST_LATERAL_CONTROLLER_EXE} ${LATERAL_CONTROLLER_LIB})
 
   # workaround to allow deprecated header to build on both galactic and rolling
@@ -118,7 +115,6 @@ if(BUILD_TESTING)
   )
   set(TEST_LONGITUDINAL_CONTROLLER_EXE test_longitudinal_controller)
   ament_add_gtest(${TEST_LONGITUDINAL_CONTROLLER_EXE} ${TEST_LON_SOURCES})
-  autoware_set_compile_options(${TEST_LONGITUDINAL_CONTROLLER_EXE})
   target_link_libraries(${TEST_LONGITUDINAL_CONTROLLER_EXE} ${LONGITUDINAL_CONTROLLER_LIB})
 
   # workaround to allow deprecated header to build on both galactic and rolling
