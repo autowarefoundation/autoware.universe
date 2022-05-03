@@ -1,23 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
-
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
 project(traffic_light_ssd_fine_detector)
+
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # TODO: remove (https://github.com/autowarefoundation/autoware.universe/issues/850)
 add_compile_options(-Wno-deprecated-declarations)
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
 
 find_package(OpenCV REQUIRED)
 

@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
-
 project(simple_planning_simulator)
 
-### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -37,12 +34,7 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_exe
 )
 
-
-### Test
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
   ament_add_gtest(test_simple_planning_simulator
     test/test_simple_planning_simulator.cpp
     TIMEOUT 120
@@ -59,8 +51,5 @@ if(BUILD_TESTING)
     )
   endif()
 endif()
-
-
-
 
 ament_auto_package(INSTALL_TO_SHARE param launch)

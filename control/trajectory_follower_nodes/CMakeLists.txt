@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(trajectory_follower_nodes)
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 set(LATERAL_CONTROLLER_NODE lateral_controller_node)
 ament_auto_add_library(${LATERAL_CONTROLLER_NODE} SHARED
@@ -54,9 +54,6 @@ rclcpp_components_register_node(${LATLON_MUXER_NODE}
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  # Unit tests
   set(TRAJECTORY_FOLLOWER_NODES_TEST test_trajectory_follower_nodes)
   ament_add_ros_isolated_gtest(${TRAJECTORY_FOLLOWER_NODES_TEST}
     test/trajectory_follower_test_utils.hpp

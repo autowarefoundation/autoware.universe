@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(traffic_light_classifier)
 
-if(NOT CMAKE_CXX_STANDARD)
-	set(CMAKE_CXX_STANDARD 17)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # TODO: remove (https://github.com/autowarefoundation/autoware.universe/issues/850)
 add_compile_options(-Wno-deprecated-declarations)

@@ -4,8 +4,6 @@ project(fault_injection)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-
-## Targets
 ament_auto_add_library(fault_injection_node_component SHARED
   src/fault_injection_node/fault_injection_node.cpp
 )
@@ -22,7 +20,6 @@ rclcpp_components_register_node(fault_injection_node_component
   EXECUTABLE fault_injection_node
 )
 
-## Tests
 if(BUILD_TESTING)
   # gtest
   ament_add_gtest(test_fault_injection_node_component
@@ -35,7 +32,6 @@ if(BUILD_TESTING)
   )
 
   # launch_testing
-  find_package(launch_testing_ament_cmake REQUIRED)
   add_launch_test(
     test/test_fault_injection_node.test.py
     TARGET test_fault_injection_launch_test
@@ -54,7 +50,6 @@ if(BUILD_TESTING)
   )
 endif()
 
-## Package
 ament_auto_package(
   INSTALL_TO_SHARE
     config

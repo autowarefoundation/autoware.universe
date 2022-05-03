@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.6)
-
 project(motion_common)
 
-### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-find_package(Eigen3 REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-# Build library
+find_package(Eigen3 REQUIRED)
+
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/motion_common/config.cpp
   src/motion_common/motion_common.cpp
@@ -21,9 +19,7 @@ if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
   )
 endif()
 
-### Test
 if(BUILD_TESTING)
-  # Linters
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 

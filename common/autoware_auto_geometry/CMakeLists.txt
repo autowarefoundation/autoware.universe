@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(autoware_auto_geometry)
 
-## dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-# includes
 ament_auto_add_library(${PROJECT_NAME} SHARED
   include/geometry/spatial_hash.hpp
   include/geometry/intersection.hpp
@@ -21,10 +19,6 @@ if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
 endif()
 
 if(BUILD_TESTING)
-  # run linters
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  # gtest
   set(GEOMETRY_GTEST geometry_gtest)
   set(GEOMETRY_SRC test/src/test_geometry.cpp
     test/src/test_convex_hull.cpp
@@ -48,5 +42,4 @@ if(BUILD_TESTING)
   target_link_libraries(${GEOMETRY_GTEST} ${PROJECT_NAME})
 endif()
 
-# Ament Exporting
 ament_auto_package()

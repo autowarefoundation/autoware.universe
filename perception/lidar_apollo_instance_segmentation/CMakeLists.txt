@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(lidar_apollo_instance_segmentation)
 
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
 # TODO: remove (https://github.com/autowarefoundation/autoware.universe/issues/850)
 add_compile_options(-Wno-deprecated-declarations)
 
@@ -93,19 +96,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     execute_process(COMMAND gdown "https://drive.google.com/uc?id=1izpNotNxS6mrYIzJwHQ_EyX_IPDU-MBr" -O ${PATH}/vls-128.caffemodel)
   endif()
 
-  find_package(ament_cmake_auto REQUIRED)
-  ament_auto_find_build_dependencies()
   find_package(PCL REQUIRED)
 
-  if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
-  endif()
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Werror)
-  endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_MWAITXINTRIN_H_INCLUDED")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FORCE_INLINES")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STRICT_ANSI__")
@@ -156,11 +148,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE lidar_apollo_instance_segmentation_node
   )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
   ament_auto_package(INSTALL_TO_SHARE
     launch
     config
@@ -168,14 +155,6 @@ endif()
   )
 
 else()
-  find_package(ament_cmake_auto REQUIRED)
-  ament_auto_find_build_dependencies()
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
   # to avoid launch file missing without a gpu
   ament_auto_package(INSTALL_TO_SHARE
     launch

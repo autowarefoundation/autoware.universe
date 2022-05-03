@@ -1,18 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(fake_test_node)
 
-find_package(ament_cmake_auto REQUIRED)
-
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ament_auto_add_library(fake_test_node SHARED src/fake_test_node.cpp)
 
-## Testing
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_fake_test_node
     test/test_fake_test_node.cpp
   )
