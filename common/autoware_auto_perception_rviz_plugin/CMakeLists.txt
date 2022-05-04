@@ -4,6 +4,8 @@ project(autoware_auto_perception_rviz_plugin)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+
 set(OD_PLUGIN_LIB_SRC
   src/object_detection/detected_objects_display.cpp
   src/object_detection/tracked_objects_display.cpp
