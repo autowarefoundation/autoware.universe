@@ -4,3 +4,6 @@
 [submodule "src/autoware_auto_msgs"]
 	path = src/autoware_auto_msgs
 	url = https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs.git
+[submodule "src/rviz2_overlay_plugins"]
+	path = src/rviz2_overlay_plugins
+	url = git@github.com:KYabuuchi/rviz2_overlay_plugins.git

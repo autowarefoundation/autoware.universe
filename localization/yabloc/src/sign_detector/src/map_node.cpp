@@ -64,7 +64,7 @@ private:
       height = std::min(height, v.z());
     }
 
-    RCLCPP_INFO_STREAM(this->get_logger(), "height: " << height);
+    RCLCPP_INFO_STREAM(this->get_logger(), mgrs.x() << " " << mgrs.y() << " (" << msg.latitude << ", " << msg.longitude << ") " << height);
 
     geometry_msgs::msg::Pose pose;
     pose.position.x = p.x;

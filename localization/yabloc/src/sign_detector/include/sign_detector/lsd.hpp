@@ -7,6 +7,7 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <chrono>
 #include <lsd/lsd.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <optional>
@@ -44,9 +45,14 @@ private:
     cv::resize(image, image, cv::Size(WIDTH, HEIGHT));
     cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
+    std::chrono::time_point start = std::chrono::system_clock::now();
     cv::Mat lines;
     lsd->detect(image, lines);
     lsd->drawSegments(image, lines);
+
+    auto dur = std::chrono::system_clock::now() - start;
+    long ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    std::cout << cv::Size(WIDTH, HEIGHT) << " " << ms << std::endl;
     // cv::imshow("show", image);
     // cv::waitKey(1);
 
