@@ -56,13 +56,14 @@ ament_auto_add_executable(lsd_node src/lsd_node.cpp src/lsd.cpp)
 target_include_directories(lsd_node PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd include)
 target_link_libraries(lsd_node ${OpenCV_LIBS} cv_lsd)
 
-ament_auto_add_executable(map_node src/map_node.cpp)
-target_include_directories(map_node PUBLIC include 3rd/regulatory_elements/include)
-target_link_libraries(map_node  regulatory_elements ${PCL_LIBRARIES} Geographic)
+ament_auto_add_executable(fix_to_pose_node src/fix_to_pose_node.cpp)
+target_include_directories(fix_to_pose_node PUBLIC include 3rd/regulatory_elements/include)
+target_link_libraries(fix_to_pose_node  regulatory_elements ${PCL_LIBRARIES} Geographic)
 
-ament_auto_add_executable(eagleye_node src/eagleye_node.cpp)
-target_include_directories(eagleye_node PUBLIC include )
-target_link_libraries(eagleye_node Geographic)
+ament_auto_add_executable(pose_to_path_node src/pose_to_path_node.cpp)
+target_include_directories(pose_to_path_node PUBLIC include )
+target_link_libraries(pose_to_path_node)
+
 
 # ===================================================
 # Python

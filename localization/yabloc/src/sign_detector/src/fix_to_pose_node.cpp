@@ -1,25 +1,35 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <visualization_msgs/msg/marker.hpp>
 
 #include "sign_detector/fix2mgrs.hpp"
 #include <pcl-1.10/pcl/kdtree/kdtree_flann.h>
 #include <pcl-1.10/pcl/point_cloud.h>
 #include <tf2_ros/transform_broadcaster.h>
 
-class MapSubscriber : public rclcpp::Node
+class Fix2Pose : public rclcpp::Node
 {
 public:
-  MapSubscriber(const std::string& map_topic) : Node("map_subscriber"), kdtree_(nullptr)
+  Fix2Pose() : Node("fix_to_pose"), kdtree_(nullptr)
   {
-    sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local(), std::bind(&MapSubscriber::mapCallback, this, std::placeholders::_1));
-    sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>("eagleye/fix", 10, std::bind(&MapSubscriber::fixCallback, this, std::placeholders::_1));
-    pub_ground_ = this->create_publisher<visualization_msgs::msg::Marker>("ground", 10);
+    std::string map_topic = "/map/vector_map";
+    std::string fix_topic = "/eagleye/fix";
+    std::string pose_topic = "/eagleye/pose";
+    this->declare_parameter<std::string>("map_topic", map_topic);
+    this->declare_parameter<std::string>("fix_topic", fix_topic);
+    this->declare_parameter<std::string>("pose_topic", pose_topic);
+    this->get_parameter("map_topic", map_topic);
+    this->get_parameter("fix_topic", fix_topic);
+    this->get_parameter("pose_topic", pose_topic);
+
+    sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local().reliable(), std::bind(&Fix2Pose::mapCallback, this, std::placeholders::_1));
+    sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(fix_topic, 10, std::bind(&Fix2Pose::fixCallback, this, std::placeholders::_1));
+    pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic, 10);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
   }
@@ -27,16 +37,16 @@ public:
 private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
-  void publishTf(const geometry_msgs::msg::Pose& pose, const rclcpp::Time&)
+  void publishTf(const geometry_msgs::msg::PoseStamped& pose, const rclcpp::Time&)
   {
     geometry_msgs::msg::TransformStamped t;
 
-    t.header.stamp = this->get_clock()->now();
+    t.header.stamp = pose.header.stamp;
     t.header.frame_id = "map";
     t.child_frame_id = "base_link";
-    t.transform.translation.x = pose.position.x;
-    t.transform.translation.y = pose.position.y;
-    t.transform.translation.z = pose.position.z;
+    t.transform.translation.x = pose.pose.position.x;
+    t.transform.translation.y = pose.pose.position.y;
+    t.transform.translation.z = pose.pose.position.z;
     t.transform.rotation.w = 1;
 
     tf_broadcaster_->sendTransform(t);
@@ -45,7 +55,6 @@ private:
   void fixCallback(const sensor_msgs::msg::NavSatFix& msg)
   {
     if (!kdtree_) return;
-
 
     Eigen::Vector3d mgrs = fix2Mgrs(msg);
     pcl::PointXYZ p;
@@ -66,30 +75,16 @@ private:
 
     RCLCPP_INFO_STREAM(this->get_logger(), mgrs.x() << " " << mgrs.y() << " (" << msg.latitude << ", " << msg.longitude << ") " << height);
 
-    geometry_msgs::msg::Pose pose;
-    pose.position.x = p.x;
-    pose.position.y = p.y;
-    pose.position.z = height;
-    publishVisMarker(pose);
-    publishTf(pose, msg.header.stamp);
-  }
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header.frame_id = "map";
+    pose.header.stamp = msg.header.stamp;
+    pose.pose.position.x = p.x;
+    pose.pose.position.y = p.y;
+    pose.pose.position.z = height;
 
-  void publishVisMarker(const geometry_msgs::msg::Pose& pose)
-  {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = this->get_clock()->now();
-    marker.type = visualization_msgs::msg::Marker::SPHERE;
-    marker.scale.x = 1;
-    marker.scale.y = 1;
-    marker.scale.z = 1;
-    marker.pose.position.x = pose.position.x;
-    marker.pose.position.y = pose.position.y;
-    marker.pose.position.z = pose.position.z;
-    marker.pose.orientation.w = 1;
-    marker.color.r = 1.0;
-    marker.color.a = 1.0;
-    pub_ground_->publish(marker);
+    pub_pose_stamped_->publish(pose);
+
+    publishTf(pose, msg.header.stamp);
   }
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin& msg)
@@ -142,7 +137,7 @@ private:
   }
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_ground_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
@@ -151,9 +146,8 @@ private:
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
-  const std::string map_topic = "/map/vector_map";
 
-  rclcpp::spin(std::make_shared<MapSubscriber>(map_topic));
+  rclcpp::spin(std::make_shared<Fix2Pose>());
   rclcpp::shutdown();
   return 0;
 }

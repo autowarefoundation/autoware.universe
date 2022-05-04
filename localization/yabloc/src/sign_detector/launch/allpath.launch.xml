@@ -1,13 +1,26 @@
 <launch>
     <arg name="log_level" default="warn"/>
+
     
-    <node name="eagleye_path" pkg="sign_detector" exec="eagleye_node" output="log" args="--ros-args --log-level $(var log_level)">
+    <node name="eagleye_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="fix_topic" value="/eagleye/fix"/>
-        <param name="path_topic" value="/eagleye/path"/>
+        <param name="pose_topic" value="/eagleye/pose"/>
+        <param name="map_topic" value="/map/vector_map"/>
     </node>
 
-    <node name="raw_path" pkg="sign_detector" exec="eagleye_node" output="log" args="--ros-args --log-level $(var log_level)">
+    <node name="raw_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="fix_topic" value="/sensing/gnss/ublox/nav_sat_fix"/>
-        <param name="path_topic" value="/ublox/path"/>
+        <param name="pose_topic" value="/sensing/gnss/ublox/pose"/>
+        <param name="map_topic" value="/map/vector_map"/>
+    </node>
+
+    <node name="raw_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="pose_topic" value="/sensing/gnss/ublox/pose"/>
+        <param name="path_topic" value="/sensing/gnss/ublox/path"/>
+    </node>
+
+    <node name="eagleye_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="pose_topic" value="/eagleye/pose"/>
+        <param name="path_topic" value="/eagleye/path"/>
     </node>
 </launch>
