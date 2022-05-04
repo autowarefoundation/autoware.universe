@@ -18,6 +18,7 @@ ament_auto_find_build_dependencies()
 
 include_directories(
   include
+  SYSTEM
   ${GRID_MAP_INCLUDE_DIR}
   ${PCL_COMMON_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
@@ -37,6 +38,13 @@ if(${PCL_VERSION} GREATER_EQUAL 1.12.1)
   find_package(Qhull REQUIRED)
   target_link_libraries(costmap_generator_lib
     QHULL::QHULL
+  )
+endif()
+
+# workaround to allow deprecated header to build on both galactic and rolling
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(costmap_generator_lib PRIVATE
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
   )
 endif()
 

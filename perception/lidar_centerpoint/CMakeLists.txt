@@ -10,7 +10,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(CUDA_VERBOSE OFF)
+# TODO: remove (https://github.com/autowarefoundation/autoware.universe/issues/850)
+add_compile_options(-Wno-deprecated-declarations -Wno-unknown-pragmas)
+
+option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
