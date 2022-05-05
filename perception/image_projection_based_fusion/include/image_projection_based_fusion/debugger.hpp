@@ -57,7 +57,7 @@ private:
   std::vector<image_transport::Subscriber> image_subs_;
   std::vector<image_transport::Publisher> image_pubs_;
   std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
-  std::size_t image_buffer_size{5};
+  std::size_t image_buffer_size{25};
 };
 
 }  // namespace image_projection_based_fusion
