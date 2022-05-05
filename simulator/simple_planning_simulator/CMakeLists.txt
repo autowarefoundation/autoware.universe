@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
-
 project(simple_planning_simulator)
 
-### Dependencies
-# require that dependencies from package.xml be available
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies(REQUIRED
-  ${${PROJECT_NAME}_BUILD_DEPENDS}
-  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
-
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -22,14 +16,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_vel.cpp
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
-
-  # DISTURBANCE MODIFICATIONS
-  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared_disturbance.cpp
-  src/disturbance_generators/disturbance_generators.cpp
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
-autoware_set_compile_options(${PROJECT_NAME})
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 
@@ -46,12 +34,7 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_exe
 )
 
-
-### Test
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
   ament_add_gtest(test_simple_planning_simulator
     test/test_simple_planning_simulator.cpp
     TIMEOUT 120
@@ -68,8 +51,5 @@ if(BUILD_TESTING)
     )
   endif()
 endif()
-
-
-
 
 ament_auto_package(INSTALL_TO_SHARE param launch)
