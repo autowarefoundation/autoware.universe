@@ -1,9 +1,11 @@
 <launch>
     <!-- ========================================= -->
-    <!-- default parameters -->
     <arg name="path" default="$(find-pkg-share sign_detector)/config/"/>
+    <arg name="use_sim_time" default="false"/>
 
     <!-- ========================================= -->
     <!-- rviz -->
-    <node name="rviz2" pkg="rviz2" exec="rviz2" output="log" args="-d $(var path)/default.rviz"/>
+    <node name="rviz2" pkg="rviz2" exec="rviz2" output="log" args="-d $(var path)/default.rviz">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
 </launch>

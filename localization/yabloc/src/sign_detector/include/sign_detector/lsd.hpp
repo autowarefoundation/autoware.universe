@@ -12,13 +12,13 @@
 #include <opencv4/opencv2/opencv.hpp>
 #include <optional>
 
-class LineDetector : public rclcpp::Node
+class LineSegmentDetector : public rclcpp::Node
 {
 public:
-  LineDetector(const std::string& image_topic, const std::string& info_topic) : Node("line_detector"), info_(std::nullopt)
+  LineSegmentDetector(const std::string& image_topic, const std::string& info_topic) : Node("line_detector"), info_(std::nullopt)
   {
-    sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(image_topic, 10, std::bind(&LineDetector::imageCallback, this, std::placeholders::_1));
-    sub_info_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(info_topic, 10, std::bind(&LineDetector::infoCallback, this, std::placeholders::_1));
+    sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(image_topic, 10, std::bind(&LineSegmentDetector::imageCallback, this, std::placeholders::_1));
+    sub_info_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(info_topic, 10, std::bind(&LineSegmentDetector::infoCallback, this, std::placeholders::_1));
     pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/lsd", 10);
     lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
   }
@@ -52,9 +52,7 @@ private:
 
     auto dur = std::chrono::system_clock::now() - start;
     long ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    std::cout << cv::Size(WIDTH, HEIGHT) << " " << ms << std::endl;
-    // cv::imshow("show", image);
-    // cv::waitKey(1);
+    RCLCPP_INFO_STREAM(this->get_logger(), cv::Size(WIDTH, HEIGHT) << " " << ms);
 
     {
       cv_bridge::CvImage raw_image;
