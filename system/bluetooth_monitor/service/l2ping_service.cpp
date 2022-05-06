@@ -85,7 +85,7 @@ bool L2pingService::initialize()
   return true;
 }
 
-void L2pingService::shutdown() {close(socket_);}
+void L2pingService::shutdown() { close(socket_); }
 
 void L2pingService::run()
 {
@@ -208,7 +208,9 @@ bool L2pingService::buildDeviceList()
   // Loop for HCI devices
   for (int i = 0; i < hci_device_list.dev_num; ++i, ++hci_device) {
     // Build device list to ping from connected devices
-    if (!buildDeviceListFromConnectedDevices(sock, hci_device->dev_id)) {return false};
+    if (!buildDeviceListFromConnectedDevices(sock, hci_device->dev_id)) {
+      return false
+    };
   }
 
   close(sock);
@@ -256,8 +258,7 @@ bool L2pingService::buildDeviceListFromConnectedDevices(int sock, uint16_t devic
     // Skip if device not found and wild card not specified
     if (
       std::count(config_.addresses.begin(), config_.addresses.end(), address_str) == 0 &&
-      std::count(config_.addresses.begin(), config_.addresses.end(), "*") == 0)
-    {
+      std::count(config_.addresses.begin(), config_.addresses.end(), "*") == 0) {
       continue;
     }
 

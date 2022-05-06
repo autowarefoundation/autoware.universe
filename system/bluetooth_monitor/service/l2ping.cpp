@@ -95,7 +95,9 @@ bool L2ping::getDeviceInformation(uint16_t handle)
       "Device Name: %s LMP Version: %s (0x%x) LMP Subversion: 0x%x Manufacturer: %s (%d)\n", name,
       version_str ? version_str : "n/a", version.lmp_ver, version.lmp_subver,
       bt_compidtostr(version.manufacturer), version.manufacturer);
-    if (version_str) {bt_free(version_str);}
+    if (version_str) {
+      bt_free(version_str);
+    }
   }
 
   hci_close_dev(dev_sock);
@@ -163,7 +165,7 @@ bool L2ping::initialize()
   return true;
 }
 
-void L2ping::shutdown() {close(socket_);}
+void L2ping::shutdown() { close(socket_); }
 
 bool L2ping::ping()
 {
@@ -254,11 +256,15 @@ bool L2ping::ping()
       }
     }
 
-    if (!failed) {setStatusCode(StatusCode::OK);}
+    if (!failed) {
+      setStatusCode(StatusCode::OK);
+    }
 
     // Try next send
     sleep(config_.delay);
-    if (++id > 254) {id = IDENTIFIER};
+    if (++id > 254) {
+      id = IDENTIFIER
+    };
   }
 }
 
@@ -353,6 +359,6 @@ void L2ping::setStatusCode(StatusCode code)
   status_.error_code = 0;
 }
 
-L2pingStatus L2ping::getStatus() const {return status_;}
+L2pingStatus L2ping::getStatus() const { return status_; }
 
-const std::string & L2ping::getAddress() const {return status_.address;}
+const std::string & L2ping::getAddress() const { return status_.address; }
