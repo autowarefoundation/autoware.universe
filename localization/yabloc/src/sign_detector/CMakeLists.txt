@@ -23,8 +23,12 @@ find_package(rclpy REQUIRED)
 find_package(OpenCV REQUIRED)
 # PCL
 find_package(PCL REQUIRED)
+# Eigen3
+find_package(Eigen3 REQUIRED)
 
 include_directories(
+  SYSTEM
+  ${EIGEN3_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )

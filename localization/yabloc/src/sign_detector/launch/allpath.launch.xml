@@ -29,4 +29,10 @@
         <param name="path_topic" value="/eagleye/path"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
+
+    <node name="ll2_to_image" pkg="sign_detector" exec="ll2_to_image_node" output="screen" args="--ros-args --log-level $(var log_level)">
+        <param name="pose_topic" value="/eagleye/pose"/>
+        <param name="map_topic" value="/map/vector_map"/>
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
 </launch>
