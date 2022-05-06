@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2022 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ class BluetoothMonitor : public rclcpp::Node
 public:
   /**
    * @brief Constructor
+   * @param [in] options Options associated with this node
    */
-  BluetoothMonitor();
+  explicit BluetoothMonitor(const rclcpp::NodeOptions & options);
 
 protected:
   /**

@@ -5,12 +5,11 @@ project(bluetooth_monitor)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-### Target executable
-ament_auto_add_executable(bluetooth_monitor
-  src/bluetooth_monitor_node.cpp
+ament_auto_add_library(bluetooth_monitor_lib SHARED
   src/bluetooth_monitor.cpp
 )
 
+### Target executable
 ament_auto_add_executable(l2ping_service
   service/main.cpp
   service/l2ping_service.cpp
@@ -22,13 +21,13 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(bluetooth_monitor bluetooth ${Boost_LIBRARIES})
+target_link_libraries(bluetooth_monitor_lib bluetooth ${Boost_LIBRARIES})
 target_link_libraries(l2ping_service bluetooth ${Boost_LIBRARIES})
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
+rclcpp_components_register_node(bluetooth_monitor_lib
+  PLUGIN "BluetoothMonitor"
+  EXECUTABLE bluetooth_monitor
+)
 
 ament_auto_package(INSTALL_TO_SHARE
   config

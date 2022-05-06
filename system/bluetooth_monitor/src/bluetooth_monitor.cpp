@@ -28,8 +28,8 @@
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
-BluetoothMonitor::BluetoothMonitor()
-: Node("bluetooth_monitor"),
+BluetoothMonitor::BluetoothMonitor(const rclcpp::NodeOptions & options)
+: Node("bluetooth_monitor", options),
   updater_(this),
   socket_(-1),
   port_(declare_parameter("port", DEFAULT_PORT))
@@ -199,3 +199,6 @@ void BluetoothMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapp
   // Set error level of diagnostic status
   setErrorLevel(stat);
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(BluetoothMonitor)
