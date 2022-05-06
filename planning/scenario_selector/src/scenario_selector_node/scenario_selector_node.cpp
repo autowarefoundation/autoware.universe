@@ -106,22 +106,22 @@ bool isInLane(
 bool isInParkingLot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const geometry_msgs::msg::Pose & current_pose,
-  const geometry_msgs::msg::Pose & goal_pose)
+  const geometry_msgs::msg::Point & goal_pose)
 {
   const auto & p_c = current_pose.position;
-  const auto & p_g = current_pose.position;
+  const auto & p_g = goal_pose;
   const lanelet::Point3d search_current_point(lanelet::InvalId, p_c.x, p_c.y, p_c.z);
   const lanelet::Point3d search_goal_point(lanelet::InvalId, p_g.x, p_g.y, p_g.z);
 
-  const auto nearest_parking_lot_to_goal =
+  const auto nearest_parking_lot_from_goal =
     findNearestParkinglot(lanelet_map_ptr, search_goal_point.basicPoint2d());
 
-  if (!nearest_parking_lot_to_goal) {
+  if (!nearest_parking_lot_from_goal) {
     return false;
   }
 
-  return lanelet::geometry::within(search_current_point, nearest_parking_lot->basicPolygon()) and
-    lanelet::geometry::within(search_goal_point, nearest_parking_lot->basicPolygon());
+  return lanelet::geometry::within(search_current_point, nearest_parking_lot_from_goal->basicPolygon()) and
+    lanelet::geometry::within(search_goal_point, nearest_parking_lot_from_goal->basicPolygon());
 }
 
 bool isNearTrajectoryEnd(
