@@ -12,7 +12,7 @@ L2ping is only allowed for root by default, so this package provides the followi
 - Provide a small program named `l2ping_service` which performs L2ping and provides wireless device information to `bluetooth_monitor` by using socket programming.
 - `bluetooth_monitor` is able to know wireless device information and L2ping status as an unprivileged user since those information are sent by socket communication.
 
-![a](docs/block_diagram.drawio.svg)
+![block_diagram](docs/block_diagram.drawio.svg)
 
 ## Output
 
