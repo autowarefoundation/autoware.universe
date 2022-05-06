@@ -105,19 +105,23 @@ bool isInLane(
 
 bool isInParkingLot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
-  const geometry_msgs::msg::Pose & current_pose)
+  const geometry_msgs::msg::Pose & current_pose,
+  const geometry_msgs::msg::Pose & goal_pose)
 {
-  const auto & p = current_pose.position;
-  const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
+  const auto & p_c = current_pose.position;
+  const auto & p_g = current_pose.position;
+  const lanelet::Point3d search_current_point(lanelet::InvalId, p_c.x, p_c.y, p_c.z);
+  const lanelet::Point3d search_goal_point(lanelet::InvalId, p_g.x, p_g.y, p_g.z);
 
-  const auto nearest_parking_lot =
-    findNearestParkinglot(lanelet_map_ptr, search_point.basicPoint2d());
+  const auto nearest_parking_lot_to_goal =
+    findNearestParkinglot(lanelet_map_ptr, search_goal_point.basicPoint2d());
 
-  if (!nearest_parking_lot) {
+  if (!nearest_parking_lot_to_goal) {
     return false;
   }
 
-  return lanelet::geometry::within(search_point, nearest_parking_lot->basicPolygon());
+  return lanelet::geometry::within(search_current_point, nearest_parking_lot->basicPolygon()) and
+    lanelet::geometry::within(search_goal_point, nearest_parking_lot->basicPolygon());
 }
 
 bool isNearTrajectoryEnd(
@@ -167,7 +171,7 @@ std::string ScenarioSelectorNode::selectScenarioByPosition()
 {
   const auto is_in_lane = isInLane(lanelet_map_ptr_, current_pose_->pose.position);
   const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_pose.position);
-  const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose);
+  const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose, route_->goal_pose.position);
 
   if (current_scenario_ == tier4_planning_msgs::msg::Scenario::EMPTY) {
     if (is_in_lane && is_goal_in_lane) {
@@ -186,7 +190,7 @@ std::string ScenarioSelectorNode::selectScenarioByPosition()
   }
 
   if (current_scenario_ == tier4_planning_msgs::msg::Scenario::PARKING) {
-    bool is_parking_completed{};
+    bool is_parking_completed;
     this->get_parameter<bool>("is_parking_completed", is_parking_completed);
     if (is_parking_completed && is_in_lane) {
       this->set_parameter(rclcpp::Parameter("is_parking_completed", false));
