@@ -24,6 +24,8 @@
   <depend>lanelet2_core</depend>
   <depend>lanelet2_io</depend>
 
+  <depend>eagleye_msgs</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

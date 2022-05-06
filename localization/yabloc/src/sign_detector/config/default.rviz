@@ -281,6 +281,26 @@ Visualization Manager:
       Topic: /lsd
       Value: true
       Width: 500
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz_default_plugins/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /eagleye/pose
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -327,16 +347,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 362.49853515625
+      Distance: 94.34843444824219
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 216.0383758544922
-        Y: -475.8363037109375
-        Z: -14.44079303741455
+        X: 184.48846435546875
+        Y: -364.8458251953125
+        Z: 1.3940637111663818
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -345,7 +365,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: eagleye/pose
       Value: Orbit (rviz)
-      Yaw: 3.711757183074951
+      Yaw: 3.6803946495056152
     Saved: ~
 Window Geometry:
   Displays:
