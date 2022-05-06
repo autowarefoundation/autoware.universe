@@ -397,11 +397,10 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
       continue;
     }
     autoware_auto_perception_msgs::msg::TrackedObject object;
-    
-    
     (*itr)->getTrackedObject(time, object);
     output_msg.objects.push_back(object);
   }
+  
   // Publish
   tracked_objects_pub_->publish(output_msg);
 }
