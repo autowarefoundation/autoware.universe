@@ -21,6 +21,10 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
@@ -128,7 +132,7 @@ bool BluetoothMonitor::receiveData(diagnostic_updater::DiagnosticStatusWrapper &
   return true;
 }
 
-void BluetoothMonitor::closeConnection() { close(socket_); }
+void BluetoothMonitor::closeConnection() {close(socket_);}
 
 void BluetoothMonitor::setErrorLevel(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {  // No device

@@ -36,7 +36,9 @@
 #include <sys/socket.h>
 #include <syslog.h>
 
+#include <memory>
 #include <sstream>
+#include <string>
 
 static const bdaddr_t ANY_ADDRESS = {{0, 0, 0, 0, 0, 0}};
 
@@ -83,7 +85,7 @@ bool L2pingService::initialize()
   return true;
 }
 
-void L2pingService::shutdown() { close(socket_); }
+void L2pingService::shutdown() {close(socket_);}
 
 void L2pingService::run()
 {
@@ -157,7 +159,7 @@ void L2pingService::setFunctionError(const std::string & function_name, int erro
   status_list_.clear();
 
   // Set error data
-  L2pingStatus status;
+  L2pingStatus status{};
   status.status_code = StatusCode::FUNCTION_ERROR;
   status.function_name = function_name;
   status.error_code = error_code;
@@ -206,7 +208,7 @@ bool L2pingService::buildDeviceList()
   // Loop for HCI devices
   for (int i = 0; i < hci_device_list.dev_num; ++i, ++hci_device) {
     // Build device list to ping from connected devices
-    if (!buildDeviceListFromConnectedDevices(sock, hci_device->dev_id)) return false;
+    if (!buildDeviceListFromConnectedDevices(sock, hci_device->dev_id)) {return false};
   }
 
   close(sock);
@@ -254,7 +256,8 @@ bool L2pingService::buildDeviceListFromConnectedDevices(int sock, uint16_t devic
     // Skip if device not found and wild card not specified
     if (
       std::count(config_.addresses.begin(), config_.addresses.end(), address_str) == 0 &&
-      std::count(config_.addresses.begin(), config_.addresses.end(), "*") == 0) {
+      std::count(config_.addresses.begin(), config_.addresses.end(), "*") == 0)
+    {
       continue;
     }
 
