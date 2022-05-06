@@ -1,4 +1,4 @@
-// Copyright 2015-2019 Autoware Foundation
+// Copyright 2015-2019 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -121,8 +121,8 @@ private:
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
-  double estimateCost(const geometry_msgs::msg::Pose & pose);
-  bool isGoal(const AstarNode & node);
+  double estimateCost(const geometry_msgs::msg::Pose & pose) const;
+  bool isGoal(const AstarNode & node) const;
 
   AstarNode * getNodeRef(const IndexXYT & index) { return &nodes_[index.y][index.x][index.theta]; }
 
