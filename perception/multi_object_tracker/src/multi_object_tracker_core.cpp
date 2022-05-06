@@ -375,8 +375,7 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
   const std::shared_ptr<const Tracker> tracker) const
 {
   constexpr int measurement_count_threshold = 3;
-  
-  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {   
+  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {
     return false;
   }
   return true;
@@ -395,20 +394,15 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   output_msg.header.stamp = time;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     if (!shouldTrackerPublish(*itr)) {
-      //RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), "aaaaa");
       continue;
     }
     autoware_auto_perception_msgs::msg::TrackedObject object;
     
     
     (*itr)->getTrackedObject(time, object);
-    
-
     output_msg.objects.push_back(object);
   }
-
   // Publish
-  //RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), "%s\n", output_msg.objects.c_str());
   tracked_objects_pub_->publish(output_msg);
 }
 
