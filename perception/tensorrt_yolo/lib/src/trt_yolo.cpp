@@ -257,8 +257,8 @@ Net::Net(
     std::cout << "Fail to create serialized network" << std::endl;
     return;
   }
-  engine_ =
-    unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
+  engine_ = unique_ptr<nvinfer1::ICudaEngine>(
+    runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!prepare()) {
     std::cout << "Fail to create engine" << std::endl;
     return;

@@ -109,8 +109,8 @@ bool TensorRTWrapper::parseONNX(
     std::cout << "Fail to create serialized network" << std::endl;
     return false;
   }
-  engine_ =
-    unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
+  engine_ = unique_ptr<nvinfer1::ICudaEngine>(
+    runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!engine_) {
     std::cout << "Fail to create engine" << std::endl;
     return false;

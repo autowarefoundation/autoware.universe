@@ -121,7 +121,8 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
   if (!plan) {
     return false;
   }
-  engine_ = UniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan->data(), plan->size()));
+  engine_ =
+    UniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan->data(), plan->size()));
   if (!engine_) {
     return false;
   }

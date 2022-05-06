@@ -36,8 +36,7 @@ void Net::load(const std::string & path)
   file.read(buffer, size);
   file.close();
   if (runtime_) {
-    engine_ =
-      unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(buffer, size));
+    engine_ = unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(buffer, size));
   }
   delete[] buffer;
 }
@@ -141,8 +140,8 @@ Net::Net(
     std::cout << "Fail to create serialized network" << std::endl;
     return;
   }
-  engine_ =
-    unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
+  engine_ = unique_ptr<nvinfer1::ICudaEngine>(
+    runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!engine_) {
     std::cout << "Fail to create engine" << std::endl;
     return;

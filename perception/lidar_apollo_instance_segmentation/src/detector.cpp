@@ -69,19 +69,19 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
     assert(!outfile.fail());
     outfile.write(reinterpret_cast<char *>(plan->data()), plan->size());
     outfile.close();
-    if(network) {
+    if (network) {
       delete network;
     }
-    if(parser) {
+    if (parser) {
       delete parser;
     }
-    if(builder) {
+    if (builder) {
       delete builder;
     }
-    if(config) {
+    if (config) {
       delete config;
     }
-    if(plan) {
+    if (plan) {
       delete plan;
     }
   }
