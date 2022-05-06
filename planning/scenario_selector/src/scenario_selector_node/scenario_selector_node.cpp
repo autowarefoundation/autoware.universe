@@ -120,7 +120,7 @@ bool isInParkingLot(
   }
 
   return lanelet::geometry::within(
-           search_current_point, nearest_parking_lot_from_goal->basicPolygon()) and
+           search_current_point, nearest_parking_lot_from_goal->basicPolygon()) &&
          lanelet::geometry::within(
            search_goal_point, nearest_parking_lot_from_goal->basicPolygon());
 }
