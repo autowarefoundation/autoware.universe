@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SERVICE__L2PING_HPP_
-#define SERVICE__L2PING_HPP_
+#ifndef BLUETOOTH_MONITOR__SERVICE__L2PING_HPP_
+#define BLUETOOTH_MONITOR__SERVICE__L2PING_HPP_
 
 #include "bluetooth_monitor/service/l2ping_interface.hpp"
 
@@ -131,4 +131,4 @@ protected:
   unsigned char receive_buffer_[L2CAP_CMD_HDR_SIZE + SIZE];  //!< @brief buffer to receive
 };
 
-#endif  // SERVICE__L2PING_HPP_
+#endif  // BLUETOOTH_MONITOR__SERVICE__L2PING_HPP_

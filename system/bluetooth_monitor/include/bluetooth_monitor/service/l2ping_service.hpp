@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SERVICE__L2PING_SERVICE_HPP_
-#define SERVICE__L2PING_SERVICE_HPP_
+#ifndef BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
+#define BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
 
 #include "bluetooth_monitor/service/l2ping.hpp"
 #include "bluetooth_monitor/service/l2ping_interface.hpp"
@@ -80,4 +80,4 @@ protected:
   L2pingStatusList status_list_;                  //!< @brief List of l2ping status
 };
 
-#endif  // SERVICE__L2PING_SERVICE_HPP_
+#endif  // BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_

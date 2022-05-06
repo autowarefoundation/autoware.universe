@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SERVICE__L2PING_INTERFACE_HPP_
-#define SERVICE__L2PING_INTERFACE_HPP_
+#ifndef BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
+#define BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -136,4 +136,4 @@ struct L2pingStatus
  */
 typedef std::vector<L2pingStatus> L2pingStatusList;
 
-#endif  // SERVICE__L2PING_INTERFACE_HPP_
+#endif  // BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
