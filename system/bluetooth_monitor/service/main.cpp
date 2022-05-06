@@ -32,7 +32,7 @@ void usage()
 }
 
 /**
- * @brief Maln loop
+ * @brief Main loop
  * @param [in] argc Number of arguments
  * @param [in] argv Command line arguments
  * @return 0 on success, 1 on error
