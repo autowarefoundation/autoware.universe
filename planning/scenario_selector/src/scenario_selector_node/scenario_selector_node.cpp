@@ -119,7 +119,6 @@ bool isInParkingLot(
   if (!nearest_parking_lot_from_goal) {
     return false;
   }
-
   return lanelet::geometry::within(search_current_point, nearest_parking_lot_from_goal->basicPolygon()) and
     lanelet::geometry::within(search_goal_point, nearest_parking_lot_from_goal->basicPolygon());
 }
@@ -161,7 +160,7 @@ ScenarioSelectorNode::getScenarioTrajectory(const std::string & scenario)
     return lane_driving_trajectory_;
   }
   if (scenario == tier4_planning_msgs::msg::Scenario::PARKING) {
-    return parking_trajectory_;
+    return lane_driving_trajectory_;
   }
   RCLCPP_ERROR_STREAM(this->get_logger(), "invalid scenario argument: " << scenario);
   return lane_driving_trajectory_;
