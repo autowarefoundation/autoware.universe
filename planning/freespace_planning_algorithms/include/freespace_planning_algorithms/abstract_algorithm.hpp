@@ -141,14 +141,14 @@ public:
   {
     planner_common_param_.vehicle_shape = vehicle_shape;
   }
-  bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory);
+  bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
   virtual ~AbstractPlanningAlgorithm() {}
 
 protected:
-  void computeCollisionIndexes(int theta_index, std::vector<IndexXY> & indexes);
-  bool detectCollision(const IndexXYT & base_index);
-  inline bool isOutOfRange(const IndexXYT & index)
+  void computeCollisionIndexes(int theta_index, std::vector<IndexXY> & indexes) const;
+  bool detectCollision(const IndexXYT & base_index) const;
+  inline bool isOutOfRange(const IndexXYT & index) const
   {
     if (index.x < 0 || static_cast<int>(costmap_.info.width) <= index.x) {
       return true;
@@ -158,7 +158,7 @@ protected:
     }
     return false;
   }
-  inline bool isObs(const IndexXYT & index)
+  inline bool isObs(const IndexXYT & index) const
   {
     // NOTE: Accessing by .at() instead makes 1.2 times slower here.
     // Also, boundary check is already done in isOutOfRange before calling this function.

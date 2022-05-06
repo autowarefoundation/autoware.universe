@@ -117,7 +117,7 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
 }
 
 void AbstractPlanningAlgorithm::computeCollisionIndexes(
-  int theta_index, std::vector<IndexXY> & indexes_2d)
+  int theta_index, std::vector<IndexXY> & indexes_2d) const
 {
   IndexXYT base_index{0, 0, theta_index};
   const VehicleShape & vehicle_shape = planner_common_param_.vehicle_shape;
@@ -149,7 +149,7 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   }
 }
 
-bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index)
+bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) const
 {
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
   for (const auto & coll_index_2d : coll_indexes_2d) {
@@ -167,7 +167,7 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index)
 }
 
 bool AbstractPlanningAlgorithm::hasObstacleOnTrajectory(
-  const geometry_msgs::msg::PoseArray & trajectory)
+  const geometry_msgs::msg::PoseArray & trajectory) const
 {
   for (const auto & pose : trajectory.poses) {
     const auto pose_local = global2local(costmap_, pose);
