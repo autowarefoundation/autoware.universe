@@ -400,7 +400,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     (*itr)->getTrackedObject(time, object);
     output_msg.objects.push_back(object);
   }
-  
+
   // Publish
   tracked_objects_pub_->publish(output_msg);
 }
