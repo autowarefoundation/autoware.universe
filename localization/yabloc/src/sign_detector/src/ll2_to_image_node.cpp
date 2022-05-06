@@ -44,11 +44,19 @@ private:
       return v - pose;
     };
 
-    const float max_range = 50;  // [m]
+    const float max_range = 20;  // [m]
+
     auto checkIntersection = [max_range](const Eigen::Vector3f& from, const Eigen::Vector3f& to) -> bool {
-      float mu = to.squaredNorm() / (from.dot(to));
-      Eigen::Vector3f nearest = from + to * mu;
-      return nearest.norm() < max_range;
+      // Compute distance between pose and linesegment of linestring
+      Eigen::Vector3f dir = to - from;
+      float inner = from.dot(dir);
+      if (std::abs(inner) < 1e-3f) {
+        return from.norm() < 1.42 * max_range;
+      }
+
+      float mu = std::clamp(dir.squaredNorm() / inner, 0.f, 1.0f);
+      Eigen::Vector3f nearest = from + dir * mu;
+      return nearest.norm() < 1.42 * max_range;
     };
 
     struct LineString {
@@ -60,7 +68,7 @@ private:
     std::vector<LineString> near_linestring;
 
     for (const lanelet::LineString3d& line : *visible_linestrings_) {
-      // compute distance between pose and linesegment of linestring
+
       std::optional<Eigen::Vector3f> from = std::nullopt;
       for (const lanelet::ConstPoint3d p : line) {
         Eigen::Vector3f to = toVector3f(p);
@@ -75,22 +83,23 @@ private:
       }
     }
 
-
-    cv::Mat image = cv::Mat::zeros(cv::Size{600, 600}, CV_8UC3);
+    const float max_image_size = 600;
+    cv::Mat image = cv::Mat::zeros(cv::Size{max_image_size, max_image_size}, CV_8UC3);
     // Draw image
     {
       const cv::Size center(image.cols / 2, image.rows / 2);
-      auto toCvPoint = [center](const Eigen::Vector3f v) -> cv::Point {
+      auto toCvPoint = [center, max_range](const Eigen::Vector3f v) -> cv::Point {
         cv::Point pt;
-        pt.x = -v.x() / 30 * 600 + center.width;
-        pt.y = -v.y() / 30 * 600 + center.height;
+        pt.x = -v.x() / max_range * center.width + center.width;
+        pt.y = -v.y() / max_range * center.height + center.height;
         return pt;
       };
 
-      for (const LineString& ls : near_linestring) {
-        cv::line(image, toCvPoint(ls.from), toCvPoint(ls.to), cv::Scalar(0, 0, 255), 2, cv::LineTypes::LINE_8);
-      }
+      for (const LineString& ls : near_linestring)
+        cv::line(image, toCvPoint(ls.from), toCvPoint(ls.to), cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
+      cv::circle(image, center, 5, cv::Scalar(0, 255, 0), -1);
     }
+
 
     // Publish
     publishImage(image, this->get_clock()->now());
