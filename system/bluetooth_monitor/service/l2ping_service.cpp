@@ -209,8 +209,8 @@ bool L2pingService::buildDeviceList()
   for (int i = 0; i < hci_device_list.dev_num; ++i, ++hci_device) {
     // Build device list to ping from connected devices
     if (!buildDeviceListFromConnectedDevices(sock, hci_device->dev_id)) {
-      return false
-    };
+      return false;
+    }
   }
 
   close(sock);

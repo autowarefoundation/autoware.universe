@@ -263,8 +263,8 @@ bool L2ping::ping()
     // Try next send
     sleep(config_.delay);
     if (++id > 254) {
-      id = IDENTIFIER
-    };
+      id = IDENTIFIER;
+    }
   }
 }
 
