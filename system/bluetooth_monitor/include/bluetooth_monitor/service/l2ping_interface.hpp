@@ -48,7 +48,7 @@ struct L2pingConfig
    * @note NOLINT syntax is needed since this is an interface to serialization and
    * used inside boost serialization.
    */
-  template<typename archive>
+  template <typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
     ar & delay;
@@ -73,7 +73,7 @@ struct L2pingServiceConfig
    * @note NOLINT syntax is needed since this is an interface to serialization and
    * used inside boost serialization.
    */
-  template<typename archive>
+  template <typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
     ar & l2ping;
@@ -84,8 +84,7 @@ struct L2pingServiceConfig
 /**
  * @brief Status code of a device
  */
-enum class StatusCode
-{
+enum class StatusCode {
   OK = 0,
   RTT_WARNING = 1,
   VERIFY_ERROR = 2,
@@ -117,7 +116,7 @@ struct L2pingStatus
    * @note NOLINT syntax is needed since this is an interface to serialization and
    * used inside boost serialization.
    */
-  template<typename archive>
+  template <typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
     ar & status_code;

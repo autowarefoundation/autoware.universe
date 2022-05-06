@@ -165,7 +165,7 @@ bool L2ping::initialize()
   return true;
 }
 
-void L2ping::shutdown() {close(socket_);}
+void L2ping::shutdown() { close(socket_); }
 
 bool L2ping::ping()
 {
@@ -359,6 +359,6 @@ void L2ping::setStatusCode(StatusCode code)
   status_.error_code = 0;
 }
 
-L2pingStatus L2ping::getStatus() const {return status_;}
+L2pingStatus L2ping::getStatus() const { return status_; }
 
-const std::string & L2ping::getAddress() const {return status_.address;}
+const std::string & L2ping::getAddress() const { return status_.address; }
