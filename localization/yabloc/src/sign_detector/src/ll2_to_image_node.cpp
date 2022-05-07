@@ -90,7 +90,7 @@ private:
       const cv::Size center(image.cols / 2, image.rows / 2);
       auto toCvPoint = [center, max_range](const Eigen::Vector3f v) -> cv::Point {
         cv::Point pt;
-        pt.x = -v.x() / max_range * center.width + center.width;
+        pt.x = v.x() / max_range * center.width + center.width;
         pt.y = -v.y() / max_range * center.height + center.height;
         return pt;
       };

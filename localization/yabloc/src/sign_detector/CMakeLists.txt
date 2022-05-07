@@ -17,6 +17,7 @@ ament_auto_find_build_dependencies()
 
 find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(Sophus REQUIRED)
 
 # ===================================================
 # OpenCV
@@ -31,6 +32,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${SOPHUS_INCLUDE_DIRS}
 )
 
 # ===================================================
@@ -75,6 +77,11 @@ target_link_libraries(pose_to_path_node)
 ament_auto_add_executable(ll2_to_image_node src/ll2_to_image_node.cpp)
 target_include_directories(ll2_to_image_node PUBLIC include)
 target_link_libraries(ll2_to_image_node ll2_util Geographic)
+
+ament_auto_add_executable(imu_kf_node src/imu_kf_node.cpp)
+target_include_directories(imu_kf_node PUBLIC include)
+target_link_libraries(imu_kf_node)
+target_compile_definitions(imu_kf_node PUBLIC SOPHUS_USE_BASIC_LOGGING=1)
 
 # ===================================================
 # Python
