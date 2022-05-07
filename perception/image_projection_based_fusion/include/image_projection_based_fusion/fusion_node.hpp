@@ -20,8 +20,8 @@
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
@@ -29,7 +29,6 @@
 #include <message_filters/synchronizer.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-
 
 #include <map>
 #include <memory>
@@ -43,7 +42,7 @@ using autoware_auto_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 
-template <class Msg,class ObjType>
+template <class Msg, class ObjType>
 class FusionNode : public rclcpp::Node
 {
 public:

@@ -24,7 +24,7 @@
 namespace image_projection_based_fusion
 {
 
-class RoiDetectedObjectFusionNode : public FusionNode<DetectedObjects,DetectedObject>
+class RoiDetectedObjectFusionNode : public FusionNode<DetectedObjects, DetectedObject>
 {
 public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
