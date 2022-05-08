@@ -6,7 +6,10 @@
   <description>The pose_initializer package</description>
   <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
   <license>Apache License 2.0</license>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>

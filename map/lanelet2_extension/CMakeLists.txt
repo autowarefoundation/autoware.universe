@@ -1,18 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(lanelet2_extension)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 find_package(PkgConfig)
 find_path(GeographicLib_INCLUDE_DIR GeographicLib/Config.h
@@ -57,13 +47,6 @@ target_link_libraries(lanelet2_extension_lib
   ${GeographicLib_LIBRARIES}
 )
 
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(lanelet2_extension_lib PUBLIC
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
 ament_auto_add_executable(lanelet2_extension_sample src/sample_code.cpp)
 add_dependencies(lanelet2_extension_sample lanelet2_extension_lib)
 target_link_libraries(lanelet2_extension_sample
@@ -79,7 +62,6 @@ target_link_libraries(autoware_lanelet2_validation
 )
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(message_conversion-test test/src/test_message_conversion.cpp)
   target_link_libraries(message_conversion-test lanelet2_extension_lib)
   ament_add_gtest(projector-test test/src/test_projector.cpp)
@@ -90,8 +72,6 @@ if(BUILD_TESTING)
   target_link_libraries(regulatory_elements-test lanelet2_extension_lib)
   ament_add_gtest(utilities-test test/src/test_utilities.cpp)
   target_link_libraries(utilities-test lanelet2_extension_lib)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
 endif()
 
 ament_auto_package()

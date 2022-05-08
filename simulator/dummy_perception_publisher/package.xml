@@ -4,12 +4,12 @@
   <name>dummy_perception_publisher</name>
   <version>0.1.0</version>
   <description>The dummy_perception_publisher package</description>
-
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <build_depend>autoware_cmake</build_depend>
   <build_depend>rosidl_default_generators</build_depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
