@@ -1,39 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <arg name="vehicle_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml" description="path to the file of vehicle info yaml"/>
+  <arg name="vehicle_model" default="sample_vehicle"/>
   <arg name="use_pointcloud_container" default="false" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
   <arg name="use_concat_filter" default="true"/>
   <!-- common parameters -->
   <arg name="input/pointcloud" default="/sensing/lidar/concatenated/pointcloud" description="The topic will be used in the detection module"/>
-  <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
-  <arg name="image_raw0" default="/front_image" description="image raw topic name"/>
+  <arg name="mode" default="lidar" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
+  <arg name="image_raw0" default="/front_camera" description="image raw topic name"/>
   <arg name="camera_info0" default="/front_cam_info" description="camera info topic name"/>
-  <arg name="image_raw1" default="/front_left_image"/>
+  <arg name="image_raw1" default="/front_left_camera"/>
   <arg name="camera_info1" default="/front_left_cam_info"/>
-  <arg name="image_raw2" default="/front_right_image"/>
+  <arg name="image_raw2" default="/front_right_camera"/>
   <arg name="camera_info2" default="/front_right_cam_info"/>
-  <arg name="image_raw3" default="/side_left_image"/>
+  <arg name="image_raw3" default="/side_left_camera"/>
   <arg name="camera_info3" default="/side_left_cam_info"/>
-  <arg name="image_raw4" default="/side_right_image"/>
+  <arg name="image_raw4" default="/side_right_camera"/>
   <arg name="camera_info4" default="/side_right_cam_info"/>
-  <arg name="image_number" default="2" description="choose image raw number(0-5)"/>
-  <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
+  <arg name="image_number" default="1" description="choose image raw number(0-5)"/>
+  <arg name="use_vector_map" default="false" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="false" description="use pointcloud map in detection"/>
 
+  <!--   Global parameters -->
+  <!--   Do not add "group" in order to propagate global parameters -->
+  <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
+    <arg name="use_sim_time" value="false"/>
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+  </include>
   <!--  &lt;!&ndash; Pointcloud container &ndash;&gt;-->
   <!--  <group>-->
-  <!--    <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py"-->
-  <!--             if="$(var use_pointcloud_container)">-->
-  <!--      <arg name="use_multithread" value="true"/>-->
-  <!--      <arg name="container_name" value="$(var pointcloud_container_name)"/>-->
+  <!--    <include file="$(find-pkg-share benchmarking_launch)/launch/static_transforms.launch.py">-->
+
   <!--    </include>-->
   <!--  </group>-->
 
   <include file="$(find-pkg-share benchmarking_launch)/launch/pointcloud_container.launch.py">
     <arg name="base_frame" value="base_link"/>
-    <arg name="use_intra_process" value="true"/>
-    <arg name="use_multithread" value="true"/>
+    <!--    <arg name="use_intra_process" value="true"/>-->
+    <!--    <arg name="use_multithread" value="true"/>-->
     <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
     <arg name="container_name" value="$(var pointcloud_container_name)"/>
   </include>
@@ -96,13 +101,12 @@
         <push-ros-namespace namespace="tracking"/>
         <include file="$(find-pkg-share benchmarking_launch)/launch/object_recognition/tracking/tracking.launch.xml"/>
       </group>
-      <!-- prediction module -->
-      <group>
-        <push-ros-namespace namespace="prediction"/>
-        <include file="$(find-pkg-share benchmarking_launch)/launch/object_recognition/prediction/prediction.launch.xml">
-          <arg name="use_vector_map" value="$(var use_vector_map)"/>
-        </include>
-      </group>
+    </group>
+
+    <!-- Tools -->
+    <group>
+      <!-- Rviz -->
+      <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share benchmarking_launch)/rviz/waymo.rviz"/>
     </group>
   </group>
 </launch>

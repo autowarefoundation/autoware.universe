@@ -1,3 +1,4 @@
 /**:
   ros__parameters:
-    file_path: "/home/kaan/datasets/training_training_0000/segment-1022527355599519580_4866_960_4886_960_with_camera_labels.tfrecord"
+    prediction_path: "/home/kaan/projects/autoware/src/universe/autoware/benchmarking/perception_benchmark_tool/benchmarking_result/predictions_6.bin"
+    ground_truth_path: "/home/kaan/projects/autoware/src/universe/autoware/benchmarking/perception_benchmark_tool/benchmarking_result/gt_6.bin"

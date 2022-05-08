@@ -1,5 +1,5 @@
 <launch>
-  <arg name="image_raw0" default="/image_raw0"/>
+  <arg name="image_raw0" default="/front_camera"/>
   <arg name="image_raw1" default=""/>
   <arg name="image_raw2" default=""/>
   <arg name="image_raw3" default=""/>

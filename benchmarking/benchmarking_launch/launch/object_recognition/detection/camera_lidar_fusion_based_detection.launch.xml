@@ -26,8 +26,7 @@
 
   <group>
     <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
-      <arg name="image_raw0" value="/front_image"/>
-      <!--      <arg name="image_raw0" value="$(var image_raw0)"/>-->
+      <arg name="image_raw0" value="$(var image_raw0)"/>
       <arg name="image_raw1" value="$(var image_raw1)"/>
       <arg name="image_raw2" value="$(var image_raw2)"/>
       <arg name="image_raw3" value="$(var image_raw3)"/>
@@ -38,9 +37,6 @@
       <arg name="image_number" value="$(var image_number)"/>
     </include>
   </group>
-  <!--  <group>-->
-  <!--    <include file="$(find-pkg-share tensorrt_yolo)/launch/tensorrt_yolo.launch.xml"></include>-->
-  <!--  </group>-->
 
   <!-- Pointcloud map filter -->
   <group>
@@ -61,7 +57,7 @@
       <arg name="output_clusters" value="clusters"/>
       <arg name="use_pointcloud_map" value="false"/>
     </include>
-    <include file="$(find-pkg-share roi_cluster_fusion)/launch/roi_cluster_fusion.launch.xml">
+    <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_cluster_fusion.launch.xml">
       <arg name="input/camera_info0" value="$(var camera_info0)"/>
       <arg name="input/rois0" value="/perception/object_recognition/detection/rois0"/>
       <arg name="input/camera_info1" value="$(var camera_info1)"/>
@@ -72,6 +68,12 @@
       <arg name="input/rois3" value="/perception/object_recognition/detection/rois3"/>
       <arg name="input/camera_info4" value="$(var camera_info4)"/>
       <arg name="input/rois4" value="/perception/object_recognition/detection/rois4"/>
+      <arg name="input/camera_info5" value="$(var camera_info5)"/>
+      <arg name="input/rois5" value="/perception/object_recognition/detection/rois5"/>
+      <arg name="input/camera_info6" value="$(var camera_info6)"/>
+      <arg name="input/rois6" value="/perception/object_recognition/detection/rois6"/>
+      <arg name="input/camera_info7" value="$(var camera_info7)"/>
+      <arg name="input/rois7" value="/perception/object_recognition/detection/rois7"/>
       <arg name="input/rois_number" value="$(var image_number)"/>
       <arg name="input/clusters" value="clusters"/>
       <arg name="input/image0" value="$(var image_raw0)"/>
@@ -79,8 +81,10 @@
       <arg name="input/image2" value="$(var image_raw2)"/>
       <arg name="input/image3" value="$(var image_raw3)"/>
       <arg name="input/image4" value="$(var image_raw4)"/>
-      <arg name="output" value="camera_lidar_fusion/clusters"/>
-      <arg name="debug_mode" value="true"/>
+      <arg name="input/image5" value="$(var image_raw5)"/>
+      <arg name="input/image6" value="$(var image_raw6)"/>
+      <arg name="input/image7" value="$(var image_raw7)"/>
+      <arg name="output/clusters" value="camera_lidar_fusion/clusters"/>
     </include>
     <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
       <arg name="input/objects" value="camera_lidar_fusion/clusters"/>

@@ -13,7 +13,12 @@
   <test_depend>python3-pytest</test_depend>
 
   <exec_depend>autoware_auto_perception_msgs</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
   <exec_depend>tier4_perception_msgs</exec_depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
 
   <export>
     <build_type>ament_python</build_type>
