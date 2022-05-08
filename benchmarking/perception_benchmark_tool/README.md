@@ -82,3 +82,6 @@ Waymo Dataset has so strict tracking evaluation IoU scores. (Vehicle: 0.7 , Pede
 For this reason with given default values, pedestrians and cyclists do not match our perception pipeline.
 
 For more realistic results we need to change IoU scores from the Waymo evaluation config.
+
+![Screenshot from 2022-05-09 01-10-48](https://user-images.githubusercontent.com/12658936/167317879-fd1777c3-e7d4-4492-9108-673f9a2f774b.png)
+
