@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import launch
-import yaml
 from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition
@@ -24,6 +23,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
+import yaml
 
 
 def launch_setup(context, *args, **kwargs):
