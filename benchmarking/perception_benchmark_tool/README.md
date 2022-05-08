@@ -88,5 +88,5 @@ For more realistic results for pedestrians, we need to change the bounding box d
 ![Screenshot from 2022-05-09 01-10-48](https://user-images.githubusercontent.com/12658936/167317879-fd1777c3-e7d4-4492-9108-673f9a2f774b.png)
 
 ### lidar_apollo_instance_segmentation
-![Screenshot from 2022-05-09 02-05-03](https://user-images.githubusercontent.com/12658936/167319631-aa8a7f01-88d9-4db0-8e30-ae5013359a12.png)
 
+![Screenshot from 2022-05-09 02-05-03](https://user-images.githubusercontent.com/12658936/167319631-aa8a7f01-88d9-4db0-8e30-ae5013359a12.png)
