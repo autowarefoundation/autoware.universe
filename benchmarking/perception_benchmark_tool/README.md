@@ -81,6 +81,12 @@ In our perception pipeline, we assumed the width and length of pedestrians to be
 Waymo Dataset has so strict tracking evaluation IoU scores. (Vehicle: 0.7 , Pedestrian and Cyclist: 0.5).
 For this reason with given default values, pedestrians and cyclists do not match our perception pipeline.
 
-For more realistic results we need to change IoU scores from the Waymo evaluation config.
+For more realistic results for pedestrians, we need to change the bounding box description of pedestrians.
+
+### lidar_centerpoint
 
 ![Screenshot from 2022-05-09 01-10-48](https://user-images.githubusercontent.com/12658936/167317879-fd1777c3-e7d4-4492-9108-673f9a2f774b.png)
+
+### lidar_apollo_instance_segmentation
+![Screenshot from 2022-05-09 02-05-03](https://user-images.githubusercontent.com/12658936/167319631-aa8a7f01-88d9-4db0-8e30-ae5013359a12.png)
+
