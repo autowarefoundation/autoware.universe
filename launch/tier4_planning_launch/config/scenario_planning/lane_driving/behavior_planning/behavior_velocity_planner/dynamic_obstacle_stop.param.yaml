@@ -1,7 +1,6 @@
 /**:
   ros__parameters:
     dynamic_obstacle_stop:
-      detection_method: "Object"  # [-] candidate: Object, ObjectWithoutPath, Points
       use_partition_lanelet: true # [-] whether to use partition lanelet map data
       specify_decel_jerk: false   # [-] whether to specify jerk when ego decelerates
       stop_margin: 2.5            # [m] the vehicle decelerates to be able to stop with this margin

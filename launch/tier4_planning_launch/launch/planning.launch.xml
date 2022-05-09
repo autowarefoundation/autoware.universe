@@ -4,7 +4,7 @@
   <arg name="vehicle_info_param_file"/>
 
   <!-- pointcloud container -->
-  <arg name="use_pointcloud_container" default="true" description="launch pointcloud container"/>
+  <arg name="use_pointcloud_container" default="false"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
 
   <group>

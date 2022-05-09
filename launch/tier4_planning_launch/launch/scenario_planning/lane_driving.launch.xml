@@ -4,8 +4,8 @@
   <arg name="vehicle_info_param_file"/>
 
   <!-- pointcloud container -->
-  <arg name="use_pointcloud_container" default="true" description="launch pointcloud container"/>
-  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+  <arg name="use_pointcloud_container"/>
+  <arg name="pointcloud_container_name"/>
 
   <!-- lane_driving scenario -->
   <group>
@@ -13,17 +13,22 @@
     <!-- behavior planning module -->
     <group>
       <push-ros-namespace namespace="behavior_planning"/>
+      <arg name="detection_method" default="Object" description="options: `Object`, `ObjectWithoutPath` or `Points`"/>
+
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.py">
         <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
         <arg name="use_multithread" value="true"/>
+        <arg name="detection_method" value="$(var detection_method)"/>
       </include>
 
-      <!-- compare map module -->
-      <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/compare_map.launch.py">
-        <arg name="use_multithread" value="true"/>
-        <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
-        <arg name="container_name" value="$(var pointcloud_container_name)"/>
-      </include>
+      <!-- launch compare map filter if the mode is Points-->
+      <group if="$(eval '&quot;$(var detection_method)&quot;==&quot;Points&quot;')">
+        <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/compare_map.launch.py">
+          <arg name="use_multithread" value="true"/>
+          <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
+          <arg name="container_name" value="$(var pointcloud_container_name)"/>
+        </include>
+      </group>
     </group>
 
     <!-- motion planning module -->

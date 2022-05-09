@@ -401,6 +401,7 @@ def launch_setup(context, *args, **kwargs):
                 "backward_path_length": 5.0,
                 "max_accel": -2.8,
                 "delay_response_time": 1.3,
+                "detection_method": LaunchConfiguration("detection_method"),
             },
             common_param,
             base_param,
@@ -479,6 +480,9 @@ def generate_launch_description():
     # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
+
+    # detection method for dynamic obstacle stop module
+    add_launch_arg("detection_method", "Object")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
