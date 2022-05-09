@@ -19,6 +19,9 @@
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <string>
+#include <vector>
+
 namespace behavior_velocity_planner
 {
 namespace dynamic_obstacle_stop_utils
@@ -166,7 +169,7 @@ Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
 std::vector<geometry_msgs::msg::Pose> getHighestConfidencePath(
-  const std::vector<DynamicObstacle::PredictedPath> & predicted_paths);
+  const std::vector<PredictedPath> & predicted_paths);
 
 // apply linear interpolation to position
 geometry_msgs::msg::Pose lerpByPose(

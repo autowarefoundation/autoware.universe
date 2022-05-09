@@ -18,8 +18,6 @@
 #include "utilization/trajectory_utils.hpp"
 #include "utilization/util.hpp"
 
-#include <pcl/filters/voxel_grid.h>
-
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -27,9 +25,11 @@ namespace bg = boost::geometry;
 DynamicObstacleStopModule::DynamicObstacleStopModule(
   const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
+  std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
   const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   planner_param_(planner_param),
+  dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
   debug_ptr_(debug_ptr)
 {
   if (planner_param.dynamic_obstacle_stop.use_partition_lanelet) {
@@ -68,17 +68,13 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     extended_smoothed_path, current_pose, trim_distance);
 
   // create abstracted dynamic obstacles from objects or points
-  const auto dynamic_obstacles = createDynamicObstacles(
-    *planner_data_->predicted_objects, planner_data_->compare_map_filtered_pointcloud,
-    trim_smoothed_path, current_pose, planner_param_.dynamic_obstacle_stop.detection_method);
-  if (!dynamic_obstacles) {
-    return true;
-  }
-  debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles->size());
+  dynamic_obstacle_creator_->setData(*planner_data_, *path);
+  const auto dynamic_obstacles = dynamic_obstacle_creator_->createDynamicObstacles();
+  debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
 
   // extract obstacles using lanelet information
   const auto partition_excluded_obstacles =
-    excludeObstaclesOutSideOfPartition(dynamic_obstacles.get(), trim_smoothed_path, current_pose);
+    excludeObstaclesOutSideOfPartition(dynamic_obstacles, trim_smoothed_path, current_pose);
 
   // timer starts
   const auto t1 = std::chrono::system_clock::now();
@@ -107,111 +103,11 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
     applyMaxJerkLimit(current_pose, current_vel, current_acc, *path);
   }
 
+  visualizeDetectionArea(trim_smoothed_path);
   publishDebugValue(
     trim_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
 
   return true;
-}
-
-// create dynamic obstacles for each method
-boost::optional<std::vector<DynamicObstacle>> DynamicObstacleStopModule::createDynamicObstacles(
-  const PredictedObjects & predicted_objects,
-  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & points, const PathWithLaneId & path,
-  const geometry_msgs::msg::Pose & current_pose, const std::string & detection_method) const
-{
-  using dynamic_obstacle_stop_utils::DetectionMethod;
-  const auto detection_method_enum = dynamic_obstacle_stop_utils::toEnum(detection_method);
-
-  switch (detection_method_enum) {
-    // create dynamic obstacles from objects
-    case DetectionMethod::Object: {
-      return createDynamicObstaclesFromObjects(predicted_objects);
-    }
-
-    // create dynamic obstacles from objects
-    // but overwrite the predicted path to run straight to the path for ego
-    case DetectionMethod::ObjectWithoutPath: {
-      visualizeDetectionArea(path);
-      return createDynamicObstaclesFromObjects(predicted_objects, path);
-    }
-
-    // create dynamic obstacles from points
-    // predicted path that runs straight to the path for ego is created
-    case DetectionMethod::Points: {
-      visualizeDetectionArea(path);
-      const auto voxel_grid_filtered_points = applyVoxelGridFilter(points);
-      // todo: extract points with triangle shaped detection area
-      const auto extracted_points =
-        extractObstaclePointsWithRectangle(voxel_grid_filtered_points, current_pose);
-      return createDynamicObstaclesFromPoints(extracted_points, path);
-    }
-
-    default: {
-      RCLCPP_WARN_STREAM(logger_, "detection method is invalid.");
-      return {};
-    }
-  }
-}
-
-std::vector<DynamicObstacle> DynamicObstacleStopModule::createDynamicObstaclesFromPoints(
-  const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud, const PathWithLaneId & path) const
-{
-  std::vector<DynamicObstacle> dynamic_obstacles{};
-  for (const auto & p : obstacle_pointcloud) {
-    const auto ros_point = tier4_autoware_utils::createPoint(p.x, p.y, p.z);
-    DynamicObstacle dynamic_obstacle(planner_param_.dynamic_obstacle);
-    dynamic_obstacle.createDynamicObstacle(ros_point, path);
-    dynamic_obstacles.emplace_back(dynamic_obstacle);
-  }
-
-  return dynamic_obstacles;
-}
-
-std::vector<DynamicObstacle> DynamicObstacleStopModule::createDynamicObstaclesFromObjects(
-  const PredictedObjects & predicted_objects, const PathWithLaneId & path) const
-{
-  std::vector<DynamicObstacle> dynamic_obstacles;
-  for (const auto & object : predicted_objects.objects) {
-    DynamicObstacle dynamic_obstacle(planner_param_.dynamic_obstacle);
-    dynamic_obstacle.createDynamicObstacle(object, path);
-
-    dynamic_obstacles.emplace_back(dynamic_obstacle);
-  }
-
-  return dynamic_obstacles;
-}
-
-std::vector<DynamicObstacle> DynamicObstacleStopModule::createDynamicObstaclesFromObjects(
-  const PredictedObjects & predicted_objects) const
-{
-  std::vector<DynamicObstacle> dynamic_obstacles;
-  for (const auto & object : predicted_objects.objects) {
-    DynamicObstacle dynamic_obstacle(planner_param_.dynamic_obstacle);
-    dynamic_obstacle.createDynamicObstacle(object);
-
-    dynamic_obstacles.emplace_back(dynamic_obstacle);
-  }
-
-  return dynamic_obstacles;
-}
-
-pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::applyVoxelGridFilter(
-  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_points) const
-{
-  auto no_height_points = *input_points;
-  for (auto & p : no_height_points) {
-    p.z = 0.0;
-  }
-
-  // use boost::makeshared instead of std beacause filter.setInputCloud requires boost shared ptr
-  pcl::VoxelGrid<pcl::PointXYZ> filter;
-  filter.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
-  filter.setLeafSize(0.05f, 0.05f, 100000.0f);
-
-  pcl::PointCloud<pcl::PointXYZ> output_points;
-  filter.filter(output_points);
-
-  return output_points;
 }
 
 pcl::PointCloud<pcl::PointXYZ> DynamicObstacleStopModule::extractObstaclePointsWithRectangle(
@@ -493,7 +389,7 @@ std::vector<DynamicObstacle> DynamicObstacleStopModule::checkCollisionWithObstac
 // calculate the predicted pose of the obstacle on the predicted path with given travel time
 // assume that the obstacle moves with constant velocity
 boost::optional<geometry_msgs::msg::Pose> DynamicObstacleStopModule::calcPredictedObstaclePose(
-  const std::vector<DynamicObstacle::PredictedPath> & predicted_paths, const float travel_time,
+  const std::vector<PredictedPath> & predicted_paths, const float travel_time,
   const float velocity_mps) const
 {
   // use the path that has highest confidence for now

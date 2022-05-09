@@ -42,6 +42,7 @@ public:
   DynamicObstacleStopModule(
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
+    std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
     const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr,
     const rclcpp::Clock::SharedPtr clock);
 
@@ -61,6 +62,7 @@ private:
   State state_{State::GO};
   rclcpp::Time stop_time_;
   BasicPolygons2d partition_lanelets_;
+  std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator_;
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
 
   // Function
@@ -110,7 +112,7 @@ private:
     std::vector<DynamicObstacle> & dynamic_obstacles) const;
 
   boost::optional<geometry_msgs::msg::Pose> calcPredictedObstaclePose(
-    const std::vector<DynamicObstacle::PredictedPath> & predicted_paths, const float travel_time,
+    const std::vector<PredictedPath> & predicted_paths, const float travel_time,
     const float velocity_mps) const;
 
   bool checkCollisionWithShape(

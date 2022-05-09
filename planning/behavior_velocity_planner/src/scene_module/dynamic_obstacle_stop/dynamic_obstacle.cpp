@@ -14,6 +14,8 @@
 
 #include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
 
+#include <pcl/filters/voxel_grid.h>
+
 namespace behavior_velocity_planner
 {
 namespace
@@ -33,95 +35,11 @@ geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
 
   return tier4_autoware_utils::createQuaternionFromYaw(azimuth_angle);
 }
-}  // namespace
-
-DynamicObstacle::DynamicObstacle() {}
-DynamicObstacle::DynamicObstacle(const DynamicObstacleParam & param) { param_ = param; }
-
-void DynamicObstacle::createDynamicObstacle(
-  const geometry_msgs::msg::Point & point, const PathWithLaneId & path)
-{
-  // create pose facing the direction of the lane
-  pose.position = point;
-  pose.orientation = createQuaternionFacingToTrajectory(path.points, pose.position);
-
-  min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
-  max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
-
-  // create classification of points as pedestrian
-  ObjectClassification classification;
-  classification.label = ObjectClassification::PEDESTRIAN;
-  classification.probability = 1.0;
-  classifications.emplace_back(classification);
-
-  // create shape of points as cylinder
-  shape.type = Shape::CYLINDER;
-  shape.dimensions.x = param_.diameter;
-  shape.dimensions.y = param_.diameter;
-  shape.dimensions.z = param_.height;
-
-  // create predicted path of points
-  PredictedPath predicted_path;
-  predicted_path.path =
-    createPredictedPath(pose, param_.time_step, max_velocity_mps, param_.path_size);
-  predicted_path.confidence = 1.0;
-  predicted_paths.emplace_back(predicted_path);
-}
-
-// overwrite path of objects to run straight to the lane
-void DynamicObstacle::createDynamicObstacle(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const PathWithLaneId & path)
-{
-  const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
-
-  // create pose facing the direction of the lane
-  pose.position = object_pose.position;
-  pose.orientation = createQuaternionFacingToTrajectory(path.points, pose.position);
-
-  // assume min and max velocity is value specified in param
-  min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
-  max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
-
-  // use classification of objects
-  classifications = object.classification;
-
-  // use shape of objects
-  shape = object.shape;
-
-  // replace predicted path with path that runs straight to lane
-  PredictedPath predicted_path;
-  predicted_path.path =
-    createPredictedPath(pose, param_.time_step, max_velocity_mps, param_.path_size);
-  predicted_path.confidence = 1.0;
-  predicted_paths.emplace_back(predicted_path);
-}
-
-void DynamicObstacle::createDynamicObstacle(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object)
-{
-  pose = object.kinematics.initial_pose_with_covariance.pose;
-
-  // TODO(Tomohito Ando): calculate from velocity and covariance of object
-  min_velocity_mps = param_.min_vel_kmph / 3.6;
-  max_velocity_mps = param_.max_vel_kmph / 3.6;
-  classifications = object.classification;
-  shape = object.shape;
-
-  // get predicted paths of objects
-  for (const auto & path : object.kinematics.predicted_paths) {
-    PredictedPath predicted_path;
-    predicted_path.confidence = path.confidence;
-    predicted_path.path.resize(path.path.size());
-    std::copy(path.path.cbegin(), path.path.cend(), predicted_path.path.begin());
-
-    predicted_paths.emplace_back(predicted_path);
-  }
-}
 
 // create predicted path assuming that obstacles move with constant velocity
-std::vector<geometry_msgs::msg::Pose> DynamicObstacle::createPredictedPath(
+std::vector<geometry_msgs::msg::Pose> createPredictedPath(
   const geometry_msgs::msg::Pose & initial_pose, const float time_step,
-  const float max_velocity_mps, const size_t path_size) const
+  const float max_velocity_mps, const size_t path_size)
 {
   std::vector<geometry_msgs::msg::Pose> path_points;
   for (size_t i = 0; i < path_size; i++) {
@@ -132,5 +50,166 @@ std::vector<geometry_msgs::msg::Pose> DynamicObstacle::createPredictedPath(
   }
 
   return path_points;
+}
+
+pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
+  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_points)
+{
+  auto no_height_points = *input_points;
+  for (auto & p : no_height_points) {
+    p.z = 0.0;
+  }
+
+  // use boost::makeshared instead of std beacause filter.setInputCloud requires boost shared ptr
+  pcl::VoxelGrid<pcl::PointXYZ> filter;
+  filter.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
+  filter.setLeafSize(0.05f, 0.05f, 100000.0f);
+
+  pcl::PointCloud<pcl::PointXYZ> output_points;
+  filter.filter(output_points);
+
+  return output_points;
+}
+}  // namespace
+
+DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(rclcpp::Node & node)
+: DynamicObstacleCreator(node)
+{
+}
+
+std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObstacles() const
+{
+  // create dynamic obstacles from predicted objects
+  std::vector<DynamicObstacle> dynamic_obstacles;
+  for (const auto & predicted_object : dynamic_obstacle_data_.predicted_objects.objects) {
+    DynamicObstacle dynamic_obstacle;
+    dynamic_obstacle.pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+
+    // TODO(Tomohito Ando): calculate velocity from covariance of predicted_object
+    dynamic_obstacle.min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
+    dynamic_obstacle.max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
+    dynamic_obstacle.classifications = predicted_object.classification;
+    dynamic_obstacle.shape = predicted_object.shape;
+
+    // get predicted paths of predicted_objects
+    for (const auto & path : predicted_object.kinematics.predicted_paths) {
+      PredictedPath predicted_path;
+      predicted_path.confidence = path.confidence;
+      predicted_path.path.resize(path.path.size());
+      std::copy(path.path.cbegin(), path.path.cend(), predicted_path.path.begin());
+
+      dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
+    }
+
+    dynamic_obstacles.emplace_back(dynamic_obstacle);
+  }
+
+  return dynamic_obstacles;
+}
+
+DynamicObstacleCreatorForObjectWithoutPath::DynamicObstacleCreatorForObjectWithoutPath(
+  rclcpp::Node & node)
+: DynamicObstacleCreator(node)
+{
+}
+
+std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createDynamicObstacles()
+  const
+{
+  std::vector<DynamicObstacle> dynamic_obstacles;
+
+  for (const auto & predicted_object : dynamic_obstacle_data_.predicted_objects.objects) {
+    DynamicObstacle dynamic_obstacle;
+    dynamic_obstacle.pose.position =
+      predicted_object.kinematics.initial_pose_with_covariance.pose.position;
+    dynamic_obstacle.pose.orientation = createQuaternionFacingToTrajectory(
+      dynamic_obstacle_data_.path.points, dynamic_obstacle.pose.position);
+
+    dynamic_obstacle.min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
+    dynamic_obstacle.max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
+    dynamic_obstacle.classifications = predicted_object.classification;
+    dynamic_obstacle.shape = predicted_object.shape;
+
+    // replace predicted path with path that runs straight to lane
+    PredictedPath predicted_path;
+    predicted_path.path = createPredictedPath(
+      dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps, param_.path_size);
+    predicted_path.confidence = 1.0;
+    dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
+
+    dynamic_obstacles.emplace_back(dynamic_obstacle);
+  }
+
+  return dynamic_obstacles;
+}
+
+DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(rclcpp::Node & node)
+: DynamicObstacleCreator(node), tf_buffer_(node.get_clock()), tf_listener_(tf_buffer_)
+{
+  using std::placeholders::_1;
+  sub_compare_map_filtered_pointcloud_ = node.create_subscription<sensor_msgs::msg::PointCloud2>(
+    "~/input/compare_map_filtered_pointcloud", rclcpp::SensorDataQoS(),
+    std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
+}
+
+std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles() const
+{
+  std::vector<DynamicObstacle> dynamic_obstacles;
+  for (const auto & point : dynamic_obstacle_data_.compare_map_filtered_pointcloud) {
+    DynamicObstacle dynamic_obstacle;
+
+    // create pose facing the direction of the lane
+    dynamic_obstacle.pose.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
+    dynamic_obstacle.pose.orientation = createQuaternionFacingToTrajectory(
+      dynamic_obstacle_data_.path.points, dynamic_obstacle.pose.position);
+
+    dynamic_obstacle.min_velocity_mps = tier4_autoware_utils::kmph2mps(param_.min_vel_kmph);
+    dynamic_obstacle.max_velocity_mps = tier4_autoware_utils::kmph2mps(param_.max_vel_kmph);
+
+    // create classification of points as pedestrian
+    ObjectClassification classification;
+    classification.label = ObjectClassification::PEDESTRIAN;
+    classification.probability = 1.0;
+    dynamic_obstacle.classifications.emplace_back(classification);
+
+    // create shape of points as cylinder
+    dynamic_obstacle.shape.type = Shape::CYLINDER;
+    dynamic_obstacle.shape.dimensions.x = param_.diameter;
+    dynamic_obstacle.shape.dimensions.y = param_.diameter;
+    dynamic_obstacle.shape.dimensions.z = param_.height;
+
+    // create predicted path of points
+    PredictedPath predicted_path;
+    predicted_path.path = createPredictedPath(
+      dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps, param_.path_size);
+    predicted_path.confidence = 1.0;
+    dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
+
+    dynamic_obstacles.emplace_back(dynamic_obstacle);
+  }
+
+  return dynamic_obstacles;
+}
+
+void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+{
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf_buffer_.lookupTransform(
+      "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+  } catch (tf2::TransformException & e) {
+    RCLCPP_WARN(node_.get_logger(), "no transform found for no_ground_pointcloud: %s", e.what());
+    return;
+  }
+
+  pcl::PointCloud<pcl::PointXYZ> pc;
+  pcl::fromROSMsg(*msg, pc);
+
+  Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::transformPointCloud(pc, *pc_transformed, affine);
+
+  dynamic_obstacle_data_.compare_map_filtered_pointcloud = applyVoxelGridFilter(pc_transformed);
 }
 }  // namespace behavior_velocity_planner

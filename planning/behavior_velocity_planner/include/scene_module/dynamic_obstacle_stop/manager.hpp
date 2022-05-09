@@ -32,11 +32,14 @@ public:
 private:
   dynamic_obstacle_stop_utils::PlannerParam planner_param_;
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
+  std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  void setDynamicObstacleCreator(rclcpp::Node & node);
 };
 }  // namespace behavior_velocity_planner
 

@@ -212,7 +212,7 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
 }
 
 std::vector<geometry_msgs::msg::Pose> getHighestConfidencePath(
-  const std::vector<DynamicObstacle::PredictedPath> & predicted_paths)
+  const std::vector<PredictedPath> & predicted_paths)
 {
   std::vector<geometry_msgs::msg::Pose> predicted_path{};
   float highest_confidence = 0.0;
