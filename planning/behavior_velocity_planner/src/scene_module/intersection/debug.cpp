@@ -240,6 +240,12 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     createObjectsMarkerArray(debug_data_.stuck_targets, "stuck_targets", lane_id_, 0.99, 0.99, 0.2),
     current_time, &debug_marker_array);
 
+  if (debug_data_.stop_required) {
+    appendMarkerArray(
+      createVirtualStopWallMarkerArray(debug_data_.stop_wall_pose, lane_id_, "intersection"),
+      current_time, &debug_marker_array);
+  }
+
   if (state == IntersectionModule::State::STOP) {
     appendMarkerArray(
       createPoseMarkerArray(
@@ -262,18 +268,16 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   const auto now = this->clock_->now();
   const auto state = state_machine_.getState();
 
-  if (state == IntersectionModule::State::STOP) {
-    if (debug_data_.stop_required) {
-      appendMarkerArray(
-        tier4_autoware_utils::createStopVirtualWallMarker(
-          debug_data_.stop_wall_pose, "intersection", now, lane_id_),
-        now, &wall_marker);
-    } else {
-      appendMarkerArray(
-        tier4_autoware_utils::createStopVirtualWallMarker(
-          debug_data_.slow_wall_pose, "intersection", now, lane_id_),
-        now, &wall_marker);
-    }
+  if (debug_data_.stop_required) {
+    appendMarkerArray(
+      tier4_autoware_utils::createStopVirtualWallMarker(
+        debug_data_.stop_wall_pose, "intersection", now, lane_id_),
+      now, &wall_marker);
+  } else if (state == IntersectionModule::State::STOP) {
+    appendMarkerArray(
+      tier4_autoware_utils::createStopVirtualWallMarker(
+        debug_data_.slow_wall_pose, "intersection", now, lane_id_),
+      now, &wall_marker);
   }
   return wall_marker;
 }
