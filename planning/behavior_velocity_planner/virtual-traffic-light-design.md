@@ -2,24 +2,28 @@
 
 #### Role
 
-During automated operation, it's sometimes required to cooperate with the infrastructures such as
+Autonomous vehicles has to cooperate with the infrastructures such as
 
-- shutter
-- traffic light
-- virtual traffic light
-- intersection
-- FMS
-  ![usecase](docs/virtual_traffic_light/usecases.png)
+- Warehouse shutter
+- V2X support traffic light
+- Communication devices at intersections
+- Fleet Management System(FMS)
 
-This module links to external operator to coordinate with other vehicles at an intersection.
-This is one of the example cases of virtual traffic light.
-![overview](docs/virtual_traffic_light/intersection_mediation.png)
+This is an example case...
 
-start_line, stop_line, end_line is defined in vector map.
+1. V2X support traffic light
+   ![traffic_light](docs/virtual_traffic_light/V2X_support_traffic_light.png)
 
-1. When the linkage start point is passed, the shutter will be opened.
-2. If the shutter does not open or communication is interrupted, stop at the stop line.
-3. After passing the exit zone, close the shutter.
+1. Intersection coordination with FMS.
+   ![FMS](docs/virtual_traffic_light/intersection_mediation.png)
+
+It's possible to make function individually, however it's possible to generalize with these three elements.
+
+1. `start` : Start cooperation, after ego passes the start line.
+2. `stop` : Communicate with infrastructure and stop at the stop line if necessary.
+3. `end` : After passing the exit zone, close the cooperation as long as communication is stable.
+
+This module sends/receives status from infrastructure.
 
 ### System Configuration Diagram
 
