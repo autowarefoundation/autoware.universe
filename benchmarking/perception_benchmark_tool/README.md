@@ -29,9 +29,6 @@ pip3 install waymo-open-dataset-tf-2-4-0
 Lidar point clouds and camera images are encoded in the .tfrecord file. It may take about ~60-90 seconds to decode
 the data back.
 
-Export waymo.launch file path to DATASET variable
-export DATASET_PATH
-
 ```bash
 ros2 run perception_benchmark_tool perception_benchmark_node \
 $HOME/Downloads/validation_validation_0000 \
