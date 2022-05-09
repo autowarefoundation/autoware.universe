@@ -1,16 +1,13 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(lidar_centerpoint)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-set(CUDA_VERBOSE OFF)
+# TODO: remove (https://github.com/autowarefoundation/autoware.universe/issues/850)
+add_compile_options(-Wno-deprecated-declarations -Wno-unknown-pragmas)
+
+option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
@@ -156,22 +153,10 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     centerpoint
   )
 
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(lidar_centerpoint_component PUBLIC
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
-
   rclcpp_components_register_node(lidar_centerpoint_component
     PLUGIN "centerpoint::LidarCenterPointNode"
     EXECUTABLE lidar_centerpoint_node
   )
-
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
 
   ament_auto_package(
     INSTALL_TO_SHARE
@@ -183,10 +168,6 @@ else()
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
 
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
   ament_auto_package(
     INSTALL_TO_SHARE
       launch

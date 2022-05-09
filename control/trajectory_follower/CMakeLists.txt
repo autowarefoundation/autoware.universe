@@ -1,27 +1,8 @@
-# Copyright 2021 The Autoware Foundation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-cmake_minimum_required(VERSION 3.5)
-
+cmake_minimum_required(VERSION 3.14)
 project(trajectory_follower)
 
-# require that dependencies from package.xml be available
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies(REQUIRED
-  ${${PROJECT_NAME}_BUILD_DEPENDS}
-  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS}
-)
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # lateral_controller
 set(LATERAL_CONTROLLER_LIB lateral_controller_lib)
@@ -55,20 +36,11 @@ set(LATERAL_CONTROLLER_LIB_HEADERS
   include/trajectory_follower/vehicle_model/vehicle_model_interface.hpp
 )
 
-# generate library
 ament_auto_add_library(${LATERAL_CONTROLLER_LIB} SHARED
   ${LATERAL_CONTROLLER_LIB_SRC}
   ${LATERAL_CONTROLLER_LIB_HEADERS}
 )
-autoware_set_compile_options(${LATERAL_CONTROLLER_LIB})
 target_compile_options(${LATERAL_CONTROLLER_LIB} PRIVATE -Wno-error=old-style-cast)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(${LATERAL_CONTROLLER_LIB} PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
 
 # longitudinal_controller
 set(LONGITUDINAL_CONTROLLER_LIB longitudinal_controller_lib)
@@ -85,27 +57,13 @@ set(LONGITUDINAL_CONTROLLER_LIB_HEADERS
   include/trajectory_follower/longitudinal_controller_utils.hpp
 )
 
-# generate library
 ament_auto_add_library(${LONGITUDINAL_CONTROLLER_LIB} SHARED
   ${LONGITUDINAL_CONTROLLER_LIB_SRC}
   ${LONGITUDINAL_CONTROLLER_LIB_HEADERS}
 )
-autoware_set_compile_options(${LONGITUDINAL_CONTROLLER_LIB})
 target_compile_options(${LONGITUDINAL_CONTROLLER_LIB} PRIVATE -Wno-error=old-style-cast)
 
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(${LONGITUDINAL_CONTROLLER_LIB} PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-# Testing
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  # Unit tests
   set(TEST_LAT_SOURCES
     test/test_mpc.cpp
     test/test_mpc_trajectory.cpp
@@ -115,15 +73,7 @@ if(BUILD_TESTING)
   )
   set(TEST_LATERAL_CONTROLLER_EXE test_lateral_controller)
   ament_add_gtest(${TEST_LATERAL_CONTROLLER_EXE} ${TEST_LAT_SOURCES})
-  autoware_set_compile_options(${TEST_LATERAL_CONTROLLER_EXE})
   target_link_libraries(${TEST_LATERAL_CONTROLLER_EXE} ${LATERAL_CONTROLLER_LIB})
-
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(${TEST_LATERAL_CONTROLLER_EXE} PRIVATE
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
 
   set(TEST_LON_SOURCES
     test/test_debug_values.cpp
@@ -133,17 +83,8 @@ if(BUILD_TESTING)
   )
   set(TEST_LONGITUDINAL_CONTROLLER_EXE test_longitudinal_controller)
   ament_add_gtest(${TEST_LONGITUDINAL_CONTROLLER_EXE} ${TEST_LON_SOURCES})
-  autoware_set_compile_options(${TEST_LONGITUDINAL_CONTROLLER_EXE})
   target_link_libraries(${TEST_LONGITUDINAL_CONTROLLER_EXE} ${LONGITUDINAL_CONTROLLER_LIB})
-
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(${TEST_LONGITUDINAL_CONTROLLER_EXE} PRIVATE
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
 endif()
 
-# ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE
 )
