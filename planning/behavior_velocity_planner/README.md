@@ -13,6 +13,7 @@ It consists of several modules. Please refer to the links listed below for detai
 - [Intersection](intersection-design.md)
 - [MergeFromPrivate](merge-from-private-design.md)
 - [Stop Line](stop-line-design.md)
+- [Virtual Traffic Light](virtual-traffic-light-design.md)
 - [Traffic Light](traffic-light-design.md)
 - [Occlusion Spot](occlusion-spot-design.md)
 - [No Stopping Area](no-stopping-area-design.md)
