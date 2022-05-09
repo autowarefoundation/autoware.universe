@@ -199,20 +199,21 @@ bool CrosswalkModule::checkStopArea(
 
   // insert stop point
   autoware_auto_planning_msgs::msg::PathWithLaneId path_tmp;
+  auto tmp_debug_data = debug_data_;
   {
     lanelet::Optional<lanelet::ConstLineString3d> stop_line_opt =
       getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
     if (!!stop_line_opt) {
       if (!insertTargetVelocityPoint(
             input, stop_line_opt.get(), planner_param_.stop_margin, 0.0, *planner_data_, path_tmp,
-            debug_data_, first_stop_path_point_index_)) {
+            tmp_debug_data, first_stop_path_point_index_)) {
         return false;
       }
     } else {
       if (!insertTargetVelocityPoint(
             input, crosswalk_polygon,
             planner_param_.stop_line_distance + planner_param_.stop_margin, 0.0, *planner_data_,
-            path_tmp, debug_data_, first_stop_path_point_index_)) {
+            path_tmp, tmp_debug_data, first_stop_path_point_index_)) {
         return false;
       }
     }
@@ -230,9 +231,10 @@ bool CrosswalkModule::checkStopArea(
 
   if (!isActivated()) {
     output = path_tmp;
-    *insert_stop = stop;
+    debug_data_ = tmp_debug_data;
   }
 
+  *insert_stop = stop;
   return true;
 }
 
