@@ -220,14 +220,14 @@ int get_ata_identify(int fd, HDDInfo * info)
   // IDENTIFY DEVICE
   // Word 10..19 Serial number
   char serial_number[20 + 1]{};
-  strncpy(serial_number, reinterpret_cast<char *>(data) + 20, 20);
+  memcpy(serial_number, data + 20, 20);
   swap_char(serial_number, 20);
   info->serial_ = serial_number;
   boost::trim(info->serial_);
 
   // Word 27..46 Model number
   char model_number[40 + 1]{};
-  strncpy(model_number, reinterpret_cast<char *>(data) + 54, 40);
+  memcpy(model_number, data + 54, 40);
   swap_char(model_number, 40);
   info->model_ = model_number;
   boost::trim(info->model_);
@@ -339,13 +339,13 @@ int get_nvme_identify(int fd, HDDInfo * info)
   // Identify Controller Data Structure
   // Bytes 23:04 Serial Number (SN)
   char serial_number[20 + 1]{};
-  strncpy(serial_number, data + 4, 20);
+  memcpy(serial_number, data + 4, 20);
   info->serial_ = serial_number;
   boost::trim(info->serial_);
 
   // Bytes 63:24 Model Number (MN)
   char model_number[40 + 1]{};
-  strncpy(model_number, data + 24, 40);
+  memcpy(model_number, data + 24, 40);
   info->model_ = model_number;
   boost::trim(info->model_);
 
