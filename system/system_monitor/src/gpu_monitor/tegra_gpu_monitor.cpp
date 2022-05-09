@@ -127,7 +127,8 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 }
 
-void GPUMonitor::checkThrottling([[maybe_unused]]diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GPUMonitor::checkThrottling(
+  [[maybe_unused]] diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Please emove the [[maybe_unused]] tag after implementation, it's a temp build fix
   // TODO(Fumihito Ito): implement me
