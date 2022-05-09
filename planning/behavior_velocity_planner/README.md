@@ -5,6 +5,8 @@
 `behavior_velocity_planner` is a planner that adjust velocity based on the traffic rules.
 It consists of several modules. Please refer to the links listed below for detail on each module.
 
+![Architecture](./docs/BehaviorVelocityPlanner-Architecture.drawio.svg)
+
 - [Blind Spot](blind-spot-design.md)
 - [Crosswalk](crosswalk-design.md)
 - [Detection Area](detection-area-design.md)
