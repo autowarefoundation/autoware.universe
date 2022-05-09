@@ -492,14 +492,11 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
       avoidance_debug_msg.allow_avoidance = false;
       avoidance_debug_msg.failed_reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
+      continue;
     }
 
     const auto max_shift_length =
       o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
-
-    if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
-      continue;
-    }
 
     const auto max_left_shift_limit = [&max_shift_length, this]() noexcept {
       return std::min(getLeftShiftBound(), max_shift_length);
