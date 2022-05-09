@@ -27,6 +27,7 @@
 #include "boost/optional/optional_fwd.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 
