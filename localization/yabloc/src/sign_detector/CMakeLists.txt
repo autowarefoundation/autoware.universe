@@ -20,6 +20,8 @@ find_package(rclpy REQUIRED)
 find_package(Sophus REQUIRED)
 
 # ===================================================
+# YAML
+find_package(yaml-cpp REQUIRED)
 # OpenCV
 find_package(OpenCV REQUIRED)
 # PCL
@@ -47,45 +49,35 @@ include_directories(${GeographicLib_INCLUDE_DIRS})
 
 # ===================================================
 # Library
-ament_auto_add_library(cv_lsd SHARED  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd/lsd/lsd.cpp)
-target_include_directories(cv_lsd PUBLIC  3rd/opencv_lsd)
-target_link_libraries(cv_lsd ${OpenCV_LIBS})
+macro(ADD_LIB)
+  cmake_parse_arguments(_ARG "" "SRC;TARGET"  "LIB;INC" ${ARGN})
+  file(GLOB SOURCE_TMP ${_ARG_SRC})
+  ament_auto_add_library(${_ARG_TARGET} SHARED ${SOURCE_TMP})
+  target_include_directories(${_ARG_TARGET} PUBLIC ${_ARG_INC})
+  target_link_libraries(${_ARG_TARGET} ${_ARG_LIB})
+  target_compile_definitions(${_ARG_TARGET} PUBLIC SOPHUS_USE_BASIC_LOGGING=1)
+endmacro()
 
-file(GLOB RE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/3rd/regulatory_elements/lib/*.cpp)
-ament_auto_add_library(regulatory_elements SHARED ${RE_SOURCE})
-target_include_directories(regulatory_elements PUBLIC  3rd/regulatory_elements/include)
-
-ament_auto_add_library(ll2_util SHARED lib/ll2_util.cpp)
-target_include_directories(ll2_util PUBLIC include/ll2_util.hpp 3rd/regulatory_elements/include)
-target_link_libraries(ll2_util regulatory_elements)
-
+ADD_LIB(SRC 3rd/opencv_lsd/lsd/*.cpp          TARGET cv_lsd LIB ${OpenCV_LIBS} INC 3rd/opencv_lsd)
+ADD_LIB(SRC 3rd/regulatory_elements/lib/*.cpp TARGET regulatory_elements       INC 3rd/regulatory_elements/include)
+ADD_LIB(SRC lib/*.cpp                         TARGET ll2_util                  INC 3rd/regulatory_elements/include)
 
 # ===================================================
 # Executable
-ament_auto_add_executable(lsd_node src/lsd_node.cpp src/lsd_node.cpp)
-target_include_directories(lsd_node PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/3rd/opencv_lsd include)
-target_link_libraries(lsd_node ${OpenCV_LIBS} cv_lsd)
+macro(ADD_EXE)
+  cmake_parse_arguments(_ARG "" "SRC"  "LIB;INC" ${ARGN})
+  get_filename_component(TARGET_NAME ${_ARG_SRC} NAME_WE)
+  ament_auto_add_executable(${TARGET_NAME} ${_ARG_SRC})
+  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
+  target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
+endmacro()
 
-ament_auto_add_executable(fix_to_pose_node src/fix_to_pose_node.cpp)
-target_include_directories(fix_to_pose_node PUBLIC include)
-target_link_libraries(fix_to_pose_node ll2_util ${PCL_LIBRARIES} Geographic)
-
-ament_auto_add_executable(pose_to_path_node src/pose_to_path_node.cpp)
-target_include_directories(pose_to_path_node PUBLIC include)
-target_link_libraries(pose_to_path_node)
-
-ament_auto_add_executable(ll2_to_image_node src/ll2_to_image_node.cpp)
-target_include_directories(ll2_to_image_node PUBLIC include)
-target_link_libraries(ll2_to_image_node ll2_util Geographic)
-
-ament_auto_add_executable(imu_kf_node src/imu_kf_node.cpp)
-target_include_directories(imu_kf_node PUBLIC include)
-target_link_libraries(imu_kf_node)
-target_compile_definitions(imu_kf_node PUBLIC SOPHUS_USE_BASIC_LOGGING=1)
-
-ament_auto_add_executable(particle_filter_node src/particle_filter_node.cpp)
-target_include_directories(particle_filter_node PUBLIC include)
-target_link_libraries(particle_filter_node)
+ADD_EXE(SRC src/lsd_node.cpp          INC 3rd/opencv_lsd include LIB cv_lsd ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES})
+ADD_EXE(SRC src/ll2_to_image_node.cpp INC                include LIB ll2_util Geographic   ${YAML_CPP_LIBRARIES})
+ADD_EXE(SRC src/fix_to_pose_node.cpp  INC                include LIB ll2_util Geographic   ${PCL_LIBRARIES})
+ADD_EXE(SRC src/pose_to_path_node.cpp INC                include LIB )
+ADD_EXE(SRC src/imu_kf_node.cpp       INC                include LIB )
+ADD_EXE(SRC src/particle_filter_node.cpp INC             include LIB )
 
 # ===================================================
 # Python

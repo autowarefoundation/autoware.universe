@@ -4,6 +4,7 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <yaml-cpp/yaml.h>
 
 class Ll2ImageConverter : public rclcpp::Node
 {
@@ -20,9 +21,24 @@ public:
     pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
     sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local().reliable(), std::bind(&Ll2ImageConverter::mapCallback, this, std::placeholders::_1));
     sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(pose_topic, 10, std::bind(&Ll2ImageConverter::poseCallback, this, std::placeholders::_1));
+
+    std::string config_path = "/";
+    this->declare_parameter<std::string>("config_path", config_path);
+    this->get_parameter("config_path", config_path);
+    if (config_path != "/") {
+      YAML::Node node = YAML::LoadFile(config_path)["vmvl"];
+      image_size_ = node["image_size"].as<int>();
+      max_range_ = node["max_range"].as<float>();
+    } else {
+      image_size_ = 800;
+      max_range_ = 20;
+    }
   }
 
 private:
+  float max_range_ = 20;  // [m]
+  float image_size_ = 600;
+
   void poseCallback(const geometry_msgs::msg::PoseStamped& pose_stamped)
   {
     if (!visible_linestrings_.has_value()) {
@@ -44,19 +60,18 @@ private:
       return v - pose;
     };
 
-    const float max_range = 20;  // [m]
 
-    auto checkIntersection = [max_range](const Eigen::Vector3f& from, const Eigen::Vector3f& to) -> bool {
+    auto checkIntersection = [this](const Eigen::Vector3f& from, const Eigen::Vector3f& to) -> bool {
       // Compute distance between pose and linesegment of linestring
       Eigen::Vector3f dir = to - from;
       float inner = from.dot(dir);
       if (std::abs(inner) < 1e-3f) {
-        return from.norm() < 1.42 * max_range;
+        return from.norm() < 1.42 * this->max_range_;
       }
 
       float mu = std::clamp(dir.squaredNorm() / inner, 0.f, 1.0f);
       Eigen::Vector3f nearest = from + dir * mu;
-      return nearest.norm() < 1.42 * max_range;
+      return nearest.norm() < 2 * 1.42 * this->max_range_;
     };
 
     struct LineString {
@@ -87,16 +102,15 @@ private:
     float z = pose_stamped.pose.orientation.z;
     Eigen::Matrix2f rotation = Eigen::Rotation2D(-2 * std::atan2(z, w)).matrix();
 
-    const float max_image_size = 600;
-    cv::Mat image = cv::Mat::zeros(cv::Size{max_image_size, max_image_size}, CV_8UC3);
+    cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
     // Draw image
     {
       const cv::Size center(image.cols / 2, image.rows / 2);
-      auto toCvPoint = [center, max_range, rotation](const Eigen::Vector3f v) -> cv::Point {
+      auto toCvPoint = [center, this, rotation](const Eigen::Vector3f v) -> cv::Point {
         cv::Point pt;
         Eigen::Vector2f w = rotation * v.topRows(2);
-        pt.y = -w.x() / max_range * center.width + center.width;
-        pt.x = -w.y() / max_range * center.height + center.height;
+        pt.x = -w.y() / this->max_range_ * center.width + center.width;
+        pt.y = -w.x() / this->max_range_ * center.height + 2 * center.height;
         return pt;
       };
 

@@ -5,12 +5,9 @@
 class ParticleFilter : public rclcpp::Node
 {
 public:
-  ParticleFilter() : Node("particle_filter")
+  ParticleFilter() : Node("particle_filter"), frame_id_("map"), child_frame_id_("base_link")
   {
     std::string pose_topic = "/eagleye/pose";
-    frame_id_ = "map";
-    child_frame_id_ = "base_link";
-
     this->declare_parameter<std::string>("pose_topic", pose_topic);
     this->get_parameter("pose_topic", pose_topic);
 

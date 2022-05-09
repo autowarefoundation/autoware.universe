@@ -18,6 +18,8 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <yaml-cpp/yaml.h>
+
 class LineSegmentDetector : public rclcpp::Node
 {
 public:
@@ -33,6 +35,18 @@ public:
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+    std::string config_path = "/";
+    this->declare_parameter<std::string>("config_path", config_path);
+    this->get_parameter("config_path", config_path);
+    if (config_path != "/") {
+      YAML::Node node = YAML::LoadFile(config_path)["vmvl"];
+      image_size_ = node["image_size"].as<int>();
+      max_range_ = node["max_range"].as<float>();
+    } else {
+      image_size_ = 800;
+      max_range_ = 20;
+    }
   }
 
 private:
@@ -45,6 +59,9 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub_image_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_info_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_, pub_image_lsd_;
+
+  int image_size_;
+  float max_range_;
 
   void projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat& K_cv, const rclcpp::Time& stamp) const
   {
@@ -91,15 +108,13 @@ private:
     }
 
     // Draw projected edge image
-    const float max_image_size = 800;
-    const float max_range = 20;  // [m]
-    cv::Mat image = cv::Mat::zeros(cv::Size{max_image_size, max_image_size}, CV_8UC3);
+    cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
     {
       const cv::Size center(image.cols / 2, image.rows / 2);
-      auto toCvPoint = [center, max_range](const Eigen::Vector3f& v) -> cv::Point {
+      auto toCvPoint = [center, this](const Eigen::Vector3f& v) -> cv::Point {
         cv::Point pt;
-        pt.x = -v.y() / max_range * center.width + center.width;
-        pt.y = -v.x() / max_range * center.height + 2 * center.height;
+        pt.x = -v.y() / this->max_range_ * center.width + center.width;
+        pt.y = -v.x() / this->max_range_ * center.height + 2 * center.height;
         return pt;
       };
       for (const auto e : edges) {
