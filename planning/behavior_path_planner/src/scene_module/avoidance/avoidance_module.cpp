@@ -490,8 +490,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     avoidance_debug_msg.max_shift_length = max_allowable_lateral_distance;
 
     if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
-      avoidance_debug_msg.allow_avoidance = false;
-      avoidance_debug_msg.failed_reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
+      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
       continue;
     }
 
