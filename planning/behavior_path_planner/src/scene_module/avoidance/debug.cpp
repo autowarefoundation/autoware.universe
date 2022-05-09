@@ -126,8 +126,8 @@ MarkerArray makeOverhangToRoadShoulderMarkerArray(
 }
 
 MarkerArray createOverhangFurthestLineStringMarkerArray(
-  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float & r,
-  const float & g, const float & b)
+  const lanelet::ConstLineStrings3d & linestrings, const std::string & ns, const double r,
+  const double g, const double b)
 {
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;
