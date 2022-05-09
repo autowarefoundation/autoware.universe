@@ -199,6 +199,7 @@ remote_controllable_traffic_light -[hidden]down-> warning_light
 
 @enduml
 ```
+
 #### Module Parameters
 
 | Parameter                       | Type   | Description                                                           |
