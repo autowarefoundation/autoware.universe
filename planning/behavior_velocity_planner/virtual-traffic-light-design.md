@@ -2,28 +2,28 @@
 
 #### Role
 
-Autonomous vehicles has to cooperate with the infrastructures such as
+Autonomous vehicles have to cooperate with the infrastructures such as:
 
-- Warehouse shutter
-- V2X support traffic light
+- Warehouse shutters
+- Traffic lights with V2X support
 - Communication devices at intersections
-- Fleet Management System(FMS)
+- Fleet Management Systems (FMS)
 
-This is an example case...
+The following items are example cases:
 
-1. V2X support traffic light
+1. Traffic control by traffic lights with V2X support
    ![traffic_light](docs/virtual_traffic_light/V2X_support_traffic_light.png)
 
-1. Intersection coordination with FMS.
+2. Intersection coordination of multiple vehicles by FMS.
    ![FMS](docs/virtual_traffic_light/intersection_mediation.png)
 
-It's possible to make function individually, however it's possible to generalize with these three elements.
+It's possible to make each function individually, however, the use cases can be generalized with these three elements.
 
-1. `start` : Start cooperation, after ego passes the start line.
-2. `stop` : Communicate with infrastructure and stop at the stop line if necessary.
-3. `end` : After passing the exit zone, close the cooperation as long as communication is stable.
+1. `start`: Start a cooperation procedure after the vehicle enters a certain zone.
+2. `stop`: Stop at a defined stop line according to the status received from infrastructures.
+3. `end`: Finalize the cooperation procedure after the vehicle reaches the exit zone. This should be done within the range of stable communication.
 
-This module sends/receives status from infrastructure.
+This module sends/receives status from infrastructures and plans the velocity of the cooperation result.
 
 ### System Configuration Diagram
 
