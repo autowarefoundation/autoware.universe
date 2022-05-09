@@ -21,20 +21,17 @@ set(scene_modules
   no_stopping_area
   virtual_traffic_light
   occlusion_spot
-  run_out
 )
 
-foreach(scene_module IN LISTS scene_modules)
-  file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
-  list(APPEND scene_modules_src ${scene_module_src})
-endforeach()
 
-ament_auto_add_library(behavior_velocity_planner SHARED
-  src/node.cpp
-  src/planner_manager.cpp
+# Common
+ament_auto_add_library(scene_module_lib SHARED
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
+<<<<<<< HEAD
   src/utilization/debug.cpp
+=======
+>>>>>>> refactor(behavior_velocity_planner): simplify CMakeLists.txt (#855)
   ${scene_modules_src}
 )
 
@@ -52,8 +49,11 @@ ament_target_dependencies(behavior_velocity_planner
   PCL
 )
 
+<<<<<<< HEAD
 target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
 
+=======
+>>>>>>> refactor(behavior_velocity_planner): simplify CMakeLists.txt (#855)
 rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
   EXECUTABLE behavior_velocity_planner_node
