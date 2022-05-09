@@ -18,19 +18,13 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <node name="raw_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <param name="pose_topic" value="/sensing/gnss/ublox/pose"/>
-        <param name="path_topic" value="/sensing/gnss/ublox/path"/>
+    <node name="pose_to_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /eagleye/pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /eagleye/path]"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <node name="eagleye_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <param name="pose_topic" value="/eagleye/pose"/>
-        <param name="path_topic" value="/eagleye/path"/>
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-    </node>
-
-    <node name="ll2_to_image" pkg="sign_detector" exec="ll2_to_image_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="ll2_to_image" pkg="sign_detector" exec="ll2_to_image_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="pose_topic" value="/eagleye/pose"/>
         <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -39,7 +33,7 @@
     <node name="lsd" pkg="sign_detector" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
-    <node name="imu_kf" pkg="sign_detector" exec="imu_kf_node" output="screen" args="--ros-args --log-level info">
+    <node name="imu_kf" pkg="sign_detector" exec="imu_kf_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
     <node name="particle_filter" pkg="sign_detector" exec="particle_filter_node" output="screen" args="--ros-args --log-level $(var log_level)">
