@@ -215,7 +215,7 @@ end_line : end line to consider virtual traffic light, defined in vector map
 | `max_delay_sec`                 | double | [s] maximum allowed delay for command                                 |
 | `near_line_distance`            | double | [m] threshold distance to stop line to check ego stop.                |
 | `dead_line_margin`              | double | [m] threshold distance that this module continue to insert stop line. |
-| `check_timeout_after_stop_line` | double | [s] check timeout to stop when linkage is disconnected                |
+| `check_timeout_after_stop_line` | bool   | [-] check timeout to stop when linkage is disconnected                |
 
 #### Flowchart
 
