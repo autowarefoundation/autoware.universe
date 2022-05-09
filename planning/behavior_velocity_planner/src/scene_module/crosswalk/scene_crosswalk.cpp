@@ -232,9 +232,9 @@ bool CrosswalkModule::checkStopArea(
   if (!isActivated()) {
     output = path_tmp;
     debug_data_ = tmp_debug_data;
+    *insert_stop = true;
   }
 
-  *insert_stop = stop;
   return true;
 }
 
