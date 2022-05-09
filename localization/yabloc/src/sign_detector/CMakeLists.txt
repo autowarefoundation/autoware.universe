@@ -83,6 +83,10 @@ target_include_directories(imu_kf_node PUBLIC include)
 target_link_libraries(imu_kf_node)
 target_compile_definitions(imu_kf_node PUBLIC SOPHUS_USE_BASIC_LOGGING=1)
 
+ament_auto_add_executable(particle_filter_node src/particle_filter_node.cpp)
+target_include_directories(particle_filter_node PUBLIC include)
+target_link_libraries(particle_filter_node)
+
 # ===================================================
 # Python
 ament_python_install_package(scripts)

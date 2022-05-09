@@ -91,7 +91,7 @@ private:
     }
 
     // Draw projected edge image
-    const float max_image_size = 600;
+    const float max_image_size = 800;
     const float max_range = 20;  // [m]
     cv::Mat image = cv::Mat::zeros(cv::Size{max_image_size, max_image_size}, CV_8UC3);
     {

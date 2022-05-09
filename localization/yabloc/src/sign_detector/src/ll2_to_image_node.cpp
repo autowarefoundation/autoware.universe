@@ -83,15 +83,20 @@ private:
       }
     }
 
+    float w = pose_stamped.pose.orientation.w;
+    float z = pose_stamped.pose.orientation.z;
+    Eigen::Matrix2f rotation = Eigen::Rotation2D(-2 * std::atan2(z, w)).matrix();
+
     const float max_image_size = 600;
     cv::Mat image = cv::Mat::zeros(cv::Size{max_image_size, max_image_size}, CV_8UC3);
     // Draw image
     {
       const cv::Size center(image.cols / 2, image.rows / 2);
-      auto toCvPoint = [center, max_range](const Eigen::Vector3f v) -> cv::Point {
+      auto toCvPoint = [center, max_range, rotation](const Eigen::Vector3f v) -> cv::Point {
         cv::Point pt;
-        pt.x = v.x() / max_range * center.width + center.width;
-        pt.y = -v.y() / max_range * center.height + center.height;
+        Eigen::Vector2f w = rotation * v.topRows(2);
+        pt.y = -w.x() / max_range * center.width + center.width;
+        pt.x = -w.y() / max_range * center.height + center.height;
         return pt;
       };
 

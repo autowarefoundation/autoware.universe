@@ -42,4 +42,7 @@
     <node name="imu_kf" pkg="sign_detector" exec="imu_kf_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
+    <node name="particle_filter" pkg="sign_detector" exec="particle_filter_node" output="screen" args="--ros-args --log-level $(var log_level)">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
 </launch>
