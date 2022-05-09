@@ -16,6 +16,7 @@
 #define SCENE_MODULE__INTERSECTION__MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 #include <scene_module/intersection/scene_intersection.hpp>
 #include <scene_module/intersection/scene_merge_from_private_road.hpp>
 #include <scene_module/scene_module_interface.hpp>
@@ -37,8 +38,13 @@ public:
 
 private:
   IntersectionModule::PlannerParam intersection_param_;
+  rtc_interface::RTCInterface rtc_interface_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  bool getActivation(const UUID & uuid) override;
+  void updateRTCStatus(const UUID & uuid, const bool safe, const double distance) override;
+  void removeRTCStatus(const UUID & uuid) override;
+  void publishRTCStatus() override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
