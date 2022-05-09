@@ -15,7 +15,7 @@ The following items are example cases:
    ![traffic_light](docs/virtual_traffic_light/V2X_support_traffic_light.png)
 
 2. Intersection coordination of multiple vehicles by FMS.
-   ![FMS](docs/virtual_traffic_light/intersection_mediation.png)
+   ![FMS](docs/virtual_traffic_light/intersection-coordination.png)
 
 It's possible to make each function individually, however, the use cases can be generalized with these three elements.
 
