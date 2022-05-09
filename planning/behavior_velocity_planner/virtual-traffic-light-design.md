@@ -11,7 +11,7 @@ During automated operation, it's sometimes required to cooperate with the infras
 - FMS
   ![usecase](docs/virtual_traffic_light/usecases.png)
 
-This module links to external operator to mediate with other vehicles at an intersection.
+This module links to external operator to coordinate with other vehicles at an intersection.
 This is one of the example cases of virtual traffic light.
 ![overview](docs/virtual_traffic_light/intersection_mediation.png)
 
@@ -84,7 +84,7 @@ Planner and each infrastructure communicate with each other using common abstrac
 - Special handling for each infrastructure is not scalable. The interface is defined as an Autoware API.
 - The requirements for each infrastructure are slightly different, but will be handled flexibly.
 
-FMS: Intersection mediation when multiple vehicles are in operation and the relevant lane is occupied
+FMS: Intersection coordination when multiple vehicles are in operation and the relevant lane is occupied
 
 - Automatic shutter: Open the shutter when approaching/close it when leaving
 - Manual shutter: Have the driver open and close the shutter.
