@@ -14,7 +14,6 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 
-#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -27,13 +26,13 @@
 namespace surround_obstacle_checker
 {
 
-using motion_utils::createStopVirtualWallMarker;
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::createStopVirtualWallMarker;
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const Polygon2d & ego_polygon, const double base_link2front,
@@ -51,11 +50,6 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
-  vehicle_footprint_pub_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
-  vehicle_footprint_offset_pub_ =
-    node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
-  vehicle_footprint_recover_offset_pub_ =
-    node.create_publisher<PolygonStamped>("~/debug/footprint_recover_offset", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
@@ -122,7 +116,11 @@ void SurroundObstacleCheckerDebugNode::publish()
   stop_obstacle_point_ptr_ = nullptr;
 }
 
+<<<<<<< HEAD
 MarkerArray SurroundObstacleCheckerDebugNode::makeVirtualWallMarker()
+=======
+MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
+>>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 {
   MarkerArray msg;
   rclcpp::Time current_time = this->clock_->now();
@@ -133,6 +131,7 @@ MarkerArray SurroundObstacleCheckerDebugNode::makeVirtualWallMarker()
     const auto markers = createStopVirtualWallMarker(p, "surround obstacle", current_time, 0);
     appendMarkerArray(markers, &msg);
   }
+<<<<<<< HEAD
 
   return msg;
 }
@@ -141,6 +140,8 @@ MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
 {
   MarkerArray msg;
   rclcpp::Time current_time = this->clock_->now();
+=======
+>>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 
   // visualize surround object
   if (stop_obstacle_point_ptr_ != nullptr) {
@@ -183,6 +184,7 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   return stop_reason_array;
 }
 
+<<<<<<< HEAD
 Polygon2d SurroundObstacleCheckerDebugNode::createSelfPolygonWithOffset(
   const Polygon2d & base_polygon, const double & offset)
 {
@@ -221,4 +223,6 @@ PolygonStamped SurroundObstacleCheckerDebugNode::boostPolygonToPolygonStamped(
   return polygon_stamped;
 }
 
+=======
+>>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 }  // namespace surround_obstacle_checker
