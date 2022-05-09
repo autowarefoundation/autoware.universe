@@ -15,11 +15,11 @@ This module links to external operator to coordinate with other vehicles at an i
 This is one of the example cases of virtual traffic light.
 ![overview](docs/virtual_traffic_light/intersection_mediation.png)
 
-#### Infrastructure linkage: V2X specification
+start_line, stop_line, end_line is defined in vector map.
 
-When the linkage start point is passed, the shutter will be opened.
-If the shutter does not open or communication is interrupted, stop at the stop line
-After passing the end of the linkage, close the shutter.
+1. When the linkage start point is passed, the shutter will be opened.
+2. If the shutter does not open or communication is interrupted, stop at the stop line.
+3. After passing the exit zone, close the shutter.
 
 ### System Configuration Diagram
 
@@ -199,15 +199,6 @@ remote_controllable_traffic_light -[hidden]down-> warning_light
 
 @enduml
 ```
-
-#### definition
-
-instrument_id: id for each virtual traffic light element
-instrument_center: for debugging
-start_line : start line considering virtual traffic light defined in vector map
-stop_line : stop line is defined in vector map
-end_line : end line to consider virtual traffic light, defined in vector map
-
 #### Module Parameters
 
 | Parameter                       | Type   | Description                                                           |
