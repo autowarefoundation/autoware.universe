@@ -26,6 +26,7 @@ from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import launch_testing
+import pytest
 import rclpy
 
 
@@ -79,9 +80,7 @@ def generate_test_description():
 
 class DummyTest(unittest.TestCase):
     def test_wait_for_node_ready(self):
-        """
-        Waiting for the node is ready
-        """
+        """Waiting for the node is ready."""
         rclpy.init()
         test_node = rclpy.create_node("test_node")
         while len(test_node.get_node_names()) == 0:
