@@ -25,12 +25,26 @@
 #include <limits>
 #include <memory>
 
+namespace
+{
+
+static constexpr double epsilon = 0.001;
+static constexpr double step = 0.05;
+static constexpr double vertical_theta_step = (1.0 / 180.0) * M_PI;
+static constexpr double vertical_min_theta = (-15.0 / 180.0) * M_PI;
+static constexpr double vertical_max_theta = (15.0 / 180.0) * M_PI;
+static constexpr double horizontal_theta_step = (0.1 / 180.0) * M_PI;
+static constexpr double horizontal_min_theta = (-180.0 / 180.0) * M_PI;
+static constexpr double horizontal_max_theta = (180.0 / 180.0) * M_PI;
+
 pcl::PointXYZ getPointWrtBaseLink(
   const tf2::Transform & tf_base_link2moved_object, double x, double y, double z)
 {
   const auto p_wrt_base = tf_base_link2moved_object(tf2::Vector3(x, y, z));
   return pcl::PointXYZ(p_wrt_base.x(), p_wrt_base.y(), p_wrt_base.z());
 }
+
+}  // namespace
 
 void ObjectCentricPointCloudCreator::create_object_pointcloud(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
@@ -39,14 +53,6 @@ void ObjectCentricPointCloudCreator::create_object_pointcloud(
   std::normal_distribution<> x_random(0.0, obj_info.std_dev_x);
   std::normal_distribution<> y_random(0.0, obj_info.std_dev_y);
   std::normal_distribution<> z_random(0.0, obj_info.std_dev_z);
-  const double epsilon = 0.001;
-  const double step = 0.05;
-  const double vertical_theta_step = (1.0 / 180.0) * M_PI;
-  const double vertical_min_theta = (-15.0 / 180.0) * M_PI;
-  const double vertical_max_theta = (15.0 / 180.0) * M_PI;
-  const double horizontal_theta_step = (0.1 / 180.0) * M_PI;
-  const double horizontal_min_theta = (-180.0 / 180.0) * M_PI;
-  const double horizontal_max_theta = (180.0 / 180.0) * M_PI;
 
   const auto tf_base_link2moved_object = tf_base_link2map * obj_info.tf_map2moved_object;
 
@@ -217,12 +223,6 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
     min_zs.at(idx) = min_z;
     max_zs.at(idx) = max_z;
   }
-
-  const double epsilon = 0.001;
-  const double vertical_theta_step = (1.0 / 180.0) * M_PI;
-  const double vertical_min_theta = (-15.0 / 180.0) * M_PI;
-  const double vertical_max_theta = (15.0 / 180.0) * M_PI;
-  const double horizontal_theta_step = 0.25 * M_PI / 180.0;
 
   double angle = 0.0;
   const auto n_scan = static_cast<size_t>(std::floor(2 * M_PI / horizontal_theta_step));
