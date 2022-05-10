@@ -16,6 +16,7 @@
 #define SCENE_MODULE__TRAFFIC_LIGHT__MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <scene_module/traffic_light/scene.hpp>
 
@@ -38,6 +39,10 @@ public:
 private:
   TrafficLightModule::PlannerParam planner_param_;
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  bool getActivation(const UUID & uuid) override;
+  void updateRTCStatus(const UUID & uuid, const bool safe, const double distance) override;
+  void removeRTCStatus(const UUID & uuid) override;
+  void publishRTCStatus() override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
@@ -47,6 +52,8 @@ private:
     pub_tl_state_;
 
   boost::optional<int> first_ref_stop_path_point_index_;
+
+  rtc_interface::RTCInterface rtc_interface_;
 };
 }  // namespace behavior_velocity_planner
 

@@ -27,7 +27,7 @@ namespace behavior_velocity_planner
 using lanelet::TrafficLight;
 
 TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, getModuleName()), rtc_interface_(node, "traffic_light")
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
@@ -56,12 +56,18 @@ void TrafficLightModuleManager::modifyPathVelocity(
   first_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   for (const auto & scene_module : scene_modules_) {
+    const UUID uuid = getUUID(scene_module->getModuleId());
+    scene_module->setActivation(getActivation(uuid));
+
     tier4_planning_msgs::msg::StopReason stop_reason;
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
     traffic_light_scene_module->setPlannerData(planner_data_);
     traffic_light_scene_module->modifyPathVelocity(path, &stop_reason);
     stop_reason_array.stop_reasons.emplace_back(stop_reason);
+
+    updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance());
+
     if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
       first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
     }
@@ -89,6 +95,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
   pub_debug_->publish(debug_marker_array);
   pub_virtual_wall_->publish(virtual_wall_marker_array);
   pub_tl_state_->publish(tl_state);
+  publishRTCStatus();
 }
 
 void TrafficLightModuleManager::launchNewModules(
@@ -112,6 +119,7 @@ void TrafficLightModuleManager::launchNewModules(
       registerModule(std::make_shared<TrafficLightModule>(
         module_id, *(traffic_light_reg_elem.first), traffic_light_reg_elem.second, planner_param_,
         logger_.get_child("traffic_light_module"), clock_));
+      generateUUID(module_id);
     }
   }
 }
@@ -127,4 +135,23 @@ TrafficLightModuleManager::getModuleExpiredFunction(
     return lanelet_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
+
+bool TrafficLightModuleManager::getActivation(const UUID & uuid)
+{
+  return rtc_interface_.isActivated(uuid);
+}
+
+void TrafficLightModuleManager::updateRTCStatus(
+  const UUID & uuid, const bool safe, const double distance)
+{
+  rtc_interface_.updateCooperateStatus(uuid, safe, distance);
+}
+
+void TrafficLightModuleManager::removeRTCStatus(const UUID & uuid)
+{
+  rtc_interface_.removeCooperateStatus(uuid);
+}
+
+void TrafficLightModuleManager::publishRTCStatus() { rtc_interface_.publishCooperateStatus(); }
+
 }  // namespace behavior_velocity_planner
