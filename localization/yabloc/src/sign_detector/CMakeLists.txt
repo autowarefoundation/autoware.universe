@@ -60,7 +60,9 @@ endmacro()
 
 ADD_LIB(SRC 3rd/opencv_lsd/lsd/*.cpp          TARGET cv_lsd LIB ${OpenCV_LIBS} INC 3rd/opencv_lsd)
 ADD_LIB(SRC 3rd/regulatory_elements/lib/*.cpp TARGET regulatory_elements       INC 3rd/regulatory_elements/include)
-ADD_LIB(SRC lib/*.cpp                         TARGET ll2_util                  INC 3rd/regulatory_elements/include)
+ADD_LIB(SRC lib/ll2_util.cpp                  TARGET ll2_util                  INC 3rd/regulatory_elements/include)
+ADD_LIB(SRC lib/particle_filter.cpp           TARGET pf                        INC include)
+ADD_LIB(SRC lib/lsd.cpp                       TARGET lsd                       INC include)
 
 # ===================================================
 # Executable
@@ -72,12 +74,12 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
 
-ADD_EXE(SRC src/lsd_node.cpp          INC 3rd/opencv_lsd include LIB cv_lsd ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES})
+ADD_EXE(SRC src/lsd_node.cpp          INC 3rd/opencv_lsd include LIB cv_lsd lsd ${OpenCV_LIBS} ${YAML_CPP_LIBRARIES})
 ADD_EXE(SRC src/ll2_to_image_node.cpp INC                include LIB ll2_util Geographic   ${YAML_CPP_LIBRARIES})
 ADD_EXE(SRC src/fix_to_pose_node.cpp  INC                include LIB ll2_util Geographic   ${PCL_LIBRARIES})
 ADD_EXE(SRC src/pose_to_path_node.cpp INC                include LIB )
 ADD_EXE(SRC src/imu_kf_node.cpp       INC                include LIB )
-ADD_EXE(SRC src/particle_filter_node.cpp INC             include LIB )
+ADD_EXE(SRC src/particle_filter_node.cpp INC             include LIB pf)
 
 # ===================================================
 # Python

@@ -9,14 +9,10 @@
 class Ll2ImageConverter : public rclcpp::Node
 {
 public:
-  Ll2ImageConverter() : Node("ll2_to_image")
+  Ll2ImageConverter() : Node("ll2_to_image"), line_thick_(this->declare_parameter<int>("line_thick", 1))
   {
-    std::string map_topic = "/map/vector_map";
-    std::string pose_topic = "/eagleye/pose";
-    this->declare_parameter<std::string>("map_topic", map_topic);
-    this->declare_parameter<std::string>("pose_topic", pose_topic);
-    this->get_parameter("map_topic", map_topic);
-    this->get_parameter("pose_topic", pose_topic);
+    std::string map_topic = this->declare_parameter<std::string>("map_topic", "/map/vector_map");
+    std::string pose_topic = this->declare_parameter<std::string>("pose_topic", "/eagleye/pose");
 
     pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
     sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local().reliable(), std::bind(&Ll2ImageConverter::mapCallback, this, std::placeholders::_1));
@@ -38,6 +34,7 @@ public:
 private:
   float max_range_ = 20;  // [m]
   float image_size_ = 600;
+  const int line_thick_;
 
   void poseCallback(const geometry_msgs::msg::PoseStamped& pose_stamped)
   {
@@ -115,7 +112,7 @@ private:
       };
 
       for (const LineString& ls : near_linestring)
-        cv::line(image, toCvPoint(ls.from), toCvPoint(ls.to), cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
+        cv::line(image, toCvPoint(ls.from), toCvPoint(ls.to), cv::Scalar(0, 255, 255), line_thick_, cv::LineTypes::LINE_8);
     }
 
 
