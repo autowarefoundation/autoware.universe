@@ -165,6 +165,13 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       ${CUDA_INCLUDE_DIRS}
   )
 
+  # To suppress unknown-pragmas error. The root-cause is CUB library in CUDA 11.6.
+  # This issue was fixed by https://github.com/NVIDIA/cub/commit/7d608bf1dc14553e2fb219eabeed80b76621b6fe
+  target_include_directories(centerpoint
+    SYSTEM PUBLIC
+      ${CUDA_INCLUDE_DIRS}
+  )
+
   ## node ##
   ament_auto_add_library(lidar_centerpoint_component SHARED
     src/node.cpp
