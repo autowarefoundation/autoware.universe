@@ -171,7 +171,6 @@ void BlockageDiagComponent::filter(
       no_return_mask_binalized= no_return_mask / 255;
     no_return_mask_buffer.push_back(no_return_mask_binalized);
       for (const auto& binary_mask:no_return_mask_buffer) {
-          time_series_blockage_mask +=mask;
         time_series_blockage_mask += binary_mask;
       }
 //    time_series_blockage_mask = time_series_blockage_mask*(255/no_return_mask_buffer.size());
