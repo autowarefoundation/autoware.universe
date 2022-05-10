@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cv_bridge/cv_bridge.h>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -17,8 +16,6 @@
 #include <opencv4/opencv2/core/eigen.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-
-#include <yaml-cpp/yaml.h>
 
 class LineSegmentDetector : public rclcpp::Node
 {
@@ -65,6 +62,4 @@ private:
   }
 
   void imageCallback(const sensor_msgs::msg::CompressedImage& msg) const;
-
-  sensor_msgs::msg::Image::ConstSharedPtr decompressImage(const sensor_msgs::msg::CompressedImage& compressed_img) const;
 };

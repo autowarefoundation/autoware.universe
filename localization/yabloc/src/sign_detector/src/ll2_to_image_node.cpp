@@ -18,17 +18,8 @@ public:
     sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local().reliable(), std::bind(&Ll2ImageConverter::mapCallback, this, std::placeholders::_1));
     sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(pose_topic, 10, std::bind(&Ll2ImageConverter::poseCallback, this, std::placeholders::_1));
 
-    std::string config_path = "/";
-    this->declare_parameter<std::string>("config_path", config_path);
-    this->get_parameter("config_path", config_path);
-    if (config_path != "/") {
-      YAML::Node node = YAML::LoadFile(config_path)["vmvl"];
-      image_size_ = node["image_size"].as<int>();
-      max_range_ = node["max_range"].as<float>();
-    } else {
-      image_size_ = 800;
-      max_range_ = 20;
-    }
+    image_size_ = this->declare_parameter<int>("image_size", 800);
+    max_range_ = this->declare_parameter<float>("max_range", 20.f);
   }
 
 private:

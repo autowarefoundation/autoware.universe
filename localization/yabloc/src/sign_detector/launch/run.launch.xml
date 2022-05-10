@@ -29,20 +29,21 @@
         <param name="pose_topic" value="/eagleye/pose"/>
         <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="max_range" value="20"/>
+        <param name="max_range" value="20.0"/>
         <param name="image_size" value="800"/>
         <param name="line_thick" value="2"/>
     </node>
 
     <node name="lsd" pkg="sign_detector" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="config_path" value="$(var config_path)"/>
+        <param name="max_range" value="20.0"/>
+        <param name="image_size" value="800"/>
         <param name="line_thick" value="2"/>
     </node>
     <node name="imu_kf" pkg="sign_detector" exec="imu_kf_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
-    <node name="particle_filter" pkg="sign_detector" exec="particle_filter_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="particle_filter" pkg="sign_detector" exec="particle_filter_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="blur_size" value="13"/>
         <param name="dilate_size" value="2"/>

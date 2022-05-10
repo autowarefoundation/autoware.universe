@@ -1,5 +1,6 @@
 #include "sign_detector/particle_filter.hpp"
-
+#include "sign_detector/timer.hpp"
+#include <opencv4/opencv2/highgui.hpp>
 
 void ParticleFilter::publishTf(const geometry_msgs::msg::PoseStamped& pose)
 {
@@ -54,13 +55,24 @@ void ParticleFilter::ll2ImageCallback(const sensor_msgs::msg::Image& msg)
 
 cv::Mat ParticleFilter::matchImage(const cv::Mat& query, const cv::Mat& ref)
 {
+  Timer timer;
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2 * dilate_size_ + 1, 2 * dilate_size_ + 1), cv::Point(dilate_size_, dilate_size_));
   cv::Mat dst_ref;
   cv::dilate(ref, dst_ref, kernel);
   cv::GaussianBlur(dst_ref, dst_ref, cv::Size(blur_size_, blur_size_), 0, 0);
 
+  cv::Rect roi(cv::Point(200, 400), cv::Size(400, 200));
+  cv::Mat temp = query(roi);  // 切り出し画像
+  cv::Mat ret;
+  cv::matchTemplate(dst_ref, temp, ret, CV_TM_CCORR_NORMED);
+  RCLCPP_INFO_STREAM(this->get_logger(), "blur time: " << timer << " ms");
+  cv::imshow("show", ret);
+  cv::waitKey(1);
+
   cv::Mat zero = cv::Mat::zeros(query.size(), CV_8UC1);
   cv::Mat merged;
   cv::merge(std::vector<cv::Mat>{query, dst_ref, zero}, merged);
+
+
   return merged;
 }
