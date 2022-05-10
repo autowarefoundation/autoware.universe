@@ -31,6 +31,7 @@ if(BUILD_TESTING)
   ament_add_gtest(test_${PROJECT_NAME}
     test/test_collision_distance.cpp
     test/test_occupancy_grid_utils.cpp
+    test/test_polygon_iterator.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     apparent_safe_velocity_limiter_node
