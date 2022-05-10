@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>elevation_map_loader</name>
   <version>0.1.0</version>
@@ -7,8 +8,9 @@
   <maintainer email="taichi.higashide@tier4.jp">Taichi Higashide</maintainer>
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>grid_map_cv</depend>

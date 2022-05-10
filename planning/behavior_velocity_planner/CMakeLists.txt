@@ -1,453 +1,81 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(behavior_velocity_planner)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # Find the non-obvious packages manually
-find_package(ament_cmake REQUIRED)
 find_package(Boost REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(OpenCV REQUIRED)
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-
-set(BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES
-  tier4_api_msgs
-  autoware_auto_perception_msgs
-  autoware_auto_planning_msgs
-  tier4_planning_msgs
-  tier4_autoware_utils
-  Boost
-  Eigen3
-  diagnostic_msgs
-  geometry_msgs
-  lanelet2_extension
-  PCL
-  pcl_conversions
-  rclcpp
-  sensor_msgs
-  interpolation
-  tf2
-  tf2_eigen
-  tf2_geometry_msgs
-  tf2_ros
-  vehicle_info_util
-  visualization_msgs
-  nav_msgs
-  grid_map_ros
+set(scene_modules
+  detection_area
+  blind_spot
+  stop_line
+  crosswalk
+  traffic_light
+  intersection
+  no_stopping_area
+  virtual_traffic_light
+  occlusion_spot
 )
 
+foreach(scene_module IN LISTS scene_modules)
+  file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
+  list(APPEND scene_modules_src ${scene_module_src})
+endforeach()
 
-# Common
-ament_auto_add_library(scene_module_lib SHARED
-  src/utilization/path_utilization.cpp
-  src/utilization/util.cpp
-)
-
-target_include_directories(scene_module_lib
-  SYSTEM PUBLIC
-    ${BOOST_INCLUDE_DIRS}
-    ${tf2_geometry_msgs_INCLUDE_DIRS}
-)
-
-target_include_directories(scene_module_lib
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-target_include_directories(scene_module_lib
-  SYSTEM PUBLIC
-    ${PCL_INCLUDE_DIRS}
-)
-
-ament_target_dependencies(scene_module_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_lib PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-# Scene Module: Stop Line
-ament_auto_add_library(scene_module_stop_line SHARED
-  src/scene_module/stop_line/manager.cpp
-  src/scene_module/stop_line/scene.cpp
-  src/scene_module/stop_line/debug.cpp
-)
-
-target_include_directories(scene_module_stop_line
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_stop_line ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_stop_line scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_stop_line PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
-# Scene Module: Crosswalk
-ament_auto_add_library(scene_module_crosswalk SHARED
-  src/scene_module/crosswalk/manager.cpp
-  src/scene_module/crosswalk/scene_crosswalk.cpp
-  src/scene_module/crosswalk/scene_walkway.cpp
-  src/scene_module/crosswalk/debug.cpp
-  src/scene_module/crosswalk/util.cpp
-)
-
-target_include_directories(scene_module_crosswalk
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_crosswalk ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_crosswalk scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_crosswalk PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-# Scene Module: Intersection
-ament_auto_add_library(scene_module_intersection SHARED
-  src/scene_module/intersection/manager.cpp
-  src/scene_module/intersection/scene_intersection.cpp
-  src/scene_module/intersection/scene_merge_from_private_road.cpp
-  src/scene_module/intersection/debug.cpp
-  src/scene_module/intersection/util.cpp
-)
-
-target_include_directories(scene_module_intersection
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_intersection ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_intersection scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_intersection PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
-# Scene Module: Traffic Light
-ament_auto_add_library(scene_module_traffic_light SHARED
-  src/scene_module/traffic_light/manager.cpp
-  src/scene_module/traffic_light/scene.cpp
-  src/scene_module/traffic_light/debug.cpp
-)
-
-target_include_directories(scene_module_traffic_light
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_traffic_light scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_traffic_light PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
-# Scene Module: Blind Spot
-ament_auto_add_library(scene_module_blind_spot SHARED
-  src/scene_module/blind_spot/manager.cpp
-  src/scene_module/blind_spot/scene.cpp
-  src/scene_module/blind_spot/debug.cpp
-)
-
-target_include_directories(scene_module_blind_spot
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_blind_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_blind_spot scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_blind_spot PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
-# Scene Module: Detection Area
-ament_auto_add_library(scene_module_detection_area SHARED
-  src/scene_module/detection_area/manager.cpp
-  src/scene_module/detection_area/scene.cpp
-  src/scene_module/detection_area/debug.cpp
-)
-
-target_include_directories(scene_module_detection_area
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_detection_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_detection_area scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_detection_area PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-# Scene Module: No Stopping Area
-ament_auto_add_library(scene_module_no_stopping_area SHARED
-  src/scene_module/no_stopping_area/manager.cpp
-  src/scene_module/no_stopping_area/scene_no_stopping_area.cpp
-  src/scene_module/no_stopping_area/debug.cpp
-)
-
-target_include_directories(scene_module_no_stopping_area
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_no_stopping_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_no_stopping_area scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_no_stopping_area PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
-# Scene Module: Virtual Traffic Light
-ament_auto_add_library(scene_module_virtual_traffic_light SHARED
-  src/scene_module/virtual_traffic_light/manager.cpp
-  src/scene_module/virtual_traffic_light/scene.cpp
-  src/scene_module/virtual_traffic_light/debug.cpp
-)
-
-target_include_directories(scene_module_virtual_traffic_light
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_virtual_traffic_light ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_virtual_traffic_light scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_virtual_traffic_light PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
-# SceneModule OcclusionSpot
-# Util
-ament_auto_add_library(occlusion_spot_lib SHARED
-  src/scene_module/occlusion_spot/grid_utils.cpp
-  src/scene_module/occlusion_spot/occlusion_spot_utils.cpp
-  src/scene_module/occlusion_spot/risk_predictive_braking.cpp
-)
-
-target_include_directories(occlusion_spot_lib
-  SYSTEM PUBLIC
-    ${BOOST_INCLUDE_DIRS}
-    ${tf2_geometry_msgs_INCLUDE_DIRS}
-)
-
-target_include_directories(occlusion_spot_lib
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(occlusion_spot_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(occlusion_spot_lib PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-ament_auto_add_library(scene_module_occlusion_spot SHARED
-  src/scene_module/occlusion_spot/manager.cpp
-  src/scene_module/occlusion_spot/debug.cpp
-  src/scene_module/occlusion_spot/scene_occlusion_spot.cpp
-)
-
-target_include_directories(scene_module_occlusion_spot
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_occlusion_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_occlusion_spot scene_module_lib occlusion_spot_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_occlusion_spot PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-# Scene Module Manager
-ament_auto_add_library(scene_module_manager SHARED
-  src/planner_manager.cpp
-)
-
-target_include_directories(scene_module_manager
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(scene_module_manager ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(scene_module_manager scene_module_lib)
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(scene_module_manager PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-# Node
 ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
+  src/planner_manager.cpp
+  src/utilization/path_utilization.cpp
+  src/utilization/util.cpp
+  ${scene_modules_src}
 )
 
 target_include_directories(behavior_velocity_planner
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+  SYSTEM PUBLIC
+    ${BOOST_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${tf2_geometry_msgs_INCLUDE_DIRS}
 )
 
-ament_target_dependencies(behavior_velocity_planner ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-target_link_libraries(behavior_velocity_planner
-  scene_module_lib
-  scene_module_stop_line
-  scene_module_crosswalk
-  scene_module_intersection
-  scene_module_traffic_light
-  scene_module_blind_spot
-  scene_module_occlusion_spot
-  scene_module_detection_area
-  scene_module_no_stopping_area
-  scene_module_virtual_traffic_light
-  scene_module_manager
+ament_target_dependencies(behavior_velocity_planner
+  Boost
+  Eigen3
+  PCL
 )
-
-ament_export_dependencies(${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(behavior_velocity_planner PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
 
 rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
   EXECUTABLE behavior_velocity_planner_node
 )
 
-
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  # utils for test
-  ament_auto_add_library(utilization SHARED
-    src/utilization/util.cpp
-  )
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(utilization PRIVATE
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
-
   # Gtest for utilization
-  ament_add_gtest(utilization-test
+  ament_add_ros_isolated_gtest(utilization-test
     test/src/test_state_machine.cpp
     test/src/test_arc_lane_util.cpp
     test/src/test_utilization.cpp
   )
   target_link_libraries(utilization-test
     gtest_main
-    utilization
+    behavior_velocity_planner
   )
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(utilization-test PRIVATE
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
 
   # Gtest for occlusion spot
-  ament_add_gtest(occlusion_spot-test
+  ament_add_ros_isolated_gtest(occlusion_spot-test
     test/src/test_occlusion_spot_utils.cpp
     test/src/test_risk_predictive_braking.cpp
     test/src/test_grid_utils.cpp
   )
   target_link_libraries(occlusion_spot-test
     gtest_main
-    scene_module_occlusion_spot
+    behavior_velocity_planner
   )
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(occlusion_spot-test PRIVATE
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
-
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
