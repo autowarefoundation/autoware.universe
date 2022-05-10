@@ -42,9 +42,14 @@ if(BUILD_TESTING)
     ${TRAJECTORY_FOLLOWER_NODES_TEST} ${CONTROLLER_NODE})
 
   find_package(autoware_testing REQUIRED)
-  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
-    PARAM_FILENAMES "lateral_controller_defaults.param.yaml longitudinal_controller_defaults.param.yaml
-test_vehicle_info.param.yaml test_nearest_search.param.yaml"
+  add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe
+    PARAM_FILENAMES "latlon_muxer_defaults.param.yaml"
+  )
+  add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "lateral_controller_defaults.param.yaml test_vehicle_info.param.yaml"
+  )
+  add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "longitudinal_controller_defaults.param.yaml test_vehicle_info.param.yaml"
   )
 endif()
 
