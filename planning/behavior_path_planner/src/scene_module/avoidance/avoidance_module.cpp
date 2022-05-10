@@ -502,17 +502,17 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     avoidance_debug_msg.to_furthest_linestring_distance = o.to_road_shoulder_distance;
     avoidance_debug_msg.max_shift_length = max_allowable_lateral_distance;
 
-    if (max_allowable_lateral_distance <= avoid_margin) {
+    if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
       continue;
     }
 
-    const auto is_object_on_right = isOnRight(o);
-    const auto shift_length = getShiftLength(o, is_object_on_right, avoid_margin);
-    if (isSameDirectionShift(is_object_on_right, shift_length)) {
-      avoidance_debug_array_false_and_push_back("IgnoreSameDirectionShift");
-      continue;
-    }
+    const auto max_shift_length =
+      o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
+
+    const auto max_left_shift_limit = [&max_shift_length, this]() noexcept {
+      return std::min(getLeftShiftBound(), max_shift_length);
+    };
 
     const auto avoiding_shift = shift_length - current_ego_shift;
     const auto return_shift = shift_length;
