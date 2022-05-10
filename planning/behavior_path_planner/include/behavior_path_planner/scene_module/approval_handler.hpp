@@ -35,7 +35,7 @@ public:
   bool isApproved() const
   {
     const auto now = clock_.now();
-    const auto thresh_sec = 0.5;
+    const auto thresh_sec = 5.0;
     if (approval_.data && (now - approval_.stamp).seconds() < thresh_sec) {
       if ((now - last_clear_time_).seconds() > thresh_sec) {
         return true;
