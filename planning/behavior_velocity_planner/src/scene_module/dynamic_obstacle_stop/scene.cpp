@@ -89,13 +89,14 @@ bool DynamicObstacleStopModule::modifyPathVelocity(
 
   // insert stop point for the detected obstacle
   if (planner_param_.approaching.enable) {
-    // approach the obstacle with slow velocity after stopping
-    insertVelocityWithApproaching(
+    // after a certain amount of time has elapsed since the ego stopped,
+    // approach the obstacle with slow velocity
+    insertVelocity(
       dynamic_obstacle, current_pose, current_vel, current_acc, trim_smoothed_path, *path);
   } else {
-    const auto stop_point =
-      calcStopPoint(dynamic_obstacle, trim_smoothed_path, current_pose, current_vel, current_acc);
-    insertStopPoint(stop_point, *path);
+    // just insert zero velocity for stopping
+    insertStoppingVelocity(
+      dynamic_obstacle, current_pose, current_vel, current_acc, trim_smoothed_path, *path);
   }
 
   // apply max jerk limit if the ego can't stop with specified max jerk and acc
@@ -667,10 +668,10 @@ void DynamicObstacleStopModule::insertStopPoint(
   planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
 }
 
-void DynamicObstacleStopModule::insertVelocityWithApproaching(
+void DynamicObstacleStopModule::insertVelocity(
   const boost::optional<DynamicObstacle> & dynamic_obstacle,
   const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-  const PathWithLaneId & resampled_path, PathWithLaneId & output_path)
+  const PathWithLaneId & smoothed_path, PathWithLaneId & output_path)
 {
   // no obstacles
   if (!dynamic_obstacle) {
@@ -680,7 +681,7 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
 
   const auto longitudinal_offset_to_collision_point =
     tier4_autoware_utils::calcSignedArcLength(
-      resampled_path.points, current_pose.position, dynamic_obstacle->nearest_collision_point) -
+      smoothed_path.points, current_pose.position, dynamic_obstacle->nearest_collision_point) -
     planner_param_.vehicle_param.base_to_front;
   // enough distance to the obstacle
   if (
@@ -698,9 +699,8 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
         state_ = State::STOP;
       }
 
-      const auto stop_point =
-        calcStopPoint(dynamic_obstacle, resampled_path, current_pose, current_vel, current_acc);
-      insertStopPoint(stop_point, output_path);
+      insertStoppingVelocity(
+        dynamic_obstacle, current_pose, current_vel, current_acc, smoothed_path, output_path);
       break;
     }
 
@@ -711,9 +711,8 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
         elapsed_time > planner_param_.approaching.stop_time_thresh ? State::APPROACH : State::STOP;
       RCLCPP_DEBUG_STREAM(logger_, "elapsed time: " << elapsed_time);
 
-      const auto stop_point =
-        calcStopPoint(dynamic_obstacle, resampled_path, current_pose, current_vel, current_acc);
-      insertStopPoint(stop_point, output_path);
+      insertStoppingVelocity(
+        dynamic_obstacle, current_pose, current_vel, current_acc, smoothed_path, output_path);
       break;
     }
 
@@ -721,7 +720,7 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
       RCLCPP_DEBUG_STREAM(logger_, "APPROACH state");
       insertApproachingVelocity(
         *dynamic_obstacle, current_pose, planner_param_.approaching.limit_vel_kmph / 3.6,
-        planner_param_.approaching.margin, resampled_path, output_path);
+        planner_param_.approaching.margin, smoothed_path, output_path);
       debug_ptr_->setAccelReason(DynamicObstacleStopDebug::AccelReason::STOP);
       break;
     }
@@ -731,6 +730,16 @@ void DynamicObstacleStopModule::insertVelocityWithApproaching(
       break;
     }
   }
+}
+
+void DynamicObstacleStopModule::insertStoppingVelocity(
+  const boost::optional<DynamicObstacle> & dynamic_obstacle,
+  const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
+  const PathWithLaneId & smoothed_path, PathWithLaneId & output_path)
+{
+  const auto stop_point =
+    calcStopPoint(dynamic_obstacle, smoothed_path, current_pose, current_vel, current_acc);
+  insertStopPoint(stop_point, output_path);
 }
 
 void DynamicObstacleStopModule::insertApproachingVelocity(

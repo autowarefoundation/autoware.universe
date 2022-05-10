@@ -125,10 +125,15 @@ private:
     const boost::optional<geometry_msgs::msg::Pose> stop_point,
     autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
-  void insertVelocityWithApproaching(
+  void insertVelocity(
     const boost::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-    const PathWithLaneId & resampled_path, PathWithLaneId & output_path);
+    const PathWithLaneId & smoothed_path, PathWithLaneId & output_path);
+
+  void insertStoppingVelocity(
+    const boost::optional<DynamicObstacle> & dynamic_obstacle,
+    const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
+    const PathWithLaneId & smoothed_path, PathWithLaneId & output_path);
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
