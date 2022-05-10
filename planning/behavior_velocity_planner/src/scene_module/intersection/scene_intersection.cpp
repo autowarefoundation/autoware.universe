@@ -134,7 +134,7 @@ bool IntersectionModule::modifyPathVelocity(
     RCLCPP_DEBUG(logger_, "stop line line is at path[0], ignore planning.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
-    setDistance(std::numeric_limits<double>::max());
+    setDistance(0.0);
     return true;
   }
 
@@ -155,6 +155,10 @@ bool IntersectionModule::modifyPathVelocity(
   if (current_state == State::GO && is_over_pass_judge_line && !external_stop) {
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
+    setSafe(true);
+    setDistance(tier4_autoware_utils::calcSignedArcLength(
+      input_path.points, planner_data_->current_pose.pose.position,
+      input_path.points.at(stop_line_idx).point.pose.position));
     return true;  // no plan needed.
   }
 
@@ -173,7 +177,7 @@ bool IntersectionModule::modifyPathVelocity(
     is_entry_prohibited = true;
   }
   state_machine_.setStateWithMarginTime(
-    is_entry_prohibited ? State::STOP : State::GO, logger_.get_child("state_machine"), *clock_);
+    isActivated() ? State::GO : State::STOP, logger_.get_child("state_machine"), *clock_);
 
   /* set stop speed : TODO behavior on straight lane should be improved*/
   const bool is_stop_required = is_stuck || !has_traffic_light_ || turn_direction_ != "straight";
@@ -207,7 +211,7 @@ bool IntersectionModule::modifyPathVelocity(
     return true;
   }
 
-  if (state_machine_.getState() == State::STOP) {
+  if (state_machine_.getState() == State::STOP && is_entry_prohibited) {
     const double v = planner_param_.decel_velocity;
     util::setVelocityFrom(stop_line_idx, v, path);
 
