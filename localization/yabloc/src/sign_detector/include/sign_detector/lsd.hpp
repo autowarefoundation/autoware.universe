@@ -29,8 +29,8 @@ public:
   {
     sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(image_topic, 10, std::bind(&LineSegmentDetector::imageCallback, this, std::placeholders::_1));
     sub_info_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(info_topic, 10, std::bind(&LineSegmentDetector::infoCallback, this, std::placeholders::_1));
-    pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/projected", 10);
-    pub_image_lsd_ = this->create_publisher<sensor_msgs::msg::Image>("/lsd", 10);
+    pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/projected_image", 10);
+    pub_image_lsd_ = this->create_publisher<sensor_msgs::msg::Image>("/lsd_image", 10);
     lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());

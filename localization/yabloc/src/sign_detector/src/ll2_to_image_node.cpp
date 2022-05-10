@@ -116,7 +116,6 @@ private:
 
       for (const LineString& ls : near_linestring)
         cv::line(image, toCvPoint(ls.from), toCvPoint(ls.to), cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
-      cv::circle(image, center, 5, cv::Scalar(0, 255, 0), -1);
     }
 
 
