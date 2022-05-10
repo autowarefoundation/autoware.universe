@@ -64,7 +64,6 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
     config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, 1 << 30);
 #else
     config->setMaxWorkspaceSize(1 << 30);
-#endif
     nvinfer1::IHostMemory * plan = builder->buildSerializedNetwork(*network, *config);
     assert(plan != nullptr);
     std::ofstream outfile(engine_file, std::ofstream::binary);
