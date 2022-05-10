@@ -84,7 +84,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   pub_velocity_limit_input_ = new QSpinBox();
   pub_velocity_limit_input_->setRange(-100.0, 100.0);
   pub_velocity_limit_input_->setValue(0.0);
-  pub_velocity_limit_input_->setSingleStep(1.0);
+  pub_velocity_limit_input_->setSingleStep(5.0);
   connect(velocity_limit_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickVelocityLimit()));
 
   auto * v_layout = new QVBoxLayout;
@@ -98,7 +98,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   v_layout->addLayout(engage_status_layout);
   velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
   velocity_limit_layout->addWidget(pub_velocity_limit_input_);
-  velocity_limit_layout->addWidget(new QLabel("  [m/s]"));
+  velocity_limit_layout->addWidget(new QLabel("  [km/h]"));
   v_layout->addLayout(velocity_limit_layout);
   setLayout(v_layout);
 }
@@ -234,7 +234,7 @@ void AutowareStatePanel::onEngageStatus(
 void AutowareStatePanel::onClickVelocityLimit()
 {
   auto velocity_limit = std::make_shared<tier4_planning_msgs::msg::VelocityLimit>();
-  velocity_limit->max_velocity = pub_velocity_limit_input_->value();
+  velocity_limit->max_velocity = pub_velocity_limit_input_->value() / 3.6;
   pub_velocity_limit_->publish(*velocity_limit);
 }
 
