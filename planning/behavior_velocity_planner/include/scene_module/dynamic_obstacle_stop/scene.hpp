@@ -66,23 +66,6 @@ private:
   std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
 
   // Function
-  boost::optional<std::vector<DynamicObstacle>> createDynamicObstacles(
-    const PredictedObjects & predicted_objects,
-    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & points, const PathWithLaneId & path,
-    const geometry_msgs::msg::Pose & current_pose, const std::string & detection_method) const;
-
-  std::vector<DynamicObstacle> createDynamicObstaclesFromObjects(
-    const PredictedObjects & predicted_objects) const;
-
-  std::vector<DynamicObstacle> createDynamicObstaclesFromPoints(
-    const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud, const PathWithLaneId & path) const;
-
-  std::vector<DynamicObstacle> createDynamicObstaclesFromObjects(
-    const PredictedObjects & predicted_objects, const PathWithLaneId & path) const;
-
-  pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
-    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_points) const;
-
   pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithRectangle(
     const pcl::PointCloud<pcl::PointXYZ> & input_points,
     const geometry_msgs::msg::Pose & current_pose) const;
