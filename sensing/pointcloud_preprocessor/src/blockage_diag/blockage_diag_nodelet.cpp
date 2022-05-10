@@ -39,6 +39,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     lidar_model_ = static_cast<std::string>(declare_parameter("model", "Pandar40P"));
     blockage_count_threshold_ =
       static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
+    time_series_blockage_frames_ =
+      static_cast<uint>(declare_parameter("time_series_blockage_frames", 100));
   }
 
   updater_.setHardwareID("blockage_diag");
@@ -75,7 +77,7 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
   stat.add(
     "sky_blockage_range_deg", "[" + std::to_string(sky_blockage_range_deg_[0]) + "," +
                                 std::to_string(sky_blockage_range_deg_[1]) + "]");
-
+  stat.add("time_series_blockage_frames", std::to_string(time_series_blockage_frames_));
   // TODO(badai-nguyen): consider sky_blockage_ratio_ for DiagnosticsStatus." [todo]
 
   auto level = DiagnosticStatus::OK;
@@ -267,6 +269,11 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
     RCLCPP_DEBUG(
       get_logger(), " Setting new angle_range to: [%f , %f].", angle_range_deg_[0],
       angle_range_deg_[1]);
+  }
+  if (get_param(p, "time_series_blockage_frames_", time_series_blockage_frames_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting new time_series_blockage_frames to: %d.",
+      time_series_blockage_frames_);
   }
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
