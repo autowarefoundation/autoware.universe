@@ -132,8 +132,9 @@ public:
       tier4_planning_msgs::msg::StopReason2 stop_reason_2;
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason, &stop_reason_2);
-      stop_reason_array.stop_reasons.emplace_back(stop_reason);
-      stop_reason2_array.stop_reasons.emplace_back(stop_reason_2);
+      if (stop_reason.reason != "") stop_reason_array.stop_reasons.emplace_back(stop_reason);
+      if (stop_reason_2.stop_reason != 0)
+        stop_reason2_array.stop_reasons.emplace_back(stop_reason_2);
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
         infrastructure_command_array.commands.push_back(*command);

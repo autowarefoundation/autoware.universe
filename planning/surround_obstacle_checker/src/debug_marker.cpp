@@ -197,10 +197,11 @@ tier4_planning_msgs::msg::StopReason2Array SurroundObstacleCheckerDebugNode::mak
   // create stop reason stamped
   tier4_planning_msgs::msg::StopReason2 stop_reason2_msg;
   stop_reason2_msg.stop_reason = tier4_planning_msgs::msg::StopReason2::SURROUND_OBSTACLE_CHECK;
-  stop_reason2_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+  stop_reason2_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_FALSE;
 
   if (stop_pose_ptr_ != nullptr) {
     stop_reason2_msg.stop_line = *stop_pose_ptr_;
+    stop_reason2_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
     if (stop_obstacle_point_ptr_ != nullptr) {
       stop_reason2_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
     }
