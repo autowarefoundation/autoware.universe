@@ -39,8 +39,9 @@ geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
 // create predicted path assuming that obstacles move with constant velocity
 std::vector<geometry_msgs::msg::Pose> createPredictedPath(
   const geometry_msgs::msg::Pose & initial_pose, const float time_step,
-  const float max_velocity_mps, const size_t path_size)
+  const float max_velocity_mps, const float max_prediction_time)
 {
+  const size_t path_size = max_prediction_time / time_step;
   std::vector<geometry_msgs::msg::Pose> path_points;
   for (size_t i = 0; i < path_size; i++) {
     const float travel_dist = max_velocity_mps * time_step * i;
@@ -133,7 +134,8 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createD
     // replace predicted path with path that runs straight to lane
     PredictedPath predicted_path;
     predicted_path.path = createPredictedPath(
-      dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps, param_.path_size);
+      dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps,
+      param_.max_prediction_time);
     predicted_path.confidence = 1.0;
     dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
 
@@ -181,7 +183,8 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
     // create predicted path of points
     PredictedPath predicted_path;
     predicted_path.path = createPredictedPath(
-      dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps, param_.path_size);
+      dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps,
+      param_.max_prediction_time);
     predicted_path.confidence = 1.0;
     dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
 

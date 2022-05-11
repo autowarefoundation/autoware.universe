@@ -73,7 +73,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.max_vel_kmph = node.declare_parameter(ns_do + ".max_vel_kmph", 5.0);
     p.diameter = node.declare_parameter(ns_do + ".diameter", 0.1);
     p.height = node.declare_parameter(ns_do + ".height", 2.0);
-    p.path_size = node.declare_parameter(ns_do + ".path_size", 20);
+    p.max_prediction_time = node.declare_parameter(ns_do + ".max_prediction_time", 10.0);
     p.time_step = node.declare_parameter(ns_do + ".time_step", 0.5);
   }
 

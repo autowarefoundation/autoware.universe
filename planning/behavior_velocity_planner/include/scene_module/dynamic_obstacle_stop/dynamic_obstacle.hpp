@@ -43,10 +43,10 @@ struct DynamicObstacleParam
   float max_vel_kmph{5.0};
 
   // parameter to convert points to dynamic obstacle
-  float diameter{0.1};  // [m]
-  float height{2.0};    // [m]
-  size_t path_size{20};
-  float time_step{0.5};  // [sec]
+  float diameter{0.1};              // [m]
+  float height{2.0};                // [m]
+  float max_prediction_time{10.0};  // [sec]
+  float time_step{0.5};             // [sec]
 };
 
 struct PoseWithRange

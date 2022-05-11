@@ -163,14 +163,14 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `dist_right`                   | double | [m] right distance from ego position  |
 | `dist_left`                    | double | [m] left distance from ego position   |
 
-| Parameter /dynamic_obstacle | Type   | Description                                                                                                         |
-| --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
-| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                                       |
-| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                                       |
-| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                          |
-| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                            |
-| `path_size`                 | double | [-] create the predicted path of this size. used for creating dynamic obstacles from points or objects without path |
-| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path         |
+| Parameter /dynamic_obstacle | Type   | Description                                                                                                 |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                               |
+| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                               |
+| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                  |
+| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                    |
+| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                 |
+| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path |
 
 | Parameter /approaching | Type   | Description                                                                                        |
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------------- |
