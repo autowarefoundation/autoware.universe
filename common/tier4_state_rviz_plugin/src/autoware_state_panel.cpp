@@ -81,15 +81,6 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   engage_button_ptr_ = new QPushButton("Engage");
   connect(engage_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutowareEngage()));
 
-  // Gate Mode Button
-  gate_mode_button_ptr_ = new QPushButton("Gate Mode");
-  connect(gate_mode_button_ptr_, SIGNAL(clicked()), SLOT(onClickGateMode()));
-
-  // Path Change Approval Button
-  path_change_approval_button_ptr_ = new QPushButton("Path Change Approval");
-  connect(path_change_approval_button_ptr_, SIGNAL(clicked()), SLOT(onClickPathChangeApproval()));
-
-  // Velocity Limit
   velocity_limit_button_ptr_ = new QPushButton("Send Velocity Limit");
   pub_velocity_limit_input_ = new QSpinBox();
   pub_velocity_limit_input_->setRange(-100.0, 100.0);
@@ -97,13 +88,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   pub_velocity_limit_input_->setSingleStep(5.0);
   connect(velocity_limit_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickVelocityLimit()));
 
-  // Emergency Button
-  emergency_button_ptr_ = new QPushButton("Set Emergency");
-  connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
-
-  // Layout
   auto * v_layout = new QVBoxLayout;
-  auto * gate_mode_path_change_approval_layout = new QHBoxLayout;
   auto * velocity_limit_layout = new QHBoxLayout();
   v_layout->addLayout(gate_layout);
   v_layout->addLayout(selector_layout);
@@ -112,13 +97,9 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   v_layout->addLayout(engage_status_layout);
   v_layout->addWidget(engage_button_ptr_);
   v_layout->addLayout(engage_status_layout);
-  gate_mode_path_change_approval_layout->addWidget(gate_mode_button_ptr_);
-  gate_mode_path_change_approval_layout->addWidget(path_change_approval_button_ptr_);
-  v_layout->addLayout(gate_mode_path_change_approval_layout);
   velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
   velocity_limit_layout->addWidget(pub_velocity_limit_input_);
   velocity_limit_layout->addWidget(new QLabel("  [km/h]"));
-  velocity_limit_layout->addWidget(emergency_button_ptr_);
   v_layout->addLayout(velocity_limit_layout);
   setLayout(v_layout);
 }
@@ -146,6 +127,7 @@ void AutowareStatePanel::onInitialize()
     "/api/autoware/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
 
   client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
+<<<<<<< HEAD
     "/api/external/set/engage", rmw_qos_profile_services_default);
 
   client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
@@ -161,6 +143,12 @@ void AutowareStatePanel::onInitialize()
     "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/"
     "path_change_approval",
     rclcpp::QoS{1}.transient_local());
+=======
+    "/api/autoware/set/engage", rmw_qos_profile_services_default);
+
+  pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
+    "/planning/scenario_planning/max_velocity_default", rclcpp::QoS(1));
+>>>>>>> feat(rviz_plugins): add velocity limit to autoware state panel (#879)
 }
 
 void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
@@ -260,19 +248,6 @@ void AutowareStatePanel::onEngageStatus(
 {
   current_engage_ = msg->engage;
   engage_status_label_ptr_->setText(QString::fromStdString(Bool2String(current_engage_)));
-}
-
-void AutowareStatePanel::onEmergencyStatus(
-  const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)
-{
-  current_emergency_ = msg->emergency;
-  if (msg->emergency) {
-    emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
-    emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
-  } else {
-    emergency_button_ptr_->setText(QString::fromStdString("Set Emergency"));
-    emergency_button_ptr_->setStyleSheet("background-color: #00FF00;");
-  }
 }
 
 void AutowareStatePanel::onClickVelocityLimit()
