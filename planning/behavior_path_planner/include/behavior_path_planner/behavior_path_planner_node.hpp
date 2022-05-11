@@ -39,6 +39,9 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
@@ -50,6 +53,7 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -67,6 +71,9 @@ using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
+using tier4_planning_msgs::msg::AvoidanceDebugFactor;
+using tier4_planning_msgs::msg::AvoidanceDebugMsg;
+using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::PathChangeModuleArray;
 using tier4_planning_msgs::msg::Scenario;
@@ -102,6 +109,9 @@ private:
   std::string prev_ready_module_name_ = "NONE";
 
   TurnSignalDecider turn_signal_decider_;
+
+  std::mutex mutex_pd_;  // mutex for planner_data_
+  std::mutex mutex_bt_;  // mutex for bt_manager_
 
   // setup
   void waitForData();
@@ -140,22 +150,21 @@ private:
   /**
    * @brief extract path from behavior tree output
    */
-  PathWithLaneId::SharedPtr getPath(const BehaviorModuleOutput & bt_out);
+  PathWithLaneId::SharedPtr getPath(
+    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
 
   /**
    * @brief extract path candidate from behavior tree output
    */
-  PathWithLaneId::SharedPtr getPathCandidate(const BehaviorModuleOutput & bt_out);
+  PathWithLaneId::SharedPtr getPathCandidate(
+    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
 
   /**
    * @brief publish behavior module status mainly for the user interface
    */
-  void publishModuleStatus(const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses);
-
-  /**
-   * @brief update current pose on the planner_data_
-   */
-  void updateCurrentPose();
+  void publishModuleStatus(
+    const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses,
+    const std::shared_ptr<PlannerData> planner_data);
 
   // debug
 
@@ -163,6 +172,7 @@ private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
+  rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
 };

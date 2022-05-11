@@ -14,8 +14,6 @@
 
 #include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
 #include <deque>
 #include <memory>
 #include <string>
@@ -120,6 +118,11 @@ void AutowareStateMonitorNode::onOdometry(const nav_msgs::msg::Odometry::ConstSh
       break;
     }
 
+    state_input_.odometry_buffer.pop_front();
+  }
+
+  constexpr size_t odometry_buffer_size = 200;  // 40Hz * 5sec
+  if (state_input_.odometry_buffer.size() > odometry_buffer_size) {
     state_input_.odometry_buffer.pop_front();
   }
 }

@@ -19,7 +19,12 @@
 #include <boost/optional.hpp>  // To be replaced by std::optional in C++17
 
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <algorithm>
 #include <map>

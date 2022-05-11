@@ -5,12 +5,15 @@
 `behavior_velocity_planner` is a planner that adjust velocity based on the traffic rules.
 It consists of several modules. Please refer to the links listed below for detail on each module.
 
+![Architecture](./docs/BehaviorVelocityPlanner-Architecture.drawio.svg)
+
 - [Blind Spot](blind-spot-design.md)
 - [Crosswalk](crosswalk-design.md)
 - [Detection Area](detection-area-design.md)
 - [Intersection](intersection-design.md)
 - [MergeFromPrivate](merge-from-private-design.md)
 - [Stop Line](stop-line-design.md)
+- [Virtual Traffic Light](virtual-traffic-light-design.md)
 - [Traffic Light](traffic-light-design.md)
 - [Occlusion Spot](occlusion-spot-design.md)
 - [No Stopping Area](no-stopping-area-design.md)
@@ -52,4 +55,5 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 | `forward_path_length`   | double | forward path length                                                                 |
 | `backward_path_length`  | double | backward path length                                                                |
 | `max_accel`             | double | (to be a global parameter) max acceleration of the vehicle                          |
+| `system_delay`          | double | (to be a global parameter) delay time until output control command                  |
 | `delay_response_time`   | double | (to be a global parameter) delay time of the vehicle's response to control commands |

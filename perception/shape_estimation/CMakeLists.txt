@@ -1,17 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(shape_estimation)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(pcl_conversions REQUIRED)
@@ -45,6 +36,11 @@ ament_auto_add_library(shape_estimation_lib SHARED
 
 ament_target_dependencies(shape_estimation_lib ${SHAPE_ESTIMATION_DEPENDENCIES})
 
+target_include_directories(shape_estimation_lib
+  SYSTEM PUBLIC
+    "${PCL_INCLUDE_DIRS}"
+)
+
 ament_auto_add_library(shape_estimation_node SHARED
   src/node.cpp
 )
@@ -67,11 +63,6 @@ rclcpp_components_register_node(shape_estimation_node
   PLUGIN "ShapeEstimationNode"
   EXECUTABLE shape_estimation
 )
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 ament_auto_package(INSTALL_TO_SHARE
   launch

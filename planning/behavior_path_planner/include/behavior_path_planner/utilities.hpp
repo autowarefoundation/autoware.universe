@@ -45,7 +45,12 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <limits>
 #include <memory>
@@ -79,7 +84,7 @@ inline void fromMsg(const geometry_msgs::msg::PoseStamped & msg, tf2::Stamped<tf
   fromMsg(msg.pose, tmp);
   out.setData(tmp);
 }
-
+#ifdef ROS_DISTRO_GALACTIC
 // Remove after this commit is released
 // https://github.com/ros2/geometry2/commit/e9da371d81e388a589540357c050e262442f1b4a
 inline geometry_msgs::msg::Point & toMsg(const tf2::Vector3 & in, geometry_msgs::msg::Point & out)
@@ -109,6 +114,7 @@ inline void doTransform(
   tf2::Vector3 v_out = t * v_in;
   toMsg(v_out, t_out);
 }
+#endif
 }  // namespace tf2
 
 namespace behavior_path_planner

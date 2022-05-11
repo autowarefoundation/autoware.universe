@@ -23,8 +23,14 @@
 
 #include <boost/optional.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 namespace image_projection_based_fusion
 {
@@ -121,7 +127,9 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
-    debugger_ = std::make_shared<Debugger>(this, rois_number_);
+    std::size_t image_buffer_size =
+      static_cast<std::size_t>(declare_parameter("image_buffer_size", 15));
+    debugger_ = std::make_shared<Debugger>(this, rois_number_, image_buffer_size);
   }
 }
 

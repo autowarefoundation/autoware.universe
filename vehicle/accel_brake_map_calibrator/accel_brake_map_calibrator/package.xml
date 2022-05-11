@@ -5,9 +5,11 @@
   <version>0.1.0</version>
   <description>The accel_brake_map_calibrator</description>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>diagnostic_updater</depend>
@@ -16,6 +18,7 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
