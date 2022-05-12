@@ -26,8 +26,18 @@
 #include <memory>
 #include <string>
 
+namespace surround_obstacle_checker
+{
+
+using tier4_planning_msgs::msg::StopFactor;
+using tier4_planning_msgs::msg::StopReason;
+using tier4_planning_msgs::msg::StopReasonArray;
+using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
+
 enum class PoseType : int8_t { NoStart = 0 };
 enum class PointType : int8_t { NoStart = 0 };
+
 class SurroundObstacleCheckerDebugNode
 {
 public:
@@ -52,5 +62,5 @@ private:
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;
   rclcpp::Clock::SharedPtr clock_;
 };
-
+}  // namespace surround_obstacle_checker
 #endif  // SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_

@@ -21,7 +21,11 @@
 #include <TrtNet.hpp>
 
 #include <pcl/common/transforms.h>
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 #include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_listener.h>
 

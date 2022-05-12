@@ -286,16 +286,32 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
         // interpolate and crop backward
         const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
           smoothed_points, mpt_param_.delta_arc_length_for_mpt_points);
-        const auto cropped_interpolated_points = points_utils::clipBackwardPoints(
-          interpolated_points, current_ego_pose_.position, traj_param_.backward_fixing_distance,
-          mpt_param_.delta_arc_length_for_mpt_points);
+        const auto interpolated_points_with_yaw =
+          points_utils::convertToPosesWithYawEstimation(interpolated_points);
+        const auto cropped_interpolated_points_with_yaw = points_utils::clipBackwardPoints(
+          interpolated_points_with_yaw, current_ego_pose_, traj_param_.backward_fixing_distance,
+          mpt_param_.delta_arc_length_for_mpt_points,
+          traj_param_.delta_yaw_threshold_for_closest_point);
+        const auto cropped_interpolated_points =
+          points_utils::convertToPoints(cropped_interpolated_points_with_yaw);
 
         return points_utils::convertToReferencePoints(cropped_interpolated_points);
       }
 
       // calc non fixed traj points
-      const size_t seg_idx =
-        tier4_autoware_utils::findNearestSegmentIndex(smoothed_points, fixed_ref_points.back().p);
+      const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
+        points_utils::convertToPoints(fixed_ref_points));
+      const auto seg_idx_optional = tier4_autoware_utils::findNearestSegmentIndex(
+        smoothed_points, fixed_ref_points_with_yaw.back(), std::numeric_limits<double>::max(),
+        traj_param_.delta_yaw_threshold_for_closest_point);
+
+      if (!seg_idx_optional) {
+        RCLCPP_INFO_EXPRESSION(
+          rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+          "cannot find nearest segment index in getReferencePoints");
+        return std::vector<ReferencePoint>{};
+      }
+      const auto seg_idx = *seg_idx_optional;
       const auto non_fixed_traj_points =
         std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{
           smoothed_points.begin() + seg_idx, smoothed_points.end()};
@@ -322,7 +338,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
     // set some information to reference points considering fix kinematics
     trimPoints(ref_points);
     calcOrientation(ref_points);
-    calcVelocity(ref_points, smoothed_points);
+    calcVelocity(ref_points, smoothed_points, traj_param_.delta_yaw_threshold_for_closest_point);
     calcCurvature(ref_points);
     calcArcLength(ref_points);
     calcPlanningFromEgo(
@@ -385,8 +401,9 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
     */
 
     // assign fix kinematics
-    const size_t nearest_ref_idx =
-      tier4_autoware_utils::findNearestIndex(ref_points, current_ego_pose_.position);
+    const size_t nearest_ref_idx = findNearestIndexWithSoftYawConstraints(
+      points_utils::convertToPoints(ref_points), current_ego_pose_,
+      traj_param_.delta_yaw_threshold_for_closest_point);
 
     // calculate cropped_ref_points.at(nearest_ref_idx) with yaw
     const geometry_msgs::msg::Pose nearest_ref_pose = [&]() -> geometry_msgs::msg::Pose {
@@ -422,8 +439,9 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   }
 
   const auto & prev_ref_points = prev_trajs->mpt_ref_points;
-  const int nearest_prev_ref_idx =
-    tier4_autoware_utils::findNearestIndex(prev_ref_points, current_ego_pose_.position);
+  const int nearest_prev_ref_idx = static_cast<int>(findNearestIndexWithSoftYawConstraints(
+    points_utils::convertToPoints(prev_ref_points), current_ego_pose_,
+    traj_param_.delta_yaw_threshold_for_closest_point));
 
   // calculate begin_prev_ref_idx
   const int begin_prev_ref_idx = [&]() {
@@ -1174,6 +1192,19 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
   return traj_points;
 }
 
+size_t MPTOptimizer::findNearestIndexWithSoftYawConstraints(
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
+  const double yaw_threshold) const
+{
+  const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
+
+  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
+    points_with_yaw, pose, std::numeric_limits<double>::max(), yaw_threshold);
+  return nearest_idx_optional
+           ? *nearest_idx_optional
+           : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
+}
+
 void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) const
 {
   const auto yaw_angles = slerpYawFromReferencePoints(ref_points);
@@ -1188,11 +1219,16 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) con
 
 void MPTOptimizer::calcVelocity(
   std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points) const
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const double yaw_thresh) const
 {
+  const auto ref_points_with_yaw =
+    points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
   for (size_t i = 0; i < ref_points.size(); i++) {
-    ref_points.at(i).v = points[tier4_autoware_utils::findNearestIndex(points, ref_points.at(i).p)]
-                           .longitudinal_velocity_mps;
+    ref_points.at(i).v =
+      points[findNearestIndexWithSoftYawConstraints(
+               points_utils::convertToPoints(points), ref_points_with_yaw.at(i), yaw_thresh)]
+        .longitudinal_velocity_mps;
   }
 }
 
@@ -1277,8 +1313,11 @@ void MPTOptimizer::calcExtraPoints(
     if (prev_trajs && !prev_trajs->mpt_ref_points.empty()) {
       const auto & prev_ref_points = prev_trajs->mpt_ref_points;
 
-      const size_t prev_idx =
-        tier4_autoware_utils::findNearestIndex(prev_ref_points, ref_points.at(i).p);
+      const auto ref_points_with_yaw =
+        points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
+      const size_t prev_idx = findNearestIndexWithSoftYawConstraints(
+        points_utils::convertToPoints(prev_ref_points), ref_points_with_yaw.at(i),
+        traj_param_.delta_yaw_threshold_for_closest_point);
       const double dist_to_nearest_prev_ref =
         tier4_autoware_utils::calcDistance2d(prev_ref_points.at(prev_idx), ref_points.at(i));
       if (dist_to_nearest_prev_ref < 1.0 && prev_ref_points.at(prev_idx).near_objects) {
@@ -1337,7 +1376,7 @@ void MPTOptimizer::calcBounds(
       BoundsCandidates filtered_bounds_candidates;
       for (const auto & bounds_candidate : bounds_candidates) {
         // Step 1. Bounds is continuous to the previous one,
-        //         and the overlapped signed length is longer than vehice width
+        //         and the overlapped signed length is longer than vehicle width
         //         overlapped_signed_length already considers vehicle width.
         const double overlapped_signed_length =
           calcOverlappedBoundsSignedLength(prev_continuous_bounds, bounds_candidate);
@@ -1481,7 +1520,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   BoundsCandidates bounds_candidate;
 
   constexpr double max_search_lane_width = 5.0;
-  const std::vector<double> ds_vec{0.45, 0.15, 0.05, 0.01};
+  const auto search_widths = mpt_param_.bounds_search_widths;
 
   // search right to left
   const double bound_angle =
@@ -1501,8 +1540,8 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   CollisionType latest_right_bound_collision_type = previous_collision_type;
 
   while (traversed_dist < max_search_lane_width) {
-    for (size_t ds_idx = 0; ds_idx < ds_vec.size(); ++ds_idx) {
-      const double ds = ds_vec.at(ds_idx);
+    for (size_t search_idx = 0; search_idx < search_widths.size(); ++search_idx) {
+      const double ds = search_widths.at(search_idx);
       while (true) {
         const CollisionType current_collision_type =
           getCollisionType(maps, enable_avoidance, avoiding_point, traversed_dist, bound_angle);
@@ -1510,7 +1549,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         if (has_collision(current_collision_type)) {  // currently collision
           if (!has_collision(previous_collision_type)) {
             // if target_position becomes collision from no collision or out_of_sight
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               const double left_bound = traversed_dist - ds / 2.0;
               bounds_candidate.push_back(Bounds{
                 current_right_bound, left_bound, latest_right_bound_collision_type,
@@ -1523,7 +1562,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
                                                                              // out_of_sight
           if (previous_collision_type == CollisionType::NO_COLLISION) {
             // if target_position becomes out_of_sight from no collision
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               const double left_bound = max_search_lane_width;
               bounds_candidate.push_back(Bounds{
                 current_right_bound, left_bound, latest_right_bound_collision_type,
@@ -1535,7 +1574,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         } else {  // currently no collision
           if (has_collision(previous_collision_type)) {
             // if target_position becomes no collision from collision
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               current_right_bound = traversed_dist - ds / 2.0;
               latest_right_bound_collision_type = previous_collision_type;
               previous_collision_type = current_collision_type;
@@ -1547,7 +1586,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         // if target_position is longer than max_search_lane_width
         if (traversed_dist >= max_search_lane_width) {
           if (!has_collision(previous_collision_type)) {
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               const double left_bound = traversed_dist - ds / 2.0;
               bounds_candidate.push_back(Bounds{
                 current_right_bound, left_bound, latest_right_bound_collision_type,
@@ -1562,9 +1601,9 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         previous_collision_type = current_collision_type;
       }
 
-      if (ds_idx != ds_vec.size() - 1) {
+      if (search_idx != search_widths.size() - 1) {
         // go back with ds since target_position became empty or road/object
-        // NOTE: if ds is the last of ds_vec, don't have to go back
+        // NOTE: if ds is the last of search_widths, don't have to go back
         traversed_dist -= ds;
       }
     }

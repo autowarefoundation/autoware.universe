@@ -1,48 +1,18 @@
-# Copyright 2019 the Autoware Foundation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Co-developed by Tier IV, Inc. and Apex.AI, Inc.
-cmake_minimum_required(VERSION 3.5)
-
-### Export headers
+cmake_minimum_required(VERSION 3.14)
 project(autoware_auto_geometry)
 
-## dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-# includes
 ament_auto_add_library(${PROJECT_NAME} SHARED
   include/geometry/spatial_hash.hpp
   include/geometry/intersection.hpp
   include/geometry/spatial_hash_config.hpp
   src/spatial_hash.cpp
-  src/bounding_box.cpp)
-autoware_set_compile_options(${PROJECT_NAME})
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
+  src/bounding_box.cpp
+)
 
 if(BUILD_TESTING)
-  # run linters
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  # gtest
   set(GEOMETRY_GTEST geometry_gtest)
   set(GEOMETRY_SRC test/src/test_geometry.cpp
     test/src/test_convex_hull.cpp
@@ -53,8 +23,7 @@ if(BUILD_TESTING)
     test/src/test_common_2d.cpp
     test/src/test_intersection.cpp
   )
-  ament_add_gtest(${GEOMETRY_GTEST} ${GEOMETRY_SRC})
-  autoware_set_compile_options(${GEOMETRY_GTEST})
+  ament_add_ros_isolated_gtest(${GEOMETRY_GTEST} ${GEOMETRY_SRC})
   target_compile_options(${GEOMETRY_GTEST} PRIVATE -Wno-conversion -Wno-sign-conversion)
   target_include_directories(${GEOMETRY_GTEST} PRIVATE "test/include" "include")
   ament_target_dependencies(${GEOMETRY_GTEST}
@@ -67,5 +36,4 @@ if(BUILD_TESTING)
   target_link_libraries(${GEOMETRY_GTEST} ${PROJECT_NAME})
 endif()
 
-# Ament Exporting
 ament_auto_package()
