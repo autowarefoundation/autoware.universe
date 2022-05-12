@@ -43,7 +43,7 @@ using unique_identifier_msgs::msg::UUID;
 class RTCInterface
 {
 public:
-  RTCInterface(rclcpp::Node & node, const std::string & name, const Module & module);
+  RTCInterface(rclcpp::Node & node, const std::string & name);
   void publishCooperateStatus();
   void updateCooperateStatus(const UUID & uuid, const bool safe, const double distance);
   void removeCooperateStatus(const UUID & uuid);
