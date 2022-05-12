@@ -41,10 +41,10 @@
     </include>
     <!-- motion velocity smoother -->
     <arg name="smoother_type" default="JerkFiltered" description="options: JerkFiltered, L2, Analytical, Linf(Unstable)"/>
-    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory" />
-    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory" />
+    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory"/>
+    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory"/>
     <include file="$(find-pkg-share motion_velocity_smoother)/launch/motion_velocity_smoother.launch.xml">
-      <arg name="smoother_type" value="$(var smoother_type)" />
+      <arg name="smoother_type" value="$(var smoother_type)"/>
       <arg name="common_param_path" value="$(var common_param_path)"/>
       <arg name="param_path" value="$(var param_path)"/>
       <arg name="smoother_param_path" value="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/common/motion_velocity_smoother/$(var smoother_type).param.yaml"/>
