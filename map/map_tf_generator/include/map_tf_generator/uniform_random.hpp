@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MAP_TF_GENERETOR__UNIFORM_RANDOM_HPP_
-#define MAP_TF_GENERETOR__UNIFORM_RANDOM_HPP_
+#ifndef MAP_TF_GENERATOR__UNIFORM_RANDOM_HPP_
+#define MAP_TF_GENERATOR__UNIFORM_RANDOM_HPP_
 
 #include <random>
 #include <vector>
 
-std::vector<int> UniformRandom(const int max_excluded, const int n) {
+std::vector<int> UniformRandom(const int max_excluded, const int n)
+{
   std::default_random_engine generator;
-  std::uniform_int_distribution<int> distribution(0, max_excluded-1);
+  std::uniform_int_distribution<int> distribution(0, max_excluded - 1);
 
   std::vector<int> v(n);
   for (int i = 0; i < n; ++i) {
@@ -29,4 +30,4 @@ std::vector<int> UniformRandom(const int max_excluded, const int n) {
   return v;
 }
 
-#endif  // MAP_TF_GENERETOR__UNIFORM_RANDOM_HPP_
+#endif  // MAP_TF_GENERATOR__UNIFORM_RANDOM_HPP_

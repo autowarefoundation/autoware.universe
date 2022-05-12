@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "map_tf_generator/uniform_random.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -24,8 +26,6 @@
 
 #include <memory>
 #include <string>
-
-#include "map_tf_generator/uniform_random.hpp"
 
 const int N_SAMPLES = 20;
 

@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include "map_tf_generator/uniform_random.hpp"
 
-using testing::Each;
+#include <gmock/gmock.h>
+
 using testing::AllOf;
+using testing::Each;
 using testing::Ge;
 using testing::Lt;
-
 
 TEST(UniformRandom, UniformRandom)
 {
