@@ -42,8 +42,8 @@ def generate_launch_description():
     composable_nodes = [
         ComposableNode(
             package="compare_map_segmentation",
-            plugin="compare_map_segmentation::VoxelBasedCompareMapFilterComponent",
-            name="voxel_based_compare_map_filter_node",
+            plugin="compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent",
+            name="voxel_distance_based_compare_map_filter_node",
             remappings=[
                 ("input", "/perception/obstacle_segmentation/pointcloud"),
                 ("map", "/map/pointcloud_map"),
