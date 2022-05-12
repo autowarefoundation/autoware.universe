@@ -18,13 +18,13 @@
 #include <random>
 #include <vector>
 
-std::vector<size_t> UniformRandom(const int max_excluded, const int n)
+std::vector<size_t> UniformRandom(const size_t max_exclusive, const size_t n)
 {
   std::default_random_engine generator;
-  std::uniform_int_distribution<size_t> distribution(0, max_excluded - 1);
+  std::uniform_int_distribution<size_t> distribution(0, max_exclusive - 1);
 
   std::vector<size_t> v(n);
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; i++) {
     v[i] = distribution(generator);
   }
   return v;
