@@ -29,13 +29,13 @@ TEST(UniformRandom, UniformRandom)
   }
 
   {
-    const size_t min_inclusize = 0;
+    const size_t min_inclusive = 0;
     const size_t max_exclusive = 4;
 
     for (int i = 0; i < 50; i++) {
       const std::vector<size_t> random = UniformRandom(4, 10);
       ASSERT_EQ(random.size(), static_cast<size_t>(10));
-      ASSERT_THAT(random, Each(AllOf(Ge(min_inclusize), Lt(max_exclusive))));  // in range [0, 4)
+      ASSERT_THAT(random, Each(AllOf(Ge(min_inclusive), Lt(max_exclusive))));  // in range [0, 4)
     }
   }
 }
