@@ -28,6 +28,8 @@ TEST(UniformRandom, UniformRandom)
     ASSERT_EQ(random.size(), static_cast<size_t>(0));
   }
 
+  // checks if the returned values are in range of [min, max)
+  // note that the minimun range is always zero and the max value is exclusive
   {
     const size_t min_inclusive = 0;
     const size_t max_exclusive = 4;
