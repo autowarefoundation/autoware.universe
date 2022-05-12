@@ -58,9 +58,9 @@ private:
     PointCloud clouds;
     pcl::fromROSMsg<pcl::PointXYZ>(*clouds_ros, clouds);
 
-    const std::vector<int> indices = UniformRandom(clouds.size(), N_SAMPLES);
+    const std::vector<size_t> indices = UniformRandom(clouds.size(), N_SAMPLES);
     double coordinate[3] = {0, 0, 0};
-    for (const int i : indices) {
+    for (const auto i : indices) {
       coordinate[0] += clouds.points[i].x;
       coordinate[1] += clouds.points[i].y;
       coordinate[2] += clouds.points[i].z;
