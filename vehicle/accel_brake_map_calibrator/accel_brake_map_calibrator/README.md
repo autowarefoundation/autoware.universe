@@ -17,7 +17,7 @@ ros2 launch accel_brake_map_calibrator accel_brake_map_calibrator.launch.xml rvi
 Or if you want to use rosbag files, run the following commands.
 
 ```sh
-ros2 param set /use_sim_time true
+ros2 launch accel_brake_map_calibrator accel_brake_map_calibrator.launch.xml rviz:=true use_sim_time:=true
 ros2 bag play <rosbag_file> --clock
 ```
 
