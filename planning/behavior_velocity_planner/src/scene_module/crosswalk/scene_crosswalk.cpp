@@ -224,7 +224,7 @@ bool CrosswalkModule::checkStopArea(
   if (first_stop_path_point_index_) {
     setDistance(tier4_autoware_utils::calcSignedArcLength(
       path_tmp.points, planner_data_->current_pose.pose.position,
-      path_tmp.points.at(*first_stop_path_point_index_).point.pose.position));
+      tmp_debug_data.first_stop_pose.position));
   } else {
     setDistance(std::numeric_limits<double>::max());
   }
