@@ -1,12 +1,12 @@
 /**:
   ros__parameters:
-    longitudinal_ctrl_period: 0.03  # control period [s]
     delay_compensation_time: 0.17
 
     enable_smooth_stop: true
     enable_overshoot_emergency: true
     enable_large_tracking_error_emergency: true
     enable_slope_compensation: false
+    enable_keep_stopped_until_steer_convergence: true
 
     # state transition
     drive_state_stop_dist: 0.5
@@ -15,6 +15,8 @@
     stopped_state_entry_duration_time: 0.1
     stopped_state_entry_vel: 0.1
     stopped_state_entry_acc: 0.1
+    stopped_state_new_traj_duration_time: 1.0
+    stopped_state_new_traj_end_dist: 0.3
     emergency_state_overshoot_stop_dist: 1.5
     emergency_state_traj_trans_dev: 3.0
     emergency_state_traj_rot_dev: 0.7
