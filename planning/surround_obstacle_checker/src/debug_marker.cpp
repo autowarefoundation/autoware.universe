@@ -168,4 +168,4 @@ tier4_planning_msgs::msg::StopReason2Array SurroundObstacleCheckerDebugNode::mak
   return stop_reason2_array;
 }
 
-} // namespace surround_obstacle_checker
+}  // namespace surround_obstacle_checker
