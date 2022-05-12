@@ -27,7 +27,7 @@
 #include <memory>
 #include <string>
 
-const int N_SAMPLES = 20;
+constexpr size_t N_SAMPLES = 20;
 
 class MapTFGeneratorNode : public rclcpp::Node
 {
