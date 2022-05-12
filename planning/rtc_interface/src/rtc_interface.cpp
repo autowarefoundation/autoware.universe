@@ -16,6 +16,8 @@
 
 namespace
 {
+using tier4_rtc_msgs::msg::Module;
+
 std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
 {
   std::stringstream ss;
@@ -24,14 +26,50 @@ std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
   }
   return ss.str();
 }
+
+Module getModuleType(const std::string & module_name)
+{
+  Module module;
+  if (module_name == "blind_spot") {
+    module.type = Module::BLIND_SPOT;
+  } else if (module_name == "crosswalk") {
+    module.type = Module::CROSSWALK;
+  } else if (module_name == "detection_area") {
+    module.type = Module::DETECTION_AREA;
+  } else if (module_name == "intersection") {
+    module.type = Module::INTERSECTION;
+  } else if (module_name == "no_stopping_area") {
+    module.type = Module::NO_STOPPING_AREA;
+  } else if (module_name == "occlusion_spot") {
+    module.type = Module::OCCLUSION_SPOT;
+  } else if (module_name == "stop_line") {
+    module.type = Module::NONE;
+  } else if (module_name == "traffic_light") {
+    module.type = Module::TRAFFIC_LIGHT;
+  } else if (module_name == "virtual_traffic_light") {
+    module.type = Module::TRAFFIC_LIGHT;
+  } else if (module_name == "lane_change_left") {
+    module.type = Module::LANE_CHANGE_LEFT;
+  } else if (module_name == "lane_change_right") {
+    module.type = Module::LANE_CHANGE_RIGHT;
+  } else if (module_name == "avoidance_left") {
+    module.type = Module::AVOIDANCE_LEFT;
+  } else if (module_name == "avoidance_right") {
+    module.type = Module::AVOIDANCE_RIGHT;
+  } else if (module_name == "pull_over") {
+    module.type = Module::PULL_OVER;
+  } else if (module_name == "pull_out") {
+    module.type = Module::PULL_OUT;
+  }
+  return module;
+}
+
 }  // namespace
 
 namespace rtc_interface
 {
-RTCInterface::RTCInterface(rclcpp::Node & node, const std::string & name, const Module & module)
-: clock_{*node.get_clock()},
-  logger_{node.get_logger().get_child("RTCInterface[" + name + "]")},
-  module_{module}
+RTCInterface::RTCInterface(rclcpp::Node & node, const std::string & name)
+: clock_{*node.get_clock()}, logger_{node.get_logger().get_child("RTCInterface[" + name + "]")}
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -43,6 +81,9 @@ RTCInterface::RTCInterface(rclcpp::Node & node, const std::string & name, const 
   srv_commands_ = node.create_service<CooperateCommands>(
     "~/" + name + "/cooperate_commands",
     std::bind(&RTCInterface::onCooperateCommandService, this, _1, _2));
+
+  // Module
+  module_ = getModuleType(name);
 }
 
 void RTCInterface::publishCooperateStatus()
