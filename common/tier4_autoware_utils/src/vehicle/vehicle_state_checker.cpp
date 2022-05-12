@@ -84,7 +84,8 @@ bool VehicleStateChecker::checkStoppedAtStopPoint(const double stop_duration = 0
     return false;
   }
 
-  return calcSignedArcLength(trajectory_ptr_->points, p, idx.get()) < th_arrived_distance_m;
+  return std::abs(calcSignedArcLength(trajectory_ptr_->points, p, idx.get())) <
+         th_arrived_distance_m;
 }
 
 bool VehicleStateChecker::checkStoppedWithoutLocalization(const double stop_duration = 0.0) const
