@@ -1,7 +1,7 @@
 <launch>
     <!-- ========================================= -->
     <arg name="path" default="$(find-pkg-share sign_detector)/config/"/>
-    <arg name="use_sim_time" default="false"/>
+    <arg name="use_sim_time" default="true"/>
 
     <!-- ========================================= -->
     <!-- rviz -->

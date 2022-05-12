@@ -36,8 +36,23 @@ cv::Mat ParticleFilter::extractGreenChannel(const cv::Mat& src_image)
   return one_ch_images.at(1);
 }
 
+void ParticleFilter::syncrhoCallback(const sensor_msgs::msg::Image& msg1, const sensor_msgs::msg::Image& msg2)
+{
+  RCLCPP_INFO_STREAM(this->get_logger(), "ll2: " << msg1.header.stamp.sec << "." << msg1.header.stamp.nanosec);
+  RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << msg2.header.stamp.sec << "." << msg2.header.stamp.nanosec);
+  cv::Mat ll2_image = cv_bridge::toCvCopy(msg1, "bgr8")->image;
+  cv::Mat lsd_image = cv_bridge::toCvCopy(msg2, "rgb8")->image;
+
+  // ll2_image = extractGreenChannel(ll2_image);
+  // lsd_image = extractGreenChannel(lsd_image);
+  // cv::Mat match_image = matchImage(lsd_image, ll2_image);
+  cv::Mat match_image = ll2_image + lsd_image;
+  publishImage(match_image, msg1.header.stamp);
+}
+
 void ParticleFilter::lsdImageCallback(const sensor_msgs::msg::Image& msg)
 {
+  RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << msg.header.stamp.sec << "." << msg.header.stamp.nanosec);
   cv::Mat lsd_image = cv_bridge::toCvCopy(msg, "bgr8")->image;
   lsd_image = extractGreenChannel(lsd_image);
   if (!latest_ll2_image_.has_value())
@@ -49,6 +64,7 @@ void ParticleFilter::lsdImageCallback(const sensor_msgs::msg::Image& msg)
 
 void ParticleFilter::ll2ImageCallback(const sensor_msgs::msg::Image& msg)
 {
+  RCLCPP_INFO_STREAM(this->get_logger(), "ll2: " << msg.header.stamp.sec << "." << msg.header.stamp.nanosec);
   cv::Mat ll2_image = cv_bridge::toCvCopy(msg, "bgr8")->image;
   latest_ll2_image_ = extractGreenChannel(ll2_image);
 }
