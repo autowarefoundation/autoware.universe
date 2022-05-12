@@ -95,12 +95,15 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
     msg = "OK";
   }
 
-  if ((ground_blockage_ratio_ > 0.0f) && (sky_blockage_ratio_ > 0.0f)) {
-    msg = msg + ": LIDAR both blockage";
-  } else if (ground_blockage_ratio_ > 0.0f) {
-    msg = msg + ": LIDAR ground blockage";
-  } else if (sky_blockage_ratio_ > 0.0f) {
-    msg = msg + ": LIDAR sky blockage";
+  std::string msg;
+  if (level == DiagnosticStatus::OK) {
+    msg = "OK";
+  } else if (level == DiagnosticStatus::WARN) {
+    msg = "WARNING: LiDAR blockage";
+  } else if (level == DiagnosticStatus::ERROR) {
+    msg = "ERROR: LiDAR blockage";
+  } else if (level == DiagnosticStatus::STALE) {
+    msg = "STALE";
   }
   stat.summary(level, msg);
 }
