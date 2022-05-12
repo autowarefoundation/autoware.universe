@@ -16,6 +16,28 @@ rclcpp_components_register_node(map_tf_generator_node
   EXECUTABLE map_tf_generator
 )
 
+function(add_testcase filepath)
+  get_filename_component(filename ${filepath} NAME)
+  string(REGEX REPLACE ".cpp" "" test_name ${filename})
+
+  ament_add_gmock(${test_name} ${filepath})
+  target_include_directories(${test_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+endfunction()
+
+set(BUILD_TESTING ON)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+
+  file(GLOB TEST_FILES test/*)
+  message("TEST_FILES = ${TEST_FILES}")
+  foreach(filepath ${TEST_FILES})
+    add_testcase(${filepath})
+  endforeach()
+endif()
+
+## Install
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )

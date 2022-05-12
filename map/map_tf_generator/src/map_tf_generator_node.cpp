@@ -25,6 +25,10 @@
 #include <memory>
 #include <string>
 
+#include "map_tf_generator/uniform_random.hpp"
+
+const int N_SAMPLES = 20;
+
 class MapTFGeneratorNode : public rclcpp::Node
 {
 public:
@@ -54,16 +58,16 @@ private:
     PointCloud clouds;
     pcl::fromROSMsg<pcl::PointXYZ>(*clouds_ros, clouds);
 
-    const unsigned int sum = clouds.points.size();
+    const std::vector<int> indices = UniformRandom(clouds.size(), N_SAMPLES);
     double coordinate[3] = {0, 0, 0};
-    for (unsigned int i = 0; i < sum; i++) {
+    for (const int i : indices) {
       coordinate[0] += clouds.points[i].x;
       coordinate[1] += clouds.points[i].y;
       coordinate[2] += clouds.points[i].z;
     }
-    coordinate[0] = coordinate[0] / sum;
-    coordinate[1] = coordinate[1] / sum;
-    coordinate[2] = coordinate[2] / sum;
+    coordinate[0] = coordinate[0] / indices.size();
+    coordinate[1] = coordinate[1] / indices.size();
+    coordinate[2] = coordinate[2] / indices.size();
 
     geometry_msgs::msg::TransformStamped static_transformStamped;
     static_transformStamped.header.stamp = this->now();
