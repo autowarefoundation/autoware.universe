@@ -33,7 +33,6 @@ if(BUILD_TESTING)
   add_testcase(test/test_uniform_random.cpp)
 endif()
 
-## Install
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
