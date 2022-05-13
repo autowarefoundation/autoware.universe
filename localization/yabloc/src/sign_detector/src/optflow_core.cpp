@@ -3,7 +3,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv4/opencv2/calib3d.hpp>
 
-void OptFlowNode ::imageCallback(const sensor_msgs::msg::CompressedImage& msg)
+void OptFlowNode::imageCallback(const sensor_msgs::msg::CompressedImage& msg)
 {
   sensor_msgs::msg::Image::ConstSharedPtr image_ptr = decompressImage(msg);
   cv::Mat image = cv_bridge::toCvCopy(*image_ptr, "rgb8")->image;
