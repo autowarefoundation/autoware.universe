@@ -123,7 +123,7 @@ public:
       tier4_planning_msgs::msg::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason);
-      
+
       if (stop_reason.reason != "") {
         stop_reason_array.stop_reasons.emplace_back(stop_reason);
       }
