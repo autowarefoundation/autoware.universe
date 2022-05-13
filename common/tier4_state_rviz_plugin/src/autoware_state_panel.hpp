@@ -30,6 +30,7 @@
 #include <tier4_control_msgs/msg/external_command_selector_mode.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
+#include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 namespace rviz_plugins
@@ -45,6 +46,8 @@ public:
 public Q_SLOTS:  // NOLINT for Qt
   void onClickAutowareEngage();
   void onClickVelocityLimit();
+  void onClickGateMode();
+  void onClickPathChangeApproval();
 
 protected:
   void onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
@@ -79,6 +82,8 @@ protected:
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
 
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
+  rclcpp::Publisher<tier4_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::Approval>::SharedPtr pub_path_change_approval_;
 
   QLabel * gate_mode_label_ptr_;
   QLabel * selector_mode_label_ptr_;
@@ -87,6 +92,8 @@ protected:
   QLabel * engage_status_label_ptr_;
   QPushButton * engage_button_ptr_;
   QPushButton * velocity_limit_button_ptr_;
+  QPushButton * gate_mode_button_ptr_;
+  QPushButton * path_change_approval_button_ptr_;
   QSpinBox * pub_velocity_limit_input_;
 
   bool current_engage_{false};
