@@ -44,8 +44,9 @@ class RTCInterface
 {
 public:
   RTCInterface(rclcpp::Node & node, const std::string & name);
-  void publishCooperateStatus();
-  void updateCooperateStatus(const UUID & uuid, const bool safe, const double distance);
+  void publishCooperateStatus(const rclcpp::Time & stamp);
+  void updateCooperateStatus(
+    const UUID & uuid, const bool safe, const double distance, const rclcpp::Time & stamp);
   void removeCooperateStatus(const UUID & uuid);
   bool isActivated(const UUID & uuid) const;
 
@@ -58,7 +59,6 @@ private:
   rclcpp::Publisher<CooperateStatusArray>::SharedPtr pub_statuses_;
   rclcpp::Service<CooperateCommands>::SharedPtr srv_commands_;
 
-  mutable rclcpp::Clock clock_;
   rclcpp::Logger logger_;
   Module module_;
   CooperateStatusArray registered_status_;

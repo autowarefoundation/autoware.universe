@@ -69,7 +69,7 @@ Module getModuleType(const std::string & module_name)
 namespace rtc_interface
 {
 RTCInterface::RTCInterface(rclcpp::Node & node, const std::string & name)
-: clock_{*node.get_clock()}, logger_{node.get_logger().get_child("RTCInterface[" + name + "]")}
+: logger_{node.get_logger().get_child("RTCInterface[" + name + "]")}
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -86,9 +86,9 @@ RTCInterface::RTCInterface(rclcpp::Node & node, const std::string & name)
   module_ = getModuleType(name);
 }
 
-void RTCInterface::publishCooperateStatus()
+void RTCInterface::publishCooperateStatus(const rclcpp::Time & stamp)
 {
-  registered_status_.stamp = clock_.now();
+  registered_status_.stamp = stamp;
   pub_statuses_->publish(registered_status_);
 }
 
@@ -119,7 +119,8 @@ void RTCInterface::onCooperateCommandService(
   }
 }
 
-void RTCInterface::updateCooperateStatus(const UUID & uuid, const bool safe, const double distance)
+void RTCInterface::updateCooperateStatus(
+  const UUID & uuid, const bool safe, const double distance, const rclcpp::Time & stamp)
 {
   // Find registered status which has same uuid
   auto itr = std::find_if(
@@ -129,7 +130,7 @@ void RTCInterface::updateCooperateStatus(const UUID & uuid, const bool safe, con
   // If there is no registered status, add it
   if (itr == registered_status_.statuses.end()) {
     CooperateStatus status;
-    status.stamp = clock_.now();
+    status.stamp = stamp;
     status.uuid = uuid;
     status.module = module_;
     status.safe = safe;
@@ -140,7 +141,7 @@ void RTCInterface::updateCooperateStatus(const UUID & uuid, const bool safe, con
   }
 
   // If the registered status is found, update status
-  itr->stamp = clock_.now();
+  itr->stamp = stamp;
   itr->safe = safe;
   itr->distance = distance;
 }
