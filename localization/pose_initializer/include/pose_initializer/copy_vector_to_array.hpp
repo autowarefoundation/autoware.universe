@@ -20,16 +20,14 @@
 #include <array>
 #include <vector>
 
-template<typename T, unsigned long int N>
+template <typename T, unsigned long int N>
 void CopyVectorToArray(const std::vector<T> & vector, std::array<T, N> & array)
 {
   if (N != vector.size()) {
     // throws the error to prevent causing an anonymous bug
     // such as only partial array is initialized
-    throw std::invalid_argument(
-      fmt::format(
-        "Vector size (which is {}) is different from the copy size (which is {})",
-        vector.size(), N));
+    throw std::invalid_argument(fmt::format(
+      "Vector size (which is {}) is different from the copy size (which is {})", vector.size(), N));
   }
 
   std::copy_n(vector.begin(), N, array.begin());

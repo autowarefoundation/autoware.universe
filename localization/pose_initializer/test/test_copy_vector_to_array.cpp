@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
 #include "pose_initializer/copy_vector_to_array.hpp"
+
+#include <gmock/gmock.h>
 
 TEST(CopyVectorToArray, CopyAllElements)
 {
@@ -22,7 +22,6 @@ TEST(CopyVectorToArray, CopyAllElements)
   std::array<int, 5> array;
   CopyVectorToArray<int, 5>(vector, array);
   EXPECT_THAT(array, testing::ElementsAre(0, 1, 2, 3, 4));
-
 }
 
 TEST(CopyVectorToArray, CopyZeroElements)
@@ -35,21 +34,17 @@ TEST(CopyVectorToArray, CopyZeroElements)
 
 TEST(CopyVectorToArray, ThrowsInvalidArgumentIfMoreElementsExpected)
 {
-  auto f = []{
+  auto f = [] {
     const std::vector<int> vector{0, 1, 2, 3, 4};
     std::array<int, 6> array;
     CopyVectorToArray<int, 6>(vector, array);
   };
 
   EXPECT_THROW(
-    try {
-      f();
-    } catch(std::exception & e) {
+    try { f(); } catch (std::exception & e) {
       EXPECT_STREQ(
-        e.what(),
-        "Vector size (which is 5) is different from the copy size (which is 6)");
+        e.what(), "Vector size (which is 5) is different from the copy size (which is 6)");
       throw;
     },
-    std::invalid_argument
-  );
+    std::invalid_argument);
 }
