@@ -90,14 +90,15 @@ ament_auto_add_library(${CONTROL_LIB} SHARED
         ${CONTROL_LIB_HEADERS}
         )
 
+
 #ament_export_targets(${CONTROL_LIB} HAS_LIBRARY_TARGET)
 
-target_include_directories(${CONTROL_LIB}
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
-        $<INSTALL_INTERFACE:include>
-        $<INSTALL_INTERFACE:include/utils>)
+#target_include_directories(${CONTROL_LIB}
+#        PUBLIC
+#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
+#        $<INSTALL_INTERFACE:include>
+#        $<INSTALL_INTERFACE:include/utils>)
 
 #ament_export_targets(${CONTROL_LIB} HAS_LIBRARY_TARGET)
 #ament_export_libraries(${CONTROL_LIB})
@@ -153,7 +154,7 @@ ament_auto_package(CONFIG_EXTRAS_POST "${CONTROL_LIB}-extras.cmake")
 # -------------  PROTOTYPES ____________________________
 
 ## TF example
-#ament_auto_add_executable(main_tf usage_examples/main_tf.cpp)
+ament_auto_add_executable(main_tf usage_examples/main_tf.cpp)
 #target_link_libraries(main_tf fmt::fmt stdc++fs ${AUTOWARE_CONTROL_TOOLBOX_LIB})
 #target_link_directories(main_tf PUBLIC ${AUTOWARE_CONTROL_LIB_INCLUDE_DIR})
 #target_include_directories(main_tf PRIVATE include include/utils)
