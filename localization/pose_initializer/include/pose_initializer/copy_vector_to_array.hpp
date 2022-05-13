@@ -21,7 +21,7 @@
 #include <array>
 #include <vector>
 
-template <typename T, unsigned long int N>
+template<typename T, size_t N>
 void CopyVectorToArray(const std::vector<T> & vector, std::array<T, N> & array)
 {
   if (N != vector.size()) {
