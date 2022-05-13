@@ -72,14 +72,13 @@ set(CONTROL_LIB autoware_control_toolbox_lib)
 set(CONTROL_LIB_SOURCE
         src/utils/act_utils.cpp
         src/utils/act_utils_eigen.cpp
-        src/utils/writetopath.cpp
         src/autoware_control_toolbox.cpp)
 
 set(CONTROL_LIB_HEADERS
         include/autoware_control_toolbox.hpp
         include/utils/act_utils.hpp
         include/utils/act_utils_eigen.hpp
-        include/utils/writetopath.hpp)
+        )
 
 set(CONTROL_LIB_INCLUDE_DIRS
         include
@@ -155,6 +154,7 @@ ament_auto_package(CONFIG_EXTRAS_POST "${CONTROL_LIB}-extras.cmake")
 
 ## TF example
 ament_auto_add_executable(main_tf usage_examples/main_tf.cpp)
+ament_auto_add_executable(main_pade usage_examples/main_pade.cpp)
 #target_link_libraries(main_tf fmt::fmt stdc++fs ${AUTOWARE_CONTROL_TOOLBOX_LIB})
 #target_link_directories(main_tf PUBLIC ${AUTOWARE_CONTROL_LIB_INCLUDE_DIR})
 #target_include_directories(main_tf PRIVATE include include/utils)
