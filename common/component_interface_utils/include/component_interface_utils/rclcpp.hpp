@@ -35,7 +35,7 @@ public:
   /// Constructor.
   explicit NodeAdaptor(rclcpp::Node * node) : node_(node) {}
 
-  /// Create a client wrapper for logging. This is for member function of node.
+  /// Create a client wrapper for logging.
   template <class SharedPtrT>
   void init_cli(SharedPtrT & cli, CallbackGroup group = nullptr) const
   {
