@@ -10,7 +10,7 @@ RTC Interface is an interface to publish the decision status of behavior plannin
 
 ```c++
 // Generate instance (in this example, "intersection" is selected)
-rtc_interface::RTCInterface rtc_interface(node, "intersection", tier4_rtc_msgs::msg::Module::INTERSECTION);
+rtc_interface::RTCInterface rtc_interface(node, "intersection");
 
 // Generate UUID
 const unique_identifier_msgs::msg::UUID uuid = generateUUID(getModuleId());
@@ -23,17 +23,22 @@ while (...) {
   // Get distance to the object corresponding to the module id
   const double distance = ...
 
+  // Get time stamp
+  const rclcpp::Time stamp = ...
+
   // Update status
-  rtc_interface.updateCooperateStatus(uuid, safe, distance);
+  rtc_interface.updateCooperateStatus(uuid, safe, distance, stamp);
 
   if (rtc_interface.isActivated(uuid)) {
     // Execute planning
   } else {
     // Stop planning
   }
+  // Get time stamp
+  const rclcpp::Time stamp = ...
 
   // Publish status topic
-  rtc_interface.publishCooperateStatus();
+  rtc_interface.publishCooperateStatus(stamp);
 }
 
 // Remove the status from array
@@ -67,7 +72,7 @@ An instance of `RTCInterface`
 ### publishCooperateStatus
 
 ```c++
-rtc_interface::publishCooperateStatus()
+rtc_interface::publishCooperateStatus(const rclcpp::Time & stamp)
 ```
 
 #### Description
@@ -76,7 +81,7 @@ Publish registered cooperate status.
 
 #### Input
 
-Nothing
+- `stamp` : Time stamp
 
 #### Output
 
@@ -85,7 +90,7 @@ Nothing
 ### updateCooperateStatus
 
 ```c++
-rtc_interface::updateCooperateStatus(const unique_identifier_msgs::msg::UUID & uuid, const bool safe, const double distance)
+rtc_interface::updateCooperateStatus(const unique_identifier_msgs::msg::UUID & uuid, const bool safe, const double distance, const rclcpp::Time & stamp)
 ```
 
 #### Description
@@ -98,6 +103,7 @@ If cooperate status corresponding to `uuid` is not registered yet, add new coope
 - `uuid` : UUID for requesting module
 - `safe` : Safety status of requesting module
 - `distance` : Distance to the object from ego vehicle
+- `stamp` : Time stamp
 
 #### Output
 
@@ -115,7 +121,7 @@ Remove cooperate status corresponding to `uuid` from registered statuses.
 
 #### Input
 
-- `uuid` : UUID for unregistering module
+- `uuid` : UUID for expired module
 
 #### Output
 
