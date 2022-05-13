@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "pose_initializer/pose_initializer_core.hpp"
+
 #include "pose_initializer/copy_vector_to_array.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -27,7 +28,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-
 
 double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const tf2::Vector3 & point)
 {
