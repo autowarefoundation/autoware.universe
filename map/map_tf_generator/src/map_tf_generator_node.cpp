@@ -55,6 +55,7 @@ private:
 
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr clouds_ros)
   {
+    // fix random seed to produce the same viewer position every time
     srand(3939);
 
     PointCloud clouds;
