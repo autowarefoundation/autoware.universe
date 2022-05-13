@@ -109,14 +109,6 @@ repositories:
     type: git
     url: git@github.com:tier4/lidar_driver.git
     version: v0.1.4
-  vendor/rosbridge_suite:
-    type: git
-    url: https://github.com/tier4/rosbridge_suite.git
-    version: 0ee05e529aef88bf2654b77ddd5ccd7b6fe2ee6b
-  vendor/rosauth:
-    type: git
-    url: https://github.com/GT-RAIL/rosauth.git
-    version: 3ca66938fb604c0d2f948f356ce7a1b9bdfb717e
   vendor/velodyne_vls:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
