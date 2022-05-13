@@ -55,6 +55,8 @@ private:
 
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr clouds_ros)
   {
+    srand(3939);
+
     PointCloud clouds;
     pcl::fromROSMsg<pcl::PointXYZ>(*clouds_ros, clouds);
 
