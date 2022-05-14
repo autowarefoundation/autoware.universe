@@ -301,14 +301,16 @@ TEST(PolygonIterator, BenchCompare)
 
   for (double resolution = 0.01; resolution <= 1.00; resolution *= 10) {
     map.setGeometry(Length(10.0, 10.0), resolution, Position(0.0, 0.0));  // bufferSize(8, 5)
-    for (auto seed = 0; seed < 1000; ++seed) {
+    const auto move = grid_map::Position(2.0, 2.0);
+    map.move(move);
+    for (auto seed = 0; seed < 100; ++seed) {
       std::cout << seed << std::endl;
       std::random_device r;
       std::default_random_engine engine(seed);
       std::uniform_real_distribution uniform_dist(-2.50, 2.50);
       Polygon polygon;
       for (const auto & vertex : base_polygon.getVertices()) {
-        polygon.addVertex(vertex + Position(uniform_dist(engine), uniform_dist(engine)));
+        polygon.addVertex(vertex + Position(uniform_dist(engine), uniform_dist(engine)) + move);
       }
       stopwatch.tic("ctor");
       apparent_safe_velocity_limiter::PolygonIterator iterator(map, polygon);
@@ -320,7 +322,7 @@ TEST(PolygonIterator, BenchCompare)
       while (!iterator.isPastEnd() && !iterator_gridmap.isPastEnd()) {
         // std::cout << (*iterator).transpose() << " " << (*iterator_gridmap).transpose() <<
         // std::endl;
-        EXPECT_EQ((*iterator).x(), (*iterator_gridmap).x());
+        ASSERT_EQ((*iterator).x(), (*iterator_gridmap).x());
         EXPECT_EQ((*iterator).y(), (*iterator_gridmap).y());
         stopwatch.tic("iter");
         ++iterator;
