@@ -10,6 +10,6 @@
     <arg name="output_pose_topic" value="/localization/pose_estimator/pose"/>
     <arg name="output_pose_with_covariance_topic" value="/localization/pose_estimator/pose_with_covariance"/>
 
-    <arg name="param_file" value="$(var ndt_scan_matcher_param_pathg)"/>
+    <arg name="param_file" value="$(var ndt_scan_matcher_param_path)"/>
   </include>
 </launch>
