@@ -20,6 +20,7 @@ from math import asin
 from math import atan2
 from math import cos
 from math import sin
+import os
 from typing import Tuple
 
 from geometry_msgs.msg import Pose
@@ -162,14 +163,15 @@ def plot_problem(pd: ProblemDescription, ax):
 
 
 if __name__ == "__main__":
-    for postfix in ["single", "multi"]:
-        for idx in range(4):
-            pose_list = []
-            bag_path = "/tmp/result_{0}{1}".format(postfix, idx)
+    for cand_dir in os.listdir("/tmp"):
+        if cand_dir.startswith("fpalgos"):
+            bag_path = os.path.join("/tmp", cand_dir)
             pd = ProblemDescription.from_rosbag_path(bag_path)
+
             fig, ax = plt.subplots()
             plot_problem(pd, ax)
             fig.tight_layout()
-            file_name = bag_path + "-plot.png"
+
+            file_name = os.path.join("/tmp", cand_dir + "-plot.png")
             plt.savefig(file_name)
             print("saved to {}".format(file_name))
