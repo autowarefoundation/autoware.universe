@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="input/pointcloud" default="/sensing/lidar/top/rectified/pointcloud" description="The topic will be used in the localization util module"/>
+  <arg name="ndt_scan_matcher_param_path" default="$(find-pkg-share ndt_scan_matcher)/config/ndt_scan_matcher.param.yaml"/>
 
   <!-- localization module -->
   <group>
@@ -15,7 +16,9 @@
     <!-- pose_estimator module -->
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml">
+        <arg name="param_file" value="$(var ndt_scan_matcher_param_path)"/>
+      </include>
     </group>
     <!-- twist_estimator module -->
     <group>
