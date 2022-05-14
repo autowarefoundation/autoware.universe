@@ -209,7 +209,7 @@ TEST(AstarSearchTestSuite, SingleCurvature)
   for (size_t i = 0; i < goal_xs.size(); i++) {
     std::array<double, 3> start{6., 4., 0.5 * 3.1415};
     std::array<double, 3> goal{goal_xs[i], 4., 0.5 * 3.1415};
-    std::string dir_name = "/tmp/result_single" + std::to_string(i);
+    std::string dir_name = "/tmp/fpalgos-result_single" + std::to_string(i);
     EXPECT_TRUE(test_astar(start, goal, dir_name));
   }
 }
@@ -222,7 +222,7 @@ TEST(AstarSearchTestSuite, MultiCurvature)
   for (size_t i = 0; i < goal_xs.size(); i++) {
     std::array<double, 3> start{6., 4., 0.5 * 3.1415};
     std::array<double, 3> goal{goal_xs[i], 4., 0.5 * 3.1415};
-    std::string dir_name = "/tmp/result_multi" + std::to_string(i);
+    std::string dir_name = "/tmp/fpalgos-result_multi" + std::to_string(i);
     EXPECT_TRUE(test_astar(start, goal, dir_name, maximum_turning_radius, turning_radius_size));
   }
 }
