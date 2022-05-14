@@ -89,6 +89,9 @@ private:
   PredictedObjects::ConstSharedPtr dynamic_obstacles_ptr_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
 
+  // Benchmarking
+  std::multiset<double> runtimes;
+
   // parameters
   Float time_buffer_ = static_cast<Float>(declare_parameter<Float>("time_buffer"));
   Float distance_buffer_ = static_cast<Float>(declare_parameter<Float>("distance_buffer"));
