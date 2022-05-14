@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter_node.hpp"
+#include <numeric>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -174,7 +175,13 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   RCLCPP_WARN(get_logger(), "  obstacles filter     = %2.2fms", obs_filter_duration);
   RCLCPP_WARN(get_logger(), "  footprint generation = %2.2fms", footprint_duration);
   RCLCPP_WARN(get_logger(), "  distance to obstacle = %2.2fms", dist_poly_duration);
-  RCLCPP_WARN(get_logger(), "**************** Total = %2.2fms", stopwatch.toc());
+  const auto runtime = stopwatch.toc();
+  runtimes.insert(runtime);
+  const auto sum = std::accumulate(runtimes.begin(), runtimes.end(), 0.0);
+  RCLCPP_WARN(get_logger(), "**************** Total = %2.2fms", runtime);
+  RCLCPP_WARN(get_logger(), "**************** Total (max) = %2.2fms", *std::prev(runtimes.end()));
+  RCLCPP_WARN(get_logger(), "**************** Total (med) = %2.2fms", *std::next(runtimes.begin(), runtimes.size() / 2));
+  RCLCPP_WARN(get_logger(), "**************** Total (avg) = %2.2fms", sum / runtimes.size());
 }
 
 Float ApparentSafeVelocityLimiterNode::calculateSafeVelocity(
