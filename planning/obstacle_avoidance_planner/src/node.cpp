@@ -138,7 +138,7 @@ bool hasValidNearestPointFromEgo(
   return true;
 }
 
-std::tuple<double, std::vector<double>> calcVehicleCirclesInfo(
+std::tuple<double, std::vector<double>> calcVehicleCirclesInfo1(
   const VehicleParam & vehicle_param, const size_t circle_num_for_constraints,
   const size_t circle_num_for_radius, const double radius_ratio)
 {
@@ -158,6 +158,33 @@ std::tuple<double, std::vector<double>> calcVehicleCirclesInfo(
   }
 
   return {radius, longitudinal_offsets};
+}
+
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo2(
+  const VehicleParam & vehicle_param, const size_t circle_num_for_constraints,
+  const size_t circle_num_for_radius, const double radius_ratio)
+{
+  const double radius = std::hypot(
+                          vehicle_param.length / static_cast<double>(circle_num_for_radius) / 2.0,
+                          vehicle_param.width / 2.0) *
+                        radius_ratio;
+
+  std::vector<double> longitudinal_offsets;
+  std::vector<double> radiuses;
+
+  const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num_for_radius);
+
+  longitudinal_offsets.push_back(
+    unit_lon_length / 2.0 +
+    (unit_lon_length * (circle_num_for_radius - 1)) /
+      static_cast<double>(circle_num_for_constraints - 1) * (circle_num_for_constraints - 1) -
+    vehicle_param.rear_overhang);
+  radiuses.push_back(radius);
+
+  longitudinal_offsets.push_back(-vehicle_param.rear_overhang);
+  radiuses.push_back(vehicle_param.width / 2.0);
+
+  return {radiuses, longitudinal_offsets};
 }
 
 [[maybe_unused]] void fillYawInTrajectoryPoint(
@@ -284,7 +311,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
         std::tie(
           vehicle_circle_radius_for_drivability_,
           vehicle_circle_longitudinal_offsets_for_drivability_) =
-          calcVehicleCirclesInfo(
+          calcVehicleCirclesInfo1(
             vehicle_param_, vehicle_circle_constraints_num_for_drivability_,
             vehicle_circle_radius_num_for_drivability_,
             vehicle_circle_radius_ratio_for_drivability_);
@@ -426,29 +453,20 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // vehicle_circles
     // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
-    use_manual_vehicle_circles_for_mpt_ = declare_parameter<bool>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles");
     vehicle_circle_constraints_num_for_mpt_ = declare_parameter<int>(
       "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_constraints");
-    if (use_manual_vehicle_circles_for_mpt_) {  // vehicle circles are designated manually
-      mpt_param_.vehicle_circle_longitudinal_offsets = declare_parameter<std::vector<double>>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets");
-      mpt_param_.vehicle_circle_radius =
-        declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles.radius");
-    } else {  // vehicle circles are calculated automatically with designated ratio
-      const int default_radius_num = std::round(vehicle_param_.length / vehicle_param_.width * 1.5);
+    const int default_radius_num = std::round(vehicle_param_.length / vehicle_param_.width * 1.5);
 
-      vehicle_circle_radius_num_for_mpt_ = declare_parameter<int>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius",
-        default_radius_num);
-      vehicle_circle_radius_ratio_for_mpt_ = declare_parameter<double>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio");
+    vehicle_circle_radius_num_for_mpt_ = declare_parameter<int>(
+      "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius",
+      default_radius_num);
+    vehicle_circle_radius_ratio_for_mpt_ = declare_parameter<double>(
+      "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio");
 
-      std::tie(mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
-          vehicle_param_, vehicle_circle_constraints_num_for_mpt_,
-          vehicle_circle_radius_num_for_mpt_, vehicle_circle_radius_ratio_for_mpt_);
-    }
+    std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+      calcVehicleCirclesInfo2(
+        vehicle_param_, vehicle_circle_constraints_num_for_mpt_,
+        vehicle_circle_radius_num_for_mpt_, vehicle_circle_radius_ratio_for_mpt_);
 
     // clearance
     mpt_param_.hard_clearance_from_road =
@@ -543,6 +561,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
       is_stopping_if_outside_drivable_area_);
 
     // drivability check
+    /*
     updateParam<bool>(
       parameters, "advanced.option.drivability_check.use_vehicle_circles",
       use_vehicle_circles_for_drivability_);
@@ -577,6 +596,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
             vehicle_circle_radius_ratio_for_drivability_);
       }
     }
+    */
 
     updateParam<bool>(parameters, "option.enable_avoidance", enable_avoidance_);
     updateParam<bool>(parameters, "option.enable_pre_smoothing", enable_pre_smoothing_);
@@ -708,6 +728,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
       mpt_param_.hard_constraint);
 
     // vehicle_circles
+    /*
     updateParam<bool>(
       parameters,
       "advanced.mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles",
@@ -735,6 +756,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
           vehicle_param_, vehicle_circle_constraints_num_for_mpt_,
           vehicle_circle_radius_num_for_mpt_, vehicle_circle_radius_ratio_for_mpt_);
     }
+    */
 
     // clearance
     updateParam<double>(
@@ -867,7 +889,8 @@ void ObstacleAvoidancePlanner::pathCallback(
   debug_data_ptr_ = std::make_shared<DebugData>();
   debug_data_ptr_->init(
     is_showing_calculation_time_, mpt_visualize_sampling_num_, current_ego_pose_,
-    mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets);
+    mpt_param_.vehicle_circle_radiuses,
+    mpt_param_.vehicle_circle_longitudinal_offsets);
 
   // generate optimized trajectory
   const auto optimized_traj_points = generateOptimizedTrajectory(*path_ptr);

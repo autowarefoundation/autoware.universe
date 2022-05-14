@@ -41,13 +41,13 @@ geometry_msgs::msg::Pose convertRefPointsToPose(const ReferencePoint & ref_point
 }
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
-  const std::vector<ReferencePoint> & ref_points, const size_t l_idx)
+  const std::vector<ReferencePoint> & ref_points, const size_t l_idx, const double offset)
 {
   Eigen::VectorXd ub_vec(ref_points.size());
   Eigen::VectorXd lb_vec(ref_points.size());
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound;
-    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound;
+    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound + offset;
+    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound + offset;
   }
   return {ub_vec, lb_vec};
 }
@@ -991,7 +991,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.Wex + C_vec;
 
     // calculate bounds
-    const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx);
+    const double bounds_offset = mpt_param_.vehicle_circle_radiuses.at(l_idx) - vehicle_param_.width / 2.0;
+    const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
     if (mpt_param_.soft_constraint) {
@@ -1629,10 +1630,10 @@ CollisionType MPTOptimizer::getCollisionType(
   const double traversed_dist, const double bound_angle) const
 {
   // calculate clearance
-  const double min_soft_road_clearance = mpt_param_.vehicle_circle_radius +
+  const double min_soft_road_clearance = vehicle_param_.width / 2.0 +
                                          mpt_param_.soft_clearance_from_road +
                                          mpt_param_.extra_desired_clearance_from_road;
-  const double min_obj_clearance = mpt_param_.vehicle_circle_radius +
+  const double min_obj_clearance = vehicle_param_.width / 2.0 +
                                    mpt_param_.clearance_from_object +
                                    mpt_param_.soft_clearance_from_road;
 
