@@ -97,7 +97,10 @@ def generate_launch_description():
     )
     add_launch_arg(
         "voxel_grid_downsample_filter_param_path",
-        [FindPackageShare("localization_pointcloud_preprocessor"), "/config/voxel_grid_filter.param.yaml"],
+        [
+            FindPackageShare("localization_pointcloud_preprocessor"),
+            "/config/voxel_grid_filter.param.yaml",
+        ],
         "path to the parameter file of voxel_grid_downsample_filter",
     )
     add_launch_arg(
