@@ -47,7 +47,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             -Wdouble-promotion
             # -Wfloat-equal
             -Waddress
-            -fvisibility=hidden)
+            -fvisibility=default) # visibility hidden or default is set here.
 endif ()
 
 ## Dependencies

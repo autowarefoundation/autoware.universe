@@ -25,7 +25,7 @@
 #include <limits>
 #include <boost/optional.hpp>
 #include "utils/act_utils_eigen.hpp"
-#include "visibility_control.hpp"
+
 
 namespace ns_control_toolbox
 {
@@ -39,7 +39,8 @@ namespace ns_control_toolbox
  * @param Nd	: size of the denominator array
  * */
 
-	struct __attribute__((visibility("default"))) tf
+// For visibility we can set for each object : __attribute__((visibility("default"))) class_name
+	struct tf
 		{
 		// Constructors.
 		tf() : num_{ 1. }, den_{ 1. }
@@ -102,13 +103,13 @@ namespace ns_control_toolbox
 		std::vector<double> den_;   // <-@brief denominator
 		};
 
-/**
- * @brief tf2ss Converts a transfer function representation in to a state-space form.
- * We assume the system is SISO type.
- *
- * */
+	/**
+	 * @brief tf2ss Converts a transfer function representation in to a state-space form.
+	 * We assume the system is SISO type.
+	 *
+	 * */
 
-	struct __attribute__((visibility("default"))) tf2ss
+	struct tf2ss
 		{
 		tf2ss();
 
@@ -165,13 +166,13 @@ namespace ns_control_toolbox
 	 * @param Td	: time delay value in seconds.
 	 * @param N		: Order of Pade approximation.
 	 * */
-	tf __attribute__((visibility("default"))) pade(double const& Td, size_t const& order);
+	tf pade(double const& Td, size_t const& order);
 
 	/**
 	 * @bried see pade()
 	 * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
 	 * */
-	tf __attribute__((visibility("default"))) padecoeff(double const& Td, size_t const& order);
+	tf padecoeff(double const& Td, size_t const& order);
 
 } // namespace ns_control_toolbox
 #endif // AUTOWARE_CONTROL_TOOLBOX_HPP_
