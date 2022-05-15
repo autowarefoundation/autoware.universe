@@ -1384,22 +1384,31 @@ ObstacleAvoidancePlanner::alignVelocity(
         fine_traj_points, zero_vel_path_point.pose, std::numeric_limits<double>::max(),
         traj_param_.delta_yaw_threshold_for_closest_point);
       if (opt_traj_seg_idx) {
-        autoware_auto_planning_msgs::msg::TrajectoryPoint zero_vel_traj_point;
-        zero_vel_traj_point.pose =
+        const auto interpolated_pose =
           lerpPose(fine_traj_points, zero_vel_path_point.pose.position, opt_traj_seg_idx.get());
-        zero_vel_traj_point.longitudinal_velocity_mps =
-          zero_vel_path_point.longitudinal_velocity_mps;
+        if (interpolated_pose) {
+          autoware_auto_planning_msgs::msg::TrajectoryPoint zero_vel_traj_point;
+          zero_vel_traj_point.pose = interpolated_pose.get();
+          zero_vel_traj_point.longitudinal_velocity_mps =
+            zero_vel_path_point.longitudinal_velocity_mps;
 
-        // if
-        // (tier4_autoware_utils::calcDistance2d(fine_traj_points.at(opt_traj_seg_idx.get()).pose,
-        // zero_vel_traj_point.pose) > 1e-3 &&
-        // tier4_autoware_utils::calcDistance2d(fine_traj_points.at(opt_traj_seg_idx.get() +
-        // 1).pose, zero_vel_traj_point.pose) > 1e-3) {
-        auto fine_traj_points_with_zero_vel = fine_traj_points;
-        fine_traj_points_with_zero_vel.insert(
-          fine_traj_points_with_zero_vel.begin() + opt_traj_seg_idx.get() + 1, zero_vel_traj_point);
-        return {fine_traj_points_with_zero_vel, opt_traj_seg_idx.get() + 1};
-        // }
+          if (
+            tier4_autoware_utils::calcDistance2d(
+              fine_traj_points.at(opt_traj_seg_idx.get()).pose, zero_vel_traj_point.pose) < 1e-3) {
+            return {fine_traj_points, opt_traj_seg_idx.get()};
+          } else if (
+            tier4_autoware_utils::calcDistance2d(
+              fine_traj_points.at(opt_traj_seg_idx.get() + 1).pose, zero_vel_traj_point.pose) <
+            1e-3) {
+            return {fine_traj_points, opt_traj_seg_idx.get() + 1};
+          }
+
+          auto fine_traj_points_with_zero_vel = fine_traj_points;
+          fine_traj_points_with_zero_vel.insert(
+            fine_traj_points_with_zero_vel.begin() + opt_traj_seg_idx.get() + 1,
+            zero_vel_traj_point);
+          return {fine_traj_points_with_zero_vel, opt_traj_seg_idx.get() + 1};
+        }
       }
     }
 

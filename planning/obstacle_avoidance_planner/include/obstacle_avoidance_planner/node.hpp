@@ -49,7 +49,7 @@
 namespace
 {
 template <typename T>
-geometry_msgs::msg::Pose lerpPose(
+boost::optional<geometry_msgs::msg::Pose> lerpPose(
   const T & points, const geometry_msgs::msg::Point & target_pos, const size_t closest_seg_idx)
 {
   constexpr double epsilon = 1e-6;
@@ -70,6 +70,10 @@ geometry_msgs::msg::Pose lerpPose(
     interpolated_pose.orientation = next_pose.orientation;
   } else {
     const double ratio = closest_to_target_dist / seg_dist;
+    if (ratio < 0 || 1 < ratio) {
+      return {};
+    }
+
     interpolated_pose.position.x =
       interpolation::lerp(closest_pose.position.x, next_pose.position.x, ratio);
     interpolated_pose.position.y =
