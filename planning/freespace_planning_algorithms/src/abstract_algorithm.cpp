@@ -120,7 +120,7 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   int theta_index, std::vector<IndexXY> & indexes_2d) const
 {
   IndexXYT base_index{0, 0, theta_index};
-  const VehicleShape & vehicle_shape = planner_common_param_.vehicle_shape;
+  const VehicleShape & vehicle_shape = collision_vehicle_shape_;
 
   // Define the robot as rectangle
   const double back = -1.0 * vehicle_shape.base2back;

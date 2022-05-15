@@ -105,7 +105,9 @@ class AstarSearch : public AbstractPlanningAlgorithm
 public:
   using TransitionTable = std::vector<std::vector<NodeUpdate>>;
 
-  AstarSearch(const PlannerCommonParam & planner_common_param, const AstarParam & astar_param);
+  AstarSearch(
+    const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
+    const AstarParam & astar_param);
 
   void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(

@@ -132,7 +132,6 @@ public:
   /** \brief Return the shortest Reeds-Shepp path from SE(2) state state1 to SE(2) state state2 */
   ReedsSheppPath reedsShepp(const StateXYT & s0, const StateXYT & s1) const;
 
-protected:
   StateXYT interpolate(const StateXYT & s0, ReedsSheppPath & path, double seg) const;
 
   /** \brief Turning radius */

@@ -122,8 +122,9 @@ AstarSearch::TransitionTable createTransitionTable(
 }
 
 AstarSearch::AstarSearch(
-  const PlannerCommonParam & planner_common_param, const AstarParam & astar_param)
-: AbstractPlanningAlgorithm(planner_common_param),
+  const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
+  const AstarParam & astar_param)
+: AbstractPlanningAlgorithm(planner_common_param, collision_vehicle_shape),
   astar_param_(astar_param),
   goal_node_(nullptr),
   use_reeds_shepp_(true)
