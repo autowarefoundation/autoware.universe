@@ -8,6 +8,14 @@ ament_auto_add_library(reeds_shepp SHARED
   src/reeds_shepp.cpp
 )
 
+ament_auto_add_library(rrtstar_core SHARED
+  src/rrtstar_core.cpp
+)
+
+target_link_libraries(rrtstar_core
+  reeds_shepp
+)
+
 ament_auto_add_library(freespace_planning_algorithms SHARED
   src/abstract_algorithm.cpp
   src/astar_search.cpp
@@ -23,6 +31,14 @@ if(BUILD_TESTING)
     test/src/test_freespace_planning_algorithms.cpp
   )
   target_link_libraries(freespace_planning_algorithms-test
+    freespace_planning_algorithms
+  )
+
+  find_package(ament_cmake_ros REQUIRED)
+  ament_add_gtest(rrtstar_core_informed-test
+    test/src/test_rrtstar_core_informed.cpp
+  )
+  target_link_libraries(rrtstar_core_informed-test
     freespace_planning_algorithms
   )
 endif()
