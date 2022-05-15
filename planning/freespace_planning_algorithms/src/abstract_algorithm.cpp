@@ -87,6 +87,17 @@ geometry_msgs::msg::Pose local2global(
   return transformPose(pose_local, transform);
 }
 
+double PlannerWaypoints::compute_length() const
+{
+  double total_cost = 0.0;
+  for (size_t i = 0; i < waypoints.size() - 1; ++i) {
+    const auto pose_a = waypoints.at(i);
+    const auto pose_b = waypoints.at(i + 1);
+    total_cost += tier4_autoware_utils::calcDistance2d(pose_a.pose, pose_b.pose);
+  }
+  return total_cost;
+}
+
 void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   costmap_ = costmap;

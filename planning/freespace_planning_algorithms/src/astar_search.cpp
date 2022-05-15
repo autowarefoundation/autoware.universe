@@ -334,22 +334,6 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   }
 }
 
-bool AstarSearch::hasFeasibleSolution()
-{
-  if (goal_node_ == nullptr) {
-    return false;
-  }
-  const AstarNode * node = goal_node_;
-  while (node != nullptr) {
-    auto index = pose2index(costmap_, node2pose(*node), planner_common_param_.theta_size);
-    if (isOutOfRange(index) || detectCollision(index)) {
-      return false;
-    }
-    node = node->parent;
-  }
-  return true;
-}
-
 bool AstarSearch::isGoal(const AstarNode & node) const
 {
   const double lateral_goal_range = planner_common_param_.lateral_goal_range / 2.0;

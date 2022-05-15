@@ -113,7 +113,6 @@ public:
   bool makePlan(
     const geometry_msgs::msg::Pose & start_pose,
     const geometry_msgs::msg::Pose & goal_pose) override;
-  bool hasFeasibleSolution() override;  // currently used only in testing
 
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
