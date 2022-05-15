@@ -16,8 +16,8 @@
 #define SIMPLE_PLANNING_SIMULATOR_DISTURBANCE_GENERATORS_HPP
 
 #include <chrono>
-#include "autoware_control_toolbox/autoware_control_toolbox.hpp"
-#include "autoware_control_toolbox/utils/act_utils.hpp"
+#include "autoware_control_toolbox.hpp"
+#include "act_utils.hpp"
 #include <random>
 #include <memory>
 

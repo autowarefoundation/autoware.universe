@@ -21,8 +21,8 @@
 #include "rclcpp_components/register_node_macro.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
-#include "autoware_control_toolbox/utils/act_utils.hpp"
 
+#include "act_utils.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 
 #include <algorithm>
