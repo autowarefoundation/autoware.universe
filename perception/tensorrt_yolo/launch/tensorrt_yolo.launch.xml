@@ -3,6 +3,7 @@
   <arg name="label_file" default="coco.names"/>
   <arg name="input_topic" default="/image_raw"/>
   <arg name="output_topic" default="rois"/>
+  <arg name="engine_file" default="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type).engine"/>
   <arg name="calib_image_directory" default="$(find-pkg-share tensorrt_yolo)/calib_image/"/>
   <arg name="mode" default="FP32"/>
   <arg name="gpu_id" default="0"/>
@@ -11,7 +12,7 @@
     <remap from="out/objects" to="$(var output_topic)"/>
     <remap from="out/image" to="$(var output_topic)/debug/image"/>
     <param name="onnx_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type).onnx"/>
-    <param name="engine_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type)_GPU$(var gpu_id).engine"/>
+    <param name="engine_file" type="str" value="$(var engine_file)"/>
     <param name="label_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var label_file)"/>
     <param name="calib_image_directory" type="str" value="$(var calib_image_directory)"/>
     <param name="calib_cache_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type).cache"/>
