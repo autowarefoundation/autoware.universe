@@ -141,7 +141,6 @@ Object CarInitialPoseTool::createObjectMsg() const
   return object;
 }
 
-
 BusInitialPoseTool::BusInitialPoseTool()
 {
   // short cut below k
