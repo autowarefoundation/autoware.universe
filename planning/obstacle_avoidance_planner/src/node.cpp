@@ -1373,16 +1373,56 @@ ObstacleAvoidancePlanner::alignVelocity(
 {
   stop_watch_.tic(__func__);
 
+  // insert zero velocity path index, and get optional zero_vel_path_idx
+  const auto path_zero_vel_info = [&]()
+    -> std::pair<
+      std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>, boost::optional<size_t>> {
+    const auto opt_path_zero_vel_idx = tier4_autoware_utils::searchZeroVelocityIndex(path_points);
+    if (opt_path_zero_vel_idx) {
+      const auto & zero_vel_path_point = path_points.at(opt_path_zero_vel_idx.get());
+      const auto opt_traj_seg_idx = tier4_autoware_utils::findNearestSegmentIndex(
+        fine_traj_points, zero_vel_path_point.pose, std::numeric_limits<double>::max(),
+        traj_param_.delta_yaw_threshold_for_closest_point);
+      if (opt_traj_seg_idx) {
+        autoware_auto_planning_msgs::msg::TrajectoryPoint zero_vel_traj_point;
+        zero_vel_traj_point.pose =
+          lerpPose(fine_traj_points, zero_vel_path_point.pose.position, opt_traj_seg_idx.get());
+        zero_vel_traj_point.longitudinal_velocity_mps =
+          zero_vel_path_point.longitudinal_velocity_mps;
+
+        // if
+        // (tier4_autoware_utils::calcDistance2d(fine_traj_points.at(opt_traj_seg_idx.get()).pose,
+        // zero_vel_traj_point.pose) > 1e-3 &&
+        // tier4_autoware_utils::calcDistance2d(fine_traj_points.at(opt_traj_seg_idx.get() +
+        // 1).pose, zero_vel_traj_point.pose) > 1e-3) {
+        auto fine_traj_points_with_zero_vel = fine_traj_points;
+        fine_traj_points_with_zero_vel.insert(
+          fine_traj_points_with_zero_vel.begin() + opt_traj_seg_idx.get() + 1, zero_vel_traj_point);
+        return {fine_traj_points_with_zero_vel, opt_traj_seg_idx.get() + 1};
+        // }
+      }
+    }
+
+    return {fine_traj_points, {}};
+  }();
+  const auto fine_traj_points_with_path_zero_vel = path_zero_vel_info.first;
+  const auto opt_zero_vel_path_idx = path_zero_vel_info.second;
+
   // search zero velocity index of fine_traj_points
   const size_t zero_vel_fine_traj_idx = [&]() {
-    const size_t zero_vel_path_idx = searchExtendedZeroVelocityIndex(fine_traj_points, path_points);
+    // zero velocity for being outside drivable area
     const size_t zero_vel_traj_idx =
-      searchExtendedZeroVelocityIndex(fine_traj_points, traj_points);  // for outside drivable area
+      searchExtendedZeroVelocityIndex(fine_traj_points_with_path_zero_vel, traj_points);
 
-    return std::min(zero_vel_path_idx, zero_vel_traj_idx);
+    // zero velocity in path points
+    if (opt_zero_vel_path_idx) {
+      return std::min(opt_zero_vel_path_idx.get(), zero_vel_traj_idx);
+    }
+    return zero_vel_traj_idx;
   }();
 
-  auto fine_traj_points_with_vel = fine_traj_points;
+  // interpolate z and velocity
+  auto fine_traj_points_with_vel = fine_traj_points_with_path_zero_vel;
   size_t prev_begin_idx = 0;
   for (size_t i = 0; i < fine_traj_points_with_vel.size(); ++i) {
     const auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
@@ -1403,12 +1443,9 @@ ObstacleAvoidancePlanner::alignVelocity(
 
     // lerp vx
     const double target_vel = lerpTwistX(truncated_points, target_pose.position, closest_seg_idx);
+
     if (i >= zero_vel_fine_traj_idx) {
       fine_traj_points_with_vel[i].longitudinal_velocity_mps = 0.0;
-    } else if (target_vel < 1e-6) {  // NOTE: velocity may be negative due to linear interpolation
-      const auto prev_idx = std::max(static_cast<int>(i) - 1, 0);
-      fine_traj_points_with_vel[i].longitudinal_velocity_mps =
-        fine_traj_points_with_vel[prev_idx].longitudinal_velocity_mps;
     } else {
       fine_traj_points_with_vel[i].longitudinal_velocity_mps = target_vel;
     }

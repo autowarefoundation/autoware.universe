@@ -1225,10 +1225,31 @@ void MPTOptimizer::calcVelocity(
   const auto ref_points_with_yaw =
     points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
   for (size_t i = 0; i < ref_points.size(); i++) {
-    ref_points.at(i).v =
-      points[findNearestIndexWithSoftYawConstraints(
-               points_utils::convertToPoints(points), ref_points_with_yaw.at(i), yaw_thresh)]
-        .longitudinal_velocity_mps;
+    const size_t nearest_ref_idx = findNearestIndexWithSoftYawConstraints(
+      points_utils::convertToPoints(points), ref_points_with_yaw.at(i), yaw_thresh);
+    const size_t second_nearest_ref_idx = [&]() -> size_t {
+      if (nearest_ref_idx == 0) {
+        return 1;
+      } else if (nearest_ref_idx == points.size() - 1) {
+        return points.size() - 2;
+      }
+
+      const double prev_dist = tier4_autoware_utils::calcDistance2d(
+        ref_points_with_yaw.at(i), points.at(nearest_ref_idx - 1));
+      const double next_dist = tier4_autoware_utils::calcDistance2d(
+        ref_points_with_yaw.at(i), points.at(nearest_ref_idx + 1));
+      if (prev_dist < next_dist) {
+        return nearest_ref_idx - 1;
+      }
+      return nearest_ref_idx + 1;
+    }();
+
+    // NOTE: std::max, not std::min, is used here since ref_points' sampling width may be longer
+    // than points' sampling width. A zero velocity point is guaranteed to be inserted in an output
+    // trajectory in the alignVelocity function in ObstacleAvoidancePlanner.
+    ref_points.at(i).v = std::max(
+      points.at(nearest_ref_idx).longitudinal_velocity_mps,
+      points.at(second_nearest_ref_idx).longitudinal_velocity_mps);
   }
 }
 
