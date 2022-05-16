@@ -110,7 +110,7 @@ ros2 run accel_brake_map_calibrator view_statistics.py
 You can save accel and brake map anytime with the following command.
 
 ```sh
-ros2 service call /accel_brake_map_calibrator/update_map_dir "path: '<accel/brake map directory>'"
+ros2 service call /accel_brake_map_calibrator/update_map_dir tier4_vehicle_msgs/srv/UpdateAccelBrakeMap "path: '<accel/brake map directory>'"
 ```
 
 You can also save accel and brake map in the default directory where Autoware reads accel_map.csv/brake_map.csv using the RViz plugin (AccelBrakeMapCalibratorButtonPanel) as following.
