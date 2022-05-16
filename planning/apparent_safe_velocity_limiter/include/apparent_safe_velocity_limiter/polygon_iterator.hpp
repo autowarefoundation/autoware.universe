@@ -15,6 +15,8 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__POLYGON_ITERATOR_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__POLYGON_ITERATOR_HPP_
 
+#include "grid_map_core/TypeDefs.hpp"
+
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/GridMapMath.hpp>
 #include <grid_map_core/Polygon.hpp>
@@ -57,8 +59,6 @@ public:
 
     // We make line scan from left to right / up to down *in the index frame*.
     // In the position frame, this corresponds to high to low Y values and high to low X values.
-    // Thus, we make lines along the Y axis from highest to lowest X values.
-    // This results in lexicographically ordered indexes.
 
     // get edges sorted from highest to lowest X values
     using Edge = std::pair<const grid_map::Position, const grid_map::Position>;
@@ -74,21 +74,20 @@ public:
     std::multiset<Edge, Comp> edges;
     const auto & vertices = polygon_.getVertices();
     for (auto vertex = vertices.cbegin(); std::next(vertex) != vertices.cend(); ++vertex) {
-      const auto edge = vertex->x() > std::next(vertex)->x() ?  // order pair by decreasing x
-                          Edge(*vertex, *std::next(vertex))
-                                                             : Edge(*std::next(vertex), *vertex);
-      if (edge.first.x() != edge.second.x()) {  // ignore horizontal edges
-        edges.insert(edge);
-      }
+      // order pair by decreasing x and ignore horizontal edges (when x is equal)
+      if (vertex->x() > std::next(vertex)->x())
+        edges.emplace(*vertex, *std::next(vertex));
+      else if (vertex->x() < std::next(vertex)->x())
+        edges.emplace(*std::next(vertex), *vertex);
     }
     // get min/max x edge values
     const auto max_vertex_x = edges.cbegin()->first.x();
     const auto min_vertex_x = std::prev(edges.cend())->second.x();
     // get min/max x values truncated to grid cell centers
     const auto max_line_x = std::clamp(
-      min_x + resolution * static_cast<int>((max_vertex_x - min_x) / resolution), min_x, max_x);
+      min_x + resolution * std::floor((max_vertex_x - min_x) / resolution), min_x, max_x);
     const auto min_line_x = std::clamp(
-      min_x + resolution * static_cast<int>((min_vertex_x - min_x) / resolution), min_x, max_x);
+      min_x + resolution * std::floor((min_vertex_x - min_x) / resolution), min_x, max_x);
     // calculate for each line the y value intersecting with the polygon in decreasing order
     std::vector<std::multiset<double, std::greater<>>> y_intersections_per_line;
     const auto nb_x_lines = static_cast<size_t>((max_line_x - min_line_x) / resolution) + 1;
@@ -97,9 +96,6 @@ public:
     for (auto line_x = max_line_x; line_x >= min_line_x - epsilon; line_x -= resolution) {
       std::multiset<double, std::greater<>> y_intersections;
       for (const auto & edge : edges) {
-        if (edge.first.x() < line_x) {  // edge below the line
-          break;
-        }
         // special case when exactly touching a vertex: only count edge for its lowest x
         // up-down edge (\/) case: count the vertex twice
         // down-down edge case: count the vertex only once
@@ -109,6 +105,8 @@ public:
           const auto diff = edge.first - edge.second;
           const auto y = edge.second.y() + (line_x - edge.second.x()) * diff.y() / diff.x();
           y_intersections.insert(y);
+        } else if (edge.first.x() < line_x) {  // edge below the line
+          break;
         }
       }
       y_intersections_per_line.push_back(y_intersections);
@@ -116,13 +114,15 @@ public:
     // calculate map indexes between pairs of intersections Y values on each X line
     polygon_indexes_.reserve(nb_x_lines * static_cast<size_t>((max_y - min_y) / resolution + 1));
     const auto & start_idx = grid_map.getStartIndex();
-    // TODO(Maxime CLEMENT): from_row can be 1 less than real value due to float precision issue
-    const auto from_row = static_cast<size_t>((max_x - max_line_x) / resolution);
+    grid_map::Index idx;
+    grid_map::getIndexFromPosition(
+      idx, grid_map::Position(max_line_x, map_pose.y()), grid_map.getLength(), map_pose, resolution,
+      map_size, start_idx);
+    const auto from_row = idx(0);
     for (size_t i = 0; i < y_intersections_per_line.size(); ++i) {
-      const auto y_intersections = y_intersections_per_line[i];
-      auto row = static_cast<int>(start_idx(0) + from_row + i);
+      const auto & y_intersections = y_intersections_per_line[i];
+      auto row = static_cast<int>(from_row + i);
       grid_map::wrapIndexToRange(row, map_size(0));
-      // query the index of the row at it may be shifted in the gridmap
       for (auto y_iter = y_intersections.cbegin(); y_iter != y_intersections.cend(); ++y_iter) {
         const auto from_y = std::clamp(*y_iter, min_y, max_y + resolution);
         const auto from_col = static_cast<int>(std::abs(max_y + resolution - from_y) / resolution);
