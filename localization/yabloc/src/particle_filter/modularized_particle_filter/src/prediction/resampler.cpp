@@ -37,16 +37,20 @@ RetroactiveResampler::retroactiveWeighting(
   const modularized_particle_filter_msgs::msg::ParticleArray & predicted_particles,
   const modularized_particle_filter_msgs::msg::ParticleArray::ConstSharedPtr & weighted_particles)
 {
+  rclcpp::Logger logger = rclcpp::get_logger("modularized_particle_filter.retroactive_resampler");
   if (!(weighted_particles->id <= resampling_history_wp_ &&                    // not future data
         weighted_particles->id > resampling_history_wp_ - max_history_num_ &&  // not old data
         weighted_particles->id >= 0))                                          // not error data
   {
-    RCLCPP_WARN(
-      rclcpp::get_logger("modularized_particle_filter.retroactive_resampler"), "out of history");
+    RCLCPP_WARN(logger, "out of history");
     return std::nullopt;
   }
 
   modularized_particle_filter_msgs::msg::ParticleArray reweighted_particles{predicted_particles};
+
+  RCLCPP_INFO_STREAM(
+    logger, "current generation " << resampling_history_wp_ << " callback generation "
+                                  << weighted_particles->id);
 
   // initialize corresponding index lookup table
   std::vector<int> index_table(static_cast<int>(weighted_particles->particles.size()));
@@ -68,9 +72,14 @@ RetroactiveResampler::retroactiveWeighting(
   }
 
   // weighting to current particles
+  float sum_weight = 0;
   for (int m{0}; m < static_cast<int>(weighted_particles->particles.size()); m++) {
     reweighted_particles.particles[m].weight *=
       weighted_particles->particles[index_table[m]].weight;
+    sum_weight += reweighted_particles.particles[m].weight;
+  }
+  for (int m{0}; m < static_cast<int>(weighted_particles->particles.size()); m++) {
+    reweighted_particles.particles[m].weight /= sum_weight;
   }
 
   return reweighted_particles;
@@ -105,13 +114,17 @@ RetroactiveResampler::resampling(
               return weight + ps.weight;
             })};
 
+  if (!std::isfinite(sum_weight_inv)) {
+    exit(EXIT_FAILURE);
+  }
+
   const double r{
     (rand() / static_cast<double>(RAND_MAX)) /
     (static_cast<double>(predicted_particles.particles.size()))};
 
-  int i{0};
-  double c{predicted_particles.particles[i].weight * sum_weight_inv};
+  double c{predicted_particles.particles[0].weight * sum_weight_inv};
 
+  int i{0};
   for (int m{0}; m < static_cast<int>(predicted_particles.particles.size()); m++) {
     const double u{r + m * num_of_particles_inv};
 
@@ -121,7 +134,7 @@ RetroactiveResampler::resampling(
     }
 
     resampled_particles.particles[m] = predicted_particles.particles[i];
-    resampled_particles.particles[m].weight = num_of_particles_inv;
+    resampled_particles.particles[m].weight = num_of_particles_inv;  // TODO:
     resampling_history_[resampling_history_wp_ % max_history_num_][m] = i;
   }
 

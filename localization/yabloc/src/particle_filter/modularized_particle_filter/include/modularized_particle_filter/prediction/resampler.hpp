@@ -28,7 +28,7 @@ protected:
 
 private:
   const int max_history_num_;
-  float resampling_interval_seconds_;
+  const float resampling_interval_seconds_;
 
   std::optional<double> previous_resampling_time_opt_;
 

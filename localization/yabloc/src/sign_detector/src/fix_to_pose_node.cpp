@@ -23,6 +23,8 @@ public:
     std::string pose_topic = "/pose_topic";
     std::string pose_with_covariance_topic = "/pose_with_covariance";
 
+    covariance_ = this->declare_parameter<float>("covariance", 16.f);
+
     sub_heading_ = this->create_subscription<eagleye_msgs::msg::Heading>(
       heading_topic, 10, std::bind(&Fix2Pose::headingCallback, this, std::placeholders::_1));
     sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -44,7 +46,7 @@ public:
 private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::string pose_topic_;
-
+  float covariance_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<eagleye_msgs::msg::Heading>::SharedPtr sub_heading_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
@@ -114,9 +116,9 @@ private:
     geometry_msgs::msg::PoseWithCovarianceStamped pose_covariance;
     pose_covariance.header = pose.header;
     pose_covariance.pose.pose = pose.pose;
-    pose_covariance.pose.covariance.at(0) = 9;
-    pose_covariance.pose.covariance.at(7) = 9;
-    pose_covariance.pose.covariance.at(14) = 9;
+    pose_covariance.pose.covariance.at(0) = covariance_;
+    pose_covariance.pose.covariance.at(7) = covariance_;
+    pose_covariance.pose.covariance.at(14) = covariance_;
     pub_pose_covariance_->publish(pose_covariance);
 
     publishTf(pose, msg.header.stamp);

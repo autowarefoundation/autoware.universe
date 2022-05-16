@@ -18,7 +18,7 @@
         <remap from="gnss/pose_with_covariance" to="eagleye/pose_with_covariance"/>
 
         <param name="num_of_particles" value="$(env MPF_NUM_OF_PARTICLES 500)" />
-        <param name="resampling_interval_seconds" value="$(env MPF_PREDICTOR_RESAMPLING_INTERVAL_SECONDS 1.0)" />
+        <param name="resampling_interval_seconds" value="2.0" />
         <param name="prediction_rate" value="$(env MPF_PREDICTOR_PREDICTION_RATE 50.0)" />
     </node>
 
