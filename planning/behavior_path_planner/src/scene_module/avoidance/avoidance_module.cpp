@@ -1931,7 +1931,7 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
   }
 
   // calc max velocity with given acceleration
-  const auto v0 = getEgoSpeed();
+  const auto v0 = ego_velocity_starting_avoidance_;
   const auto vmax = std::max(
     parameters_.min_avoidance_speed_for_acc_prevention,
     std::sqrt(v0 * v0 + 2.0 * s * parameters_.max_avoidance_acceleration));
@@ -2125,6 +2125,8 @@ BehaviorModuleOutput AvoidanceModule::plan()
     prev_linear_shift_path_ = toShiftedPath(avoidance_data_.reference_path);
     path_shifter_.generate(&prev_linear_shift_path_, true, SHIFT_TYPE::LINEAR);
     prev_reference_ = avoidance_data_.reference_path;
+    // update ego velocity
+    ego_velocity_starting_avoidance_ = getEgoSpeed();
     if (parameters_.publish_debug_marker) {
       setDebugData(path_shifter_, debug_data_);
     }

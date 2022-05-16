@@ -202,6 +202,7 @@ private:
   void generateExtendedDrivableArea(ShiftedPath * shifted_path) const;
 
   // -- velocity planning --
+  double ego_velocity_starting_avoidance_ = 0.0;
   void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path) const;
 
   // clean up shifter
