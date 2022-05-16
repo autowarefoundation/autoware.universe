@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <functional>
 #include <limits>
-#include <set>
+#include <list>
 #include <utility>
 #include <vector>
 
@@ -61,53 +61,69 @@ public:
     // In the position frame, this corresponds to high to low Y values and high to low X values.
 
     // get edges sorted from highest to lowest X values
-    using Edge = std::pair<const grid_map::Position, const grid_map::Position>;
-    struct Comp
-    {
-      bool operator()(const Edge & e1, const Edge & e2) const
-      {
-        return e1.first.x() > e2.first.x() ||
-               (e1.first.x() == e2.first.x() && e1.second.x() > e2.second.x());
-      }
-    };
 
-    std::multiset<Edge, Comp> edges;
+    struct Edge {
+      grid_map::Position first;
+      grid_map::Position second;
+
+      Edge(grid_map::Position f, grid_map::Position s) : first(std::move(f)), second(std::move(s)) {}
+    };
+    std::vector<Edge> edges;
     const auto & vertices = polygon_.getVertices();
     for (auto vertex = vertices.cbegin(); std::next(vertex) != vertices.cend(); ++vertex) {
       // order pair by decreasing x and ignore horizontal edges (when x is equal)
       if (vertex->x() > std::next(vertex)->x())
-        edges.emplace(*vertex, *std::next(vertex));
+        edges.emplace_back(*vertex, *std::next(vertex));
       else if (vertex->x() < std::next(vertex)->x())
-        edges.emplace(*std::next(vertex), *vertex);
+        edges.emplace_back(*std::next(vertex), *vertex);
     }
+    std::sort(edges.begin(), edges.end(), [](const Edge & e1, const Edge & e2) 
+      {
+        return e1.first.x() > e2.first.x() ||
+               (e1.first.x() == e2.first.x() && e1.second.x() > e2.second.x());
+      }
+    );
     // get min/max x edge values
-    const auto max_vertex_x = edges.cbegin()->first.x();
-    const auto min_vertex_x = std::prev(edges.cend())->second.x();
+    const auto max_vertex_x = edges.front().first.x();
+    const auto min_vertex_x = edges.back().second.x();
     // get min/max x values truncated to grid cell centers
     const auto max_line_x = std::clamp(
       min_x + resolution * std::floor((max_vertex_x - min_x) / resolution), min_x, max_x);
     const auto min_line_x = std::clamp(
       min_x + resolution * std::floor((min_vertex_x - min_x) / resolution), min_x, max_x);
     // calculate for each line the y value intersecting with the polygon in decreasing order
-    std::vector<std::multiset<double, std::greater<>>> y_intersections_per_line;
+    std::vector<std::list<double>> y_intersections_per_line;
     const auto nb_x_lines = static_cast<size_t>((max_line_x - min_line_x) / resolution) + 1;
     y_intersections_per_line.reserve(nb_x_lines);
     const auto epsilon = resolution / 2.0;
     for (auto line_x = max_line_x; line_x >= min_line_x - epsilon; line_x -= resolution) {
-      std::multiset<double, std::greater<>> y_intersections;
+      std::list<double> y_intersections;
       for (const auto & edge : edges) {
         // special case when exactly touching a vertex: only count edge for its lowest x
         // up-down edge (\/) case: count the vertex twice
         // down-down edge case: count the vertex only once
         if (edge.second.x() == line_x) {
-          y_intersections.insert(edge.second.y());
+          y_intersections.push_back(edge.second.y());
         } else if (edge.first.x() > line_x && edge.second.x() < line_x) {
           const auto diff = edge.first - edge.second;
           const auto y = edge.second.y() + (line_x - edge.second.x()) * diff.y() / diff.x();
-          y_intersections.insert(y);
+          y_intersections.push_back(y);
         } else if (edge.first.x() < line_x) {  // edge below the line
           break;
         }
+      }
+      y_intersections.sort(std::greater());
+      // remove pairs outside of map
+      auto iter = y_intersections.begin();
+      while(iter != y_intersections.end() && std::next(iter) != y_intersections.end()
+        && *iter >= max_y && *std::next(iter) >= max_y) {
+          iter = y_intersections.erase(iter);
+          iter = y_intersections.erase(iter);
+      }
+      iter = std::lower_bound(y_intersections.begin(), y_intersections.end(), min_y, std::greater());
+      while(iter != y_intersections.end() && std::next(iter) != y_intersections.end()) {
+          iter = y_intersections.erase(iter);
+          iter = y_intersections.erase(iter);
       }
       y_intersections_per_line.push_back(y_intersections);
     }
@@ -130,9 +146,6 @@ public:
         ++y_iter;
         const auto to_y = std::clamp(*y_iter, min_y, max_y);
         const auto to_col = static_cast<int>(std::abs(max_y - to_y) / resolution);
-        // TODO(Maxime CLEMENT): remove pairs outside of map directly when finding intersection
-        // points special case where both intersection points are outside of the map
-        if ((from_y >= max_y && to_y >= max_y) || (from_y <= min_y && to_y <= min_y)) continue;
         for (auto col = from_col; col <= to_col; ++col) {
           auto wrapped_col = start_idx(1) + col;
           grid_map::wrapIndexToRange(wrapped_col, map_size(1));
