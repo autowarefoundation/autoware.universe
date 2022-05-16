@@ -52,6 +52,7 @@
 #include <exception>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 

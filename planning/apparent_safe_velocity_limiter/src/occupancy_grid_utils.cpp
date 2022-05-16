@@ -37,7 +37,8 @@ void maskPolygons(
   in_masks.reserve(polygon_in_masks.size());
   for (const auto & poly : polygon_in_masks) in_masks.push_back(convert(poly));
   grid_map::Position position;
-  for (apparent_safe_velocity_limiter::PolygonIterator iterator(grid_map, convert(polygon_out_mask));
+  for (apparent_safe_velocity_limiter::PolygonIterator iterator(
+         grid_map, convert(polygon_out_mask));
        !iterator.isPastEnd(); ++iterator) {
     grid_map.getPosition(*iterator, position);
     if (std::find_if(in_masks.begin(), in_masks.end(), [&](const auto & mask) {
