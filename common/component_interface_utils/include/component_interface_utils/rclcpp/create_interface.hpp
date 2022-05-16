@@ -36,7 +36,7 @@ typename Client<SpecT>::SharedPtr create_client_impl(
   // https://github.com/ros2/rclcpp/blob/48068130edbb43cdd61076dc1851672ff1a80408/rclcpp/include/rclcpp/node.hpp#L253-L265
   auto client = node->template create_client<typename SpecT::Service>(
     SpecT::name, rmw_qos_profile_services_default, group);
-  return Client<SpecT>::make_shared(client);
+  return Client<SpecT>::make_shared(client, node->get_logger());
 }
 
 /// Create a service wrapper for logging. This is a private implementation.

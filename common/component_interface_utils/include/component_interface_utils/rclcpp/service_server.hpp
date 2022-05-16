@@ -15,6 +15,7 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
+#include <rclcpp/logging.hpp>
 #include <rclcpp/service.hpp>
 
 namespace component_interface_utils

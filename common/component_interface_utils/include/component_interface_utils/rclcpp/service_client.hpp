@@ -16,6 +16,8 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 
 #include <rclcpp/client.hpp>
+#include <rclcpp/logger.hpp>
+#include <rclcpp/logging.hpp>
 
 #include <utility>
 
@@ -32,7 +34,8 @@ public:
   using WrapType = rclcpp::Client<typename SpecT::Service>;
 
   /// Constructor.
-  explicit Client(typename WrapType::SharedPtr client)
+  explicit Client(typename WrapType::SharedPtr client, const rclcpp::Logger & logger)
+  : logger_(logger)
   {
     client_ = client;  // to keep the reference count
   }
@@ -40,7 +43,8 @@ public:
   /// Send request.
   typename WrapType::SharedFuture async_send_request(typename WrapType::SharedRequest request)
   {
-    return client_->async_send_request(request);
+    const auto callback = [this](typename WrapType::SharedFuture future) {};
+    return this->async_send_request(request, callback);
   }
 
   /// Send request.
@@ -48,12 +52,23 @@ public:
   typename WrapType::SharedFuture async_send_request(
     typename WrapType::SharedRequest request, CallbackT && callback)
   {
-    return client_->async_send_request(request, std::forward<CallbackT>(callback));
+#ifdef ROS_DISTRO_GALACTIC
+    using rosidl_generator_traits::to_yaml;
+#endif
+
+    const auto wrapped = [this, callback](typename WrapType::SharedFuture future) {
+      RCLCPP_INFO_STREAM(logger_, "client exit: " << SpecT::name << "\n" << to_yaml(*future.get()));
+      callback(future);
+    };
+
+    RCLCPP_INFO_STREAM(logger_, "client call: " << SpecT::name << "\n" << to_yaml(*request));
+    return client_->async_send_request(request, wrapped);
   }
 
 private:
   RCLCPP_DISABLE_COPY(Client)
   typename WrapType::SharedPtr client_;
+  rclcpp::Logger logger_;
 };
 
 }  // namespace component_interface_utils
