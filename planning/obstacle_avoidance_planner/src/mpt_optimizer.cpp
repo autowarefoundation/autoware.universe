@@ -47,11 +47,12 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   Eigen::VectorXd lb_vec(ref_points.size());
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound + offset;
-    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound + offset;
+    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound - offset;
   }
   return {ub_vec, lb_vec};
 }
 
+/*
 Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
 {
   double max_width = std::numeric_limits<double>::min();
@@ -69,6 +70,33 @@ Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
     }
   }
   return front_bounds_candidates.at(max_width_index);
+}
+*/
+
+Bounds findNearestBounds(
+  const geometry_msgs::msg::Pose & bounds_pose, const BoundsCandidates & front_bounds_candidates,
+  const geometry_msgs::msg::Point & target_pos)
+{
+  double min_dist = std::numeric_limits<double>::max();
+  size_t min_dist_index = 0;
+  if (front_bounds_candidates.size() != 1) {
+    for (size_t candidate_idx = 0; candidate_idx < front_bounds_candidates.size();
+         ++candidate_idx) {
+      const auto & front_bounds_candidate = front_bounds_candidates.at(candidate_idx);
+
+      const double bound_center =
+        (front_bounds_candidate.upper_bound + front_bounds_candidate.lower_bound) / 2.0;
+      const auto center_pos =
+        tier4_autoware_utils::calcOffsetPose(bounds_pose, 0.0, bound_center, 0.0);
+      const double dist = tier4_autoware_utils::calcDistance2d(center_pos, target_pos);
+
+      if (dist < min_dist) {
+        min_dist_index = candidate_idx;
+        min_dist = dist;
+      }
+    }
+  }
+  return front_bounds_candidates.at(min_dist_index);
 }
 
 double calcOverlappedBoundsSignedLength(
@@ -352,7 +380,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
     ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
 
     // set bounds information
-    calcBounds(ref_points, enable_avoidance, maps, debug_data_ptr);
+    calcBounds(ref_points, enable_avoidance, maps, prev_trajs, debug_data_ptr);
     calcVehicleBounds(ref_points, maps, debug_data_ptr, enable_avoidance);
 
     // set extra information (alpha and has_object_collision)
@@ -991,7 +1019,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.Wex + C_vec;
 
     // calculate bounds
-    const double bounds_offset = mpt_param_.vehicle_circle_radiuses.at(l_idx) - vehicle_param_.width / 2.0;
+    const double bounds_offset =
+      mpt_param_.vehicle_circle_radiuses.at(l_idx) - vehicle_param_.width / 2.0;
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
@@ -1349,7 +1378,7 @@ void MPTOptimizer::addSteerWeightR(
 
 void MPTOptimizer::calcBounds(
   std::vector<ReferencePoint> & ref_points, const bool enable_avoidance, const CVMaps & maps,
-  std::shared_ptr<DebugData> debug_data_ptr) const
+  const std::unique_ptr<Trajectories> & prev_trajs, std::shared_ptr<DebugData> debug_data_ptr) const
 {
   stop_watch_.tic(__func__);
 
@@ -1368,8 +1397,19 @@ void MPTOptimizer::calcBounds(
 
     // extract only continuous bounds;
     if (i == 0) {  // TODO(murooka) use previous bounds, not widest bounds
-      const auto & widest_bounds = findWidestBounds(bounds_candidates);
-      ref_points.at(i).bounds = widest_bounds;
+      const auto target_pos = [&]() {
+        if (prev_trajs && !prev_trajs->mpt_ref_points.empty()) {
+          return prev_trajs->mpt_ref_points.front().p;
+        }
+        return current_ego_pose_.position;
+      }();
+
+      geometry_msgs::msg::Pose ref_pose;
+      ref_pose.position = ref_points.at(i).p;
+      ref_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_points.at(i).yaw);
+
+      const auto & nearest_bounds = findNearestBounds(ref_pose, bounds_candidates, target_pos);
+      ref_points.at(i).bounds = nearest_bounds;
     } else {
       const auto & prev_ref_point = ref_points.at(i - 1);
       const auto & prev_continuous_bounds = prev_ref_point.bounds;
@@ -1633,8 +1673,7 @@ CollisionType MPTOptimizer::getCollisionType(
   const double min_soft_road_clearance = vehicle_param_.width / 2.0 +
                                          mpt_param_.soft_clearance_from_road +
                                          mpt_param_.extra_desired_clearance_from_road;
-  const double min_obj_clearance = vehicle_param_.width / 2.0 +
-                                   mpt_param_.clearance_from_object +
+  const double min_obj_clearance = vehicle_param_.width / 2.0 + mpt_param_.clearance_from_object +
                                    mpt_param_.soft_clearance_from_road;
 
   // calculate target position
