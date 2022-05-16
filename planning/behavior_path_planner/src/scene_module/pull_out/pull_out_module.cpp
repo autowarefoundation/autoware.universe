@@ -40,7 +40,6 @@ PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node, const PullOutParameters & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
-  approval_handler_.waitApproval();
 }
 
 BehaviorModuleOutput PullOutModule::run()
@@ -62,7 +61,6 @@ void PullOutModule::onEntry()
     lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose);
   status_.back_finished = false;
   status_.start_distance = arclength_start.length;
-  approval_handler_.waitApproval();
 }
 
 void PullOutModule::onExit()
@@ -230,6 +228,8 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   out.path = std::make_shared<PathWithLaneId>(candidatePath);
 
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+
+  approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
 
   return out;
 }

@@ -38,6 +38,33 @@
 #include <string>
 #include <utility>
 
+namespace
+{
+  std::string toLowercase(const std::string & name)
+  {
+    if (name == "Avoidance")
+    {
+      return "avoidance";
+    }
+    else if (name == "LaneChange")
+    {
+      return "lane_change";
+    }
+    else if (name == "PullOver")
+    {
+      return "pull_over";
+    }
+    else if (name == "PullOver")
+    {
+      return "pull_out";
+    }
+    else
+    {
+      return "";
+    }
+  }
+}
+
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -155,7 +182,6 @@ public:
     }
 
     // module is waiting approval. Check it.
-    approval_handler_.setCurrentApproval(planner_data_->approval.is_approved);
     if (approval_handler_.isApproved()) {
       RCLCPP_DEBUG(logger_, "Was waiting approval, and now approved. Do plan().");
       approval_handler_.clearWaitApproval();
@@ -180,11 +206,6 @@ public:
    * @brief set planner data
    */
   void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
-
-  void updateApproval()
-  {
-    approval_handler_.setCurrentApproval(planner_data_->approval.is_approved);
-  }
 
   std::string name() const { return name_; }
 

@@ -39,7 +39,6 @@ LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
-  approval_handler_.waitApproval();
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
@@ -60,7 +59,6 @@ void LaneChangeModule::onEntry()
   const auto arclength_start =
     lanelet::utils::getArcCoordinates(status_.lane_change_lanes, current_pose);
   status_.start_distance = arclength_start.length;
-  approval_handler_.waitApproval();
 }
 
 void LaneChangeModule::onExit()
@@ -183,6 +181,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
   return out;
 }
 

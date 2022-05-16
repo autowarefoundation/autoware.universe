@@ -51,8 +51,6 @@ AvoidanceModule::AvoidanceModule(
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
   using std::placeholders::_1;
-
-  approval_handler_.waitApproval();
 }
 
 bool AvoidanceModule::isExecutionRequested() const
@@ -2154,6 +2152,8 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  RCLCPP_WARN_STREAM(getLogger(), "[avoidance] planWaitingApproval()");
+  approval_handler_.waitApprovalLeft(true, 0.1);
   return out;
 }
 
@@ -2168,12 +2168,8 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
     registerRawShiftPoints(shift_points);
 
     DEBUG_PRINT("shift_point size: %lu -> %lu", prev_size, path_shifter_.getShiftPointsSize());
-
-    // use this approval.
-    approval_handler_.clearApproval();  // TODO(Horibe) will be fixed with service-call?
   } else {
     DEBUG_PRINT("We want to add this shift point, but NOT approved. waiting...");
-    approval_handler_.waitApproval();
   }
 }
 
@@ -2499,7 +2495,6 @@ void AvoidanceModule::onEntry()
   DEBUG_PRINT("AVOIDANCE onEntry. wait approval!");
   initVariables();
   current_state_ = BT::NodeStatus::SUCCESS;
-  approval_handler_.waitApproval();
 }
 
 void AvoidanceModule::onExit()

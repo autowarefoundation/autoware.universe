@@ -39,7 +39,6 @@ PullOverModule::PullOverModule(
   const std::string & name, rclcpp::Node & node, const PullOverParameters & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
-  approval_handler_.waitApproval();
 }
 
 BehaviorModuleOutput PullOverModule::run()
@@ -59,7 +58,6 @@ void PullOverModule::onEntry()
   const auto arclength_start =
     lanelet::utils::getArcCoordinates(status_.pull_over_lanes, current_pose);
   status_.start_distance = arclength_start.length;
-  approval_handler_.waitApproval();
 }
 
 void PullOverModule::onExit()
@@ -178,6 +176,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
   return out;
 }
 

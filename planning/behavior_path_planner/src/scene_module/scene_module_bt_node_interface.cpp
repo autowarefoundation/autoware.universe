@@ -54,11 +54,11 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
   auto current_status = BT::NodeStatus::RUNNING;
 
   scene_module_->onEntry();
-  scene_module_->updateApproval();
 
-  const bool is_waiting_approval = scene_module_->approval_handler_.isWaitingApproval() &&
-                                   !scene_module_->approval_handler_.isApproved();
-  if (is_waiting_approval) {
+  const bool is_lane_following = scene_module_->name() == "LaneFollowing";
+
+  const bool is_waiting_approval = !scene_module_->approval_handler_.isApproved();
+  if (is_waiting_approval && !is_lane_following) {
     try {
       // NOTE: Since BehaviorTreeCpp has an issue to shadow the exception reason thrown
       // in the TreeNode, catch and display it here until the issue is fixed.
