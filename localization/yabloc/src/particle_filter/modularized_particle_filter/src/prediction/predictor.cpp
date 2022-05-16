@@ -7,8 +7,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <complex>
 #include <iostream>
+#include <memory>
 #include <numeric>
 
 namespace mpf_msgs = modularized_particle_filter_msgs;
@@ -48,15 +48,13 @@ Predictor::Predictor()
   timer_ = this->create_wall_timer(chrono_period, std::bind(&Predictor::timerCallback, this));
 }
 
-void Predictor::gnssposeCallback(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+void Predictor::gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
 {
   if (particle_array_opt_.has_value()) return;
   initialposeCallback(initialpose);
 }
 
-void Predictor::initialposeCallback(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "initiposeCallback");
   modularized_particle_filter_msgs::msg::ParticleArray particle_array{};
@@ -88,8 +86,7 @@ void Predictor::initialposeCallback(
     std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_);
 }
 
-void Predictor::twistCallback(
-  const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist)
+void Predictor::twistCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist)
 {
   twist_opt_ = *twist;
 }
@@ -140,7 +137,7 @@ void Predictor::timerCallback()
 }
 
 void Predictor::weightedParticlesCallback(
-  const modularized_particle_filter_msgs::msg::ParticleArray::ConstSharedPtr weighted_particles_ptr)
+  const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "weightedParticleCallback is called");
   modularized_particle_filter_msgs::msg::ParticleArray particle_array{particle_array_opt_.value()};
@@ -162,8 +159,7 @@ void Predictor::weightedParticlesCallback(
   particle_array_opt_ = particle_array;
 }
 
-geometry_msgs::msg::Pose Predictor::calculateMeanPose(
-  const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
+geometry_msgs::msg::Pose Predictor::calculateMeanPose(const ParticleArray & particle_array)
 {
   modularized_particle_filter_msgs::msg::ParticleArray normalized_particle_array{particle_array};
   geometry_msgs::msg::Pose mean_pose;
@@ -199,9 +195,8 @@ geometry_msgs::msg::Pose Predictor::calculateMeanPose(
   for (modularized_particle_filter_msgs::msg::Particle particle :
        normalized_particle_array.particles) {
     double weight{1.0 / normalized_particle_array.particles.size()};
-    if (0.0f < sum_weight) {
-      weight = particle.weight / sum_weight;
-    }
+    if (0.0f < sum_weight) weight = particle.weight / sum_weight;
+
     mean_pose.position.x += particle.pose.position.x * weight;
     mean_pose.position.y += particle.pose.position.y * weight;
     mean_pose.position.z += particle.pose.position.z * weight;

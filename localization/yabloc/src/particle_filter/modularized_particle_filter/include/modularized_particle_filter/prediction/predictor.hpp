@@ -16,7 +16,6 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <memory>
 #include <optional>
 
 class Predictor : public rclcpp::Node
@@ -27,11 +26,12 @@ public:
 private:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
 
   // Subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr gnss_sub_;
+  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_sub_;
   rclcpp::Subscription<ParticleArray>::SharedPtr weighted_particles_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr height_sub_;
 
@@ -48,11 +48,11 @@ private:
 
   std::shared_ptr<RetroactiveResampler> resampler_ptr_;
   std::optional<ParticleArray> particle_array_opt_;
-  std::optional<geometry_msgs::msg::TwistWithCovarianceStamped> twist_opt_;
+  std::optional<TwistWithCovarianceStamped> twist_opt_;
 
   void gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
-  void twistCallback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist);
+  void twistCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist);
   void weightedParticlesCallback(const ParticleArray::ConstSharedPtr weighted_particles);
   void timerCallback();
 
