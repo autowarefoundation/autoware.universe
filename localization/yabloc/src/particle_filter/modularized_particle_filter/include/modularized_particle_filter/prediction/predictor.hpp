@@ -1,11 +1,10 @@
 #ifndef MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
 #define MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
 
-#include <iostream>
-#include <memory>
-#include <optional>
-
+#include "modularized_particle_filter/prediction/resampler.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/transform_listener.h"
 
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -14,10 +13,9 @@
 #include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
 #include "modularized_particle_filter_msgs/msg/particle_array.hpp"
 
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "modularized_particle_filter/prediction/resampler.hpp"
+#include <iostream>
+#include <memory>
+#include <optional>
 
 class Predictor : public rclcpp::Node
 {
@@ -38,7 +36,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_ptr_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_ptr_;
 
   int number_of_particles_;
   float resampling_interval_seconds_;
@@ -49,15 +47,14 @@ private:
 
   void initialposeCallback(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initialpose);
-  void twistCallback(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist);
+  void twistCallback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist);
   void weightedParticlesCallback(
     const modularized_particle_filter_msgs::msg::ParticleArray::ConstSharedPtr weighted_particles);
   void timerCallback();
 
-  modularized_particle_filter_msgs::msg::Particle
-  calculateMeanState(const modularized_particle_filter_msgs::msg::ParticleArray particle_array);
+  modularized_particle_filter_msgs::msg::Particle calculateMeanState(
+    const modularized_particle_filter_msgs::msg::ParticleArray particle_array);
   void outputMeanState(const modularized_particle_filter_msgs::msg::Particle mean_particle);
 };
 
-#endif // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
+#endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_

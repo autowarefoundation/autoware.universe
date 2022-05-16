@@ -1,0 +1,30 @@
+<launch>
+    <!-- ========================================= -->
+    <arg name="use_sim_time" default="true"/>
+    <arg name="log_level" default="info"/>
+
+    <!-- ========================================= -->
+    <node pkg="modularized_particle_filter" exec="predictor" name="predictor" output="screen" args="--ros-args --log-level $(var log_level)">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+
+        <remap from="initialpose" to="/initialpose" />
+        <remap from="twist_with_covariance" to="/eagleye/twist_with_covariance" />
+
+        <remap from="weighted_particles"  to="weighted_particles" />
+        <remap from="predicted_particles" to="predicted_particles" />
+        <remap from="predicted_mean_pose" to="predicted_mean_pose" />
+        <remap from="resampled_particles" to="resampled_particles" />
+
+        <param name="num_of_particles" value="$(env MPF_NUM_OF_PARTICLES 500)" />
+        <param name="resampling_interval_seconds" value="$(env MPF_PREDICTOR_RESAMPLING_INTERVAL_SECONDS 1.0)" />
+        <param name="prediction_rate" value="$(env MPF_PREDICTOR_PREDICTION_RATE 50.0)" />
+    </node>
+
+    <group>
+        <node pkg="modularized_particle_filter" exec="particle_array_to_marker_array.py" name="lidar_particle_array_to_marker_array">
+            <remap from="sub/particle_array" to="predicted_particles" />
+            <remap from="pub/marker_array" to="mpf/weighted_particles/marker_array" />
+        </node>
+    </group>
+
+</launch>
