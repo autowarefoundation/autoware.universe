@@ -18,6 +18,7 @@ float normalPDF(float x, float mu, float sigma, float inv_sqrt_2pi = 0.398942280
 {
   float a = (x - mu) / sigma;
   return inv_sqrt_2pi / sigma * std::exp(-0.5f * a * a);
+
 }
 
 }  // namespace

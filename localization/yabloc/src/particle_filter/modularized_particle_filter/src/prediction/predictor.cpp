@@ -3,11 +3,6 @@
 #include "modularized_particle_filter/prediction/prediction_util.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
-#include <geometry_msgs/msg/pose_array.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
-#include <modularized_particle_filter_msgs/msg/particle_array.hpp>
-
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
@@ -31,22 +26,21 @@ Predictor::Predictor()
   tf2_broadcaster_ptr_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   // Publishers
-  predicted_particles_pub_ =
-    this->create_publisher<mpf_msgs::msg::ParticleArray>("predicted_particles", 10);
-  resampled_particles_pub_ =
-    this->create_publisher<mpf_msgs::msg::ParticleArray>("resampled_particles", 10);
+  predicted_particles_pub_ = this->create_publisher<ParticleArray>("predicted_particles", 10);
+  resampled_particles_pub_ = this->create_publisher<ParticleArray>("resampled_particles", 10);
 
   // Subscribers
-  gnss_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "gnss/pose_with_covariance", 1,
-    std::bind(&Predictor::gnssposeCallback, this, std::placeholders::_1));
-  initialpose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, std::placeholders::_1));
+  using std::placeholders::_1;
+  gnss_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
+    "gnss/pose_with_covariance", 1, std::bind(&Predictor::gnssposeCallback, this, _1));
+  initialpose_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
+    "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, _1));
   twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "twist_with_covariance", 10, std::bind(&Predictor::twistCallback, this, std::placeholders::_1));
-  weighted_particles_sub_ = this->create_subscription<mpf_msgs::msg::ParticleArray>(
-    "weighted_particles", 10,
-    std::bind(&Predictor::weightedParticlesCallback, this, std::placeholders::_1));
+    "twist_with_covariance", 10, std::bind(&Predictor::twistCallback, this, _1));
+  weighted_particles_sub_ = this->create_subscription<ParticleArray>(
+    "weighted_particles", 10, std::bind(&Predictor::weightedParticlesCallback, this, _1));
+  height_sub_ = this->create_subscription<std_msgs::msg::Float32>(
+    "height", 10, [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; });
 
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -102,22 +96,15 @@ void Predictor::twistCallback(
 
 void Predictor::timerCallback()
 {
-  if (!particle_array_opt_.has_value()) {
-    return;
-  }
+  if (!particle_array_opt_.has_value()) return;
+  if (!twist_opt_.has_value()) return;
 
   modularized_particle_filter_msgs::msg::ParticleArray particle_array = particle_array_opt_.value();
-
-  if (!twist_opt_.has_value()) {
-    return;
-  }
-
   geometry_msgs::msg::TwistWithCovarianceStamped twist{twist_opt_.value()};
 
   rclcpp::Time current_time{this->now()};
   const float dt =
     static_cast<float>((current_time - rclcpp::Time(particle_array.header.stamp)).seconds());
-
   if (dt < 0.0f) return;
 
   particle_array.header.stamp = current_time;
@@ -139,6 +126,7 @@ void Predictor::timerCallback()
     pose.orientation = tf2::toMsg(q);
     pose.position.x += vx * std::cos(yaw) * dt;
     pose.position.y += vx * std::sin(yaw) * dt;
+    pose.position.z = ground_height_;
 
     particle_array.particles[i].pose = pose;
   }
