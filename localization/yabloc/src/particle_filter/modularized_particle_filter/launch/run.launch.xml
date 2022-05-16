@@ -31,13 +31,9 @@
     </node>
 
     <group>
-        <node pkg="modularized_particle_filter" exec="particle_array_to_marker_array.py" name="gnss_particle_array_to_marker_array">
-            <remap from="sub/particle_array" to="weighted_particles" />
-            <remap from="pub/marker_array" to="mpf/weighted_particles/marker_array" />
-        </node>
-        <node pkg="modularized_particle_filter" exec="particle_array_to_marker_array.py" name="predict_particle_array_to_marker_array">
-            <remap from="sub/particle_array" to="predicted_particles" />
-            <remap from="pub/marker_array" to="mpf/predict_particles/marker_array" />
+        <node pkg="modularized_particle_filter" exec="particle_visualize" name="gnss_particle_array_to_marker_array" output="screen">
+            <remap from="/particle_array" to="weighted_particles" />
+            <remap from="/marker_array" to="mpf/weighted_particles/marker_array" />
         </node>
     </group>
 
