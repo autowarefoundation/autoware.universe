@@ -114,9 +114,9 @@ private:
     geometry_msgs::msg::PoseWithCovarianceStamped pose_covariance;
     pose_covariance.header = pose.header;
     pose_covariance.pose.pose = pose.pose;
-    pose_covariance.pose.covariance.at(0) = 1;
-    pose_covariance.pose.covariance.at(7) = 1;
-    pose_covariance.pose.covariance.at(14) = 1;
+    pose_covariance.pose.covariance.at(0) = 9;
+    pose_covariance.pose.covariance.at(7) = 9;
+    pose_covariance.pose.covariance.at(14) = 9;
     pub_pose_covariance_->publish(pose_covariance);
 
     publishTf(pose, msg.header.stamp);

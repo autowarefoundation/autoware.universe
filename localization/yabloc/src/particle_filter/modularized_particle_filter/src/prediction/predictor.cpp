@@ -37,6 +37,9 @@ Predictor::Predictor()
     this->create_publisher<mpf_msgs::msg::ParticleArray>("resampled_particles", 10);
 
   // Subscribers
+  gnss_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "gnss/pose_with_covariance", 1,
+    std::bind(&Predictor::gnssposeCallback, this, std::placeholders::_1));
   initialpose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, std::placeholders::_1));
   twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
@@ -49,6 +52,13 @@ Predictor::Predictor()
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0f / prediction_rate));
   timer_ = this->create_wall_timer(chrono_period, std::bind(&Predictor::timerCallback, this));
+}
+
+void Predictor::gnssposeCallback(
+  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+{
+  if (particle_array_opt_.has_value()) return;
+  initialposeCallback(initialpose);
 }
 
 void Predictor::initialposeCallback(
@@ -119,15 +129,16 @@ void Predictor::timerCallback()
     const float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
     const float vx{
       twist.twist.twist.linear.x +
-      prediction_util::nrand(4 * std::sqrt(twist.twist.covariance[0]))};
-    pose.position.x += vx * std::cos(yaw) * dt;
-    pose.position.y += vx * std::sin(yaw) * dt;
+      prediction_util::nrand(16 * std::sqrt(twist.twist.covariance[0]))};
     const float wz{
       twist.twist.twist.angular.z +
-      prediction_util::nrand(4 * std::sqrt(twist.twist.covariance[5 * 6 + 5]))};
+      prediction_util::nrand(1 * std::sqrt(twist.twist.covariance[5 * 6 + 5]))};
     tf2::Quaternion q;
     q.setRPY(roll, pitch, prediction_util::normalizeRadian(yaw + wz * dt));
+
     pose.orientation = tf2::toMsg(q);
+    pose.position.x += vx * std::cos(yaw) * dt;
+    pose.position.y += vx * std::sin(yaw) * dt;
 
     particle_array.particles[i].pose = pose;
   }

@@ -52,13 +52,15 @@ private:
   void particlesCallback(const mpf_msgs::msg::ParticleArray & msg)
   {
     visualization_msgs::msg::MarkerArray marker_array;
-    float sum_weight = std::accumulate(
-      msg.particles.begin(), msg.particles.end(), 0.f,
-      [](float acc, const mpf_msgs::msg::Particle & p) -> float { return acc + p.weight; });
+    auto minmax_weight = std::minmax_element(
+      msg.particles.begin(), msg.particles.end(),
+      [](const mpf_msgs::msg::Particle & a, const mpf_msgs::msg::Particle & b) -> bool {
+        return a.weight < b.weight;
+      });
 
-    std::cout << sum_weight << std::endl;
-    sum_weight = std::max(sum_weight, 1e-3f);
-    auto boundWeight = [sum_weight](float raw) -> float { return 200 * raw / sum_weight; };
+    float min = minmax_weight.first->weight;
+    float max = minmax_weight.second->weight;
+    auto boundWeight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
 
     int id = 0;
     for (const mpf_msgs::msg::Particle & p : msg.particles) {
@@ -66,12 +68,12 @@ private:
       marker.frame_locked = true;
       marker.header.frame_id = "map";
       marker.id = id++;
-      marker.type = visualization_msgs::msg::Marker::SPHERE;
+      marker.type = visualization_msgs::msg::Marker::ARROW;
       marker.scale.x = 0.3;
-      marker.scale.y = 0.3;
-      marker.scale.z = 0.3;
+      marker.scale.y = 0.1;
+      marker.scale.z = 0.1;
       marker.color = computeColor(boundWeight(p.weight));
-      marker.pose.orientation.w = 1;
+      marker.pose.orientation = p.pose.orientation;
       marker.pose.position.x = p.pose.position.x;
       marker.pose.position.y = p.pose.position.y;
       marker.pose.position.z = p.pose.position.z;

@@ -15,6 +15,7 @@
         <remap from="predicted_particles" to="predicted_particles" />
         <remap from="predicted_mean_pose" to="predicted_mean_pose" />
         <remap from="resampled_particles" to="resampled_particles" />
+        <remap from="gnss/pose_with_covariance" to="eagleye/pose_with_covariance"/>
 
         <param name="num_of_particles" value="$(env MPF_NUM_OF_PARTICLES 500)" />
         <param name="resampling_interval_seconds" value="$(env MPF_PREDICTOR_RESAMPLING_INTERVAL_SECONDS 1.0)" />

@@ -25,6 +25,7 @@ public:
 private:
   // Subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_;
   rclcpp::Subscription<modularized_particle_filter_msgs::msg::ParticleArray>::SharedPtr
     weighted_particles_sub_;
@@ -45,6 +46,8 @@ private:
   std::optional<modularized_particle_filter_msgs::msg::ParticleArray> particle_array_opt_;
   std::optional<geometry_msgs::msg::TwistWithCovarianceStamped> twist_opt_;
 
+  void gnssposeCallback(
+    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void initialposeCallback(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void twistCallback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist);
