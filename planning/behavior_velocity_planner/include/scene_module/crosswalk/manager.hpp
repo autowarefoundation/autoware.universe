@@ -58,9 +58,10 @@ private:
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
   bool getActivation(const UUID & uuid) override;
-  void updateRTCStatus(const UUID & uuid, const bool safe, const double distance) override;
+  void updateRTCStatus(
+    const UUID & uuid, const bool safe, const double distance, const Time & stamp) override;
   void removeRTCStatus(const UUID & uuid) override;
-  void publishRTCStatus() override;
+  void publishRTCStatus(const Time & stamp) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;

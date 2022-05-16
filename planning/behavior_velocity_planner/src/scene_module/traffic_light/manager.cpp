@@ -66,7 +66,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
     traffic_light_scene_module->modifyPathVelocity(path, &stop_reason);
     stop_reason_array.stop_reasons.emplace_back(stop_reason);
 
-    updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance());
+    updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), path->header.stamp);
 
     if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
       first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
@@ -95,7 +95,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
   pub_debug_->publish(debug_marker_array);
   pub_virtual_wall_->publish(virtual_wall_marker_array);
   pub_tl_state_->publish(tl_state);
-  publishRTCStatus();
+  publishRTCStatus(path->header.stamp);
 }
 
 void TrafficLightModuleManager::launchNewModules(
@@ -142,9 +142,9 @@ bool TrafficLightModuleManager::getActivation(const UUID & uuid)
 }
 
 void TrafficLightModuleManager::updateRTCStatus(
-  const UUID & uuid, const bool safe, const double distance)
+  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
 {
-  rtc_interface_.updateCooperateStatus(uuid, safe, distance);
+  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
 }
 
 void TrafficLightModuleManager::removeRTCStatus(const UUID & uuid)
@@ -152,6 +152,9 @@ void TrafficLightModuleManager::removeRTCStatus(const UUID & uuid)
   rtc_interface_.removeCooperateStatus(uuid);
 }
 
-void TrafficLightModuleManager::publishRTCStatus() { rtc_interface_.publishCooperateStatus(); }
+void TrafficLightModuleManager::publishRTCStatus(const Time & stamp)
+{
+  rtc_interface_.publishCooperateStatus(stamp);
+}
 
 }  // namespace behavior_velocity_planner

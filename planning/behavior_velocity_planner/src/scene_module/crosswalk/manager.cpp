@@ -172,9 +172,9 @@ bool CrosswalkModuleManager::getActivation(const UUID & uuid)
 }
 
 void CrosswalkModuleManager::updateRTCStatus(
-  const UUID & uuid, const bool safe, const double distance)
+  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
 {
-  rtc_interface_.updateCooperateStatus(uuid, safe, distance);
+  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
 }
 
 void CrosswalkModuleManager::removeRTCStatus(const UUID & uuid)
@@ -182,6 +182,9 @@ void CrosswalkModuleManager::removeRTCStatus(const UUID & uuid)
   rtc_interface_.removeCooperateStatus(uuid);
 }
 
-void CrosswalkModuleManager::publishRTCStatus() { rtc_interface_.publishCooperateStatus(); }
+void CrosswalkModuleManager::publishRTCStatus(const Time & stamp)
+{
+  rtc_interface_.publishCooperateStatus(stamp);
+}
 
 }  // namespace behavior_velocity_planner

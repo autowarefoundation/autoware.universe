@@ -158,9 +158,9 @@ bool IntersectionModuleManager::getActivation(const UUID & uuid)
 }
 
 void IntersectionModuleManager::updateRTCStatus(
-  const UUID & uuid, const bool safe, const double distance)
+  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
 {
-  rtc_interface_.updateCooperateStatus(uuid, safe, distance);
+  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
 }
 
 void IntersectionModuleManager::removeRTCStatus(const UUID & uuid)
@@ -168,6 +168,9 @@ void IntersectionModuleManager::removeRTCStatus(const UUID & uuid)
   rtc_interface_.removeCooperateStatus(uuid);
 }
 
-void IntersectionModuleManager::publishRTCStatus() { rtc_interface_.publishCooperateStatus(); }
+void IntersectionModuleManager::publishRTCStatus(const Time & stamp)
+{
+  rtc_interface_.publishCooperateStatus(stamp);
+}
 
 }  // namespace behavior_velocity_planner
