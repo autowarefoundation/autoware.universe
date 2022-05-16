@@ -30,8 +30,6 @@ GNSSPoseCorrector::GNSSPoseCorrector()
   pose_buffer_size_(10),
   pose_circular_buffer_(pose_buffer_size_)
 {
-  prev_time_ = this->now();
-
   weighted_particle_pub_ =
     this->create_publisher<modularized_particle_filter_msgs::msg::ParticleArray>(
       "weighted_particles", 10);
@@ -87,9 +85,10 @@ void GNSSPoseCorrector::correctAndPublishParticles()
   modularized_particle_filter_msgs::msg::ParticleArray synced_particles{
     findSyncedParticles(particles_circular_buffer_, synced_pose.header.stamp).value()};
 
-  // ROS_WARN_STREAM(
-  //     "dt: "
-  //     << (synced_pose.header.stamp - synced_particles.header.stamp).toSec());
+  RCLCPP_WARN_STREAM(
+    this->get_logger(),
+    "dt: " << (rclcpp::Time(synced_pose.header.stamp) - rclcpp::Time(synced_particles.header.stamp))
+                .seconds());
 
   modularized_particle_filter_msgs::msg::ParticleArray weighted_particles{
     calculateWeightedParticles(synced_particles, synced_pose, flat_radius_)};
@@ -116,9 +115,6 @@ modularized_particle_filter_msgs::msg::ParticleArray GNSSPoseCorrector::calculat
     } else {
       weighted_particles.particles[i].weight = normalPDF(distance - flat_radius, 0.0, sigma);
     }
-    // ROS_WARN_STREAM("i: " << i << ", distance: " << distance << ", sigma: "
-    //                       << sigma << ", w: " <<
-    //                       weighted_particles.particles[i].weight);
   }
 
   return weighted_particles;

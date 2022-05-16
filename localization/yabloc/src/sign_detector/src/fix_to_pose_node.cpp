@@ -1,10 +1,13 @@
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
-
 #include "sign_detector/fix2mgrs.hpp"
 #include "sign_detector/ll2_util.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
 #include <eagleye_msgs/msg/heading.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+
 #include <pcl-1.10/pcl/kdtree/kdtree_flann.h>
 #include <pcl-1.10/pcl/point_cloud.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -15,23 +18,23 @@ public:
   Fix2Pose() : Node("fix_to_pose"), kdtree_(nullptr)
   {
     std::string map_topic = "/map/vector_map";
-    std::string fix_topic = "/eagleye/fix";
-    std::string pose_topic = "/eagleye/pose";
     std::string heading_topic = "/eagleye/heading_interpolate_3rd";
+    std::string fix_topic = "/fix_topic";
+    std::string pose_topic = "/pose_topic";
+    std::string pose_with_covariance_topic = "/pose_with_covariance";
 
-    this->declare_parameter<std::string>("map_topic", map_topic);
-    this->declare_parameter<std::string>("fix_topic", fix_topic);
-    this->declare_parameter<std::string>("pose_topic", pose_topic);
-    this->declare_parameter<std::string>("heading_topic", heading_topic);
-    this->get_parameter("map_topic", map_topic);
-    this->get_parameter("fix_topic", fix_topic);
-    this->get_parameter("pose_topic", pose_topic);
-    this->get_parameter("heading_topic", heading_topic);
+    sub_heading_ = this->create_subscription<eagleye_msgs::msg::Heading>(
+      heading_topic, 10, std::bind(&Fix2Pose::headingCallback, this, std::placeholders::_1));
+    sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+      map_topic, rclcpp::QoS(10).transient_local().reliable(),
+      std::bind(&Fix2Pose::mapCallback, this, std::placeholders::_1));
+    sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+      fix_topic, 10, std::bind(&Fix2Pose::fixCallback, this, std::placeholders::_1));
 
-    sub_heading_ = this->create_subscription<eagleye_msgs::msg::Heading>(heading_topic, 10, std::bind(&Fix2Pose::headingCallback, this, std::placeholders::_1));
-    sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(map_topic, rclcpp::QoS(10).transient_local().reliable(), std::bind(&Fix2Pose::mapCallback, this, std::placeholders::_1));
-    sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(fix_topic, 10, std::bind(&Fix2Pose::fixCallback, this, std::placeholders::_1));
+    // Publisher
     pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic, 10);
+    pub_pose_covariance_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      pose_with_covariance_topic, 10);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -42,7 +45,16 @@ private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::string pose_topic_;
 
-  void publishTf(const geometry_msgs::msg::PoseStamped& pose, const rclcpp::Time&)
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<eagleye_msgs::msg::Heading>::SharedPtr sub_heading_;
+  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_covariance_;
+  float heading_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
+  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
+
+  void publishTf(const geometry_msgs::msg::PoseStamped & pose, const rclcpp::Time &)
   {
     geometry_msgs::msg::TransformStamped t;
 
@@ -60,12 +72,9 @@ private:
     tf_broadcaster_->sendTransform(t);
   }
 
-  void headingCallback(const eagleye_msgs::msg::Heading& msg)
-  {
-    heading_ = msg.heading_angle;
-  }
+  void headingCallback(const eagleye_msgs::msg::Heading & msg) { heading_ = msg.heading_angle; }
 
-  void fixCallback(const sensor_msgs::msg::NavSatFix& msg)
+  void fixCallback(const sensor_msgs::msg::NavSatFix & msg)
   {
     if (!kdtree_) return;
 
@@ -86,7 +95,9 @@ private:
       height = std::min(height, v.z());
     }
 
-    RCLCPP_INFO_STREAM(this->get_logger(), mgrs.x() << " " << mgrs.y() << " (" << msg.latitude << ", " << msg.longitude << ") " << height);
+    RCLCPP_INFO_STREAM(
+      this->get_logger(), mgrs.x() << " " << mgrs.y() << " (" << msg.latitude << ", "
+                                   << msg.longitude << ") " << height);
 
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "map";
@@ -100,10 +111,18 @@ private:
 
     pub_pose_stamped_->publish(pose);
 
+    geometry_msgs::msg::PoseWithCovarianceStamped pose_covariance;
+    pose_covariance.header = pose.header;
+    pose_covariance.pose.pose = pose.pose;
+    pose_covariance.pose.covariance.at(0) = 1;
+    pose_covariance.pose.covariance.at(7) = 1;
+    pose_covariance.pose.covariance.at(14) = 1;
+    pub_pose_covariance_->publish(pose_covariance);
+
     publishTf(pose, msg.header.stamp);
   }
 
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin& msg)
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
   {
     lanelet::LaneletMapPtr viz_lanelet_map = fromBinMsg(msg);
 
@@ -113,7 +132,7 @@ private:
 
     kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
 
-    auto toPointXYZ = [](const lanelet::ConstPoint3d& p) -> pcl::PointXYZ {
+    auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
       pcl::PointXYZ q;
       q.x = p.x();
       q.y = p.y();
@@ -122,27 +141,18 @@ private:
     };
 
     cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-    for (lanelet::LineString3d& line : viz_lanelet_map->lineStringLayer) {
+    for (lanelet::LineString3d & line : viz_lanelet_map->lineStringLayer) {
       if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
       lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
       if (attr.value() != "line_thin") continue;
 
-      for (const lanelet::ConstPoint3d& p : line)
-        cloud_->push_back(toPointXYZ(p));
+      for (const lanelet::ConstPoint3d & p : line) cloud_->push_back(toPointXYZ(p));
     }
     kdtree_->setInputCloud(cloud_);
   }
-
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
-  rclcpp::Subscription<eagleye_msgs::msg::Heading>::SharedPtr sub_heading_;
-  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
-  float heading_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
-  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
 };
 
-int main(int argc, char* argv[])
+int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
 
