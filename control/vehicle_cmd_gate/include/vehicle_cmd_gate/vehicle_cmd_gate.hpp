@@ -50,17 +50,16 @@ using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using tier4_control_msgs::msg::GateMode;
-using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::msg::Emergency;
+using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
 
-using nav_msgs::msg::Odometry;
 using diagnostic_msgs::msg::DiagnosticStatus;
+using nav_msgs::msg::Odometry;
 
 using EngageMsg = autoware_auto_vehicle_msgs::msg::Engage;
 using EngageSrv = tier4_external_api_msgs::srv::Engage;
-
 
 struct Commands
 {
