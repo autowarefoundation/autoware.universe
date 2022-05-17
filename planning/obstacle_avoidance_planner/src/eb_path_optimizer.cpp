@@ -354,8 +354,8 @@ int EBPathOptimizer::getNumFixedPoints(
 
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
 EBPathOptimizer::convertOptimizedPointsToTrajectory(
-  const std::vector<double> optimized_points, const std::vector<ConstrainRectangle> & constraints,
-  const int farthest_idx)
+  const std::vector<double> optimized_points,
+  [[maybe_unused]] const std::vector<ConstrainRectangle> & constraints, const int farthest_idx)
 {
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> traj_points;
   for (int i = 0; i <= farthest_idx; i++) {
