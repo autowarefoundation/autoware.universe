@@ -544,8 +544,8 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
 
 visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
   const std::vector<std::vector<geometry_msgs::msg::Pose>> & vehicle_circles_pose,
-  const double vehicle_width, const size_t sampling_num, const std::string & ns,
-  const double r, const double g, const double b)
+  const double vehicle_width, const size_t sampling_num, const std::string & ns, const double r,
+  const double g, const double b)
 {
   const auto current_time = rclcpp::Clock().now();
   visualization_msgs::msg::MarkerArray msg;
@@ -605,8 +605,8 @@ visualization_msgs::msg::MarkerArray getLateralErrorsLineMarkerArray(
 visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
   const geometry_msgs::msg::Pose & current_ego_pose,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
-  const std::vector<double> & vehicle_circle_radiuses, const std::string & ns, const double r, const double g,
-  const double b)
+  const std::vector<double> & vehicle_circle_radiuses, const std::string & ns, const double r,
+  const double g, const double b)
 {
   visualization_msgs::msg::MarkerArray msg;
 
@@ -641,8 +641,8 @@ visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
 visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & mpt_traj_points,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
-  const std::vector<double> & vehicle_circle_radiuses, const size_t sampling_num, const std::string & ns,
-  const double r, const double g, const double b)
+  const std::vector<double> & vehicle_circle_radiuses, const size_t sampling_num,
+  const std::string & ns, const double r, const double g, const double b)
 {
   visualization_msgs::msg::MarkerArray msg;
 
