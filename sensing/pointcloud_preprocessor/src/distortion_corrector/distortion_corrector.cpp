@@ -24,6 +24,15 @@ namespace pointcloud_preprocessor
 DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOptions & options)
 : Node("distortion_corrector_node", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "distortion_corrector");
+    stop_watch_ptr_->tic();
+  }
+
   // Parameter
   time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
 
@@ -67,6 +76,13 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
 
   if (points_sub_count < 1) {
     return;
+  }
+
+  // add processing time for debug
+  if (stop_watch_ptr_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
   }
 
   tf2::Transform tf2_base_link_to_sensor{};

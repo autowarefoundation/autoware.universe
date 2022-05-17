@@ -60,6 +60,15 @@ namespace pointcloud_preprocessor
 CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("CropBoxFilter", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "crop_box_filter");
+    stop_watch_ptr_->tic();
+  }
+
   // set initial parameters
   {
     auto & p = param_;
@@ -91,6 +100,12 @@ void CropBoxFilterComponent::filter(
   PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
+  // add processing time for debug
+  if (stop_watch_ptr_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 
   output.data.resize(input->data.size());
   Eigen::Vector3f pt(Eigen::Vector3f::Zero());

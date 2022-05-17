@@ -21,6 +21,15 @@ namespace pointcloud_preprocessor
 RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("RingOutlierFilter", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
+    stop_watch_ptr_->tic();
+  }
+
   // set initial parameters
   {
     distance_ratio_ = static_cast<double>(declare_parameter("distance_ratio", 1.03));
@@ -39,6 +48,12 @@ void RingOutlierFilterComponent::filter(
   PointCloud2 & output)
 {
   std::scoped_lock lock(mutex_);
+  // add processing time for debug
+  if (stop_watch_ptr_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
   std::unordered_map<uint16_t, std::vector<std::size_t>> input_ring_map;
   input_ring_map.reserve(128);
   sensor_msgs::msg::PointCloud2::SharedPtr input_ptr =

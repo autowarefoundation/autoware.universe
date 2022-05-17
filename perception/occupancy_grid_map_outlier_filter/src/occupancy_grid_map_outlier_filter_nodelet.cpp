@@ -181,6 +181,15 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
 : Node("OccupancyGridMapOutlierFilter", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "occupancy_grid_map_outlier_filter");
+    stop_watch_ptr_->tic();
+  }
+
   /* params */
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
@@ -219,6 +228,12 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   PointCloud2 ogm_frame_pc{};
   if (!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
     return;
+  }
+  // add processing time for debug
+  if (stop_watch_ptr_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
   }
   // Occupancy grid map based filter
   PclPointCloud high_confidence_pc{};
