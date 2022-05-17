@@ -1515,7 +1515,7 @@ void MPTOptimizer::calcVehicleBounds(
 
       // interpolate bounds
       const double avoid_s = ref_points_spline_interpolation.getAccumulatedLength(p_idx) + d;
-      for (size_t cp_idx = p_idx; cp_idx < ref_points.size(); ++cp_idx) {
+      for (size_t cp_idx = 0; cp_idx < ref_points.size(); ++cp_idx) {
         const double current_s = ref_points_spline_interpolation.getAccumulatedLength(cp_idx);
         if (avoid_s <= current_s) {
           double prev_avoid_idx;
