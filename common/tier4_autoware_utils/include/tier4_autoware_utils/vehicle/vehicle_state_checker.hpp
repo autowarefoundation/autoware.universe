@@ -28,6 +28,8 @@ namespace tier4_autoware_utils
 {
 
 using autoware_auto_planning_msgs::msg::Trajectory;
+using geometry_msgs::msg::TwistStamped;
+using nav_msgs::msg::Odometry;
 
 class VehicleStopChecker
 {
@@ -38,46 +40,35 @@ public:
 
   rclcpp::Logger getLogger() { return logger_; }
 
-private:
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-
+protected:
+  rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
 
-  std::deque<geometry_msgs::msg::TwistStamped> twist_buffer_;
+  Odometry::SharedPtr odometry_ptr_;
 
+  std::deque<TwistStamped> twist_buffer_;
+
+private:
   static constexpr double velocity_buffer_time_sec = 10.0;
 
-  void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void onOdom(const Odometry::SharedPtr msg);
 };
 
-class VehicleArrivalChecker
+class VehicleArrivalChecker : public VehicleStopChecker
 {
 public:
   explicit VehicleArrivalChecker(rclcpp::Node * node);
 
-  bool isVehicleStopped(const double stop_duration) const;
-
   bool isVehicleStoppedAtStopPoint(const double stop_duration) const;
 
-  rclcpp::Logger getLogger() { return logger_; }
-
 private:
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
-
-  rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Logger logger_;
-
-  nav_msgs::msg::Odometry::SharedPtr odometry_ptr_;
-  Trajectory::SharedPtr trajectory_ptr_;
-
-  std::deque<geometry_msgs::msg::TwistStamped> twist_buffer_;
-
-  static constexpr double velocity_buffer_time_sec = 10.0;
   static constexpr double th_arrived_distance_m = 1.0;
 
-  void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
+
+  Trajectory::SharedPtr trajectory_ptr_;
+
   void onTrajectory(const Trajectory::SharedPtr msg);
 };
 }  // namespace tier4_autoware_utils

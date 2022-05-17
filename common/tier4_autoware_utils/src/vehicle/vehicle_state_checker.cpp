@@ -25,7 +25,7 @@ VehicleStopChecker::VehicleStopChecker(rclcpp::Node * node)
 {
   using std::placeholders::_1;
 
-  sub_odom_ = node->create_subscription<nav_msgs::msg::Odometry>(
+  sub_odom_ = node->create_subscription<Odometry>(
     "/localization/kinematic_state", rclcpp::QoS(1),
     std::bind(&VehicleStopChecker::onOdom, this, _1));
 }
@@ -64,9 +64,11 @@ bool VehicleStopChecker::isVehicleStopped(const double stop_duration = 0.0) cons
   return true;
 }
 
-void VehicleStopChecker::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
+void VehicleStopChecker::onOdom(const Odometry::SharedPtr msg)
 {
-  auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
+  odometry_ptr_ = msg;
+
+  auto current_velocity = std::make_shared<TwistStamped>();
   current_velocity->header = msg->header;
   current_velocity->twist = msg->twist.twist;
 
@@ -87,52 +89,13 @@ void VehicleStopChecker::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
   }
 }
 
-VehicleArrivalChecker::VehicleArrivalChecker(rclcpp::Node * node)
-: clock_(node->get_clock()), logger_(node->get_logger())
+VehicleArrivalChecker::VehicleArrivalChecker(rclcpp::Node * node) : VehicleStopChecker(node)
 {
   using std::placeholders::_1;
-
-  sub_odom_ = node->create_subscription<nav_msgs::msg::Odometry>(
-    "/localization/kinematic_state", rclcpp::QoS(1),
-    std::bind(&VehicleArrivalChecker::onOdom, this, _1));
 
   sub_trajectory_ = node->create_subscription<Trajectory>(
     "/planning/scenario_planning/trajectory", rclcpp::QoS(1),
     std::bind(&VehicleArrivalChecker::onTrajectory, this, _1));
-}
-
-bool VehicleArrivalChecker::isVehicleStopped(const double stop_duration = 0.0) const
-{
-  if (twist_buffer_.empty()) {
-    return false;
-  }
-
-  const auto now = clock_->now();
-  const auto time_buffer = now - twist_buffer_.back().header.stamp;
-  if (time_buffer.seconds() < stop_duration) {
-    return false;
-  }
-
-  // Get velocities within stop_duration
-  std::vector<double> vs;
-  for (const auto & velocity : twist_buffer_) {
-    vs.push_back(velocity.twist.linear.x);
-
-    const auto time_diff = now - velocity.header.stamp;
-    if (time_diff.seconds() >= stop_duration) {
-      break;
-    }
-  }
-
-  // Check all velocities
-  constexpr double stop_velocity = 1e-3;
-  for (const auto & v : vs) {
-    if (v >= stop_velocity) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 bool VehicleArrivalChecker::isVehicleStoppedAtStopPoint(const double stop_duration = 0.0) const
@@ -154,31 +117,6 @@ bool VehicleArrivalChecker::isVehicleStoppedAtStopPoint(const double stop_durati
 
   return std::abs(calcSignedArcLength(trajectory_ptr_->points, p, idx.get())) <
          th_arrived_distance_m;
-}
-
-void VehicleArrivalChecker::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
-{
-  odometry_ptr_ = msg;
-
-  auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  current_velocity->header = msg->header;
-  current_velocity->twist = msg->twist.twist;
-
-  twist_buffer_.push_front(*current_velocity);
-
-  const auto now = clock_->now();
-  while (true) {
-    // Check oldest data time
-    const auto time_diff = now - twist_buffer_.back().header.stamp;
-
-    // Finish when oldest data is newer than threshold
-    if (time_diff.seconds() <= velocity_buffer_time_sec) {
-      break;
-    }
-
-    // Remove old data
-    twist_buffer_.pop_back();
-  }
 }
 
 void VehicleArrivalChecker::onTrajectory(const Trajectory::SharedPtr msg) { trajectory_ptr_ = msg; }
