@@ -207,14 +207,41 @@ bool StopLineModule::modifyPathVelocity(
   const auto & current_position = planner_data_->current_pose.pose.position;
   const PointWithSearchRangeIndex src_point_with_search_range_index =
     planning_utils::findFirstNearSearchRangeIndex(path->points, current_position);
-  const SearchRangeIndex dst_search_range =
+  SearchRangeIndex dst_search_range =
     planning_utils::getPathIndexRangeIncludeLaneId(*path, lane_id_);
+
+  std::set<int64_t> unique_lane_ids;
+  for (const auto & p : path->points) {
+    unique_lane_ids.insert(p.lane_ids.at(0));
+  }
+
+  const auto next_id_itr =
+    std::next(std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id_), 1);
+
+  const auto prev_id_itr =
+    std::next(std::find(unique_lane_ids.rbegin(), unique_lane_ids.rend(), lane_id_), 1);
+
+  // extend following and previous search range to avoid no collision
+  if (next_itr != unique_lane_ids.end()) {
+    const auto next_lanelet_index_range =
+      planning_utils::getPathIndexRangeIncludeLaneId(*path, *next_id_itr);
+
+    dst_search_range.max_idx = next_lanelet_index_range.min_idx;
+  }
+
+  if (prev_itr != unique_lane_ids.rend()) {
+    const auto prev_lanelet_index_range =
+      planning_utils::getPathIndexRangeIncludeLaneId(*path, *prev_id_itr);
+
+    dst_search_range.min_idx = prev_lanelet_index_range.max_idx;
+  }
 
   // Find collision
   const auto collision = findCollision(*path, stop_line, dst_search_range);
 
   // If no collision found, do nothing
   if (!collision) {
+    RCLCPP_WARN(logger_, "is no collision");
     return true;
   }
 
