@@ -9,6 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
@@ -20,11 +21,12 @@
   <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>cv_bridge</depend>
-  <depend>autoware_auto_mapping_msgs</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_io</depend>
 
   <depend>eagleye_msgs</depend>
+  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>modularized_particle_filter_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

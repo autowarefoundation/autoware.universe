@@ -18,7 +18,7 @@ cv::Mat cloud2Image(const sensor_msgs::msg::PointCloud2 & msg)
 }
 
 void CameraPoseCorrector::syncrhoCallback(
-  const sensor_msgs::msg::PointCloud2 & msg1, const sensor_msgs::msg::PointCloud2 & msg2)
+  const PointCloud2 & msg1, const CloudPose & msg2, const ParticleArray & particles)
 {
   RCLCPP_INFO_STREAM(
     this->get_logger(), "ll2: " << msg1.header.stamp.sec << "." << msg1.header.stamp.nanosec);
@@ -26,7 +26,7 @@ void CameraPoseCorrector::syncrhoCallback(
     this->get_logger(), "lsd: " << msg2.header.stamp.sec << "." << msg2.header.stamp.nanosec);
 
   cv::Mat ll2_image = cloud2Image(msg1);
-  cv::Mat lsd_image = cloud2Image(msg2);
+  cv::Mat lsd_image = cloud2Image(msg2.cloud);
 
   cv::Mat match_image;
   cv::Mat zero_image = cv::Mat::zeros(ll2_image.size(), CV_8UC1);

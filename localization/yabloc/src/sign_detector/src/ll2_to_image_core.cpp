@@ -18,7 +18,7 @@ Ll2ImageConverter::Ll2ImageConverter()
   // Publisher
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
   pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
-  pub_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/ll2_cloud", 10);
+  pub_cloud_ = this->create_publisher<CloudWithPose>("/ll2_cloud", 10);
 
   using std::placeholders::_1;
 
@@ -113,7 +113,7 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
 
   // Publish
   publishImage(image, pose_stamped.header.stamp);
-  publishCloud(image, pose_stamped.header.stamp);
+  publishCloud(image, pose_stamped.header.stamp, pose_stamped.pose);
 
   std_msgs::msg::Float32 height;
   height.data = pose.z();
@@ -130,7 +130,8 @@ void Ll2ImageConverter::publishImage(const cv::Mat & image, const rclcpp::Time &
   pub_image_->publish(*raw_image.toImageMsg());
 }
 
-void Ll2ImageConverter::publishCloud(const cv::Mat & image, const rclcpp::Time & stamp)
+void Ll2ImageConverter::publishCloud(
+  const cv::Mat & image, const rclcpp::Time & stamp, const geometry_msgs::msg::Pose & pose)
 {
   pcl::PointCloud<pcl::PointXYZ> cloud;
   std::vector<cv::Point2i> nonzero_pix;
@@ -146,8 +147,11 @@ void Ll2ImageConverter::publishCloud(const cv::Mat & image, const rclcpp::Time &
   }
 
   // Convert to msg
-  sensor_msgs::msg::PointCloud2 msg;
-  pcl::toROSMsg(cloud, msg);
+  sensor_msgs::msg::PointCloud2 cloud_msg;
+  pcl::toROSMsg(cloud, cloud_msg);
+  CloudWithPose msg;
+  msg.pose = pose;
+  msg.cloud = cloud_msg;
   msg.header.stamp = stamp;
   msg.header.frame_id = "map";
   pub_cloud_->publish(msg);
