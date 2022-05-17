@@ -57,7 +57,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
 
   const bool is_lane_following = scene_module_->name() == "LaneFollowing";
 
-  const bool is_waiting_approval = !scene_module_->approval_handler_.isApproved();
+  const bool is_waiting_approval = !scene_module_->isActivated();
   if (is_waiting_approval && !is_lane_following) {
     try {
       // NOTE: Since BehaviorTreeCpp has an issue to shadow the exception reason thrown
@@ -67,7 +67,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
       if (!res) {
         RCLCPP_ERROR_STREAM(scene_module_->getLogger(), "setOutput() failed : " << res.error());
       }
-      module_status_->is_waiting_approval = scene_module_->approval_handler_.isWaitingApproval();
+      module_status_->is_waiting_approval = scene_module_->isWaitingApproval();
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
         scene_module_->getLogger(), "behavior module has failed with exception: " << e.what());
@@ -89,7 +89,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
 
       // for data output
       module_status_->status = current_status;
-      module_status_->is_waiting_approval = scene_module_->approval_handler_.isWaitingApproval();
+      module_status_->is_waiting_approval = scene_module_->isWaitingApproval();
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
         scene_module_->getLogger(), "behavior module has failed with exception: " << e.what());

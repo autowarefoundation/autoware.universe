@@ -37,16 +37,23 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+: SceneModuleInterface{name, node}, parameters_{parameters}, rtc_interface_left_(node, "lane_change_left"), rtc_interface_right_(node, "lane_change_right"), uuid_left_(generateUUID()), uuid_right_(generateUUID())
 {
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
 {
   RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
-  approval_handler_.clearWaitApproval();
+  //approval_handler_.clearWaitApproval();
   current_state_ = BT::NodeStatus::RUNNING;
-  return plan();
+  const auto output = plan();
+  const auto turn_signal_info = output.turn_signal_info;
+  if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    waitApprovalLeft(isExecutionReady(), turn_signal_info.signal_distance);
+  } else {
+    waitApprovalRight(isExecutionReady(), turn_signal_info.signal_distance);
+  }
+  return output;
 }
 
 void LaneChangeModule::onEntry()
@@ -63,7 +70,8 @@ void LaneChangeModule::onEntry()
 
 void LaneChangeModule::onExit()
 {
-  approval_handler_.clearWaitApproval();
+  clearWaitingApproval();
+  removeRTCStatus();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
 }
@@ -181,7 +189,16 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
-  approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
+  const auto turn_signal_info = util::getPathTurnSignal(
+    status_.current_lanes, status_.lane_change_path.shifted_path,
+    status_.lane_change_path.shift_point, planner_data_->self_pose->pose,
+    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters,
+    parameters_.lane_change_search_distance);
+  if (turn_signal_info.first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    waitApprovalLeft(isExecutionReady(), turn_signal_info.second);
+  } else {
+    waitApprovalRight(isExecutionReady(), turn_signal_info.second);
+  }
   return out;
 }
 
@@ -445,7 +462,7 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
   const auto current_lanes = status_.current_lanes;
 
   // check abort enable flag
-  if (!parameters_.enable_abort_lane_change) {
+  if (!isActivated()) {
     return false;
   }
 

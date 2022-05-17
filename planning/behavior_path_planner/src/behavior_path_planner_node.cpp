@@ -140,12 +140,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param);
     bt_manager_->registerSceneModule(lane_change_module);
 
-    auto force_lane_change_module =
-      std::make_shared<LaneChangeModule>("ForceLaneChange", *this, lane_change_param);
-    bt_manager_->registerSceneModule(force_lane_change_module);
-
-    bt_manager_->registerForceApproval("ForceLaneChange");
-
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
     bt_manager_->registerSceneModule(pull_over_module);
 

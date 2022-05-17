@@ -64,7 +64,7 @@ SideShiftModule::SideShiftModule(
     "~/input/lateral_offset", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
 
   // If lateral offset is subscribed, it approves side shift module automatically
-  approval_handler_.clearWaitApproval();
+  clearWaitingApproval();
 }
 
 void SideShiftModule::initVariables()

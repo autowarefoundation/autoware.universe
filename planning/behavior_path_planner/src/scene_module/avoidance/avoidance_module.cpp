@@ -48,7 +48,7 @@ using tier4_autoware_utils::findNearestIndex;
 
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+: SceneModuleInterface{name, node}, parameters_{parameters}, rtc_interface_left_(node, "avoidance_left"), rtc_interface_right_(node, "avoidance_right"), uuid_left_(generateUUID()), uuid_right_(generateUUID())
 {
   using std::placeholders::_1;
 }
@@ -2080,8 +2080,8 @@ BehaviorModuleOutput AvoidanceModule::plan()
     DEBUG_PRINT("new_shift_points size = %lu", new_shift_points->size());
     printShiftPoints(*new_shift_points, "new_shift_points");
     addShiftPointIfApproved(*new_shift_points);
-  } else if (approval_handler_.isWaitingApproval()) {
-    approval_handler_.clearWaitApproval();
+  } else if (isWaitingApproval()) {
+    clearWaitingApproval();
   }
 
   // generate path with shift points that have been inserted.
@@ -2153,13 +2153,13 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   BehaviorModuleOutput out = plan();
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
   RCLCPP_WARN_STREAM(getLogger(), "[avoidance] planWaitingApproval()");
-  approval_handler_.waitApprovalLeft(true, 0.1);
+  waitApprovalLeft(true, 0.1);
   return out;
 }
 
 void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_points)
 {
-  if (approval_handler_.isApproved()) {
+  if (isActivated()) {
     DEBUG_PRINT("We want to add this shift point, and approved. ADD SHIFT POINT!");
     const size_t prev_size = path_shifter_.getShiftPointsSize();
     addNewShiftPoints(path_shifter_, shift_points);
@@ -2502,7 +2502,8 @@ void AvoidanceModule::onExit()
   DEBUG_PRINT("AVOIDANCE onExit");
   initVariables();
   current_state_ = BT::NodeStatus::IDLE;
-  approval_handler_.clearWaitApproval();
+  clearWaitingApproval();
+  removeRTCStatus();
 }
 
 void AvoidanceModule::setParameters(const AvoidanceParameters & parameters)

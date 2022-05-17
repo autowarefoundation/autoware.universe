@@ -44,7 +44,7 @@ PullOutModule::PullOutModule(
 
 BehaviorModuleOutput PullOutModule::run()
 {
-  approval_handler_.clearWaitApproval();
+  clearWaitingApproval();
   current_state_ = BT::NodeStatus::RUNNING;
   return plan();
 }
@@ -65,7 +65,7 @@ void PullOutModule::onEntry()
 
 void PullOutModule::onExit()
 {
-  approval_handler_.clearWaitApproval();
+  clearWaitingApproval();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }
@@ -229,7 +229,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
 
-  approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
+  //approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
 
   return out;
 }

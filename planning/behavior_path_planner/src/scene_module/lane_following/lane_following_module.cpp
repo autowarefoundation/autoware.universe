@@ -30,7 +30,7 @@ LaneFollowingModule::LaneFollowingModule(
 
 void LaneFollowingModule::initParam()
 {
-  approval_handler_.clearWaitApproval();  // no need approval
+  clearWaitingApproval();  // no need approval
 }
 
 bool LaneFollowingModule::isExecutionRequested() const { return true; }

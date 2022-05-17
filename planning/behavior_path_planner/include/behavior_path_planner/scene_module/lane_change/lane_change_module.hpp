@@ -26,6 +26,7 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 
 #include <tf2/utils.h>
 
@@ -37,6 +38,7 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using rtc_interface::RTCInterface;
 
 struct LaneChangeParameters
 {
@@ -94,10 +96,43 @@ public:
 
   void setParameters(const LaneChangeParameters & parameters);
 
+  void publishRTCStatus() override
+  {
+    rtc_interface_left_.publishCooperateStatus(clock_->now());
+    rtc_interface_right_.publishCooperateStatus(clock_->now());
+    RCLCPP_WARN_STREAM(getLogger(), "publishRTCStatus()");
+  }
+
+  bool isActivated() const override { return rtc_interface_left_.isActivated(uuid_left_) || rtc_interface_right_.isActivated(uuid_right_); }
+
 private:
   LaneChangeParameters parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
+
+  // for RTC
+  RTCInterface rtc_interface_left_;
+  RTCInterface rtc_interface_right_;
+  UUID uuid_left_;
+  UUID uuid_right_;
+
+  void waitApprovalLeft(const bool safe, const double distance)
+  {
+    rtc_interface_left_.updateCooperateStatus(uuid_left_, safe, distance, clock_->now());
+    is_waiting_approval_ = true;
+  }
+
+  void waitApprovalRight(const bool safe, const double distance)
+  {
+    rtc_interface_right_.updateCooperateStatus(uuid_right_, safe, distance, clock_->now());
+    is_waiting_approval_ = true;
+  }
+
+  void removeRTCStatus()
+  {
+    rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    rtc_interface_right_.removeCooperateStatus(uuid_right_);
+  }
 
   double lane_change_lane_length_{200.0};
   double check_distance_{100.0};
