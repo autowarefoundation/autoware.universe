@@ -1,5 +1,5 @@
 #pragma once
-#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -8,36 +8,36 @@
 class SyncroSubscriber
 {
 public:
-  using Image = sensor_msgs::msg::Image;
-  using ImageSub = message_filters::Subscriber<Image>;
-  using SyncPolicy = message_filters::sync_policies::ApproximateTime<Image, Image>;
+  using Cloud = sensor_msgs::msg::PointCloud2;
+  using CloudSub = message_filters::Subscriber<Cloud>;
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<Cloud, Cloud>;
 
   SyncroSubscriber(
     rclcpp::Node::SharedPtr n, const std::string & topic1, const std::string & topic2)
   {
-    image1_sub = std::make_shared<ImageSub>(n, topic1);
-    image2_sub = std::make_shared<ImageSub>(n, topic2);
+    cloud1_sub = std::make_shared<CloudSub>(n, topic1);
+    cloud2_sub = std::make_shared<CloudSub>(n, topic2);
 
     using std::placeholders::_1;
     using std::placeholders::_2;
 
     syncronizer = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
-      SyncPolicy(50), *image1_sub, *image2_sub);
+      SyncPolicy(50), *cloud1_sub, *cloud2_sub);
     syncronizer->registerCallback(std::bind(&SyncroSubscriber::rawCallback, this, _1, _2));
     user_callback = std::nullopt;
   }
 
-  using UserCallback =
-    std::function<void(const sensor_msgs::msg::Image &, const sensor_msgs::msg::Image &)>;
+  using UserCallback = std::function<void(
+    const sensor_msgs::msg::PointCloud2 &, const sensor_msgs::msg::PointCloud2 &)>;
   void setCallback(const UserCallback & callback) { user_callback = callback; }
 
 private:
-  std::shared_ptr<ImageSub> image1_sub;
-  std::shared_ptr<ImageSub> image2_sub;
+  std::shared_ptr<CloudSub> cloud1_sub;
+  std::shared_ptr<CloudSub> cloud2_sub;
   std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> syncronizer;
   std::optional<UserCallback> user_callback;
 
-  void rawCallback(const Image::ConstSharedPtr & msg1, const Image::ConstSharedPtr & msg2)
+  void rawCallback(const Cloud::ConstSharedPtr & msg1, const Cloud::ConstSharedPtr & msg2)
   {
     if (user_callback.has_value()) user_callback.value()(*msg1, *msg2);
   };

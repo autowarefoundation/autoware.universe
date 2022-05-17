@@ -1,7 +1,7 @@
 <launch>
     <!-- ========================================= -->
     <arg name="use_sim_time" default="true"/>
-    <arg name="log_level" default="info"/>
+    <arg name="log_level" default="warn"/>
     <arg name="MPF_GNSS_POSE_CORRECTOR_ENABLED" default="true"/>
 
     <!-- ========================================= -->
@@ -22,13 +22,15 @@
         <param name="prediction_rate" value="$(env MPF_PREDICTOR_PREDICTION_RATE 50.0)" />
     </node>
 
-    <node if="$(var MPF_GNSS_POSE_CORRECTOR_ENABLED)" pkg="modularized_particle_filter" exec="gnss_pose_corrector" name="gnss_pose_corrector" args="--ros-args --log-level info">
+    <node pkg="modularized_particle_filter" exec="gnss_pose_corrector" name="gnss_pose_corrector" args="--ros-args --log-level $(var log_level)">
         <remap from="weighted_particles" to="weighted_particles" />
         <remap from="pose_with_covariance" to="eagleye/pose_with_covariance" />
         <remap from="predicted_particles" to="predicted_particles" />
 
         <param name="particles_buffer_size" value="50" />
         <param name="flat_radius" value="1.0" />
+    </node>
+    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info">
     </node>
 
     <group>
