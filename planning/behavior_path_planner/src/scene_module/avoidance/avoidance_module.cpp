@@ -2125,8 +2125,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
     prev_linear_shift_path_ = toShiftedPath(avoidance_data_.reference_path);
     path_shifter_.generate(&prev_linear_shift_path_, true, SHIFT_TYPE::LINEAR);
     prev_reference_ = avoidance_data_.reference_path;
-    // update ego velocity
-    ego_velocity_starting_avoidance_ = getEgoSpeed();
     if (parameters_.publish_debug_marker) {
       setDebugData(path_shifter_, debug_data_);
     }
@@ -2194,6 +2192,9 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
     DEBUG_PRINT("We want to add this shift point, and approved. ADD SHIFT POINT!");
     const size_t prev_size = path_shifter_.getShiftPointsSize();
     addNewShiftPoints(path_shifter_, shift_points);
+
+    // update ego velocity
+    ego_velocity_starting_avoidance_ = getEgoSpeed();
 
     // register original points for consistency
     registerRawShiftPoints(shift_points);
