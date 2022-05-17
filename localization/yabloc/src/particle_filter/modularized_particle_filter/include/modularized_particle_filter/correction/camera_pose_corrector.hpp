@@ -1,10 +1,12 @@
 #ifndef MODULARIZED_PARTICLE_FILTER__CORRECTION__CAMERA_POSE_CORRECTOR_HPP_
 #define MODULARIZED_PARTICLE_FILTER__CORRECTION__CAMERA_POSE_CORRECTOR_HPP_
 
+#include "modularized_particle_filter/correction/syncrho_subscriber.hpp"
+
+#include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -15,21 +17,29 @@
 class CameraPoseCorrector : public rclcpp::Node
 {
 public:
-  CameraPoseCorrector();
+  CameraPoseCorrector() : Node("camera_pose_corrector")
+  {
+    synchro_subscriber_ = std::make_shared<SyncroSubscriber>(
+      rclcpp::Node::SharedPtr{this}, "/ll2_image", "/projected_image");
+
+    using std::placeholders::_1, std::placeholders::_2;
+    synchro_subscriber_->setCallback(
+      std::bind(&CameraPoseCorrector::syncrhoCallback, this, _1, _2));
+
+    image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/match_image", 10);
+  }
 
 private:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
-
   // Subscriber
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr scan_sub_;
+  std::shared_ptr<SyncroSubscriber> synchro_subscriber_;
   rclcpp::Subscription<ParticleArray>::SharedPtr particle_sub_;
   // Publisher
   rclcpp::Publisher<ParticleArray>::SharedPtr weighted_particle_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
 
-  rclcpp::Time prev_time_;
-  int particles_buffer_size_;
-  boost::circular_buffer<ParticleArray> particles_circular_buffer_;
+  void syncrhoCallback(const sensor_msgs::msg::Image & msg1, const sensor_msgs::msg::Image & msg2);
+  void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CAMERA_POSE_CORRECTOR_HPP_

@@ -20,28 +20,26 @@ public:
   GNSSPoseCorrector();
 
 private:
-  rclcpp::Subscription<modularized_particle_filter_msgs::msg::ParticleArray>::SharedPtr
-    particle_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_sub_;
+  using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
+  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-  rclcpp::Publisher<modularized_particle_filter_msgs::msg::ParticleArray>::SharedPtr
-    weighted_particle_pub_;
+  // Publisher and subscriber
+  rclcpp::Subscription<ParticleArray>::SharedPtr particle_sub_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_sub_;
+  rclcpp::Publisher<ParticleArray>::SharedPtr weighted_particle_pub_;
 
-  int particles_buffer_size_;
-  float flat_radius_;
-  boost::circular_buffer<modularized_particle_filter_msgs::msg::ParticleArray>
-    particles_circular_buffer_;
-  int pose_buffer_size_;
-  boost::circular_buffer<geometry_msgs::msg::PoseWithCovarianceStamped> pose_circular_buffer_;
+  // Circular buffer
+  const int particles_buffer_size_;
+  const float flat_radius_;
+  const int pose_buffer_size_;
+  boost::circular_buffer<ParticleArray> particles_circular_buffer_;
+  boost::circular_buffer<PoseWithCovarianceStamped> pose_circular_buffer_;
 
-  void particleCallback(
-    const modularized_particle_filter_msgs::msg::ParticleArray::ConstSharedPtr particles);
-  void poseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_msg);
-
+  void particleCallback(const ParticleArray::ConstSharedPtr particles);
+  void poseCallback(const PoseWithCovarianceStamped::ConstSharedPtr pose_msg);
   void correctAndPublishParticles();
-  modularized_particle_filter_msgs::msg::ParticleArray calculateWeightedParticles(
-    modularized_particle_filter_msgs::msg::ParticleArray predicted_particles,
-    geometry_msgs::msg::PoseWithCovarianceStamped pose, float flat_radius);
+  ParticleArray calculateWeightedParticles(
+    ParticleArray predicted_particles, PoseWithCovarianceStamped pose, float flat_radius);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__GNSS_POSE_CORRECTOR_HPP_
