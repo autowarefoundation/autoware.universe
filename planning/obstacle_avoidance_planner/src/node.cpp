@@ -175,6 +175,18 @@ std::tuple<double, std::vector<double>> calcVehicleCirclesInfo(
   }
 }
 
+size_t findNearestIndexWithSoftYawConstraints(
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
+  const double yaw_threshold)
+{
+  const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
+
+  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
+    points_with_yaw, pose, std::numeric_limits<double>::max(), yaw_threshold);
+  return nearest_idx_optional
+           ? *nearest_idx_optional
+           : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
+}
 }  // namespace
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options)
@@ -927,6 +939,10 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
   // calculate trajectory with EB and MPT
   auto optimal_trajs = optimizeTrajectory(path, cv_maps);
 
+  // calculate velocity
+  // NOTE: Velocity is not considered in optimization.
+  calcVelocity(path.points, optimal_trajs.model_predictive_trajectory);
+
   // insert 0 velocity when trajectory is over drivable area
   if (is_stopping_if_outside_drivable_area_) {
     insertZeroVelocityOutsideDrivableArea(optimal_trajs.model_predictive_trajectory, cv_maps);
@@ -1074,6 +1090,40 @@ Trajectories ObstacleAvoidancePlanner::getPrevTrajs(
   trajs.smoothed_trajectory = traj;
   trajs.model_predictive_trajectory = traj;
   return trajs;
+}
+
+void ObstacleAvoidancePlanner::calcVelocity(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const
+{
+  for (size_t i = 0; i < traj_points.size(); i++) {
+    const size_t nearest_path_idx = findNearestIndexWithSoftYawConstraints(
+      points_utils::convertToPoints(path_points), traj_points.at(i).pose,
+      traj_param_.delta_yaw_threshold_for_closest_point);
+    const size_t second_nearest_path_idx = [&]() -> size_t {
+      if (nearest_path_idx == 0) {
+        return 1;
+      } else if (nearest_path_idx == path_points.size() - 1) {
+        return path_points.size() - 2;
+      }
+
+      const double prev_dist = tier4_autoware_utils::calcDistance2d(
+        traj_points.at(i), path_points.at(nearest_path_idx - 1));
+      const double next_dist = tier4_autoware_utils::calcDistance2d(
+        traj_points.at(i), path_points.at(nearest_path_idx + 1));
+      if (prev_dist < next_dist) {
+        return nearest_path_idx - 1;
+      }
+      return nearest_path_idx + 1;
+    }();
+
+    // NOTE: std::max, not std::min, is used here since traj_points' sampling width may be longer
+    // than path_points' sampling width. A zero velocity point is guaranteed to be inserted in an
+    // output trajectory in the alignVelocity function
+    traj_points.at(i).longitudinal_velocity_mps = std::max(
+      path_points.at(nearest_path_idx).longitudinal_velocity_mps,
+      path_points.at(second_nearest_path_idx).longitudinal_velocity_mps);
+  }
 }
 
 void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(

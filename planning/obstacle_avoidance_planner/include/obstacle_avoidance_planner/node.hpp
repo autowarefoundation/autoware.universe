@@ -257,6 +257,10 @@ private:
   Trajectories getPrevTrajs(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const;
 
+  void calcVelocity(
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+    std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const;
+
   void insertZeroVelocityOutsideDrivableArea(
     std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
     const CVMaps & cv_maps);
