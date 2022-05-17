@@ -14,7 +14,7 @@
 
 #include "image_diagnostics/image_diagnostics_node.hpp"
 
-#include <std_msgs/msg/header.hpp>￼
+#include <std_msgs/msg/header.hpp>
 
 namespace image_diagnostics
 {
@@ -22,7 +22,6 @@ using image_diagnostics::Image_State;
 ImageDiagNode::ImageDiagNode(const rclcpp::NodeOptions & node_options)
 : Node("image_diagnostics_node", node_options)
 {
-
   image_sub_ = create_subscription<sensor_msgs::msg::Image>(
     "input/raw_image", rclcpp::SensorDataQoS(),
     std::bind(&ImageDiagNode::ImageChecker, this, std::placeholders::_1));
@@ -32,7 +31,7 @@ ImageDiagNode::ImageDiagNode(const rclcpp::NodeOptions & node_options)
   gray_image_pub_ = image_transport::create_publisher(this, "image_diag/debug/gray_image");
   raw_image_pub_ = image_transport::create_publisher(this, "image_diag/raw_image");
   frequency_intensity_pub1_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-    "image_diag/frequencey_intensity_ratio", rclcpp::SensorDataQoS());
+    "image_diag/frequency_intensity_ratio", rclcpp::SensorDataQoS());
 
   image_state_pub_ = create_publisher<tier4_debug_msgs::msg::Int32Stamped>(
     "image_diag/image_state_diag", rclcpp::SensorDataQoS());
@@ -42,7 +41,6 @@ ImageDiagNode::ImageDiagNode(const rclcpp::NodeOptions & node_options)
     std::string(this->get_namespace()) + ": Image_Diagnostics", this,
     &ImageDiagNode::onImageDiagChecker);
   updater_.setPeriod(0.1);
-
 }
 
 void ImageDiagNode::onImageDiagChecker(DiagnosticStatusWrapper & stat)
@@ -75,8 +73,6 @@ void ImageDiagNode::onImageDiagChecker(DiagnosticStatusWrapper & stat)
   }
   stat.summary(level, msg);
 }
-
-
 
 void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg)
 {
@@ -240,9 +236,9 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
   } else {
     diagnostic_status_ = 0;
   }
-  tier4_debug_msgs::msg::Int32Stamped imgae_state_out;
-  imgae_state_out.data = diagnostic_status_;
-  image_state_pub_->publish(imgae_state_out);
+  tier4_debug_msgs::msg::Int32Stamped image_state_out;
+  image_state_out.data = diagnostic_status_;
+  image_state_pub_->publish(image_state_out);
 
   img_gray.convertTo(img_gray, CV_8UC1);
   imgDFT.convertTo(imgDFT, CV_8UC1);
