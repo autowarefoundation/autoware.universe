@@ -40,24 +40,26 @@ class DrawGraph(Node):
             CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback
         )
 
-        default_map_dir = args.default_map_dir
+        self.default_map_dir = args.default_map_dir
         self.calibrated_map_dir = args.calibrated_map_dir
-        scatter_only = args.scatter_only
-        log_file = args.log_file
-        min_vel_thr = args.min_vel_thr
-        vel_diff_thr = args.vel_diff_thr
-        pedal_diff_thr = args.pedal_diff_thr
-        max_steer_thr = args.max_steer_thr
-        max_pitch_thr = args.max_pitch_thr
-        max_jerk_thr = args.max_jerk_thr
-        max_pedal_vel_thr = args.max_pedal_vel_thr
+        self.scatter_only = args.scatter_only
+        self.log_file = args.log_file
+        self.min_vel_thr = args.min_vel_thr
+        self.vel_diff_thr = args.vel_diff_thr
+        self.pedal_diff_thr = args.pedal_diff_thr
+        self.max_steer_thr = args.max_steer_thr
+        self.max_pitch_thr = args.max_pitch_thr
+        self.max_jerk_thr = args.max_jerk_thr
+        self.max_pedal_vel_thr = args.max_pedal_vel_thr
 
-        if default_map_dir is None:
+    def get_data_callback(self, request, response):
+
+        if self.default_map_dir is None:
             package_path = get_package_share_directory("raw_vehicle_cmd_converter")
             self.declare_parameter(
                 "/accel_brake_map_calibrator/csv_default_map_dir", package_path + "/data/default/"
             )
-            default_map_dir = (
+            self.default_map_dir = (
                 self.get_parameter("/accel_brake_map_calibrator/csv_default_map_dir")
                 .get_parameter_value()
                 .string_value
@@ -74,15 +76,32 @@ class DrawGraph(Node):
                 .string_value
             )
 
-        print("default map dir: {}".format(default_map_dir))
+        print("default map dir: {}".format(self.default_map_dir))
         print("calibrated map dir: {}".format(self.calibrated_map_dir))
 
         # read csv
-        self.cr = CSVReader(log_file, csv_type="file")
+        # If log file doesn't exsist, return empty data
+        if not Path(self.log_file).exists():
+            response.graph_image = []
+            print("svg data is empty")
+
+            response.accel_map = ""
+            print("accel map is empty")
+
+            response.brake_map = ""
+            print("brake map is empty")
+
+            return response
+
+        self.cr = CSVReader(self.log_file, csv_type="file")
 
         # remove unused_data
         self.csv_data = self.cr.removeUnusedData(
-            min_vel_thr, max_steer_thr, max_pitch_thr, max_pedal_vel_thr, max_jerk_thr
+            self.min_vel_thr,
+            self.max_steer_thr,
+            self.max_pitch_thr,
+            self.max_pedal_vel_thr,
+            self.max_jerk_thr,
         )
 
         # get statistics array
@@ -99,9 +118,9 @@ class DrawGraph(Node):
             acc_data,
             color_data,
             CF.VEL_LIST / 3.6,
-            vel_diff_thr,
+            self.vel_diff_thr,
             CF.PEDAL_LIST,
-            pedal_diff_thr,
+            self.pedal_diff_thr,
         )
 
         count_map, average_map, stddev_map = CalcUtils.create_stat_map(data)
@@ -109,9 +128,11 @@ class DrawGraph(Node):
         for i in range(len(CF.VEL_LIST)):
             velocity_map_list.append(CalcUtils.extract_x_index_map(full_data, i))
 
-        default_pedal_list, default_acc_list = self.load_map(default_map_dir)
+        default_pedal_list, default_acc_list = self.load_map(self.default_map_dir)
         if len(default_pedal_list) == 0 or len(default_acc_list) == 0:
-            self.get_logger().warning("No default map file was found in {}".format(default_map_dir))
+            self.get_logger().warning(
+                "No default map file was found in {}".format(self.default_map_dir)
+            )
 
         calibrated_pedal_list, calibrated_acc_list = self.load_map(self.calibrated_map_dir)
         if len(calibrated_pedal_list) == 0 or len(calibrated_acc_list) == 0:
@@ -136,28 +157,41 @@ class DrawGraph(Node):
                 default_acc_list,
                 calibrated_pedal_list,
                 calibrated_acc_list,
-                scatter_only,
+                self.scatter_only,
             )
         plt.savefig("plot.svg")
         print("svg saved")
 
-    def get_data_callback(self, request, response):
-
+        # pack response data
         text = Path("plot.svg").read_text()
-        byte = text.encode()
-        for b in byte:
-            response.graph_image.append(b)
-        print("svg data packed")
+        if text == "":
+            response.graph_image = []
+            print("svg data is empty")
+        else:
+            byte = text.encode()
+            for b in byte:
+                response.graph_image.append(b)
+            print("svg data is packed")
 
-        with open(self.calibrated_map_dir + "accel_map.csv", "r") as calibrated_accel_map:
-            for accel_data in calibrated_accel_map:
-                response.accel_map += accel_data
-        print("accel map packed")
+        accel_map_name = Path(self.calibrated_map_dir + "accel_map.csv")
+        if accel_map_name.exists():
+            with open(self.calibrated_map_dir + "accel_map.csv", "r") as calibrated_accel_map:
+                for accel_data in calibrated_accel_map:
+                    response.accel_map += accel_data
+            print("accel map is packed")
+        else:
+            response.accel_map = ""
+            print("accel map is empty")
 
-        with open(self.calibrated_map_dir + "brake_map.csv", "r") as calibrated_brake_map:
-            for brake_data in calibrated_brake_map:
-                response.brake_map += brake_data
-        print("brake map packed")
+        brake_map_name = Path(self.calibrated_map_dir + "brake_map.csv")
+        if brake_map_name.exists():
+            with open(self.calibrated_map_dir + "brake_map.csv", "r") as calibrated_brake_map:
+                for brake_data in calibrated_brake_map:
+                    response.brake_map += brake_data
+            print("brake map is packed")
+        else:
+            response.brake_map = ""
+            print("brake map is empty")
 
         return response
 
