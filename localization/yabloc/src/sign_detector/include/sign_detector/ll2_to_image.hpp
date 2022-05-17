@@ -6,9 +6,12 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/float32.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 class Ll2ImageConverter : public rclcpp::Node
 {
@@ -22,6 +25,7 @@ private:
 
   std::optional<lanelet::LineStrings3d> visible_linestrings_;
 
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_height_;
 
@@ -31,6 +35,7 @@ private:
   void poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped);
 
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
+  void publishCloud(const cv::Mat & image, const rclcpp::Time & stamp);
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
 };

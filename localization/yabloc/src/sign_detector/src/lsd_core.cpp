@@ -1,19 +1,20 @@
 #include "sign_detector/lsd.hpp"
 #include "sign_detector/util.hpp"
 
-void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage& msg) const
+#include <pcl_conversions/pcl_conversions.h>
+
+void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage & msg) const
 {
   sensor_msgs::msg::Image::ConstSharedPtr image_ptr = decompressImage(msg);
   cv::Mat image = cv_bridge::toCvCopy(*image_ptr, "rgb8")->image;
   cv::Size size = image.size();
 
   if (!info_.has_value()) return;
-  cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void*)(info_->k.data()));
-  cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void*)(info_->d.data()));
+  cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
+  cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
   cv::Mat undistorted;
   cv::undistort(image, undistorted, K, D, K);
   image = undistorted;
-
 
   const int WIDTH = 800;
   const float SCALE = 1.0f * WIDTH / size.width;
@@ -44,10 +45,11 @@ void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage&
   projectEdgeOnPlane(lines, scaled_K, msg.header.stamp);
 }
 
-void LineSegmentDetector::listenExtrinsicTf(const std::string& frame_id)
+void LineSegmentDetector::listenExtrinsicTf(const std::string & frame_id)
 {
   try {
-    geometry_msgs::msg::TransformStamped ts = tf_buffer_->lookupTransform("base_link", frame_id, tf2::TimePointZero);
+    geometry_msgs::msg::TransformStamped ts =
+      tf_buffer_->lookupTransform("base_link", frame_id, tf2::TimePointZero);
     Eigen::Vector3f p;
     p.x() = ts.transform.translation.x;
     p.y() = ts.transform.translation.y;
@@ -61,11 +63,12 @@ void LineSegmentDetector::listenExtrinsicTf(const std::string& frame_id)
     camera_extrinsic_ = Eigen::Affine3f::Identity();
     camera_extrinsic_->translation() = p;
     camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
-  } catch (tf2::TransformException& ex) {
+  } catch (tf2::TransformException & ex) {
   }
 }
 
-void LineSegmentDetector::projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat& K_cv, const rclcpp::Time& stamp) const
+void LineSegmentDetector::projectEdgeOnPlane(
+  const cv::Mat & lines, const cv::Mat & K_cv, const rclcpp::Time & stamp) const
 {
   if (!camera_extrinsic_.has_value()) {
     RCLCPP_WARN_STREAM(this->get_logger(), "camera_extrinsic_ has not been initialized");
@@ -73,11 +76,13 @@ void LineSegmentDetector::projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat
   }
   Eigen::Vector3f t = camera_extrinsic_->translation();
   Eigen::Quaternionf q(camera_extrinsic_->rotation());
-  RCLCPP_INFO_STREAM(this->get_logger(), "transform: " << t.transpose() << " " << q.coeffs().transpose());
+  RCLCPP_INFO_STREAM(
+    this->get_logger(), "transform: " << t.transpose() << " " << q.coeffs().transpose());
 
-  struct Edge {
+  struct Edge
+  {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Edge(const Eigen::Vector3f& p, const Eigen::Vector3f& q) : p(p), q(q) {}
+    Edge(const Eigen::Vector3f & p, const Eigen::Vector3f & q) : p(p), q(q) {}
     Eigen::Vector3f p, q;
   };
 
@@ -87,7 +92,7 @@ void LineSegmentDetector::projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat
   K_inv = K.inverse();
 
   // NOTE: reference capture is better?
-  auto conv = [t, q, K_inv](const Eigen::Vector2f& u) -> Eigen::Vector3f {
+  auto conv = [t, q, K_inv](const Eigen::Vector2f & u) -> Eigen::Vector3f {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
     Eigen::Vector3f bearing = (q * K_inv * u3).normalized();
     if (bearing.z() > -0.1) return Eigen::Vector3f::Zero();
@@ -113,7 +118,7 @@ void LineSegmentDetector::projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat
   cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   {
     const cv::Size center(image.cols / 2, image.rows / 2);
-    auto toCvPoint = [center, this](const Eigen::Vector3f& v) -> cv::Point {
+    auto toCvPoint = [center, this](const Eigen::Vector3f & v) -> cv::Point {
       cv::Point pt;
       pt.x = -v.y() / this->max_range_ * center.width + center.width;
       pt.y = -v.x() / this->max_range_ * center.height + 2 * center.height;
@@ -121,7 +126,8 @@ void LineSegmentDetector::projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat
     };
     for (const auto e : edges) {
       if (e.p.isZero() || e.q.isZero()) continue;
-      cv::line(image, toCvPoint(e.p), toCvPoint(e.q), cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
+      cv::line(
+        image, toCvPoint(e.p), toCvPoint(e.q), cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
     }
   }
 
@@ -134,4 +140,28 @@ void LineSegmentDetector::projectEdgeOnPlane(const cv::Mat& lines, const cv::Mat
     raw_image.image = image;
     pub_image_->publish(*raw_image.toImageMsg());
   }
+  publishCloud(image, stamp);
+}
+
+void LineSegmentDetector::publishCloud(const cv::Mat & image, const rclcpp::Time & stamp) const
+{
+  pcl::PointCloud<pcl::PointXYZ> cloud;
+  std::vector<cv::Point2i> nonzero_pix;
+  cv::Mat gray_image;
+  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+  cv::findNonZero(gray_image, nonzero_pix);
+  for (const auto p : nonzero_pix) {
+    pcl::PointXYZ xyz;
+    xyz.x = p.x;
+    xyz.y = p.y;
+    xyz.z = 0;
+    cloud.push_back(xyz);
+  }
+
+  // Convert to msg
+  sensor_msgs::msg::PointCloud2 msg;
+  pcl::toROSMsg(cloud, msg);
+  msg.header.stamp = stamp;
+  msg.header.frame_id = "map";
+  pub_cloud_->publish(msg);
 }

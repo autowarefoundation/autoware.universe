@@ -4,6 +4,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <cv_bridge/cv_bridge.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 Ll2ImageConverter::Ll2ImageConverter()
 : Node("ll2_to_image"), line_thick_(this->declare_parameter<int>("line_thick", 1))
@@ -11,18 +12,22 @@ Ll2ImageConverter::Ll2ImageConverter()
   image_size_ = this->declare_parameter<int>("image_size", 800);
   max_range_ = this->declare_parameter<float>("max_range", 20.f);
 
-  std::string map_topic = this->declare_parameter<std::string>("map_topic", "/map/vector_map");
-  std::string pose_topic = this->declare_parameter<std::string>("pose_topic", "/eagleye/pose");
+  std::string map_topic = "/map/vector_map";
+  std::string pose_topic = "/eagleye/pose";
+
   // Publisher
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
   pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
+  pub_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/ll2_cloud", 10);
+
+  using std::placeholders::_1;
 
   // Subscriber
   sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     map_topic, rclcpp::QoS(10).transient_local().reliable(),
-    std::bind(&Ll2ImageConverter::mapCallback, this, std::placeholders::_1));
+    std::bind(&Ll2ImageConverter::mapCallback, this, _1));
   sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    pose_topic, 10, std::bind(&Ll2ImageConverter::poseCallback, this, std::placeholders::_1));
+    pose_topic, 10, std::bind(&Ll2ImageConverter::poseCallback, this, _1));
 }
 
 void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped)
@@ -107,7 +112,8 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
   }
 
   // Publish
-  publishImage(image, this->get_clock()->now());
+  publishImage(image, pose_stamped.header.stamp);
+  publishCloud(image, pose_stamped.header.stamp);
 
   std_msgs::msg::Float32 height;
   height.data = pose.z();
@@ -122,6 +128,29 @@ void Ll2ImageConverter::publishImage(const cv::Mat & image, const rclcpp::Time &
   raw_image.encoding = "bgr8";
   raw_image.image = image;
   pub_image_->publish(*raw_image.toImageMsg());
+}
+
+void Ll2ImageConverter::publishCloud(const cv::Mat & image, const rclcpp::Time & stamp)
+{
+  pcl::PointCloud<pcl::PointXYZ> cloud;
+  std::vector<cv::Point2i> nonzero_pix;
+  cv::Mat gray_image;
+  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+  cv::findNonZero(gray_image, nonzero_pix);
+  for (const auto p : nonzero_pix) {
+    pcl::PointXYZ xyz;
+    xyz.x = p.x;
+    xyz.y = p.y;
+    xyz.z = 0;
+    cloud.push_back(xyz);
+  }
+
+  // Convert to msg
+  sensor_msgs::msg::PointCloud2 msg;
+  pcl::toROSMsg(cloud, msg);
+  msg.header.stamp = stamp;
+  msg.header.frame_id = "map";
+  pub_cloud_->publish(msg);
 }
 
 void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
