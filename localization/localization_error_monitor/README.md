@@ -8,6 +8,12 @@ The package monitors the following two values:
 - size of long radius of confidence ellipse
 - size of confidence ellipse along lateral direction (body-frame)
 
+For example, this node will diagnose the system as an error when the following condition is met
+
+- `error_covariance` * `scale` > `error_ellipse_size`
+
+where `error_covariance` denotes the covariance of `input/pose_with_cov`. You can find the definition of `scale` and `error_ellipse_size` in the following section.
+
 ## Inputs / Outputs
 
 ### Input
