@@ -223,8 +223,8 @@ bool StopLineModule::modifyPathVelocity(
 
 
   // extend following and previous search range to avoid no collision
-  if (dst_search_range.max_idx < path->points.size() - 1) dst_search_range.max_idx--;
-  if (dst_search_range.min_idx > 0) dst_search_range.min_idx++;
+  if (dst_search_range.max_idx < path->points.size() - 1) dst_search_range.max_idx++;
+  if (dst_search_range.min_idx > 0) dst_search_range.min_idx--;
 
   // Find collision
   const auto collision = findCollision(*path, stop_line, dst_search_range);
