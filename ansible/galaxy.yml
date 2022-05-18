@@ -1,0 +1,20 @@
+# Required
+namespace: pilot_auto
+name: dev_env
+version: 0.1.0
+readme: README.md
+authors:
+  - Kenji Miyake <kenji.miyake@tier4.jp>
+
+# Optional
+description: Set up development environment for Pilot.Auto
+license:
+  - Apache-2.0
+tags:
+  - pilot_auto
+dependencies: {}
+repository: https://github.com/tier4/pilot-auto
+documentation: https://github.com/tier4/pilot-auto
+homepage: https://tier4.jp/
+issues: https://github.com/tier4/pilot-auto/issues
+build_ignore: []

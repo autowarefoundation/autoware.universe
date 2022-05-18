@@ -1,0 +1,4 @@
+- name: Add kvaser library apt repository
+  become: true
+  apt_repository:
+    repo: ppa:astuff/kvaser-linux

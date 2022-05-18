@@ -1,0 +1,16 @@
+name: setup-local-dev-env
+
+on:
+  pull_request:
+
+jobs:
+  setup-local-dev-env:
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Run setup script
+        run: |
+          ./setup-dev-env.sh -y -v --no-nvidia local_dev_env

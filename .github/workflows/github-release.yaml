@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       beta-branch-or-tag-name:
+        description: beta branch or tag name
         type: string
         required: true
 

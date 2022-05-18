@@ -13,28 +13,19 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # TODO: Install this in the script and remove this
-      - name: Install dependencies for the setup script
-        run: |
-          apt-get -y update
-          apt-get -y install sudo git
-          touch ~/.bashrc
-          mkdir src
-
       - name: Run setup script
         run: |
-          ./setup_ubuntu20.04.sh -c
+          ./setup-dev-env.sh -y
 
-      - name: Set git config for private repositories
-        run: |
-          git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/.insteadOf 'https://github.com/'
-          git config --global url.https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/.insteadOf 'git@github.com:'
+      - name: Set git config
+        uses: autowarefoundation/autoware-github-actions/set-git-config@v1
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
 
       - name: Run vcs import
         run: |
-          mkdir -p src
-          vcs import src < autoware.proj.repos
+          mkdir src
+          vcs import src < autoware.repos
 
       - name: Run rosdep install
         run: |

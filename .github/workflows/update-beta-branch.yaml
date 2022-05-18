@@ -68,7 +68,7 @@ jobs:
           author: GitHub <noreply@github.com>
           signoff: false
           base: ${{ env.BASE_BRANCH }}
-          branch: "${{ env.SYNC_BRANCH_PREFIX }}/${{ env.BASE_BRANCH }}"
+          branch: ${{ env.SYNC_BRANCH_PREFIX }}/${{ env.BASE_BRANCH }}
           delete-branch: true
           title: "chore: update rc branch"
           body: |

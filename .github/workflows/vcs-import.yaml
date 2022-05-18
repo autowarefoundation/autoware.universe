@@ -2,8 +2,6 @@ name: vcs-import
 
 on:
   pull_request:
-    paths:
-      - autoware.proj.repos
   workflow_dispatch:
 
 jobs:
@@ -24,21 +22,22 @@ jobs:
         with:
           rosdistro: galactic
 
-      - name: Register kvaser repository
+      - name: Register kvaser-linux repository
         run: |
+          sudo apt-get -y update
           sudo apt-get -y install software-properties-common
-          sudo apt-add-repository ppa:astuff/kvaser-linux
+          sudo add-apt-repository -y ppa:astuff/kvaser-linux
+          sudo apt-get -y update
 
-      - name: Set git config for private repositories
-        run: |
-          git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/.insteadOf 'https://github.com/'
-          git config --global url.https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/.insteadOf 'git@github.com:'
+      - name: Set git config
+        uses: autowarefoundation/autoware-github-actions/set-git-config@v1
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
 
       - name: Run vcs import
         run: |
           mkdir src
-          vcs import src < autoware.proj.repos
+          vcs import src < autoware.repos
 
       - name: Run rosdep install
         run: |

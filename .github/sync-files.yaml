@@ -1,22 +1,38 @@
 - repository: autowarefoundation/autoware
   files:
     - source: .github/dependabot.yaml
-    # - source: .github/workflows/build.yaml # TODO: Sync after renaming to autoware.repos
+    - source: .github/workflows/build.yaml
+      post-commands: |
+        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
     - source: .github/workflows/github-release.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/pre-commit-ansible.yaml
     - source: .github/workflows/pre-commit-optional.yaml
     - source: .github/workflows/semantic-pull-request.yaml
+    - source: .github/workflows/setup-universe.yaml
+      dest: .github/workflows/setup-local-dev-env.yaml
+      post-commands: |
+        sd "setup-universe" "setup-local-dev-env" {dest}
+        sd "universe" "local_dev_env" {dest}
     - source: .github/workflows/spell-check-differential.yaml
     - source: .github/workflows/sync-files.yaml
-    # - source: .github/workflows/vcs-import.yaml # TODO: Sync after renaming to autoware.repos
+    - source: .github/workflows/vcs-import.yaml
+      post-commands: |
+        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
     - source: .clang-format
     - source: .markdownlint.yaml
-    # - source: .pre-commit-config.yaml # TODO: Sync after yamllint and ansible-lint have passed
+    - source: .pre-commit-config.yaml
     - source: .pre-commit-config-ansible.yaml
     - source: .pre-commit-config-optional.yaml
     - source: .prettierignore
     - source: .prettierrc.yaml
+    - source: .shellcheckrc
     - source: .yamllint.yaml
+    - source: amd64.env
+    - source: arm64.env
     - source: CPPLINT.cfg
     - source: setup.cfg
+    - source: setup-dev-env.sh
+      post-commands: |
+        sd "autoware.dev_env" "pilot_auto.dev_env" {dest}
+        sd "dev_env.universe" "dev_env.local_dev_env" {dest}
