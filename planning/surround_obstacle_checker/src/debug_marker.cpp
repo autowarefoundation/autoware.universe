@@ -168,4 +168,4 @@ tier4_planning_msgs::msg::MotionFactorArray SurroundObstacleCheckerDebugNode::ma
   return motion_factor_array;
 }
 
-} // namespace surround_obstacle_checker
+}  // namespace surround_obstacle_checker
