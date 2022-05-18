@@ -15,6 +15,8 @@
 #ifndef SAMPLER_COMMON__STRUCTURES_HPP_
 #define SAMPLER_COMMON__STRUCTURES_HPP_
 
+#include <eigen3/Eigen/Core>
+
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -230,6 +232,13 @@ struct Constraints
     double min_curvature;
     double max_curvature;
   } hard{};
+  struct
+  {
+    Eigen::Vector2d left_rear;
+    Eigen::Vector2d left_front;
+    Eigen::Vector2d right_rear;
+    Eigen::Vector2d right_front;
+  } vehicle_offsets;
   MultiPolygon obstacle_polygons;
   Polygon drivable_polygon;
   Polygon prefered_polygon;

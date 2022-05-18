@@ -31,23 +31,7 @@ namespace sampler_node
 {
 struct Parameters
 {
-  struct
-  {
-    struct
-    {
-      double max_curvature{};
-      double min_curvature{};
-    } hard;
-    struct
-    {
-      double min_curvature{};
-      double lateral_deviation_weight{};
-      double longitudinal_deviation_weight{};
-      double jerk_weight{};
-      double length_weight{};
-      double curvature_weight{};
-    } soft;
-  } constraints;
+  sampler_common::Constraints constraints;
   struct
   {
     bool enable_frenet{};
@@ -80,8 +64,7 @@ struct Parameters
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
-  const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::Constraints & constraints, plot::Plotter & plotter,
+  const autoware_auto_planning_msgs::msg::Path & path_msg, plot::Plotter & plotter,
   const Parameters & params);
 
 std::vector<sampler_common::Path> generateBezierPaths(
@@ -91,8 +74,7 @@ std::vector<sampler_common::Path> generateBezierPaths(
 std::vector<frenet_planner::Path> generateFrenetPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::transform::Spline2D & path_spline,
-  const sampler_common::Constraints & constraints, const Parameters & params);
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 }  // namespace sampler_node
 
 #endif  // SAMPLER_NODE__PATH_GENERATION_HPP_

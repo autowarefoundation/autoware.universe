@@ -14,6 +14,7 @@
 
 #include "sampler_node/path_sampler_node.hpp"
 
+#include "Eigen/src/Core/Matrix.h"
 #include "frenet_planner/structures.hpp"
 #include "lanelet2_core/LaneletMap.h"
 #include "sampler_common/constraints/path_footprint.hpp"
@@ -30,6 +31,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/utilities.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
@@ -114,6 +116,16 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
   params_.sampling.bezier.nb_t = declare_parameter<int>("sampling.bezier.nb_t");
   params_.sampling.bezier.mt_min = declare_parameter<double>("sampling.bezier.mt_min");
   params_.sampling.bezier.mt_max = declare_parameter<double>("sampling.bezier.mt_max");
+
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  params_.constraints.vehicle_offsets.left_rear =
+    Eigen::Vector2d(vehicle_info.rear_overhang_m, vehicle_info.left_overhang_m);
+  params_.constraints.vehicle_offsets.left_front =
+    Eigen::Vector2d(vehicle_info.front_overhang_m, vehicle_info.left_overhang_m);
+  params_.constraints.vehicle_offsets.right_rear =
+    Eigen::Vector2d(vehicle_info.rear_overhang_m, vehicle_info.right_overhang_m);
+  params_.constraints.vehicle_offsets.right_front =
+    Eigen::Vector2d(vehicle_info.front_overhang_m, vehicle_info.right_overhang_m);
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
@@ -205,17 +217,18 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg);
-  const auto constraints =
-    prepareConstraints(*in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
+  prepareConstraints(
+    params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
 
-  auto paths = generateCandidatePaths(
-    *current_state, prev_path_, path_spline, *msg, constraints, *w_.plotter_, params_);
+  auto paths =
+    generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, *w_.plotter_, params_);
   for (auto & path : paths) {
-    const auto nb_violations = sampler_common::constraints::checkHardConstraints(path, constraints);
+    const auto nb_violations =
+      sampler_common::constraints::checkHardConstraints(path, params_.constraints);
     debug.violations.outside += nb_violations.outside;
     debug.violations.collision += nb_violations.collision;
     debug.violations.curvature += nb_violations.curvature;
-    sampler_common::constraints::calculateCost(path, constraints, path_spline);
+    sampler_common::constraints::calculateCost(path, params_.constraints, path_spline);
   }
   const auto selected_path = selectBestPath(paths);
   if (selected_path) {
@@ -232,8 +245,9 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
 
   // Plot //
   const auto plot_begin = calc_end;
-  w_.plotter_->plotPolygons(constraints.obstacle_polygons);
-  w_.plotter_->plotPolygons({constraints.drivable_polygon, constraints.prefered_polygon});
+  w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
+  w_.plotter_->plotPolygons(
+    {params_.constraints.drivable_polygon, params_.constraints.prefered_polygon});
   std::vector<double> x;
   std::vector<double> y;
   x.reserve(msg->points.size());
@@ -246,15 +260,9 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   w_.plotter_->plotPaths(paths);
   if (selected_path) w_.plotter_->plotSelectedPath(*selected_path);
   // TODO(Maxime CLEMENT): temporary
-  sampler_common::constraints::Offsets offsets;
-  constexpr auto offset = 0.1;
-  offsets.left_front = {offset, offset};
-  offsets.right_front = {offset, -offset};
-  offsets.left_rear = {-offset, offset};
-  offsets.right_rear = {-offset, -offset};
   if (selected_path)
     w_.plotter_->plotPolygons(
-      {sampler_common::constraints::buildFootprintPolygon(*selected_path, offsets)});
+      {sampler_common::constraints::buildFootprintPolygon(*selected_path, params_.constraints)});
 
   w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
   w_.replot();

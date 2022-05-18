@@ -31,15 +31,9 @@
 namespace sampler_common::constraints
 {
 
-struct Offsets
+Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints)
 {
-  Eigen::Vector2d left_rear;
-  Eigen::Vector2d left_front;
-  Eigen::Vector2d right_rear;
-  Eigen::Vector2d right_front;
-};
-Polygon buildFootprintPolygon(const Path & path, const Offsets & offsets)
-{
+  const auto & offsets = constraints.vehicle_offsets;
   // Using the method from Section IV.A of A. Artuñedoet al.: Real-Time Motion Planning Approach for
   // Automated Driving in Urban Environments
   Polygon footprint;
