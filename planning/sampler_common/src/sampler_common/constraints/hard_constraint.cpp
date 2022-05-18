@@ -14,8 +14,13 @@
 
 #include "sampler_common/constraints/hard_constraint.hpp"
 
+#include "sampler_common/constraints/path_footprint.hpp"
+#include "sampler_common/structures.hpp"
+
 #include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/detail/intersects/interface.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/core/cs.hpp>
 
@@ -45,30 +50,52 @@ bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygon
   return false;
 }
 
+bool collideWithPolygons(const Polygon & footprint, const std::vector<Polygon> & polygons)
+{
+  for (const auto & polygon : polygons) {
+    if (boost::geometry::intersects(footprint, polygon)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
 {
   for (const auto & point : path.points) {
     bool within_at_least_one_poly = false;
-    for (auto polygon : polygons) {
+    for (const auto & polygon : polygons) {
       if (boost::geometry::within(point, polygon.outer())) {
         within_at_least_one_poly = true;
         break;
       }
     }
-    if(!within_at_least_one_poly)
-      return false;
+    if (!within_at_least_one_poly) return false;
   }
   return true;
 }
 
+bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
+{
+  return boost::geometry::within(footprint, polygons);
+}
+
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints)
 {
+  // TODO(Maxime CLEMENT): get from vehicle parameters
+  Offsets offsets;
+  constexpr auto offset = 1.0;
+  offsets.left_front = {offset, offset};
+  offsets.right_front = {offset, -offset};
+  offsets.left_rear = {-offset, offset};
+  offsets.right_rear = {-offset, -offset};
+  const Polygon footprint = buildFootprintPolygon(path, offsets);
   NumberOfViolations number_of_violations;
-  if (collideWithPolygons(path, constraints.obstacle_polygons)) {
+  if (collideWithPolygons(footprint, constraints.obstacle_polygons)) {
     ++number_of_violations.collision;
     path.valid = false;
   }
-  if (!withinPolygons(path, constraints.drivable_polygons)) {
+  if (!withinPolygons(footprint, constraints.drivable_polygon)) {
     ++number_of_violations.outside;
     path.valid = false;
   }

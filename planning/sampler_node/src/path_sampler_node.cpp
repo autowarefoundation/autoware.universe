@@ -16,21 +16,25 @@
 
 #include "frenet_planner/structures.hpp"
 #include "lanelet2_core/LaneletMap.h"
+#include "sampler_common/constraints/path_footprint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/debug.hpp"
 #include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
-#include "sampler_node/debug.hpp"
-#include <geometry_msgs/msg/transform_stamped.hpp>
+
 #include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRules.h>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/utilities.hpp>
+
+#include <geometry_msgs/msg/transform_stamped.hpp>
+
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
@@ -74,24 +78,36 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
 
-  params_.constraints.hard.max_curvature = declare_parameter<double>("constraints.hard.max_curvature");
-  params_.constraints.hard.min_curvature = declare_parameter<double>("constraints.hard.min_curvature");
-  params_.constraints.soft.lateral_deviation_weight = declare_parameter<double>("constraints.soft.lateral_deviation_weight");
-  params_.constraints.soft.longitudinal_deviation_weight = declare_parameter<double>("constraints.soft.longitudinal_deviation_weight");
+  params_.constraints.hard.max_curvature =
+    declare_parameter<double>("constraints.hard.max_curvature");
+  params_.constraints.hard.min_curvature =
+    declare_parameter<double>("constraints.hard.min_curvature");
+  params_.constraints.soft.lateral_deviation_weight =
+    declare_parameter<double>("constraints.soft.lateral_deviation_weight");
+  params_.constraints.soft.longitudinal_deviation_weight =
+    declare_parameter<double>("constraints.soft.longitudinal_deviation_weight");
   params_.constraints.soft.jerk_weight = declare_parameter<double>("constraints.soft.jerk_weight");
-  params_.constraints.soft.length_weight = declare_parameter<double>("constraints.soft.length_weight");
-  params_.constraints.soft.curvature_weight = declare_parameter<double>("constraints.soft.curvature_weight");
+  params_.constraints.soft.length_weight =
+    declare_parameter<double>("constraints.soft.length_weight");
+  params_.constraints.soft.curvature_weight =
+    declare_parameter<double>("constraints.soft.curvature_weight");
   params_.sampling.enable_frenet = declare_parameter<bool>("sampling.enable_frenet");
   params_.sampling.enable_bezier = declare_parameter<bool>("sampling.enable_bezier");
   params_.sampling.resolution = declare_parameter<double>("sampling.resolution");
-  params_.sampling.minimum_committed_length = declare_parameter<double>("sampling.minimum_committed_length");
-  params_.sampling.reuse_max_length_max = declare_parameter<double>("sampling.reuse_max_length_max");
+  params_.sampling.minimum_committed_length =
+    declare_parameter<double>("sampling.minimum_committed_length");
+  params_.sampling.reuse_max_length_max =
+    declare_parameter<double>("sampling.reuse_max_length_max");
   params_.sampling.reuse_samples = declare_parameter<int>("sampling.reuse_samples");
   params_.sampling.reuse_max_deviation = declare_parameter<double>("sampling.reuse_max_deviation");
-  params_.sampling.target_lengths = declare_parameter<std::vector<double>>("sampling.target_lengths");
-  params_.sampling.frenet.target_lateral_positions = declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_positions");
-  params_.sampling.frenet.target_lateral_velocities = declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_velocities");
-  params_.sampling.frenet.target_lateral_accelerations = declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_accelerations");
+  params_.sampling.target_lengths =
+    declare_parameter<std::vector<double>>("sampling.target_lengths");
+  params_.sampling.frenet.target_lateral_positions =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_positions");
+  params_.sampling.frenet.target_lateral_velocities =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_velocities");
+  params_.sampling.frenet.target_lateral_accelerations =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_accelerations");
   params_.sampling.bezier.nb_k = declare_parameter<int>("sampling.bezier.nb_k");
   params_.sampling.bezier.mk_min = declare_parameter<double>("sampling.bezier.mk_min");
   params_.sampling.bezier.mk_max = declare_parameter<double>("sampling.bezier.mk_max");
@@ -168,14 +184,13 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
   return result;
 }
 
-
 // ROS callback functions
 void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr msg)
 {
   w_.plotter_->clear();
   sampler_node::debug::Debug debug;
   const auto current_state = getCurrentEgoState();
-  // TODO move to "validInputs(current_state, msg)"
+  // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
   if (
     msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state ||
     !current_steer_ptr_) {
@@ -190,9 +205,11 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg);
-  const auto constraints = prepareConstraints(*in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
+  const auto constraints =
+    prepareConstraints(*in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
 
-  auto paths = generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, constraints, *w_.plotter_, params_);
+  auto paths = generateCandidatePaths(
+    *current_state, prev_path_, path_spline, *msg, constraints, *w_.plotter_, params_);
   for (auto & path : paths) {
     const auto nb_violations = sampler_common::constraints::checkHardConstraints(path, constraints);
     debug.violations.outside += nb_violations.outside;
@@ -216,8 +233,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   // Plot //
   const auto plot_begin = calc_end;
   w_.plotter_->plotPolygons(constraints.obstacle_polygons);
-  w_.plotter_->plotPolygons(constraints.drivable_polygons);
-  w_.plotter_->plotPolygons(constraints.prefered_polygons);
+  w_.plotter_->plotPolygons({constraints.drivable_polygon, constraints.prefered_polygon});
   std::vector<double> x;
   std::vector<double> y;
   x.reserve(msg->points.size());
@@ -229,6 +245,17 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   w_.plotter_->plotReferencePath(x, y);
   w_.plotter_->plotPaths(paths);
   if (selected_path) w_.plotter_->plotSelectedPath(*selected_path);
+  // TODO(Maxime CLEMENT): temporary
+  sampler_common::constraints::Offsets offsets;
+  constexpr auto offset = 0.1;
+  offsets.left_front = {offset, offset};
+  offsets.right_front = {offset, -offset};
+  offsets.left_rear = {-offset, offset};
+  offsets.right_rear = {-offset, -offset};
+  if (selected_path)
+    w_.plotter_->plotPolygons(
+      {sampler_common::constraints::buildFootprintPolygon(*selected_path, offsets)});
+
   w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
   w_.replot();
   QCoreApplication::processEvents();
@@ -299,13 +326,13 @@ void PathSamplerNode::publishPath(
   double path_arc_length = 0.0;
   double msg_arc_length = 0.0;
   size_t msg_idx = 0;
-  for(size_t i = 0; i < path.intervals.size(); ++i) {
+  for (size_t i = 0; i < path.intervals.size(); ++i) {
     path_arc_length += path.intervals[i];
-    while(msg_arc_length < path_arc_length && msg_idx + 1 < path_msg->points.size()) {
+    while (msg_arc_length < path_arc_length && msg_idx + 1 < path_msg->points.size()) {
       const auto x0 = path_msg->points[msg_idx].pose.position.x;
       const auto y0 = path_msg->points[msg_idx].pose.position.y;
-      const auto x1 = path_msg->points[msg_idx+1].pose.position.x;
-      const auto y1 = path_msg->points[msg_idx+1].pose.position.y;
+      const auto x1 = path_msg->points[msg_idx + 1].pose.position.x;
+      const auto y1 = path_msg->points[msg_idx + 1].pose.position.y;
       msg_arc_length += std::hypot(x1 - x0, y1 - y0);
       ++msg_idx;
     }
@@ -329,17 +356,21 @@ void PathSamplerNode::publishPath(
   trajectory_pub_->publish(traj_msg);
 }
 
-void PathSamplerNode::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr map_msg) {
+void PathSamplerNode::mapCallback(
+  const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr map_msg)
+{
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
 }
-void PathSamplerNode::routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr route_msg) {
+void PathSamplerNode::routeCallback(
+  const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr route_msg)
+{
   prefered_ids_.clear();
   drivable_ids_.clear();
-  if(lanelet_map_ptr_) {
-    for(const auto & segment : route_msg->segments) {
+  if (lanelet_map_ptr_) {
+    for (const auto & segment : route_msg->segments) {
       prefered_ids_.push_back(segment.preferred_primitive_id);
-      for(const auto & primitive : segment.primitives) {
+      for (const auto & primitive : segment.primitives) {
         drivable_ids_.push_back(primitive.id);
       }
     }

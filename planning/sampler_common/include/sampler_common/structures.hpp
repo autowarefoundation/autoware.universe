@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__STRUCTURES_HPP
-#define SAMPLER_COMMON__STRUCTURES_HPP
+#ifndef SAMPLER_COMMON__STRUCTURES_HPP_
+#define SAMPLER_COMMON__STRUCTURES_HPP_
 
 #include <boost/geometry/core/cs.hpp>
+#include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 
@@ -26,6 +27,7 @@ namespace sampler_common
 {
 using Point = boost::geometry::model::d2::point_xy<double>;
 using Polygon = boost::geometry::model::polygon<Point>;
+using MultiPolygon = boost::geometry::model::multi_polygon<Polygon>;
 
 struct FrenetPoint
 {
@@ -91,7 +93,7 @@ struct Path
       extended_path.intervals.end(), intervals.begin(), intervals.end());
     extended_path.intervals.insert(
       extended_path.intervals.end(), path.intervals.begin(), path.intervals.end());
-    // TODO(Maxime CLEMENT): direct copy from the 2nd pathectory. might need to be improved
+    // TODO(Maxime CLEMENT): direct copy from the 2nd path. might need to be improved
     extended_path.cost = path.cost;
     extended_path.valid = path.valid;
     return extended_path;
@@ -214,7 +216,7 @@ struct Constraints
     double velocity_deviation_weight;
     double jerk_weight;
     double curvature_weight;
-  } soft;
+  } soft{};
   struct
   {
     double min_lateral_deviation;
@@ -227,17 +229,11 @@ struct Constraints
     double max_jerk;
     double min_curvature;
     double max_curvature;
-  } hard;
-  struct
-  {
-    // TODO(Maxime CLEMENT): more complicated obstacle representations
-    std::vector<Point> positions;
-    double radius;
-  } obstacles;
-  std::vector<Polygon> obstacle_polygons;
-  std::vector<Polygon> drivable_polygons;
-  std::vector<Polygon> prefered_polygons;
+  } hard{};
+  MultiPolygon obstacle_polygons;
+  Polygon drivable_polygon;
+  Polygon prefered_polygon;
 };
 }  // namespace sampler_common
 
-#endif  // SAMPLER_COMMON__STRUCTURES_HPP
+#endif  // SAMPLER_COMMON__STRUCTURES_HPP_
