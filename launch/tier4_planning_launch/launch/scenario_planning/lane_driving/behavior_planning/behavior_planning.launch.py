@@ -19,11 +19,14 @@ import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import ExecuteProcess
 from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
@@ -401,7 +404,6 @@ def launch_setup(context, *args, **kwargs):
                 "backward_path_length": 5.0,
                 "max_accel": -2.8,
                 "delay_response_time": 1.3,
-                "detection_method": LaunchConfiguration("detection_method"),
             },
             common_param,
             base_param,
@@ -433,9 +435,35 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
+    # load compare map for dynamic obstacle stop module
+    load_compare_map = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                FindPackageShare("tier4_planning_launch"),
+                "/launch/scenario_planning/lane_driving/behavior_planning/compare_map.launch.py",
+            ]
+        ),
+        launch_arguments={
+            "use_pointcloud_container": LaunchConfiguration("use_pointcloud_container"),
+            "container_name": LaunchConfiguration("container_name"),
+            "use_multithread": "true",
+        }.items(),
+        # launch compare map only when detection method is Points
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    "'",
+                    dynamic_obstacle_stop_param["dynamic_obstacle_stop"]["detection_method"],
+                    "' == 'Points'",
+                ]
+            )
+        ),
+    )
+
     group = GroupAction(
         [
             container,
+            load_compare_map,
             ExecuteProcess(
                 cmd=[
                     "ros2",
@@ -481,8 +509,9 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 
-    # detection method for dynamic obstacle stop module
-    add_launch_arg("detection_method", "Object")
+    # for compare map
+    add_launch_arg("use_pointcloud_container", "true")
+    add_launch_arg("container_name", "pointcloud_container")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

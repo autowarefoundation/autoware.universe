@@ -44,8 +44,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
 
   {
     auto & p = planner_param_.dynamic_obstacle_stop;
-    // since detection method is passed from launch file, no ns.
-    p.detection_method = node.declare_parameter("detection_method", "Object");
+    p.detection_method = node.declare_parameter(ns + ".detection_method", "Object");
     p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
     p.specify_decel_jerk = node.declare_parameter(ns + ".specify_decel_jerk", false);
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
