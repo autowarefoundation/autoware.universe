@@ -2,6 +2,10 @@
 <launch>
   <arg name="input/pointcloud" default="/sensing/lidar/top/rectified/pointcloud" description="The topic will be used in the localization util module"/>
   <arg name="ndt_scan_matcher_param_path" default="$(find-pkg-share ndt_scan_matcher)/config/ndt_scan_matcher.param.yaml"/>
+  <arg name="random_downsample_filter_param_path" default="$(find-pkg-share ndt_scan_matcher)/config/random_downsample_filter.param.yaml"/>
+  <arg name="crop_box_filter_measurement_range_param_path" default="$(find-pkg-share ndt_scan_matcher)/config/crop_box_filter_measurement_range.param.yaml"/>
+  <arg name="voxel_grid_filter_param_path" default="$(find-pkg-share ndt_scan_matcher)/config/voxel_grid_filter.param.yaml"/>
+  <arg name="localization_error_monitor_param_path" default="$(find-pkg-share localization_error_monitor)/config/localization_error_monitor.param.yaml"/>
 
   <!-- localization module -->
   <group>
@@ -11,6 +15,9 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/util/util.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+        <arg name="crop_box_filter_measurement_range_param_path" value="$(var crop_box_filter_measurement_range_param_path)"/>
+        <arg name="voxel_grid_downsample_filter_param_path" value="$(var voxel_grid_downsample_filter_param_path)"/>
+        <arg name="random_downsample_filter_param_path" value="$(var random_downsample_filter_param_path)"/>
       </include>
     </group>
     <!-- pose_estimator module -->
@@ -31,6 +38,8 @@
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml"/>
     </group>
     <!-- localization_error_monitor_module -->
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml"/>
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml">
+      <arg name="param_file" value="$(var localization_error_monitor_param_path)"/>
+    </include>
   </group>
 </launch>
