@@ -878,11 +878,13 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
   double lss_center = std::max(lss * 0.1, 0.02);
 
   std::unordered_set<lanelet::Id> added;
-  visualization_msgs::msg::Marker left_line_strip, right_line_strip, center_line_strip;
+  visualization_msgs::msg::Marker left_line_strip, right_line_strip, lane_bound_line_strip, center_line_strip;
   visualization::initLineStringMarker(
     &left_line_strip, "map", additional_namespace + "left_lane_bound", c);
   visualization::initLineStringMarker(
     &right_line_strip, "map", additional_namespace + "right_lane_bound", c);
+  visualization::initLineStringMarker(
+    &lane_bound_line_strip, "map", additional_namespace + "lane_bound", c);
   visualization::initLineStringMarker(
     &center_line_strip, "map", additional_namespace + "center_lane_line", c);
 
@@ -892,6 +894,11 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
     lanelet::ConstLineString3d left_ls = lll.leftBound();
     lanelet::ConstLineString3d right_ls = lll.rightBound();
     lanelet::ConstLineString3d center_ls = lll.centerline();
+    lanelet::LineString3d lane_bound_ls(lanelet::utils::getId());
+    lane_bound_ls.push_back(lanelet::Point3d(
+      lanelet::utils::getId(), left_ls.front().x(), left_ls.front().y(), left_ls.front().z()));
+    lane_bound_ls.push_back(lanelet::Point3d(
+      lanelet::utils::getId(), right_ls.front().x(), right_ls.front().y(), right_ls.front().z()));
 
     if (!exists(added, left_ls.id())) {
       visualization::pushLineStringMarker(&left_line_strip, left_ls, c, lss);
@@ -900,6 +907,10 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
     if (!exists(added, right_ls.id())) {
       visualization::pushLineStringMarker(&right_line_strip, right_ls, c, lss);
       added.insert(right_ls.id());
+    }
+    if (!exists(added, lane_bound_ls.id())) {
+      visualization::pushLineStringMarker(&lane_bound_line_strip, lane_bound_ls, c, lss);
+      added.insert(lane_bound_ls.id());
     }
     if (viz_centerline && !exists(added, center_ls.id())) {
       visualization::pushLineStringMarker(&center_line_strip, center_ls, c, lss_center);
@@ -916,6 +927,9 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
   }
   if (!center_line_strip.points.empty()) {
     marker_array.markers.push_back(center_line_strip);
+  }
+  if (!lane_bound_line_strip.points.empty()) {
+    marker_array.markers.push_back(lane_bound_line_strip);
   }
   return marker_array;
 }
