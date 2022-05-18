@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_NODE__PLOT__PLOTTER_HPP
-#define SAMPLER_NODE__PLOT__PLOTTER_HPP
+#ifndef SAMPLER_NODE__PLOT__PLOTTER_HPP_
+#define SAMPLER_NODE__PLOT__PLOTTER_HPP_
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
@@ -72,10 +72,11 @@ private:
   QCPCurve * committed_frenet_curve_ = nullptr;
   QCPCurve * committed_cartesian_curve_ = nullptr;
 
-  template <typename T> static QCPCurve * toFrenetCurve(const T & frenet, QCPAxisRect * axis_rect);
+  template <typename T>
+  static QCPCurve * toFrenetCurve(const T & frenet, QCPAxisRect * axis_rect);
   static QCPCurve * toCartesianCurve(const sampler_common::Path & path, QCPAxisRect * axis_rect);
 };
 
 }  // namespace sampler_node::plot
 
-#endif  // SAMPLER_NODE__PLOT__PLOTTER_HPP
+#endif  // SAMPLER_NODE__PLOT__PLOTTER_HPP_

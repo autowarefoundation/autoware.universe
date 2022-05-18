@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_NODE__DEBUG_HPP
-#define SAMPLER_NODE__DEBUG_HPP
+#ifndef SAMPLER_NODE__DEBUG_HPP_
+#define SAMPLER_NODE__DEBUG_HPP_
 
 #include <sampler_common/constraints/hard_constraint.hpp>
 
-namespace sampler_node::debug {
-struct Debug {
-    sampler_common::constraints::NumberOfViolations violations;
+namespace sampler_node::debug
+{
+struct Debug
+{
+  sampler_common::constraints::NumberOfViolations violations;
 };
-} // namespace sampler_node::debug
+}  // namespace sampler_node::debug
 
-#endif // SAMPLER_NODE__DEBUG_HPP
+#endif  // SAMPLER_NODE__DEBUG_HPP_

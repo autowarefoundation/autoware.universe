@@ -145,8 +145,7 @@ void Plotter::plotFrenetTrajectories(const std::vector<frenet_planner::Trajector
 
 void Plotter::plotFrenetPaths(const std::vector<frenet_planner::Path> & paths)
 {
-
-  for (const auto & path: paths) {
+  for (const auto & path : paths) {
     if (path.frenet_points.empty()) {
       continue;
     }
@@ -282,8 +281,8 @@ void Plotter::replot(const bool fc, const bool poly, const bool rescale)
   }
 }
 
-template <typename T> QCPCurve * Plotter::toFrenetCurve(
-  const T & frenet, QCPAxisRect * axis_rect)
+template <typename T>
+QCPCurve * Plotter::toFrenetCurve(const T & frenet, QCPAxisRect * axis_rect)
 {
   auto curve = new QCPCurve(axis_rect->axis(QCPAxis::atBottom), axis_rect->axis(QCPAxis::atLeft));
   QVector<double> xs;
@@ -313,7 +312,8 @@ QCPCurve * Plotter::toCartesianCurve(const sampler_common::Path & path, QCPAxisR
   return curve;
 }
 
-void Plotter::clear() {
+void Plotter::clear()
+{
   if (committed_frenet_curve_ != nullptr) fcplot_->removePlottable(committed_frenet_curve_);
   if (committed_cartesian_curve_ != nullptr) fcplot_->removePlottable(committed_cartesian_curve_);
   for (auto plottable : frenet_curves_) fcplot_->removePlottable(plottable);

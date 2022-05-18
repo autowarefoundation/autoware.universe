@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
-#define SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
+#ifndef SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP_
+#define SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP_
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
@@ -60,4 +60,4 @@ private:
 };
 }  // namespace sampler_node::plot
 
-#endif  // SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
+#endif  // SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP_

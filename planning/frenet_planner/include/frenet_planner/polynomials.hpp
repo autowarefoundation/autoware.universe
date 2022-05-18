@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRENET_PLANNER__POLYNOMIALS_HPP
-#define FRENET_PLANNER__POLYNOMIALS_HPP
+#ifndef FRENET_PLANNER__POLYNOMIALS_HPP_
+#define FRENET_PLANNER__POLYNOMIALS_HPP_
 
 namespace frenet_planner
 {
@@ -46,4 +46,4 @@ public:
 };
 }  // namespace frenet_planner
 
-#endif  // FRENET_PLANNER__POLYNOMIALS_HPP
+#endif  // FRENET_PLANNER__POLYNOMIALS_HPP_

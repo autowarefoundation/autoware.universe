@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINT_HPP
-#define SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINT_HPP
+#ifndef SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINTS_HPP_
+#define SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINTS_HPP_
 
 #include "sampler_common/structures.hpp"
 
@@ -21,34 +21,38 @@
 
 namespace sampler_common::constraints
 {
-    struct MapConstraints {
-        MapConstraints(const Point & ego_pose, const lanelet::LaneletMapConstPtr & map_ptr, const std::vector<lanelet::Ids> route_ids) {
-
+struct MapConstraints
+{
+  MapConstraints(
+    const Point & ego_pose, const lanelet::LaneletMapConstPtr & map_ptr,
+    const std::vector<lanelet::Ids> route_ids)
+  {
+  }
+  /// @brief check the given path and return the corresponding cost
+  /// \return cost of the path. If negative then the path is invalid.
+  double check(const Path & path)
+  {
+    double cost = 0.0;
+    for (const auto & p : path.points) {
+      bool drivable = false;
+      for (size_t i = 0; i < drivable_polygons.size(); ++i) {
+        if (boost::geometry::within(p, drivable_polygons[i])) {
+          drivable = true;
+          cost += polygon_costs[i];
+          break;
         }
-        /// @brief check the given path and return the corresponding cost
-        /// \return cost of the path. If negative then the path is invalid.
-        double check(const Path & path) {
-            double cost = 0.0;
-            for(const auto & p : path.points) {
-                bool drivable = false;
-                for(size_t i = 0; i < drivable_polygons.size(); ++i) {
-                    if(boost::geometry::within(p, drivable_polygons[i])) {
-                        drivable = true;
-                        cost += polygon_costs[i];
-                        break;
-                    }
-                }
-                if(!drivable) {
-                    cost = -1;
-                    break;
-                }
-            }
-            return cost;
-        }
+      }
+      if (!drivable) {
+        cost = -1;
+        break;
+      }
+    }
+    return cost;
+  }
 
-        std::vector<Polygon> drivable_polygons;
-        std::vector<double> polygon_costs;
-    };
-}
+  std::vector<Polygon> drivable_polygons;
+  std::vector<double> polygon_costs;
+};
+}  // namespace sampler_common::constraints
 
-#endif // SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINT_HPP
+#endif  // SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINTS_HPP_

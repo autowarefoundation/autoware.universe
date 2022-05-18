@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__PLOT__DEBUG_WINDOW_HPP
-#define SAMPLER_COMMON__PLOT__DEBUG_WINDOW_HPP
+#ifndef SAMPLER_COMMON__PLOT__DEBUG_WINDOW_HPP_
+#define SAMPLER_COMMON__PLOT__DEBUG_WINDOW_HPP_
 
 #include "sampler_common/plot/plotter.hpp"
 #include "sampler_common/structures.hpp"
@@ -58,4 +58,4 @@ private:
 };
 }  // namespace sampler_common::plot
 
-#endif  // SAMPLER_COMMON__PLOT__DEBUG_WINDOW_HPP
+#endif  // SAMPLER_COMMON__PLOT__DEBUG_WINDOW_HPP_

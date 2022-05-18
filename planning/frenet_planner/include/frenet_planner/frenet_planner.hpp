@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRENET_PLANNER__FRENET_PLANNER_HPP
-#define FRENET_PLANNER__FRENET_PLANNER_HPP
+#ifndef FRENET_PLANNER__FRENET_PLANNER_HPP_
+#define FRENET_PLANNER__FRENET_PLANNER_HPP_
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
@@ -53,4 +53,4 @@ void calculateCartesian(
 
 }  // namespace frenet_planner
 
-#endif  // FRENET_PLANNER__FRENET_PLANNER_HPP
+#endif  // FRENET_PLANNER__FRENET_PLANNER_HPP_
