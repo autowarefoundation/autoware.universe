@@ -20,7 +20,7 @@
 namespace component_interface_utils
 {
 
-/// The wrapper class of rclcpp::Subscription.
+/// The wrapper class of rclcpp::Subscription. This is for future use and no functionality now.
 template <class SpecT>
 class Subscription
 {
