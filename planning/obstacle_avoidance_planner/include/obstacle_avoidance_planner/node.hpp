@@ -43,6 +43,7 @@
 #include "boost/optional.hpp"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace
@@ -114,6 +115,7 @@ private:
   bool reset_prev_optimization_;
 
   // vehicle circles info for for mpt constraints
+  std::string vehicle_circle_method_;
   int vehicle_circle_num_for_calculation_;
   std::vector<double> vehicle_circle_radius_ratios_;
 
