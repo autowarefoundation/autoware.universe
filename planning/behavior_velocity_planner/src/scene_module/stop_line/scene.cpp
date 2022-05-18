@@ -107,16 +107,26 @@ boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCol
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
   const SearchRangeIndex & search_index)
 {
-  debug_data_.search_stopline = stop_line;
   const size_t min_search_index = std::max(static_cast<size_t>(0), search_index.min_idx);
   const size_t max_search_index = std::min(search_index.max_idx, path.points.size() - 1);
+
+  // for creating debug marker
+  debug_data_.search_stopline = stop_line;
+  for (size_t i = min_search_index; i < max_search_index; ++i)
+  {
+    const auto & p_front = path.points.at(i).point.pose.position;
+    const auto & p_back = path.points.at(i + 1).point.pose.position;
+    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
+    debug_data_.search_segments.push_back(path_segment);
+  }
+
   for (size_t i = min_search_index; i < max_search_index; ++i) {
     const auto & p_front = path.points.at(i).point.pose.position;
     const auto & p_back = path.points.at(i + 1).point.pose.position;
 
     // Find intersection
     const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
-    debug_data_.search_segments.push_back(path_segment);
+
     std::vector<Point2d> collision_points;
     bg::intersection(stop_line, path_segment, collision_points);
 
