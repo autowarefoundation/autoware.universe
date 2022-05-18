@@ -32,19 +32,13 @@ enum class Metric {
 };
 
 static const std::unordered_map<std::string, Metric> str_to_metric = {
-  {"lateral_error", Metric::lateral_error},
-  {"absolute_error", Metric::absolute_error}
-};
+  {"lateral_error", Metric::lateral_error}, {"absolute_error", Metric::absolute_error}};
 static const std::unordered_map<Metric, std::string> metric_to_str = {
-  {Metric::lateral_error, "lateral_error"},
-  {Metric::absolute_error, "absolute_error"}
-};
+  {Metric::lateral_error, "lateral_error"}, {Metric::absolute_error, "absolute_error"}};
 
 // Metrics descriptions
 static const std::unordered_map<Metric, std::string> metric_descriptions = {
-  {Metric::lateral_error, "lateral error [m]"},
-  {Metric::absolute_error, "absolute error [m]"}
-};
+  {Metric::lateral_error, "lateral error [m]"}, {Metric::absolute_error, "absolute error [m]"}};
 
 namespace details
 {

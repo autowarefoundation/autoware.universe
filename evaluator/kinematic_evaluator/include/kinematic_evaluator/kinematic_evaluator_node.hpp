@@ -74,8 +74,8 @@ private:
   std::vector<Metric> metrics_;
   std::deque<rclcpp::Time> stamps_;
   std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
-  std::unordered_map< Metric, Stat<double> > metrics_dict_; 
+  std::unordered_map<Metric, Stat<double>> metrics_dict_;
 };
 }  // namespace kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
+#endif  // KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_

@@ -85,4 +85,4 @@ private:
 };
 }  // namespace localization_diagnostics
 
-#endif  // LOCALIZATION_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
+#endif  // LOCALIZATION_EVALUATOR__LOCALIZATION_EVALUATOR_NODE_HPP_

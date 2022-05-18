@@ -27,7 +27,7 @@ using nav_msgs::msg::Odometry;
 
 /**
  * @brief calculate velocity deviation of the given trajectory from the reference trajectory
- * @param [in] value new value 
+ * @param [in] value new value
  * @param [in] stat_prev input trajectory
  * @return calculated statistics
  */
