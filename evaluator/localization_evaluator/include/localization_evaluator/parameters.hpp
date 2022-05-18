@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__PARAMETERS_HPP_
-#define KINEMATIC_EVALUATOR__PARAMETERS_HPP_
+#ifndef LOCALIZATION_EVALUATOR__PARAMETERS_HPP_
+#define LOCALIZATION_EVALUATOR__PARAMETERS_HPP_
 
-#include "kinematic_evaluator/metrics/metric.hpp"
+#include "localization_evaluator/metrics/metric.hpp"
 
 #include <array>
 
-namespace kinematic_diagnostics
+namespace localization_diagnostics
 {
 /**
  * @brief Enumeration of trajectory metrics
@@ -29,6 +29,6 @@ struct Parameters
   std::array<bool, static_cast<size_t>(Metric::SIZE)> metrics{};  // default values to false
 };  // struct Parameters
 
-}  // namespace kinematic_diagnostics
+}  // namespace localization_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__PARAMETERS_HPP_
+#endif  // LOCALIZATION_EVALUATOR__PARAMETERS_HPP_
