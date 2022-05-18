@@ -878,7 +878,8 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
   double lss_center = std::max(lss * 0.1, 0.02);
 
   std::unordered_set<lanelet::Id> added;
-  visualization_msgs::msg::Marker left_line_strip, right_line_strip, start_bound_line_strip, center_line_strip;
+  visualization_msgs::msg::Marker left_line_strip, right_line_strip, start_bound_line_strip,
+    center_line_strip;
   visualization::initLineStringMarker(
     &left_line_strip, "map", additional_namespace + "left_lane_bound", c);
   visualization::initLineStringMarker(
