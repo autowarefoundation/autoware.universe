@@ -45,8 +45,8 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
     node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node_->create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-  motion_factor_pub_ =
-    node_->create_publisher<tier4_planning_msgs::msg::MotionFactorArray>("~/output/motion_factors", 1);
+  motion_factor_pub_ = node_->create_publisher<tier4_planning_msgs::msg::MotionFactorArray>(
+    "~/output/motion_factors", 1);
   pub_debug_values_ =
     node_->create_publisher<Float32MultiArrayStamped>("~/obstacle_stop/debug_values", 1);
 }
@@ -376,11 +376,11 @@ tier4_planning_msgs::msg::MotionFactorArray ObstacleStopPlannerDebugNode::makeMo
 
   // create stop reason stamped
   tier4_planning_msgs::msg::MotionFactor motion_factor_msg;
-  motion_factor_msg.stop_reason = tier4_planning_msgs::msg::MotionFactor::OBSTACLE_STOP;
+  motion_factor_msg.reason = tier4_planning_msgs::msg::MotionFactor::OBSTACLE_STOP;
   motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_FALSE;
 
   if (stop_pose_ptr_ != nullptr) {
-    motion_factor_msg.stop_line = *stop_pose_ptr_;
+    motion_factor_msg.stop_pose = *stop_pose_ptr_;
     motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
     if (stop_obstacle_point_ptr_ != nullptr) {
       motion_factor_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);

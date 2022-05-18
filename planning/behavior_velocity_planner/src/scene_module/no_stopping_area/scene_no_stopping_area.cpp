@@ -122,8 +122,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::NO_STOPPING_AREA);
-  *motion_factor =
-    planning_utils::initializeMotionFactor(tier4_planning_msgs::msg::MotionFactor::NO_STOPPING_AREA);
+  *motion_factor = planning_utils::initializeMotionFactor(
+    tier4_planning_msgs::msg::MotionFactor::NO_STOPPING_AREA);
   // Get stop line geometry
   const auto stop_line = getStopLineGeometry2d(original_path, planner_param_.stop_line_margin);
   if (!stop_line) {
@@ -191,7 +191,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(
     // Create MotionFactor
     {
       motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-      motion_factor->stop_line = stop_point->second;
+      motion_factor->stop_pose = stop_point->second;
       motion_factor->stop_factor_points = debug_data_.stuck_points;
     }
 

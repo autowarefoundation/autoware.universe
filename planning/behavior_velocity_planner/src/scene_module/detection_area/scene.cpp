@@ -302,7 +302,7 @@ bool DetectionAreaModule::modifyPathVelocity(
   // Create MotionFactor
   {
     motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-    motion_factor->stop_line = stop_point->second;
+    motion_factor->stop_pose = stop_point->second;
     motion_factor->stop_factor_points = obstacle_points;
   }
 

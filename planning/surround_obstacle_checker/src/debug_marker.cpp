@@ -41,8 +41,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-  motion_factor_pub_ =
-    node.create_publisher<tier4_planning_msgs::msg::MotionFactorArray>("~/output/motion_factors", 1);
+  motion_factor_pub_ = node.create_publisher<tier4_planning_msgs::msg::MotionFactorArray>(
+    "~/output/motion_factors", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
@@ -141,7 +141,8 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   return stop_reason_array;
 }
 
-tier4_planning_msgs::msg::MotionFactorArray SurroundObstacleCheckerDebugNode::makeMotionFactorArray()
+tier4_planning_msgs::msg::MotionFactorArray
+SurroundObstacleCheckerDebugNode::makeMotionFactorArray()
 {
   // create header
   std_msgs::msg::Header header;
@@ -150,11 +151,11 @@ tier4_planning_msgs::msg::MotionFactorArray SurroundObstacleCheckerDebugNode::ma
 
   // create stop reason stamped
   tier4_planning_msgs::msg::MotionFactor motion_factor_msg;
-  motion_factor_msg.stop_reason = tier4_planning_msgs::msg::MotionFactor::SURROUND_OBSTACLE_CHECK;
+  motion_factor_msg.reason = tier4_planning_msgs::msg::MotionFactor::SURROUND_OBSTACLE_CHECK;
   motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_FALSE;
 
   if (stop_pose_ptr_ != nullptr) {
-    motion_factor_msg.stop_line = *stop_pose_ptr_;
+    motion_factor_msg.stop_pose = *stop_pose_ptr_;
     motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
     if (stop_obstacle_point_ptr_ != nullptr) {
       motion_factor_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);

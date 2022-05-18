@@ -194,7 +194,7 @@ bool IntersectionModule::modifyPathVelocity(
         planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
       planning_utils::appendStopReason(stop_factor, stop_reason);
       motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-      motion_factor->stop_line = debug_data_.stop_point_pose;
+      motion_factor->stop_pose = debug_data_.stop_point_pose;
       motion_factor->stop_factor_points =
         planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
 

@@ -30,8 +30,8 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/motion_factor.hpp>
+#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/geometry.hpp>

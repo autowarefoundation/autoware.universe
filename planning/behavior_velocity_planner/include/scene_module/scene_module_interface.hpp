@@ -19,9 +19,9 @@
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/motion_factor.hpp>
 #include <tier4_planning_msgs/msg/motion_factor_array.hpp>
+#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 
@@ -138,7 +138,6 @@ public:
       if (motion_factor.stop_reason != 0) {
         motion_factor_array.motion_factors.emplace_back(motion_factor);
       }
-        
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
         infrastructure_command_array.commands.push_back(*command);

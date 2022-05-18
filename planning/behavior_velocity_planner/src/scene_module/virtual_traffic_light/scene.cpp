@@ -475,10 +475,11 @@ void VirtualTrafficLightModule::setStopReason(
 }
 
 void VirtualTrafficLightModule::setMotionFactor(
-  const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  const geometry_msgs::msg::Pose & stop_pose,
+  tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
   motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-  motion_factor->stop_line = stop_pose;
+  motion_factor->stop_pose = stop_pose;
   motion_factor->stop_factor_points.push_back(toMsg(map_data_.instrument_center));
 }
 

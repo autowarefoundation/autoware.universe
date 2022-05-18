@@ -186,7 +186,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
     stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
     planning_utils::appendStopReason(stop_factor, stop_reason);
     motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-    motion_factor->stop_line = stop_point_with_lane_id.point.pose;
+    motion_factor->stop_pose = stop_point_with_lane_id.point.pose;
     motion_factor->stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
   }
 

@@ -84,7 +84,7 @@ bool WalkwayModule::modifyPathVelocity(
     stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
     motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-    motion_factor->stop_line = debug_data_.first_stop_pose;
+    motion_factor->stop_pose = debug_data_.first_stop_pose;
     motion_factor->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.

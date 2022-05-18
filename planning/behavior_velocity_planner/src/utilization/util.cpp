@@ -550,7 +550,7 @@ tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & st
 tier4_planning_msgs::msg::MotionFactor initializeMotionFactor(const uint8_t stop_reason)
 {
   tier4_planning_msgs::msg::MotionFactor motion_factor_msg;
-  motion_factor_msg.stop_reason = stop_reason;
+  motion_factor_msg.reason = stop_reason;
   motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_FALSE;
   return motion_factor_msg;
 }
