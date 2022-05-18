@@ -33,7 +33,7 @@ public:
     using std::placeholders::_3;
 
     syncronizer = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
-      SyncPolicy(50), *cloud_sub, *cloud_pose_sub, *particles_sub);
+      SyncPolicy(80), *cloud_sub, *cloud_pose_sub, *particles_sub);
 
     syncronizer->registerCallback(std::bind(&SyncroSubscriber::rawCallback, this, _1, _2, _3));
     user_callback = std::nullopt;

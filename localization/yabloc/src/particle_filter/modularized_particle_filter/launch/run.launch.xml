@@ -30,14 +30,16 @@
         <param name="particles_buffer_size" value="50" />
         <param name="flat_radius" value="1.0" />
     </node>
-    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info">
+    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info" output="screen">
     </node>
 
-    <group>
-        <node pkg="modularized_particle_filter" exec="particle_visualize" name="gnss_particle_array_to_marker_array" output="screen">
-            <remap from="/particle_array" to="weighted_particles" />
-            <remap from="/marker_array" to="mpf/weighted_particles/marker_array" />
-        </node>
-    </group>
+    <node pkg="modularized_particle_filter" exec="particle_visualize" name="gnss_particle_array_to_marker_array" output="screen">
+        <remap from="/particle_array" to="weighted_particles" />
+        <remap from="/marker_array" to="mpf/weighted_particles/marker_array" />
+    </node>
+    <node pkg="modularized_particle_filter" exec="particle_visualize" name="camera_particle_array_to_marker_array" output="screen">
+        <remap from="/particle_array" to="camera/weighted_particles" />
+        <remap from="/marker_array" to="camera/weighted_particles/marker_array" />
+    </node>
 
 </launch>

@@ -18,7 +18,6 @@ float normalPDF(float x, float mu, float sigma, float inv_sqrt_2pi = 0.398942280
 {
   float a = (x - mu) / sigma;
   return inv_sqrt_2pi / sigma * std::exp(-0.5f * a * a);
-
 }
 
 }  // namespace
@@ -86,7 +85,7 @@ void GNSSPoseCorrector::correctAndPublishParticles()
   modularized_particle_filter_msgs::msg::ParticleArray synced_particles{
     findSyncedParticles(particles_circular_buffer_, synced_pose.header.stamp).value()};
 
-  RCLCPP_WARN_STREAM(
+  RCLCPP_INFO_STREAM(
     this->get_logger(),
     "dt: " << (rclcpp::Time(synced_pose.header.stamp) - rclcpp::Time(synced_particles.header.stamp))
                 .seconds());

@@ -21,13 +21,17 @@ class CameraPoseCorrector : public rclcpp::Node
 public:
   CameraPoseCorrector() : Node("camera_pose_corrector")
   {
+    using std::placeholders::_1, std::placeholders::_2, std::placeholders::_3;
+
+    // Publisher
+    weighted_particle_pub_ = this->create_publisher<ParticleArray>("camera/weighted_particles", 10);
+    image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/match_image", 10);
+
+    // Subscriber
     synchro_subscriber_ = std::make_shared<SyncroSubscriber>(
       rclcpp::Node::SharedPtr{this}, "/lsd_cloud", "/ll2_cloud", "/predicted_particles");
-
-    using std::placeholders::_1, std::placeholders::_2, std::placeholders::_3;
     synchro_subscriber_->setCallback(
       std::bind(&CameraPoseCorrector::syncrhoCallback, this, _1, _2, _3));
-    image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/match_image", 10);
   }
 
 private:

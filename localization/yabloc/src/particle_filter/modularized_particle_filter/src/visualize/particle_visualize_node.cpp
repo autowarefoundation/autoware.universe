@@ -60,6 +60,7 @@ private:
 
     float min = minmax_weight.first->weight;
     float max = minmax_weight.second->weight;
+    max = std::max(max, min + 1e-7f);
     auto boundWeight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
 
     int id = 0;
