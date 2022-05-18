@@ -23,7 +23,7 @@ namespace signed_distance_function
 {
 
 double AbstractSignedDistanceFunction::getSphereTracingDist(
-  double x_start, double y_start, double angle, double eps) const
+  double x_start, double y_start, double angle, double max_dist, double eps) const
 {
   // https://computergraphics.stackexchange.com/questions/161/what-is-ray-marching-is-sphere-tracing-the-same-thing/163
   tf2::Vector3 direction(cos(angle), sin(angle), 0.0);
@@ -35,6 +35,9 @@ double AbstractSignedDistanceFunction::getSphereTracingDist(
   auto ray_tip = pos_start;
   for (size_t itr = 0; itr < max_iter; ++itr) {
     const auto dist = this->operator()(ray_tip.getX(), ray_tip.getY());
+    if (dist > max_dist) {
+      return std::numeric_limits<double>::infinity();
+    }
     ray_tip = ray_tip + dist * direction;
     bool almost_on_surface = std::abs(dist) < eps;
     if (almost_on_surface) {

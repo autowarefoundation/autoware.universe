@@ -17,6 +17,7 @@
 
 #include <tf2/LinearMath/Transform.h>
 
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -30,7 +31,8 @@ class AbstractSignedDistanceFunction
 public:
   virtual double operator()(double x, double y) const = 0;
   double getSphereTracingDist(
-    double x_start, double y_start, double angle, double eps = 1e-2) const;
+    double x_start, double y_start, double angle,
+    double max_dist = std::numeric_limits<double>::infinity(), double eps = 1e-2) const;
   virtual ~AbstractSignedDistanceFunction() {}
 };
 
