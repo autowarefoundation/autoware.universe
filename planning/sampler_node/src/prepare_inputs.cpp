@@ -15,16 +15,24 @@
 #include "sampler_node/prepare_inputs.hpp"
 
 #include "frenet_planner/structures.hpp"
+#include "lanelet2_core/LaneletMap.h"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/path_generation.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
+#include <had_map_utils/had_map_computation.hpp>
+
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
+
 #include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/detail/intersects/interface.hpp>
+#include <boost/geometry/geometry.hpp>
 
 #include <algorithm>
+#include <list>
+#include <memory>
 #include <vector>
 
 namespace sampler_node
@@ -32,7 +40,8 @@ namespace sampler_node
 
 sampler_common::Constraints prepareConstraints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids, const lanelet::Ids & prefered_ids)
+  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids,
+  const lanelet::Ids & prefered_ids)
 {
   sampler_common::Constraints constraints;
   constraints.hard.max_curvature = 0.3;
@@ -43,41 +52,42 @@ sampler_common::Constraints prepareConstraints(
   constraints.soft.length_weight = -1.0;  // negative weight to consider length as a reward
   constraints.soft.curvature_weight = 1.0;
 
-  for (auto & dynamic_obstacle_polygon :
-       utils::predictedObjectsToPolygons(predicted_objects)) {
+  for (auto & dynamic_obstacle_polygon : utils::predictedObjectsToPolygons(predicted_objects)) {
     boost::geometry::correct(dynamic_obstacle_polygon);
     constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
   }
-  for(const auto & drivable_id : drivable_ids) {
-    const auto lanelet = map.laneletLayer.get(drivable_id);
-    sampler_common::Polygon road_polygon;
-    for(const auto & point: lanelet.polygon2d().basicPolygon()) {
-      road_polygon.outer().push_back({point.x(), point.y()});
-    }
-    boost::geometry::correct(road_polygon);
-    constraints.drivable_polygons.push_back(std::move(road_polygon));
+
+  const auto drivable_lanelet_polygon =
+    autoware::common::had_map_utils::coalesce_lanelets(drivable_ids, map);
+  constraints.drivable_polygon.clear();
+  for (const auto & point : drivable_lanelet_polygon) {
+    constraints.drivable_polygon.outer().emplace_back(point.x(), point.y());
   }
-  for(const auto & prefered_id : prefered_ids) {
-    const auto lanelet = map.laneletLayer.get(prefered_id);
-    sampler_common::Polygon prefered_polygon;
-    for(const auto & point: lanelet.polygon2d().basicPolygon()) {
-      prefered_polygon.outer().push_back({point.x(), point.y()});
-    }
-    boost::geometry::correct(prefered_polygon);
-    constraints.prefered_polygons.push_back(std::move(prefered_polygon));
+  // TODO(Maxime CLEMENT): investigate why correcting the polygon breaks the collision detection
+  // boost::geometry::correct(constraints.drivable_polygon);
+
+  const auto prefered_lanelet_polygon =
+    autoware::common::had_map_utils::coalesce_lanelets(prefered_ids, map);
+  constraints.prefered_polygon.clear();
+  for (const auto & point : prefered_lanelet_polygon) {
+    constraints.prefered_polygon.outer().emplace_back(point.x(), point.y());
   }
+  boost::geometry::correct(constraints.prefered_polygon);
+
   return constraints;
 }
 
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
-  const double base_length, const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+  const double base_length, const sampler_common::transform::Spline2D & path_spline,
+  const Parameters & params)
 {
   frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.time_resolution = params.sampling.resolution;
   sampling_parameters.target_lateral_positions = params.sampling.frenet.target_lateral_positions;
   sampling_parameters.target_lateral_velocities = params.sampling.frenet.target_lateral_velocities;
-  sampling_parameters.target_lateral_accelerations = params.sampling.frenet.target_lateral_accelerations;
+  sampling_parameters.target_lateral_accelerations =
+    params.sampling.frenet.target_lateral_accelerations;
   const auto max_s =
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
   for (const auto target_length : params.sampling.target_lengths) {

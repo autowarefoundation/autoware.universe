@@ -34,30 +34,31 @@ using CGAL_Point = Kernel::Point_2;
 using CGAL_Polygon = CGAL::Polygon_2<Kernel>;
 using CGAL_Polygon_with_holes = CGAL::Polygon_with_holes_2<Kernel>;
 
-// TODO(s.me) this is getting a bit long, break up
-lanelet::Polygon3d coalesce_drivable_areas(
-  const autoware_auto_planning_msgs::msg::HADMapRoute & had_map_route,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr)
+
+lanelet::Polygon3d coalesce_lanelets(
+  const lanelet::Ids & ids,
+  const lanelet::LaneletMap & lanelet_map)
 {
   CGAL_Polygon_with_holes drivable_area;
 
-  for (const auto & map_segment : had_map_route.segments) {
+  for (const auto & id: ids) {
     // Attempt to obtain a polygon from the primitive ID
     geometry_msgs::msg::Polygon current_area_polygon{};
-    const auto & lanelet_layer = lanelet_map_ptr->laneletLayer;
-    const auto & current_lanelet_candidate = lanelet_layer.find(map_segment.preferred_primitive_id);
+    const auto & lanelet_layer = lanelet_map.laneletLayer;
+    const auto & current_lanelet_candidate = lanelet_layer.find(id);
     if (current_lanelet_candidate != lanelet_layer.end()) {
       current_area_polygon = lanelet2Polygon(*current_lanelet_candidate);
     } else {
-      const auto & area_layer = lanelet_map_ptr->areaLayer;
-      const auto & current_area_candidate = area_layer.find(map_segment.preferred_primitive_id);
+      const auto & area_layer = lanelet_map.areaLayer;
+      const auto & current_area_candidate = area_layer.find(id);
       if (current_area_candidate != area_layer.end()) {
         current_area_polygon = area2Polygon(*current_area_candidate);
       } else {
         // This might happen if a primitive is on the route, but outside of the bounding box that we
         // query the map for. Not sure how to deal with this at this point though.
-        std::cerr << "Error: primitive ID " << map_segment.preferred_primitive_id
-                  << " not found, skipping" << std::endl;
+        std::cerr << "Error: primitive ID " << id <<
+          " not found, skipping" <<
+          std::endl;
         continue;
       }
     }
@@ -120,6 +121,18 @@ lanelet::Polygon3d coalesce_drivable_areas(
   }
   lanelet::Polygon3d lanelet_drivable_area(lanelet::utils::getId(), lanelet_drivable_area_points);
   return lanelet_drivable_area;
+}
+
+// TODO(s.me) this is getting a bit long, break up
+lanelet::Polygon3d coalesce_drivable_areas(
+  const autoware_auto_planning_msgs::msg::HADMapRoute & had_map_route,
+  const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  lanelet::Ids prefered_ids;
+  for (const auto & map_segment : had_map_route.segments) {
+    prefered_ids.push_back(map_segment.preferred_primitive_id);
+  }
+  return coalesce_lanelets(prefered_ids, *lanelet_map_ptr);
 }
 
 }  // namespace had_map_utils

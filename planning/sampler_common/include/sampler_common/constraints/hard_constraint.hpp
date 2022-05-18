@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP
-#define SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP
+#ifndef SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_
+#define SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_
 
 #include "sampler_common/structures.hpp"
 
@@ -32,4 +32,4 @@ struct NumberOfViolations
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints);
 }  // namespace sampler_common::constraints
 
-#endif  // SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP
+#endif  // SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_

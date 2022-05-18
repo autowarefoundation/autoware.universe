@@ -30,6 +30,7 @@
 #include <nav_msgs/msg/detail/occupancy_grid__struct.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+
 #include <lanelet2_core/LaneletMap.h>
 
 #include <string>
@@ -40,7 +41,8 @@ namespace sampler_node
 /// @brief prepare constraints
 sampler_common::Constraints prepareConstraints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids, const lanelet::Ids & prefered_ids);
+  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids,
+  const lanelet::Ids & prefered_ids);
 /// @brief prepare sampling parameters to generate trajectories in Frenet frame
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const frenet_planner::FrenetState & initial_state,
@@ -49,7 +51,8 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
 /// @brief prepare sampling parameters to generate paths in Frenet frame
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
-  const double base_length, const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
+  const double base_length, const sampler_common::transform::Spline2D & path_spline,
+  const Parameters & params);
 /// @brief prepare the 2D spline representation of the given Path message
 sampler_common::transform::Spline2D preparePathSpline(
   const autoware_auto_planning_msgs::msg::Path & path_msg);
