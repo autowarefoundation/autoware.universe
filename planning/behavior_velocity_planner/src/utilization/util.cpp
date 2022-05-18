@@ -183,15 +183,14 @@ SearchRangeIndex getPathIndexRangeIncludeLaneId(
   bool found_first_idx = false;
   for (size_t i = 0; i < path.points.size(); i++) {
     const auto & p = path.points.at(i);
-    if (p.lane_ids.size() != 1)
-      continue;
-
-    if (lane_id == p.lane_ids.at(0)) {
-      if (!found_first_idx) {
-        search_range.min_idx = i;
-        found_first_idx = true;
+    for (const auto & id : p.lane_ids) {
+      if (id == lane_id) {
+        if (!found_first_idx) {
+          search_range.min_idx = i;
+          found_first_idx = true;
+        }
+        search_range.max_idx = i;
       }
-      search_range.max_idx = i;
     }
   }
   return search_range;
