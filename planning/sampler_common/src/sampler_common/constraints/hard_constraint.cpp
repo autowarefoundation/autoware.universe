@@ -83,13 +83,7 @@ bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints)
 {
   // TODO(Maxime CLEMENT): get from vehicle parameters
-  Offsets offsets;
-  constexpr auto offset = 1.0;
-  offsets.left_front = {offset, offset};
-  offsets.right_front = {offset, -offset};
-  offsets.left_rear = {-offset, offset};
-  offsets.right_rear = {-offset, -offset};
-  const Polygon footprint = buildFootprintPolygon(path, offsets);
+  const Polygon footprint = buildFootprintPolygon(path, constraints);
   NumberOfViolations number_of_violations;
   if (collideWithPolygons(footprint, constraints.obstacle_polygons)) {
     ++number_of_violations.collision;

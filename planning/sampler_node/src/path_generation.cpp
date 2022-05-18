@@ -36,8 +36,7 @@ namespace sampler_node
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
-  const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::Constraints & constraints, plot::Plotter & plotter,
+  const autoware_auto_planning_msgs::msg::Path & path_msg, plot::Plotter & plotter,
   const Parameters & params)
 {
   const auto reuse_length_step = params.sampling.reuse_max_length_max / 2.0;
@@ -48,7 +47,7 @@ std::vector<sampler_common::Path> generateCandidatePaths(
     !previous_path.points.empty() &&
     !sampler_common::tryToReusePath(
       previous_path, initial_state.pose, params.sampling.minimum_committed_length,
-      params.sampling.reuse_max_deviation, constraints, base_path))
+      params.sampling.reuse_max_deviation, params.constraints, base_path))
     return {};
   const auto move_to_paths = [&](auto & paths_to_move) {
     paths.insert(
@@ -57,7 +56,7 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   };
   if (params.sampling.enable_frenet) {
     auto frenet_paths =
-      generateFrenetPaths(initial_state, base_path, path_msg, path_spline, constraints, params);
+      generateFrenetPaths(initial_state, base_path, path_msg, path_spline, params);
     plotter.plotFrenetPaths(frenet_paths);
     move_to_paths(frenet_paths);
   }
@@ -72,7 +71,7 @@ std::vector<sampler_common::Path> generateCandidatePaths(
        reuse_max_length += reuse_length_step) {
     if (sampler_common::tryToReusePath(
           previous_path, initial_state.pose, reuse_max_length, params.sampling.reuse_max_deviation,
-          constraints, base_path)) {
+          params.constraints, base_path)) {
       plotter.plotCommittedPath(base_path);
       const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
       sampler_common::State end_of_reused_path;
@@ -80,8 +79,8 @@ std::vector<sampler_common::Path> generateCandidatePaths(
       end_of_reused_path.heading = base_path.yaws.back();
       end_of_reused_path.curvature = base_path.curvatures.back();
       if (params.sampling.enable_frenet) {
-        const auto paths_from_prev_path = generateFrenetPaths(
-          end_of_reused_path, base_path, path_msg, path_spline, constraints, params);
+        const auto paths_from_prev_path =
+          generateFrenetPaths(end_of_reused_path, base_path, path_msg, path_spline, params);
         plotter.plotFrenetPaths(paths_from_prev_path);
         for (const auto & path : paths_from_prev_path) {
           paths.push_back(base_path.extend(path));
@@ -152,10 +151,8 @@ std::vector<sampler_common::Path> generateBezierPaths(
 std::vector<frenet_planner::Path> generateFrenetPaths(
   const sampler_common::State & initial_state, const sampler_common::Path & base_path,
   const autoware_auto_planning_msgs::msg::Path & path,
-  const sampler_common::transform::Spline2D & path_spline,
-  const sampler_common::Constraints & constraints, const Parameters & params)
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
-  (void)constraints;
   const auto sampling_parameters = prepareSamplingParameters(
     initial_state, path,
     std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0), path_spline,

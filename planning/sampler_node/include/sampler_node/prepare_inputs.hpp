@@ -39,7 +39,8 @@
 namespace sampler_node
 {
 /// @brief prepare constraints
-sampler_common::Constraints prepareConstraints(
+void prepareConstraints(
+  sampler_common::Constraints & constraints,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
   const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids,
   const lanelet::Ids & prefered_ids);

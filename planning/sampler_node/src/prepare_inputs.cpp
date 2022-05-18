@@ -36,27 +36,20 @@
 namespace sampler_node
 {
 
-sampler_common::Constraints prepareConstraints(
+void prepareConstraints(
+  sampler_common::Constraints & constraints,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
   const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids,
   const lanelet::Ids & prefered_ids)
 {
-  sampler_common::Constraints constraints;
-  constraints.hard.max_curvature = 0.3;
-  constraints.hard.min_curvature = -constraints.hard.max_curvature;
-  constraints.soft.lateral_deviation_weight = 0.1;
-  constraints.soft.longitudinal_deviation_weight = 1.0;
-  constraints.soft.jerk_weight = 1.0;
-  constraints.soft.length_weight = -1.0;  // negative weight to consider length as a reward
-  constraints.soft.curvature_weight = 1.0;
-
+  constraints.obstacle_polygons = sampler_common::MultiPolygon();
   for (auto & dynamic_obstacle_polygon : utils::predictedObjectsToPolygons(predicted_objects)) {
     boost::geometry::correct(dynamic_obstacle_polygon);
     constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
   }
 
   // const auto drivable_lanelet_polygon =
-  constraints.drivable_polygon.clear();
+  constraints.drivable_polygon = sampler_common::Polygon();
   // for (const auto & point : drivable_lanelet_polygon) {
   //   constraints.drivable_polygon.outer().emplace_back(point.x(), point.y());
   // }
@@ -64,13 +57,11 @@ sampler_common::Constraints prepareConstraints(
   // boost::geometry::correct(constraints.drivable_polygon);
 
   // const auto prefered_lanelet_polygon =
-  constraints.prefered_polygon.clear();
+  constraints.prefered_polygon = sampler_common::Polygon();
   // for (const auto & point : prefered_lanelet_polygon) {
   //   constraints.prefered_polygon.outer().emplace_back(point.x(), point.y());
   // }
   boost::geometry::correct(constraints.prefered_polygon);
-
-  return constraints;
 }
 
 frenet_planner::SamplingParameters prepareSamplingParameters(
