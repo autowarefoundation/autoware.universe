@@ -6,8 +6,8 @@
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UI_MAINWINDOW_H
-#define UI_MAINWINDOW_H
+#ifndef SAMPLER_NODE__PLOT__UI_MAINWINDOW_H_
+#define SAMPLER_NODE__PLOT__UI_MAINWINDOW_H_
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -137,4 +137,4 @@ class MainWindow : public Ui_MainWindow
 
 QT_END_NAMESPACE
 
-#endif  // UI_MAINWINDOW_H
+#endif  // SAMPLER_NODE__PLOT__UI_MAINWINDOW_H_

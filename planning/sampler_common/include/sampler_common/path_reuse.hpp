@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__PATH_REUSE_HPP
-#define SAMPLER_COMMON__PATH_REUSE_HPP
+#ifndef SAMPLER_COMMON__PATH_REUSE_HPP_
+#define SAMPLER_COMMON__PATH_REUSE_HPP_
 
 #include "sampler_common/structures.hpp"
 
@@ -32,4 +32,4 @@ bool tryToReusePath(
   const double max_deviation, const Constraints & constraints, Path & reusable_path);
 }  // namespace sampler_common
 
-#endif  // SAMPLER_COMMON__PATH_REUSE_HPP
+#endif  // SAMPLER_COMMON__PATH_REUSE_HPP_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef FRENET_PLANNER__STRUCTURES_HPP
-#define FRENET_PLANNER__STRUCTURES_HPP
+#ifndef FRENET_PLANNER__STRUCTURES_HPP_
+#define FRENET_PLANNER__STRUCTURES_HPP_
 
 #include "frenet_planner/polynomials.hpp"
 
@@ -156,4 +156,4 @@ struct Debug
 };
 }  // namespace frenet_planner
 
-#endif  // FRENET_PLANNER__STRUCTURES_HPP
+#endif  // FRENET_PLANNER__STRUCTURES_HPP_

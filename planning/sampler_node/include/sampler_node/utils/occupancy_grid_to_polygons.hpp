@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef FRENET_PLANNER__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
-#define FRENET_PLANNER__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
+#ifndef SAMPLER_NODE__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
+#define SAMPLER_NODE__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
 
 #include "sampler_common/structures.hpp"
 
@@ -128,4 +128,4 @@ inline std::vector<sampler_common::Polygon> predictedObjectsToPolygons(
 }
 }  // namespace sampler_node::utils
 
-#endif  // FRENET_PLANNER__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
+#endif  // SAMPLER_NODE__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_

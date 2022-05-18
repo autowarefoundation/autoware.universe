@@ -37,50 +37,58 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
   const autoware_auto_planning_msgs::msg::Path & path_msg,
-  const sampler_common::Constraints & constraints, plot::Plotter & plotter, const Parameters & params)
+  const sampler_common::Constraints & constraints, plot::Plotter & plotter,
+  const Parameters & params)
 {
   const auto reuse_length_step = params.sampling.reuse_max_length_max / 2.0;
 
   std::vector<sampler_common::Path> paths;
   sampler_common::Path base_path;
-  if(!previous_path.points.empty() && !sampler_common::tryToReusePath(
-          previous_path, initial_state.pose, params.sampling.minimum_committed_length, params.sampling.reuse_max_deviation, constraints,
-          base_path))
+  if (
+    !previous_path.points.empty() &&
+    !sampler_common::tryToReusePath(
+      previous_path, initial_state.pose, params.sampling.minimum_committed_length,
+      params.sampling.reuse_max_deviation, constraints, base_path))
     return {};
-  const auto move_to_paths = [&](auto & paths_to_move) { paths.insert(paths.end(), std::make_move_iterator(paths_to_move.begin()), std::make_move_iterator(paths_to_move.end())); };
-  if(params.sampling.enable_frenet) {
-    auto frenet_paths = generateFrenetPaths(initial_state, base_path, path_msg, path_spline, constraints, params);
+  const auto move_to_paths = [&](auto & paths_to_move) {
+    paths.insert(
+      paths.end(), std::make_move_iterator(paths_to_move.begin()),
+      std::make_move_iterator(paths_to_move.end()));
+  };
+  if (params.sampling.enable_frenet) {
+    auto frenet_paths =
+      generateFrenetPaths(initial_state, base_path, path_msg, path_spline, constraints, params);
     plotter.plotFrenetPaths(frenet_paths);
     move_to_paths(frenet_paths);
   }
-  if(params.sampling.enable_bezier){
-    const auto bezier_paths = generateBezierPaths(initial_state, base_path, path_msg, path_spline, params);
+  if (params.sampling.enable_bezier) {
+    const auto bezier_paths =
+      generateBezierPaths(initial_state, base_path, path_msg, path_spline, params);
     move_to_paths(bezier_paths);
   }
 
-  for (auto reuse_max_length = reuse_length_step; reuse_max_length <= params.sampling.reuse_max_length_max;
+  for (auto reuse_max_length = reuse_length_step;
+       reuse_max_length <= params.sampling.reuse_max_length_max;
        reuse_max_length += reuse_length_step) {
     if (sampler_common::tryToReusePath(
-          previous_path, initial_state.pose, reuse_max_length, params.sampling.reuse_max_deviation, constraints,
-          base_path)) {
+          previous_path, initial_state.pose, reuse_max_length, params.sampling.reuse_max_deviation,
+          constraints, base_path)) {
       plotter.plotCommittedPath(base_path);
       const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
       sampler_common::State end_of_reused_path;
       end_of_reused_path.pose = base_path.points.back();
       end_of_reused_path.heading = base_path.yaws.back();
       end_of_reused_path.curvature = base_path.curvatures.back();
-      if(params.sampling.enable_frenet)
-      {
-        const auto paths_from_prev_path =
-          generateFrenetPaths(end_of_reused_path, base_path, path_msg, path_spline, constraints, params);
+      if (params.sampling.enable_frenet) {
+        const auto paths_from_prev_path = generateFrenetPaths(
+          end_of_reused_path, base_path, path_msg, path_spline, constraints, params);
         plotter.plotFrenetPaths(paths_from_prev_path);
         for (const auto & path : paths_from_prev_path) {
           paths.push_back(base_path.extend(path));
           paths.back().cost *= cost_mult;
         }
       }
-      if(params.sampling.enable_bezier)
-      {
+      if (params.sampling.enable_bezier) {
         const auto paths_from_prev_path =
           generateBezierPaths(end_of_reused_path, base_path, path_msg, path_spline, params);
         for (const auto & path : paths_from_prev_path) {
@@ -117,9 +125,11 @@ std::vector<sampler_common::Path> generateBezierPaths(
     target_state.pose = path_spline.cartesian({target_s, 0});
     target_state.curvature = path_spline.curvature(target_s);
     target_state.heading = path_spline.yaw(target_s);
-    const auto beziers = bezier_sampler::sample(initial_state, target_state, params.sampling.bezier);
+    const auto beziers =
+      bezier_sampler::sample(initial_state, target_state, params.sampling.bezier);
 
-    constexpr double step = 0.01;  // TODO(Maxime CLEMENT): calculate from params.sampling.resolution
+    constexpr double step =
+      0.01;  // TODO(Maxime CLEMENT): calculate from params.sampling.resolution
     for (const auto & bezier : beziers) {
       sampler_common::Path path;
       for (double t = 0.0; t <= 1.0; t += step) {
@@ -148,7 +158,8 @@ std::vector<frenet_planner::Path> generateFrenetPaths(
   (void)constraints;
   const auto sampling_parameters = prepareSamplingParameters(
     initial_state, path,
-    std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0), path_spline, params);
+    std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0), path_spline,
+    params);
 
   frenet_planner::FrenetState initial_frenet_state;
   initial_frenet_state.position = path_spline.frenet(initial_state.pose);
