@@ -155,7 +155,7 @@ BehaviorModuleOutput PullOverModule::plan()
   return output;
 }
 
-PathWithLaneId PullOverModule::planCandidate() const
+std::pair<PathWithLaneId, TurnSignalInfo> PullOverModule::planCandidate() const
 {
   // Get lane change lanes
   const auto current_lanes = getCurrentLanes();
@@ -168,15 +168,35 @@ PathWithLaneId PullOverModule::planCandidate() const
     getSafePath(pull_over_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
-  return selected_path.path;
+  const auto hazard_info = getHazard(
+    status_.pull_over_lanes, planner_data_->self_pose->pose,
+    planner_data_->route_handler->getGoalPose(), planner_data_->self_odometry->twist.twist.linear.x,
+    parameters_.hazard_on_threshold_dis, parameters_.hazard_on_threshold_vel,
+    planner_data_->parameters.base_link2front);
+
+  const auto turn_info = util::getPathTurnSignal(
+    status_.current_lanes, status_.pull_over_path.shifted_path, status_.pull_over_path.shift_point,
+    planner_data_->self_pose->pose, planner_data_->self_odometry->twist.twist.linear.x,
+    planner_data_->parameters, parameters_.pull_over_search_distance);
+
+  TurnSignalInfo turn_signal_info;
+  if (hazard_info.first.command == HazardLightsCommand::ENABLE) {
+    turn_signal_info.hazard_signal.command = hazard_info.first.command;
+    turn_signal_info.signal_distance = hazard_info.second;
+  } else {
+    turn_signal_info.turn_signal.command = turn_info.first.command;
+    turn_signal_info.signal_distance = turn_info.second;
+  }
+
+  return {selected_path.path, turn_signal_info};
 }
 
 BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
-  //approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
+  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().first);
+  // approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
   return out;
 }
 

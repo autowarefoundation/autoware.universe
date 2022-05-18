@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__APPROVAL_HANDLER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-
 #include <rtc_interface/rtc_interface.hpp>
+
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <memory>
@@ -31,13 +31,20 @@ using unique_identifier_msgs::msg::UUID;
 class ApprovalHandler
 {
 public:
-  explicit ApprovalHandler(rclcpp::Node & node, const std::string & name) : clock_{*node.get_clock()}, logger_{node.get_logger().get_child("[" + name + "]")}, rtc_interface_left_(node, name + "_left"), rtc_interface_right_(node, name + "_right"), uuid_left_(generateUUID()), uuid_right_(generateUUID())
+  explicit ApprovalHandler(rclcpp::Node & node, const std::string & name)
+  : clock_{*node.get_clock()},
+    logger_{node.get_logger().get_child("[" + name + "]")},
+    rtc_interface_left_(node, name + "_left"),
+    rtc_interface_right_(node, name + "_right"),
+    uuid_left_(generateUUID()),
+    uuid_right_(generateUUID())
   {
   }
 
   bool isApproved() const
   {
-    return rtc_interface_left_.isActivated(uuid_left_) || rtc_interface_right_.isActivated(uuid_right_);
+    return rtc_interface_left_.isActivated(uuid_left_) ||
+           rtc_interface_right_.isActivated(uuid_right_);
   }
 
   bool isWaitingApproval() const { return is_waiting_approval_; }

@@ -35,8 +35,8 @@
 
 #include <limits>
 #include <memory>
-#include <string>
 #include <random>
+#include <string>
 #include <utility>
 
 namespace behavior_path_planner
@@ -126,14 +126,15 @@ public:
   {
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
-    out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+    const auto candidate = planCandidate();
+    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.first);
     return out;
   }
 
   /**
    * @brief Get candidate path. This information is used for external judgement.
    */
-  virtual PathWithLaneId planCandidate() const = 0;
+  virtual std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const = 0;
 
   /**
    * @brief update data for planning. Note that the call of this function does not mean

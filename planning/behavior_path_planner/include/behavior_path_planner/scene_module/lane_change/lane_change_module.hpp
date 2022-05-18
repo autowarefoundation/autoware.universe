@@ -22,11 +22,11 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 
 #include <tf2/utils.h>
 
@@ -90,7 +90,7 @@ public:
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
-  PathWithLaneId planCandidate() const override;
+  std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const override;
   void onEntry() override;
   void onExit() override;
 
@@ -100,10 +100,17 @@ public:
   {
     rtc_interface_left_.publishCooperateStatus(clock_->now());
     rtc_interface_right_.publishCooperateStatus(clock_->now());
-    RCLCPP_WARN_STREAM(getLogger(), "publishRTCStatus()");
   }
 
-  bool isActivated() const override { return rtc_interface_left_.isActivated(uuid_left_) || rtc_interface_right_.isActivated(uuid_right_); }
+  bool isActivated() const override
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      return rtc_interface_left_.isActivated(uuid_left_);
+    } else if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      return rtc_interface_right_.isActivated(uuid_right_);
+    }
+    return false;
+  }
 
 private:
   LaneChangeParameters parameters_;
@@ -130,8 +137,12 @@ private:
 
   void removeRTCStatus()
   {
-    rtc_interface_left_.removeCooperateStatus(uuid_left_);
-    rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    }
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    }
   }
 
   double lane_change_lane_length_{200.0};

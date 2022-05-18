@@ -20,6 +20,7 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -49,7 +50,7 @@ public:
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
-  PathWithLaneId planCandidate() const override;
+  std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;
   void onEntry() override;
   void onExit() override;
@@ -63,7 +64,15 @@ public:
     rtc_interface_right_.publishCooperateStatus(clock_->now());
   }
 
-  bool isActivated() const override { return rtc_interface_left_.isActivated(uuid_left_) || rtc_interface_right_.isActivated(uuid_right_); }
+  bool isActivated() const override
+  {
+    if (rtc_interface_left_.isRegistered(next_uuid_)) {
+      return rtc_interface_left_.isActivated(next_uuid_);
+    } else if (rtc_interface_right_.isRegistered(next_uuid_)) {
+      return rtc_interface_right_.isActivated(next_uuid_);
+    }
+    return false;
+  }
 
 private:
   AvoidanceParameters parameters_;
@@ -75,25 +84,38 @@ private:
   // for RTC
   RTCInterface rtc_interface_left_;
   RTCInterface rtc_interface_right_;
-  UUID uuid_left_;
-  UUID uuid_right_;
+  UUID next_uuid_;
+  std::vector<std::pair<UUID, TurnSignalInfo>> registered_uuids_;
 
-  void waitApprovalLeft(const bool safe, const double distance)
+  void updateRTCStatus(const TurnSignalInfo & info)
   {
-    rtc_interface_left_.updateCooperateStatus(uuid_left_, safe, distance, clock_->now());
-    is_waiting_approval_ = true;
+    if (info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      rtc_interface_left_.updateCooperateStatus(
+        next_uuid_, true, info.signal_distance, clock_->now());
+    } else if (info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      rtc_interface_right_.updateCooperateStatus(
+        next_uuid_, true, info.signal_distance, clock_->now());
+    }
   }
 
-  void waitApprovalRight(const bool safe, const double distance)
-  {
-    rtc_interface_right_.updateCooperateStatus(uuid_right_, safe, distance, clock_->now());
-    is_waiting_approval_ = true;
-  }
+  void waitApproval() { is_waiting_approval_ = true; }
 
   void removeRTCStatus()
   {
-    rtc_interface_left_.removeCooperateStatus(uuid_left_);
-    rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    for (const auto & uuid_info : registered_uuids_) {
+      if (uuid_info.second.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        rtc_interface_left_.removeCooperateStatus(uuid_info.first);
+      } else if (uuid_info.second.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+        rtc_interface_right_.removeCooperateStatus(uuid_info.first);
+      }
+    }
+    registered_uuids_.clear();
+
+    if (rtc_interface_left_.isRegistered(next_uuid_)) {
+      rtc_interface_left_.removeCooperateStatus(next_uuid_);
+    } else if (rtc_interface_right_.isRegistered(next_uuid_)) {
+      rtc_interface_right_.removeCooperateStatus(next_uuid_);
+    }
   }
 
   // data used in previous planning

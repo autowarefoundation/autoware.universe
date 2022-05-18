@@ -49,7 +49,10 @@ BehaviorModuleOutput LaneFollowingModule::plan()
   output.path = std::make_shared<PathWithLaneId>(getReferencePath());
   return output;
 }
-PathWithLaneId LaneFollowingModule::planCandidate() const { return getReferencePath(); }
+std::pair<PathWithLaneId, TurnSignalInfo> LaneFollowingModule::planCandidate() const
+{
+  return {getReferencePath(), TurnSignalInfo{}};
+}
 void LaneFollowingModule::onEntry()
 {
   initParam();

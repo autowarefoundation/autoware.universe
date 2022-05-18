@@ -48,7 +48,11 @@ using tier4_autoware_utils::findNearestIndex;
 
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}, rtc_interface_left_(node, "avoidance_left"), rtc_interface_right_(node, "avoidance_right"), uuid_left_(generateUUID()), uuid_right_(generateUUID())
+: SceneModuleInterface{name, node},
+  parameters_{parameters},
+  rtc_interface_left_(node, "avoidance_left"),
+  rtc_interface_right_(node, "avoidance_right"),
+  next_uuid_{generateUUID()}
 {
   using std::placeholders::_1;
 }
@@ -2122,13 +2126,15 @@ BehaviorModuleOutput AvoidanceModule::plan()
   return output;
 }
 
-PathWithLaneId AvoidanceModule::planCandidate() const
+std::pair<PathWithLaneId, TurnSignalInfo> AvoidanceModule::planCandidate() const
 {
   DEBUG_PRINT("AVOIDANCE planCandidate start");
 
   auto path_shifter = path_shifter_;
   auto debug_data = debug_data_;
   auto current_raw_shift_points = current_raw_shift_points_;
+
+  TurnSignalInfo turn_signal_info;
 
   const auto shift_points = calcShiftPoints(current_raw_shift_points, debug_data);
   const auto new_shift_points = findNewShiftPoint(shift_points, path_shifter);
@@ -2140,20 +2146,26 @@ PathWithLaneId AvoidanceModule::planCandidate() const
 
   if (new_shift_points) {  // clip from shift start index for visualize
     clipByMinStartIdx(*new_shift_points, shifted_path.path);
+    if (new_shift_points->back().getRelativeLength() > 0.0) {
+      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+    } else if (new_shift_points->back().getRelativeLength() < 0.0) {
+      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+    }
+    turn_signal_info.signal_distance = new_shift_points->front().start_longitudinal;
   }
 
   clipPathLength(shifted_path.path);
 
-  return shifted_path.path;
+  return {shifted_path.path, turn_signal_info};
 }
 
 BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
 {
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
-  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
-  RCLCPP_WARN_STREAM(getLogger(), "[avoidance] planWaitingApproval()");
-  waitApprovalLeft(true, 0.1);
+  const auto candidate = planCandidate();
+  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.first);
+  updateRTCStatus(candidate.second);
   return out;
 }
 
@@ -2167,9 +2179,21 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
     // register original points for consistency
     registerRawShiftPoints(shift_points);
 
+    TurnSignalInfo turn_signal_info;
+    turn_signal_info.signal_distance = std::numeric_limits<double>::lowest();
+    if (shift_points.back().getRelativeLength() > 0.0) {
+      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+    } else if (shift_points.back().getRelativeLength() < 0.0) {
+      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+    }
+
+    registered_uuids_.push_back({next_uuid_, turn_signal_info});
+    next_uuid_ = generateUUID();
+
     DEBUG_PRINT("shift_point size: %lu -> %lu", prev_size, path_shifter_.getShiftPointsSize());
   } else {
     DEBUG_PRINT("We want to add this shift point, but NOT approved. waiting...");
+    waitApproval();
   }
 }
 

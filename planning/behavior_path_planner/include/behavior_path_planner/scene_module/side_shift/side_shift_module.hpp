@@ -27,6 +27,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace behavior_path_planner
 {
@@ -65,7 +66,7 @@ public:
   void updateData() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
-  PathWithLaneId planCandidate() const override;
+  std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const override;
   void onEntry() override;
   void onExit() override;
 

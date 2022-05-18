@@ -273,7 +273,7 @@ BehaviorModuleOutput SideShiftModule::plan()
   return output;
 }
 
-PathWithLaneId SideShiftModule::planCandidate() const
+std::pair<PathWithLaneId, TurnSignalInfo> SideShiftModule::planCandidate() const
 {
   auto path_shifter_local = path_shifter_;
 
@@ -286,7 +286,7 @@ PathWithLaneId SideShiftModule::planCandidate() const
   // Reset orientation
   setOrientation(&shifted_path.path);
 
-  return shifted_path.path;
+  return {shifted_path.path, TurnSignalInfo{}};
 }
 
 BehaviorModuleOutput SideShiftModule::planWaitingApproval()
@@ -302,7 +302,7 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(shifted_path.path);
-  output.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  output.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().first);
 
   prev_output_ = shifted_path;
 
