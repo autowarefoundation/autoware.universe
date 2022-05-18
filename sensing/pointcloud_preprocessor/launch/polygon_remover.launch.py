@@ -1,17 +1,20 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
 import launch
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-
-import os
 import yaml
-from ament_index_python.packages import get_package_share_directory
+
 
 def generate_launch_description():
     ns = "pointcloud_preprocessor"
     pkg = "pointcloud_preprocessor"
 
-    param_file = os.path.join(get_package_share_directory("vehicle_info_util"), "config/polygon_remover.yaml")
-        
+    param_file = os.path.join(
+        get_package_share_directory("vehicle_info_util"), "config/polygon_remover.yaml"
+    )
+
     with open(param_file, "r") as f:
         polygon_remover_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 

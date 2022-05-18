@@ -19,6 +19,7 @@
 
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_point_types</depend>
+  <depend>cgal</depend>
   <depend>cv_bridge</depend>
   <depend>diagnostic_updater</depend>
   <depend>image_transport</depend>
@@ -42,7 +43,6 @@
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_pcl_extensions</depend>
-  <depend>cgal</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
