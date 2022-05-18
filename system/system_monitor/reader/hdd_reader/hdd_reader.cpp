@@ -159,7 +159,7 @@ void usage()
 
 /**
  * @brief exchanges the values of 2 bytes
- * @param [inout] str a string referemce to ATA string
+ * @param [inout] str a string reference to ATA string
  * @param [in] size size of ATA string
  * @note Each pair of bytes in an ATA string is swapped.
  * FIRMWARE REVISION field example
