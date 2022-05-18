@@ -112,8 +112,7 @@ boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCol
 
   // for creating debug marker
   debug_data_.search_stopline = stop_line;
-  for (size_t i = min_search_index; i < max_search_index; ++i)
-  {
+  for (size_t i = min_search_index; i < max_search_index; ++i) {
     const auto & p_front = path.points.at(i).point.pose.position;
     const auto & p_back = path.points.at(i + 1).point.pose.position;
     const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
@@ -220,7 +219,6 @@ bool StopLineModule::modifyPathVelocity(
     planning_utils::findFirstNearSearchRangeIndex(path->points, current_position);
   SearchRangeIndex dst_search_range =
     planning_utils::getPathIndexRangeIncludeLaneId(*path, lane_id_);
-
 
   // extend following and previous search range to avoid no collision
   if (dst_search_range.max_idx < path->points.size() - 1) dst_search_range.max_idx++;
