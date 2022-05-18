@@ -1020,7 +1020,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
     // calculate bounds
     const double bounds_offset =
-      mpt_param_.vehicle_circle_radiuses.at(l_idx) - vehicle_param_.width / 2.0;
+      vehicle_param_.width / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
