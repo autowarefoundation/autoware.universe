@@ -126,7 +126,6 @@ boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCol
 
     // Find intersection
     const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
-
     std::vector<Point2d> collision_points;
     bg::intersection(stop_line, path_segment, collision_points);
 
