@@ -4,9 +4,6 @@ project(lidar_centerpoint)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-# TODO: remove (https://github.com/autowarefoundation/autoware.universe/issues/850)
-add_compile_options(-Wno-deprecated-declarations -Wno-unknown-pragmas)
-
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 # set flags for CUDA availability
@@ -89,13 +86,13 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
         message(STATUS "File already exists.")
       else()
         message(STATUS "File hash changes. Downloading now ...")
-        execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
+        execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
         # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
         message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
       endif()
     else()
       message(STATUS "File doesn't exists. Downloading now ...")
-      execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
+      execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
       # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
       message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
     endif()
@@ -142,6 +139,13 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${CUDA_curand_LIBRARY}
     ${CUDNN_LIBRARY}
     centerpoint_cuda_libraries
+  )
+
+  # To suppress unknown-pragmas error. The root-cause is CUB library in CUDA 11.6.
+  # This issue was fixed by https://github.com/NVIDIA/cub/commit/7d608bf1dc14553e2fb219eabeed80b76621b6fe
+  target_include_directories(centerpoint
+    SYSTEM PUBLIC
+      ${CUDA_INCLUDE_DIRS}
   )
 
   ## node ##
