@@ -45,8 +45,8 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
     node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node_->create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-  stop_reason2_pub_ =
-    node_->create_publisher<tier4_planning_msgs::msg::StopReason2Array>("~/output/stop_reason2", 1);
+  motion_factor_pub_ =
+    node_->create_publisher<tier4_planning_msgs::msg::MotionFactorArray>("~/output/motion_factors", 1);
   pub_debug_values_ =
     node_->create_publisher<Float32MultiArrayStamped>("~/obstacle_stop/debug_values", 1);
 }
@@ -146,8 +146,8 @@ void ObstacleStopPlannerDebugNode::publish()
   stop_reason_pub_->publish(stop_reason_msg);
 
   /* publish stop reason2 for autoware api */
-  const auto stop_reason2_msg = makeStopReason2Array();
-  stop_reason2_pub_->publish(stop_reason2_msg);
+  const auto motion_factor_msg = makeMotionFactorArray();
+  motion_factor_pub_->publish(motion_factor_msg);
 
   // publish debug values
   tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
@@ -367,7 +367,7 @@ tier4_planning_msgs::msg::StopReasonArray ObstacleStopPlannerDebugNode::makeStop
   return stop_reason_array;
 }
 
-tier4_planning_msgs::msg::StopReason2Array ObstacleStopPlannerDebugNode::makeStopReason2Array()
+tier4_planning_msgs::msg::MotionFactorArray ObstacleStopPlannerDebugNode::makeMotionFactorArray()
 {
   // create header
   std_msgs::msg::Header header;
@@ -375,23 +375,23 @@ tier4_planning_msgs::msg::StopReason2Array ObstacleStopPlannerDebugNode::makeSto
   header.stamp = node_->now();
 
   // create stop reason stamped
-  tier4_planning_msgs::msg::StopReason2 stop_reason2_msg;
-  stop_reason2_msg.stop_reason = tier4_planning_msgs::msg::StopReason2::OBSTACLE_STOP;
-  stop_reason2_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_FALSE;
+  tier4_planning_msgs::msg::MotionFactor motion_factor_msg;
+  motion_factor_msg.stop_reason = tier4_planning_msgs::msg::MotionFactor::OBSTACLE_STOP;
+  motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_FALSE;
 
   if (stop_pose_ptr_ != nullptr) {
-    stop_reason2_msg.stop_line = *stop_pose_ptr_;
-    stop_reason2_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
+    motion_factor_msg.stop_line = *stop_pose_ptr_;
+    motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
     if (stop_obstacle_point_ptr_ != nullptr) {
-      stop_reason2_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
+      motion_factor_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
     }
   }
 
   // create stop reason array
-  tier4_planning_msgs::msg::StopReason2Array stop_reason2_array;
-  stop_reason2_array.header = header;
-  stop_reason2_array.stop_reasons.emplace_back(stop_reason2_msg);
-  return stop_reason2_array;
+  tier4_planning_msgs::msg::MotionFactorArray motion_factor_array;
+  motion_factor_array.header = header;
+  motion_factor_array.motion_factors.emplace_back(motion_factor_msg);
+  return motion_factor_array;
 }
 
 }  // namespace motion_planning

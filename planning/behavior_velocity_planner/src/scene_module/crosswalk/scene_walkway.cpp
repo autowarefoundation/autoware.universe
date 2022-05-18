@@ -40,15 +40,15 @@ WalkwayModule::WalkwayModule(
 bool WalkwayModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
+  tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::WALKWAY);
-  *stop_reason_2 =
-    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::WALKWAY);
+  *motion_factor =
+    planning_utils::initializeMotionFactor(tier4_planning_msgs::msg::MotionFactor::WALKWAY);
 
   const auto input = *path;
 
@@ -83,9 +83,9 @@ bool WalkwayModule::modifyPathVelocity(
     stop_factor.stop_pose = debug_data_.first_stop_pose;
     stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
-    stop_reason_2->stop_line = debug_data_.first_stop_pose;
-    stop_reason_2->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
+    motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
+    motion_factor->stop_line = debug_data_.first_stop_pose;
+    motion_factor->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
     const double signed_arc_dist_to_stop_point = tier4_autoware_utils::calcSignedArcLength(

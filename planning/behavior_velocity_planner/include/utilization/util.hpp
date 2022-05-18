@@ -31,7 +31,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
-#include <tier4_planning_msgs/msg/stop_reason2.hpp>
+#include <tier4_planning_msgs/msg/motion_factor.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/geometry.hpp>
@@ -277,7 +277,7 @@ double findReachTime(
   const double t_min, const double t_max);
 
 tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
-tier4_planning_msgs::msg::StopReason2 initializeStopReason2(const uint8_t stop_reason);
+tier4_planning_msgs::msg::MotionFactor initializeMotionFactor(const uint8_t stop_reason);
 
 void appendStopReason(
   const tier4_planning_msgs::msg::StopFactor stop_factor,

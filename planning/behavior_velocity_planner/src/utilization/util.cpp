@@ -547,12 +547,12 @@ tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & st
   return stop_reason_msg;
 }
 
-tier4_planning_msgs::msg::StopReason2 initializeStopReason2(const uint8_t stop_reason)
+tier4_planning_msgs::msg::MotionFactor initializeMotionFactor(const uint8_t stop_reason)
 {
-  tier4_planning_msgs::msg::StopReason2 stop_reason_msg;
-  stop_reason_msg.stop_reason = stop_reason;
-  stop_reason_msg.state = tier4_planning_msgs::msg::StopReason2::STOP_FALSE;
-  return stop_reason_msg;
+  tier4_planning_msgs::msg::MotionFactor motion_factor_msg;
+  motion_factor_msg.stop_reason = stop_reason;
+  motion_factor_msg.state = tier4_planning_msgs::msg::MotionFactor::STOP_FALSE;
+  return motion_factor_msg;
 }
 
 void appendStopReason(

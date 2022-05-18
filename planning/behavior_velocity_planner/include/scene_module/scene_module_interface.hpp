@@ -20,8 +20,8 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
-#include <tier4_planning_msgs/msg/stop_reason2.hpp>
-#include <tier4_planning_msgs/msg/stop_reason2_array.hpp>
+#include <tier4_planning_msgs/msg/motion_factor.hpp>
+#include <tier4_planning_msgs/msg/motion_factor_array.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 
@@ -49,7 +49,7 @@ public:
   virtual bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    tier4_planning_msgs::msg::StopReason2 * stop_reason_2) = 0;
+    tier4_planning_msgs::msg::MotionFactor * motion_factor) = 0;
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
 
   int64_t getModuleId() const { return module_id_; }
@@ -93,8 +93,8 @@ public:
     pub_infrastructure_commands_ =
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
         "~/output/infrastructure_commands", 20);
-    pub_stop_reason2_ = node.create_publisher<tier4_planning_msgs::msg::StopReason2Array>(
-      "~/output/stop_reason2", 20);
+    pub_motion_factor_ = node.create_publisher<tier4_planning_msgs::msg::MotionFactorArray>(
+      "~/output/motion_factors", 20);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -117,11 +117,11 @@ public:
   {
     visualization_msgs::msg::MarkerArray debug_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-    tier4_planning_msgs::msg::StopReason2Array stop_reason2_array;
+    tier4_planning_msgs::msg::MotionFactorArray motion_factor_array;
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
-    stop_reason2_array.header.frame_id = "map";
-    stop_reason2_array.header.stamp = clock_->now();
+    motion_factor_array.header.frame_id = "map";
+    motion_factor_array.header.stamp = clock_->now();
 
     tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
     infrastructure_command_array.stamp = clock_->now();
@@ -129,12 +129,16 @@ public:
     first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
       tier4_planning_msgs::msg::StopReason stop_reason;
-      tier4_planning_msgs::msg::StopReason2 stop_reason_2;
+      tier4_planning_msgs::msg::MotionFactor motion_factor;
       scene_module->setPlannerData(planner_data_);
-      scene_module->modifyPathVelocity(path, &stop_reason, &stop_reason_2);
-      if (stop_reason.reason != "") stop_reason_array.stop_reasons.emplace_back(stop_reason);
-      if (stop_reason_2.stop_reason != 0)
-        stop_reason2_array.stop_reasons.emplace_back(stop_reason_2);
+      scene_module->modifyPathVelocity(path, &stop_reason, &motion_factor);
+      if (stop_reason.reason != "") {
+        stop_reason_array.stop_reasons.emplace_back(stop_reason);
+      }
+      if (motion_factor.stop_reason != 0) {
+        motion_factor_array.motion_factors.emplace_back(motion_factor);
+      }
+        
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
         infrastructure_command_array.commands.push_back(*command);
@@ -152,8 +156,8 @@ public:
     if (!stop_reason_array.stop_reasons.empty()) {
       pub_stop_reason_->publish(stop_reason_array);
     }
-    if (!stop_reason2_array.stop_reasons.empty()) {
-      pub_stop_reason2_->publish(stop_reason2_array);
+    if (!motion_factor_array.motion_factors.empty()) {
+      pub_motion_factor_->publish(motion_factor_array);
     }
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
@@ -214,7 +218,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::StopReason2Array>::SharedPtr pub_stop_reason2_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::MotionFactorArray>::SharedPtr pub_motion_factor_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
 };

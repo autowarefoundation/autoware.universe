@@ -60,13 +60,13 @@ BlindSpotModule::BlindSpotModule(
 bool BlindSpotModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
+  tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
   debug_data_ = DebugData();
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::BLIND_SPOT);
-  *stop_reason_2 =
-    planning_utils::initializeStopReason2(tier4_planning_msgs::msg::StopReason2::BLIND_SPOT);
+  *motion_factor =
+    planning_utils::initializeMotionFactor(tier4_planning_msgs::msg::MotionFactor::BLIND_SPOT);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -148,9 +148,9 @@ bool BlindSpotModule::modifyPathVelocity(
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
-    stop_reason_2->stop_line = debug_data_.stop_point_pose;
-    stop_reason_2->stop_factor_points =
+    motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
+    motion_factor->stop_line = debug_data_.stop_point_pose;
+    motion_factor->stop_factor_points =
       planning_utils::toRosPoints(debug_data_.conflicting_targets);
 
   } else {

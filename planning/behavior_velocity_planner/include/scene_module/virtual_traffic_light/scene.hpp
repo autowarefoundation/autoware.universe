@@ -81,7 +81,7 @@ public:
   bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    tier4_planning_msgs::msg::StopReason2 * stop_reason_2) override;
+    tier4_planning_msgs::msg::MotionFactor * motion_factor) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
@@ -100,9 +100,9 @@ private:
   void setStopReason(
     const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason * stop_reason);
 
-  void setStopReason2(
+  void setMotionFactor(
     const geometry_msgs::msg::Pose & stop_pose,
-    tier4_planning_msgs::msg::StopReason2 * stop_reason_2);
+    tier4_planning_msgs::msg::MotionFactor * motion_factor);
 
   bool isBeforeStartLine();
 
@@ -121,12 +121,12 @@ private:
   void insertStopVelocityAtStopLine(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    tier4_planning_msgs::msg::StopReason2 * stop_reason_2);
+    tier4_planning_msgs::msg::MotionFactor * motion_factor);
 
   void insertStopVelocityAtEndLine(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    tier4_planning_msgs::msg::StopReason2 * stop_reason_2);
+    tier4_planning_msgs::msg::MotionFactor * motion_factor);
 };
 }  // namespace behavior_velocity_planner
 #endif  // SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_

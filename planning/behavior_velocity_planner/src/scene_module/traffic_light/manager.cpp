@@ -78,7 +78,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-  tier4_planning_msgs::msg::StopReason2Array stop_reason2_array;
+  tier4_planning_msgs::msg::MotionFactorArray motion_factor_array;
   autoware_auto_perception_msgs::msg::LookingTrafficSignal tl_state;
 
   tl_state.header.stamp = path->header.stamp;
@@ -90,13 +90,13 @@ void TrafficLightModuleManager::modifyPathVelocity(
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   for (const auto & scene_module : scene_modules_) {
     tier4_planning_msgs::msg::StopReason stop_reason;
-    tier4_planning_msgs::msg::StopReason2 stop_reason_2;
+    tier4_planning_msgs::msg::MotionFactor motion_factor;
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
     traffic_light_scene_module->setPlannerData(planner_data_);
-    traffic_light_scene_module->modifyPathVelocity(path, &stop_reason, &stop_reason_2);
+    traffic_light_scene_module->modifyPathVelocity(path, &stop_reason, &motion_factor);
     stop_reason_array.stop_reasons.emplace_back(stop_reason);
-    stop_reason2_array.stop_reasons.emplace_back(stop_reason_2);
+    motion_factor_array.motion_factors.emplace_back(motion_factor);
     if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
       first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
     }
@@ -118,8 +118,8 @@ void TrafficLightModuleManager::modifyPathVelocity(
   if (!stop_reason_array.stop_reasons.empty()) {
     pub_stop_reason_->publish(stop_reason_array);
   }
-  if (!stop_reason2_array.stop_reasons.empty()) {
-    pub_stop_reason2_->publish(stop_reason2_array);
+  if (!motion_factor_array.motion_factors.empty()) {
+    pub_motion_factor_->publish(motion_factor_array);
   }
   pub_debug_->publish(debug_marker_array);
   pub_tl_state_->publish(tl_state);

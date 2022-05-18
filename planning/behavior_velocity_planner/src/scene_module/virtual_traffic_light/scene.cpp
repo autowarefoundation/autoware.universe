@@ -351,7 +351,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
 bool VirtualTrafficLightModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
+  tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
   // Initialize
   setInfrastructureCommand({});
@@ -360,14 +360,14 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
     tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
 
   if (command_.type == "intersection_coordination") {
-    *stop_reason_2 = planning_utils::initializeStopReason2(
-      tier4_planning_msgs::msg::StopReason2::INTERSECTION_COORDINATION);
+    *motion_factor = planning_utils::initializeMotionFactor(
+      tier4_planning_msgs::msg::MotionFactor::INTERSECTION_COORDINATION);
   } else if (command_.type == "eva_beacon_system") {
-    *stop_reason_2 = planning_utils::initializeStopReason2(
-      tier4_planning_msgs::msg::StopReason2::EVA_BEACON_SYSTEM);
+    *motion_factor = planning_utils::initializeMotionFactor(
+      tier4_planning_msgs::msg::MotionFactor::EVA_BEACON_SYSTEM);
   } else {
-    *stop_reason_2 = planning_utils::initializeStopReason2(
-      tier4_planning_msgs::msg::StopReason2::VIRTUAL_TRAFFIC_LIGHT);
+    *motion_factor = planning_utils::initializeMotionFactor(
+      tier4_planning_msgs::msg::MotionFactor::VIRTUAL_TRAFFIC_LIGHT);
   }
 
   module_data_ = {};
@@ -408,7 +408,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   // Stop at stop_line if no message received
   if (!virtual_traffic_light_state) {
     RCLCPP_DEBUG(logger_, "no message received");
-    insertStopVelocityAtStopLine(path, stop_reason, stop_reason_2);
+    insertStopVelocityAtStopLine(path, stop_reason, motion_factor);
     updateInfrastructureCommand();
     return true;
   }
@@ -416,7 +416,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   // Stop at stop_line if no right is given
   if (!hasRightOfWay(*virtual_traffic_light_state)) {
     RCLCPP_DEBUG(logger_, "no right is given");
-    insertStopVelocityAtStopLine(path, stop_reason, stop_reason_2);
+    insertStopVelocityAtStopLine(path, stop_reason, motion_factor);
     updateInfrastructureCommand();
     return true;
   }
@@ -425,7 +425,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   if (isBeforeStopLine()) {
     if (isStateTimeout(*virtual_traffic_light_state)) {
       RCLCPP_DEBUG(logger_, "state is timeout before stop line");
-      insertStopVelocityAtStopLine(path, stop_reason, stop_reason_2);
+      insertStopVelocityAtStopLine(path, stop_reason, motion_factor);
     }
 
     updateInfrastructureCommand();
@@ -439,7 +439,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   if (
     planner_param_.check_timeout_after_stop_line && isStateTimeout(*virtual_traffic_light_state)) {
     RCLCPP_DEBUG(logger_, "state is timeout after stop line");
-    insertStopVelocityAtStopLine(path, stop_reason, stop_reason_2);
+    insertStopVelocityAtStopLine(path, stop_reason, motion_factor);
     updateInfrastructureCommand();
     return true;
   }
@@ -447,7 +447,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   // Stop at stop_line if finalization isn't completed
   if (!virtual_traffic_light_state->is_finalized) {
     RCLCPP_DEBUG(logger_, "finalization isn't completed");
-    insertStopVelocityAtEndLine(path, stop_reason, stop_reason_2);
+    insertStopVelocityAtEndLine(path, stop_reason, motion_factor);
 
     if (isNearAnyEndLine() && planner_data_->isVehicleStopped()) {
       state_ = State::FINALIZING;
@@ -474,12 +474,12 @@ void VirtualTrafficLightModule::setStopReason(
   planning_utils::appendStopReason(stop_factor, stop_reason);
 }
 
-void VirtualTrafficLightModule::setStopReason2(
-  const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
+void VirtualTrafficLightModule::setMotionFactor(
+  const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
-  stop_reason_2->state = tier4_planning_msgs::msg::StopReason2::STOP_TRUE;
-  stop_reason_2->stop_line = stop_pose;
-  stop_reason_2->stop_factor_points.push_back(toMsg(map_data_.instrument_center));
+  motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
+  motion_factor->stop_line = stop_pose;
+  motion_factor->stop_factor_points.push_back(toMsg(map_data_.instrument_center));
 }
 
 bool VirtualTrafficLightModule::isBeforeStartLine()
@@ -595,7 +595,7 @@ bool VirtualTrafficLightModule::hasRightOfWay(
 void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
+  tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
   const auto collision = findCollision(path->points, *map_data_.stop_line);
 
@@ -611,7 +611,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
-  setStopReason2(stop_pose, stop_reason_2);
+  setMotionFactor(stop_pose, motion_factor);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_stop_line =
@@ -621,7 +621,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::StopReason2 * stop_reason_2)
+  tier4_planning_msgs::msg::MotionFactor * motion_factor)
 {
   const auto collision = findCollision(path->points, map_data_.end_lines);
 
@@ -642,7 +642,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
 
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
-  setStopReason2(stop_pose, stop_reason_2);
+  setMotionFactor(stop_pose, motion_factor);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_end_line =
