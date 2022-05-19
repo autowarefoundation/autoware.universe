@@ -93,7 +93,7 @@ public:
   {
     Pose pose;
     double cost_from_start;
-    double cost_to_goal;
+    boost::optional<double> cost_to_goal = boost::none;
     boost::optional<size_t> idx = boost::none;
     boost::optional<size_t> parent_idx = boost::none;
     boost::optional<double> cost_to_parent = boost::none;
@@ -121,11 +121,11 @@ private:
   std::vector<size_t> findNeighboreIndexes(const Pose & pose) const;
   Node & addNewNode(const Pose & pose, size_t idx_parent);
   Node & getParentNode(const Node & node) { return nodes_[*node.parent_idx]; }
-  void rewire(Node & node_a, Node & node_b);
+  void reconnect(Node & node_new, Node & node_reconnect);
   size_t getBestParentIndex(
     const Pose & pose_new, const Node & node_nearest,
     const std::vector<size_t> & neighbore_indexes) const;
-  boost::optional<size_t> getRewireTargetIndex(
+  boost::optional<size_t> getReconnectTargetIndex(
     const Node & node_new, const std::vector<size_t> & neighbore_indexes) const;
 
   Node node_start_;

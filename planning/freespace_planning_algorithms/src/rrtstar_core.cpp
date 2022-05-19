@@ -156,9 +156,9 @@ void RRTStar::extend()
   Node & node_new = addNewNode(x_new, idx_best_parent);
 
   // Rewire
-  const auto idx_rewire = getRewireTargetIndex(node_new, neighbore_indexes);
-  if (idx_rewire != boost::none) {
-    rewire(node_new, nodes_[*idx_rewire]);
+  const auto idx_reconnect = getReconnectTargetIndex(node_new, neighbore_indexes);
+  if (idx_reconnect != boost::none) {
+    reconnect(node_new, nodes_[*idx_reconnect]);
   }
 
   // Check if reached
@@ -175,7 +175,7 @@ void RRTStar::extend()
     boost::optional<size_t> idx_min = boost::none;
     double cost_min = inf;
     for (const auto & node : reached_nodes_) {
-      const double cost = node.cost_from_start + node.cost_to_goal;
+      const double cost = node.cost_from_start + *node.cost_to_goal;
       if (cost < cost_min) {
         cost_min = cost;
         idx_min = *node.idx;
@@ -183,7 +183,7 @@ void RRTStar::extend()
     }
     node_goal_.cost_from_start = cost_min;
     node_goal_.parent_idx = *idx_min;
-    node_goal_.cost_to_parent = nodes_[*idx_min].cost_to_goal;
+    node_goal_.cost_to_parent = *nodes_[*idx_min].cost_to_goal;
   }
 }
 
@@ -302,7 +302,7 @@ RRTStar::Node & RRTStar::addNewNode(const Pose & pose, size_t idx_parent)
   return nodes_[idx_new_node];
 }
 
-boost::optional<size_t> RRTStar::getRewireTargetIndex(
+boost::optional<size_t> RRTStar::getReconnectTargetIndex(
   const Node & node_new, const std::vector<size_t> & neighbore_indexes) const
 {
   boost::optional<size_t> idx_rewire = boost::none;
@@ -341,28 +341,36 @@ size_t RRTStar::getBestParentIndex(
   return idx_cost_min;
 }
 
-void RRTStar::rewire(Node & node_a, Node & node_b)
+void RRTStar::reconnect(Node & node_new, Node & node_reconnect)
 {
-  // connect node_a -> node_b
-  // Initial state: node_a_parent -> node_a -> #nil; node_b_parent -> node_b -> #nil
+  // connect node_new (parent) -> node_reconnect (child)
 
-  Node & node_b_parent = getParentNode(node_b);
-  auto & child_indexes = node_b_parent.child_indexes;
-  child_indexes.erase(std::find(child_indexes.begin(), child_indexes.end(), *node_b.idx));
-  node_b.parent_idx = boost::none;
-  node_b.cost_to_parent = boost::none;
+  // current state:
+  // node_new -> #nil;
+  // node_reconnect_parent -> node_reconnect -> #nil
 
-  // Current state: node_a_parent -> node_a -> #nil; node_b_parent -> #nil; node_b -> #nil
-  const double cost_a2b = cspace_.distance(node_a.pose, node_b.pose);
-  node_a.child_indexes.push_back(*node_b.idx);
-  node_b.parent_idx = *node_a.idx;
-  node_b.cost_to_parent = cost_a2b;
-  node_b.cost_from_start = node_a.cost_from_start + cost_a2b;
-  // Current state: node_a_parent -> node_a -> node_b -> #nil; node_b_parent -> #nil;
+  Node & node_reconnect_parent = getParentNode(node_reconnect);
+  auto & child_indexes = node_reconnect_parent.child_indexes;
+  child_indexes.erase(std::find(child_indexes.begin(), child_indexes.end(), *node_reconnect.idx));
+  node_reconnect.parent_idx = boost::none;
+  node_reconnect.cost_to_parent = boost::none;
 
-  // update cost of all descendents of node_b
+  // Current state:
+  // node_new_parent -> node_new -> #nil
+  // node_reconnect_parent -> #nil
+  // node_reconnect -> #nil
+  const double cost_a2b = cspace_.distance(node_new.pose, node_reconnect.pose);
+  node_new.child_indexes.push_back(*node_reconnect.idx);
+  node_reconnect.parent_idx = *node_new.idx;
+  node_reconnect.cost_to_parent = cost_a2b;
+  node_reconnect.cost_from_start = node_new.cost_from_start + cost_a2b;
+  // Current state:
+  // node_new_parent -> node_new -> node_reconnect -> #nil;
+  // node_reconnect_parent -> #nil;
+
+  // update cost of all descendents of node_reconnect
   std::queue<size_t> bfqueue;
-  bfqueue.push(*node_b.idx);
+  bfqueue.push(*node_reconnect.idx);
   while (!bfqueue.empty()) {
     const Node node = nodes_[bfqueue.front()];
     bfqueue.pop();
