@@ -87,6 +87,63 @@ visualization_msgs::msg::MarkerArray createMarkers(
   return msg;
 }
 
+visualization_msgs::msg::MarkerArray createStopLineCollisionCheck(
+  const DebugData & debug_data, const int64_t module_id)
+{
+  visualization_msgs::msg::MarkerArray msg;
+
+  // Search Segments
+  {
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "map";
+    marker.ns = "search_segments";
+    marker.id = module_id;
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+    marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    for (const auto & e : debug_data.search_segments) {
+      marker.points.push_back(
+        geometry_msgs::build<geometry_msgs::msg::Point>().x(e.at(0).x()).y(e.at(0).y()).z(0.0));
+      marker.points.push_back(
+        geometry_msgs::build<geometry_msgs::msg::Point>().x(e.at(1).x()).y(e.at(1).y()).z(0.0));
+    }
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.color.a = 0.999;  // Don't forget to set the alpha!
+    marker.color.r = 0.0;
+    marker.color.g = 0.0;
+    marker.color.b = 1.0;
+    msg.markers.push_back(marker);
+  }
+
+  // Search stopline
+  {
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "map";
+    marker.ns = "search_stopline";
+    marker.id = module_id;
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+    marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    const auto p0 = debug_data.search_stopline.at(0);
+    marker.points.push_back(
+      geometry_msgs::build<geometry_msgs::msg::Point>().x(p0.x()).y(p0.y()).z(0.0));
+    const auto p1 = debug_data.search_stopline.at(1);
+    marker.points.push_back(
+      geometry_msgs::build<geometry_msgs::msg::Point>().x(p1.x()).y(p1.y()).z(0.0));
+
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.color.a = 0.999;  // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    msg.markers.push_back(marker);
+  }
+
+  return msg;
+}
+
 }  // namespace
 
 visualization_msgs::msg::MarkerArray StopLineModule::createDebugMarkerArray()
@@ -95,6 +152,12 @@ visualization_msgs::msg::MarkerArray StopLineModule::createDebugMarkerArray()
 
   appendMarkerArray(
     createMarkers(debug_data_, module_id_), this->clock_->now(), &debug_marker_array);
+
+  if (planner_param_.show_stopline_collision_check) {
+    appendMarkerArray(
+      createStopLineCollisionCheck(debug_data_, module_id_), this->clock_->now(),
+      &debug_marker_array);
+  }
 
   return debug_marker_array;
 }
