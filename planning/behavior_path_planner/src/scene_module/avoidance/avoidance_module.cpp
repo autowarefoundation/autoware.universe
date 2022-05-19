@@ -2714,7 +2714,7 @@ double AvoidanceModule::addDistancetoReturnPoint(ObjectData & object_data)const
   
   std::vector<Point2d> collision_points;
   std::vector<Point2d> inlanelet_points;
-  std::vector<Point2d> ckeck_points;
+  std::vector<Point2d> check_points;
   for(auto lanelet : checklanelets)
   {
     std::vector<Point2d> right_collision_points;
@@ -2741,10 +2741,10 @@ double AvoidanceModule::addDistancetoReturnPoint(ObjectData & object_data)const
     }
   }
   
-  ckeck_points.insert(ckeck_points.end(),collision_points.begin(),collision_points.end());
-  ckeck_points.insert(ckeck_points.end(),inlanelet_points.begin(),inlanelet_points.end());
+  check_points.insert(check_points.end(),collision_points.begin(),collision_points.end());
+  check_points.insert(check_points.end(),inlanelet_points.begin(),inlanelet_points.end());
     
-  for(auto & check_point : ckeck_points)
+  for(auto & check_point : check_points)
   {
     const auto dx = check_point.x() - object_pose.position.x;
     const auto dy = check_point.y() - object_pose.position.y;
