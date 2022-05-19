@@ -14,21 +14,25 @@
 
 #include "freespace_planning_algorithms/rrtstar_core.hpp"
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 
-int main()
+TEST(RRTStarCore, WithInformedOption)
 {
   const rrtstar_core::Pose x_start{0.1, 0.1, 0};
   const rrtstar_core::Pose x_goal{0.1, 0.9, 0.};
 
   const rrtstar_core::Pose x_lo{0, 0, -6.28};
   const rrtstar_core::Pose x_hi{1., 1., +6.28};
-  auto lambda = [](const rrtstar_core::Pose & p) {
-    const double score = (p.x - 0.5) * (p.x - 0.5) + (p.y - 0.5) * (p.y - 0.5);
-    return score > 0.09;
+
+  auto is_feasible = [](const rrtstar_core::Pose & p) {
+    const double radius_squared = (p.x - 0.5) * (p.x - 0.5) + (p.y - 0.5) * (p.y - 0.5);
+    return radius_squared > 0.09;
   };
-  const auto cspace = rrtstar_core::CSpace(x_lo, x_hi, 0.2, lambda);
-  auto algo = rrtstar_core::RRTStar(x_start, x_goal, 0.3, 0.01, true, cspace);
+  const auto resolution = 0.01;
+  const auto cspace = rrtstar_core::CSpace(x_lo, x_hi, 0.2, is_feasible);
+  auto algo = rrtstar_core::RRTStar(x_start, x_goal, 0.3, resolution, true, cspace);
 
   clock_t start = clock();
   for (int i = 0; i < 3000; i++) {
@@ -37,4 +41,18 @@ int main()
   clock_t end = clock();
   std::cout << "elapsed time : " << (end - start) / 1000.0 << " [msec]" << std::endl;
   algo.dumpState("/tmp/rrt_result.txt");
+
+  bool is_feasible_path = true;
+  for (const auto & pose : algo.sampleSolutionWaypoints(resolution)) {
+    if (!is_feasible(pose)) {
+      is_feasible_path = false;
+    }
+  }
+  EXPECT_TRUE(is_feasible_path);
+}
+
+int main(int argc, char ** argv)
+{
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
