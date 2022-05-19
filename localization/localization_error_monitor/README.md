@@ -10,7 +10,7 @@ The package monitors the following two values:
 
 For example, this node will diagnose the system as an error when the following condition is met
 
-- `error_covariance` * `scale` > `error_ellipse_size`
+- `error_covariance` \* `scale` > `error_ellipse_size`
 
 where `error_covariance` denotes the covariance of `input/pose_with_cov`. You can find the definition of `scale` and `error_ellipse_size` in the following section.
 
