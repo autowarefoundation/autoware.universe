@@ -40,7 +40,7 @@ class BoxSDF : public AbstractSignedDistanceFunction
 {
 public:
   BoxSDF(double length, double width, tf2::Transform tf_global_to_local)
-  : length_(length), width_(width), tf_loacal_to_global_(tf_global_to_local.inverse())
+  : length_(length), width_(width), tf_local_to_global_(tf_global_to_local.inverse())
   {
   }
   double operator()(double x, double y) const override;
@@ -48,7 +48,7 @@ public:
 private:
   double length_;
   double width_;
-  tf2::Transform tf_loacal_to_global_;
+  tf2::Transform tf_local_to_global_;
 };
 
 class CompisiteSDF : public AbstractSignedDistanceFunction
