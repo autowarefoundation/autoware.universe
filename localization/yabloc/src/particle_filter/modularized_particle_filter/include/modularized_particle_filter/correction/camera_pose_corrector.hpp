@@ -10,8 +10,6 @@
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-#include <boost/circular_buffer.hpp>
-
 #include <tf2_ros/transform_broadcaster.h>
 
 #include <optional>
@@ -24,7 +22,7 @@ public:
     using std::placeholders::_1, std::placeholders::_2, std::placeholders::_3;
 
     // Publisher
-    weighted_particle_pub_ = this->create_publisher<ParticleArray>("camera/weighted_particles", 10);
+    weighted_particle_pub_ = this->create_publisher<ParticleArray>("/weighted_particles", 10);
     image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/match_image", 10);
 
     // Subscriber

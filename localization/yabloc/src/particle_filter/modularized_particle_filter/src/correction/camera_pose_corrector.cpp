@@ -28,17 +28,17 @@ Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
 }
 
 void CameraPoseCorrector::syncrhoCallback(
-  const PointCloud2 & msg1, const CloudPose & msg2, const ParticleArray & particles)
+  const PointCloud2 & lsd_msg, const CloudPose & ll2_msg, const ParticleArray & particles)
 {
-  // RCLCPP_INFO_STREAM(this->get_logger(), "ll2: " << rclcpp::Time(msg1.header.stamp).seconds());
-  // RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << rclcpp::Time(msg2.header.stamp).seconds());
+  rclcpp::Duration dt = rclcpp::Time(lsd_msg.header.stamp) - rclcpp::Time(ll2_msg.header.stamp);
+  RCLCPP_INFO_STREAM(this->get_logger(), "dt: " << dt.seconds());
 
-  cv::Mat lsd_image = cloud2Image(msg1);
-  cv::Mat ll2_image = cloud2Image(msg2.cloud);
+  cv::Mat lsd_image = cloud2Image(lsd_msg);
+  cv::Mat ll2_image = cloud2Image(ll2_msg.cloud);
   pcl::PointCloud<pcl::PointXYZ> lsd_cloud;
-  pcl::fromROSMsg(msg1, lsd_cloud);
+  pcl::fromROSMsg(lsd_msg, lsd_cloud);
 
-  const Eigen::Affine3f base_transform = pose2Affine(msg2.pose);
+  const Eigen::Affine3f base_transform = pose2Affine(ll2_msg.pose);
 
   cv::Mat zero_image = cv::Mat::zeros(ll2_image.size(), CV_8UC1);
 
@@ -98,7 +98,7 @@ void CameraPoseCorrector::syncrhoCallback(
   cv::merge(std::vector<cv::Mat>{ll2_image, lsd_image, zero_image}, match_image);
 
   // Publish
-  publishImage(match_image, msg1.header.stamp);
+  publishImage(match_image, lsd_msg.header.stamp);
   weighted_particle_pub_->publish(weighted_particles);
 }
 

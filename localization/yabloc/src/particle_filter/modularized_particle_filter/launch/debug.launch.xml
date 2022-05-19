@@ -17,21 +17,26 @@
     </node>
 
     <node pkg="modularized_particle_filter" exec="gnss_pose_corrector" name="gnss_pose_corrector" args="--ros-args --log-level $(var log_level)">
-        <remap from="weighted_particles" to="/weighted_particles" />
+        <remap from="weighted_particles" to="/gnss/weighted_particles" />
         <remap from="pose_with_covariance" to="/eagleye/pose_with_covariance" />
 
         <param name="particles_buffer_size" value="50" />
         <param name="flat_radius" value="1.0" />
     </node>
 
-    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info">
-        <remap from="/weighted_particles" to="/weighted_particles"/>
+    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info" output="screen">
+        <remap from="weighted_particles" to="/camera/weighted_particles"/>
     </node>
 
     
     <!-- ========================================= -->
-    <node pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen">
-        <remap from="/particle_array" to="/predicted_particles" />
+    <node pkg="modularized_particle_filter" exec="particle_visualize" name="gnss_particle_array_to_marker_array" output="screen">
+        <remap from="/particle_array" to="/gnss/weighted_particles" />
+        <remap from="/marker_array" to="/gnss/weighted_particles/marker_array" />
+    </node>
+    <node pkg="modularized_particle_filter" exec="particle_visualize" name="camera_particle_array_to_marker_array" output="screen">
+        <remap from="/particle_array" to="/camera/weighted_particles" />
         <remap from="/marker_array" to="/camera/weighted_particles/marker_array" />
     </node>
+
 </launch>
