@@ -101,10 +101,6 @@ repositories:
     type: git
     url: https://github.com/tier4/ublox.git
     version: ba21bbbad702e99074f706a7b868db79968e1dfd
-  vendor/septentrio:
-    type: git
-    url: https://github.com/tier4/septentrio_gnss_driver.git
-    version: d6da33824df8cf5d00cd7762fbe27e8dd5566500
   vendor/lidar-driver:
     type: git
     url: git@github.com:tier4/lidar_driver.git
