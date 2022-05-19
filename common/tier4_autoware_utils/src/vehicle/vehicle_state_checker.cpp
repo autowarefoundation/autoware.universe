@@ -36,28 +36,28 @@ bool VehicleStopChecker::isVehicleStopped(const double stop_duration = 0.0) cons
     return false;
   }
 
+  constexpr double stop_velocity = 1e-3;
   const auto now = clock_->now();
-  const auto time_buffer = now - twist_buffer_.back().header.stamp;
-  if (time_buffer.seconds() < stop_duration) {
+
+  const auto time_buffer_front = now - twist_buffer_.back().header.stamp;
+  if (time_buffer_front.seconds() < stop_duration) {
     return false;
   }
 
+  const auto time_buffer_back = now - twist_buffer_.front().header.stamp;
+  if (time_buffer_back.seconds() > stop_duration) {
+    return twist_buffer_.front().twist.linear.x < stop_velocity;
+  }
+
   // Get velocities within stop_duration
-  std::vector<double> vs;
   for (const auto & velocity : twist_buffer_) {
-    vs.push_back(velocity.twist.linear.x);
+    if (stop_velocity <= velocity.twist.linear.x) {
+      return false;
+    }
 
     const auto time_diff = now - velocity.header.stamp;
     if (time_diff.seconds() >= stop_duration) {
       break;
-    }
-  }
-
-  // Check all velocities
-  constexpr double stop_velocity = 1e-3;
-  for (const auto & v : vs) {
-    if (v >= stop_velocity) {
-      return false;
     }
   }
 
