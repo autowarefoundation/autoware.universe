@@ -240,7 +240,8 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
     object_data.lateral = calcLateralDeviation(object_closest_pose, object_pos);
     avoidance_debug_msg.lateral_distance_from_centerline = object_data.lateral;
-
+    object_data.path_pose = object_closest_pose;
+    
     // Find the footprint point closest to the path, set to object_data.overhang_distance.
     object_data.overhang_dist =
       calcOverhangDistance(object_data, object_closest_pose, object_data.overhang_pose.position);
@@ -274,6 +275,8 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
         debug_linestring.push_back(target_lines.front());
       }
     }
+    
+    object_data.distance_add_to_returnpoint = addDistancetoReturnPoint(object_data);
 
     DEBUG_PRINT(
       "set object_data: longitudinal = %f, lateral = %f, largest_overhang = %f,"
@@ -573,7 +576,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     AvoidPoint ap_return;
     ap_return.length = 0.0;
     ap_return.start_length = shift_length;
-    ap_return.start_longitudinal = o.longitudinal;
+    ap_return.start_longitudinal = o.longitudinal + o.distance_add_to_returnpoint;
     ap_return.end_longitudinal =
       o.longitudinal + std::min(nominal_return_distance, return_remaining_distance);
     ap_return.id = getOriginalShiftPointUniqueId();
@@ -2676,5 +2679,93 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   addShiftPoint(shifter.getShiftPoints(), "path_shifter_registered_points", 0.99, 0.99, 0.0, 0.5);
   addAvoidPoint(debug.new_shift_points, "path_shifter_proposed_points", 0.99, 0.0, 0.0, 0.5);
 }
+double AvoidanceModule::addDistancetoReturnPoint(ObjectData & object_data)const
+{
+  using Point2d = boost::geometry::model::d2::point_xy<double>;
+  using lanelet::geometry::distance2d;
+  using lanelet::utils::getId;
+  using lanelet::utils::to2D;
+  tier4_autoware_utils::Polygon2d object_poly{};
+  util::calcObjectPolygon(object_data.object, &object_poly);
+  const auto & rh = planner_data_->route_handler;
+  auto object_pose = object_data.object.kinematics.initial_pose_with_covariance.pose; 
+  object_pose.orientation = object_data.path_pose.orientation;
+  auto yaw = tf2::getYaw(object_pose.orientation) + M_PI_2;
+  Eigen::Vector3d base_unit_vec{std::cos(yaw), std::sin(yaw), 0};
+   
+  double max=0.0;
+  double min=0.0;
+  bool flag = true;
+  
+  lanelet::ConstLanelets checklanelets;
+  lanelet::ConstLanelet nextlanelet;
+  lanelet::ConstLanelets pretlanelets;
 
+  checklanelets.push_back(object_data.overhang_lanelet);
+  if(rh->getNextLaneletWithinRoute(object_data.overhang_lanelet,&nextlanelet))
+  {
+    checklanelets.push_back(nextlanelet);
+  }
+  
+  if(rh->getPreviousLaneletsWithinRoute(object_data.overhang_lanelet,&pretlanelets))
+  {
+      checklanelets.push_back(pretlanelets.front());
+  }
+  
+  std::vector<Point2d> collision_points;
+  std::vector<Point2d> inlanelet_points;
+  std::vector<Point2d> ckeck_points;
+  for(auto lanelet : checklanelets)
+  {
+    std::vector<Point2d> right_collision_points;
+    std::vector<Point2d> left_collision_points;
+    boost::geometry::intersection(object_poly, to2D(lanelet.rightBound().basicLineString()), right_collision_points);  
+    boost::geometry::intersection(object_poly, to2D(lanelet.leftBound().basicLineString()), left_collision_points);
+    collision_points.insert(collision_points.end(),right_collision_points.begin(),right_collision_points.end());
+    collision_points.insert(collision_points.end(),left_collision_points.begin(),left_collision_points.end());
+
+  }
+  
+  geometry_msgs::msg::Pose target_pose;
+  for(const auto & p : object_poly.outer()) {
+    const auto target_point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
+    
+    target_pose.position = target_point;
+    for(auto lanelet : checklanelets)
+    {
+      if(lanelet::utils::isInLanelet(target_pose,lanelet,0.001))
+      {
+        Point2d point(p.x(), p.y());
+        inlanelet_points.push_back(point);  
+      }
+    }
+  }
+  
+  ckeck_points.insert(ckeck_points.end(),collision_points.begin(),collision_points.end());
+  ckeck_points.insert(ckeck_points.end(),inlanelet_points.begin(),inlanelet_points.end());
+    
+  for(auto & check_point : ckeck_points)
+  {
+    const auto dx = check_point.x() - object_pose.position.x;
+    const auto dy = check_point.y() - object_pose.position.y;
+    const Eigen::Vector3d diff_vec{dx, dy, 0};
+    const Eigen::Vector3d cross_vec = base_unit_vec.cross(diff_vec);
+    if(flag)
+    {
+      max = cross_vec.z();
+      min = cross_vec.z();
+      flag = false;
+    }  
+    if(cross_vec.z() > max)
+    {
+      max = cross_vec.z();
+    }
+    if(cross_vec.z() < min)
+    {
+      min = cross_vec.z();
+    }
+
+  }
+  return fabs(max-min);  
+}
 }  // namespace behavior_path_planner

@@ -186,6 +186,7 @@ private:
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
   double getCurrentShift() const;
   double getCurrentLinearShift() const;
+  double addDistancetoReturnPoint(ObjectData & object_data)const;
 };
 
 }  // namespace behavior_path_planner
