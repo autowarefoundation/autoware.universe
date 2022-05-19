@@ -52,8 +52,8 @@ public:
     return std::hypot(pose0.x - pose1.x, pose0.y - pose1.y);
   };
 
-  // Method names with postfix c2p indicate that the arguments regarding two nodes must follow
-  // child-to-parent order.
+  // Method names with postfix child2parent indicate that the arguments regarding two nodes must
+  // follow child-to-parent order.
   //
   // Note that parent-to-child and child-to-parent reeds-shepp paths are sometimes
   // different, because there may two reeds-shepp paths with an exact same cost given two poses.
@@ -65,11 +65,13 @@ public:
   //
   // In this code, by forcing all reeds-shepp-involved methods take arguments in the
   // child-to-parent order, we keep the consistency of the resulting reeds-shepp paths.
-  void sampleWayPoints_c2p(
+  void sampleWayPoints_child2parent(
     const Pose & pose_child, const Pose & pose_parent, double step,
     std::vector<Pose> & pose_seq) const;
-  Pose interpolate_c2p(const Pose & pose_child, const Pose & pose_parent, double seg) const;
-  bool isValidPath_c2p(const Pose & pose_child, const Pose & pose_parent, double step) const;
+  Pose interpolate_child2parent(
+    const Pose & pose_child, const Pose & pose_parent, double seg) const;
+  bool isValidPath_child2parent(
+    const Pose & pose_child, const Pose & pose_parent, double step) const;
 
   bool isValidPose(const Pose & pose) const { return isInside(pose) && is_obstacle_free_(pose); }
   double getReedsSheppRadius() const { return rsspace_.rho_; }

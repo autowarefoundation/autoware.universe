@@ -79,7 +79,8 @@ Pose CSpace::ellipticInformedSampling(double c_best, const Pose & p_start, const
   }
 }
 
-Pose CSpace::interpolate_c2p(const Pose & pose_child, const Pose & pose_parent, double seg) const
+Pose CSpace::interpolate_child2parent(
+  const Pose & pose_child, const Pose & pose_parent, double seg) const
 {
   auto path = rsspace_.reedsShepp(pose_child, pose_parent);
   return interpolate(path, pose_child, seg);
@@ -90,7 +91,7 @@ Pose CSpace::interpolate(Path & path, const Pose & pose, double seg) const
   return rsspace_.interpolate(pose, path, seg / rsspace_.rho_);
 }
 
-void CSpace::sampleWayPoints_c2p(
+void CSpace::sampleWayPoints_child2parent(
   const Pose & pose_child, const Pose & pose_parent, double step,
   std::vector<Pose> & pose_seq) const
 {
@@ -102,7 +103,8 @@ void CSpace::sampleWayPoints_c2p(
   }
 }
 
-bool CSpace::isValidPath_c2p(const Pose & pose_child, const Pose & pose_parent, double step) const
+bool CSpace::isValidPath_child2parent(
+  const Pose & pose_child, const Pose & pose_parent, double step) const
 {
   auto path = rsspace_.reedsShepp(pose_child, pose_parent);
   const double path_true_length = path.length() * rsspace_.rho_;
@@ -142,9 +144,9 @@ void RRTStar::extend()
   const Node node_nearest = nodes_[findNearestIndex(x_rand)];
 
   // NOTE: no child-parent relation here
-  const Pose x_new = cspace_.interpolate_c2p(node_nearest.pose, x_rand, mu_);
+  const Pose x_new = cspace_.interpolate_child2parent(node_nearest.pose, x_rand, mu_);
 
-  if (!cspace_.isValidPath_c2p(x_new, node_nearest.pose, collision_check_resolution_)) {
+  if (!cspace_.isValidPath_child2parent(x_new, node_nearest.pose, collision_check_resolution_)) {
     return;
   }
 
@@ -161,7 +163,7 @@ void RRTStar::extend()
 
   // Check if reached
   bool is_reached =
-    cspace_.isValidPath_c2p(node_goal_.pose, node_new.pose, collision_check_resolution_);
+    cspace_.isValidPath_child2parent(node_goal_.pose, node_new.pose, collision_check_resolution_);
   if (is_reached) {
     node_new.cost_to_goal = cspace_.distance(node_new.pose, node_goal_.pose);
     reached_nodes_.push_back(node_new);
@@ -191,7 +193,7 @@ std::vector<Pose> RRTStar::sampleSolutionWaypoints(double resolution) const
   auto node = node_goal_;
   while (node.parent_idx != boost::none) {
     const auto node_parent = nodes_[*node.parent_idx];
-    cspace_.sampleWayPoints_c2p(node.pose, node_parent.pose, resolution, poses);
+    cspace_.sampleWayPoints_child2parent(node.pose, node_parent.pose, resolution, poses);
     node = node_parent;
   }
   poses.push_back(node_start_.pose);
@@ -219,7 +221,7 @@ void RRTStar::dumpState(std::string filename) const
 
       // fill trajectory from parent to this node
       std::vector<Pose> poses;
-      cspace_.sampleWayPoints_c2p(
+      cspace_.sampleWayPoints_child2parent(
         n.pose, nodes_[*n.parent_idx].pose, collision_check_resolution_, poses);
       for (const auto & pose : poses) {
         j["traj_piece"].push_back({pose.x, pose.y, pose.yaw});
@@ -306,7 +308,8 @@ boost::optional<size_t> RRTStar::getRewireTargetIndex(
   boost::optional<size_t> idx_rewire = boost::none;
   for (const size_t idx_neighbore : neighbore_indexes) {
     const Node & node_neighbore = nodes_[idx_neighbore];
-    if (cspace_.isValidPath_c2p(node_new.pose, node_neighbore.pose, collision_check_resolution_)) {
+    if (cspace_.isValidPath_child2parent(
+          node_new.pose, node_neighbore.pose, collision_check_resolution_)) {
       const double cost_from_start_rewired =
         node_new.cost_from_start + cspace_.distance(node_new.pose, node_neighbore.pose);
       if (cost_from_start_rewired < node_neighbore.cost_from_start) {
@@ -328,7 +331,8 @@ size_t RRTStar::getBestParentIndex(
     const double cost_start_to_new =
       node_neighbore.cost_from_start + cspace_.distance(node_neighbore.pose, pose_new);
     if (cost_start_to_new < cost_min) {
-      if (cspace_.isValidPath_c2p(pose_new, node_neighbore.pose, collision_check_resolution_)) {
+      if (cspace_.isValidPath_child2parent(
+            pose_new, node_neighbore.pose, collision_check_resolution_)) {
         idx_cost_min = *node_neighbore.idx;
         cost_min = cost_start_to_new;
       }
