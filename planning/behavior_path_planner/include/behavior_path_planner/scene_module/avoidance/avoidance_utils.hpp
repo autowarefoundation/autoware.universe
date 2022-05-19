@@ -28,6 +28,12 @@ bool isOnRight(const ObjectData & obj);
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose,
   const double backward_length);
+  
+lanelet::ConstLanelets calcRightLaneAroundPose(
+  const std::shared_ptr<const PlannerData> & planner_data,lanelet::ConstLanelets curlanelets);
+
+lanelet::ConstLanelets calcLeftLaneAroundPose(
+  const std::shared_ptr<const PlannerData> & planner_data,lanelet::ConstLanelets curlanelets);
 
 size_t findPathIndexFromArclength(
   const std::vector<double> & path_arclength_arr, const double target_arc);

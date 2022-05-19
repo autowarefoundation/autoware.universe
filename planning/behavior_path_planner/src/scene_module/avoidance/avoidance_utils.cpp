@@ -53,6 +53,37 @@ lanelet::ConstLanelets calcLaneAroundPose(
 
   return current_lanes;
 }
+lanelet::ConstLanelets calcRightLaneAroundPose(
+  const std::shared_ptr<const PlannerData> & planner_data,lanelet::ConstLanelets curlanelets)
+{
+  const auto & route_handler = planner_data->route_handler;
+  lanelet::ConstLanelets rightlanelets;
+  for(auto lane :curlanelets)
+  {        
+    auto right_lane = route_handler->getRightLanelet(lane);
+    if(right_lane)
+    {
+       rightlanelets.push_back(right_lane.get());
+    }
+  }
+  return rightlanelets;
+}
+
+lanelet::ConstLanelets calcLeftLaneAroundPose(
+  const std::shared_ptr<const PlannerData> & planner_data,lanelet::ConstLanelets curlanelets)
+{
+  const auto & route_handler = planner_data->route_handler;
+  lanelet::ConstLanelets leftlanelets;
+  for(auto lane :curlanelets)
+  {        
+    auto left_lane = route_handler->getLeftLanelet(lane);
+    if(left_lane)
+    {
+       leftlanelets.push_back(left_lane.get());
+    }
+  }
+  return leftlanelets;
+}
 
 ShiftedPath toShiftedPath(const PathWithLaneId & path)
 {

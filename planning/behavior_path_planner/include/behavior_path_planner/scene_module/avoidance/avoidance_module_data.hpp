@@ -255,6 +255,8 @@ struct AvoidancePlanningData
 
   // current driving lanelet
   lanelet::ConstLanelets current_lanelets;
+  lanelet::ConstLanelets right_lanelets;
+  lanelet::ConstLanelets left_lanelets;
 
   // avoidance target objects
   ObjectDataArray objects;

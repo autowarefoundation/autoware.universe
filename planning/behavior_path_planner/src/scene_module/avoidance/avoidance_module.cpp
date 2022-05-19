@@ -147,6 +147,8 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
   // lanelet info
   data.current_lanelets = calcLaneAroundPose(
     planner_data_, reference_pose.pose, planner_data_->parameters.backward_path_length);
+  data.right_lanelets = calcRightLaneAroundPose(planner_data_,data.current_lanelets);
+  data.left_lanelets = calcLeftLaneAroundPose(planner_data_,data.current_lanelets);
 
   // target objects for avoidance
   data.objects = calcAvoidanceTargetObjects(data.current_lanelets, data.reference_path, debug);
@@ -2376,6 +2378,12 @@ ShiftedPath AvoidanceModule::generateAvoidancePath(PathShifter & path_shifter) c
     return toShiftedPath(avoidance_data_.reference_path);
   }
 
+  if(shiftedpathcheck(shifted_path))
+  {
+    RCLCPP_ERROR(getLogger(),"out of lanelet");
+    return toShiftedPath(avoidance_data_.reference_path);
+  }
+
   return shifted_path;
 }
 
@@ -2675,6 +2683,68 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
 
   addShiftPoint(shifter.getShiftPoints(), "path_shifter_registered_points", 0.99, 0.99, 0.0, 0.5);
   addAvoidPoint(debug.new_shift_points, "path_shifter_proposed_points", 0.99, 0.0, 0.0, 0.5);
+}
+bool AvoidanceModule::shiftedpathcheck(ShiftedPath shifted_path)const
+{
+  PathWithLaneId path_refence = shifted_path.path;
+   auto shift_length = shifted_path.shift_length;
+   lanelet::ConstLanelets current_lanelets;
+   lanelet::ConstLanelets left_lanelets;
+   lanelet::ConstLanelets right_lanelets;
+   lanelet::ConstLanelets check_lanelets;
+   left_lanelets=avoidance_data_.left_lanelets; 
+   right_lanelets=avoidance_data_.right_lanelets;
+   current_lanelets=avoidance_data_.current_lanelets;
+      
+   check_lanelets.insert(
+    check_lanelets.end(), current_lanelets.begin(), current_lanelets.end());
+   if(!left_lanelets.empty())
+   { check_lanelets.insert(
+      check_lanelets.end(), left_lanelets.begin(), left_lanelets.end());
+   }
+
+   if(!right_lanelets.empty())
+   { check_lanelets.insert(
+      check_lanelets.end(), right_lanelets.begin(), right_lanelets.end());
+   }
+  
+   bool out_flag=false;
+   size_t i=0;
+   auto with = planner_data_->parameters.vehicle_width*0.5;
+   for (auto & pt : path_refence.points)
+   {
+      if(fabs(shift_length.at(i))>1.0e-2)
+      {
+          double yaw = tf2::getYaw(pt.point.pose.orientation);
+
+         if(shift_length.at(i)>1.0e-2)
+         {
+           with=1.0*with;
+           pt.point.pose.position.x -= std::sin(yaw) * with;
+           pt.point.pose.position.y += std::cos(yaw) * with;
+         }
+         else
+         {
+           with=-1.0*with;
+           pt.point.pose.position.x -= std::sin(yaw) * with;
+           pt.point.pose.position.y += std::cos(yaw) * with;
+
+         }
+         
+      for (const auto & clt : check_lanelets) {
+         if (lanelet::utils::isInLanelet(pt.point.pose, clt, 0.01)) {          
+             out_flag=false;
+             break;
+          }
+          out_flag=true;
+      }
+
+      if(out_flag==true)break;
+
+    }
+      i++;
+   }
+   return out_flag;
 }
 
 }  // namespace behavior_path_planner
