@@ -2,8 +2,7 @@
 
 ## Purpose
 
-`surround_obstacle_checker` is a module to prevent moving if any obstacles is near stopping ego vehicle.
-This module runs only when ego vehicle is stopping.
+This module subscribes required data (ego-pose, obstacles, etc), and publishes zero velocity limit to keep stopping if any of stop conditions are satisfied.
 
 ## Inner-workings / Algorithms
 
