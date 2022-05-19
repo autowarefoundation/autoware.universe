@@ -114,6 +114,7 @@ public:
   std::vector<Pose> sampleSolutionWaypoints(double resolution) const;
   void dumpState(std::string filename) const;
   double getSolutionCost() const { return node_goal_.cost_from_start; }
+  std::vector<Node> getNodes() const { return nodes_; }
 
 private:
   size_t findNearestIndex(const Pose & x_rand) const;

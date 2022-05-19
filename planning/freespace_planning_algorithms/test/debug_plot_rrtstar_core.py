@@ -66,9 +66,9 @@ class Tree:
     def show_path(self, node, ax, color="black", width=1.0, highlight_node=False):
         q_seq = np.array(node.traj)
         ax.plot(q_seq[:, 0], q_seq[:, 1], color=color, linewidth=width)
-        q0, q1 = q_seq[0], q_seq[-1]
+        q0 = q_seq[0]
         if highlight_node:
-            ax.scatter([q0[0], q1[0]], [q0[1], q1[1]], color="green", s=50)
+            ax.scatter([q0[0]], [q0[1]], color="green", s=50)
 
     def show_world(self, ax):
         ax.plot([0, 1.0], [0.0, 0], c="k")

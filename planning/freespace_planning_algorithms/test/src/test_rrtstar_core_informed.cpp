@@ -21,34 +21,62 @@
 TEST(RRTStarCore, WithInformedOption)
 {
   const rrtstar_core::Pose x_start{0.1, 0.1, 0};
-  const rrtstar_core::Pose x_goal{0.1, 0.9, 0.};
+  const rrtstar_core::Pose x_goal{0.5, 0.9, 0.};
 
   const rrtstar_core::Pose x_lo{0, 0, -6.28};
   const rrtstar_core::Pose x_hi{1., 1., +6.28};
 
-  auto is_feasible = [](const rrtstar_core::Pose & p) {
+  auto is_collision_free = [](const rrtstar_core::Pose & p) {
     const double radius_squared = (p.x - 0.5) * (p.x - 0.5) + (p.y - 0.5) * (p.y - 0.5);
     return radius_squared > 0.09;
   };
   const auto resolution = 0.01;
-  const auto cspace = rrtstar_core::CSpace(x_lo, x_hi, 0.2, is_feasible);
-  auto algo = rrtstar_core::RRTStar(x_start, x_goal, 0.3, resolution, true, cspace);
+  const auto cspace = rrtstar_core::CSpace(x_lo, x_hi, 0.1, is_collision_free);
+  auto algo = rrtstar_core::RRTStar(x_start, x_goal, 0.2, resolution, true, cspace);
 
   clock_t start = clock();
-  for (int i = 0; i < 3000; i++) {
+  for (int i = 0; i < 2000; i++) {
     algo.extend();
   }
   clock_t end = clock();
   std::cout << "elapsed time : " << (end - start) / 1000.0 << " [msec]" << std::endl;
   algo.dumpState("/tmp/rrt_result.txt");
 
-  bool is_feasible_path = true;
-  for (const auto & pose : algo.sampleSolutionWaypoints(resolution)) {
-    if (!is_feasible(pose)) {
-      is_feasible_path = false;
+  {  // testing
+    const auto is_pose_equal =
+      [](const rrtstar_core::Pose & p0, const rrtstar_core::Pose & p1) -> bool {
+      const double eps = 1e-8;
+      if (abs(p0.x - p1.x) > eps) {
+        return false;
+      }
+      if (abs(p0.y - p1.y) > eps) {
+        return false;
+      }
+      if (abs(p0.yaw - p1.yaw) > eps) {
+        return false;
+      }
+    };
+    const auto & nodes = algo.getNodes();
+
+    // check all path (including result path) feasibility
+    bool is_all_path_feasible = true;
+    for (const auto & node : nodes) {
+      if (!node.parent_idx) {
+        continue;
+      }
+      const auto & node_parent = nodes[*node.parent_idx];
+      std::vector<rrtstar_core::Pose> mid_poses;
+      cspace.sampleWayPoints_child2parent(node.pose, node_parent.pose, resolution, mid_poses);
+
+      // check feasibility
+      for (const auto & pose : mid_poses) {
+        if (!cspace.isValidPose(pose)) {
+          is_all_path_feasible = false;
+        }
+      }
     }
+    EXPECT_TRUE(is_all_path_feasible);
   }
-  EXPECT_TRUE(is_feasible_path);
 }
 
 int main(int argc, char ** argv)

@@ -309,7 +309,7 @@ boost::optional<size_t> RRTStar::getRewireTargetIndex(
   for (const size_t idx_neighbore : neighbore_indexes) {
     const Node & node_neighbore = nodes_[idx_neighbore];
     if (cspace_.isValidPath_child2parent(
-          node_new.pose, node_neighbore.pose, collision_check_resolution_)) {
+          node_neighbore.pose, node_new.pose, collision_check_resolution_)) {
       const double cost_from_start_rewired =
         node_new.cost_from_start + cspace_.distance(node_new.pose, node_neighbore.pose);
       if (cost_from_start_rewired < node_neighbore.cost_from_start) {
