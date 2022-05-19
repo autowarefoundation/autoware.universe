@@ -490,24 +490,19 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     avoidance_debug_msg.max_shift_length = max_allowable_lateral_distance;
 
     if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
-      avoidance_debug_msg.allow_avoidance = false;
-      avoidance_debug_msg.failed_reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
+      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
+      continue;
     }
 
     const auto max_shift_length =
       o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
-    const auto max_left_shift_limit = [&o, &max_allowable_lateral_distance, &max_shift_length,
-                                       this]() noexcept {
-      const auto left_shift_constraint = std::min(getLeftShiftBound(), max_shift_length);
-      return (o.to_road_shoulder_distance > max_allowable_lateral_distance) ? left_shift_constraint
-                                                                            : 0.0;
+
+    const auto max_left_shift_limit = [&max_shift_length, this]() noexcept {
+      return std::min(getLeftShiftBound(), max_shift_length);
     };
 
-    const auto max_right_shift_limit = [&o, &max_allowable_lateral_distance, &max_shift_length,
-                                        this]() noexcept {
-      const auto right_shift_constraint = std::max(getRightShiftBound(), -max_shift_length);
-      return (o.to_road_shoulder_distance > max_allowable_lateral_distance) ? right_shift_constraint
-                                                                            : 0.0;
+    const auto max_right_shift_limit = [&max_shift_length, this]() noexcept {
+      return std::max(getRightShiftBound(), -max_shift_length);
     };
 
     const auto shift_length = isOnRight(o)
@@ -1939,8 +1934,8 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
     std::sqrt(v0 * v0 + 2.0 * s * parameters_.max_avoidance_acceleration));
 
   // apply velocity limit
-  constexpr size_t VLIM_APPLY_IDX_MARGIN = 0;
-  for (size_t i = ego_idx + VLIM_APPLY_IDX_MARGIN; i < N; ++i) {
+  constexpr size_t V_LIM_APPLY_IDX_MARGIN = 0;
+  for (size_t i = ego_idx + V_LIM_APPLY_IDX_MARGIN; i < N; ++i) {
     path.path.points.at(i).point.longitudinal_velocity_mps =
       std::min(path.path.points.at(i).point.longitudinal_velocity_mps, static_cast<float>(vmax));
   }
@@ -2619,7 +2614,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   using marker_utils::createAvoidPointMarkerArray;
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createOvehangFurthestLineStringMarkerArray;
+  using marker_utils::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
@@ -2652,7 +2647,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
   add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
   add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects));
-  add(createOvehangFurthestLineStringMarkerArray(
+  add(createOverhangFurthestLineStringMarkerArray(
     *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
   // parent object info

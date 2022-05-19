@@ -10,12 +10,12 @@ ament_auto_add_library(vehicle_cmd_gate_node SHARED
 )
 
 rclcpp_components_register_node(vehicle_cmd_gate_node
-  PLUGIN "VehicleCmdGate"
+  PLUGIN "vehicle_cmd_gate::VehicleCmdGate"
   EXECUTABLE vehicle_cmd_gate
 )
 
 if(BUILD_TESTING)
-  ament_add_gtest(test_vehicle_cmd_gate
+  ament_add_ros_isolated_gtest(test_vehicle_cmd_gate
     test/src/test_main.cpp
     test/src/test_vehicle_cmd_filter.cpp
   )
