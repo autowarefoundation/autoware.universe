@@ -82,7 +82,7 @@ bool isPathShapeChanged(
   // calculate lateral deviations between truncated path_points and prev_path_points
   for (const auto & prev_point : truncated_prev_points) {
     const double dist =
-      tier4_autoware_utils::calcLateralOffset(truncated_points, prev_point.pose.position);
+      std::abs(tier4_autoware_utils::calcLateralOffset(truncated_points, prev_point.pose.position));
     if (dist > max_path_shape_change_dist) {
       return true;
     }
