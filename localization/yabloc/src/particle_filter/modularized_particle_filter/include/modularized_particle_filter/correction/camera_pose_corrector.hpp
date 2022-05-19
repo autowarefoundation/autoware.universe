@@ -47,6 +47,7 @@ private:
   void syncrhoCallback(
     const PointCloud2 & msg1, const CloudPose & msg2, const ParticleArray & particles);
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
+  cv::Mat dilateImage(const cv::Mat & image);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CAMERA_POSE_CORRECTOR_HPP_
