@@ -44,11 +44,6 @@ bool VehicleStopChecker::isVehicleStopped(const double stop_duration = 0.0) cons
     return false;
   }
 
-  const auto time_buffer_front = now - twist_buffer_.front().header.stamp;
-  if (time_buffer_front.seconds() > stop_duration) {
-    return twist_buffer_.front().twist.linear.x < stop_velocity;
-  }
-
   // Get velocities within stop_duration
   for (const auto & velocity : twist_buffer_) {
     if (stop_velocity <= velocity.twist.linear.x) {
