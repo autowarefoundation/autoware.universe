@@ -938,7 +938,6 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
   if (!start_bound_line_strip.points.empty()) {
     marker_array.markers.push_back(start_bound_line_strip);
   }
-
   return marker_array;
 }
 
