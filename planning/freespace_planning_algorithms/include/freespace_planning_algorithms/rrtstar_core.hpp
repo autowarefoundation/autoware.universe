@@ -26,6 +26,7 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -86,26 +87,42 @@ private:
   std::mt19937 rand_gen_;
 };
 
+struct Node;
+using NodeSharedPtr = std::shared_ptr<Node>;
+using NodeConstSharedPtr = std::shared_ptr<const Node>;
+using NodeWeakPtr = std::weak_ptr<Node>;
+
+struct Node
+{
+  Pose pose;
+  boost::optional<double> cost_from_start = boost::none;
+  boost::optional<double> cost_to_goal = boost::none;
+  boost::optional<double> cost_to_parent = boost::none;
+  NodeWeakPtr parent = NodeWeakPtr();
+  std::vector<NodeSharedPtr> childs = std::vector<NodeSharedPtr>();
+
+  bool isRoot() const { return getParent() == nullptr; }
+
+  void addParent(const NodeSharedPtr & parent_, double cost_to_parent_)
+  {
+    parent = parent_;
+    cost_to_parent = cost_to_parent_;
+  }
+
+  void deleteChild(const NodeSharedPtr & node)
+  {
+    childs.erase(std::find_if(
+      childs.begin(), childs.end(), [&node](const NodeConstSharedPtr node_child) -> bool {
+        return node_child.get() == node.get();
+      }));
+  }
+
+  NodeSharedPtr getParent() const { return parent.lock(); }
+};
+
 class RRTStar
 {
 public:
-  struct Node
-  {
-    Pose pose;
-    double cost_from_start;
-    boost::optional<double> cost_to_goal = boost::none;
-    boost::optional<size_t> idx = boost::none;
-    boost::optional<size_t> parent_idx = boost::none;
-    boost::optional<double> cost_to_parent = boost::none;
-    std::vector<size_t> child_indexes = std::vector<size_t>();
-
-    void addParent(size_t parent_idx_, double cost_to_parent_)
-    {
-      parent_idx = parent_idx_;
-      cost_to_parent = cost_to_parent_;
-    }
-  };
-
   RRTStar(
     Pose x_start, Pose x_goal, double mu, double collision_check_resolution, bool is_informed,
     CSpace cspace);
@@ -113,25 +130,26 @@ public:
   void extend();
   std::vector<Pose> sampleSolutionWaypoints(double resolution) const;
   void dumpState(std::string filename) const;
-  double getSolutionCost() const { return node_goal_.cost_from_start; }
-  std::vector<Node> getNodes() const { return nodes_; }
+  double getSolutionCost() const { return *node_goal_->cost_from_start; }
+  std::vector<NodeConstSharedPtr> getNodes() const;
 
 private:
-  size_t findNearestIndex(const Pose & x_rand) const;
-  std::vector<size_t> findNeighboreIndexes(const Pose & pose) const;
-  Node & addNewNode(const Pose & pose, size_t idx_parent);
-  Node & getParentNode(const Node & node) { return nodes_[*node.parent_idx]; }
-  void reconnect(Node & node_new, Node & node_reconnect);
-  size_t getBestParentIndex(
-    const Pose & pose_new, const Node & node_nearest,
-    const std::vector<size_t> & neighbore_indexes) const;
-  boost::optional<size_t> getReconnectTargetIndex(
-    const Node & node_new, const std::vector<size_t> & neighbore_indexes) const;
+  NodeConstSharedPtr findNearestNode(const Pose & x_rand) const;
+  std::vector<NodeConstSharedPtr> findNeighboreNodes(const Pose & pose) const;
+  NodeSharedPtr addNewNode(const Pose & pose, NodeSharedPtr node_parent);
+  NodeConstSharedPtr getBestParentNode(
+    const Pose & pose_new, const NodeConstSharedPtr & node_nearest,
+    const std::vector<NodeConstSharedPtr> & neighbore_nodes) const;
+  void reconnect(const NodeSharedPtr & node_new, const NodeSharedPtr & node_reconnect);
+  NodeConstSharedPtr getReconnectTargeNode(
+    const NodeConstSharedPtr node_new,
+    const std::vector<NodeConstSharedPtr> & neighbore_nodes) const;
 
-  Node node_start_;
-  Node node_goal_;
-  std::vector<Node> nodes_;
-  std::vector<Node> reached_nodes_;
+  NodeSharedPtr node_start_;
+  NodeSharedPtr node_goal_;
+  std::vector<NodeSharedPtr> nodes_;
+  std::vector<NodeSharedPtr> reached_nodes_;
+  // std::vector<Node> nodes_;
   const double mu_;
   const double collision_check_resolution_;
   const bool is_informed_;

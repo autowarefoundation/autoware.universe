@@ -17,7 +17,9 @@
 #include <nlohmann/json.hpp>
 
 #include <fstream>
+#include <memory>
 #include <queue>
+#include <unordered_map>
 
 namespace rrtstar_core
 {
@@ -128,77 +130,89 @@ RRTStar::RRTStar(
   is_informed_(is_informed),
   cspace_(cspace)
 {
-  node_start_ = Node{x_start, 0.0, inf, 0};
-  node_goal_ = Node{x_goal, inf, 0.0};
+  node_goal_ = std::make_shared<Node>(Node{x_goal, boost::none, 0.0});
+  node_start_ = std::make_shared<Node>(Node{x_start, 0.0});
   nodes_.push_back(node_start_);
 }
 
 void RRTStar::extend()
 {
   // Determine new node
-  Pose x_rand = (isSolutionFound() && is_informed_)
-                  ? cspace_.ellipticInformedSampling(
-                      node_goal_.cost_from_start, node_start_.pose, node_goal_.pose)
-                  : cspace_.uniformSampling();
+  Pose x_rand;
+  if (isSolutionFound() && is_informed_) {
+    x_rand = cspace_.ellipticInformedSampling(
+      *node_goal_->cost_from_start, node_start_->pose, node_goal_->pose);
+  } else {
+    x_rand = cspace_.uniformSampling();
+  }
 
-  const Node node_nearest = nodes_[findNearestIndex(x_rand)];
+  const auto node_nearest = findNearestNode(x_rand);
 
   // NOTE: no child-parent relation here
-  const Pose x_new = cspace_.interpolate_child2parent(node_nearest.pose, x_rand, mu_);
+  const Pose x_new = cspace_.interpolate_child2parent(node_nearest->pose, x_rand, mu_);
 
-  if (!cspace_.isValidPath_child2parent(x_new, node_nearest.pose, collision_check_resolution_)) {
+  if (!cspace_.isValidPath_child2parent(x_new, node_nearest->pose, collision_check_resolution_)) {
     return;
   }
 
-  std::vector<size_t> neighbore_indexes = findNeighboreIndexes(x_new);
+  const auto & neighbore_nodes = findNeighboreNodes(x_new);
 
-  const size_t idx_best_parent = getBestParentIndex(x_new, node_nearest, neighbore_indexes);
-  Node & node_new = addNewNode(x_new, idx_best_parent);
+  const auto & node_best_parent = getBestParentNode(x_new, node_nearest, neighbore_nodes);
+  const auto & node_new = addNewNode(x_new, std::const_pointer_cast<Node>(node_best_parent));
 
   // Rewire
-  const auto idx_reconnect = getReconnectTargetIndex(node_new, neighbore_indexes);
-  if (idx_reconnect != boost::none) {
-    reconnect(node_new, nodes_[*idx_reconnect]);
+  const auto node_reconnect = getReconnectTargeNode(node_new, neighbore_nodes);
+  if (node_reconnect) {
+    reconnect(node_new, std::const_pointer_cast<Node>(node_reconnect));
   }
 
   // Check if reached
   bool is_reached =
-    cspace_.isValidPath_child2parent(node_goal_.pose, node_new.pose, collision_check_resolution_);
+    cspace_.isValidPath_child2parent(node_goal_->pose, node_new->pose, collision_check_resolution_);
   if (is_reached) {
-    node_new.cost_to_goal = cspace_.distance(node_new.pose, node_goal_.pose);
+    node_new->cost_to_goal = cspace_.distance(node_new->pose, node_goal_->pose);
     reached_nodes_.push_back(node_new);
   }
 
   if (isSolutionFound()) {
     // This cannot be inside if(is_reached){...} because we must update this anytime after rewiring
     // takes place
-    boost::optional<size_t> idx_min = boost::none;
     double cost_min = inf;
+    NodeSharedPtr node_best_parent;
     for (const auto & node : reached_nodes_) {
-      const double cost = node.cost_from_start + *node.cost_to_goal;
+      const double cost = *(node->cost_from_start) + *(node->cost_to_goal);
       if (cost < cost_min) {
         cost_min = cost;
-        idx_min = *node.idx;
+        node_best_parent = node;
       }
     }
-    node_goal_.cost_from_start = cost_min;
-    node_goal_.parent_idx = *idx_min;
-    node_goal_.cost_to_parent = *nodes_[*idx_min].cost_to_goal;
+    node_goal_->cost_from_start = cost_min;
+    node_goal_->parent = node_best_parent;
+    node_goal_->cost_to_parent = node_best_parent->cost_to_goal;
   }
 }
 
 std::vector<Pose> RRTStar::sampleSolutionWaypoints(double resolution) const
 {
   std::vector<Pose> poses;
-  auto node = node_goal_;
-  while (node.parent_idx != boost::none) {
-    const auto node_parent = nodes_[*node.parent_idx];
-    cspace_.sampleWayPoints_child2parent(node.pose, node_parent.pose, resolution, poses);
+  NodeSharedPtr node = node_goal_;
+  while (!node->isRoot()) {
+    const auto node_parent = node->getParent();
+    cspace_.sampleWayPoints_child2parent(node->pose, node_parent->pose, resolution, poses);
     node = node_parent;
   }
-  poses.push_back(node_start_.pose);
+  poses.push_back(node_start_->pose);
   std::reverse(poses.begin(), poses.end());
   return poses;
+}
+
+std::vector<NodeConstSharedPtr> RRTStar::getNodes() const
+{
+  std::vector<NodeConstSharedPtr> nodes;
+  for (const auto & node : nodes_) {
+    nodes.push_back(node);
+  }
+  return nodes;
 }
 
 void RRTStar::dumpState(std::string filename) const
@@ -206,23 +220,27 @@ void RRTStar::dumpState(std::string filename) const
   // Dump information of all nodes
   using json = nlohmann::json;
 
-  auto serialize_node = [&](const Node & n) {
+  std::unordered_map<NodeSharedPtr, int> node_index_map;
+  for (size_t i = 0; i < nodes_.size(); ++i) {
+    node_index_map[nodes_.at(i)] = i;
+  }
+  node_index_map[node_goal_] = node_index_map.size();
+
+  auto serialize_node = [&](const NodeSharedPtr & node) {
     json j;
-    j["pose"] = {n.pose.x, n.pose.y, n.pose.yaw};
-    if (n.idx == boost::none) {
-      j["idx"] = -1;
-    } else {
-      j["idx"] = *n.idx;
-    }
-    if (n.parent_idx == boost::none) {
+    j["pose"] = {node->pose.x, node->pose.y, node->pose.yaw};
+    j["idx"] = node_index_map.at(node);
+
+    const auto parent = node->getParent();
+    if (!parent) {
       j["parent_idx"] = -1;
     } else {
-      j["parent_idx"] = *n.parent_idx;
+      j["parent_idx"] = node_index_map.at(parent);
 
       // fill trajectory from parent to this node
       std::vector<Pose> poses;
       cspace_.sampleWayPoints_child2parent(
-        n.pose, nodes_[*n.parent_idx].pose, collision_check_resolution_, poses);
+        node->pose, parent->pose, collision_check_resolution_, poses);
       for (const auto & pose : poses) {
         j["traj_piece"].push_back({pose.x, pose.y, pose.yaw});
       }
@@ -242,23 +260,23 @@ void RRTStar::dumpState(std::string filename) const
   file.close();
 }
 
-size_t RRTStar::findNearestIndex(const Pose & x_rand) const
+NodeConstSharedPtr RRTStar::findNearestNode(const Pose & x_rand) const
 {
   double dist_min = inf;
-  boost::optional<size_t> idx_min = boost::none;
+  NodeConstSharedPtr node_nearest;
   for (const auto & node : nodes_) {
-    if (cspace_.distanceLowerBound(node.pose, x_rand) < dist_min) {
-      const double dist_real = cspace_.distance(node.pose, x_rand);
+    if (cspace_.distanceLowerBound(node->pose, x_rand) < dist_min) {
+      const double dist_real = cspace_.distance(node->pose, x_rand);
       if (dist_real < dist_min) {
         dist_min = dist_real;
-        idx_min = *node.idx;
+        node_nearest = node;
       }
     }
   }
-  return *idx_min;
+  return node_nearest;
 }
 
-std::vector<size_t> RRTStar::findNeighboreIndexes(const Pose & x_new) const
+std::vector<NodeConstSharedPtr> RRTStar::findNeighboreNodes(const Pose & x_new) const
 {
   // In the original paper of rrtstar, radius is shrinking over time.
   // However, because we use reeds-shepp distance metric instead of Euclidean metric,
@@ -273,75 +291,68 @@ std::vector<size_t> RRTStar::findNeighboreIndexes(const Pose & x_new) const
 
   const double radius_neighbore = mu_;
 
-  std::vector<size_t> indexes;
+  std::vector<NodeConstSharedPtr> nodes;
   for (auto & node : nodes_) {
-    if (cspace_.distanceLowerBound(node.pose, x_new) > radius_neighbore) continue;
-    const bool is_neighbour = (cspace_.distance(node.pose, x_new) < radius_neighbore);
+    if (cspace_.distanceLowerBound(node->pose, x_new) > radius_neighbore) continue;
+    const bool is_neighbour = (cspace_.distance(node->pose, x_new) < radius_neighbore);
     if (is_neighbour) {
-      indexes.push_back(*node.idx);
+      nodes.push_back(node);
     }
   }
-  return indexes;
+  return nodes;
 }
 
-RRTStar::Node & RRTStar::addNewNode(const Pose & pose, size_t idx_parent)
+NodeSharedPtr RRTStar::addNewNode(const Pose & pose, NodeSharedPtr node_parent)
 {
-  const size_t idx_new_node = nodes_.size();
-  const double cost_to_parent = cspace_.distance(pose, nodes_[idx_parent].pose);
-  const double cost_from_start = nodes_[idx_parent].cost_from_start + cost_to_parent;
-  const Node node_new{pose, cost_from_start, inf, idx_new_node, idx_parent, cost_to_parent};
+  const double cost_to_parent = cspace_.distance(pose, node_parent->pose);
+  const double cost_from_start = *(node_parent->cost_from_start) + cost_to_parent;
+  auto node_new =
+    std::make_shared<Node>(Node{pose, cost_from_start, boost::none, cost_to_parent, node_parent});
   nodes_.push_back(node_new);
-  // TODO(HiroIshida): check ?
-  // When replacing the next line to
-  // Node & node_parent = nodes_[idx_parent];
-  // node_parent.child_indexes.push_back(idx_new_node);
-  // It should do the same.
-  // But, sometimes, idx_new_node is not pushed and then segmentation fault occurs
-  // in erase opeation inside rewire method
-  nodes_[idx_parent].child_indexes.push_back(idx_new_node);
-  return nodes_[idx_new_node];
+  node_parent->childs.push_back(node_new);
+  return node_new;
 }
 
-boost::optional<size_t> RRTStar::getReconnectTargetIndex(
-  const Node & node_new, const std::vector<size_t> & neighbore_indexes) const
+NodeConstSharedPtr RRTStar::getReconnectTargeNode(
+  const NodeConstSharedPtr node_new, const std::vector<NodeConstSharedPtr> & neighbore_nodes) const
 {
-  boost::optional<size_t> idx_rewire = boost::none;
-  for (const size_t idx_neighbore : neighbore_indexes) {
-    const Node & node_neighbore = nodes_[idx_neighbore];
+  NodeConstSharedPtr node_reconnect = nullptr;
+
+  for (const auto & node_neighbore : neighbore_nodes) {
     if (cspace_.isValidPath_child2parent(
-          node_neighbore.pose, node_new.pose, collision_check_resolution_)) {
+          node_neighbore->pose, node_new->pose, collision_check_resolution_)) {
       const double cost_from_start_rewired =
-        node_new.cost_from_start + cspace_.distance(node_new.pose, node_neighbore.pose);
-      if (cost_from_start_rewired < node_neighbore.cost_from_start) {
-        idx_rewire = *node_neighbore.idx;
+        *node_new->cost_from_start + cspace_.distance(node_new->pose, node_neighbore->pose);
+      if (cost_from_start_rewired < *node_neighbore->cost_from_start) {
+        node_reconnect = node_neighbore;
       }
     }
   }
-  return idx_rewire;
+
+  return node_reconnect;
 }
 
-size_t RRTStar::getBestParentIndex(
-  const Pose & pose_new, const Node & node_nearest,
-  const std::vector<size_t> & neighbore_indexes) const
+NodeConstSharedPtr RRTStar::getBestParentNode(
+  const Pose & pose_new, const NodeConstSharedPtr & node_nearest,
+  const std::vector<NodeConstSharedPtr> & neighbore_nodes) const
 {
-  size_t idx_cost_min = *node_nearest.idx;
-  double cost_min = node_nearest.cost_from_start + cspace_.distance(node_nearest.pose, pose_new);
-  for (const size_t idx_neighbore : neighbore_indexes) {
-    const Node & node_neighbore = nodes_[idx_neighbore];
+  NodeConstSharedPtr node_best = node_nearest;
+  double cost_min =
+    *(node_nearest->cost_from_start) + cspace_.distance(node_nearest->pose, pose_new);
+  for (const auto & node : neighbore_nodes) {
     const double cost_start_to_new =
-      node_neighbore.cost_from_start + cspace_.distance(node_neighbore.pose, pose_new);
+      *(node->cost_from_start) + cspace_.distance(node->pose, pose_new);
     if (cost_start_to_new < cost_min) {
-      if (cspace_.isValidPath_child2parent(
-            pose_new, node_neighbore.pose, collision_check_resolution_)) {
-        idx_cost_min = *node_neighbore.idx;
+      if (cspace_.isValidPath_child2parent(pose_new, node->pose, collision_check_resolution_)) {
+        node_best = node;
         cost_min = cost_start_to_new;
       }
     }
   }
-  return idx_cost_min;
+  return node_best;
 }
 
-void RRTStar::reconnect(Node & node_new, Node & node_reconnect)
+void RRTStar::reconnect(const NodeSharedPtr & node_new, const NodeSharedPtr & node_reconnect)
 {
   // connect node_new (parent) -> node_reconnect (child)
 
@@ -349,35 +360,33 @@ void RRTStar::reconnect(Node & node_new, Node & node_reconnect)
   // node_new -> #nil;
   // node_reconnect_parent -> node_reconnect -> #nil
 
-  Node & node_reconnect_parent = getParentNode(node_reconnect);
-  auto & child_indexes = node_reconnect_parent.child_indexes;
-  child_indexes.erase(std::find(child_indexes.begin(), child_indexes.end(), *node_reconnect.idx));
-  node_reconnect.parent_idx = boost::none;
-  node_reconnect.cost_to_parent = boost::none;
+  const auto node_reconnect_parent = node_reconnect->getParent();
+  node_reconnect_parent->deleteChild(node_reconnect);
+  node_reconnect->parent = std::weak_ptr<Node>();
+  node_reconnect->cost_to_parent = boost::none;
 
   // Current state:
   // node_new_parent -> node_new -> #nil
   // node_reconnect_parent -> #nil
   // node_reconnect -> #nil
-  const double cost_a2b = cspace_.distance(node_new.pose, node_reconnect.pose);
-  node_new.child_indexes.push_back(*node_reconnect.idx);
-  node_reconnect.parent_idx = *node_new.idx;
-  node_reconnect.cost_to_parent = cost_a2b;
-  node_reconnect.cost_from_start = node_new.cost_from_start + cost_a2b;
+  const double cost_a2b = cspace_.distance(node_new->pose, node_reconnect->pose);
+  node_new->childs.push_back(node_reconnect);
+  node_reconnect->parent = node_new;
+  node_reconnect->cost_to_parent = cost_a2b;
+  node_reconnect->cost_from_start = *node_new->cost_from_start + cost_a2b;
   // Current state:
   // node_new_parent -> node_new -> node_reconnect -> #nil;
   // node_reconnect_parent -> #nil;
 
   // update cost of all descendents of node_reconnect
-  std::queue<size_t> bfqueue;
-  bfqueue.push(*node_reconnect.idx);
+  std::queue<NodeSharedPtr> bfqueue;
+  bfqueue.push(node_reconnect);
   while (!bfqueue.empty()) {
-    const Node node = nodes_[bfqueue.front()];
+    const auto node = bfqueue.front();
     bfqueue.pop();
-    for (const size_t child_idx : node.child_indexes) {
-      auto & node_child = nodes_[child_idx];
-      node_child.cost_from_start = node.cost_from_start + *node_child.cost_to_parent;
-      bfqueue.push(child_idx);
+    for (const auto & child : node->childs) {
+      child->cost_from_start = *node->cost_from_start + *child->cost_to_parent;
+      bfqueue.push(child);
     }
   }
 }

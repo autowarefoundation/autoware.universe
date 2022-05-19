@@ -83,12 +83,12 @@ TEST(RRTStarCore, WithInformedOption)
     // check all path (including result path) feasibility
     bool is_all_path_feasible = true;
     for (const auto & node : nodes) {
-      if (!node.parent_idx) {
+      const auto & node_parent = node->getParent();
+      if (!node_parent) {
         continue;
       }
-      const auto & node_parent = nodes[*node.parent_idx];
       std::vector<rrtstar_core::Pose> mid_poses;
-      cspace.sampleWayPoints_child2parent(node.pose, node_parent.pose, resolution, mid_poses);
+      cspace.sampleWayPoints_child2parent(node->pose, node_parent->pose, resolution, mid_poses);
 
       // check feasibility
       for (const auto & pose : mid_poses) {
