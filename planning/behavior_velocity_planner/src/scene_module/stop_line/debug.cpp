@@ -84,55 +84,6 @@ visualization_msgs::msg::MarkerArray createMarkers(
     msg.markers.push_back(marker);
   }
 
-  // Search Segments
-  {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.ns = "search_segments";
-    marker.id = module_id;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::POINTS;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    for (const auto & e : debug_data.search_segments) {
-      marker.points.push_back(
-        geometry_msgs::build<geometry_msgs::msg::Point>().x(e.at(0).x()).y(e.at(0).y()).z(0.0));
-      marker.points.push_back(
-        geometry_msgs::build<geometry_msgs::msg::Point>().x(e.at(1).x()).y(e.at(1).y()).z(0.0));
-    }
-    marker.scale.x = 0.3;
-    marker.scale.y = 0.3;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    msg.markers.push_back(marker);
-  }
-
-  // Search stopline
-  {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.ns = "search_stopline";
-    marker.id = module_id;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::POINTS;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    const auto p0 = debug_data.search_stopline.at(0);
-    marker.points.push_back(
-      geometry_msgs::build<geometry_msgs::msg::Point>().x(p0.x()).y(p0.y()).z(0.0));
-    const auto p1 = debug_data.search_stopline.at(1);
-    marker.points.push_back(
-      geometry_msgs::build<geometry_msgs::msg::Point>().x(p1.x()).y(p1.y()).z(0.0));
-
-    marker.scale.x = 0.3;
-    marker.scale.y = 0.3;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    msg.markers.push_back(marker);
-  }
-
   return msg;
 }
 
