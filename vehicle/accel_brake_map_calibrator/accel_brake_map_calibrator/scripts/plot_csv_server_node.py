@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
 import math
 from pathlib import Path
 
@@ -29,56 +28,60 @@ from plotter import Plotter
 import rclpy
 from rclpy.node import Node
 from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
+import yaml
 
 
 class DrawGraph(Node):
     calibrated_map_dir = ""
 
-    def __init__(self, args):
+    def __init__(self):
         super().__init__("plot_server")
         self.srv = self.create_service(
             CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback
         )
 
-        self.default_map_dir = args.default_map_dir
-        self.calibrated_map_dir = args.calibrated_map_dir
-        self.scatter_only = args.scatter_only
-        self.log_file = args.log_file
-        self.min_vel_thr = args.min_vel_thr
-        self.vel_diff_thr = args.vel_diff_thr
-        self.pedal_diff_thr = args.pedal_diff_thr
-        self.max_steer_thr = args.max_steer_thr
-        self.max_pitch_thr = args.max_pitch_thr
-        self.max_jerk_thr = args.max_jerk_thr
-        self.max_pedal_vel_thr = args.max_pedal_vel_thr
+        package_path = get_package_share_directory("accel_brake_map_calibrator")
+        default_map_path = get_package_share_directory("raw_vehicle_cmd_converter")
 
-    def get_data_callback(self, request, response):
+        self.default_map_dir = default_map_path + "/data/default/"
+        self.calibrated_map_dir = package_path + "/config/"
+        self.log_file = package_path + "/config/log.csv"
 
-        if self.default_map_dir is None:
-            package_path = get_package_share_directory("raw_vehicle_cmd_converter")
-            self.declare_parameter(
-                "/accel_brake_map_calibrator/csv_default_map_dir", package_path + "/data/default/"
-            )
-            self.default_map_dir = (
-                self.get_parameter("/accel_brake_map_calibrator/csv_default_map_dir")
-                .get_parameter_value()
-                .string_value
-            )
+        config_file = package_path + "/config/accel_brake_map_calibrator.param.yaml"
+        if Path(config_file).exists():
+            print("config file exists")
+            with open(config_file) as yml:
+                data = yaml.safe_load(yml)
+            self.min_vel_thr = data["/**"]["ros__parameters"]["velocity_min_threshold"]
+            self.vel_diff_thr = data["/**"]["ros__parameters"]["velocity_diff_threshold"]
+            self.pedal_diff_thr = data["/**"]["ros__parameters"]["pedal_diff_threshold"]
+            self.max_steer_thr = data["/**"]["ros__parameters"]["max_steer_threshold"]
+            self.max_pitch_thr = data["/**"]["ros__parameters"]["max_pitch_threshold"]
+            self.max_jerk_thr = data["/**"]["ros__parameters"]["max_jerk_threshold"]
+        else:
+            print("config file is not found")
+            self.min_vel_thr = 0.1
+            self.vel_diff_thr = 0.556
+            self.pedal_diff_thr = 0.03
+            self.max_steer_thr = 0.2
+            self.max_pitch_thr = 0.02
+            self.max_jerk_thr = 0.7
 
-        if self.calibrated_map_dir is None:
-            package_path = get_package_share_directory("accel_brake_map_calibrator")
-            self.declare_parameter(
-                "/accel_brake_map_calibrator/csv_calibrated_map_dir", package_path + "/config/"
-            )
-            self.calibrated_map_dir = (
-                self.get_parameter("/accel_brake_map_calibrator/csv_calibrated_map_dir")
-                .get_parameter_value()
-                .string_value
-            )
+        self.max_pedal_vel_thr = 0.7
 
+        # debug
         print("default map dir: {}".format(self.default_map_dir))
         print("calibrated map dir: {}".format(self.calibrated_map_dir))
+        print("log file :", self.log_file)
+        print("min_vel_thr : ", self.min_vel_thr)
+        print("vel_diff_thr : ", self.vel_diff_thr)
+        print("pedal_diff_thr : ", self.pedal_diff_thr)
+        print("max_steer_thr : ", self.max_steer_thr)
+        print("max_pitch_thr : ", self.max_pitch_thr)
+        print("max_jerk_thr : ", self.max_jerk_thr)
+        print("max_pedal_vel_thr : ", self.max_pedal_vel_thr)
 
+    def get_data_callback(self, request, response):
         # read csv
         # If log file doesn't exsist, return empty data
         if not Path(self.log_file).exists():
@@ -157,7 +160,6 @@ class DrawGraph(Node):
                 default_acc_list,
                 calibrated_pedal_list,
                 calibrated_acc_list,
-                self.scatter_only,
             )
         plt.savefig("plot.svg")
         print("svg saved")
@@ -211,30 +213,28 @@ class DrawGraph(Node):
         default_acc_list,
         calibrated_pedal_list,
         calibrated_acc_list,
-        scatter_only,
     ):
 
         fig = plotter.subplot_more(subplot_num)
 
-        if not scatter_only:
-            # calibrated map
-            if len(calibrated_pedal_list) != 0 and len(calibrated_acc_list) != 0:
-                plotter.plot(
-                    calibrated_pedal_list[vel_list_idx],
-                    calibrated_acc_list[vel_list_idx],
-                    color="blue",
-                    label="calibrated",
-                )
+        # calibrated map
+        if len(calibrated_pedal_list) != 0 and len(calibrated_acc_list) != 0:
+            plotter.plot(
+                calibrated_pedal_list[vel_list_idx],
+                calibrated_acc_list[vel_list_idx],
+                color="blue",
+                label="calibrated",
+            )
 
-            # default map
-            if len(default_pedal_list) != 0 and len(default_acc_list) != 0:
-                plotter.plot(
-                    default_pedal_list[vel_list_idx],
-                    default_acc_list[vel_list_idx],
-                    color="orange",
-                    label="default",
-                    linestyle="dashed",
-                )
+        # default map
+        if len(default_pedal_list) != 0 and len(default_acc_list) != 0:
+            plotter.plot(
+                default_pedal_list[vel_list_idx],
+                default_acc_list[vel_list_idx],
+                color="orange",
+                label="default",
+                linestyle="dashed",
+            )
 
         # plot all data
         pedal_list = [0 for i in range(len(CF.PEDAL_LIST))]
@@ -318,48 +318,11 @@ class DrawGraph(Node):
 
 def main(args=None):
     rclpy.init(args=None)
-    node = DrawGraph(args)
+    node = DrawGraph()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
 
 if __name__ == "__main__":
-    package_path = get_package_share_directory("accel_brake_map_calibrator")
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-d", "--default-map-dir", default=None, type=str, help="directory of default map"
-    )
-    parser.add_argument(
-        "-c", "--calibrated-map-dir", default=None, type=str, help="directory of calibrated map"
-    )
-    parser.add_argument("-s", "--scatter-only", action="store_true", help="show only scatters")
-    parser.add_argument(
-        "-l",
-        "--log-file",
-        default=package_path + "/config/log.csv",
-        type=str,
-        help="path of log.csv",
-    )
-    parser.add_argument(
-        "--min-vel-thr", default=0.1, type=float, help="valid min velocity threshold"
-    )
-    parser.add_argument(
-        "--vel-diff-thr", default=0.556, type=float, help="valid velocity diff threshold"
-    )
-    parser.add_argument(
-        "--pedal-diff-thr", default=0.03, type=float, help="valid pedal diff threshold"
-    )
-    parser.add_argument(
-        "--max-steer-thr", default=0.2, type=float, help="valid max steer threshold"
-    )
-    parser.add_argument(
-        "--max-pitch-thr", default=0.02, type=float, help="valid max pitch threshold"
-    )
-    parser.add_argument("--max-jerk-thr", default=0.7, type=float, help="valid max jerk threshold")
-    parser.add_argument(
-        "--max-pedal-vel-thr", default=0.7, type=float, help="valid max pedal velocity threshold"
-    )
-
-    args = parser.parse_args()
-    main(args)
+    main()
