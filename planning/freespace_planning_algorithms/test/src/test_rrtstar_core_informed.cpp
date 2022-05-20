@@ -17,6 +17,27 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <stack>
+
+bool checkAllNodeConnected(const rrtstar_core::RRTStar & tree)
+{
+  const auto & nodes = tree.getNodes();
+  rrtstar_core::NodeConstSharedPtr root = nodes.front();
+
+  std::stack<rrtstar_core::NodeConstSharedPtr> node_stack;
+  node_stack.push(root);
+
+  size_t visit_count = 0;
+  while (!node_stack.empty()) {
+    const auto & node_here = node_stack.top();
+    node_stack.pop();
+    visit_count += 1;
+    for (const auto & child : node_here->childs) {
+      node_stack.push(child);
+    }
+  }
+  return nodes.size() == visit_count;
+}
 
 TEST(RRTStarCore, WithInformedOption)
 {
@@ -41,6 +62,7 @@ TEST(RRTStarCore, WithInformedOption)
   clock_t end = clock();
   std::cout << "elapsed time : " << (end - start) / 1000.0 << " [msec]" << std::endl;
   algo.dumpState("/tmp/rrt_result.txt");
+  EXPECT_TRUE(checkAllNodeConnected(algo));
 
   {  // testing
     const auto is_pose_equal =
@@ -76,6 +98,19 @@ TEST(RRTStarCore, WithInformedOption)
       }
     }
     EXPECT_TRUE(is_all_path_feasible);
+  }
+
+  {  // check solution trajectory
+    const auto waypoints = algo.sampleSolutionWaypoints(resolution);
+    EXPECT_GT(waypoints.size(), 2);
+
+    bool is_feasible = true;
+    for (const auto & p : waypoints) {
+      if (!cspace.isValidPose(p)) {
+        is_feasible = false;
+      }
+    }
+    EXPECT_TRUE(is_feasible);
   }
 }
 
