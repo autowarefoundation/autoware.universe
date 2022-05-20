@@ -220,14 +220,12 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
 std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_rrtstar(bool informed, bool update)
 {
   auto planner_common_param = get_default_planner_params();
-  if (update) {
-    planner_common_param.time_limit = 2000.0;
-  }
 
   // configure rrtstar param
   const double mu = 12.0;
   const double margin = 0.2;
-  const auto rrtstar_param = fpa::RRTStarParam{update, informed, mu, margin};
+  const double max_planning_time = 200;
+  const auto rrtstar_param = fpa::RRTStarParam{update, informed, max_planning_time, mu, margin};
   auto algo = std::make_unique<fpa::RRTStar>(planner_common_param, vehicle_shape, rrtstar_param);
   return algo;
 }

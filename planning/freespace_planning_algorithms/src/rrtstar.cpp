@@ -86,14 +86,23 @@ bool RRTStar::makePlan(
   while (true) {
     const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
     const double msec = (now - begin).seconds() * 1000.0;
+
     if (msec > planner_common_param_.time_limit) {
+      // break regardless of solution find or not
       break;
     }
 
-    algo.extend();
-    if (!rrtstar_param_.enable_update && algo.isSolutionFound()) {
-      break;
+    if (algo.isSolutionFound()) {
+      if (!rrtstar_param_.enable_update) {
+        break;
+      } else {
+        if (msec > rrtstar_param_.max_planning_time) {
+          break;
+        }
+      }
     }
+
+    algo.extend();
   }
 
   if (!algo.isSolutionFound()) {
