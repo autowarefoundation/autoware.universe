@@ -68,9 +68,9 @@ else()
 endif()
 
 # Download onnx
-find_program(GDOWN_AVAIL "gdown")
-if(NOT GDOWN_AVAIL)
-  message("gdown: command not found. External files could not be downloaded.")
+find_program(CURL_AVAIL "curl")
+if(NOT CURL_AVAIL)
+  message("curl: command not found. External files could not be downloaded.")
 endif()
 set(PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if(NOT EXISTS "${PATH}")
@@ -82,7 +82,7 @@ message(STATUS "Checking and downloading yolov3.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1ZYoBqVynmO5kKntyN56GEbELRpuXG8Ym" -O ${PATH}/yolov3.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov3.onnx" -o ${PATH}/yolov3.onnx
     ERROR_QUIET
   )
 endif()
@@ -93,7 +93,7 @@ message(STATUS "Checking and downloading yolov4.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX" -O ${PATH}/yolov4.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov4.onnx" -o ${PATH}/yolov4.onnx
     ERROR_QUIET
   )
 endif()
@@ -104,7 +104,7 @@ message(STATUS "Checking and downloading yolov4.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1rUHjV_JfkmlVFgb20XXrOMWo_HZAjrFh" -O ${PATH}/yolov4-tiny.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov4-tiny.onnx" -o ${PATH}/yolov4-tiny.onnx
     ERROR_QUIET
   )
 endif()
@@ -115,7 +115,7 @@ message(STATUS "Checking and downloading yolov5s.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1CF21nQWigwCPTr5psQZXg6cBQIOYKbad" -O ${PATH}/yolov5s.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov5s.onnx" -o ${PATH}/yolov5s.onnx
     ERROR_QUIET
   )
 endif()
@@ -126,7 +126,7 @@ message(STATUS "Checking and downloading yolov5m.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1a1h50KJH6slwmjKZpPlS-errukF-BrgG" -O ${PATH}/yolov5m.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov5m.onnx" -o ${PATH}/yolov5m.onnx
     ERROR_QUIET
   )
 endif()
@@ -137,7 +137,7 @@ message(STATUS "Checking and downloading yolov5l.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1xO8S92Cq7qrmx93UHHyA7Cd7-dJsBDP8" -O ${PATH}/yolov5l.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov5l.onnx" -o ${PATH}/yolov5l.onnx
     ERROR_QUIET
   )
 endif()
@@ -148,7 +148,7 @@ message(STATUS "Checking and downloading yolov5x.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1kAHuNJUCxpD-yWrS6t95H3zbAPfClLxI" -O ${PATH}/yolov5x.onnx
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/yolov5x.onnx" -o ${PATH}/yolov5x.onnx
     ERROR_QUIET
   )
 endif()
@@ -158,7 +158,7 @@ message(STATUS "Checking and downloading coco.names")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=19wXD23PE16kJDkZ7j2W3Ijvx5I1kO9kJ" -O ${PATH}/coco.names
+    COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/coco.names" -o ${PATH}/coco.names
     ERROR_QUIET
   )
 endif()
