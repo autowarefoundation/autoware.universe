@@ -166,16 +166,26 @@ void BlockageDiagComponent::filter(
     no_return_mask(
       cv::Rect(0, horizontal_ring_id_, horizontal_bins, vertical_bins - horizontal_ring_id_))
       .copyTo(ground_no_return_mask);
-    cv::Mat time_series_blockage_mask(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-    cv::Mat no_return_mask_binarized(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+    cv::Mat time_series_blockage_mask(
+      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+    cv::Mat no_return_mask_binarized(
+      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     static boost::circular_buffer<cv::Mat> no_return_mask_buffer(time_series_blockage_frames_);
-      no_return_mask_binarized= no_return_mask / 255;
-    no_return_mask_buffer.push_back(no_return_mask_binarized);
-      for (const auto& binary_mask:no_return_mask_buffer) {
-        time_series_blockage_mask += binary_mask;
-      }
-//    time_series_blockage_mask = time_series_blockage_mask*(255/no_return_mask_buffer.size());
-    cv::inRange(time_series_blockage_mask,no_return_mask_buffer.size()-1,no_return_mask_buffer.size(),time_series_blockage_mask);
+    no_return_mask_binarized = no_return_mask / 255;
+    static int frame_count;
+    int interval_frames = 5;
+    frame_count++;
+    if (frame_count == interval_frames) {
+      no_return_mask_buffer.push_back(no_return_mask_binarized);
+      frame_count = 0;
+    }
+    for (const auto & binary_mask : no_return_mask_buffer) {
+      time_series_blockage_mask += binary_mask;
+    }
+    cv::Mat time_series_blockage_result(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+    cv::inRange(
+      time_series_blockage_mask, no_return_mask_buffer.size() - 1, no_return_mask_buffer.size(),
+      time_series_blockage_result);
     ground_blockage_ratio_ =
       static_cast<float>(cv::countNonZero(ground_no_return_mask)) /
       static_cast<float>(horizontal_bins * (vertical_bins - horizontal_ring_id_));
@@ -223,7 +233,7 @@ void BlockageDiagComponent::filter(
     blockage_mask_pub_.publish(blockage_mask_msg);
 
     cv::Mat time_series_blockage_mask_colorized;
-    cv::applyColorMap(time_series_blockage_mask, time_series_blockage_mask_colorized, cv::COLORMAP_JET);
+    cv::applyColorMap(time_series_blockage_result, time_series_blockage_mask_colorized, cv::COLORMAP_JET);
     sensor_msgs::msg::Image::SharedPtr time_series_blockage_mask_msg =
            cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", time_series_blockage_mask_colorized).toImageMsg();
       time_series_blockage_mask_msg->header = input->header;
