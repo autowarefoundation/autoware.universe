@@ -36,7 +36,6 @@ namespace lanelet
 {
 namespace visualization
 {
-
 /**
  * [lanelet2Triangle converts lanelet into vector of triangles. Used for
  * triangulation]
