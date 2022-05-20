@@ -51,11 +51,6 @@
 
 namespace
 {
-void insertMarkerArray(
-  visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
-{
-  a1->markers.insert(a1->markers.end(), a2.markers.begin(), a2.markers.end());
-}
 
 void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
 {
@@ -135,6 +130,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
   setColor(&cl_lanelet_id, 0.5, 0.5, 0.5, 0.999);
 
   visualization_msgs::msg::MarkerArray map_marker_array;
+  using lanelet::visualization::insertMarkerArray;
 
   insertMarkerArray(
     &map_marker_array,
