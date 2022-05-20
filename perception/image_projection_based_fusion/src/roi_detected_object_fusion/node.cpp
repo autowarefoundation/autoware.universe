@@ -30,11 +30,7 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
-<<<<<<< HEAD
-  const DetectedObjects & input_object_msg, const int image_id,
-=======
   const DetectedObjects & input_object_msg, const std::size_t image_id,
->>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg)
 {
@@ -65,11 +61,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
 
   if (debugger_) {
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
-<<<<<<< HEAD
-    for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); roi_i++) {
-=======
     for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); ++roi_i) {
->>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
       debugger_->image_rois_.push_back(input_roi_msg.feature_objects.at(roi_i).feature.roi);
     }
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
@@ -82,11 +74,7 @@ void RoiDetectedObjectFusionNode::generateDetectedObjectRois(
   const Eigen::Matrix4d & camera_projection,
   std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
 {
-<<<<<<< HEAD
-  for (std::size_t obj_i = 0; obj_i < input_objects.size(); obj_i++) {
-=======
   for (std::size_t obj_i = 0; obj_i < input_objects.size(); ++obj_i) {
->>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
     std::vector<Eigen::Vector3d> vertices_camera_coord;
     {
       const auto & object = input_objects.at(obj_i);

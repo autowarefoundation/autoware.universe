@@ -59,11 +59,7 @@ Debugger::Debugger(rclcpp::Node * node_ptr, const std::size_t image_num) : node_
 }
 
 void Debugger::imageCallback(
-<<<<<<< HEAD
-  const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const int image_id)
-=======
   const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const std::size_t image_id)
->>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
 {
   image_buffers_.at(image_id).push_front(input_image_msg);
 }
@@ -75,11 +71,7 @@ void Debugger::clear()
   obstacle_points_.clear();
 }
 
-<<<<<<< HEAD
-void Debugger::publishImage(const int image_id, const rclcpp::Time & stamp)
-=======
 void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & stamp)
->>>>>>> 580565a24ff9af8c86006905681f3d1036c8724a
 {
   const boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr> & image_buffer =
     image_buffers_.at(image_id);
