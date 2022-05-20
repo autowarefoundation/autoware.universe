@@ -54,8 +54,9 @@ Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints
     Eigen::Matrix2d rotation;
     rotation << std::cos(heading), -std::sin(heading), std::sin(heading), std::cos(heading);
     const Eigen::Vector2d left_rear_point = first_point + rotation * offsets.left_rear;
+    const Eigen::Vector2d right_rear_point = first_point + rotation * offsets.right_rear;
     boost::geometry::append(footprint, Point(left_rear_point.x(), left_rear_point.y()));
-    right_bound.emplace_back(first_point + rotation * offsets.right_rear);
+    right_bound.push_back(right_rear_point);
   }
   // For each points (except 1st and last)
   for (auto it = std::next(points.begin()); it != std::prev(points.end()); ++it) {
@@ -70,11 +71,11 @@ Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints
     if (turning_right) {
       const Eigen::Vector2d left_front_point = point + rotation * offsets.left_front;
       boost::geometry::append(footprint, Point(left_front_point.x(), left_front_point.y()));
-      right_bound.emplace_back(point + rotation * offsets.right_rear);
+      right_bound.push_back(point + rotation * offsets.right_rear);
     } else {
-      const Eigen::Vector2d left_rear_point = point + rotation * offsets.left_front;
+      const Eigen::Vector2d left_rear_point = point + rotation * offsets.left_rear;
       boost::geometry::append(footprint, Point(left_rear_point.x(), left_rear_point.y()));
-      right_bound.emplace_back(point + rotation * offsets.right_front);
+      right_bound.push_back(point + rotation * offsets.right_front);
     }
   }
   // last point: use the left and right point on the front
@@ -85,7 +86,7 @@ Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints
     rotation << std::cos(heading), -std::sin(heading), std::sin(heading), std::cos(heading);
     Eigen::Vector2d left_front_point = last_point + rotation * offsets.left_front;
     boost::geometry::append(footprint, Point(left_front_point.x(), left_front_point.y()));
-    right_bound.emplace_back(last_point + rotation * offsets.right_front);
+    right_bound.push_back(last_point + rotation * offsets.right_front);
   }
   for (auto it = right_bound.rbegin(); it != right_bound.rend(); ++it)
     boost::geometry::append(footprint, Point(it->x(), it->y()));

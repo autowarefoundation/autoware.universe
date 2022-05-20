@@ -137,29 +137,17 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_stop_planner",
         namespace="",
         remappings=[
-            ("~/output/stop_reason", "/planning/scenario_planning/status/stop_reason"),
-            ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
-            ("~/output/max_velocity", "/planning/scenario_planning/max_velocity_candidates"),
-            (
-                "~/output/velocity_limit_clear_command",
-                "/planning/scenario_planning/clear_velocity_limit",
-            ),
-            ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
-            ("~/input/acceleration", "/localization/acceleration"),
-            (
-                "~/input/pointcloud",
-                "/perception/obstacle_segmentation/pointcloud",
-            ),
+            ("~/output/trajectory", "sampling_planner/trajectory"),
             ("~/input/objects", "/perception/object_recognition/objects"),
-            ("~/input/odometry", "/localization/kinematic_state"),
-            ("~/input/trajectory", "obstacle_velocity_limiter/trajectory"),
+            ("~/input/steer", "/vehicle/status/steering_status"),
+            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/vector_map", LaunchConfiguration("input_map_topic")),
+            ("~/input/route", LaunchConfiguration("input_route_topic")),
         ],
         parameters=[
-            nearest_search_param,
             common_param,
-            obstacle_stop_planner_param,
-            obstacle_stop_planner_acc_param,
             vehicle_info_param,
+            sampler_node_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -241,13 +229,10 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             container,
-            obstacle_stop_planner_loader,
-            obstacle_cruise_planner_loader,
-            obstacle_cruise_planner_relay_loader,
             surround_obstacle_checker_loader,
         ]
     )
-    return [group]
+    return [group, sampler_node]
 
 
 def generate_launch_description():

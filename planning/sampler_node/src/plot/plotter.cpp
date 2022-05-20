@@ -272,6 +272,7 @@ void Plotter::replot(const bool fc, const bool poly, const bool rescale)
     if (rescale) {
       fcplot_->rescaleAxes();
     }
+    cartesian_rect_->axis(QCPAxis::atBottom)->setScaleRatio(cartesian_rect_->axis(QCPAxis::atLeft));
     fcplot_->replot();
   } else if (poly) {
     if (rescale) {
