@@ -36,11 +36,6 @@ namespace lanelet
 {
 namespace visualization
 {
-void insertMarkerArray(
-  visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
-{
-  a1->markers.insert(a1->markers.end(), a2.markers.begin(), a2.markers.end());
-}
 
 /**
  * [lanelet2Triangle converts lanelet into vector of triangles. Used for

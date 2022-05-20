@@ -937,7 +937,9 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
   if (!start_bound_line_strip.points.empty()) {
     marker_array.markers.push_back(start_bound_line_strip);
   }
-  insertMarkerArray(&marker_array, center_line_arrows);
+  marker_array.markers.insert(
+    marker_array.markers.end(), center_line_arrows.markers.begin(),
+    center_line_arrows.markers.end());
   return marker_array;
 }
 
