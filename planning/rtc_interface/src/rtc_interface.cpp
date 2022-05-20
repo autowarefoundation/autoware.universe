@@ -163,10 +163,7 @@ void RTCInterface::removeCooperateStatus(const UUID & uuid)
     "[removeCooperateStatus] uuid : " << to_string(uuid) << " is not found." << std::endl);
 }
 
-void RTCInterface::clearCooperateStatus()
-{
-  registered_status_.statuses.clear();
-}
+void RTCInterface::clearCooperateStatus() { registered_status_.statuses.clear(); }
 
 bool RTCInterface::isActivated(const UUID & uuid) const
 {
