@@ -80,9 +80,9 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       pcd_paths.push_back(p);
     }
 
-    if (fs::is_directory(p.c_str())) {
+    if (fs::is_directory(p)) {
       for (const auto & file : fs::directory_iterator(p)) {
-        const std::string filename = file.path().c_str();
+        const auto filename = file.path().string();
         if (isPcdFile(filename)) {
           pcd_paths.push_back(filename);
         }
