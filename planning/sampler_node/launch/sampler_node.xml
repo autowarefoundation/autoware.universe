@@ -3,6 +3,8 @@
   <arg name="input_path_topic" default="/planning/scenario_planning/lane_driving/behavior_planning/path" />
   <arg name="output_path_topic" default="output/path" />
   <arg name="param_path" default="$(find-pkg-share sampler_node)/config/sampler_node.param.yaml" />
+  <!-- vehicle info -->
+  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
 
   <node pkg="sampler_node" exec="sampler_node_exe" name="sampler_node" output="screen" launch-prefix="konsole -e gdb -ex run --args">
     <remap from="~/input/objects" to="$(var input_objects)"/>

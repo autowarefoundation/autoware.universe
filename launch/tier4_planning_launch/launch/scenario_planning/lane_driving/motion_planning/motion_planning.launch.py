@@ -244,6 +244,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             common_param,
+            vehicle_info_param,
             sampler_node_param,
         ],
         # prefix=["konsole -e gdb -ex run --args"],  # for debugging

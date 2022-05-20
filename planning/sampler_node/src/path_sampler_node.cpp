@@ -118,14 +118,16 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
   params_.sampling.bezier.mt_max = declare_parameter<double>("sampling.bezier.mt_max");
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
-  params_.constraints.vehicle_offsets.left_rear =
-    Eigen::Vector2d(vehicle_info.rear_overhang_m, vehicle_info.left_overhang_m);
-  params_.constraints.vehicle_offsets.left_front =
-    Eigen::Vector2d(vehicle_info.front_overhang_m, vehicle_info.left_overhang_m);
-  params_.constraints.vehicle_offsets.right_rear =
-    Eigen::Vector2d(vehicle_info.rear_overhang_m, vehicle_info.right_overhang_m);
-  params_.constraints.vehicle_offsets.right_front =
-    Eigen::Vector2d(vehicle_info.front_overhang_m, vehicle_info.right_overhang_m);
+  // const auto half_wheel_tread = vehicle_info.wheel_tread_m / 2.0;
+  const auto left_offset = vehicle_info.vehicle_width_m / 2.0;
+  const auto right_offset = -vehicle_info.vehicle_width_m / 2.0;
+  // const auto right_offset = -(half_wheel_tread + vehicle_info.right_overhang_m);
+  const auto rear_offset = -vehicle_info.rear_overhang_m;
+  const auto front_offset = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
+  params_.constraints.vehicle_offsets.left_rear = Eigen::Vector2d(rear_offset, left_offset);
+  params_.constraints.vehicle_offsets.left_front = Eigen::Vector2d(front_offset, left_offset);
+  params_.constraints.vehicle_offsets.right_rear = Eigen::Vector2d(rear_offset, right_offset);
+  params_.constraints.vehicle_offsets.right_front = Eigen::Vector2d(front_offset, right_offset);
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
@@ -232,7 +234,6 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   }
   const auto selected_path = selectBestPath(paths);
   if (selected_path) {
-    // combine newly computed trajectory with the base trajectory
     publishPath(*selected_path, msg);
     prev_path_ = *selected_path;
   } else {
@@ -245,9 +246,9 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
 
   // Plot //
   const auto plot_begin = calc_end;
-  w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
-  w_.plotter_->plotPolygons(
-    {params_.constraints.drivable_polygon, params_.constraints.prefered_polygon});
+  // w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
+  // w_.plotter_->plotPolygons(
+  //   {params_.constraints.drivable_polygon, params_.constraints.prefered_polygon});
   std::vector<double> x;
   std::vector<double> y;
   x.reserve(msg->points.size());
