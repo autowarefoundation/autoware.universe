@@ -309,9 +309,10 @@ void FreespacePlannerNode::getAstarParam()
 void FreespacePlannerNode::getRRTStarParam()
 {
   auto & p = rrtstar_param_;
-  p.enable_update = declare_parameter("rrtstar.enable_update", false);
+  p.enable_update = declare_parameter("rrtstar.enable_update", true);
   p.use_informed_sampling = declare_parameter("rrtstar.use_informed_sampling", true);
-  p.mu = declare_parameter("rrtstar.mu", 2.5);
+  p.mu = declare_parameter("rrtstar.neighbour_radius", 8.0);
+  p.max_planning_time = declare_parameter("rrtstar.max_planning_time", 150);
   p.margin = declare_parameter("rrtstar.margin", 0.1);
 }
 
