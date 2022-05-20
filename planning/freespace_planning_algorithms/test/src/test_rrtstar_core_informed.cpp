@@ -42,7 +42,7 @@ bool checkAllNodeConnected(const rrtstar_core::RRTStar & tree)
 TEST(RRTStarCore, WithInformedOption)
 {
   const rrtstar_core::Pose x_start{0.1, 0.1, 0};
-  const rrtstar_core::Pose x_goal{0.5, 0.9, 0.};
+  const rrtstar_core::Pose x_goal{0.8, 0.8, 0.};
 
   const rrtstar_core::Pose x_lo{0, 0, -6.28};
   const rrtstar_core::Pose x_hi{1., 1., +6.28};
@@ -56,12 +56,16 @@ TEST(RRTStarCore, WithInformedOption)
   auto algo = rrtstar_core::RRTStar(x_start, x_goal, 0.2, resolution, true, cspace);
 
   clock_t start = clock();
-  for (int i = 0; i < 2000; i++) {
+  for (int i = 0; i < 10000; i++) {
+    if (i % 200 == 1) {
+      algo.deleteNodeUsingBranchAndBound();
+    }
     algo.extend();
   }
   clock_t end = clock();
   std::cout << "elapsed time : " << (end - start) / 1000.0 << " [msec]" << std::endl;
   algo.dumpState("/tmp/rrt_result.txt");
+  algo.deleteNodeUsingBranchAndBound();
   EXPECT_TRUE(checkAllNodeConnected(algo));
 
   {  // testing

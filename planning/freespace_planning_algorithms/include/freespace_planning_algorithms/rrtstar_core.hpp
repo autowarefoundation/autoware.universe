@@ -111,10 +111,11 @@ struct Node
 
   void deleteChild(const NodeSharedPtr & node)
   {
-    childs.erase(std::find_if(
+    const auto & delete_iter = std::find_if(
       childs.begin(), childs.end(), [&node](const NodeConstSharedPtr node_child) -> bool {
         return node_child.get() == node.get();
-      }));
+      });
+    childs.erase(delete_iter);
   }
 
   NodeSharedPtr getParent() const { return parent.lock(); }
@@ -128,6 +129,7 @@ public:
     CSpace cspace);
   bool isSolutionFound() const { return (reached_nodes_.size() > 0); }
   void extend();
+  void deleteNodeUsingBranchAndBound();
   std::vector<Pose> sampleSolutionWaypoints(double resolution) const;
   void dumpState(std::string filename) const;
   double getSolutionCost() const { return *node_goal_->cost_from_start; }

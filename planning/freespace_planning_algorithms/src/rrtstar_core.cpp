@@ -17,9 +17,12 @@
 #include <nlohmann/json.hpp>
 
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <queue>
+#include <stack>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace rrtstar_core
 {
@@ -189,6 +192,67 @@ void RRTStar::extend()
     node_goal_->cost_from_start = cost_min;
     node_goal_->parent = node_best_parent;
     node_goal_->cost_to_parent = node_best_parent->cost_to_goal;
+  }
+}
+
+void RRTStar::deleteNodeUsingBranchAndBound()
+{
+  // see III.B of Karaman et al. ICRA 2011
+  if (!isSolutionFound()) {
+    return;
+  }
+
+  std::unordered_map<NodeSharedPtr, int> node_index_map;
+  for (size_t i = 0; i < nodes_.size(); ++i) {
+    node_index_map[nodes_.at(i)] = i;
+  }
+
+  const auto optimal_cost_ubound = node_goal_->cost_from_start;
+  std::unordered_set<size_t> delete_indices;
+
+  const auto is_deleted = [&](const auto & node) -> bool {
+    return delete_indices.find(node_index_map[node]) != delete_indices.end();
+  };
+
+  for (const auto & node : nodes_) {
+    if (is_deleted(node)) {
+      continue;
+    }
+
+    // This cost_to_goal (cost_to_go in the paper) is originally defined by Euclidean distance.
+    // But we use cspace_.distance (reeds-sheep by default)
+    const auto here_cost_to_goal_lbound = cspace_.distance(node->pose, node_goal_->pose);
+    const auto here_optimal_cost_lbound = here_cost_to_goal_lbound + *node->cost_from_start;
+
+    if (here_optimal_cost_lbound > optimal_cost_ubound) {
+      delete_indices.insert(node_index_map[node]);
+      const auto & node_parent = node->getParent();
+      node_parent->deleteChild(node);
+
+      // delete childs
+      std::stack<NodeSharedPtr> node_stack;
+      node_stack.push(node);
+      while (!node_stack.empty()) {
+        auto node_here = node_stack.top();
+
+        node_stack.pop();
+        delete_indices.insert(node_index_map[node_here]);
+
+        for (auto & node_child : node_here->childs) {
+          if (is_deleted(node_child)) {
+            continue;
+          }
+          node_stack.push(node_child);
+        }
+      }
+    }
+  }
+
+  // Because nodes_ are shrinking in erasing, delete indices must be sorted
+  std::vector<size_t> delete_indices_vec(delete_indices.begin(), delete_indices.end());
+  std::sort(delete_indices_vec.begin(), delete_indices_vec.end(), std::greater<size_t>());
+  for (const size_t delete_idx : delete_indices_vec) {
+    nodes_.erase(nodes_.begin() + delete_idx);
   }
 }
 
