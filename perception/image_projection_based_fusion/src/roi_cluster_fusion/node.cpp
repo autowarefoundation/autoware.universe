@@ -162,3 +162,12 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   if (debugger_) {
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_rois_ = debug_pointcloud_rois;
+    debugger_->obstacle_points_ = debug_image_points;
+    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+  }
+}
+
+}  // namespace image_projection_based_fusion
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::RoiClusterFusionNode)
