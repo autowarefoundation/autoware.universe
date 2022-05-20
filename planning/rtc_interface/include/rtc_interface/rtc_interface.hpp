@@ -48,7 +48,9 @@ public:
   void updateCooperateStatus(
     const UUID & uuid, const bool safe, const double distance, const rclcpp::Time & stamp);
   void removeCooperateStatus(const UUID & uuid);
+  void clearCooperateStatus();
   bool isActivated(const UUID & uuid) const;
+  bool isRegistered(const UUID & uuid) const;
 
 private:
   void onCooperateCommandService(

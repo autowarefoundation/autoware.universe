@@ -163,6 +163,11 @@ void RTCInterface::removeCooperateStatus(const UUID & uuid)
     "[removeCooperateStatus] uuid : " << to_string(uuid) << " is not found." << std::endl);
 }
 
+void RTCInterface::clearCooperateStatus()
+{
+  registered_status_.statuses.clear();
+}
+
 bool RTCInterface::isActivated(const UUID & uuid) const
 {
   const auto itr = std::find_if(
@@ -176,6 +181,14 @@ bool RTCInterface::isActivated(const UUID & uuid) const
   RCLCPP_WARN_STREAM(
     getLogger(), "[isActivated] uuid : " << to_string(uuid) << " is not found." << std::endl);
   return false;
+}
+
+bool RTCInterface::isRegistered(const UUID & uuid) const
+{
+  const auto itr = std::find_if(
+    registered_status_.statuses.begin(), registered_status_.statuses.end(),
+    [uuid](auto & s) { return s.uuid == uuid; });
+  return itr != registered_status_.statuses.end();
 }
 
 rclcpp::Logger RTCInterface::getLogger() const { return logger_; }

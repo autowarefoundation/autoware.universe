@@ -50,7 +50,7 @@ rtc_interface.removeCooperateStatus(uuid);
 ### RTCInterface (Constructor)
 
 ```c++
-rtc_interface::RTCInterface(rclcpp::Node & node, const std::string & name, const tier4_rtc_msgs::msg::Module & module);
+rtc_interface::RTCInterface(rclcpp::Node & node, const std::string & name);
 ```
 
 #### Description
@@ -63,7 +63,6 @@ A constructor for `rtc_interface::RTCInterface`.
 - `name` : Name of cooperate status array topic and cooperate commands service
   - Cooperate status array topic name : `~/{name}/cooperate_status`
   - Cooperate commands service name : `~/{name}/cooperate_commands`
-- `module` : Module id defined in `tier4_rtc_msgs/Module`
 
 #### Output
 
@@ -127,6 +126,24 @@ Remove cooperate status corresponding to `uuid` from registered statuses.
 
 Nothing
 
+### clearCooperateStatus
+
+```c++
+rtc_interface::clearCooperateStatus()
+```
+
+#### Description
+
+Remove all cooperate statuses.
+
+#### Input
+
+Nothing
+
+#### Output
+
+Nothing
+
 ### isActivated
 
 ```c++
@@ -144,6 +161,25 @@ Return received command status corresponding to `uuid`.
 #### Output
 
 If received command is `ACTIVATED`, return `true`.
+If not, return `false`.
+
+### isRegistered
+
+```c++
+rtc_interface::isRegistered(const unique_identifier_msgs::msg::UUID & uuid)
+```
+
+#### Description
+
+Return `true` if `uuid` is registered.
+
+#### Input
+
+- `uuid` : UUID for checking module
+
+#### Output
+
+If `uuid` is registered, return `true`.
 If not, return `false`.
 
 ## Assumptions / Known limits
