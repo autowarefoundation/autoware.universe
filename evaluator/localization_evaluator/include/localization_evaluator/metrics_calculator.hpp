@@ -34,15 +34,15 @@ public:
   MetricsCalculator() = default;
   /**
    * @brief update Metrics
+   * @param [in] stat_prev Previous statistics
    * @param [in] metric metric enum value
    * @param [in] pos current position
    * @param [in] pos_gt ground truth position
-   * @param [in] stat_prev Previous statistics
    * @return string describing the requested metric
    */
   Stat<double> updateStat(
-    const Metric metric, const geometry_msgs::msg::Point & pos,
-    const geometry_msgs::msg::Point & pos_gt, const Stat<double> stat_prev) const;
+    const Stat<double> stat_prev, const Metric metric, const geometry_msgs::msg::Point & pos,
+    const geometry_msgs::msg::Point & pos_gt) const;
 };  // class MetricsCalculator
 
 }  // namespace localization_diagnostics

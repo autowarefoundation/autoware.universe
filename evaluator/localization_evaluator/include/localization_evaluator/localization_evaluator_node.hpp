@@ -62,8 +62,6 @@ public:
     const Metric & metric, const Stat<double> & metric_stat) const;
 
 private:
-  geometry_msgs::msg::Pose getCurrentEgoPose() const;
-  void onOdom(const Odometry::ConstSharedPtr & msg, const Odometry::ConstSharedPtr & msg_gt);
   // ROS
   message_filters::Subscriber<Odometry> odom_sub_;
   message_filters::Subscriber<Odometry> odom_gt_sub_;

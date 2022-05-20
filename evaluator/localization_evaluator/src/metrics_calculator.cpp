@@ -19,15 +19,14 @@
 namespace localization_diagnostics
 {
 Stat<double> MetricsCalculator::updateStat(
-  const Metric metric, const geometry_msgs::msg::Point & pos,
-  const geometry_msgs::msg::Point & pos_gt, const Stat<double> stat_prev) const
+  const Stat<double> stat_prev, const Metric metric, const geometry_msgs::msg::Point & pos,
+  const geometry_msgs::msg::Point & pos_gt) const
 {
   switch (metric) {
     case Metric::lateral_error:
-    // TODO: remove dummy + 1 with actual ground truth
-      return metrics::updateLateralStats(pos.x, pos_gt.x + 1, stat_prev);
+      return metrics::updateLateralStats(stat_prev, pos.x, pos_gt.x);
     case Metric::absolute_error:
-      return metrics::updateAbsoluteStats(pos, pos_gt, stat_prev);
+      return metrics::updateAbsoluteStats(stat_prev, pos, pos_gt);
     default:
       throw std::runtime_error(
         "[MetricsCalculator][calculate()] unknown Metric " +

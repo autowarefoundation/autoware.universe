@@ -56,30 +56,28 @@ LocalizationEvaluatorNode::LocalizationEvaluatorNode(const rclcpp::NodeOptions &
 LocalizationEvaluatorNode::~LocalizationEvaluatorNode()
 {
   if (!output_file_str_.empty()) {
-    // column width is the maximum size we might print + 1 for the space between columns
-    // const auto column_width = std::to_string(std::numeric_limits<double>::max()).size() + 1;
-    // Write data using format
     std::ofstream f(output_file_str_);
-    f << std::fixed << std::left;
+    f << std::left << std::fixed;
     // header
-    f << "#Stamp(ns)";
+    f << std::setw(24) << "#Stamp [ns]";
     for (Metric metric : metrics_) {
-      f << " " << metric_descriptions.at(metric);
-      f << " . .";  // extra "columns" to align columns headers
+      f << std::setw(30) << metric_descriptions.at(metric);
     }
     f << std::endl;
-    f << "#.";
+    f << std::setw(24) << "#";
     for (Metric metric : metrics_) {
       (void)metric;
-      f << " min max mean";
+      f << std::setw(9) << "min" << std::setw(9) << "max" << std::setw(12) << "mean";
     }
     f << std::endl;
+
     // data
     for (size_t i = 0; i < stamps_.size(); ++i) {
-      f << stamps_[i].nanoseconds();
+      f << std::setw(24) << stamps_[i].nanoseconds();
       for (Metric metric : metrics_) {
         const auto & stat = metric_stats_[static_cast<size_t>(metric)][i];
-        f << " " << stat;
+        f << stat;
+        f << std::setw(4) << "";
       }
       f << std::endl;
     }
@@ -111,71 +109,24 @@ void LocalizationEvaluatorNode::syncCallback(
 {
   RCLCPP_INFO(
     get_logger(), "Received two messages at time stamps: %d.%d and %d.%d", msg->header.stamp.sec,
-    msg->header.stamp.nanosec, msg_gt->header.stamp.sec, msg->header.stamp.nanosec);
+    msg->header.stamp.nanosec, msg_gt->header.stamp.sec, msg_gt->header.stamp.nanosec);
 
   DiagnosticArray metrics_msg;
   metrics_msg.header.stamp = now();
-
-  geometry_msgs::msg::Point pos(msg->pose.pose.position);
-  geometry_msgs::msg::Point pos_gt(msg_gt->pose.pose.position);
+  stamps_.push_back(metrics_msg.header.stamp);
 
   for (Metric metric : metrics_) {
-    metrics_dict_[metric] =
-      metrics_calculator_.updateStat(metric, pos, pos_gt, metrics_dict_[metric]);
+    metrics_dict_[metric] = metrics_calculator_.updateStat(
+      metrics_dict_[metric], metric, msg->pose.pose.position, msg_gt->pose.pose.position);
+    metric_stats_[static_cast<size_t>(metric)].push_back(metrics_dict_[metric]);
     if (metrics_dict_[metric].count() > 0) {
       metrics_msg.status.push_back(generateDiagnosticStatus(metric, metrics_dict_[metric]));
     }
   }
   if (!metrics_msg.status.empty()) {
-    std::cout << "Data: " << metrics_msg.status[0].name << " size: " << metrics_msg.status.size()
-              << std::endl;
     metrics_pub_->publish(metrics_msg);
   }
 }
-
-void LocalizationEvaluatorNode::onOdom(
-  const Odometry::ConstSharedPtr & msg, const Odometry::ConstSharedPtr & msg_gt)
-{
-  DiagnosticArray metrics_msg;
-  metrics_msg.header.stamp = now();
-
-  geometry_msgs::msg::Point pos(msg->pose.pose.position);
-  geometry_msgs::msg::Point pos_gt(msg_gt->pose.pose.position);
-
-  for (Metric metric : metrics_) {
-    metrics_dict_[metric] =
-      metrics_calculator_.updateStat(metric, pos, pos_gt, metrics_dict_[metric]);
-    if (metrics_dict_[metric].count() > 0) {
-      metrics_msg.status.push_back(generateDiagnosticStatus(metric, metrics_dict_[metric]));
-    }
-  }
-  if (!metrics_msg.status.empty()) {
-    std::cout << "Data: " << metrics_msg.status[0].name << " size: " << metrics_msg.status.size()
-              << std::endl;
-    metrics_pub_->publish(metrics_msg);
-  }
-}
-
-geometry_msgs::msg::Pose LocalizationEvaluatorNode::getCurrentEgoPose() const
-{
-  geometry_msgs::msg::TransformStamped tf_current_pose;
-
-  geometry_msgs::msg::Pose p;
-  try {
-    tf_current_pose = tf_buffer_ptr_->lookupTransform(
-      "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(get_logger(), "%s", ex.what());
-    return p;
-  }
-
-  p.orientation = tf_current_pose.transform.rotation;
-  p.position.x = tf_current_pose.transform.translation.x;
-  p.position.y = tf_current_pose.transform.translation.y;
-  p.position.z = tf_current_pose.transform.translation.z;
-  return p;
-}
-
 }  // namespace localization_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"

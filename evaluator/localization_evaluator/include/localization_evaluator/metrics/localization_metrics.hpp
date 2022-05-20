@@ -27,24 +27,24 @@ using nav_msgs::msg::Odometry;
 
 /**
  * @brief calculate lateral localization error
+ * @param [in] stat_prev statistics to update
  * @param [in] lateral_pos lateral position of the vehicle
  * @param [in] lateral_gt ground truth lateral position
- * @param [in] stat_prev statistics to update
  * @return calculated statistics
  */
 Stat<double> updateLateralStats(
-  const double & lateral_pos, const double & lateral_gt, const Stat<double> stat_prev);
+  const Stat<double> stat_prev, const double & lateral_pos, const double & lateral_gt);
 
 /**
  * @brief calculate absolute localization error
+ * @param [in] stat_prev statistics to update
  * @param [in] pos current position of the vehicle
  * @param [in] pos_gt ground truth position of the vehicle
- * @param [in] stat_prev statistics to update
  * @return calculated statistics
  */
 Stat<double> updateAbsoluteStats(
-  const geometry_msgs::msg::Point & pos, const geometry_msgs::msg::Point & pos_gt,
-  const Stat<double> stat_prev);
+  const Stat<double> stat_prev, const geometry_msgs::msg::Point & pos,
+  const geometry_msgs::msg::Point & pos_gt);
 
 }  // namespace metrics
 }  // namespace localization_diagnostics

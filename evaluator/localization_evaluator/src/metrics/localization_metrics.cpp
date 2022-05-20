@@ -22,7 +22,7 @@ namespace metrics
 {
 
 Stat<double> updateLateralStats(
-  const double & lateral_pos, const double & lateral_gt, const Stat<double> stat_prev)
+  const Stat<double> stat_prev, const double & lateral_pos, const double & lateral_gt)
 {
   Stat<double> stat(stat_prev);
   stat.add(std::abs(lateral_gt - lateral_pos));
@@ -31,18 +31,13 @@ Stat<double> updateLateralStats(
 }
 
 Stat<double> updateAbsoluteStats(
-  const geometry_msgs::msg::Point & pos, const geometry_msgs::msg::Point & pos_gt,
-  const Stat<double> stat_prev)
+  const Stat<double> stat_prev, const geometry_msgs::msg::Point & pos,
+  const geometry_msgs::msg::Point & pos_gt)
 {
-  // TODO: remove dummy with actual ground truth
-  geometry_msgs::msg::Point dummy_pos(pos_gt);
-  dummy_pos.y += 3;
-  dummy_pos.x += 4;
-
   Stat<double> stat(stat_prev);
   double dist = std::sqrt(
-    (dummy_pos.x - pos.x) * (dummy_pos.x - pos.x) + (dummy_pos.y - pos.y) * (dummy_pos.y - pos.y) +
-    (dummy_pos.z - pos.z) * (dummy_pos.z - pos.z));
+    (pos_gt.x - pos.x) * (pos_gt.x - pos.x) + (pos_gt.y - pos.y) * (pos_gt.y - pos.y) +
+    (pos_gt.z - pos.z) * (pos_gt.z - pos.z));
   stat.add(dist);
 
   return stat;
