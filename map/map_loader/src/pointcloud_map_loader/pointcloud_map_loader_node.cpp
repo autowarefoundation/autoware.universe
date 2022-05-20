@@ -48,7 +48,7 @@ bool isPcdFile(const std::string & p)
     return false;
   }
 
-  const std::string ext = fs::path(p.c_str()).extension();
+  const std::string ext = fs::path(p).extension();
 
   if (ext != ".pcd" && ext != ".PCD") {
     return false;
