@@ -105,7 +105,7 @@ TEST(RRTStarCore, WithInformedOption)
   }
 
   {  // check solution trajectory
-    const auto waypoints = algo.sampleSolutionWaypoints(resolution);
+    const auto waypoints = algo.sampleSolutionWaypoints();
     EXPECT_GT(waypoints.size(), 2);
 
     bool is_feasible = true;

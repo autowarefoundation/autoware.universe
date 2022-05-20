@@ -256,13 +256,14 @@ void RRTStar::deleteNodeUsingBranchAndBound()
   }
 }
 
-std::vector<Pose> RRTStar::sampleSolutionWaypoints(double resolution) const
+std::vector<Pose> RRTStar::sampleSolutionWaypoints() const
 {
   std::vector<Pose> poses;
   NodeSharedPtr node = node_goal_;
   while (!node->isRoot()) {
     const auto node_parent = node->getParent();
-    cspace_.sampleWayPoints_child2parent(node->pose, node_parent->pose, resolution, poses);
+    cspace_.sampleWayPoints_child2parent(
+      node->pose, node_parent->pose, collision_check_resolution_, poses);
     node = node_parent;
   }
   poses.push_back(node_start_->pose);

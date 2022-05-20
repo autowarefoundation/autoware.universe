@@ -99,7 +99,7 @@ bool RRTStar::makePlan(
   if (!algo.isSolutionFound()) {
     return false;
   }
-  const auto waypoints = algo.sampleSolutionWaypoints(collision_check_resolution);
+  const auto waypoints = algo.sampleSolutionWaypoints();
   setRRTPath(waypoints);
   return true;
 }

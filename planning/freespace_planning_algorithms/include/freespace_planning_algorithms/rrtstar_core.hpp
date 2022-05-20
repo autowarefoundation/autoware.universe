@@ -130,7 +130,7 @@ public:
   bool isSolutionFound() const { return (reached_nodes_.size() > 0); }
   void extend();
   void deleteNodeUsingBranchAndBound();
-  std::vector<Pose> sampleSolutionWaypoints(double resolution) const;
+  std::vector<Pose> sampleSolutionWaypoints() const;
   void dumpState(std::string filename) const;
   double getSolutionCost() const { return *node_goal_->cost_from_start; }
   std::vector<NodeConstSharedPtr> getNodes() const;
