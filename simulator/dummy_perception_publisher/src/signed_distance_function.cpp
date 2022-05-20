@@ -60,8 +60,7 @@ double BoxSDF::operator()(double x, double y) const
   const auto positive_dist_x = std::max(sd_val_x, 0.0);
   const auto positive_dist_y = std::max(sd_val_y, 0.0);
 
-  const auto positive_dist =
-    sqrt(positive_dist_x * positive_dist_x + positive_dist_y * positive_dist_y);
+  const auto positive_dist = std::hypot(positive_dist_x, positive_dist_y);
   if (positive_dist > 0.0) {
     return positive_dist;
   }
