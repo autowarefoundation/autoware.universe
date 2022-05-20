@@ -14,47 +14,22 @@
 
 #include "grid_map_utils/polygon_iterator.hpp"
 
+#include "grid_map_core/Polygon.hpp"
+
 #include <grid_map_core/GridMapMath.hpp>
 
 #include <algorithm>
 #include <functional>
-#include <list>
 #include <utility>
 
 namespace grid_map_utils
 {
-PolygonIterator::PolygonIterator(
-  const grid_map::GridMap & grid_map, const grid_map::Polygon & polygon)
+
+std::vector<Edge> PolygonIterator::calculateSortedEdges(const grid_map::Polygon & polygon)
 {
-  auto poly = polygon;
-  if (poly.nVertices() < 3) return;
-  // repeat the first vertex to get the last edge [last vertex, first vertex]
-  if (poly.getVertex(0) != poly.getVertex(poly.nVertices() - 1)) poly.addVertex(poly.getVertex(0));
-
-  const auto resolution = grid_map.getResolution();
-  const auto & map_pose = grid_map.getPosition();
-  const auto & map_size = grid_map.getSize();
-  // A cell is selected when its center point is inside the polygon
-  // Thus we restrict the range of x/y values to the center of the top left and bottom right cells
-  const auto min_x = map_pose.x() - grid_map.getLength().x() / 2.0 + resolution / 2;
-  const auto max_x = map_pose.x() + grid_map.getLength().x() / 2.0 - resolution / 2;
-  const auto min_y = map_pose.y() - grid_map.getLength().y() / 2.0 + resolution / 2;
-  const auto max_y = map_pose.y() + grid_map.getLength().y() / 2.0 - resolution / 2;
-
-  // We make line scan from left to right / up to down *in the index frame*.
-  // In the position frame, this corresponds to high to low Y values and high to low X values.
-
-  // get edges sorted from highest to lowest X values
-
-  struct Edge
-  {
-    grid_map::Position first;
-    grid_map::Position second;
-
-    Edge(grid_map::Position f, grid_map::Position s) : first(std::move(f)), second(std::move(s)) {}
-  };
   std::vector<Edge> edges;
-  const auto & vertices = poly.getVertices();
+  edges.reserve(polygon.nVertices() / 2);
+  const auto & vertices = polygon.getVertices();
   for (auto vertex = vertices.cbegin(); std::next(vertex) != vertices.cend(); ++vertex) {
     // order pair by decreasing x and ignore horizontal edges (when x is equal)
     if (vertex->x() > std::next(vertex)->x())
@@ -62,27 +37,28 @@ PolygonIterator::PolygonIterator(
     else if (vertex->x() < std::next(vertex)->x())
       edges.emplace_back(*std::next(vertex), *vertex);
   }
-  std::sort(edges.begin(), edges.end(), [](const Edge & e1, const Edge & e2) {
-    return e1.first.x() > e2.first.x() ||
-           (e1.first.x() == e2.first.x() && e1.second.x() > e2.second.x());
-  });
-  if (edges.empty()) return;
+  std::sort(edges.begin(), edges.end());
+  edges.shrink_to_fit();
+  return edges;
+}
+
+std::vector<std::list<double>> PolygonIterator::calculateIntersectionsPerLine(
+  const std::vector<Edge> & edges, const double min_x, const double max_x, const double min_y,
+  const double max_y, const double resolution)
+{
   // get min/max x edge values
-  const auto max_vertex_x = edges.front().first.x();
-  const auto min_vertex_x = edges.back().second.x();
+  const auto max_vertex_x = std::clamp(edges.front().first.x(), min_x, max_x);
+  const auto min_vertex_x = std::clamp(edges.back().second.x(), min_x, max_x);
   // get min/max x values truncated to grid cell centers
-  const auto max_line_x =
-    std::clamp(min_x + resolution * std::floor((max_vertex_x - min_x) / resolution), min_x, max_x);
-  const auto min_line_x =
-    std::clamp(min_x + resolution * std::floor((min_vertex_x - min_x) / resolution), min_x, max_x);
+  const auto inverse_max_row = static_cast<int>((max_vertex_x - min_x) / resolution);
+  const auto inverse_min_row = static_cast<int>((min_vertex_x - min_x) / resolution);
   // calculate for each line the y value intersecting with the polygon in decreasing order
   std::vector<std::list<double>> y_intersections_per_line;
-  const auto nb_x_lines = static_cast<size_t>((max_line_x - min_line_x) / resolution) + 1;
-  y_intersections_per_line.reserve(nb_x_lines);
-  const auto epsilon = resolution / 2.0;
-  for (auto line_x = max_line_x; line_x >= min_line_x - epsilon; line_x -= resolution) {
+  y_intersections_per_line.reserve(inverse_max_row - inverse_min_row + 1);
+  for (auto row = inverse_max_row; row >= inverse_min_row; --row) {
     std::list<double> y_intersections;
     for (const auto & edge : edges) {
+      const auto line_x = min_x + resolution * row;
       // special case when exactly touching a vertex: only count edge for its lowest x
       // up-down edge (\/) case: count the vertex twice
       // down-down edge case: count the vertex only once
@@ -111,14 +87,43 @@ PolygonIterator::PolygonIterator(
     }
     y_intersections_per_line.push_back(y_intersections);
   }
+  return y_intersections_per_line;
+}
+
+PolygonIterator::PolygonIterator(
+  const grid_map::GridMap & grid_map, const grid_map::Polygon & polygon)
+{
+  auto poly = polygon;
+  if (poly.nVertices() < 3) return;
+  // repeat the first vertex to get the last edge [last vertex, first vertex]
+  if (poly.getVertex(0) != poly.getVertex(poly.nVertices() - 1)) poly.addVertex(poly.getVertex(0));
+
+  const auto resolution = grid_map.getResolution();
+  const auto & map_pose = grid_map.getPosition();
+  const auto & map_size = grid_map.getSize();
+  // A cell is selected when its center point is inside the polygon
+  // Thus we restrict the range of x/y values to the center of the top left and bottom right cells
+  const auto min_x = map_pose.x() - grid_map.getLength().x() / 2.0 + resolution / 2;
+  const auto max_x = map_pose.x() + grid_map.getLength().x() / 2.0 - resolution / 2;
+  const auto min_y = map_pose.y() - grid_map.getLength().y() / 2.0 + resolution / 2;
+  const auto max_y = map_pose.y() + grid_map.getLength().y() / 2.0 - resolution / 2;
+
+  // We make line scan from left to right / up to down *in the index frame*.
+  // In the position frame, this corresponds to high to low Y values and high to low X values.
+
+  const std::vector<Edge> edges = calculateSortedEdges(poly);
+  if (edges.empty()) return;
+  const auto y_intersections_per_line =
+    calculateIntersectionsPerLine(edges, min_x, max_x, min_y, max_y, resolution);
+
   // calculate map indexes between pairs of intersections Y values on each X line
-  polygon_indexes_.reserve(nb_x_lines * static_cast<size_t>((max_y - min_y) / resolution + 1));
+  polygon_indexes_.reserve(
+    y_intersections_per_line.size() * static_cast<size_t>((max_y - min_y) / resolution + 1));
   const auto & start_idx = grid_map.getStartIndex();
-  grid_map::Index idx;
-  grid_map::getIndexFromPosition(
-    idx, grid_map::Position(max_line_x, map_pose.y()), grid_map.getLength(), map_pose, resolution,
-    map_size, start_idx);
-  const auto from_row = idx(0);
+  // TODO(Maxime CLEMENT): this is calculated in calculateIntersectionsPerLine, try to reuse.
+  const auto max_vertex_x = std::clamp(edges.front().first.x(), min_x, max_x);
+  const auto from_row =
+    start_idx(0) + map_size(0) - static_cast<int>((max_vertex_x - min_x) / resolution) - 1;
   for (size_t i = 0; i < y_intersections_per_line.size(); ++i) {
     const auto & y_intersections = y_intersections_per_line[i];
     auto row = static_cast<int>(from_row + i);

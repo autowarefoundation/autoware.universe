@@ -18,10 +18,26 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/Polygon.hpp>
 
+#include <list>
+#include <utility>
 #include <vector>
 
 namespace grid_map_utils
 {
+
+/// @brief Representation of a polygon edge made of 2 vertices
+struct Edge
+{
+  grid_map::Position first;
+  grid_map::Position second;
+
+  Edge(grid_map::Position f, grid_map::Position s) : first(std::move(f)), second(std::move(s)) {}
+
+  bool operator<(const Edge & e)
+  {
+    return first.x() > e.first.x() || (first.x() == e.first.x() && second.x() > e.second.x());
+  }
+};
 
 /// @brief A polygon iterator for grid_map::GridMap based on the scan line algorithm.
 /** @details This iterator allows to iterate over all cells whose center is inside a polygon. \
@@ -54,6 +70,18 @@ public:
   [[nodiscard]] bool isPastEnd() const;
 
 private:
+  /// @brief Calculate sorted edges of the given polygon.
+  /** @details Vertices in an edge are ordered from higher to lower x.
+              Edges are sorted in reverse lexicographical order of x.
+      @param polygon Polygon for which edges are calculated.
+      @return Sorted edges of the polygon.
+  */
+  static std::vector<Edge> calculateSortedEdges(const grid_map::Polygon & polygon);
+
+  static std::vector<std::list<double>> calculateIntersectionsPerLine(
+    const std::vector<Edge> & edges, const double min_x, const double max_x, const double min_y,
+    const double max_y, const double resolution);
+
   /// calculated indexes of the gridmap that are inside the polygon
   std::vector<grid_map::Index> polygon_indexes_;
   /// current index of the iterator
