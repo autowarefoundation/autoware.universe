@@ -237,16 +237,14 @@ enum AlgorithmType {
   ASTAR_MULTI,
   RRTSTAR_FASTEST,
   RRTSTAR_UPDATE,
-  INFORMED_RRTSTAR_FASTEST,
-  INFORMED_RRTSTAR_UPDATE
+  RRTSTAR_INFORMED_UPDATE,
 };
 std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
   {{ASTAR_SINGLE, "fpalgos-astar_single"},
    {ASTAR_MULTI, "fpalgos-astar_multi"},
    {RRTSTAR_FASTEST, "fpalgos-rrtstar_fastest"},
    {RRTSTAR_UPDATE, "fpalgos-rrtstar_update"},
-   {INFORMED_RRTSTAR_FASTEST, "fpalgos-informed_rrtstar_fastest"},
-   {INFORMED_RRTSTAR_UPDATE, "fpalgos-informed_rrtstar_update"}});
+   {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}});
 
 bool test_algorithm(enum AlgorithmType algo_type)
 {
@@ -259,9 +257,7 @@ bool test_algorithm(enum AlgorithmType algo_type)
     algo = configure_rrtstar(false, false);
   } else if (algo_type == AlgorithmType::RRTSTAR_UPDATE) {
     algo = configure_rrtstar(false, true);
-  } else if (algo_type == AlgorithmType::INFORMED_RRTSTAR_FASTEST) {
-    algo = configure_rrtstar(true, false);
-  } else if (algo_type == AlgorithmType::INFORMED_RRTSTAR_UPDATE) {
+  } else if (algo_type == AlgorithmType::RRTSTAR_INFORMED_UPDATE) {
     algo = configure_rrtstar(true, true);
   } else {
     throw std::runtime_error("invalid algorithm time");
@@ -369,14 +365,9 @@ TEST(RRTStarTestSuite, Fastetst) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRT
 
 TEST(RRTStarTestSuite, Update) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE)); }
 
-TEST(RRTStarTestSuite, FastetstInformed)
+TEST(RRTStarTestSuite, InformedUpdate)
 {
-  EXPECT_TRUE(test_algorithm(AlgorithmType::INFORMED_RRTSTAR_FASTEST));
-}
-
-TEST(RRTStarTestSuite, UpdateInformed)
-{
-  EXPECT_TRUE(test_algorithm(AlgorithmType::INFORMED_RRTSTAR_UPDATE));
+  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_INFORMED_UPDATE));
 }
 
 int main(int argc, char ** argv)
