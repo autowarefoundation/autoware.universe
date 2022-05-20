@@ -89,6 +89,8 @@ public:
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon ego_lane_polygon;
+    geometry_msgs::msg::Polygon detection_area_2d;
+    std::vector<geometry_msgs::msg::Polygon> detection_area_2d_with_margin;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;

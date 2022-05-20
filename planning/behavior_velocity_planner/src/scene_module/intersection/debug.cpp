@@ -94,6 +94,40 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   return msg;
 }
 
+
+visualization_msgs::msg::MarkerArray createPolygonsMarkerArray(
+  const std::vector<geometry_msgs::msg::Polygon> & polygons, const std::string & ns, const int64_t lane_id,
+  const double r, const double g, const double b)
+{
+  visualization_msgs::msg::MarkerArray msg;
+
+  for (const auto & polygon : polygons) {
+    visualization_msgs::msg::Marker marker{};
+    marker.header.frame_id = "map";
+
+    marker.ns = ns;
+    marker.id = lane_id;
+    marker.lifetime = rclcpp::Duration::from_seconds(0.3);
+    marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
+    marker.scale = createMarkerScale(0.3, 0.0, 0.0);
+    marker.color = createMarkerColor(r, g, b, 0.8);
+    for (const auto & p : polygon.points) {
+      geometry_msgs::msg::Point point;
+      point.x = p.x;
+      point.y = p.y;
+      point.z = p.z;
+      marker.points.push_back(point);
+    }
+    if (!marker.points.empty()) {
+      marker.points.push_back(marker.points.front());
+    }
+    msg.markers.push_back(marker);
+  }
+  return msg;
+}
+
 visualization_msgs::msg::MarkerArray createObjectsMarkerArray(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const std::string & ns,
   const int64_t lane_id, const double r, const double g, const double b)
@@ -276,6 +310,14 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   appendMarkerArray(
     createPolygonMarkerArray(debug_data_.ego_lane_polygon, "ego_lane", lane_id_, 0.0, 0.3, 0.7),
+    current_time, &debug_marker_array);
+
+  appendMarkerArray(
+    createPolygonMarkerArray(debug_data_.detection_area_2d, "detection_area_2d", lane_id_, 1.0, 0.3, 0.7),
+    current_time, &debug_marker_array);
+
+  appendMarkerArray(
+    createPolygonsMarkerArray(debug_data_.detection_area_2d_with_margin, "detection_area_margin", lane_id_, 1.0, 0.3, 0.7),
     current_time, &debug_marker_array);
 
   appendMarkerArray(

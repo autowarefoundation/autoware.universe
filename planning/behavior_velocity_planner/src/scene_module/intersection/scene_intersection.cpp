@@ -260,10 +260,59 @@ bool IntersectionModule::checkCollision(
     const Point2d obj_point(
       object.kinematics.initial_pose_with_covariance.pose.position.x,
       object.kinematics.initial_pose_with_covariance.pose.position.y);
+
+    std::vector<geometry_msgs::msg::Polygon> detection_areas_with_margin;
+    // getDetectionAreaWithMargin(detection_areas);
     for (const auto & detection_area : detection_areas) {
       const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
       const double dist_to_detection_area =
         boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
+      Polygon2d boost_poly = toBoostPoly(detection_poly);
+
+      debug_data_.detection_area_2d = toGeomMsg(boost_poly);
+      Polygon2d poly_with_margin;
+      int poly_size = boost::size(bg::exterior_ring(boost_poly));
+      std::cout << "size: " << poly_size << std::endl;
+
+      // int count = 0;
+        // for (auto it = boost::begin(bg::exterior_ring(boost_poly)); it != boost::end(bg::exterior_ring(boost_poly)); ++it)
+        // {
+        //   double x = bg::get<0>(*it);
+        //   double y = bg::get<1>(*it);
+        //   if(count < poly_size / 2){
+        //     x = x + planner_param_.detection_area_margin;
+        //     y = y + planner_param_.detection_area_margin;
+        //   std::cout << "+ count: " << count << "x: " << x << ", y: " << y << std::endl;
+        //   }else{
+        //     x = x - planner_param_.detection_area_margin;
+        //     y = y - planner_param_.detection_area_margin;
+        //   std::cout << "- count: " << count << "x: " << x << ", y: " << y << std::endl;
+        //   }
+        //   bg::append(poly_with_margin.outer(), Point2d(x, y));
+        //   count++;
+        // }
+        // detection_areas_with_margin.push_back(toGeomMsg(poly_with_margin));
+
+      // std::cout << "polygon: " << bg::dsv(boost_poly) << std::endl;
+
+        for(std::size_t i = 0; i < boost_poly.outer().size(); i++){
+          double x, y;
+          if(i < boost_poly.outer().size() / 2){
+            x = boost_poly.outer().at(i).x() + planner_param_.detection_area_margin;
+            y = boost_poly.outer().at(i).y() + planner_param_.detection_area_margin;
+          std::cout << "+ count: " << i << " x: " << x << ", y: " << y << std::endl;
+          }else{
+            x = boost_poly.outer().at(i).x() - planner_param_.detection_area_margin;
+            y = boost_poly.outer().at(i).y() - planner_param_.detection_area_margin;
+          std::cout << "- count: " << i << " x: " << x << ", y: " << y << std::endl;
+          }
+
+          bg::append(poly_with_margin.outer(), Point2d(x, y));
+          // std::cout << "detection_pory " << boost_poly << std::endl;
+          // std::cout << "detection_pory x " << boost_poly.outer().at(i).x() << "detection_poly y " << boost_poly.outer().at(i).y() << std::endl;
+        }
+        detection_areas_with_margin.push_back(toGeomMsg(poly_with_margin));
+
       if (dist_to_detection_area > planner_param_.detection_area_margin) {
         // ignore the object far from detection area
         continue;
@@ -275,6 +324,8 @@ bool IntersectionModule::checkCollision(
         break;
       }
     }
+    // std::vector<lanelet::CompoundPolygon3d> detection_areas_3d_with_margin = util::getPolygon3dFromLaneletsVec(detection_areas_with_margin, planner_param_.detection_area_length);
+    debug_data_.detection_area_2d_with_margin = detection_areas_with_margin;
   }
 
   /* check collision between target_objects predicted path and ego lane */
