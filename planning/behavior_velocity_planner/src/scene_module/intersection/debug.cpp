@@ -157,7 +157,7 @@ visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
 
   visualization_msgs::msg::Marker marker_virtual_wall{};
   marker_virtual_wall.header.frame_id = "map";
-  marker_virtual_wall.ns = "stop_virtual_wall";
+  marker_virtual_wall.ns = "intersection_virtual_wall";
   marker_virtual_wall.id = lane_id;
   marker_virtual_wall.lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
@@ -170,7 +170,7 @@ visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
 
   visualization_msgs::msg::Marker marker_factor_text{};
   marker_factor_text.header.frame_id = "map";
-  marker_factor_text.ns = "stop_factor_text";
+  marker_factor_text.ns = "intersection_factor_text";
   marker_factor_text.id = lane_id;
   marker_factor_text.lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_factor_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -192,7 +192,7 @@ visualization_msgs::msg::MarkerArray createVirtualSlowWallMarkerArray(
 
   visualization_msgs::msg::Marker marker_virtual_wall{};
   marker_virtual_wall.header.frame_id = "map";
-  marker_virtual_wall.ns = "slow_virtual_wall";
+  marker_virtual_wall.ns = "intersection_slow_virtual_wall";
   marker_virtual_wall.id = lane_id;
   marker_virtual_wall.lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
@@ -205,7 +205,7 @@ visualization_msgs::msg::MarkerArray createVirtualSlowWallMarkerArray(
 
   visualization_msgs::msg::Marker marker_factor_text{};
   marker_factor_text.header.frame_id = "map";
-  marker_factor_text.ns = "slow_factor_text";
+  marker_factor_text.ns = "intersection_slow_factor_text";
   marker_factor_text.id = lane_id;
   marker_factor_text.lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_factor_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -316,19 +316,30 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       createPoseMarkerArray(
         debug_data_.judge_point_pose, "judge_point_pose", lane_id_, 1.0, 1.0, 0.5),
       current_time, &debug_marker_array);
-
-    if (debug_data_.stop_required) {
-      appendMarkerArray(
-        createVirtualStopWallMarkerArray(debug_data_.stop_wall_pose, lane_id_, "intersection"),
-        current_time, &debug_marker_array);
-    } else {
-      appendMarkerArray(
-        createVirtualSlowWallMarkerArray(debug_data_.slow_wall_pose, lane_id_, "intersection"),
-        current_time, &debug_marker_array);
-    }
   }
 
   return debug_marker_array;
+}
+
+visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+
+  const auto current_time = this->clock_->now();
+  const auto state = state_machine_.getState();
+
+  if (state == IntersectionModule::State::STOP) {
+    if (debug_data_.stop_required) {
+      appendMarkerArray(
+        createVirtualStopWallMarkerArray(debug_data_.stop_wall_pose, lane_id_, "intersection"),
+        current_time, &wall_marker);
+    } else {
+      appendMarkerArray(
+        createVirtualSlowWallMarkerArray(debug_data_.slow_wall_pose, lane_id_, "intersection"),
+        current_time, &wall_marker);
+    }
+  }
+  return wall_marker;
 }
 
 visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMarkerArray()
@@ -351,5 +362,22 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
   }
 
   return debug_marker_array;
+}
+
+visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+
+  const auto state = state_machine_.getState();
+
+  const auto current_time = this->clock_->now();
+  if (state == MergeFromPrivateRoadModule::State::STOP) {
+    appendMarkerArray(
+      createVirtualStopWallMarkerArray(
+        debug_data_.virtual_wall_pose, lane_id_, "merge_from_private_road", -1.0),
+      current_time, &wall_marker);
+  }
+
+  return wall_marker;
 }
 }  // namespace behavior_velocity_planner

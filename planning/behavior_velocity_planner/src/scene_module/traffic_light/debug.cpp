@@ -139,6 +139,12 @@ visualization_msgs::msg::MarkerArray createMarkerArray(
 visualization_msgs::msg::MarkerArray TrafficLightModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
+  return debug_marker_array;
+}
+
+visualization_msgs::msg::MarkerArray TrafficLightModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray debug_marker_array;
 
   appendMarkerArray(
     createMarkerArray(debug_data_, module_id_), this->clock_->now(), &debug_marker_array);

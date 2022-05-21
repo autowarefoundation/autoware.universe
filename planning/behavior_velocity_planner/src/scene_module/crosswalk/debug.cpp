@@ -290,6 +290,97 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     msg.markers.push_back(marker);
   }
 
+  return msg;
+}
+
+visualization_msgs::msg::MarkerArray createWalkwayMarkers(
+  const DebugData & debug_data, const int64_t module_id)
+{
+  int32_t uid = planning_utils::bitShift(module_id);
+  visualization_msgs::msg::MarkerArray msg;
+  tf2::Transform tf_base_link2front(
+    tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
+
+  // Stop point
+  if (!debug_data.stop_poses.empty()) {
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = "map";
+    marker.ns = "stop point";
+    marker.id = module_id;
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+    marker.type = visualization_msgs::msg::Marker::POINTS;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = 0.25;
+    marker.scale.y = 0.25;
+    marker.color.a = 0.999;  // Don't forget to set the alpha!
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
+      geometry_msgs::msg::Point point;
+      point.x = debug_data.stop_poses.at(j).position.x;
+      point.y = debug_data.stop_poses.at(j).position.y;
+      point.z = debug_data.stop_poses.at(j).position.z;
+      marker.points.push_back(point);
+    }
+    msg.markers.push_back(marker);
+  }
+
+  for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
+
+    visualization_msgs::msg::Marker range_marker;
+    range_marker.header.frame_id = "map";
+    range_marker.ns = "walkway stop judge range";
+    range_marker.id = uid + debug_data.stop_poses.size() + j;
+    range_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+    range_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    range_marker.action = visualization_msgs::msg::Marker::ADD;
+    range_marker.pose.position.x = 0;
+    range_marker.pose.position.y = 0;
+    range_marker.pose.position.z = 0;
+    range_marker.pose.orientation.x = 0.0;
+    range_marker.pose.orientation.y = 0.0;
+    range_marker.pose.orientation.z = 0.0;
+    range_marker.pose.orientation.w = 1.0;
+    range_marker.scale.x = 0.1;
+    range_marker.scale.y = 0.1;
+    range_marker.color.a = 0.5;  // Don't forget to set the alpha!
+    range_marker.color.r = 1.0;
+    range_marker.color.g = 0.0;
+    range_marker.color.b = 0.0;
+    geometry_msgs::msg::Point point;
+    point.x = debug_data.stop_poses.at(j).position.x;
+    point.y = debug_data.stop_poses.at(j).position.y;
+    point.z = debug_data.stop_poses.at(j).position.z;
+    for (size_t i = 0; i < 50; ++i) {
+      geometry_msgs::msg::Point range_point;
+      range_point.x = point.x + debug_data.stop_judge_range * std::cos(M_PI * 2 / 50 * i);
+      range_point.y = point.y + debug_data.stop_judge_range * std::sin(M_PI * 2 / 50 * i);
+      range_point.z = point.z;
+      range_marker.points.push_back(range_point);
+    }
+    range_marker.points.push_back(range_marker.points.front());
+    msg.markers.push_back(range_marker);
+  }
+
+  return msg;
+}
+
+visualization_msgs::msg::MarkerArray createCrosswalkVirtualWall(
+  const DebugData & debug_data, const int64_t module_id)
+{
+  int32_t uid = planning_utils::bitShift(module_id);
+  visualization_msgs::msg::MarkerArray msg;
+  tf2::Transform tf_base_link2front(
+    tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
+
   // Stop VirtualWall
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::msg::Marker marker;
@@ -389,51 +480,18 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray createWalkwayMarkers(
-  const DebugData & debug_data, const int64_t module_id)
-{
+visualization_msgs::msg::MarkerArray createWalkwayVirtualWall(const DebugData & debug_data, const int64_t module_id) {
+
   int32_t uid = planning_utils::bitShift(module_id);
   visualization_msgs::msg::MarkerArray msg;
   tf2::Transform tf_base_link2front(
     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
 
-  // Stop point
-  if (!debug_data.stop_poses.empty()) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.ns = "stop point";
-    marker.id = module_id;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::POINTS;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    marker.pose.position.x = 0;
-    marker.pose.position.y = 0;
-    marker.pose.position.z = 0;
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.25;
-    marker.scale.y = 0.25;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
-      geometry_msgs::msg::Point point;
-      point.x = debug_data.stop_poses.at(j).position.x;
-      point.y = debug_data.stop_poses.at(j).position.y;
-      point.z = debug_data.stop_poses.at(j).position.z;
-      marker.points.push_back(point);
-    }
-    msg.markers.push_back(marker);
-  }
-
   // Stop VirtualWall
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.ns = "stop_virtual_wall";
+    marker.ns = "crosswalk_virtual_wall";
     marker.id = uid + j;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
@@ -452,45 +510,13 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
 
-    visualization_msgs::msg::Marker range_marker;
-    range_marker.header.frame_id = "map";
-    range_marker.ns = "walkway stop judge range";
-    range_marker.id = uid + debug_data.stop_poses.size() + j;
-    range_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    range_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-    range_marker.action = visualization_msgs::msg::Marker::ADD;
-    range_marker.pose.position.x = 0;
-    range_marker.pose.position.y = 0;
-    range_marker.pose.position.z = 0;
-    range_marker.pose.orientation.x = 0.0;
-    range_marker.pose.orientation.y = 0.0;
-    range_marker.pose.orientation.z = 0.0;
-    range_marker.pose.orientation.w = 1.0;
-    range_marker.scale.x = 0.1;
-    range_marker.scale.y = 0.1;
-    range_marker.color.a = 0.5;  // Don't forget to set the alpha!
-    range_marker.color.r = 1.0;
-    range_marker.color.g = 0.0;
-    range_marker.color.b = 0.0;
-    geometry_msgs::msg::Point point;
-    point.x = debug_data.stop_poses.at(j).position.x;
-    point.y = debug_data.stop_poses.at(j).position.y;
-    point.z = debug_data.stop_poses.at(j).position.z;
-    for (size_t i = 0; i < 50; ++i) {
-      geometry_msgs::msg::Point range_point;
-      range_point.x = point.x + debug_data.stop_judge_range * std::cos(M_PI * 2 / 50 * i);
-      range_point.y = point.y + debug_data.stop_judge_range * std::sin(M_PI * 2 / 50 * i);
-      range_point.z = point.z;
-      range_marker.points.push_back(range_point);
-    }
-    range_marker.points.push_back(range_marker.points.front());
-    msg.markers.push_back(range_marker);
   }
+
   // Factor Text
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.ns = "factor_text";
+    marker.ns = "crosswalk_factor_text";
     marker.id = uid + j;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -515,6 +541,22 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
 }
 
 }  // namespace
+
+visualization_msgs::msg::MarkerArray CrosswalkModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+  appendMarkerArray(
+    createCrosswalkVirtualWall(debug_data_, module_id_), this->clock_->now(), &wall_marker);
+  return wall_marker;
+}
+
+visualization_msgs::msg::MarkerArray WalkwayModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+  appendMarkerArray(
+    createWalkwayVirtualWall(debug_data_, module_id_), this->clock_->now(), &wall_marker);
+  return wall_marker;
+}
 
 visualization_msgs::msg::MarkerArray CrosswalkModule::createDebugMarkerArray()
 {

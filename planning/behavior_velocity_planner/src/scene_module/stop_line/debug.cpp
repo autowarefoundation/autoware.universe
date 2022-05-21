@@ -141,16 +141,21 @@ visualization_msgs::msg::MarkerArray createStopLineCollisionCheck(
 visualization_msgs::msg::MarkerArray StopLineModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
-
-  appendMarkerArray(
-    createMarkers(debug_data_, module_id_), this->clock_->now(), &debug_marker_array);
-
   if (planner_param_.show_stopline_collision_check) {
     appendMarkerArray(
       createStopLineCollisionCheck(debug_data_, module_id_), this->clock_->now(),
       &debug_marker_array);
   }
-
   return debug_marker_array;
+}
+
+visualization_msgs::msg::MarkerArray StopLineModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+
+  appendMarkerArray(
+    createMarkers(debug_data_, module_id_), this->clock_->now(), &wall_marker);
+
+  return wall_marker;
 }
 }  // namespace behavior_velocity_planner

@@ -60,7 +60,7 @@ visualization_msgs::msg::MarkerArray createMarkerArray(
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.ns = "stop_virtual_wall";
+    marker.ns = "detection_area_virtual_wall";
     marker.id = uid + j;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
@@ -83,7 +83,7 @@ visualization_msgs::msg::MarkerArray createMarkerArray(
   for (size_t j = 0; j < debug_data.dead_line_poses.size(); ++j) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.ns = "dead_line_virtual_wall";
+    marker.ns = "detection_area_dead_line_virtual_wall";
     marker.id = uid + j;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
@@ -102,11 +102,11 @@ visualization_msgs::msg::MarkerArray createMarkerArray(
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
   }
-  // Facto Text
+  // Factor Text
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.ns = "factor_text";
+    marker.ns = "detection_area_factor_text";
     marker.id = uid + j;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -234,21 +234,29 @@ visualization_msgs::msg::MarkerArray createObstacleMarkerArray(
 
 visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray()
 {
-  visualization_msgs::msg::MarkerArray debug_marker_array;
+  visualization_msgs::msg::MarkerArray wall_marker;
   const rclcpp::Time current_time = clock_->now();
-  appendMarkerArray(
-    createMarkerArray(debug_data_, getModuleId()), current_time, &debug_marker_array);
 
   if (!debug_data_.stop_poses.empty()) {
     appendMarkerArray(
       createCorrespondenceMarkerArray(detection_area_reg_elem_, current_time), current_time,
-      &debug_marker_array);
+      &wall_marker);
 
     appendMarkerArray(
       createObstacleMarkerArray(debug_data_.obstacle_points, current_time), current_time,
-      &debug_marker_array);
+      &wall_marker);
   }
 
-  return debug_marker_array;
+  return wall_marker;
 }
+visualization_msgs::msg::MarkerArray DetectionAreaModule::createVirtualWallMarkerArray(){
+  visualization_msgs::msg::MarkerArray wall_marker;
+
+  const rclcpp::Time current_time = clock_->now();
+  appendMarkerArray(
+    createMarkerArray(debug_data_, getModuleId()), current_time, &wall_marker);
+
+  return wall_marker;
+}
+
 }  // namespace behavior_velocity_planner

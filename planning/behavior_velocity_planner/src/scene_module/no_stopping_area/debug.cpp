@@ -227,4 +227,13 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArra
   }
   return debug_marker_array;
 }
+
+visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+  const rclcpp::Time current_time = clock_->now();
+  appendMarkerArray(
+    createMarkerArray(debug_data_, current_time, getModuleId()), current_time, &wall_marker);
+  return wall_marker;
+}
 }  // namespace behavior_velocity_planner
