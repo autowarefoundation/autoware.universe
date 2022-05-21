@@ -149,77 +149,6 @@ visualization_msgs::msg::MarkerArray createPathMarkerArray(
   return msg;
 }
 
-// visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
-//   const geometry_msgs::msg::Pose & pose, const int64_t lane_id, const std::string & stop_factor,
-//   const double offset_z = 0.0)
-// {
-//   visualization_msgs::msg::MarkerArray msg;
-
-//   visualization_msgs::msg::Marker marker_virtual_wall{};
-//   marker_virtual_wall.header.frame_id = "map";
-//   marker_virtual_wall.ns = "intersection_virtual_wall";
-//   marker_virtual_wall.id = lane_id;
-//   marker_virtual_wall.lifetime = rclcpp::Duration::from_seconds(0.5);
-//   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
-//   marker_virtual_wall.action = visualization_msgs::msg::Marker::ADD;
-//   marker_virtual_wall.pose = pose;
-//   marker_virtual_wall.pose.position.z += 1.0;
-//   marker_virtual_wall.scale = createMarkerScale(0.1, 5.0, 2.0);
-//   marker_virtual_wall.color = createMarkerColor(1.0, 0.0, 0.0, 0.5);
-//   msg.markers.push_back(marker_virtual_wall);
-
-//   visualization_msgs::msg::Marker marker_factor_text{};
-//   marker_factor_text.header.frame_id = "map";
-//   marker_factor_text.ns = "intersection_factor_text";
-//   marker_factor_text.id = lane_id;
-//   marker_factor_text.lifetime = rclcpp::Duration::from_seconds(0.5);
-//   marker_factor_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-//   marker_factor_text.action = visualization_msgs::msg::Marker::ADD;
-//   marker_factor_text.pose = pose;
-//   marker_factor_text.pose.position.z += 2.0 + offset_z;
-//   marker_factor_text.scale = createMarkerScale(0.0, 0.0, 1.0);
-//   marker_factor_text.color = createMarkerColor(1.0, 1.0, 1.0, 0.999);
-//   marker_factor_text.text = stop_factor;
-//   msg.markers.push_back(marker_factor_text);
-
-//   return msg;
-// }
-
-// visualization_msgs::msg::MarkerArray createVirtualSlowWallMarkerArray(
-//   const geometry_msgs::msg::Pose & pose, const int64_t lane_id, const std::string & slow_factor)
-// {
-//   visualization_msgs::msg::MarkerArray msg;
-
-//   visualization_msgs::msg::Marker marker_virtual_wall{};
-//   marker_virtual_wall.header.frame_id = "map";
-//   marker_virtual_wall.ns = "intersection_slow_virtual_wall";
-//   marker_virtual_wall.id = lane_id;
-//   marker_virtual_wall.lifetime = rclcpp::Duration::from_seconds(0.5);
-//   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
-//   marker_virtual_wall.action = visualization_msgs::msg::Marker::ADD;
-//   marker_virtual_wall.pose = pose;
-//   marker_virtual_wall.pose.position.z += 1.0;
-//   marker_virtual_wall.scale = createMarkerScale(0.1, 5.0, 2.0);
-//   marker_virtual_wall.color = createMarkerColor(1.0, 1.0, 0.0, 0.5);
-//   msg.markers.push_back(marker_virtual_wall);
-
-//   visualization_msgs::msg::Marker marker_factor_text{};
-//   marker_factor_text.header.frame_id = "map";
-//   marker_factor_text.ns = "intersection_slow_factor_text";
-//   marker_factor_text.id = lane_id;
-//   marker_factor_text.lifetime = rclcpp::Duration::from_seconds(0.5);
-//   marker_factor_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-//   marker_factor_text.action = visualization_msgs::msg::Marker::ADD;
-//   marker_factor_text.pose = pose;
-//   marker_factor_text.pose.position.z += 2.0;
-//   marker_factor_text.scale = createMarkerScale(0.0, 0.0, 1.0);
-//   marker_factor_text.color = createMarkerColor(1.0, 1.0, 1.0, 0.999);
-//   marker_factor_text.text = slow_factor;
-//   msg.markers.push_back(marker_factor_text);
-
-//   return msg;
-// }
-
 visualization_msgs::msg::MarkerArray createPoseMarkerArray(
   const geometry_msgs::msg::Pose & pose, const std::string & ns, const int64_t id, const double r,
   const double g, const double b)
@@ -330,17 +259,11 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
 
   if (state == IntersectionModule::State::STOP) {
     if (debug_data_.stop_required) {
-      // appendMarkerArray(
-      //   createVirtualStopWallMarkerArray(debug_data_.stop_wall_pose, lane_id_, "intersection"),
-      //   current_time, &wall_marker);
       appendMarkerArray(
         tier4_autoware_utils::createStopVirtualWallMarker(
           debug_data_.stop_wall_pose, "intersection", now, lane_id_),
         now, &wall_marker);
     } else {
-      // appendMarkerArray(
-      //   createVirtualSlowWallMarkerArray(debug_data_.slow_wall_pose, lane_id_, "intersection"),
-      //   current_time, &wall_marker);
       appendMarkerArray(
         tier4_autoware_utils::createStopVirtualWallMarker(
           debug_data_.slow_wall_pose, "intersection", now, lane_id_),
@@ -375,10 +298,6 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWa
 
   const auto now = this->clock_->now();
   if (state == MergeFromPrivateRoadModule::State::STOP) {
-    // appendMarkerArray(
-    //   createVirtualStopWallMarkerArray(
-    //     debug_data_.virtual_wall_pose, lane_id_, "merge_from_private_road", -1.0),
-    //   now, &wall_marker);
     appendMarkerArray(
       tier4_autoware_utils::createStopVirtualWallMarker(
         debug_data_.virtual_wall_pose, "merge_from_private_road", now, lane_id_),

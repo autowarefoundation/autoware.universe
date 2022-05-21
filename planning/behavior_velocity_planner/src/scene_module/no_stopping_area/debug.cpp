@@ -61,27 +61,6 @@ geometry_msgs::msg::Point toPoint2d(const geometry_msgs::msg::Point32 & poly)
   return msg;
 }
 
-// visualization_msgs::msg::MarkerArray createMarkerArray(
-//   const DebugData & debug_data, const rclcpp::Time & now, const int64_t module_id)
-// {
-//   visualization_msgs::msg::MarkerArray msg;
-//   const tf2::Transform tf_base_link2front(
-//     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
-
-//   // Stop VirtualWall
-//   const int32_t uid = planning_utils::bitShift(module_id);
-//   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
-//     tf2::Transform tf_map2base_link;
-//     tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
-//     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-//     geometry_msgs::msg::Pose pose;
-//     tf2::toMsg(tf_map2front, pose);
-//     msg = tier4_autoware_utils::createStopVirtualWallMarker(pose, "no_stopping_area", now, uid +
-//     j);
-//   }
-//   return msg;
-// }
-
 visualization_msgs::msg::MarkerArray createLaneletInfoMarkerArray(
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem, const rclcpp::Time & now)
 {
