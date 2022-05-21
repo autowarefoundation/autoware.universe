@@ -38,7 +38,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const double base_link2front, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
 : base_link2front_(base_link2front), clock_(clock)
 {
-  debug_virtual_wall_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
+  debug_virtual_wall_pub_ =
+    node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
 }

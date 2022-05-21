@@ -592,5 +592,19 @@ LineString2d extendLine(
   return {
     {(p1 - length * t).x(), (p1 - length * t).y()}, {(p2 + length * t).x(), (p2 + length * t).y()}};
 }
+
+geometry_msgs::msg::Pose toVehicleFrontPose(
+  const geometry_msgs::msg::Pose & p_baselink, const double baselink2front)
+{
+  tf2::Transform tf_base_link2front(
+    tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(baselink2front, 0.0, 0.0));
+  tf2::Transform tf_map2base_link;
+  tf2::fromMsg(p_baselink, tf_map2base_link);
+  tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+  geometry_msgs::msg::Pose p_front;
+  tf2::toMsg(tf_map2front, p_front);
+  return p_front;
+}
+
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
