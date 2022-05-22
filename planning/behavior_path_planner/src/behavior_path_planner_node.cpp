@@ -173,6 +173,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&BehaviorPathPlannerNode::run, this));
   }
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "behavior_path_planner");
+    stop_watch_ptr_->tic();
+  }
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
@@ -515,6 +523,12 @@ void BehaviorPathPlannerNode::waitForData()
 
 void BehaviorPathPlannerNode::run()
 {
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
   mutex_bt_.lock();  // for bt_manager_
   mutex_pd_.lock();  // for planner_data_

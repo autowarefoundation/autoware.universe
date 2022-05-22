@@ -30,6 +30,8 @@
 #include <tier4_api_msgs/msg/crosswalk_status.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -113,6 +115,11 @@ private:
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();
   bool isDataReady(const PlannerData planner_data) const;
+
+  // debug
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
+
 };
 }  // namespace behavior_velocity_planner
 

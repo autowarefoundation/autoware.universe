@@ -28,6 +28,8 @@
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -175,6 +177,10 @@ private:
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
+
+  /** \brief processing time publisher. **/
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 };
 }  // namespace behavior_path_planner
 

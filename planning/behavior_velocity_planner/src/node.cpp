@@ -416,6 +416,13 @@ void BehaviorVelocityPlannerNode::onTrigger(
   if (debug_viz_pub_->get_subscription_count() > 0) {
     publishDebugMarker(output_path_msg);
   }
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 void BehaviorVelocityPlannerNode::publishDebugMarker(
