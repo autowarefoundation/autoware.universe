@@ -18,6 +18,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   DIRECTORY src
 )
 
+target_link_libraries(${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
@@ -27,6 +29,13 @@ if(BUILD_TESTING)
   )
   target_link_libraries(test_${PROJECT_NAME}
     ${PROJECT_NAME}
+  )
+
+  find_package(OpenCV REQUIRED)
+  add_executable(visualize_edge_cases test/visualize_edge_cases.cpp)
+  target_link_libraries(visualize_edge_cases
+    ${PROJECT_NAME}
+    ${OpenCV_LIBS}
   )
 endif()
 
