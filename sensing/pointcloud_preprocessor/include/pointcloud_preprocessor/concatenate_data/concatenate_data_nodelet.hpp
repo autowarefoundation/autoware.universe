@@ -73,6 +73,9 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_debug_msgs/msg/string_stamped.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
@@ -165,6 +168,11 @@ private:
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  /** \brief processing time publisher. **/
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
+
 };
 
 }  // namespace pointcloud_preprocessor

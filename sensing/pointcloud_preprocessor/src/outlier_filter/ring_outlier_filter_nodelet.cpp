@@ -49,7 +49,7 @@ void RingOutlierFilterComponent::filter(
 {
   std::scoped_lock lock(mutex_);
   // add processing time for debug
-  if (stop_watch_ptr_) {
+  if (debug_publisher_) {
     const double processing_time_ms = stop_watch_ptr_->toc(true);
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);

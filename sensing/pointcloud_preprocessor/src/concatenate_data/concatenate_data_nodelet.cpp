@@ -69,6 +69,15 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   const rclcpp::NodeOptions & node_options)
 : Node("point_cloud_concatenator_component", node_options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "concatenate_data_synchronizer");
+    stop_watch_ptr_->tic();
+  }
+
   // Set parameters
   {
     output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
@@ -260,6 +269,12 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
 
 void PointCloudConcatenateDataSynchronizerComponent::publish()
 {
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double processing_time_ms = stop_watch_ptr_->toc(true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
   sensor_msgs::msg::PointCloud2::SharedPtr concat_cloud_ptr_ = nullptr;
   not_subscribed_topic_names_.clear();
 
