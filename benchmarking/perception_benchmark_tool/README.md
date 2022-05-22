@@ -1,13 +1,13 @@
 # perception_benchmark_tool
 
 This package contains various tools for testing the Waymo dataset and perception stack of Autoware.Universe. This tool
-is written in a way that it can be extended with other daatsets.
+is written in a way that it can be extended with other datasets.
 
 ## Installation
 
 For testing 3D Object Tracking with Waymo Dataset, follow the given steps.
 
-1- Download the Waymo dataset validation segment(.tfrecord) files from given link.
+1- Download the Waymo dataset validation segment(.tfrecord) files from the given link.
 
 <https://waymo.com/open/download/>
 
@@ -38,7 +38,7 @@ $YOUR_AUTOWARE_PATH/src/universe/autoware/benchmarking/benchmarking_launch/launc
 -p ground_truth_path:=$YOUR_AUTOWARE_PATH/src/universe/autoware/benchmarking/perception_benchmark_tool/benchmarking_result/gt.bin
 ```
 
-This command will run the perception stack with waymo. We will get the ground truth and prediction files in the file
+This command will run the perception stack with the Waymo Dataset. We will get the ground truth and prediction files in the file
 paths we give as arguments to the node.
 
 Lidar point clouds and camera images are encoded in the .tfrecord file. It may take about ~60-90 seconds to decode
@@ -46,7 +46,7 @@ the data back for each segment file.
 
 4- Install Waymo Open Dataset toolkit for metric computation:
 
-Follow given command or instruction provided by the Waymo: <https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md>
+Follow the given command or instruction provided by the Waymo: <https://github.com/waymo-research/waymo-open-dataset/blob/master/docs/quick_start.md>
 
 ```bash
 git clone https://github.com/waymo-research/waymo-open-dataset.git waymo-od
@@ -72,13 +72,13 @@ bazel-bin/waymo_open_dataset/metrics/tools/compute_tracking_metrics_main \
 
 ## Result
 
-The evaluation result of the Perception pipeline on the waymo dataset is presented below.
+The evaluation result of the Perception pipeline on the Waymo Dataset is presented below.
 
 In our perception pipeline, we assumed the width and length of pedestrians to be 1 meter.
 Waymo Dataset has so strict tracking evaluation IoU scores. (Vehicle: 0.7 , Pedestrian and Cyclist: 0.5).
 For this reason with given default values, pedestrians and cyclists do not match our perception pipeline.
 
-For more realistic results for pedestrians, we need to change the bounding box description of pedestrians.
+For more realistic pedestrian results, we need to change the bounding box description of pedestrians.
 
 ### lidar_centerpoint
 

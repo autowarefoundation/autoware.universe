@@ -19,6 +19,8 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>cv_bridge</depend>
+  <depend>tf_transformations</depend>
 
   <export>
     <build_type>ament_python</build_type>
