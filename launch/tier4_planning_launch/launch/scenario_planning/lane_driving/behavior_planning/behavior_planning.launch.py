@@ -298,7 +298,7 @@ def launch_setup(context, *args, **kwargs):
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_velocity_planner_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
