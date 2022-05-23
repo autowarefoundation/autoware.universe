@@ -21,6 +21,8 @@
 
 #include "system_monitor/system_monitor_utility.hpp"
 
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <fmt/format.h>
 
 #include <memory>
@@ -304,8 +306,9 @@ void ProcessMonitor::onTimer()
 {
   is_top_error_ = false;
 
-  // Remember start time to measure elapsed time
-  const auto t_start = std::chrono::high_resolution_clock::now();
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
 
   bp::ipstream is_err;
   bp::ipstream is_out;
@@ -324,8 +327,7 @@ void ProcessMonitor::onTimer()
   is_out >> os.rdbuf();
   top_output_ = os.str();
 
-  const auto t_end = std::chrono::high_resolution_clock::now();
-  elapsed_ms_ = std::chrono::duration<float, std::milli>(t_end - t_start).count();
+  elapsed_ms_ = stop_watch.toc("execution_time");
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

@@ -122,7 +122,7 @@ protected:
   rclcpp::TimerBase::SharedPtr timer_;  //!< @brief timer to execute top command
   std::string top_output_;              //!< @brief output from top command
   bool is_top_error_;                   //!< @brief flag if an error occurs
-  float elapsed_ms_;                    //!< @brief Execution time of top command
+  double elapsed_ms_;                   //!< @brief Execution time of top command
 };
 
 #endif  // SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
