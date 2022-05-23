@@ -171,7 +171,7 @@ protected:
   std::string tf_output_frame_;
 
   /** \brief Internal mutex. */
-  boost::mutex mutex_;
+  std::mutex mutex_;
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
