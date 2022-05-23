@@ -41,11 +41,6 @@ public:
    */
   explicit ProcessMonitor(const rclcpp::NodeOptions & options);
 
-  /**
-   * @brief Update the diagnostic state
-   */
-  void update();
-
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 

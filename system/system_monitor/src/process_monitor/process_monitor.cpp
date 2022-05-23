@@ -57,8 +57,6 @@ ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&ProcessMonitor::onTimer, this));
 }
 
-void ProcessMonitor::update() { updater_.force_update(); }
-
 void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   std::string str = top_output_;
