@@ -80,7 +80,7 @@ std::vector<std::list<double>> PolygonIterator::calculateIntersectionsPerLine(
     }
     iter = std::lower_bound(
       y_intersections.begin(), y_intersections.end(),
-      origin.y() - grid_map.getSize()(1) * grid_map.getResolution(), std::greater());
+      origin.y() - (grid_map.getSize()(1) - 1) * grid_map.getResolution(), std::greater());
     while (iter != y_intersections.end() && std::next(iter) != y_intersections.end()) {
       iter = y_intersections.erase(iter);
       iter = y_intersections.erase(iter);
