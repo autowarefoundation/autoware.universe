@@ -15,6 +15,8 @@
 #ifndef GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
 #define GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
 
+#include "grid_map_core/TypeDefs.hpp"
+
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/Polygon.hpp>
 
@@ -70,17 +72,33 @@ public:
   [[nodiscard]] bool isPastEnd() const;
 
 private:
-  /// @brief Calculate sorted edges of the given polygon.
-  /** @details Vertices in an edge are ordered from higher to lower x.
+  /** @brief Calculate sorted edges of the given polygon.
+      @details Vertices in an edge are ordered from higher to lower x.
               Edges are sorted in reverse lexicographical order of x.
       @param polygon Polygon for which edges are calculated.
       @return Sorted edges of the polygon.
   */
   static std::vector<Edge> calculateSortedEdges(const grid_map::Polygon & polygon);
 
+  /// @brief Calculates intersections between lines (i.e., center of rows) and the polygon edges.
+  /// @param edges Edges of the polygon.
+  /// @param from_to_row ranges of lines to use for intersection.
+  /// @param origin Position of the top-left cell in the grid map.
+  /// @param grid_map grid map.
+  /// @return for each row the list of y values with an intersection.
   static std::vector<std::list<double>> calculateIntersectionsPerLine(
-    const std::vector<Edge> & edges, const double min_x, const double max_x, const double min_y,
-    const double max_y, const double resolution);
+    const std::vector<Edge> & edges, const std::pair<int, int> from_to_row,
+    const grid_map::Position & origin, const grid_map::GridMap & grid_map);
+
+  /// @brief Calculates the range of rows covering the given edges.
+  /// @details The rows are calculated without any shift that might exist in the grid map.
+  /// @param edges Edges of the polygon.
+  /// @param origin Position of the top-left cell in the grid map.
+  /// @param grid_map grid map.
+  /// @return the range of rows as a pair {first row, last row}.
+  static std::pair<int, int> calculateRowRange(
+    const std::vector<Edge> & edges, const grid_map::Position & origin,
+    const grid_map::GridMap & grid_map);
 
   /// calculated indexes of the gridmap that are inside the polygon
   std::vector<grid_map::Index> polygon_indexes_;
