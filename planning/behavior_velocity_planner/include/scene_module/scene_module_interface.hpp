@@ -135,7 +135,7 @@ public:
       if (stop_reason.reason != "") {
         stop_reason_array.stop_reasons.emplace_back(stop_reason);
       }
-      if (motion_factor.stop_reason != 0) {
+      if (motion_factor.reason != 0) {
         motion_factor_array.motion_factors.emplace_back(motion_factor);
       }
 
