@@ -32,8 +32,8 @@ if(BUILD_TESTING)
   )
 
   find_package(OpenCV REQUIRED)
-  add_executable(visualize_edge_cases test/visualize_edge_cases.cpp)
-  target_link_libraries(visualize_edge_cases
+  add_executable(benchmark test/benchmark.cpp)
+  target_link_libraries(benchmark
     ${PROJECT_NAME}
     ${OpenCV_LIBS}
   )
