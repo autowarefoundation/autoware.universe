@@ -29,13 +29,13 @@ L2ping is only allowed for root by default, so this package provides the followi
 
 <b>[values]</b>
 
-| key                            | value (example)                                                         |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| Device [0-9]: Status           | OK / RTT warning / Verify error / Lost / Ping rejected / Function error |
-| Device [0-9]: Name             | Wireless Controller                                                     |
-| Device [0-9]: Manufacturer     | MediaTek, Inc.                                                          |
-| Device [0-9]: Address          | AA:BB:CC:DD:EE:FF                                                       |
-| Device [0-9]: RTT              | 0.00ms                                                                  |
+| key                        | value (example)                                                         |
+| -------------------------- | ----------------------------------------------------------------------- |
+| Device [0-9]: Status       | OK / RTT warning / Verify error / Lost / Ping rejected / Function error |
+| Device [0-9]: Name         | Wireless Controller                                                     |
+| Device [0-9]: Manufacturer | MediaTek, Inc.                                                          |
+| Device [0-9]: Address      | AA:BB:CC:DD:EE:FF                                                       |
+| Device [0-9]: RTT          | 0.00ms                                                                  |
 
 - The following key will be added when `bluetooth_monitor` reports `Function error`.<br>
   ex.) The `connect` system call failed.
