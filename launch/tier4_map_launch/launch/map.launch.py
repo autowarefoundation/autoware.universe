@@ -29,9 +29,9 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    lanelet2_map_loader_param_path = LaunchConfiguration(
-        "lanelet2_map_loader_param_path"
-    ).perform(context)
+    lanelet2_map_loader_param_path = LaunchConfiguration("lanelet2_map_loader_param_path").perform(
+        context
+    )
 
     with open(lanelet2_map_loader_param_path, "r") as f:
         lanelet2_map_loader_param_path = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -59,9 +59,7 @@ def launch_setup(context, *args, **kwargs):
             },
             lanelet2_map_loader_param_path,
         ],
-        extra_arguments=[
-            {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
-        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     lanelet2_map_visualization = ComposableNode(
@@ -72,9 +70,7 @@ def launch_setup(context, *args, **kwargs):
             ("input/lanelet2_map", "vector_map"),
             ("output/lanelet2_map_marker", "vector_map_marker"),
         ],
-        extra_arguments=[
-            {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
-        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     pointcloud_map_loader = ComposableNode(
@@ -91,9 +87,7 @@ def launch_setup(context, *args, **kwargs):
                 ]
             }
         ],
-        extra_arguments=[
-            {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
-        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     map_tf_generator = ComposableNode(
@@ -106,9 +100,7 @@ def launch_setup(context, *args, **kwargs):
                 "viewer_frame": "viewer",
             }
         ],
-        extra_arguments=[
-            {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
-        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     container = ComposableNodeContainer(
@@ -141,9 +133,7 @@ def generate_launch_description():
 
     def add_launch_arg(name: str, default_value=None, description=None):
         launch_arguments.append(
-            DeclareLaunchArgument(
-                name, default_value=default_value, description=description
-            )
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
     add_launch_arg("map_path", "", "path to map directory"),
@@ -165,22 +155,20 @@ def generate_launch_description():
         ],
         "path to lanelet2_map_loader param file",
     ),
-    add_launch_arg(
-        "use_intra_process", "false", "use ROS2 component container communication"
-    ),
+    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication"),
     add_launch_arg("use_multithread", "false", "use multithread"),
 
     set_container_executable = SetLaunchConfiguration(
-            "container_executable",
-            "component_container",
-            condition=UnlessCondition(LaunchConfiguration("use_multithread")),
-        )
+        "container_executable",
+        "component_container",
+        condition=UnlessCondition(LaunchConfiguration("use_multithread")),
+    )
 
     set_container_mt_executable = SetLaunchConfiguration(
-            "container_executable",
-            "component_container_mt",
-            condition=IfCondition(LaunchConfiguration("use_multithread")),
-        )
+        "container_executable",
+        "component_container_mt",
+        condition=IfCondition(LaunchConfiguration("use_multithread")),
+    )
 
     return launch.LaunchDescription(
         launch_arguments
