@@ -293,6 +293,11 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
       get_logger(), "Setting new time_series_blockage_frames to: %d.",
       time_series_blockage_frames_);
   }
+  if (get_param(p, "time_series_blockage_interval_frames", time_series_blockage_interval_frames_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting new time_series_blockage_interval_frames to: %d.",
+      time_series_blockage_frames_);
+  }
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   result.reason = "success";
