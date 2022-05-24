@@ -169,7 +169,7 @@ inline std::string getFrameId(const BoundingBoxArray & t)
 
 ## Challenges
 
-- `tf2_geometry_msgs` does not implement `doTransform` for any non-stamped datatypes, but it is
+- `tf2_geometry_msgs` does not implement `doTransform` for any non-stamped data types, but it is
   possible with the same function template. It is needed when transforming sub-data, with main data
   that does have a stamp and can call doTransform on the sub-data with the same transform. Is this a useful upstream contribution?
 - `tf2_geometry_msgs` does not have `Point`, `Point32`, does not seem it needs one, also the
