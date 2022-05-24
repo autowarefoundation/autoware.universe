@@ -23,7 +23,7 @@ The MPC uses a model of the vehicle to simulate the trajectory resulting from th
 The optimization of the control command is formulated as a Quadratic Program (QP).
 
 These functionalities are implemented in the `trajectory_follower` package
-(see [trajectory_follower-mpc-design](../../../trajectory_follower/design/trajectory_follower-mpc-design))
+(see [trajectory_follower-mpc-design](https://github.com/autowarefoundation/autoware.universe/blob/main/control/trajectory_follower/design/trajectory_follower-mpc-design.md))
 
 ### Assumptions / Known limits
 
