@@ -7,6 +7,7 @@ This package detects 2D bounding boxes for target objects e.g., cars, trucks, bi
 ## Inner-workings / Algorithms
 
 ### Cite
+
 <!-- cspell:ignore Redmon, Farhadi, Bochkovskiy, Jocher, ultralytics, Roboflow, Zenodo -->
 
 yolov3
