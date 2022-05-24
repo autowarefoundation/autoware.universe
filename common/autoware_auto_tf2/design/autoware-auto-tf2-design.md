@@ -1,4 +1,4 @@
-# autoware_auto_tf2 {#autoware-auto-tf2-design}
+# autoware_auto_tf2
 
 This is the design document for the `autoware_auto_tf2` package.
 

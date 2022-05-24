@@ -1,4 +1,4 @@
-# MPC (Trajectory Follower) {#trajectory_follower-mpc-design}
+# MPC (Trajectory Follower)
 
 This is the design document for the MPC implemented in the `trajectory_follower` package.
 
