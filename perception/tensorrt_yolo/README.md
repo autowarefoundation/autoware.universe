@@ -7,6 +7,7 @@ This package detects 2D bounding boxes for target objects e.g., cars, trucks, bi
 ## Inner-workings / Algorithms
 
 ### Cite
+
 <!-- cspell:disable -->
 
 yolov3
@@ -20,7 +21,9 @@ Bochkovskiy, A., Wang, C. Y., & Liao, H. Y. M. (2020). Yolov4: Optimal speed and
 yolov5
 
 Jocher, G., et al. (2021). ultralytics/yolov5: v6.0 - YOLOv5n 'Nano' models, Roboflow integration, TensorFlow export, OpenCV DNN support (v6.0). Zenodo. <https://doi.org/10.5281/zenodo.5563715>
+
 <!-- cspell:enable -->
+
 ## Inputs / Outputs
 
 ### Input
