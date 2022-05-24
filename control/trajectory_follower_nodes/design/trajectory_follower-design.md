@@ -13,7 +13,7 @@ This functionality is decomposed into three nodes.
 - [latlon-muxer-design](latlon_muxer-design.md) : combines the lateral and longitudinal control commands
   into a single control command.
 
-Core functionalities are implemented in the [trajectory_follower](https://github.com/autowarefoundation/autoware.universe/blob/main/control/trajectory_follower/design/trajectory_follower-design.md) package.
+Core functionalities are implemented in the [trajectory_follower](../../../trajectory_follower/design/trajectory_follower-design.md/#trajectory-follower) package.
 
 @image html images/trajectory_follower-diagram.png "Overview of the Trajectory Follower package"
 
