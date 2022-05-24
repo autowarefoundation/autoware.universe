@@ -30,7 +30,7 @@ namespace image_projection_based_fusion
 {
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
-class PointpaintingFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2>
+class PointpaintingFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>
 {
 public:
   explicit PointpaintingFusionNode(const rclcpp::NodeOptions & options);
@@ -39,14 +39,14 @@ protected:
   void preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const int image_id,
+    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
     const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info,
     sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr obj_pub_ptr_;
+  rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
 
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
@@ -54,6 +54,8 @@ protected:
   bool has_twist_{false};
 
   std::unique_ptr<centerpoint::PointPaintingTRT> detector_ptr_{nullptr};
+
+  bool out_of_scope(const DetectedObjects & obj);
 };
 
 }  // namespace image_projection_based_fusion
