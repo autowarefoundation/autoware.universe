@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__UTILS_HPP_
-#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__UTILS_HPP_
+#ifndef SCENE_MODULE__RUN_OUT__UTILS_HPP_
+#define SCENE_MODULE__RUN_OUT__UTILS_HPP_
 
-#include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
+#include "scene_module/run_out/dynamic_obstacle.hpp"
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -24,7 +24,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace dynamic_obstacle_stop_utils
+namespace run_out_utils
 {
 namespace bg = boost::geometry;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
@@ -44,7 +44,7 @@ struct CommonParam
   double limit_min_jerk;   // min jerk limit [m/sss]
   double limit_min_acc;    // min deceleration limit [m/ss]
 };
-struct DynamicObstacleStopParam
+struct RunOutParam
 {
   std::string detection_method;
   bool use_partition_lanelet;
@@ -93,7 +93,7 @@ struct SlowDownLimit
 struct PlannerParam
 {
   CommonParam common;
-  DynamicObstacleStopParam dynamic_obstacle_stop;
+  RunOutParam run_out;
   VehicleParam vehicle_param;
   DetectionAreaSize detection_area;
   ApproachingParam approaching;
@@ -222,6 +222,6 @@ PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_dist
 PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
 
 DetectionMethod toEnum(const std::string & detection_method);
-}  // namespace dynamic_obstacle_stop_utils
+}  // namespace run_out_utils
 }  // namespace behavior_velocity_planner
-#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__UTILS_HPP_
+#endif  // SCENE_MODULE__RUN_OUT__UTILS_HPP_

@@ -333,17 +333,17 @@ def launch_setup(context, *args, **kwargs):
     with open(no_stopping_area_param_path, "r") as f:
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    dynamic_obstacle_stop_param_path = os.path.join(
+    run_out_param_path = os.path.join(
         get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
         "behavior_velocity_planner",
-        "dynamic_obstacle_stop.param.yaml",
+        "run_out.param.yaml",
     )
-    with open(dynamic_obstacle_stop_param_path, "r") as f:
-        dynamic_obstacle_stop_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(run_out_param_path, "r") as f:
+        run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
@@ -398,7 +398,7 @@ def launch_setup(context, *args, **kwargs):
                 "launch_detection_area": True,
                 "launch_virtual_traffic_light": True,
                 "launch_occlusion_spot": True,
-                "launch_dynamic_obstacle_stop": False,
+                "launch_run_out": False,
                 "launch_no_stopping_area": True,
                 "forward_path_length": 1000.0,
                 "backward_path_length": 5.0,
@@ -418,7 +418,7 @@ def launch_setup(context, *args, **kwargs):
             occlusion_spot_param,
             no_stopping_area_param,
             vehicle_info_param,
-            dynamic_obstacle_stop_param,
+            run_out_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -453,7 +453,7 @@ def launch_setup(context, *args, **kwargs):
             PythonExpression(
                 [
                     "'",
-                    dynamic_obstacle_stop_param["dynamic_obstacle_stop"]["detection_method"],
+                    run_out_param["run_out"]["detection_method"],
                     "' == 'Points'",
                 ]
             )

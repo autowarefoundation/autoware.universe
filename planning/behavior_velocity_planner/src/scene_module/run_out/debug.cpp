@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/dynamic_obstacle_stop/debug.hpp"
+#include "scene_module/run_out/debug.hpp"
 
-#include "scene_module/dynamic_obstacle_stop/scene.hpp"
+#include "scene_module/run_out/scene.hpp"
 
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
@@ -45,22 +45,22 @@ visualization_msgs::msg::Marker createStopLineMarker(
   return marker;
 }
 
-DynamicObstacleStopDebug::TextWithPosition createDebugText(
+RunOutDebug::TextWithPosition createDebugText(
   const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
 {
   const auto offset_pose = tier4_autoware_utils::calcOffsetPose(pose, 0, lateral_offset, 0);
 
-  DynamicObstacleStopDebug::TextWithPosition text_with_position;
+  RunOutDebug::TextWithPosition text_with_position;
   text_with_position.text = text;
   text_with_position.position = offset_pose.position;
 
   return text_with_position;
 }
 
-DynamicObstacleStopDebug::TextWithPosition createDebugText(
+RunOutDebug::TextWithPosition createDebugText(
   const std::string text, const geometry_msgs::msg::Point position)
 {
-  DynamicObstacleStopDebug::TextWithPosition text_with_position;
+  RunOutDebug::TextWithPosition text_with_position;
   text_with_position.text = text;
   text_with_position.position = position;
 
@@ -69,17 +69,15 @@ DynamicObstacleStopDebug::TextWithPosition createDebugText(
 
 }  // namespace
 
-DynamicObstacleStopDebug::DynamicObstacleStopDebug(rclcpp::Node & node) : node_(node)
+RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
 {
-  pub_debug_values_ = node.create_publisher<Float32MultiArrayStamped>(
-    "~/dynamic_obstacle_stop/debug/debug_values", 1);
-  pub_accel_reason_ =
-    node.create_publisher<Int32Stamped>("~/dynamic_obstacle_stop/debug/accel_reason", 1);
-  pub_debug_trajectory_ =
-    node.create_publisher<Trajectory>("~/dynamic_obstacle_stop/debug/trajectory", 1);
+  pub_debug_values_ =
+    node.create_publisher<Float32MultiArrayStamped>("~/run_out/debug/debug_values", 1);
+  pub_accel_reason_ = node.create_publisher<Int32Stamped>("~/run_out/debug/accel_reason", 1);
+  pub_debug_trajectory_ = node.create_publisher<Trajectory>("~/run_out/debug/trajectory", 1);
 }
 
-void DynamicObstacleStopDebug::pushDebugPoints(const pcl::PointXYZ & debug_point)
+void RunOutDebug::pushDebugPoints(const pcl::PointXYZ & debug_point)
 {
   geometry_msgs::msg::Point ros_point;
   ros_point.x = debug_point.x;
@@ -89,20 +87,19 @@ void DynamicObstacleStopDebug::pushDebugPoints(const pcl::PointXYZ & debug_point
   debug_points_.push_back(ros_point);
 }
 
-void DynamicObstacleStopDebug::pushDebugPoints(const geometry_msgs::msg::Point & debug_point)
+void RunOutDebug::pushDebugPoints(const geometry_msgs::msg::Point & debug_point)
 {
   debug_points_.push_back(debug_point);
 }
 
-void DynamicObstacleStopDebug::pushDebugPoints(
-  const std::vector<geometry_msgs::msg::Point> & debug_points)
+void RunOutDebug::pushDebugPoints(const std::vector<geometry_msgs::msg::Point> & debug_points)
 {
   for (const auto & p : debug_points) {
     debug_points_.push_back(p);
   }
 }
 
-void DynamicObstacleStopDebug::pushDebugPoints(
+void RunOutDebug::pushDebugPoints(
   const geometry_msgs::msg::Point & debug_point, const PointType point_type)
 {
   switch (point_type) {
@@ -123,24 +120,19 @@ void DynamicObstacleStopDebug::pushDebugPoints(
   }
 }
 
-void DynamicObstacleStopDebug::pushStopPose(const geometry_msgs::msg::Pose & pose)
-{
-  stop_pose_.emplace(pose);
-}
+void RunOutDebug::pushStopPose(const geometry_msgs::msg::Pose & pose) { stop_pose_.emplace(pose); }
 
-void DynamicObstacleStopDebug::pushDebugLines(
-  const std::vector<geometry_msgs::msg::Point> & debug_line)
+void RunOutDebug::pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line)
 {
   debug_lines_.push_back(debug_line);
 }
 
-void DynamicObstacleStopDebug::pushDebugPolygons(
-  const std::vector<geometry_msgs::msg::Point> & debug_polygon)
+void RunOutDebug::pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon)
 {
   debug_polygons_.push_back(debug_polygon);
 }
 
-void DynamicObstacleStopDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
+void RunOutDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
 {
   std::vector<geometry_msgs::msg::Point> ros_points;
   for (const auto & p : debug_polygon.outer()) {
@@ -150,24 +142,23 @@ void DynamicObstacleStopDebug::pushDetectionAreaPolygons(const Polygon2d & debug
   detection_area_polygons_.push_back(ros_points);
 }
 
-void DynamicObstacleStopDebug::pushDebugTexts(const TextWithPosition & debug_text)
+void RunOutDebug::pushDebugTexts(const TextWithPosition & debug_text)
 {
   debug_texts_.push_back(debug_text);
 }
 
-void DynamicObstacleStopDebug::pushDebugTexts(
+void RunOutDebug::pushDebugTexts(
   const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
 {
   debug_texts_.push_back(createDebugText(text, pose, lateral_offset));
 }
 
-void DynamicObstacleStopDebug::pushDebugTexts(
-  const std::string text, const geometry_msgs::msg::Point position)
+void RunOutDebug::pushDebugTexts(const std::string text, const geometry_msgs::msg::Point position)
 {
   debug_texts_.push_back(createDebugText(text, position));
 }
 
-void DynamicObstacleStopDebug::clearDebugMarker()
+void RunOutDebug::clearDebugMarker()
 {
   debug_points_.clear();
   debug_points_red_.clear();
@@ -179,7 +170,7 @@ void DynamicObstacleStopDebug::clearDebugMarker()
   stop_pose_.reset();
 }
 
-visualization_msgs::msg::MarkerArray DynamicObstacleStopDebug::createVisualizationMarkerArray()
+visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
 {
   rclcpp::Time current_time = node_.now();
 
@@ -197,8 +188,7 @@ visualization_msgs::msg::MarkerArray DynamicObstacleStopDebug::createVisualizati
   return visualization_marker_array;
 }
 
-visualization_msgs::msg::MarkerArray
-DynamicObstacleStopDebug::createVisualizationMarkerArrayFromDebugData(
+visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArrayFromDebugData(
   const builtin_interfaces::msg::Time & current_time)
 {
   visualization_msgs::msg::MarkerArray msg;
@@ -299,12 +289,9 @@ DynamicObstacleStopDebug::createVisualizationMarkerArrayFromDebugData(
 
   return msg;
 }
-void DynamicObstacleStopDebug::setAccelReason(const AccelReason & accel_reason)
-{
-  accel_reason_ = accel_reason;
-}
+void RunOutDebug::setAccelReason(const AccelReason & accel_reason) { accel_reason_ = accel_reason; }
 
-void DynamicObstacleStopDebug::publishDebugValue()
+void RunOutDebug::publishDebugValue()
 {
   // publish debug values
   tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
@@ -320,13 +307,13 @@ void DynamicObstacleStopDebug::publishDebugValue()
   pub_accel_reason_->publish(accel_reason);
 }
 
-void DynamicObstacleStopDebug::publishDebugTrajectory(const Trajectory & trajectory)
+void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
 {
   pub_debug_trajectory_->publish(trajectory);
 }
 
 // scene module
-visualization_msgs::msg::MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray RunOutModule::createDebugMarkerArray()
 {
   return debug_ptr_->createVisualizationMarkerArray();
 }

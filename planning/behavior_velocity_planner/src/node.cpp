@@ -32,10 +32,10 @@
 #include <scene_module/blind_spot/manager.hpp>
 #include <scene_module/crosswalk/manager.hpp>
 #include <scene_module/detection_area/manager.hpp>
-#include <scene_module/dynamic_obstacle_stop/manager.hpp>
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/run_out/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -191,8 +191,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_occlusion_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_dynamic_obstacle_stop", true)) {
-    planner_manager_.launchSceneModule(std::make_shared<DynamicObstacleStopModuleManager>(*this));
+  if (this->declare_parameter("launch_run_out", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
   }
 }
 

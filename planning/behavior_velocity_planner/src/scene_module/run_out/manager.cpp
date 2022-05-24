@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/dynamic_obstacle_stop/manager.hpp"
+#include "scene_module/run_out/manager.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -20,7 +20,7 @@ namespace
 {
 }  // namespace
 
-DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node & node)
+RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   // Vehicle Parameters
@@ -43,7 +43,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   }
 
   {
-    auto & p = planner_param_.dynamic_obstacle_stop;
+    auto & p = planner_param_.run_out;
     p.detection_method = node.declare_parameter(ns + ".detection_method", "Object");
     p.use_partition_lanelet = node.declare_parameter(ns + ".use_partition_lanelet", true);
     p.specify_decel_jerk = node.declare_parameter(ns + ".specify_decel_jerk", false);
@@ -95,11 +95,11 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
     p.max_acc = node.declare_parameter(ns_m + ".max_acc", -2.0);
   }
 
-  debug_ptr_ = std::make_shared<DynamicObstacleStopDebug>(node);
+  debug_ptr_ = std::make_shared<RunOutDebug>(node);
   setDynamicObstacleCreator(node);
 }
 
-void DynamicObstacleStopModuleManager::launchNewModules(
+void RunOutModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) {
@@ -108,14 +108,14 @@ void DynamicObstacleStopModuleManager::launchNewModules(
 
   constexpr int64_t module_id = 0;
   if (!isModuleRegistered(module_id)) {
-    registerModule(std::make_shared<DynamicObstacleStopModule>(
-      module_id, planner_data_, planner_param_, logger_.get_child("dynamic_obstacle_stop_module"),
+    registerModule(std::make_shared<RunOutModule>(
+      module_id, planner_data_, planner_param_, logger_.get_child("run_out_module"),
       std::move(dynamic_obstacle_creator_), debug_ptr_, clock_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-DynamicObstacleStopModuleManager::getModuleExpiredFunction(
+RunOutModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   return
@@ -124,12 +124,11 @@ DynamicObstacleStopModuleManager::getModuleExpiredFunction(
     };
 }
 
-void DynamicObstacleStopModuleManager::setDynamicObstacleCreator(rclcpp::Node & node)
+void RunOutModuleManager::setDynamicObstacleCreator(rclcpp::Node & node)
 {
-  using dynamic_obstacle_stop_utils::DetectionMethod;
+  using run_out_utils::DetectionMethod;
 
-  const auto detection_method_enum =
-    dynamic_obstacle_stop_utils::toEnum(planner_param_.dynamic_obstacle_stop.detection_method);
+  const auto detection_method_enum = run_out_utils::toEnum(planner_param_.run_out.detection_method);
   switch (detection_method_enum) {
     case DetectionMethod::Object:
       dynamic_obstacle_creator_ = std::make_unique<DynamicObstacleCreatorForObject>(node);

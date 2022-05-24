@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__SCENE_HPP_
-#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__SCENE_HPP_
+#ifndef SCENE_MODULE__RUN_OUT__SCENE_HPP_
+#define SCENE_MODULE__RUN_OUT__SCENE_HPP_
 
-#include "scene_module/dynamic_obstacle_stop/debug.hpp"
-#include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
-#include "scene_module/dynamic_obstacle_stop/utils.hpp"
+#include "scene_module/run_out/debug.hpp"
+#include "scene_module/run_out/dynamic_obstacle.hpp"
+#include "scene_module/run_out/utils.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
 #include <memory>
@@ -30,21 +30,20 @@ namespace bg = boost::geometry;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using dynamic_obstacle_stop_utils::DetectionAreaSize;
-using dynamic_obstacle_stop_utils::PlannerParam;
-using dynamic_obstacle_stop_utils::State;
+using run_out_utils::DetectionAreaSize;
+using run_out_utils::PlannerParam;
+using run_out_utils::State;
 using tier4_debug_msgs::msg::Float32Stamped;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
-class DynamicObstacleStopModule : public SceneModuleInterface
+class RunOutModule : public SceneModuleInterface
 {
 public:
-  DynamicObstacleStopModule(
+  RunOutModule(
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
-    const std::shared_ptr<DynamicObstacleStopDebug> & debug_ptr,
-    const rclcpp::Clock::SharedPtr clock);
+    const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
@@ -63,7 +62,7 @@ private:
   rclcpp::Time stop_time_;
   BasicPolygons2d partition_lanelets_;
   std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator_;
-  std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
+  std::shared_ptr<RunOutDebug> debug_ptr_;
 
   // Function
   pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithRectangle(
@@ -155,4 +154,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__SCENE_HPP_
+#endif  // SCENE_MODULE__RUN_OUT__SCENE_HPP_

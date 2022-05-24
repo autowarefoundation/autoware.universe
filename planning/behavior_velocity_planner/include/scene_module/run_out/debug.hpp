@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DEBUG_HPP_
-#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DEBUG_HPP_
+#ifndef SCENE_MODULE__RUN_OUT__DEBUG_HPP_
+#define SCENE_MODULE__RUN_OUT__DEBUG_HPP_
 
-#include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
+#include "scene_module/run_out/dynamic_obstacle.hpp"
 
 #include <string>
 #include <vector>
@@ -74,7 +74,7 @@ private:
   std::array<float, static_cast<int>(TYPE::SIZE)> values_;
 };
 
-class DynamicObstacleStopDebug
+class RunOutDebug
 {
 public:
   enum class AccelReason {
@@ -90,8 +90,8 @@ public:
     geometry_msgs::msg::Point position;
   };
 
-  explicit DynamicObstacleStopDebug(rclcpp::Node & node);
-  ~DynamicObstacleStopDebug() {}
+  explicit RunOutDebug(rclcpp::Node & node);
+  ~RunOutDebug() {}
 
   void setDebugValues(const DebugValues::TYPE type, const double val)
   {
@@ -140,4 +140,4 @@ private:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DEBUG_HPP_
+#endif  // SCENE_MODULE__RUN_OUT__DEBUG_HPP_

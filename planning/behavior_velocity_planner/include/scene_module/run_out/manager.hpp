@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__MANAGER_HPP_
-#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__MANAGER_HPP_
+#ifndef SCENE_MODULE__RUN_OUT__MANAGER_HPP_
+#define SCENE_MODULE__RUN_OUT__MANAGER_HPP_
 
-#include "scene_module/dynamic_obstacle_stop/scene.hpp"
+#include "scene_module/run_out/scene.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
 #include <memory>
 
 namespace behavior_velocity_planner
 {
-class DynamicObstacleStopModuleManager : public SceneModuleManagerInterface
+class RunOutModuleManager : public SceneModuleManagerInterface
 {
 public:
-  explicit DynamicObstacleStopModuleManager(rclcpp::Node & node);
+  explicit RunOutModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "dynamic_obstacle_stop"; }
+  const char * getModuleName() override { return "run_out"; }
 
 private:
-  dynamic_obstacle_stop_utils::PlannerParam planner_param_;
-  std::shared_ptr<DynamicObstacleStopDebug> debug_ptr_;
+  run_out_utils::PlannerParam planner_param_;
+  std::shared_ptr<RunOutDebug> debug_ptr_;
   std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
@@ -43,4 +43,4 @@ private:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__MANAGER_HPP_
+#endif  // SCENE_MODULE__RUN_OUT__MANAGER_HPP_

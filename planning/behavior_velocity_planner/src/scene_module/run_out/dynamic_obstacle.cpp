@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/dynamic_obstacle_stop/dynamic_obstacle.hpp"
+#include "scene_module/run_out/dynamic_obstacle.hpp"
 
 #include <pcl/filters/voxel_grid.h>
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DYNAMIC_OBSTACLE_HPP_
-#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DYNAMIC_OBSTACLE_HPP_
+#ifndef SCENE_MODULE__RUN_OUT__DYNAMIC_OBSTACLE_HPP_
+#define SCENE_MODULE__RUN_OUT__DYNAMIC_OBSTACLE_HPP_
 
 #include "behavior_velocity_planner/planner_data.hpp"
 #include "utilization/util.hpp"
@@ -149,4 +149,4 @@ private:
 
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__DYNAMIC_OBSTACLE_HPP_
+#endif  // SCENE_MODULE__RUN_OUT__DYNAMIC_OBSTACLE_HPP_

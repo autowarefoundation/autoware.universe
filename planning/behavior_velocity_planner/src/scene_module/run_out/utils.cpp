@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/dynamic_obstacle_stop/utils.hpp"
+#include "scene_module/run_out/utils.hpp"
 
 namespace behavior_velocity_planner
 {
-namespace dynamic_obstacle_stop_utils
+namespace run_out_utils
 {
 bool validCheckDecelPlan(
   const double v_end, const double a_end, const double v_target, const double a_target,
@@ -506,5 +506,5 @@ DetectionMethod toEnum(const std::string & detection_method)
   }
 }
 
-}  // namespace dynamic_obstacle_stop_utils
+}  // namespace run_out_utils
 }  // namespace behavior_velocity_planner

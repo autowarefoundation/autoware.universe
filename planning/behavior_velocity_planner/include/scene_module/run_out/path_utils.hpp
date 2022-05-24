@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
-#define SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
+#ifndef SCENE_MODULE__RUN_OUT__PATH_UTILS_HPP_
+#define SCENE_MODULE__RUN_OUT__PATH_UTILS_HPP_
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -26,7 +26,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace dynamic_obstacle_stop_utils
+namespace run_out_utils
 {
 
 template <class T>
@@ -90,6 +90,6 @@ size_t calcIndexByLengthReverse(
   return 0;
 }
 
-}  // namespace dynamic_obstacle_stop_utils
+}  // namespace run_out_utils
 }  // namespace behavior_velocity_planner
-#endif  // SCENE_MODULE__DYNAMIC_OBSTACLE_STOP__PATH_UTILS_HPP_
+#endif  // SCENE_MODULE__RUN_OUT__PATH_UTILS_HPP_

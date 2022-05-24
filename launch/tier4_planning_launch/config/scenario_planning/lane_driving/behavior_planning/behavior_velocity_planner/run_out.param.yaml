@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    dynamic_obstacle_stop:
+    run_out:
       detection_method: "Object"  # [-] candidate: Object, ObjectWithoutPath, Points
       use_partition_lanelet: true # [-] whether to use partition lanelet map data
       specify_decel_jerk: false   # [-] whether to specify jerk when ego decelerates
@@ -22,12 +22,12 @@
 
       # parameter to create abstracted dynamic obstacles
       dynamic_obstacle:
-        min_vel_kmph: 0.0 # [km/h] minimum velocity for dynamic obstacles
-        max_vel_kmph: 5.0 # [km/h] maximum velocity for dynamic obstacles
-        diameter: 0.1     # [m] diameter of obstacles. used for creating dynamic obstacles from points
-        height: 2.0       # [m] height of obstacles. used for creating dynamic obstacles from points
-        path_size: 20     # [-] create the predicted path of this size. used for creating dynamic obstacles from points or objects without path
-        time_step: 0.5    # [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path
+        min_vel_kmph: 0.0         # [km/h] minimum velocity for dynamic obstacles
+        max_vel_kmph: 5.0         # [km/h] maximum velocity for dynamic obstacles
+        diameter: 0.1             # [m] diameter of obstacles. used for creating dynamic obstacles from points
+        height: 2.0               # [m] height of obstacles. used for creating dynamic obstacles from points
+        max_prediction_time: 10.0 # [sec] create predicted path until this time
+        time_step: 0.5            # [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path
 
       # approach if ego has stopped in the front of the obstacle for a certain amount of time
       approaching:
