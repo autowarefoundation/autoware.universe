@@ -130,9 +130,7 @@ def generate_launch_description():
 
     def add_launch_arg(name: str, default_value=None, description=None):
         launch_arguments.append(
-            DeclareLaunchArgument(
-                name, default_value=default_value, description=description
-            )
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
     add_launch_arg("map_path", "", "path to map directory"),
@@ -146,22 +144,20 @@ def generate_launch_description():
         [LaunchConfiguration("map_path"), "/pointcloud_map.pcd"],
         "path to pointcloud map file",
     ),
-    add_launch_arg(
-        "use_intra_process", "false", "use ROS2 component container communication"
-    ),
+    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication"),
     add_launch_arg("use_multithread", "false", "use multithread"),
 
     set_container_executable = SetLaunchConfiguration(
-            "container_executable",
-            "component_container",
-            condition=UnlessCondition(LaunchConfiguration("use_multithread")),
-        )
+        "container_executable",
+        "component_container",
+        condition=UnlessCondition(LaunchConfiguration("use_multithread")),
+    )
 
     set_container_mt_executable = SetLaunchConfiguration(
-            "container_executable",
-            "component_container_mt",
-            condition=IfCondition(LaunchConfiguration("use_multithread")),
-        )
+        "container_executable",
+        "component_container_mt",
+        condition=IfCondition(LaunchConfiguration("use_multithread")),
+    )
 
     return launch.LaunchDescription(
         launch_arguments
