@@ -24,9 +24,7 @@ L2ping is only allowed for root by default, so this package provides the followi
 | ----- | -------------- |
 | OK    | OK             |
 | WARN  | RTT warning    |
-|       | Verify error   |
 | ERROR | Lost           |
-|       | Ping rejected  |
 |       | Function error |
 
 <b>[values]</b>
@@ -38,8 +36,6 @@ L2ping is only allowed for root by default, so this package provides the followi
 | Device [0-9]: Manufacturer     | MediaTek, Inc.                                                          |
 | Device [0-9]: Address          | AA:BB:CC:DD:EE:FF                                                       |
 | Device [0-9]: RTT              | 0.00ms                                                                  |
-| Device [0-9]: Sent packets     | 1000                                                                    |
-| Device [0-9]: Received packets | 1000                                                                    |
 
 - The following key will be added when `bluetooth_monitor` reports `Function error`.<br>
   ex.) The `connect` system call failed.
@@ -53,9 +49,7 @@ L2ping is only allowed for root by default, so this package provides the followi
 | Name        | Type   | Default Value | Explanation                                               |
 | ----------- | ------ | ------------- | --------------------------------------------------------- |
 | `port`      | int    | 7640          | Port number to connect to L2ping service.                 |
-| `delay`     | int    | 1             | Wait seconds between sending each packet.                 |
 | `timeout`   | int    | 5             | Wait timeout seconds for the response.                    |
-| `verify`    | bool   | false         | Verify request and response payload.                      |
 | `rtt_warn`  | float  | 0.00          | RTT(Round-Trip Time) to generate warn.                    |
 | `addresses` | string | \*            | List of bluetooth address of wireless devices to monitor. |
 

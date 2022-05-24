@@ -2,8 +2,6 @@
 /**:
   ros__parameters:
     port: 7640
-    delay: 1
     timeout: 5
-    verify: false
     rtt_warn: 0.00
     addresses: ["4C:B9:9B:6E:7F:9A"]

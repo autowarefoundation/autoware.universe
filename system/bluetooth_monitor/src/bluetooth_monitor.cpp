@@ -39,9 +39,7 @@ BluetoothMonitor::BluetoothMonitor(const rclcpp::NodeOptions & options)
   gethostname(host_name, sizeof(host_name));
 
   // Build L2ping configuration
-  config_.l2ping.delay = declare_parameter("delay", DEFAULT_DELAY);
   config_.l2ping.timeout = declare_parameter("timeout", DEFAULT_TIMEOUT);
-  config_.l2ping.verify = declare_parameter("verify", DEFAULT_VERIFY);
   config_.l2ping.rtt_warn = declare_parameter("rtt_warn", RTT_NO_WARN);
   config_.addresses = declare_parameter("addresses", std::vector<std::string>());
 
@@ -135,7 +133,8 @@ bool BluetoothMonitor::receiveData(diagnostic_updater::DiagnosticStatusWrapper &
 void BluetoothMonitor::closeConnection() { close(socket_); }
 
 void BluetoothMonitor::setErrorLevel(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{  // No device
+{
+  // No device
   if (status_list_.size() == 0) {
     stat.summary(DiagStatus::OK, "No device connected");
     return;
@@ -151,11 +150,9 @@ void BluetoothMonitor::setErrorLevel(diagnostic_updater::DiagnosticStatusWrapper
     stat.add(fmt::format("Device {}: Manufacturer", index), status.manufacturer);
     stat.add(fmt::format("Device {}: Address", index), status.address);
     stat.addf(fmt::format("Device {}: RTT", index), "%.2f ms", status.time_difference);
-    stat.addf(fmt::format("Device {} Sent packets", index), "%d", status.sent_packets);
-    stat.addf(fmt::format("Device {} Received packets", index), "%d", status.received_packets);
 
     if (status.status_code == StatusCode::FUNCTION_ERROR) {
-      stat.add(fmt::format("Device {}: {}", index, status.function_name), strerror(errno));
+      stat.add(fmt::format("Device {}: {}", index, status.function_name), status.error_message);
     }
 
     level = status_error_list_.at(status.status_code);

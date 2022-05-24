@@ -99,17 +99,13 @@ protected:
   const std::map<StatusCode, const char *> status_string_list_ = {
     {StatusCode::OK, "OK"},
     {StatusCode::RTT_WARNING, "RTT warning"},
-    {StatusCode::VERIFY_ERROR, "Verify error"},
     {StatusCode::LOST, "Lost"},
-    {StatusCode::REJECTED, "Ping rejected"},
     {StatusCode::FUNCTION_ERROR, FUNCTION_ERROR_STR}};
 
   const std::map<StatusCode, unsigned char> status_error_list_ = {
     {StatusCode::OK, DiagStatus::OK},
     {StatusCode::RTT_WARNING, DiagStatus::WARN},
-    {StatusCode::VERIFY_ERROR, DiagStatus::WARN},
     {StatusCode::LOST, DiagStatus::ERROR},
-    {StatusCode::REJECTED, DiagStatus::ERROR},
     {StatusCode::FUNCTION_ERROR, DiagStatus::ERROR}};
 };
 

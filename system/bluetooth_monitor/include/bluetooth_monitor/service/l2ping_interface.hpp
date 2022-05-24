@@ -19,8 +19,6 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <bluetooth/bluetooth.h>
-
 #include <string>
 #include <vector>
 
@@ -36,9 +34,7 @@ static constexpr float RTT_NO_WARN = 0.0f;
  */
 struct L2pingConfig
 {
-  int delay{DEFAULT_DELAY};      //!< @brief Wait seconds between sending each packet
   int timeout{DEFAULT_TIMEOUT};  //!< @brief Wait timeout seconds for the response
-  bool verify{DEFAULT_VERIFY};   //!< @brief Verify request and response payload
   float rtt_warn{RTT_NO_WARN};   //!< @brief RTT warning time
 
   /**
@@ -51,9 +47,7 @@ struct L2pingConfig
   template <typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
-    ar & delay;
     ar & timeout;
-    ar & verify;
     ar & rtt_warn;
   }
 };
@@ -87,10 +81,8 @@ struct L2pingServiceConfig
 enum class StatusCode {
   OK = 0,
   RTT_WARNING = 1,
-  VERIFY_ERROR = 2,
-  LOST = 3,
-  REJECTED = 4,
-  FUNCTION_ERROR = 5,
+  LOST = 2,
+  FUNCTION_ERROR = 3,
 };
 
 /**
@@ -100,14 +92,12 @@ struct L2pingStatus
 {
   StatusCode status_code;     //!< @brief Status code of a device
   std::string function_name;  //!< @brief Function name which error occurred
-  int error_code;             //!< @brief Error number which is set by system calls
+  std::string error_message;  //!< @brief Error message to display
 
   std::string name;          //!< @brief Name of remote device
   std::string manufacturer;  //!< @brief Manufacturer name of remote device
   std::string address;       //!< @brief Bluetooth address
   float time_difference;     //!< @brief Time difference between sent and received
-  int sent_packets;          //!< @brief Number of sent packets to remote device
-  int received_packets;      //!< @brief Number of received packets from remote device
 
   /**
    * @brief Load or save data members.
@@ -121,13 +111,11 @@ struct L2pingStatus
   {
     ar & status_code;
     ar & function_name;
-    ar & error_code;
+    ar & error_message;
     ar & name;
     ar & manufacturer;
     ar & address;
     ar & time_difference;
-    ar & sent_packets;
-    ar & received_packets;
   }
 };
 

@@ -53,9 +53,9 @@ protected:
   /**
    * @brief Set error data to inform ros2 node
    * @param [in] function_name Function name which error occurred
-   * @param [in] error_code number which is set by system calls
+   * @param [in] error_message Error message to display
    */
-  void setFunctionError(const std::string & function_name, int error_code);
+  void setFunctionError(const std::string & function_name, const std::string & error_message);
 
   /**
    * @brief Build device list to ping

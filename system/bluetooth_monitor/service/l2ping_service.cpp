@@ -11,36 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// This code is derived from BlueZ with following copyrights.
-
-// SPDX-License-Identifier: GPL-2.0-or-later
-/*
- *
- *  BlueZ - Bluetooth protocol stack for Linux
- *
- *  Copyright (C) 2000-2001  Qualcomm Incorporated
- *  Copyright (C) 2002-2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2002-2010  Marcel Holtmann <marcel@holtmann.org>
- *
- *
- */
 
 #include "bluetooth_monitor/service/l2ping_service.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/process.hpp>
 
-#include <bluetooth/rfcomm.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <syslog.h>
 
 #include <memory>
+#include <regex>
 #include <sstream>
 #include <string>
 
-static const bdaddr_t ANY_ADDRESS = {{0, 0, 0, 0, 0, 0}};
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+
+namespace bp = boost::process;
 
 L2pingService::L2pingService(const int port) : port_(port), socket_(-1) {}
 
@@ -122,7 +111,7 @@ void L2pingService::run()
       boost::archive::text_iarchive oa(iss);
       oa & config_;
     } catch (const std::exception & e) {
-      syslog(LOG_ERR, "Exception occurred. %s\n", e.what());
+      syslog(LOG_ERR, "Exception occurred. ! %s\n", e.what());
       close(new_sock);
       continue;
     }
@@ -153,7 +142,8 @@ void L2pingService::run()
   }
 }
 
-void L2pingService::setFunctionError(const std::string & function_name, int error_code)
+void L2pingService::setFunctionError(
+  const std::string & function_name, const std::string & error_message)
 {
   // Clear list
   status_list_.clear();
@@ -162,110 +152,68 @@ void L2pingService::setFunctionError(const std::string & function_name, int erro
   L2pingStatus status{};
   status.status_code = StatusCode::FUNCTION_ERROR;
   status.function_name = function_name;
-  status.error_code = error_code;
+  status.error_message = error_message;
 
   status_list_.emplace_back(status);
 }
 
 bool L2pingService::buildDeviceList()
 {
-  // Create socket to bluetooth host controller interface(HCI)
-  int sock = socket(AF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
+  bp::pipe pipe;
+  std::ostringstream os;
 
-  if (sock < 0) {
-    setFunctionError("socket", errno);
-    syslog(LOG_ERR, "Failed to create socket. %s", strerror(errno));
-    return false;
-  }
+  // Get MAC address list of paired devices
+  /*
+   Output example of `bluetoothctl paired-devices`
 
-  // Register local address to connect to HCI
-  sockaddr_rc local_address{};
-
-  local_address.rc_family = AF_BLUETOOTH;  // Bluetooth family
-  local_address.rc_bdaddr = ANY_ADDRESS;   // Any address
-  local_address.rc_channel = 1;            // Single channel
-
-  if (bind(sock, (struct sockaddr *)&local_address, sizeof(local_address)) < 0) {
-    setFunctionError("bind", errno);
-    syslog(LOG_ERR, "Failed to bind socket. %s", strerror(errno));
-    return false;
-  }
-
-  // Get list of HCI devices
-  hci_dev_list_req hci_device_list{};
-  hci_device_list.dev_num = HCI_MAX_DEV;
-
-  if (ioctl(sock, HCIGETDEVLIST, &hci_device_list) < 0) {
-    setFunctionError("HCIGETDEVLIST", errno);
-    syslog(LOG_ERR, "Failed to get list of HCI devices. %s", strerror(errno));
-    close(sock);
-    return false;
-  }
-
-  // Get information of each HCI device
-  hci_dev_req * hci_device = hci_device_list.dev_req;
-
-  // Loop for HCI devices
-  for (int i = 0; i < hci_device_list.dev_num; ++i, ++hci_device) {
-    // Build device list to ping from connected devices
-    if (!buildDeviceListFromConnectedDevices(sock, hci_device->dev_id)) {
+   Device 01:02:03:04:05:06 Wireless Controller
+   Device AA:BB:CC:DD:EE:FF bluetooth mouse4.0
+  */
+  {
+    bp::ipstream is_err;
+    bp::child c("bluetoothctl paired-devices", bp::std_out > pipe, bp::std_err > is_err);
+    c.wait();
+    if (c.exit_code() != 0) {
+      is_err >> os.rdbuf();
+      setFunctionError("bluetoothctl", os.str());
+      syslog(LOG_ERR, "%s\n", os.str().c_str());
       return false;
     }
   }
 
-  close(sock);
-
-  return true;
-}
-
-bool L2pingService::buildDeviceListFromConnectedDevices(int sock, uint16_t device_id)
-{
-  // Get informaton of HCI device
-  hci_dev_info hci_device_info{};
-  hci_device_info.dev_id = device_id;
-  if (ioctl(sock, HCIGETDEVINFO, &hci_device_info) < 0) {
-    setFunctionError("HCIGETDEVINFO", errno);
-    syslog(
-      LOG_ERR, "Failed to get informaton of HCI device. id = %d, %s", hci_device_info.dev_id,
-      strerror(errno));
-    return false;
-  }
-
-  // Get list of connected devices
-  hci_conn_list_req connection_list_request{};
-  connection_list_request.dev_id = hci_device_info.dev_id;
-  connection_list_request.conn_num = HCI_MAX_DEV;
-
-  if (ioctl(sock, HCIGETCONNLIST, &connection_list_request)) {
-    setFunctionError("HCIGETCONNLIST", errno);
-    syslog(
-      LOG_ERR, "Failed to get connection list of HCI device. id = %d, %s", hci_device_info.dev_id,
-      strerror(errno));
-    return false;
-  }
-
-  // Allocate space for list of connected devices
-  hci_conn_info * devices = new hci_conn_info[connection_list_request.conn_num];
-
-  // Get information of each connected device
-  hci_conn_info * connection_info = connection_list_request.conn_info;
-
-  // Loop for connected devices
-  for (int i = 0; i < connection_list_request.conn_num; ++i, ++connection_info) {
-    char address_str[18]{};
-    ba2str(&connection_info->bdaddr, address_str);
-
-    // Skip if device not found and wild card not specified
-    if (
-      std::count(config_.addresses.begin(), config_.addresses.end(), address_str) == 0 &&
-      std::count(config_.addresses.begin(), config_.addresses.end(), "*") == 0) {
-      continue;
+  // Pick up MAC address
+  std::vector<std::string> address_list;
+  {
+    bp::ipstream is_out;
+    bp::ipstream is_err;
+    bp::child c("cut -f 2 -d \" \"", bp::std_out > is_out, bp::std_err > is_err, bp::std_in < pipe);
+    c.wait();
+    if (c.exit_code() != 0) {
+      is_err >> os.rdbuf();
+      setFunctionError("cut", os.str());
+      syslog(LOG_ERR, "%s\n", os.str().c_str());
+      return false;
     }
 
+    // Register device
+    std::string line;
+    while (std::getline(is_out, line) && !line.empty()) {
+      // Skip if device not found and wild card not specified
+      if (
+        std::count(config_.addresses.begin(), config_.addresses.end(), line) == 0 &&
+        std::count(config_.addresses.begin(), config_.addresses.end(), "*") == 0) {
+        continue;
+      }
+      address_list.push_back(line);
+    }
+  }
+
+  // Loop for registered devices
+  for (const auto & address : address_list) {
     bool found = false;
     for (const auto & object : objects_) {
       // If device not registered
-      if (object->getAddress() == address_str) {
+      if (object->getAddress() == address) {
         found = true;
         break;
       }
@@ -273,13 +221,10 @@ bool L2pingService::buildDeviceListFromConnectedDevices(int sock, uint16_t devic
 
     if (!found) {
       // Start ping thread
-      objects_.emplace_back(std::make_unique<L2ping>(connection_info->bdaddr, config_.l2ping));
-      objects_.back().get()->getDeviceInformation(connection_info->handle);
+      objects_.emplace_back(std::make_unique<L2ping>(address, config_.l2ping));
       objects_.back().get()->run();
     }
   }
-
-  delete[] devices;
 
   return true;
 }
