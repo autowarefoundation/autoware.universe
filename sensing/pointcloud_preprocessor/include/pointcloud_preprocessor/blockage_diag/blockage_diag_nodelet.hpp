@@ -71,6 +71,7 @@ private:
   uint blockage_count_threshold_;
   std::string lidar_model_;
   uint time_series_blockage_frames_ = 100;
+  uint time_series_blockage_interval_frames_ = 5;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

@@ -41,6 +41,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
       static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
     time_series_blockage_frames_ =
       static_cast<uint>(declare_parameter("time_series_blockage_frames", 100));
+    time_series_blockage_frames_ =
+      static_cast<uint>(declare_parameter("time_series_blockage_interval_frames", 5));
   }
 
   updater_.setHardwareID("blockage_diag");
@@ -172,17 +174,17 @@ void BlockageDiagComponent::filter(
       cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     static boost::circular_buffer<cv::Mat> no_return_mask_buffer(time_series_blockage_frames_);
     no_return_mask_binarized = no_return_mask / 255;
-    static int frame_count;
-    int interval_frames = 5;
+    static uint frame_count;
     frame_count++;
-    if (frame_count == interval_frames) {
+    if (frame_count == time_series_blockage_interval_frames_) {
       no_return_mask_buffer.push_back(no_return_mask_binarized);
       frame_count = 0;
     }
     for (const auto & binary_mask : no_return_mask_buffer) {
       time_series_blockage_mask += binary_mask;
     }
-    cv::Mat time_series_blockage_result(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+    cv::Mat time_series_blockage_result(
+      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     cv::inRange(
       time_series_blockage_mask, no_return_mask_buffer.size() - 1, no_return_mask_buffer.size(),
       time_series_blockage_result);
@@ -279,7 +281,7 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
       get_logger(), " Setting new angle_range to: [%f , %f].", angle_range_deg_[0],
       angle_range_deg_[1]);
   }
-  if (get_param(p, "time_series_blockage_frames_", time_series_blockage_frames_)) {
+  if (get_param(p, "time_series_blockage_frames", time_series_blockage_frames_)) {
     RCLCPP_DEBUG(
       get_logger(), "Setting new time_series_blockage_frames to: %d.",
       time_series_blockage_frames_);
