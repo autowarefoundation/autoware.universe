@@ -33,9 +33,11 @@ public:
   {
     // Subscriber
     sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(
-      image_topic, 10, std::bind(&LineSegmentDetector::imageCallback, this, std::placeholders::_1));
+      image_topic, rclcpp::QoS(10).durability_volatile().best_effort(),
+      std::bind(&LineSegmentDetector::imageCallback, this, std::placeholders::_1));
     sub_info_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-      info_topic, 10, std::bind(&LineSegmentDetector::infoCallback, this, std::placeholders::_1));
+      info_topic, rclcpp::QoS(10).durability_volatile().best_effort(),
+      std::bind(&LineSegmentDetector::infoCallback, this, std::placeholders::_1));
 
     // Publisher
     pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/projected_image", 10);

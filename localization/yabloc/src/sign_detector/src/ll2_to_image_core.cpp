@@ -170,8 +170,8 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (
-      attr.value() != "line_thin" && attr.value() != "pedestrian_marking" &&
-      attr.value() != "stop_line")
+      attr.value() != "virtual" && attr.value() != "line_thin" &&
+      attr.value() != "pedestrian_marking" && attr.value() != "stop_line")
       continue;
 
     visible_linestrings_->push_back(line);
