@@ -380,13 +380,15 @@ visualization_msgs::msg::MarkerArray CrosswalkModule::createVirtualWallMarkerArr
 
   visualization_msgs::msg::MarkerArray wall_marker;
   for (const auto & p : debug_data_.stop_poses) {
-    const auto p_front = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
       tier4_autoware_utils::createStopVirtualWallMarker(p_front, "crosswalk", now, id++), now,
       &wall_marker);
   }
   for (const auto & p : debug_data_.slow_poses) {
-    const auto p_front = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
       tier4_autoware_utils::createSlowDownVirtualWallMarker(p_front, "crosswalk", now, id++), now,
       &wall_marker);
@@ -402,7 +404,8 @@ visualization_msgs::msg::MarkerArray WalkwayModule::createVirtualWallMarkerArray
 
   visualization_msgs::msg::MarkerArray wall_marker;
   for (const auto & p : debug_data_.stop_poses) {
-    const auto p_front = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
       tier4_autoware_utils::createStopVirtualWallMarker(p_front, "walkway", now, id++), now,
       &wall_marker);

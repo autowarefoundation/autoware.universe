@@ -38,16 +38,18 @@ visualization_msgs::msg::MarkerArray TrafficLightModule::createVirtualWallMarker
   const auto now = this->clock_->now();
 
   for (const auto & p : debug_data_.dead_line_poses) {
-    const auto wall_pose = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      tier4_autoware_utils::createDeadLineVirtualWallMarker(wall_pose, "traffic_light", now, id++),
+      tier4_autoware_utils::createDeadLineVirtualWallMarker(p_front, "traffic_light", now, id++),
       now, &wall_marker);
   }
 
   for (const auto & p : debug_data_.stop_poses) {
-    const auto wall_pose = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(wall_pose, "traffic_light", now, id++), now,
+      tier4_autoware_utils::createStopVirtualWallMarker(p_front, "traffic_light", now, id++), now,
       &wall_marker);
   }
 

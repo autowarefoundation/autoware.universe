@@ -94,10 +94,10 @@ visualization_msgs::msg::MarkerArray StopLineModule::createVirtualWallMarkerArra
 {
   const auto now = this->clock_->now();
   visualization_msgs::msg::MarkerArray wall_marker;
-  const auto wall_pose =
-    planning_utils::toVehicleFrontPose(*debug_data_.stop_pose, debug_data_.base_link2front);
+  const auto p_front = tier4_autoware_utils::calcOffsetPose(
+    *debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);
   appendMarkerArray(
-    tier4_autoware_utils::createStopVirtualWallMarker(wall_pose, "stopline", now, module_id_), now,
+    tier4_autoware_utils::createStopVirtualWallMarker(p_front, "stopline", now, module_id_), now,
     &wall_marker);
   return wall_marker;
 }

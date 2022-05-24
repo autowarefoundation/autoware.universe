@@ -299,9 +299,6 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   return concat_vec;
 }
 
-geometry_msgs::msg::Pose toVehicleFrontPose(
-  const geometry_msgs::msg::Pose & p_baselink, const double baselink2front);
-
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 

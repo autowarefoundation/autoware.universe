@@ -176,14 +176,16 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createVirtualWallMarke
 
   auto id = getModuleId();
   for (const auto & p : debug_data_.stop_poses) {
-    const auto p_front = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
       tier4_autoware_utils::createStopVirtualWallMarker(p_front, "detection_area", now, id++), now,
       &wall_marker);
   }
 
   for (const auto & p : debug_data_.dead_line_poses) {
-    const auto p_front = planning_utils::toVehicleFrontPose(p, debug_data_.base_link2front);
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
       tier4_autoware_utils::createDeadLineVirtualWallMarker(p_front, "detection_area", now, id++),
       now, &wall_marker);
