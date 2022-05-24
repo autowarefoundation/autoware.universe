@@ -27,8 +27,8 @@
 #include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include <route_handler/route_handler.hpp>
-#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>

@@ -19,6 +19,8 @@
 #include "behavior_velocity_planner/planner_manager.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -30,8 +32,6 @@
 #include <tier4_api_msgs/msg/crosswalk_status.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -119,7 +119,6 @@ private:
   // debug
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
-
 };
 }  // namespace behavior_velocity_planner
 

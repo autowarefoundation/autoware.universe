@@ -38,6 +38,7 @@
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <deque>
+#include <memory>
 #include <string>
 
 namespace pointcloud_preprocessor
