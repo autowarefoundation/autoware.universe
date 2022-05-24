@@ -25,6 +25,7 @@
   <depend>tf2_sensor_msgs</depend>
   <depend>tier4_perception_msgs</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>lidar_centerpoint</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
 

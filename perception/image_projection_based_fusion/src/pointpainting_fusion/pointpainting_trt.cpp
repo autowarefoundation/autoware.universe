@@ -25,7 +25,6 @@
 #include <vector>
 
 namespace centerpoint
-// image_projection_based_fusion
 {
 PointPaintingTRT::PointPaintingTRT(
   const NetworkParam & encoder_param, const NetworkParam & head_param,

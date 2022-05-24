@@ -1,12 +1,17 @@
-cmake_minimum_required(VERSION 3.8)
+# cmake_minimum_required(VERSION 3.8)
+# project(image_projection_based_fusion)
+
+# if (NOT CMAKE_CXX_STANDARD)
+#   set(CMAKE_CXX_STANDARD 14)
+# endif()
+# if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#   add_compile_options(-Wall -Wextra -Wpedantic)
+# endif()
+cmake_minimum_required(VERSION 3.14)
 project(image_projection_based_fusion)
 
-if (NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 set(CUDA_VERBOSE ON)
 
@@ -70,97 +75,93 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
-if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
+# if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 
-  # find dependencies
-  find_package(ament_lint_auto REQUIRED)
-  find_package(ament_cmake_auto REQUIRED)
-  find_package(OpenCV REQUIRED)
-  find_package(Eigen3 REQUIRED)
-  find_package(PCL REQUIRED)
-  ament_auto_find_build_dependencies()
+#   # find dependencies
+#   find_package(ament_lint_auto REQUIRED)
+#   find_package(ament_cmake_auto REQUIRED)
+#   find_package(OpenCV REQUIRED)
+#   find_package(Eigen3 REQUIRED)
+#   find_package(PCL REQUIRED)
+#   ament_auto_find_build_dependencies()
 
-  include_directories(
-    include
-    ${OpenCV_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
-    ${PCL_INCLUDE_DIRS}
-    ${CUDA_INCLUDE_DIRS}
-  )
+#   include_directories(
+#     include
+#     ${OpenCV_INCLUDE_DIRS}
+#     ${EIGEN3_INCLUDE_DIR}
+#     ${PCL_INCLUDE_DIRS}
+#     ${CUDA_INCLUDE_DIRS}
+#   )
 
-  ### node ###
-  ament_auto_add_library(${PROJECT_NAME} SHARED
-    src/fusion_node.cpp
-    src/debugger.cpp
-    src/utils/geometry.cpp
-    src/utils/utils.cpp
-    src/roi_cluster_fusion/node.cpp
-    src/roi_detected_object_fusion/node.cpp
-    src/pointpainting_fusion/node.cpp
-    src/pointpainting_fusion/pointpainting_trt.cpp
-    src/pointpainting_fusion/voxel_generator.cpp
-  )
+#   ### node ###
+#   ament_auto_add_library(${PROJECT_NAME} SHARED
+#     src/fusion_node.cpp
+#     src/debugger.cpp
+#     src/utils/geometry.cpp
+#     src/utils/utils.cpp
+#     src/roi_cluster_fusion/node.cpp
+#     src/roi_detected_object_fusion/node.cpp
+#     src/pointpainting_fusion/node.cpp
+#     src/pointpainting_fusion/pointpainting_trt.cpp
+#     src/pointpainting_fusion/voxel_generator.cpp
+#   )
 
-  cuda_add_library(pointpainting_cuda_lib SHARED
-    src/pointpainting_fusion/preprocess_kernel.cu
-  )
+#   cuda_add_library(pointpainting_cuda_lib SHARED
+#     src/pointpainting_fusion/preprocess_kernel.cu
+#   )
   
-  target_link_libraries(${PROJECT_NAME}
-    ${OpenCV_LIBRARIES}
-    ${EIGEN3_LIBRARIES}
-    ${PCL_LIBRARIES}
-    ${NVINFER}
-    ${CUDA_LIBRARIES}
-    ${CUBLAS_LIBRARIES}
-    ${CUDA_curand_LIBRARY}
-    ${CUDNN_LIBRARY}
-    pointpainting_cuda_lib
-  )
+#   target_link_libraries(${PROJECT_NAME}
+#     ${OpenCV_LIBRARIES}
+#     ${EIGEN3_LIBRARIES}
+#     ${PCL_LIBRARIES}
+#     ${NVINFER}
+#     ${CUDA_LIBRARIES}
+#     ${CUBLAS_LIBRARIES}
+#     ${CUDA_curand_LIBRARY}
+#     ${CUDNN_LIBRARY}
+#     pointpainting_cuda_lib
+#   )
 
-  rclcpp_components_register_node(${PROJECT_NAME}
-    PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
-    EXECUTABLE roi_cluster_fusion_node
-  )
+#   rclcpp_components_register_node(${PROJECT_NAME}
+#     PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
+#     EXECUTABLE roi_cluster_fusion_node
+#   )
 
-  rclcpp_components_register_node(${PROJECT_NAME}
-    PLUGIN "image_projection_based_fusion::RoiDetectedObjectFusionNode"
-    EXECUTABLE roi_detected_object_fusion_node
-  )
+#   rclcpp_components_register_node(${PROJECT_NAME}
+#     PLUGIN "image_projection_based_fusion::RoiDetectedObjectFusionNode"
+#     EXECUTABLE roi_detected_object_fusion_node
+#   )
 
-  rclcpp_components_register_node(${PROJECT_NAME}
-    PLUGIN "image_projection_based_fusion::PointpaintingFusionNode"
-    EXECUTABLE pointpainting_fusion_node
-  )
+#   rclcpp_components_register_node(${PROJECT_NAME}
+#     PLUGIN "image_projection_based_fusion::PointpaintingFusionNode"
+#     EXECUTABLE pointpainting_fusion_node
+#   )
 
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-  endif()
+#   if(BUILD_TESTING)
+#     find_package(ament_lint_auto REQUIRED)
+#   endif()
 
-  ament_auto_package(INSTALL_TO_SHARE
-      launch
-      data
-      config
-  )
-else()
-  find_package(ament_cmake_auto REQUIRED)
-  ament_auto_find_build_dependencies()
+#   ament_auto_package(INSTALL_TO_SHARE
+#       launch
+#       data
+#       config
+#   )
+# else()
+#   find_package(ament_cmake_auto REQUIRED)
+#   ament_auto_find_build_dependencies()
 
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
+#   if(BUILD_TESTING)
+#     find_package(ament_lint_auto REQUIRED)
+#     ament_lint_auto_find_test_dependencies()
+#   endif()
 
-  ament_auto_package(
-    INSTALL_TO_SHARE
-      launch
-  )
-endif()
+#   ament_auto_package(
+#     INSTALL_TO_SHARE
+#       launch
+#   )
+# endif()
 
-cmake_minimum_required(VERSION 3.14)
-project(image_projection_based_fusion)
 
-find_package(autoware_cmake REQUIRED)
-autoware_package()
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)

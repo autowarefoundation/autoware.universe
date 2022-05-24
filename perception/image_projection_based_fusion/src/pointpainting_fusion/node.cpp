@@ -27,7 +27,7 @@ namespace image_projection_based_fusion
 {
 
 PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<sensor_msgs::msg::PointCloud2>("pointpainting_fusion", options)
+: FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>("pointpainting_fusion", options)
 {
   const float score_threshold =
     static_cast<float>(this->declare_parameter<double>("score_threshold", 0.4));
@@ -65,14 +65,14 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   centerpoint::CenterPointConfig config(
     class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold);
+
   // create detector
   detector_ptr_ = std::make_unique<centerpoint::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
 
   // sub and pub
   sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
-  obj_pub_ptr_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "~/output/objects", rclcpp::QoS{1});
+  obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 }
 
 void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
@@ -120,8 +120,8 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
 }
 
 void PointpaintingFusionNode::fuseOnSingleImage(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const int image_id,
-  const DetectedObjectsWithFeature & input_roi_msg,
+  __attribute__((unused)) const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
+  const std::size_t image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info,
   sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
@@ -139,17 +139,6 @@ void PointpaintingFusionNode::fuseOnSingleImage(
     }
     transform_stamped = transform_stamped_optional.value();
   }
-
-  // get transform from pointcloud frame id to camera optical frame id
-  // geometry_msgs::msg::TransformStamped transform_stamped;
-  // try {
-  //   transform_stamped = tf_buffer_.lookupTransform(
-  //     /*target*/ camera_info.header.frame_id,
-  //     /*src*/ painted_pointcloud_msg.header.frame_id, tf2::TimePointZero);
-  // } catch (tf2::TransformException & ex) {
-  //   RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-  //   return;
-  // }
 
   // projection matrix
   Eigen::Matrix4d camera_projection;
@@ -251,6 +240,11 @@ void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
   }
 
   obj_pub_ptr_->publish(output_obj_msg);
+}
+
+bool PointpaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
+{
+  return false;
 }
 
 }  // namespace image_projection_based_fusion
