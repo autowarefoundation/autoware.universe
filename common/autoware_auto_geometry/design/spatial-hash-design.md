@@ -37,7 +37,7 @@ The bin size was computed to be the same as the lookup distance.
 
 In addition, this data structure can support 2D or 3D queries. This is determined during
 configuration, and baked into the data structure via the configuration class. The purpose of
-this was to avoid if statements in tight loops. The configuration class specializations themself
+this was to avoid if statements in tight loops. The configuration class specializations themselves
 use CRTP (Curiously Recurring Template Patterns) to do "static polymorphism", and avoid
 a dispatching call.
 
