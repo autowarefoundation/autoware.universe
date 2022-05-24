@@ -26,10 +26,11 @@ ConsoleMeterDisplay::ConsoleMeterDisplay()
 {
   const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
 
-  const bool large_screen = screen_info->height > 2000;
-  const auto left = large_screen ? 512 : 256;
-  const auto top = large_screen ? 128 : 64;
-  const auto length = large_screen ? 256 : 128;
+  constexpr float hight_4k = 2160.0;
+  const float scale = static_cast<float>(screen_info->height) / hight_4k;
+  const auto left = static_cast<int>(std::round(512 * scale));
+  const auto top = static_cast<int>(std::round(128 * scale));
+  const auto length = static_cast<int>(std::round(256 * scale));
 
   property_text_color_ = new rviz_common::properties::ColorProperty(
     "Text Color", QColor(25, 255, 240), "text color", this, SLOT(updateVisualization()), this);

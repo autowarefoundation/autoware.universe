@@ -30,10 +30,12 @@ namespace rviz_plugins
 MaxVelocityDisplay::MaxVelocityDisplay()
 {
   const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
-  const bool large_screen = screen_info->height > 2000;
-  const auto left = large_screen ? 595 : 297;
-  const auto top = large_screen ? 280 : 140;
-  const auto length = large_screen ? 96 : 48;
+
+  constexpr float hight_4k = 2160.0;
+  const float scale = static_cast<float>(screen_info->height) / hight_4k;
+  const int left = static_cast<int>(std::round(595 * scale));
+  const int top = static_cast<int>(std::round(280 * scale));
+  const int length = static_cast<int>(std::round(96 * scale));
 
   property_topic_name_ = new rviz_common::properties::StringProperty(
     "Topic", "/planning/scenario_planning/current_max_velocity",

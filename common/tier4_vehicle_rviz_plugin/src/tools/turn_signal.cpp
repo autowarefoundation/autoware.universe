@@ -26,11 +26,12 @@ TurnSignalDisplay::TurnSignalDisplay()
 {
   const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
 
-  const bool large_screen = screen_info->height > 2000;
-  const auto left = large_screen ? 196 : 98;
-  const auto top = large_screen ? 350 : 175;
-  const auto width = large_screen ? 512 : 256;
-  const auto height = large_screen ? 256 : 128;
+  constexpr float hight_4k = 2160.0;
+  const float scale = static_cast<float>(screen_info->height) / hight_4k;
+  const auto left = static_cast<int>(std::round(196 * scale));
+  const auto top = static_cast<int>(std::round(350 * scale));
+  const auto width = static_cast<int>(std::round(512 * scale));
+  const auto height = static_cast<int>(std::round(256 * scale));
 
   property_left_ = new rviz_common::properties::IntProperty(
     "Left", left, "Left of the plotter window", this, SLOT(updateVisualization()), this);
