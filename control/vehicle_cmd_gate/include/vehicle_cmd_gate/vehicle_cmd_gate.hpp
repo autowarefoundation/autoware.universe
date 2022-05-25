@@ -228,9 +228,6 @@ private:
     std::shared_ptr<rclcpp::Time> last_running_time_;
     double stopped_state_entry_duration_time_;
 
-    std::shared_ptr<rclcpp::Time> last_running_time_;
-    double stopped_state_entry_duration_time_;
-
     rclcpp::Node * node_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr request_start_cli_;
     rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr request_start_pub_;
