@@ -29,7 +29,7 @@ namespace behavior_velocity_planner
 using lanelet::autoware::DetectionArea;
 
 DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, getModuleName()), rtc_interface_(node, "detection_area")
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
@@ -52,6 +52,7 @@ void DetectionAreaModuleManager::launchNewModules(
       registerModule(std::make_shared<DetectionAreaModule>(
         module_id, *detection_area_with_lane_id.first, planner_param_,
         logger_.get_child("detection_area_module"), clock_));
+      generateUUID(module_id);
     }
   }
 }
@@ -66,5 +67,26 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
   return [detection_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return detection_area_id_set.count(scene_module->getModuleId()) == 0;
   };
+}
+
+bool DetectionAreaModuleManager::getActivation(const UUID & uuid)
+{
+  return rtc_interface_.isActivated(uuid);
+}
+
+void DetectionAreaModuleManager::updateRTCStatus(
+  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
+{
+  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
+}
+
+void DetectionAreaModuleManager::removeRTCStatus(const UUID & uuid)
+{
+  rtc_interface_.removeCooperateStatus(uuid);
+}
+
+void DetectionAreaModuleManager::publishRTCStatus(const Time & stamp)
+{
+  rtc_interface_.publishCooperateStatus(stamp);
 }
 }  // namespace behavior_velocity_planner
