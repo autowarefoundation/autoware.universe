@@ -27,11 +27,14 @@ private:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+  using TwistStamped = geometry_msgs::msg::TwistStamped;
 
   // Subscriber
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr gnss_sub_;
-  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_cov_sub_;
+  rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
+
   rclcpp::Subscription<ParticleArray>::SharedPtr weighted_particles_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr height_sub_;
 
@@ -44,6 +47,8 @@ private:
 
   const int number_of_particles_;
   const float resampling_interval_seconds_;
+  const float static_linear_covariance;
+  const float static_angular_covariance;
   float ground_height_;
 
   std::shared_ptr<RetroactiveResampler> resampler_ptr_;
@@ -52,7 +57,8 @@ private:
 
   void gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
-  void twistCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist);
+  void twistCovarianceCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist);
+  void twistCallback(const TwistStamped::ConstSharedPtr twist);
   void weightedParticlesCallback(const ParticleArray::ConstSharedPtr weighted_particles);
   void timerCallback();
 

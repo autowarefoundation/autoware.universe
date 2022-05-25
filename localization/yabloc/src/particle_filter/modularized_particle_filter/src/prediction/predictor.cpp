@@ -19,7 +19,9 @@ Predictor::Predictor()
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
   resampler_ptr_(nullptr),
   particle_array_opt_(std::nullopt),
-  twist_opt_(std::nullopt)
+  twist_opt_(std::nullopt),
+  static_linear_covariance(declare_parameter("static_linear_covariance", 0.01)),
+  static_angular_covariance(declare_parameter("static_angular_covariance", 0.01))
 {
   const double prediction_rate{declare_parameter("prediction_rate", 50.0f)};
 
@@ -35,8 +37,12 @@ Predictor::Predictor()
     "gnss/pose_with_covariance", 1, std::bind(&Predictor::gnssposeCallback, this, _1));
   initialpose_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, _1));
-  twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "twist_with_covariance", 10, std::bind(&Predictor::twistCallback, this, _1));
+
+  twist_sub_ = this->create_subscription<TwistStamped>(
+    "twist", 10, std::bind(&Predictor::twistCallback, this, _1));
+  twist_cov_sub_ = this->create_subscription<TwistWithCovarianceStamped>(
+    "twist_with_covariance", 10, std::bind(&Predictor::twistCovarianceCallback, this, _1));
+
   weighted_particles_sub_ = this->create_subscription<ParticleArray>(
     "weighted_particles", 10, std::bind(&Predictor::weightedParticlesCallback, this, _1));
   height_sub_ = this->create_subscription<std_msgs::msg::Float32>(
@@ -86,7 +92,21 @@ void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstShared
     std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_);
 }
 
-void Predictor::twistCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist)
+void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
+{
+  TwistWithCovarianceStamped twist_covariance;
+  twist_covariance.header = twist->header;
+  twist_covariance.twist.twist = twist->twist;
+  twist_covariance.twist.covariance.at(0) = static_linear_covariance;
+  twist_covariance.twist.covariance.at(7) = 1e4;
+  twist_covariance.twist.covariance.at(14) = 1e4;
+  twist_covariance.twist.covariance.at(21) = 1e4;
+  twist_covariance.twist.covariance.at(28) = 1e4;
+  twist_covariance.twist.covariance.at(35) = static_angular_covariance;
+  twist_opt_ = twist_covariance;
+}
+
+void Predictor::twistCovarianceCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist)
 {
   twist_opt_ = *twist;
 }
