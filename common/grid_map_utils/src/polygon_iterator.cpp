@@ -18,8 +18,6 @@
 #include "grid_map_core/Polygon.hpp"
 #include "grid_map_core/TypeDefs.hpp"
 
-#include <grid_map_core/GridMapMath.hpp>
-
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -72,16 +70,16 @@ std::vector<std::list<double>> PolygonIterator::calculateIntersectionsPerLine(
     }
     y_intersections.sort(std::greater());
     // remove pairs outside of map
-    auto iter = y_intersections.begin();
-    while (iter != y_intersections.end() && std::next(iter) != y_intersections.end() &&
+    auto iter = y_intersections.cbegin();
+    while (iter != y_intersections.cend() && std::next(iter) != y_intersections.cend() &&
            *iter >= origin.y() && *std::next(iter) >= origin.y()) {
       iter = y_intersections.erase(iter);
       iter = y_intersections.erase(iter);
     }
     iter = std::lower_bound(
-      y_intersections.begin(), y_intersections.end(),
+      y_intersections.cbegin(), y_intersections.cend(),
       origin.y() - (grid_map.getSize()(1) - 1) * grid_map.getResolution(), std::greater());
-    while (iter != y_intersections.end() && std::next(iter) != y_intersections.end()) {
+    while (iter != y_intersections.cend() && std::next(iter) != y_intersections.cend()) {
       iter = y_intersections.erase(iter);
       iter = y_intersections.erase(iter);
     }
@@ -95,7 +93,7 @@ std::pair<int, int> PolygonIterator::calculateRowRange(
   const grid_map::GridMap & grid_map)
 {
   const auto min_vertex_x =
-    std::min_element(edges.begin(), edges.end(), [](const Edge & e1, const Edge & e2) {
+    std::min_element(edges.cbegin(), edges.cend(), [](const Edge & e1, const Edge & e2) {
       return e1.second.x() < e2.second.x();
     })->second.x();
   const auto max_vertex_x = edges.front().first.x();
@@ -118,66 +116,99 @@ PolygonIterator::PolygonIterator(
   // repeat the first vertex to get the last edge [last vertex, first vertex]
   if (poly.getVertex(0) != poly.getVertex(poly.nVertices() - 1)) poly.addVertex(poly.getVertex(0));
 
-  const auto resolution = grid_map.getResolution();
-  const auto & map_size = grid_map.getSize();
-  const auto & start_idx = grid_map.getStartIndex();
+  map_start_idx_ = grid_map.getStartIndex();
+  map_resolution_ = grid_map.getResolution();
+  map_size_ = grid_map.getSize();
   const auto origin = [&]() {
     grid_map::Position origin;
-    grid_map.getPosition(start_idx, origin);
+    grid_map.getPosition(map_start_idx_, origin);
     return origin;
   }();
+  map_origin_y_ = origin.y();
+
   // We make line scan left -> right / up -> down *in the index frame* (idx[0,0] is pos[up, left]).
   // In the position frame, this corresponds to high -> low Y values and high -> low X values.
   const std::vector<Edge> edges = calculateSortedEdges(poly);
   if (edges.empty()) return;
   const auto from_to_row = calculateRowRange(edges, origin, grid_map);
-  const auto y_intersections_per_line =
-    calculateIntersectionsPerLine(edges, from_to_row, origin, grid_map);
+  intersections_per_line_ = calculateIntersectionsPerLine(edges, from_to_row, origin, grid_map);
 
-  // calculate map indexes between pairs of intersections Y values on each X line
-  polygon_indexes_.reserve(
-    y_intersections_per_line.size() * static_cast<size_t>(grid_map.getSize()(1)));
-  const auto from_row = start_idx(0) + from_to_row.first;
-  for (size_t i = 0; i < y_intersections_per_line.size(); ++i) {
-    const auto & y_intersections = y_intersections_per_line[i];
-    auto row = static_cast<int>(from_row + i);
-    grid_map::wrapIndexToRange(row, map_size(0));
-    for (auto y_iter = y_intersections.cbegin(); y_iter != y_intersections.cend(); ++y_iter) {
-      const auto dist_from_origin = origin.y() - *y_iter;
-      const auto from_col =
-        std::clamp(static_cast<int>(1.0 + dist_from_origin / resolution), 0, map_size(1) - 1);
+  row_of_first_line_ = from_to_row.first;
+  current_col_ = 0;
+  current_to_col_ = -1;
+  current_line_ = -1;  // goToNextLine() increments the line so assign -1 to start from 0
 
-      ++y_iter;
-      const auto dist_to_origin = origin.y() - *y_iter;
-      const auto to_col =
-        std::clamp(static_cast<int>(dist_to_origin / resolution), 0, map_size(1) - 1);
-      for (auto col = from_col; col <= to_col; ++col) {
-        auto wrapped_col = start_idx(1) + col;
-        grid_map::wrapIndexToRange(wrapped_col, map_size(1));
-        polygon_indexes_.emplace_back(row, wrapped_col);
-      }
+  // Initialize iterator to the first (row,column) inside the Polygon
+  if (!intersections_per_line_.empty()) {
+    goToNextLine();
+    if (!isPastEnd()) {
+      calculateColumnIndexes();
+      calculateIndex();
     }
   }
 }
 
 bool PolygonIterator::operator!=(const PolygonIterator & other) const
 {
-  return current_index != other.current_index;
+  return current_line_ != other.current_line_ || current_col_ != other.current_col_;
 }
 
-const grid_map::Index & PolygonIterator::operator*() const
+const grid_map::Index & PolygonIterator::operator*() const { return current_index_; }
+
+void PolygonIterator::goToNextLine()
 {
-  return polygon_indexes_[current_index];
+  ++current_line_;
+  while (current_line_ < intersections_per_line_.size() &&
+         intersections_per_line_[current_line_].size() < 2)
+    ++current_line_;
+  if (!isPastEnd()) intersection_iter_ = intersections_per_line_[current_line_].cbegin();
+}
+
+void PolygonIterator::calculateColumnIndexes()
+{
+  const auto dist_from_origin = map_origin_y_ - *intersection_iter_;
+  current_col_ =
+    std::clamp(static_cast<int>(1.0 + dist_from_origin / map_resolution_), 0, map_size_(1) - 1);
+  ++intersection_iter_;
+  const auto dist_to_origin = map_origin_y_ - *intersection_iter_;
+  current_to_col_ =
+    std::clamp(static_cast<int>(dist_to_origin / map_resolution_), 0, map_size_(1) - 1);
+  // Case where intersections do not encompass the center of a cell: iterate again
+  if (current_to_col_ < current_col_) {
+    operator++();
+  }
+}
+
+void PolygonIterator::calculateIndex()
+{
+  current_index_(0) = map_start_idx_(0) + row_of_first_line_ + static_cast<int>(current_line_);
+  grid_map::wrapIndexToRange(current_index_(0), map_size_(0));
+  current_index_(1) = map_start_idx_(1) + current_col_;
+  grid_map::wrapIndexToRange(current_index_(1), map_size_(1));
 }
 
 PolygonIterator & PolygonIterator::operator++()
 {
-  ++current_index;
+  ++current_col_;
+  if (current_col_ > current_to_col_) {
+    ++intersection_iter_;
+    if (
+      intersection_iter_ == intersections_per_line_[current_line_].cend() ||
+      std::next(intersection_iter_) == intersections_per_line_[current_line_].cend()) {
+      goToNextLine();
+    }
+    if (!isPastEnd()) {
+      calculateColumnIndexes();
+    }
+  }
+  if (!isPastEnd()) {
+    calculateIndex();
+  }
   return *this;
 }
 
 [[nodiscard]] bool PolygonIterator::isPastEnd() const
 {
-  return current_index >= polygon_indexes_.size();
+  return current_line_ >= intersections_per_line_.size();
 }
 }  // namespace grid_map_utils

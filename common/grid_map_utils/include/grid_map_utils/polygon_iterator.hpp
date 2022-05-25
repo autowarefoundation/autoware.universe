@@ -18,6 +18,7 @@
 #include "grid_map_core/TypeDefs.hpp"
 
 #include <grid_map_core/GridMap.hpp>
+#include <grid_map_core/GridMapMath.hpp>
 #include <grid_map_core/Polygon.hpp>
 
 #include <list>
@@ -35,18 +36,19 @@ struct Edge
 
   Edge(grid_map::Position f, grid_map::Position s) : first(std::move(f)), second(std::move(s)) {}
 
+  /// @brief Sorting operator resulting in edges sorted from highest to lowest x values
   bool operator<(const Edge & e)
   {
     return first.x() > e.first.x() || (first.x() == e.first.x() && second.x() > e.second.x());
   }
 };
 
-/// @brief A polygon iterator for grid_map::GridMap based on the scan line algorithm.
-/** @details This iterator allows to iterate over all cells whose center is inside a polygon. \
+/** @brief A polygon iterator for grid_map::GridMap based on the scan line algorithm.
+    @details This iterator allows to iterate over all cells whose center is inside a polygon. \
              This reproduces the behavior of the original grid_map::PolygonIterator which uses\
              a "point in polygon" check for each cell of the gridmap, making it very expensive\
-             to run on large maps. In comparison, this implementation uses
-             that is much more scalable.
+             to run on large maps. In comparison, the scan line algorithm implemented here is \
+             much more scalable.
 */
 class PolygonIterator
 {
@@ -100,10 +102,28 @@ private:
     const std::vector<Edge> & edges, const grid_map::Position & origin,
     const grid_map::GridMap & grid_map);
 
-  /// calculated indexes of the gridmap that are inside the polygon
-  std::vector<grid_map::Index> polygon_indexes_;
-  /// current index of the iterator
-  size_t current_index = 0;
+  // Helper functions
+  /// @brief Increment the current_line_ to the line with intersections
+  void goToNextLine();
+  /// @brief Calculate the initial current_col_ and the current_to_col_ for the current intersection
+  void calculateColumnIndexes();
+  /// @brief Calculate the current_index_ from the current_line_ and current_col_
+  void calculateIndex();
+
+  /// Gridmap info
+  int row_of_first_line_;
+  grid_map::Index map_start_idx_;
+  grid_map::Size map_size_;
+  double map_resolution_;
+  double map_origin_y_;
+  /// Intersections between scan lines and the polygon
+  std::vector<std::list<double>> intersections_per_line_;
+  std::list<double>::const_iterator intersection_iter_;
+  /// current indexes
+  grid_map::Index current_index_;
+  size_t current_line_;
+  int current_col_;
+  int current_to_col_;
 };
 }  // namespace grid_map_utils
 
