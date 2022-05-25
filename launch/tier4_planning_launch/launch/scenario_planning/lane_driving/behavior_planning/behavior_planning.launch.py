@@ -333,7 +333,7 @@ def launch_setup(context, *args, **kwargs):
     with open(no_stopping_area_param_path, "r") as f:
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    run_out_para_path = os.path.join(
+    run_out_param_path = os.path.join(
         get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
@@ -342,7 +342,7 @@ def launch_setup(context, *args, **kwargs):
         "behavior_velocity_planner",
         "run_out.param.yaml",
     )
-    with open(run_out_para_path, "r") as f:
+    with open(run_out_param_path, "r") as f:
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_velocity_planner_param_path = os.path.join(
