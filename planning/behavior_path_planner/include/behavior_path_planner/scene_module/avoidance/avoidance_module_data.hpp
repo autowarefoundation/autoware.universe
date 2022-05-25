@@ -201,8 +201,8 @@ struct ObjectData  // avoidance target
 
   // lateral distance from overhang to the road shoulder
   double to_road_shoulder_distance{0.0};
-  
-  //add distance to returned point
+
+  // add distance to returned point
   double distance_add_to_returnpoint;
   Pose path_pose;
 };
