@@ -30,7 +30,7 @@ namespace grid_map_utils
 std::vector<Edge> PolygonIterator::calculateSortedEdges(const grid_map::Polygon & polygon)
 {
   std::vector<Edge> edges;
-  edges.reserve(polygon.nVertices() / 2);
+  edges.reserve(polygon.nVertices());
   const auto & vertices = polygon.getVertices();
   for (auto vertex = vertices.cbegin(); std::next(vertex) != vertices.cend(); ++vertex) {
     // order pair by decreasing x and ignore horizontal edges (when x is equal)
@@ -55,8 +55,8 @@ std::vector<std::list<double>> PolygonIterator::calculateIntersectionsPerLine(
   y_intersections_per_line.reserve(to_row - from_row + 1);
   for (auto row = from_row; row <= to_row; ++row) {
     std::list<double> y_intersections;
+    const auto line_x = origin.x() - grid_map.getResolution() * row;
     for (const auto & edge : edges) {
-      const auto line_x = origin.x() - grid_map.getResolution() * row;
       // special case when exactly touching a vertex: only count edge for its lowest x
       // up-down edge (\/) case: count the vertex twice
       // down-down edge case: count the vertex only once
@@ -94,7 +94,10 @@ std::pair<int, int> PolygonIterator::calculateRowRange(
   const std::vector<Edge> & edges, const grid_map::Position & origin,
   const grid_map::GridMap & grid_map)
 {
-  const auto min_vertex_x = edges.back().second.x();
+  const auto min_vertex_x =
+    std::min_element(edges.begin(), edges.end(), [](const Edge & e1, const Edge & e2) {
+      return e1.second.x() < e2.second.x();
+    })->second.x();
   const auto max_vertex_x = edges.front().first.x();
 
   const auto dist_min_to_origin = origin.x() - min_vertex_x + grid_map.getResolution();
@@ -140,9 +143,9 @@ PolygonIterator::PolygonIterator(
     auto row = static_cast<int>(from_row + i);
     grid_map::wrapIndexToRange(row, map_size(0));
     for (auto y_iter = y_intersections.cbegin(); y_iter != y_intersections.cend(); ++y_iter) {
-      const auto dist_from_origin = origin.y() - *y_iter + resolution;
+      const auto dist_from_origin = origin.y() - *y_iter;
       const auto from_col =
-        std::clamp(static_cast<int>(dist_from_origin / resolution), 0, map_size(1) - 1);
+        std::clamp(static_cast<int>(1.0 + dist_from_origin / resolution), 0, map_size(1) - 1);
 
       ++y_iter;
       const auto dist_to_origin = origin.y() - *y_iter;
