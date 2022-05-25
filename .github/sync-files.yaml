@@ -1,24 +1,14 @@
 - repository: autowarefoundation/autoware
   files:
+    # General
     - source: .github/dependabot.yaml
-    - source: .github/workflows/build.yaml
-      post-commands: |
-        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
     - source: .github/workflows/github-release.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/pre-commit-ansible.yaml
     - source: .github/workflows/pre-commit-optional.yaml
     - source: .github/workflows/semantic-pull-request.yaml
-    - source: .github/workflows/setup-universe.yaml
-      dest: .github/workflows/setup-local-dev-env.yaml
-      post-commands: |
-        sd "setup-universe" "setup-local-dev-env" {dest}
-        sd "universe" "local_dev_env" {dest}
     - source: .github/workflows/spell-check-differential.yaml
     - source: .github/workflows/sync-files.yaml
-    - source: .github/workflows/vcs-import.yaml
-      post-commands: |
-        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
     - source: .clang-format
     - source: .markdownlint.yaml
     - source: .pre-commit-config.yaml
@@ -32,7 +22,61 @@
     - source: arm64.env
     - source: CPPLINT.cfg
     - source: setup.cfg
+
+    # Autoware Workflows
+    - source: .github/workflows/build-main.yaml
+      post-commands: |
+        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
+
+    - source: .github/workflows/build-humble.yaml
+      post-commands: |
+        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
+
+    - source: .github/workflows/setup-universe.yaml
+      dest: .github/workflows/setup-local-dev-env.yaml
+      post-commands: |
+        sd "setup-universe" "setup-local-dev-env" {dest}
+        sd "universe" "local_dev_env" {dest}
+
+    - source: .github/workflows/vcs-import.yaml
+      post-commands: |
+        sd "GITHUB_TOKEN" "REPO_TOKEN" {dest}
+        sd -- \
+        "     - name: Set git config" \
+        "     - name: Register kvaser-linux repository
+                run: |
+                  sudo apt-get -y update
+                  sudo apt-get -y install software-properties-common
+                  sudo add-apt-repository -y ppa:astuff/kvaser-linux
+                  sudo apt-get -y update
+
+              - name: Set git config" {dest}
+
+    # Setup
     - source: setup-dev-env.sh
       post-commands: |
         sd "autoware.dev_env" "pilot_auto.dev_env" {dest}
         sd "dev_env.universe" "dev_env.local_dev_env" {dest}
+
+    # Docker
+    - source: docker/README.md
+      post-commands: |
+        sd "autowarefoundation" "tier4" {dest}
+        sd "autoware-universe" "pilot-auto" {dest}
+        sd "Autoware Universe" "Pilot.Auto" {dest}
+        sd "Autoware" "Pilot.Auto" {dest}
+
+    - source: docker/build.sh
+      post-commands: |
+        sd "autowarefoundation" "tier4" {dest}
+        sd "autoware-universe" "pilot-auto" {dest}
+
+    - source: docker/autoware-universe/docker-bake.hcl
+      dest: docker/pilot-auto/docker-bake.hcl
+      post-commands: |
+        sd "autoware-universe" "pilot-auto" {dest}
+
+    - source: docker/autoware-universe/Dockerfile
+      dest: docker/pilot-auto/Dockerfile
+      post-commands: |
+        sd "universe" "local_dev_env" {dest}
