@@ -436,6 +436,19 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   return p_vec;
 }
 
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dWithMarginFromLaneletsVec(
+  const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length, double margin)
+{
+  std::vector<lanelet::CompoundPolygon3d> p_vec;
+  for (const auto & ll : ll_vec) {
+    const double path_length = lanelet::utils::getLaneletLength3d(ll);
+    const auto polygon3d =
+      lanelet::utils::getPolygonFromArcLengthWithMargin(ll, path_length - clip_length, path_length, margin);
+    p_vec.push_back(polygon3d);
+  }
+  return p_vec;
+}
+
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec)
 {
   std::vector<int> id_list;

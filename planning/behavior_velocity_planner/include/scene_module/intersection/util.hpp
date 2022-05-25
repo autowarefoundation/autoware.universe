@@ -101,6 +101,9 @@ bool getStopPoseIndexFromMap(
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
 
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dWithMarginFromLaneletsVec(
+  const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length, double margin);
+
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
 
 double calcArcLengthFromPath(
