@@ -32,12 +32,20 @@
 #include <string>
 #include <vector>
 
-int main()
+int main(int argc, char * argv[])
 {
+  bool visualize = false;
+  for (int i = 1; i < argc; ++i) {
+    const auto arg = std::string(argv[i]);
+    if (arg == "-v" || arg == "--visualize") {
+      visualize = true;
+    }
+  }
   std::ofstream result_file;
   result_file.open("benchmark_results.csv");
-  result_file << "#Size PolygonVertices grid_map_utils_constructor grid_map_utils_iteration "
-                 "grid_map_constructor grid_map_iteration\n";
+  result_file
+    << "#Size PolygonVertices PolygonIndexes grid_map_utils_constructor grid_map_utils_iteration "
+       "grid_map_constructor grid_map_iteration\n";
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
 
   constexpr auto nb_iterations = 10;
@@ -83,6 +91,7 @@ int main()
     grid_map::GridMap map({"layer"});
     map.setGeometry(grid_map_length, resolution);
     for (auto vertices = 3ul; vertices <= base_polygon.nVertices(); ++vertices) {
+      auto polygon_indexes = 0.0;
       std::cout << "\tPolygon with " << vertices << " vertices" << std::endl;
 
       double grid_map_utils_constructor_duration{};
@@ -114,22 +123,24 @@ int main()
         grid_map_constructor_duration += stopwatch.toc("gm_ctor");
         bool diff = false;
         while (!grid_map_utils_iterator.isPastEnd() && !grid_map_iterator.isPastEnd()) {
-          if (
-            (*grid_map_utils_iterator).x() != (*grid_map_iterator).x() ||
-            (*grid_map_utils_iterator).y() != (*grid_map_iterator).y()) {
-            diff = true;
-          }
           stopwatch.tic("gmu_iter");
+          const auto gmu_idx = *grid_map_utils_iterator;
           ++grid_map_utils_iterator;
           grid_map_utils_iteration_duration += stopwatch.toc("gmu_iter");
           stopwatch.tic("gm_iter");
+          const auto gm_idx = *grid_map_iterator;
           ++grid_map_iterator;
           grid_map_iteration_duration += stopwatch.toc("gm_iter");
+          ++polygon_indexes;
+
+          if (gmu_idx.x() != gm_idx.x() || gmu_idx.y() != gm_idx.y()) {
+            diff = true;
+          }
         }
         if (grid_map_iterator.isPastEnd() != grid_map_utils_iterator.isPastEnd()) {
           diff = true;
         }
-        if (diff) {
+        if (diff || visualize) {
           // Prepare images of the cells selected by the two PolygonIterators
           auto gridmap = map;
           for (grid_map_utils::PolygonIterator iterator(map, polygon); !iterator.isPastEnd();
@@ -160,8 +171,8 @@ int main()
         }
       }
       // print results to file
-      result_file << grid_map_size << " " << vertices << " "
-                  << grid_map_utils_constructor_duration / nb_iterations << " "
+      result_file << grid_map_size << " " << vertices << " " << polygon_indexes / nb_iterations
+                  << " " << grid_map_utils_constructor_duration / nb_iterations << " "
                   << grid_map_utils_iteration_duration / nb_iterations << " "
                   << grid_map_constructor_duration / nb_iterations << " "
                   << grid_map_iteration_duration / nb_iterations << "\n";

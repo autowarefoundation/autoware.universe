@@ -202,68 +202,121 @@ TEST(PolygonIterator, MoveMap)
   EXPECT_TRUE(iterator.isPastEnd());
 }
 
-// Used to compare performances with the original grid_map::PolygonIterator
-TEST(PolygonIterator, DISABLED_ComparePerformance)
+// TODO(Maxime CLEMENT): difference with the original implementation when polygon edge is exactly on
+// a cell center
+TEST(PolygonIterator, DISABLED_Difference)
 {
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
-  double ctor_duration{};
-  double gm_ctor_duration{};
-  double iter_duration{};
-  double gm_iter_duration{};
-
   GridMap map({"layer"});
+  map.setGeometry(Length(5.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
-  Polygon base_polygon;
-  base_polygon.addVertex(Position(-5.0, 5.0));
-  base_polygon.addVertex(Position(0.0, 5.0));
-  base_polygon.addVertex(Position(5.0, 5.0));
-  base_polygon.addVertex(Position(5.0, 0.0));
-  base_polygon.addVertex(Position(5.0, -5.0));
-  base_polygon.addVertex(Position(0.0, -5.0));
-  base_polygon.addVertex(Position(-5.0, -5.0));
-  base_polygon.addVertex(Position(-5.0, 0.0));
-
-  for (double resolution = 0.01; resolution <= 1.00; resolution *= 10) {
-    map.setGeometry(Length(10.0, 10.0), resolution, Position(0.0, 0.0));  // bufferSize(8, 5)
-    const auto move = grid_map::Position(2.0, 2.0);
-    map.move(move);
-    for (auto seed = 0; seed < 100; ++seed) {
-      std::cout << seed << std::endl;
-      std::random_device r;
-      std::default_random_engine engine(seed);
-      std::uniform_real_distribution uniform_dist(-2.50, 2.50);
-      Polygon polygon;
-      for (const auto & vertex : base_polygon.getVertices()) {
-        polygon.addVertex(vertex + Position(uniform_dist(engine), uniform_dist(engine)) + move);
-      }
-      stopwatch.tic("ctor");
-      grid_map_utils::PolygonIterator iterator(map, polygon);
-      ctor_duration += stopwatch.toc("ctor");
-      stopwatch.tic("gm_ctor");
-      grid_map::PolygonIterator iterator_gridmap(map, polygon);
-      gm_ctor_duration += stopwatch.toc("gm_ctor");
-
-      while (!iterator.isPastEnd() && !iterator_gridmap.isPastEnd()) {
-        // std::cout << (*iterator).transpose() << " " << (*iterator_gridmap).transpose() <<
-        // std::endl;
-        ASSERT_EQ((*iterator).x(), (*iterator_gridmap).x());
-        EXPECT_EQ((*iterator).y(), (*iterator_gridmap).y());
-        stopwatch.tic("iter");
-        ++iterator;
-        iter_duration += stopwatch.toc("iter");
-        stopwatch.tic("gm_iter");
-        ++iterator_gridmap;
-        gm_iter_duration += stopwatch.toc("gm_iter");
-      }
-      EXPECT_EQ(iterator.isPastEnd(), iterator_gridmap.isPastEnd());
-      while (!iterator_gridmap.isPastEnd())
-        std::cout << "MISSING " << (*++iterator_gridmap).transpose() << std::endl;
-      while (!iterator.isPastEnd())
-        std::cout << (*++iterator).transpose() << " MISSING" << std::endl;
-    }
+  Polygon polygon;
+  polygon.addVertex(Position(2.5, 2.5));
+  polygon.addVertex(Position(2.5, -2.5));
+  polygon.addVertex(Position(-2.5, -2.5));
+  grid_map_utils::PolygonIterator iterator(map, polygon);
+  grid_map::PolygonIterator gm_iterator(map, polygon);
+  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
+    EXPECT_EQ((*gm_iterator)(0), (*iterator)(0));
+    EXPECT_EQ((*gm_iterator)(1), (*iterator)(1));
+    // std::cout << (*iterator).transpose() << " || " << (*gm_iterator).transpose() << std::endl;
+    ++iterator;
+    ++gm_iterator;
   }
-  std::printf(
-    "Total Runtimes (constructor/increment):\nCustom: %2.2fms, %2.2fms\nGridMap: %2.2fms, "
-    "%2.2fms\n",
-    ctor_duration, gm_ctor_duration, iter_duration, gm_iter_duration);
+  EXPECT_EQ(iterator.isPastEnd(), gm_iterator.isPastEnd());
+}
+
+TEST(PolygonIterator, DISABLED_SelfCrossingPolygon)
+{
+  GridMap map({"layer"});
+  map.setGeometry(Length(5.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
+
+  Polygon polygon;
+  polygon.addVertex(Position(2.0, 2.0));
+  polygon.addVertex(Position(2.0, -2.0));
+  polygon.addVertex(Position(-2.0, 2.0));
+  polygon.addVertex(Position(-2.0, -2.0));
+  grid_map_utils::PolygonIterator iterator(map, polygon);
+  grid_map::PolygonIterator gm_iterator(map, polygon);
+  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
+    // EXPECT_EQ((*gm_iterator)(0), (*iterator)(0));
+    // EXPECT_EQ((*gm_iterator)(1), (*iterator)(1));
+    std::cout << (*iterator).transpose() << " || " << (*gm_iterator).transpose() << std::endl;
+    ++iterator;
+    ++gm_iterator;
+  }
+
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(0, (*iterator)(0));
+  EXPECT_EQ(0, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(0, (*iterator)(0));
+  EXPECT_EQ(4, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(1, (*iterator)(0));
+  EXPECT_EQ(0, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(1, (*iterator)(0));
+  EXPECT_EQ(1, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(1, (*iterator)(0));
+  EXPECT_EQ(3, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(1, (*iterator)(0));
+  EXPECT_EQ(4, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(2, (*iterator)(0));
+  EXPECT_EQ(0, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(2, (*iterator)(0));
+  EXPECT_EQ(2, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(2, (*iterator)(0));
+  EXPECT_EQ(4, (*iterator)(1));
+
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(3, (*iterator)(0));
+  EXPECT_EQ(0, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(3, (*iterator)(0));
+  EXPECT_EQ(4, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(3, (*iterator)(0));
+  EXPECT_EQ(0, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(3, (*iterator)(0));
+  EXPECT_EQ(1, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(3, (*iterator)(0));
+  EXPECT_EQ(3, (*iterator)(1));
+
+  ++iterator;
+  ASSERT_FALSE(iterator.isPastEnd());
+  EXPECT_EQ(3, (*iterator)(0));
+  EXPECT_EQ(4, (*iterator)(1));
+
+  EXPECT_TRUE(iterator.isPastEnd());
 }

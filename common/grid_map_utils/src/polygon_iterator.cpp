@@ -166,9 +166,9 @@ void PolygonIterator::goToNextLine()
 
 void PolygonIterator::calculateColumnIndexes()
 {
-  const auto dist_from_origin = map_origin_y_ - *intersection_iter_;
+  const auto dist_from_origin = map_origin_y_ - *intersection_iter_ + map_resolution_;
   current_col_ =
-    std::clamp(static_cast<int>(1.0 + dist_from_origin / map_resolution_), 0, map_size_(1) - 1);
+    std::clamp(static_cast<int>(dist_from_origin / map_resolution_), 0, map_size_(1) - 1);
   ++intersection_iter_;
   const auto dist_to_origin = map_origin_y_ - *intersection_iter_;
   current_to_col_ =
