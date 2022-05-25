@@ -24,13 +24,13 @@
 #include <iomanip>
 #include <limits>
 #include <boost/optional.hpp>
-#include "utils/act_utils_eigen.hpp"
-
+#include "utils_act/act_utils_eigen.hpp"
+#include "visibility_control.hpp"
+#include "tf_algebra.hpp"
 
 namespace ns_control_toolbox
 {
 
-	double constexpr EPS = std::numeric_limits<double>::epsilon();
 
 /**
  * @brief Transfer Function representation in descending power of  Laplace variable "s".
@@ -39,8 +39,8 @@ namespace ns_control_toolbox
  * @param Nd	: size of the denominator array
  * */
 
-// For visibility we can set for each object : __attribute__((visibility("default"))) class_name
-	struct tf
+	// For visibility we can set for each object : __attribute__((visibility("default"))) class_name
+	struct ACT_PUBLIC tf
 		{
 		// Constructors.
 		tf() : num_{ 1. }, den_{ 1. }
@@ -51,42 +51,11 @@ namespace ns_control_toolbox
 		tf(std::vector<double> num, std::vector<double> den)
 				: num_{ std::move(num) }, den_{ std::move(den) }
 		{
+
+			ns_utils::stripVectorZerosFromLeft(num_); // remove zeros from the left.
+			ns_utils::stripVectorZerosFromLeft(den_);
 		}
 
-		// Copy constructor.
-		tf(tf const& other)
-		{
-			num_ = other.num_;
-			den_ = other.den_;
-		}
-
-		tf(tf&& other)
-
-		noexcept
-		{
-			num_ = std::move(other.num_);
-			den_ = std::move(other.den_);
-		}
-
-		tf& operator=(tf const& other)
-		{
-			if (this != &other)
-			{
-				num_ = other.num_;
-				den_ = other.den_;
-			}
-			return *this;
-		}
-
-		tf& operator=(tf&& other) noexcept
-		{
-			if (this != &other)
-			{
-				num_ = other.num_;
-				den_ = other.den_;
-			}
-			return *this;
-		}
 
 		// Member functions.
 		/**
@@ -97,6 +66,18 @@ namespace ns_control_toolbox
 
 
 		void print() const;
+
+		[[nodiscard]] std::vector<double> num() const
+		{
+			return num_;
+		}
+
+		[[nodiscard]] std::vector<double> den() const
+		{
+			return den_;
+		}
+
+	private:
 
 		// Data members
 		std::vector<double> num_;   // <-@brief numerator
@@ -109,34 +90,13 @@ namespace ns_control_toolbox
 	 *
 	 * */
 
-	struct tf2ss
+	struct ACT_PUBLIC tf2ss
 		{
 		tf2ss();
 
 		explicit tf2ss(tf const& sys_tf);
 
 		tf2ss(std::vector<double> const& num, std::vector<double> const& den);
-
-		// Copy constructor
-		tf2ss(tf2ss const& other)
-		{
-			A_ = other.A_;
-			B_ = other.B_;
-			C_ = other.C_;
-			D_ = other.D_;
-		}
-
-		tf2ss& operator=(tf2ss const& other)
-		{
-			if (this != &other)
-			{
-				A_ = other.A_;
-				B_ = other.B_;
-				C_ = other.C_;
-				D_ = other.D_;
-			}
-			return *this;
-		}
 
 		void print() const;
 
@@ -148,17 +108,12 @@ namespace ns_control_toolbox
 
 	private:
 		/**
-		 * @brief some numerator and denominator can be defined by leading zeros like [0, 0, 1], and we want to strip
-		 * away the leading zeros.
-		 * */
-		static void checkOrderAndStrip(std::vector<double>& num_or_den);
-
-		/**
 		 * @brief Compute the system Matrices
 		 * */
 
 		void computeSystemMatrices(std::vector<double> const& num,
 				std::vector<double> const& den);
+
 
 		};
 
@@ -166,13 +121,13 @@ namespace ns_control_toolbox
 	 * @param Td	: time delay value in seconds.
 	 * @param N		: Order of Pade approximation.
 	 * */
-	tf pade(double const& Td, size_t const& order);
+	tf ACT_PUBLIC pade(double const& Td, size_t const& order);
 
 	/**
 	 * @bried see pade()
 	 * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
 	 * */
-	tf padecoeff(double const& Td, size_t const& order);
+	tf ACT_PUBLIC padecoeff(double const& Td, size_t const& order);
 
 } // namespace ns_control_toolbox
 #endif // AUTOWARE_CONTROL_TOOLBOX_HPP_

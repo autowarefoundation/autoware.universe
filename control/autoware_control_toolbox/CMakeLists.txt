@@ -4,6 +4,12 @@ project(autoware_control_toolbox)
 # Example https://github.com/tier4/autoware.universe/blob/b6beeece906024794c708c1d4dc6051cd5e270fc/control/trajectory_follower/CMakeLists.txt#L105
 # require that dependencies from package.xml be available
 
+# Release, Debug, RelWithDebInfo, MinSizeRel
+set(CMAKE_BUILD_TYPE "Debug")
+
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DNDEBUG)
+endif ()
 
 if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 14)
@@ -70,14 +76,18 @@ find_package(Boost REQUIRED)
 set(CONTROL_LIB autoware_control_toolbox_lib)
 
 set(CONTROL_LIB_SOURCE
-        src/utils/act_utils.cpp
-        src/utils/act_utils_eigen.cpp
-        src/autoware_control_toolbox.cpp)
+        src/utils_act/act_utils.cpp
+        src/utils_act/act_utils_eigen.cpp
+        src/autoware_control_toolbox.cpp
+        src/tf_algebra.cpp
+        )
 
 set(CONTROL_LIB_HEADERS
         include/autoware_control_toolbox.hpp
-        include/utils/act_utils.hpp
-        include/utils/act_utils_eigen.hpp
+        include/utils_act/act_utils.hpp
+        include/utils_act/act_utils_eigen.hpp
+        include/visibility_control.hpp
+        include/tf_algebra.hpp
         )
 
 set(CONTROL_LIB_INCLUDE_DIRS
@@ -155,6 +165,8 @@ ament_auto_package(CONFIG_EXTRAS_POST "${CONTROL_LIB}-extras.cmake")
 ## TF example
 ament_auto_add_executable(main_tf usage_examples/main_tf.cpp)
 ament_auto_add_executable(main_pade usage_examples/main_pade.cpp)
+ament_auto_add_executable(main_tf2ss usage_examples/main_tf2ss.cpp)
+ament_auto_add_executable(main_tf_algebra usage_examples/main_tf_algebra.cpp)
 #target_link_libraries(main_tf fmt::fmt stdc++fs ${AUTOWARE_CONTROL_TOOLBOX_LIB})
 #target_link_directories(main_tf PUBLIC ${AUTOWARE_CONTROL_LIB_INCLUDE_DIR})
 #target_include_directories(main_tf PRIVATE include include/utils)
