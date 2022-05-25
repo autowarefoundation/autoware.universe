@@ -2,3 +2,11 @@
   become: true
   apt_repository:
     repo: ppa:astuff/kvaser-linux
+
+- name: Install kvaser library
+  become: true
+  apt:
+    name:
+      - kvaser-canlib-dev
+      - kvaser-drivers-dkms
+    update_cache: true
