@@ -13,7 +13,6 @@ protected:
 
     ~PointsToCostmapTest() override { rclcpp::shutdown(); }
 
-    pointcloud construct_points();
     grid_map::GridMap constrcut_gridmap();
 
 public:
@@ -24,29 +23,6 @@ public:
     double grid_position_y_ = 0;
 };
 
-pointcloud PointsToCostmapTest::construct_points()
-{
-    pointcloud cloud;
-    // construct cloud with n points
-    cloud.width    = 3;
-    cloud.height   = 1;
-    cloud.is_dense = false;
-    cloud.resize (cloud.width * cloud.height);
-
-    cloud.points[0].x = 0.7;
-    cloud.points[0].y = 1;
-    cloud.points[0].z = 1;
-
-    cloud.points[1].x = 1.1;
-    cloud.points[1].y = 1;
-    cloud.points[1].z = 4;
-
-    cloud.points[2].x = 1.4;
-    cloud.points[2].y = 2;
-    cloud.points[2].z = 2.7;
-
-    return cloud;
-}
 
 grid_map::GridMap PointsToCostmapTest::constrcut_gridmap()
 {
