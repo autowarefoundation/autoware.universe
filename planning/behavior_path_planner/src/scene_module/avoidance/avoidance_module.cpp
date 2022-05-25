@@ -2686,7 +2686,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
 }
 bool AvoidanceModule::shiftedpathcheck(ShiftedPath shifted_path)const
 {
-  PathWithLaneId path_refence = shifted_path.path;
+  PathWithLaneId path_reference = shifted_path.path;
    auto shift_length = shifted_path.shift_length;
    lanelet::ConstLanelets current_lanelets;
    lanelet::ConstLanelets left_lanelets;
@@ -2711,7 +2711,7 @@ bool AvoidanceModule::shiftedpathcheck(ShiftedPath shifted_path)const
    bool out_flag=false;
    size_t i=0;
    auto with = planner_data_->parameters.vehicle_width*0.5;
-   for (auto & pt : path_refence.points)
+   for (auto & pt : path_reference.points)
    {
       if(fabs(shift_length.at(i))>1.0e-2)
       {
