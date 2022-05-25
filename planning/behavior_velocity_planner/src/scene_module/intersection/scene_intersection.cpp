@@ -113,6 +113,8 @@ bool IntersectionModule::modifyPathVelocity(
 
   if (detection_areas.empty()) {
     RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
     return true;
   }
   debug_data_.detection_area = detection_areas;
@@ -214,6 +216,7 @@ bool IntersectionModule::modifyPathVelocity(
   if (state_machine_.getState() == State::STOP && is_entry_prohibited) {
     const double v = planner_param_.decel_velocity;
     util::setVelocityFrom(stop_line_idx, v, path);
+    setSafe(true);
 
     debug_data_.stop_required = false;
     debug_data_.slow_wall_pose = util::getAheadPose(stop_line_idx, base_link2front, *path);
