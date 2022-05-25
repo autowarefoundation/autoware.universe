@@ -29,6 +29,7 @@
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <random>
 #include <set>
@@ -49,7 +50,11 @@ class SceneModuleInterface
 public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
-  : module_id_(module_id), safe_(false), distance_(0.0), logger_(logger), clock_(clock)
+  : module_id_(module_id),
+    safe_(false),
+    distance_(std::numeric_limits<double>::lowest()),
+    logger_(logger),
+    clock_(clock)
   {
   }
   virtual ~SceneModuleInterface() = default;
