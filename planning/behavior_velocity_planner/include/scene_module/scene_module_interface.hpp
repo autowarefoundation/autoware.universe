@@ -77,19 +77,12 @@ public:
     infrastructure_command_ = command;
   }
 
-  bool isActivated() const { return activated_; }
-
-  bool isSafe() const { return safe_; }
-
-  double getDistance() const { return distance_; }
+  boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
   void setActivation(const bool activated) { activated_ = activated; }
-
-  void setSafe(const bool safe) { safe_ = safe; }
-
-  void setDistance(const double distance) { distance_ = distance; }
-
-  boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
+  bool isActivated() const { return activated_; }
+  bool isSafe() const { return safe_; }
+  double getDistance() const { return distance_; }
 
 protected:
   const int64_t module_id_;
@@ -101,6 +94,9 @@ protected:
   std::shared_ptr<const PlannerData> planner_data_;
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   boost::optional<int> first_stop_path_point_index_;
+
+  void setSafe(const bool safe) { safe_ = safe; }
+  void setDistance(const double distance) { distance_ = distance; }
 };
 
 class SceneModuleManagerInterface
