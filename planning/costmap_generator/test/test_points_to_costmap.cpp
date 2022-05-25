@@ -1,3 +1,6 @@
+// Copyright 2022 The Autoware Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 #include <rclcpp/rclcpp.hpp>
 #include <gtest/gtest.h>
 #include <costmap_generator/points_to_costmap.hpp>
