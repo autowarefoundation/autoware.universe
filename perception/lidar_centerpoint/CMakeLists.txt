@@ -146,13 +146,11 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
-    PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 
   # To suppress unknown-pragmas error. The root-cause is CUB library in CUDA 11.6.
   # This issue was fixed by https://github.com/NVIDIA/cub/commit/7d608bf1dc14553e2fb219eabeed80b76621b6fe
-  target_include_directories(centerpoint
+  target_include_directories(centerpoint_lib
     SYSTEM PUBLIC
       ${CUDA_INCLUDE_DIRS}
   )
