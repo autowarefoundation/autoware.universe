@@ -2713,7 +2713,7 @@ double AvoidanceModule::addDistancetoReturnPoint(ObjectData & object_data)const
   }
   
   std::vector<Point2d> collision_points;
-  std::vector<Point2d> inlanelet_points;
+  std::vector<Point2d> in_lane_points;
   std::vector<Point2d> check_points;
   for(auto lanelet : checklanelets)
   {
@@ -2736,13 +2736,13 @@ double AvoidanceModule::addDistancetoReturnPoint(ObjectData & object_data)const
       if(lanelet::utils::isInLanelet(target_pose,lanelet,0.001))
       {
         Point2d point(p.x(), p.y());
-        inlanelet_points.push_back(point);  
+        in_lane_points.push_back(point);  
       }
     }
   }
   
   check_points.insert(check_points.end(),collision_points.begin(),collision_points.end());
-  check_points.insert(check_points.end(),inlanelet_points.begin(),inlanelet_points.end());
+  check_points.insert(check_points.end(),in_lane_points.begin(),in_lane_points.end());
     
   for(auto & check_point : check_points)
   {
