@@ -100,7 +100,7 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_validPoints)
         {
             if(costmap_data(i,j) == grid_max_value)
             {
-                std::cout << "i:"<< i <<",j:"<<j<< std::endl;
+                // std::cout << "i:"<< i <<",j:"<<j<< std::endl;
                 nonempty_gridcell_num += 1;
             }
         }
@@ -209,7 +209,6 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_outOfGrid)
     in_sensor_points.resize (in_sensor_points.width * in_sensor_points.height);
 
     in_sensor_points.points[0].x = 1 + grid_length_x_ / 2.0;
-    std::cout<<"in_sensor_points.points[0].x:"<<in_sensor_points.points[0].x<<std::endl;
     in_sensor_points.points[0].y = 1 + grid_length_y_ / 2.0;
     in_sensor_points.points[0].z = 0.5; 
 
