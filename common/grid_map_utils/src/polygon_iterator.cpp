@@ -42,17 +42,17 @@ std::vector<Edge> PolygonIterator::calculateSortedEdges(const grid_map::Polygon 
   return edges;
 }
 
-std::vector<std::list<double>> PolygonIterator::calculateIntersectionsPerLine(
+std::vector<std::vector<double>> PolygonIterator::calculateIntersectionsPerLine(
   const std::vector<Edge> & edges, const std::pair<int, int> from_to_row,
   const grid_map::Position & origin, const grid_map::GridMap & grid_map)
 {
   const auto from_row = from_to_row.first;
   const auto to_row = from_to_row.second;
   // calculate for each line the y value intersecting with the polygon in decreasing order
-  std::vector<std::list<double>> y_intersections_per_line;
+  std::vector<std::vector<double>> y_intersections_per_line;
   y_intersections_per_line.reserve(to_row - from_row + 1);
   for (auto row = from_row; row <= to_row; ++row) {
-    std::list<double> y_intersections;
+    std::vector<double> y_intersections;
     const auto line_x = origin.x() - grid_map.getResolution() * row;
     for (const auto & edge : edges) {
       // special case when exactly touching a vertex: only count edge for its lowest x
@@ -68,7 +68,7 @@ std::vector<std::list<double>> PolygonIterator::calculateIntersectionsPerLine(
         break;
       }
     }
-    y_intersections.sort(std::greater());
+    std::sort(y_intersections.begin(), y_intersections.end(), std::greater());
     // remove pairs outside of map
     auto iter = y_intersections.cbegin();
     while (iter != y_intersections.cend() && std::next(iter) != y_intersections.cend() &&

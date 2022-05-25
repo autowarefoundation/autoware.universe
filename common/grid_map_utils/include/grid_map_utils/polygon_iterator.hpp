@@ -21,7 +21,6 @@
 #include <grid_map_core/GridMapMath.hpp>
 #include <grid_map_core/Polygon.hpp>
 
-#include <list>
 #include <utility>
 #include <vector>
 
@@ -87,8 +86,8 @@ private:
   /// @param from_to_row ranges of lines to use for intersection.
   /// @param origin Position of the top-left cell in the grid map.
   /// @param grid_map grid map.
-  /// @return for each row the list of y values with an intersection.
-  static std::vector<std::list<double>> calculateIntersectionsPerLine(
+  /// @return for each row the vector of y values with an intersection.
+  static std::vector<std::vector<double>> calculateIntersectionsPerLine(
     const std::vector<Edge> & edges, const std::pair<int, int> from_to_row,
     const grid_map::Position & origin, const grid_map::GridMap & grid_map);
 
@@ -117,8 +116,8 @@ private:
   double map_resolution_;
   double map_origin_y_;
   /// Intersections between scan lines and the polygon
-  std::vector<std::list<double>> intersections_per_line_;
-  std::list<double>::const_iterator intersection_iter_;
+  std::vector<std::vector<double>> intersections_per_line_;
+  std::vector<double>::const_iterator intersection_iter_;
   /// current indexes
   grid_map::Index current_index_;
   size_t current_line_;
