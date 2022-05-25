@@ -196,7 +196,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_occlusion_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
   }
-  if (this->declare_parameter("launch_run_out", true)) {
+  if (this->declare_parameter("launch_run_out", false)) {
     planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
   }
 }
