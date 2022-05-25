@@ -20,6 +20,9 @@ while [ "$1" != "" ]; do
     --no-nvidia)
         option_no_nvidia=true
         ;;
+    --no-cuda-drivers)
+        option_no_cuda_drivers=true
+        ;;
     *)
         args+=("$1")
         ;;
@@ -58,11 +61,16 @@ if [ "$option_verbose" = "true" ]; then
     ansible_args+=("-vvv")
 fi
 
-# Check NVIDIA Installation
+# Check installation of NVIDIA libraries
 if [ "$option_no_nvidia" = "true" ]; then
     ansible_args+=("--extra-vars" "install_nvidia=n")
 elif [ "$option_yes" = "true" ]; then
     ansible_args+=("--extra-vars" "install_nvidia=y")
+fi
+
+# Check installation of CUDA Drivers
+if [ "$option_no_cuda_drivers" = "true" ]; then
+    ansible_args+=("--extra-vars" "install_cuda_drivers=false")
 fi
 
 # Load env
@@ -73,7 +81,7 @@ fi
 
 # Add env args
 # shellcheck disable=SC2013
-for env_name in $(sed "s/=.*//" <amd64.env); do
+for env_name in $(sed -e "s/^\s*//" -e "/^#/d" -e "s/=.*//" <amd64.env); do
     ansible_args+=("--extra-vars" "${env_name}=${!env_name}")
 done
 
@@ -99,8 +107,11 @@ fi
 ansible_version=$(pip3 list | grep -oP "^ansible\s+\K([0-9]+)" || true)
 if [ "$ansible_version" != "5" ]; then
     sudo apt-get -y purge ansible
-    sudo pip3 install -U "ansible==5.*"
+    pip3 install -U "ansible==5.*"
 fi
+
+# For Python packages installed with user privileges
+export PATH="$HOME/.local/bin:$PATH"
 
 # Install ansible collections
 ansible-galaxy collection install -f -r "$SCRIPT_DIR/ansible-galaxy-requirements.yaml"
