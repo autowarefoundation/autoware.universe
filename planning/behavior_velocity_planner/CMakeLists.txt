@@ -21,6 +21,7 @@ set(scene_modules
   no_stopping_area
   virtual_traffic_light
   occlusion_spot
+  run_out
 )
 
 foreach(scene_module IN LISTS scene_modules)
@@ -48,6 +49,8 @@ ament_target_dependencies(behavior_velocity_planner
   Eigen3
   PCL
 )
+
+target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
 
 rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
