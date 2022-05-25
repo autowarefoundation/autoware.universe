@@ -187,7 +187,8 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "occupancy_grid_map_outlier_filter");
-    stop_watch_ptr_->tic();
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
   }
 
   /* params */
@@ -224,16 +225,11 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
 {
+  stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
   if (!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
     return;
-  }
-  // add processing time for debug
-  if (debug_publisher_) {
-    const double processing_time_ms = stop_watch_ptr_->toc(true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms", processing_time_ms);
   }
   // Occupancy grid map based filter
   PclPointCloud high_confidence_pc{};
@@ -270,6 +266,16 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     debugger_ptr_->publishHighConfidence(high_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishLowConfidence(filtered_low_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishOutlier(outlier_pc, ogm_frame_pc.header);
+  }
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
   }
 }
 

@@ -34,7 +34,8 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "voxel_based_compare_map_filter");
-    stop_watch_ptr_->tic();
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
   }
 
   distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
@@ -58,12 +59,6 @@ void VoxelBasedCompareMapFilterComponent::filter(
   if (voxel_map_ptr_ == NULL) {
     output = *input;
     return;
-  }
-  // add processing time for debug
-  if (debug_publisher_) {
-    const double processing_time_ms = stop_watch_ptr_->toc(true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms", processing_time_ms);
   }
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
@@ -252,6 +247,7 @@ bool VoxelBasedCompareMapFilterComponent::is_in_voxel(
 
 void VoxelBasedCompareMapFilterComponent::input_target_callback(const PointCloud2ConstPtr map)
 {
+  stop_watch_ptr_->toc("processing_time", true);
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
@@ -264,6 +260,16 @@ void VoxelBasedCompareMapFilterComponent::input_target_callback(const PointCloud
   voxel_grid_.setInputCloud(map_pcl_ptr);
   voxel_grid_.setSaveLeafLayout(true);
   voxel_grid_.filter(*voxel_map_ptr_);
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult VoxelBasedCompareMapFilterComponent::paramCallback(

@@ -30,7 +30,8 @@ LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "lidar_apollo_instance_segmentation");
-    stop_watch_ptr_->tic();
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
   }
   detector_ptr_ = std::make_shared<LidarApolloInstanceSegmentation>(this);
   debugger_ptr_ = std::make_shared<Debugger>(this);
@@ -45,16 +46,21 @@ LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
 void LidarInstanceSegmentationNode::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
-  // add processing time for debug
-  if (debug_publisher_) {
-    const double processing_time_ms = stop_watch_ptr_->toc(true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms", processing_time_ms);
-  }
+  stop_watch_ptr_->toc("processing_time", true);
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output_msg;
   detector_ptr_->detectDynamicObjects(*msg, output_msg);
   dynamic_objects_pub_->publish(output_msg);
   debugger_ptr_->publishColoredPointCloud(output_msg);
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
