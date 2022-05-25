@@ -36,7 +36,8 @@ int main()
 {
   std::ofstream result_file;
   result_file.open("benchmark_results.csv");
-  result_file << "#Size PolygonVertices GMU_Ctor GMU_Iter GM_Ctor GM_Iter\n";
+  result_file << "#Size PolygonVertices grid_map_utils_constructor grid_map_utils_iteration "
+                 "grid_map_constructor grid_map_iteration\n";
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
 
   constexpr auto nb_iterations = 10;
@@ -46,34 +47,34 @@ int main()
   std::random_device r;
   std::default_random_engine engine(0);
   // TODO(Maxime CLEMENT): moving breaks the polygon visualization
-  std::uniform_real_distribution move_dist(0.0, 0.0);
-  std::uniform_real_distribution poly_x_offset(grid_map_length.x() / polygon_side_vertices);
-  std::uniform_real_distribution poly_y_offset(grid_map_length.y() / polygon_side_vertices);
+  std::uniform_real_distribution move_dist(-2.0, 2.0);
+  std::uniform_real_distribution poly_x_offset(-2.0, 2.0);
+  std::uniform_real_distribution poly_y_offset(-2.0, 2.0);
 
   grid_map::Polygon base_polygon;
   const auto top_left = grid_map::Position(-grid_map_length.x() / 2, grid_map_length.y() / 2);
   const auto top_right = grid_map::Position(grid_map_length.x() / 2, grid_map_length.y() / 2);
   const auto bot_right = grid_map::Position(grid_map_length.x() / 2, -grid_map_length.y() / 2);
   const auto bot_left = grid_map::Position(-grid_map_length.x() / 2, -grid_map_length.y() / 2);
-  const auto top_vect = top_right - top_left;
+  const auto top_vector = top_right - top_left;
   for (double i = 0; i < polygon_side_vertices; ++i) {
     const auto factor = i / polygon_side_vertices;
-    base_polygon.addVertex(top_left + factor * top_vect);
+    base_polygon.addVertex(top_left + factor * top_vector);
   }
-  const auto right_vect = bot_right - top_right;
+  const auto right_vector = bot_right - top_right;
   for (double i = 0; i < polygon_side_vertices; ++i) {
     const auto factor = i / polygon_side_vertices;
-    base_polygon.addVertex(top_right + factor * right_vect);
+    base_polygon.addVertex(top_right + factor * right_vector);
   }
-  const auto bot_vect = bot_left - bot_right;
+  const auto bot_vector = bot_left - bot_right;
   for (double i = 0; i < polygon_side_vertices; ++i) {
     const auto factor = i / polygon_side_vertices;
-    base_polygon.addVertex(bot_right + factor * bot_vect);
+    base_polygon.addVertex(bot_right + factor * bot_vector);
   }
-  const auto left_vect = top_left - bot_left;
+  const auto left_vector = top_left - bot_left;
   for (double i = 0; i < polygon_side_vertices; ++i) {
     const auto factor = i / polygon_side_vertices;
-    base_polygon.addVertex(bot_left + factor * left_vect);
+    base_polygon.addVertex(bot_left + factor * left_vector);
   }
 
   for (auto grid_map_size = 100; grid_map_size <= 1000; grid_map_size += 100) {
@@ -139,7 +140,6 @@ int main()
             gridmap.at("layer", *iterator) = 100;
 
           cv::Mat img;
-          cv::Mat img2;
           cv::Mat custom_img;
           cv::Mat gm_img;
           cv::Mat diff_img;
@@ -148,23 +148,9 @@ int main()
             map, "layer", CV_8UC1, 0.0, 100, img);
           cv::resize(img, custom_img, cv::Size(500, 500), cv::INTER_LINEAR);
           grid_map::GridMapCvConverter::toImage<unsigned char, 1>(
-            gridmap, "layer", CV_8UC1, 0.0, 100, img2);
-          cv::resize(img2, gm_img, cv::Size(500, 500), cv::INTER_LINEAR);
+            gridmap, "layer", CV_8UC1, 0.0, 100, img);
+          cv::resize(img, gm_img, cv::Size(500, 500), cv::INTER_LINEAR);
           cv::compare(custom_img, gm_img, diff_img, cv::CMP_EQ);
-
-          grid_map::Index idx;
-          const auto x_factor = custom_img.rows / static_cast<double>(map.getSize()(0));
-          const auto y_factor = custom_img.cols / static_cast<double>(map.getSize()(1));
-          polygon.addVertex(polygon.getVertex(0));
-          for (auto it = polygon.getVertices().cbegin();
-               std::next(it) != polygon.getVertices().cend(); ++it) {
-            map.getIndex((*it), idx);
-            const auto p1 = cv::Point2i(idx(1) * x_factor, idx(0) * y_factor);
-            map.getIndex((*std::next(it)), idx);
-            const auto p2 = cv::Point2i(idx(1) * x_factor, idx(0) * y_factor);
-            cv::line(custom_img, p1, p2, {155, 155, 155});
-            cv::line(gm_img, p1, p2, {155, 155, 155});
-          }
 
           cv::imshow("custom", custom_img);
           cv::imshow("grid_map", gm_img);
