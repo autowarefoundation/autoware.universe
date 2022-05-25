@@ -35,7 +35,7 @@ repositories:
   autoware/calibration_tools:
     type: git
     url: git@github.com:tier4/calibration_tools.git
-    version: tier4/universe
+    version: eb57bd404255c9554c0746a8a694a671ff3272c3
   # description
   description/sensor/sensor_component_description:
     type: git
