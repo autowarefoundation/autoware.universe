@@ -19,12 +19,16 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <vector>
 
-// TODO(wep21): Remove these apis
-//              after they are implemented in ros2 geometry2.
+#ifdef ROS_DISTRO_GALACTIC
 namespace tf2
 {
 inline void fromMsg(const geometry_msgs::msg::Point & in, tf2::Vector3 & out)
@@ -48,6 +52,7 @@ inline void doTransform(
   toMsg(v_out, t_out);
 }
 }  // namespace tf2
+#endif
 
 namespace freespace_planning_algorithms
 {

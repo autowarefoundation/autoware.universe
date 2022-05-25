@@ -1,29 +1,13 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(planning_error_monitor)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ament_auto_add_library(planning_error_monitor_node SHARED
   src/planning_error_monitor_node.cpp
   src/debug_marker.cpp
 )
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(planning_error_monitor_node PUBLIC
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
 
 rclcpp_components_register_node(planning_error_monitor_node
   PLUGIN "planning_diagnostics::PlanningErrorMonitorNode"
@@ -39,9 +23,7 @@ rclcpp_components_register_node(invalid_trajectory_publisher_node
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  ament_add_gtest(test_planning_error_monitor
+  ament_add_ros_isolated_gtest(test_planning_error_monitor
     test/src/test_main.cpp
     test/src/test_planning_error_monitor_functions.cpp
     test/src/test_planning_error_monitor_helper.hpp
@@ -58,5 +40,6 @@ endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
+    config
     launch
 )

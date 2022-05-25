@@ -18,7 +18,12 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -423,7 +428,8 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   // of the lanelets that are below max_dist and max_delta_yaw
   if (
     lanelet.first < dist_threshold_for_searching_lanelet_ &&
-    abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
+    (M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta ||
+     abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_)) {
     return true;
   }
 

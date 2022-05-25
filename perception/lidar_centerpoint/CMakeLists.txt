@@ -1,16 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(lidar_centerpoint)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-set(CUDA_VERBOSE OFF)
+option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
@@ -92,13 +86,13 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
         message(STATUS "File already exists.")
       else()
         message(STATUS "File hash changes. Downloading now ...")
-        execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
+        execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
         # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
         message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
       endif()
     else()
       message(STATUS "File doesn't exists. Downloading now ...")
-      execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
+      execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
       # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
       message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
     endif()
@@ -147,6 +141,13 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     centerpoint_cuda_libraries
   )
 
+  # To suppress unknown-pragmas error. The root-cause is CUB library in CUDA 11.6.
+  # This issue was fixed by https://github.com/NVIDIA/cub/commit/7d608bf1dc14553e2fb219eabeed80b76621b6fe
+  target_include_directories(centerpoint
+    SYSTEM PUBLIC
+      ${CUDA_INCLUDE_DIRS}
+  )
+
   ## node ##
   ament_auto_add_library(lidar_centerpoint_component SHARED
     src/node.cpp
@@ -168,11 +169,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE lidar_centerpoint_node
   )
 
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
-
   ament_auto_package(
     INSTALL_TO_SHARE
       launch
@@ -183,10 +179,6 @@ else()
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
 
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
   ament_auto_package(
     INSTALL_TO_SHARE
       launch

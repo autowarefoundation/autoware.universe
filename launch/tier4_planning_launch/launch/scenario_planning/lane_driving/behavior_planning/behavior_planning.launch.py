@@ -333,7 +333,7 @@ def launch_setup(context, *args, **kwargs):
     with open(no_stopping_area_param_path, "r") as f:
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    run_out_param_path = os.path.join(
+    run_out_para_path = os.path.join(
         get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
@@ -342,8 +342,20 @@ def launch_setup(context, *args, **kwargs):
         "behavior_velocity_planner",
         "run_out.param.yaml",
     )
-    with open(run_out_param_path, "r") as f:
+    with open(run_out_para_path, "r") as f:
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    behavior_velocity_planner_param_path = os.path.join(
+        get_package_share_directory("tier4_planning_launch"),
+        "config",
+        "scenario_planning",
+        "lane_driving",
+        "behavior_planning",
+        "behavior_velocity_planner",
+        "behavior_velocity_planner.param.yaml",
+    )
+    with open(behavior_velocity_planner_param_path, "r") as f:
+        behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
@@ -389,25 +401,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/traffic_signal", "debug/traffic_signal"),
         ],
         parameters=[
-            {
-                "launch_stop_line": True,
-                "launch_crosswalk": True,
-                "launch_traffic_light": True,
-                "launch_intersection": True,
-                "launch_blind_spot": True,
-                "launch_detection_area": True,
-                "launch_virtual_traffic_light": True,
-                "launch_occlusion_spot": True,
-                "launch_run_out": False,
-                "launch_no_stopping_area": True,
-                "forward_path_length": 1000.0,
-                "backward_path_length": 5.0,
-                "max_accel": -2.8,
-                "delay_response_time": 1.3,
-            },
-            common_param,
-            base_param,
-            smoother_param,
+            behavior_velocity_planner_param,
             blind_spot_param,
             crosswalk_param,
             detection_area_param,
@@ -419,6 +413,9 @@ def launch_setup(context, *args, **kwargs):
             no_stopping_area_param,
             vehicle_info_param,
             run_out_param,
+            common_param,
+            base_param,
+            smoother_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )

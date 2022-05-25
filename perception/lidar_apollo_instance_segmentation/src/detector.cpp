@@ -63,17 +63,27 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
     const int batch_size = 1;
     builder->setMaxBatchSize(batch_size);
     config->setMaxWorkspaceSize(1 << 30);
-    nvinfer1::ICudaEngine * engine = builder->buildEngineWithConfig(*network, *config);
-    nvinfer1::IHostMemory * trt_model_stream = engine->serialize();
-    assert(trt_model_stream != nullptr);
+    nvinfer1::IHostMemory * plan = builder->buildSerializedNetwork(*network, *config);
+    assert(plan != nullptr);
     std::ofstream outfile(engine_file, std::ofstream::binary);
     assert(!outfile.fail());
-    outfile.write(reinterpret_cast<char *>(trt_model_stream->data()), trt_model_stream->size());
+    outfile.write(reinterpret_cast<char *>(plan->data()), plan->size());
     outfile.close();
-    network->destroy();
-    parser->destroy();
-    builder->destroy();
-    config->destroy();
+    if (network) {
+      delete network;
+    }
+    if (parser) {
+      delete parser;
+    }
+    if (builder) {
+      delete builder;
+    }
+    if (config) {
+      delete config;
+    }
+    if (plan) {
+      delete plan;
+    }
   }
   net_ptr_.reset(new Tn::trtNet(engine_file));
 
@@ -103,6 +113,7 @@ bool LidarApolloInstanceSegmentation::transformCloud(
         tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
       pcl::transformPointCloud(pcl_input, pcl_transformed_cloud, affine_matrix);
       transformed_cloud.header.frame_id = target_frame_;
+      pcl_transformed_cloud.header.frame_id = target_frame_;
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
       return false;

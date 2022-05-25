@@ -1,19 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(tensorrt_yolo)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
 
 find_package(OpenCV REQUIRED)
 
@@ -102,7 +93,7 @@ message(STATUS "Checking and downloading yolov4.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com//uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX" -O ${PATH}/yolov4.onnx
+    COMMAND gdown "https://drive.google.com/uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX" -O ${PATH}/yolov4.onnx
     ERROR_QUIET
   )
 endif()
@@ -124,7 +115,7 @@ message(STATUS "Checking and downloading yolov5s.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com//uc?id=1CF21nQWigwCPTr5psQZXg6cBQIOYKbad" -O ${PATH}/yolov5s.onnx
+    COMMAND gdown "https://drive.google.com/uc?id=1CF21nQWigwCPTr5psQZXg6cBQIOYKbad" -O ${PATH}/yolov5s.onnx
     ERROR_QUIET
   )
 endif()
@@ -135,7 +126,7 @@ message(STATUS "Checking and downloading yolov5m.onnx")
 if(NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
   execute_process(
-    COMMAND gdown "https://drive.google.com//uc?id=1a1h50KJH6slwmjKZpPlS-errukF-BrgG" -O ${PATH}/yolov5m.onnx
+    COMMAND gdown "https://drive.google.com/uc?id=1a1h50KJH6slwmjKZpPlS-errukF-BrgG" -O ${PATH}/yolov5m.onnx
     ERROR_QUIET
   )
 endif()
@@ -239,11 +230,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     PLUGIN "object_recognition::TensorrtYoloNodelet"
     EXECUTABLE tensorrt_yolo_node
   )
-
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
 
   ament_auto_package(INSTALL_TO_SHARE
     config

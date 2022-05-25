@@ -41,17 +41,18 @@ geometry_msgs::msg::Pose convertRefPointsToPose(const ReferencePoint & ref_point
 }
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
-  const std::vector<ReferencePoint> & ref_points, const size_t l_idx)
+  const std::vector<ReferencePoint> & ref_points, const size_t l_idx, const double offset)
 {
   Eigen::VectorXd ub_vec(ref_points.size());
   Eigen::VectorXd lb_vec(ref_points.size());
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound;
-    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound;
+    ub_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).upper_bound + offset;
+    lb_vec(i) = ref_points.at(i).vehicle_bounds.at(l_idx).lower_bound - offset;
   }
   return {ub_vec, lb_vec};
 }
 
+/*
 Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
 {
   double max_width = std::numeric_limits<double>::min();
@@ -69,6 +70,33 @@ Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
     }
   }
   return front_bounds_candidates.at(max_width_index);
+}
+*/
+
+Bounds findNearestBounds(
+  const geometry_msgs::msg::Pose & bounds_pose, const BoundsCandidates & front_bounds_candidates,
+  const geometry_msgs::msg::Point & target_pos)
+{
+  double min_dist = std::numeric_limits<double>::max();
+  size_t min_dist_index = 0;
+  if (front_bounds_candidates.size() != 1) {
+    for (size_t candidate_idx = 0; candidate_idx < front_bounds_candidates.size();
+         ++candidate_idx) {
+      const auto & front_bounds_candidate = front_bounds_candidates.at(candidate_idx);
+
+      const double bound_center =
+        (front_bounds_candidate.upper_bound + front_bounds_candidate.lower_bound) / 2.0;
+      const auto center_pos =
+        tier4_autoware_utils::calcOffsetPose(bounds_pose, 0.0, bound_center, 0.0);
+      const double dist = tier4_autoware_utils::calcDistance2d(center_pos, target_pos);
+
+      if (dist < min_dist) {
+        min_dist_index = candidate_idx;
+        min_dist = dist;
+      }
+    }
+  }
+  return front_bounds_candidates.at(min_dist_index);
 }
 
 double calcOverlappedBoundsSignedLength(
@@ -286,16 +314,32 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
         // interpolate and crop backward
         const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
           smoothed_points, mpt_param_.delta_arc_length_for_mpt_points);
-        const auto cropped_interpolated_points = points_utils::clipBackwardPoints(
-          interpolated_points, current_ego_pose_.position, traj_param_.backward_fixing_distance,
-          mpt_param_.delta_arc_length_for_mpt_points);
+        const auto interpolated_points_with_yaw =
+          points_utils::convertToPosesWithYawEstimation(interpolated_points);
+        const auto cropped_interpolated_points_with_yaw = points_utils::clipBackwardPoints(
+          interpolated_points_with_yaw, current_ego_pose_, traj_param_.backward_fixing_distance,
+          mpt_param_.delta_arc_length_for_mpt_points,
+          traj_param_.delta_yaw_threshold_for_closest_point);
+        const auto cropped_interpolated_points =
+          points_utils::convertToPoints(cropped_interpolated_points_with_yaw);
 
         return points_utils::convertToReferencePoints(cropped_interpolated_points);
       }
 
       // calc non fixed traj points
-      const size_t seg_idx =
-        tier4_autoware_utils::findNearestSegmentIndex(smoothed_points, fixed_ref_points.back().p);
+      const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
+        points_utils::convertToPoints(fixed_ref_points));
+      const auto seg_idx_optional = tier4_autoware_utils::findNearestSegmentIndex(
+        smoothed_points, fixed_ref_points_with_yaw.back(), std::numeric_limits<double>::max(),
+        traj_param_.delta_yaw_threshold_for_closest_point);
+
+      if (!seg_idx_optional) {
+        RCLCPP_INFO_EXPRESSION(
+          rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+          "cannot find nearest segment index in getReferencePoints");
+        return std::vector<ReferencePoint>{};
+      }
+      const auto seg_idx = *seg_idx_optional;
       const auto non_fixed_traj_points =
         std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{
           smoothed_points.begin() + seg_idx, smoothed_points.end()};
@@ -322,7 +366,6 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
     // set some information to reference points considering fix kinematics
     trimPoints(ref_points);
     calcOrientation(ref_points);
-    calcVelocity(ref_points, smoothed_points);
     calcCurvature(ref_points);
     calcArcLength(ref_points);
     calcPlanningFromEgo(
@@ -336,7 +379,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
     ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
 
     // set bounds information
-    calcBounds(ref_points, enable_avoidance, maps, debug_data_ptr);
+    calcBounds(ref_points, enable_avoidance, maps, prev_trajs, debug_data_ptr);
     calcVehicleBounds(ref_points, maps, debug_data_ptr, enable_avoidance);
 
     // set extra information (alpha and has_object_collision)
@@ -385,8 +428,9 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
     */
 
     // assign fix kinematics
-    const size_t nearest_ref_idx =
-      tier4_autoware_utils::findNearestIndex(ref_points, current_ego_pose_.position);
+    const size_t nearest_ref_idx = findNearestIndexWithSoftYawConstraints(
+      points_utils::convertToPoints(ref_points), current_ego_pose_,
+      traj_param_.delta_yaw_threshold_for_closest_point);
 
     // calculate cropped_ref_points.at(nearest_ref_idx) with yaw
     const geometry_msgs::msg::Pose nearest_ref_pose = [&]() -> geometry_msgs::msg::Pose {
@@ -422,8 +466,9 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   }
 
   const auto & prev_ref_points = prev_trajs->mpt_ref_points;
-  const int nearest_prev_ref_idx =
-    tier4_autoware_utils::findNearestIndex(prev_ref_points, current_ego_pose_.position);
+  const int nearest_prev_ref_idx = static_cast<int>(findNearestIndexWithSoftYawConstraints(
+    points_utils::convertToPoints(prev_ref_points), current_ego_pose_,
+    traj_param_.delta_yaw_threshold_for_closest_point));
 
   // calculate begin_prev_ref_idx
   const int begin_prev_ref_idx = [&]() {
@@ -973,7 +1018,9 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.Wex + C_vec;
 
     // calculate bounds
-    const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx);
+    const double bounds_offset =
+      vehicle_param_.width / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
+    const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
     if (mpt_param_.soft_constraint) {
@@ -1128,7 +1175,6 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
     autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose = calcVehiclePose(ref_point, lat_error, yaw_error, 0.0);
 
-    traj_point.longitudinal_velocity_mps = ref_point.v;
     traj_points.push_back(traj_point);
 
     {  // for debug visualization
@@ -1174,6 +1220,19 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
   return traj_points;
 }
 
+size_t MPTOptimizer::findNearestIndexWithSoftYawConstraints(
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
+  const double yaw_threshold) const
+{
+  const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
+
+  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
+    points_with_yaw, pose, std::numeric_limits<double>::max(), yaw_threshold);
+  return nearest_idx_optional
+           ? *nearest_idx_optional
+           : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
+}
+
 void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) const
 {
   const auto yaw_angles = slerpYawFromReferencePoints(ref_points);
@@ -1183,16 +1242,6 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) con
     }
 
     ref_points.at(i).yaw = yaw_angles.at(i);
-  }
-}
-
-void MPTOptimizer::calcVelocity(
-  std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points) const
-{
-  for (size_t i = 0; i < ref_points.size(); i++) {
-    ref_points.at(i).v = points[tier4_autoware_utils::findNearestIndex(points, ref_points.at(i).p)]
-                           .longitudinal_velocity_mps;
   }
 }
 
@@ -1277,8 +1326,11 @@ void MPTOptimizer::calcExtraPoints(
     if (prev_trajs && !prev_trajs->mpt_ref_points.empty()) {
       const auto & prev_ref_points = prev_trajs->mpt_ref_points;
 
-      const size_t prev_idx =
-        tier4_autoware_utils::findNearestIndex(prev_ref_points, ref_points.at(i).p);
+      const auto ref_points_with_yaw =
+        points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
+      const size_t prev_idx = findNearestIndexWithSoftYawConstraints(
+        points_utils::convertToPoints(prev_ref_points), ref_points_with_yaw.at(i),
+        traj_param_.delta_yaw_threshold_for_closest_point);
       const double dist_to_nearest_prev_ref =
         tier4_autoware_utils::calcDistance2d(prev_ref_points.at(prev_idx), ref_points.at(i));
       if (dist_to_nearest_prev_ref < 1.0 && prev_ref_points.at(prev_idx).near_objects) {
@@ -1309,7 +1361,7 @@ void MPTOptimizer::addSteerWeightR(
 
 void MPTOptimizer::calcBounds(
   std::vector<ReferencePoint> & ref_points, const bool enable_avoidance, const CVMaps & maps,
-  std::shared_ptr<DebugData> debug_data_ptr) const
+  const std::unique_ptr<Trajectories> & prev_trajs, std::shared_ptr<DebugData> debug_data_ptr) const
 {
   stop_watch_.tic(__func__);
 
@@ -1328,8 +1380,19 @@ void MPTOptimizer::calcBounds(
 
     // extract only continuous bounds;
     if (i == 0) {  // TODO(murooka) use previous bounds, not widest bounds
-      const auto & widest_bounds = findWidestBounds(bounds_candidates);
-      ref_points.at(i).bounds = widest_bounds;
+      const auto target_pos = [&]() {
+        if (prev_trajs && !prev_trajs->mpt_ref_points.empty()) {
+          return prev_trajs->mpt_ref_points.front().p;
+        }
+        return current_ego_pose_.position;
+      }();
+
+      geometry_msgs::msg::Pose ref_pose;
+      ref_pose.position = ref_points.at(i).p;
+      ref_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_points.at(i).yaw);
+
+      const auto & nearest_bounds = findNearestBounds(ref_pose, bounds_candidates, target_pos);
+      ref_points.at(i).bounds = nearest_bounds;
     } else {
       const auto & prev_ref_point = ref_points.at(i - 1);
       const auto & prev_continuous_bounds = prev_ref_point.bounds;
@@ -1337,7 +1400,7 @@ void MPTOptimizer::calcBounds(
       BoundsCandidates filtered_bounds_candidates;
       for (const auto & bounds_candidate : bounds_candidates) {
         // Step 1. Bounds is continuous to the previous one,
-        //         and the overlapped signed length is longer than vehice width
+        //         and the overlapped signed length is longer than vehicle width
         //         overlapped_signed_length already considers vehicle width.
         const double overlapped_signed_length =
           calcOverlappedBoundsSignedLength(prev_continuous_bounds, bounds_candidate);
@@ -1435,7 +1498,7 @@ void MPTOptimizer::calcVehicleBounds(
 
       // interpolate bounds
       const double avoid_s = ref_points_spline_interpolation.getAccumulatedLength(p_idx) + d;
-      for (size_t cp_idx = p_idx; cp_idx < ref_points.size(); ++cp_idx) {
+      for (size_t cp_idx = 0; cp_idx < ref_points.size(); ++cp_idx) {
         const double current_s = ref_points_spline_interpolation.getAccumulatedLength(cp_idx);
         if (avoid_s <= current_s) {
           double prev_avoid_idx;
@@ -1481,7 +1544,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   BoundsCandidates bounds_candidate;
 
   constexpr double max_search_lane_width = 5.0;
-  const std::vector<double> ds_vec{0.45, 0.15, 0.05, 0.01};
+  const auto search_widths = mpt_param_.bounds_search_widths;
 
   // search right to left
   const double bound_angle =
@@ -1501,8 +1564,8 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   CollisionType latest_right_bound_collision_type = previous_collision_type;
 
   while (traversed_dist < max_search_lane_width) {
-    for (size_t ds_idx = 0; ds_idx < ds_vec.size(); ++ds_idx) {
-      const double ds = ds_vec.at(ds_idx);
+    for (size_t search_idx = 0; search_idx < search_widths.size(); ++search_idx) {
+      const double ds = search_widths.at(search_idx);
       while (true) {
         const CollisionType current_collision_type =
           getCollisionType(maps, enable_avoidance, avoiding_point, traversed_dist, bound_angle);
@@ -1510,7 +1573,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         if (has_collision(current_collision_type)) {  // currently collision
           if (!has_collision(previous_collision_type)) {
             // if target_position becomes collision from no collision or out_of_sight
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               const double left_bound = traversed_dist - ds / 2.0;
               bounds_candidate.push_back(Bounds{
                 current_right_bound, left_bound, latest_right_bound_collision_type,
@@ -1523,7 +1586,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
                                                                              // out_of_sight
           if (previous_collision_type == CollisionType::NO_COLLISION) {
             // if target_position becomes out_of_sight from no collision
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               const double left_bound = max_search_lane_width;
               bounds_candidate.push_back(Bounds{
                 current_right_bound, left_bound, latest_right_bound_collision_type,
@@ -1535,7 +1598,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         } else {  // currently no collision
           if (has_collision(previous_collision_type)) {
             // if target_position becomes no collision from collision
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               current_right_bound = traversed_dist - ds / 2.0;
               latest_right_bound_collision_type = previous_collision_type;
               previous_collision_type = current_collision_type;
@@ -1547,7 +1610,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         // if target_position is longer than max_search_lane_width
         if (traversed_dist >= max_search_lane_width) {
           if (!has_collision(previous_collision_type)) {
-            if (ds_idx == ds_vec.size() - 1) {
+            if (search_idx == search_widths.size() - 1) {
               const double left_bound = traversed_dist - ds / 2.0;
               bounds_candidate.push_back(Bounds{
                 current_right_bound, left_bound, latest_right_bound_collision_type,
@@ -1562,9 +1625,9 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
         previous_collision_type = current_collision_type;
       }
 
-      if (ds_idx != ds_vec.size() - 1) {
+      if (search_idx != search_widths.size() - 1) {
         // go back with ds since target_position became empty or road/object
-        // NOTE: if ds is the last of ds_vec, don't have to go back
+        // NOTE: if ds is the last of search_widths, don't have to go back
         traversed_dist -= ds;
       }
     }
@@ -1590,11 +1653,10 @@ CollisionType MPTOptimizer::getCollisionType(
   const double traversed_dist, const double bound_angle) const
 {
   // calculate clearance
-  const double min_soft_road_clearance = mpt_param_.vehicle_circle_radius +
+  const double min_soft_road_clearance = vehicle_param_.width / 2.0 +
                                          mpt_param_.soft_clearance_from_road +
                                          mpt_param_.extra_desired_clearance_from_road;
-  const double min_obj_clearance = mpt_param_.vehicle_circle_radius +
-                                   mpt_param_.clearance_from_object +
+  const double min_obj_clearance = vehicle_param_.width / 2.0 + mpt_param_.clearance_from_object +
                                    mpt_param_.soft_clearance_from_road;
 
   // calculate target position

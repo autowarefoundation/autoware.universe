@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,13 @@
 #include "motion_common/motion_common.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
+
+#ifdef ROS_DISTRO_GALACTIC
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#else
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#endif
+
 #include "trajectory_follower/interpolate.hpp"
 #include "trajectory_follower/mpc_trajectory.hpp"
 #include "trajectory_follower/visibility_control.hpp"
@@ -32,7 +39,6 @@
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include <cmath>
 #include <string>

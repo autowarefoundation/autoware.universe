@@ -22,6 +22,12 @@
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <algorithm>
 #include <limits>
 #include <string>
@@ -665,7 +671,7 @@ double AdaptiveCruiseController::getMedianVel(const std::vector<nav_msgs::msg::O
   }
 
   std::vector<double> raw_vel_que;
-  for (const auto vel : vel_que) {
+  for (const auto & vel : vel_que) {
     raw_vel_que.emplace_back(vel.twist.twist.linear.x);
   }
 
