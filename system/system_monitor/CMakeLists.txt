@@ -62,10 +62,26 @@ else()
   endif()
 endif()
 
+if(CMAKE_ECU_PLATFORM STREQUAL "adlink")
+  set(CMAKE_ECU_PLATFORM "adlink")
+else()
+  set(CMAKE_ECU_PLATFORM "unknown")
+endif()
+
 message(STATUS "HOST_SYSTEM_VERSION: " ${CMAKE_HOST_SYSTEM_VERSION})
 message(STATUS "SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
 message(STATUS "CPU PLATFORM: " ${CMAKE_CPU_PLATFORM})
 message(STATUS "GPU PLATFORM: " ${CMAKE_GPU_PLATFORM})
+message(STATUS "ECU PLATFORM: " ${CMAKE_ECU_PLATFORM})
+
+set(ECU_MONITOR_SOURCE
+  src/ecu_monitor/ecu_monitor_base.cpp
+  src/ecu_monitor/${CMAKE_ECU_PLATFORM}_ecu_monitor.cpp
+)
+
+ament_auto_add_library(ecu_monitor_lib SHARED
+  ${ECU_MONITOR_SOURCE}
+)
 
 set(CPU_MONITOR_SOURCE
   src/cpu_monitor/cpu_monitor_base.cpp
@@ -129,6 +145,7 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(ecu_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(cpu_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(hdd_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(mem_monitor_lib ${LIBRARIES})
@@ -175,9 +192,17 @@ rclcpp_components_register_node(gpu_monitor_lib
   EXECUTABLE gpu_monitor
 )
 
+rclcpp_components_register_node(ecu_monitor_lib
+  PLUGIN "ECUMonitor"
+  EXECUTABLE ecu_monitor
+)
+
 # TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.
 if(BUILD_TESTING)
-  # ament_add_ros_isolated_gtest(test_cpu_monitor
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+
+  # ament_add_gtest(test_cpu_monitor
   #   test/src/cpu_monitor/test_${CMAKE_CPU_PLATFORM}_cpu_monitor.cpp
   #   ${CPU_MONITOR_SOURCE}
   # )
@@ -193,7 +218,7 @@ if(BUILD_TESTING)
 
   # target_link_libraries(test_cpu_monitor ${Boost_LIBRARIES} ${LIBRARIES})
 
-  # ament_add_ros_isolated_gtest(test_hdd_monitor
+  # ament_add_gtest(test_hdd_monitor
   #   test/src/hdd_monitor/test_hdd_monitor.cpp
   #   src/hdd_monitor/hdd_monitor.cpp
   # )
@@ -210,7 +235,7 @@ if(BUILD_TESTING)
   # target_link_libraries(test_hdd_monitor ${Boost_LIBRARIES} ${LIBRARIES}
   # )
 
-  # ament_add_ros_isolated_gtest(test_mem_monitor
+  # ament_add_gtest(test_mem_monitor
   #   test/src/mem_monitor/test_mem_monitor.cpp
   #   src/mem_monitor/mem_monitor.cpp
   # )
@@ -226,7 +251,7 @@ if(BUILD_TESTING)
 
   # target_link_libraries(test_mem_monitor ${Boost_LIBRARIES} ${LIBRARIES})
 
-  # ament_add_ros_isolated_gtest(test_net_monitor
+  # ament_add_gtest(test_net_monitor
   #   test/src/net_monitor/test_net_monitor.cpp
   #   src/net_monitor/net_monitor.cpp
   #   src/net_monitor/nl80211.cpp
@@ -243,7 +268,7 @@ if(BUILD_TESTING)
 
   # target_link_libraries(test_net_monitor ${Boost_LIBRARIES} ${NL_LIBS} ${LIBRARIES})
 
-  # ament_add_ros_isolated_gtest(test_ntp_monitor
+  # ament_add_gtest(test_ntp_monitor
   #   test/src/ntp_monitor/test_ntp_monitor.cpp
   #   src/ntp_monitor/ntp_monitor.cpp
   # )
@@ -259,7 +284,7 @@ if(BUILD_TESTING)
 
   # target_link_libraries(test_ntp_monitor ${Boost_LIBRARIES} ${LIBRARIES})
 
-  # ament_add_ros_isolated_gtest(test_process_monitor
+  # ament_add_gtest(test_process_monitor
   #   test/src/process_monitor/test_process_monitor.cpp
   #   src/process_monitor/process_monitor.cpp
   # )
@@ -275,7 +300,7 @@ if(BUILD_TESTING)
 
   # target_link_libraries(test_process_monitor ${Boost_LIBRARIES} ${LIBRARIES})
 
-  # ament_add_ros_isolated_gtest(test_gpu_monitor
+  # ament_add_gtest(test_gpu_monitor
   #   test/src/gpu_monitor/test_${CMAKE_GPU_PLATFORM}_gpu_monitor.cpp
   #   ${GPU_MONITOR_SOURCE}
   # )
@@ -292,6 +317,10 @@ if(BUILD_TESTING)
   # target_link_libraries(test_gpu_monitor ${GPU_LIBRARY} ${LIBRARIES})
 
 endif()
+
+#############
+## Install ##
+#############
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
