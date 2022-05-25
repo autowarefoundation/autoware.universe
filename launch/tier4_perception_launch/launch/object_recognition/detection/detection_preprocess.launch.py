@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+
 from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
@@ -24,6 +25,8 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 import yaml
+
+
 class DetectionPreProcessPipeline:
     def __init__(self, context):
         self.output_topic = (
@@ -38,11 +41,13 @@ class DetectionPreProcessPipeline:
         self.use_down_sample_filter = self.detection_preprocess_param["use_down_sample_filter"]
         self.voxel_size = self.detection_preprocess_param["down_sample_voxel_size"]
         self.distance_threshold = self.detection_preprocess_param["distance_threshold"]
+
     def create_pipeline(self, output_topic):
         if self.use_down_sample_filter:
             return self.create_down_sample_pipeline(output_topic)
         else:
             return self.create_normal_pipeline(output_topic)
+
     def create_normal_pipeline(self, output_topic):
         components = []
         components.append(
@@ -66,6 +71,7 @@ class DetectionPreProcessPipeline:
             )
         )
         return components
+
     def create_down_sample_pipeline(self, output_topic):
         components = []
         down_sample_topic = "/perception/obstacle_segmentation/downsampled/pointcloud"
@@ -111,6 +117,8 @@ class DetectionPreProcessPipeline:
             )
         )
         return components
+
+
 def launch_setup(context, *args, **kwargs):
     pipeline = DetectionPreProcessPipeline(context)
     components = []
@@ -134,10 +142,14 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(LaunchConfiguration("use_pointcloud_container")),
     )
     return [individual_container, pointcloud_container_loader]
+
+
 def generate_launch_description():
     launch_arguments = []
+
     def add_launch_arg(name: str, default_value=None):
         launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
+
     add_launch_arg("input_topic", "")
     add_launch_arg("use_multithread", "False")
     add_launch_arg("use_intra_process", "True")
