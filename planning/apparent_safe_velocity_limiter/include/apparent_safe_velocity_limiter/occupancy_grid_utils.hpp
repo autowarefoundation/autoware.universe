@@ -16,25 +16,14 @@
 #define APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_
 
 #include "apparent_safe_velocity_limiter/collision_distance.hpp"
-#include "grid_map_core/Polygon.hpp"
 #include "grid_map_core/TypeDefs.hpp"
-#include "grid_map_core/iterators/GridMapIterator.hpp"
 
 #include <grid_map_core/GridMap.hpp>
-#include <grid_map_core/iterators/LineIterator.hpp>
-#include <grid_map_core/iterators/PolygonIterator.hpp>
-#include <grid_map_cv/GridMapCvConverter.hpp>
-#include <grid_map_ros/GridMapRosConverter.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
-#include <nav_msgs/msg/detail/occupancy_grid__struct.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-
-#include <boost/geometry.hpp>
-
-#include <opencv2/imgproc/types_c.h>
 
 namespace apparent_safe_velocity_limiter
 {

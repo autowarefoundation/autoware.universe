@@ -16,6 +16,7 @@
   <depend>eigen</depend>
   <depend>grid_map_msgs</depend>
   <depend>grid_map_ros</depend>
+  <depend>grid_map_utils</depend>
   <depend>libboost-dev</depend>
   <depend>nav_msgs</depend>
   <depend>pcl_ros</depend>
