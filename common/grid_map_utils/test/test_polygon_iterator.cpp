@@ -202,27 +202,49 @@ TEST(PolygonIterator, MoveMap)
   EXPECT_TRUE(iterator.isPastEnd());
 }
 
-// TODO(Maxime CLEMENT): difference with the original implementation when polygon edge is exactly on
-// a cell center
-TEST(PolygonIterator, DISABLED_Difference)
+// This test shows a difference when an edge passes exactly through the center of a cell
+TEST(PolygonIterator, Difference)
 {
   GridMap map({"layer"});
   map.setGeometry(Length(5.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
+  // Triangle where the hypothenus is an exact diagonal of the map: difference.
   Polygon polygon;
   polygon.addVertex(Position(2.5, 2.5));
-  polygon.addVertex(Position(2.5, -2.5));
+  polygon.addVertex(Position(-2.5, 2.5));
   polygon.addVertex(Position(-2.5, -2.5));
   grid_map_utils::PolygonIterator iterator(map, polygon);
   grid_map::PolygonIterator gm_iterator(map, polygon);
+  bool diff = false;
   while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
-    EXPECT_EQ((*gm_iterator)(0), (*iterator)(0));
-    EXPECT_EQ((*gm_iterator)(1), (*iterator)(1));
-    // std::cout << (*iterator).transpose() << " || " << (*gm_iterator).transpose() << std::endl;
+    if((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
+      diff = true;
     ++iterator;
     ++gm_iterator;
   }
-  EXPECT_EQ(iterator.isPastEnd(), gm_iterator.isPastEnd());
+  if(iterator.isPastEnd() != gm_iterator.isPastEnd()) {
+    diff = true;
+  };
+  EXPECT_TRUE(diff);
+
+  // Triangle where the hypothenus does not cross any cell center: no difference.
+  polygon.removeVertices();
+  polygon.addVertex(Position(2.5, 2.1));
+  polygon.addVertex(Position(-2.5, 2.5));
+  polygon.addVertex(Position(-2.5, -2.9));
+  iterator = grid_map_utils::PolygonIterator(map, polygon);
+  gm_iterator = grid_map::PolygonIterator(map, polygon);
+  diff = false;
+  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
+    if((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
+      diff = true;
+    ++iterator;
+    ++gm_iterator;
+  }
+  if(iterator.isPastEnd() != gm_iterator.isPastEnd()) {
+    diff = true;
+  };
+  EXPECT_FALSE(diff);
 }
 
 TEST(PolygonIterator, DISABLED_SelfCrossingPolygon)

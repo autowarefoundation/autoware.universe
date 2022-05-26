@@ -23,8 +23,8 @@ The `grid_map_utils::PolygonIterator` follows the same API as the original [`gri
 
 ## Assumptions
 
-The algorithm assumes an input polygon with at least 3 vertices (i.e., a triangle)
-and without any intersection between its edges.
+The behavior of the `grid_map_utils::PolygonIterator` is only guaranteed to match the `grid_map::PolygonIterator` if edges of the polygon do not _exactly_ cross any cell center.
+In such a case, whether the crossed cell is considered inside or outside of the polygon can vary due to floating precision error.
 
 ## Performances
 
