@@ -20,13 +20,13 @@ public:
   Ll2ImageConverter();
 
 private:
-  float max_range_ = 20;  // [m]
-  float image_size_ = 600;
   const int line_thick_;
+  const int image_size_;
+  const float max_range_;  // [m]
 
   using CloudWithPose = modularized_particle_filter_msgs::msg::CloudWithPose;
 
-  std::optional<lanelet::LineStrings3d> visible_linestrings_;
+  pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_ = nullptr;
 
   rclcpp::Publisher<CloudWithPose>::SharedPtr pub_cloud_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
@@ -39,7 +39,8 @@ private:
 
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
   void publishCloud(
-    const cv::Mat & image, const rclcpp::Time & stamp, const geometry_msgs::msg::Pose & pose);
+    const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp,
+    const geometry_msgs::msg::Pose & pose);
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
 };

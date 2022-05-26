@@ -18,7 +18,7 @@ void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage 
 
   const int WIDTH = 800;
   const float SCALE = 1.0f * WIDTH / size.width;
-  int HEIGHT = SCALE * size.height;
+  const int HEIGHT = SCALE * size.height;
   cv::resize(image, image, cv::Size(WIDTH, HEIGHT));
   cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
@@ -79,85 +79,76 @@ void LineSegmentDetector::projectEdgeOnPlane(
   RCLCPP_INFO_STREAM(
     this->get_logger(), "transform: " << t.transpose() << " " << q.coeffs().transpose());
 
-  struct Edge
-  {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Edge(const Eigen::Vector3f & p, const Eigen::Vector3f & q) : p(p), q(q) {}
-    Eigen::Vector3f p, q;
-  };
-
   // Convert to projected coordinate
   Eigen::Matrix3f K, K_inv;
   cv::cv2eigen(K_cv, K);
   K_inv = K.inverse();
 
-  // NOTE: reference capture is better?
-  auto conv = [t, q, K_inv](const Eigen::Vector2f & u) -> Eigen::Vector3f {
+  auto conv = [t, q, K_inv](
+                const Eigen::Vector2f & u,
+                const Eigen::Vector2f & v) -> std::optional<pcl::PointNormal> {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
-    Eigen::Vector3f bearing = (q * K_inv * u3).normalized();
-    if (bearing.z() > -0.1) return Eigen::Vector3f::Zero();
-
-    float l = -t.z() / bearing.z();
-    float projected_x = t.x() + bearing.x() * l;
-    float projected_y = t.y() + bearing.y() * l;
-    Eigen::Vector3f tmp(projected_x, projected_y, 0);
-    return tmp;
+    Eigen::Vector3f v3(v.x(), v.y(), 1);
+    Eigen::Vector3f u_bearing = (q * K_inv * u3).normalized();
+    Eigen::Vector3f v_bearing = (q * K_inv * v3).normalized();
+    if (u_bearing.z() > -0.1) return std::nullopt;
+    if (v_bearing.z() > -0.1) return std::nullopt;
+    float u_distance = -t.z() / u_bearing.z();
+    float v_distance = -t.z() / v_bearing.z();
+    pcl::PointNormal pn;
+    pn.x = t.x() + u_bearing.x() * u_distance;
+    pn.y = t.y() + u_bearing.y() * u_distance;
+    pn.normal_x = t.x() + v_bearing.x() * v_distance;
+    pn.normal_y = t.y() + v_bearing.y() * v_distance;
+    return pn;
   };
 
-  std::vector<Edge> edges;
+  pcl::PointCloud<pcl::PointNormal> edges;
   const int N = lines.rows;
   for (int i = 0; i < N; i++) {
     cv::Mat xyxy = lines.row(i);
     Eigen::Vector2f xy1, xy2;
     xy1 << xyxy.at<float>(0), xyxy.at<float>(1);
     xy2 << xyxy.at<float>(2), xyxy.at<float>(3);
-    edges.emplace_back(conv(xy1), conv(xy2));
+
+    auto pn_opt = conv(xy1, xy2);
+    if (pn_opt.has_value()) edges.emplace_back(pn_opt.value());
   }
 
   // Draw projected edge image
   cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
-  {
-    const cv::Size center(image.cols / 2, image.rows / 2);
-    auto toCvPoint = [center, this](const Eigen::Vector3f & v) -> cv::Point {
-      cv::Point pt;
-      pt.x = -v.y() / this->max_range_ * center.width + center.width;
-      pt.y = -v.x() / this->max_range_ * center.height + 2 * center.height;
-      return pt;
-    };
-    for (const auto e : edges) {
-      if (e.p.isZero() || e.q.isZero()) continue;
-      cv::line(
-        image, toCvPoint(e.p), toCvPoint(e.q), cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
-    }
+  const cv::Size center(image.cols / 2, image.rows / 2);
+  auto toCvPoint = [center, this](const Eigen::Vector3f & v) -> cv::Point {
+    cv::Point pt;
+    pt.x = -v.y() / this->max_range_ * center.width + center.width;
+    pt.y = -v.x() / this->max_range_ * center.height + 2 * center.height;
+    return pt;
+  };
+
+  for (const auto e : edges) {
+    cv::line(
+      image, toCvPoint(e.getVector3fMap()), toCvPoint(e.getNormalVector3fMap()),
+      cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
   }
 
-  // Publish image
-  {
-    cv_bridge::CvImage raw_image;
-    raw_image.header.stamp = stamp;
-    raw_image.header.frame_id = "map";
-    raw_image.encoding = "bgr8";
-    raw_image.image = image;
-    pub_image_->publish(*raw_image.toImageMsg());
-  }
-  publishCloud(image, stamp);
+  // Publish
+  publishCloud(edges, stamp);
+  publishImage(image, stamp);
 }
 
-void LineSegmentDetector::publishCloud(const cv::Mat & image, const rclcpp::Time & stamp) const
+void LineSegmentDetector::publishImage(const cv::Mat & image, const rclcpp::Time & stamp) const
 {
-  pcl::PointCloud<pcl::PointXYZ> cloud;
-  std::vector<cv::Point2i> nonzero_pix;
-  cv::Mat gray_image;
-  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-  cv::findNonZero(gray_image, nonzero_pix);
-  for (const auto p : nonzero_pix) {
-    pcl::PointXYZ xyz;
-    xyz.x = p.x;
-    xyz.y = p.y;
-    xyz.z = 0;
-    cloud.push_back(xyz);
-  }
+  cv_bridge::CvImage raw_image;
+  raw_image.header.stamp = stamp;
+  raw_image.header.frame_id = "map";
+  raw_image.encoding = "bgr8";
+  raw_image.image = image;
+  pub_image_->publish(*raw_image.toImageMsg());
+}
 
+void LineSegmentDetector::publishCloud(
+  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const
+{
   // Convert to msg
   sensor_msgs::msg::PointCloud2 msg;
   pcl::toROSMsg(cloud, msg);

@@ -12,6 +12,8 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <cv_bridge/cv_bridge.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -65,6 +67,8 @@ private:
   const int image_size_;
   const float max_range_;
 
+  void directLineSegment(const cv::Mat & image, const cv::Mat & lines) const;
+
   void projectEdgeOnPlane(
     const cv::Mat & lines, const cv::Mat & K_cv, const rclcpp::Time & stamp) const;
 
@@ -77,5 +81,7 @@ private:
   }
 
   void imageCallback(const sensor_msgs::msg::CompressedImage & msg) const;
-  void publishCloud(const cv::Mat & image, const rclcpp::Time & stamp) const;
+  void publishCloud(
+    const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const;
+  void publishImage(const cv::Mat & image, const rclcpp::Time & stamp) const;
 };

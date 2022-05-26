@@ -2,8 +2,9 @@
     <!-- ========================================= -->
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
+    <arg name="pf" default="false"/>
 
-    <include file="$(find-pkg-share modularized_particle_filter)/launch/run.launch.xml">
+    <include file="$(find-pkg-share modularized_particle_filter)/launch/run.launch.xml" if="$(var pf)">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
     </include>

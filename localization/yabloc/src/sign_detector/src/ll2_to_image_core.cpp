@@ -7,11 +7,11 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 Ll2ImageConverter::Ll2ImageConverter()
-: Node("ll2_to_image"), line_thick_(this->declare_parameter<int>("line_thick", 1))
+: Node("ll2_to_image"),
+  line_thick_(declare_parameter<int>("line_thick", 1)),
+  image_size_(declare_parameter<int>("image_size", 800)),
+  max_range_(declare_parameter<float>("max_range", 20.f))
 {
-  image_size_ = this->declare_parameter<int>("image_size", 800);
-  max_range_ = this->declare_parameter<float>("max_range", 20.f);
-
   std::string map_topic = "/map/vector_map";
   std::string pose_topic = "/eagleye/pose";
 
@@ -32,7 +32,7 @@ Ll2ImageConverter::Ll2ImageConverter()
 
 void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped)
 {
-  if (!visible_linestrings_.has_value()) {
+  if (linestrings_ == nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 500, "wating for /map/vector_map");
     return;
@@ -46,15 +46,10 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
     pose << p.x, p.y, p.z;
   }
 
-  auto toVector3f = [&pose](const lanelet::ConstPoint3d & p) -> Eigen::Vector3f {
-    Eigen::Vector3f v;
-    v << p.x(), p.y(), p.z();
-    return v - pose;
-  };
-
-  auto checkIntersection = [this](
-                             const Eigen::Vector3f & from, const Eigen::Vector3f & to) -> bool {
-    // Compute distance between pose and linesegment of linestring
+  // Compute distance between pose and linesegment of linestring
+  auto checkIntersection = [this, pose](const pcl::PointNormal & pn) -> bool {
+    const Eigen::Vector3f from = pn.getVector3fMap() - pose;
+    const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose;
     Eigen::Vector3f dir = to - from;
     float inner = from.dot(dir);
     if (std::abs(inner) < 1e-3f) {
@@ -66,54 +61,35 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
     return nearest.norm() < 2 * 1.42 * this->max_range_;
   };
 
-  struct LineString
-  {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    LineString(const Eigen::Vector3f & from, const Eigen::Vector3f & to) : from(from), to(to) {}
-    Eigen::Vector3f from, to;
-  };
-
-  std::vector<LineString> near_linestring;
-
-  for (const lanelet::LineString3d & line : *visible_linestrings_) {
-    std::optional<Eigen::Vector3f> from = std::nullopt;
-    for (const lanelet::ConstPoint3d p : line) {
-      Eigen::Vector3f to = toVector3f(p);
-      if (!from.has_value()) {
-        from = to;
-        continue;
-      }
-
-      if (checkIntersection(*from, to)) near_linestring.push_back({*from, to});
-      from = to;
-    }
+  pcl::PointCloud<pcl::PointNormal> near_linestring;
+  for (const pcl::PointNormal & pn : *linestrings_) {
+    if (checkIntersection(pn)) near_linestring.push_back(pn);
   }
 
   float w = pose_stamped.pose.orientation.w;
   float z = pose_stamped.pose.orientation.z;
   Eigen::Matrix2f rotation = Eigen::Rotation2D(-2 * std::atan2(z, w)).matrix();
 
-  cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   // Draw image
-  {
-    const cv::Size center(image.cols / 2, image.rows / 2);
-    auto toCvPoint = [center, this, rotation](const Eigen::Vector3f v) -> cv::Point {
-      cv::Point pt;
-      Eigen::Vector2f w = rotation * v.topRows(2);
-      pt.x = -w.y() / this->max_range_ * center.width + center.width;
-      pt.y = -w.x() / this->max_range_ * center.height + 2 * center.height;
-      return pt;
-    };
+  cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
+  const cv::Size center(image.cols / 2, image.rows / 2);
+  auto toCvPoint = [center, this, rotation](const Eigen::Vector3f v) -> cv::Point {
+    cv::Point pt;
+    Eigen::Vector2f w = rotation * v.topRows(2);
+    pt.x = -w.y() / this->max_range_ * center.width + center.width;
+    pt.y = -w.x() / this->max_range_ * center.height + 2 * center.height;
+    return pt;
+  };
 
-    for (const LineString & ls : near_linestring)
-      cv::line(
-        image, toCvPoint(ls.from), toCvPoint(ls.to), cv::Scalar(0, 255, 255), line_thick_,
-        cv::LineTypes::LINE_8);
+  for (const pcl::PointNormal & pn : near_linestring) {
+    cv::line(
+      image, toCvPoint(pn.getVector3fMap() - pose), toCvPoint(pn.getNormalVector3fMap() - pose),
+      cv::Scalar(0, 255, 255), line_thick_, cv::LineTypes::LINE_8);
   }
 
   // Publish
   publishImage(image, pose_stamped.header.stamp);
-  publishCloud(image, pose_stamped.header.stamp, pose_stamped.pose);
+  publishCloud(near_linestring, pose_stamped.header.stamp, pose_stamped.pose);
 
   std_msgs::msg::Float32 height;
   height.data = pose.z();
@@ -131,21 +107,9 @@ void Ll2ImageConverter::publishImage(const cv::Mat & image, const rclcpp::Time &
 }
 
 void Ll2ImageConverter::publishCloud(
-  const cv::Mat & image, const rclcpp::Time & stamp, const geometry_msgs::msg::Pose & pose)
+  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp,
+  const geometry_msgs::msg::Pose & pose)
 {
-  pcl::PointCloud<pcl::PointXYZ> cloud;
-  std::vector<cv::Point2i> nonzero_pix;
-  cv::Mat gray_image;
-  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-  cv::findNonZero(gray_image, nonzero_pix);
-  for (const auto p : nonzero_pix) {
-    pcl::PointXYZ xyz;
-    xyz.x = p.x;
-    xyz.y = p.y;
-    xyz.z = 0;
-    cloud.push_back(xyz);
-  }
-
   // Convert to msg
   sensor_msgs::msg::PointCloud2 cloud_msg;
   pcl::toROSMsg(cloud, cloud_msg);
@@ -164,16 +128,32 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
   RCLCPP_INFO_STREAM(this->get_logger(), "line: " << viz_lanelet_map->lineStringLayer.size());
   RCLCPP_INFO_STREAM(this->get_logger(), "point: " << viz_lanelet_map->pointLayer.size());
 
-  visible_linestrings_ = lanelet::LineStrings3d{};
+  linestrings_ = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
 
   for (lanelet::LineString3d & line : viz_lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (
-      attr.value() != "virtual" && attr.value() != "line_thin" &&
+      attr.value() != "zebra_marking" && attr.value() != "virtual" && attr.value() != "line_thin" &&
       attr.value() != "pedestrian_marking" && attr.value() != "stop_line")
       continue;
 
-    visible_linestrings_->push_back(line);
+    bool is_dual = (attr.value() == "line_thin");
+
+    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
+    for (const lanelet::ConstPoint3d p : line) {
+      if (from.has_value()) {
+        pcl::PointNormal pn;
+        pn.x = from->x();
+        pn.y = from->y();
+        pn.z = 0;
+        pn.normal_x = p.x();
+        pn.normal_y = p.y();
+        pn.normal_z = 0;
+        // if(is_dual){ TODO: }
+        linestrings_->push_back(pn);
+      }
+      from = p;
+    }
   }
 }
