@@ -29,9 +29,6 @@ import yaml
 
 class DetectionPreProcessPipeline:
     def __init__(self, context):
-        self.output_topic = (
-            "/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"
-        )
         detection_preprocess_param_path = os.path.join(
             get_package_share_directory("perception_launch"),
             "config/object_recognition/detection/detection_preprocess.param.yaml",
@@ -42,13 +39,13 @@ class DetectionPreProcessPipeline:
         self.voxel_size = self.detection_preprocess_param["down_sample_voxel_size"]
         self.distance_threshold = self.detection_preprocess_param["distance_threshold"]
 
-    def create_pipeline(self, output_topic):
+    def create_pipeline(self):
         if self.use_down_sample_filter:
-            return self.create_down_sample_pipeline(output_topic)
+            return self.create_down_sample_pipeline()
         else:
-            return self.create_normal_pipeline(output_topic)
+            return self.create_normal_pipeline()
 
-    def create_normal_pipeline(self, output_topic):
+    def create_normal_pipeline(self):
         components = []
         components.append(
             ComposableNode(
@@ -58,7 +55,7 @@ class DetectionPreProcessPipeline:
                 remappings=[
                     ("input", LaunchConfiguration("input_topic")),
                     ("map", "/map/pointcloud_map"),
-                    ("output", output_topic),
+                    ("output", LaunchConfiguration("output_topic")),
                 ],
                 parameters=[
                     {
@@ -104,7 +101,7 @@ class DetectionPreProcessPipeline:
                 remappings=[
                     ("input", down_sample_topic),
                     ("map", "/map/pointcloud_map"),
-                    ("output", output_topic),
+                    ("output", LaunchConfiguration("output_topic")),
                 ],
                 parameters=[
                     {
@@ -123,9 +120,7 @@ def launch_setup(context, *args, **kwargs):
     pipeline = DetectionPreProcessPipeline(context)
     components = []
     components.extend(
-        pipeline.create_pipeline(
-            output_topic=pipeline.output_topic,
-        )
+        pipeline.create_pipeline()
     )
     individual_container = ComposableNodeContainer(
         name=LaunchConfiguration("container_name"),
@@ -151,6 +146,7 @@ def generate_launch_description():
         launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
 
     add_launch_arg("input_topic", "")
+    add_launch_arg("output_topic", "")
     add_launch_arg("use_multithread", "False")
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
