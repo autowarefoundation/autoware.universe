@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <costmap_generator/points_to_costmap.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
-#include <costmap_generator/points_to_costmap.hpp>
 using pointcloud = pcl::PointCloud<pcl::PointXYZ>;
 class PointsToCostmapTest : public ::testing::Test
 {
