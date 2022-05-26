@@ -80,22 +80,22 @@ RTCAutoApproverNode::RTCAutoApproverNode(const rclcpp::NodeOptions & node_option
     BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/traffic_light/cooperate_commands",
     rmw_qos_profile_services_default);
   lane_change_left_cli_ = create_client<CooperateCommands>(
-    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/lane_change_left/cooperate_commands",
+    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_path_planner/lane_change_left/cooperate_commands",
     rmw_qos_profile_services_default);
   lane_change_right_cli_ = create_client<CooperateCommands>(
-    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/lane_change_right/cooperate_commands",
+    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_path_planner/lane_change_right/cooperate_commands",
     rmw_qos_profile_services_default);
   avoidance_left_cli_ = create_client<CooperateCommands>(
-    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/avoidance_left/cooperate_commands",
+    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_path_planner/avoidance_left/cooperate_commands",
     rmw_qos_profile_services_default);
   avoidance_right_cli_ = create_client<CooperateCommands>(
-    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/avoidance_right/cooperate_commands",
+    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_path_planner/avoidance_right/cooperate_commands",
     rmw_qos_profile_services_default);
   pull_over_cli_ = create_client<CooperateCommands>(
-    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/pull_over/cooperate_commands",
+    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_path_planner/pull_over/cooperate_commands",
     rmw_qos_profile_services_default);
   pull_out_cli_ = create_client<CooperateCommands>(
-    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/pull_out/cooperate_commands",
+    BEHAVIOR_PLANNING_NAMESPACE + "/behavior_path_planner/pull_out/cooperate_commands",
     rmw_qos_profile_services_default);
 }
 
