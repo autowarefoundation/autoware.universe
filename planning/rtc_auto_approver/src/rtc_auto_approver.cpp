@@ -22,7 +22,7 @@ RTCAutoApproverNode::RTCAutoApproverNode(const rclcpp::NodeOptions & node_option
 {
   using std::placeholders::_1;
 
-  // Subscrivers
+  // Subscribers
   blind_spot_sub_ = create_subscription<CooperateStatusArray>(
     BEHAVIOR_PLANNING_NAMESPACE + "/behavior_velocity_planner/blind_spot/cooperate_status",
     rclcpp::QoS(1), std::bind(&RTCAutoApproverNode::onBlindSpotStatus, this, _1));
