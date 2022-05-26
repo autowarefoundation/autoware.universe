@@ -46,9 +46,9 @@
   <group if="$(eval &quot;'$(var lidar_detection_model)'=='centerpoint'&quot;)">
     <push-ros-namespace namespace="centerpoint"/>
     <group>
-      <!-- <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
+      <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-      </include> -->
+      </include>
     </group>
   </group>
 
@@ -95,10 +95,4 @@
       <arg name="output/object" value="objects"/>
     </include>
   </group>
-
-    <!-- <node pkg="topic_tools" exec="relay" name="clustering_relay" output="log">
-      <param name="input_topic" value="clustering/objects"/>
-      <param name="output_topic" value="objects"/>
-      <param name="type" value="autoware_auto_perception_msgs/msg/DetectedObjects"/>
-    </node> -->
 </launch>
