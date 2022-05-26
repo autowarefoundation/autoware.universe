@@ -61,29 +61,34 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
     return nearest.norm() < 2 * 1.42 * this->max_range_;
   };
 
-  pcl::PointCloud<pcl::PointNormal> near_linestring;
-  for (const pcl::PointNormal & pn : *linestrings_) {
-    if (checkIntersection(pn)) near_linestring.push_back(pn);
-  }
-
   float w = pose_stamped.pose.orientation.w;
   float z = pose_stamped.pose.orientation.z;
-  Eigen::Matrix2f rotation = Eigen::Rotation2D(-2 * std::atan2(z, w)).matrix();
+  Eigen::Matrix3f rotation =
+    Eigen::AngleAxisf(-2.f * std::atan2(z, w), Eigen::Vector3f::UnitZ()).matrix();
+
+  pcl::PointCloud<pcl::PointNormal> near_linestring;
+  for (const pcl::PointNormal & pn : *linestrings_) {
+    if (checkIntersection(pn)) {
+      pcl::PointNormal relative_pn;
+      relative_pn.getVector3fMap() = rotation * (pn.getVector3fMap() - pose);
+      relative_pn.getNormalVector3fMap() = rotation * (pn.getNormalVector3fMap() - pose);
+      near_linestring.push_back(relative_pn);
+    }
+  }
 
   // Draw image
   cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   const cv::Size center(image.cols / 2, image.rows / 2);
   auto toCvPoint = [center, this, rotation](const Eigen::Vector3f v) -> cv::Point {
     cv::Point pt;
-    Eigen::Vector2f w = rotation * v.topRows(2);
-    pt.x = -w.y() / this->max_range_ * center.width + center.width;
-    pt.y = -w.x() / this->max_range_ * center.height + 2 * center.height;
+    pt.x = -v.y() / this->max_range_ * center.width + center.width;
+    pt.y = -v.x() / this->max_range_ * center.height + 2 * center.height;
     return pt;
   };
 
   for (const pcl::PointNormal & pn : near_linestring) {
     cv::line(
-      image, toCvPoint(pn.getVector3fMap() - pose), toCvPoint(pn.getNormalVector3fMap() - pose),
+      image, toCvPoint(pn.getVector3fMap()), toCvPoint(pn.getNormalVector3fMap()),
       cv::Scalar(0, 255, 255), line_thick_, cv::LineTypes::LINE_8);
   }
 

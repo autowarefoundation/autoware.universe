@@ -28,7 +28,7 @@
         <param name="flat_radius" value="1.0" />
     </node>
 
-    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info" if="false">
+    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info">
         <remap from="/weighted_particles" to="/weighted_particles"/>
     </node>
 
