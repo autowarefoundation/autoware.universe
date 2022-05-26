@@ -1,4 +1,4 @@
-# Copyright 2022 Tier IV, Inc. All rights reserved.
+# Copyright 2022 TIER IV, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ class DetectionPreProcessPipeline:
 
     def create_down_sample_pipeline(self, output_topic):
         components = []
-        down_sample_topic = "/perception/obstacle_segmentation/downsampled/pointcloud"
+        down_sample_topic = "/perception/obstacle_segmentation/pointcloud_map_filtered/downsampled/pointcloud"
         components.append(
             ComposableNode(
                 package="pointcloud_preprocessor",
