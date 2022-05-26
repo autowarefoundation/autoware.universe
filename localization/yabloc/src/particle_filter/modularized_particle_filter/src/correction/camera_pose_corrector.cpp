@@ -100,23 +100,24 @@ void CameraPoseCorrector::synchroCallback(
     return (d1.cross(t)).norm() + (d2.cross(t)).norm();
   };
 
+  auto start = std::chrono::system_clock::now();
   // Search nearest neighbor segments
   std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> paired_segments;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
-    Eigen::Vector3f t1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).normalized();
+    Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
     float l1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).norm();
 
     pcl::PointNormal best_pn2;
     float best_score = std::numeric_limits<float>::max();
     for (const pcl::PointNormal & pn2 : ll2_cloud) {
       Eigen::Vector3f t2 = (pn2.getVector3fMap() - pn2.getNormalVector3fMap()).normalized();
-      if (std::abs(t1.dot(t2)) < 0.7) continue;
+      if (std::abs(t1.dot(t2)) < 0.9) continue;
 
       Eigen::Vector3f d1 = pn2.getVector3fMap() - pn1.getVector3fMap();
       Eigen::Vector3f d2 = pn2.getNormalVector3fMap() - pn1.getVector3fMap();
       float m1 = d1.dot(t1);
       float m2 = d2.dot(t1);
-      if ((m1 < 0 || m1 > l1) && (m2 < 0 || m2 > l1)) continue;
+      if (std::min(std::max(m1, m2), l1) < std::max(std::min(m1, m2), 0.f)) continue;
 
       float score = distanceSegments(pn1, pn2);
       if (score < best_score) {
@@ -124,9 +125,14 @@ void CameraPoseCorrector::synchroCallback(
         best_pn2 = pn2;
       }
     }
-    if (best_score < 2 * 20) {
+    if (best_score < score_threshold_) {
       paired_segments.emplace_back(pn1, best_pn2);
     }
+  }
+  {
+    auto dur = std::chrono::system_clock::now() - start;
+    long us = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+    RCLCPP_INFO_STREAM(get_logger(), "time of matching: " << us);
   }
 
   cv::Mat pair_image = visualizePairs(paired_segments);

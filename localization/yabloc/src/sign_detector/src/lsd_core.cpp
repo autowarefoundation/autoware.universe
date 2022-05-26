@@ -131,7 +131,7 @@ void LineSegmentDetector::projectEdgeOnPlane(
     Eigen::Vector3f to = pn.getNormalVector3fMap();
     float norm = (from - to).norm();
     cv::Scalar color = cv::Scalar(0, 255, 0);
-    if (norm > 3.0) {
+    if (norm > length_threshold_) {
       long_edges.push_back(pn);
       color = cv::Scalar(0, 255, 255);
     }

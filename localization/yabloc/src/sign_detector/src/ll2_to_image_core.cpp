@@ -72,6 +72,8 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
       pcl::PointNormal relative_pn;
       relative_pn.getVector3fMap() = rotation * (pn.getVector3fMap() - pose);
       relative_pn.getNormalVector3fMap() = rotation * (pn.getNormalVector3fMap() - pose);
+      relative_pn.z = 0;
+      relative_pn.normal_z = 0;
       near_linestring.push_back(relative_pn);
     }
   }

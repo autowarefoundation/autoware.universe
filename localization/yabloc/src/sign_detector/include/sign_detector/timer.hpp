@@ -1,18 +1,13 @@
 #pragma once
 #include <chrono>
+#include <ostream>
 
 class Timer
 {
 public:
-  Timer()
-  {
-    reset();
-  }
+  Timer() { reset(); }
 
-  void reset()
-  {
-    start = std::chrono::system_clock::now();
-  }
+  void reset() { start = std::chrono::system_clock::now(); }
 
   long milliSeconds() const
   {
@@ -26,7 +21,7 @@ public:
     return std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
   }
 
-  friend std::ostream& operator<<(std::ostream& os, Timer& t)
+  friend std::ostream & operator<<(std::ostream & os, Timer & t)
   {
     os << t.milliSeconds();
     return os;

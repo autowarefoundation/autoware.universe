@@ -31,7 +31,8 @@ public:
     info_(std::nullopt),
     line_thick_(declare_parameter<int>("line_thick", 1)),
     image_size_(declare_parameter<int>("image_size", 800)),
-    max_range_(declare_parameter<float>("max_range", 20.f))
+    max_range_(declare_parameter<float>("max_range", 20.f)),
+    length_threshold_(declare_parameter<float>("length_threshold", 2.0f))
   {
     // Subscriber
     sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(
@@ -66,6 +67,7 @@ private:
   const int line_thick_;
   const int image_size_;
   const float max_range_;
+  const float length_threshold_;
 
   void directLineSegment(const cv::Mat & image, const cv::Mat & lines) const;
 

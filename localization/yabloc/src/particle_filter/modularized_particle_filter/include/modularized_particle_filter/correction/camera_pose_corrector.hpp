@@ -22,7 +22,8 @@ public:
   CameraPoseCorrector()
   : Node("camera_pose_corrector"),
     image_size_(declare_parameter<int>("image_size", 800)),
-    max_range_(declare_parameter<float>("max_range", 20.f))
+    max_range_(declare_parameter<float>("max_range", 20.f)),
+    score_threshold_(declare_parameter<float>("score_threshold", 10.f))
   {
     using std::placeholders::_1, std::placeholders::_2, std::placeholders::_3;
 
@@ -44,6 +45,7 @@ private:
 
   const int image_size_;
   const float max_range_;
+  const float score_threshold_;
 
   // Subscriber
   std::shared_ptr<SyncroSubscriber> synchro_subscriber_;
