@@ -217,14 +217,13 @@ TEST(PolygonIterator, Difference)
   grid_map::PolygonIterator gm_iterator(map, polygon);
   bool diff = false;
   while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
-    if((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
-      diff = true;
+    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1)) diff = true;
     ++iterator;
     ++gm_iterator;
   }
-  if(iterator.isPastEnd() != gm_iterator.isPastEnd()) {
+  if (iterator.isPastEnd() != gm_iterator.isPastEnd()) {
     diff = true;
-  };
+  }
   EXPECT_TRUE(diff);
 
   // Triangle where the hypothenus does not cross any cell center: no difference.
@@ -236,109 +235,46 @@ TEST(PolygonIterator, Difference)
   gm_iterator = grid_map::PolygonIterator(map, polygon);
   diff = false;
   while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
-    if((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
-      diff = true;
+    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1)) diff = true;
     ++iterator;
     ++gm_iterator;
   }
-  if(iterator.isPastEnd() != gm_iterator.isPastEnd()) {
+  if (iterator.isPastEnd() != gm_iterator.isPastEnd()) {
     diff = true;
-  };
+  }
   EXPECT_FALSE(diff);
 }
 
-TEST(PolygonIterator, DISABLED_SelfCrossingPolygon)
+TEST(PolygonIterator, SelfCrossingPolygon)
 {
   GridMap map({"layer"});
   map.setGeometry(Length(5.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
+  // Hour-glass shape
   Polygon polygon;
-  polygon.addVertex(Position(2.0, 2.0));
-  polygon.addVertex(Position(2.0, -2.0));
-  polygon.addVertex(Position(-2.0, 2.0));
-  polygon.addVertex(Position(-2.0, -2.0));
+  polygon.addVertex(Position(2.5, 2.9));
+  polygon.addVertex(Position(2.5, -2.9));
+  polygon.addVertex(Position(-2.5, 2.5));
+  polygon.addVertex(Position(-2.5, -2.5));
   grid_map_utils::PolygonIterator iterator(map, polygon);
   grid_map::PolygonIterator gm_iterator(map, polygon);
+
+  const std::vector<Index> expected_indexes = {
+    Index(0, 0), Index(0, 1), Index(0, 2), Index(0, 3), Index(0, 4), Index(1, 1), Index(1, 2),
+    Index(1, 3), Index(2, 2), Index(3, 2), Index(4, 1), Index(4, 2), Index(4, 3)};
+  bool diff = false;
+  size_t i = 0;
   while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
-    // EXPECT_EQ((*gm_iterator)(0), (*iterator)(0));
-    // EXPECT_EQ((*gm_iterator)(1), (*iterator)(1));
-    std::cout << (*iterator).transpose() << " || " << (*gm_iterator).transpose() << std::endl;
+    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1)) diff = true;
+    ASSERT_TRUE(i < expected_indexes.size());
+    EXPECT_EQ((*iterator)(0), expected_indexes[i](0));
+    EXPECT_EQ((*iterator)(1), expected_indexes[i](1));
+    ++i;
     ++iterator;
     ++gm_iterator;
   }
-
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(0, (*iterator)(0));
-  EXPECT_EQ(0, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(0, (*iterator)(0));
-  EXPECT_EQ(4, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(1, (*iterator)(0));
-  EXPECT_EQ(0, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(1, (*iterator)(0));
-  EXPECT_EQ(1, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(1, (*iterator)(0));
-  EXPECT_EQ(3, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(1, (*iterator)(0));
-  EXPECT_EQ(4, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(2, (*iterator)(0));
-  EXPECT_EQ(0, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(2, (*iterator)(0));
-  EXPECT_EQ(2, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(2, (*iterator)(0));
-  EXPECT_EQ(4, (*iterator)(1));
-
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(3, (*iterator)(0));
-  EXPECT_EQ(0, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(3, (*iterator)(0));
-  EXPECT_EQ(4, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(3, (*iterator)(0));
-  EXPECT_EQ(0, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(3, (*iterator)(0));
-  EXPECT_EQ(1, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(3, (*iterator)(0));
-  EXPECT_EQ(3, (*iterator)(1));
-
-  ++iterator;
-  ASSERT_FALSE(iterator.isPastEnd());
-  EXPECT_EQ(3, (*iterator)(0));
-  EXPECT_EQ(4, (*iterator)(1));
-
-  EXPECT_TRUE(iterator.isPastEnd());
+  if (iterator.isPastEnd() != gm_iterator.isPastEnd()) {
+    diff = true;
+  }
+  EXPECT_FALSE(diff);
 }
