@@ -76,7 +76,7 @@ bool transformDetectedObjects(
       }
       tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
     }
-    for (auto& object :output_msg.objects) {
+    for (auto & object : output_msg.objects) {
       tf2::fromMsg(object.kinematics.pose_with_covariance.pose, tf_objects_world2objects);
       tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
       tf2::toMsg(tf_target2objects, object.kinematics.pose_with_covariance.pose);
@@ -366,7 +366,8 @@ void MultiObjectTracker::sanitizeTracker(
       bool should_delete_tracker1 = false;
       bool should_delete_tracker2 = false;
 
-      // If at least one of them is UNKNOWN, delete the one with lower IOU. Because the UNKNOWN objects are not reliable.
+      // If at least one of them is UNKNOWN, delete the one with lower IOU. Because the UNKNOWN
+      // objects are not reliable.
       if (label1 == Label::UNKNOWN || label2 == Label::UNKNOWN) {
         if (min_iou_for_unknown_object < iou) {
           if (label1 == Label::UNKNOWN && label2 == Label::UNKNOWN) {
