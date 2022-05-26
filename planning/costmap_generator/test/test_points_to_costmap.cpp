@@ -16,7 +16,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
-
+#include <costmap_generator/points_to_costmap.hpp>
 using pointcloud = pcl::PointCloud<pcl::PointXYZ>;
 class PointsToCostmapTest : public ::testing::Test
 {
