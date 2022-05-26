@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="rtc_auto_approver" exec="rtc_auto_approver_node" name="rtc_auto_approver" output="screen" />
+</launch>
