@@ -20,10 +20,11 @@
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <visualization_msgs/msg/marker.hpp>
-#include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2_algorithms.h>
+
+#include <vector>
 
 using K = CGAL::Exact_predicates_inexact_constructions_kernel;
 using PointCgal = K::Point_2;
