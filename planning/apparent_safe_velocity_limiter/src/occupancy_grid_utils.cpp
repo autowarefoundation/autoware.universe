@@ -13,7 +13,11 @@
 // limitations under the License.
 
 #include <apparent_safe_velocity_limiter/occupancy_grid_utils.hpp>
-#include <apparent_safe_velocity_limiter/polygon_iterator.hpp>
+#include <grid_map_core/Polygon.hpp>
+#include <grid_map_core/iterators/GridMapIterator.hpp>
+#include <grid_map_cv/GridMapCvConverter.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <grid_map_utils/polygon_iterator.hpp>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -37,8 +41,7 @@ void maskPolygons(
   in_masks.reserve(polygon_in_masks.size());
   for (const auto & poly : polygon_in_masks) in_masks.push_back(convert(poly));
   grid_map::Position position;
-  for (apparent_safe_velocity_limiter::PolygonIterator iterator(
-         grid_map, convert(polygon_out_mask));
+  for (grid_map_utils::PolygonIterator iterator(grid_map, convert(polygon_out_mask));
        !iterator.isPastEnd(); ++iterator) {
     grid_map.getPosition(*iterator, position);
     if (std::find_if(in_masks.begin(), in_masks.end(), [&](const auto & mask) {
