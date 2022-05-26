@@ -176,7 +176,7 @@ void BlockageDiagComponent::filter(
     static boost::circular_buffer<cv::Mat> no_return_mask_buffer(time_series_blockage_frames_);
 
     cv::Mat no_return_mask_result(
-      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(255));
+      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     cv::Mat time_series_blockage_mask(
       cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     cv::Mat no_return_mask_binarized(
