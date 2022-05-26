@@ -446,6 +446,6 @@ bool NormalVehicleTracker::getTrackedObject(
   object.shape.dimensions.z = bounding_box_.height;
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
-  object.shape.footprint = utils::rotatePolygon(object.shape.footprint, origin_yaw-ekf_pose_yaw);
+  object.shape.footprint = utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
   return true;
 }

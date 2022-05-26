@@ -354,7 +354,7 @@ bool BicycleTracker::getTrackedObject(
 
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
-  
+
   // position
   pose_with_cov.pose.position.x = X_t(IDX::X);
   pose_with_cov.pose.position.y = X_t(IDX::Y);
@@ -410,7 +410,7 @@ bool BicycleTracker::getTrackedObject(
   object.shape.dimensions.z = bounding_box_.height;
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
-  object.shape.footprint = utils::rotatePolygon(object.shape.footprint, origin_yaw-ekf_pose_yaw);
+  object.shape.footprint = utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 
   return true;
 }

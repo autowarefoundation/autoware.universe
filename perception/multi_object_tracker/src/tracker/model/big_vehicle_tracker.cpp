@@ -389,7 +389,7 @@ bool BigVehicleTracker::getTrackedObject(
 
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
-  
+
   // position
   pose_with_cov.pose.position.x = X_t(IDX::X);
   pose_with_cov.pose.position.y = X_t(IDX::Y);
