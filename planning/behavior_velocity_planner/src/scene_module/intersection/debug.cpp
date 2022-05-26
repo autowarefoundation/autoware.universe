@@ -240,12 +240,6 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     createObjectsMarkerArray(debug_data_.stuck_targets, "stuck_targets", lane_id_, 0.99, 0.99, 0.2),
     current_time, &debug_marker_array);
 
-  if (debug_data_.stop_required) {
-    appendMarkerArray(
-      createVirtualStopWallMarkerArray(debug_data_.stop_wall_pose, lane_id_, "intersection"),
-      current_time, &debug_marker_array);
-  }
-
   if (state == IntersectionModule::State::STOP) {
     appendMarkerArray(
       createPoseMarkerArray(
