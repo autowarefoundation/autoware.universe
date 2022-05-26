@@ -3,13 +3,13 @@
     can_assign_matrix:
       #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE,PEDESTRIAN <-Measurement
       [1,       0,   0,     0,    0,       0,         0,      0,         #UNKNOWN <-Tracker
-       1,       1,   1,     1,    1,       0,         0,      0,         #CAR
-       1,       1,   1,     1,    1,       0,         0,      0,         #TRUCK
-       1,       1,   1,     1,    1,       0,         0,      0,         #BUS
-       1,       1,   1,     1,    1,       0,         0,      0,         #TRAILER
-       1,       0,   0,     0,    0,       1,         1,      1,         #MOTORBIKE
-       1,       0,   0,     0,    0,       1,         1,      1,         #BICYCLE
-       1,       0,   0,     0,    0,       1,         1,      1]         #PEDESTRIAN
+       0,       1,   1,     1,    1,       0,         0,      0,         #CAR
+       0,       1,   1,     1,    1,       0,         0,      0,         #TRUCK
+       0,       1,   1,     1,    1,       0,         0,      0,         #BUS
+       0,       1,   1,     1,    1,       0,         0,      0,         #TRAILER
+       0,       0,   0,     0,    0,       1,         1,      1,         #MOTORBIKE
+       0,       0,   0,     0,    0,       1,         1,      1,         #BICYCLE
+       0,       0,   0,     0,    0,       1,         1,      1]         #PEDESTRIAN
 
     max_dist_matrix:
       #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN
