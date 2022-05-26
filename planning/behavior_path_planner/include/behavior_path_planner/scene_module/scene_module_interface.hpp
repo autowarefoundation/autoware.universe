@@ -201,6 +201,8 @@ public:
 
   virtual void publishRTCStatus() { return; }
 
+  virtual void removeRTCStatus() { return; }
+
   virtual bool isActivated() const { return true; }
 
 private:

@@ -100,22 +100,10 @@ private:
 
   void waitApproval() { is_waiting_approval_ = true; }
 
-  void removeRTCStatus()
+  void removeRTCStatus() override
   {
-    for (const auto & uuid_info : registered_uuids_) {
-      if (uuid_info.second.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-        rtc_interface_left_.removeCooperateStatus(uuid_info.first);
-      } else if (uuid_info.second.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-        rtc_interface_right_.removeCooperateStatus(uuid_info.first);
-      }
-    }
-    registered_uuids_.clear();
-
-    if (rtc_interface_left_.isRegistered(next_uuid_)) {
-      rtc_interface_left_.removeCooperateStatus(next_uuid_);
-    } else if (rtc_interface_right_.isRegistered(next_uuid_)) {
-      rtc_interface_right_.removeCooperateStatus(next_uuid_);
-    }
+      rtc_interface_left_.clearCooperateStatus();
+      rtc_interface_right_.clearCooperateStatus();
   }
 
   // data used in previous planning

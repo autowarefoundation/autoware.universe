@@ -135,14 +135,10 @@ private:
     is_waiting_approval_ = true;
   }
 
-  void removeRTCStatus()
+  void removeRTCStatus() override
   {
-    if (rtc_interface_left_.isRegistered(uuid_left_)) {
-      rtc_interface_left_.removeCooperateStatus(uuid_left_);
-    }
-    if (rtc_interface_right_.isRegistered(uuid_right_)) {
-      rtc_interface_right_.removeCooperateStatus(uuid_right_);
-    }
+    rtc_interface_left_.clearCooperateStatus();
+    rtc_interface_right_.clearCooperateStatus();
   }
 
   double lane_change_lane_length_{200.0};

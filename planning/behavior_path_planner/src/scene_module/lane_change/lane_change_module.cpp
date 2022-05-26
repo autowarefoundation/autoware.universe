@@ -480,6 +480,10 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
   const auto current_lanes = status_.current_lanes;
 
   // check abort enable flag
+  if (!parameters_.enable_abort_lane_change) {
+    return false;
+  }
+
   if (!isActivated()) {
     return false;
   }
