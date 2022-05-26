@@ -74,7 +74,7 @@ class DetectionPreProcessPipeline:
 
     def create_down_sample_pipeline(self, output_topic):
         components = []
-        down_sample_topic = "/perception/obstacle_segmentation/downsampled/pointcloud"
+        down_sample_topic = "/perception/obstacle_segmentation/pointcloud_map_filtered/downsampled/pointcloud"
         components.append(
             ComposableNode(
                 package="pointcloud_preprocessor",
