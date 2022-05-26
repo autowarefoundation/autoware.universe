@@ -65,6 +65,7 @@
         sd "autoware-universe" "pilot-auto" {dest}
         sd "Autoware Universe" "Pilot.Auto" {dest}
         sd "Autoware" "Pilot.Auto" {dest}
+        sd -s "../" "https://github.com/autowarefoundation/autoware/tree/main/" {dest}
 
     - source: docker/build.sh
       post-commands: |
