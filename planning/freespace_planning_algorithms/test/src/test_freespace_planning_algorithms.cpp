@@ -67,7 +67,7 @@ std_msgs::msg::Float64 create_float_msg(double val)
 }
 
 nav_msgs::msg::OccupancyGrid construct_cost_map(
-  int width, int height, double resolution, int n_padding)
+  size_t width, size_t height, double resolution, size_t n_padding)
 {
   nav_msgs::msg::OccupancyGrid costmap_msg{};
 
@@ -78,33 +78,34 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
 
   // create data
   const size_t n_elem = width * height;
-  for (int i = 0; i < n_elem; ++i) {
+  for (size_t i = 0; i < n_elem; ++i) {
     costmap_msg.data.push_back(0.0);
   }
 
-  for (int i = 0; i < n_padding; ++i) {
+  for (size_t i = 0; i < n_padding; ++i) {
     // fill left
-    for (int j = width * i; j <= width * (i + 1); ++j) {
+    for (size_t j = width * i; j <= width * (i + 1); ++j) {
       costmap_msg.data[j] = 100.0;
     }
     // fill right
-    for (int j = width * (height - n_padding + i); j <= width * (height - n_padding + i + 1); ++j) {
+    for (size_t j = width * (height - n_padding + i); j <= width * (height - n_padding + i + 1);
+         ++j) {
       costmap_msg.data[j] = 100.0;
     }
   }
 
-  for (int i = 0; i < height; ++i) {
+  for (size_t i = 0; i < height; ++i) {
     // fill bottom
-    for (int j = i * width; j <= i * width + n_padding; ++j) {
+    for (size_t j = i * width; j <= i * width + n_padding; ++j) {
       costmap_msg.data[j] = 100.0;
     }
-    for (int j = (i + 1) * width - n_padding; j <= (i + 1) * width; ++j) {
+    for (size_t j = (i + 1) * width - n_padding; j <= (i + 1) * width; ++j) {
       costmap_msg.data[j] = 100.0;
     }
   }
 
-  for (int i = 0; i < height; ++i) {
-    for (int j = 0; j < width; ++j) {
+  for (size_t i = 0; i < height; ++i) {
+    for (size_t j = 0; j < width; ++j) {
       const double x = j * resolution;
       const double y = i * resolution;
       // wall

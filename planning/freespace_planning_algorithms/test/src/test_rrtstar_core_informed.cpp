@@ -69,19 +69,6 @@ TEST(RRTStarCore, WithInformedOption)
   EXPECT_TRUE(checkAllNodeConnected(algo));
 
   {  // testing
-    const auto is_pose_equal =
-      [](const rrtstar_core::Pose & p0, const rrtstar_core::Pose & p1) -> bool {
-      const double eps = 1e-8;
-      if (abs(p0.x - p1.x) > eps) {
-        return false;
-      }
-      if (abs(p0.y - p1.y) > eps) {
-        return false;
-      }
-      if (abs(p0.yaw - p1.yaw) > eps) {
-        return false;
-      }
-    };
     const auto & nodes = algo.getNodes();
 
     // check all path (including result path) feasibility
@@ -106,7 +93,8 @@ TEST(RRTStarCore, WithInformedOption)
 
   {  // check solution trajectory
     const auto waypoints = algo.sampleSolutionWaypoints();
-    EXPECT_GT(waypoints.size(), 2);
+    const bool is_valid_number_of_waypoints = waypoints.size() > 2;
+    EXPECT_TRUE(is_valid_number_of_waypoints);
 
     bool is_feasible = true;
     for (const auto & p : waypoints) {
