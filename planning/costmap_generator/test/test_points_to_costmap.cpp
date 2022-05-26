@@ -56,13 +56,13 @@ grid_map::GridMap PointsToCostmapTest::constrcut_gridmap()
   return gm;
 }
 
-// gridy
-// |  mapx-------
+// grid_y
+// |  map_x-------
 // |            |
 // |            |
 // |            |
-// |            mapy
-// |__________________gridx
+// |            map_y
+// |__________________grid_x
 TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_validPoints)
 {
   // construct pointcloud in map frame
