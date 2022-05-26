@@ -58,6 +58,8 @@ private:
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
   cv::Mat dilateImage(const cv::Mat & image);
   cv::Mat cloud2Image(const pcl::PointCloud<pcl::PointNormal> & cloud);
+  cv::Point2f toCvPoint(const Eigen::Vector3f & p);
+  cv::Mat visualizePairs(const std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> & pairs);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CAMERA_POSE_CORRECTOR_HPP_

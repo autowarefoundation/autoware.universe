@@ -91,8 +91,8 @@ void LineSegmentDetector::projectEdgeOnPlane(
     Eigen::Vector3f v3(v.x(), v.y(), 1);
     Eigen::Vector3f u_bearing = (q * K_inv * u3).normalized();
     Eigen::Vector3f v_bearing = (q * K_inv * v3).normalized();
-    if (u_bearing.z() > -0.1) return std::nullopt;
-    if (v_bearing.z() > -0.1) return std::nullopt;
+    if (u_bearing.z() > -0.02) return std::nullopt;
+    if (v_bearing.z() > -0.02) return std::nullopt;
     float u_distance = -t.z() / u_bearing.z();
     float v_distance = -t.z() / v_bearing.z();
     pcl::PointNormal pn;
@@ -125,14 +125,24 @@ void LineSegmentDetector::projectEdgeOnPlane(
     return pt;
   };
 
-  for (const auto e : edges) {
+  pcl::PointCloud<pcl::PointNormal> long_edges;
+  for (auto & pn : edges) {
+    Eigen::Vector3f from = pn.getVector3fMap();
+    Eigen::Vector3f to = pn.getNormalVector3fMap();
+    float norm = (from - to).norm();
+    cv::Scalar color = cv::Scalar(0, 255, 0);
+    if (norm > 3.0) {
+      long_edges.push_back(pn);
+      color = cv::Scalar(0, 255, 255);
+    }
+
     cv::line(
-      image, toCvPoint(e.getVector3fMap()), toCvPoint(e.getNormalVector3fMap()),
-      cv::Scalar(0, 255, 255), 2, cv::LineTypes::LINE_8);
+      image, toCvPoint(pn.getVector3fMap()), toCvPoint(pn.getNormalVector3fMap()), color, 2,
+      cv::LineTypes::LINE_8);
   }
 
   // Publish
-  publishCloud(edges, stamp);
+  publishCloud(long_edges, stamp);
   publishImage(image, stamp);
 }
 
