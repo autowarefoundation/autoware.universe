@@ -43,55 +43,57 @@ using unique_identifier_msgs::msg::UUID;
 class RTCAutoApproverNode : public rclcpp::Node
 {
 public:
-    explicit RTCAutoApproverNode(const rclcpp::NodeOptions & node_options);
+  explicit RTCAutoApproverNode(const rclcpp::NodeOptions & node_options);
 
 private:
-    void onBlindSpotStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onCrosswalkStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onDetectionAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onIntersectionStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onNoStoppingAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onTrafficLightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onLaneChangeLeftStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onLaneChangeRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onAvoidanceLeftStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onAvoidanceRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onPullOverStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
-    void onPullOutStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onBlindSpotStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onCrosswalkStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onDetectionAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onIntersectionStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onNoStoppingAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onTrafficLightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onLaneChangeLeftStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onLaneChangeRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onAvoidanceLeftStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onAvoidanceRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onPullOverStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+  void onPullOutStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
 
-    void onStatus(const CooperateStatusArray::ConstSharedPtr msg, const rclcpp::Client<CooperateCommands>::SharedPtr cli) const;
-    bool isNecessarySendCommand(const CooperateStatus & status) const;
-    CooperateCommands::Request createRequest(const CooperateStatusArray & array) const;
+  void onStatus(
+    const CooperateStatusArray::ConstSharedPtr msg,
+    const rclcpp::Client<CooperateCommands>::SharedPtr cli) const;
+  bool isNecessarySendCommand(const CooperateStatus & status) const;
+  CooperateCommands::Request createRequest(const CooperateStatusArray & array) const;
 
-    /* subscribers */
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr blind_spot_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr crosswalk_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr detection_area_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr intersection_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr no_stopping_area_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr traffic_light_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr lane_change_left_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr lane_change_right_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr avoidance_left_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr avoidance_right_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr pull_over_sub_;
-    rclcpp::Subscription<CooperateStatusArray>::SharedPtr pull_out_sub_;
+  /* subscribers */
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr blind_spot_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr crosswalk_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr detection_area_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr intersection_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr no_stopping_area_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr traffic_light_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr lane_change_left_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr lane_change_right_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr avoidance_left_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr avoidance_right_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr pull_over_sub_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr pull_out_sub_;
 
-    /* service clients */
-    rclcpp::Client<CooperateCommands>::SharedPtr blind_spot_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr crosswalk_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr detection_area_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr intersection_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr no_stopping_area_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr traffic_light_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr lane_change_left_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr lane_change_right_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr avoidance_left_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr avoidance_right_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr pull_over_cli_;
-    rclcpp::Client<CooperateCommands>::SharedPtr pull_out_cli_;
+  /* service clients */
+  rclcpp::Client<CooperateCommands>::SharedPtr blind_spot_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr crosswalk_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr detection_area_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr intersection_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr no_stopping_area_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr traffic_light_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr lane_change_left_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr lane_change_right_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr avoidance_left_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr avoidance_right_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr pull_over_cli_;
+  rclcpp::Client<CooperateCommands>::SharedPtr pull_out_cli_;
 
-    std::string BEHAVIOR_PLANNING_NAMESPACE =
+  std::string BEHAVIOR_PLANNING_NAMESPACE =
     "/planning/scenario_planning/lane_driving/behavior_planning";
 };
 

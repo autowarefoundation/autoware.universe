@@ -109,7 +109,8 @@ void RTCAutoApproverNode::onCrosswalkStatus(const CooperateStatusArray::ConstSha
   onStatus(msg, crosswalk_cli_);
 }
 
-void RTCAutoApproverNode::onDetectionAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const
+void RTCAutoApproverNode::onDetectionAreaStatus(
+  const CooperateStatusArray::ConstSharedPtr msg) const
 {
   onStatus(msg, detection_area_cli_);
 }
@@ -119,7 +120,8 @@ void RTCAutoApproverNode::onIntersectionStatus(const CooperateStatusArray::Const
   onStatus(msg, intersection_cli_);
 }
 
-void RTCAutoApproverNode::onNoStoppingAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const
+void RTCAutoApproverNode::onNoStoppingAreaStatus(
+  const CooperateStatusArray::ConstSharedPtr msg) const
 {
   onStatus(msg, no_stopping_area_cli_);
 }
@@ -129,22 +131,26 @@ void RTCAutoApproverNode::onTrafficLightStatus(const CooperateStatusArray::Const
   onStatus(msg, traffic_light_cli_);
 }
 
-void RTCAutoApproverNode::onLaneChangeLeftStatus(const CooperateStatusArray::ConstSharedPtr msg) const
+void RTCAutoApproverNode::onLaneChangeLeftStatus(
+  const CooperateStatusArray::ConstSharedPtr msg) const
 {
   onStatus(msg, lane_change_left_cli_);
 }
 
-void RTCAutoApproverNode::onLaneChangeRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const
+void RTCAutoApproverNode::onLaneChangeRightStatus(
+  const CooperateStatusArray::ConstSharedPtr msg) const
 {
   onStatus(msg, lane_change_right_cli_);
 }
 
-void RTCAutoApproverNode::onAvoidanceLeftStatus(const CooperateStatusArray::ConstSharedPtr msg) const
+void RTCAutoApproverNode::onAvoidanceLeftStatus(
+  const CooperateStatusArray::ConstSharedPtr msg) const
 {
   onStatus(msg, avoidance_left_cli_);
 }
 
-void RTCAutoApproverNode::onAvoidanceRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const
+void RTCAutoApproverNode::onAvoidanceRightStatus(
+  const CooperateStatusArray::ConstSharedPtr msg) const
 {
   onStatus(msg, avoidance_right_cli_);
 }
@@ -159,7 +165,9 @@ void RTCAutoApproverNode::onPullOutStatus(const CooperateStatusArray::ConstShare
   onStatus(msg, pull_out_cli_);
 }
 
-void RTCAutoApproverNode::onStatus(const CooperateStatusArray::ConstSharedPtr msg, const rclcpp::Client<CooperateCommands>::SharedPtr cli) const
+void RTCAutoApproverNode::onStatus(
+  const CooperateStatusArray::ConstSharedPtr msg,
+  const rclcpp::Client<CooperateCommands>::SharedPtr cli) const
 {
   if (!msg) {
     return;
@@ -167,8 +175,7 @@ void RTCAutoApproverNode::onStatus(const CooperateStatusArray::ConstSharedPtr ms
 
   const auto request = std::make_shared<CooperateCommands::Request>(createRequest(*msg));
 
-  if (!request->commands.empty())
-  {
+  if (!request->commands.empty()) {
     cli->async_send_request(request);
   }
 }
@@ -176,36 +183,30 @@ void RTCAutoApproverNode::onStatus(const CooperateStatusArray::ConstSharedPtr ms
 bool RTCAutoApproverNode::isNecessarySendCommand(const CooperateStatus & status) const
 {
   const bool is_activate = (status.command_status.type == Command::ACTIVATE);
-  if (status.safe && !is_activate)
-  {
+  if (status.safe && !is_activate) {
     return true;
   }
-  if (!status.safe && is_activate)
-  {
+  if (!status.safe && is_activate) {
     return true;
   }
   return false;
 }
 
-CooperateCommands::Request RTCAutoApproverNode::createRequest(const CooperateStatusArray & array) const
+CooperateCommands::Request RTCAutoApproverNode::createRequest(
+  const CooperateStatusArray & array) const
 {
   CooperateCommands::Request request;
   request.stamp = array.stamp;
-  
-  for (const auto & status : array.statuses)
-  {
-    if (isNecessarySendCommand(status))
-    {
+
+  for (const auto & status : array.statuses) {
+    if (isNecessarySendCommand(status)) {
       CooperateCommand cmd;
       cmd.module = status.module;
       cmd.uuid = status.uuid;
-      if (status.command_status.type == Command::DEACTIVATE)
-      {
+      if (status.command_status.type == Command::DEACTIVATE) {
         cmd.command.type = Command::ACTIVATE;
         request.commands.push_back(cmd);
-      }
-      else if (status.command_status.type == Command::ACTIVATE)
-      {
+      } else if (status.command_status.type == Command::ACTIVATE) {
         cmd.command.type = Command::DEACTIVATE;
         request.commands.push_back(cmd);
       }
