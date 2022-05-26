@@ -439,7 +439,7 @@ visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
 visualization_msgs::msg::MarkerArray getBoundsCandidatesLineMarkerArray(
   const std::vector<ReferencePoint> & ref_points,
   std::vector<std::vector<Bounds>> & bounds_candidates, const double r, const double g,
-  const double b, const double vehicle_width, const size_t sampling_num)
+  const double b, [[maybe_unused]] const double vehicle_width, const size_t sampling_num)
 {
   const auto current_time = rclcpp::Clock().now();
   visualization_msgs::msg::MarkerArray msg;
