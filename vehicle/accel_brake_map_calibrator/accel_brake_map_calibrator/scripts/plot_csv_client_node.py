@@ -36,7 +36,8 @@ from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as Calib
 class CalibrationDataRelay(Node):
     def __init__(self, args):
         super().__init__("plot_server")
-        self.cli = self.create_client(CalibData, "/accel_brake_map_calibrator/get_data_service")
+        # self.cli = self.create_client(CalibData, "/accel_brake_map_calibrator/get_data_service")
+        self.cli = self.create_client(CalibData, "/api/external/get/accel_brake_map_calibrator/data")
 
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("service not available, waiting again...")
