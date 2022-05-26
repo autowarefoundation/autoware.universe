@@ -15,12 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 from dataclasses import dataclass
 from math import asin
 from math import atan2
 from math import cos
 from math import sin
 import os
+import re
+import subprocess
+from typing import Dict
 from typing import Tuple
 
 from geometry_msgs.msg import Pose
@@ -134,7 +138,7 @@ class VehicleModel:
         return pose_msg.position.x, pose_msg.position.y, yaw
 
 
-def plot_problem(pd: ProblemDescription, ax):
+def plot_problem(pd: ProblemDescription, ax, meta_info):
     info = pd.costmap.info
     n_grid = np.array([info.width, info.height])
     res = info.resolution
@@ -152,26 +156,69 @@ def plot_problem(pd: ProblemDescription, ax):
     vmodel.plot_pose(pd.goal, ax, "red")
 
     for pose in pd.trajectory.poses:
-        vmodel.plot_pose(pose, ax, "black", 0.5)
+        vmodel.plot_pose(pose, ax, "blue", 0.5)
 
     text = "elapsed : {0} [msec]".format(int(round(pd.elapsed_time.data)))
-    ax.text(0.3, 0.3, text, fontsize=15, color="gray")
+    ax.text(0.3, 0.3, text, fontsize=15, color="red")
 
-    ax.set_xlim([0, 10])
-    ax.set_ylim([b_min[1], b_max[1]])
+    ax.text(0.3, b_max[1] - 1.5, meta_info, fontsize=15, color="red")
+
     ax.axis("equal")
+    ax.set_xlim([b_min[0], b_max[0]])
+    ax.set_ylim([b_min[1], b_max[1]])
+
+
+def create_concate_png(src_list, dest, is_horizontal):
+    opt = "+append" if is_horizontal else "-append"
+    cmd = ["convert", opt]
+    for src in src_list:
+        cmd.append(src)
+    cmd.append(dest)
+    subprocess.Popen(cmd)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--concat", action="store_true", help="concat pngs (requires image magick)")
+    args = parser.parse_args()
+    concat = args.concat
+
+    dir_name_table: Dict[Tuple[str, int], str] = {}
+    prefix = "fpalgos"
     for cand_dir in os.listdir("/tmp"):
-        if cand_dir.startswith("fpalgos"):
-            bag_path = os.path.join("/tmp", cand_dir)
-            pd = ProblemDescription.from_rosbag_path(bag_path)
+        if cand_dir.startswith(prefix):
+            m = re.match(r"{}-(\w+)-case([0-9])".format(prefix), cand_dir)
+            assert m is not None
+            algo_name = m.group(1)
+            case_number = int(m.group(2))
+            dir_name_table[(algo_name, case_number)] = cand_dir
+
+    algo_names = sorted({key[0] for key in dir_name_table.keys()})
+    case_indices = sorted({key[1] for key in dir_name_table.keys()})
+    n_algo = len(algo_names)
+    n_case = len(case_indices)
+
+    for i in range(n_algo):
+        algo_name = algo_names[i]
+        algo_pngs = []
+        for j in range(n_case):
 
             fig, ax = plt.subplots()
-            plot_problem(pd, ax)
+
+            result_dir = dir_name_table[(algo_name, j)]
+            bag_path = os.path.join("/tmp", result_dir)
+
+            pd = ProblemDescription.from_rosbag_path(bag_path)
+
+            meta_info = "{}-case{}".format(algo_name, j)
+            plot_problem(pd, ax, meta_info)
             fig.tight_layout()
 
-            file_name = os.path.join("/tmp", cand_dir + "-plot.png")
+            file_name = os.path.join("/tmp", "plot-{}.png".format(meta_info))
+            algo_pngs.append(file_name)
             plt.savefig(file_name)
             print("saved to {}".format(file_name))
+
+        algowise_summary_file = os.path.join("/tmp", "summary-{}.png".format(algo_name))
+        if concat:
+            create_concate_png(algo_pngs, algowise_summary_file, True)
