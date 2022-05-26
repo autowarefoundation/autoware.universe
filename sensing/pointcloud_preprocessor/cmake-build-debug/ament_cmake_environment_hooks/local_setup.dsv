@@ -1,3 +1,0 @@
-source;share/pointcloud_preprocessor/environment/ament_prefix_path.sh
-source;share/pointcloud_preprocessor/environment/library_path.sh
-source;share/pointcloud_preprocessor/environment/path.sh

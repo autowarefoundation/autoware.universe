@@ -1,4 +1,0 @@
-source;share/pointcloud_preprocessor/local_setup.bash
-source;share/pointcloud_preprocessor/local_setup.dsv
-source;share/pointcloud_preprocessor/local_setup.sh
-source;share/pointcloud_preprocessor/local_setup.zsh
