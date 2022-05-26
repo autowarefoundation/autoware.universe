@@ -17,6 +17,7 @@
 
 from dataclasses import dataclass
 import json
+import os
 from typing import Dict
 from typing import List
 
@@ -101,4 +102,6 @@ if __name__ == "__main__":
         dict_data = json.load(f)
     tree = Tree.from_dict(dict_data)
     tree.visualize()
-    plt.show()
+    file_name = os.path.join("/tmp", "plot-rrtstar_core.png")
+    plt.savefig(file_name)
+    print("saved to {}".format(file_name))
