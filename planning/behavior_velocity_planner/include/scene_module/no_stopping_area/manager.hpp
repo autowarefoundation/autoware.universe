@@ -19,6 +19,8 @@
 #include "scene_module/no_stopping_area/scene_no_stopping_area.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
+#include <rtc_interface/rtc_interface.hpp>
+
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 
 #include <functional>
@@ -35,7 +37,13 @@ public:
 
 private:
   NoStoppingAreaModule::PlannerParam planner_param_;
+  rtc_interface::RTCInterface rtc_interface_;
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  bool getActivation(const UUID & uuid) override;
+  void updateRTCStatus(
+    const UUID & uuid, const bool safe, const double distance, const Time & stamp) override;
+  void removeRTCStatus(const UUID & uuid) override;
+  void publishRTCStatus(const Time & stamp) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
