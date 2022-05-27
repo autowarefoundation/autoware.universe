@@ -155,6 +155,9 @@ PIDBasedPlanner::PIDBasedPlanner(
   const vehicle_info_util::VehicleInfo & vehicle_info)
 : PlannerInterface(node, longitudinal_info, vehicle_info)
 {
+  min_accel_during_cruise_ =
+    node.declare_parameter<double>("pid_based_planner.min_accel_during_cruise");
+
   // pid controller
   const double kp = node.declare_parameter<double>("pid_based_planner.kp");
   const double ki = node.declare_parameter<double>("pid_based_planner.ki");
@@ -172,8 +175,8 @@ PIDBasedPlanner::PIDBasedPlanner(
   min_cruise_target_vel_ =
     node.declare_parameter<double>("pid_based_planner.min_cruise_target_vel");
 
-  max_cruise_obstacle_velocity_to_stop_ =
-    node.declare_parameter<double>("pid_based_planner.max_cruise_obstacle_velocity_to_stop");
+  obstacle_velocity_threshold_from_cruise_to_stop_ = node.declare_parameter<double>(
+    "pid_based_planner.obstacle_velocity_threshold_from_cruise_to_stop");
 
   // publisher
   stop_reasons_pub_ =
@@ -304,7 +307,7 @@ bool PIDBasedPlanner::isStopRequired(const TargetObstacle & obstacle)
   const bool is_stop_obstacle = isStopObstacle(obstacle.classification.label);
 
   if (is_cruise_obstacle) {
-    return std::abs(obstacle.velocity) < max_cruise_obstacle_velocity_to_stop_;
+    return std::abs(obstacle.velocity) < obstacle_velocity_threshold_from_cruise_to_stop_;
   } else if (is_stop_obstacle && !is_cruise_obstacle) {
     return true;
   }
@@ -372,16 +375,7 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
   const double dist_to_stop = stop_obstacle_info.dist_to_stop;
   const auto & obstacle = stop_obstacle_info.obstacle;
 
-  const size_t ego_idx = [&]() -> size_t {
-    const auto ego_idx = tier4_autoware_utils::findNearestIndex(
-      planner_data.traj.points, planner_data.current_pose, max_nearest_dist_deviation_,
-      max_nearest_yaw_deviation_);
-    if (ego_idx) {
-      return ego_idx.get();
-    }
-    return tier4_autoware_utils::findNearestIndex(
-      planner_data.traj.points, planner_data.current_pose.position);
-  }();
+  const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
   // TODO(murooka) Should I use interpolation?
   const auto zero_vel_idx = [&]() -> boost::optional<size_t> {
@@ -420,8 +414,7 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
 
   // virtual wall marker for stop
   const auto marker_pose = obstacle_velocity_utils::calcForwardPose(
-    planner_data.traj, planner_data.current_pose.position,
-    dist_to_stop + vehicle_info_.max_longitudinal_offset_m);
+    planner_data.traj, ego_idx, dist_to_stop + vehicle_info_.max_longitudinal_offset_m);
   if (marker_pose) {
     visualization_msgs::msg::MarkerArray wall_msg;
     const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
@@ -465,8 +458,7 @@ VelocityLimit PIDBasedPlanner::doCruise(
   const double dist_to_cruise = cruise_obstacle_info.dist_to_cruise;
   const double normalized_dist_to_cruise = cruise_obstacle_info.normalized_dist_to_cruise;
 
-  const size_t ego_idx = tier4_autoware_utils::findNearestIndex(
-    planner_data.traj.points, planner_data.current_pose.position);
+  const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
   // calculate target velocity with acceleration limit by PID controller
   const double pid_output_vel = pid_controller_->calc(normalized_dist_to_cruise);
@@ -486,7 +478,7 @@ VelocityLimit PIDBasedPlanner::doCruise(
   // calculate target acceleration
   const double target_acc = vel_to_acc_weight_ * additional_vel;
   const double target_acc_with_acc_limit =
-    std::clamp(target_acc, longitudinal_info_.min_accel, longitudinal_info_.max_accel);
+    std::clamp(target_acc, min_accel_during_cruise_, longitudinal_info_.max_accel);
 
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("ObstacleVelocityPlanner::PIDBasedPlanner"), is_showing_debug_info_,
@@ -521,6 +513,9 @@ void PIDBasedPlanner::publishDebugValues(const ObstacleVelocityPlannerData & pla
 
 void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & parameters)
 {
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "pid_based_planner.min_accel_during_cruise", min_accel_during_cruise_);
+
   // pid controller
   double kp = pid_controller_->getKp();
   double ki = pid_controller_->getKi();

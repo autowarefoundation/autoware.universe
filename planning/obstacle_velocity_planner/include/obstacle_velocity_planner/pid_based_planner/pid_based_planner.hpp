@@ -15,9 +15,9 @@
 #ifndef OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
 #define OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
 
-#include "obstacle_velocity_planner/planner_interface.hpp"
 #include "obstacle_velocity_planner/pid_based_planner/debug_values.hpp"
 #include "obstacle_velocity_planner/pid_based_planner/pid_controller.hpp"
+#include "obstacle_velocity_planner/planner_interface.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
@@ -99,10 +99,22 @@ private:
 
   void publishDebugValues(const ObstacleVelocityPlannerData & planner_data) const;
 
+  size_t findExtendedNearestIndex(
+    const Trajectory traj, const geometry_msgs::msg::Pose & pose) const
+  {
+    const auto nearest_idx = tier4_autoware_utils::findNearestIndex(
+      traj.points, pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    if (nearest_idx) {
+      return nearest_idx.get();
+    }
+    return tier4_autoware_utils::findNearestIndex(traj.points, pose.position);
+  }
+
   // ROS parameters
+  double min_accel_during_cruise_;
   double vel_to_acc_weight_;
   double min_cruise_target_vel_;
-  double max_cruise_obstacle_velocity_to_stop_;
+  double obstacle_velocity_threshold_from_cruise_to_stop_;
   // bool use_predicted_obstacle_pose_;
 
   // pid controller

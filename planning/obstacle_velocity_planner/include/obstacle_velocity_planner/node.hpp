@@ -72,7 +72,8 @@ private:
 
   // member Functions
   ObstacleVelocityPlannerData createPlannerData(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose, DebugData & debug_data);
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    DebugData & debug_data);
   double calcCurrentAccel() const;
   std::vector<TargetObstacle> filterObstacles(
     const PredictedObjects & predicted_objects, const Trajectory & traj,
@@ -94,8 +95,8 @@ private:
 
   bool is_showing_debug_info_;
   double min_behavior_stop_margin_;
-  double max_nearest_dist_deviation_;
-  double max_nearest_yaw_deviation_;
+  double nearest_dist_deviation_threshold_;
+  double nearest_yaw_deviation_threshold_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -148,9 +149,9 @@ private:
     double rough_detection_area_expand_width;
     double detection_area_expand_width;
     double decimate_trajectory_step_length;
-    double min_obstacle_crossing_velocity;
-    double margin_for_collision_time;
-    double max_ego_obj_overlap_time;
+    double crossing_obstacle_velocity_threshold;
+    double collision_time_margin;
+    double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
   };

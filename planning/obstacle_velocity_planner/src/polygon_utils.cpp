@@ -240,7 +240,8 @@ bool willCollideWithSurroundObstacle(
   const std::vector<Polygon2d> & traj_polygons,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const double max_dist,
-  const double max_ego_obj_overlap_time, const double max_prediction_time_for_collision_check)
+  const double ego_obstacle_overlap_time_threshold,
+  const double max_prediction_time_for_collision_check)
 {
   constexpr double epsilon = 1e-3;
 
@@ -273,7 +274,7 @@ bool willCollideWithSurroundObstacle(
         } else {
           const double overlap_time = (static_cast<double>(i) - start_predicted_path_idx) *
                                       rclcpp::Duration(predicted_path.time_step).seconds();
-          if (max_ego_obj_overlap_time < overlap_time) {
+          if (ego_obstacle_overlap_time_threshold < overlap_time) {
             return true;
           }
         }

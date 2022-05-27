@@ -38,8 +38,8 @@ visualization_msgs::msg::Marker getObjectMarker(
   const double r, const double g, const double b);
 
 boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Point & point, const double target_length);
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t nearest_idx,
+  const double target_length);
 
 boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,

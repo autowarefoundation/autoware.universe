@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     common:
-      planning_algorithm: "rule_base" # currently supported algorithm is "rule_base"
+      planning_algorithm: "pid_base" # currently supported algorithm is "pid_base"
 
       is_showing_debug_info: true
 
@@ -13,8 +13,8 @@
 
       lpf_gain_for_accel: 0.2 # gain of low pass filter for ego acceleration [-]
 
-      max_nearest_dist_deviation: 3.0 # [m]
-      max_nearest_yaw_deviation: 1.57 # [rad]
+      nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
+      nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index
       min_behavior_stop_margin: 3.0 # [m]
 
       cruise_obstacle_type:
@@ -43,14 +43,14 @@
       decimate_trajectory_step_length : 2.0 # longitudinal step length to calculate trajectory polygon for collision checking
 
       # if crossing vehicle is decided as target obstacles or not
-      min_obstacle_crossing_velocity : 3.0 # velocity threshold for crosing obstacle for cruise or stop [m/s]
+      crossing_obstacle_velocity_threshold : 3.0 # velocity threshold for crossing obstacle for cruise or stop [m/s]
       crossing_obstacle_traj_angle_threshold : 0.698 # [rad] = 40 [deg], yaw threshold of crossing obstacle against the nearest trajectory point for cruise or stop
-      margin_for_collision_time : 8.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
+      collision_time_margin : 8.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
 
-      max_ego_obj_overlap_time : 1.0 #  time threshold to dedice cut-in obstacle for cruise or stop [s]
+      ego_obstacle_overlap_time_threshold : 1.0 #  time threshold to decide cut-in obstacle for cruise or stop [s]
       max_prediction_time_for_collision_check : 20.0 # prediction time to check collision between obstacle and ego
 
-    rule_based_planner:
+    pid_based_planner:
       # use_predicted_obstacle_pose: false
 
       # PID gains to keep safe distance with the front vehicle
@@ -58,12 +58,14 @@
       ki: 0.0
       kd: 0.5
 
+      min_accel_during_cruise: -2.0 # minimum acceleration during cruise to slow down [m/ss]
+
       output_ratio_during_accel: 2.5 # target acceleration is multiplied with this value while ego accelerates to catch up the front vehicle [-]
       vel_to_acc_weight: 8.0 # target acceleration is calculated by (target_velocity - current_velocity) * vel_to_acc_weight [-]
 
       min_cruise_target_vel: 0.0 # minimum target velocity during slow down [m/s]
 
-      max_cruise_obstacle_velocity_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
+      obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
 
     optimization_based_planner:
       limit_min_accel: -3.0

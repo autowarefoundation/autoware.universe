@@ -35,24 +35,27 @@ VelocityLimitClearCommand createVelocityLimitClearCommandMsg(const rclcpp::Time 
   return msg;
 }
 
-Trajectory trimTrajectoryFrom(const Trajectory & input, const geometry_msgs::msg::Point & position)
+// TODO(murooka) make this function common
+size_t findExtendedNearestIndex(
+  const Trajectory traj, const geometry_msgs::msg::Pose & pose, const double max_dist,
+  const double max_yaw)
+{
+  const auto nearest_idx =
+    tier4_autoware_utils::findNearestIndex(traj.points, pose, max_dist, max_yaw);
+  if (nearest_idx) {
+    return nearest_idx.get();
+  }
+  return tier4_autoware_utils::findNearestIndex(traj.points, pose.position);
+}
+
+Trajectory trimTrajectoryFrom(
+  const Trajectory & input, const geometry_msgs::msg::Pose & pose, const double max_dist,
+  const double max_yaw)
 {
   Trajectory output{};
 
-  double min_distance = 0.0;
-  size_t min_distance_index = 0;
-  bool is_init = false;
-  for (size_t i = 0; i < input.points.size(); ++i) {
-    const double x = input.points.at(i).pose.position.x - position.x;
-    const double y = input.points.at(i).pose.position.y - position.y;
-    const double squared_distance = x * x + y * y;
-    if (!is_init || squared_distance < min_distance * min_distance) {
-      is_init = true;
-      min_distance = std::sqrt(squared_distance);
-      min_distance_index = i;
-    }
-  }
-  for (size_t i = min_distance_index; i < input.points.size(); ++i) {
+  const size_t nearest_idx = findExtendedNearestIndex(input, pose, max_dist, max_yaw);
+  for (size_t i = nearest_idx; i < input.points.size(); ++i) {
     output.points.push_back(input.points.at(i));
   }
 
@@ -162,9 +165,10 @@ ObstacleVelocityPlannerNode::ObstacleVelocityPlannerNode(const rclcpp::NodeOptio
 
   // publisher
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
-  vel_limit_pub_ = create_publisher<VelocityLimit>("~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
-  clear_vel_limit_pub_ =
-    create_publisher<VelocityLimitClearCommand>("~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
+  vel_limit_pub_ =
+    create_publisher<VelocityLimit>("~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
+  clear_vel_limit_pub_ = create_publisher<VelocityLimitClearCommand>(
+    "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
   debug_cruise_wall_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/cruise_wall_marker", 1);
@@ -202,12 +206,12 @@ ObstacleVelocityPlannerNode::ObstacleVelocityPlannerNode(const rclcpp::NodeOptio
       declare_parameter<double>("obstacle_filtering.detection_area_expand_width");
     obstacle_filtering_param_.decimate_trajectory_step_length =
       declare_parameter<double>("obstacle_filtering.decimate_trajectory_step_length");
-    obstacle_filtering_param_.min_obstacle_crossing_velocity =
-      declare_parameter<double>("obstacle_filtering.min_obstacle_crossing_velocity");
-    obstacle_filtering_param_.margin_for_collision_time =
-      declare_parameter<double>("obstacle_filtering.margin_for_collision_time");
-    obstacle_filtering_param_.max_ego_obj_overlap_time =
-      declare_parameter<double>("obstacle_filtering.max_ego_obj_overlap_time");
+    obstacle_filtering_param_.crossing_obstacle_velocity_threshold =
+      declare_parameter<double>("obstacle_filtering.crossing_obstacle_velocity_threshold");
+    obstacle_filtering_param_.collision_time_margin =
+      declare_parameter<double>("obstacle_filtering.collision_time_margin");
+    obstacle_filtering_param_.ego_obstacle_overlap_time_threshold =
+      declare_parameter<double>("obstacle_filtering.ego_obstacle_overlap_time_threshold");
     obstacle_filtering_param_.max_prediction_time_for_collision_check =
       declare_parameter<double>("obstacle_filtering.max_prediction_time_for_collision_check");
     obstacle_filtering_param_.crossing_obstacle_traj_angle_threshold =
@@ -229,11 +233,13 @@ ObstacleVelocityPlannerNode::ObstacleVelocityPlannerNode(const rclcpp::NodeOptio
     }
 
     min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
-    max_nearest_dist_deviation_ = declare_parameter<double>("common.max_nearest_dist_deviation");
-    max_nearest_yaw_deviation_ = declare_parameter<double>("common.max_nearest_yaw_deviation");
+    nearest_dist_deviation_threshold_ =
+      declare_parameter<double>("common.nearest_dist_deviation_threshold");
+    nearest_yaw_deviation_threshold_ =
+      declare_parameter<double>("common.nearest_yaw_deviation_threshold");
     planner_ptr_->setParams(
-      is_showing_debug_info_, min_behavior_stop_margin_, max_nearest_dist_deviation_,
-      max_nearest_yaw_deviation_);
+      is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
+      nearest_yaw_deviation_threshold_);
   }
 
   // wait for first self pose
@@ -264,8 +270,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleVelocityPlannerNode::onParam(
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.is_showing_debug_info", is_showing_debug_info_);
   planner_ptr_->setParams(
-    is_showing_debug_info_, min_behavior_stop_margin_, max_nearest_dist_deviation_,
-    max_nearest_yaw_deviation_);
+    is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
 
   // obstacle_filtering
   tier4_autoware_utils::updateParam<double>(
@@ -278,14 +284,14 @@ rcl_interfaces::msg::SetParametersResult ObstacleVelocityPlannerNode::onParam(
     parameters, "obstacle_filtering.decimate_trajectory_step_length",
     obstacle_filtering_param_.decimate_trajectory_step_length);
   tier4_autoware_utils::updateParam<double>(
-    parameters, "obstacle_filtering.min_obstacle_crossing_velocity",
-    obstacle_filtering_param_.min_obstacle_crossing_velocity);
+    parameters, "obstacle_filtering.crossing_obstacle_velocity_threshold",
+    obstacle_filtering_param_.crossing_obstacle_velocity_threshold);
   tier4_autoware_utils::updateParam<double>(
-    parameters, "obstacle_filtering.margin_for_collision_time",
-    obstacle_filtering_param_.margin_for_collision_time);
+    parameters, "obstacle_filtering.collision_time_margin",
+    obstacle_filtering_param_.collision_time_margin);
   tier4_autoware_utils::updateParam<double>(
-    parameters, "obstacle_filtering.max_ego_obj_overlap_time",
-    obstacle_filtering_param_.max_ego_obj_overlap_time);
+    parameters, "obstacle_filtering.ego_obstacle_overlap_time_threshold",
+    obstacle_filtering_param_.ego_obstacle_overlap_time_threshold);
   tier4_autoware_utils::updateParam<double>(
     parameters, "obstacle_filtering.max_prediction_time_for_collision_check",
     obstacle_filtering_param_.max_prediction_time_for_collision_check);
@@ -325,7 +331,9 @@ void ObstacleVelocityPlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
   const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
 
   // check if subscribed variables are ready
-  if (msg->points.empty() || !current_twist_ptr_ || !prev_twist_ptr_ || !in_objects_ptr_ || !current_pose_ptr) {
+  if (
+    msg->points.empty() || !current_twist_ptr_ || !prev_twist_ptr_ || !in_objects_ptr_ ||
+    !current_pose_ptr) {
     return;
   }
 
@@ -357,7 +365,8 @@ void ObstacleVelocityPlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
 }
 
 ObstacleVelocityPlannerData ObstacleVelocityPlannerNode::createPlannerData(
-  const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose, DebugData & debug_data)
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+  DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
 
@@ -403,7 +412,8 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
   const auto time_stamp = rclcpp::Time(predicted_objects.header.stamp);
 
   // calculate decimated trajectory
-  const auto trimmed_traj = trimTrajectoryFrom(traj, current_pose.position);
+  const auto trimmed_traj = trimTrajectoryFrom(
+    traj, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   const auto decimated_traj =
     decimateTrajectory(trimmed_traj, obstacle_filtering_param_.decimate_trajectory_step_length);
   if (decimated_traj.points.size() < 2) {
@@ -461,14 +471,14 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
         decimated_traj, object_pose,
         obstacle_filtering_param_.crossing_obstacle_traj_angle_threshold);
       const double has_high_speed =
-        std::abs(object_velocity) > obstacle_filtering_param_.min_obstacle_crossing_velocity;
+        std::abs(object_velocity) > obstacle_filtering_param_.crossing_obstacle_velocity_threshold;
 
       // ignore running vehicle crossing the ego trajectory with high speed with some condition
       if (!is_angle_aligned && has_high_speed) {
         const double collision_time_margin = calcCollisionTimeMargin(
           current_pose, current_vel, nearest_collision_point, predicted_object,
           first_within_idx.get(), decimated_traj, decimated_traj_polygons);
-        if (collision_time_margin > obstacle_filtering_param_.margin_for_collision_time) {
+        if (collision_time_margin > obstacle_filtering_param_.collision_time_margin) {
           // Ignore condition 1
           // Ignore vehicle obstacles inside the trajectory, which is crossing the trajectory with
           // high speed and does not collide with ego in a certain time.
@@ -489,7 +499,8 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
 
       const bool will_collide = polygon_utils::willCollideWithSurroundObstacle(
         decimated_traj, decimated_traj_polygons, predicted_path_with_highest_confidence,
-        predicted_object.shape, max_dist, obstacle_filtering_param_.max_ego_obj_overlap_time,
+        predicted_object.shape, max_dist,
+        obstacle_filtering_param_.ego_obstacle_overlap_time_threshold,
         obstacle_filtering_param_.max_prediction_time_for_collision_check);
 
       // TODO(murooka) think later

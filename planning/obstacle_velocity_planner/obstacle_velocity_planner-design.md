@@ -44,9 +44,9 @@ In this function, target obstacles for stopping or cruising are selected based o
 By default, objects that realize one of the following conditions are considered to be the target obstacle candidates.
 Some terms will be defined in the following subsections.
 
-- Vehicle objects \mathit{inside the detection area} other than \mathit{far crossing vehicles}.
-- non vehicle objects \mathit{inside the detection area}
-- \mathit{Near cut-in vehicles} outside the detection area
+- Vehicle objects "inside the detection area" other than "far crossing vehicles".
+- non vehicle objects "inside the detection area"
+- "Near cut-in vehicles" outside the detection area
 
 Note that currently the obstacle candidates selection algorithm is for autonomous driving.
 However, we have following parameters as well for stop and cruise respectively so that we can extend the obstacles candidates selection algorithm for non vehicle robots.
@@ -86,7 +86,7 @@ In the `obstacle_filtering` namespace,
 Near crossing vehicles (= not far crossing vehicles) are defined as vehicle objects realizing either of following conditions.
 
 - whose yaw angle against the nearest trajectory point is greater than `crossing_obstacle_traj_angle_threshold`
-- whose velocity is less than `min_obstacle_crossing_velocity`.
+- whose velocity is less than `crossing_obstacle_velocity_threshold`.
 
 Assuming `t_1` to be the time for the ego to reach the current crossing obstacle position with the constant velocity motion, and `t_2` to be the time for the crossing obstacle to go outside the detectino area, if the following condition is realized, the crossing vehicle will be ignored.
 
@@ -98,21 +98,21 @@ In the `obstacle_filtering` namespace,
 
 | Parameter                                | Type   | Description                                                                   |
 | ---------------------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `min_obstacle_crossing_velocity`         | double | velocity threshold to decide crossing obstacle [m/s]                           |
+| `crossing_obstacle_velocity_threshold`   | double | velocity threshold to decide crossing obstacle [m/s]                          |
 | `crossing_obstacle_traj_angle_threshold` | double | yaw threshold of crossing obstacle against the nearest trajectory point [rad] |
-| `margin_for_collision_time`              | double | time threshold of collision between obstacle and ego [s]                      |
+| `collision_time_margin`                  | double | time threshold of collision between obstacle and ego [s]                      |
 
 #### Near Cut-in vehicles
 
 Near Cut-in vehicles are defined as vehicle objects
 
-- whose predicted path's footprints from the current time to `max_prediction_time_for_collision_check` overlap with the detection area longer than `max_ego_obj_overlap_time`.
+- whose predicted path's footprints from the current time to `max_prediction_time_for_collision_check` overlap with the detection area longer than `ego_obstacle_overlap_time_threshold`.
 
 In the `obstacle_filtering` namespace,
 
 | Parameter                                 | Type   | Description                                                     |
 | ----------------------------------------- | ------ | --------------------------------------------------------------- |
-| `max_ego_obj_overlap_time`                | double | time threshold to decide cut-in obstacle for cruise or stop [s] |
+| `ego_obstacle_overlap_time_threshold`     | double | time threshold to decide cut-in obstacle for cruise or stop [s] |
 | `max_prediction_time_for_collision_check` | double | prediction time to check collision between obstacle and ego [s] |
 
 ### Stop planning
@@ -190,8 +190,8 @@ stop
 Currently, only a PID-based planner is supported.
 Each planner will be explained in the following.
 
-| Parameter                | Type   | Description                                                   |
-| ------------------------ | ------ | ------------------------------------------------------------- |
+| Parameter                | Type   | Description                                                  |
+| ------------------------ | ------ | ------------------------------------------------------------ |
 | `common.planning_method` | string | cruise and stop planning algorithm, selected from "pid_base" |
 
 ### PID-based planner
@@ -200,12 +200,12 @@ Each planner will be explained in the following.
 
 In the `pid_based_planner` namespace,
 
-| Parameter                              | Type   | Description                                                  |
-| -------------------------------------- | ------ | ------------------------------------------------------------ |
-| `max_cruise_obstacle_velocity_to_stop` | double | obstacle velocity threshold to be stopped from cruised [m/s] |
+| Parameter                                         | Type   | Description                                                  |
+| ------------------------------------------------- | ------ | ------------------------------------------------------------ |
+| `obstacle_velocity_threshold_from_cruise_to_stop` | double | obstacle velocity threshold to be stopped from cruised [m/s] |
 
 Only one obstacle is targeted for the stop planning.
-It is the obstacle among obstacle candidates whose velocity is less than `max_cruise_obstacle_velocity_to_stop`, and which is the nearest to the ego along the trajectory. A stop point is inserted keeping`common.safe_distance_margin` distance between the ego and obstacle.
+It is the obstacle among obstacle candidates whose velocity is less than `obstacle_velocity_threshold_from_cruise_to_stop`, and which is the nearest to the ego along the trajectory. A stop point is inserted keeping`common.safe_distance_margin` distance between the ego and obstacle.
 
 Note that, as explained in the stop planning design, a stop planning which requires a strong acceleration (less than `common.min_strong_accel`) will be canceled.
 

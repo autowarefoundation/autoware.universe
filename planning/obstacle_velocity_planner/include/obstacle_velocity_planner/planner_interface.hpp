@@ -99,12 +99,12 @@ public:
 
   void setParams(
     const bool is_showing_debug_info, const double min_behavior_stop_margin,
-    const double max_nearest_dist_deviation, const double max_nearest_yaw_deviation)
+    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold)
   {
     is_showing_debug_info_ = is_showing_debug_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
-    max_nearest_dist_deviation_ = max_nearest_dist_deviation;
-    max_nearest_yaw_deviation_ = max_nearest_yaw_deviation;
+    nearest_dist_deviation_threshold_ = nearest_dist_deviation_threshold;
+    nearest_yaw_deviation_threshold_ = nearest_yaw_deviation_threshold;
   }
 
   /*
@@ -160,8 +160,8 @@ protected:
   bool is_showing_debug_info_{false};
   LongitudinalInfo longitudinal_info_;
   double min_behavior_stop_margin_;
-  double max_nearest_dist_deviation_;
-  double max_nearest_yaw_deviation_;
+  double nearest_dist_deviation_threshold_;
+  double nearest_yaw_deviation_threshold_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
