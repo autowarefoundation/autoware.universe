@@ -244,7 +244,8 @@ bool willCollideWithSurroundObstacle(
 {
   constexpr double epsilon = 1e-3;
 
-  boost::optional<size_t> start_predicted_path_idx = {};
+  bool is_found = false;
+  size_t start_predicted_path_idx = 0;
   for (size_t i = 0; i < predicted_path.path.size(); ++i) {
     const auto & path_point = predicted_path.path.at(i);
     if (
@@ -266,18 +267,18 @@ bool willCollideWithSurroundObstacle(
       const double dist = bg::distance(traj_polygon, obj_polygon);
 
       if (dist < epsilon) {
-        if (!start_predicted_path_idx) {
+        if (!is_found) {
           start_predicted_path_idx = i;
+          is_found = true;
         } else {
-          const double overlap_time = (static_cast<double>(i) - start_predicted_path_idx.get()) *
+          const double overlap_time = (static_cast<double>(i) - start_predicted_path_idx) *
                                       rclcpp::Duration(predicted_path.time_step).seconds();
-          // std::cerr << overlap_time << std::endl;
           if (max_ego_obj_overlap_time < overlap_time) {
             return true;
           }
         }
       } else {
-        start_predicted_path_idx = {};
+        is_found = false;
       }
     }
   }
