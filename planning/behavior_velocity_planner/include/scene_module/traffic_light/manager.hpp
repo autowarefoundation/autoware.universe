@@ -39,7 +39,7 @@ public:
 private:
   TrafficLightModule::PlannerParam planner_param_;
   rtc_interface::RTCInterface rtc_interface_;
-  
+
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
   bool getActivation(const UUID & uuid) override;
   void updateRTCStatus(
