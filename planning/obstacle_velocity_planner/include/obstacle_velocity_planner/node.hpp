@@ -72,7 +72,7 @@ private:
 
   // member Functions
   ObstacleVelocityPlannerData createPlannerData(
-    const Trajectory & trajectory, DebugData & debug_data);
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose, DebugData & debug_data);
   double calcCurrentAccel() const;
   std::vector<TargetObstacle> filterObstacles(
     const PredictedObjects & predicted_objects, const Trajectory & traj,

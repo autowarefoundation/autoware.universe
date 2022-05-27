@@ -322,8 +322,10 @@ void ObstacleVelocityPlannerNode::onSmoothedTrajectory(const Trajectory::SharedP
 
 void ObstacleVelocityPlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
 {
+  const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
+
   // check if subscribed variables are ready
-  if (msg->points.empty() || !current_twist_ptr_ || !prev_twist_ptr_ || !in_objects_ptr_) {
+  if (msg->points.empty() || !current_twist_ptr_ || !prev_twist_ptr_ || !in_objects_ptr_ || !current_pose_ptr) {
     return;
   }
 
@@ -331,7 +333,7 @@ void ObstacleVelocityPlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
 
   // create algorithmic data
   DebugData debug_data;
-  const auto planner_data = createPlannerData(*msg, debug_data);
+  const auto planner_data = createPlannerData(*msg, current_pose_ptr->pose, debug_data);
 
   // generate Trajectory
   boost::optional<VelocityLimit> vel_limit;
@@ -355,11 +357,10 @@ void ObstacleVelocityPlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
 }
 
 ObstacleVelocityPlannerData ObstacleVelocityPlannerNode::createPlannerData(
-  const Trajectory & trajectory, DebugData & debug_data)
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose, DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
 
-  const auto & current_pose = self_pose_listener_.getCurrentPose()->pose;
   const double current_vel = current_twist_ptr_->twist.linear.x;
   const double current_accel = calcCurrentAccel();
 

@@ -98,7 +98,7 @@ In the `obstacle_filtering` namespace,
 
 | Parameter                                | Type   | Description                                                                   |
 | ---------------------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `min_obstacle_crossing_velocity`         | double | velocity threshold to decide crosing obstacle [m/s]                           |
+| `min_obstacle_crossing_velocity`         | double | velocity threshold to decide crossing obstacle [m/s]                           |
 | `crossing_obstacle_traj_angle_threshold` | double | yaw threshold of crossing obstacle against the nearest trajectory point [rad] |
 | `margin_for_collision_time`              | double | time threshold of collision between obstacle and ego [s]                      |
 
@@ -112,7 +112,7 @@ In the `obstacle_filtering` namespace,
 
 | Parameter                                 | Type   | Description                                                     |
 | ----------------------------------------- | ------ | --------------------------------------------------------------- |
-| `max_ego_obj_overlap_time`                | double | time threshold to dedice cut-in obstacle for cruise or stop [s] |
+| `max_ego_obj_overlap_time`                | double | time threshold to decide cut-in obstacle for cruise or stop [s] |
 | `max_prediction_time_for_collision_check` | double | prediction time to check collision between obstacle and ego [s] |
 
 ### Stop planning

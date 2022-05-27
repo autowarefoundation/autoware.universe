@@ -43,11 +43,11 @@
       decimate_trajectory_step_length : 2.0 # longitudinal step length to calculate trajectory polygon for collision checking
 
       # if crossing vehicle is decided as target obstacles or not
-      min_obstacle_crossing_velocity : 3.0 # velocity threshold for crosing obstacle for cruise or stop [m/s]
+      min_obstacle_crossing_velocity : 3.0 # velocity threshold for crossing obstacle for cruise or stop [m/s]
       crossing_obstacle_traj_angle_threshold : 0.698 # [rad] = 40 [deg], yaw threshold of crossing obstacle against the nearest trajectory point for cruise or stop
       margin_for_collision_time : 8.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
 
-      max_ego_obj_overlap_time : 1.0 #  time threshold to dedice cut-in obstacle for cruise or stop [s]
+      max_ego_obj_overlap_time : 1.0 #  time threshold to decide cut-in obstacle for cruise or stop [s]
       max_prediction_time_for_collision_check : 20.0 # prediction time to check collision between obstacle and ego
 
     rule_based_planner:

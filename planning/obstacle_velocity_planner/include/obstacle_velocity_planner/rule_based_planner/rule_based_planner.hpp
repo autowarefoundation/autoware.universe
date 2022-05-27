@@ -78,7 +78,7 @@ private:
     boost::optional<CruiseObstacleInfo> & cruise_obstacle_info);
   double calcDistanceToObstacle(
     const ObstacleVelocityPlannerData & planner_data, const TargetObstacle & obstacle);
-  bool isStopRequired(const TargetObstacle & obsatcle);
+  bool isStopRequired(const TargetObstacle & obstacle);
 
   void planCruise(
     const ObstacleVelocityPlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
