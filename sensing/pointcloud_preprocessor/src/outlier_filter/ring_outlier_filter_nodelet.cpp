@@ -21,6 +21,16 @@ namespace pointcloud_preprocessor
 RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("RingOutlierFilter", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
   // set initial parameters
   {
     distance_ratio_ = static_cast<double>(declare_parameter("distance_ratio", 1.03));
@@ -38,7 +48,8 @@ void RingOutlierFilterComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
-  boost::mutex::scoped_lock lock(mutex_);
+  std::scoped_lock lock(mutex_);
+  stop_watch_ptr_->toc("processing_time", true);
   std::unordered_map<uint16_t, std::vector<std::size_t>> input_ring_map;
   input_ring_map.reserve(128);
   sensor_msgs::msg::PointCloud2::SharedPtr input_ptr =
@@ -109,12 +120,21 @@ void RingOutlierFilterComponent::filter(
     }
     tmp_indices.clear();
   }
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallback(
   const std::vector<rclcpp::Parameter> & p)
 {
-  boost::mutex::scoped_lock lock(mutex_);
+  std::scoped_lock lock(mutex_);
 
   if (get_param(p, "distance_ratio", distance_ratio_)) {
     RCLCPP_DEBUG(get_logger(), "Setting new distance ratio to: %f.", distance_ratio_);
