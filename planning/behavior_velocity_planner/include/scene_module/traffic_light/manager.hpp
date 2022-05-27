@@ -38,6 +38,8 @@ public:
 
 private:
   TrafficLightModule::PlannerParam planner_param_;
+  rtc_interface::RTCInterface rtc_interface_;
+  
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
   bool getActivation(const UUID & uuid) override;
   void updateRTCStatus(
@@ -53,8 +55,6 @@ private:
     pub_tl_state_;
 
   boost::optional<int> first_ref_stop_path_point_index_;
-
-  rtc_interface::RTCInterface rtc_interface_;
 };
 }  // namespace behavior_velocity_planner
 

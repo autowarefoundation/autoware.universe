@@ -31,7 +31,6 @@
 
 namespace behavior_velocity_planner
 {
-using tier4_rtc_msgs::msg::Module;
 class CrosswalkModuleManager : public SceneModuleManagerInterface
 {
 public:
