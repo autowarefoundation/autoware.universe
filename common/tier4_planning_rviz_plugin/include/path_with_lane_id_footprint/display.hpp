@@ -36,8 +36,8 @@
 #include <OgreSceneNode.h>
 
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace rviz_plugins
 {
