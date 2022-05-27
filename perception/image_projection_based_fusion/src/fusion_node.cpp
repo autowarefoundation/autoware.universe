@@ -54,8 +54,7 @@ FusionNode<Msg, ObjType>::FusionNode(
   }
 
   // subscribers
-  // sub_.subscribe(this, "input", rclcpp::QoS(1).get_rmw_qos_profile());
-  sub_.subscribe(this, "~/input/pointcloud", rmw_qos_profile_sensor_data);
+  sub_.subscribe(this, "input", rclcpp::QoS(1).get_rmw_qos_profile());
 
   camera_info_subs_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
@@ -226,7 +225,7 @@ void FusionNode<Msg, Obj>::fusionCallback(
 }
 
 template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::postprocess()
+void FusionNode<Msg, Obj>::postprocess(Msg & output_msg __attribute__((unused)))
 {
   // do nothing by default
 }
@@ -239,5 +238,5 @@ void FusionNode<Msg, Obj>::publish(const Msg & output_msg)
 
 template class FusionNode<DetectedObjects, DetectedObject>;
 template class FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>;
-
+template class FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>;
 }  // namespace image_projection_based_fusion
