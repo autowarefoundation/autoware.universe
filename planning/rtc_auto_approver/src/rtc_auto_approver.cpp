@@ -261,73 +261,73 @@ void RTCAutoApproverNode::onBlindSpotEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   blind_spot_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onCrosswalkEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   crosswalk_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onDetectionAreaEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   detection_area_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onIntersectionEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   intersection_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onNoStoppingAreaEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   no_stopping_area_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onTrafficLightEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   traffic_light_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onLaneChangeLeftEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   lane_change_left_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onLaneChangeRightEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   lane_change_right_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onAvoidanceLeftEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   avoidance_left_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onAvoidanceRightEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   avoidance_right_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onPullOverEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   pull_over_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 void RTCAutoApproverNode::onPullOutEnableService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   pull_out_enabled_ = request->enable;
-  response->response = true;
+  response->success = true;
 }
 
 bool RTCAutoApproverNode::isNecessarySendCommand(const CooperateStatus & status) const
