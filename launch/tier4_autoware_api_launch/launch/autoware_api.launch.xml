@@ -1,5 +1,5 @@
 <launch>
-  <arg name="respawn" default="true"/>
+  <arg name="respawn_rosbridge" default="true"/>
 
   <!-- awapi (deprecated) -->
   <group>
