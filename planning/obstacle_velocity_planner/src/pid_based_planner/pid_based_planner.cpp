@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_planner/rule_based_planner/rule_based_planner.hpp"
+#include "obstacle_velocity_planner/pid_based_planner/pid_based_planner.hpp"
 
 #include "obstacle_velocity_planner/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -123,7 +123,7 @@ double calcMinimumDistanceToStop(const double initial_vel, const double min_acc)
 
 tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
   const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose,
-  const boost::optional<RuleBasedPlanner::StopObstacleInfo> & stop_obstacle_info)
+  const boost::optional<PIDBasedPlanner::StopObstacleInfo> & stop_obstacle_info)
 {
   // create header
   std_msgs::msg::Header header;
@@ -150,30 +150,30 @@ tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
 }
 }  // namespace
 
-RuleBasedPlanner::RuleBasedPlanner(
+PIDBasedPlanner::PIDBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
   const vehicle_info_util::VehicleInfo & vehicle_info)
 : PlannerInterface(node, longitudinal_info, vehicle_info)
 {
   // pid controller
-  const double kp = node.declare_parameter<double>("rule_based_planner.kp");
-  const double ki = node.declare_parameter<double>("rule_based_planner.ki");
-  const double kd = node.declare_parameter<double>("rule_based_planner.kd");
+  const double kp = node.declare_parameter<double>("pid_based_planner.kp");
+  const double ki = node.declare_parameter<double>("pid_based_planner.ki");
+  const double kd = node.declare_parameter<double>("pid_based_planner.kd");
   pid_controller_ = std::make_unique<PIDController>(kp, ki, kd);
   output_ratio_during_accel_ =
-    node.declare_parameter<double>("rule_based_planner.output_ratio_during_accel");
+    node.declare_parameter<double>("pid_based_planner.output_ratio_during_accel");
 
   // some parameters
   // use_predicted_obstacle_pose_ =
-  //   node.declare_parameter<bool>("rule_based_planner.use_predicted_obstacle_pose");
+  //   node.declare_parameter<bool>("pid_based_planner.use_predicted_obstacle_pose");
 
-  vel_to_acc_weight_ = node.declare_parameter<double>("rule_based_planner.vel_to_acc_weight");
+  vel_to_acc_weight_ = node.declare_parameter<double>("pid_based_planner.vel_to_acc_weight");
 
   min_cruise_target_vel_ =
-    node.declare_parameter<double>("rule_based_planner.min_cruise_target_vel");
+    node.declare_parameter<double>("pid_based_planner.min_cruise_target_vel");
 
   max_cruise_obstacle_velocity_to_stop_ =
-    node.declare_parameter<double>("rule_based_planner.max_cruise_obstacle_velocity_to_stop");
+    node.declare_parameter<double>("pid_based_planner.max_cruise_obstacle_velocity_to_stop");
 
   // publisher
   stop_reasons_pub_ =
@@ -183,7 +183,7 @@ RuleBasedPlanner::RuleBasedPlanner(
   debug_values_pub_ = node.create_publisher<Float32MultiArrayStamped>("~/debug/values", 1);
 }
 
-Trajectory RuleBasedPlanner::generateTrajectory(
+Trajectory PIDBasedPlanner::generateTrajectory(
   const ObstacleVelocityPlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
   DebugData & debug_data)
 {
@@ -206,13 +206,13 @@ Trajectory RuleBasedPlanner::generateTrajectory(
 
   const double calculation_time = stop_watch_.toc(__func__);
   RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleVelocityPlanner::RuleBasedPlanner"), is_showing_debug_info_,
+    rclcpp::get_logger("ObstacleVelocityPlanner::PIDBasedPlanner"), is_showing_debug_info_,
     "  %s := %f [ms]", __func__, calculation_time);
 
   return output_traj;
 }
 
-void RuleBasedPlanner::calcObstaclesToCruiseAndStop(
+void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
   const ObstacleVelocityPlannerData & planner_data,
   boost::optional<StopObstacleInfo> & stop_obstacle_info,
   boost::optional<CruiseObstacleInfo> & cruise_obstacle_info)
@@ -268,7 +268,7 @@ void RuleBasedPlanner::calcObstaclesToCruiseAndStop(
   }
 }
 
-double RuleBasedPlanner::calcDistanceToObstacle(
+double PIDBasedPlanner::calcDistanceToObstacle(
   const ObstacleVelocityPlannerData & planner_data, const TargetObstacle & obstacle)
 {
   // TODO(murooka) deal with polygon-shaped obstacle
@@ -287,7 +287,7 @@ double RuleBasedPlanner::calcDistanceToObstacle(
   //   }
   //
   //   RCLCPP_INFO_EXPRESSION(
-  //     rclcpp::get_logger("ObstacleVelocityPlanner::RuleBasedPlanner"), true,
+  //     rclcpp::get_logger("ObstacleVelocityPlanner::PIDBasedPlanner"), true,
   //     "Failed to interpolated obstacle pose from predicted path. Use non-interpolated obstacle
   //     pose.");
   // }
@@ -298,7 +298,7 @@ double RuleBasedPlanner::calcDistanceToObstacle(
 }
 
 // Note: If stop planning is not required, cruise planning will be done instead.
-bool RuleBasedPlanner::isStopRequired(const TargetObstacle & obstacle)
+bool PIDBasedPlanner::isStopRequired(const TargetObstacle & obstacle)
 {
   const bool is_cruise_obstacle = isCruiseObstacle(obstacle.classification.label);
   const bool is_stop_obstacle = isStopObstacle(obstacle.classification.label);
@@ -312,7 +312,7 @@ bool RuleBasedPlanner::isStopRequired(const TargetObstacle & obstacle)
   return false;
 }
 
-Trajectory RuleBasedPlanner::planStop(
+Trajectory PIDBasedPlanner::planStop(
   const ObstacleVelocityPlannerData & planner_data,
   const boost::optional<StopObstacleInfo> & stop_obstacle_info, DebugData & debug_data)
 {
@@ -321,7 +321,7 @@ Trajectory RuleBasedPlanner::planStop(
   boost::optional<size_t> zero_vel_idx = {};
   if (stop_obstacle_info) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("ObstacleVelocityPlanner::RuleBasedPlanner"), is_showing_debug_info_,
+      rclcpp::get_logger("ObstacleVelocityPlanner::PIDBasedPlanner"), is_showing_debug_info_,
       "stop planning");
 
     auto local_stop_obstacle_info = stop_obstacle_info.get();
@@ -364,7 +364,7 @@ Trajectory RuleBasedPlanner::planStop(
   return output_traj;
 }
 
-boost::optional<size_t> RuleBasedPlanner::doStop(
+boost::optional<size_t> PIDBasedPlanner::doStop(
   const ObstacleVelocityPlannerData & planner_data, const StopObstacleInfo & stop_obstacle_info,
   std::vector<TargetObstacle> & debug_obstacles_to_stop,
   visualization_msgs::msg::MarkerArray & debug_wall_marker) const
@@ -433,14 +433,14 @@ boost::optional<size_t> RuleBasedPlanner::doStop(
   return zero_vel_idx.get();
 }
 
-void RuleBasedPlanner::planCruise(
+void PIDBasedPlanner::planCruise(
   const ObstacleVelocityPlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
   const boost::optional<CruiseObstacleInfo> & cruise_obstacle_info, DebugData & debug_data)
 {
   // do cruise
   if (cruise_obstacle_info) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("ObstacleVelocityPlanner::RuleBasedPlanner"), is_showing_debug_info_,
+      rclcpp::get_logger("ObstacleVelocityPlanner::PIDBasedPlanner"), is_showing_debug_info_,
       "cruise planning");
 
     vel_limit = doCruise(
@@ -457,7 +457,7 @@ void RuleBasedPlanner::planCruise(
   }
 }
 
-VelocityLimit RuleBasedPlanner::doCruise(
+VelocityLimit PIDBasedPlanner::doCruise(
   const ObstacleVelocityPlannerData & planner_data, const CruiseObstacleInfo & cruise_obstacle_info,
   std::vector<TargetObstacle> & debug_obstacles_to_cruise,
   visualization_msgs::msg::MarkerArray & debug_wall_marker)
@@ -489,7 +489,7 @@ VelocityLimit RuleBasedPlanner::doCruise(
     std::clamp(target_acc, longitudinal_info_.min_accel, longitudinal_info_.max_accel);
 
   RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleVelocityPlanner::RuleBasedPlanner"), is_showing_debug_info_,
+    rclcpp::get_logger("ObstacleVelocityPlanner::PIDBasedPlanner"), is_showing_debug_info_,
     "target_velocity %f", positive_target_vel);
 
   prev_target_vel_ = positive_target_vel;
@@ -513,32 +513,32 @@ VelocityLimit RuleBasedPlanner::doCruise(
   return vel_limit;
 }
 
-void RuleBasedPlanner::publishDebugValues(const ObstacleVelocityPlannerData & planner_data) const
+void PIDBasedPlanner::publishDebugValues(const ObstacleVelocityPlannerData & planner_data) const
 {
   const auto debug_values_msg = convertDebugValuesToMsg(planner_data.current_time, debug_values_);
   debug_values_pub_->publish(debug_values_msg);
 }
 
-void RuleBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & parameters)
+void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & parameters)
 {
   // pid controller
   double kp = pid_controller_->getKp();
   double ki = pid_controller_->getKi();
   double kd = pid_controller_->getKd();
 
-  tier4_autoware_utils::updateParam<double>(parameters, "rule_based_planner.kp", kp);
-  tier4_autoware_utils::updateParam<double>(parameters, "rule_based_planner.ki", ki);
-  tier4_autoware_utils::updateParam<double>(parameters, "rule_based_planner.kd", kd);
+  tier4_autoware_utils::updateParam<double>(parameters, "pid_based_planner.kp", kp);
+  tier4_autoware_utils::updateParam<double>(parameters, "pid_based_planner.ki", ki);
+  tier4_autoware_utils::updateParam<double>(parameters, "pid_based_planner.kd", kd);
   tier4_autoware_utils::updateParam<double>(
-    parameters, "rule_based_planner.output_ratio_during_accel", output_ratio_during_accel_);
+    parameters, "pid_based_planner.output_ratio_during_accel", output_ratio_during_accel_);
 
   // vel_to_acc_weight
   tier4_autoware_utils::updateParam<double>(
-    parameters, "rule_based_planner.vel_to_acc_weight", vel_to_acc_weight_);
+    parameters, "pid_based_planner.vel_to_acc_weight", vel_to_acc_weight_);
 
   // min_cruise_target_vel
   tier4_autoware_utils::updateParam<double>(
-    parameters, "rule_based_planner.min_cruise_target_vel", min_cruise_target_vel_);
+    parameters, "pid_based_planner.min_cruise_target_vel", min_cruise_target_vel_);
 
   pid_controller_->updateParam(kp, ki, kd);
 }

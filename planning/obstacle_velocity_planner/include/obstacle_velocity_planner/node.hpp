@@ -17,7 +17,7 @@
 
 #include "obstacle_velocity_planner/common_structs.hpp"
 #include "obstacle_velocity_planner/optimization_based_planner/optimization_based_planner.hpp"
-#include "obstacle_velocity_planner/rule_based_planner/rule_based_planner.hpp"
+#include "obstacle_velocity_planner/pid_based_planner/pid_based_planner.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
@@ -130,7 +130,7 @@ private:
   VehicleInfo vehicle_info_;
 
   // planning algorithm
-  enum class PlanningAlgorithm { OPTIMIZATION_BASE, RULE_BASE, INVALID };
+  enum class PlanningAlgorithm { OPTIMIZATION_BASE, PID_BASE, INVALID };
   PlanningAlgorithm getPlanningAlgorithmType(const std::string & param) const;
   PlanningAlgorithm planning_algorithm_;
 

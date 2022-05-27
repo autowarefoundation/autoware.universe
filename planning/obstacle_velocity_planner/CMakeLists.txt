@@ -14,7 +14,7 @@ ament_auto_add_library(obstacle_velocity_planner_core SHARED
   src/optimization_based_planner/box2d.cpp
   src/optimization_based_planner/velocity_optimizer.cpp
   src/optimization_based_planner/optimization_based_planner.cpp
-  src/rule_based_planner/rule_based_planner.cpp
+  src/pid_based_planner/pid_based_planner.cpp
 )
 
 rclcpp_components_register_node(obstacle_velocity_planner_core

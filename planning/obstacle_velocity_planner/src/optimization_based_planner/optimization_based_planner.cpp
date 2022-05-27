@@ -735,7 +735,7 @@ OptimizationBasedPlanner::TrajectoryData OptimizationBasedPlanner::resampleTraje
   return resampled_traj_data;
 }
 
-// TODO(shimizu) what is the difference with applylienar interpolation
+// TODO(shimizu) what is the difference with apply linear interpolation
 Trajectory OptimizationBasedPlanner::resampleTrajectory(
   const std::vector<double> & base_index, const Trajectory & base_trajectory,
   const std::vector<double> & query_index, const bool use_spline_for_pose)

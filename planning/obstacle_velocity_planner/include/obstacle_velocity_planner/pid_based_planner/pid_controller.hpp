@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__PID_CONTROLLER_HPP_
-#define OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__PID_CONTROLLER_HPP_
+#ifndef OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_CONTROLLER_HPP_
+#define OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_CONTROLLER_HPP_
 
 #include <boost/optional.hpp>
 
@@ -59,4 +59,4 @@ private:
   boost::optional<double> prev_error_;
 };
 
-#endif  // OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__PID_CONTROLLER_HPP_
+#endif  // OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_CONTROLLER_HPP_

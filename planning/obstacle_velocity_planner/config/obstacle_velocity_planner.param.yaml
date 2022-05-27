@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     common:
-      planning_algorithm: "rule_base" # currently supported algorithm is "rule_base"
+      planning_algorithm: "pid_base" # currently supported algorithm is "pid_base"
 
       is_showing_debug_info: true
 
@@ -50,7 +50,7 @@
       max_ego_obj_overlap_time : 1.0 #  time threshold to decide cut-in obstacle for cruise or stop [s]
       max_prediction_time_for_collision_check : 20.0 # prediction time to check collision between obstacle and ego
 
-    rule_based_planner:
+    pid_based_planner:
       # use_predicted_obstacle_pose: false
 
       # PID gains to keep safe distance with the front vehicle

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__DEBUG_VALUES_HPP_
-#define OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__DEBUG_VALUES_HPP_
+#ifndef OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__DEBUG_VALUES_HPP_
+#define OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__DEBUG_VALUES_HPP_
 
 #include <array>
 
@@ -76,4 +76,4 @@ private:
   std::array<double, static_cast<int>(TYPE::SIZE)> values_;
 };
 
-#endif  // OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__DEBUG_VALUES_HPP_
+#endif  // OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__DEBUG_VALUES_HPP_

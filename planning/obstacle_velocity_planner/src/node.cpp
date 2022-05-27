@@ -162,9 +162,9 @@ ObstacleVelocityPlannerNode::ObstacleVelocityPlannerNode(const rclcpp::NodeOptio
 
   // publisher
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
-  vel_limit_pub_ = create_publisher<VelocityLimit>("~/output/velocity_limit", 1);
+  vel_limit_pub_ = create_publisher<VelocityLimit>("~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
   clear_vel_limit_pub_ =
-    create_publisher<VelocityLimitClearCommand>("~/output/clear_velocity_limit", 1);
+    create_publisher<VelocityLimitClearCommand>("~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
   debug_cruise_wall_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/cruise_wall_marker", 1);
@@ -222,8 +222,8 @@ ObstacleVelocityPlannerNode::ObstacleVelocityPlannerNode(const rclcpp::NodeOptio
     if (planning_algorithm_ == PlanningAlgorithm::OPTIMIZATION_BASE) {
       planner_ptr_ =
         std::make_unique<OptimizationBasedPlanner>(*this, longitudinal_info, vehicle_info_);
-    } else if (planning_algorithm_ == PlanningAlgorithm::RULE_BASE) {
-      planner_ptr_ = std::make_unique<RuleBasedPlanner>(*this, longitudinal_info, vehicle_info_);
+    } else if (planning_algorithm_ == PlanningAlgorithm::PID_BASE) {
+      planner_ptr_ = std::make_unique<PIDBasedPlanner>(*this, longitudinal_info, vehicle_info_);
     } else {
       std::logic_error("Designated algorithm is not supported.");
     }
@@ -247,8 +247,8 @@ ObstacleVelocityPlannerNode::ObstacleVelocityPlannerNode(const rclcpp::NodeOptio
 ObstacleVelocityPlannerNode::PlanningAlgorithm
 ObstacleVelocityPlannerNode::getPlanningAlgorithmType(const std::string & param) const
 {
-  if (param == "rule_base") {
-    return PlanningAlgorithm::RULE_BASE;
+  if (param == "pid_base") {
+    return PlanningAlgorithm::PID_BASE;
   } else if (param == "optimization_base") {
     return PlanningAlgorithm::OPTIMIZATION_BASE;
   }
@@ -348,7 +348,7 @@ void ObstacleVelocityPlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
   // publish debug data
   publishDebugData(debug_data);
 
-  // publish and print calcualtion time
+  // publish and print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
   publishCalculationTime(calculation_time);
   RCLCPP_INFO_EXPRESSION(
@@ -402,7 +402,7 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
 {
   const auto time_stamp = rclcpp::Time(predicted_objects.header.stamp);
 
-  // calcualte decimated trajectory
+  // calculate decimated trajectory
   const auto trimmed_traj = trimTrajectoryFrom(traj, current_pose.position);
   const auto decimated_traj =
     decimateTrajectory(trimmed_traj, obstacle_filtering_param_.decimate_trajectory_step_length);
@@ -410,7 +410,7 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
     return {};
   }
 
-  // calcualte decimated trajectory polygons
+  // calculate decimated trajectory polygons
   const auto decimated_traj_polygons = polygon_utils::createOneStepPolygons(
     decimated_traj, vehicle_info_, obstacle_filtering_param_.detection_area_expand_width);
   debug_data.detection_polygons = decimated_traj_polygons;
@@ -449,9 +449,9 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
     const auto first_within_idx = polygon_utils::getFirstCollisionIndex(
       decimated_traj_polygons, obstacle_polygon, collision_points);
 
-    // precide detection area filtering with polygons
+    // precise detection area filtering with polygons
     geometry_msgs::msg::Point nearest_collision_point;
-    if (first_within_idx) {  // obsacles inside the trajectory
+    if (first_within_idx) {  // obstacles inside the trajectory
       // calculate nearest collision point
       nearest_collision_point =
         calcNearestCollisionPoint(first_within_idx.get(), collision_points, decimated_traj);

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__RULE_BASED_PLANNER_HPP_
-#define OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__RULE_BASED_PLANNER_HPP_
+#ifndef OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
+#define OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
 
 #include "obstacle_velocity_planner/planner_interface.hpp"
-#include "obstacle_velocity_planner/rule_based_planner/debug_values.hpp"
-#include "obstacle_velocity_planner/rule_based_planner/pid_controller.hpp"
+#include "obstacle_velocity_planner/pid_based_planner/debug_values.hpp"
+#include "obstacle_velocity_planner/pid_based_planner/pid_controller.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
@@ -33,7 +33,7 @@
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_planning_msgs::msg::StopSpeedExceeded;
 
-class RuleBasedPlanner : public PlannerInterface
+class PIDBasedPlanner : public PlannerInterface
 {
 public:
   struct CruiseObstacleInfo
@@ -61,7 +61,7 @@ public:
     double dist_to_stop;
   };
 
-  RuleBasedPlanner(
+  PIDBasedPlanner(
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const vehicle_info_util::VehicleInfo & vehicle_info);
 
@@ -124,4 +124,4 @@ private:
   DebugValues debug_values_;
 };
 
-#endif  // OBSTACLE_VELOCITY_PLANNER__RULE_BASED_PLANNER__RULE_BASED_PLANNER_HPP_
+#endif  // OBSTACLE_VELOCITY_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
