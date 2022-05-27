@@ -28,23 +28,6 @@ namespace behavior_velocity_planner
 {
 namespace
 {
-visualization_msgs::msg::Marker createStopLineMarker(
-  const geometry_msgs::msg::Pose & pose, const builtin_interfaces::msg::Time & current_time)
-{
-  constexpr int32_t marker_id = 0;
-  auto marker = createDefaultMarker(
-    "map", current_time, "stop_line", marker_id, visualization_msgs::msg::Marker::LINE_STRIP,
-    createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0, 0.999));
-
-  constexpr float line_length = 6.0;
-  const auto p1 = tier4_autoware_utils::calcOffsetPose(pose, 0, line_length / 2.0, 0);
-  const auto p2 = tier4_autoware_utils::calcOffsetPose(pose, 0, -line_length / 2.0, 0);
-  marker.points.push_back(p1.position);
-  marker.points.push_back(p2.position);
-
-  return marker;
-}
-
 RunOutDebug::TextWithPosition createDebugText(
   const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
 {
@@ -120,7 +103,10 @@ void RunOutDebug::pushDebugPoints(
   }
 }
 
-void RunOutDebug::pushStopPose(const geometry_msgs::msg::Pose & pose) { stop_pose_.emplace(pose); }
+void RunOutDebug::pushStopPose(const geometry_msgs::msg::Pose & pose)
+{
+  stop_pose_.push_back(pose);
+}
 
 void RunOutDebug::pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line)
 {
@@ -167,7 +153,6 @@ void RunOutDebug::clearDebugMarker()
   debug_polygons_.clear();
   detection_area_polygons_.clear();
   debug_texts_.clear();
-  stop_pose_.reset();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -177,15 +162,26 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
   // create marker array from debug data
   auto visualization_marker_array = createVisualizationMarkerArrayFromDebugData(current_time);
 
-  if (stop_pose_) {
-    visualization_marker_array.markers.emplace_back(
-      createStopLineMarker(stop_pose_.value(), current_time));
-  }
-
   // clear debug data
   clearDebugMarker();
 
   return visualization_marker_array;
+}
+
+visualization_msgs::msg::MarkerArray RunOutDebug::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+  rclcpp::Time now = node_.now();
+  size_t id = 0;
+
+  for (const auto & p : stop_pose_) {
+    appendMarkerArray(
+      tier4_autoware_utils::createStopVirtualWallMarker(p, "run_out", now, id++), &wall_marker);
+  }
+
+  stop_pose_.clear();
+
+  return wall_marker;
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArrayFromDebugData(
@@ -316,6 +312,11 @@ void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
 visualization_msgs::msg::MarkerArray RunOutModule::createDebugMarkerArray()
 {
   return debug_ptr_->createVisualizationMarkerArray();
+}
+
+visualization_msgs::msg::MarkerArray RunOutModule::createVirtualWallMarkerArray()
+{
+  return debug_ptr_->createVirtualWallMarkerArray();
 }
 
 }  // namespace behavior_velocity_planner

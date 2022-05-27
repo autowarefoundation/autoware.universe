@@ -116,6 +116,7 @@ public:
   void publishDebugValue();
   void publishDebugTrajectory(const Trajectory & trajectory);
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray();
 
 private:
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArrayFromDebugData(
@@ -129,7 +130,7 @@ private:
   std::vector<geometry_msgs::msg::Point> debug_points_;
   std::vector<geometry_msgs::msg::Point> debug_points_red_;
   std::vector<geometry_msgs::msg::Point> debug_points_yellow_;
-  boost::optional<geometry_msgs::msg::Pose> stop_pose_{};
+  std::vector<geometry_msgs::msg::Pose> stop_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_lines_;
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
