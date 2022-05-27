@@ -91,8 +91,8 @@ void LineSegmentDetector::projectEdgeOnPlane(
     Eigen::Vector3f v3(v.x(), v.y(), 1);
     Eigen::Vector3f u_bearing = (q * K_inv * u3).normalized();
     Eigen::Vector3f v_bearing = (q * K_inv * v3).normalized();
-    if (u_bearing.z() > -0.02) return std::nullopt;
-    if (v_bearing.z() > -0.02) return std::nullopt;
+    if (u_bearing.z() > -0.05) return std::nullopt;
+    if (v_bearing.z() > -0.05) return std::nullopt;
     float u_distance = -t.z() / u_bearing.z();
     float v_distance = -t.z() / v_bearing.z();
     pcl::PointNormal pn;

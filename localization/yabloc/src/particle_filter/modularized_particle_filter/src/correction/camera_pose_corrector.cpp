@@ -100,8 +100,16 @@ void CameraPoseCorrector::synchroCallback(
     return (d1.cross(t)).norm() + (d2.cross(t)).norm();
   };
 
-  auto start = std::chrono::system_clock::now();
+  // Classify LL2 segments by angle
+  std::unordered_map<int, std::vector<pcl::PointNormal>> angle_and_lines;
+  for (const pcl::PointNormal & pn : ll2_cloud) {
+    Eigen::Vector3f t = pn.getNormalVector3fMap() - pn.getVector3fMap();
+    float angle = std::atan2(t.y(), t.x()) * 180.f / M_PI;
+    angle_and_lines[static_cast<int>(angle)].push_back(pn);
+  }
+
   // Search nearest neighbor segments
+  auto start = std::chrono::system_clock::now();
   std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> paired_segments;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
     Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
@@ -109,43 +117,38 @@ void CameraPoseCorrector::synchroCallback(
 
     pcl::PointNormal best_pn2;
     float best_score = std::numeric_limits<float>::max();
-    for (const pcl::PointNormal & pn2 : ll2_cloud) {
-      Eigen::Vector3f t2 = (pn2.getVector3fMap() - pn2.getNormalVector3fMap()).normalized();
-      if (std::abs(t1.dot(t2)) < 0.9) continue;
 
-      Eigen::Vector3f d1 = pn2.getVector3fMap() - pn1.getVector3fMap();
-      Eigen::Vector3f d2 = pn2.getNormalVector3fMap() - pn1.getVector3fMap();
-      float m1 = d1.dot(t1);
-      float m2 = d2.dot(t1);
-      if (std::min(std::max(m1, m2), l1) < std::max(std::min(m1, m2), 0.f)) continue;
+    for (const auto [angle_deg, cloud] : angle_and_lines) {
+      // First, exclude clusters whose angles do not match
+      float angle = static_cast<float>(angle_deg) * M_PI / 180.f;
+      Eigen::Vector3f t2(std::cos(angle), std::sin(angle), 0);
+      if (std::abs(t1.dot(t2)) < 0.95) continue;
 
-      float score = distanceSegments(pn1, pn2);
-      if (score < best_score) {
-        best_score = score;
-        best_pn2 = pn2;
+      for (const pcl::PointNormal & pn2 : cloud) {
+        // If the foot grated to the line segment does not share the line segment, exclude it
+        Eigen::Vector3f d1 = pn2.getVector3fMap() - pn1.getVector3fMap();
+        Eigen::Vector3f d2 = pn2.getNormalVector3fMap() - pn1.getVector3fMap();
+        float m1 = d1.dot(t1);
+        float m2 = d2.dot(t1);
+        if (std::min(std::max(m1, m2), l1) < std::max(std::min(m1, m2), 0.f)) continue;
+
+        float score = distanceSegments(pn1, pn2);
+        if (score < best_score) {
+          best_score = score;
+          best_pn2 = pn2;
+        }
       }
     }
-    if (best_score < score_threshold_) {
-      paired_segments.emplace_back(pn1, best_pn2);
-    }
+    if (best_score < score_threshold_) paired_segments.emplace_back(pn1, best_pn2);
   }
   {
     auto dur = std::chrono::system_clock::now() - start;
     long us = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
-    RCLCPP_INFO_STREAM(get_logger(), "time of matching: " << us);
+    RCLCPP_INFO_STREAM(
+      get_logger(), "time: " << us << " ll2: " << ll2_cloud.size() << " lsd: " << lsd_cloud.size());
   }
 
   cv::Mat pair_image = visualizePairs(paired_segments);
-
-  // {
-  //   Eigen::Affine3f particle_transform = pose2Affine(max_element->pose);
-  //   Eigen::Affine3f transform = base_transform.inverse() * particle_transform;
-  //   Eigen::Matrix4f T = Eigen::Matrix4f::Identity();
-  //   T.topLeftCorner(3, 3) = transform.rotation().transpose();
-  //   T.topRightCorner(3, 1) = to_image_coord * scale * transform.translation();
-  //   pcl::PointCloud<pcl::PointNormal> dst;
-  //   pcl::transformPointCloud(lsd_cloud, dst, T);
-  // }
 
   // Build nice image
   cv::Mat match_image;
