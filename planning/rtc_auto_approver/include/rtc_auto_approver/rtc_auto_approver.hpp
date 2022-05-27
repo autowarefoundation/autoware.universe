@@ -23,6 +23,7 @@
 #include "tier4_rtc_msgs/msg/cooperate_status.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status_array.hpp"
 #include "tier4_rtc_msgs/msg/module.hpp"
+#include "tier4_rtc_msgs/srv/auto_mode.hpp"
 #include "tier4_rtc_msgs/srv/cooperate_commands.hpp"
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -37,6 +38,7 @@ using tier4_rtc_msgs::msg::CooperateResponse;
 using tier4_rtc_msgs::msg::CooperateStatus;
 using tier4_rtc_msgs::msg::CooperateStatusArray;
 using tier4_rtc_msgs::msg::Module;
+using tier4_rtc_msgs::srv::AutoMode;
 using tier4_rtc_msgs::srv::CooperateCommands;
 using unique_identifier_msgs::msg::UUID;
 
@@ -46,6 +48,7 @@ public:
   explicit RTCAutoApproverNode(const rclcpp::NodeOptions & node_options);
 
 private:
+  // Callback for cooperate status
   void onBlindSpotStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
   void onCrosswalkStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
   void onDetectionAreaStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
@@ -58,6 +61,32 @@ private:
   void onAvoidanceRightStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
   void onPullOverStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
   void onPullOutStatus(const CooperateStatusArray::ConstSharedPtr msg) const;
+
+  // Callback for auto mode
+  void onBlindSpotEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onCrosswalkEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onDetectionAreaEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onIntersectionEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onNoStoppingAreaEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onTrafficLightEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onLaneChangeLeftEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onLaneChangeRightEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onAvoidanceLeftEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onAvoidanceRightEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onPullOverEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
+  void onPullOutEnableService(
+    const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
 
   void onStatus(
     const CooperateStatusArray::ConstSharedPtr msg,
@@ -92,6 +121,33 @@ private:
   rclcpp::Client<CooperateCommands>::SharedPtr avoidance_right_cli_;
   rclcpp::Client<CooperateCommands>::SharedPtr pull_over_cli_;
   rclcpp::Client<CooperateCommands>::SharedPtr pull_out_cli_;
+
+  /* service */
+  rclcpp::Service<AutoMode>::SharedPtr blind_spot_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr crosswalk_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr detection_area_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr intersection_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr no_stopping_area_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr traffic_light_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr lane_change_left_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr lane_change_right_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr avoidance_left_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr avoidance_right_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr pull_over_enable_srv_;
+  rclcpp::Service<AutoMode>::SharedPtr pull_out_enable_srv_;
+
+  bool blind_spot_enabled_;
+  bool crosswalk_enabled_;
+  bool detection_area_enabled_;
+  bool intersection_enabled_;
+  bool no_stopping_area_enabled_;
+  bool traffic_light_enabled_;
+  bool lane_change_left_enabled_;
+  bool lane_change_right_enabled_;
+  bool avoidance_left_enabled_;
+  bool avoidance_right_enabled_;
+  bool pull_over_enabled_;
+  bool pull_out_enabled_;
 
   std::string BEHAVIOR_PLANNING_NAMESPACE =
     "/planning/scenario_planning/lane_driving/behavior_planning";

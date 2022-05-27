@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    blind_spot: true
+    crosswalk: true
+    detection_area: true
+    intersection: true
+    no_stopping_area: true
+    traffic_light: true
+    lane_change_left: true
+    lane_change_right: true
+    avoidance_left: true
+    avoidance_right: true
+    pull_over: true
+    pull_out: true
