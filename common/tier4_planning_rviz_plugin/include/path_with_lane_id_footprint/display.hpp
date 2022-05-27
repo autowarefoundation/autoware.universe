@@ -82,8 +82,10 @@ protected:
   std::shared_ptr<VehicleInfo> vehicle_info_;
   std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
 
-  using LaneIdObject = std::pair<std::unique_ptr<Ogre::SceneNode>, std::unique_ptr<rviz_rendering::MovableText>>;
+  using LaneIdObject =
+    std::pair<std::unique_ptr<Ogre::SceneNode>, std::unique_ptr<rviz_rendering::MovableText>>;
   std::vector<LaneIdObject> lane_id_obj_ptrs_;
+
 private:
   autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr last_msg_ptr_;
   bool validateFloats(
