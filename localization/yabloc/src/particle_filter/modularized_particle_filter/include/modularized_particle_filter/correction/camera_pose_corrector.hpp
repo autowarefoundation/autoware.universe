@@ -63,7 +63,7 @@ private:
   cv::Point2f toCvPoint(const Eigen::Vector3f & p);
   cv::Mat visualizePairs(const std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> & pairs);
 
-  float computeScore(
+  std::pair<float, std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>>> computeScore(
     const pcl::PointCloud<pcl::PointNormal> & lsd_cloud,
     std::unordered_map<int, std::vector<pcl::PointNormal>> & angle_and_lines);
 };

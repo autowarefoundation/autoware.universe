@@ -63,6 +63,7 @@ private:
     max = std::max(max, min + 1e-7f);
     auto boundWeight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
 
+    RCLCPP_INFO_STREAM(get_logger(), "min: " << min << " max: " << max);
     int id = 0;
     for (const mpf_msgs::msg::Particle & p : msg.particles) {
       visualization_msgs::msg::Marker marker;

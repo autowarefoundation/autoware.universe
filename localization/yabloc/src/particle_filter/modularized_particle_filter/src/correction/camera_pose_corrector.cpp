@@ -62,6 +62,21 @@ Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
   return t * q;
 }
 
+pcl::PointCloud<pcl::PointNormal> transformCloud(
+  const pcl::PointCloud<pcl::PointNormal> & cloud, const Eigen::Affine3f & transform)
+{
+  pcl::PointCloud<pcl::PointNormal> dst;
+  dst.reserve(cloud.size());
+  for (const pcl::PointNormal & pn : cloud) {
+    pcl::PointNormal dst_pn;
+    dst_pn.getVector3fMap() = transform * pn.getVector3fMap();
+    dst_pn.getNormalVector3fMap() = transform * pn.getNormalVector3fMap();
+    dst.push_back(dst_pn);
+  }
+
+  return dst;
+}
+
 cv::Mat CameraPoseCorrector::dilateImage(const cv::Mat & image)
 {
   cv::Mat dst;
@@ -99,6 +114,16 @@ void CameraPoseCorrector::synchroCallback(
 
   // Compute particles' score
   ParticleArray weighted_particles = particles;
+  // ParticleArray weighted_particles;
+  // for (int i = 0; i < 20; i++) {
+  //   for (int j = 0; j < 10; j++) {
+  //     modularized_particle_filter_msgs::msg::Particle p;
+  //     p.pose = ll2_msg.pose;
+  //     p.pose.position.x -= (i - 10);
+  //     p.pose.position.y -= (j - 5);
+  //     weighted_particles.particles.push_back(p);
+  //   }
+  // }
 
   // Classify LL2 segments by angle
   std::unordered_map<int, std::vector<pcl::PointNormal>> angle_and_lines;
@@ -111,12 +136,16 @@ void CameraPoseCorrector::synchroCallback(
   // Search nearest neighbor segments
   auto start = std::chrono::system_clock::now();
   std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> paired_segments;
+  cv::Mat pair_image;
+
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = base_transform.inverse() * pose2Affine(particle.pose);
-    pcl::PointCloud<pcl::PointNormal> transformed_lsd;
-    pcl::transformPointCloudWithNormals(lsd_cloud, transformed_lsd, transform);
-    particle.weight = computeScore(transformed_lsd, angle_and_lines);
-    particle.weight = 1;
+    pcl::PointCloud<pcl::PointNormal> transformed_lsd = transformCloud(lsd_cloud, transform);
+
+    pair_image = cloud2Image(transformed_lsd);
+    auto [a, b] = computeScore(transformed_lsd, angle_and_lines);
+    particle.weight = a;
+    paired_segments = b;
   }
   {
     auto dur = std::chrono::system_clock::now() - start;
@@ -125,7 +154,7 @@ void CameraPoseCorrector::synchroCallback(
       get_logger(), "time: " << ms << " ll2: " << ll2_cloud.size() << " lsd: " << lsd_cloud.size());
   }
 
-  cv::Mat pair_image = visualizePairs(paired_segments);
+  // cv::Mat pair_image = visualizePairs(paired_segments);
 
   // Build nice image
   cv::Mat match_image;
@@ -146,11 +175,14 @@ void CameraPoseCorrector::publishImage(const cv::Mat & image, const rclcpp::Time
   image_pub_->publish(*raw_image.toImageMsg());
 }
 
-float CameraPoseCorrector::computeScore(
+std::pair<float, std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>>>
+CameraPoseCorrector::computeScore(
   const pcl::PointCloud<pcl::PointNormal> & lsd_cloud,
   std::unordered_map<int, std::vector<pcl::PointNormal>> & angle_and_lines)
 {
   float score = 0;
+  std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> paired_segments;
+
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
     Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
     float l1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).norm();
@@ -179,7 +211,10 @@ float CameraPoseCorrector::computeScore(
         }
       }
     }
-    if (best_score < score_threshold_) score += 1.0f;
+    if (best_score < score_threshold_) {
+      score += 1.0f;
+      paired_segments.push_back({pn1, best_pn2});
+    }
   }
-  return score;
+  return {score, paired_segments};
 }
