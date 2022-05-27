@@ -29,7 +29,6 @@
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 
 #include <memory>
 #include <string>
@@ -102,8 +101,8 @@ private:
 
   void removeRTCStatus() override
   {
-      rtc_interface_left_.clearCooperateStatus();
-      rtc_interface_right_.clearCooperateStatus();
+    rtc_interface_left_.clearCooperateStatus();
+    rtc_interface_right_.clearCooperateStatus();
   }
 
   // data used in previous planning
