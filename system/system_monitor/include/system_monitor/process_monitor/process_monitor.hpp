@@ -27,6 +27,7 @@
 #include <boost/process.hpp>
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -123,6 +124,8 @@ protected:
   std::string top_output_;              //!< @brief output from top command
   bool is_top_error_;                   //!< @brief flag if an error occurs
   double elapsed_ms_;                   //!< @brief Execution time of top command
+  std::mutex mutex_;                    //!< @brief mutex for output from top command
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 };
 
 #endif  // SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_

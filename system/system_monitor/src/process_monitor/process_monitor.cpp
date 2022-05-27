@@ -33,7 +33,8 @@
 ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
 : Node("process_monitor", options),
   updater_(this),
-  num_of_procs_(declare_parameter<int>("num_of_procs", 5))
+  num_of_procs_(declare_parameter<int>("num_of_procs", 5)),
+  is_top_error_(false)
 {
   using namespace std::literals::chrono_literals;
 
@@ -56,18 +57,36 @@ ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
   }
 
   // Start timer to execute top command
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&ProcessMonitor::onTimer, this));
+  timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 1s, std::bind(&ProcessMonitor::onTimer, this), timer_callback_group_);
 }
 
 void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  std::string str = top_output_;
+  // thread-safe read
+  std::string str;
+  bool is_top_error;
+  double elapsed_ms;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    str = top_output_;
+    is_top_error = is_top_error_;
+    elapsed_ms = elapsed_ms_;
+  }
 
-  if (is_top_error_) {
+  if (is_top_error) {
     stat.summary(DiagStatus::ERROR, "top error");
     stat.add("top", str);
     setErrorContent(&load_tasks_, "top error", "top", str);
     setErrorContent(&memory_tasks_, "top error", "top", str);
+    return;
+  }
+
+  // If top still not running
+  if (str.empty()) {
+    // Send OK tentatively
+    stat.summary(DiagStatus::OK, "starting up");
     return;
   }
 
@@ -82,7 +101,7 @@ void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrappe
   // Get high memory processes
   getHighMemoryProcesses(str);
 
-  stat.addf("execution time", "%f ms", elapsed_ms_);
+  stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
 void ProcessMonitor::getTasksSummary(
@@ -304,7 +323,7 @@ void ProcessMonitor::setErrorContent(
 
 void ProcessMonitor::onTimer()
 {
-  is_top_error_ = false;
+  bool is_top_error = false;
 
   // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
@@ -317,17 +336,23 @@ void ProcessMonitor::onTimer()
   // Get processes
   bp::child c("top -bn1 -o %CPU -w 128", bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
+
   if (c.exit_code() != 0) {
-    is_top_error_ = true;
+    is_top_error = true;
     is_err >> os.rdbuf();
-    top_output_ = os.str();
-    return;
+  } else {
+    is_out >> os.rdbuf();
   }
 
-  is_out >> os.rdbuf();
-  top_output_ = os.str();
+  const double elapsed_ms = stop_watch.toc("execution_time");
 
-  elapsed_ms_ = stop_watch.toc("execution_time");
+  // thread-safe copy
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    top_output_ = os.str();
+    is_top_error_ = is_top_error;
+    elapsed_ms_ = elapsed_ms;
+  }
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
