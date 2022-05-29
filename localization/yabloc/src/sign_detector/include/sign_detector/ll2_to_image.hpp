@@ -34,6 +34,7 @@ private:
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
+  cv::Mat lut_;
 
   void poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped);
 
@@ -43,6 +44,8 @@ private:
     const geometry_msgs::msg::Pose & pose);
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
+
+  void makeDistanceImage(const cv::Mat & image);
 };
 
 #endif  // SIGN_DETECTOR__LL2_TO_IMAGE_HPP_

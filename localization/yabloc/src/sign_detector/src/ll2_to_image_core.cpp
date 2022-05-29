@@ -1,6 +1,8 @@
 #include "sign_detector/ll2_to_image.hpp"
 #include "sign_detector/ll2_util.hpp"
 
+#include <opencv4/opencv2/highgui.hpp>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <cv_bridge/cv_bridge.h>
@@ -28,6 +30,11 @@ Ll2ImageConverter::Ll2ImageConverter()
     std::bind(&Ll2ImageConverter::mapCallback, this, _1));
   sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     pose_topic, 10, std::bind(&Ll2ImageConverter::poseCallback, this, _1));
+
+  lut_ = cv::Mat(1, 256, CV_8UC1);
+  for (int i = 0; i < 256; i++) {
+    lut_.at<uchar>(0, i) = 256 * std::pow(i / 256.f, 3.0f);
+  }
 }
 
 void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped)
@@ -98,6 +105,8 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
   publishImage(image, pose_stamped.header.stamp);
   publishCloud(near_linestring, pose_stamped.header.stamp, pose_stamped.pose);
 
+  makeDistanceImage(image);
+
   std_msgs::msg::Float32 height;
   height.data = pose.z();
   pub_height_->publish(height);
@@ -163,4 +172,20 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
       from = p;
     }
   }
+}
+
+void Ll2ImageConverter::makeDistanceImage(const cv::Mat & image)
+{
+  cv::Mat distance, gray;
+  std::vector<cv::Mat> rgb;
+  cv::split(image, rgb);
+  gray = cv::Mat::ones(image.size(), CV_8UC1) * 255 - rgb[1];
+  cv::distanceTransform(gray, distance, cv::DIST_L2, 3);
+  cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
+  distance.convertTo(distance, CV_8UC1, -2.55, 255);
+
+  cv::LUT(distance, lut_, distance);
+  cv::applyColorMap(distance, distance, cv::COLORMAP_JET);
+  cv::imshow("distance", distance);
+  cv::waitKey(1);
 }
