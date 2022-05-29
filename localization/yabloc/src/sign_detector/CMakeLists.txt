@@ -81,6 +81,7 @@ ADD_EXE(TARGET optflow_node         SRC src/optflow_*.cpp         INC           
 ADD_EXE(TARGET pose_to_path_node    SRC src/pose_to_path_node.cpp INC                LIB )
 ADD_EXE(TARGET imu_kf_node          SRC src/imu_kf_node.cpp       INC                LIB )
 ADD_EXE(TARGET particle_filter_node SRC src/particle_filter_*.cpp INC                LIB )
+ADD_EXE(TARGET mask_lsd_node SRC src/mask_lsd_*.cpp INC                LIB util)
 
 # ===================================================
 # Python
