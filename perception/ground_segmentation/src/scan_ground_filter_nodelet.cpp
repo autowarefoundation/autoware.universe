@@ -170,6 +170,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
       // check points which is far enough from previous point
       if (global_slope > global_slope_max_angle) {
         p->point_state = PointLabel::NON_GROUND;
+        calculate_slope = false;
       } else if (
         (prev_point_label == PointLabel::NON_GROUND) &&
         (std::abs(height_from_obj) >= split_height_distance_)) {
