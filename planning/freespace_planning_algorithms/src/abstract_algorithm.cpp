@@ -132,8 +132,8 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   const auto base_theta = tf2::getYaw(base_pose.orientation);
 
   // Convert each point to index and check if the node is Obstacle
-  for (double x = back; x <= front; x += costmap_.info.resolution) {
-    for (double y = right; y <= left; y += costmap_.info.resolution) {
+  for (double x = back; x <= front + costmap_.info.resolution; x += costmap_.info.resolution) {
+    for (double y = right; y <= left + costmap_.info.resolution; y += costmap_.info.resolution) {
       // Calculate offset in rotated frame
       const double offset_x = std::cos(base_theta) * x - std::sin(base_theta) * y;
       const double offset_y = std::sin(base_theta) * x + std::cos(base_theta) * y;
