@@ -25,6 +25,17 @@ public:
     using std::placeholders::_1;
     using std::placeholders::_2;
 
+    declare_parameter("offset");
+    rclcpp::Parameter offset_param;
+    this->get_parameter("offset", offset_param);
+    if (offset_param.as_double_array().size() == 3) {
+      auto v = offset_param.as_double_array();
+      for (int i = 0; i < 3; i++) gnss_to_baselink_(i) = v[i];
+    } else {
+      gnss_to_baselink_.setZero();
+    }
+    std::cout << "offset: " << gnss_to_baselink_.transpose() << std::endl;
+
     sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
       "/sensing/camera/traffic_light/camera_info", 10, std::bind(&MaskLsd::infoCallback, this, _1));
 
@@ -56,6 +67,7 @@ private:
 
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  Eigen::Vector3f gnss_to_baselink_;
 
   void infoCallback(const sensor_msgs::msg::CameraInfo & msg)
   {

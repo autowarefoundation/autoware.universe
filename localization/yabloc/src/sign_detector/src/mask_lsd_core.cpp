@@ -67,6 +67,7 @@ void MaskLsd::overlayLl2(
   Eigen::Matrix3f K;
   cv::cv2eigen(scaled_intrinsic.value(), K);
 
+  cv::Mat ll2_image = cv::Mat::zeros(lsd_image.size(), CV_8UC3);
   for (const pcl::PointNormal & pn : ll2) {
     Eigen::Vector3f p1 = pn.getVector3fMap();
     Eigen::Vector3f p2 = pn.getNormalVector3fMap();
@@ -78,8 +79,10 @@ void MaskLsd::overlayLl2(
     u = u / u.z();
     v = v / v.z();
     cv::line(
-      lsd_image, cv::Point2f(u.x(), u.y()), cv::Point2f(v.x(), v.y()), cv::Scalar(0, 255, 255), 3);
+      ll2_image, cv::Point2f(u.x(), u.y()), cv::Point2f(v.x(), v.y()), cv::Scalar(0, 255, 255), 50);
   }
+
+  cv::addWeighted(lsd_image, 0.8f, ll2_image, 0.4f, 1, lsd_image);
 }
 
 void MaskLsd::listenExtrinsicTf(const std::string & frame_id)
@@ -97,8 +100,9 @@ void MaskLsd::listenExtrinsicTf(const std::string & frame_id)
     q.x() = ts.transform.rotation.x;
     q.y() = ts.transform.rotation.y;
     q.z() = ts.transform.rotation.z;
+
     camera_extrinsic_ = Eigen::Affine3f::Identity();
-    camera_extrinsic_->translation() = p;
+    camera_extrinsic_->translation() = p + gnss_to_baselink_;
     camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
   } catch (tf2::TransformException & ex) {
   }
