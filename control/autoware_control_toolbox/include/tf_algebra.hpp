@@ -24,17 +24,22 @@
 #include <iomanip>
 #include <limits>
 #include <boost/optional.hpp>
-#include "utils_act/act_utils_eigen.hpp"
-#include "utils_act/act_utils.hpp"
-#include "visibility_control.hpp"
 
 // BOOST POLYNOMIAL
 #include <boost/math/tools/polynomial.hpp>
 
+// Library headers
+#include "utils_act/act_utils_eigen.hpp"
+#include "utils_act/act_utils.hpp"
+#include "visibility_control.hpp"
+#include "utils_act/act_definitions.hpp"
+#include "utils_act/transfer_functions.hpp"
+#include "utils_act/state_space.hpp"
+
 
 namespace ns_control_toolbox
 {
-	double constexpr EPS = std::numeric_limits<double>::epsilon();
+
 
 	//using namespace boost::math;
 	using boost_polynomial = boost::math::tools::polynomial<double>; // for polynomial

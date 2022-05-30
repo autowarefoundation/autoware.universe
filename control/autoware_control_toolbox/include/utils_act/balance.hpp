@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-#include <string>
-#include <algorithm>
 
-#include "utils_act/act_utils.hpp"
-#include "autoware_control_toolbox.hpp"
+#ifndef AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP
+#define AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP
+
+#include "act_utils_eigen.hpp"
+#include "act_utils.hpp"
 
 
+void balance(Eigen::MatrixXd& A);
 
+
+#endif //AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP
