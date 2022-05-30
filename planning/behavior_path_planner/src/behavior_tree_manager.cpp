@@ -53,12 +53,10 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
   const std::string & name = module->name();
   const auto status = std::make_shared<SceneModuleStatus>(name);
 
-  // simple condition node for "isRequested" and "isReady"
+  // simple condition node for "isRequested"
   bt_factory_.registerSimpleCondition(name + "_Request", [module, status](BT::TreeNode &) {
     return isExecutionRequested(module, status);
   });
-  bt_factory_.registerSimpleCondition(
-    name + "_Ready", [module, status](BT::TreeNode &) { return isExecutionReady(module, status); });
 
   // simple action node for "planCandidate"
   auto bt_node =
@@ -77,13 +75,6 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
 
   scene_modules_.push_back(module);
   modules_status_.push_back(status);
-}
-
-void BehaviorTreeManager::registerForceApproval(const std::string & name)
-{
-  bt_factory_.registerSimpleCondition(name + "_ForceApproval", [this, name](BT::TreeNode &) {
-    return BehaviorTreeManager::checkForceApproval(name);
-  });
 }
 
 BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData> & data)

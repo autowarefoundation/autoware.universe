@@ -29,16 +29,6 @@ BT::NodeStatus isExecutionRequested(
   return ret ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
-BT::NodeStatus isExecutionReady(
-  const std::shared_ptr<const SceneModuleInterface> p,
-  const std::shared_ptr<SceneModuleStatus> & status)
-{
-  const auto ret = p->isExecutionReady();
-  status->is_ready = ret;
-  RCLCPP_DEBUG_STREAM(p->getLogger(), "name = " << p->name() << ", result = " << ret);
-  return ret ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
-}
-
 SceneModuleBTNodeInterface::SceneModuleBTNodeInterface(
   const std::string & name, const BT::NodeConfiguration & config,
   const std::shared_ptr<SceneModuleInterface> & scene_module,
