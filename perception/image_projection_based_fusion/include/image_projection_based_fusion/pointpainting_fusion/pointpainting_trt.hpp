@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_TRT_HPP_
-#define IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_TRT_HPP_
+#ifndef IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_
+#define IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_
 
 #include <image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp>
 #include <lidar_centerpoint/centerpoint_trt.hpp>
@@ -40,4 +40,4 @@ protected:
 };
 }  // namespace centerpoint
 
-#endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_TRT_HPP_
+#endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_

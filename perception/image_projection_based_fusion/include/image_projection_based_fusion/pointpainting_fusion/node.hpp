@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING__NODE_HPP_
-#define IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING__NODE_HPP_
+#ifndef IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_
+#define IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_
 
 #include "image_projection_based_fusion/fusion_node.hpp"
 #include "image_projection_based_fusion/pointpainting_fusion/pointpainting_trt.hpp"
@@ -60,4 +60,4 @@ protected:
 
 }  // namespace image_projection_based_fusion
 
-#endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING__NODE_HPP_
+#endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_

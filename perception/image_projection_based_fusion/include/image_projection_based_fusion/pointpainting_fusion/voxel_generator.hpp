@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMAGE_PROJECTION_BASED_FUSION__VOXEL_GENERATOR_HPP_
-#define IMAGE_PROJECTION_BASED_FUSION__VOXEL_GENERATOR_HPP_
+#ifndef IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_
+#define IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_
 
 #include <lidar_centerpoint/preprocess/voxel_generator.hpp>
 
@@ -30,4 +30,4 @@ public:
 };
 }  // namespace image_projection_based_fusion
 
-#endif  // IMAGE_PROJECTION_BASED_FUSION__VOXEL_GENERATOR_HPP_
+#endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_

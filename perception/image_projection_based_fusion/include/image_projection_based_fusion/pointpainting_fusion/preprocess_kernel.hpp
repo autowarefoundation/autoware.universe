@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMAGE_PROJECTION_BASED_FUSION__PREPROCESS_KERNEL_HPP_
-#define IMAGE_PROJECTION_BASED_FUSION__PREPROCESS_KERNEL_HPP_
+#ifndef IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__PREPROCESS_KERNEL_HPP_
+#define IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__PREPROCESS_KERNEL_HPP_
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -28,4 +28,4 @@ cudaError_t generateFeatures_launch(
 
 }  // namespace image_projection_based_fusion
 
-#endif  // IMAGE_PROJECTION_BASED_FUSION__PREPROCESS_KERNEL_HPP_
+#endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__PREPROCESS_KERNEL_HPP_

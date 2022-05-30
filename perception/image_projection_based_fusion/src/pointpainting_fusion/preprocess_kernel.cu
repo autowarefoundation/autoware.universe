@@ -29,6 +29,7 @@
  */
 
 #include "image_projection_based_fusion/pointpainting_fusion/preprocess_kernel.hpp"
+
 #include <stdexcept>
 // #include <lidar_centerpoint/utils.hpp>
 
@@ -83,7 +84,9 @@ __global__ void generateFeatures_kernel(
   }
 
   for (std::size_t i = 0; i < POINT_FEATURE_SIZE; ++i) {
-    pillarSM[pillar_idx_inBlock][point_idx][i] = voxel_features[POINT_FEATURE_SIZE * pillar_idx * MAX_POINT_IN_VOXEL_SIZE + POINT_FEATURE_SIZE * point_idx + i];
+    pillarSM[pillar_idx_inBlock][point_idx][i] = voxel_features
+      [POINT_FEATURE_SIZE * pillar_idx * MAX_POINT_IN_VOXEL_SIZE + POINT_FEATURE_SIZE * point_idx +
+       i];
   }
   __syncthreads();
 
@@ -92,7 +95,6 @@ __global__ void generateFeatures_kernel(
     atomicAdd(&(pillarSumSM[pillar_idx_inBlock].x), pillarSM[pillar_idx_inBlock][point_idx][0]);
     atomicAdd(&(pillarSumSM[pillar_idx_inBlock].y), pillarSM[pillar_idx_inBlock][point_idx][1]);
     atomicAdd(&(pillarSumSM[pillar_idx_inBlock].z), pillarSM[pillar_idx_inBlock][point_idx][2]);
-
   }
   __syncthreads();
 
@@ -155,14 +157,16 @@ __global__ void generateFeatures_kernel(
   __syncthreads();
 
   for (int i = 0; i < ENCODER_IN_FEATURE_SIZE; i++) {
-    int outputSMId = pillar_idx_inBlock * MAX_POINT_IN_VOXEL_SIZE * ENCODER_IN_FEATURE_SIZE + i * MAX_POINT_IN_VOXEL_SIZE + point_idx;
-    int outputId = pillar_idx * MAX_POINT_IN_VOXEL_SIZE * ENCODER_IN_FEATURE_SIZE + i * MAX_POINT_IN_VOXEL_SIZE + point_idx;
+    int outputSMId = pillar_idx_inBlock * MAX_POINT_IN_VOXEL_SIZE * ENCODER_IN_FEATURE_SIZE +
+                     i * MAX_POINT_IN_VOXEL_SIZE + point_idx;
+    int outputId = pillar_idx * MAX_POINT_IN_VOXEL_SIZE * ENCODER_IN_FEATURE_SIZE +
+                   i * MAX_POINT_IN_VOXEL_SIZE + point_idx;
     features[outputId] = ((float *)pillarOutSM)[outputSMId];
   }
 }
 
 cudaError_t generateFeatures_launch(
-const float * voxel_features, const float * voxel_num_points, const int * coords,
+  const float * voxel_features, const float * voxel_num_points, const int * coords,
   const std::size_t num_voxels, const std::size_t max_voxel_size, const float voxel_size_x,
   const float voxel_size_y, const float voxel_size_z, const float range_min_x,
   const float range_min_y, const float range_min_z, float * features, cudaStream_t stream)
