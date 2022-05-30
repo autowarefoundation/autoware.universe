@@ -51,7 +51,7 @@ ns_control_toolbox::tf2ss::tf2ss()
 }
 
 
-ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf)
+ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
 {
 
 	auto num = sys_tf.num();
@@ -70,10 +70,13 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf)
 	// Compute the system matrices.
 	computeSystemMatrices(num, den);
 
+	// Discretisize.
+	discretisize(Ts);
+
 }
 
 ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
-		const std::vector<double>& denominator)
+		const std::vector<double>& denominator, const double& Ts) : Ts_{ Ts }
 {
 	auto num = numerator;
 	auto den = denominator;
@@ -91,6 +94,8 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 	// Compute the system matrices.
 	computeSystemMatrices(num, den);
 
+	// Discretisize
+	discretisize(Ts);
 }
 
 
@@ -170,6 +175,7 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 		C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
 	}
 
+	// Discretisize the system.
 
 	bool debug = false;
 	if (debug)

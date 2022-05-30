@@ -25,6 +25,12 @@ int main()
 	ss_sys.discretisize(Ts);
 	ss_sys.print_discrete_system();
 
+	//
+	ns_utils::print("Discretization with a given Ts when constructing");
+	Ts = 0.05;
+	auto  sys_ss2 = ns_control_toolbox::tf2ss(tf_delay, Ts);
+	sys_ss2.print_discrete_system();
+
 
 	return 0;
 }
