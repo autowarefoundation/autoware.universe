@@ -19,8 +19,10 @@
 #include "act_utils_eigen.hpp"
 #include "act_utils.hpp"
 
-
-void balance(Eigen::MatrixXd& A);
+namespace ns_control_toolbox
+{
+	void balance(Eigen::MatrixXd& A);
+} // namespace ns_control_toolbox
 
 
 #endif //AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP

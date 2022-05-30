@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include "utils_act/balance.hpp"
+#include "utils_act/act_utils_eigen.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_definitions.hpp"
 
 /**
  * @brief Balances a matrix using the Lapack algorithms.
@@ -22,8 +25,71 @@
  * Numerical Recipes in C: The Art of Scientific Computing, Second Edition Balancing Chapter 11.
  * */
 
-void balance(Eigen::MatrixXd& A)
+void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 {
 
+	ns_utils::print("in balance eigen \n");
+
+	// get the size of the matrix.
+	auto const& nx = A.rows();
+	bool converged{ false };
+
+	while (!converged)
+	{
+		converged = true;
+
+		for (auto k = 0; k < nx; ++k)
+		{
+
+			// Compute row and column norms.
+			auto r = A.row(k).lpNorm<1>(); // instead of 1-norm, one can use other norms as well.
+			auto c = A.col(k).lpNorm<1>();
+
+			// auto s = std::pow(r, 1) + std::pow(c, 1);
+			auto&& s = r + c;
+			double f{ 1. };
+
+			if ((r > EPS) && (c > EPS))
+			{
+				while (c < r / RADIX)
+				{
+					c = c * RADIX;
+					r = r / RADIX;
+					f = f * RADIX;
+				}
+
+
+				while (c > r * RADIX)
+				{
+					c = c / RADIX;
+					r = r * RADIX;
+					f = f / RADIX;
+
+				}
+
+				// Convergence block.
+				if (c + r < 0.95 * s)
+				{
+					converged = true;
+
+					// Apply similarity transformation to the rows and cols.
+					A.col(k).noalias() = A.col(k) * f;
+					A.row(k).noalias() = A.row(k) / f;
+				}
+
+			}
+
+			else
+			{
+				// Apply similarity transformation to the rows and cols.
+				A.col(k).noalias() = A.col(k) * f;
+				A.row(k).noalias() = A.row(k) / f;
+			}
+
+		}
+
+
+	}
 
 }
+

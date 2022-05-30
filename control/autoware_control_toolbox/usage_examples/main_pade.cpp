@@ -20,7 +20,7 @@ int main()
 	auto ss_sys = ns_control_toolbox::tf2ss(tf_delay);
 	ss_sys.print();
 
-	// Test discretization and comprate with Matlab.
+	// Test discretization and compare with Matlab.
 	double Ts = 0.1;
 	ss_sys.discretisize(Ts);
 	ss_sys.print_discrete_system();
