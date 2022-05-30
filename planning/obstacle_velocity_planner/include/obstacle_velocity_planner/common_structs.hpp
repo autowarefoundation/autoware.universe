@@ -36,13 +36,13 @@ struct TargetObstacle
 {
   TargetObstacle(
     const rclcpp::Time & arg_time_stamp, const PredictedObject & object,
-    const geometry_msgs::msg::Point & arg_collision_point)
+    const double aligned_velocity, const geometry_msgs::msg::Point & arg_collision_point)
   {
     time_stamp = arg_time_stamp;
     orientation_reliable = true;
     pose = object.kinematics.initial_pose_with_covariance.pose;
     velocity_reliable = true;
-    velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    velocity = aligned_velocity;
     is_classified = true;
     classification = object.classification.at(0);
     shape = object.shape;

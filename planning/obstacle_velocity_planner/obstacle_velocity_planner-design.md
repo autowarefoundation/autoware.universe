@@ -37,6 +37,37 @@ Design for the following functions is defined here.
 - Obstacle stop planning
 - Adaptive cruise planning
 
+A data structure for cruise and stop planning is as follows.
+This planner data is created first, and then sent to the planning algorithm.
+
+```cpp
+struct ObstacleVelocityPlannerData
+{
+  rclcpp::Time current_time;
+  autoware_auto_planning_msgs::msg::Trajectory traj;
+  geometry_msgs::msg::Pose current_pose;
+  double current_vel;
+  double current_acc;
+  std::vector<TargetObstacle> target_obstacles;
+};
+```
+
+```cpp
+struct TargetObstacle
+{
+  rclcpp::Time time_stamp;
+  bool orientation_reliable;
+  geometry_msgs::msg::Pose pose;
+  bool velocity_reliable;
+  float velocity;
+  bool is_classified;
+  ObjectClassification classification;
+  Shape shape;
+  std::vector<PredictedPath> predicted_paths;
+  geometry_msgs::msg::Point collision_point;
+};
+```
+
 ### Obstacle candidates selection
 
 In this function, target obstacles for stopping or cruising are selected based on their pose and velocity.

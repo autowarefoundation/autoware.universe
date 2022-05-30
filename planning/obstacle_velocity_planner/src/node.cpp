@@ -48,18 +48,30 @@ size_t findExtendedNearestIndex(
   return tier4_autoware_utils::findNearestIndex(traj.points, pose.position);
 }
 
-Trajectory trimTrajectoryFrom(
-  const Trajectory & input, const geometry_msgs::msg::Pose & pose, const double max_dist,
-  const double max_yaw)
+Trajectory trimTrajectoryFrom(const Trajectory & input, const double nearest_idx)
 {
   Trajectory output{};
 
-  const size_t nearest_idx = findExtendedNearestIndex(input, pose, max_dist, max_yaw);
   for (size_t i = nearest_idx; i < input.points.size(); ++i) {
     output.points.push_back(input.points.at(i));
   }
 
   return output;
+}
+
+bool isFrontObstacle(
+  const Trajectory & traj, const size_t ego_idx, const geometry_msgs::msg::Point & obj_pos)
+{
+  size_t obj_idx = tier4_autoware_utils::findNearestSegmentIndex(traj.points, obj_pos);
+
+  const double ego_to_obj_distance =
+    tier4_autoware_utils::calcSignedArcLength(traj.points, ego_idx, obj_idx);
+
+  if (obj_idx == 0 && ego_to_obj_distance < 0) {
+    return false;
+  }
+
+  return true;
 }
 
 TrajectoryPoint calcLinearPoint(
@@ -135,6 +147,22 @@ bool isAngleAlignedWithTrajectory(
 
   const bool is_aligned = std::abs(diff_yaw) <= threshold_angle;
   return is_aligned;
+}
+
+double calcAlignedObstacleVelocity(
+  const PredictedObject & predicted_object, const Trajectory & trajectory)
+{
+  const auto & object_pos = predicted_object.kinematics.initial_pose_with_covariance.pose.position;
+  const auto & object_vel =
+    predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
+
+  const size_t object_idx = tier4_autoware_utils::findNearestIndex(trajectory.points, object_pos);
+
+  const double object_yaw =
+    tf2::getYaw(predicted_object.kinematics.initial_pose_with_covariance.pose.orientation);
+  const double traj_yaw = tf2::getYaw(trajectory.points.at(object_idx).pose.orientation);
+
+  return object_vel * std::cos(object_yaw - traj_yaw);
 }
 }  // namespace
 
@@ -411,9 +439,11 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
 {
   const auto time_stamp = rclcpp::Time(predicted_objects.header.stamp);
 
-  // calculate decimated trajectory
-  const auto trimmed_traj = trimTrajectoryFrom(
+  const size_t ego_idx = findExtendedNearestIndex(
     traj, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+
+  // calculate decimated trajectory
+  const auto trimmed_traj = trimTrajectoryFrom(traj, ego_idx);
   const auto decimated_traj =
     decimateTrajectory(trimmed_traj, obstacle_filtering_param_.decimate_trajectory_step_length);
   if (decimated_traj.points.size() < 2) {
@@ -440,6 +470,13 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
     const auto & object_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
     const auto & object_velocity =
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
+
+    const bool is_front_obstacle = isFrontObstacle(traj, ego_idx, object_pose.position);
+    if (!is_front_obstacle) {
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), is_showing_debug_info_, "Ignore obstacles since its not front obstacle.");
+      continue;
+    }
 
     // rough detection area filtering without polygons
     const double dist_from_obstacle_to_traj = [&]() {
@@ -520,8 +557,10 @@ std::vector<TargetObstacle> ObstacleVelocityPlannerNode::filterObstacles(
     }
 
     // convert to obstacle type
-    const auto target_obstacle =
-      TargetObstacle(time_stamp, predicted_object, nearest_collision_point);
+    const double trajectory_aligned_obstacle_velocity =
+      calcAlignedObstacleVelocity(predicted_object, traj);
+    const auto target_obstacle = TargetObstacle(
+      time_stamp, predicted_object, trajectory_aligned_obstacle_velocity, nearest_collision_point);
     target_obstacles.push_back(target_obstacle);
   }
 
