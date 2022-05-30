@@ -203,10 +203,10 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_outOfGrid)
   grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
-  double maximum_height_thres = 0.99;
-  double minimum_lidar_height_thres = 0;
-  double grid_min_value = 0;
-  double grid_max_value = 1;
+  const double maximum_height_thres = 0.99;
+  const double minimum_lidar_height_thres = 0;
+  const double grid_min_value = 0;
+  const double grid_max_value = 1;
 
   std::string gridmap_layer_name = "points";
   grid_map::Matrix costmap_data = point2costmap.makeCostmapFromPoints(
