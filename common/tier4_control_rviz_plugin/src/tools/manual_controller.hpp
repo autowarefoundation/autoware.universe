@@ -14,32 +14,32 @@
 //  limitations under the License.
 //
 
-#ifndef AUTOWARE_STATE_PANEL_HPP_
-#define AUTOWARE_STATE_PANEL_HPP_
+#ifndef TOOLS__MANUAL_CONTROLLER_HPP_
+#define TOOLS__MANUAL_CONTROLLER_HPP_
 
+#include <QDial>
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QDial>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
-#include <tier4_control_msgs/msg/gate_mode.hpp>
-#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
-#include <tier4_external_api_msgs/srv/engage.hpp>
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
+#include <tier4_external_api_msgs/srv/engage.hpp>
 
 namespace rviz_plugins
 {
-using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
-using tier4_control_msgs::msg::GateMode;
 using geometry_msgs::msg::Twist;
+using tier4_control_msgs::msg::GateMode;
 using EngageSrv = tier4_external_api_msgs::srv::Engage;
 using autoware_auto_vehicle_msgs::msg::Engage;
 using autoware_auto_vehicle_msgs::msg::GearReport;
@@ -75,8 +75,7 @@ protected:
   rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_command_;
   rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
   rclcpp::Client<EngageSrv>::SharedPtr client_engage_;
-rclcpp::Subscription<GearReport>::SharedPtr sub_gear_;
-
+  rclcpp::Subscription<GearReport>::SharedPtr sub_gear_;
 
   double criuse_velocity_{0.0};
   double steering_angle_{0.0};
@@ -91,12 +90,12 @@ rclcpp::Subscription<GearReport>::SharedPtr sub_gear_;
   QPushButton * enable_button_ptr_;
   QPushButton * cruise_velocity_button_ptr_;
   QSpinBox * cruise_velocity_input_;
-  QDial * steering_slider_ptr_; 
-  QLabel * steering_angle_ptr_; 
+  QDial * steering_slider_ptr_;
+  QLabel * steering_angle_ptr_;
 
   bool current_engage_;
 };
 
 }  // namespace rviz_plugins
 
-#endif  // AUTOWARE_STATE_PANEL_HPP_
+#endif  // TOOLS__MANUAL_CONTROLLER_HPP_

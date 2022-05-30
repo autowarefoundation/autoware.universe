@@ -18,8 +18,8 @@
 
 #include <QHBoxLayout>
 #include <QString>
-#include <QVBoxLayout>
 #include <QTimer>
+#include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
 
 #include <memory>
@@ -33,34 +33,34 @@ ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent
 {
   auto * state_layout = new QHBoxLayout;
   {
-  // Enable Button
-  enable_button_ptr_ = new QPushButton("Enable Manual Control");
-  connect(enable_button_ptr_, SIGNAL(clicked()), SLOT(onClickEnableButton()));
-  state_layout->addWidget(enable_button_ptr_);
+    // Enable Button
+    enable_button_ptr_ = new QPushButton("Enable Manual Control");
+    connect(enable_button_ptr_, SIGNAL(clicked()), SLOT(onClickEnableButton()));
+    state_layout->addWidget(enable_button_ptr_);
 
-  // Gate Mode
-  auto * gate_prefix_label_ptr = new QLabel("GATE: ");
-  gate_prefix_label_ptr->setAlignment(Qt::AlignRight);
-  gate_mode_label_ptr_ = new QLabel("INIT");
-  gate_mode_label_ptr_->setAlignment(Qt::AlignCenter);
-  state_layout->addWidget(gate_prefix_label_ptr);
-  state_layout->addWidget(gate_mode_label_ptr_);
+    // Gate Mode
+    auto * gate_prefix_label_ptr = new QLabel("GATE: ");
+    gate_prefix_label_ptr->setAlignment(Qt::AlignRight);
+    gate_mode_label_ptr_ = new QLabel("INIT");
+    gate_mode_label_ptr_->setAlignment(Qt::AlignCenter);
+    state_layout->addWidget(gate_prefix_label_ptr);
+    state_layout->addWidget(gate_mode_label_ptr_);
 
-  // Engage Status
-  auto * engage_prefix_label_ptr = new QLabel("Engage: ");
-  engage_prefix_label_ptr->setAlignment(Qt::AlignRight);
-  engage_status_label_ptr_ = new QLabel("INIT");
-  engage_status_label_ptr_->setAlignment(Qt::AlignCenter);
-  state_layout->addWidget(engage_prefix_label_ptr);
-  state_layout->addWidget(engage_status_label_ptr_);
+    // Engage Status
+    auto * engage_prefix_label_ptr = new QLabel("Engage: ");
+    engage_prefix_label_ptr->setAlignment(Qt::AlignRight);
+    engage_status_label_ptr_ = new QLabel("INIT");
+    engage_status_label_ptr_->setAlignment(Qt::AlignCenter);
+    state_layout->addWidget(engage_prefix_label_ptr);
+    state_layout->addWidget(engage_status_label_ptr_);
 
-  // Gear
-  auto * gear_prefix_label_ptr = new QLabel("GEAR: ");
-  gear_prefix_label_ptr->setAlignment(Qt::AlignRight);
-  gear_label_ptr_ = new QLabel("INIT");
-  gear_label_ptr_->setAlignment(Qt::AlignCenter);
-  state_layout->addWidget(gear_prefix_label_ptr);
-  state_layout->addWidget(gear_label_ptr_);
+    // Gear
+    auto * gear_prefix_label_ptr = new QLabel("GEAR: ");
+    gear_prefix_label_ptr->setAlignment(Qt::AlignRight);
+    gear_label_ptr_ = new QLabel("INIT");
+    gear_label_ptr_->setAlignment(Qt::AlignCenter);
+    state_layout->addWidget(gear_prefix_label_ptr);
+    state_layout->addWidget(gear_label_ptr_);
   }
 
   auto * cruise_velocity_layout = new QHBoxLayout();
@@ -103,32 +103,32 @@ void ManualController::update()
   AckermannControlCommand ackermann;
   {
     ackermann.lateral.steering_tire_angle = steering_angle_;
-    ackermann.longitudinal.speed= criuse_velocity_;
-    if(current_acceleration_){
+    ackermann.longitudinal.speed = criuse_velocity_;
+    if (current_acceleration_) {
       /**
        * @brief Calculate desired acceleration by simple BackSteppingControl
        *  V = 0.5*(v-v_des)^2 >= 0
        *  D[V] = (D[v] - a_des)*(v-v_des) <=0
        *  a_des = k_const *(v - v_des) + a (k < 0 )
        */
-      const double k =  - 0.05;
+      const double k = -0.05;
       const double v = current_velocity_;
       const double v_des = criuse_velocity_;
       const double a = *current_acceleration_;
-      const double a_des = k*(v-v_des) + a;
-      ackermann.longitudinal.acceleration= std::clamp(a_des, -0.4, 0.4);
+      const double a_des = k * (v - v_des) + a;
+      ackermann.longitudinal.acceleration = std::clamp(a_des, -0.4, 0.4);
       // std::cout<<"a des: "<<a_des<<" a: "<<a<<" k: "<<k*(v-v_des)<<std::endl;
     }
   }
   GearCommand gear_cmd;
   {
-    const double eps =0.001;
-    if(ackermann.longitudinal.speed>eps){
+    const double eps = 0.001;
+    if (ackermann.longitudinal.speed > eps) {
       gear_cmd.command = GearCommand::DRIVE;
-    } else if(ackermann.longitudinal.speed < -eps) {
-      gear_cmd.command=GearCommand::REVERSE;
-    } else{
-      gear_cmd.command=GearCommand::PARK;
+    } else if (ackermann.longitudinal.speed < -eps) {
+      gear_cmd.command = GearCommand::REVERSE;
+    } else {
+      gear_cmd.command = GearCommand::PARK;
     }
   }
   pub_control_command_->publish(ackermann);
@@ -138,7 +138,8 @@ void ManualController::update()
 void ManualController::onManualSteering()
 {
   steering_angle_ = steering_slider_ptr_->sliderPosition() * M_PI / 180.0;
-  const QString steering_string = QString::fromStdString(std::to_string(steering_angle_*180.0 / M_PI));
+  const QString steering_string =
+    QString::fromStdString(std::to_string(steering_angle_ * 180.0 / M_PI));
   steering_angle_ptr_->setText(steering_string);
 }
 
@@ -155,9 +156,8 @@ void ManualController::onInitialize()
     "/control/current_gate_mode", 10, std::bind(&ManualController::onGateMode, this, _1));
 
   sub_velocity_ = raw_node_->create_subscription<VelocityReport>(
-    "/vehicle/status/velocity_status", 1,
-    std::bind(&ManualController::onVelocity, this, _1));
-  
+    "/vehicle/status/velocity_status", 1, std::bind(&ManualController::onVelocity, this, _1));
+
   sub_engage_ = raw_node_->create_subscription<Engage>(
     "/api/autoware/get/engage", 10, std::bind(&ManualController::onEngageStatus, this, _1));
 
@@ -167,13 +167,12 @@ void ManualController::onInitialize()
   client_engage_ = raw_node_->create_client<EngageSrv>(
     "/api/autoware/set/engage", rmw_qos_profile_services_default);
 
-  pub_gate_mode_ = raw_node_->create_publisher<GateMode>(
-    "/control/gate_mode_cmd", rclcpp::QoS(1));
+  pub_gate_mode_ = raw_node_->create_publisher<GateMode>("/control/gate_mode_cmd", rclcpp::QoS(1));
 
   pub_control_command_ = raw_node_->create_publisher<AckermannControlCommand>(
     "/external/selected/control_cmd", rclcpp::QoS(1));
 
-  pub_gear_cmd_ = raw_node_->create_publisher<GearCommand>("/external/selected/gear_cmd", 1); 
+  pub_gear_cmd_ = raw_node_->create_publisher<GearCommand>("/external/selected/gear_cmd", 1);
 }
 
 void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
@@ -198,12 +197,12 @@ void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::Const
 void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
 {
   current_engage_ = msg->engage;
-  if(current_engage_){
+  if (current_engage_) {
     engage_status_label_ptr_->setText(QString::fromStdString("Ready"));
     engage_status_label_ptr_->setStyleSheet("background-color: #FFFF00;");
-  } else{
-      engage_status_label_ptr_->setText(QString::fromStdString("Not Ready"));
-      engage_status_label_ptr_->setStyleSheet("background-color: #00FF00;");
+  } else {
+    engage_status_label_ptr_->setText(QString::fromStdString("Not Ready"));
+    engage_status_label_ptr_->setStyleSheet("background-color: #00FF00;");
   }
 }
 
@@ -211,9 +210,10 @@ void ManualController::onVelocity(const VelocityReport::ConstSharedPtr msg)
 {
   // convert velocity-report to twist-stamped
   current_velocity_ = msg->longitudinal_velocity;
-  if(previous_velocity_){
-    const double dt =(rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_stamp_)).seconds();
-    current_acceleration_ = std::make_unique<double>((current_velocity_- *previous_velocity_) / dt);
+  if (previous_velocity_) {
+    const double dt = (rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_stamp_)).seconds();
+    current_acceleration_ =
+      std::make_unique<double>((current_velocity_ - *previous_velocity_) / dt);
   }
   previous_velocity_ = std::make_unique<double>(msg->longitudinal_velocity);
   prev_stamp_ = rclcpp::Time(msg->header.stamp);
@@ -253,7 +253,7 @@ void ManualController::onClickEnableButton()
       return;
     }
     client_engage_->async_send_request(
-      req, [this]([[maybe_unused]]rclcpp::Client<EngageSrv>::SharedFuture result) {});
+      req, [this]([[maybe_unused]] rclcpp::Client<EngageSrv>::SharedFuture result) {});
   }
 }
 
