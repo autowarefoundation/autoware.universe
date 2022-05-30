@@ -1,60 +1,41 @@
 /**:
   ros__parameters:
-    polygon_vertices:
-      # [
-      #   0.0,
-      #   -23.916,
-      #   0.21031,
-      #   -10.228,
-      #   23.8108,
-      #   -6.61647,
-      #   10.8577,
-      #   -2.18663,
-      #   14.7159,
-      #   21.3748,
-      #   6.50012,
-      #   10.4246,
-      #   -14.7159,
-      #   21.3748,
-      #   -6.8404,
-      #   10.1773,
-      #   -23.8108,
-      #   -6.61647,
-      #   -10.7277,
-      #   -2.58666,
-      # ] Pentagram
+    polygon_vertices: 
+      # This is the coordinates of polygon vertices
+      # The first two numbers are the horizontal and vertical coordinates of the first point respectively
+      # Axis directions are as same as base_link
       [
-        0.815,
         -1.03,
         0.815,
         2.0,
-        1.115,
+        0.815, 
         1.9,
         1.115,
         2.1,
-        1.015,
+        1.115, 
         2.2,
         1.015,
         3.0,
-        0.815,
+        1.015, 
         3.2,
         0.815,
         3.74,
-        -0.815,
+        0.815, 
         3.74,
         -0.815,
         3.2,
-        -1.015,
+        -0.815, 
         3.0,
         -1.015,
         2.2,
-        -1.115,
+        -1.015, 
         2.1,
         -1.115,
         1.9,
-        -0.815,
+        -1.115, 
         2.0,
         -0.815,
         -1.03,
-      ]
+        -0.815, 
+      ] # car
     will_visualize: true

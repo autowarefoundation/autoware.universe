@@ -44,8 +44,8 @@ PolygonRemoverComponent::PolygonRemoverComponent(const rclcpp::NodeOptions & opt
   };
   polygon_ = std::make_shared<geometry_msgs::msg::Polygon>();
   for (size_t i = 0UL; i < polygon_vertices_.size(); i += 2) {
-    auto p_y = static_cast<float>(polygon_vertices_.at(i));
-    auto p_x = static_cast<float>(polygon_vertices_.at(i + 1));
+    auto p_x = static_cast<float>(polygon_vertices_.at(i));
+    auto p_y = static_cast<float>(polygon_vertices_.at(i + 1));
     polygon_->points.emplace_back(make_point(p_x, p_y, 0.0F));
   }
   this->update_polygon(polygon_);
