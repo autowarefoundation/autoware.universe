@@ -127,12 +127,21 @@ ns_control_toolbox::tf2ss::tf2ss()
 		: A_{ Eigen::MatrixXd(1, 1) },
 		  B_{ Eigen::MatrixXd(1, 1) },
 		  C_{ Eigen::MatrixXd(1, 1) },
-		  D_{ Eigen::MatrixXd(1, 1) }
+		  D_{ Eigen::MatrixXd(1, 1) },
+		  Ad_{ Eigen::MatrixXd(1, 1) },
+		  Bd_{ Eigen::MatrixXd(1, 1) },
+		  Cd_{ Eigen::MatrixXd(1, 1) },
+		  Dd_{ Eigen::MatrixXd(1, 1) }
 {
 	A_.setIdentity();
 	B_.setIdentity();
 	C_.setIdentity();
 	D_.setZero();
+
+	Ad_.setIdentity();
+	Bd_.setIdentity();
+	Cd_.setIdentity();
+	Dd_.setZero();
 	// ns_eigen_utils::printEigenMat(A_);
 }
 
@@ -191,6 +200,12 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 	C_ = Eigen::MatrixXd::Zero(1, n_order);
 	B_ = Eigen::MatrixXd::Identity(n_order, 1);
 	D_ = Eigen::MatrixXd::Zero(1, 1);
+
+	// set discrete matrix sizes
+	Ad_.resize(n_order, n_order);
+	Bd_.resize(1, n_order);
+	Cd_.resize(n_order, 1);
+	Dd_.resize(1, 1);
 
 	// Zero padding the numerator.
 	auto num_of_zero = den.size() - num.size();
@@ -285,6 +300,48 @@ void ns_control_toolbox::tf2ss::print() const
 
 	ns_utils::print("D : \n");
 	ns_eigen_utils::printEigenMat(D_);
+}
+
+
+void ns_control_toolbox::tf2ss::print_discrete_system() const
+{
+
+	ns_utils::print("Ad : \n");
+	ns_eigen_utils::printEigenMat(Ad_);
+
+	ns_utils::print("Bd : \n");
+	ns_eigen_utils::printEigenMat(Bd_);
+
+	ns_utils::print("Cd : \n");
+	ns_eigen_utils::printEigenMat(Cd_);
+
+	ns_utils::print("Dd : \n");
+	ns_eigen_utils::printEigenMat(Dd_);
+}
+
+/**
+ * @brief Discretisize the continuous time state-space model using Tustin approximation.
+ * */
+void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
+{
+
+	auto&& n = A_.rows();
+
+	// take inverse:
+	auto const&& I = Eigen::MatrixXd::Identity(n, n);
+
+	auto const&& mat1_ATs = I - A_ * Ts / 2.;
+
+	auto const&& inv1_ATs = mat1_ATs.inverse();
+
+	Ad_ = inv1_ATs * (I + A_ * Ts / 2.);
+	Bd_ = inv1_ATs * B_ * Ts;
+	Cd_ = C_ * inv1_ATs;
+	Dd_ = D_ + C_ * Bd_ / 2.;
+
+	//	ns_utils::print("invA \n");
+	//	ns_eigen_utils::printEigenMat(inv1_ATs);
+
 }
 
 ns_control_toolbox::tf ns_control_toolbox::padecoeff(const double& Td, const size_t& order)
