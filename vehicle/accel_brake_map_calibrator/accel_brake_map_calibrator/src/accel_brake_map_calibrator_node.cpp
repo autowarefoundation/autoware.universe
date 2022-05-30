@@ -1092,7 +1092,7 @@ void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticS
 
   if (new_accel_mse_que_.size() < part_mse_que_size_ / 2) {
     // lack of data
-    stat.summary(level, msg); 
+    stat.summary(level, msg);
     calibration_status_pub_->publish(accel_brake_map_status);
     return;
   }

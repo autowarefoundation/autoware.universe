@@ -16,13 +16,16 @@
 # limitations under the License.
 
 import os
+
+from autoware_auto_vehicle_msgs.msg import VelocityReport
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
-
+from rclpy.qos import QoSReliabilityPolicy
 from tier4_vehicle_msgs.msg import ActuationStatusStamped
-from autoware_auto_vehicle_msgs.msg import VelocityReport
+
 
 class ActuationStatusPublisher(Node):
     def __init__(self):
@@ -33,7 +36,6 @@ class ActuationStatusPublisher(Node):
         qos_profile.history = QoSHistoryPolicy.KEEP_LAST
         qos_profile.durability = QoSDurabilityPolicy.VOLATILE
 
-
         self.pub = self.create_publisher(
             ActuationStatusStamped, "/vehicle/status/actuation_status", qos_profile
         )
@@ -41,7 +43,7 @@ class ActuationStatusPublisher(Node):
             VelocityReport, "/vehicle/status/velocity_status", self.callback, qos_profile
         )
 
-    def callback(self,msg):
+    def callback(self, msg):
         data = ActuationStatusStamped()
         data.header = msg.header
         data.status.accel_status = msg.longitudinal_velocity * 0.1
@@ -56,6 +58,7 @@ def main(args=None):
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()

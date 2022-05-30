@@ -23,7 +23,7 @@ install(
   scripts/view_plot.py
   scripts/new_accel_brake_map_server.py
   test/plot_csv_client_node.py
-  test/sim_actuation_status_publisher.py  
+  test/sim_actuation_status_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
