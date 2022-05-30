@@ -6,20 +6,21 @@ This package is to add manual controller from rviz plugin.
 
 ### Input
 
-| Name         | Type                              | Description                                                                                    |
-| ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `/control/current_gate_mode` | `tier4_control_msgs::msg::GateMode` | Current GATE mode |
+| Name                              | Type                                              | Description             |
+| --------------------------------- | ------------------------------------------------- | ----------------------- |
+| `/control/current_gate_mode`      | `tier4_control_msgs::msg::GateMode`               | Current GATE mode       |
 | `/vehicle/status/velocity_status` | `autoware_auto_vehicle_msgs::msg::VelocityReport` | Current velocity status |
-| `/api/autoware/get/engage` | `tier4_external_api_msgs::srv::Engage` | Getting Engage |
-| `/vehicle/status/gear_status` | `autoware_auto_vehicle_msgs::msg::GearReport` | The state of GEAR |
+| `/api/autoware/get/engage`        | `tier4_external_api_msgs::srv::Engage`            | Getting Engage          |
+| `/vehicle/status/gear_status`     | `autoware_auto_vehicle_msgs::msg::GearReport`     | The state of GEAR       |
 
 ### Output
 
-| Name         | Type                              | Description                                                                                    |
-| ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `/control/gate_mode_cmd` | `tier4_control_msgs::msg::GateMode` | GATE mode |
+| Name                             | Type                                                       | Description             |
+| -------------------------------- | ---------------------------------------------------------- | ----------------------- |
+| `/control/gate_mode_cmd`         | `tier4_control_msgs::msg::GateMode`                        | GATE mode               |
 | `/external/selected/control_cmd` | `autoware_auto_control_msgs::msg::AckermannControlCommand` | AckermannControlCommand |
-| `/external/selected/gear_cmd` | `autoware_auto_vehicle_msgs::msg::GearCommand` | GEAR |
+| `/external/selected/gear_cmd`    | `autoware_auto_vehicle_msgs::msg::GearCommand`             | GEAR                    |
+
 ## Usage
 
 1. Start rviz and select Panels.
