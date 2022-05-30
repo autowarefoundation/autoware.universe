@@ -7,7 +7,7 @@
 int main()
 {
 
-	double Td    = 0.1; // time delay in seconds.
+	double Td    = 0.11; // time delay in seconds.
 	size_t order = 3; // order of the Pade approximation.
 
 	auto tf_delay = ns_control_toolbox::pade(Td, order);
