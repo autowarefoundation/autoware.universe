@@ -19,7 +19,6 @@ import argparse
 import os
 
 from ament_index_python.packages import get_package_share_directory
-
 import rclpy
 from rclpy.node import Node
 from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
