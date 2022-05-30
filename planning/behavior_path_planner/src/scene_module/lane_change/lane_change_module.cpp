@@ -172,8 +172,10 @@ BehaviorModuleOutput LaneChangeModule::plan()
   return output;
 }
 
-std::pair<PathWithLaneId, TurnSignalInfo> LaneChangeModule::planCandidate() const
+CandidateOutput LaneChangeModule::planCandidate() const
 {
+  CandidateOutput output;
+
   // Get lane change lanes
   const auto current_lanes = getCurrentLanes();
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
@@ -185,21 +187,17 @@ std::pair<PathWithLaneId, TurnSignalInfo> LaneChangeModule::planCandidate() cons
     getSafePath(lane_change_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
-  TurnSignalInfo turn_signal_info;
   const auto start_idx = selected_path.shift_point.start_idx;
   const auto end_idx = selected_path.shift_point.end_idx;
-  const double diff = selected_path.shifted_path.shift_length.at(end_idx) -
-                      selected_path.shifted_path.shift_length.at(start_idx);
-  if (diff > 0.0) {
-    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-  } else if (diff < 0.0) {
-    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-  }
 
-  turn_signal_info.signal_distance = util::getSignedDistance(
-    planner_data_->self_pose->pose, selected_path.shift_point.start, status_.current_lanes);
+  output.path_candidate = selected_path.path;
+  output.lateral_shift = selected_path.shifted_path.shift_length.at(end_idx) -
+                         selected_path.shifted_path.shift_length.at(start_idx);
+  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+    selected_path.path.points, planner_data_->self_pose->pose.position,
+    selected_path.shift_point.start.position);
 
-  return {selected_path.path, turn_signal_info};
+  return output;
 }
 
 BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
@@ -207,15 +205,14 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   const auto candidate = planCandidate();
-  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.first);
-  const auto turn_signal_info = candidate.second;
-  if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    waitApprovalLeft(isExecutionReady(), turn_signal_info.signal_distance);
-  } else if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    waitApprovalRight(isExecutionReady(), turn_signal_info.signal_distance);
+  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+  if (candidate.lateral_shift > 0.0) {
+    waitApprovalLeft(isExecutionReady(), candidate.distance_to_path_change);
+  } else if (candidate.lateral_shift < 0.0) {
+    waitApprovalRight(isExecutionReady(), candidate.distance_to_path_change);
   } else {
     RCLCPP_WARN_STREAM(
-      getLogger(), "Direction is UNKNOWN distance = " << turn_signal_info.signal_distance);
+      getLogger(), "Direction is UNKNOWN distance = " << candidate.distance_to_path_change);
   }
   return out;
 }

@@ -91,7 +91,7 @@ public:
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
-  std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const override;
+  CandidateOutput planCandidate() const override;
   void onEntry() override;
   void onExit() override;
 

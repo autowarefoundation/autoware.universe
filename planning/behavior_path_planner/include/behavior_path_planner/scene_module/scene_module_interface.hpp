@@ -82,6 +82,15 @@ struct BehaviorModuleOutput
   TurnSignalInfo turn_signal_info{};
 };
 
+struct CandidateOutput
+{
+  CandidateOutput() {}
+  explicit CandidateOutput(const PathWithLaneId & path) : path_candidate{path} {}
+  PathWithLaneId path_candidate{};
+  double lateral_shift{0.0};
+  double distance_to_path_change{std::numeric_limits<double>::lowest()};
+};
+
 class SceneModuleInterface
 {
 public:
@@ -127,14 +136,14 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.first);
+    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
   }
 
   /**
    * @brief Get candidate path. This information is used for external judgement.
    */
-  virtual std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const = 0;
+  virtual CandidateOutput planCandidate() const = 0;
 
   /**
    * @brief update data for planning. Note that the call of this function does not mean

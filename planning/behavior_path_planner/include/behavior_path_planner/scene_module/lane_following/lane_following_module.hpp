@@ -48,7 +48,7 @@ public:
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
-  std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const override;
+  CandidateOutput planCandidate() const override;
   void onEntry() override;
   void onExit() override;
 

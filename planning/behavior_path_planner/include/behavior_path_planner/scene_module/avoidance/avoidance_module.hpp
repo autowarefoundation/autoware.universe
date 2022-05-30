@@ -49,7 +49,7 @@ public:
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
-  std::pair<PathWithLaneId, TurnSignalInfo> planCandidate() const override;
+  CandidateOutput planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;
   void onEntry() override;
   void onExit() override;
@@ -86,14 +86,14 @@ private:
   UUID next_uuid_;
   std::vector<std::pair<UUID, TurnSignalInfo>> registered_uuids_;
 
-  void updateRTCStatus(const TurnSignalInfo & info)
+  void updateRTCStatus(const CandidateOutput & candidate)
   {
-    if (info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    if (candidate.lateral_shift > 0.0) {
       rtc_interface_left_.updateCooperateStatus(
-        next_uuid_, true, info.signal_distance, clock_->now());
-    } else if (info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+        next_uuid_, true, candidate.distance_to_path_change, clock_->now());
+    } else if (candidate.lateral_shift < 0.0) {
       rtc_interface_right_.updateCooperateStatus(
-        next_uuid_, true, info.signal_distance, clock_->now());
+        next_uuid_, true, candidate.distance_to_path_change, clock_->now());
     }
   }
 

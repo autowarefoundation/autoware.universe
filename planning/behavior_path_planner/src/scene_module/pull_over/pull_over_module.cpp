@@ -155,7 +155,7 @@ BehaviorModuleOutput PullOverModule::plan()
   return output;
 }
 
-std::pair<PathWithLaneId, TurnSignalInfo> PullOverModule::planCandidate() const
+CandidateOutput PullOverModule::planCandidate() const
 {
   // Get lane change lanes
   const auto current_lanes = getCurrentLanes();
@@ -188,14 +188,14 @@ std::pair<PathWithLaneId, TurnSignalInfo> PullOverModule::planCandidate() const
     turn_signal_info.signal_distance = turn_info.second;
   }
 
-  return {selected_path.path, turn_signal_info};
+  return CandidateOutput(selected_path.path);
 }
 
 BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().first);
+  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
   // approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
   return out;
 }

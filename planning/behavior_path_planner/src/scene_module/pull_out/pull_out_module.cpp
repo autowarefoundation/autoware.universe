@@ -171,7 +171,7 @@ BehaviorModuleOutput PullOutModule::plan()
   return output;
 }
 
-std::pair<PathWithLaneId, TurnSignalInfo> PullOutModule::planCandidate() const
+CandidateOutput PullOutModule::planCandidate() const
 {
   // Get lane change lanes
   const auto current_lanes = getCurrentLanes();
@@ -194,17 +194,14 @@ std::pair<PathWithLaneId, TurnSignalInfo> PullOutModule::planCandidate() const
       if (found_safe_retreat_path == true) {
         selected_retreat_path.pull_out_path.path.header =
           planner_data_->route_handler->getRouteHeader();
-        return {
-          selected_retreat_path.pull_out_path.path,
-          calcTurnSignalInfo(selected_retreat_path.pull_out_path.shift_point)};
+        return CandidateOutput(selected_retreat_path.pull_out_path.path);
       }
     }
   }
   // ROS_ERROR("found safe path in plan candidate :%d", found_safe_path);
 
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
-  return {selected_path.path, calcTurnSignalInfo(selected_path.shift_point)};
-  ;
+  return CandidateOutput(selected_path.path);
 }
 
 BehaviorModuleOutput PullOutModule::planWaitingApproval()
@@ -218,7 +215,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   // Generate drivable area
   {
     const auto candidate = planCandidate();
-    candidatePath = candidate.first;
+    candidatePath = candidate.path_candidate;
     lanelet::ConstLanelets lanes;
     lanes.insert(lanes.end(), current_lanes.begin(), current_lanes.end());
     lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
@@ -231,7 +228,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   }
   out.path = std::make_shared<PathWithLaneId>(candidatePath);
 
-  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().first);
+  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
 
   // approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
 

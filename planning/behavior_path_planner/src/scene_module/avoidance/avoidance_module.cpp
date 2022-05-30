@@ -2126,9 +2126,10 @@ BehaviorModuleOutput AvoidanceModule::plan()
   return output;
 }
 
-std::pair<PathWithLaneId, TurnSignalInfo> AvoidanceModule::planCandidate() const
+CandidateOutput AvoidanceModule::planCandidate() const
 {
   DEBUG_PRINT("AVOIDANCE planCandidate start");
+  CandidateOutput output;
 
   auto path_shifter = path_shifter_;
   auto debug_data = debug_data_;
@@ -2146,17 +2147,15 @@ std::pair<PathWithLaneId, TurnSignalInfo> AvoidanceModule::planCandidate() const
 
   if (new_shift_points) {  // clip from shift start index for visualize
     clipByMinStartIdx(*new_shift_points, shifted_path.path);
-    if (new_shift_points->back().getRelativeLength() > 0.0) {
-      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-    } else if (new_shift_points->back().getRelativeLength() < 0.0) {
-      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-    }
-    turn_signal_info.signal_distance = new_shift_points->front().start_longitudinal;
+    output.lateral_shift = new_shift_points->back().getRelativeLength();
+    output.distance_to_path_change = new_shift_points->front().start_longitudinal;
   }
 
   clipPathLength(shifted_path.path);
 
-  return {shifted_path.path, turn_signal_info};
+  output.path_candidate = shifted_path.path;
+
+  return output;
 }
 
 BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
@@ -2164,8 +2163,8 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
   const auto candidate = planCandidate();
-  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.first);
-  updateRTCStatus(candidate.second);
+  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+  updateRTCStatus(candidate);
   return out;
 }
 
