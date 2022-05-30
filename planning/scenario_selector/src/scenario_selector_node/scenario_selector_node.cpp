@@ -53,7 +53,7 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
 
   const auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
   const auto result = lanelet::utils::query::getLinkedParkingLot(
-    nearest_lanelet, all_parking_lots, linked_parking_lot.get());
+    search_point, all_parking_lots, linked_parking_lot.get());
 
   if (result) {
     return linked_parking_lot;
