@@ -180,6 +180,25 @@ TEST(geometry, getPose)
   }
 
   {
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId p;
+    p.point.pose.position.x = x_ans;
+    p.point.pose.position.y = y_ans;
+    p.point.pose.position.z = z_ans;
+    p.point.pose.orientation.x = q_x_ans;
+    p.point.pose.orientation.y = q_y_ans;
+    p.point.pose.orientation.z = q_z_ans;
+    p.point.pose.orientation.w = q_w_ans;
+    const geometry_msgs::msg::Pose p_out = getPose(p);
+    EXPECT_DOUBLE_EQ(p_out.position.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.position.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.position.z, z_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.x, q_x_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.y, q_y_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.z, q_z_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.w, q_w_ans);
+  }
+
+  {
     autoware_auto_planning_msgs::msg::TrajectoryPoint p;
     p.pose.position.x = x_ans;
     p.pose.position.y = y_ans;
@@ -196,6 +215,88 @@ TEST(geometry, getPose)
     EXPECT_DOUBLE_EQ(p_out.orientation.y, q_y_ans);
     EXPECT_DOUBLE_EQ(p_out.orientation.z, q_z_ans);
     EXPECT_DOUBLE_EQ(p_out.orientation.w, q_w_ans);
+  }
+}
+
+TEST(geometry, setPose)
+{
+  using tier4_autoware_utils::setPose;
+
+  const double x_ans = 1.0;
+  const double y_ans = 2.0;
+  const double z_ans = 3.0;
+  const double q_x_ans = 0.1;
+  const double q_y_ans = 0.2;
+  const double q_z_ans = 0.3;
+  const double q_w_ans = 0.4;
+
+  geometry_msgs::msg::Pose p;
+  p.position.x = x_ans;
+  p.position.y = y_ans;
+  p.position.z = z_ans;
+  p.orientation.x = q_x_ans;
+  p.orientation.y = q_y_ans;
+  p.orientation.z = q_z_ans;
+  p.orientation.w = q_w_ans;
+
+  {
+    geometry_msgs::msg::Pose p_out{};
+    setPose(p, p_out);
+    EXPECT_DOUBLE_EQ(p_out.position.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.position.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.position.z, z_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.x, q_x_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.y, q_y_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.z, q_z_ans);
+    EXPECT_DOUBLE_EQ(p_out.orientation.w, q_w_ans);
+  }
+
+  {
+    geometry_msgs::msg::PoseStamped p_out{};
+    setPose(p, p_out);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.z, z_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.x, q_x_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.y, q_y_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.z, q_z_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.w, q_w_ans);
+  }
+
+  {
+    autoware_auto_planning_msgs::msg::PathPoint p_out{};
+    setPose(p, p_out);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.z, z_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.x, q_x_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.y, q_y_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.z, q_z_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.w, q_w_ans);
+  }
+
+  {
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId p_out{};
+    setPose(p, p_out);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.position.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.position.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.position.z, z_ans);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.orientation.x, q_x_ans);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.orientation.y, q_y_ans);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.orientation.z, q_z_ans);
+    EXPECT_DOUBLE_EQ(p_out.point.pose.orientation.w, q_w_ans);
+  }
+
+  {
+    autoware_auto_planning_msgs::msg::TrajectoryPoint p_out{};
+    setPose(p, p_out);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.position.z, z_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.x, q_x_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.y, q_y_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.z, q_z_ans);
+    EXPECT_DOUBLE_EQ(p_out.pose.orientation.w, q_w_ans);
   }
 }
 

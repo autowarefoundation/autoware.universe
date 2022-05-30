@@ -26,6 +26,7 @@
 #include <Eigen/Geometry>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -71,6 +72,13 @@ inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseWithCova
 }
 
 template <>
+inline geometry_msgs::msg::Point getPoint(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  return p.point.pose.position;
+}
+
+template <>
 inline geometry_msgs::msg::Point getPoint(const autoware_auto_planning_msgs::msg::PathPoint & p)
 {
   return p.pose.position;
@@ -109,9 +117,56 @@ inline geometry_msgs::msg::Pose getPose(const autoware_auto_planning_msgs::msg::
 }
 
 template <>
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  return p.point.pose;
+}
+
+template <>
 inline geometry_msgs::msg::Pose getPose(const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose;
+}
+
+template <class T>
+void setPose(const geometry_msgs::msg::Pose & pose, [[maybe_unused]] T & p)
+{
+  static_assert(sizeof(T) == 0, "Only specializations of getPose can be used.");
+  throw std::logic_error("Only specializations of getPose can be used.");
+}
+
+template <>
+inline void setPose(const geometry_msgs::msg::Pose & pose, geometry_msgs::msg::Pose & p)
+{
+  p = pose;
+}
+
+template <>
+inline void setPose(const geometry_msgs::msg::Pose & pose, geometry_msgs::msg::PoseStamped & p)
+{
+  p.pose = pose;
+}
+
+template <>
+inline void setPose(
+  const geometry_msgs::msg::Pose & pose, autoware_auto_planning_msgs::msg::PathPoint & p)
+{
+  p.pose = pose;
+}
+
+template <>
+inline void setPose(
+  const geometry_msgs::msg::Pose & pose, autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  p.point.pose = pose;
+}
+
+template <>
+inline void setPose(
+  const geometry_msgs::msg::Pose & pose, autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
+{
+  p.pose = pose;
 }
 
 inline geometry_msgs::msg::Point createPoint(const double x, const double y, const double z)
