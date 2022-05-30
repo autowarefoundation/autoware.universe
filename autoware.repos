@@ -81,10 +81,6 @@ repositories:
     type: git
     url: https://github.com/tier4/grid_map.git
     version: 657cc055eb90a042057738a85a5651c03e42b1bb
-  vendor/topic_tools:
-    type: git
-    url: https://github.com/tier4/topic_tools.git
-    version: ac3af3357f009925d29c8979f7613bcf111e58c4
   vendor/pacmod_interface:
     type: git
     url: https://github.com/tier4/pacmod_interface.git
