@@ -125,7 +125,7 @@ TEST(trajectory, validateNonEmpty)
   EXPECT_NO_THROW(validateNonEmpty(traj.points));
 }
 
-TEST(trajectory, validateNonSharpAngle_DefaltThreshold)
+TEST(trajectory, validateNonSharpAngle_DefaultThreshold)
 {
   using autoware_auto_planning_msgs::msg::TrajectoryPoint;
   using tier4_autoware_utils::validateNonSharpAngle;
@@ -998,7 +998,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset
+  // Forward offset
   {
     const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, 2.25);
 
@@ -1089,7 +1089,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_PathWithLaneId)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset
+  // Forward offset
   {
     const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, 2.25);
 
@@ -1139,46 +1139,46 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
   using autoware_auto_planning_msgs::msg::TrajectoryPoint;
   using tier4_autoware_utils::calcLongitudinalOffsetPoint;
 
-  Trajectory curv_traj{};
+  Trajectory curve_traj{};
 
   {
     TrajectoryPoint p;
     p.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(2.0, 1.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 0, 4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 0, 4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
@@ -1188,7 +1188,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 4, -4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 4, -4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
@@ -1196,9 +1196,9 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset
+  // Forward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 1, 3.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 1, 3.0);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 2.707106781186547524, epsilon);
@@ -1208,7 +1208,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
 
   // Backward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 4, -4.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 4, -4.0);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 0.41421356237309505, epsilon);
@@ -1263,7 +1263,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset(No lateral deviation)
+  // Forward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.25, 0.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 2.25);
@@ -1274,7 +1274,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset(Lateral deviation)
+  // Forward offset(Lateral deviation)
   {
     const auto p_src = createPoint(-1.25, 1.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 4.25);
@@ -1380,7 +1380,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset(No lateral deviation)
+  // Forward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.25, 0.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 2.25);
@@ -1391,7 +1391,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset(Lateral deviation)
+  // Forward offset(Lateral deviation)
   {
     const auto p_src = createPoint(-1.25, 1.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 4.25);
@@ -1456,47 +1456,47 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
   using autoware_auto_planning_msgs::msg::TrajectoryPoint;
   using tier4_autoware_utils::calcLongitudinalOffsetPoint;
 
-  Trajectory curv_traj{};
+  Trajectory curve_traj{};
 
   {
     TrajectoryPoint p;
     p.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(2.0, 1.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   {
     TrajectoryPoint p;
     p.pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
     p.longitudinal_velocity_mps = 0.0;
-    curv_traj.points.push_back(p);
+    curve_traj.points.push_back(p);
   }
 
   // Whole length
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, 4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, 4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
@@ -1507,7 +1507,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
   // Whole length
   {
     const auto p_src = createPoint(3.0, 2.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, -4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, -4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
@@ -1515,10 +1515,10 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset(No lateral deviation)
+  // Forward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, 3.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, 3.0);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 2.707106781186547524, epsilon);
@@ -1526,10 +1526,10 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
     EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
   }
 
-  // Foward offset(Lateral deviation)
+  // Forward offset(Lateral deviation)
   {
     const auto p_src = createPoint(0.75, 0.25, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, 1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, 1.0);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 1.25, epsilon);
@@ -1540,7 +1540,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
   // Backward offset(No lateral deviation)
   {
     const auto p_src = createPoint(3.0, 2.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, -4.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, -4.0);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 0.41421356237309505, epsilon);
@@ -1551,7 +1551,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
   // Backward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.75, 1.25, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, -1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, -1.0);
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().x, 1.0, epsilon);
@@ -1570,7 +1570,7 @@ TEST(trajectory, insertTargetPoint)
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
-  // Insert betweet trajectory front and back
+  // Insert between trajectory front and back
   {
     auto traj_out = traj;
 
@@ -1629,7 +1629,7 @@ TEST(trajectory, insertTargetPoint)
     }
   }
 
-  // Invalid target point(Infront of begin point)
+  // Invalid target point(In front of begin point)
   {
     auto traj_out = traj;
 
@@ -1674,7 +1674,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
   constexpr double overlap_threshold = 1e-4;
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
-  // Insert betweet trajectory front and back
+  // Insert between trajectory front and back
   {
     auto traj_out = traj;
 
@@ -1799,7 +1799,7 @@ TEST(trajectory, insertTargetPoint_PathWithLaneId)
 
   const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
 
-  // Insert betweet trajectory front and back
+  // Insert between trajectory front and back
   {
     auto path_out = path_with_lane_id;
 
@@ -1856,7 +1856,7 @@ TEST(trajectory, insertTargetPoint_PathWithLaneId)
     }
   }
 
-  // Invalid target point(Infront of begin point)
+  // Invalid target point(In front of begin point)
   {
     auto path_out = path_with_lane_id;
 
@@ -1901,7 +1901,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold_PathWithLaneId)
   constexpr double overlap_threshold = 1e-4;
   const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
 
-  // Insert betweet trajectory front and back
+  // Insert between trajectory front and back
   {
     auto path_out = path_with_lane_id;
 
