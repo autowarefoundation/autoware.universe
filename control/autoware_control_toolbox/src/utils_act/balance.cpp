@@ -45,6 +45,10 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 			auto r = A.row(k).lpNorm<1>(); // instead of 1-norm, one can use other norms as well.
 			auto c = A.col(k).lpNorm<1>();
 
+			// In the lapack implementation diagonal element is ignored in the norms.
+			// r = r - std::abs(A.row(k)(k));
+			// c = c - std::abs(A.col(k)(k));
+
 			// auto s = std::pow(r, 1) + std::pow(c, 1);
 			auto&& s = r + c;
 			double f{ 1. };
@@ -85,9 +89,7 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 				A.col(k).noalias() = A.col(k) * f;
 				A.row(k).noalias() = A.row(k) / f;
 			}
-
 		}
-
 
 	}
 
