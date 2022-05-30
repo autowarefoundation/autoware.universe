@@ -23,7 +23,7 @@
 #include "act_utils_eigen.hpp"
 #include "act_definitions.hpp"
 #include "transfer_functions.hpp"
-
+#include "balance.hpp"
 
 namespace ns_control_toolbox
 {
