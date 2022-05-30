@@ -103,19 +103,19 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 		const std::vector<double>& num,
 		const std::vector<double>& den)
 {
-	auto n_order = static_cast<long>(den.size() - 1);       // Order of the system.
+	auto nx = static_cast<long>(den.size() - 1);       // Order of the system.
 
-	// We can put system check function if the n_order = 0 -- i.e throw exception.
+	// We can put system check function if the nx = 0 -- i.e throw exception.
 
-	A_ = Eigen::MatrixXd::Zero(n_order, n_order);
-	C_ = Eigen::MatrixXd::Zero(1, n_order);
-	B_ = Eigen::MatrixXd::Identity(n_order, 1);
+	A_ = Eigen::MatrixXd::Zero(nx, nx);
+	C_ = Eigen::MatrixXd::Zero(1, nx);
+	B_ = Eigen::MatrixXd::Identity(nx, 1);
 	D_ = Eigen::MatrixXd::Zero(1, 1);
 
 	// set discrete matrix sizes
-	Ad_.resize(n_order, n_order);
-	Bd_.resize(1, n_order);
-	Cd_.resize(n_order, 1);
+	Ad_.resize(nx, nx);
+	Bd_.resize(1, nx);
+	Cd_.resize(nx, 1);
 	Dd_.resize(1, 1);
 
 	// Zero padding the numerator.
@@ -132,8 +132,6 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 	// Normalize the numerator and denominator
 	auto&& den_first_item = den[0];
 	std::vector<double> normalized_den{ den };
-
-
 
 	// normalize the numerator
 	if (std::fabs(den_first_item) > EPS)
@@ -152,17 +150,17 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 	}
 
 
-	if (n_order > 0)
+	if (nx > 0)
 	{
 		D_(0, 0) = zero_padded_num[0];
 	}
 
-	//	auto B = Eigen::MatrixXd::Identity(n_order - 1, n_order);
+	//	auto B = Eigen::MatrixXd::Identity(nx - 1, nx);
 	//	ns_eigen_utils::printEigenMat(B);
 
-	if (n_order > 1)
+	if (nx > 1)
 	{
-		A_.bottomRows(n_order - 1) = Eigen::MatrixXd::Identity(n_order - 1, n_order);
+		A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
 	}
 
 
@@ -175,21 +173,34 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
 		C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
 	}
 
-	// Discretisize the system.
+	// Balance the matrices.
+	// First concatenate
+	auto AB        = ns_eigen_utils::hstack<double>(A_, B_);
+	auto CD        = ns_eigen_utils::hstack<double>(C_, D_);
+	auto ss_system = ns_eigen_utils::vstack<double>(AB, CD);
+
+	// Call balance metho on the system matrices.
+	ns_control_toolbox::balance(ss_system);
+
+	// Re-assign back to A, B, C, D. We might make this step faster with arrays.
+	A_ = ss_system.topLeftCorner(nx, nx);
+	B_ = ss_system.topRightCorner(nx, 1);
+	C_ = ss_system.bottomLeftCorner(1, nx);
+	D_ = ss_system.bottomRightCorner(1, 1);
 
 	bool debug = false;
 	if (debug)
 	{
-//				ns_utils::print("A : \n_order");
+//				ns_utils::print("A : \nx");
 //				ns_eigen_utils::printEigenMat(A_);
 //
-//        ns_utils::print("B : \n_order");
+//        ns_utils::print("B : \nx");
 //        ns_eigen_utils::printEigenMat(B_);
 //
-//        ns_utils::print("C : \n_order");
+//        ns_utils::print("C : \nx");
 //        ns_eigen_utils::printEigenMat(C_);
 //
-//				ns_utils::print("D : \n_order");
+//				ns_utils::print("D : \nx");
 //				ns_eigen_utils::printEigenMat(D_);
 		ns_utils::print("Zero padded vector");
 		ns_utils::print_container(zero_padded_num);
