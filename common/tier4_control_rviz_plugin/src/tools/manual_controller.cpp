@@ -103,7 +103,7 @@ void ManualController::update()
   AckermannControlCommand ackermann;
   {
     ackermann.lateral.steering_tire_angle = steering_angle_;
-    ackermann.longitudinal.speed = criuse_velocity_;
+    ackermann.longitudinal.speed = cruise_velocity_;
     if (current_acceleration_) {
       /**
        * @brief Calculate desired acceleration by simple BackSteppingControl
@@ -113,7 +113,7 @@ void ManualController::update()
        */
       const double k = -0.05;
       const double v = current_velocity_;
-      const double v_des = criuse_velocity_;
+      const double v_des = cruise_velocity_;
       const double a = *current_acceleration_;
       const double a_des = k * (v - v_des) + a;
       ackermann.longitudinal.acceleration = std::clamp(a_des, -0.4, 0.4);
@@ -145,7 +145,7 @@ void ManualController::onManualSteering()
 
 void ManualController::onClickCruiseVelocity()
 {
-  criuse_velocity_ = cruise_velocity_input_->value() / 3.6;
+  cruise_velocity_ = cruise_velocity_input_->value() / 3.6;
 }
 
 void ManualController::onInitialize()

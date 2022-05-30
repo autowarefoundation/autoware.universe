@@ -77,7 +77,7 @@ protected:
   rclcpp::Client<EngageSrv>::SharedPtr client_engage_;
   rclcpp::Subscription<GearReport>::SharedPtr sub_gear_;
 
-  double criuse_velocity_{0.0};
+  double cruise_velocity_{0.0};
   double steering_angle_{0.0};
   double current_velocity_{0.0};
   rclcpp::Time prev_stamp_;
