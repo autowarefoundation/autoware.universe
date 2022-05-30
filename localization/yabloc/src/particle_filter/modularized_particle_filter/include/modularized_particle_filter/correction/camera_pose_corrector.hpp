@@ -39,7 +39,7 @@ public:
 
     lut_ = cv::Mat(1, 256, CV_8UC1);
     for (int i = 0; i < 256; i++) {
-      lut_.at<uchar>(0, i) = 256 * std::pow(i / 256.f, 3.0f);
+      lut_.at<uchar>(0, i) = 256 * std::pow(i / 256.f, 4.0f);
     }
   }
 

@@ -189,10 +189,12 @@ void CameraPoseCorrector::synchroCallback(
   //   paired_segments = b;
   // }
   float max_score = -1;
+  std::vector<float> score_list;
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = base_transform.inverse() * pose2Affine(particle.pose);
     pcl::PointCloud<pcl::PointNormal> transformed_lsd = transformCloud(lsd_cloud, transform);
     particle.weight = computeScore(transformed_lsd, ll2_image);
+    score_list.push_back(particle.weight);
 
     max_score = std::max(max_score, particle.weight);
   }
@@ -202,6 +204,12 @@ void CameraPoseCorrector::synchroCallback(
     RCLCPP_INFO_STREAM(
       get_logger(), "time: " << ms << " ll2: " << ll2_cloud.size() << " lsd: " << lsd_cloud.size()
                              << " max_score: " << max_score);
+  }
+
+  std::sort(score_list.begin(), score_list.end(), std::greater<float>());
+  float truncated_score = score_list.at(0.1 * weighted_particles.particles.size());
+  for (auto & particle : weighted_particles.particles) {
+    particle.weight = std::min(particle.weight, truncated_score);
   }
 
   // Build nice image
@@ -281,7 +289,7 @@ float CameraPoseCorrector::computeScore(
       Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
 
       cv::Point2f px = toCvPoint(p);
-      if (rect.contains(px)) score += ll2_image.at<uchar>(px);
+      if (rect.contains(px)) score += ll2_image.at<uchar>(px) - 64;
     }
   }
   return score;

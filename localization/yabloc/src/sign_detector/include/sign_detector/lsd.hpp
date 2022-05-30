@@ -47,7 +47,8 @@ public:
     pub_image_lsd_ = this->create_publisher<sensor_msgs::msg::Image>("/lsd_image", 10);
     pub_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/lsd_cloud", 10);
 
-    lsd = cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_ADV);
+    lsd = cv::lsd::createLineSegmentDetector(
+      cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
