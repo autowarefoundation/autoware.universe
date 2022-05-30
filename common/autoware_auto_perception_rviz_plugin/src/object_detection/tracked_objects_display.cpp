@@ -56,8 +56,8 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 
     // Get marker for id
     geometry_msgs::msg::Point uuid_vis_position;
-    uuid_vis_position.x = object.kinematics.pose_with_covariance.pose.position.x - 0.5;
-    uuid_vis_position.y = object.kinematics.pose_with_covariance.pose.position.y;
+    uuid_vis_position.x = object.kinematics.pose_with_covariance.pose.position.x;
+    uuid_vis_position.y = object.kinematics.pose_with_covariance.pose.position.y - 0.5;
     uuid_vis_position.z = object.kinematics.pose_with_covariance.pose.position.z - 0.5;
 
     auto id_marker =
@@ -81,8 +81,8 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 
     // Get marker for velocity text
     geometry_msgs::msg::Point vel_vis_position;
-    vel_vis_position.x = uuid_vis_position.x - 0.5;
-    vel_vis_position.y = uuid_vis_position.y;
+    vel_vis_position.x = uuid_vis_position.x;
+    vel_vis_position.y = uuid_vis_position.y - 0.5;
     vel_vis_position.z = uuid_vis_position.z - 0.5;
     auto velocity_text_marker = get_velocity_text_marker_ptr(
       object.kinematics.twist_with_covariance.twist, vel_vis_position, object.classification);
