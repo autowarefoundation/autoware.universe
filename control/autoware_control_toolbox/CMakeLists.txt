@@ -80,14 +80,21 @@ set(CONTROL_LIB_SOURCE
         src/utils_act/act_utils_eigen.cpp
         src/autoware_control_toolbox.cpp
         src/tf_algebra.cpp
+        src/utils_act/state_space.cpp
+        src/utils_act/transfer_functions.cpp
+        src/utils_act/balance.cpp
         )
 
 set(CONTROL_LIB_HEADERS
+        include/utils_act/act_definitions.hpp
         include/autoware_control_toolbox.hpp
         include/utils_act/act_utils.hpp
+        include/utils_act/balance.hpp
         include/utils_act/act_utils_eigen.hpp
         include/visibility_control.hpp
         include/tf_algebra.hpp
+        include/utils_act/state_space.hpp
+        include/utils_act/transfer_functions.hpp
         )
 
 set(CONTROL_LIB_INCLUDE_DIRS

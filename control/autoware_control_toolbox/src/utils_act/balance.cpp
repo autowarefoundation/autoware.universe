@@ -12,12 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-#include <string>
-#include <algorithm>
+#include "utils_act/balance.hpp"
 
-#include "utils_act/act_utils.hpp"
-#include "autoware_control_toolbox.hpp"
+/**
+ * @brief Balances a matrix using the Lapack algorithms.
+ * James, R., Langou, J. and Lowery, B.R., 2014. On matrix balancing and eigenvector computation. arXiv preprint
+ * arXiv:1401.5766.
+ *
+ * Numerical Recipes in C: The Art of Scientific Computing, Second Edition Balancing Chapter 11.
+ * */
+
+void balance(Eigen::MatrixXd& A)
+{
 
 
-
+}
