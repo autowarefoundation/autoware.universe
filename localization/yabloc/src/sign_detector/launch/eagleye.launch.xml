@@ -3,6 +3,7 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
     <arg name="pf" default="false"/>
+    <arg name="param_file" default="$(find-pkg-share sign_detector)/config/param.yaml"/>
     <!-- ========================================= -->
     <node name="eagleye_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -14,10 +15,10 @@
 
     <node name="raw_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
-        <param name="covariance" value="36.0"/>
+        <!-- <param name="covariance" value="36.0"/> -->
         <remap from="pose_topic" to="/sensing/gnss/ublox/pose"/>
         <remap from="pose_with_covariance" to="/sensing/gnss/ublox/pose_with_covariance"/>
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param from="$(var param_file)"/>
     </node>
 
 </launch>

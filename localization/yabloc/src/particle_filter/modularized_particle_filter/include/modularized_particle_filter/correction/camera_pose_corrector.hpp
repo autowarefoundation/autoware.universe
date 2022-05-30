@@ -36,6 +36,11 @@ public:
       rclcpp::Node::SharedPtr{this}, "/lsd_cloud", "/ll2_cloud", "/predicted_particles");
     synchro_subscriber_->setCallback(
       std::bind(&CameraPoseCorrector::synchroCallback, this, _1, _2, _3));
+
+    lut_ = cv::Mat(1, 256, CV_8UC1);
+    for (int i = 0; i < 256; i++) {
+      lut_.at<uchar>(0, i) = 256 * std::pow(i / 256.f, 3.0f);
+    }
   }
 
 private:
@@ -63,9 +68,18 @@ private:
   cv::Point2f toCvPoint(const Eigen::Vector3f & p);
   cv::Mat visualizePairs(const std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> & pairs);
 
+  cv::Mat buildLl2Image(const pcl::PointCloud<pcl::PointNormal> & cloud);
+
+  pcl::PointCloud<pcl::PointNormal> rejectOutsideLines(
+    const pcl::PointCloud<pcl::PointNormal> & cloud);
+  cv::Mat lut_;
+
   std::pair<float, std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>>> computeScore(
     const pcl::PointCloud<pcl::PointNormal> & lsd_cloud,
     std::unordered_map<int, std::vector<pcl::PointNormal>> & angle_and_lines);
+
+  float computeScore(
+    const pcl::PointCloud<pcl::PointNormal> & lsd_cloud, const cv::Mat & ll2_image);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CAMERA_POSE_CORRECTOR_HPP_

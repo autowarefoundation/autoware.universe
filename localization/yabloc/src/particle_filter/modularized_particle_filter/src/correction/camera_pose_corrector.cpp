@@ -29,6 +29,28 @@ cv::Mat CameraPoseCorrector::cloud2Image(const pcl::PointCloud<pcl::PointNormal>
   return image;
 }
 
+cv::Mat CameraPoseCorrector::buildLl2Image(const pcl::PointCloud<pcl::PointNormal> & cloud)
+{
+  cv::Mat image = 255 - cv::Mat::ones(cv::Size(image_size_, image_size_), CV_8UC1);
+
+  for (const auto pn : cloud)
+    cv::line(
+      image, toCvPoint(pn.getVector3fMap()), toCvPoint(pn.getNormalVector3fMap()),
+      cv::Scalar::all(0), 1);
+
+  cv::Mat distance;
+  cv::distanceTransform(image, distance, cv::DIST_L2, 3);
+  cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
+  distance.convertTo(distance, CV_8UC1, -2.55, 255);
+  cv::LUT(distance, lut_, distance);
+
+  // cv::Mat show_distance;
+  // cv::applyColorMap(distance, show_distance, cv::COLORMAP_JET);
+  // cv::imshow("distance",distance);
+  // cv::waitKey(1);
+  return distance;
+}
+
 cv::Mat CameraPoseCorrector::visualizePairs(
   const std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> & pairs)
 {
@@ -97,6 +119,25 @@ float distanceSegments(const pcl::PointNormal & p1, const pcl::PointNormal & p2)
   return (d1.cross(t)).norm() + (d2.cross(t)).norm();
 }
 
+pcl::PointCloud<pcl::PointNormal> CameraPoseCorrector::rejectOutsideLines(
+  const pcl::PointCloud<pcl::PointNormal> & cloud)
+{
+  pcl::PointCloud<pcl::PointNormal> dst;
+
+  auto checkInside = [](const Eigen::Vector3f & p) -> bool {
+    if (std::abs(p.y()) > 5) return false;
+    if (p.x() > 40) return false;
+    return true;
+  };
+
+  for (const pcl::PointNormal & line : cloud) {
+    Eigen::Vector3f from = line.getVector3fMap();
+    Eigen::Vector3f to = line.getNormalVector3fMap();
+    if (checkInside(from) && checkInside(to)) dst.push_back(line);
+  }
+  return dst;
+}
+
 void CameraPoseCorrector::synchroCallback(
   const PointCloud2 & lsd_msg, const CloudPose & ll2_msg, const ParticleArray & particles)
 {
@@ -107,8 +148,10 @@ void CameraPoseCorrector::synchroCallback(
   pcl::fromROSMsg(lsd_msg, lsd_cloud);
   pcl::fromROSMsg(ll2_msg.cloud, ll2_cloud);
 
+  lsd_cloud = rejectOutsideLines(lsd_cloud);
+
   cv::Mat lsd_image = cloud2Image(lsd_cloud);
-  cv::Mat ll2_image = cloud2Image(ll2_cloud);
+  cv::Mat ll2_image = buildLl2Image(ll2_cloud);
 
   const Eigen::Affine3f base_transform = pose2Affine(ll2_msg.pose);
 
@@ -135,30 +178,35 @@ void CameraPoseCorrector::synchroCallback(
 
   // Search nearest neighbor segments
   auto start = std::chrono::system_clock::now();
-  std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> paired_segments;
-  cv::Mat pair_image;
-
+  // std::vector<std::pair<pcl::PointNormal, pcl::PointNormal>> paired_segments;
+  // cv::Mat pair_image;
+  // for (auto & particle : weighted_particles.particles) {
+  //   Eigen::Affine3f transform = base_transform.inverse() * pose2Affine(particle.pose);
+  //   pcl::PointCloud<pcl::PointNormal> transformed_lsd = transformCloud(lsd_cloud, transform);
+  //   pair_image = cloud2Image(transformed_lsd);
+  //   auto [a, b] = computeScore(transformed_lsd, angle_and_lines);
+  //   particle.weight = a;
+  //   paired_segments = b;
+  // }
+  float max_score = -1;
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = base_transform.inverse() * pose2Affine(particle.pose);
     pcl::PointCloud<pcl::PointNormal> transformed_lsd = transformCloud(lsd_cloud, transform);
+    particle.weight = computeScore(transformed_lsd, ll2_image);
 
-    pair_image = cloud2Image(transformed_lsd);
-    auto [a, b] = computeScore(transformed_lsd, angle_and_lines);
-    particle.weight = a;
-    paired_segments = b;
+    max_score = std::max(max_score, particle.weight);
   }
   {
     auto dur = std::chrono::system_clock::now() - start;
     long ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     RCLCPP_INFO_STREAM(
-      get_logger(), "time: " << ms << " ll2: " << ll2_cloud.size() << " lsd: " << lsd_cloud.size());
+      get_logger(), "time: " << ms << " ll2: " << ll2_cloud.size() << " lsd: " << lsd_cloud.size()
+                             << " max_score: " << max_score);
   }
-
-  // cv::Mat pair_image = visualizePairs(paired_segments);
 
   // Build nice image
   cv::Mat match_image;
-  cv::merge(std::vector<cv::Mat>{ll2_image, lsd_image, pair_image}, match_image);
+  cv::merge(std::vector<cv::Mat>{ll2_image, lsd_image, ll2_image}, match_image);
 
   // Publish
   publishImage(match_image, lsd_msg.header.stamp);
@@ -217,4 +265,24 @@ CameraPoseCorrector::computeScore(
     }
   }
   return {score, paired_segments};
+}
+
+float CameraPoseCorrector::computeScore(
+  const pcl::PointCloud<pcl::PointNormal> & lsd_cloud, const cv::Mat & ll2_image)
+{
+  float score = 0;
+
+  const cv::Rect rect(0, 0, ll2_image.cols, ll2_image.rows);
+  for (const pcl::PointNormal & pn1 : lsd_cloud) {
+    Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
+    float l1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).norm();
+
+    for (float distance = 0; distance < l1; distance += 0.1f) {
+      Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
+
+      cv::Point2f px = toCvPoint(p);
+      if (rect.contains(px)) score += ll2_image.at<uchar>(px);
+    }
+  }
+  return score;
 }

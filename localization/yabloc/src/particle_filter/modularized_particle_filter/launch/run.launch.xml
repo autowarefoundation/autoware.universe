@@ -12,7 +12,7 @@
         <remap from="gnss/pose_with_covariance" to="/eagleye/pose_with_covariance"/>
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="num_of_particles" value="200" />
+        <param name="num_of_particles" value="500" />
         <param name="resampling_interval_seconds" value="2.0" />
         <param name="prediction_rate" value="50.0" />
 

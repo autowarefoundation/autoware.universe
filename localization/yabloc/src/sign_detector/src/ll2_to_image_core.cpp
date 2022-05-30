@@ -105,7 +105,7 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
   publishImage(image, pose_stamped.header.stamp);
   publishCloud(near_linestring, pose_stamped.header.stamp, pose_stamped.pose);
 
-  makeDistanceImage(image);
+  // makeDistanceImage(image);
 
   std_msgs::msg::Float32 height;
   height.data = pose.z();
