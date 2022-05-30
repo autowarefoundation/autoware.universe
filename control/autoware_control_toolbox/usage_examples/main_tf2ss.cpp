@@ -33,6 +33,16 @@ int main()
 	ns_control_toolbox::tf2ss sys_ss2(num, den);
 	sys_ss2.print();
 
+	ns_utils::print("SS.A \n");
+	ns_eigen_utils::printEigenMat(sys_ss2.A_);
+
+	ns_utils::print("SS.Ad \n");
+	ns_eigen_utils::printEigenMat(sys_ss2.Ad_);
+
+	// DISCRETIZATION
+	double Ts{ 0.1 };
+	sys_ss2.discretisize(Ts);
+	sys_ss2.print_discrete_system();
 
 	return 0;
 }

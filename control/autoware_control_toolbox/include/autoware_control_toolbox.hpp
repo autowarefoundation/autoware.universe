@@ -92,23 +92,40 @@ namespace ns_control_toolbox
 
 	struct ACT_PUBLIC tf2ss
 		{
+
+		// Constructors
 		tf2ss();
 
 		explicit tf2ss(tf const& sys_tf);
 
 		tf2ss(std::vector<double> const& num, std::vector<double> const& den);
 
+
+		// Public methods
+		// Currently only Tustin - Bilinear discretization is implemented.
+		void discretisize(double const& Ts);
+
 		void print() const;
 
-		// Data members Eigen Matrices.
-		Eigen::MatrixXd A_;
-		Eigen::MatrixXd B_;
-		Eigen::MatrixXd C_;
-		Eigen::MatrixXd D_;
+		void print_discrete_system() const;
+
+		// Data members
+		// Continuous time state-space model
+		Eigen::MatrixXd A_{};
+		Eigen::MatrixXd B_{};
+		Eigen::MatrixXd C_{};
+		Eigen::MatrixXd D_{};
+
+		// Discrete time state-space model
+		Eigen::MatrixXd Ad_{};
+		Eigen::MatrixXd Bd_{};
+		Eigen::MatrixXd Cd_{};
+		Eigen::MatrixXd Dd_{};
+
 
 	private:
 		/**
-		 * @brief Compute the system Matrices
+		 * @brief Compute the system continuous time system matrices
 		 * */
 
 		void computeSystemMatrices(std::vector<double> const& num,
