@@ -34,11 +34,12 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 	auto const& nx = A.rows();
 	bool converged{ false };
 
+
 	while (!converged)
 	{
 		converged = true;
 
-		for (auto k = 0; k < nx; ++k)
+		for (auto k = 1; k < nx; ++k)
 		{
 
 			// Compute row and column norms.
@@ -46,29 +47,33 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 			auto c = A.col(k).lpNorm<1>();
 
 			// In the lapack implementation diagonal element is ignored in the norms.
-			r = r - std::abs(A.row(k)(k));
-			c = c - std::abs(A.col(k)(k));
+			// r = r - std::abs(A.row(k)(k));
+			// c = c - std::abs(A.col(k)(k));
 
 			// auto s = std::pow(r, 1) + std::pow(c, 1);
-			auto&& s = r + c;
 			double f{ 1. };
 
 			if ((r > EPS) && (c > EPS))
 			{
-				while (c < r / RADIX)
+
+				auto g = r / RADIX;
+				auto&& s = r + c;
+
+				while (c < g)
 				{
+					f = f * RADIX;
 					c = c * RADIX;
 					r = r / RADIX;
-					f = f * RADIX;
+					g = g / RADIX;
 				}
 
-
-				while (c > r * RADIX)
+				g = c / RADIX;
+				while (g > r)
 				{
+					f = f / RADIX;
 					c = c / RADIX;
 					r = r * RADIX;
-					f = f / RADIX;
-
+					g = g / RADIX;
 				}
 
 				// Convergence block.
@@ -79,6 +84,8 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 					// Apply similarity transformation to the rows and cols.
 					A.col(k).noalias() = A.col(k) * f;
 					A.row(k).noalias() = A.row(k) / f;
+
+					// ns_utils::print("f in the balancing algorithm : ", f);
 				}
 
 			}

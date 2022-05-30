@@ -92,7 +92,7 @@ namespace ns_eigen_utils
 
 /**
  * @brief Stack matrix in sequence horizontally
- *        imspired by numpy.hstack
+ *        inspired by numpy.hstack
  *        https://docs.scipy.org/doc/numpy/reference/generated/numpy.hstack.html
  *
  * @param m1 first matrix
@@ -298,8 +298,8 @@ namespace ns_eigen_utils
 		eigen_dynamic_type<T> curvature(m, 1);
 		curvature.setZero();
 
-		auto              && EPS = std::numeric_limits<double>::epsilon();
-		for (Eigen::Index k      = 0; k < m; k++)
+		auto&& EPS = std::numeric_limits<double>::epsilon();
+		for (Eigen::Index k = 0; k < m; k++)
 		{
 			auto&& cubed_norm = std::pow(rdot.row(k).norm(), 3) + EPS;
 			curvature(k) = (rdot(k, 0) * rdotdot(k, 1) - rdot(k, 1) * rdotdot(k, 0)) / cubed_norm;
