@@ -69,7 +69,7 @@ class DetectionPreProcessPipeline:
         )
         return components
 
-    def create_down_sample_pipeline(self, output_topic):
+    def create_down_sample_pipeline(self):
         components = []
         down_sample_topic = (
             "/perception/obstacle_segmentation/pointcloud_map_filtered/downsampled/pointcloud"
