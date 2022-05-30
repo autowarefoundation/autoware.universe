@@ -17,12 +17,14 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/geometry/pose_deviation.hpp"
+#include "tier4_autoware_utils/math/constants.hpp"
 
 #include <boost/optional.hpp>
 
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <vector>
 
 namespace tier4_autoware_utils
 {
@@ -31,6 +33,27 @@ void validateNonEmpty(const T & points)
 {
   if (points.empty()) {
     throw std::invalid_argument("Points is empty.");
+  }
+}
+
+template <class T>
+void validateNonSharpAngle(
+  const T & point1, const T & point2, const T & point3, const double angle_threshold = pi / 4)
+{
+  const auto p1 = getPoint(point1);
+  const auto p2 = getPoint(point2);
+  const auto p3 = getPoint(point3);
+
+  const std::vector vec_1to2 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
+  const std::vector vec_3to2 = {p2.x - p3.x, p2.y - p3.y, p2.z - p3.z};
+  const auto product = std::inner_product(vec_1to2.begin(), vec_1to2.end(), vec_3to2.begin(), 0.0);
+
+  const auto dist_1to2 = calcDistance3d(p1, p2);
+  const auto dist_3to2 = calcDistance3d(p3, p2);
+
+  constexpr double epsilon = 1e-3;
+  if (std::cos(angle_threshold) < product / dist_1to2 / dist_3to2 + epsilon) {
+    throw std::invalid_argument("Invalid sharp angle.");
   }
 }
 
@@ -416,6 +439,120 @@ boost::optional<double> calcDistanceToForwardStopPoint(
   }
 
   return std::max(0.0, *closest_stop_dist);
+}
+
+/**
+ * @brief calculate the point offset from source point along the trajectory (or path)
+ * @param points points of trajectory, path, ...
+ * @param src_idx index of source point
+ * @param offset length of offset from source point
+ * @return offset point
+ */
+template <class T>
+boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
+  const T & points, const size_t src_idx, const double offset)
+{
+  validateNonEmpty(points);
+
+  if (points.size() - 1 < src_idx) {
+    throw std::out_of_range("Invalid source index");
+  }
+
+  if (points.size() == 1) {
+    return {};
+  }
+
+  if (offset < 0.0) {
+    auto reverse_points = points;
+    std::reverse(reverse_points.begin(), reverse_points.end());
+    return calcLongitudinalOffsetPoint(
+      reverse_points, reverse_points.size() - src_idx - 1, -offset);
+  }
+
+  double dist_sum = 0.0;
+
+  for (size_t i = src_idx; i < points.size() - 1; ++i) {
+    const auto & p_front = getPoint(points.at(i));
+    const auto & p_back = getPoint(points.at(i + 1));
+
+    const auto dist_segment = calcDistance2d(p_front, p_back);
+    dist_sum += dist_segment;
+
+    const auto dist_res = offset - dist_sum;
+    if (dist_res <= 0.0) {
+      return calcInterpolatePoint(p_back, p_front, std::abs(dist_res / dist_segment));
+    }
+  }
+
+  return {};
+}
+
+/**
+ * @brief calculate the point offset from source point along the trajectory (or path)
+ * @param points points of trajectory, path, ...
+ * @param src_point source point
+ * @param offset length of offset from source point
+ * @return offset point
+ */
+template <class T>
+boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
+  const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
+{
+  validateNonEmpty(points);
+
+  if (offset < 0.0) {
+    auto reverse_points = points;
+    std::reverse(reverse_points.begin(), reverse_points.end());
+    return calcLongitudinalOffsetPoint(reverse_points, src_point, -offset);
+  }
+
+  const size_t src_seg_idx = findNearestSegmentIndex(points, src_point);
+  const double signed_length_src_offset =
+    calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
+
+  return calcLongitudinalOffsetPoint(points, src_seg_idx, offset + signed_length_src_offset);
+}
+
+/**
+ * @brief calculate the point offset from source point along the trajectory (or path)
+ * @param seg_idx segment index of point at beginning of length
+ * @param p_target point to be inserted
+ * @param points output points of trajectory, path, ...
+ * @return index of insert point
+ */
+template <class T>
+inline size_t insertTargetPoint(
+  const size_t seg_idx, const geometry_msgs::msg::Point & p_target, T & points,
+  const double overlap_threshold = 1e-3)
+{
+  validateNonEmpty(points);
+
+  const auto p_front = getPoint(points.at(seg_idx));
+  const auto p_back = getPoint(points.at(seg_idx + 1));
+  const auto yaw = calcAzimuthAngle(p_front, p_back);
+
+  validateNonSharpAngle(p_front, p_target, p_back);
+
+  const auto overlap_with_front = calcDistance2d(p_target, p_front) < overlap_threshold;
+  const auto overlap_with_back = calcDistance2d(p_target, p_back) < overlap_threshold;
+
+  geometry_msgs::msg::Pose target_pose;
+  target_pose.position = p_target;
+  target_pose.orientation = createQuaternionFromYaw(yaw);
+
+  auto p_insert = points.at(seg_idx);
+  setPose(target_pose, p_insert);
+
+  if (!overlap_with_front && !overlap_with_back) {
+    points.insert(points.begin() + seg_idx + 1, p_insert);
+    return seg_idx + 1;
+  }
+
+  if (overlap_with_back) {
+    return seg_idx + 1;
+  }
+
+  return seg_idx;
 }
 }  // namespace tier4_autoware_utils
 

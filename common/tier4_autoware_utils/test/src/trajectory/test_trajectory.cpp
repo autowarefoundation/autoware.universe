@@ -25,6 +25,8 @@
 
 namespace
 {
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using TrajectoryPointArray = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
 using tier4_autoware_utils::createPoint;
@@ -64,6 +66,26 @@ T generateTestTrajectory(
   return traj;
 }
 
+template <>
+PathWithLaneId generateTestTrajectory(
+  const size_t num_points, const double point_interval, const double vel, const double init_theta,
+  const double delta_theta)
+{
+  PathWithLaneId path_with_lane_id;
+  for (size_t i = 0; i < num_points; ++i) {
+    const double theta = init_theta + i * delta_theta;
+    const double x = i * point_interval * std::cos(theta);
+    const double y = i * point_interval * std::sin(theta);
+
+    PathPointWithLaneId p;
+    p.point.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
+    p.point.longitudinal_velocity_mps = vel;
+    path_with_lane_id.points.push_back(p);
+  }
+
+  return path_with_lane_id;
+}
+
 TrajectoryPointArray generateTestTrajectoryPointArray(
   const size_t num_points, const double point_interval, const double vel = 0.0,
   const double init_theta = 0.0, const double delta_theta = 0.0)
@@ -101,6 +123,65 @@ TEST(trajectory, validateNonEmpty)
   // Non-empty
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   EXPECT_NO_THROW(validateNonEmpty(traj.points));
+}
+
+TEST(trajectory, validateNonSharpAngle_DefaltThreshold)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using tier4_autoware_utils::validateNonSharpAngle;
+
+  TrajectoryPoint p1;
+  p1.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  p1.longitudinal_velocity_mps = 0.0;
+
+  TrajectoryPoint p2;
+  p2.pose = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+  p2.longitudinal_velocity_mps = 0.0;
+
+  TrajectoryPoint p3;
+  p3.pose = createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  p3.longitudinal_velocity_mps = 0.0;
+
+  // Non sharp angle
+  {
+    EXPECT_NO_THROW(validateNonSharpAngle(p1, p2, p3));
+  }
+
+  // Sharp angle
+  {
+    EXPECT_THROW(validateNonSharpAngle(p2, p1, p3), std::invalid_argument);
+    EXPECT_THROW(validateNonSharpAngle(p1, p3, p2), std::invalid_argument);
+  }
+}
+
+TEST(trajectory, validateNonSharpAngle_SetThreshold)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using tier4_autoware_utils::pi;
+  using tier4_autoware_utils::validateNonSharpAngle;
+
+  TrajectoryPoint p1;
+  p1.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  p1.longitudinal_velocity_mps = 0.0;
+
+  TrajectoryPoint p2;
+  p2.pose = createPose(1.73205080756887729, 0.0, 0.0, 0.0, 0.0, 0.0);
+  p2.longitudinal_velocity_mps = 0.0;
+
+  TrajectoryPoint p3;
+  p3.pose = createPose(1.73205080756887729, 1.0, 0.0, 0.0, 0.0, 0.0);
+  p3.longitudinal_velocity_mps = 0.0;
+
+  // Non sharp angle
+  {
+    EXPECT_NO_THROW(validateNonSharpAngle(p1, p2, p3, pi / 6));
+    EXPECT_NO_THROW(validateNonSharpAngle(p2, p3, p1, pi / 6));
+  }
+
+  // Sharp angle
+  {
+    EXPECT_THROW(validateNonSharpAngle(p3, p1, p2, pi / 6), std::invalid_argument);
+  }
 }
 
 TEST(trajectory, searchZeroVelocityIndex)
@@ -872,6 +953,790 @@ TEST(trajectory, calcDistanceToForwardStopPoint_DistThreshold)
   }
 }
 
+TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
+{
+  using tier4_autoware_utils::calcArcLength;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(calcLongitudinalOffsetPoint(Trajectory{}.points, {}, {}), std::invalid_argument);
+
+  // Out of range
+  EXPECT_THROW(
+    calcLongitudinalOffsetPoint(traj.points, traj.points.size() + 1, 1.0), std::out_of_range);
+  EXPECT_THROW(calcLongitudinalOffsetPoint(traj.points, -1, 1.0), std::out_of_range);
+
+  // Same Point
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, 0.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 0, 9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 9, -9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, 2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 5.25, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, -2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.75, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // No found
+  {
+    const auto p_out =
+      calcLongitudinalOffsetPoint(traj.points, 0, calcArcLength(traj.points) + 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found
+  {
+    const auto p_out =
+      calcLongitudinalOffsetPoint(traj.points, 9, -calcArcLength(traj.points) - 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found(Trajectory size is 1)
+  {
+    const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(one_point_traj.points, 0.0, 0.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPointFromIndex_PathWithLaneId)
+{
+  using tier4_autoware_utils::calcArcLength;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+
+  const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(calcLongitudinalOffsetPoint(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+
+  // Out of range
+  EXPECT_THROW(
+    calcLongitudinalOffsetPoint(path_with_lane_id.points, path_with_lane_id.points.size() + 1, 1.0),
+    std::out_of_range);
+  EXPECT_THROW(calcLongitudinalOffsetPoint(path_with_lane_id.points, -1, 1.0), std::out_of_range);
+
+  // Same Point
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, 0.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 0, 9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 9, -9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, 2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 5.25, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, -2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.75, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // No found
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(
+      path_with_lane_id.points, 0, calcArcLength(path_with_lane_id.points) + 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(
+      path_with_lane_id.points, 9, -calcArcLength(path_with_lane_id.points) - 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found(Trajectory size is 1)
+  {
+    const auto one_point_path = generateTestTrajectory<PathWithLaneId>(1, 1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(one_point_path.points, 0.0, 0.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+
+  Trajectory curv_traj{};
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(2.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  // Whole length
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 0, 4.41421356237309505);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 4, -4.41421356237309505);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 1, 3.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 2.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().y, 1.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset
+  {
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, 4, -4.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.41421356237309505, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
+{
+  using tier4_autoware_utils::calcArcLength;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::createPoint;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(calcLongitudinalOffsetPoint(Trajectory{}.points, {}, {}), std::invalid_argument);
+
+  // Same Point
+  {
+    const auto p_src = createPoint(3.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 0.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_EQ(p_out.get(), createPoint(9.0, 0.0, 0.0));
+    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_EQ(p_out.get(), createPoint(0.0, 0.0, 0.0));
+    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset(No lateral deviation)
+  {
+    const auto p_src = createPoint(1.25, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.5, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset(Lateral deviation)
+  {
+    const auto p_src = createPoint(-1.25, 1.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 4.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset
+  {
+    const auto p_src = createPoint(6.25, 1.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 4.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset(Lateral deviation)
+  {
+    const auto p_src = createPoint(6.25, -1.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -4.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // No found
+  {
+    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_out =
+      calcLongitudinalOffsetPoint(traj.points, p_src, calcArcLength(traj.points) + 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found
+  {
+    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_out =
+      calcLongitudinalOffsetPoint(traj.points, p_src, -calcArcLength(traj.points) - 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // Out of range(Trajectory size is 1)
+  {
+    const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
+    EXPECT_THROW(
+      calcLongitudinalOffsetPoint(one_point_traj.points, geometry_msgs::msg::Point{}, {}),
+      std::out_of_range);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
+{
+  using tier4_autoware_utils::calcArcLength;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::createPoint;
+
+  const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(calcLongitudinalOffsetPoint(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+
+  // Same Point
+  {
+    const auto p_src = createPoint(3.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 0.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_EQ(p_out.get(), createPoint(9.0, 0.0, 0.0));
+    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, -9.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_EQ(p_out.get(), createPoint(0.0, 0.0, 0.0));
+    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset(No lateral deviation)
+  {
+    const auto p_src = createPoint(1.25, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.5, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset(Lateral deviation)
+  {
+    const auto p_src = createPoint(-1.25, 1.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 4.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset
+  {
+    const auto p_src = createPoint(6.25, 1.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, -2.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 4.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset(Lateral deviation)
+  {
+    const auto p_src = createPoint(6.25, -1.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, -4.25);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // No found
+  {
+    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(
+      path_with_lane_id.points, p_src, calcArcLength(path_with_lane_id.points) + 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found
+  {
+    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(
+      path_with_lane_id.points, p_src, -calcArcLength(path_with_lane_id.points) - 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // Out of range(Trajectory size is 1)
+  {
+    const auto one_point_path = generateTestTrajectory<PathWithLaneId>(1, 1.0);
+    EXPECT_THROW(
+      calcLongitudinalOffsetPoint(one_point_path.points, geometry_msgs::msg::Point{}, {}),
+      std::out_of_range);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+
+  Trajectory curv_traj{};
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(2.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
+    p.longitudinal_velocity_mps = 0.0;
+    curv_traj.points.push_back(p);
+  }
+
+  // Whole length
+  {
+    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, 4.41421356237309505);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Whole length
+  {
+    const auto p_src = createPoint(3.0, 2.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, -4.41421356237309505);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset(No lateral deviation)
+  {
+    const auto p_src = createPoint(1.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, 3.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 2.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().y, 1.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Foward offset(Lateral deviation)
+  {
+    const auto p_src = createPoint(0.75, 0.25, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, 1.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 1.25, epsilon);
+    EXPECT_NEAR(p_out.get().y, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset(No lateral deviation)
+  {
+    const auto p_src = createPoint(3.0, 2.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, -4.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 0.41421356237309505, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+
+  // Backward offset(No lateral deviation)
+  {
+    const auto p_src = createPoint(1.75, 1.25, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(curv_traj.points, p_src, -1.0);
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().x, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().y, 0.75, epsilon);
+    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+  }
+}
+
+TEST(trajectory, insertTargetPoint)
+{
+  using tier4_autoware_utils::calcDistance2d;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::findNearestSegmentIndex;
+  using tier4_autoware_utils::getPoint;
+  using tier4_autoware_utils::insertTargetPoint;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Insert betweet trajectory front and back
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(3.5, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(traj_out.points.at(i));
+      const auto & p_back = getPoint(traj_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    }
+
+    const auto & p_insert = getPoint(traj_out.points.at(insert_idx));
+    EXPECT_EQ(p_insert.x, p_target.x);
+    EXPECT_EQ(p_insert.y, p_target.y);
+    EXPECT_EQ(p_insert.z, p_target.z);
+  }
+
+  // Overlap base_idx point
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(3.0001, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_EQ(insert_idx, 3U);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(traj_out.points.at(i));
+      const auto & p_back = getPoint(traj_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    }
+  }
+
+  // Overlap base_idx + 1 point
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(3.9999, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(traj_out.points.at(i));
+      const auto & p_back = getPoint(traj_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    }
+  }
+
+  // Invalid target point(Infront of begin point)
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(-1.0, 0.0, 0.0);
+    EXPECT_THROW(insertTargetPoint(0, p_target, traj_out.points), std::invalid_argument);
+  }
+
+  // Invalid target point(Behind of end point)
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    EXPECT_THROW(insertTargetPoint(base_idx, p_target, traj_out.points), std::invalid_argument);
+  }
+
+  // Invalid target point(Huge lateral offset)
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(4.0, 10.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    EXPECT_THROW(insertTargetPoint(base_idx, p_target, traj_out.points), std::invalid_argument);
+  }
+
+  // Empty
+  {
+    auto empty_traj = generateTestTrajectory<Trajectory>(0, 1.0);
+    EXPECT_THROW(
+      insertTargetPoint({}, geometry_msgs::msg::Point{}, empty_traj.points), std::invalid_argument);
+  }
+}
+
+TEST(trajectory, insertTargetPoint_OverlapThreshold)
+{
+  using tier4_autoware_utils::calcDistance2d;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::findNearestSegmentIndex;
+  using tier4_autoware_utils::getPoint;
+  using tier4_autoware_utils::insertTargetPoint;
+
+  constexpr double overlap_threshold = 1e-4;
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Insert betweet trajectory front and back
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(3.0001, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(traj_out.points.at(i));
+      const auto & p_back = getPoint(traj_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    }
+
+    const auto & p_insert = getPoint(traj_out.points.at(insert_idx));
+    EXPECT_EQ(p_insert.x, p_target.x);
+    EXPECT_EQ(p_insert.y, p_target.y);
+    EXPECT_EQ(p_insert.z, p_target.z);
+  }
+
+  // Overlap base_idx point
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(3.00001, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, 3U);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(traj_out.points.at(i));
+      const auto & p_back = getPoint(traj_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    }
+  }
+
+  // Overlap base_idx + 1 point
+  {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(3.99999, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(traj_out.points.at(i));
+      const auto & p_back = getPoint(traj_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    }
+  }
+}
+
 TEST(trajectory, calcDistanceToForwardStopPoint_YawThreshold)
 {
   using tier4_autoware_utils::calcDistanceToForwardStopPoint;
@@ -920,6 +1785,181 @@ TEST(trajectory, calcDistanceToForwardStopPoint_YawThreshold)
       const auto dist =
         calcDistanceToForwardStopPoint(traj_input.points, pose, max_d, deg2rad(10.0));
       EXPECT_FALSE(dist);
+    }
+  }
+}
+
+TEST(trajectory, insertTargetPoint_PathWithLaneId)
+{
+  using tier4_autoware_utils::calcDistance2d;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::findNearestSegmentIndex;
+  using tier4_autoware_utils::getPoint;
+  using tier4_autoware_utils::insertTargetPoint;
+
+  const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
+
+  // Insert betweet trajectory front and back
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(3.5, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, path_out.points);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size() + 1);
+
+    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(path_out.points.at(i));
+      const auto & p_back = getPoint(path_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    }
+
+    const auto & p_insert = getPoint(path_out.points.at(insert_idx));
+    EXPECT_EQ(p_insert.x, p_target.x);
+    EXPECT_EQ(p_insert.y, p_target.y);
+    EXPECT_EQ(p_insert.z, p_target.z);
+  }
+
+  // Overlap base_idx point
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(3.0, 0.0, 0.0);
+    const auto insert_idx = insertTargetPoint(3, p_target, path_out.points);
+
+    EXPECT_EQ(insert_idx, 3U);
+    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
+
+    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(path_out.points.at(i));
+      const auto & p_back = getPoint(path_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    }
+  }
+
+  // Overlap base_idx + 1 point
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(4.0, 0.0, 0.0);
+    const auto insert_idx = insertTargetPoint(3, p_target, path_out.points);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
+
+    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(path_out.points.at(i));
+      const auto & p_back = getPoint(path_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    }
+  }
+
+  // Invalid target point(Infront of begin point)
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(-1.0, 0.0, 0.0);
+    EXPECT_THROW(insertTargetPoint(0, p_target, path_out.points), std::invalid_argument);
+  }
+
+  // Invalid target point(Behind of end point)
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    EXPECT_THROW(insertTargetPoint(base_idx, p_target, path_out.points), std::invalid_argument);
+  }
+
+  // Invalid target point(Huge lateral offset)
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(4.0, 10.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    EXPECT_THROW(insertTargetPoint(base_idx, p_target, path_out.points), std::invalid_argument);
+  }
+
+  // Empty
+  {
+    auto empty_traj = generateTestTrajectory<Trajectory>(0, 1.0);
+    EXPECT_THROW(
+      insertTargetPoint({}, geometry_msgs::msg::Point{}, empty_traj.points), std::invalid_argument);
+  }
+}
+
+TEST(trajectory, insertTargetPoint_OverlapThreshold_PathWithLaneId)
+{
+  using tier4_autoware_utils::calcDistance2d;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::findNearestSegmentIndex;
+  using tier4_autoware_utils::getPoint;
+  using tier4_autoware_utils::insertTargetPoint;
+
+  constexpr double overlap_threshold = 1e-4;
+  const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
+
+  // Insert betweet trajectory front and back
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(3.0001, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, path_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size() + 1);
+
+    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(path_out.points.at(i));
+      const auto & p_back = getPoint(path_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    }
+
+    const auto & p_insert = getPoint(path_out.points.at(insert_idx));
+    EXPECT_EQ(p_insert.x, p_target.x);
+    EXPECT_EQ(p_insert.y, p_target.y);
+    EXPECT_EQ(p_insert.z, p_target.z);
+  }
+
+  // Overlap base_idx point
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(3.00001, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, path_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, 3U);
+    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
+
+    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(path_out.points.at(i));
+      const auto & p_back = getPoint(path_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    }
+  }
+
+  // Overlap base_idx + 1 point
+  {
+    auto path_out = path_with_lane_id;
+
+    const auto p_target = createPoint(3.99999, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, path_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, 4U);
+    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
+
+    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
+      const auto & p_front = getPoint(path_out.points.at(i));
+      const auto & p_back = getPoint(path_out.points.at(i + 1));
+      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
     }
   }
 }
