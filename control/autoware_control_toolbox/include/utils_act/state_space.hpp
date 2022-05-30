@@ -46,6 +46,8 @@ namespace ns_control_toolbox
 
 		};
 
+	struct ss_system;
+
 
 /**
  * @brief tf2ss Converts a transfer function representation in to a state-space form.

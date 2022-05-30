@@ -21,7 +21,8 @@
 
 namespace ns_control_toolbox
 {
-	constexpr auto EPS = std::numeric_limits<double>::epsilon();
+	constexpr auto   EPS   = std::numeric_limits<double>::epsilon();
+	constexpr double RADIX = 2.; // used in the balance.hpp
 } // namespace ns_control_toolbox
 
 #endif //AUTOWARE_CONTROL_TOOLBOX_ACT_DEFINITIONS_HPP
