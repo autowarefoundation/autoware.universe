@@ -16,18 +16,10 @@
 # limitations under the License.
 
 import argparse
-
-# from http import client
-# import math
 import os
 
 from ament_index_python.packages import get_package_share_directory
 
-# from calc_utils import CalcUtils
-# import config as CF
-# from csv_reader import CSVReader
-# import numpy as np
-# from plotter import Plotter
 import rclpy
 from rclpy.node import Node
 from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as CalibData
@@ -35,7 +27,7 @@ from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as Calib
 
 class CalibrationDataRelay(Node):
     def __init__(self, args):
-        super().__init__("plot_server")
+        super().__init__("plot_client")
         # self.cli = self.create_client(CalibData, "/accel_brake_map_calibrator/get_data_service")
         self.cli = self.create_client(
             CalibData, "/api/external/get/accel_brake_map_calibrator/data"

@@ -25,7 +25,7 @@
   </node>
 
   <!-- calibration plot and map server node -->
-  <node pkg="accel_brake_map_calibrator" exec="plot_csv_server_node.py" name="plot_csv_server" output="screen"/>
+  <node pkg="accel_brake_map_calibrator" exec="new_accel_brake_map_server.py" name="plot_csv_server" output="screen"/>
   <!-- Rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share accel_brake_map_calibrator)/rviz/occupancy.rviz" if="$(var rviz)"/>
 </launch>

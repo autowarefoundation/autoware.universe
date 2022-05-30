@@ -21,8 +21,9 @@ install(
   scripts/csv_reader.py
   scripts/log_analyzer.py
   scripts/view_plot.py
-  scripts/plot_csv_client_node.py
-  scripts/plot_csv_server_node.py
+  scripts/new_accel_brake_map_server.py
+  test/plot_csv_client_node.py
+  test/sim_actuation_status_publisher.py  
   DESTINATION lib/${PROJECT_NAME}
 )
 
