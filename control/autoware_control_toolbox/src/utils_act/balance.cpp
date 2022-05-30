@@ -46,8 +46,8 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 			auto c = A.col(k).lpNorm<1>();
 
 			// In the lapack implementation diagonal element is ignored in the norms.
-			// r = r - std::abs(A.row(k)(k));
-			// c = c - std::abs(A.col(k)(k));
+			r = r - std::abs(A.row(k)(k));
+			c = c - std::abs(A.col(k)(k));
 
 			// auto s = std::pow(r, 1) + std::pow(c, 1);
 			auto&& s = r + c;
