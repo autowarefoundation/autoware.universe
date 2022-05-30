@@ -120,12 +120,12 @@ void ManualController::update()
        *  D[V] = (D[v] - a_des)*(v-v_des) <=0
        *  a_des = k_const *(v - v_des) + a (k < 0 )
        */
-      const double k = -0.05;
+      const double k = -0.5;
       const double v = current_velocity_;
       const double v_des = cruise_velocity_;
       const double a = *current_acceleration_;
       const double a_des = k * (v - v_des) + a;
-      ackermann.longitudinal.acceleration = std::clamp(a_des, -0.4, 0.4);
+      ackermann.longitudinal.acceleration = std::clamp(a_des, -1.0, 1.0);
     }
   }
   GearCommand gear_cmd;
@@ -219,8 +219,8 @@ void ManualController::onVelocity(const VelocityReport::ConstSharedPtr msg)
 {
   current_velocity_ = msg->longitudinal_velocity;
   if (previous_velocity_) {
-    const double dt = (rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_stamp_)).seconds();
     const double cutoff = 10.0;
+    const double dt = 1.0 / 10.0;
     const double acc = (current_velocity_ - *previous_velocity_) / dt;
     if (!current_acceleration_) {
       current_acceleration_ = std::make_unique<double>(acc);

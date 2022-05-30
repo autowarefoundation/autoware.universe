@@ -33,6 +33,8 @@
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 
+#include <memory>
+
 namespace rviz_plugins
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
