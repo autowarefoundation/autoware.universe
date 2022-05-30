@@ -26,10 +26,11 @@ int main()
 	sys_tf.print();
 
 	//  Default constructor example
-	// ns_control_toolbox::tf2ss sys_ss;
+	// ns_control_toolbox::tf2ss sys_ss; args : sys, Ts with Ts is defaulted = 0.1
 	ns_control_toolbox::tf2ss sys_ss1(sys_tf);
 
 	// Constructor with num and den
+	// args : sys, Ts with Ts is defaulted = 0.1
 	ns_control_toolbox::tf2ss sys_ss2(num, den);
 	sys_ss2.print();
 
@@ -39,10 +40,16 @@ int main()
 	ns_utils::print("SS.Ad \n");
 	ns_eigen_utils::printEigenMat(sys_ss2.Ad_);
 
-	// DISCRETIZATION
+	// DISCRETIZATION : Note sstf2 automatically discretisize
 	double Ts{ 0.1 };
 	sys_ss2.discretisize(Ts);
 	sys_ss2.print_discrete_system();
+
+	// Test defaulted.
+	ns_utils::print("Discretization with a given Ts when constructing");
+	auto sys_ss3 = ns_control_toolbox::tf2ss(sys_tf, Ts);
+	sys_ss2.print_discrete_system();
+
 
 	return 0;
 }
