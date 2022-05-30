@@ -37,7 +37,10 @@ namespace behavior_path_planner
 {
 PullOverModule::PullOverModule(
   const std::string & name, rclcpp::Node & node, const PullOverParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+: SceneModuleInterface{name, node},
+  parameters_{parameters},
+  rtc_interface_{node, "pull_over"},
+  uuid_{generateUUID()}
 {
 }
 
@@ -168,6 +171,11 @@ CandidateOutput PullOverModule::planCandidate() const
     getSafePath(pull_over_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
+  CandidateOutput output(selected_path.path);
+  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+    selected_path.path.points, planner_data_->self_pose->pose.position,
+    selected_path.shift_point.start.position);
+
   const auto hazard_info = getHazard(
     status_.pull_over_lanes, planner_data_->self_pose->pose,
     planner_data_->route_handler->getGoalPose(), planner_data_->self_odometry->twist.twist.linear.x,
@@ -188,15 +196,16 @@ CandidateOutput PullOverModule::planCandidate() const
     turn_signal_info.signal_distance = turn_info.second;
   }
 
-  return CandidateOutput(selected_path.path);
+  return output;
 }
 
 BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
-  // approval_handler_.waitApprovalLeft(isExecutionReady(), 0.1);
+  const auto candidate = planCandidate();
+  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+  waitApproval(isExecutionReady(), candidate.distance_to_path_change);
   return out;
 }
 

@@ -38,7 +38,10 @@ namespace behavior_path_planner
 {
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node, const PullOutParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}, rtc_interface_{node, "pull_out"}
+: SceneModuleInterface{name, node},
+  parameters_{parameters},
+  rtc_interface_{node, "pull_out"},
+  uuid_{generateUUID()}
 {
 }
 
