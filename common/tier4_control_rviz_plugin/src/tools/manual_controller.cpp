@@ -29,6 +29,15 @@ using std::placeholders::_1;
 
 namespace rviz_plugins
 {
+
+double lowpassFilter(
+  const double current_value, const double prev_value, double cutoff, const double dt)
+{
+  const double tau = 1.0 / (2.0 * M_PI * cutoff);
+  const double a = tau / (dt + tau);
+  return prev_value * a + (1.0 - a) * current_value;
+}
+
 ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent)
 {
   auto * state_layout = new QHBoxLayout;
@@ -117,7 +126,6 @@ void ManualController::update()
       const double a = *current_acceleration_;
       const double a_des = k * (v - v_des) + a;
       ackermann.longitudinal.acceleration = std::clamp(a_des, -0.4, 0.4);
-      // std::cout<<"a des: "<<a_des<<" a: "<<a<<" k: "<<k*(v-v_des)<<std::endl;
     }
   }
   GearCommand gear_cmd;
@@ -137,7 +145,8 @@ void ManualController::update()
 
 void ManualController::onManualSteering()
 {
-  steering_angle_ = steering_slider_ptr_->sliderPosition() * M_PI / 180.0;
+  const double scale_factor = -0.25;
+  steering_angle_ = scale_factor * steering_slider_ptr_->sliderPosition() * M_PI / 180.0;
   const QString steering_string =
     QString::fromStdString(std::to_string(steering_angle_ * 180.0 / M_PI));
   steering_angle_ptr_->setText(steering_string);
@@ -208,12 +217,17 @@ void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
 
 void ManualController::onVelocity(const VelocityReport::ConstSharedPtr msg)
 {
-  // convert velocity-report to twist-stamped
   current_velocity_ = msg->longitudinal_velocity;
   if (previous_velocity_) {
     const double dt = (rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_stamp_)).seconds();
-    current_acceleration_ =
-      std::make_unique<double>((current_velocity_ - *previous_velocity_) / dt);
+    const double cutoff = 10.0;
+    const double acc = (current_velocity_ - *previous_velocity_) / dt;
+    if (!current_acceleration_) {
+      current_acceleration_ = std::make_unique<double>(acc);
+    } else {
+      current_acceleration_ =
+        std::make_unique<double>(lowpassFilter(acc, *current_acceleration_, cutoff, dt));
+    }
   }
   previous_velocity_ = std::make_unique<double>(msg->longitudinal_velocity);
   prev_stamp_ = rclcpp::Time(msg->header.stamp);
