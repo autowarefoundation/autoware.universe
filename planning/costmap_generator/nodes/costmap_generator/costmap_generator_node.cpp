@@ -268,7 +268,6 @@ void CostmapGenerator::onLaneletMapBin(
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_);
 
   if (use_wayarea_) {
-    loadRoadAreasFromLaneletMap(lanelet_map_, &area_points_);
     loadParkingAreasFromLaneletMap(lanelet_map_, &area_points_);
   }
 }
