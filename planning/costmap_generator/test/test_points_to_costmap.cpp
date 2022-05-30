@@ -24,7 +24,7 @@ protected:
 
   ~PointsToCostmapTest() override { rclcpp::shutdown(); }
 
-  grid_map::GridMap constrcut_gridmap();
+  grid_map::GridMap construct_gridmap();
 
 public:
   double grid_resolution_ = 1;
@@ -34,7 +34,7 @@ public:
   double grid_position_y_ = 0;
 };
 
-grid_map::GridMap PointsToCostmapTest::constrcut_gridmap()
+grid_map::GridMap PointsToCostmapTest::construct_gridmap()
 {
   grid_map::GridMap gm;
 
@@ -63,7 +63,7 @@ grid_map::GridMap PointsToCostmapTest::constrcut_gridmap()
 // |            |
 // |            map_y
 // |__________________grid_x
-TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_validPoints)
+TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_validPoints)
 {
   // construct pointcloud in map frame
   pointcloud in_sensor_points;
@@ -85,7 +85,7 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_validPoints)
   in_sensor_points.points[2].y = 2;
   in_sensor_points.points[2].z = 2.7;
 
-  grid_map::GridMap gridmap = constrcut_gridmap();
+  grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
   double maximum_height_thres = 5;
@@ -98,20 +98,20 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_validPoints)
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
 
-  int nonempty_gridcell_num = 0;
+  int nonempty_grid_cell_num = 0;
   for (int i = 0; i < costmap_data.rows(); i++) {
     for (int j = 0; j < costmap_data.cols(); j++) {
       if (costmap_data(i, j) == grid_max_value) {
         // std::cout << "i:"<< i <<",j:"<<j<< std::endl;
-        nonempty_gridcell_num += 1;
+        nonempty_grid_cell_num += 1;
       }
     }
   }
 
-  EXPECT_EQ(nonempty_gridcell_num, 3);
+  EXPECT_EQ(nonempty_grid_cell_num, 3);
 }
 
-TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_biggerThanMaximumHeightThres)
+TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_biggerThanMaximumHeightThres)
 {
   // construct pointcloud in map frame
   pointcloud in_sensor_points;
@@ -124,7 +124,7 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_biggerThanMa
   in_sensor_points.points[0].y = 1;
   in_sensor_points.points[0].z = 1;  // out of [maximum_height_thres,minimum_lidar_height_thres]
 
-  grid_map::GridMap gridmap = constrcut_gridmap();
+  grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
   double maximum_height_thres = 0.99;
@@ -137,19 +137,19 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_biggerThanMa
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
 
-  int nonempty_gridcell_num = 0;
+  int nonempty_grid_cell_num = 0;
   for (int i = 0; i < costmap_data.rows(); i++) {
     for (int j = 0; j < costmap_data.cols(); j++) {
       if (costmap_data(i, j) == grid_max_value) {
-        nonempty_gridcell_num += 1;
+        nonempty_grid_cell_num += 1;
       }
     }
   }
 
-  EXPECT_EQ(nonempty_gridcell_num, 0);
+  EXPECT_EQ(nonempty_grid_cell_num, 0);
 }
 
-TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_lessThanMinimumHeightThres)
+TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_lessThanMinimumHeightThres)
 {
   // construct pointcloud in map frame
   pointcloud in_sensor_points;
@@ -162,7 +162,7 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_lessThanMini
   in_sensor_points.points[0].y = 1;
   in_sensor_points.points[0].z = -0.1;  // out of [maximum_height_thres,minimum_lidar_height_thres]
 
-  grid_map::GridMap gridmap = constrcut_gridmap();
+  grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
   double maximum_height_thres = 0.99;
@@ -175,19 +175,19 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_lessThanMini
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
 
-  int nonempty_gridcell_num = 0;
+  int nonempty_grid_cell_num = 0;
   for (int i = 0; i < costmap_data.rows(); i++) {
     for (int j = 0; j < costmap_data.cols(); j++) {
       if (costmap_data(i, j) == grid_max_value) {
-        nonempty_gridcell_num += 1;
+        nonempty_grid_cell_num += 1;
       }
     }
   }
 
-  EXPECT_EQ(nonempty_gridcell_num, 0);
+  EXPECT_EQ(nonempty_grid_cell_num, 0);
 }
 
-TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_outOfGrid)
+TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_outOfGrid)
 {
   // construct pointcloud in map frame
   pointcloud in_sensor_points;
@@ -200,7 +200,7 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_outOfGrid)
   in_sensor_points.points[0].y = 1 + grid_length_y_ / 2.0;
   in_sensor_points.points[0].z = 0.5;
 
-  grid_map::GridMap gridmap = constrcut_gridmap();
+  grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
   double maximum_height_thres = 0.99;
@@ -213,14 +213,14 @@ TEST_F(PointsToCostmapTest, TestmakeCostmapFromPoints_invalidPoints_outOfGrid)
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
 
-  int nonempty_gridcell_num = 0;
+  int nonempty_grid_cell_num = 0;
   for (int i = 0; i < costmap_data.rows(); i++) {
     for (int j = 0; j < costmap_data.cols(); j++) {
       if (costmap_data(i, j) == grid_max_value) {
-        nonempty_gridcell_num += 1;
+        nonempty_grid_cell_num += 1;
       }
     }
   }
 
-  EXPECT_EQ(nonempty_gridcell_num, 0);
+  EXPECT_EQ(nonempty_grid_cell_num, 0);
 }
