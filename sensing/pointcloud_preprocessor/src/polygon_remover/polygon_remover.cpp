@@ -44,8 +44,8 @@ PolygonRemoverComponent::PolygonRemoverComponent(const rclcpp::NodeOptions & opt
   };
   polygon_ = std::make_shared<geometry_msgs::msg::Polygon>();
   for (size_t i = 0UL; i < polygon_vertices_.size(); i += 2) {
-    auto p_x = static_cast<float>(polygon_vertices_.at(i));
-    auto p_y = static_cast<float>(polygon_vertices_.at(i + 1));
+    auto p_y = static_cast<float>(polygon_vertices_.at(i));
+    auto p_x = static_cast<float>(polygon_vertices_.at(i + 1));
     polygon_->points.emplace_back(make_point(p_x, p_y, 0.0F));
   }
   this->update_polygon(polygon_);
@@ -77,11 +77,11 @@ void PolygonRemoverComponent::update_polygon(
     marker_.type = visualization_msgs::msg::Marker::LINE_LIST;
     marker_.action = visualization_msgs::msg::Marker::ADD;
     marker_.pose.orientation.w = 1.0;
-    marker_.scale.x = 0.2;
+    marker_.scale.x = 0.02;
     marker_.color.a = 1.0;
-    marker_.color.r = 1.0;
+    marker_.color.r = 0.0;
     marker_.color.g = 1.0;
-    marker_.color.b = 1.0;
+    marker_.color.b = 0.0;
 
     auto make_point = [](float x, float y, float z) {
       geometry_msgs::msg::Point point;
