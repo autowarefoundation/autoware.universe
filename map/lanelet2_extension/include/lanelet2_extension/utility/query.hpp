@@ -162,8 +162,8 @@ bool getLinkedParkingLot(
   lanelet::ConstPolygon3d * linked_parking_lot);
 // get linked parking lot from current pose of ego car
 bool getLinkedParkingLot(
-  const lanelet::BasicPoint2d & current_position,
-  const lanelet::ConstPolygons3d & all_parking_lots, lanelet::ConstPolygon3d * linked_parking_lot);
+  const lanelet::BasicPoint2d & current_position, const lanelet::ConstPolygons3d & all_parking_lots,
+  lanelet::ConstPolygon3d * linked_parking_lot);
 bool getLinkedParkingLot(
   const lanelet::ConstLineString3d & parking_space,
   const lanelet::ConstPolygons3d & all_parking_lots, lanelet::ConstPolygon3d * linked_parking_lot);
