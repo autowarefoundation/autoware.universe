@@ -42,9 +42,9 @@ See the following figures to know how to create an attention area and its ration
 
 ![intersection_straight](docs/intersection/intersection_straight.png)
 
-![intersection_right](docs/intersection/intersection_right.png)
+![intersection_turn_right](docs/intersection/intersection_turn_right.png)
 
-![intersection_left](docs/intersection/intersection_left.png)
+![intersection_turn_left](docs/intersection/intersection_turn_left.png)
 
 ### Collision Check and Crossing Judgement
 
