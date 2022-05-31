@@ -203,7 +203,6 @@ bool StopLineModule::modifyPathVelocity(
 
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
-  const geometry_msgs::msg::Point stop_line_position = getCenterOfStopLine(stop_line_);
   const auto & current_position = planner_data_->current_pose.pose.position;
   const PointWithSearchRangeIndex src_point_with_search_range_index =
     planning_utils::findFirstNearSearchRangeIndex(path->points, current_position);
@@ -217,6 +216,8 @@ bool StopLineModule::modifyPathVelocity(
   if (!collision) {
     return true;
   }
+  const double center_line_z = (stop_line_[0].z() + stop_line_[1].z()) / 2.0;
+  const auto stop_line_position = planning_utils::toRosPoint(collision->point, center_line_z);
 
   // Find offset segment
   const auto offset_segment = findOffsetSegment(*path, *collision);
