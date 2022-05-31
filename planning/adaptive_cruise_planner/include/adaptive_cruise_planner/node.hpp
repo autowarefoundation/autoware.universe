@@ -65,10 +65,10 @@ private:
   // callback functions
   rcl_interfaces::msg::SetParametersResult onParam(
     const std::vector<rclcpp::Parameter> & parameters);
-  void onObjects(const PredictedObjects::SharedPtr msg);
-  void onOdometry(const Odometry::SharedPtr);
-  void onTrajectory(const Trajectory::SharedPtr msg);
-  void onSmoothedTrajectory(const Trajectory::SharedPtr msg);
+  void onObjects(const PredictedObjects::ConstSharedPtr msg);
+  void onOdometry(const Odometry::ConstSharedPtr);
+  void onTrajectory(const Trajectory::ConstSharedPtr msg);
+  void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // member Functions
   AdaptiveCruisePlannerData createPlannerData(
@@ -120,7 +120,7 @@ private:
   tier4_autoware_utils::SelfPoseListener self_pose_listener_;
 
   // data for callback functions
-  PredictedObjects::SharedPtr in_objects_ptr_;
+  PredictedObjects::ConstSharedPtr in_objects_ptr_;
   geometry_msgs::msg::TwistStamped::SharedPtr current_twist_ptr_;
   geometry_msgs::msg::TwistStamped::SharedPtr prev_twist_ptr_;
 

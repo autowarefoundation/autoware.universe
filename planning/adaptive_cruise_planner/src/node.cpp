@@ -367,12 +367,12 @@ rcl_interfaces::msg::SetParametersResult AdaptiveCruisePlannerNode::onParam(
   return result;
 }
 
-void AdaptiveCruisePlannerNode::onObjects(const PredictedObjects::SharedPtr msg)
+void AdaptiveCruisePlannerNode::onObjects(const PredictedObjects::ConstSharedPtr msg)
 {
   in_objects_ptr_ = msg;
 }
 
-void AdaptiveCruisePlannerNode::onOdometry(const Odometry::SharedPtr msg)
+void AdaptiveCruisePlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
 {
   if (current_twist_ptr_) {
     prev_twist_ptr_ = current_twist_ptr_;
@@ -383,12 +383,12 @@ void AdaptiveCruisePlannerNode::onOdometry(const Odometry::SharedPtr msg)
   current_twist_ptr_->twist = msg->twist.twist;
 }
 
-void AdaptiveCruisePlannerNode::onSmoothedTrajectory(const Trajectory::SharedPtr msg)
+void AdaptiveCruisePlannerNode::onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   planner_ptr_->setSmoothedTrajectory(msg);
 }
 
-void AdaptiveCruisePlannerNode::onTrajectory(const Trajectory::SharedPtr msg)
+void AdaptiveCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
 

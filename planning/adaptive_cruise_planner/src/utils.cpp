@@ -50,7 +50,7 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
   }
 
   size_t search_idx = nearest_idx;
-  double length_to_search_idx;
+  double length_to_search_idx = 0.0;
   for (; search_idx < traj.points.size(); ++search_idx) {
     length_to_search_idx =
       tier4_autoware_utils::calcSignedArcLength(traj.points, nearest_idx, search_idx);

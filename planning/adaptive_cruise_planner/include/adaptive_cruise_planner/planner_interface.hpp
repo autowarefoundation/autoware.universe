@@ -141,7 +141,10 @@ public:
   virtual void updateParam([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 
   // TODO(shimizu) remove this function
-  void setSmoothedTrajectory(const Trajectory::SharedPtr traj) { smoothed_trajectory_ptr_ = traj; }
+  void setSmoothedTrajectory(const Trajectory::ConstSharedPtr traj)
+  {
+    smoothed_trajectory_ptr_ = traj;
+  }
 
   bool isCruiseObstacle(const uint8_t label)
   {
@@ -167,7 +170,7 @@ protected:
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   // TODO(shimizu) remove these parameters
-  Trajectory::SharedPtr smoothed_trajectory_ptr_;
+  Trajectory::ConstSharedPtr smoothed_trajectory_ptr_;
 
   double calcRSSDistance(
     const double ego_vel, const double obj_vel, const double margin = 0.0) const
