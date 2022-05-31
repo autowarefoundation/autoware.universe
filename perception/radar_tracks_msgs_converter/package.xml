@@ -20,8 +20,6 @@
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
 
-
-
   <test_depend>ament_clang_format</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
