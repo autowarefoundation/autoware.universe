@@ -100,7 +100,7 @@ obstacle that can run out from occlusion should have free space until intersecti
 
 ##### Possible Collision
 
-obstacle that can run out from occlusion is interruped by moving vehicle.
+obstacle that can run out from occlusion is interrupted by moving vehicle.
 ![brief](./docs/occlusion_spot/raycast_shadow.drawio.svg)
 
 #### Module Parameters
@@ -112,7 +112,6 @@ obstacle that can run out from occlusion is interruped by moving vehicle.
 
 | Parameter               | Type | Description                                                      |
 | ----------------------- | ---- | ---------------------------------------------------------------- |
-| `filter_occupancy_grid` | bool | [-] whether to filter occupancy grid by morphologyEx or not.     |
 | `use_object_info`       | bool | [-] whether to reflect object info to occupancy grid map or not. |
 | `use_partition_lanelet` | bool | [-] whether to use partition lanelet map data.                   |
 

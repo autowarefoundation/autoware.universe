@@ -37,6 +37,10 @@ std::vector<std::string> split(const std::string & str, const char delim)
 
 namespace fault_injection
 {
+#ifdef ROS_DISTRO_GALACTIC
+using rosidl_generator_traits::to_yaml;
+#endif
+
 FaultInjectionNode::FaultInjectionNode(rclcpp::NodeOptions node_options)
 : Node("fault_injection", node_options.automatically_declare_parameters_from_overrides(true)),
   updater_(this)
@@ -58,14 +62,13 @@ FaultInjectionNode::FaultInjectionNode(rclcpp::NodeOptions node_options)
   for (const auto & diag : readEventDiagList()) {
     diagnostic_storage_.registerEvent(diag);
     updater_.add(
-      diag.sim_name, std::bind(&FaultInjectionNode::updateEventDiag, this, _1, diag.sim_name));
+      diag.diag_name, std::bind(&FaultInjectionNode::updateEventDiag, this, _1, diag.sim_name));
   }
 }
 
 void FaultInjectionNode::onSimulationEvents(const SimulationEvents::ConstSharedPtr msg)
 {
-  RCLCPP_DEBUG(
-    this->get_logger(), "Received data: %s", rosidl_generator_traits::to_yaml(*msg).c_str());
+  RCLCPP_DEBUG(this->get_logger(), "Received data: %s", to_yaml(*msg).c_str());
   for (const auto & event : msg->fault_injection_events) {
     if (diagnostic_storage_.isEventRegistered(event.name)) {
       diagnostic_storage_.updateLevel(event.name, event.level);

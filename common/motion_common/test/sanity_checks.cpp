@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,12 +15,13 @@
 /// \file
 /// \brief This file includes basic tests for utility functions in motion_common
 
-#include <gtest/gtest.h>
+#include <common/types.hpp>
+#include <motion_common/motion_common.hpp>
 
 #include <autoware_auto_geometry_msgs/msg/complex32.hpp>
-#include <common/types.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
-#include <motion_common/motion_common.hpp>
+
+#include <gtest/gtest.h>
 
 using autoware::common::types::float64_t;
 using autoware_auto_geometry_msgs::msg::Complex32;
@@ -35,7 +36,8 @@ struct MyQuaternion
   float64_t w{1.0};
 };
 
-TEST(HeadingFuncs, FromQuat) {
+TEST(HeadingFuncs, FromQuat)
+{
   Quaternion gm_quat{};
   gm_quat.z = 0.5f;
   gm_quat.w = 0.5f;

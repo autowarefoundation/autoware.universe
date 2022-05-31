@@ -61,20 +61,22 @@ PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0)
 }
 
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const double offset, const PlannerParam & param)
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
+  const PlannerParam & param)
 {
   const auto & p = param;
   DetectionRange da_range;
   da_range.interval = p.detection_area.slice_length;
   da_range.min_longitudinal_distance =
-    offset + std::max(0.0, p.baselink_to_front - p.detection_area.min_longitudinal_offset);
+    std::max(0.0, p.baselink_to_front - p.detection_area.min_longitudinal_offset);
   da_range.max_longitudinal_distance =
     std::min(p.detection_area_max_length, p.detection_area_length) +
     da_range.min_longitudinal_distance;
   da_range.min_lateral_distance = p.half_vehicle_width;
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
   slices.clear();
-  return planning_utils::createDetectionAreaPolygons(slices, path, da_range, p.pedestrian_vel);
+  return planning_utils::createDetectionAreaPolygons(
+    slices, path, pose, da_range, p.pedestrian_vel);
 }
 
 ROAD_TYPE getCurrentRoadType(
@@ -214,11 +216,17 @@ bool isMovingVehicle(const PredictedObject & obj, const double min_vel)
   return std::abs(obj_vel) > min_vel;
 }
 
-std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstSharedPtr objects_ptr)
+std::vector<PredictedObject> extractVehicles(
+  const PredictedObjects::ConstSharedPtr objects_ptr, const Point ego_position,
+  const double distance)
 {
   std::vector<PredictedObject> vehicles;
   for (const auto & obj : objects_ptr->objects) {
     if (occlusion_spot_utils::isVehicle(obj)) {
+      const auto & o = obj.kinematics.initial_pose_with_covariance.pose.position;
+      const auto & p = ego_position;
+      // Don't consider far vehicle
+      if (std::hypot(p.x - o.x, p.y - o.y) > distance) continue;
       vehicles.emplace_back(obj);
     }
   }

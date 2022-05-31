@@ -66,7 +66,12 @@
 
 #include <boost/optional.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
@@ -146,6 +151,9 @@ protected:
   rviz_common::properties::FloatProperty * std_dev_x_;
   rviz_common::properties::FloatProperty * std_dev_y_;
   rviz_common::properties::FloatProperty * std_dev_z_;
+  rviz_common::properties::FloatProperty * width_;
+  rviz_common::properties::FloatProperty * length_;
+  rviz_common::properties::FloatProperty * height_;
   rviz_common::properties::FloatProperty * std_dev_theta_;
   rviz_common::properties::FloatProperty * position_z_;
   rviz_common::properties::FloatProperty * velocity_;

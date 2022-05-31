@@ -24,6 +24,8 @@
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/parse_color.hpp>
 #include <rviz_common/validate_floats.hpp>
+#include <rviz_rendering/objects/movable_text.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -34,9 +36,14 @@
 #include <OgreSceneNode.h>
 
 #include <memory>
+#include <utility>
+#include <vector>
 
 namespace rviz_plugins
 {
+using vehicle_info_util::VehicleInfo;
+using vehicle_info_util::VehicleInfoUtil;
+
 class AutowarePathWithLaneIdFootprintDisplay
 : public rviz_common::MessageFilterDisplay<autoware_auto_planning_msgs::msg::PathWithLaneId>
 {
@@ -63,7 +70,8 @@ protected:
   rviz_common::properties::FloatProperty * property_vehicle_length_;
   rviz_common::properties::FloatProperty * property_vehicle_width_;
   rviz_common::properties::FloatProperty * property_rear_overhang_;
-
+  rviz_common::properties::BoolProperty * property_lane_id_view_;
+  rviz_common::properties::FloatProperty * property_lane_id_scale_;
   struct VehicleFootprintInfo
   {
     VehicleFootprintInfo(const float l, const float w, const float r)
@@ -72,12 +80,19 @@ protected:
     }
     float length, width, rear_overhang;
   };
+  std::shared_ptr<VehicleInfo> vehicle_info_;
   std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
+
+  using LaneIdObject =
+    std::pair<std::unique_ptr<Ogre::SceneNode>, std::unique_ptr<rviz_rendering::MovableText>>;
+  std::vector<LaneIdObject> lane_id_obj_ptrs_;
 
 private:
   autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr last_msg_ptr_;
   bool validateFloats(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr & msg_ptr);
+
+  void allocateLaneIdObjects(const std::size_t size);
 };
 
 }  // namespace rviz_plugins

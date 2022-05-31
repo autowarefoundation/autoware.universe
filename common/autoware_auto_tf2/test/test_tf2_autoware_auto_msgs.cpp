@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 /// \file
-/// \brief This file includes common transoform functionaly for autoware_auto_msgs
+/// \brief This file includes common transform functionally for autoware_auto_msgs
 
+#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
+#include <rclcpp/clock.hpp>
 
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
-#include <rclcpp/clock.hpp>
+
 #include <memory>
 
 std::unique_ptr<tf2_ros::Buffer> tf_buffer = nullptr;
 constexpr double EPS = 1e-3;
 
-geometry_msgs::msg::TransformStamped filled_transfom()
+geometry_msgs::msg::TransformStamped filled_transform()
 {
   geometry_msgs::msg::TransformStamped t;
   t.transform.translation.x = 10;
@@ -43,10 +43,9 @@ geometry_msgs::msg::TransformStamped filled_transfom()
   return t;
 }
 
-
 TEST(Tf2AutowareAuto, DoTransformPoint32)
 {
-  const auto trans = filled_transfom();
+  const auto trans = filled_transform();
   geometry_msgs::msg::Point32 p1;
   p1.x = 1;
   p1.y = 2;
@@ -61,10 +60,9 @@ TEST(Tf2AutowareAuto, DoTransformPoint32)
   EXPECT_NEAR(p_out.z, 27, EPS);
 }
 
-
 TEST(Tf2AutowareAuto, DoTransformPolygon)
 {
-  const auto trans = filled_transfom();
+  const auto trans = filled_transform();
   geometry_msgs::msg::Polygon poly;
   geometry_msgs::msg::Point32 p1;
   p1.x = 1;
@@ -80,10 +78,9 @@ TEST(Tf2AutowareAuto, DoTransformPolygon)
   EXPECT_NEAR(poly_out.points[0].z, 27, EPS);
 }
 
-
 TEST(Tf2AutowareAuto, DoTransformQuaternion32)
 {
-  const auto trans = filled_transfom();
+  const auto trans = filled_transform();
   autoware_auto_geometry_msgs::msg::Quaternion32 q1;
   q1.w = 0;
   q1.x = 0;
@@ -100,10 +97,9 @@ TEST(Tf2AutowareAuto, DoTransformQuaternion32)
   EXPECT_NEAR(q_out.w, 0.0, EPS);
 }
 
-
 TEST(Tf2AutowareAuto, DoTransformBoundingBox)
 {
-  const auto trans = filled_transfom();
+  const auto trans = filled_transform();
   BoundingBox bb1;
   bb1.orientation.w = 0;
   bb1.orientation.x = 0;
@@ -212,7 +208,6 @@ TEST(Tf2AutowareAuto, TransformBoundingBoxArray)
   // simple api
   const auto bba_simple = tf_buffer->transform(bba1, "B", tf2::durationFromSec(2.0));
 
-
   EXPECT_EQ(bba_simple.header.frame_id, "B");
 
   // checking boxes[0]
@@ -257,11 +252,9 @@ TEST(Tf2AutowareAuto, TransformBoundingBoxArray)
   EXPECT_NEAR(bba_simple.boxes[1].corners[3].y, -33, EPS);
   EXPECT_NEAR(bba_simple.boxes[1].corners[3].z, -24, EPS);
 
-
   // advanced api
-  const auto bba_advanced = tf_buffer->transform(
-    bba1, "B",
-    tf2::timeFromSec(2.0), "A", tf2::durationFromSec(3.0));
+  const auto bba_advanced =
+    tf_buffer->transform(bba1, "B", tf2::timeFromSec(2.0), "A", tf2::durationFromSec(3.0));
 
   EXPECT_EQ(bba_advanced.header.frame_id, "B");
 
@@ -317,7 +310,7 @@ int main(int argc, char ** argv)
   tf_buffer->setUsingDedicatedThread(true);
 
   // populate buffer
-  const geometry_msgs::msg::TransformStamped t = filled_transfom();
+  const geometry_msgs::msg::TransformStamped t = filled_transform();
   tf_buffer->setTransform(t, "test");
 
   int ret = RUN_ALL_TESTS();

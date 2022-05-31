@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +14,17 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
+#include <helper_functions/message_adapters.hpp>
+
+#include <geometry_msgs/msg/transform_stamped.hpp>
+
 #include <gtest/gtest.h>
 
-#include <helper_functions/message_adapters.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <memory>
 #include <vector>
 
-using autoware::common::helper_functions::message_field_adapters::get_stamp;
 using autoware::common::helper_functions::message_field_adapters::get_frame_id;
+using autoware::common::helper_functions::message_field_adapters::get_stamp;
 
 namespace
 {
@@ -35,7 +37,8 @@ builtin_interfaces::msg::Time get_stamp_msg(int t)
 }
 }  // namespace
 
-TEST(MessageFieldAdapterTest, ConstHeaderTests) {
+TEST(MessageFieldAdapterTest, ConstHeaderTests)
+{
   using Message = geometry_msgs::msg::TransformStamped;
 
   const auto stamp = get_stamp_msg(0);
@@ -50,7 +53,8 @@ TEST(MessageFieldAdapterTest, ConstHeaderTests) {
   EXPECT_EQ(frame_id, get_frame_id(msg));
 }
 
-TEST(MessageFieldAdapterTest, NonconstHeaderTests) {
+TEST(MessageFieldAdapterTest, NonconstHeaderTests)
+{
   using Message = geometry_msgs::msg::TransformStamped;
 
   const auto stamp = get_stamp_msg(0);

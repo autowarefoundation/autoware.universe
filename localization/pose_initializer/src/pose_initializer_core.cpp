@@ -14,8 +14,14 @@
 
 #include "pose_initializer/pose_initializer_core.hpp"
 
+#include "pose_initializer/copy_vector_to_array.hpp"
+
 #include <pcl_conversions/pcl_conversions.h>
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -46,29 +52,21 @@ PoseInitializer::PoseInitializer()
 {
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
 
-  std::vector<double> initialpose_particle_covariance =
+  const std::vector<double> initialpose_particle_covariance =
     this->declare_parameter<std::vector<double>>("initialpose_particle_covariance");
-  for (std::size_t i = 0; i < initialpose_particle_covariance.size(); ++i) {
-    initialpose_particle_covariance_[i] = initialpose_particle_covariance[i];
-  }
+  CopyVectorToArray(initialpose_particle_covariance, initialpose_particle_covariance_);
 
-  std::vector<double> gnss_particle_covariance =
+  const std::vector<double> gnss_particle_covariance =
     this->declare_parameter<std::vector<double>>("gnss_particle_covariance");
-  for (std::size_t i = 0; i < gnss_particle_covariance.size(); ++i) {
-    gnss_particle_covariance_[i] = gnss_particle_covariance[i];
-  }
+  CopyVectorToArray(gnss_particle_covariance, gnss_particle_covariance_);
 
-  std::vector<double> service_particle_covariance =
+  const std::vector<double> service_particle_covariance =
     this->declare_parameter<std::vector<double>>("service_particle_covariance");
-  for (std::size_t i = 0; i < service_particle_covariance.size(); ++i) {
-    service_particle_covariance_[i] = service_particle_covariance[i];
-  }
+  CopyVectorToArray(service_particle_covariance, service_particle_covariance_);
 
-  std::vector<double> output_pose_covariance =
+  const std::vector<double> output_pose_covariance =
     this->declare_parameter<std::vector<double>>("output_pose_covariance");
-  for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
-    output_pose_covariance_[i] = output_pose_covariance[i];
-  }
+  CopyVectorToArray(output_pose_covariance, output_pose_covariance_);
 
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -188,7 +186,7 @@ bool PoseInitializer::getHeight(
     input_pose_msg.pose.pose.position.z);
 
   if (map_ptr_) {
-    tf2::Transform transform;
+    tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
     try {
       const auto stamped = tf2_buffer_.lookupTransform(map_frame_, fixed_frame, tf2::TimePointZero);
       tf2::fromMsg(stamped.transform, transform);

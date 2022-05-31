@@ -8,6 +8,8 @@ This package detects 2D bounding boxes for target objects e.g., cars, trucks, bi
 
 ### Cite
 
+<!-- cspell:ignore Redmon, Farhadi, Bochkovskiy, Jocher, ultralytics, Roboflow, Zenodo -->
+
 yolov3
 
 Redmon, J., & Farhadi, A. (2018). Yolov3: An incremental improvement. arXiv preprint arXiv:1804.02767.
@@ -72,19 +74,23 @@ This package includes multiple licenses.
 
 ### YOLOv4
 
-[YOLOv4](https://drive.google.com//uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX "YOLOv4"): Converted from darknet [weight file](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights "weight file") and [conf file](https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov4.cfg "conf file").
+[YOLOv4](https://drive.google.com/uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX "YOLOv4"): Converted from darknet [weight file](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights "weight file") and [conf file](https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov4.cfg "conf file").
 
 ### YOLOv5
 
 Refer to [this guide](https://github.com/ultralytics/yolov5/issues/251 "guide")
 
-- [YOLOv5s](https://drive.google.com//uc?id=1CF21nQWigwCPTr5psQZXg6cBQIOYKbad "YOLOv5s")
+- [YOLOv5s](https://drive.google.com/uc?id=1CF21nQWigwCPTr5psQZXg6cBQIOYKbad "YOLOv5s")
 
-- [YOLOv5m](https://drive.google.com//uc?id=1a1h50KJH6slwmjKZpPlS-errukF-BrgG "YOLOv5m")
+- [YOLOv5m](https://drive.google.com/uc?id=1a1h50KJH6slwmjKZpPlS-errukF-BrgG "YOLOv5m")
 
 - [YOLOv5l](https://drive.google.com/uc?id=1xO8S92Cq7qrmx93UHHyA7Cd7-dJsBDP8 "YOLOv5l")
 
 - [YOLOv5x](https://drive.google.com/uc?id=1kAHuNJUCxpD-yWrS6t95H3zbAPfClLxI "YOLOv5x")
+
+## Limitations
+
+- If you want to run multiple instances of this node for multiple cameras using "yolo.launch.xml", first of all, create a TensorRT engine by running the "tensorrt_yolo.launch.xml" launch file separately for each GPU. Otherwise, multiple instances of the node trying to create the same TensorRT engine can cause potential problems.
 
 ## Reference repositories
 

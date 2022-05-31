@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,9 +18,9 @@
 #ifndef GEOMETRY__BOUNDING_BOX_2D_HPP_
 #define GEOMETRY__BOUNDING_BOX_2D_HPP_
 
-#include <geometry/bounding_box/rotating_calipers.hpp>
 #include <geometry/bounding_box/eigenbox_2d.hpp>
 #include <geometry/bounding_box/lfit.hpp>
+#include <geometry/bounding_box/rotating_calipers.hpp>
 
 namespace autoware
 {

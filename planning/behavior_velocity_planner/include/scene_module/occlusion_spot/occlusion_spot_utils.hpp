@@ -34,7 +34,12 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -116,7 +121,6 @@ struct PlannerParam
   bool is_show_occlusion;           // [-]
   bool is_show_cv_window;           // [-]
   bool is_show_processing_time;     // [-]
-  bool filter_occupancy_grid;       // [-]
   bool use_object_info;             // [-]
   bool use_moving_object_ray_cast;  // [-]
   bool use_partition_lanelet;       // [-]
@@ -194,7 +198,7 @@ struct DebugData
   std::vector<PossibleCollisionInfo> possible_collisions;
   std::vector<geometry_msgs::msg::Point> occlusion_points;
   PathWithLaneId path_raw;
-  PathWithLaneId interp_path;
+  PathWithLaneId path_interpolated;
   void resetData()
   {
     close_partition.clear();
@@ -208,7 +212,7 @@ struct DebugData
 PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
 //!< @brief wrapper for detection area polygon generation
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const double offset,
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
   const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
@@ -218,7 +222,9 @@ void clipPathByLength(
 //!< @brief extract target vehicles
 bool isStuckVehicle(const PredictedObject & obj, const double min_vel);
 bool isMovingVehicle(const PredictedObject & obj, const double min_vel);
-std::vector<PredictedObject> extractVehicles(const PredictedObjects::ConstSharedPtr objects_ptr);
+std::vector<PredictedObject> extractVehicles(
+  const PredictedObjects::ConstSharedPtr objects_ptr, const Point ego_position,
+  const double distance);
 std::vector<PredictedObject> filterVehiclesByDetectionArea(
   const std::vector<PredictedObject> & objs, const Polygons2d & polys);
 bool isVehicle(const ObjectClassification & obj_class);

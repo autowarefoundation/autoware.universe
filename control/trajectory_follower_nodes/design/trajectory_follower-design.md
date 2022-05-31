@@ -1,23 +1,23 @@
-Trajectory Follower Nodes {#trajectory_follower_nodes-package-design}
-=============================================
+# Trajectory Follower Nodes
 
-# Purpose
+## Purpose
 
 Generate control commands to follow a given Trajectory.
 
-# Design
+## Design
 
 This functionality is decomposed into three nodes.
-- @subpage lateral-controller-design : generates lateral control messages.
-- @subpage longitudinal-controller-design : generates longitudinal control messages.
-- @subpage latlon-muxer-design : combines the lateral and longitudinal control commands
-into a single control command.
 
-Core functionalities are implemented in the @subpage trajectory_follower-package-design package.
+- [lateral-controller-design](lateral_controller-design.md) : generates lateral control messages.
+- [longitudinal-controller-design](longitudinal_controller-design.md) : generates longitudinal control messages.
+- [latlon-muxer-design](latlon_muxer-design.md) : combines the lateral and longitudinal control commands
+  into a single control command.
+
+Core functionalities are implemented in the [trajectory_follower](../../trajectory_follower/design/trajectory_follower-design.md#trajectory-follower) package.
 
 @image html images/trajectory_follower-diagram.png "Overview of the Trajectory Follower package"
 
-# Debugging
+## Debugging
 
 Debug information are published by the lateral and longitudinal controller using `autoware_auto_msgs/Float32MultiArrayDiagnostic` messages.
 

@@ -285,10 +285,7 @@ visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray
   const auto current_time = this->clock_->now();
 
   visualization_msgs::msg::MarkerArray debug_marker_array;
-  if (!debug_data_.possible_collisions.empty()) {
-    appendMarkerArray(
-      createPossibleCollisionMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
-  }
+
   if (!debug_data_.detection_area_polygons.empty()) {
     appendMarkerArray(
       makeSlicePolygonMarker(
@@ -300,13 +297,13 @@ visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray
       makePolygonMarker(debug_data_.close_partition, "close_partition", module_id_, debug_data_.z),
       current_time, &debug_marker_array);
   }
-  if (!debug_data_.interp_path.points.empty()) {
+  if (!debug_data_.path_interpolated.points.empty()) {
     appendMarkerArray(
       createPathMarkerArray(debug_data_.path_raw, "path_raw", 0, 0.0, 1.0, 1.0), current_time,
       &debug_marker_array);
     appendMarkerArray(
-      createPathMarkerArray(debug_data_.interp_path, "path_interp", 0, 0.0, 1.0, 1.0), current_time,
-      &debug_marker_array);
+      createPathMarkerArray(debug_data_.path_interpolated, "path_interpolated", 0, 0.0, 1.0, 1.0),
+      current_time, &debug_marker_array);
   }
   if (!debug_data_.occlusion_points.empty()) {
     appendMarkerArray(
@@ -314,5 +311,17 @@ visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray
       &debug_marker_array);
   }
   return debug_marker_array;
+}
+
+visualization_msgs::msg::MarkerArray OcclusionSpotModule::createVirtualWallMarkerArray()
+{
+  const auto current_time = this->clock_->now();
+
+  visualization_msgs::msg::MarkerArray wall_marker;
+  if (!debug_data_.possible_collisions.empty()) {
+    appendMarkerArray(
+      createPossibleCollisionMarkers(debug_data_, module_id_), current_time, &wall_marker);
+  }
+  return wall_marker;
 }
 }  // namespace behavior_velocity_planner

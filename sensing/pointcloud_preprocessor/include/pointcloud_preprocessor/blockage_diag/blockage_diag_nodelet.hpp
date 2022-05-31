@@ -74,7 +74,7 @@ private:
   uint buffering_interval_ = 5;
 
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  PCL_MAKE_ALIGNED_OPERATOR_NEW
   explicit BlockageDiagComponent(const rclcpp::NodeOptions & options);
 };
 

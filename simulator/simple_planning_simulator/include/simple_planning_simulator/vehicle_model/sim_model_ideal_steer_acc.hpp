@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,12 +15,11 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_ACC_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_ACC_HPP_
 
-#include <iostream>
-
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+
+#include <iostream>
 
 /**
  * @class SimModelIdealSteerAcc
@@ -41,15 +40,8 @@ public:
   ~SimModelIdealSteerAcc() = default;
 
 private:
-  enum IDX
-  {
-    X = 0,
-    Y,
-    YAW,
-    VX
-  };
-  enum IDX_U
-  {
+  enum IDX { X = 0, Y, YAW, VX };
+  enum IDX_U {
     AX_DES = 0,
     STEER_DES,
   };
