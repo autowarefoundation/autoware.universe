@@ -7,3 +7,6 @@
 [submodule "src/rviz2_overlay_plugins"]
 	path = src/rviz2_overlay_plugins
 	url = git@github.com:KYabuuchi/rviz2_overlay_plugins.git
+[submodule "src/rosbag2_rviz_plugins"]
+	path = src/rosbag2_rviz_plugins
+	url = https://github.com/Kettenhoax/rosbag2_rviz_plugins.git

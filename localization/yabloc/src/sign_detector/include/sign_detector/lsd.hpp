@@ -34,7 +34,8 @@ public:
     line_thick_(declare_parameter<int>("line_thick", 1)),
     image_size_(declare_parameter<int>("image_size", 800)),
     max_range_(declare_parameter<float>("max_range", 20.f)),
-    length_threshold_(declare_parameter<float>("length_threshold", 2.0f))
+    length_threshold_(declare_parameter<float>("length_threshold", 2.0f)),
+    dilate_size_(declare_parameter<int>("dilate_size", 5))
   {
     // Subscriber
     sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(
@@ -73,11 +74,13 @@ private:
   const float length_threshold_;
   cv::Ptr<cv::hfs::HfsSegment> segmentator;
   cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> gs;
+  const int dilate_size_;
 
   void directLineSegment(const cv::Mat & image, const cv::Mat & lines) const;
 
   void projectEdgeOnPlane(
-    const cv::Mat & lines, const cv::Mat & K_cv, const rclcpp::Time & stamp) const;
+    const cv::Mat & lines, const cv::Mat & K_cv, const rclcpp::Time & stamp,
+    const cv::Mat & mask) const;
 
   void listenExtrinsicTf(const std::string & frame_id);
 
