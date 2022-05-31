@@ -445,10 +445,14 @@ def launch_setup(context, *args, **kwargs):
             "container_name": LaunchConfiguration("container_name"),
             "use_multithread": "true",
         }.items(),
-        # launch compare map only when detection method is Points
+        # launch compare map only when run_out module is enabled and detection method is Points
         condition=IfCondition(
             PythonExpression(
                 [
+                    LaunchConfiguration(
+                        "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
+                    ),
+                    " and ",
                     "'",
                     run_out_param["run_out"]["detection_method"],
                     "' == 'Points'",
