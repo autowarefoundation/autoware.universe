@@ -1,4 +1,4 @@
-# Intersection design
+# Intersection
 
 ## Role
 
@@ -45,6 +45,8 @@ See the following figures to know how to create an attention area and its ration
 ![intersection_turn_right](docs/intersection/intersection_turn_right.png)
 
 ![intersection_turn_left](docs/intersection/intersection_turn_left.png)
+
+Note: the case `traffic light, turn right only` is not currently implemented.
 
 ### Collision Check and Crossing Judgement
 
