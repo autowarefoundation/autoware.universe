@@ -162,38 +162,38 @@ void pointcloud_preprocessor::Filter::unsubscribe()
 void pointcloud_preprocessor::Filter::computePublish(
   const PointCloud2ConstPtr & input, const IndicesPtr & indices)
 {
-  PointCloud2 output;
-  // Call the virtual method in the child
-  filter(input, indices, output);
+  auto cloud_tf = std::make_unique<PointCloud2>();
 
-  auto cloud_tf = std::make_unique<PointCloud2>(output);  // set the output by default
+  // Call the virtual method in the child
+  filter(input, indices, *cloud_tf);
+
   // Check whether the user has given a different output TF frame
-  if (!tf_output_frame_.empty() && output.header.frame_id != tf_output_frame_) {
+  if (!tf_output_frame_.empty() && cloud_tf->header.frame_id != tf_output_frame_) {
     RCLCPP_DEBUG(
       this->get_logger(), "[computePublish] Transforming output dataset from %s to %s.",
-      output.header.frame_id.c_str(), tf_output_frame_.c_str());
+      cloud_tf->header.frame_id.c_str(), tf_output_frame_.c_str());
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
-    if (!pcl_ros::transformPointCloud(tf_output_frame_, output, cloud_transformed, *tf_buffer_)) {
+    if (!pcl_ros::transformPointCloud(tf_output_frame_, *cloud_tf, cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
         this->get_logger(), "[computePublish] Error converting output dataset from %s to %s.",
-        output.header.frame_id.c_str(), tf_output_frame_.c_str());
+        cloud_tf->header.frame_id.c_str(), tf_output_frame_.c_str());
       return;
     }
     cloud_tf.reset(new PointCloud2(cloud_transformed));
   }
-  if (tf_output_frame_.empty() && output.header.frame_id != tf_input_orig_frame_) {
+  if (tf_output_frame_.empty() && cloud_tf->header.frame_id != tf_input_orig_frame_) {
     // no tf_output_frame given, transform the dataset to its original frame
     RCLCPP_DEBUG(
       this->get_logger(), "[computePublish] Transforming output dataset from %s back to %s.",
-      output.header.frame_id.c_str(), tf_input_orig_frame_.c_str());
+      cloud_tf->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
     if (!pcl_ros::transformPointCloud(
-          tf_input_orig_frame_, output, cloud_transformed, *tf_buffer_)) {
+          tf_input_orig_frame_, *cloud_tf, cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
         this->get_logger(), "[computePublish] Error converting output dataset from %s back to %s.",
-        output.header.frame_id.c_str(), tf_input_orig_frame_.c_str());
+        cloud_tf->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
       return;
     }
     cloud_tf.reset(new PointCloud2(cloud_transformed));
