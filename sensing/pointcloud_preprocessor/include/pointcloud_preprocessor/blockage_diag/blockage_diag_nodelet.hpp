@@ -70,8 +70,8 @@ private:
   uint sky_blockage_count_ = 0;
   uint blockage_count_threshold_;
   std::string lidar_model_;
-  uint time_series_blockage_frames_ = 100;
-  uint time_series_blockage_interval_frames_ = 5;
+  uint buffering_frames_ = 100;
+  uint buffering_interval_ = 5;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
