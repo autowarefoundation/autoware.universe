@@ -87,9 +87,7 @@ protected:
   image_transport::Publisher block_diag_image_pub_;
   image_transport::Publisher dft_image_pub_;
   image_transport::Publisher gray_image_pub_;
-  image_transport::Publisher raw_image_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr average_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr frequency_intensity_pub1_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Int32Stamped>::SharedPtr image_state_pub_;
 };
 

@@ -29,9 +29,6 @@ ImageDiagNode::ImageDiagNode(const rclcpp::NodeOptions & node_options)
     image_transport::create_publisher(this, "image_diag/debug/diag_block_image");
   dft_image_pub_ = image_transport::create_publisher(this, "image_diag/debug/dft_image");
   gray_image_pub_ = image_transport::create_publisher(this, "image_diag/debug/gray_image");
-  raw_image_pub_ = image_transport::create_publisher(this, "image_diag/raw_image");
-  frequency_intensity_pub1_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-    "image_diag/frequency_intensity_ratio", rclcpp::SensorDataQoS());
 
   image_state_pub_ = create_publisher<tier4_debug_msgs::msg::Int32Stamped>(
     "image_diag/image_state_diag", rclcpp::SensorDataQoS());
@@ -81,7 +78,6 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
   cv::Mat img_gray_blockage_bin;
   cv::Mat tmp;
 
-  raw_image_pub_.publish(input_image_msg);
   img_gray = cv_bridge::toCvCopy(input_image_msg, sensor_msgs::image_encodings::MONO8)->image;
 
   cv::Size size;
@@ -138,11 +134,6 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
       region_average_vec.push_back(intensity_average);
       region_blockage_ratio_vec.push_back(roi_blockage_ratio);
       region_freq_sum_vec.push_back(freqSum);
-
-      tier4_debug_msgs::msg::Float32Stamped freq_output_msg;
-      freq_output_msg.data = freqSum;
-      freq_output_msg.stamp = input_image_msg->header.stamp;
-      frequency_intensity_pub1_->publish(freq_output_msg);
     }
   }
 
