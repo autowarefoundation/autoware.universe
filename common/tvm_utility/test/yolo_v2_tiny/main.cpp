@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "gtest/gtest.h"
+#include "tvm_utility/model_zoo.hpp"
+#include "tvm_utility/pipeline.hpp"
+
 #include <opencv2/opencv.hpp>
 
 #include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "gtest/gtest.h"
-#include "tvm_utility/model_zoo.hpp"
-#include "tvm_utility/pipeline.hpp"
 
 using model_zoo::perception::camera_obstacle_detection::yolo_v2_tiny::tensorflow_fp32_coco::config;
 
@@ -41,8 +41,7 @@ namespace tvm_utility
 namespace yolo_v2_tiny
 {
 
-class PreProcessorYoloV2Tiny
-  : public tvm_utility::pipeline::PreProcessor<std::string>
+class PreProcessorYoloV2Tiny : public tvm_utility::pipeline::PreProcessor<std::string>
 {
 public:
   explicit PreProcessorYoloV2Tiny(tvm_utility::pipeline::InferenceEngineTVMConfig config)
@@ -53,7 +52,8 @@ public:
   {
     // Allocate input variable
     std::vector<int64_t> shape_x{1, network_input_width, network_input_height, network_input_depth};
-    tvm_utility::pipeline::TVMArrayContainer x{shape_x,
+    tvm_utility::pipeline::TVMArrayContainer x{
+      shape_x,
       config.tvm_dtype_code,
       config.tvm_dtype_bits,
       config.tvm_dtype_lanes,
@@ -65,8 +65,7 @@ public:
 
   // The cv::Mat can't be used as an input because it throws an exception when
   // passed as a constant reference
-  tvm_utility::pipeline::TVMArrayContainerVector
-  schedule(const std::string & input)
+  tvm_utility::pipeline::TVMArrayContainerVector schedule(const std::string & input)
   {
     // Read input image
     auto image = cv::imread(input, cv::IMREAD_COLOR);
@@ -89,9 +88,8 @@ public:
 
     if (w_pad || h_pad) {
       cv::copyMakeBorder(
-        image, image, h_pad / 2, (h_pad - h_pad / 2),
-        w_pad / 2, (w_pad - w_pad / 2), cv::BORDER_CONSTANT,
-        cv::Scalar(0, 0, 0));
+        image, image, h_pad / 2, (h_pad - h_pad / 2), w_pad / 2, (w_pad - w_pad / 2),
+        cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
     }
 
     // Convert pixel values from int8 to float32. convert pixel value range from 0 - 255 to 0 - 1.
@@ -103,8 +101,7 @@ public:
 
     TVMArrayCopyFromBytes(
       output.getArray(), image_3f.data,
-      network_input_width * network_input_height *
-      network_input_depth * network_datatype_bytes);
+      network_input_width * network_input_height * network_input_depth * network_datatype_bytes);
 
     return {output};
   }
@@ -120,8 +117,7 @@ private:
 class PostProcessorYoloV2Tiny : public tvm_utility::pipeline::PostProcessor<std::vector<float>>
 {
 public:
-  PostProcessorYoloV2Tiny(
-    tvm_utility::pipeline::InferenceEngineTVMConfig config)
+  explicit PostProcessorYoloV2Tiny(tvm_utility::pipeline::InferenceEngineTVMConfig config)
   : network_output_width(config.network_outputs[0].second[1]),
     network_output_height(config.network_outputs[0].second[2]),
     network_output_depth(config.network_outputs[0].second[3])
@@ -154,10 +150,9 @@ public:
   }
 
   // Sigmoid function
-  float sigmoid(float x) {return static_cast<float>(1.0 / (1.0 + std::exp(-x)));}
+  float sigmoid(float x) { return static_cast<float>(1.0 / (1.0 + std::exp(-x))); }
 
-  std::vector<float>
-  schedule(const tvm_utility::pipeline::TVMArrayContainerVector & input)
+  std::vector<float> schedule(const tvm_utility::pipeline::TVMArrayContainerVector & input)
   {
     auto l_h = network_output_width;   // Layer height
     auto l_w = network_output_height;  // Layer width
@@ -170,17 +165,16 @@ public:
     assert(input[0].getArray()->dtype.bits == sizeof(float) * 8);
 
     // Get a pointer to the output data
-    float * data_ptr =
-      reinterpret_cast<float *>(reinterpret_cast<uint8_t *>(input[0].getArray()->data) +
-      input[0].getArray()->byte_offset);
+    float * data_ptr = reinterpret_cast<float *>(
+      reinterpret_cast<uint8_t *>(input[0].getArray()->data) + input[0].getArray()->byte_offset);
 
     // Utility function to return data from y given index
-    auto get_output_data = [this, data_ptr, n_classes, n_anchors,
-        n_coords](auto row_i, auto col_j, auto anchor_k, auto offset) {
-        auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
-        auto index = box_index + anchor_k * (n_classes + n_coords + 1);
-        return data_ptr[index + offset];
-      };
+    auto get_output_data = [this, data_ptr, n_classes, n_anchors, n_coords](
+                             auto row_i, auto col_j, auto anchor_k, auto offset) {
+      auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
+      auto index = box_index + anchor_k * (n_classes + n_coords + 1);
+      return data_ptr[index + offset];
+    };
 
     // Vector used to check if the result is accurate,
     // this is also the output of this (schedule) function
@@ -238,7 +232,8 @@ private:
   std::vector<std::pair<float, float>> anchors{};
 };
 
-TEST(PipelineExamples, SimplePipeline) {
+TEST(PipelineExamples, SimplePipeline)
+{
   // Instantiate the pipeline
   using PrePT = PreProcessorYoloV2Tiny;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
@@ -254,10 +249,9 @@ TEST(PipelineExamples, SimplePipeline) {
   auto output = pipeline.schedule(IMAGE_FILENAME);
 
   // Define reference vector containing expected values, expressed as hexadecimal integers
-  std::vector<int32_t> int_output{
-    0x3eb64594, 0x3f435656, 0x3ece1600, 0x3e99d381,
-    0x3f1cd6bc, 0x3f14f4dd, 0x3ed8065f, 0x3ee9f4fa,
-    0x3ec1b5e8, 0x3f4e7c6c, 0x3f136af1};
+  std::vector<int32_t> int_output{0x3eb64594, 0x3f435656, 0x3ece1600, 0x3e99d381,
+                                  0x3f1cd6bc, 0x3f14f4dd, 0x3ed8065f, 0x3ee9f4fa,
+                                  0x3ec1b5e8, 0x3f4e7c6c, 0x3f136af1};
 
   std::vector<float> expected_output(int_output.size());
 
