@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+
 #include <tvm_vendor/dlpack/dlpack.h>
 #include <tvm_vendor/tvm/runtime/c_runtime_api.h>
 #include <tvm_vendor/tvm/runtime/module.h>
@@ -39,8 +40,7 @@ public:
   TVMArrayContainer() = default;
 
   TVMArrayContainer(
-    std::vector<int64_t> shape, DLDataTypeCode dtype_code,
-    int32_t dtype_bits, int32_t dtype_lanes,
+    std::vector<int64_t> shape, DLDataTypeCode dtype_code, int32_t dtype_bits, int32_t dtype_lanes,
     DLDeviceType device_type, int32_t device_id)
   {
     TVMArrayHandle x{};
@@ -50,14 +50,14 @@ public:
     handle_ = std::make_shared<TVMArrayHandle>(x);
   }
 
-  TVMArrayHandle getArray() const {return *handle_.get();}
+  TVMArrayHandle getArray() const { return *handle_.get(); }
 
 private:
   std::shared_ptr<TVMArrayHandle> handle_{nullptr, [](TVMArrayHandle ptr) {
-      if (ptr) {
-        TVMArrayFree(ptr);
-      }
-    }};
+                                            if (ptr) {
+                                              TVMArrayFree(ptr);
+                                            }
+                                          }};
 };
 
 using TVMArrayContainerVector = std::vector<TVMArrayContainer>;
@@ -69,7 +69,7 @@ using TVMArrayContainerVector = std::vector<TVMArrayContainer>;
  * @tparam InputType The datatype of the input of the pipeline stage.
  * @tparam OutputType The datatype of the output from the pipeline stage.
  */
-template<class InputType, class OutputType>
+template <class InputType, class OutputType>
 class PipelineStage
 {
 public:
@@ -95,14 +95,18 @@ public:
  * @tparam InputType The data type of the input to the pre-processing pipeline
  * stage. Usually a ROS message type.
  */
-template<class InputType>
-class PreProcessor : public PipelineStage<InputType, TVMArrayContainerVector> {};
+template <class InputType>
+class PreProcessor : public PipelineStage<InputType, TVMArrayContainerVector>
+{
+};
 
 /**
  * @class InferenceEngine
  * @brief Pipeline stage in charge of machine learning inference.
  */
-class InferenceEngine : public PipelineStage<TVMArrayContainerVector, TVMArrayContainerVector> {};
+class InferenceEngine : public PipelineStage<TVMArrayContainerVector, TVMArrayContainerVector>
+{
+};
 
 /**
  * @class PostProcessor
@@ -115,15 +119,17 @@ class InferenceEngine : public PipelineStage<TVMArrayContainerVector, TVMArrayCo
  * @tparam OutputType The data type of the output of the inference pipeline.
  * Usually a ROS message type.
  */
-template<class OutputType>
-class PostProcessor : public PipelineStage<TVMArrayContainerVector, OutputType> {};
+template <class OutputType>
+class PostProcessor : public PipelineStage<TVMArrayContainerVector, OutputType>
+{
+};
 
 /**
  * @class Pipeline
  * @brief Inference Pipeline. Consists of 3 stages: preprocessor, inference
  * stage and postprocessor.
  */
-template<class PreProcessorType, class InferenceEngineType, class PostProcessorType>
+template <class PreProcessorType, class InferenceEngineType, class PostProcessorType>
 class Pipeline
 {
   using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
@@ -142,7 +148,9 @@ public:
     PostProcessorType post_processor)
   : pre_processor_(pre_processor),
     inference_engine_(inference_engine),
-    post_processor_(post_processor) {}
+    post_processor_(post_processor)
+  {
+  }
 
   /**
    * @brief run the pipeline. Return asynchronously in a callback.
@@ -195,12 +203,12 @@ typedef struct
 class InferenceEngineTVM : public InferenceEngine
 {
 public:
-  explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config)
-  : config_(config)
+  explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config) : config_(config)
   {
     // Get full network path
     std::string network_prefix = ament_index_cpp::get_package_share_directory("neural_networks") +
-      "/networks/" + config.network_name + "/" + config.network_backend + "/";
+                                 "/networks/" + config.network_name + "/" + config.network_backend +
+                                 "/";
     std::string network_module_path = network_prefix + config.network_module_path;
     std::string network_graph_path = network_prefix + config.network_graph_path;
     std::string network_params_path = network_prefix + config.network_params_path;
@@ -209,8 +217,7 @@ public:
     std::ifstream module(network_module_path);
     if (!module.good()) {
       throw std::runtime_error(
-              "File " + network_module_path +
-              " specified in inference_engine_tvm_config.hpp not found");
+        "File " + network_module_path + " specified in inference_engine_tvm_config.hpp not found");
     }
     module.close();
     tvm::runtime::Module mod = tvm::runtime::Module::LoadFromFile(network_module_path);
@@ -219,22 +226,20 @@ public:
     std::ifstream json_in(network_graph_path, std::ios::in);
     if (!json_in.good()) {
       throw std::runtime_error(
-              "File " + network_graph_path +
-              " specified in inference_engine_tvm_config.hpp not found");
+        "File " + network_graph_path + " specified in inference_engine_tvm_config.hpp not found");
     }
-    std::string json_data((std::istreambuf_iterator<char>(json_in)),
-      std::istreambuf_iterator<char>());
+    std::string json_data(
+      (std::istreambuf_iterator<char>(json_in)), std::istreambuf_iterator<char>());
     json_in.close();
 
     // Load parameters from binary file
     std::ifstream params_in(network_params_path, std::ios::binary);
     if (!params_in.good()) {
       throw std::runtime_error(
-              "File " + network_params_path +
-              " specified in inference_engine_tvm_config.hpp not found");
+        "File " + network_params_path + " specified in inference_engine_tvm_config.hpp not found");
     }
-    std::string params_data((std::istreambuf_iterator<char>(params_in)),
-      std::istreambuf_iterator<char>());
+    std::string params_data(
+      (std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
     params_in.close();
 
     // Parameters need to be in TVMByteArray format
@@ -243,8 +248,7 @@ public:
     params_arr.size = params_data.length();
 
     // Create tvm runtime module
-    tvm::runtime::Module runtime_mod =
-      (*tvm::runtime::Registry::Get("tvm.graph_executor.create"))(
+    tvm::runtime::Module runtime_mod = (*tvm::runtime::Registry::Get("tvm.graph_executor.create"))(
       json_data, mod, static_cast<uint32_t>(config.tvm_device_type), config.tvm_device_id);
 
     // Load parameters
@@ -261,11 +265,9 @@ public:
     get_output = runtime_mod.GetFunction("get_output");
 
     for (auto & output_config : config.network_outputs) {
-      output_.push_back(
-        TVMArrayContainer(
-          output_config.second, config.tvm_dtype_code,
-          config.tvm_dtype_bits, config.tvm_dtype_lanes,
-          kDLCPU, 0));
+      output_.push_back(TVMArrayContainer(
+        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
+        kDLCPU, 0));
     }
   }
 
