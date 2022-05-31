@@ -114,7 +114,7 @@ DelayModelSISO::DelayModelSISO(const double &Td,
           x0_(Eigen::MatrixXd::Zero(static_cast<Eigen::Index>(pade_order), 1))
 {
     tf_ = ns_control_toolbox::pade(meanTd_, pade_order);
-    ss_ = ns_control_toolbox::tf2ss(tf_);
+    ss_ = ns_control_toolbox::tf2ss(tf_, dt);
 
 }
 
@@ -134,9 +134,10 @@ void DelayModelSISO::updateModel(const double &newTd)
 
 double DelayModelSISO::getNextState(const double &u)
 {
-    x0_.noalias() = x0_ + dt_ * (ss_.A_ * x0_ + ss_.B_ * u);
+	// Discrete state-space update equations.
+    x0_.noalias() =ss_.Ad_ * x0_ + ss_.Bd_ * u;
 
-    auto &&u_delayed = (ss_.C_ * x0_ + ss_.D_ * u)(0);
+    auto &&u_delayed = (ss_.Cd_ * x0_ + ss_.Dd_ * u)(0);
 
     return u_delayed;
 }
