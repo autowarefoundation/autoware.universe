@@ -16,7 +16,6 @@
 
 #include "autoware_point_types/types.hpp"
 
-#include <boost/thread/detail/platform_time.hpp>
 #include <boost/circular_buffer.hpp>
 
 #include <algorithm>
@@ -53,7 +52,6 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
-  time_series_blockage_mask_pub_ = image_transport::create_publisher(this, "blockage_diag/debug/time_series_blockage_mask");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
