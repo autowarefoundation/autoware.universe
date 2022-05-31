@@ -174,7 +174,8 @@ void pointcloud_preprocessor::Filter::computePublish(
       cloud_tf->header.frame_id.c_str(), tf_output_frame_.c_str());
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
-    if (!pcl_ros::transformPointCloud(tf_output_frame_, *cloud_tf, cloud_transformed, *tf_buffer_)) {
+    if (!pcl_ros::transformPointCloud(
+          tf_output_frame_, *cloud_tf, cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
         this->get_logger(), "[computePublish] Error converting output dataset from %s to %s.",
         cloud_tf->header.frame_id.c_str(), tf_output_frame_.c_str());
