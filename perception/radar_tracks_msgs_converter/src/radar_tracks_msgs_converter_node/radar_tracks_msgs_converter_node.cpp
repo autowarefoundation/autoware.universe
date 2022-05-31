@@ -22,10 +22,10 @@
 #include <vector>
 
 using namespace std::literals;
-using namespace std::placeholders;
 using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
+using std::placeholders::_1;
 
 namespace
 {
@@ -106,7 +106,6 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
       // Copy back to member variable
       node_param_ = p;
     }
-
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
