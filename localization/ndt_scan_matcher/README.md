@@ -13,11 +13,16 @@ There are two main functions in this package:
 
 ### Input
 
-| Name                       | Type                                            | Description       |
-| -------------------------- | ----------------------------------------------- | ----------------- |
-| `ekf_pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | initial pose      |
-| `pointcloud_map`           | `sensor_msgs::msg::PointCloud2`                 | map pointcloud    |
-| `points_raw`               | `sensor_msgs::msg::PointCloud2`                 | sensor pointcloud |
+| Name                       | Type                                            | Description                           |
+| -------------------------- | ----------------------------------------------- | ------------------------------------- |
+| `ekf_pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | initial pose                          |
+| `pointcloud_map`           | `sensor_msgs::msg::PointCloud2`                 | map pointcloud                        |
+| `points_raw`               | `sensor_msgs::msg::PointCloud2`                 | sensor pointcloud                     |
+| `regularization_pose`      | `sensor_msgs::msg::PoseWithCovarianceStamped`   | reference pose of regularization term |
+
+> `regularization_pose` is required only when regularization is enabled.  
+> It is a reference to regularize the estimation of NDT.  
+> `/sensing/gnss/pose_with_covariance` could be a reference if open sky.
 
 ### Output
 
@@ -59,3 +64,11 @@ There are two main functions in this package:
 | `converged_param_transform_probability` | double | Threshold for deciding whether to trust the estimation result                                   |
 | `omp_neighborhood_search_method`        | int    | neighborhood search method in OMP (0=KDTREE, 1=DIRECT26, 2=DIRECT7, 3=DIRECT1)                  |
 | `omp_num_threads`                       | int    | Number of threads used for parallel computing                                                   |
+
+### Regularization Parameters
+
+Regularization is available only with NDT_OMP.
+| Name | Type | Description |
+| --------------------------------------- | ------ | ----------------------------------------------------------------------- |
+| `regularization_enabled` | bool | Flag to add regulalization term to NDT optimization (FALSE by default) |
+| `regularization_scale_factor` | double | Coefficient of the regularization term |
