@@ -376,7 +376,6 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
   // TODO(murooka) Should I use interpolation?
   const auto modified_stop_info = [&]() -> boost::optional<std::pair<size_t, double>> {
     const double dist_to_stop = stop_obstacle_info.dist_to_stop;
-    const auto & obstacle = stop_obstacle_info.obstacle;
 
     const size_t obstacle_zero_vel_idx =
       getIndexWithLongitudinalOffset(planner_data.traj.points, dist_to_stop, ego_idx);
