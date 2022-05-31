@@ -8,5 +8,6 @@
     <remap from="input/object0" to="$(var input/object0)"/>
     <remap from="input/object1" to="$(var input/object1)"/>
     <remap from="output/object" to="$(var output/object)"/>
+    <arg name="data_association_matrix_path" value="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
   </node>
 </launch>

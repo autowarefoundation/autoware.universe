@@ -53,7 +53,7 @@ private:
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
-  DataAssociation data_association_;
+  std::unique_ptr<DataAssociation> data_association_;
 };
 }  // namespace object_association
 
