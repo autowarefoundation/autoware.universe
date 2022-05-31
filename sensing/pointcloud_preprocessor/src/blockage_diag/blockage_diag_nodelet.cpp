@@ -16,8 +16,8 @@
 
 #include "autoware_point_types/types.hpp"
 
-#include <boost/circular_buffer.hpp>
 #include <boost/thread/detail/platform_time.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include <algorithm>
 
@@ -41,7 +41,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
       static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
     time_series_blockage_frames_ =
       static_cast<uint>(declare_parameter("time_series_blockage_frames", 100));
-    time_series_blockage_frames_ =
+    time_series_blockage_interval_frames_ =
       static_cast<uint>(declare_parameter("time_series_blockage_interval_frames", 5));
   }
 
@@ -55,8 +55,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
-  time_series_blockage_mask_pub_ =
-    image_transport::create_publisher(this, "blockage_diag/debug/time_series_blockage_mask");
+  time_series_blockage_mask_pub_ = image_transport::create_publisher(this, "blockage_diag/debug/time_series_blockage_mask");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
@@ -173,26 +172,33 @@ void BlockageDiagComponent::filter(
     no_return_mask(
       cv::Rect(0, horizontal_ring_id_, horizontal_bins, vertical_bins - horizontal_ring_id_))
       .copyTo(ground_no_return_mask);
+
+    static boost::circular_buffer<cv::Mat> no_return_mask_buffer(time_series_blockage_frames_);
+
+    cv::Mat no_return_mask_result(
+      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(255));
     cv::Mat time_series_blockage_mask(
       cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     cv::Mat no_return_mask_binarized(
       cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-    static boost::circular_buffer<cv::Mat> no_return_mask_buffer(time_series_blockage_frames_);
-    no_return_mask_binarized = no_return_mask / 255;
+
     static uint frame_count;
     frame_count++;
-    if (frame_count == time_series_blockage_interval_frames_) {
-      no_return_mask_buffer.push_back(no_return_mask_binarized);
-      frame_count = 0;
+    if (time_series_blockage_interval_frames_ != 0) {
+      no_return_mask_binarized = no_return_mask / 255;
+      if (frame_count == time_series_blockage_interval_frames_) {
+        no_return_mask_buffer.push_back(no_return_mask_binarized);
+        frame_count = 0;
+      }
+      for (const auto & binary_mask : no_return_mask_buffer) {
+        time_series_blockage_mask += binary_mask;
+      }
+      cv::inRange(
+        time_series_blockage_mask, no_return_mask_buffer.size() - 1, no_return_mask_buffer.size(),
+        no_return_mask_result);
+    } else {
+      no_return_mask.copyTo(no_return_mask_result);
     }
-    for (const auto & binary_mask : no_return_mask_buffer) {
-      time_series_blockage_mask += binary_mask;
-    }
-    cv::Mat time_series_blockage_result(
-      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-    cv::inRange(
-      time_series_blockage_mask, no_return_mask_buffer.size() - 1, no_return_mask_buffer.size(),
-      time_series_blockage_result);
     ground_blockage_ratio_ =
       static_cast<float>(cv::countNonZero(ground_no_return_mask)) /
       static_cast<float>(horizontal_bins * (vertical_bins - horizontal_ring_id_));
@@ -233,20 +239,12 @@ void BlockageDiagComponent::filter(
     lidar_depth_map_pub_.publish(lidar_depth_msg);
 
     cv::Mat blockage_mask_colorized;
-    cv::applyColorMap(no_return_mask, blockage_mask_colorized, cv::COLORMAP_JET);
+    cv::applyColorMap(no_return_mask_result, blockage_mask_colorized, cv::COLORMAP_JET);
     sensor_msgs::msg::Image::SharedPtr blockage_mask_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", blockage_mask_colorized).toImageMsg();
     blockage_mask_msg->header = input->header;
     blockage_mask_pub_.publish(blockage_mask_msg);
 
-    cv::Mat time_series_blockage_mask_colorized;
-    cv::applyColorMap(
-      time_series_blockage_result, time_series_blockage_mask_colorized, cv::COLORMAP_JET);
-    sensor_msgs::msg::Image::SharedPtr time_series_blockage_mask_msg =
-      cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", time_series_blockage_mask_colorized)
-        .toImageMsg();
-    time_series_blockage_mask_msg->header = input->header;
-    time_series_blockage_mask_pub_.publish(time_series_blockage_mask_msg);
   }
 
   tier4_debug_msgs::msg::Float32Stamped ground_blockage_ratio_msg;
@@ -296,7 +294,7 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
   if (get_param(p, "time_series_blockage_interval_frames", time_series_blockage_interval_frames_)) {
     RCLCPP_DEBUG(
       get_logger(), "Setting new time_series_blockage_interval_frames to: %d.",
-      time_series_blockage_frames_);
+      time_series_blockage_interval_frames_);
   }
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
