@@ -211,7 +211,7 @@ LineString2d DetectionAreaModule::getStopLineGeometry2d() const
 bool DetectionAreaModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
 {
   // Store original path
   const auto original_path = *path;
@@ -222,7 +222,7 @@ bool DetectionAreaModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::DETECTION_AREA);
   *motion_factor =
-    planning_utils::initializeMotionFactor(tier4_planning_msgs::msg::MotionFactor::DETECTION_AREA);
+    planning_utils::initializeMotionFactor(autoware_ad_api_msgs::motion::msg::MotionFactor::DETECTION_AREA);
 
   // Find obstacles in detection area
   const auto obstacle_points = getObstaclePoints();
@@ -301,9 +301,9 @@ bool DetectionAreaModule::modifyPathVelocity(
 
   // Create MotionFactor
   {
-    motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-    motion_factor->stop_pose = stop_point->second;
-    motion_factor->stop_factor_points = obstacle_points;
+    motion_factor->status = autoware_ad_api_msgs::motion::msg::MotionFactor::STOP_TRUE;
+    motion_factor->pose = stop_point->second;
+    // motion_factor->stop_factor_points = obstacle_points;
   }
 
   // Create legacy StopReason

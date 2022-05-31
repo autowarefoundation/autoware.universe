@@ -6,6 +6,8 @@ autoware_package()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   srv/InterfaceVersion.srv
+  motion/msg/MotionFactor.msg
+  motion/msg/MotionFactorArray.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs

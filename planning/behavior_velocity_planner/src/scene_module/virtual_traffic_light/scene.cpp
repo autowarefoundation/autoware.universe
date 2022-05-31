@@ -351,7 +351,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
 bool VirtualTrafficLightModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
 {
   // Initialize
   setInfrastructureCommand({});
@@ -359,17 +359,14 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   *stop_reason = planning_utils::initializeStopReason(
     tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
 
-  if (command_.type == "intersection_coordination") {
-    *motion_factor = planning_utils::initializeMotionFactor(
-      tier4_planning_msgs::msg::MotionFactor::INTERSECTION_COORDINATION);
-  } else if (command_.type == "eva_beacon_system") {
-    *motion_factor = planning_utils::initializeMotionFactor(
-      tier4_planning_msgs::msg::MotionFactor::EVA_BEACON_SYSTEM);
-  } else {
-    *motion_factor = planning_utils::initializeMotionFactor(
-      tier4_planning_msgs::msg::MotionFactor::VIRTUAL_TRAFFIC_LIGHT);
-  }
+  *motion_factor = planning_utils::initializeMotionFactor(
+    autoware_ad_api_msgs::motion::msg::MotionFactor::VIRTUAL_TRAFFIC_LIGHT);
 
+  if (command_.type == "intersection_coordination") {
+    motion_factor->detail = "intersection_coordination";
+  } else if (command_.type == "eva_beacon_system") {
+    motion_factor->detail = "eva_beacon_system";
+    
   module_data_ = {};
 
   // Copy data
@@ -476,11 +473,11 @@ void VirtualTrafficLightModule::setStopReason(
 
 void VirtualTrafficLightModule::setMotionFactor(
   const geometry_msgs::msg::Pose & stop_pose,
-  tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
 {
-  motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-  motion_factor->stop_pose = stop_pose;
-  motion_factor->stop_factor_points.push_back(toMsg(map_data_.instrument_center));
+  motion_factor->status = autoware_ad_api_msgs::motion::msg::MotionFactor::STOP_TRUE;
+  motion_factor->pose = stop_pose;
+  // motion_factor->stop_factor_points.push_back(toMsg(map_data_.instrument_center));
 }
 
 bool VirtualTrafficLightModule::isBeforeStartLine()
@@ -622,7 +619,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
 {
   const auto collision = findCollision(path->points, map_data_.end_lines);
 

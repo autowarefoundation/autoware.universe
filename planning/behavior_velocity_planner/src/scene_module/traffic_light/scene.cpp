@@ -203,7 +203,7 @@ TrafficLightModule::TrafficLightModule(
 bool TrafficLightModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
 {
   looking_tl_state_ = initializeTrafficSignal(path->header.stamp);
   debug_data_ = DebugData();
@@ -213,7 +213,7 @@ bool TrafficLightModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
   *motion_factor =
-    planning_utils::initializeMotionFactor(tier4_planning_msgs::msg::MotionFactor::TRAFFIC_LIGHT);
+    planning_utils::initializeMotionFactor(autoware_ad_api_msgs::motion::msg::MotionFactor::TRAFFIC_LIGHT);
 
   const auto input_path = *path;
 
@@ -465,7 +465,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  tier4_planning_msgs::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
@@ -493,10 +493,10 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
     std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
   planning_utils::appendStopReason(stop_factor, stop_reason);
 
-  motion_factor->state = tier4_planning_msgs::msg::MotionFactor::STOP_TRUE;
-  motion_factor->stop_pose = debug_data_.first_stop_pose;
-  motion_factor->stop_factor_points =
-    std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
+  motion_factor->status = autoware_ad_api_msgs::motion::msg::MotionFactor::STOP_TRUE;
+  motion_factor->pose = debug_data_.first_stop_pose;
+  // motion_factor->stop_factor_points =
+  //   std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
 
   return modified_path;
 }
