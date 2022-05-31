@@ -63,7 +63,7 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
 
   // use boost::makeshared instead of std beacause filter.setInputCloud requires boost shared ptr
   pcl::VoxelGrid<pcl::PointXYZ> filter;
-  filter.setInputCloud(boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
+  filter.setInputCloud(pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
   filter.setLeafSize(0.05f, 0.05f, 100000.0f);
 
   pcl::PointCloud<pcl::PointXYZ> output_points;
