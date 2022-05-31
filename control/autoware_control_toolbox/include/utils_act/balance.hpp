@@ -21,6 +21,15 @@
 
 namespace ns_control_toolbox
 {
+	/**
+	 * @brief Reduces a matrix to a upper Hessenberg form.
+	 * */
+	void permute(Eigen::MatrixXd& P);
+
+
+	/**
+	 * @brief Balances a matrix by similarity transformation of form Ab = D^{-1} A D.
+	 * */
 	void balance(Eigen::MatrixXd& A);
 } // namespace ns_control_toolbox
 

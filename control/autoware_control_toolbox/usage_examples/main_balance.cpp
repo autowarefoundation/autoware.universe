@@ -37,6 +37,9 @@ int main()
 	ns_control_toolbox::balance(ss_system);
 	ns_eigen_utils::printEigenMat(ss_system);
 
+	// PERMUTATION TEST
+
+
 
 	return 0;
 }

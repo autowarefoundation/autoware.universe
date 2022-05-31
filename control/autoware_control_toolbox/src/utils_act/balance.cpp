@@ -17,6 +17,17 @@
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_definitions.hpp"
 
+
+/**
+ * @brief Reduces a matrix to a upper Hessenberg form. Source Lapack sgebal.f.
+ * @brief P is always an Identity matrix.
+ * */
+void ns_control_toolbox::permute(Eigen::MatrixXd& P)
+{
+
+
+}
+
 /**
  * @brief Balances a matrix using the Lapack algorithms.
  * James, R., Langou, J. and Lowery, B.R., 2014. On matrix balancing and eigenvector computation. arXiv preprint
