@@ -21,8 +21,8 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(bluetooth_monitor_lib bluetooth ${Boost_LIBRARIES})
-target_link_libraries(l2ping_service bluetooth ${Boost_LIBRARIES})
+target_link_libraries(bluetooth_monitor_lib ${Boost_LIBRARIES})
+target_link_libraries(l2ping_service ${Boost_LIBRARIES})
 
 rclcpp_components_register_node(bluetooth_monitor_lib
   PLUGIN "BluetoothMonitor"

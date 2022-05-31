@@ -11,11 +11,10 @@
 
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>bluez</depend>
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>fmt</depend>
-  <depend>libbluetooth-dev</depend>
+  <depend>libboost-dev</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
 
