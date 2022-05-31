@@ -39,10 +39,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     lidar_model_ = static_cast<std::string>(declare_parameter("model", "Pandar40P"));
     blockage_count_threshold_ =
       static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
-    time_series_blockage_frames_ =
-      static_cast<uint>(declare_parameter("time_series_blockage_frames", 100));
-    time_series_blockage_interval_frames_ =
-      static_cast<uint>(declare_parameter("time_series_blockage_interval_frames", 5));
+    buffering_frames_ = static_cast<uint>(declare_parameter("buffering_frames", 100));
+    buffering_interval_ = static_cast<uint>(declare_parameter("buffering_interval", 5));
   }
 
   updater_.setHardwareID("blockage_diag");
@@ -79,9 +77,8 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
   stat.add(
     "sky_blockage_range_deg", "[" + std::to_string(sky_blockage_range_deg_[0]) + "," +
                                 std::to_string(sky_blockage_range_deg_[1]) + "]");
-  stat.add("time_series_blockage_frames", std::to_string(time_series_blockage_frames_));
-  stat.add(
-    "time_series_blockage_interval_frames", std::to_string(time_series_blockage_interval_frames_));
+  stat.add("buffering_frames", std::to_string(buffering_frames_));
+  stat.add("buffering_interval", std::to_string(buffering_interval_));
   // TODO(badai-nguyen): consider sky_blockage_ratio_ for DiagnosticsStatus." [todo]
 
   auto level = DiagnosticStatus::OK;
@@ -171,10 +168,9 @@ void BlockageDiagComponent::filter(
       cv::Rect(0, horizontal_ring_id_, horizontal_bins, vertical_bins - horizontal_ring_id_))
       .copyTo(ground_no_return_mask);
 
-    static boost::circular_buffer<cv::Mat> no_return_mask_buffer(time_series_blockage_frames_);
+    static boost::circular_buffer<cv::Mat> no_return_mask_buffer(buffering_frames_);
 
-    cv::Mat no_return_mask_result(
-      cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+    cv::Mat no_return_mask_result(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     cv::Mat time_series_blockage_mask(
       cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
     cv::Mat no_return_mask_binarized(
@@ -182,9 +178,9 @@ void BlockageDiagComponent::filter(
 
     static uint frame_count;
     frame_count++;
-    if (time_series_blockage_interval_frames_ != 0) {
+    if (buffering_interval_ != 0) {
       no_return_mask_binarized = no_return_mask / 255;
-      if (frame_count == time_series_blockage_interval_frames_) {
+      if (frame_count == buffering_interval_) {
         no_return_mask_buffer.push_back(no_return_mask_binarized);
         frame_count = 0;
       }
@@ -284,15 +280,11 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
       get_logger(), " Setting new angle_range to: [%f , %f].", angle_range_deg_[0],
       angle_range_deg_[1]);
   }
-  if (get_param(p, "time_series_blockage_frames", time_series_blockage_frames_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting new time_series_blockage_frames to: %d.",
-      time_series_blockage_frames_);
+  if (get_param(p, "buffering_frames", buffering_frames_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new buffering_frames to: %d.", buffering_frames_);
   }
-  if (get_param(p, "time_series_blockage_interval_frames", time_series_blockage_interval_frames_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting new time_series_blockage_interval_frames to: %d.",
-      time_series_blockage_interval_frames_);
+  if (get_param(p, "buffering_interval", buffering_interval_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new buffering_interval to: %d.", buffering_interval_);
   }
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
