@@ -83,6 +83,7 @@ set(CONTROL_LIB_SOURCE
         src/utils_act/state_space.cpp
         src/utils_act/transfer_functions.cpp
         src/utils_act/balance.cpp
+        src/utils_act/act_signal_builder.cpp
         )
 
 set(CONTROL_LIB_HEADERS
@@ -95,6 +96,7 @@ set(CONTROL_LIB_HEADERS
         include/tf_algebra.hpp
         include/utils_act/state_space.hpp
         include/utils_act/transfer_functions.hpp
+        include/utils_act/act_signal_builder.hpp
         )
 
 set(CONTROL_LIB_INCLUDE_DIRS
