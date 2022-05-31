@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(radar_tracks_msgs_converter)
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ## Compile options
 if(NOT CMAKE_CXX_STANDARD)
