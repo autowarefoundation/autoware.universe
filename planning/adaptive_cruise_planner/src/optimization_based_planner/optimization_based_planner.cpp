@@ -1011,7 +1011,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   const TrajectoryData & ego_traj_data, const std::vector<double> & time_vec,
   const double safety_distance, const TargetObstacle & object, const double dist_to_collision_point)
 {
-  const double & min_object_accel = longitudinal_info_.min_object_accel;
+  const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
 
   SBoundaries s_boundaries(time_vec.size());
   for (size_t i = 0; i < s_boundaries.size(); ++i) {
@@ -1025,7 +1025,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
   const double initial_s_obj = current_s_obj;
   const double initial_s_upper_bound =
-    current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel));
+    current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
   s_boundaries.front().max_s = std::clamp(initial_s_upper_bound, 0.0, s_boundaries.front().max_s);
   s_boundaries.front().is_object = true;
   for (size_t i = 1; i < time_vec.size(); ++i) {
@@ -1039,7 +1039,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     }
 
     const double s_upper_bound =
-      current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel));
+      current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
     s_boundaries.at(i).max_s = std::clamp(s_upper_bound, 0.0, s_boundaries.at(i).max_s);
     s_boundaries.at(i).is_object = true;
   }
@@ -1052,7 +1052,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   const std::vector<double> & time_vec, const double safety_distance, const TargetObstacle & object,
   const rclcpp::Time & obj_base_time, const PredictedPath & predicted_path)
 {
-  const double & min_object_accel = longitudinal_info_.min_object_accel;
+  const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
 
   const double abs_obj_vel = std::abs(object.velocity);
   const double v_obj = abs_obj_vel < object_zero_velocity_threshold_ ? 0.0 : abs_obj_vel;
@@ -1085,7 +1085,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
 
     const double current_s_obj = std::max(*dist_to_collision_point - safety_distance, 0.0);
     const double s_upper_bound =
-      current_s_obj + (v_obj * v_obj) / (2 * std::fabs(min_object_accel));
+      current_s_obj + (v_obj * v_obj) / (2 * std::fabs(min_object_accel_for_rss));
     for (size_t i = 0; i < predicted_path_id; ++i) {
       if (s_upper_bound < s_boundaries.at(i).max_s) {
         s_boundaries.at(i).max_s = std::max(0.0, s_upper_bound);

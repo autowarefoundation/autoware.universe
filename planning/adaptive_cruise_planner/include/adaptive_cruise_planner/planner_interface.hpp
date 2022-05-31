@@ -134,7 +134,9 @@ public:
     tier4_autoware_utils::updateParam<double>(parameters, "common.max_jerk", i.max_jerk);
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_jerk", i.min_jerk);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "common.min_object_accel", i.min_object_accel);
+      parameters, "common.min_ego_accel_for_rss", i.min_ego_accel_for_rss);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.min_object_accel_for_rss", i.min_object_accel_for_rss);
     tier4_autoware_utils::updateParam<double>(parameters, "common.idling_time", i.idling_time);
   }
 
@@ -178,7 +180,7 @@ protected:
     const auto & i = longitudinal_info_;
     const double rss_dist_with_margin =
       ego_vel * i.idling_time + std::pow(ego_vel, 2) * 0.5 / std::abs(i.min_accel) -
-      std::pow(obj_vel, 2) * 0.5 / std::abs(i.min_object_accel) + margin;
+      std::pow(obj_vel, 2) * 0.5 / std::abs(i.min_object_accel_for_rss) + margin;
     return rss_dist_with_margin;
   }
 

@@ -179,10 +179,10 @@ $$
 assuming that $d$ is the calculated safe distance, $t_{idling}$ is the idling time for the ego to detect the front vehicle's deceleration, $v_{ego}$ is the ego's current velocity, $v_{obstacle}$ is the front obstacle's current velocity, $a_{ego}$ is the ego's acceleration, and $a_{obstacle}$ is the obstacle's acceleration.
 These values are parameterized as follows. Other common values such as ego's minimum acceleration is defined in `common.param.yaml`.
 
-| Parameter                 | Type   | Description                                                                   |
-| ------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `common.idling_time`      | double | idling time for the ego to detect the front vehicle starting deceleration [s] |
-| `common.min_object_accel` | double | front obstacle's acceleration [m/ss]                                          |
+| Parameter                         | Type   | Description                                                                   |
+| --------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `common.idling_time`              | double | idling time for the ego to detect the front vehicle starting deceleration [s] |
+| `common.min_object_accel_for_rss` | double | front obstacle's acceleration [m/ss]                                          |
 
 ## Implementation
 

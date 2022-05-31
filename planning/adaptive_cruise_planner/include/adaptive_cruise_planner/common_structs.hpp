@@ -82,14 +82,16 @@ struct LongitudinalInfo
   LongitudinalInfo(
     const double arg_max_accel, const double arg_min_accel, const double arg_max_jerk,
     const double arg_min_jerk, const double arg_min_strong_accel, const double arg_idling_time,
-    const double arg_min_object_accel, const double arg_safe_distance_margin)
+    const double arg_min_ego_accel_for_rss, const double arg_min_object_accel_for_rss,
+    const double arg_safe_distance_margin)
   : max_accel(arg_max_accel),
     min_accel(arg_min_accel),
     max_jerk(arg_max_jerk),
     min_jerk(arg_min_jerk),
     min_strong_accel(arg_min_strong_accel),
     idling_time(arg_idling_time),
-    min_object_accel(arg_min_object_accel),
+    min_ego_accel_for_rss(arg_min_ego_accel_for_rss),
+    min_object_accel_for_rss(arg_min_object_accel_for_rss),
     safe_distance_margin(arg_safe_distance_margin)
   {
   }
@@ -99,7 +101,8 @@ struct LongitudinalInfo
   double min_jerk;
   double min_strong_accel;
   double idling_time;
-  double min_object_accel;
+  double min_ego_accel_for_rss;
+  double min_object_accel_for_rss;
   double safe_distance_margin;
 };
 
