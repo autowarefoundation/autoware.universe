@@ -1,9 +1,10 @@
 #include "sign_detector/lsd.hpp"
+#include "sign_detector/timer.hpp"
 #include "sign_detector/util.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
 
-void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage & msg) const
+void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage & msg)
 {
   sensor_msgs::msg::Image::ConstSharedPtr image_ptr = decompressImage(msg);
   cv::Mat image = cv_bridge::toCvCopy(*image_ptr, "rgb8")->image;
@@ -20,23 +21,29 @@ void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage 
   const float SCALE = 1.0f * WIDTH / size.width;
   const int HEIGHT = SCALE * size.height;
   cv::resize(image, image, cv::Size(WIDTH, HEIGHT));
-  cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+  cv::Mat gray_image;
+  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
 
   std::chrono::time_point start = std::chrono::system_clock::now();
   cv::Mat lines;
-  lsd->detect(image, lines);
-  lsd->drawSegments(image, lines);
+  lsd->detect(gray_image, lines);
+  lsd->drawSegments(gray_image, lines);
 
   auto dur = std::chrono::system_clock::now() - start;
   long ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
   RCLCPP_INFO_STREAM(this->get_logger(), cv::Size(WIDTH, HEIGHT) << " " << ms);
 
+  // cv::Mat segmented = segmentationHfs(image);
+  cv::Mat segmented = segmentationGraph(image);
+  cv::addWeighted(gray_image, 0.8, segmented, 0.5, 1, gray_image);
+
+  // Publish lsd image
   {
     cv_bridge::CvImage raw_image;
     raw_image.header.stamp = msg.header.stamp;
     raw_image.header.frame_id = "map";
     raw_image.encoding = "bgr8";
-    raw_image.image = image;
+    raw_image.image = gray_image;
     pub_image_lsd_->publish(*raw_image.toImageMsg());
   }
 
@@ -76,8 +83,6 @@ void LineSegmentDetector::projectEdgeOnPlane(
   }
   Eigen::Vector3f t = camera_extrinsic_->translation();
   Eigen::Quaternionf q(camera_extrinsic_->rotation());
-  RCLCPP_INFO_STREAM(
-    this->get_logger(), "transform: " << t.transpose() << " " << q.coeffs().transpose());
 
   // Convert to projected coordinate
   Eigen::Matrix3f K, K_inv;
@@ -143,7 +148,6 @@ void LineSegmentDetector::projectEdgeOnPlane(
 
   // Publish
   publishCloud(long_edges, stamp);
-  publishImage(image, stamp);
 }
 
 void LineSegmentDetector::publishImage(const cv::Mat & image, const rclcpp::Time & stamp) const
@@ -165,4 +169,54 @@ void LineSegmentDetector::publishCloud(
   msg.header.stamp = stamp;
   msg.header.frame_id = "map";
   pub_cloud_->publish(msg);
+}
+
+cv::Mat LineSegmentDetector::segmentationHfs(const cv::Mat & image)
+{
+  Timer t;
+
+  cv::Mat resized;
+  cv::resize(image, resized, cv::Size(), 0.5, 0.5);
+  if (segmentator.empty()) {
+    segmentator = cv::hfs::HfsSegment::create(resized.rows, resized.cols);
+  }
+
+  cv::Mat ret = segmentator->performSegmentCpu(resized);
+  RCLCPP_INFO_STREAM(this->get_logger(), "segmentation: " << t.microSeconds() / 1000.0f);
+
+  return ret;
+}
+
+cv::Mat LineSegmentDetector::segmentationGraph(const cv::Mat & image)
+{
+  if (gs.empty()) gs = cv::ximgproc::segmentation::createGraphSegmentation();
+
+  Timer t;
+  cv::Mat resized;
+  cv::resize(image, resized, cv::Size(), 0.5, 0.5);
+
+  cv::Mat segmented;
+  gs->processImage(resized, segmented);
+
+  // TODO: THIS IS EFFICIENT BUT STUPID
+  int target_class = segmented.at<int>(cv::Point2i(resized.cols / 2, resized.rows * 0.8));
+
+  cv::Mat output_image = cv::Mat::zeros(resized.size(), CV_8UC3);
+  for (int w = 0; w < resized.cols; w++) {
+    for (int h = 0; h < resized.rows; h++) {
+      cv::Point2i px(w, h);
+      if (segmented.at<int>(px) == target_class)
+        output_image.at<cv::Vec3b>(px) = cv::Vec3b(0, 255, 255);
+    }
+  }
+
+  RCLCPP_INFO_STREAM(this->get_logger(), "segmentation: " << t.microSeconds() / 1000.0f);
+  cv::resize(output_image, output_image, image.size(), 0, 0, cv::INTER_NEAREST);
+
+  const int dilate_size_ = 4;
+  cv::Mat kernel = cv::getStructuringElement(
+    cv::MORPH_ELLIPSE, cv::Size(2 * dilate_size_ + 1, 2 * dilate_size_ + 1),
+    cv::Point(dilate_size_, dilate_size_));
+  cv::dilate(output_image, output_image, kernel);
+  return output_image;
 }

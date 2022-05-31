@@ -3,7 +3,9 @@
 #include <eigen3/Eigen/StdVector>
 #include <lsd/lsd.hpp>
 #include <opencv4/opencv2/core/eigen.hpp>
+#include <opencv4/opencv2/hfs.hpp>
 #include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/ximgproc/segmentation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -69,6 +71,8 @@ private:
   const int image_size_;
   const float max_range_;
   const float length_threshold_;
+  cv::Ptr<cv::hfs::HfsSegment> segmentator;
+  cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> gs;
 
   void directLineSegment(const cv::Mat & image, const cv::Mat & lines) const;
 
@@ -83,8 +87,11 @@ private:
     listenExtrinsicTf(info_->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::msg::CompressedImage & msg) const;
+  void imageCallback(const sensor_msgs::msg::CompressedImage & msg);
   void publishCloud(
     const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const;
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp) const;
+
+  cv::Mat segmentationHfs(const cv::Mat & image);
+  cv::Mat segmentationGraph(const cv::Mat & image);
 };
