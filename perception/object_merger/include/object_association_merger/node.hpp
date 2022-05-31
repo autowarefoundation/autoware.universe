@@ -15,7 +15,8 @@
 #ifndef OBJECT_ASSOCIATION_MERGER__NODE_HPP_
 #define OBJECT_ASSOCIATION_MERGER__NODE_HPP_
 
-#include <object_association_merger/data_association.hpp>
+#include "object_association_merger/data_association/data_association.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
@@ -23,11 +24,22 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
-#include <pcl_conversions/pcl_conversions.h>
+
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+
+#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
+#include <string>
 
 namespace object_association
 {
@@ -54,6 +66,7 @@ private:
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
   std::unique_ptr<DataAssociation> data_association_;
+  std::string base_link_frame_id_; // associated with the base_link frame
 };
 }  // namespace object_association
 

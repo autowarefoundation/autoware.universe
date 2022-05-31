@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include "object_association_merger/node.hpp"
+#include "object_association_merger/utils/utils.hpp"
 
-#include <tf2/LinearMath/Transform.h>
-#include <tf2/convert.h>
-#include <tf2/transform_datatypes.h>
-
+#include <boost/optional.hpp>
 #include <chrono>
 #include <unordered_map>
-// #include <tf2_sensor_msgs/msg/tf2_sensor_msgs.hpp>
-#include <object_association_merger/node.hpp>
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <rclcpp_components/register_node_macro.hpp>
+
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
@@ -40,7 +39,7 @@ boost::optional<geometry_msgs::msg::Transform> getTransform(
       rclcpp::Duration::from_seconds(0.5));
     return self_transform_stamped.transform;
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("object_association_merger"), ex.what());
     return boost::none;
   }
 }
@@ -80,7 +79,7 @@ bool transformDetectedObjects(
 namespace object_association
 {
 ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("object_merger_node", node_options),
+: rclcpp::Node("object_association_merger_node", node_options),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
   object0_sub_(this, "input/object0", rclcpp::QoS{1}.get_rmw_qos_profile()),
@@ -110,8 +109,8 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object0_msg,
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object1_msg)
+  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects0_msg,
+  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects1_msg)
 {
   // Guard
   if (merged_object_pub_->get_subscription_count() < 1) {
@@ -119,49 +118,76 @@ void ObjectAssociationMergerNode::objectsCallback(
   }
 
   /* transform to base_link coordinate */
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_object0,transformed_object1;
+  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects0,transformed_objects1;
   if (
     !transformDetectedObjects(
-      *input_object0_msg, base_link_frame_id_, tf_buffer_, transformed_object0) ||
+      *input_objects0_msg, base_link_frame_id_, tf_buffer_, transformed_objects0) ||
     !transformDetectedObjects(
-      *input_object1_msg, base_link_frame_id_, tf_buffer_, transformed_object1)) {
+      *input_objects1_msg, base_link_frame_id_, tf_buffer_, transformed_objects1)) {
     return;
   }
 
   // build output msg
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
-  output_msg.header = input_object0_msg->header;
+  output_msg.header = input_objects0_msg->header;
 
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment;
   std::unordered_map<int, int> reverse_assignment;
+  const auto & objects0 = transformed_objects0.objects;
+  const auto & objects1 = transformed_objects1.objects;
   Eigen::MatrixXd score_matrix =
-    data_association_.calcScoreMatrix(transformed_object1, transformed_object0);
-  data_association_.assign(score_matrix, direct_assignment, reverse_assignment);
-  /* global nearest neighbor */
-  std::unordered_map<int, int> direct_assignment, reverse_assignment;
-  Eigen::MatrixXd score_matrix =
-    data_association_->calcScoreMatrix(transformed_object1, transformed_object0);
+    data_association_->calcScoreMatrix(transformed_objects1, transformed_objects0);
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
-  for (size_t object0_idx = 0; object0_idx < transformed_object0.objects.size(); ++object0_idx) {
-    if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found
-      // The one with the higher score will be hired.
-      if (
-        transformed_object1.objects.at(direct_assignment.at(object0_idx)).existence_probability <
-        transformed_object0.objects.at(object0_idx).existence_probability) {
-        output_msg.objects.push_back(transformed_object0.objects.at(object0_idx));
+  for (size_t object0_idx = 0; object0_idx < objects0.size(); ++object0_idx) {
+    const auto & object0 = objects0.at(object0_idx);
+    const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
+
+    if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found. should be merged
+
+      const std::uint8_t object0_label = utils::getHighestProbLabel(object0.classification);
+      const std::uint8_t object1_label = utils::getHighestProbLabel(object1.classification);
+
+      bool should_use_object0 = false;
+      bool should_use_object1 = false;
+
+      // If at least one of them is UNKNOWN, delete the one with lower existence_probability Because
+      // the UNKNOWN objects are not reliable.
+      if (object0_label == Label::UNKNOWN || object1_label == Label::UNKNOWN) {
+        if (object0_label == Label::UNKNOWN && object1_label == Label::UNKNOWN) {
+          if (object1.existence_probability == object0.existence_probability){
+            should_use_object0 = true;
+            should_use_object1 = true;
+          } else if (object1.existence_probability < object0.existence_probability) {
+            should_use_object0 = true;
+          } else
+            should_use_object1 = true;
+        } else if (object0_label == Label::UNKNOWN) {
+          should_use_object1 = true;
+        } else if (object1_label == Label::UNKNOWN) {
+          should_use_object0 = true;
+        }
+        // If neither is UNKNOWN, delete the one with lower existence_probability.
       } else {
-        output_msg.objects.push_back(
-          transformed_object1.objects.at(direct_assignment.at(object0_idx)));
+        if (object1.existence_probability <= object0.existence_probability)
+          should_use_object0 = true;
+        else
+          should_use_object1 = true;
       }
+
+      if (should_use_object0) output_msg.objects.push_back(object0);
+      if (should_use_object1) output_msg.objects.push_back(object1);
+
     } else {  // not found
-      output_msg.objects.push_back(transformed_object0.objects.at(object0_idx));
+      output_msg.objects.push_back(object0);
     }
   }
-  for (size_t object1_idx = 0; object1_idx < transformed_object1.objects.size(); ++object1_idx) {
+  for (size_t object1_idx = 0; object1_idx < objects1.size(); ++object1_idx) {
+    const auto & object1 = objects1.at(object1_idx);
+
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found
-      output_msg.objects.push_back(transformed_object1.objects.at(object1_idx));
+      output_msg.objects.push_back(object1);
     }
   }
 

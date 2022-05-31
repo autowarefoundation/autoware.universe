@@ -16,8 +16,8 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef OBJECT_MERGER__UTILS__UTILS_HPP_
-#define OBJECT_MERGER__UTILS__UTILS_HPP_
+#ifndef OBJECT_ASSOCIATION_MERGER__UTILS__UTILS_HPP_
+#define OBJECT_ASSOCIATION_MERGER__UTILS__UTILS_HPP_
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -89,4 +89,4 @@ enum MSG_COV_IDX {
 };
 }  // namespace utils
 
-#endif  // OBJECT_MERGER__UTILS__UTILS_HPP_
+#endif  // OBJECT_ASSOCIATION_MERGER__UTILS__UTILS_HPP_
