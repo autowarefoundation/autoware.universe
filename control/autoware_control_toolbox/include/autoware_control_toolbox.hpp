@@ -33,6 +33,7 @@
 #include "utils_act/balance.hpp"
 #include "utils_act/transfer_functions.hpp"
 #include "utils_act/state_space.hpp"
+#include "utils_act/act_signal_builder.hpp"
 
 namespace ns_control_toolbox
 {
