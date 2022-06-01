@@ -70,5 +70,5 @@ There are two main functions in this package:
 Regularization is available only with NDT_OMP.
 | Name | Type | Description |
 | --------------------------------------- | ------ | ----------------------------------------------------------------------- |
-| `regularization_enabled` | bool | Flag to add regulalization term to NDT optimization (FALSE by default) |
+| `regularization_enabled` | bool | Flag to add regularization term to NDT optimization (FALSE by default) |
 | `regularization_scale_factor` | double | Coefficient of the regularization term |
