@@ -36,7 +36,7 @@ namespace ns_control_toolbox
 
 	// For visibility we can set for each object : __attribute__((visibility("default"))) class_name
 	struct ACT_PUBLIC tf
-		{
+	{
 
 		// Constructors.
 		tf() : num_{ 1. }, den_{ 1. }
@@ -58,7 +58,7 @@ namespace ns_control_toolbox
 		 * @brief : Creates a string stream object of polynomial representation of given the vector,
 		 * */
 		static size_t getPolynomialStringAndSize(std::vector<double> const& num_or_den,
-				std::ostringstream& string_stream);
+		                                         std::ostringstream& string_stream);
 
 
 		void print() const;
@@ -73,12 +73,16 @@ namespace ns_control_toolbox
 			return den_;
 		}
 
+		// Invert the transfer function.
+		void inv();
+
+
 	private:
 
 		// Data members
 		std::vector<double> num_;   // <-@brief numerator
 		std::vector<double> den_;   // <-@brief denominator
-		};
+	};
 
 /**
  * @param Td	: time delay value in seconds.
