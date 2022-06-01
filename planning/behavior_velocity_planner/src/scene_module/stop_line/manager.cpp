@@ -21,23 +21,56 @@
 
 namespace behavior_velocity_planner
 {
-namespace
+StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
+: SceneModuleManagerInterface(node, getModuleName())
 {
-using TrafficSignsWithLaneId = std::vector<std::pair<lanelet::TrafficSignConstPtr, int64_t>>;
-using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
-TrafficSignsWithLaneId getTrafficSignRegElemsOnPath(
+  const std::string ns(getModuleName());
+  auto & p = planner_param_;
+  p.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
+  p.stop_check_dist = node.declare_parameter(ns + ".stop_check_dist", 2.0);
+  p.stop_duration_sec = node.declare_parameter(ns + ".stop_duration_sec", 1.0);
+  p.use_initialization_stop_line_state =
+    node.declare_parameter(ns + ".use_initialization_stop_line_state", false);
+  // debug
+  p.show_stopline_collision_check =
+    node.declare_parameter(ns + ".debug.show_stopline_collision_check", false);
+}
+
+TrafficSignsWithLaneId StopLineModuleManager::getTrafficSignRegElemsOnPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   TrafficSignsWithLaneId traffic_signs_reg_elems_with_id;
   std::set<int64_t> unique_lane_ids;
-  for (const auto & p : path.points) {
-    unique_lane_ids.insert(p.lane_ids.at(0));  // should we iterate ids? keep as it was.
+
+  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+    path.points, planner_data_->current_pose.pose, std::numeric_limits<double>::max(), M_PI_2);
+
+  // Add current lane id
+  lanelet::ConstLanelets current_lanes;
+  if (
+    lanelet::utils::query::getCurrentLanelets(
+      lanelet::utils::query::laneletLayer(lanelet_map), planner_data_->current_pose.pose,
+      &current_lanes) &&
+    nearest_segment_idx) {
+    for (const auto & ll : current_lanes) {
+      if (
+        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
+        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
+        unique_lane_ids.insert(ll.id());
+      }
+    }
+  }
+
+  // Add forward path lane_id
+  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  for (size_t i = start_idx; i < path.points.size(); i++) {
+    unique_lane_ids.insert(
+      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
   }
 
   for (const auto lane_id : unique_lane_ids) {
     const auto ll = lanelet_map->laneletLayer.get(lane_id);
-
     const auto tss = ll.regulatoryElementsAs<const lanelet::TrafficSign>();
     for (const auto & ts : tss) {
       traffic_signs_reg_elems_with_id.push_back(std::make_pair(ts, lane_id));
@@ -47,7 +80,7 @@ TrafficSignsWithLaneId getTrafficSignRegElemsOnPath(
   return traffic_signs_reg_elems_with_id;
 }
 
-std::vector<StopLineWithLaneId> getStopLinesWithLaneIdOnPath(
+std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
@@ -70,7 +103,7 @@ std::vector<StopLineWithLaneId> getStopLinesWithLaneIdOnPath(
   return stop_lines_with_lane_id;
 }
 
-std::set<int64_t> getStopLineIdSetOnPath(
+std::set<int64_t> StopLineModuleManager::getStopLineIdSetOnPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
@@ -81,23 +114,6 @@ std::set<int64_t> getStopLineIdSetOnPath(
   }
 
   return stop_line_id_set;
-}
-
-}  // namespace
-
-StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
-{
-  const std::string ns(getModuleName());
-  auto & p = planner_param_;
-  p.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
-  p.stop_check_dist = node.declare_parameter(ns + ".stop_check_dist", 2.0);
-  p.stop_duration_sec = node.declare_parameter(ns + ".stop_duration_sec", 1.0);
-  p.use_initialization_stop_line_state =
-    node.declare_parameter(ns + ".use_initialization_stop_line_state", false);
-  // debug
-  p.show_stopline_collision_check =
-    node.declare_parameter(ns + ".debug.show_stopline_collision_check", false);
 }
 
 void StopLineModuleManager::launchNewModules(

@@ -27,38 +27,6 @@
 
 namespace behavior_velocity_planner
 {
-namespace
-{
-std::vector<lanelet::NoStoppingAreaConstPtr> getNoStoppingAreaRegElemsOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::vector<lanelet::NoStoppingAreaConstPtr> no_stopping_area_reg_elems;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    const auto ll = lanelet_map->laneletLayer.get(lane_id);
-    const auto no_stopping_areas =
-      ll.regulatoryElementsAs<const lanelet::autoware::NoStoppingArea>();
-    for (const auto & no_stopping_area : no_stopping_areas) {
-      no_stopping_area_reg_elems.push_back(no_stopping_area);
-    }
-  }
-
-  return no_stopping_area_reg_elems;
-}
-
-std::set<int64_t> getNoStoppingAreaIdSetOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::set<int64_t> no_stopping_area_id_set;
-  for (const auto & no_stopping_area : getNoStoppingAreaRegElemsOnPath(path, lanelet_map)) {
-    no_stopping_area_id_set.insert(no_stopping_area->id());
-  }
-  return no_stopping_area_id_set;
-}
-}  // namespace
 
 NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
@@ -74,6 +42,63 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
   pp.detection_area_length = node.declare_parameter(ns + ".detection_area_length", 200.0);
   pp.stuck_vehicle_front_margin = node.declare_parameter(ns + ".stuck_vehicle_front_margin", 6.0);
   pp.path_expand_width = vi.vehicle_width_m * 0.5;
+}
+
+std::vector<lanelet::NoStoppingAreaConstPtr>
+NoStoppingAreaModuleManager::getNoStoppingAreaRegElemsOnPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map)
+{
+  std::vector<lanelet::NoStoppingAreaConstPtr> no_stopping_area_reg_elems;
+  std::set<int64_t> unique_lane_ids;
+
+  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+    path.points, planner_data_->current_pose.pose, std::numeric_limits<double>::max(), M_PI_2);
+
+  // Add current lane id
+  lanelet::ConstLanelets current_lanes;
+  if (
+    lanelet::utils::query::getCurrentLanelets(
+      lanelet::utils::query::laneletLayer(lanelet_map), planner_data_->current_pose.pose,
+      &current_lanes) &&
+    nearest_segment_idx) {
+    for (const auto & ll : current_lanes) {
+      if (
+        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
+        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
+        unique_lane_ids.insert(ll.id());
+      }
+    }
+  }
+
+  // Add forward path lane_id
+  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  for (size_t i = start_idx; i < path.points.size(); i++) {
+    unique_lane_ids.insert(
+      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+  }
+
+  for (const auto lane_id : unique_lane_ids) {
+    const auto ll = lanelet_map->laneletLayer.get(lane_id);
+    const auto no_stopping_areas =
+      ll.regulatoryElementsAs<const lanelet::autoware::NoStoppingArea>();
+    for (const auto & no_stopping_area : no_stopping_areas) {
+      no_stopping_area_reg_elems.push_back(no_stopping_area);
+    }
+  }
+
+  return no_stopping_area_reg_elems;
+}
+
+std::set<int64_t> NoStoppingAreaModuleManager::getNoStoppingAreaIdSetOnPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map)
+{
+  std::set<int64_t> no_stopping_area_id_set;
+  for (const auto & no_stopping_area : getNoStoppingAreaRegElemsOnPath(path, lanelet_map)) {
+    no_stopping_area_id_set.insert(no_stopping_area->id());
+  }
+  return no_stopping_area_id_set;
 }
 
 void NoStoppingAreaModuleManager::launchNewModules(

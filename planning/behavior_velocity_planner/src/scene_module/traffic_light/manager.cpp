@@ -24,41 +24,6 @@
 
 namespace behavior_velocity_planner
 {
-namespace
-{
-std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet>
-getTrafficLightRegElemsOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet> traffic_light_reg_elems;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    const auto ll = lanelet_map->laneletLayer.get(lane_id);
-
-    const auto tls = ll.regulatoryElementsAs<const lanelet::TrafficLight>();
-    for (const auto & tl : tls) {
-      traffic_light_reg_elems.insert(std::make_pair(tl, ll));
-    }
-  }
-
-  return traffic_light_reg_elems;
-}
-
-std::set<int64_t> getLaneletIdSetOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::set<int64_t> lanelet_id_set;
-  for (const auto & traffic_light_reg_elem : getTrafficLightRegElemsOnPath(path, lanelet_map)) {
-    lanelet_id_set.insert(traffic_light_reg_elem.second.id());
-  }
-  return lanelet_id_set;
-}
-
-}  // namespace
-
 TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
@@ -71,6 +36,62 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
   planner_param_.yellow_lamp_period = node.declare_parameter(ns + ".yellow_lamp_period", 2.75);
   pub_tl_state_ = node.create_publisher<autoware_auto_perception_msgs::msg::LookingTrafficSignal>(
     "~/output/traffic_signal", 1);
+}
+
+std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet>
+TrafficLightModuleManager::getTrafficLightRegElemsOnPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map)
+{
+  std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet> traffic_light_reg_elems;
+  std::set<int64_t> unique_lane_ids;
+
+  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+    path.points, planner_data_->current_pose.pose, std::numeric_limits<double>::max(), M_PI_2);
+
+  // Add current lane id
+  lanelet::ConstLanelets current_lanes;
+  if (
+    lanelet::utils::query::getCurrentLanelets(
+      lanelet::utils::query::laneletLayer(lanelet_map), planner_data_->current_pose.pose,
+      &current_lanes) &&
+    nearest_segment_idx) {
+    for (const auto & ll : current_lanes) {
+      if (
+        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
+        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
+        unique_lane_ids.insert(ll.id());
+      }
+    }
+  }
+
+  // Add forward path lane_id
+  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  for (size_t i = start_idx; i < path.points.size(); i++) {
+    unique_lane_ids.insert(
+      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+  }
+
+  for (const auto lane_id : unique_lane_ids) {
+    const auto ll = lanelet_map->laneletLayer.get(lane_id);
+    const auto tls = ll.regulatoryElementsAs<const lanelet::TrafficLight>();
+    for (const auto & tl : tls) {
+      traffic_light_reg_elems.insert(std::make_pair(tl, ll));
+    }
+  }
+
+  return traffic_light_reg_elems;
+}
+
+std::set<int64_t> TrafficLightModuleManager::getLaneletIdSetOnPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map)
+{
+  std::set<int64_t> lanelet_id_set;
+  for (const auto & traffic_light_reg_elem : getTrafficLightRegElemsOnPath(path, lanelet_map)) {
+    lanelet_id_set.insert(traffic_light_reg_elem.second.id());
+  }
+  return lanelet_id_set;
 }
 
 void TrafficLightModuleManager::modifyPathVelocity(

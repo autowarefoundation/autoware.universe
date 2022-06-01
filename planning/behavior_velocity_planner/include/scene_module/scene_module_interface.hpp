@@ -17,6 +17,8 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 
+#include <utilization/util.hpp>
+
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
@@ -158,6 +160,57 @@ public:
   }
 
 protected:
+  std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const lanelet::LaneletMapPtr lanelet_map)
+  {
+    std::set<int64_t> unique_lane_ids;
+    auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+      path.points, planner_data_->current_pose.pose, std::numeric_limits<double>::max(), M_PI_2);
+
+    // Add current lane id
+    lanelet::ConstLanelets current_lanes;
+    if (
+      lanelet::utils::query::getCurrentLanelets(
+        lanelet::utils::query::laneletLayer(lanelet_map), planner_data_->current_pose.pose,
+        &current_lanes) &&
+      nearest_segment_idx) {
+      for (const auto & ll : current_lanes) {
+        if (
+          ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
+          ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
+          unique_lane_ids.insert(ll.id());
+        }
+      }
+    }
+
+    // Add forward path lane_id
+    const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+    for (size_t i = start_idx; i < path.points.size(); i++) {
+      unique_lane_ids.insert(
+        path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+    }
+
+    std::vector<lanelet::ConstLanelet> lanelets;
+    for (const auto lane_id : unique_lane_ids) {
+      lanelets.push_back(lanelet_map->laneletLayer.get(lane_id));
+    }
+
+    return lanelets;
+  }
+
+  std::set<int64_t> getLaneIdSetOnPath(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const lanelet::LaneletMapPtr lanelet_map)
+  {
+    std::set<int64_t> lane_id_set;
+    for (const auto & lane : getLaneletsOnPath(path, lanelet_map)) {
+      lane_id_set.insert(lane.id());
+    }
+
+    return lane_id_set;
+  }
+
   virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
