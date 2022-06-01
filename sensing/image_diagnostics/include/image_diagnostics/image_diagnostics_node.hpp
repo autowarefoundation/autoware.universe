@@ -35,6 +35,39 @@ namespace image_diagnostics
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 
+struct ImageParam
+{
+  int num_of_regions_normal = 0;
+  int num_of_regions_dark = 0;
+  int num_of_regions_blockage = 0;
+  int num_of_regions_low_visibility = 0;
+  int num_of_regions_backlight = 0;
+
+  int image_resize_height = 480;
+  int diagnostic_status = -1;
+  int number_block_horizontal = 5;
+  int number_block_vertical = 5;
+
+  int dark_regions_num_warn_thresh = 10;
+  int blockage_region_num_warn_thresh = 3;
+  int lowVis_region_num_warn_thresh = 2;
+  int backlight_region_num_warn_thresh = 2;
+
+  int dark_regions_num_error_thresh = 20;
+  int blockage_region_num_error_thresh = 5;
+  int lowVis_region_num_error_thresh = 4;
+  int backlight_region_num_error_thresh = 3;
+
+  float blockage_ratio_thresh = 90.0f;
+  int blockage_intensity_thresh = 10;
+  float blockage_freq_ratio_thresh = 30.0f;
+
+  int dark_intensity_thresh = 10;
+  float lowVis_freq_thresh = 400.0f;
+  int backlight_intensity_thresh = 230;
+
+};
+
 enum Image_State : uint8_t { NORMAL = 0, DARK, BLOCKAGE, LOW_VIS, BACKLIGHT };
 std::unordered_map<std::string, cv::Scalar> state_color_map_ = {
   {"NORMAL", cv::Scalar(100, 100, 100)},  {"DARK", cv::Scalar(0, 0, 0)},
@@ -47,36 +80,7 @@ private:
   void ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg);
   void shiftImage(cv::Mat & img);
   void onImageDiagChecker(DiagnosticStatusWrapper & stat);
-
-  int num_of_regions_normal = 0;
-  int num_of_regions_dark = 0;
-  int num_of_regions_blockage = 0;
-  int num_of_regions_low_visibility = 0;
-  int num_of_regions_backlight = 0;
-
-  int image_resize_height_ = 480;
-  int diagnostic_status_ = -1;
-  int number_block_horizontal_ = 5;
-  int number_block_vertical_ = 5;
-
-  int dark_regions_num_warn_thresh_ = 10;
-  int blockage_region_num_warn_thresh_ = 3;
-  int lowVis_region_num_warn_thresh_ = 2;
-  int backlight_region_num_warn_thresh = 2;
-
-  int dark_regions_num_error_thresh_ = 20;
-  int blockage_region_num_error_thresh_ = 5;
-  int lowVis_region_num_error_thresh_ = 4;
-  int backlight_region_num_error_thresh = 3;
-
-  float blockage_ratio_thresh_ = 90.0f;
-  int blockage_intensity_thresh_ = 10;
-  float blockage_freq_ratio_thresh_ = 30.0f;
-
-  int dark_intensity_thresh_ = 10;
-  float lowVis_freq_thresh_ = 400.0f;
-  int backlight_intensity_thresh_ = 230;
-
+  ImageParam params_;
   Updater updater_{this};
 
 public:
