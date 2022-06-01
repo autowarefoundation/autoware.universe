@@ -106,5 +106,7 @@ private:
   void publishCloud(
     const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const;
 
+  cv::Point toCvPoint(const Eigen::Vector3f & v) const;
+
   cv::Mat segmentationGraph(const cv::Mat & image);
 };

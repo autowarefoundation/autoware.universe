@@ -23,7 +23,7 @@ public:
 
   friend std::ostream & operator<<(std::ostream & os, Timer & t)
   {
-    os << t.milliSeconds();
+    os << t.microSeconds() / 1000.f << "[ms] ";
     return os;
   }
 

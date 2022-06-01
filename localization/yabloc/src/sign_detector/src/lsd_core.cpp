@@ -4,6 +4,14 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+cv::Point2i LineSegmentDetector::toCvPoint(const Eigen::Vector3f & v) const
+{
+  cv::Point pt;
+  pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2;
+  pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_;
+  return pt;
+};
+
 void LineSegmentDetector::compressedImageCallback(const sensor_msgs::msg::CompressedImage & msg)
 {
   cv::Mat image = decompress2CvMat(msg);
@@ -22,32 +30,29 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
 
-  std::chrono::time_point start = std::chrono::system_clock::now();
   cv::Mat lines;
   {
     Timer timer;
     lsd->detect(gray_image, lines);
     lsd->drawSegments(gray_image, lines);
-    RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << timer.microSeconds() / 1000.0f << "ms");
+    RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << timer);
   }
 
-  auto dur = std::chrono::system_clock::now() - start;
-  long ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-
   cv::Mat segmented = segmentationGraph(image);
-  cv::Mat gray_segmented;
-  cv::cvtColor(segmented, gray_segmented, cv::COLOR_GRAY2BGR);
-  cv::addWeighted(gray_image, 0.8, gray_segmented, 0.5, 1, gray_image);
 
-  // Publish lsd image
-  publishImage(*pub_image_lsd_, gray_image, stamp);
-
+  {
+    cv::Mat rgb_segmented;
+    cv::merge(
+      std::vector<cv::Mat>{cv::Mat::zeros(segmented.size(), CV_8UC1), segmented, segmented},
+      rgb_segmented);
+    cv::addWeighted(gray_image, 0.8, rgb_segmented, 0.5, 1, gray_image);
+    publishImage(*pub_image_lsd_, gray_image, stamp);
+  }
   {
     Timer project_timer;
     cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
     projectEdgeOnPlane(lines, K, stamp, segmented);
-    RCLCPP_INFO_STREAM(
-      this->get_logger(), "projection: " << project_timer.microSeconds() / 1000.0f << "ms");
+    RCLCPP_INFO_STREAM(this->get_logger(), "projection: " << project_timer.microSeconds());
   }
 }
 
@@ -73,6 +78,15 @@ void LineSegmentDetector::listenExtrinsicTf(const std::string & frame_id)
   }
 }
 
+std::set<ushort> getUniquePixelValue(cv::Mat & image)
+{
+  auto begin = image.begin<ushort>();
+  auto last = std::unique(begin, image.end<ushort>());
+  std::sort(begin, last);
+  last = std::unique(begin, last);
+  return std::set<ushort>(begin, last);
+}
+
 void LineSegmentDetector::projectEdgeOnPlane(
   const cv::Mat & lines, const cv::Mat & K_cv, const rclcpp::Time & stamp,
   const cv::Mat & mask) const
@@ -81,8 +95,8 @@ void LineSegmentDetector::projectEdgeOnPlane(
     RCLCPP_WARN_STREAM(this->get_logger(), "camera_extrinsic_ has not been initialized");
     return;
   }
-  Eigen::Vector3f t = camera_extrinsic_->translation();
-  Eigen::Quaternionf q(camera_extrinsic_->rotation());
+  const Eigen::Vector3f t = camera_extrinsic_->translation();
+  const Eigen::Quaternionf q(camera_extrinsic_->rotation());
 
   // Convert to projected coordinate
   Eigen::Matrix3f K, K_inv;
@@ -109,12 +123,6 @@ void LineSegmentDetector::projectEdgeOnPlane(
     xy1 << xyxy.at<float>(0), xyxy.at<float>(1);
     xy2 << xyxy.at<float>(2), xyxy.at<float>(3);
 
-    // TODO:
-    // cv::Point2i u1(xy1.x(), xy1.y());
-    // cv::Point2i u2(xy2.x(), xy2.y());
-    // bool flag = (mask.at<cv::Vec3b>(u1)[1] == 0) & (mask.at<cv::Vec3b>(u2)[1] == 0);
-    // if (flag) continue;
-
     auto p1_opt = conv(xy1);
     auto p2_opt = conv(xy2);
     if (p1_opt.has_value() & p2_opt.has_value()) {
@@ -125,16 +133,12 @@ void LineSegmentDetector::projectEdgeOnPlane(
     }
   }
 
-  // Draw projected edge image
-  cv::Mat image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
-  const cv::Size center(image.cols / 2, image.rows / 2);
-  auto toCvPoint = [center, this](const Eigen::Vector3f & v) -> cv::Point {
-    cv::Point pt;
-    pt.x = -v.y() / this->max_range_ * center.width + center.width;
-    pt.y = -v.x() / this->max_range_ * center.height + 2 * center.height;
-    return pt;
-  };
+  std::cout << "# of ls: " << edges.size() << std::endl;
 
+  // Draw projected edge image
+  cv::Mat mask_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
+  cv::Scalar reliable_color = cv::Scalar::all(std::numeric_limits<u_short>::max());
+  std::vector<std::vector<cv::Point2i>> projected_hull(1);
   {
     // Compute convex hull
     std::vector<std::vector<cv::Point2i>> contours;
@@ -143,29 +147,46 @@ void LineSegmentDetector::projectEdgeOnPlane(
       RCLCPP_WARN_STREAM(this->get_logger(), "there are no contours");
       return;
     }
-    // std::vector<cv::Point> hull(contours.size());
-    // cv::convexHull(contours.front(), hull);
     auto & hull = contours.front();
-    std::vector<std::vector<cv::Point2i>> projected_hull(1);
     for (int i = 0; i < hull.size(); i++) {
       Eigen::Vector2f u(hull.at(i).x, hull.at(i).y);
       auto v_opt = conv(u);
       if (v_opt.has_value()) projected_hull.front().push_back(toCvPoint(v_opt.value()));
     }
-    cv::drawContours(image, projected_hull, 0, cv::Scalar(0, 155, 155), -1);
+    cv::drawContours(mask_image, projected_hull, 0, reliable_color, -1);
   }
 
   pcl::PointCloud<pcl::PointNormal> reliable_edges;
-  for (auto & pn : edges) {
-    cv::Scalar color = cv::Scalar(255, 255, 0);
-    cv::line(
-      image, toCvPoint(pn.getVector3fMap()), toCvPoint(pn.getNormalVector3fMap()), color, 2,
-      cv::LineTypes::LINE_8);
+  cv::Mat line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
+  for (int i = 0; i < edges.size(); i++) {
+    auto & pn = edges.at(i);
+    cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
+    cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
+    cv::Scalar color = cv::Scalar::all(i);
+    cv::line(line_image, p1, p2, color, 1, cv::LineTypes::FILLED);
   }
+
+  cv::Mat masked_line;
+  cv::bitwise_and(mask_image, line_image, masked_line);
+  std::set<ushort> pixel_values = getUniquePixelValue(masked_line);
+
+  cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
+  cv::drawContours(reliable_line_image, projected_hull, 0, cv::Scalar(0, 155, 155), -1);
+  for (int i = 0; i < edges.size(); i++) {
+    auto & pn = edges.at(i);
+    cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
+    cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
+    cv::Scalar color = cv::Scalar(0, 0, 255);
+    if (pixel_values.count(i) == 0) color = cv::Scalar(255, 0, 0);
+    cv::line(reliable_line_image, p1, p2, color, 2, cv::LineTypes::LINE_8);
+  }
+  // cv::threshold(masked_line, masked_line, 1, 255, cv::THRESH_BINARY);
+  // masked_line.convertTo(masked_line, CV_8UC1);
+  // cv::cvtColor(masked_line, masked_line, cv::COLOR_GRAY2BGR);
 
   // Publish
   publishCloud(reliable_edges, stamp);
-  publishImage(*pub_image_, image, stamp);
+  publishImage(*pub_image_, reliable_line_image, stamp);
 }
 
 void LineSegmentDetector::publishCloud(
@@ -200,7 +221,7 @@ cv::Mat LineSegmentDetector::segmentationGraph(const cv::Mat & image)
       if (segmented.at<int>(px) == target_class) output_image.at<uchar>(px) = 255;
     }
   }
-  RCLCPP_INFO_STREAM(this->get_logger(), "segmentation: " << t.microSeconds() / 1000.0f << "ms");
+  RCLCPP_INFO_STREAM(this->get_logger(), "segmentation: " << t);
   cv::resize(output_image, output_image, image.size(), 0, 0, cv::INTER_NEAREST);
   return output_image;
 }
