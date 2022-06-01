@@ -85,12 +85,7 @@ namespace ns_control_toolbox
 			void update_den(std::vector<double> const& den);
 			
 			void update_den(tf_factor const& den);
-			
-			std::vector<double> num()
-				{ return num_; }
-			
-			std::vector<double> den()
-				{ return den_; }
+		
 		
 		private:
 			
@@ -105,15 +100,10 @@ namespace ns_control_toolbox
 		struct TFoperations
 			{
 			
-			virtual // Delegate to the derived TF.
-			std::vector<double> num()
-				{
-					return static_cast<E const&>(*this).num();
-				}
 			
-			virtual std::vector<double> den()
+			std::pair<std::vector<double>, std::vector<double>> operator()()
 				{
-					return static_cast<E const&>(*this).den();
+					return static_cast<E const&>(*this)();
 				}
 		
 		
@@ -122,14 +112,6 @@ namespace ns_control_toolbox
 			
 			friend E;
 			
-			};
-		
-		// Transfer function object that can be multiplied.
-		// Curiously recurring template pattern
-		struct ACT_PUBLIC tf : tf_base
-			{
-			using tf_base::tf_base;
-				
 			};
 		
 		
@@ -142,15 +124,7 @@ namespace ns_control_toolbox
 			TFmultiplication(E1 const& tf1, E2 const& tf2) : tf1_(tf1), tf2_(tf2)
 				{};
 			
-			
-			friend TFmultiplication<E1, E2> operator*(TFoperations<E1> const& u, TFoperations<E2> const& v)
-				{
-					
-					
-					return TFmultiplication<E1, E2>(*static_cast<const E1*>(&u), *static_cast<const E2*>(&v));
-				}
-			
-			std::vector<double> num()
+			[[nodiscard]] std::vector<double> num() const
 				{
 					tf_factor num1{{ tf1_.num() }};
 					tf_factor num2{{ tf2_.num() }};
@@ -160,7 +134,7 @@ namespace ns_control_toolbox
 					
 				}
 			
-			std::vector<double> den()
+			[[nodiscard]] std::vector<double> den() const
 				{
 					tf_factor den1{{ tf1_.den() }};
 					tf_factor den2{{ tf2_.den() }};
@@ -169,6 +143,23 @@ namespace ns_control_toolbox
 					return den_mult();
 					
 				}
+			
+			std::pair<std::vector<double>, std::vector<double>> operator()()
+				{
+					// Compute numerator multiplication.
+					tf_factor num1{{ tf1_.num() }};
+					tf_factor num2{{ tf2_.num() }};
+					
+					auto num_mult = num1 * num2;
+					
+					// Compute denominator multiplication.
+					tf_factor den1{{ tf1_.den() }};
+					tf_factor den2{{ tf2_.den() }};
+					
+					auto den_mult = den1 * den2;
+					
+					return { num_mult(), den_mult() };
+				};
 		
 		private:
 			E1 const& tf1_;
@@ -178,21 +169,17 @@ namespace ns_control_toolbox
 		template<typename E1, typename E2>
 		TFmultiplication<E1, E2> operator*(TFoperations<E1> const& u, TFoperations<E2> const& v)
 			{
-				
-				
 				return TFmultiplication<E1, E2>(*static_cast<const E1*>(&u), *static_cast<const E2*>(&v));
 			}
-
-
-
-//		// Collection of TF arithmatic operations.
-//		template<typename E1, typename E2>
-//		struct tf_arithmetic : TFoperations<TFmultiplication<E1, E2>>
-//			{
-//
-//			};
-
-
+		
+		
+		// Transfer function object that can be multiplied.
+		// Curiously recurring template pattern
+		struct ACT_PUBLIC tf : tf_base, TFoperations<tf>
+			{
+			using tf_base::tf_base;
+			
+			};
 
 
 /**
