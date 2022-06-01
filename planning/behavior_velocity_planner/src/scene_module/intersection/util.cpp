@@ -325,7 +325,8 @@ bool getObjectiveLanelets(
   const int lane_id, const double detection_area_length, double margin,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result, const rclcpp::Logger logger)
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
+  const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -467,8 +468,7 @@ double calcArcLengthFromPath(
   return length;
 }
 
-lanelet::ConstLanelet generateOffsetLanelet(
-  const lanelet::ConstLanelet lanelet, double margin)
+lanelet::ConstLanelet generateOffsetLanelet(const lanelet::ConstLanelet lanelet, double margin)
 {
   lanelet::Points3d lefts, rights;
 

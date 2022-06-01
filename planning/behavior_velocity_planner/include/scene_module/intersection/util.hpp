@@ -59,7 +59,8 @@ bool getObjectiveLanelets(
   const int lane_id, const double detection_area_length, const double margin,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result, const rclcpp::Logger logger);
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
+  const rclcpp::Logger logger);
 
 /**
  * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
@@ -108,8 +109,7 @@ double calcArcLengthFromPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const size_t src_idx,
   const size_t dst_idx);
 
-lanelet::ConstLanelet generateOffsetLanelet(
-  const lanelet::ConstLanelet lanelet, double margin);
+lanelet::ConstLanelet generateOffsetLanelet(const lanelet::ConstLanelet lanelet, double margin);
 }  // namespace util
 }  // namespace behavior_velocity_planner
 
