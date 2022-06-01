@@ -2,6 +2,9 @@
   <!-- planning module -->
 
   <arg name="vehicle_info_param_file"/>
+  <arg name="bt_tree_config_file" default="$(find-pkg-share behavior_path_planner)/config/behavior_path_planner_tree.xml"/>
+  <arg name="use_surround_obstacle_check" default="true"/>
+  <arg name="motion_velocity_smoother_type" default="JerkFiltered" description="options: JerkFiltered, L2, Analytical, Linf(Unstable)"/>
 
   <group>
     <push-ros-namespace namespace="planning"/>
@@ -16,6 +19,9 @@
       <push-ros-namespace namespace="scenario_planning"/>
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/scenario_planning.launch.xml">
         <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+        <arg name="bt_tree_config_file" value="$(var bt_tree_config_file)"/>
+        <arg name="use_surround_obstacle_check" value="$(var use_surround_obstacle_check)"/>
+        <arg name="motion_velocity_smoother_type" value="$(var motion_velocity_smoother_type)"/>
       </include>
     </group>
 

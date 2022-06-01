@@ -2,6 +2,7 @@
   <!-- common param -->
   <arg name="common_param_path"/>
   <arg name="vehicle_info_param_file"/>
+  <arg name="use_surround_obstacle_check"/>
 
   <!-- lane_driving scenario -->
   <group>
@@ -11,6 +12,7 @@
       <push-ros-namespace namespace="behavior_planning"/>
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.py">
         <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+        <arg name="bt_tree_config_file" value="$(var bt_tree_config_file)"/>
         <arg name="use_multithread" value="true"/>
       </include>
     </group>
@@ -20,6 +22,7 @@
       <push-ros-namespace namespace="motion_planning"/>
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.py">
         <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+        <arg name="use_surround_obstacle_check" value="$(var use_surround_obstacle_check)"/>
         <arg name="use_multithread" value="true"/>
       </include>
     </group>
