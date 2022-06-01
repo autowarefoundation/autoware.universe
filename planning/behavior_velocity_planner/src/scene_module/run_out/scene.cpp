@@ -47,6 +47,9 @@ bool RunOutModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
+  // timer starts
+  const auto t1_modify_path = std::chrono::system_clock::now();
+
   // set planner data
   const auto current_vel = planner_data_->current_velocity->twist.linear.x;
   const auto current_acc = planner_data_->current_accel.get();
@@ -77,15 +80,17 @@ bool RunOutModule::modifyPathVelocity(
     excludeObstaclesOutSideOfPartition(dynamic_obstacles, trim_smoothed_path, current_pose);
 
   // timer starts
-  const auto t1 = std::chrono::system_clock::now();
+  const auto t1_collision_check = std::chrono::system_clock::now();
 
   // detect collision with dynamic obstacles using velocity planning of ego
   const auto dynamic_obstacle = detectCollision(partition_excluded_obstacles, trim_smoothed_path);
 
   // timer ends
-  const auto t2 = std::chrono::system_clock::now();
-  const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-  debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed.count() / 1000.0);
+  const auto t2_collision_check = std::chrono::system_clock::now();
+  const auto elapsed_collision_check =
+    std::chrono::duration_cast<std::chrono::microseconds>(t2_collision_check - t1_collision_check);
+  debug_ptr_->setDebugValues(
+    DebugValues::TYPE::CALCULATION_TIME_COLLISION_CHECK, elapsed_collision_check.count() / 1000.0);
 
   // insert stop point for the detected obstacle
   if (planner_param_.approaching.enable) {
@@ -107,6 +112,13 @@ bool RunOutModule::modifyPathVelocity(
   visualizeDetectionArea(trim_smoothed_path);
   publishDebugValue(
     trim_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
+
+  // timer ends
+  const auto t2_modify_path = std::chrono::system_clock::now();
+  const auto elapsed_modify_path =
+    std::chrono::duration_cast<std::chrono::microseconds>(t2_modify_path - t1_modify_path);
+  debug_ptr_->setDebugValues(
+    DebugValues::TYPE::CALCULATION_TIME, elapsed_modify_path.count() / 1000.0);
 
   return true;
 }
