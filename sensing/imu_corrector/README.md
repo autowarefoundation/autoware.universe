@@ -8,9 +8,11 @@
 2. Correct yaw rate standard deviation $\sigma$ by reading the parameter.
 
 Mathematically, we assume the following equation:
+
 $$
 \tilde{\omega}(t) = \omega(t) + b(t) + n(t)
 $$
+
 where $\tilde{\omega}$ denotes observed angular velocity, $\omega$ denotes true angular velocity, $b$ denotes an offset, and $n$ denotes a gaussian noise.
 We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 <!-- TODO(TIER IV): Make this repository public or change the link. -->
