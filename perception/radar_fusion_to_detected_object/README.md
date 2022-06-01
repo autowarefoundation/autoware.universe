@@ -62,10 +62,10 @@ roslaunch radar_fusion_to_detected_object radar_object_to_detected_object.launch
 ### Input / Output
 
 - Input
-    - `~/input/objects` (autoware_auto_perception_msgs/msg/DetectedObject.msg): 3D detected objects.
-    - `~/input/radar_objects` (autoware_auto_perception_msgs/msg/TrackedObjects.msg): Radar objects
+  - `~/input/objects` (autoware_auto_perception_msgs/msg/DetectedObject.msg): 3D detected objects.
+  - `~/input/radar_objects` (autoware_auto_perception_msgs/msg/TrackedObjects.msg): Radar objects
 - Output
-    - `~/output/objects` (autoware_auto_perception_msgs/msg/DetectedObjects.msg): 3D detected object with twist.
+  - `~/output/objects` (autoware_auto_perception_msgs/msg/DetectedObjects.msg): 3D detected object with twist.
 
 ### Parameters
 

@@ -1,5 +1,5 @@
-
 ## Common Algorithm
+
 ### 1. Link between 3d bounding box and radar data
 
 Choose radar pointcloud/objects within 3D bounding box from lidar-base detection with margin space from bird's-eye view.
@@ -27,7 +27,7 @@ On the other hand, because radar objects have twist information, radar object fu
 
 ![process_high_confidence](radar_fusion_to_detected_object_3.drawio.svg)
 
-### 5. Delete objects with low probability.
+### 5. Delete objects with low probability
 
 - Delete low confidence objects that do not have some radar points/objects.
 

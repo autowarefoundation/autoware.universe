@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_NODE_HPP__
-#define RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_NODE_HPP__
+#ifndef RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT__RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT_NODE_HPP_
+#define RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT__RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT_NODE_HPP_
 
 #include "radar_fusion_to_detected_object.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -87,4 +87,4 @@ private:
 
 }  // namespace radar_fusion_to_detected_object
 
-#endif
+#endif  // RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT__RADAR_OBJECT_FUSION_TO_DETECTED_OBJECT_NODE_HPP_
