@@ -498,7 +498,15 @@ void NDTScanMatcher::callbackSensorPoints(
     return;
   }
 
-  if (regularization_enabled_) setRegularizationPose(sensor_ros_time);
+  // If regulization is enbaled and available, set pose to NDT for regularization
+  if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP)) {
+    ndt_ptr_->unsetRegularizationPose();
+    std::optional<Eigen::Matrix4f> pose_opt = interpolateRegularizationPose(sensor_ros_time);
+    if (pose_opt.has_value()) {
+      ndt_ptr_->setRegularizationPose(pose_opt.value());
+      RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
+    }
+  }
 
   const auto initial_pose_msg =
     interpolatePose(*initial_pose_old_msg_ptr, *initial_pose_new_msg_ptr, sensor_ros_time);
@@ -826,32 +834,31 @@ bool NDTScanMatcher::validatePositionDifference(
   return true;
 }
 
-void NDTScanMatcher::setRegularizationPose(const rclcpp::Time & sensor_ros_time)
+std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(
+  const rclcpp::Time & sensor_ros_time)
 {
-  if (ndt_implement_type_ != NDTImplementType::OMP) return;
-  ndt_ptr_->unsetRegularizationPose();
-
-  if (regularization_pose_msg_ptr_array_.empty()) return;
-
-  RCLCPP_DEBUG_STREAM(get_logger(), "regularization is set to NDT");
+  if (regularization_pose_msg_ptr_array_.empty()) {
+    return std::nullopt;
+  }
 
   // synchronization
   auto regularization_old_msg_ptr =
     std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   auto regularization_new_msg_ptr =
     std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-
   getNearestTimeStampPose(
     regularization_pose_msg_ptr_array_, sensor_ros_time, regularization_old_msg_ptr,
     regularization_new_msg_ptr);
   popOldPose(regularization_pose_msg_ptr_array_, sensor_ros_time);
+
   const geometry_msgs::msg::PoseStamped regularization_pose_msg =
     interpolatePose(*regularization_old_msg_ptr, *regularization_new_msg_ptr, sensor_ros_time);
-
   // if the interpolatePose fails, 0.0 is stored in the stamp
-  if (rclcpp::Time(regularization_pose_msg.header.stamp).seconds() != 0.0) {
-    Eigen::Affine3d regularization_pose_affine{};
-    tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
-    ndt_ptr_->setRegularizationPose(regularization_pose_affine.matrix().cast<float>());
+  if (rclcpp::Time(regularization_pose_msg.header.stamp).seconds() == 0.0) {
+    return std::nullopt;
   }
+
+  Eigen::Affine3d regularization_pose_affine;
+  tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
+  return regularization_pose_affine.matrix().cast<float>();
 }

@@ -64,8 +64,8 @@
         0.0,   0.0,   0.0,   0.0,      0.0,      0.000625,
       ]
 
-    # GNSS Regularization switch
+    # Regularization switch
     regularization_enabled: false
 
-    # GNSS regularization scale factor
+    # Regularization scale factor
     regularization_scale_factor: 0.01

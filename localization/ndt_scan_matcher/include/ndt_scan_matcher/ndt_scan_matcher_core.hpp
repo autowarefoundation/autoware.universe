@@ -137,7 +137,9 @@ private:
     const geometry_msgs::msg::Point & target_point,
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
 
-  void setRegularizationPose(const rclcpp::Time & sensor_ros_time);
+  std::optional<Eigen::Matrix4f> interpolateRegularizationPose(
+    const rclcpp::Time & sensor_ros_time);
+
   void timerDiagnostic();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
