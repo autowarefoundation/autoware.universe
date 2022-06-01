@@ -99,7 +99,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
   img_gray.convertTo(img_gray_32b, CV_32FC1);
   cv::Mat imgDCT(size, CV_32FC1);
   imgDCT.setTo(0.0);
-  float freqSum = 0.0;
+  float region_freq_average = 0.0;
   cv::Mat imgDFT(size, CV_32FC1);
   imgDFT.setTo(0.0);
   for (int v = 0; v < params_.number_block_vertical; v++) {
@@ -126,14 +126,14 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
       channelImg[0](original_roi)
         .copyTo(imgDFT(cv::Rect(roi.x, roi.y, block_size_h, block_size_v)));
 
-      cv::Mat recttmp = img_gray_32b(roi);
-      channelImg[0](original_roi).copyTo(recttmp);
-      cv::log(recttmp, recttmp);
-      freqSum = cv::mean(recttmp)[0];
+      cv::Mat rect_tmp = img_gray_32b(roi);
+      channelImg[0](original_roi).copyTo(rect_tmp);
+      cv::log(rect_tmp, rect_tmp);
+      region_freq_average = cv::mean(rect_tmp)[0];
 
       region_average_vec.push_back(intensity_average);
       region_blockage_ratio_vec.push_back(roi_blockage_ratio);
-      region_freq_sum_vec.push_back(freqSum);
+      region_freq_sum_vec.push_back(region_freq_average);
     }
   }
 
