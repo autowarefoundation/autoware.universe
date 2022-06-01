@@ -39,8 +39,13 @@ int main()
 		
 		
 		// Transfer function multiplication.
-		auto tf3 = sys * tf_from_tf_factors;
+		ns_control_toolbox::tf tf1{{ 5 },
+		                           { 1, 3 }};
 		
-		auto num_den = tf3();
+		ns_control_toolbox::tf tf2{{ 2 },
+		                           { 1, 3 }};
+		
+		auto tf3 = tf1 * tf2;
+		
 		return 0;
 	}
