@@ -95,103 +95,73 @@ namespace ns_control_toolbox
 			};
 		
 		
-		// Transfer Function Multiplication Operator Definition.
-		template<typename E> // E represents TF operation.
-		struct TFoperations
-			{
-			
-			
-			std::pair<std::vector<double>, std::vector<double>> operator()()
-				{
-					return static_cast<E const&>(*this)();
-				}
-		
-		
-		private:
-			TFoperations() = default;
-			
-			friend E;
-			
-			};
-		
 		
 		// Multiplication Operator.
-		template<typename E1, typename E2>
-		struct TFmultiplication : public TFoperations<TFmultiplication<E1, E2>>
-			{
 		
-		public:
-			TFmultiplication(E1 const& tf1, E2 const& tf2) : tf1_(tf1), tf2_(tf2)
-				{};
+		struct TF_multiplication
+			{
 			
-			[[nodiscard]] std::vector<double> num() const
-				{
-					tf_factor num1{{ tf1_.num() }};
-					tf_factor num2{{ tf2_.num() }};
-					
-					auto num_mult = num1 * num2;
-					return num_mult();
-					
-				}
-			
-			[[nodiscard]] std::vector<double> den() const
-				{
-					tf_factor den1{{ tf1_.den() }};
-					tf_factor den2{{ tf2_.den() }};
-					
-					auto den_mult = den1 * den2;
-					return den_mult();
-					
-				}
-			
-			std::pair<std::vector<double>, std::vector<double>> operator()()
+			friend tf_base operator*(tf_base const& tf1, tf_base const& tf2)
 				{
 					// Compute numerator multiplication.
-					tf_factor num1{{ tf1_.num() }};
-					tf_factor num2{{ tf2_.num() }};
+					tf_factor num1{{ tf1.num() }};
+					tf_factor num2{{ tf2.num() }};
 					
 					auto num_mult = num1 * num2;
 					
 					// Compute denominator multiplication.
-					tf_factor den1{{ tf1_.den() }};
-					tf_factor den2{{ tf2_.den() }};
+					tf_factor den1{{ tf1.den() }};
+					tf_factor den2{{ tf2.den() }};
 					
 					auto den_mult = den1 * den2;
 					
-					return { num_mult(), den_mult() };
+					return tf_base{ num_mult(), den_mult() };
 				};
-		
-		private:
-			E1 const& tf1_;
-			E2 const& tf2_;
+			
+			friend tf_base operator*=(tf_base const& tf1, tf_base const& tf2)
+				{
+					// Compute numerator multiplication.
+					tf_factor num1{{ tf1.num() }};
+					tf_factor num2{{ tf2.num() }};
+					
+					auto num_mult = num1 * num2;
+					
+					// Compute denominator multiplication.
+					tf_factor den1{{ tf1.den() }};
+					tf_factor den2{{ tf2.den() }};
+					
+					auto den_mult = den1 * den2;
+					
+					return tf_base{ num_mult(), den_mult() };
+				};
+				
 			};
 		
-		template<typename E1, typename E2>
-		TFmultiplication<E1, E2> operator*(TFoperations<E1> const& u, TFoperations<E2> const& v)
-			{
-				return TFmultiplication<E1, E2>(*static_cast<const E1*>(&u), *static_cast<const E2*>(&v));
-			}
 		
+		// All Operations
+		struct TF_algebra : TF_multiplication
+			{
+			};
 		
 		// Transfer function object that can be multiplied.
 		// Curiously recurring template pattern
-		struct ACT_PUBLIC tf : tf_base, TFoperations<tf>
+		struct ACT_PUBLIC tf : tf_base, TF_algebra
 			{
 			using tf_base::tf_base;
 			
 			};
-
-
-/**
- * @param Td	: time delay value in seconds.
- * @param N		: Order of Pade approximation.
- * */
+		
+		
+		/**
+		 * @param Td	: time delay value in seconds.
+		 * @param N		: Order of Pade approximation.
+		 * */
 		tf ACT_PUBLIC pade(double const& Td, size_t const& order);
-
-/**
- * @bried see pade()
- * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
- * */
+		
+		/**
+		 * @bried see pade()
+		 * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
+		 * */
 		tf ACT_PUBLIC padecoeff(double const& Td, size_t const& order);
 		
 	} // namespace ns_control_toolbox
