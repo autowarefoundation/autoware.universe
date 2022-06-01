@@ -498,7 +498,7 @@ void NDTScanMatcher::callbackSensorPoints(
     return;
   }
 
-  // If regulization is enbaled and available, set pose to NDT for regularization
+  // If regularization is enabled and available, set pose to NDT for regularization
   if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP)) {
     ndt_ptr_->unsetRegularizationPose();
     std::optional<Eigen::Matrix4f> pose_opt = interpolateRegularizationPose(sensor_ros_time);
