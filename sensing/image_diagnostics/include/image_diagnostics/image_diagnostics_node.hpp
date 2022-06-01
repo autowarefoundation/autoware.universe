@@ -65,7 +65,6 @@ struct ImageParam
   int dark_intensity_thresh = 10;
   float lowVis_freq_thresh = 400.0f;
   int backlight_intensity_thresh = 230;
-
 };
 
 enum Image_State : uint8_t { NORMAL = 0, DARK, BLOCKAGE, LOW_VIS, BACKLIGHT };
