@@ -193,3 +193,4 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 
 - Calculate obstacle's min velocity and max velocity from covariance
 - Detect collisions with polygon object
+- Handle the case when the predicted path of obstacles are not straight line
