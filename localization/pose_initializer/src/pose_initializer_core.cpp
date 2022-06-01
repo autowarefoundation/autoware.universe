@@ -88,8 +88,7 @@ PoseInitializer::PoseInitializer()
 
   initialize_pose_service_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  ndt_client_ =
-    this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
+  ndt_client_ = this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv", rmw_qos_profile_services_default, initialize_pose_service_group_);
   while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
