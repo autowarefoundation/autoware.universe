@@ -39,8 +39,8 @@ int main()
 		
 		
 		// Transfer function multiplication.
-		//auto tf3 = sys_default * tf_from_tf_factors;
+		auto tf3 = sys * tf_from_tf_factors;
 		
-		
+		auto num_den = tf3();
 		return 0;
 	}
