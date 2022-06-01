@@ -232,7 +232,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
   RCLCPP_INFO(get_logger(), "called NDT Align Server");
   response_id_ = result->seq;
   // NOTE temporary cov
-  geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result->pose_with_cov;
+  geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result->pose_with_covariance;
   pose_with_cov.pose.covariance[0] = 1.0;
   pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
   pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
