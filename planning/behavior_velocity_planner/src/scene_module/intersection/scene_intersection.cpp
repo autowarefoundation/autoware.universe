@@ -265,17 +265,14 @@ bool IntersectionModule::checkCollision(
     const Point2d obj_point(
       object.kinematics.initial_pose_with_covariance.pose.position.x,
       object.kinematics.initial_pose_with_covariance.pose.position.y);
-
-      for (const auto & detection_area : detection_areas) {
-      const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
-      const double dist_to_detection_area =
-        boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
-
+    for (const auto & detection_area : detection_areas) {
+    const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
+    const double dist_to_detection_area =
+      boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
       if (dist_to_detection_area > planner_param_.detection_area_margin) {
         // ignore the object far from detection area
         continue;
       }
-    }
       // check direction of objects
       const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
       if (checkAngleForTargetLanelets(object_direction, detection_area_lanelet_ids)) {
@@ -283,6 +280,7 @@ bool IntersectionModule::checkCollision(
         break;
       }
     }
+  }
 
   /* check collision between target_objects predicted path and ego lane */
 
