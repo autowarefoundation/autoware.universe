@@ -426,7 +426,7 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
     point.longitudinal_velocity_mps = data.v0;
     output.points.push_back(point);
   }
-  for (const auto resampled_point : resampled_traj.points) {
+  for (const auto & resampled_point : resampled_traj.points) {
     if (output.points.empty()) {
       output.points.push_back(resampled_point);
     } else {

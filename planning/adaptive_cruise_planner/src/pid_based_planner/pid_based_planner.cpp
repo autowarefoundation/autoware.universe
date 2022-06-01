@@ -69,7 +69,7 @@ size_t getIndexWithLongitudinalOffset(
   }
 
   if (start_idx) {
-    if (start_idx.get() < 0 || points.size() <= start_idx.get()) {
+    if (/*start_idx.get() < 0 || */ points.size() <= start_idx.get()) {
       throw std::out_of_range("start_idx is out of range.");
     }
   } else {
@@ -321,7 +321,8 @@ Trajectory PIDBasedPlanner::planStop(
 {
   bool will_collide_with_obstacle = false;
 
-  boost::optional<size_t> zero_vel_idx = {};
+  size_t zero_vel_idx = 0;
+  bool zero_vel_found = false;
   if (stop_obstacle_info) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("AdaptiveCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
@@ -338,22 +339,26 @@ Trajectory PIDBasedPlanner::planStop(
     }
 
     // set zero velocity index
-    zero_vel_idx = doStop(
+    const auto opt_zero_vel_idx = doStop(
       planner_data, local_stop_obstacle_info, debug_data.obstacles_to_stop,
       debug_data.stop_wall_marker);
+    if (opt_zero_vel_idx) {
+      zero_vel_idx = opt_zero_vel_idx.get();
+      zero_vel_found = true;
+    }
   }
 
   // generate output trajectory
   auto output_traj = planner_data.traj;
-  if (zero_vel_idx) {
+  if (zero_vel_found) {
     // publish stop reason
-    const auto stop_pose = planner_data.traj.points.at(zero_vel_idx.get()).pose;
+    const auto stop_pose = planner_data.traj.points.at(zero_vel_idx).pose;
     const auto stop_reasons_msg =
       makeStopReasonArray(planner_data.current_time, stop_pose, stop_obstacle_info);
     stop_reasons_pub_->publish(stop_reasons_msg);
 
     // insert zero_velocity
-    for (size_t traj_idx = zero_vel_idx.get(); traj_idx < output_traj.points.size(); ++traj_idx) {
+    for (size_t traj_idx = zero_vel_idx; traj_idx < output_traj.points.size(); ++traj_idx) {
       output_traj.points.at(traj_idx).longitudinal_velocity_mps = 0.0;
     }
   }
