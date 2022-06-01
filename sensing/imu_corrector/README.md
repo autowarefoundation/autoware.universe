@@ -7,6 +7,9 @@
 1. Correct yaw rate offset by reading the parameter.
 2. Correct yaw rate standard deviation by reading the parameter.
 
+$$
+\tilde{\omega} = \omega + b
+$$
 <!-- TODO(TIER IV): Make this repository public or change the link. -->
 <!-- Use the value estimated by [deviation_estimator](https://github.com/tier4/calibration_tools/tree/main/localization/deviation_estimation_tools) as the parameters for this node. -->
 
