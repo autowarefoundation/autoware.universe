@@ -473,9 +473,6 @@ lanelet::ConstLanelet generateOffsetLanelet(
   lanelet::Points3d lefts, rights;
 
   const double offset = margin;
-  // const double offset = (turn_direction_ == TurnDirection::LEFT)
-  //                         ? planner_param_.ignore_width_from_center_line
-  //                         : -planner_param_.ignore_width_from_center_line;
   const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, offset);
   const auto offset_leftBound = lanelet::utils::getLeftBoundWithOffset(lanelet, offset);
 

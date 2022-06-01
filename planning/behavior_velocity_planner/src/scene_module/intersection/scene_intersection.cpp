@@ -266,9 +266,9 @@ bool IntersectionModule::checkCollision(
       object.kinematics.initial_pose_with_covariance.pose.position.x,
       object.kinematics.initial_pose_with_covariance.pose.position.y);
     for (const auto & detection_area : detection_areas) {
-    const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
-    const double dist_to_detection_area =
-      boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
+      const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
+      const double dist_to_detection_area =
+        boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
       if (dist_to_detection_area > planner_param_.detection_area_margin) {
         // ignore the object far from detection area
         continue;
