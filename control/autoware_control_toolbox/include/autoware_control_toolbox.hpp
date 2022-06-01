@@ -27,7 +27,7 @@
 
 // Library headers
 #include "visibility_control.hpp"
-#include "tf_algebra.hpp"
+#include "utils_act/tf_algebra.hpp"
 #include "utils_act/act_utils_eigen.hpp"
 #include "utils_act/act_definitions.hpp"
 #include "utils_act/balance.hpp"

@@ -49,8 +49,10 @@ namespace ns_control_toolbox
 	 * operations of the transfer function objects.
 	 * */
 	struct tf_factor_base
-		{
+	{
 	public:
+
+		tf_factor_base() = default;
 
 		explicit tf_factor_base(std::vector<double> factor) : factor_{ std::move(factor) }
 		{
@@ -89,13 +91,13 @@ namespace ns_control_toolbox
 		}
 
 	private:
-		std::vector<double> factor_;
-		};
+		std::vector<double> factor_{ 1. };
+	};
 
 
 	// OPERATORS
 	struct addition_tf_factors
-		{
+	{
 
 		friend tf_factor_base operator+(tf_factor_base const& lhs, tf_factor_base const& rhs)
 		{
@@ -125,11 +127,11 @@ namespace ns_control_toolbox
 			});
 			return tf_factor_base(v1);;
 		}
-		};
+	};
 
 
 	struct subtraction_tf_factors
-		{
+	{
 
 		friend tf_factor_base operator-(tf_factor_base const& lhs, tf_factor_base const& rhs)
 		{
@@ -159,10 +161,10 @@ namespace ns_control_toolbox
 			});
 			return tf_factor_base(v1);;
 		}
-		};
+	};
 
 	struct multiplication_tf_factors
-		{
+	{
 
 		friend tf_factor_base operator*(tf_factor_base const& lhs, tf_factor_base const& rhs)
 		{
@@ -203,10 +205,10 @@ namespace ns_control_toolbox
 
 			return tf_factor_base(vresults);
 		}
-		};
+	};
 
 	struct division_tf_factors
-		{
+	{
 
 		friend tf_factor_base operator/(tf_factor_base const& lhs, tf_factor_base const& rhs)
 		{
@@ -247,20 +249,20 @@ namespace ns_control_toolbox
 
 			return tf_factor_base(vresults);
 		}
-		};
+	};
 
 
 	struct tf_arithmetic : addition_tf_factors,
 	                       subtraction_tf_factors,
 	                       multiplication_tf_factors //, division_tf_factors
-		{
-		};
+	{
+	};
 
 
 	struct tf_factor : tf_factor_base, tf_arithmetic
-		{
+	{
 		using tf_factor_base::tf_factor_base;
-		};
+	};
 
 
 } // namespace ns_control_toolbox
