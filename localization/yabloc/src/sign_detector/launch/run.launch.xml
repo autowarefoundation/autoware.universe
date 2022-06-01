@@ -9,6 +9,11 @@
         <arg name="log_level" value="$(var log_level)"/>
     </include>
 
+    <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
+    <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
+    <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
+    <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
+
 
     <!-- ========================================= -->
     <node name="eagleye_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
@@ -20,10 +25,14 @@
     </node>
 
     <node name="raw_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
-        <param name="covariance" value="36.0"/>
         <remap from="pose_topic" to="/sensing/gnss/ublox/pose"/>
         <remap from="pose_with_covariance" to="/sensing/gnss/ublox/pose_with_covariance"/>
+        <param name="covariance" value="36.0"/>
+    </node>
+
+    <node name="undistort" pkg="sign_detector" exec="undistort_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
@@ -49,10 +58,11 @@
         <param name="line_thick" value="2"/>
         <param name="line_threshold" value="0.01"/>
         <param name="dilate_size" value="1"/>
+
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
-    <node name="imu_kf" pkg="sign_detector" exec="imu_kf_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-    </node>
+
     <node name="particle_filter" pkg="sign_detector" exec="particle_filter_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="blur_size" value="13"/>

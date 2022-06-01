@@ -60,7 +60,7 @@ private:
 
     publishImage(*pub_image_, image, msg.header.stamp);
 
-    if (!scaled_info_.has_value()) buildScaledCameraInfo(K, SCALE);
+    if (!scaled_info_.has_value()) buildScaledCameraInfo(SCALE);
     pub_info_->publish(scaled_info_.value());
 
     RCLCPP_INFO_STREAM(get_logger(), "decompress: " << timer.microSeconds() / 1000.f << "[ms]");
@@ -68,8 +68,11 @@ private:
 
   void infoCallback(const sensor_msgs::msg::CameraInfo & msg) { info_ = msg; }
 
-  void buildScaledCameraInfo(const cv::Mat & K, float scale)
+  void buildScaledCameraInfo(float scale)
   {
+    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
+    cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
+
     scaled_info_ = sensor_msgs::msg::CameraInfo{};
     cv::Mat k = scale * K;
     scaled_info_->k.at(0) = k.at<double>(0, 0);
@@ -77,6 +80,9 @@ private:
     scaled_info_->k.at(4) = k.at<double>(1, 1);
     scaled_info_->k.at(5) = k.at<double>(1, 2);
     scaled_info_->k.at(8) = 1;
+    scaled_info_->d.resize(5);
+
+    scaled_info_->header = info_->header;
   }
 };
 

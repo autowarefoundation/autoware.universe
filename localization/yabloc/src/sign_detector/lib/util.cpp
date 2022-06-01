@@ -48,6 +48,11 @@ cv::Mat decompress2CvMat(const sensor_msgs::msg::CompressedImage & compressed_im
   return cv_bridge::toCvCopy(msg_ptr, "rgb8")->image;
 }
 
+cv::Mat decompress2CvMat(const sensor_msgs::msg::Image & img)
+{
+  return cv_bridge::toCvCopy(std::make_shared<sensor_msgs::msg::Image>(img), "rgb8")->image;
+}
+
 sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(
   const sensor_msgs::msg::CompressedImage & compressed_img)
 {

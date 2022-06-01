@@ -4,27 +4,23 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage & msg)
+void LineSegmentDetector::compressedImageCallback(const sensor_msgs::msg::CompressedImage & msg)
 {
-  Timer whole_timer;
   cv::Mat image = decompress2CvMat(msg);
-  cv::Size size = image.size();
+  execute(image, msg.header.stamp);
+}
 
+void LineSegmentDetector::imageCallback(const sensor_msgs::msg::Image & msg)
+{
+  cv::Mat image = decompress2CvMat(msg);
+  execute(image, msg.header.stamp);
+}
+
+void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & stamp)
+{
   if (!info_.has_value()) return;
-  cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
-  cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
-  cv::Mat undistorted;
-  cv::undistort(image, undistorted, K, D, K);
-  image = undistorted;
-
-  const int WIDTH = 800;
-  const float SCALE = 1.0f * WIDTH / size.width;
-  const int HEIGHT = SCALE * size.height;
-  cv::resize(image, image, cv::Size(WIDTH, HEIGHT));
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-  RCLCPP_INFO_STREAM(
-    this->get_logger(), "image decompression: " << whole_timer.microSeconds() / 1000.0f << "ms");
 
   std::chrono::time_point start = std::chrono::system_clock::now();
   cv::Mat lines;
@@ -37,28 +33,22 @@ void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage 
 
   auto dur = std::chrono::system_clock::now() - start;
   long ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-  RCLCPP_INFO_STREAM(this->get_logger(), cv::Size(WIDTH, HEIGHT) << " " << ms);
 
-  // cv::Mat segmented = segmentationHfs(image);
   cv::Mat segmented = segmentationGraph(image);
   cv::Mat gray_segmented;
   cv::cvtColor(segmented, gray_segmented, cv::COLOR_GRAY2BGR);
   cv::addWeighted(gray_image, 0.8, gray_segmented, 0.5, 1, gray_image);
 
   // Publish lsd image
-  publishImage(*pub_image_lsd_, gray_image, msg.header.stamp);
+  publishImage(*pub_image_lsd_, gray_image, stamp);
 
   {
     Timer project_timer;
-    cv::Mat scaled_K = SCALE * K;
-    scaled_K.at<double>(2, 2) = 1;
-    projectEdgeOnPlane(lines, scaled_K, msg.header.stamp, segmented);
+    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
+    projectEdgeOnPlane(lines, K, stamp, segmented);
     RCLCPP_INFO_STREAM(
       this->get_logger(), "projection: " << project_timer.microSeconds() / 1000.0f << "ms");
   }
-
-  RCLCPP_INFO_STREAM(
-    this->get_logger(), "lsd_node: " << whole_timer.microSeconds() / 1000.0f << "ms");
 }
 
 void LineSegmentDetector::listenExtrinsicTf(const std::string & frame_id)
@@ -165,24 +155,16 @@ void LineSegmentDetector::projectEdgeOnPlane(
     cv::drawContours(image, projected_hull, 0, cv::Scalar(0, 155, 155), -1);
   }
 
-  pcl::PointCloud<pcl::PointNormal> long_edges;
+  pcl::PointCloud<pcl::PointNormal> reliable_edges;
   for (auto & pn : edges) {
-    Eigen::Vector3f from = pn.getVector3fMap();
-    Eigen::Vector3f to = pn.getNormalVector3fMap();
-    float norm = (from - to).norm();
-    cv::Scalar color = cv::Scalar(0, 255, 0);
-    if (norm > length_threshold_) {
-      long_edges.push_back(pn);
-      color = cv::Scalar(255, 255, 0);
-    }
-
+    cv::Scalar color = cv::Scalar(255, 255, 0);
     cv::line(
       image, toCvPoint(pn.getVector3fMap()), toCvPoint(pn.getNormalVector3fMap()), color, 2,
       cv::LineTypes::LINE_8);
   }
 
   // Publish
-  publishCloud(long_edges, stamp);
+  publishCloud(reliable_edges, stamp);
   publishImage(*pub_image_, image, stamp);
 }
 
@@ -195,22 +177,6 @@ void LineSegmentDetector::publishCloud(
   msg.header.stamp = stamp;
   msg.header.frame_id = "map";
   pub_cloud_->publish(msg);
-}
-
-cv::Mat LineSegmentDetector::segmentationHfs(const cv::Mat & image)
-{
-  Timer t;
-
-  cv::Mat resized;
-  cv::resize(image, resized, cv::Size(), 0.5, 0.5);
-  if (segmentator.empty()) {
-    segmentator = cv::hfs::HfsSegment::create(resized.rows, resized.cols);
-  }
-
-  cv::Mat ret = segmentator->performSegmentCpu(resized);
-  RCLCPP_INFO_STREAM(this->get_logger(), "segmentation: " << t.microSeconds() / 1000.0f);
-
-  return ret;
 }
 
 cv::Mat LineSegmentDetector::segmentationGraph(const cv::Mat & image)

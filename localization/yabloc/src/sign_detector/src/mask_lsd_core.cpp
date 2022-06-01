@@ -78,7 +78,7 @@ void MaskLsd::overlayLl2(
     u = u / u.z();
     v = v / v.z();
     cv::line(
-      ll2_image, cv::Point2f(u.x(), u.y()), cv::Point2f(v.x(), v.y()), cv::Scalar(0, 255, 255), 50);
+      ll2_image, cv::Point2f(u.x(), u.y()), cv::Point2f(v.x(), v.y()), cv::Scalar(0, 255, 255), 5);
   }
 
   cv::addWeighted(lsd_image, 0.8f, ll2_image, 0.4f, 1, lsd_image);

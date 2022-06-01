@@ -3,7 +3,6 @@
 #include <eigen3/Eigen/StdVector>
 #include <lsd/lsd.hpp>
 #include <opencv4/opencv2/core/eigen.hpp>
-#include <opencv4/opencv2/hfs.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/ximgproc/segmentation.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -28,22 +27,32 @@ class LineSegmentDetector : public rclcpp::Node
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  LineSegmentDetector(const std::string & image_topic, const std::string & info_topic)
+  LineSegmentDetector()
   : Node("line_detector"),
     info_(std::nullopt),
     line_thick_(declare_parameter<int>("line_thick", 1)),
     image_size_(declare_parameter<int>("image_size", 800)),
     max_range_(declare_parameter<float>("max_range", 20.f)),
-    length_threshold_(declare_parameter<float>("length_threshold", 2.0f)),
-    dilate_size_(declare_parameter<int>("dilate_size", 5))
+    dilate_size_(declare_parameter<int>("dilate_size", 5)),
+    subscribe_compressed_(declare_parameter<bool>("subscribe_compressed", false))
   {
+    const rclcpp::QoS qos = rclcpp::QoS(10);
+    // const rclcpp::QoS qos = rclcpp::QoS(10).durability_volatile().best_effort();
+    using std::placeholders::_1;
+
     // Subscriber
-    sub_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(
-      image_topic, rclcpp::QoS(10).durability_volatile().best_effort(),
-      std::bind(&LineSegmentDetector::imageCallback, this, std::placeholders::_1));
+    if (subscribe_compressed_)
+      sub_compressed_image_ = this->create_subscription<sensor_msgs::msg::CompressedImage>(
+        "/sensing/camera/traffic_light/image_raw/compressed", qos,
+        std::bind(&LineSegmentDetector::compressedImageCallback, this, _1));
+    else
+      sub_image_ = this->create_subscription<sensor_msgs::msg::Image>(
+        "/sensing/camera/traffic_light/image_raw/compressed", qos,
+        std::bind(&LineSegmentDetector::imageCallback, this, _1));
+
     sub_info_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-      info_topic, rclcpp::QoS(10).durability_volatile().best_effort(),
-      std::bind(&LineSegmentDetector::infoCallback, this, std::placeholders::_1));
+      "/sensing/camera/traffic_light/camera_info", qos,
+      std::bind(&LineSegmentDetector::infoCallback, this, _1));
 
     // Publisher
     pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/projected_image", 10);
@@ -58,7 +67,8 @@ public:
   }
 
 private:
-  rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub_image_;
+  rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub_compressed_image_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr sub_image_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_info_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_, pub_image_lsd_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_cloud_;
@@ -71,8 +81,7 @@ private:
   const int line_thick_;
   const int image_size_;
   const float max_range_;
-  const float length_threshold_;
-  cv::Ptr<cv::hfs::HfsSegment> segmentator;
+  const bool subscribe_compressed_;
   cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> gs;
   const int dilate_size_;
 
@@ -90,10 +99,12 @@ private:
     listenExtrinsicTf(info_->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::msg::CompressedImage & msg);
+  void compressedImageCallback(const sensor_msgs::msg::CompressedImage & msg);
+  void imageCallback(const sensor_msgs::msg::Image & msg);
+  void execute(const cv::Mat & image, const rclcpp::Time & stamp);
+
   void publishCloud(
     const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const;
 
-  cv::Mat segmentationHfs(const cv::Mat & image);
   cv::Mat segmentationGraph(const cv::Mat & image);
 };
