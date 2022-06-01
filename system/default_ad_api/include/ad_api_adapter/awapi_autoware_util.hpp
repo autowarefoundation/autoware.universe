@@ -60,6 +60,39 @@
 
 namespace autoware_api
 {
+
+struct AutowareInfo // delete after fixing motion_factor_calibrator
+{
+  std::shared_ptr<geometry_msgs::msg::PoseStamped> current_pose_ptr;
+  autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr steer_ptr;
+  autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr vehicle_cmd_ptr;
+  autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr turn_indicators_ptr;
+  autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr hazard_lights_ptr;
+  nav_msgs::msg::Odometry::ConstSharedPtr odometry_ptr;
+  autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr gear_ptr;
+  tier4_vehicle_msgs::msg::BatteryStatus::ConstSharedPtr battery_ptr;
+  sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_ptr;
+  tier4_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_ptr;
+  autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_ptr;
+  tier4_control_msgs::msg::GateMode::ConstSharedPtr gate_mode_ptr;
+  autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr emergency_state_ptr;
+  autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_ptr;
+  tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr motion_factor_ptr;
+  tier4_planning_msgs::msg::StopReasonArray::ConstSharedPtr stop_reason_ptr;
+  tier4_v2x_msgs::msg::InfrastructureCommandArray::ConstSharedPtr v2x_command_ptr;
+  tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr v2x_state_ptr;
+  diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diagnostic_ptr;
+  tier4_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr lane_change_available_ptr;
+  tier4_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr lane_change_ready_ptr;
+  autoware_auto_planning_msgs::msg::Path::ConstSharedPtr lane_change_candidate_ptr;
+  tier4_planning_msgs::msg::IsAvoidancePossible::ConstSharedPtr obstacle_avoid_ready_ptr;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr obstacle_avoid_candidate_ptr;
+  tier4_api_msgs::msg::VelocityLimit::ConstSharedPtr max_velocity_ptr;
+  tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr current_max_velocity_ptr;
+  tier4_api_msgs::msg::StopCommand::ConstSharedPtr temporary_stop_ptr;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr autoware_planning_traj_ptr;
+};
+
 template <class T>
 T waitForParam(
   rclcpp::Node * node, const std::string & remote_node_name, const std::string & param_name)

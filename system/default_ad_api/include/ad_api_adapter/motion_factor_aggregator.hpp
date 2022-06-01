@@ -29,37 +29,54 @@ class AutowareIvMotionFactorAggregator
 {
 public:
   AutowareIvMotionFactorAggregator(rclcpp::Node & node, const double timeout);
-  void updateSceneModuleMotionFactorArray(
-    const tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
-  void updateObstacleStopMotionFactorArray(
-    const tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
-  void updateSurroundObstacleMotionFactorArray(
-    const tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
-  tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr makeMotionFactorArray(
-    const AutowareInfo & aw_info);
 
 private:
-  void applyUpdate(const tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
+  void callbackSceneModuleMotionFactorArray(
+    const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
+  void callbackObstacleStopMotionFactorArray(
+    const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
+  void callbackSurroundObstacleMotionFactorArray(
+    const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
+  void callbackAutowareTrajectory(
+    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
+  void callbackTimer();
+
+  autoware_ad_api_msgs::motion::msg::MotionFactorArray makeMotionFactorArray();
+  void applyUpdate(const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr);
   bool checkMatchingReason(
-    const tier4_planning_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_motion_factor_array,
-    const tier4_planning_msgs::msg::MotionFactorArray & motion_factor_array);
+    const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_motion_factor_array,
+    const autoware_ad_api_msgs::motion::msg::MotionFactorArray & motion_factor_array);
   void applyTimeOut();
   void appendMotionFactorToArray(
-    const tier4_planning_msgs::msg::MotionFactor & motion_factor,
-    tier4_planning_msgs::msg::MotionFactorArray * motion_factor_array,
-    const AutowareInfo & aw_info);
-  tier4_planning_msgs::msg::MotionFactor inputStopDistToMotionFactor(
-    const tier4_planning_msgs::msg::MotionFactor & motion_factor, const AutowareInfo & aw_info);
-  double calcStopDistToStopFactor(
-    const tier4_planning_msgs::msg::StopFactor & stop_factor, const AutowareInfo & aw_info);
+    const autoware_ad_api_msgs::motion::msg::MotionFactor & motion_factor,
+    autoware_ad_api_msgs::motion::msg::MotionFactorArray * motion_factor_array);
+  autoware_ad_api_msgs::motion::msg::MotionFactor inputStopDistToMotionFactor(
+    const autoware_ad_api_msgs::motion::msg::MotionFactor & motion_factor);
+  void getCurrentPose();
 
+  rclcpp::Publisher<autoware_ad_api_msgs::motion::msg::MotionFactorArray>::SharedPtr
+    pub_motion_factor_;
+  rclcpp::Subscription<autoware_ad_api_msgs::motion::msg::MotionFactorArray>::SharedPtr
+    sub_scene_module_motion_factor_;
+  rclcpp::Subscription<autoware_ad_api_msgs::motion::msg::MotionFactorArray>::SharedPtr
+    sub_obstacle_stop_motion_factor_;
+  rclcpp::Subscription<autoware_ad_api_msgs::motion::msg::MotionFactorArray>::SharedPtr
+    sub_surround_obstacle_motion_factor_;
+  
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   double timeout_;
+  double status_pub_hz_;
 
-  std::vector<tier4_planning_msgs::msg::MotionFactorArray> motion_factor_array_vec_;
-  tier4_planning_msgs::msg::MotionFactorArray obstacle_stop_factor_;
-  tier4_planning_msgs::msg::MotionFactorArray surround_obstacle_factor_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  std::vector<autoware_ad_api_msgs::motion::msg::MotionFactorArray> motion_factor_array_vec_;
+  autoware_ad_api_msgs::motion::msg::MotionFactorArray obstacle_stop_factor_;
+  autoware_ad_api_msgs::motion::msg::MotionFactorArray surround_obstacle_factor_;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr autoware_planning_traj_ptr_;
+
+  std::shared_ptr<geometry_msgs::msg::PoseStamped> current_pose_ptr_;
 };
 
 }  // namespace autoware_api

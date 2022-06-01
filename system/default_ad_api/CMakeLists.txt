@@ -8,6 +8,11 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/interface_version.cpp
 )
 
+ament_auto_add_executable(motion_factor_aggregator
+  src/awapi_autoware_util.cpp
+  src/motion_factor_aggregator.cpp
+)
+
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
 
 if(BUILD_TESTING)
