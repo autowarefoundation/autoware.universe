@@ -45,24 +45,24 @@ Eigen::VectorXd ns_control_toolbox::make_square_signal(const Eigen::VectorXd& ti
 Eigen::VectorXd ns_control_toolbox::make_triangle_signal(const Eigen::VectorXd& time_vec, const double& frequency_hz)
 {
 	double const w_ = 2 * M_PI * frequency_hz; // [rad/sec]
-	double half_period{ 1. };
+	double period{ 1. };
 
 	if (frequency_hz > 0)
 	{
-		half_period = 1. / frequency_hz / 2.;
+		period = 1. / frequency_hz;
 	}
 
+	auto tmax = time_vec.maxCoeff();
+
 	// define a starting point.
-	double y0{};
+
 	auto trg_vec = Eigen::VectorXd(time_vec.unaryExpr([&](auto const& t)
 	                                                  {
-		                                                  auto slope =
-				                                                  sin(w_ * t) < 0 ? -1. : sin(w_ * t) == 0 ? 0. : 1.;
+		                                                  auto tn = t / tmax;
+		                                                  auto y = 2 * std::fabs(
+				                                                  tn / period - std::floor(tn / period + 1. / 2));
 
-		                                                  // use normalized time intervals.
-		                                                  auto&& dt = std::fmod(t, half_period) / half_period;
-		                                                  y0 += slope * dt;
-		                                                  return y0;
+		                                                  return y;
 	                                                  }));
 	return trg_vec;
 }
