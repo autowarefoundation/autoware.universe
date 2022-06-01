@@ -101,6 +101,7 @@ public:
   {
     double decel_velocity;
     double detection_area_length;
+    double detection_area_margin;
     double stop_line_margin;
     double stop_duration_sec;
   };

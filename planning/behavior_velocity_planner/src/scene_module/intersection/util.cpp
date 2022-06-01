@@ -322,9 +322,10 @@ bool getStopPoseIndexFromMap(
 
 bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length,
+  const int lane_id, const double detection_area_length, double margin,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_result, const rclcpp::Logger logger)
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result, const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -365,6 +366,7 @@ bool getObjectiveLanelets(
   std::vector<lanelet::ConstLanelets>                      // conflicting lanes with "lane_id"
     conflicting_lanelets_ex_yield_ego;                     // excluding ego lanes and yield lanes
   std::vector<lanelet::ConstLanelets> objective_lanelets;  // final objective lanelets
+  std::vector<lanelet::ConstLanelets> objective_lanelets_with_margin;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
   for (const auto & conflicting_lanelet : conflicting_lanelets) {
@@ -374,8 +376,10 @@ bool getObjectiveLanelets(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
+    const auto objective_lanelet_with_margin = generateOffsetLanelet(conflicting_lanelet, margin);
     conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
     objective_lanelets.push_back({conflicting_lanelet});
+    objective_lanelets_with_margin.push_back({objective_lanelet_with_margin});
   }
 
   // get possible lanelet path that reaches conflicting_lane longer than given length
@@ -395,6 +399,7 @@ bool getObjectiveLanelets(
 
   *conflicting_lanelets_result = conflicting_lanelets_ex_yield_ego;
   *objective_lanelets_result = objective_lanelets_sequences;
+  *objective_lanelets_with_margin_result = objective_lanelets_with_margin;
 
   std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;
   for (const auto & l : conflicting_lanelets) {
@@ -436,19 +441,6 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   return p_vec;
 }
 
-std::vector<lanelet::CompoundPolygon3d> getPolygon3dWithMarginFromLaneletsVec(
-  const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length, double margin)
-{
-  std::vector<lanelet::CompoundPolygon3d> p_vec;
-  for (const auto & ll : ll_vec) {
-    const double path_length = lanelet::utils::getLaneletLength3d(ll);
-    const auto polygon3d =
-      lanelet::utils::getPolygonFromArcLengthWithMargin(ll, path_length - clip_length, path_length, margin);
-    p_vec.push_back(polygon3d);
-  }
-  return p_vec;
-}
-
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec)
 {
   std::vector<int> id_list;
@@ -473,6 +465,35 @@ double calcArcLengthFromPath(
     length += std::hypot(dx_wp, dy_wp);
   }
   return length;
+}
+
+lanelet::ConstLanelet generateOffsetLanelet(
+  const lanelet::ConstLanelet lanelet, double margin)
+{
+  lanelet::Points3d lefts, rights;
+
+  const double offset = margin;
+  // const double offset = (turn_direction_ == TurnDirection::LEFT)
+  //                         ? planner_param_.ignore_width_from_center_line
+  //                         : -planner_param_.ignore_width_from_center_line;
+  const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, offset);
+  const auto offset_leftBound = lanelet::utils::getLeftBoundWithOffset(lanelet, offset);
+
+  const auto original_left_bound = offset_leftBound;
+  const auto original_right_bound = offset_rightBound;
+
+  for (const auto & pt : original_left_bound) {
+    lefts.push_back(lanelet::Point3d(pt));
+  }
+  for (const auto & pt : original_right_bound) {
+    rights.push_back(lanelet::Point3d(pt));
+  }
+  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
+  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
+  auto lanelet_with_margin = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+  const auto centerline = lanelet::utils::generateFineCenterline(lanelet_with_margin, 5.0);
+  lanelet_with_margin.setCenterline(centerline);
+  return std::move(lanelet_with_margin);
 }
 
 }  // namespace util

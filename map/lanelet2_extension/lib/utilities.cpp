@@ -320,11 +320,9 @@ lanelet::ConstLineString3d getRightBoundWithOffset(
   lanelet::LineString3d rightBound(lanelet::utils::getId());
   for (int i = 0; i < num_segments + 1; i++) {
     // Add ID for the average point of left and right
-    // const auto center_basic_point = (right_points.at(i) + left_points.at(i)) / 2;
+    const auto vec_left_2_right = (right_points.at(i) - left_points.at(i)).normalized();
 
-    const auto vec_right_2_left = (left_points.at(i) - right_points.at(i)).normalized();
-
-    const auto offset_right_basic_point = right_points.at(i) + vec_right_2_left * offset;
+    const auto offset_right_basic_point = right_points.at(i) + vec_left_2_right * offset;
 
     const lanelet::Point3d rightBound_point(
       lanelet::utils::getId(), offset_right_basic_point.x(), offset_right_basic_point.y(),
@@ -332,6 +330,36 @@ lanelet::ConstLineString3d getRightBoundWithOffset(
     rightBound.push_back(rightBound_point);
   }
   return static_cast<lanelet::ConstLineString3d>(rightBound);
+}
+
+lanelet::ConstLineString3d getLeftBoundWithOffset(
+  const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution)
+{
+  // Get length of longer border
+  const double left_length = lanelet::geometry::length(lanelet_obj.leftBound());
+  const double right_length = lanelet::geometry::length(lanelet_obj.rightBound());
+  const double longer_distance = (left_length > right_length) ? left_length : right_length;
+  const int num_segments = std::max(static_cast<int>(ceil(longer_distance / resolution)), 1);
+
+  // Resample points
+  const auto left_points = lanelet::utils::resamplePoints(lanelet_obj.leftBound(), num_segments);
+  const auto right_points = resamplePoints(lanelet_obj.rightBound(), num_segments);
+
+  // Create centerline
+  lanelet::LineString3d leftBound(lanelet::utils::getId());
+  for (int i = 0; i < num_segments + 1; i++) {
+    // Add ID for the average point of left and right
+
+    const auto vec_right_2_left = (left_points.at(i) - right_points.at(i)).normalized();
+
+    const auto offset_left_basic_point = left_points.at(i) + vec_right_2_left * offset;
+
+    const lanelet::Point3d leftBound_point(
+      lanelet::utils::getId(), offset_left_basic_point.x(), offset_left_basic_point.y(),
+      offset_left_basic_point.z());
+    leftBound.push_back(leftBound_point);
+  }
+  return static_cast<lanelet::ConstLineString3d>(leftBound);
 }
 
 lanelet::ConstLanelet getExpandedLanelet(
@@ -577,37 +605,6 @@ lanelet::ConstLineString3d getClosestSegment(
 
 lanelet::CompoundPolygon3d getPolygonFromArcLength(
   const lanelet::ConstLanelets & lanelets, const double s1, const double s2)
-{
-  const auto combined_lanelet = combineLanelets(lanelets);
-  const auto total_length = getLaneletLength2d(combined_lanelet);
-
-  // make sure that s1, and s2 are between [0, lane_length]
-  const auto s1_saturated = std::max(0.0, std::min(s1, total_length));
-  const auto s2_saturated = std::max(0.0, std::min(s2, total_length));
-
-  const auto ratio_s1 = s1_saturated / total_length;
-  const auto ratio_s2 = s2_saturated / total_length;
-
-  const auto s1_left =
-    ratio_s1 * boost::geometry::length(combined_lanelet.leftBound().basicLineString());
-  const auto s2_left =
-    ratio_s2 * boost::geometry::length(combined_lanelet.leftBound().basicLineString());
-  const auto s1_right =
-    ratio_s1 * boost::geometry::length(combined_lanelet.rightBound().basicLineString());
-  const auto s2_right =
-    ratio_s2 * boost::geometry::length(combined_lanelet.rightBound().basicLineString());
-
-  const auto left_bound =
-    getLineStringFromArcLength(combined_lanelet.leftBound(), s1_left, s2_left);
-  const auto right_bound =
-    getLineStringFromArcLength(combined_lanelet.rightBound(), s1_right, s2_right);
-
-  const auto & lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
-  return lanelet.polygon3d();
-}
-
-lanelet::CompoundPolygon3d getPolygonFromArcLengthWithMargin(
-  const lanelet::ConstLanelets & lanelets, const double s1, const double s2, const double margin)
 {
   const auto combined_lanelet = combineLanelets(lanelets);
   const auto total_length = getLaneletLength2d(combined_lanelet);

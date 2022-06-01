@@ -92,14 +92,18 @@ bool IntersectionModule::modifyPathVelocity(
   /* get detection area and conflicting area */
   std::vector<lanelet::ConstLanelets> detection_area_lanelets;
   std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
+  std::vector<lanelet::ConstLanelets> detection_area_lanelets_with_margin;
 
   util::getObjectiveLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    &conflicting_area_lanelets, &detection_area_lanelets, logger_);
+    planner_param_.detection_area_margin, &conflicting_area_lanelets,
+    &detection_area_lanelets, &detection_area_lanelets_with_margin, logger_);
   std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
     conflicting_area_lanelets, planner_param_.detection_area_length);
   std::vector<lanelet::CompoundPolygon3d> detection_areas = util::getPolygon3dFromLaneletsVec(
     detection_area_lanelets, planner_param_.detection_area_length);
+  std::vector<lanelet::CompoundPolygon3d> detection_areas_with_margin = util::getPolygon3dFromLaneletsVec(
+    detection_area_lanelets_with_margin, planner_param_.detection_area_length);
   std::vector<int> conflicting_area_lanelet_ids =
     util::getLaneletIdsFromLaneletsVec(conflicting_area_lanelets);
   std::vector<int> detection_area_lanelet_ids =
@@ -110,6 +114,7 @@ bool IntersectionModule::modifyPathVelocity(
     return true;
   }
   debug_data_.detection_area = detection_areas;
+  debug_data_.detection_area_with_margin = detection_areas_with_margin;
 
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
@@ -154,7 +159,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* calculate dynamic collision around detection area */
   bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_areas, detection_area_lanelets, detection_area_lanelet_ids, objects_ptr, closest_idx);
+    lanelet_map_ptr, *path, detection_areas, detection_area_lanelet_ids, objects_ptr, closest_idx);
   bool is_stuck = checkStuckVehicleInIntersection(
     lanelet_map_ptr, *path, closest_idx, stop_line_idx, objects_ptr);
   bool is_entry_prohibited = (has_collision || is_stuck);
@@ -227,7 +232,6 @@ bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
-  const std::vector<lanelet::ConstLanelets> & detection_area_lanelets,
   const std::vector<int> & detection_area_lanelet_ids,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx)
@@ -265,16 +269,41 @@ bool IntersectionModule::checkCollision(
     // std::vector<geometry_msgs::msg::Polygon> detection_areas_with_margin;
     // getDetectionAreaWithMargin(detection_areas);
 
-    lanelet::ConstLanelets detection_area_with_margin_lanelets;
-    for (const auto & detection_area_lanelet : detection_area_lanelets) {
-      const auto lanelet_with_margin = generateOffsetLanelet(detection_area_lanelet);
-      detection_area_with_margin_lanelets.push_back(lanelet_with_margin);
-    }
+    // lanelet::ConstLanelets detection_area_with_margin_lanelet;
+    // std::vector<lanelet::ConstLanelets> detection_area_with_margin_lanelet_vec;
+    // for (const auto & detection_area_lanelet_sequence : detection_area_lanelets) {
+    //   for (const auto & detection_area_lanelet : detection_area_lanelet_sequence) {
+    //     const auto lanelet_with_margin = generateHalfLanelet(detection_area_lanelet);
+    //     // const auto lanelet_with_margin = generateOffsetLanelet(detection_area_lanelet);
+    //     detection_area_with_margin_lanelet.push_back(lanelet_with_margin);
+    //     std::reverse(detection_area_with_margin_lanelet.begin(), detection_area_with_margin_lanelet.end());
+    //   }
+    //   detection_area_with_margin_lanelet_vec.push_back({detection_area_with_margin_lanelet});
+    //   std::reverse(detection_area_with_margin_lanelet_vec.begin(), detection_area_with_margin_lanelet_vec.end());
+    // }
+    /* reset order of lanelets */
 
-    for (const auto & detection_area : detection_areas) {
-    const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
-    const double dist_to_detection_area =
-      boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
+    // const auto current_arc =
+    //   lanelet::utils::getArcCoordinates(detection_area_with_margin_lanelets, path.points[closest_idx].point.pose);
+    // const auto stop_line_arc = lanelet::utils::getArcCoordinates(blind_spot_lanelets, stop_line_pose);
+    // const auto detection_area_start_length = lanelet::utils::getLaneletLength3d(detection_area_with_margin_lanelets);
+    // const auto intersection_length =
+    //   lanelet::utils::getLaneletLength3d(lanelet_map_ptr->laneletLayer.get(lane_id_));
+    // const auto detection_area_start_length =
+    //   total_length - intersection_length;
+
+    // const auto lane_length = lanelet::utils::getLaneletLength2d(detection_area_with_margin_lanelets);
+    // const auto detection_area_with_margin = lanelet::utils::getPolygonFromArcLength(
+    //   detection_area_with_margin_lanelets, 0, lane_length);
+
+    // std::vector<lanelet::CompoundPolygon3d> detection_area_with_margin = util::getPolygon3dFromLaneletsVec(
+    //   detection_area_with_margin_lanelet_vec, planner_param_.detection_area_length);
+    // debug_data_.detection_area_with_margin = detection_area_with_margin;
+
+      for (const auto & detection_area : detection_areas) {
+      const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
+      const double dist_to_detection_area =
+        boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
 
 
 
@@ -728,32 +757,58 @@ double IntersectionModule::calcDistanceUntilIntersectionLanelet(
   return distance;
 }
 
-lanelet::ConstLanelet IntersectionModule::generateOffsetLanelet(
-  const lanelet::ConstLanelet lanelet) const
-{
-  lanelet::Points3d lefts, rights;
+// lanelet::ConstLanelet IntersectionModule::generateOffsetLanelet(
+//   const lanelet::ConstLanelet lanelet) const
+// {
+//   lanelet::Points3d lefts, rights;
 
-  const double offset = planner_param_.detection_area_margin;
-  // const double offset = (turn_direction_ == TurnDirection::LEFT)
-  //                         ? planner_param_.ignore_width_from_center_line
-  //                         : -planner_param_.ignore_width_from_center_line;
-  const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, offset);
+//   const double offset = planner_param_.detection_area_margin;
+//   // const double offset = (turn_direction_ == TurnDirection::LEFT)
+//   //                         ? planner_param_.ignore_width_from_center_line
+//   //                         : -planner_param_.ignore_width_from_center_line;
+//   const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, offset);
 
-  const auto original_left_bound = lanelet.leftBound();
-  const auto original_right_bound = offset_rightBound;
+//   const auto original_left_bound = lanelet.leftBound();
+//   const auto original_right_bound = offset_rightBound;
 
-  for (const auto & pt : original_left_bound) {
-    lefts.push_back(lanelet::Point3d(pt));
-  }
-  for (const auto & pt : original_right_bound) {
-    rights.push_back(lanelet::Point3d(pt));
-  }
-  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
-  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
-  auto half_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
-  const auto centerline = lanelet::utils::generateFineCenterline(half_lanelet, 5.0);
-  half_lanelet.setCenterline(centerline);
-  return std::move(half_lanelet);
-}
+//   for (const auto & pt : original_left_bound) {
+//     lefts.push_back(lanelet::Point3d(pt));
+//   }
+//   for (const auto & pt : original_right_bound) {
+//     rights.push_back(lanelet::Point3d(pt));
+//   }
+//   const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
+//   const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
+//   auto half_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+//   const auto centerline = lanelet::utils::generateFineCenterline(half_lanelet, 5.0);
+//   half_lanelet.setCenterline(centerline);
+//   return std::move(half_lanelet);
+// }
+
+
+// lanelet::ConstLanelet IntersectionModule::generateHalfLanelet(
+//   const lanelet::ConstLanelet lanelet) const
+// {
+//   lanelet::Points3d lefts, rights;
+
+//   const double offset = planner_param_.detection_area_margin;
+//   const auto offset_centerline = lanelet::utils::getCenterlineWithOffset(lanelet, offset);
+
+//   const auto original_left_bound = lanelet.leftBound();
+//   const auto original_right_bound = offset_centerline;
+
+//   for (const auto & pt : original_left_bound) {
+//     lefts.push_back(lanelet::Point3d(pt));
+//   }
+//   for (const auto & pt : original_right_bound) {
+//     rights.push_back(lanelet::Point3d(pt));
+//   }
+//   const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
+//   const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
+//   auto half_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+//   const auto centerline = lanelet::utils::generateFineCenterline(half_lanelet, 5.0);
+//   half_lanelet.setCenterline(centerline);
+//   return std::move(half_lanelet);
+// }
 
 }  // namespace behavior_velocity_planner

@@ -37,6 +37,8 @@ lanelet::ConstLineString3d getCenterlineWithOffset(
   const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
 lanelet::ConstLineString3d getRightBoundWithOffset(
   const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
+lanelet::ConstLineString3d getLeftBoundWithOffset(
+  const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
 
 lanelet::ConstLanelet getExpandedLanelet(
   const lanelet::ConstLanelet & lanelet_obj, const double left_offset, const double right_offset);
@@ -74,8 +76,6 @@ lanelet::ConstLineString3d getClosestSegment(
 
 lanelet::CompoundPolygon3d getPolygonFromArcLength(
   const lanelet::ConstLanelets & lanelets, const double s1, const double s2);
-lanelet::CompoundPolygon3d getPolygonFromArcLengthWithMargin(
-  const lanelet::ConstLanelets & lanelets, const double s1, const double s2, const double margin);
 double getLaneletAngle(
   const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & search_point);
 bool isInLanelet(
