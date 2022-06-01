@@ -1,12 +1,15 @@
 #include "sign_detector/optflow.hpp"
 #include "sign_detector/util.hpp"
-#include <cv_bridge/cv_bridge.h>
+
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
 #include <opencv4/opencv2/core/eigen.hpp>
 #include <sophus/geometry.hpp>
 
-void OptFlowNode::computeRotation(const std::vector<cv::Point2f>& pt1, const std::vector<cv::Point2f>& pt2)
+#include <cv_bridge/cv_bridge.h>
+
+void OptFlowNode::computeRotation(
+  const std::vector<cv::Point2f> & pt1, const std::vector<cv::Point2f> & pt2)
 {
   if (!scaled_intrinsic.has_value()) return;
   const cv::Mat K = scaled_intrinsic.value();
@@ -22,7 +25,7 @@ void OptFlowNode::computeRotation(const std::vector<cv::Point2f>& pt1, const std
   std::cout << omega.norm() << std::endl;
 }
 
-void OptFlowNode::trackOptFlow(const cv::Mat& src_image)
+void OptFlowNode::trackOptFlow(const cv::Mat & src_image)
 {
   constexpr bool MUTUAL_CHECK = true;
 
@@ -41,11 +44,13 @@ void OptFlowNode::trackOptFlow(const cv::Mat& src_image)
   }
 
   // ================================================
-  cv::TermCriteria criteria = cv::TermCriteria((cv::TermCriteria::COUNT | cv::TermCriteria::EPS), 10, 0.03);
+  cv::TermCriteria criteria =
+    cv::TermCriteria((cv::TermCriteria::COUNT | cv::TermCriteria::EPS), 10, 0.03);
   std::vector<uchar> status;
   std::vector<float> err;
   std::vector<cv::Point2f> p1;
-  cv::calcOpticalFlowPyrLK(last_gray_image.value(), gray_image, p0, p1, status, err, cv::Size(30, 30), 2, criteria);
+  cv::calcOpticalFlowPyrLK(
+    last_gray_image.value(), gray_image, p0, p1, status, err, cv::Size(30, 30), 2, criteria);
 
   std::vector<cv::Point2f> enable_p0;
   std::vector<cv::Point2f> enable_p1;
@@ -56,12 +61,13 @@ void OptFlowNode::trackOptFlow(const cv::Mat& src_image)
     }
   }
 
-
   if (MUTUAL_CHECK) {
     std::vector<uchar> reverse_status;
     std::vector<float> reverse_err;
     std::vector<cv::Point2f> reverse_p0;
-    cv::calcOpticalFlowPyrLK(gray_image, last_gray_image.value(), enable_p1, reverse_p0, reverse_status, reverse_err, cv::Size(30, 30), 2, criteria);
+    cv::calcOpticalFlowPyrLK(
+      gray_image, last_gray_image.value(), enable_p1, reverse_p0, reverse_status, reverse_err,
+      cv::Size(30, 30), 2, criteria);
     std::vector<cv::Point2f> more_enable_p0;
     std::vector<cv::Point2f> more_enable_p1;
     for (uint i = 0; i < enable_p1.size(); i++) {
@@ -103,14 +109,12 @@ void OptFlowNode::trackOptFlow(const cv::Mat& src_image)
   last_gray_image = gray_image;
 }
 
-
-void OptFlowNode::imageCallback(const sensor_msgs::msg::CompressedImage& msg)
+void OptFlowNode::imageCallback(const sensor_msgs::msg::CompressedImage & msg)
 {
-  sensor_msgs::msg::Image::ConstSharedPtr image_ptr = decompressImage(msg);
-  cv::Mat image = cv_bridge::toCvCopy(*image_ptr, "rgb8")->image;
+  cv::Mat image = decompress2CvMat(msg);
   if (!info_.has_value()) return;
-  cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void*)(info_->k.data()));
-  cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void*)(info_->d.data()));
+  cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
+  cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
   cv::Mat undistorted;
   cv::undistort(image, undistorted, K, D, K);
   image = undistorted;
@@ -124,15 +128,5 @@ void OptFlowNode::imageCallback(const sensor_msgs::msg::CompressedImage& msg)
   scaled_intrinsic->at<double>(2, 2) = 1;
 
   trackOptFlow(image);
-  publishImage(image, this->get_clock()->now());
-}
-
-void OptFlowNode::publishImage(const cv::Mat& image, const rclcpp::Time& stamp)
-{
-  cv_bridge::CvImage raw_image;
-  raw_image.header.stamp = stamp;
-  raw_image.header.frame_id = "map";
-  raw_image.encoding = "bgr8";
-  raw_image.image = image;
-  pub_image_->publish(*raw_image.toImageMsg());
+  publishImage(*pub_image_, image, this->get_clock()->now());
 }

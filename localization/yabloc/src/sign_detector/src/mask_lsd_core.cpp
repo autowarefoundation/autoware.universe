@@ -17,8 +17,7 @@ void MaskLsd::synchroCallback(
   auto dt = rclcpp::Time(pose.header.stamp) - rclcpp::Time(compressed_image.header.stamp);
   std::cout << "dt: " << dt.seconds() << std::endl;
 
-  sensor_msgs::msg::Image::ConstSharedPtr image_ptr = decompressImage(compressed_image);
-  cv::Mat image = cv_bridge::toCvCopy(*image_ptr, "rgb8")->image;
+  cv::Mat image = decompress2CvMat(compressed_image);
   cv::Size size = image.size();
 
   if (!info_.has_value()) return;

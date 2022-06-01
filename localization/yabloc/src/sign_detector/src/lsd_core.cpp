@@ -6,8 +6,8 @@
 
 void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage & msg)
 {
-  sensor_msgs::msg::Image::ConstSharedPtr image_ptr = decompressImage(msg);
-  cv::Mat image = cv_bridge::toCvCopy(*image_ptr, "rgb8")->image;
+  Timer whole_timer;
+  cv::Mat image = decompress2CvMat(msg);
   cv::Size size = image.size();
 
   if (!info_.has_value()) return;
@@ -23,6 +23,8 @@ void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage 
   cv::resize(image, image, cv::Size(WIDTH, HEIGHT));
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+  RCLCPP_INFO_STREAM(
+    this->get_logger(), "image decompression: " << whole_timer.microSeconds() / 1000.0f << "ms");
 
   std::chrono::time_point start = std::chrono::system_clock::now();
   cv::Mat lines;
@@ -44,18 +46,19 @@ void LineSegmentDetector::imageCallback(const sensor_msgs::msg::CompressedImage 
   cv::addWeighted(gray_image, 0.8, gray_segmented, 0.5, 1, gray_image);
 
   // Publish lsd image
+  publishImage(*pub_image_lsd_, gray_image, msg.header.stamp);
+
   {
-    cv_bridge::CvImage raw_image;
-    raw_image.header.stamp = msg.header.stamp;
-    raw_image.header.frame_id = "map";
-    raw_image.encoding = "bgr8";
-    raw_image.image = gray_image;
-    pub_image_lsd_->publish(*raw_image.toImageMsg());
+    Timer project_timer;
+    cv::Mat scaled_K = SCALE * K;
+    scaled_K.at<double>(2, 2) = 1;
+    projectEdgeOnPlane(lines, scaled_K, msg.header.stamp, segmented);
+    RCLCPP_INFO_STREAM(
+      this->get_logger(), "projection: " << project_timer.microSeconds() / 1000.0f << "ms");
   }
 
-  cv::Mat scaled_K = SCALE * K;
-  scaled_K.at<double>(2, 2) = 1;
-  projectEdgeOnPlane(lines, scaled_K, msg.header.stamp, segmented);
+  RCLCPP_INFO_STREAM(
+    this->get_logger(), "lsd_node: " << whole_timer.microSeconds() / 1000.0f << "ms");
 }
 
 void LineSegmentDetector::listenExtrinsicTf(const std::string & frame_id)
@@ -180,17 +183,7 @@ void LineSegmentDetector::projectEdgeOnPlane(
 
   // Publish
   publishCloud(long_edges, stamp);
-  publishImage(image, stamp);
-}
-
-void LineSegmentDetector::publishImage(const cv::Mat & image, const rclcpp::Time & stamp) const
-{
-  cv_bridge::CvImage raw_image;
-  raw_image.header.stamp = stamp;
-  raw_image.header.frame_id = "map";
-  raw_image.encoding = "bgr8";
-  raw_image.image = image;
-  pub_image_->publish(*raw_image.toImageMsg());
+  publishImage(*pub_image_, image, stamp);
 }
 
 void LineSegmentDetector::publishCloud(

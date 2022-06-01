@@ -93,7 +93,6 @@ private:
   void imageCallback(const sensor_msgs::msg::CompressedImage & msg);
   void publishCloud(
     const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const;
-  void publishImage(const cv::Mat & image, const rclcpp::Time & stamp) const;
 
   cv::Mat segmentationHfs(const cv::Mat & image);
   cv::Mat segmentationGraph(const cv::Mat & image);
