@@ -82,18 +82,21 @@ int main()
 	print(tf7());
 
 	// Test state space model conversion.
-	double                        tau   = 0.008;
-	unsigned int                  order = 2;
+	double tau = 0.008;
+	unsigned int order = 2;
 	ns_control_toolbox::tf_factor denominator({ tau, 1 });
 	denominator.power(order);
 
 	ns_utils::print("\n Power of a TF8  \n");
 	print(denominator());
 
-	ns_control_toolbox::tf    tf8{{ 1. }, denominator() };
+	ns_control_toolbox::tf tf8{{ 1. }, denominator() };
 	ns_control_toolbox::tf2ss ss(tf8);
 	ss.print();
 
+	// Test tf factor default constructor.
+	ns_control_toolbox::tf_factor aa{};
+	ns_utils::print("tfactor default constructor : ", aa()[0]);
 
 	return 0;
 }
