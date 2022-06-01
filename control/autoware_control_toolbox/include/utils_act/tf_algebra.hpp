@@ -249,14 +249,14 @@ namespace ns_control_toolbox
 			};
 		
 		
-		struct tf_arithmetic : addition_tf_factors,
-		                       subtraction_tf_factors,
-		                       multiplication_tf_factors //, division_tf_factors
+		struct tf_factor_arithmetic : addition_tf_factors,
+		                              subtraction_tf_factors,
+		                              multiplication_tf_factors //, division_tf_factors
 			{
 			};
 		
 		
-		struct tf_factor : tf_factor_base, tf_arithmetic
+		struct tf_factor : tf_factor_base, tf_factor_arithmetic
 			{
 			using tf_factor_base::tf_factor_base;
 			};

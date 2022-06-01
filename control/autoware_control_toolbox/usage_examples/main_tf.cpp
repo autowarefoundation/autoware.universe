@@ -38,5 +38,9 @@ int main()
 		tf_from_tf_factors.print();
 		
 		
+		// Transfer function multiplication.
+		//auto tf3 = sys_default * tf_from_tf_factors;
+		
+		
 		return 0;
 	}
