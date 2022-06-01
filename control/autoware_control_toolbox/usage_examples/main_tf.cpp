@@ -20,11 +20,15 @@ int main()
 	// Print sys
 	sys.print();
 
+
 	// With a default constructor
 	ns_utils::print("\n\n");
 	ns_control_toolbox::tf sys_default;
 	sys_default.print();
 
+	// Inverse
+	sys.inv();
+	sys.print();
 
 	return 0;
 }
