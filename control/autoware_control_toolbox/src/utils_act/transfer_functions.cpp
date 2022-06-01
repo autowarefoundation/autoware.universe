@@ -16,8 +16,8 @@
 #include "utils_act/transfer_functions.hpp"
 
 
-size_t ns_control_toolbox::tf::getPolynomialStringAndSize(std::vector<double> const& num_or_den,
-                                                          std::ostringstream& string_stream)
+size_t ns_control_toolbox::tf_base::getPolynomialStringAndSize(std::vector<double> const& num_or_den,
+                                                               std::ostringstream& string_stream)
 	{
 		
 		auto Nn        = num_or_den.size();
@@ -81,7 +81,7 @@ size_t ns_control_toolbox::tf::getPolynomialStringAndSize(std::vector<double> co
 		return string_stream.str().length();
 	}
 
-void ns_control_toolbox::tf::print() const
+void ns_control_toolbox::tf_base::print() const
 	{
 		
 		std::ostringstream num_string;
@@ -118,7 +118,7 @@ void ns_control_toolbox::tf::print() const
 		
 	}
 
-void ns_control_toolbox::tf::inv()
+void ns_control_toolbox::tf_base::inv()
 	{
 		std::vector<double> temp_den{ std::move(den_) };
 		den_ = std::move(num_);
@@ -126,32 +126,33 @@ void ns_control_toolbox::tf::inv()
 		
 	}
 
-ns_control_toolbox::tf::tf(const ns_control_toolbox::tf_factor& num, const ns_control_toolbox::tf_factor& den)
+ns_control_toolbox::tf_base::tf_base(const ns_control_toolbox::tf_factor& num,
+                                     const ns_control_toolbox::tf_factor& den)
 	{
 		num_ = num();
 		den_ = den();
 		
 	}
 
-void ns_control_toolbox::tf::update_num(std::vector<double> const& num)
+void ns_control_toolbox::tf_base::update_num(std::vector<double> const& num)
 	{
 		
 		num_ = num;
 	}
 
-void ns_control_toolbox::tf::update_num(tf_factor const& num)
+void ns_control_toolbox::tf_base::update_num(tf_factor const& num)
 	{
 		
 		num_ = num();
 	}
 
-void ns_control_toolbox::tf::update_den(const std::vector<double>& den)
+void ns_control_toolbox::tf_base::update_den(const std::vector<double>& den)
 	{
 		den_ = den;
 		
 	}
 
-void ns_control_toolbox::tf::update_den(const ns_control_toolbox::tf_factor& den)
+void ns_control_toolbox::tf_base::update_den(const ns_control_toolbox::tf_factor& den)
 	{
 		den_ = den();
 	}

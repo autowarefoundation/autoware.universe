@@ -34,16 +34,16 @@ namespace ns_control_toolbox
 		 * */
 		
 		// For visibility, we can set for each object : __attribute__((visibility("default"))) class_name
-		struct ACT_PUBLIC tf
+		struct ACT_PUBLIC tf_base
 			{
 			
 			// Constructors.
-			tf() : num_{ 1. }, den_{ 1. }
+			tf_base() : num_{ 1. }, den_{ 1. }
 				{
 				}
 			
 			// Constructor from non-empty numerator and denominator std::vectors.
-			tf(std::vector<double> num, std::vector<double> den)
+			tf_base(std::vector<double> num, std::vector<double> den)
 					: num_{ std::move(num) }, den_{ std::move(den) }
 				{
 					
@@ -52,7 +52,7 @@ namespace ns_control_toolbox
 				}
 			
 			// Constructor from tf_factors
-			tf(tf_factor const& num, tf_factor const& den);
+			tf_base(tf_factor const& num, tf_factor const& den);
 			
 			// Member functions.
 			/**
@@ -85,6 +85,12 @@ namespace ns_control_toolbox
 			void update_den(std::vector<double> const& den);
 			
 			void update_den(tf_factor const& den);
+			
+			std::vector<double> num()
+				{ return num_; }
+			
+			std::vector<double> den()
+				{ return den_; }
 		
 		private:
 			
@@ -93,16 +99,112 @@ namespace ns_control_toolbox
 			std::vector<double> den_;   // <-@brief denominator
 			};
 		
-		/**
-		 * @param Td	: time delay value in seconds.
-		 * @param N		: Order of Pade approximation.
-		 * */
-		tf ACT_PUBLIC pade(double const& Td, size_t const& order);
 		
-		/**
-		 * @bried see pade()
-		 * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
-		 * */
+		// Transfer Function Multiplication Operator Definition.
+		template<typename E> // E represents TF operation.
+		struct TFoperations
+			{
+			
+			virtual // Delegate to the derived TF.
+			std::vector<double> num()
+				{
+					return static_cast<E const&>(*this).num();
+				}
+			
+			virtual std::vector<double> den()
+				{
+					return static_cast<E const&>(*this).den();
+				}
+		
+		
+		private:
+			TFoperations() = default;
+			
+			friend E;
+			
+			};
+		
+		// Transfer function object that can be multiplied.
+		// Curiously recurring template pattern
+		struct ACT_PUBLIC tf : tf_base
+			{
+			using tf_base::tf_base;
+				
+			};
+		
+		
+		// Multiplication Operator.
+		template<typename E1, typename E2>
+		struct TFmultiplication : public TFoperations<TFmultiplication<E1, E2>>
+			{
+		
+		public:
+			TFmultiplication(E1 const& tf1, E2 const& tf2) : tf1_(tf1), tf2_(tf2)
+				{};
+			
+			
+			friend TFmultiplication<E1, E2> operator*(TFoperations<E1> const& u, TFoperations<E2> const& v)
+				{
+					
+					
+					return TFmultiplication<E1, E2>(*static_cast<const E1*>(&u), *static_cast<const E2*>(&v));
+				}
+			
+			std::vector<double> num()
+				{
+					tf_factor num1{{ tf1_.num() }};
+					tf_factor num2{{ tf2_.num() }};
+					
+					auto num_mult = num1 * num2;
+					return num_mult();
+					
+				}
+			
+			std::vector<double> den()
+				{
+					tf_factor den1{{ tf1_.den() }};
+					tf_factor den2{{ tf2_.den() }};
+					
+					auto den_mult = den1 * den2;
+					return den_mult();
+					
+				}
+		
+		private:
+			E1 const& tf1_;
+			E2 const& tf2_;
+			};
+		
+		template<typename E1, typename E2>
+		TFmultiplication<E1, E2> operator*(TFoperations<E1> const& u, TFoperations<E2> const& v)
+			{
+				
+				
+				return TFmultiplication<E1, E2>(*static_cast<const E1*>(&u), *static_cast<const E2*>(&v));
+			}
+
+
+
+//		// Collection of TF arithmatic operations.
+//		template<typename E1, typename E2>
+//		struct tf_arithmetic : TFoperations<TFmultiplication<E1, E2>>
+//			{
+//
+//			};
+
+
+
+
+/**
+ * @param Td	: time delay value in seconds.
+ * @param N		: Order of Pade approximation.
+ * */
+		tf ACT_PUBLIC pade(double const& Td, size_t const& order);
+
+/**
+ * @bried see pade()
+ * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
+ * */
 		tf ACT_PUBLIC padecoeff(double const& Td, size_t const& order);
 		
 	} // namespace ns_control_toolbox
