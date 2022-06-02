@@ -13,8 +13,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ## Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ## Targets
 ament_auto_add_library(radar_object_fusion_to_detected_object_node_component SHARED
