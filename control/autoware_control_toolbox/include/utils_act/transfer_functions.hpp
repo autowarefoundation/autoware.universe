@@ -28,47 +28,6 @@
 namespace ns_control_toolbox
 {
 
-	// template<typename T, class E>
-	// class vector_scalar_mult
-	// {
-	//
-	// public:
-	//
-	// 	friend E operator*(E const& vec, T const& a)
-	// 	{
-	// 		E temp{ vec };
-	//
-	// 		for (auto& x: temp)
-	// 		{
-	// 			x = x * a;
-	// 		}
-	//
-	// 		return temp;
-	// 	}
-	//
-	// 	friend E& operator*=(E& vec, T const& a)
-	// 	{
-	// 		for (auto& x: vec)
-	// 		{
-	// 			x = x * a;
-	// 		}
-	//
-	// 		return vec;
-	// 	}
-	// };
-
-
-
-
-	// template<typename T>
-	// class std_vector_overloaded : public std::vector<T>, vector_scalar_mult<T, std_vector_overloaded<T>>
-	// {
-	// 	using std::vector<T>::vector;
-	// };
-
-
-
-
 
 	// Multiplication Operator.
 	template<typename T>

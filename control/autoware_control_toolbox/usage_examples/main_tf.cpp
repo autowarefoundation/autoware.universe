@@ -20,7 +20,6 @@ int main()
 	// Print sys
 	sys.print();
 
-
 	// With a default constructor
 	ns_utils::print("\n\n");
 	ns_control_toolbox::tf sys_default;
@@ -49,41 +48,30 @@ int main()
 
 	tf3.print();
 
-	// Transfer function multiplying num or den by a constant.
-	std::vector<double> ss{ 1., 2., 3 };
-	ns_utils::print_container(ss);
-
-	for (auto& s: ss)
-	{
-		s *= 5;
-		ns_utils::print("s: ", s);
-
-	}
-
-	ns_utils::print_container(ss);
-
-
-	//
-	double x2(1.);
-	double y2(1.5);
-	auto   anw = ns_utils::isEqual(x2, y2);
-
-	int  x1(1);
-	int  y1(1);
-	auto anw1 = ns_utils::isEqual(x1, y1);
-
+	// Test vector overloading.
 	std::vector<double> ov1{ 1, 2, 4 };
 
-	//
-	double aa  = 8;
-	auto   ov2 = ov1 * 7.0;
+
+	auto ov2 = ov1 * 7.0;
+	auto ov3 = 2. * ov1;
 
 
 	ns_utils::print_container(std::vector<double>(ov1));
 	ns_utils::print_container(std::vector<double>(ov2));
+	ns_utils::print_container(std::vector<double>(ov3));
 
-	ov2 *= 7.0;
-	ns_utils::print_container(std::vector<double>(ov2));
+	// Test overloaded a*num, b*num
+	ns_control_toolbox::tf tf_overloaded{{ 2, 0, 4 },
+	                                     { 1, 4, 0 }};
+
+	ns_utils::print("Before vector scalar multiplicaiton");
+	tf_overloaded.print();
+
+	tf_overloaded.update_num_coef(10.);
+	tf_overloaded.update_den_coef(5.);
+
+	ns_utils::print("After vector scalar multiplicaiton");
+	tf_overloaded.print();
 
 
 	return 0;
