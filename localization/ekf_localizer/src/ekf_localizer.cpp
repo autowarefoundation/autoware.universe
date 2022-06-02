@@ -18,11 +18,11 @@
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <algorithm>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
-#include <deque>
 
 // clang-format off
 #define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl
@@ -154,7 +154,9 @@ void EKFLocalizer::timerCallback()
   /* pose measurement update */
   if (!current_pose_info_deque_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Pose -------------------------");
-    DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose number = %d", int(current_pose_info_deque_.size()));
+    DEBUG_INFO(
+      get_logger(), "[EKF] measurementUpdatePose number = %d",
+      int(current_pose_info_deque_.size()));
     stop_watch_.tic();
     for (int i = 0; i < int(current_pose_info_deque_.size()); ++i) {
       PoseInfo pose_info = current_pose_info_deque_.front();
@@ -172,7 +174,9 @@ void EKFLocalizer::timerCallback()
   /* twist measurement update */
   if (!current_twist_info_deque_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Twist -------------------------");
-    DEBUG_INFO(get_logger(), "[EKF] measurementUpdateTwist number = %d", int(current_twist_info_deque_.size()));
+    DEBUG_INFO(
+      get_logger(), "[EKF] measurementUpdateTwist number = %d",
+      int(current_twist_info_deque_.size()));
     stop_watch_.tic();
     for (int i = 0; i < int(current_twist_info_deque_.size()); ++i) {
       TwistInfo twist_info = current_twist_info_deque_.front();
@@ -217,7 +221,8 @@ void EKFLocalizer::setCurrentResult()
   double roll = 0.0, pitch = 0.0;
   if (!current_pose_info_deque_.empty()) {
     current_ekf_pose_.pose.position.z = current_pose_info_deque_.back().pose->pose.position.z;
-    tf2::fromMsg(current_pose_info_deque_.back().pose->pose.orientation, q_tf); /* use Pose pitch and roll */
+    tf2::fromMsg(
+      current_pose_info_deque_.back().pose->pose.orientation, q_tf); /* use Pose pitch and roll */
     double yaw_tmp;
     tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
   }
@@ -340,9 +345,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   pose.pose = msg->pose.pose;
 
   PoseInfo pose_info = {
-    std::make_shared<geometry_msgs::msg::PoseStamped>(pose),
-    msg->pose.covariance,
-    0};
+    std::make_shared<geometry_msgs::msg::PoseStamped>(pose), msg->pose.covariance, 0};
   current_pose_info_deque_.push_back(pose_info);
 }
 
@@ -357,9 +360,7 @@ void EKFLocalizer::callbackTwistWithCovariance(
   twist.twist = msg->twist.twist;
 
   TwistInfo twist_info = {
-    std::make_shared<geometry_msgs::msg::TwistStamped>(twist),
-    msg->twist.covariance,
-    0};
+    std::make_shared<geometry_msgs::msg::TwistStamped>(twist), msg->twist.covariance, 0};
   current_twist_info_deque_.push_back(twist_info);
 }
 
@@ -461,9 +462,7 @@ void EKFLocalizer::predictKinematicsModel()
  * measurementUpdatePose
  */
 void EKFLocalizer::measurementUpdatePose(
-  const geometry_msgs::msg::PoseStamped & pose,
-  std::array<double, 36ul> current_pose_covariance
-)
+  const geometry_msgs::msg::PoseStamped & pose, std::array<double, 36ul> current_pose_covariance)
 {
   if (pose.header.frame_id != pose_frame_id_) {
     RCLCPP_WARN_THROTTLE(
@@ -567,9 +566,8 @@ void EKFLocalizer::measurementUpdatePose(
 /*
  * measurementUpdateTwist
  */
-void EKFLocalizer::measurementUpdateTwist(    
-  const geometry_msgs::msg::TwistStamped & twist,
-  std::array<double, 36ul> current_twist_covariance)
+void EKFLocalizer::measurementUpdateTwist(
+  const geometry_msgs::msg::TwistStamped & twist, std::array<double, 36ul> current_twist_covariance)
 {
   if (twist.header.frame_id != "base_link") {
     RCLCPP_WARN_THROTTLE(
