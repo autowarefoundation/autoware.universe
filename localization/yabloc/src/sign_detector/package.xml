@@ -26,6 +26,8 @@
 
   <depend>eagleye_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
+
+  <depend>modularized_particle_filter</depend>
   <depend>modularized_particle_filter_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

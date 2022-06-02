@@ -156,7 +156,6 @@ void LineSegmentDetector::projectEdgeOnPlane(
     cv::drawContours(mask_image, projected_hull, 0, max_color, -1);
   }
 
-  pcl::PointCloud<pcl::PointNormal> reliable_edges;
   cv::Mat line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
   for (int i = 0; i < edges.size(); i++) {
     auto & pn = edges.at(i);
@@ -170,14 +169,18 @@ void LineSegmentDetector::projectEdgeOnPlane(
   cv::bitwise_and(mask_image, line_image, masked_line);
   std::set<ushort> pixel_values = getUniquePixelValue(masked_line);
 
+  pcl::PointCloud<pcl::PointNormal> reliable_edges;
   cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   cv::drawContours(reliable_line_image, projected_hull, 0, cv::Scalar(0, 155, 155), -1);
   for (int i = 0; i < edges.size(); i++) {
     auto & pn = edges.at(i);
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
-    cv::Scalar color = cv::Scalar(0, 0, 255);
-    if (pixel_values.count(i + 1) == 0) color = cv::Scalar(255, 0, 0);
+    cv::Scalar color = cv::Scalar(255, 0, 0);
+    if (pixel_values.count(i + 1) != 0) {
+      color = cv::Scalar(0, 0, 255);
+      reliable_edges.push_back(pn);
+    }
     cv::line(reliable_line_image, p1, p2, color, 2, cv::LineTypes::LINE_8);
   }
 

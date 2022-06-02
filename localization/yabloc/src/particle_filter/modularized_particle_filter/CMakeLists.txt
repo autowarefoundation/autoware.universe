@@ -34,9 +34,10 @@ ament_auto_add_executable(gnss_pose_corrector
   src/correction/gnss_pose_corrector.cpp
 )
 
-ament_auto_add_executable(camera_pose_corrector
-  src/correction/camera_pose_corrector_node.cpp
-  src/correction/camera_pose_corrector.cpp
+ament_auto_add_library(
+  abst_corrector 
+  SHARED 
+  src/correction/abst_corrector.cpp
 )
 
 ament_auto_add_executable(particle_visualize
