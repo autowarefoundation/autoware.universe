@@ -35,16 +35,6 @@ public:
 
 private:
   VirtualTrafficLightModule::PlannerParam planner_param_;
-
-  template <class T>
-  std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> getRegElemMapOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map);
-
-  std::set<int64_t> getLaneletIdSetOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map);
-
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(

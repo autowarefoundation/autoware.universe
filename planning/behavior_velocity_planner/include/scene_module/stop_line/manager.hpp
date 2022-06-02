@@ -26,8 +26,6 @@
 
 namespace behavior_velocity_planner
 {
-
-using TrafficSignsWithLaneId = std::vector<std::pair<lanelet::TrafficSignConstPtr, int64_t>>;
 using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
 
 class StopLineModuleManager : public SceneModuleManagerInterface
@@ -39,10 +37,6 @@ public:
 
 private:
   StopLineModule::PlannerParam planner_param_;
-
-  TrafficSignsWithLaneId getTrafficSignRegElemsOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map);
 
   std::vector<StopLineWithLaneId> getStopLinesWithLaneIdOnPath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,

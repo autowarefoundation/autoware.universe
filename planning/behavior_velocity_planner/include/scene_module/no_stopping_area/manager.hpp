@@ -35,15 +35,6 @@ public:
 
 private:
   NoStoppingAreaModule::PlannerParam planner_param_;
-
-  std::vector<lanelet::NoStoppingAreaConstPtr> getNoStoppingAreaRegElemsOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map);
-
-  std::set<int64_t> getNoStoppingAreaIdSetOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map);
-
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
