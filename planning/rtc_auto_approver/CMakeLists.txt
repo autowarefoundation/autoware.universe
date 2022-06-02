@@ -13,7 +13,8 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/rtc_auto_approver.cpp
+  src/rtc_auto_approver_interface.cpp
+  src/node.cpp
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
