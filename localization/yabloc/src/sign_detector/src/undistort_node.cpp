@@ -3,6 +3,7 @@
 
 #include <opencv4/opencv2/calib3d.hpp>
 #include <opencv4/opencv2/core.hpp>
+#include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -40,50 +41,50 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_info_;
   std::optional<sensor_msgs::msg::CameraInfo> info_{std::nullopt}, scaled_info_{std::nullopt};
 
+  cv::Mat undistort_map_x, undistort_map_y;
+
+  void makeRemapLUT()
+  {
+    if (!info_.has_value()) return;
+    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
+    cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
+    cv::Size size(info_->width, info_->height);
+
+    cv::Size new_size(WIDTH, 1.0f * WIDTH / size.width * size.height);
+    cv::Mat new_K = cv::getOptimalNewCameraMatrix(K, D, size, 0, new_size);
+
+    cv::initUndistortRectifyMap(
+      K, D, cv::Mat(), new_K, new_size, CV_32FC1, undistort_map_x, undistort_map_y);
+
+    scaled_info_ = sensor_msgs::msg::CameraInfo{};
+    scaled_info_->k.at(0) = new_K.at<double>(0, 0);
+    scaled_info_->k.at(2) = new_K.at<double>(0, 2);
+    scaled_info_->k.at(4) = new_K.at<double>(1, 1);
+    scaled_info_->k.at(5) = new_K.at<double>(1, 2);
+    scaled_info_->k.at(8) = 1;
+    scaled_info_->d.resize(5);
+    scaled_info_->width = new_size.width;
+    scaled_info_->height = new_size.height;
+  }
+
   void imageCallback(const sensor_msgs::msg::CompressedImage & msg)
   {
     Timer timer;
-    cv::Mat image = decompress2CvMat(msg);
-    cv::Size size = image.size();
-
     if (!info_.has_value()) return;
+    if (undistort_map_x.empty()) makeRemapLUT();
 
-    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
-    cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
-    cv::Mat undistorted;
-    cv::undistort(image, undistorted, K, D, K);
-    image = undistorted;
+    cv::Mat image = decompress2CvMat(msg);
+    cv::Mat undistorted_image;
+    cv::remap(image, undistorted_image, undistort_map_x, undistort_map_y, cv::INTER_LINEAR);
 
-    const float SCALE = 1.0f * WIDTH / size.width;
-    const int HEIGHT = SCALE * size.height;
-    cv::resize(image, image, cv::Size(WIDTH, HEIGHT));
-
-    publishImage(*pub_image_, image, msg.header.stamp);
-
-    if (!scaled_info_.has_value()) buildScaledCameraInfo(SCALE);
+    scaled_info_->header = info_->header;
     pub_info_->publish(scaled_info_.value());
+    publishImage(*pub_image_, undistorted_image, msg.header.stamp);
 
     RCLCPP_INFO_STREAM(get_logger(), "decompress: " << timer.microSeconds() / 1000.f << "[ms]");
   }
 
   void infoCallback(const sensor_msgs::msg::CameraInfo & msg) { info_ = msg; }
-
-  void buildScaledCameraInfo(float scale)
-  {
-    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
-    cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
-
-    scaled_info_ = sensor_msgs::msg::CameraInfo{};
-    cv::Mat k = scale * K;
-    scaled_info_->k.at(0) = k.at<double>(0, 0);
-    scaled_info_->k.at(2) = k.at<double>(0, 2);
-    scaled_info_->k.at(4) = k.at<double>(1, 1);
-    scaled_info_->k.at(5) = k.at<double>(1, 2);
-    scaled_info_->k.at(8) = 1;
-    scaled_info_->d.resize(5);
-
-    scaled_info_->header = info_->header;
-  }
 };
 
 int main(int argc, char * argv[])

@@ -137,7 +137,6 @@ void LineSegmentDetector::projectEdgeOnPlane(
 
   // Draw projected edge image
   cv::Mat mask_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
-  cv::Scalar reliable_color = cv::Scalar::all(std::numeric_limits<u_short>::max());
   std::vector<std::vector<cv::Point2i>> projected_hull(1);
   {
     // Compute convex hull
@@ -153,7 +152,8 @@ void LineSegmentDetector::projectEdgeOnPlane(
       auto v_opt = conv(u);
       if (v_opt.has_value()) projected_hull.front().push_back(toCvPoint(v_opt.value()));
     }
-    cv::drawContours(mask_image, projected_hull, 0, reliable_color, -1);
+    auto max_color = cv::Scalar::all(std::numeric_limits<u_short>::max());
+    cv::drawContours(mask_image, projected_hull, 0, max_color, -1);
   }
 
   pcl::PointCloud<pcl::PointNormal> reliable_edges;
@@ -162,8 +162,8 @@ void LineSegmentDetector::projectEdgeOnPlane(
     auto & pn = edges.at(i);
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
-    cv::Scalar color = cv::Scalar::all(i);
-    cv::line(line_image, p1, p2, color, 1, cv::LineTypes::FILLED);
+    cv::Scalar color = cv::Scalar::all(i + 1);
+    cv::line(line_image, p1, p2, color, 1, cv::LineTypes::LINE_4);
   }
 
   cv::Mat masked_line;
@@ -177,12 +177,9 @@ void LineSegmentDetector::projectEdgeOnPlane(
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
     cv::Scalar color = cv::Scalar(0, 0, 255);
-    if (pixel_values.count(i) == 0) color = cv::Scalar(255, 0, 0);
+    if (pixel_values.count(i + 1) == 0) color = cv::Scalar(255, 0, 0);
     cv::line(reliable_line_image, p1, p2, color, 2, cv::LineTypes::LINE_8);
   }
-  // cv::threshold(masked_line, masked_line, 1, 255, cv::THRESH_BINARY);
-  // masked_line.convertTo(masked_line, CV_8UC1);
-  // cv::cvtColor(masked_line, masked_line, cv::COLOR_GRAY2BGR);
 
   // Publish
   publishCloud(reliable_edges, stamp);

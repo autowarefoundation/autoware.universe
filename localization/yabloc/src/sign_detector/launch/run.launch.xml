@@ -32,8 +32,9 @@
         <param name="covariance" value="36.0"/>
     </node>
 
-    <node name="undistort" pkg="sign_detector" exec="undistort_node" output="log" args="--ros-args --log-level $(var log_level)">
+    <node name="undistort" pkg="sign_detector" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="width" value="800"/>
     </node>
 
     <node name="pose_to_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
