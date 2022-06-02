@@ -23,7 +23,7 @@
     <param name="forgetting_factor" value="$(var forgetting_factor)"/>
     <param name="valid_min_velocity" value="$(var valid_min_velocity)"/>
     <param name="valid_max_steer" value="$(var valid_max_steer)"/>
-    <param name="warn_steer_offset" value="$(var warn_steer_offset)"/>
+    <param name="warn_steer_offset_deg" value="$(var warn_steer_offset_deg)"/>
     <remap from="~/input/twist" to="$(var output_twist_topic)"/>
     <remap from="~/input/steer" to="/vehicle/status/steering_status"/>
     <remap from="~/output/steering_offset" to="/vehicle/status/steering_offset"/>
