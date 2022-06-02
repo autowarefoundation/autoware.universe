@@ -27,7 +27,58 @@
 #include <utility>
 #include <vector>
 
-// Converts degree to radians.
+/**
+ * @brief Overloads vector * scalar multiplication.
+ * */
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+std::vector<T> operator*(std::vector<T> const& vec, T const& a)
+{
+	std::vector<T> temp{ vec };
+
+	for (auto& x: temp)
+	{
+		x = x * a;
+	}
+
+	return temp;
+}
+
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+std::vector<T>& operator*=(std::vector<T>& vec, T const& a)
+{
+	for (auto& x: vec)
+	{
+		x = x * a;
+	}
+
+	return vec;
+}
+
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+std::vector<T> operator*(T const& a, std::vector<T> const& vec)
+{
+	std::vector<T> temp{ vec };
+
+	for (auto& x: temp)
+	{
+		x = x * a;
+	}
+
+	return temp;
+}
+
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+std::vector<T>& operator*=(T const& a, std::vector<T>& vec)
+{
+	for (auto& x: vec)
+	{
+		x = x * a;
+	}
+
+	return vec;
+}
+
+
 namespace ns_utils
 {
 	/**
@@ -69,7 +120,7 @@ namespace ns_utils
 	template<typename T>
 	constexpr T angleDistance(T const target_angle, T const reference_angle)
 	{
-		T diff                   = std::fmod(target_angle - reference_angle + M_PI_2, 2 * M_PI) - M_PI_2;
+		T diff = std::fmod(target_angle - reference_angle + M_PI_2, 2 * M_PI) - M_PI_2;
 		T diff_signed_correction = diff < -M_PI_2 ? diff + 2 * M_PI : diff;
 
 		return diff_signed_correction;
@@ -79,7 +130,7 @@ namespace ns_utils
 	T wrapToPi(T const& angle)
 	{
 		const std::complex<double> i(0, 1);
-		auto                       complex_number = std::exp(i * angle);
+		auto complex_number = std::exp(i * angle);
 		return std::arg(complex_number);
 	}
 
@@ -137,7 +188,7 @@ namespace ns_utils
 				vehicle_position[1] - closest_point_position[1] };
 
 		double lateral_error =
-				       normal_vector[0] * vector_to_path_point[0] + normal_vector[1] * vector_to_path_point[1];
+				normal_vector[0] * vector_to_path_point[0] + normal_vector[1] * vector_to_path_point[1];
 
 		return lateral_error;
 	}
@@ -160,7 +211,7 @@ namespace ns_utils
 	{
 		// Prepare a container.
 		// Compute step increment.
-		T              step_increment = (end - start) / static_cast<double>(num_of_steps - 1);
+		T step_increment = (end - start) / static_cast<double>(num_of_steps - 1);
 		std::vector<T> linear_vector(num_of_steps, 0);
 
 		linear_vector[0] = start;
@@ -205,7 +256,7 @@ namespace ns_utils
 	template<typename T>
 	size_t constexpr binary_index_search(T const& ti, std::vector<T> const& tbase)
 	{
-		size_t left_ind  = 0;                              // low number
+		size_t left_ind = 0;                              // low number
 		size_t right_ind = tbase.size() - 1;                              // last index of the coordinate - high number
 
 		// Check if ti corresponds to the final value of tbase
@@ -262,9 +313,9 @@ namespace ns_utils
 			va.emplace_back(0.0);
 		}
 
-		float          i = va[1] * vb[2] - va[2] * vb[1];
-		float          j = va[2] * vb[0] - va[0] * vb[2];
-		float          k = va[0] * vb[1] - va[1] * vb[0];
+		float i = va[1] * vb[2] - va[2] * vb[1];
+		float j = va[2] * vb[0] - va[0] * vb[2];
+		float k = va[0] * vb[1] - va[1] * vb[0];
 		std::vector<T> vcross_product{ i, j, k };
 		return vcross_product;
 	}
@@ -298,7 +349,7 @@ namespace ns_utils
 			double const& previous_avg, double const& period, double const& new_value)
 	{
 		const double smoothing_factor = 2. / (period + 1.);                              // 2/(EMA_length + 1)
-		const double results          = (new_value - previous_avg) * smoothing_factor + previous_avg;
+		const double results = (new_value - previous_avg) * smoothing_factor + previous_avg;
 		return results;
 	}
 
@@ -373,14 +424,14 @@ namespace ns_utils
 
 
 	// Comparing data types.
-	template<class T>
-	typename std::enable_if<std::is_integral<T>::value, bool>::type isEqual(T a, T b)
+	template<class T, typename std::enable_if<std::is_integral<T>::value, bool>::type* = nullptr>
+	bool isEqual(T a, T b)
 	{
 		return a == b;
 	}
 
-	template<class T>
-	typename std::enable_if<std::is_floating_point<T>::value, bool>::type isEqual(T a, T b)
+	template<class T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+	bool isEqual(T a, T b)
 	{
 		return abs(a - b) < std::numeric_limits<T>::epsilon();
 	}

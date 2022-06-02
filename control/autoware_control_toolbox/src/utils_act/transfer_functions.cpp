@@ -17,17 +17,17 @@
 
 
 size_t ns_control_toolbox::tf::getPolynomialStringAndSize(std::vector<double> const& num_or_den,
-                                                          std::ostringstream& string_stream)
+		std::ostringstream& string_stream)
 {
 
-	auto Nn        = num_or_den.size();
-	int  precision = 4;
+	auto Nn = num_or_den.size();
+	int precision = 4;
 
 	for (size_t k = 0; k < Nn; ++k)
 	{
 
 		auto&& power_of_term = Nn - 1 - k;
-		auto&& coeff_abs     = std::abs(num_or_den.at(k));
+		auto&& coeff_abs = std::abs(num_or_den.at(k));
 
 		if (std::fabs(num_or_den.at(k)) > EPS)
 		{
@@ -87,8 +87,8 @@ void ns_control_toolbox::tf::print() const
 	std::ostringstream num_string;
 	std::ostringstream den_string;
 
-	auto num_string_size = getPolynomialStringAndSize(num_, num_string);
-	auto den_string_size = getPolynomialStringAndSize(den_, den_string);
+	auto num_string_size = getPolynomialStringAndSize(num(), num_string);
+	auto den_string_size = getPolynomialStringAndSize(den(), den_string);
 
 	if (num_string_size > den_string_size)
 	{
@@ -127,7 +127,7 @@ void ns_control_toolbox::tf::inv()
 }
 
 ns_control_toolbox::tf::tf(const ns_control_toolbox::tf_factor& num,
-                           const ns_control_toolbox::tf_factor& den)
+		const ns_control_toolbox::tf_factor& den)
 {
 	num_ = num();
 	den_ = den();
@@ -178,13 +178,24 @@ void ns_control_toolbox::tf::update_den_coef(double const& den_coeff)
 
 std::vector<double> ns_control_toolbox::tf::num() const
 {
-	return num_;
+	if (ns_utils::isEqual(num_coef_, 1.0))
+	{
+		return num_;
+	}
+
+	return num_ * num_coef_;
+
 }
 
 std::vector<double> ns_control_toolbox::tf::den() const
 {
 
-	return den_;
+	if (ns_utils::isEqual(den_coef_, 1.0))
+	{
+		return den_;
+	}
+
+	return den_coef_ * den_;
 }
 
 
@@ -216,16 +227,16 @@ ns_control_toolbox::tf ns_control_toolbox::padecoeff(const double& Td, const siz
 
 	auto const den0 = den[0];
 	std::transform(num.begin(), num.end(), num.begin(),
-	               [&den0](auto& x)
-	               {
-		               return x / den0;
-	               });
+			[&den0](auto& x)
+			{
+				return x / den0;
+			});
 
 	std::transform(den.begin(), den.end(), den.begin(),
-	               [&den0](auto& x)
-	               {
-		               return x / den0;
-	               });
+			[&den0](auto& x)
+			{
+				return x / den0;
+			});
 
 	return { num, den };
 }
