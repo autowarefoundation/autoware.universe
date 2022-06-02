@@ -108,21 +108,24 @@ void ns_control_toolbox::tf::print() const
 	}
 	else
 	{
-
 		ns_utils::print(num_string.str());
 		ns_utils::print(std::string(std::max(num_string_size, den_string_size), '-'));
 		ns_utils::print(den_string.str());
 	}
 
-	ns_utils::print("\nContinuous-time transfer function.\n");
+	ns_utils::print("\n");
+	// ns_utils::print("\nContinuous-time transfer function.\n");
 
 }
 
 void ns_control_toolbox::tf::inv()
 {
-	std::vector<double> temp_den{ std::move(den_) };
-	den_ = std::move(num_);
-	num_ = std::move(temp_den);
+//	std::vector<double> temp_den{ std::move(den_) };
+//	den_ = std::move(num_);
+//	num_ = std::move(temp_den);
+
+	std::swap(num_, den_);
+	std::swap(num_coef_, den_coef_);
 
 }
 

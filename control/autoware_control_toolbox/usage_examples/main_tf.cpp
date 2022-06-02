@@ -21,11 +21,12 @@ int main()
 	sys.print();
 
 	// With a default constructor
-	ns_utils::print("\n\n");
+	ns_utils::print("\n");
 	ns_control_toolbox::tf sys_default;
 	sys_default.print();
 
 	// Inverse
+	ns_utils::print("Inverse of the TF");
 	sys.inv();
 	sys.print();
 
@@ -64,13 +65,17 @@ int main()
 	ns_control_toolbox::tf tf_overloaded{{ 2, 0, 4 },
 	                                     { 1, 4, 0 }};
 
-	ns_utils::print("Before vector scalar multiplicaiton");
+	ns_utils::print("Before vector scalar multiplication \n");
 	tf_overloaded.print();
 
 	tf_overloaded.update_num_coef(10.);
 	tf_overloaded.update_den_coef(5.);
 
-	ns_utils::print("After vector scalar multiplicaiton");
+	ns_utils::print("After vector scalar multiplication\n");
+	tf_overloaded.print();
+
+	ns_utils::print("After inverting by swap \n");
+	tf_overloaded.inv();
 	tf_overloaded.print();
 
 
