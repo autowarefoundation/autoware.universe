@@ -50,7 +50,7 @@ private:
   double forgetting_factor_;
   double valid_min_velocity_;
   double valid_max_steer_;
-  double warn_steer_offset_;
+  double warn_steer_offset_abs_error_;
 
   // Diagnostic Updater
   std::shared_ptr<Updater> updater_ptr_;
