@@ -39,8 +39,6 @@ void ns_control_toolbox::permute(Eigen::MatrixXd& P)
 void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 {
 
-	ns_utils::print("in balance eigen \n");
-
 	// get the size of the matrix.
 	auto const& nx = A.rows();
 	bool converged{ false };

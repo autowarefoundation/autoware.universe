@@ -178,12 +178,16 @@ namespace ns_utils
 	template<template<typename, typename> class ContainerType, typename ValueType, typename AllocType>
 	void constexpr print_container(const ContainerType<ValueType, AllocType>& c)
 	{
-		std::cout << "\n";
-		for (const auto& v: c)
+		std::cout << "\n [";
+
+
+		for (auto it = c.cbegin(); it != c.cend() - 1; ++it)
 		{
-			std::cout << std::setprecision(4) << v << "\t";
+			std::cout << std::setprecision(4) << *it << ", ";
 		}
-		std::cout << "\n\n";
+
+		auto it = c.end() - 1;
+		std::cout << *it << "]\n\n";
 	}
 
 	// Type definition.
@@ -365,6 +369,20 @@ namespace ns_utils
 		}
 
 		return a;
+	}
+
+
+	// Comparing data types.
+	template<class T>
+	typename std::enable_if<std::is_integral<T>::value, bool>::type isEqual(T a, T b)
+	{
+		return a == b;
+	}
+
+	template<class T>
+	typename std::enable_if<std::is_floating_point<T>::value, bool>::type isEqual(T a, T b)
+	{
+		return abs(a - b) < std::numeric_limits<T>::epsilon();
 	}
 
 }  // namespace ns_utils
