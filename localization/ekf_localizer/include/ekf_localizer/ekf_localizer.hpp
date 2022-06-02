@@ -41,6 +41,21 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <deque>
+
+
+struct PoseInfo{
+    geometry_msgs::msg::PoseStamped::SharedPtr pose;
+    std::array<double, 36ul> covariance;
+    int counter;
+};
+
+struct TwistInfo{
+    geometry_msgs::msg::TwistStamped::SharedPtr twist;
+    std::array<double, 36ul> covariance;
+    int counter;
+};
+
 
 class EKFLocalizer : public rclcpp::Node
 {
@@ -138,15 +153,20 @@ private:
   };
 
   /* for model prediction */
-  geometry_msgs::msg::TwistStamped::SharedPtr
-    current_twist_ptr_;                                          //!< @brief current measured twist
-  geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured pose
+  // geometry_msgs::msg::TwistStamped::SharedPtr
+  //   current_twist_ptr_;                                          //!< @brief current measured twist
+  std::deque<TwistInfo> current_twist_info_deque_;  //!< @brief current measured pose
+  // geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured pose
+  std::deque<PoseInfo> current_pose_info_deque_;  //!< @brief current measured pose
   geometry_msgs::msg::PoseStamped current_ekf_pose_;             //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
     current_ekf_pose_no_yawbias_;  //!< @brief current estimated pose w/o yaw bias
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
+
+  int pose_smoothing_steps_;
+  int twist_smoothing_steps_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -192,13 +212,17 @@ private:
    * @brief compute EKF update with pose measurement
    * @param pose measurement value
    */
-  void measurementUpdatePose(const geometry_msgs::msg::PoseStamped & pose);
+  void measurementUpdatePose(
+    const geometry_msgs::msg::PoseStamped & pose,
+    std::array<double, 36ul> current_pose_covariance);
 
   /**
    * @brief compute EKF update with pose measurement
    * @param twist measurement value
    */
-  void measurementUpdateTwist(const geometry_msgs::msg::TwistStamped & twist);
+  void measurementUpdateTwist(
+    const geometry_msgs::msg::TwistStamped & twist,
+    std::array<double, 36ul> current_twist_covariance);
 
   /**
    * @brief check whether a measurement value falls within the mahalanobis distance threshold
