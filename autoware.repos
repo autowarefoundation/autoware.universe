@@ -32,10 +32,6 @@ repositories:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
     version: main
-  autoware/calibration_tools:
-    type: git
-    url: git@github.com:tier4/calibration_tools.git
-    version: eb57bd404255c9554c0746a8a694a671ff3272c3
   # description
   description/sensor/sensor_component_description:
     type: git
@@ -133,7 +129,3 @@ repositories:
     type: git
     url: https://github.com/tier4/spinnaker.git
     version: 4c74d319ef9186a4fb643dbd82e1b5f7918e75ea
-  vendor/image_pipeline:
-    type: git
-    url: https://github.com/tier4/image_pipeline.git
-    version: 47964112293eb19f9f57254b2e6b68706954cc63
