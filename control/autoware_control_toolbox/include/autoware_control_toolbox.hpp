@@ -35,6 +35,30 @@
 #include "utils_act/state_space.hpp"
 #include "utils_act/act_signal_builder.hpp"
 
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type = 1>
+std::vector<T> operator*(std::vector<T> const& vec, T const& a)
+{
+	std::vector<T> temp{ vec };
+
+	for (auto& x: temp)
+	{
+		x = x * a;
+	}
+
+	return temp;
+}
+
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type = 1>
+std::vector<T>& operator*=(std::vector<T>& vec, T const& a)
+{
+	for (auto& x: vec)
+	{
+		x = x * a;
+	}
+
+	return vec;
+}
+
 namespace ns_control_toolbox
 {
 

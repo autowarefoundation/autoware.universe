@@ -72,16 +72,17 @@ int main()
 	int  y1(1);
 	auto anw1 = ns_utils::isEqual(x1, y1);
 
-	ns_control_toolbox::std_vector_overloaded<double> ov1{ 1, 2, 4 };
+	std::vector<double> ov1{ 1, 2, 4 };
 
 	//
-	auto ov2 = ov1 * 6;
+	double aa  = 8;
+	auto   ov2 = ov1 * 7.0;
 
 
 	ns_utils::print_container(std::vector<double>(ov1));
 	ns_utils::print_container(std::vector<double>(ov2));
 
-	ov2 *= 7;
+	ov2 *= 7.0;
 	ns_utils::print_container(std::vector<double>(ov2));
 
 

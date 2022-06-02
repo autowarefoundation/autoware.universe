@@ -18,6 +18,7 @@
 #define AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
 
 #include "visibility_control.hpp"
+#include <utility>
 #include <vector>
 #include "act_utils.hpp"
 #include "act_utils_eigen.hpp"
@@ -27,45 +28,49 @@
 namespace ns_control_toolbox
 {
 
-	template<typename T, class E>
-	class vector_scalar_mult
-	{
+	// template<typename T, class E>
+	// class vector_scalar_mult
+	// {
+	//
+	// public:
+	//
+	// 	friend E operator*(E const& vec, T const& a)
+	// 	{
+	// 		E temp{ vec };
+	//
+	// 		for (auto& x: temp)
+	// 		{
+	// 			x = x * a;
+	// 		}
+	//
+	// 		return temp;
+	// 	}
+	//
+	// 	friend E& operator*=(E& vec, T const& a)
+	// 	{
+	// 		for (auto& x: vec)
+	// 		{
+	// 			x = x * a;
+	// 		}
+	//
+	// 		return vec;
+	// 	}
+	// };
 
-	public:
-
-		friend E operator*(E const& vec, T const& a)
-		{
-			E temp{ vec };
-
-			for (auto& x: temp)
-			{
-				x = x * a;
-			}
-
-			return temp;
-		}
-
-		friend E& operator*=(E& vec, T const& a)
-		{
-			for (auto& x: vec)
-			{
-				x = x * a;
-			}
-
-			return vec;
-		}
-	};
 
 
-	template<typename T>
-	class std_vector_overloaded : public std::vector<T>, vector_scalar_mult<T, std_vector_overloaded<T>>
-	{
-		using std::vector<T>::vector;
-	};
+
+	// template<typename T>
+	// class std_vector_overloaded : public std::vector<T>, vector_scalar_mult<T, std_vector_overloaded<T>>
+	// {
+	// 	using std::vector<T>::vector;
+	// };
+
+
+
 
 
 	// Multiplication Operator.
-
 	template<typename T>
 	struct TF_multiplication
 	{
@@ -131,7 +136,7 @@ namespace ns_control_toolbox
 
 		// Constructor from non-empty numerator and denominator std::vectors.
 		tf(std::vector<double> num, std::vector<double> den)
-				: num_{ num }, den_{ den }
+				: num_{ std::move(num) }, den_{ std::move(den) }
 		{
 
 			ns_utils::stripVectorZerosFromLeft(num_); // remove zeros from the left.
