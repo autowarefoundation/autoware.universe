@@ -79,6 +79,46 @@ namespace ns_control_toolbox
 
 		[[nodiscard]] ss_system get_ssABCD_discrete() const;
 
+		[[nodiscard]] Eigen::MatrixXd Ad() const
+		{
+			return Ad_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd Bd() const
+		{
+			return Bd_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd Cd() const
+		{
+			return Cd_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd Dd() const
+		{
+			return Dd_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd A() const
+		{
+			return A_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd B() const
+		{
+			return B_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd C() const
+		{
+			return C_;
+		}
+
+		[[nodiscard]] Eigen::MatrixXd D() const
+		{
+			return D_;
+		}
+
 
 	private:
 
