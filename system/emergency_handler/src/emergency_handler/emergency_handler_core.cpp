@@ -18,6 +18,9 @@
 #include <string>
 #include <utility>
 
+namespace emergency_handler
+{
+
 EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 {
   // Parameter
@@ -31,40 +34,34 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   using std::placeholders::_1;
 
   // Subscriber
-  sub_hazard_status_stamped_ =
-    create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
-      "~/input/hazard_status", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
-  sub_prev_control_command_ =
-    create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-      "~/input/prev_control_command", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
+  sub_hazard_status_stamped_ = create_subscription<HazardStatusStamped>(
+    "~/input/hazard_status", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
+  sub_prev_control_command_ = create_subscription<AckermannControlCommand>(
+    "~/input/prev_control_command", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
   // subscribe control mode
-  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+  sub_control_mode_ = create_subscription<ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
 
   // Heartbeat
-  heartbeat_hazard_status_ = std::make_shared<
-    HeaderlessHeartbeatChecker<autoware_auto_system_msgs::msg::HazardStatusStamped>>(
+  heartbeat_hazard_status_ = std::make_shared<HeaderlessHeartbeatChecker<HazardStatusStamped>>(
     *this, "~/input/hazard_status", param_.timeout_hazard_status);
 
   // Publisher
-  pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-    "~/output/control_command", rclcpp::QoS{1});
-  pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
-    "~/output/hazard", rclcpp::QoS{1});
-  pub_gear_cmd_ =
-    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
-  pub_emergency_state_ = create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
-    "~/output/emergency_state", rclcpp::QoS{1});
+  pub_control_command_ =
+    create_publisher<AckermannControlCommand>("~/output/control_command", rclcpp::QoS{1});
+  pub_hazard_cmd_ = create_publisher<HazardLightsCommand>("~/output/hazard", rclcpp::QoS{1});
+  pub_gear_cmd_ = create_publisher<GearCommand>("~/output/gear", rclcpp::QoS{1});
+  pub_emergency_state_ =
+    create_publisher<EmergencyState>("~/output/emergency_state", rclcpp::QoS{1});
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
-  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-  prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
-    new autoware_auto_control_msgs::msg::AckermannControlCommand);
+  control_mode_ = std::make_shared<const ControlModeReport>();
+  prev_control_command_ = AckermannControlCommand::ConstSharedPtr(new AckermannControlCommand);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -72,19 +69,16 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     this, get_clock(), update_period_ns, std::bind(&EmergencyHandler::onTimer, this));
 }
 
-void EmergencyHandler::onHazardStatusStamped(
-  const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
+void EmergencyHandler::onHazardStatusStamped(const HazardStatusStamped::ConstSharedPtr msg)
 {
   hazard_status_stamped_ = msg;
 }
 
-void EmergencyHandler::onPrevControlCommand(
-  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
+void EmergencyHandler::onPrevControlCommand(const AckermannControlCommand::ConstSharedPtr msg)
 {
-  auto control_command = new autoware_auto_control_msgs::msg::AckermannControlCommand(*msg);
+  auto control_command = new AckermannControlCommand(*msg);
   control_command->stamp = msg->stamp;
-  prev_control_command_ =
-    autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(control_command);
+  prev_control_command_ = AckermannControlCommand::ConstSharedPtr(control_command);
 }
 
 void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
@@ -92,15 +86,13 @@ void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr 
   odom_ = msg;
 }
 
-void EmergencyHandler::onControlMode(
-  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
+void EmergencyHandler::onControlMode(const ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
 }
 
-autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
+HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
 {
-  using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
   // Check emergency
@@ -122,14 +114,12 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
 
 void EmergencyHandler::publishControlCommands()
 {
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
-
   // Create timestamp
   const auto stamp = this->now();
 
   // Publish ControlCommand
   {
-    autoware_auto_control_msgs::msg::AckermannControlCommand msg;
+    AckermannControlCommand msg;
     msg = selectAlternativeControlCommand();
     msg.stamp = stamp;
     msg.lateral.stamp = stamp;
@@ -150,7 +140,7 @@ void EmergencyHandler::publishControlCommands()
 
   // Publish Emergency State
   {
-    autoware_auto_system_msgs::msg::EmergencyState emergency_state;
+    EmergencyState emergency_state;
     emergency_state.stamp = stamp;
     emergency_state.state = emergency_state_;
     pub_emergency_state_->publish(emergency_state);
@@ -178,7 +168,7 @@ void EmergencyHandler::onTimer()
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "heartbeat_hazard_status is timeout");
-    emergency_state_ = autoware_auto_system_msgs::msg::EmergencyState::MRM_OPERATING;
+    emergency_state_ = EmergencyState::MRM_OPERATING;
     publishControlCommands();
     return;
   }
@@ -192,8 +182,6 @@ void EmergencyHandler::onTimer()
 
 void EmergencyHandler::transitionTo(const int new_state)
 {
-  using autoware_auto_system_msgs::msg::EmergencyState;
-
   const auto state2string = [](const int state) {
     if (state == EmergencyState::NORMAL) {
       return "NORMAL";
@@ -224,9 +212,6 @@ void EmergencyHandler::transitionTo(const int new_state)
 
 void EmergencyHandler::updateEmergencyState()
 {
-  using autoware_auto_system_msgs::msg::EmergencyState;
-  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
-
   // Check emergency
   const bool is_emergency = isEmergency(hazard_status_stamped_->status);
 
@@ -283,8 +268,7 @@ void EmergencyHandler::updateEmergencyState()
   }
 }
 
-bool EmergencyHandler::isEmergency(
-  const autoware_auto_system_msgs::msg::HazardStatus & hazard_status)
+bool EmergencyHandler::isEmergency(const HazardStatus & hazard_status)
 {
   return hazard_status.emergency || hazard_status.emergency_holding;
 }
@@ -299,14 +283,13 @@ bool EmergencyHandler::isStopped()
   return false;
 }
 
-autoware_auto_control_msgs::msg::AckermannControlCommand
-EmergencyHandler::selectAlternativeControlCommand()
+AckermannControlCommand EmergencyHandler::selectAlternativeControlCommand()
 {
   // TODO(jilaada): Add safe_stop planner
 
   // Emergency Stop
   {
-    autoware_auto_control_msgs::msg::AckermannControlCommand emergency_stop_cmd;
+    AckermannControlCommand emergency_stop_cmd;
     emergency_stop_cmd.lateral = prev_control_command_->lateral;
     emergency_stop_cmd.longitudinal.speed = 0.0;
     emergency_stop_cmd.longitudinal.acceleration = -2.5;
@@ -314,3 +297,5 @@ EmergencyHandler::selectAlternativeControlCommand()
     return emergency_stop_cmd;
   }
 }
+
+}  // namespace emergency_handler

@@ -35,6 +35,17 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+namespace emergency_handler
+{
+
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_system_msgs::msg::EmergencyState;
+using autoware_auto_system_msgs::msg::HazardStatus;
+using autoware_auto_system_msgs::msg::HazardStatusStamped;
+using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+using autoware_auto_vehicle_msgs::msg::GearCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+
 struct HazardLampPolicy
 {
   bool emergency;
@@ -57,39 +68,29 @@ public:
 
 private:
   // Subscribers
-  rclcpp::Subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>::SharedPtr
-    sub_hazard_status_stamped_;
-  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
-    sub_prev_control_command_;
+  rclcpp::Subscription<HazardStatusStamped>::SharedPtr sub_hazard_status_stamped_;
+  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_prev_control_command_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
-    sub_control_mode_;
+  rclcpp::Subscription<ControlModeReport>::SharedPtr sub_control_mode_;
 
-  autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
-  autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr prev_control_command_;
+  HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
+  AckermannControlCommand::ConstSharedPtr prev_control_command_;
   nav_msgs::msg::Odometry::ConstSharedPtr odom_;
-  autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
+  ControlModeReport::ConstSharedPtr control_mode_;
 
-  void onHazardStatusStamped(
-    const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg);
-  void onPrevControlCommand(
-    const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
+  void onHazardStatusStamped(const HazardStatusStamped::ConstSharedPtr msg);
+  void onPrevControlCommand(const AckermannControlCommand::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
-  void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
+  void onControlMode(const ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
-    pub_control_command_;
+  rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_command_;
+  rclcpp::Publisher<HazardLightsCommand>::SharedPtr pub_hazard_cmd_;
+  rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
+  rclcpp::Publisher<EmergencyState>::SharedPtr pub_emergency_state_;
 
-  // rclcpp::Publisher<tier4_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
-  // rclcpp::Publisher<tier4_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
-    pub_hazard_cmd_;
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
-  rclcpp::Publisher<autoware_auto_system_msgs::msg::EmergencyState>::SharedPtr pub_emergency_state_;
-
-  autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
-  autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
+  HazardLightsCommand createHazardCmdMsg();
+  GearCommand createGearCmdMsg();
   void publishControlCommands();
 
   // Timer
@@ -102,19 +103,19 @@ private:
   void onTimer();
 
   // Heartbeat
-  std::shared_ptr<HeaderlessHeartbeatChecker<autoware_auto_system_msgs::msg::HazardStatusStamped>>
-    heartbeat_hazard_status_;
+  std::shared_ptr<HeaderlessHeartbeatChecker<HazardStatusStamped>> heartbeat_hazard_status_;
 
   // Algorithm
-  autoware_auto_system_msgs::msg::EmergencyState::_state_type emergency_state_{
-    autoware_auto_system_msgs::msg::EmergencyState::NORMAL};
+  EmergencyState::_state_type emergency_state_{EmergencyState::NORMAL};
   rclcpp::Time takeover_requested_time_;
 
   void transitionTo(const int new_state);
   void updateEmergencyState();
   bool isStopped();
-  bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
-  autoware_auto_control_msgs::msg::AckermannControlCommand selectAlternativeControlCommand();
+  bool isEmergency(const HazardStatus & hazard_status);
+  AckermannControlCommand selectAlternativeControlCommand();
 };
+
+}  // namespace emergency_handler
 
 #endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_

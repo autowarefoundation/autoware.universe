@@ -21,7 +21,7 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<EmergencyHandler>();
+  auto node = std::make_shared<emergency_handler::EmergencyHandler>();
   rclcpp::spin(node);
   rclcpp::shutdown();
 
