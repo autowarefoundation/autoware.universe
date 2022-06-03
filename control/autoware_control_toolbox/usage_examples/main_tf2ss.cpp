@@ -42,7 +42,7 @@ int main()
 
 	// DISCRETIZATION : Note sstf2 automatically discretisize
 	double Ts{ 0.1 };
-	sys_ss2.discretisize(Ts);
+	// sys_ss2.discretisize(Ts);
 	sys_ss2.print_discrete_system();
 
 	// Test defaulted.

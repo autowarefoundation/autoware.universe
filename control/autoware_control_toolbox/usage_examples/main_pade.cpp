@@ -11,7 +11,7 @@
 int main()
 {
 
-	double Td    = 0.1; // time delay in seconds.
+	double Td = 0.1; // time delay in seconds.
 	size_t order = 3; // order of the Pade approximation.
 
 	auto tf_delay = ns_control_toolbox::pade(Td, order);
@@ -30,6 +30,19 @@ int main()
 	Ts = 0.15;
 	auto sys_ss2 = ns_control_toolbox::tf2ss(tf_delay, Ts);
 	sys_ss2.print_discrete_system();
+
+
+	// Edge case, when the delay = 0.
+	Td = 0.0; // time delay in seconds.
+	order = 3; // order of the Pade approximation.
+
+	tf_delay = ns_control_toolbox::pade(Td, order);
+	tf_delay.print();
+
+	ss_sys = ns_control_toolbox::tf2ss(tf_delay);
+	ss_sys.print();
+
+	int a = 1;
 
 	// Test balance.
 //	auto const nx = sys_ss2.A_.rows();

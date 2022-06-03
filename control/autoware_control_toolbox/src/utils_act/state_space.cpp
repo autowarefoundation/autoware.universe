@@ -58,6 +58,7 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const dou
 	auto num = sys_tf.num();
 	auto den = sys_tf.den();
 
+
 	// Check the leading zeros to determine the order of the system, and strip the leading zeros.
 	ns_utils::stripVectorZerosFromLeft(num);
 	ns_utils::stripVectorZerosFromLeft(den);
@@ -66,6 +67,11 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const dou
 	if (den.size() < num.size())
 	{
 		throw std::invalid_argument("This system is not a proper system.");
+	}
+
+	if (den.size() == 1 && num.size() == 1)
+	{
+		throw std::invalid_argument("System is a static gain not a dynamic system");
 	}
 
 	// Compute the system matrices.
@@ -90,6 +96,11 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 	if (den.size() < num.size())
 	{
 		throw std::invalid_argument("This system is not a proper system.");
+	}
+
+	if (den.size() == 1 && num.size() == 1)
+	{
+		throw std::invalid_argument("System is a static gain not a dynamic system");
 	}
 
 	// Compute the system matrices.
