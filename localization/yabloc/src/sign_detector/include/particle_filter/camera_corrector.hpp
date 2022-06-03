@@ -24,7 +24,8 @@ public:
   CameraParticleCorrector()
   : AbstCorrector("camera_particle_corrector"),
     image_size_(declare_parameter<int>("image_size", 800)),
-    max_range_(declare_parameter<float>("max_range", 20.f))
+    max_range_(declare_parameter<float>("max_range", 20.f)),
+    gamma_(declare_parameter<float>("gamma", 3.0f))
   {
     using std::placeholders::_1;
 
@@ -35,6 +36,8 @@ public:
     ll2_sub_ = create_subscription<CloudWithPose>("/ll2_cloud", 10, ll2_callback);
 
     image_pub_ = create_publisher<Image>("/match_image", 10);
+
+    gamma_converter.reset(gamma_);
   }
 
 private:
@@ -42,6 +45,9 @@ private:
   void ll2Callback(const CloudWithPose & msg);
   cv::Mat buildLl2Image(const LineSegment & cloud);
   cv::Point2f toCvPoint(const Eigen::Vector3f & p);
+
+  float computeScore(const LineSegment & ls_cloud, cv::Mat & ll2_image);
+  LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr lsd_sub_;
   rclcpp::Subscription<CloudWithPose>::SharedPtr ll2_sub_;
@@ -52,5 +58,6 @@ private:
   GammaConverter gamma_converter{4.0f};
   const int image_size_;
   const float max_range_;
+  const float gamma_;
 };
 }  // namespace particle_filter

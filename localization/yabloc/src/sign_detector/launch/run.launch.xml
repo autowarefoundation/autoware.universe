@@ -63,7 +63,7 @@
         <param name="line_thick" value="2"/>
     </node>
 
-    <node name="lsd" pkg="sign_detector" exec="lsd_node" output="screen" args="--ros-args --log-level info">
+    <node name="lsd" pkg="sign_detector" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="max_range" value="$(var max_range)"/>
         <param name="image_size" value="$(var image_size)"/>

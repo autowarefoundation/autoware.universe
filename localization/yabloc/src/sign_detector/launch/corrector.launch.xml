@@ -7,9 +7,12 @@
     <arg name="max_range" default="40"/>
 
     <!-- ========================================= -->
-    <node name="camera_corrector" pkg="sign_detector" exec="camera_corrector_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="camera_corrector" pkg="sign_detector" exec="camera_corrector_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="$(var image_size)"/>
         <param name="max_range" value="$(var max_range)"/>
+        <param name="gamma" value="3.0"/>
+
+        <remap from="/weighted_particles" to="/test/weighted_particles"/>
     </node>
 </launch>

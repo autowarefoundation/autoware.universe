@@ -74,4 +74,13 @@ void publishImage(
   publisher.publish(*raw_image.toImageMsg());
 }
 
+Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
+{
+  const auto pos = pose.position;
+  const auto ori = pose.orientation;
+  Eigen::Translation3f t(pos.x, pos.y, pos.z);
+  Eigen::Quaternionf q(ori.w, ori.x, ori.y, ori.z);
+  return t * q;
+}
+
 }  // namespace util

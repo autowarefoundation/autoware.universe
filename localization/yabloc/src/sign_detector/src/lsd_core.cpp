@@ -133,8 +133,6 @@ void LineSegmentDetector::projectEdgeOnPlane(
     }
   }
 
-  std::cout << "# of ls: " << edges.size() << std::endl;
-
   // Draw projected edge image
   cv::Mat mask_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
   std::vector<std::vector<cv::Point2i>> projected_hull(1);
@@ -176,9 +174,9 @@ void LineSegmentDetector::projectEdgeOnPlane(
     auto & pn = edges.at(i);
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
-    cv::Scalar color = cv::Scalar(255, 0, 0);
+    cv::Scalar color = cv::Scalar(255, 255, 255);
     if (pixel_values.count(i + 1) != 0) {
-      color = cv::Scalar(0, 0, 255);
+      color = cv::Scalar(100, 100, 255);
       reliable_edges.push_back(pn);
     }
     cv::line(reliable_line_image, p1, p2, color, 2, cv::LineTypes::LINE_8);

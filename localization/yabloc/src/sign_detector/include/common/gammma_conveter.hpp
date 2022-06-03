@@ -6,7 +6,9 @@ namespace particle_filter
 class GammaConverter
 {
 public:
-  GammaConverter(float gamma)
+  GammaConverter(float gamma = 1.0f) { reset(gamma); }
+
+  void reset(float gamma)
   {
     lut_ = cv::Mat(1, 256, CV_8UC1);
     for (int i = 0; i < 256; i++) {
