@@ -32,6 +32,9 @@
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
+#include <tier4_external_api_msgs/srv/set_emergency.hpp>
+#include "tier4_external_api_msgs/msg/response_status.hpp"
+
 
 #include <memory>
 
@@ -45,6 +48,7 @@ using tier4_control_msgs::msg::GateMode;
 using EngageSrv = tier4_external_api_msgs::srv::Engage;
 using autoware_auto_vehicle_msgs::msg::Engage;
 using autoware_auto_vehicle_msgs::msg::GearReport;
+using tier4_external_api_msgs::srv::SetEmergency;
 
 class ManualController : public rviz_common::Panel
 {
@@ -59,6 +63,7 @@ public Q_SLOTS:
   void onClickEnableButton();
   void onManualSteering();
   void update();
+  void onClickEmergencyButton();
 
 protected:
   // Timer
@@ -78,6 +83,7 @@ protected:
   rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
   rclcpp::Client<EngageSrv>::SharedPtr client_engage_;
   rclcpp::Subscription<GearReport>::SharedPtr sub_gear_;
+  rclcpp::Client<SetEmergency>::SharedPtr client_emergency_stop_;
 
   double cruise_velocity_{0.0};
   double steering_angle_{0.0};
@@ -94,6 +100,7 @@ protected:
   QSpinBox * cruise_velocity_input_;
   QDial * steering_slider_ptr_;
   QLabel * steering_angle_ptr_;
+  QPushButton * emergency_button_ptr_;
 
   bool current_engage_;
 };
