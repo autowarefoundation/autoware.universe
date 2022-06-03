@@ -79,45 +79,48 @@ namespace ns_control_toolbox
 
 		[[nodiscard]] ss_system get_ssABCD_discrete() const;
 
-		[[nodiscard]] Eigen::MatrixXd Ad() const
+		[[nodiscard]] Eigen::MatrixXd const& Ad() const
 		{
 			return Ad_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd Bd() const
+		[[nodiscard]] Eigen::MatrixXd const& Bd() const
 		{
 			return Bd_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd Cd() const
+		[[nodiscard]] Eigen::MatrixXd const& Cd() const
 		{
 			return Cd_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd Dd() const
+		[[nodiscard]] Eigen::MatrixXd const& Dd() const
 		{
 			return Dd_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd A() const
+		[[nodiscard]] Eigen::MatrixXd const& A() const
 		{
 			return A_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd B() const
+		[[nodiscard]] Eigen::MatrixXd const& B() const
 		{
 			return B_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd C() const
+		[[nodiscard]] Eigen::MatrixXd const& C() const
 		{
 			return C_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd D() const
+		[[nodiscard]] Eigen::MatrixXd const& D() const
 		{
 			return D_;
 		}
+
+		// Constant reference to discrete matrices.
+
 
 
 	private:

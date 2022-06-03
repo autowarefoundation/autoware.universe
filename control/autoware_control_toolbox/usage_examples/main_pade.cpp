@@ -39,10 +39,12 @@ int main()
 	tf_delay = ns_control_toolbox::pade(Td, order);
 	tf_delay.print();
 
+
+	ns_utils::print("Must throw an error STATIC GAIN .........");
 	ss_sys = ns_control_toolbox::tf2ss(tf_delay);
 	ss_sys.print();
 
-	int a = 1;
+
 
 	// Test balance.
 //	auto const nx = sys_ss2.A_.rows();
