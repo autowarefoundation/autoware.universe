@@ -61,7 +61,7 @@ namespace ns_control_toolbox
 		// Constructors
 		tf2ss();
 
-		explicit tf2ss(tf const& sys_tf, const double& Ts = 0.1);
+		tf2ss(tf const& sys_tf, const double& Ts = 0.1);
 
 		tf2ss(std::vector<double> const& num, std::vector<double> const& den, const double& Ts = 0.1);
 
