@@ -24,12 +24,13 @@ RTCAutoApproverNode::RTCAutoApproverNode(const rclcpp::NodeOptions & node_option
 {
   const std::vector<std::string> module_list =
     declare_parameter("module_list", std::vector<std::string>());
-  const std::vector<std::string> enable_list =
-    declare_parameter("enable_list", std::vector<std::string>());
+  const std::vector<std::string> default_enable_list =
+    declare_parameter("default_enable_list", std::vector<std::string>());
 
   for (const auto & module_name : module_list) {
     const std::string name_space = BEHAVIOR_PLANNING_NAMESPACE + "/" + module_name;
-    const bool enabled = std::count(enable_list.begin(), enable_list.end(), module_name) != 0;
+    const bool enabled =
+      std::count(default_enable_list.begin(), default_enable_list.end(), module_name) != 0;
     approvers_.push_back(std::make_shared<RTCAutoApproverInterface>(this, name_space, enabled));
   }
 }
