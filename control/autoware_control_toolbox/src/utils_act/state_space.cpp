@@ -278,15 +278,35 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 
 }
 
-ns_control_toolbox::ss_system ns_control_toolbox::tf2ss::get_ssABCD_continuous() const
+ns_control_toolbox::ss_system ns_control_toolbox::tf2ss::getSystem_continuous() const
 {
 
 	return ns_control_toolbox::ss_system(A_, B_, C_, D_);
 }
 
-ns_control_toolbox::ss_system ns_control_toolbox::tf2ss::get_ssABCD_discrete() const
+ns_control_toolbox::ss_system ns_control_toolbox::tf2ss::getSystem_discrete() const
 {
 	return ns_control_toolbox::ss_system(Ad_, Bd_, Cd_, Dd_);
+}
+
+void ns_control_toolbox::tf2ss::getABCD_continuous(Eigen::MatrixXd& A, Eigen::MatrixXd& B,
+                                                   Eigen::MatrixXd& C, Eigen::MatrixXd& D) const
+{
+
+	A = A_;
+	B = B_;
+	C = C_;
+	D = D_;
+}
+
+void ns_control_toolbox::tf2ss::getABCD_discrete(Eigen::MatrixXd& Ad, Eigen::MatrixXd& Bd, Eigen::MatrixXd& Cd,
+                                                 Eigen::MatrixXd& Dd) const
+{
+
+	Ad = Ad_;
+	Bd = Bd_;
+	Cd = Cd_;
+	Dd = Dd_;
 }
 
 

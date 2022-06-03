@@ -49,11 +49,11 @@ namespace ns_control_toolbox
 	};
 
 
-/**
- * @brief tf2ss Converts a transfer function representation in to a state-space form.
- * We assume the system is SISO type.
- *
- * */
+	/**
+	 * @brief tf2ss Converts a transfer function representation in to a state-space form.
+	 * We assume the system is SISO type.
+	 *
+	 * */
 
 	struct ACT_PUBLIC tf2ss
 	{
@@ -75,46 +75,56 @@ namespace ns_control_toolbox
 		void print_discrete_system() const;
 
 
-		[[nodiscard]] ss_system get_ssABCD_continuous() const;
+		[[nodiscard]] ss_system getSystem_continuous() const;
 
-		[[nodiscard]] ss_system get_ssABCD_discrete() const;
+		[[nodiscard]] ss_system getSystem_discrete() const;
 
-		[[nodiscard]] Eigen::MatrixXd const& Ad() const
+		void getABCD_continuous(Eigen::MatrixXd& A, Eigen::MatrixXd& B,
+		                        Eigen::MatrixXd& C, Eigen::MatrixXd& D) const;
+
+		void getABCD_discrete(Eigen::MatrixXd& Ad, Eigen::MatrixXd& Bd,
+		                      Eigen::MatrixXd& Cd, Eigen::MatrixXd& Dd) const;
+
+		// Getters for the system matrices.
+		// Discrete time state-space matrices.
+		[[nodiscard]] Eigen::MatrixXd Ad() const
 		{
 			return Ad_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& Bd() const
+		[[nodiscard]] Eigen::MatrixXd Bd() const
 		{
 			return Bd_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& Cd() const
+		[[nodiscard]] Eigen::MatrixXd Cd() const
 		{
 			return Cd_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& Dd() const
+		[[nodiscard]] Eigen::MatrixXd Dd() const
 		{
 			return Dd_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& A() const
+
+		// Continuous time state-space matrices.
+		[[nodiscard]] Eigen::MatrixXd A() const
 		{
 			return A_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& B() const
+		[[nodiscard]] Eigen::MatrixXd B() const
 		{
 			return B_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& C() const
+		[[nodiscard]] Eigen::MatrixXd C() const
 		{
 			return C_;
 		}
 
-		[[nodiscard]] Eigen::MatrixXd const& D() const
+		[[nodiscard]] Eigen::MatrixXd D() const
 		{
 			return D_;
 		}
