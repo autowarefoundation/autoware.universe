@@ -1241,8 +1241,8 @@ void visualization::pushArrowsMarker(
   for (auto i = ls.begin(); i + 1 != ls.end(); i++) {
     const float heading = std::atan2((*(i + 1)).y() - (*i).y(), (*(i + 1)).x() - (*i).x());
 
-    const float sin_offset = lss * 0.5 * std::sin(heading);
-    const float cos_offset = lss * 0.5 * std::cos(heading);
+    const float sin_offset = lss * std::sin(heading);
+    const float cos_offset = lss * std::cos(heading);
 
     geometry_msgs::msg::Point p;
     p.x = (*i).x() + sin_offset;
