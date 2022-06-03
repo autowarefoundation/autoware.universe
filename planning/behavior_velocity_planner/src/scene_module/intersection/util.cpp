@@ -474,9 +474,8 @@ lanelet::ConstLanelet generateOffsetLanelet(const lanelet::ConstLanelet lanelet,
 
   const double offset = margin;
   const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, offset);
-  const auto offset_leftBound = lanelet::utils::getLeftBoundWithOffset(lanelet, offset);
 
-  const auto original_left_bound = offset_leftBound;
+  const auto original_left_bound = lanelet.leftBound();
   const auto original_right_bound = offset_rightBound;
 
   for (const auto & pt : original_left_bound) {
