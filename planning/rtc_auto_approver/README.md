@@ -10,15 +10,16 @@ RTC Auto Approver is a node to approve request to cooperate from behavior planni
 
 start
 :Receive RTC status;
-if (Status is safe && Current command is DEACTIVATE?) then (yes)
-  :Send ACTIVATE;
-  end
+if (Auto approver enabled?) then (yes)
+  if (Status is safe && Current command is DEACTIVATE?) then (yes)
+    :Send ACTIVATE;
+    end
+  endif
+  if (Status is unsafe && Current command is ACTIVATE?) then (yes)
+    :Send DEACTIVATE;
+    end
+  endif
 endif
-if (Status is unsafe && Current command is ACTIVATE?) then (yes)
-  :Send DEACTIVATE;
-  end
-endif
-
 end
 
 ```
