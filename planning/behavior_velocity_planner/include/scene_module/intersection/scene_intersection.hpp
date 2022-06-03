@@ -149,7 +149,6 @@ private:
    * actual collision check algorithm inside this function)
    * @param lanelet_map_ptr  lanelet map
    * @param path             ego-car lane
-   * @param detection_areas  collision check is performed for vehicles that exist in this area
    * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet
    * ids
    * @param objects_ptr      target objects
@@ -159,7 +158,6 @@ private:
   bool checkCollision(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
     const std::vector<int> & detection_area_lanelet_ids,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx);
