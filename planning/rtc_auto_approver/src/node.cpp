@@ -14,26 +14,23 @@
 
 #include "rtc_auto_approver/node.hpp"
 
+#include <unordered_map>
+
 namespace rtc_auto_approver
 {
 
 RTCAutoApproverNode::RTCAutoApproverNode(const rclcpp::NodeOptions & node_options)
 : Node("rtc_auto_approver_node", node_options)
 {
-  for (const auto & module_name : behavior_velocity_planner_modules_) {
-    const std::string name_space =
-      BEHAVIOR_PLANNING_NAMESPACE + BEHAVIOR_VELOCITY_PLANNER_NAMESPACE + "/" + module_name;
-    const bool default_value = declare_parameter(module_name, true);
-    approvers_.push_back(
-      std::make_shared<RTCAutoApproverInterface>(this, name_space, default_value));
-  }
+  const std::vector<std::string> module_list =
+    declare_parameter("module_list", std::vector<std::string>());
+  const std::vector<std::string> enable_list =
+    declare_parameter("enable_list", std::vector<std::string>());
 
-  for (const auto & module_name : behavior_path_planner_modules_) {
-    const std::string name_space =
-      BEHAVIOR_PLANNING_NAMESPACE + BEHAVIOR_PATH_PLANNER_NAMESPACE + "/" + module_name;
-    const bool default_value = declare_parameter(module_name, true);
-    approvers_.push_back(
-      std::make_shared<RTCAutoApproverInterface>(this, name_space, default_value));
+  for (const auto & module_name : module_list) {
+    const std::string name_space = BEHAVIOR_PLANNING_NAMESPACE + "/" + module_name;
+    const bool enabled = std::count(enable_list.begin(), enable_list.end(), module_name) != 0;
+    approvers_.push_back(std::make_shared<RTCAutoApproverInterface>(this, name_space, enabled));
   }
 }
 

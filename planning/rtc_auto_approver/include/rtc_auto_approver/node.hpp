@@ -34,16 +34,6 @@ private:
 
   std::string BEHAVIOR_PLANNING_NAMESPACE =
     "/planning/scenario_planning/lane_driving/behavior_planning";
-  std::string BEHAVIOR_VELOCITY_PLANNER_NAMESPACE = "/behavior_velocity_planner";
-  std::string BEHAVIOR_PATH_PLANNER_NAMESPACE = "/behavior_path_planner";
-
-  std::vector<std::string> behavior_velocity_planner_modules_ = {
-    "blind_spot",   "crosswalk",        "detection_area",
-    "intersection", "no_stopping_area", "traffic_light"};
-
-  std::vector<std::string> behavior_path_planner_modules_ = {
-    "lane_change_left", "lane_change_right", "avoidance_left",
-    "avoidance_right",  "pull_over",         "pull_out"};
 };
 
 }  // namespace rtc_auto_approver
