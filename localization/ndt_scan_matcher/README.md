@@ -75,21 +75,38 @@ $$
 \begin{align}
     \min_{\mathbf{R},\mathbf{t}}
     \mathrm{NDT}(\mathbf{R},\mathbf{t})
-    +\mathrm{scale\ factor}\cdot \left\|
+    +\mathrm{scale\ factor}\cdot \left|
+        \mathbf{R}^\top
+        (\mathbf{t_{base}-\mathbf{t}})
+        \cdot
         \begin{pmatrix}
-            1&0&0\\
-            0&1&0\\
-            0&0&0
+            1\\
+            0\\
+            0
         \end{pmatrix}
-        (\mathbf{t}-\mathbf{t_{base}})
-        \right\|_{2}^2
+        \right|^2
 \end{align}
 $$
 
 , where t_base is base position measured by GNSS or other means.
 NDT(R,t) stands for the pure NDT cost function.
-The regularization term shifts the optimal solution to the base position.
-Only **X and Y** -axis are taken into account, but Z-axis and orientation are not,
+The regularization term shifts the optimal solution to the base position in the longitudinal direction of the vehicle.
+Only errors along the **longitudinal direction** with respect to the base position are considered; errors along Z-axis and lateral-axis error are not considered.
+
+Although the regularization term has rotation as a parameter, the gradient and hessian associated with it is not computed to stabilize the optimization.
+Specifically, the gradients are computed as follows.
+
+$$
+\begin{align}
+    &g_x=\nabla_x \mathrm{NDT}(\mathbf{R},\mathbf{t}) + 2 \mathrm{scale\ factor} \cos\theta_z\cdot e_{\mathrm{longitudinal}}
+    \\
+    &g_y=\nabla_y \mathrm{NDT}(\mathbf{R},\mathbf{t}) + 2 \mathrm{scale\ factor} \sin\theta_z\cdot e_{\mathrm{longitudinal}}
+    \\
+    &g_z=\nabla_z \mathrm{NDT}(\mathbf{R},\mathbf{t})
+    \\
+    &g_\mathbf{R}=\nabla_\mathbf{R} \mathrm{NDT}(\mathbf{R},\mathbf{t})
+\end{align}
+$$
 
 Regularization is disabled by default.
 If you wish to use it, please edit the following parameters to enable it.
@@ -108,7 +125,7 @@ By remapping the base position topic to something other than GNSS, as described 
 #### Using other base position
 
 Other than GNSS, you can give other global position topics obtained from magnetic markers, visual markers or etc. if they are available in your environment.
-(Currently Autoware does not provide a node that gives such location.)
+(Currently Autoware does not provide a node that gives such pose.)
 To use your topic for regularization, you need to remap the `input_regularization_pose_topic` with your topic in `ndt_scan_matcher.launch.xml`.
 By default, it is remapped with `/sensing/gnss/pose_with_covariance`.
 
@@ -119,7 +136,7 @@ topics that are published at a low frequency relative to the driving speed canno
 Inappropriate linear interpolation may result in bad optimization results.
 
 When using GNSS for base location, the regularization can have negative effects in tunnels, indoors, and near skyscrapers.
-This is becase if the base position is far off from the true value, NDT scan matching may converge to inappropriate optimal position.
+This is because if the base position is far off from the true value, NDT scan matching may converge to inappropriate optimal position.
 
 ### Parameters
 
