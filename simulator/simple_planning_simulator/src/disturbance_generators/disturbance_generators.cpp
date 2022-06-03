@@ -135,9 +135,12 @@ void DelayModelSISO::updateModel(const double &newTd)
 double DelayModelSISO::getNextState(const double &u)
 {
 	// Discrete state-space update equations.
-    x0_.noalias() =ss_.Ad_ * x0_ + ss_.Bd_ * u;
+	// Comput output y
+	auto &&u_delayed = (ss_.Cd() * x0_ + ss_.Dd() * u)(0);
 
-    auto &&u_delayed = (ss_.Cd_ * x0_ + ss_.Dd_ * u)(0);
+	// Update the internal state
+    x0_.noalias() =ss_.Ad() * x0_ + ss_.Bd() * u;
+
 
     return u_delayed;
 }
