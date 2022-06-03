@@ -40,13 +40,14 @@ int main()
 
 	// Transfer function multiplication.
 	ns_control_toolbox::tf tf1{{ 5 },
-	                           { 1, 3 }};
+	                           { 1, 0 }, 2., 7. };
 
 	ns_control_toolbox::tf tf2{{ 2 },
-	                           { 1, 3 }};
+	                           { 1, 1 }, 3., 3. };
 
 	auto tf3 = tf1 * tf2;
 
+	ns_utils::print("TF TF multiplication with num den constants ");
 	tf3.print();
 
 	// Test vector overloading.
