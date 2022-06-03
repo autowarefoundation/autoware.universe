@@ -28,7 +28,7 @@
         <param name="flat_radius" value="5.0" />
     </node>
 
-    <node pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info" output="screen">
+    <node if="false" pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level info" output="screen">
         <remap from="/weighted_particles" to="/test/weighted_particles"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="20.0"/>

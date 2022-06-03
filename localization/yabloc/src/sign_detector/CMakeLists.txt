@@ -77,13 +77,14 @@ endmacro()
 ADD_EXE(TARGET lsd_node             SRC src/lsd_*.cpp             INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
 ADD_EXE(TARGET ll2_to_image_node    SRC src/ll2_to_image_*.cpp    INC                LIB util Geographic )
 ADD_EXE(TARGET fix_to_pose_node     SRC src/fix_to_pose_node.cpp  INC                LIB util Geographic ${PCL_LIBRARIES})
-ADD_EXE(TARGET optflow_node         SRC src/optflow_*.cpp         INC                LIB util)
+# ADD_EXE(TARGET optflow_node         SRC src/optflow_*.cpp         INC                LIB util)
 ADD_EXE(TARGET pose_to_path_node    SRC src/pose_to_path_node.cpp INC                LIB )
 ADD_EXE(TARGET imu_kf_node          SRC src/imu_kf_node.cpp       INC                LIB )
 ADD_EXE(TARGET particle_filter_node SRC src/particle_filter_*.cpp INC                LIB )
-ADD_EXE(TARGET mask_lsd_node SRC src/mask_lsd_*.cpp INC                LIB util)
+# ADD_EXE(TARGET mask_lsd_node SRC src/mask_lsd_*.cpp INC                LIB util)
 ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC                LIB util)
-ADD_EXE(TARGET camera_corrector_node SRC src/camera_corrector_node.cpp INC include                LIB util)
+
+ADD_EXE(TARGET camera_corrector_node SRC src/particle_filter/camera_corrector*.cpp INC include                LIB util)
 
 # ===================================================
 # Python

@@ -1,5 +1,5 @@
+#include "common/util.hpp"
 #include "sign_detector/timer.hpp"
-#include "sign_detector/util.hpp"
 
 #include <opencv4/opencv2/calib3d.hpp>
 #include <opencv4/opencv2/core.hpp>
@@ -73,13 +73,13 @@ private:
     if (!info_.has_value()) return;
     if (undistort_map_x.empty()) makeRemapLUT();
 
-    cv::Mat image = decompress2CvMat(msg);
+    cv::Mat image = util::decompress2CvMat(msg);
     cv::Mat undistorted_image;
     cv::remap(image, undistorted_image, undistort_map_x, undistort_map_y, cv::INTER_LINEAR);
 
     scaled_info_->header = info_->header;
     pub_info_->publish(scaled_info_.value());
-    publishImage(*pub_image_, undistorted_image, msg.header.stamp);
+    util::publishImage(*pub_image_, undistorted_image, msg.header.stamp);
 
     RCLCPP_INFO_STREAM(get_logger(), "decompress: " << timer.microSeconds() / 1000.f << "[ms]");
   }

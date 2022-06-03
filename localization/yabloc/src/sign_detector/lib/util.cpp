@@ -1,4 +1,4 @@
-#include "sign_detector/util.hpp"
+#include "common/util.hpp"
 
 #include <opencv4/opencv2/imgcodecs.hpp>
 
@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+namespace util
+{
 cv_bridge::CvImage decompressImage(const sensor_msgs::msg::CompressedImage & compressed_img)
 {
   cv_bridge::CvImage raw_image;
@@ -71,3 +73,5 @@ void publishImage(
   raw_image.image = image;
   publisher.publish(*raw_image.toImageMsg());
 }
+
+}  // namespace util

@@ -2,12 +2,23 @@
     <!-- ========================================= -->
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
+    <arg name="image_size" default="800"/>
+    <arg name="max_range" default="20.0"/>
+
     <arg name="pf" default="false"/>
 
     <include file="$(find-pkg-share modularized_particle_filter)/launch/run.launch.xml" if="$(var pf)">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
     </include>
+
+    <include file="$(find-pkg-share sign_detector)/launch/corrector.launch.xml" if="$(var pf)">
+        <arg name="use_sim_time" value="$(var use_sim_time)" />
+        <arg name="log_level" value="$(var log_level)"/>
+        <arg name="image_size" value="$(var image_size)" />
+        <arg name="max_range" value="$(var max_range)"/>
+    </include>
+
 
     <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
@@ -47,15 +58,15 @@
         <param name="pose_topic" value="/localization/pose_estimator/pose"/>
         <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="max_range" value="20.0"/>
-        <param name="image_size" value="800"/>
+        <param name="max_range" value="$(var max_range)"/>
+        <param name="image_size" value="$(var image_size)"/>
         <param name="line_thick" value="2"/>
     </node>
 
     <node name="lsd" pkg="sign_detector" exec="lsd_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="max_range" value="20.0"/>
-        <param name="image_size" value="800"/>
+        <param name="max_range" value="$(var max_range)"/>
+        <param name="image_size" value="$(var image_size)"/>
         <param name="line_thick" value="2"/>
         <param name="line_threshold" value="0.01"/>
         <param name="dilate_size" value="1"/>

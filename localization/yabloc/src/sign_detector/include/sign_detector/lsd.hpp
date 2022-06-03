@@ -29,11 +29,10 @@ public:
 
   LineSegmentDetector()
   : Node("line_detector"),
-    info_(std::nullopt),
+    dilate_size_(declare_parameter<int>("dilate_size", 5)),
     line_thick_(declare_parameter<int>("line_thick", 1)),
     image_size_(declare_parameter<int>("image_size", 800)),
     max_range_(declare_parameter<float>("max_range", 20.f)),
-    dilate_size_(declare_parameter<int>("dilate_size", 5)),
     subscribe_compressed_(declare_parameter<bool>("subscribe_compressed", false))
   {
     const rclcpp::QoS qos = rclcpp::QoS(10);
@@ -77,13 +76,13 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd;
-  std::optional<sensor_msgs::msg::CameraInfo> info_;
+  std::optional<sensor_msgs::msg::CameraInfo> info_{std::nullopt};
+  const int dilate_size_;
   const int line_thick_;
   const int image_size_;
   const float max_range_;
   const bool subscribe_compressed_;
   cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> gs;
-  const int dilate_size_;
 
   void directLineSegment(const cv::Mat & image, const cv::Mat & lines) const;
 

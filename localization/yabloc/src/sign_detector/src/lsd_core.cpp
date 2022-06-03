@@ -1,6 +1,6 @@
+#include "common/util.hpp"
 #include "sign_detector/lsd.hpp"
 #include "sign_detector/timer.hpp"
-#include "sign_detector/util.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -10,17 +10,17 @@ cv::Point2i LineSegmentDetector::toCvPoint(const Eigen::Vector3f & v) const
   pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2;
   pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_;
   return pt;
-};
+}
 
 void LineSegmentDetector::compressedImageCallback(const sensor_msgs::msg::CompressedImage & msg)
 {
-  cv::Mat image = decompress2CvMat(msg);
+  cv::Mat image = util::decompress2CvMat(msg);
   execute(image, msg.header.stamp);
 }
 
 void LineSegmentDetector::imageCallback(const sensor_msgs::msg::Image & msg)
 {
-  cv::Mat image = decompress2CvMat(msg);
+  cv::Mat image = util::decompress2CvMat(msg);
   execute(image, msg.header.stamp);
 }
 
@@ -46,7 +46,7 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
       std::vector<cv::Mat>{cv::Mat::zeros(segmented.size(), CV_8UC1), segmented, segmented},
       rgb_segmented);
     cv::addWeighted(gray_image, 0.8, rgb_segmented, 0.5, 1, gray_image);
-    publishImage(*pub_image_lsd_, gray_image, stamp);
+    util::publishImage(*pub_image_lsd_, gray_image, stamp);
   }
   {
     Timer project_timer;
@@ -118,10 +118,10 @@ void LineSegmentDetector::projectEdgeOnPlane(
   pcl::PointCloud<pcl::PointNormal> edges;
   const int N = lines.rows;
   for (int i = 0; i < N; i++) {
-    cv::Mat xyxy = lines.row(i);
+    cv::Mat xy_xy = lines.row(i);
     Eigen::Vector2f xy1, xy2;
-    xy1 << xyxy.at<float>(0), xyxy.at<float>(1);
-    xy2 << xyxy.at<float>(2), xyxy.at<float>(3);
+    xy1 << xy_xy.at<float>(0), xy_xy.at<float>(1);
+    xy2 << xy_xy.at<float>(2), xy_xy.at<float>(3);
 
     auto p1_opt = conv(xy1);
     auto p2_opt = conv(xy2);
@@ -186,7 +186,7 @@ void LineSegmentDetector::projectEdgeOnPlane(
 
   // Publish
   publishCloud(reliable_edges, stamp);
-  publishImage(*pub_image_, reliable_line_image, stamp);
+  util::publishImage(*pub_image_, reliable_line_image, stamp);
 }
 
 void LineSegmentDetector::publishCloud(
