@@ -35,10 +35,10 @@ int main()
 	sys_ss2.print();
 
 	ns_utils::print("SS.A \n");
-	ns_eigen_utils::printEigenMat(sys_ss2.A_);
+	ns_eigen_utils::printEigenMat(sys_ss2.A());
 
 	ns_utils::print("SS.Ad \n");
-	ns_eigen_utils::printEigenMat(sys_ss2.Ad_);
+	ns_eigen_utils::printEigenMat(sys_ss2.Ad());
 
 	// DISCRETIZATION : Note sstf2 automatically discretisize
 	double Ts{ 0.1 };
