@@ -919,7 +919,7 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
     }
     if (viz_centerline && !exists(added, center_ls.id())) {
       visualization::pushLineStringMarker(&center_line_strip, center_ls, c, lss_center);
-      visualization::pushArrowsMarker(&center_arrows, center_ls, c, lss);
+      visualization::pushArrowsMarker(&center_arrows, center_ls, c);
       added.insert(center_ls.id());
     }
   }
@@ -1222,7 +1222,7 @@ void visualization::initArrowsMarker(
 
 void visualization::pushArrowsMarker(
   visualization_msgs::msg::Marker * marker, const lanelet::ConstLineString3d & ls,
-  const std_msgs::msg::ColorRGBA c, const float lss)
+  const std_msgs::msg::ColorRGBA c)
 {
   if (marker == nullptr) {
     RCLCPP_ERROR_STREAM(
@@ -1241,20 +1241,22 @@ void visualization::pushArrowsMarker(
   for (auto i = ls.begin(); i + 1 != ls.end(); i++) {
     const float heading = std::atan2((*(i + 1)).y() - (*i).y(), (*(i + 1)).x() - (*i).x());
 
-    const float sin_offset = lss * std::sin(heading);
-    const float cos_offset = lss * std::cos(heading);
+    const float sin_offset = std::sin(heading);
+    const float cos_offset = std::cos(heading);
+    const double width = 0.3;
+    const double height = 1.0;
 
     geometry_msgs::msg::Point p;
-    p.x = (*i).x() + sin_offset;
-    p.y = (*i).y() - cos_offset;
+    p.x = (*i).x() + sin_offset * width;
+    p.y = (*i).y() - cos_offset * width;
     p.z = (*i).z();
     marker->points.push_back(p);
-    p.x = (*i).x() - sin_offset;
-    p.y = (*i).y() + cos_offset;
+    p.x = (*i).x() - sin_offset * width;
+    p.y = (*i).y() + cos_offset * width;
     p.z = (*i).z();
     marker->points.push_back(p);
-    p.x = (*i).x() + cos_offset;
-    p.y = (*i).y() + sin_offset;
+    p.x = (*i).x() + cos_offset * height;
+    p.y = (*i).y() + sin_offset * height;
     p.z = (*i).z();
     marker->points.push_back(p);
     marker->colors.push_back(c);

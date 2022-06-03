@@ -99,11 +99,10 @@ void initArrowsMarker(
  * @param marker     [output marker message]
  * @param ls         [input linestring]
  * @param c          [color of the marker]
- * @param lss        [thickness of the marker]
  */
 void pushArrowsMarker(
   visualization_msgs::msg::Marker * marker, const lanelet::ConstLineString3d & ls,
-  const std_msgs::msg::ColorRGBA c, const float lss = 0.1);
+  const std_msgs::msg::ColorRGBA c);
 
 /**
  * [initTrafficLightTriangleMarker initializes marker to visualize shape of traffic
