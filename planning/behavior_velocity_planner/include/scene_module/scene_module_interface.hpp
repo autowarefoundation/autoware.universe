@@ -25,9 +25,13 @@
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>

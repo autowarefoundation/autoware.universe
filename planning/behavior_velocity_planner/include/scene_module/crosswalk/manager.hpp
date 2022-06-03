@@ -25,6 +25,8 @@
 
 #include <functional>
 #include <memory>
+#include <set>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
