@@ -81,6 +81,14 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
 
   // initializer
 
+  // QoS setup
+  static constexpr std::size_t queue_size = 1;
+  rclcpp::QoS durable_qos(queue_size);
+
+  // Publisher for checkUpdateSuggest
+  calibration_status_pub_ = create_publisher<tier4_external_api_msgs::msg::CalibrationStatus>(
+    "/accel_brake_map_calibrator/output/calibration_status", durable_qos);
+
   /* Diagnostic Updater */
   updater_ptr_ = std::make_shared<diagnostic_updater::Updater>(this, 1.0 / update_hz_);
   updater_ptr_->setHardwareID("accel_brake_map_calibrator");
@@ -96,6 +104,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     if (
       !accel_map_.readAccelMapFromCSV(csv_path_accel_map) ||
       !new_accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
+      is_default_map_ = false;
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("accel_brake_map_calibrator"),
         "Cannot read accelmap. csv path = " << csv_path_accel_map.c_str() << ". stop calculation.");
@@ -104,6 +113,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     if (
       !brake_map_.readBrakeMapFromCSV(csv_path_brake_map) ||
       !new_brake_map_.readBrakeMapFromCSV(csv_path_brake_map)) {
+      is_default_map_ = false;
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("accel_brake_map_calibrator"),
         "Cannot read brakemap. csv path = " << csv_path_brake_map.c_str() << ". stop calculation.");
@@ -141,10 +151,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   std::copy(accel_map_value_.begin(), accel_map_value_.end(), update_accel_map_value_.begin());
   std::copy(brake_map_value_.begin(), brake_map_value_.end(), update_brake_map_value_.begin());
 
-  // QoS setup
-  static constexpr std::size_t queue_size = 1;
-  rclcpp::QoS durable_qos(queue_size);
-
   // publisher
   update_suggest_pub_ =
     create_publisher<std_msgs::msg::Bool>("~/output/update_suggest", durable_qos);
@@ -174,8 +180,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     "/accel_brake_map_calibrator/output/updated_map_error", durable_qos);
   map_error_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "/accel_brake_map_calibrator/output/map_error_ratio", durable_qos);
-  calibration_status_pub_ = create_publisher<tier4_external_api_msgs::msg::CalibrationStatus>(
-    "/accel_brake_map_calibrator/output/calibration_status", durable_qos);
 
   // subscriber
   using std::placeholders::_1;
@@ -1082,13 +1086,21 @@ nav_msgs::msg::OccupancyGrid AccelBrakeMapCalibrator::getOccMsg(
 void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
-  int8_t level = DiagStatus::OK;
-  std::string msg = "OK";
-
   using CalibrationStatus = tier4_external_api_msgs::msg::CalibrationStatus;
   CalibrationStatus accel_brake_map_status;
+  int8_t level;
+  std::string msg;
+
   accel_brake_map_status.target = CalibrationStatus::ACCEL_BRAKE_MAP;
-  accel_brake_map_status.status = CalibrationStatus::NORMAL;
+  if(is_default_map_ == true){
+    accel_brake_map_status.status = CalibrationStatus::NORMAL;
+    level = DiagStatus::OK;
+    msg = "OK";
+  }else{
+    accel_brake_map_status.status = CalibrationStatus::ERROR;
+    level = DiagStatus::ERROR;
+    msg = "Default map is not found in " + csv_default_map_dir_;
+  }
 
   if (new_accel_mse_que_.size() < part_mse_que_size_ / 2) {
     // lack of data

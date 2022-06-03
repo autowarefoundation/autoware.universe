@@ -115,6 +115,7 @@ private:
 
   // Diagnostic Updater
   std::shared_ptr<diagnostic_updater::Updater> updater_ptr_;
+  bool is_default_map_ = true;
 
   int get_pitch_method_;
   int update_method_;
