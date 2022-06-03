@@ -81,7 +81,7 @@ public:
   bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor) override;
+    autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
@@ -106,7 +106,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const StopLineModule::SegmentIndexWithPose & insert_index_with_pose,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor);
+    autoware_ad_api_msgs::msg::MotionFactor * motion_factor);
 
   lanelet::ConstLineString3d stop_line_;
   int64_t lane_id_;

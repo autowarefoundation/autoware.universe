@@ -40,7 +40,7 @@ WalkwayModule::WalkwayModule(
 bool WalkwayModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -48,7 +48,7 @@ bool WalkwayModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::WALKWAY);
   *motion_factor =
-    planning_utils::initializeMotionFactor(autoware_ad_api_msgs::motion::msg::MotionFactor::WALKWAY);
+    planning_utils::initializeMotionFactor(autoware_ad_api_msgs::msg::MotionFactor::WALKWAY);
 
   const auto input = *path;
 
@@ -83,7 +83,7 @@ bool WalkwayModule::modifyPathVelocity(
     stop_factor.stop_pose = debug_data_.first_stop_pose;
     stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    motion_factor->status = autoware_ad_api_msgs::motion::msg::MotionFactor::STOP_TRUE;
+    motion_factor->status = autoware_ad_api_msgs::msg::MotionFactor::STOP_TRUE;
     motion_factor->pose = debug_data_.first_stop_pose;
     // motion_factor->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
 

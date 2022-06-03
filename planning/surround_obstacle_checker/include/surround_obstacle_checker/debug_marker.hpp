@@ -18,8 +18,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
-#include <tier4_planning_msgs/msg/motion_factor_array.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+// #include <tier4_planning_msgs/msg/motion_factor_array.hpp>
+#include <autoware_ad_api_msgs/msg/motion_factor_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -51,12 +52,12 @@ public:
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
-  rclcpp::Publisher<autoware_ad_api_msgs::motion::msg::MotionFactorArray>::SharedPtr motion_factor_pub_;
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr motion_factor_pub_;
   double base_link2front_;
 
   visualization_msgs::msg::MarkerArray makeVisualizationMarker();
   tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
-  autoware_ad_api_msgs::motion::msg::MotionFactorArray makeMotionFactorArray();
+  autoware_ad_api_msgs::msg::MotionFactorArray makeMotionFactorArray();
 
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;

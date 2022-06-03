@@ -46,13 +46,13 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 bool MergeFromPrivateRoadModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason,
-  autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor)
+  autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
 {
   debug_data_ = DebugData();
   *stop_reason = planning_utils::initializeStopReason(
     tier4_planning_msgs::msg::StopReason::MERGE_FROM_PRIVATE_ROAD);
   *motion_factor = planning_utils::initializeMotionFactor(
-    autoware_ad_api_msgs::motion::msg::MotionFactor::MERGE_FROM_PRIVATE_ROAD);
+    autoware_ad_api_msgs::msg::MotionFactor::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -121,7 +121,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
       stop_factor.stop_pose = debug_data_.stop_point_pose;
       stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
       planning_utils::appendStopReason(stop_factor, stop_reason);
-      motion_factor->status = autoware_ad_api_msgs::motion::msg::MotionFactor::STOP_TRUE;
+      motion_factor->status = autoware_ad_api_msgs::msg::MotionFactor::STOP_TRUE;
       motion_factor->pose = debug_data_.stop_point_pose;
       // motion_factor->stop_factor_points.emplace_back(debug_data_.first_collision_point);
     }

@@ -21,8 +21,8 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 // #include <tier4_planning_msgs/msg/motion_factor.hpp>
 // #include <tier4_planning_msgs/msg/motion_factor_array.hpp>
-#include <autoware_ad_api_msgs/motion/msg/motion_factor.hpp>
-#include <autoware_ad_api_msgs/motion/msg/motion_factor_array.hpp>
+#include <autoware_ad_api_msgs/msg/motion_factor.hpp>
+#include <autoware_ad_api_msgs/msg/motion_factor_array.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
@@ -51,7 +51,7 @@ public:
   virtual bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason,
-    autoware_ad_api_msgs::motion::msg::MotionFactor * motion_factor) = 0;
+    autoware_ad_api_msgs::msg::MotionFactor * motion_factor) = 0;
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
 
   int64_t getModuleId() const { return module_id_; }
@@ -95,7 +95,7 @@ public:
     pub_infrastructure_commands_ =
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
         "~/output/infrastructure_commands", 20);
-    pub_motion_factor_ = node.create_publisher<autoware_ad_api_msgs::motion::msg::MotionFactorArray>(
+    pub_motion_factor_ = node.create_publisher<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "~/output/motion_factors", 20);
   }
 
@@ -115,11 +115,11 @@ public:
     deleteExpiredModules(path);
   }
 
-  virtual void modifyPathVelocity(autoware_auto_planning_mtier4_planning_msgssgs::msg::PathWithLaneId * path)
+  virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
   {
     visualization_msgs::msg::MarkerArray debug_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-    autoware_ad_api_msgs::motion::msg::MotionFactorArray motion_factor_array;
+    autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array;
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
     motion_factor_array.header.frame_id = "map";
@@ -131,7 +131,7 @@ public:
     first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
       tier4_planning_msgs::msg::StopReason stop_reason;
-      autoware_ad_api_msgs::motion::msg::MotionFactor motion_factor;
+      autoware_ad_api_msgs::msg::MotionFactor motion_factor;
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason, &motion_factor);
       if (stop_reason.reason != "") {
@@ -219,7 +219,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
-  rclcpp::Publisher<autoware_ad_api_msgs::motion::msg::MotionFactorArray>::SharedPtr pub_motion_factor_;
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr pub_motion_factor_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
 };

@@ -21,14 +21,14 @@ namespace autoware_api
 {
 
 bool compareFactorsByDistance(
-  autoware_ad_api_msgs::motion::msg::MotionFactor & a, autoware_ad_api_msgs::motion::msg::MotionFactor & b)
+  autoware_ad_api_msgs::msg::MotionFactor & a, autoware_ad_api_msgs::msg::MotionFactor & b)
 {
   return a.distance < b.distance;
 }
 
 MotionFactorAggregator::MotionFactorAggregator(rclcpp::NodeOptions & node_options)
 :Node("motion_factor_aggregator", node_options),
- clock(this->get_clock()),
+ clock_(this->get_clock()),
  tf_buffer_(this->get_clock()),
  tf_listener_(tf_buffer_)
 // : logger_(node.get_logger().get_child("motion_factor_aggregator")),
@@ -42,25 +42,25 @@ MotionFactorAggregator::MotionFactorAggregator(rclcpp::NodeOptions & node_option
   timeout_ = this->declare_parameter("time_out", 0.5);
 
   // Publisher
-  pub_motion_factor_ = this->create_publisher<autoware_ad_api_msgs::motion::msg::MotionFactorArray>(
+  pub_motion_factor_ = this->create_publisher<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "~/output/motion_factors", 100);
 
   // Subscriber
   sub_scene_module_motion_factor_ =
-    this->create_subscription<autoware_ad_api_msgs::motion::msg::MotionFactorArray>(
+    this->create_subscription<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "input/scene_module/motion_factor", 100,
       std::bind(&MotionFactorAggregator::callbackSceneModuleMotionFactor, this, _1));
   sub_obstacle_stop_motion_factor_ =
-    this->create_subscription<autoware_ad_api_msgs::motion::msg::MotionFactorArray>(
+    this->create_subscription<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "input/obstacle_stop/motion_factor", 100,
       std::bind(&MotionFactorAggregator::callbackObstacleStopMotionFactor, this, _1));
   sub_surround_obstacle_motion_factor_ =
-    this->create_subscription<autoware_ad_api_msgs::motion::msg::MotionFactorArray>(
+    this->create_subscription<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "input/surround_obstacle/motion_factor", 100,
       std::bind(&MotionFactorAggregator::callbackSurroundObstacleMotionFactor, this, _1));
 
   // timer
-  auto timer_callback = std::bind(&MotionFactorAggregator::timerCallback, this);
+  auto timer_callback = std::bind(&MotionFactorAggregator::callbackTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0 / status_pub_hz_));
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
@@ -69,15 +69,15 @@ MotionFactorAggregator::MotionFactorAggregator(rclcpp::NodeOptions & node_option
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-void MotionFactorAggregator::callbackSceneModuleMotionFactorArray(
-  const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr)
+void MotionFactorAggregator::callbackSceneModuleMotionFactor(
+  const autoware_ad_api_msgs::msg::MotionFactorArray::ConstSharedPtr msg_ptr)
 {
   applyUpdate(msg_ptr);
   applyTimeOut();
 }
 
-void MotionFactorAggregator::callbackObstacleStopMotionFactorArray(
-  const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr)
+void MotionFactorAggregator::callbackObstacleStopMotionFactor(
+  const autoware_ad_api_msgs::msg::MotionFactorArray::ConstSharedPtr msg_ptr)
 {
   if (!obstacle_stop_factor_.motion_factors.empty()) {
     obstacle_stop_factor_.motion_factors.clear();
@@ -85,8 +85,8 @@ void MotionFactorAggregator::callbackObstacleStopMotionFactorArray(
   obstacle_stop_factor_ = *msg_ptr;
 }
 
-void MotionFactorAggregator::callbackSurroundObstacleMotionFactorArray(
-  const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr)
+void MotionFactorAggregator::callbackSurroundObstacleMotionFactor(
+  const autoware_ad_api_msgs::msg::MotionFactorArray::ConstSharedPtr msg_ptr)
 {
   if (!surround_obstacle_factor_.motion_factors.empty()) {
     surround_obstacle_factor_.motion_factors.clear();
@@ -103,14 +103,14 @@ void MotionFactorAggregator::callbackAutowareTrajectory(
 void MotionFactorAggregator::callbackTimer()
 {
   getCurrentPose();
-  autoware_ad_api_msgs::motion::msg::MotionFactorArray motion_factor_array_msg
+  autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array_msg
     = makeMotionFactorArray();
   pub_motion_factor_->publish(motion_factor_array_msg);
 
 }
 
 void MotionFactorAggregator::applyUpdate(
-  const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_ptr)
+  const autoware_ad_api_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_ptr)
 {
   /* remove old motion factor that matches reason with received msg */
   // make reason-matching msg list
@@ -134,8 +134,8 @@ void MotionFactorAggregator::applyUpdate(
 }
 
 bool MotionFactorAggregator::checkMatchingReason(
-  const autoware_ad_api_msgs::motion::msg::MotionFactorArray::ConstSharedPtr & msg_motion_factor_array,
-  const autoware_ad_api_msgs::motion::msg::MotionFactorArray & motion_factor_array)
+  const autoware_ad_api_msgs::msg::MotionFactorArray::ConstSharedPtr & msg_motion_factor_array,
+  const autoware_ad_api_msgs::msg::MotionFactorArray & motion_factor_array)
 {
   for (const auto & msg_motion_factor : msg_motion_factor_array->motion_factors) {
     for (const auto & motion_factor : motion_factor_array.motion_factors) {
@@ -170,10 +170,10 @@ void MotionFactorAggregator::applyTimeOut()
   }
 }
 
-autoware_ad_api_msgs::motion::msg::MotionFactorArray:
+autoware_ad_api_msgs::msg::MotionFactorArray
 MotionFactorAggregator::makeMotionFactorArray()
 {
-  autoware_ad_api_msgs::motion::msg::MotionFactorArray motion_factor_array_msg;
+  autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array_msg;
   // input header
   motion_factor_array_msg.header.frame_id = "map";
   motion_factor_array_msg.header.stamp = clock_->now();
@@ -190,7 +190,7 @@ MotionFactorAggregator::makeMotionFactorArray()
   }
 
   for (const auto & motion_factor : surround_obstacle_factor_.motion_factors) {
-    appendMotionFactorToArray(motion_factor, &motion_factor_array_msg,);
+    appendMotionFactorToArray(motion_factor, &motion_factor_array_msg);
   }
 
   // sort factors in ascending order
@@ -202,8 +202,8 @@ MotionFactorAggregator::makeMotionFactorArray()
 }
 
 void MotionFactorAggregator::appendMotionFactorToArray(
-  const autoware_ad_api_msgs::motion::msg::MotionFactor & motion_factor,
-  autoware_ad_api_msgs::motion::msg::MotionFactorArray * motion_factor_array)
+  const autoware_ad_api_msgs::msg::MotionFactor & motion_factor,
+  autoware_ad_api_msgs::msg::MotionFactorArray * motion_factor_array)
 {
   // calculate distance to stop pose
   const auto motion_factor_with_dist = inputStopDistToMotionFactor(motion_factor);
@@ -212,11 +212,11 @@ void MotionFactorAggregator::appendMotionFactorToArray(
   motion_factor_array->motion_factors.emplace_back(motion_factor_with_dist);
 }
 
-autoware_ad_api_msgs::motion::msg::MotionFactor
+autoware_ad_api_msgs::msg::MotionFactor
 MotionFactorAggregator::inputStopDistToMotionFactor(
-  const autoware_ad_api_msgs::motion::msg::MotionFactor & motion_factor)
+  const autoware_ad_api_msgs::msg::MotionFactor & motion_factor)
 {
-  if (!autoware_planning_traj_ptr || !current_pose_ptr_) {
+  if (!autoware_planning_traj_ptr_ || !current_pose_ptr_) {
     // pass through all stop reason
     return motion_factor;
   }
