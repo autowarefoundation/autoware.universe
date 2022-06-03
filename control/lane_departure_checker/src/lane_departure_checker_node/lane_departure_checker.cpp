@@ -62,8 +62,8 @@ size_t findNearestIndexWithSoftYawConstraints(
   const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
     trajectory.points, pose, std::numeric_limits<double>::max(), yaw_threshold);
   return nearest_idx_optional
-          ? *nearest_idx_optional
-          : tier4_autoware_utils::findNearestIndex(trajectory.points, pose.position);
+           ? *nearest_idx_optional
+           : tier4_autoware_utils::findNearestIndex(trajectory.points, pose.position);
 }
 
 LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
@@ -108,9 +108,9 @@ Output LaneDepartureChecker::update(const Input & input)
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
-  output.trajectory_deviation =
-    calcTrajectoryDeviation(*input.reference_trajectory,
-    input.current_pose->pose, param_.delta_yaw_threshold_for_closest_point);
+  output.trajectory_deviation = calcTrajectoryDeviation(
+    *input.reference_trajectory, input.current_pose->pose,
+    param_.delta_yaw_threshold_for_closest_point);
   output.processing_time_map["calcTrajectoryDeviation"] = stop_watch.toc(true);
 
   {
@@ -147,8 +147,7 @@ Output LaneDepartureChecker::update(const Input & input)
 PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double yaw_threshold)
 {
-  const auto nearest_idx = findNearestIndexWithSoftYawConstraints(
-    trajectory, pose, yaw_threshold);
+  const auto nearest_idx = findNearestIndexWithSoftYawConstraints(trajectory, pose, yaw_threshold);
   return tier4_autoware_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
 }
 
