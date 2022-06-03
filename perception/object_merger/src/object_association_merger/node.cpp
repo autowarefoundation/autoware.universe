@@ -74,6 +74,19 @@ bool transformDetectedObjects(
   }
   return true;
 }
+
+bool isUnknownObjectOverlapped(
+  const autoware_auto_perception_msgs::msg::DetectedObject & unknown_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & known_object)
+{
+  constexpr double precision_threshold = 0.4;
+  constexpr double recall_threshold = 0.5;
+  const auto precision = utils::get2dPrecision(unknown_object, known_object);
+  const auto recall = utils::get2dRecall(unknown_object, known_object);
+  std::cout << "precision: " << precision << std::endl;
+  std::cout << "recall: " << recall << std::endl;
+  return precision > precision_threshold || recall > recall_threshold;
+}
 }  // namespace
 
 namespace object_association
@@ -94,17 +107,16 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
     "output/object", rclcpp::QoS{1});
 
   // Parameters
-    base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
+  base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
+  remove_overlapped_unknown_objects_ = declare_parameter<bool>("remove_overlapped_unknown_objects", true);
 
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
   const auto max_dist_matrix = this->declare_parameter<std::vector<double>>("max_dist_matrix");
-  const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
-  const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
   const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
   data_association_ = std::make_unique<DataAssociation>(
-    can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
+    can_assign_matrix, max_dist_matrix, max_rad_matrix,
     min_iou_matrix);
 }
 
@@ -132,62 +144,64 @@ void ObjectAssociationMergerNode::objectsCallback(
   output_msg.header = input_objects0_msg->header;
 
   /* global nearest neighbor */
-  std::unordered_map<int, int> direct_assignment;
-  std::unordered_map<int, int> reverse_assignment;
+  std::unordered_map<int, int> direct_assignment, reverse_assignment;
   const auto & objects0 = transformed_objects0.objects;
   const auto & objects1 = transformed_objects1.objects;
   Eigen::MatrixXd score_matrix =
     data_association_->calcScoreMatrix(transformed_objects1, transformed_objects0);
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+
   for (size_t object0_idx = 0; object0_idx < objects0.size(); ++object0_idx) {
     const auto & object0 = objects0.at(object0_idx);
-    const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
-
-    if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found. should be merged
-
-      const std::uint8_t object0_label = utils::getHighestProbLabel(object0.classification);
-      const std::uint8_t object1_label = utils::getHighestProbLabel(object1.classification);
-
-      bool should_use_object0 = false;
-      bool should_use_object1 = false;
-
-      // If at least one of them is UNKNOWN, delete the one with lower existence_probability Because
-      // the UNKNOWN objects are not reliable.
-      if (object0_label == Label::UNKNOWN || object1_label == Label::UNKNOWN) {
-        if (object0_label == Label::UNKNOWN && object1_label == Label::UNKNOWN) {
-          if (object1.existence_probability == object0.existence_probability){
-            should_use_object0 = true;
-            should_use_object1 = true;
-          } else if (object1.existence_probability < object0.existence_probability) {
-            should_use_object0 = true;
-          } else
-            should_use_object1 = true;
-        } else if (object0_label == Label::UNKNOWN) {
-          should_use_object1 = true;
-        } else if (object1_label == Label::UNKNOWN) {
-          should_use_object0 = true;
-        }
-        // If neither is UNKNOWN, delete the one with lower existence_probability.
-      } else {
-        if (object1.existence_probability <= object0.existence_probability)
-          should_use_object0 = true;
-        else
-          should_use_object1 = true;
-      }
-
-      if (should_use_object0) output_msg.objects.push_back(object0);
-      if (should_use_object1) output_msg.objects.push_back(object1);
-
+    if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found and merge
+      const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
+      if (object1.existence_probability <= object0.existence_probability)
+        output_msg.objects.push_back(object0);
+      else
+        output_msg.objects.push_back(object1);
     } else {  // not found
       output_msg.objects.push_back(object0);
     }
   }
   for (size_t object1_idx = 0; object1_idx < objects1.size(); ++object1_idx) {
     const auto & object1 = objects1.at(object1_idx);
-
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found
       output_msg.objects.push_back(object1);
+    }
+  }
+
+  // Remove overlapped unknown object
+  if (remove_overlapped_unknown_objects_){
+    std::vector<autoware_auto_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
+    unknown_objects.reserve(output_msg.objects.size());
+    known_objects.reserve(output_msg.objects.size());
+    for (const auto & object : output_msg.objects) {
+      if (utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+        unknown_objects.push_back(object);
+      } else {
+        known_objects.push_back(object);
+      }
+    }
+    output_msg.objects.clear();
+    output_msg.objects = known_objects;
+    for (const auto & unknown_object : unknown_objects) {
+        std::cout << "testttttt" << __LINE__ << ":"<<unknown_objects.size()<< std::endl;
+
+      bool is_overlapped = false;
+      for (const auto & known_object : known_objects) {
+        if (isUnknownObjectOverlapped(unknown_object, known_object)) {
+          is_overlapped = true;
+          break;
+        }
+      }
+      std::cout << "testttttt" << __LINE__ << ":" << is_overlapped << ", " << unknown_objects.size()
+                << std::endl;
+
+      if (!is_overlapped) {
+        std::cout << "testttttt" << __LINE__ << std::endl;
+        output_msg.objects.push_back(unknown_object);
+      }
     }
   }
 

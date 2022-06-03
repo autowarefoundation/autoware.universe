@@ -37,8 +37,6 @@ class DataAssociation
 private:
   Eigen::MatrixXi can_assign_matrix_;
   Eigen::MatrixXd max_dist_matrix_;
-  Eigen::MatrixXd max_area_matrix_;
-  Eigen::MatrixXd min_area_matrix_;
   Eigen::MatrixXd max_rad_matrix_;
   Eigen::MatrixXd min_iou_matrix_;
   const double score_threshold_;
@@ -48,7 +46,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   DataAssociation(
     std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
-    std::vector<double> max_area_vector, std::vector<double> min_area_vector,
     std::vector<double> max_rad_vector, std::vector<double> min_iou_vector);
   void assign(
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,

@@ -44,6 +44,12 @@ double get2dIoU(
 double get2dIoU(
   const autoware_auto_perception_msgs::msg::DetectedObject & object1,
   const autoware_auto_perception_msgs::msg::DetectedObject & object2);
+double get2dPrecision(
+  const autoware_auto_perception_msgs::msg::DetectedObject & source_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object);
+double get2dRecall(
+  const autoware_auto_perception_msgs::msg::DetectedObject & source_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object);
 std::uint8_t getHighestProbLabel(
   const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification);
 geometry_msgs::msg::Polygon rotatePolygon(

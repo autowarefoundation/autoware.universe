@@ -57,7 +57,6 @@ double getFormedYawAngle(
 
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
-  std::vector<double> max_area_vector, std::vector<double> min_area_vector,
   std::vector<double> max_rad_vector, std::vector<double> min_iou_vector)
 : score_threshold_(0.01)
 {
@@ -72,18 +71,6 @@ DataAssociation::DataAssociation(
     Eigen::Map<Eigen::MatrixXd> max_dist_matrix_tmp(
       max_dist_vector.data(), max_dist_label_num, max_dist_label_num);
     max_dist_matrix_ = max_dist_matrix_tmp.transpose();
-  }
-  {
-    const int max_area_label_num = static_cast<int>(std::sqrt(max_area_vector.size()));
-    Eigen::Map<Eigen::MatrixXd> max_area_matrix_tmp(
-      max_area_vector.data(), max_area_label_num, max_area_label_num);
-    max_area_matrix_ = max_area_matrix_tmp.transpose();
-  }
-  {
-    const int min_area_label_num = static_cast<int>(std::sqrt(min_area_vector.size()));
-    Eigen::Map<Eigen::MatrixXd> min_area_matrix_tmp(
-      min_area_vector.data(), min_area_label_num, min_area_label_num);
-    min_area_matrix_ = min_area_matrix_tmp.transpose();
   }
   {
     const int max_rad_label_num = static_cast<int>(std::sqrt(max_rad_vector.size()));
@@ -162,13 +149,6 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         // dist gate
         if (passed_gate) {
           if (max_dist < dist) passed_gate = false;
-        }
-        // area gate
-        if (passed_gate) {
-          const double max_area = max_area_matrix_(object1_label, object0_label);
-          const double min_area = min_area_matrix_(object1_label, object0_label);
-          const double area = utils::getArea(object0.shape);
-          if (area < min_area || max_area < area) passed_gate = false;
         }
         // angle gate
         if (passed_gate) {
