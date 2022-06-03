@@ -36,41 +36,54 @@ namespace ns_control_toolbox
 		friend T operator*(T const& tf1, T const& tf2)
 		{
 			// Compute numerator multiplication.
-			tf_factor num1{{ tf1.num() }};
-			tf_factor num2{{ tf2.num() }};
+			tf_factor num1{{ tf1.num_vector_only() }};
+			tf_factor num2{{ tf2.num_vector_only() }};
 
 			auto num_mult = num1 * num2;
 
+			// Multiply the numerator constants.
+			auto num_constant_mult = tf1.num_constant() * tf2.num_constant();
+
+
 			// Compute denominator multiplication.
-			tf_factor den1{{ tf1.den() }};
-			tf_factor den2{{ tf2.den() }};
+			tf_factor den1{{ tf1.den_vector_only() }};
+			tf_factor den2{{ tf2.den_vector_only() }};
 
 			tf_factor den_mult = den1 * den2;
 
-			return T{ num_mult(), den_mult() };
+			// Multiply the numerator constants.
+			auto den_constant_mult = tf1.den_constant() * tf2.den_constant();
+
+			return T{ num_mult(), den_mult(), num_constant_mult, den_constant_mult };
 		};
 
 		friend T operator*=(T const& tf1, T const& tf2)
 		{
 			// Compute numerator multiplication.
-			tf_factor num1{{ tf1.num() }};
-			tf_factor num2{{ tf2.num() }};
+			tf_factor num1{{ tf1.num_vector_only() }};
+			tf_factor num2{{ tf2.num_vector_only() }};
 
 			auto num_mult = num1 * num2;
 
+			// Multiply the numerator constants.
+			auto num_constant_mult = tf1.num_const() * tf2.num_constant();
+
 			// Compute denominator multiplication.
-			tf_factor den1{{ tf1.den() }};
-			tf_factor den2{{ tf2.den() }};
+			tf_factor den1{{ tf1.den_vector_only() }};
+			tf_factor den2{{ tf2.den_vector_only() }};
 
 			tf_factor den_mult = den1 * den2;
 
-			return T{ num_mult(), den_mult() };
+			// Multiply the numerator constants.
+			auto den_constant_mult = tf1.den_const() * tf2.den_constant();
+
+			return T{ num_mult(), den_mult(), num_constant_mult, den_constant_mult };
 		};
 
 	};
 
 
-	// All Operations
+	// All algebraic operations.
 	template<typename T>
 	struct TF_algebra : public TF_multiplication<T>
 	{
@@ -80,8 +93,10 @@ namespace ns_control_toolbox
 	/**
 	 * @brief Transfer Function representation in descending power of  Laplace variable "s".
 	 * [s^n, s^{n-1} ... s^0]
-	 * @param Nn	: size of the numerator array.
-	 * @param Nd	: size of the denominator array
+	 * @param num	: std::vector<double> numerator
+	 * @param den	: std::vector<double> denominator
+	 * @param num_factor: numerator coefficient
+	 * @param den_factor: denominator coefficient
 	 * */
 
 	// For visibility, we can set for each object : __attribute__((visibility("default"))) class_name
@@ -94,13 +109,23 @@ namespace ns_control_toolbox
 		}
 
 		// Constructor from non-empty numerator and denominator std::vectors.
-		tf(std::vector<double> num, std::vector<double> den)
-				: num_{ std::move(num) }, den_{ std::move(den) }
+		tf(std::vector<double> num, std::vector<double> den) : num_{ std::move(num) }, den_{ std::move(den) }
 		{
 
 			ns_utils::stripVectorZerosFromLeft(num_); // remove zeros from the left.
 			ns_utils::stripVectorZerosFromLeft(den_);
 		}
+
+		// Required for TF*TF multiplication.
+		tf(std::vector<double> num, std::vector<double> den,
+		   double num_constant, double den_constant) : num_{ std::move(num) }, den_{ std::move(den) },
+		                                               num_constant_{ num_constant }, den_constant_{ den_constant }
+		{
+
+			ns_utils::stripVectorZerosFromLeft(num_); // remove zeros from the left.
+			ns_utils::stripVectorZerosFromLeft(den_);
+		}
+
 
 		// Constructor from tf_factors
 		tf(tf_factor const& num, tf_factor const& den);
@@ -115,9 +140,17 @@ namespace ns_control_toolbox
 
 		void print() const;
 
-		[[nodiscard]] std::vector<double> num() const;
+		[[nodiscard]] std::vector<double> num() const; // gets num that multiplied by its constant.
 
 		[[nodiscard]] std::vector<double> den() const;
+
+		[[nodiscard]] std::vector<double> num_vector_only() const; // gets num without multiplied by its constant.
+
+		[[nodiscard]] std::vector<double> den_vector_only() const; //
+
+		[[nodiscard]] double num_constant() const;
+
+		[[nodiscard]] double den_constant() const;
 
 
 		// Invert the transfer function.
@@ -133,11 +166,11 @@ namespace ns_control_toolbox
 		void update_den(tf_factor const& den);
 
 		// In some cases, the TF might have variable multiplier of the form a*[num], b*den where a, b vary.
-		void update_num_den_coef(double const& num_coeff, double const& den_coeff);
+		void update_num_den_coef(double const& num_constant, double const& den_constant);
 
-		void update_num_coef(double const& num_coeff);
+		void update_num_coef(double const& num_constant);
 
-		void update_den_coef(double const& den_coeff);
+		void update_den_coef(double const& den_constant);
 
 
 	private:
@@ -146,8 +179,8 @@ namespace ns_control_toolbox
 		std::vector<double> num_{ 1. };   // <-@brief numerator
 		std::vector<double> den_{ 1. };   // <-@brief denominator
 
-		double num_coef_{ 1. };
-		double den_coef_{ 1. };
+		double num_constant_{ 1. };
+		double den_constant_{ 1. };
 
 	};
 
