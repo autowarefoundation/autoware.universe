@@ -73,11 +73,15 @@ This is a function that adds the regularization term to the NDT optimization pro
 
 $$
 \begin{align}
-    \min_{\mathbf{R},\mathbf{t}}\
+    \min_{\mathbf{R},\mathbf{t}}
     \mathrm{NDT}(\mathbf{R},\mathbf{t})
-    +\mathrm{scale\_factor}\cdot \left\|
-        \begin{pmatrix}1&0&0\\0&1&0\\0&0&0\end{pmatrix}
-        (\mathbf{t}-\mathbf{t}_{base})
+    +\mathrm{scale\ factor}\cdot \left\|
+        \begin{pmatrix}
+            1&0&0\\
+            0&1&0\\
+            0&0&0
+        \end{pmatrix}
+        (\mathbf{t}-\mathbf{t_{base}})
         \right\|_{2}^2
 \end{align}
 $$
@@ -138,8 +142,7 @@ The following figures show tested maps.
 - The left is a map with enough features that NDT can successfully localize.
 - The right is a map with so few features that the NDT cannot localize well.
 
-<img src="./media/bridge_map.jpg" alt="drawing" width="400"/>
-<img src="./media/bridge_map_less_feature.jpg" alt="drawing" width="400"/>
+<img src="./media/bridge_map.jpg" alt="drawing" width="300"/> <img src="./media/bridge_map_less_feature.jpg" alt="drawing" width="300"/>
 
 The following figures show the trajectories estimated on the feature-less map with standard NDT and regularization-enabled NDT, respectively.
 The color of the trajectory indicates the error (meter) from the reference trajectory, which is computed with the feature-rich map.
@@ -147,5 +150,4 @@ The color of the trajectory indicates the error (meter) from the reference traje
 - The left figure shows that the pure NDT causes a longitudinal error in the bridge and is not able to recover.
 - The right figure shows that the regularization suppresses the longitudinal error.
 
-<img src="./media/trajectory_without_regularization.png" alt="drawing" width="400"/>
-<img src="./media/trajectory_with_regularization.png" alt="drawing" width="400"/>
+<img src="./media/trajectory_without_regularization.png" alt="drawing" width="300"/> <img src="./media/trajectory_with_regularization.png" alt="drawing" width="300"/>
