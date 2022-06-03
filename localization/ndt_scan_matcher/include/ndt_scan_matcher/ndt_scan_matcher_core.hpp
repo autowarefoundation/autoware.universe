@@ -205,7 +205,7 @@ private:
   std::thread diagnostic_thread_;
   std::map<std::string, std::string> key_value_stdmap_;
 
-  // for GNSS regularization
+  // variables for regularization
   const bool regularization_enabled_;
   const float regularization_scale_factor_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
