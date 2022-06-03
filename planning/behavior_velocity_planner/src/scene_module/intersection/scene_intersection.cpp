@@ -159,8 +159,8 @@ bool IntersectionModule::modifyPathVelocity(
   const auto objects_ptr = planner_data_->predicted_objects;
 
   /* calculate dynamic collision around detection area */
-  bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx);
+  bool has_collision =
+    checkCollision(lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx);
   bool is_stuck = checkStuckVehicleInIntersection(
     lanelet_map_ptr, *path, closest_idx, stop_line_idx, objects_ptr);
   bool is_entry_prohibited = (has_collision || is_stuck);
@@ -261,7 +261,7 @@ bool IntersectionModule::checkCollision(
       continue;  // TODO(Kenji Miyake): check direction?
     }
 
-      // check direction of objects
+    // check direction of objects
     const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
     if (checkAngleForTargetLanelets(object_direction, detection_area_lanelet_ids)) {
       target_objects.objects.push_back(object);
