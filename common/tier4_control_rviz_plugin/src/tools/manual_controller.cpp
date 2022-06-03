@@ -96,6 +96,11 @@ ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent
   cruise_velocity_layout->addWidget(steering_angle_ptr_);
   cruise_velocity_layout->addWidget(new QLabel("  [deg]"));
 
+  // Emergency Button
+  emergency_button_ptr_ = new QPushButton("Emergency Button");
+  connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
+  cruise_velocity_layout->addWidget(emergency_button_ptr_);
+
   // Layout
   auto * v_layout = new QVBoxLayout;
   v_layout->addLayout(state_layout);
@@ -200,7 +205,7 @@ void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::Const
     default:
       gate_mode_label_ptr_->setText("UNKNOWN");
       gate_mode_label_ptr_->setStyleSheet("background-color: #FF0000;");
-      break;
+       break;
   }
 }
 void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
@@ -269,6 +274,23 @@ void ManualController::onClickEnableButton()
     client_engage_->async_send_request(
       req, [this]([[maybe_unused]] rclcpp::Client<EngageSrv>::SharedFuture result) {});
   }
+}
+
+void ManualController::onClickEmergencyButton()
+{
+  auto req = std::make_shared<tier4_external_api_msgs::srv::SetEmergency::Request>();
+  req->emergency = true;
+
+  client_emergency_stop_->async_send_request(
+    req, [this]([[maybe_unused]] 
+               rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
+      auto response = result.get();
+      if (response->status.code == tier4_external_api_msgs::msg::ResponseStatus::SUCCESS) {
+        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+      } else {
+        RCLCPP_WARN(raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
+      }
+    });
 }
 
 }  // namespace rviz_plugins
