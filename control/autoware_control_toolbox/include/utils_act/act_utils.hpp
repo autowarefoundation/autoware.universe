@@ -29,51 +29,72 @@
 
 /**
  * @brief Overloads vector * scalar multiplication.
+ *
  * */
-template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+
+
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, std::vector<T>>::type* = nullptr>
 std::vector<T> operator*(std::vector<T> const& vec, T const& a)
 {
 	std::vector<T> temp{ vec };
 
-	for (auto& x: temp)
-	{
-		x = x * a;
-	}
+	std::transform(temp.begin(), temp.end(),
+			temp.begin(), [&](auto& xi)
+			{ return xi * a; });
 
+//	for (auto& x: temp)
+//	{
+//		x = x * a;
+//	}
 	return temp;
 }
 
-template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, std::vector<T>>::type* = nullptr>
 std::vector<T>& operator*=(std::vector<T>& vec, T const& a)
 {
-	for (auto& x: vec)
-	{
-		x = x * a;
-	}
+
+	std::transform(vec.begin(), vec.end(),
+			vec.begin(), [&](auto& xi)
+			{ return xi * a; });
+
+//	for (auto& x: vec)
+//	{
+//		x = x * a;
+//	}
 
 	return vec;
 }
 
-template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, std::vector<T>>::type* = nullptr>
 std::vector<T> operator*(T const& a, std::vector<T> const& vec)
 {
 	std::vector<T> temp{ vec };
 
-	for (auto& x: temp)
-	{
-		x = x * a;
-	}
+	std::transform(temp.begin(), temp.end(),
+			temp.begin(), [&](auto& xi)
+			{ return xi * a; });
+
+//	for (auto& x: temp)
+//	{
+//		x = x * a;
+//	}
 
 	return temp;
 }
 
-template<typename T, typename std::enable_if<std::is_floating_point<T>::value, bool>::type* = nullptr>
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, std::vector<T>>::type* = nullptr>
 std::vector<T>& operator*=(T const& a, std::vector<T>& vec)
 {
-	for (auto& x: vec)
-	{
-		x = x * a;
-	}
+
+	std::transform(vec.begin(), vec.end(),
+			vec.begin(), [&](auto& xi)
+			{ return xi * a; });
+
+//	for (auto& x: vec)
+//	{
+//		x = x * a;
+//	}
 
 	return vec;
 }
