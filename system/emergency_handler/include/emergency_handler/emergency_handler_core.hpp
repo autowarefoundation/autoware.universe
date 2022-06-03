@@ -30,10 +30,9 @@
 // ROS2 core
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/system/heartbeat_checker.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 
 namespace emergency_handler
 {
@@ -45,6 +44,8 @@ using autoware_auto_system_msgs::msg::HazardStatusStamped;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using tier4_autoware_utils::HeaderlessHeartbeatChecker;
+using tier4_autoware_utils::VehicleStopChecker;
 
 struct HazardLampPolicy
 {
@@ -70,17 +71,14 @@ private:
   // Subscribers
   rclcpp::Subscription<HazardStatusStamped>::SharedPtr sub_hazard_status_stamped_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_prev_control_command_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<ControlModeReport>::SharedPtr sub_control_mode_;
 
   HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
   AckermannControlCommand::ConstSharedPtr prev_control_command_;
-  nav_msgs::msg::Odometry::ConstSharedPtr odom_;
   ControlModeReport::ConstSharedPtr control_mode_;
 
   void onHazardStatusStamped(const HazardStatusStamped::ConstSharedPtr msg);
   void onPrevControlCommand(const AckermannControlCommand::ConstSharedPtr msg);
-  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onControlMode(const ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
@@ -105,13 +103,15 @@ private:
   // Heartbeat
   std::shared_ptr<HeaderlessHeartbeatChecker<HazardStatusStamped>> heartbeat_hazard_status_;
 
+  // Stop checker
+  std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;
+
   // Algorithm
   EmergencyState::_state_type emergency_state_{EmergencyState::NORMAL};
   rclcpp::Time takeover_requested_time_;
 
   void transitionTo(const int new_state);
   void updateEmergencyState();
-  bool isStopped();
   bool isEmergency(const HazardStatus & hazard_status);
   AckermannControlCommand selectAlternativeControlCommand();
 };

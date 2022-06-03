@@ -40,8 +40,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   sub_prev_control_command_ = create_subscription<AckermannControlCommand>(
     "~/input/prev_control_command", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
-  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
   // subscribe control mode
   sub_control_mode_ = create_subscription<ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
@@ -59,7 +57,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<EmergencyState>("~/output/emergency_state", rclcpp::QoS{1});
 
   // Initialize
-  odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
   control_mode_ = std::make_shared<const ControlModeReport>();
   prev_control_command_ = AckermannControlCommand::ConstSharedPtr(new AckermannControlCommand);
 
@@ -67,6 +64,9 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), update_period_ns, std::bind(&EmergencyHandler::onTimer, this));
+
+  // Stop Checker
+  vehicle_stop_checker_ = std::make_unique<VehicleStopChecker>(this);
 }
 
 void EmergencyHandler::onHazardStatusStamped(const HazardStatusStamped::ConstSharedPtr msg)
@@ -79,11 +79,6 @@ void EmergencyHandler::onPrevControlCommand(const AckermannControlCommand::Const
   auto control_command = new AckermannControlCommand(*msg);
   control_command->stamp = msg->stamp;
   prev_control_command_ = AckermannControlCommand::ConstSharedPtr(control_command);
-}
-
-void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
-{
-  odom_ = msg;
 }
 
 void EmergencyHandler::onControlMode(const ControlModeReport::ConstSharedPtr msg)
@@ -116,6 +111,7 @@ void EmergencyHandler::publishControlCommands()
 {
   // Create timestamp
   const auto stamp = this->now();
+  const bool is_stopped = vehicle_stop_checker_->isVehicleStopped();
 
   // Publish ControlCommand
   {
@@ -131,7 +127,7 @@ void EmergencyHandler::publishControlCommands()
   pub_hazard_cmd_->publish(createHazardCmdMsg());
 
   // Publish gear
-  if (param_.use_parking_after_stopped && isStopped()) {
+  if (param_.use_parking_after_stopped && is_stopped) {
     GearCommand msg;
     msg.stamp = stamp;
     msg.command = GearCommand::PARK;
@@ -218,6 +214,7 @@ void EmergencyHandler::updateEmergencyState()
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
   const bool is_takeover_done = control_mode_->mode == ControlModeReport::MANUAL;
+  const bool is_stopped = vehicle_stop_checker_->isVehicleStopped();
 
   // State Machine
   if (emergency_state_ == EmergencyState::NORMAL) {
@@ -253,7 +250,7 @@ void EmergencyHandler::updateEmergencyState()
       }
     } else if (emergency_state_ == EmergencyState::MRM_OPERATING) {
       // TODO(Kenji Miyake): Check MRC is accomplished
-      if (isStopped()) {
+      if (is_stopped) {
         transitionTo(EmergencyState::MRM_SUCCEEDED);
         return;
       }
@@ -271,16 +268,6 @@ void EmergencyHandler::updateEmergencyState()
 bool EmergencyHandler::isEmergency(const HazardStatus & hazard_status)
 {
   return hazard_status.emergency || hazard_status.emergency_holding;
-}
-
-bool EmergencyHandler::isStopped()
-{
-  constexpr auto th_stopped_velocity = 0.001;
-  if (odom_->twist.twist.linear.x < th_stopped_velocity) {
-    return true;
-  }
-
-  return false;
 }
 
 AckermannControlCommand EmergencyHandler::selectAlternativeControlCommand()
