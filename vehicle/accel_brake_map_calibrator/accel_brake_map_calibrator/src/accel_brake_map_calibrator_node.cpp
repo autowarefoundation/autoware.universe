@@ -1092,11 +1092,11 @@ void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticS
   std::string msg;
 
   accel_brake_map_status.target = CalibrationStatus::ACCEL_BRAKE_MAP;
-  if(is_default_map_ == true){
+  if (is_default_map_ == true) {
     accel_brake_map_status.status = CalibrationStatus::NORMAL;
     level = DiagStatus::OK;
     msg = "OK";
-  }else{
+  } else {
     accel_brake_map_status.status = CalibrationStatus::ERROR;
     level = DiagStatus::ERROR;
     msg = "Default map is not found in " + csv_default_map_dir_;
