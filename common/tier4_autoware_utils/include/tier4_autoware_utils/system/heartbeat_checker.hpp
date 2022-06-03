@@ -19,6 +19,9 @@
 
 #include <string>
 
+namespace tier4_autoware_utils
+{
+
 template <class HeartbeatMsg>
 class HeaderlessHeartbeatChecker
 {
@@ -55,4 +58,5 @@ private:
   }
 };
 
+}  // namespace tier4_autoware_utils
 #endif  // TIER4_AUTOWARE_UTILS__SYSTEM__HEARTBEAT_CHECKER_HPP_
