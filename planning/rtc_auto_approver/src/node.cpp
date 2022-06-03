@@ -14,7 +14,7 @@
 
 #include "rtc_auto_approver/node.hpp"
 
-#include <unordered_map>
+#include <algorithm>
 
 namespace rtc_auto_approver
 {
