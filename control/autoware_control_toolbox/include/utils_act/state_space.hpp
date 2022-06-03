@@ -32,21 +32,21 @@ namespace ns_control_toolbox
 	 * @brief Stores the state space model matrices either discrete, or continuous.
 	 * */
 
-	struct ss
-		{
-		explicit ss(Eigen::MatrixXd const& Am,
-				Eigen::MatrixXd const& Bm,
-				Eigen::MatrixXd const& Cm,
-				Eigen::MatrixXd const& Dm);
+	struct ss_system
+	{
+		ss_system() = default;
 
-		Eigen::MatrixXd A;
-		Eigen::MatrixXd B;
-		Eigen::MatrixXd C;
-		Eigen::MatrixXd D;
+		explicit ss_system(Eigen::MatrixXd const& Am,
+		                   Eigen::MatrixXd const& Bm,
+		                   Eigen::MatrixXd const& Cm,
+		                   Eigen::MatrixXd const& Dm);
 
-		};
+		Eigen::MatrixXd A{};
+		Eigen::MatrixXd B{};
+		Eigen::MatrixXd C{};
+		Eigen::MatrixXd D{};
 
-	struct ss_system;
+	};
 
 
 /**
@@ -56,7 +56,7 @@ namespace ns_control_toolbox
  * */
 
 	struct ACT_PUBLIC tf2ss
-		{
+	{
 
 		// Constructors
 		tf2ss();
@@ -74,6 +74,22 @@ namespace ns_control_toolbox
 
 		void print_discrete_system() const;
 
+
+		[[nodiscard]] ss_system get_ssABCD_continuous() const;
+
+		[[nodiscard]] ss_system get_ssABCD_discrete() const;
+
+
+	private:
+
+		double Ts_{};
+
+		/**
+		 * @brief Compute the system continuous time system matrices
+		 * */
+		void computeSystemMatrices(std::vector<double> const& num,
+		                           std::vector<double> const& den);
+
 		// Data members
 		// Continuous time state-space model
 		Eigen::MatrixXd A_{};
@@ -87,19 +103,7 @@ namespace ns_control_toolbox
 		Eigen::MatrixXd Cd_{};
 		Eigen::MatrixXd Dd_{};
 
-
-	private:
-
-		double Ts_{};
-
-		/**
-		 * @brief Compute the system continuous time system matrices
-		 * */
-		void computeSystemMatrices(std::vector<double> const& num,
-				std::vector<double> const& den);
-
-
-		};
+	};
 
 
 } // namespace ns_control_toolbox
