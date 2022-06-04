@@ -22,7 +22,7 @@
 
 ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
 {
-
+	N_ = sys_tf.order(); // size of A will be order of the TF.
 	auto num = sys_tf.num();
 	auto den = sys_tf.den();
 
@@ -60,6 +60,8 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 	ns_utils::stripVectorZerosFromLeft(num);
 	ns_utils::stripVectorZerosFromLeft(den);
 
+	N_ = std::max(num.size(), den.size());
+
 	// Compare if the system is a proper.
 	if (den.size() < num.size())
 	{
@@ -82,20 +84,15 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>& num,
                                                       const std::vector<double>& den)
 {
-	auto nx = static_cast<long>(den.size() - 1);       // Order of the system.
+	auto&& nx = N_ - 1; //static_cast<long>(den.size() - 1);       // Order of the system.
 
 	// We can put system check function if the nx = 0 -- i.e throw exception.
 
-	A_ = Eigen::MatrixXd::Zero(nx, nx);
-	C_ = Eigen::MatrixXd::Zero(1, nx);
-	B_ = Eigen::MatrixXd::Identity(nx, 1);
-	D_ = Eigen::MatrixXd::Zero(1, 1);
 
-	// set discrete matrix sizes
-	Ad_.resize(nx, nx);
-	Bd_.resize(1, nx);
-	Cd_.resize(nx, 1);
-	Dd_.resize(1, 1);
+	// B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
+
+	sys_matABCD_cont_.resize(nx + 1, nx + 1);
+	sys_matABCD_disc_.resize(nx + 1, nx + 1);
 
 
 	// Zero padding the numerator.
@@ -130,9 +127,16 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	}
 
 
+//	A_ = ss_system.topLeftCorner(nx, nx);
+//	B_ = ss_system.topRightCorner(nx, 1);
+//	C_ = ss_system.bottomLeftCorner(1, nx);
+//	D_ = ss_system.bottomRightCorner(1, 1);
+
 	if (nx > 0)
 	{
-		D_(0, 0) = zero_padded_num[0];
+		// D_(0, 0) = zero_padded_num[0];
+		sys_matABCD_cont_(nx, nx) = 0;
+
 	}
 
 	//	auto B = Eigen::MatrixXd::Identity(nx - 1, nx);
@@ -140,51 +144,55 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	if (nx > 1)
 	{
-		A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
+		// A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
+		sys_matABCD_cont_.block(1, 0, nx - 1, nx) = Eigen::MatrixXd::Identity(nx - 1, nx);
 	}
 
+	// Assign B in system_matABCD
+	sys_matABCD_cont_(0, nx) = 1;
 
 	// normalize the denominator and assign the first row of the A_matrix to the normalized denominator's values
 	// excluding the first item of the denominator.
 	for (size_t k = 1; k < normalized_den.size(); k++)
 	{
 		Eigen::Index ind_eig{ static_cast<long>(k - 1) };
-		A_(0, ind_eig) = -1 * normalized_den[k];
-		C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
+
+		// A_(0, ind_eig) = -1 * normalized_den[k];
+		sys_matABCD_cont_.topLeftCorner(nx, nx)(0, ind_eig) = -1 * normalized_den[k];
+
+
+		// C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
+		sys_matABCD_cont_.bottomLeftCorner(1, nx)(0, ind_eig) =
+				zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
+
 	}
 
 	// Balance the matrices.
-	// First concatenate
-	auto AB = ns_eigen_utils::hstack<double>(A_, B_);
-	auto CD = ns_eigen_utils::hstack<double>(C_, D_);
-	auto ss_system = ns_eigen_utils::vstack<double>(AB, CD);
-
-	// Call balance metho on the system matrices.
-	ns_control_toolbox::balance(ss_system);
+	// Call balance method on the system matrices.
+	ns_control_toolbox::balance(sys_matABCD_cont_);
 
 	// Re-assign back to A, B, C, D. We might make this step faster with arrays.
-	A_ = ss_system.topLeftCorner(nx, nx);
-	B_ = ss_system.topRightCorner(nx, 1);
-	C_ = ss_system.bottomLeftCorner(1, nx);
-	D_ = ss_system.bottomRightCorner(1, 1);
+
 
 
 }
 
 void ns_control_toolbox::tf2ss::print() const
 {
+	ns_utils::print("System Matrices [A, B; C, D] : ");
+	ns_eigen_utils::printEigenMat(sys_matABCD_cont_);
 
 	ns_utils::print("A : ");
-	ns_eigen_utils::printEigenMat(A_);
+	ns_eigen_utils::printEigenMat(A());
 
 	ns_utils::print("B : ");
-	ns_eigen_utils::printEigenMat(B_);
+	ns_eigen_utils::printEigenMat(B());
 
 	ns_utils::print("C : ");
-	ns_eigen_utils::printEigenMat(C_);
+	ns_eigen_utils::printEigenMat(C());
 
 	ns_utils::print("D : ");
-	ns_eigen_utils::printEigenMat(D_);
+	ns_eigen_utils::printEigenMat(D());
 }
 
 
@@ -192,16 +200,19 @@ void ns_control_toolbox::tf2ss::print_discrete_system() const
 {
 
 	ns_utils::print("Ad : ");
-	ns_eigen_utils::printEigenMat(Ad_);
+	ns_eigen_utils::printEigenMat(Ad());
 
 	ns_utils::print("Bd : ");
-	ns_eigen_utils::printEigenMat(Bd_);
+	ns_eigen_utils::printEigenMat(Bd());
 
 	ns_utils::print("Cd : ");
-	ns_eigen_utils::printEigenMat(Cd_);
+	ns_eigen_utils::printEigenMat(Cd());
 
 	ns_utils::print("Dd : ");
-	ns_eigen_utils::printEigenMat(Dd_);
+	ns_eigen_utils::printEigenMat(Dd());
+
+	ns_utils::print("System Matrices [Ad, Bd; Cd, Dd] : ");
+	ns_eigen_utils::printEigenMat(sys_matABCD_disc_);
 }
 
 /**
@@ -210,21 +221,32 @@ void ns_control_toolbox::tf2ss::print_discrete_system() const
 void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 {
 
-	auto&& n = A_.rows();
+	auto&& nx = N_ - 1;
+
+	auto&& A_ = sys_matABCD_cont_.topLeftCorner(nx, nx);
+	auto&& B_ = sys_matABCD_cont_.topRightCorner(nx, 1);
+	auto&& C_ = sys_matABCD_cont_.bottomLeftCorner(1, nx);
+	auto&& D_ = sys_matABCD_cont_.bottomRightCorner(1, 1);
 
 	// take inverse:
-	auto const&& I = Eigen::MatrixXd::Identity(n, n);
+	auto const&& I = Eigen::MatrixXd::Identity(nx, nx);
 
 	auto const&& mat1_ATs = I - A_ * Ts / 2.;
-
 	auto const&& inv1_ATs = mat1_ATs.inverse();
 
-	Ad_ = inv1_ATs * (I + A_ * Ts / 2.);
-	Bd_ = inv1_ATs * B_ * Ts;
-	Cd_ = C_ * inv1_ATs;
-	Dd_ = D_ + C_ * Bd_ / 2.;
 
-	//	ns_utils::print("invA \n");
+	auto&& Ad_ = inv1_ATs * (I + A_ * Ts / 2.);
+	auto&& Bd_ = inv1_ATs * B_ * Ts;
+	auto&& Cd_ = C_ * inv1_ATs;
+	auto&& Dd_ = D_ + C_ * Bd_ / 2.;
+
+	sys_matABCD_disc_.topLeftCorner(nx, nx) = Ad_;
+	sys_matABCD_disc_.topRightCorner(nx, 1) = Bd_;
+	sys_matABCD_disc_.bottomLeftCorner(1, nx) = Cd_;
+	sys_matABCD_disc_.bottomRightCorner(1, 1) = Dd_;
+
+
+	//	ns_utils::print("invA \nx");
 	//	ns_eigen_utils::printEigenMat(inv1_ATs);
 
 }
