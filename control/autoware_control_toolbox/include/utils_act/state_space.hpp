@@ -28,26 +28,6 @@
 namespace ns_control_toolbox
 {
 
-	/**
-	 * @brief Stores the state space model matrices either discrete, or continuous.
-	 * */
-
-	struct ss_system
-	{
-		ss_system() = default;
-
-		explicit ss_system(Eigen::MatrixXd Am,
-		                   Eigen::MatrixXd Bm,
-		                   Eigen::MatrixXd Cm,
-		                   Eigen::MatrixXd Dm);
-
-		Eigen::MatrixXd A{};
-		Eigen::MatrixXd B{};
-		Eigen::MatrixXd C{};
-		Eigen::MatrixXd D{};
-
-	};
-
 
 	/**
 	 * @brief tf2ss Converts a transfer function representation in to a state-space form.
@@ -55,9 +35,10 @@ namespace ns_control_toolbox
 	 *
 	 * */
 
-	struct ACT_PUBLIC tf2ss
+	class ACT_PUBLIC tf2ss
 	{
 
+	public:
 		// Constructors
 		tf2ss() = default;
 
@@ -74,16 +55,6 @@ namespace ns_control_toolbox
 
 		void print_discrete_system() const;
 
-
-		[[nodiscard]] ss_system getSystem_continuous() const;
-
-		[[nodiscard]] ss_system getSystem_discrete() const;
-
-		virtual void getABCD_continuous(Eigen::MatrixXd& A, Eigen::MatrixXd& B,
-		                                Eigen::MatrixXd& C, Eigen::MatrixXd& D) const;
-
-		virtual void getABCD_discrete(Eigen::MatrixXd& Ad, Eigen::MatrixXd& Bd,
-		                              Eigen::MatrixXd& Cd, Eigen::MatrixXd& Dd) const;
 
 		// Getters for the system matrices.
 		// Discrete time state-space matrices.
@@ -157,7 +128,10 @@ namespace ns_control_toolbox
 
 	};
 
+
+
 	// Type definition.
+
 	template<int nx, int ny>
 	using mat_type_t = Eigen::Matrix<double, nx, ny>;
 
