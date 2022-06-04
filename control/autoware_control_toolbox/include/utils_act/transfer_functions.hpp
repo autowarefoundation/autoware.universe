@@ -172,6 +172,11 @@ namespace ns_control_toolbox
 
 		void update_den_coef(double const& den_constant);
 
+		[[nodiscard]] int order() const
+		{
+			return static_cast<int>(std::max(num_.size(), den_.size()));
+		}
+
 
 	private:
 
