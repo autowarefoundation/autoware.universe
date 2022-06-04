@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #include "object_association_merger/node.hpp"
+
 #include "object_association_merger/utils/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <boost/optional.hpp>
+
 #include <chrono>
 #include <unordered_map>
 
@@ -112,7 +114,8 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
 
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
-  remove_overlapped_unknown_objects_ = declare_parameter<bool>("remove_overlapped_unknown_objects", true);
+  remove_overlapped_unknown_objects_ =
+    declare_parameter<bool>("remove_overlapped_unknown_objects", true);
 
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
@@ -120,8 +123,7 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
   const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
   data_association_ = std::make_unique<DataAssociation>(
-    can_assign_matrix, max_dist_matrix, max_rad_matrix,
-    min_iou_matrix);
+    can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix);
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
@@ -134,7 +136,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   }
 
   /* transform to base_link coordinate */
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects0,transformed_objects1;
+  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects0, transformed_objects1;
   if (
     !transformDetectedObjects(
       *input_objects0_msg, base_link_frame_id_, tf_buffer_, transformed_objects0) ||
@@ -176,7 +178,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   }
 
   // Remove overlapped unknown object
-  if (remove_overlapped_unknown_objects_){
+  if (remove_overlapped_unknown_objects_) {
     std::vector<autoware_auto_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
     unknown_objects.reserve(output_msg.objects.size());
     known_objects.reserve(output_msg.objects.size());

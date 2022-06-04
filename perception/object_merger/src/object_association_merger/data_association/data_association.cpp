@@ -35,11 +35,10 @@ double getDistance(
 }
 
 double getFormedYawAngle(
-  const geometry_msgs::msg::Quaternion & quat0,
-  const geometry_msgs::msg::Quaternion & quat1, const bool distinguish_front_or_back = true)
+  const geometry_msgs::msg::Quaternion & quat0, const geometry_msgs::msg::Quaternion & quat1,
+  const bool distinguish_front_or_back = true)
 {
-  const double yaw0 =
-    tier4_autoware_utils::normalizeRadian(tf2::getYaw(quat0));
+  const double yaw0 = tier4_autoware_utils::normalizeRadian(tf2::getYaw(quat0));
   const double yaw1 = tier4_autoware_utils::normalizeRadian(tf2::getYaw(quat1));
   const double angle_range = distinguish_front_or_back ? M_PI : M_PI_2;
   const double angle_step = distinguish_front_or_back ? 2.0 * M_PI : M_PI;
@@ -131,12 +130,10 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
       objects1.objects.at(objects1_idx);
     const std::uint8_t object1_label = utils::getHighestProbLabel(object1.classification);
 
-    for (size_t objects0_idx = 0; objects0_idx < objects0.objects.size();
-         ++objects0_idx) {
+    for (size_t objects0_idx = 0; objects0_idx < objects0.objects.size(); ++objects0_idx) {
       const autoware_auto_perception_msgs::msg::DetectedObject & object0 =
         objects0.objects.at(objects0_idx);
-      const std::uint8_t object0_label =
-        utils::getHighestProbLabel(object0.classification);
+      const std::uint8_t object0_label = utils::getHighestProbLabel(object0.classification);
 
       double score = 0.0;
       if (can_assign_matrix_(object1_label, object0_label)) {

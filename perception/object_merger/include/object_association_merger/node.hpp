@@ -24,7 +24,6 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
-
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
@@ -66,7 +65,7 @@ private:
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
   std::unique_ptr<DataAssociation> data_association_;
-  std::string base_link_frame_id_; // associated with the base_link frame
+  std::string base_link_frame_id_;  // associated with the base_link frame
   bool remove_overlapped_unknown_objects_;
 };
 }  // namespace object_association
