@@ -47,5 +47,11 @@ int main()
 	sys_ss3.print_discrete_system();
 
 
+	// Simulate one-step.
+	const int orderN = 4;
+	ns_control_toolbox::state_type_t<orderN> x0_;
+	x0_.setOnes();
+
+
 	return 0;
 }

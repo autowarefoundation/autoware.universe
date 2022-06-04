@@ -60,7 +60,7 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 	ns_utils::stripVectorZerosFromLeft(num);
 	ns_utils::stripVectorZerosFromLeft(den);
 
-	N_ = std::max(num.size(), den.size());
+	N_ = static_cast<Eigen::Index>(std::max(num.size(), den.size()));
 
 	// Compare if the system is a proper.
 	if (den.size() < num.size())
