@@ -41,15 +41,52 @@ int main()
 	ns_eigen_utils::printEigenMat(sys_ss2.Ad());
 
 	// DISCRETIZATION : Note sstf2 automatically discretisize
-	double Ts{ 0.1 };
+	double Ts{ 0.05 };
 	// sys_ss2.discretisize(Ts);
 	sys_ss2.print_discrete_system();
 
 	// Test defaulted.
 	ns_utils::print("Discretization with a given Ts when constructing");
 	auto sys_ss3 = ns_control_toolbox::tf2ss(sys_tf, Ts);
-	sys_ss2.print_discrete_system();
+	sys_ss3.print_discrete_system();
 
+
+	// Using ss
+//	auto ss1 = ns_control_toolbox::ss<3>{ sys_tf,
+//	                                      Ts };
+//
+//	ns_utils::print("Templated state-space class");
+//	ns_utils::print("----------------------------");
+//	ss1.print_discrete_system();
+//
+//
+//	// Get state space matrices from ss.
+//	int const nx{ 3 };
+//
+//	ns_control_toolbox::mat_type_t<nx, nx> A;
+//	ns_control_toolbox::mat_type_t<nx, 1> B;
+//	ns_control_toolbox::mat_type_t<1, nx> C;
+//	ns_control_toolbox::mat_type_t<1, 1> D;
+//
+////	ss1.getSSc(A, B, C, D);
+//	ss1.getSSd(A, B, C, D);
+//	ns_utils::print("Getting A, B, C, D");
+//	ns_eigen_utils::printEigenMat(A, "A");
+//	ns_eigen_utils::printEigenMat(A);
+//	ns_eigen_utils::printEigenMat(B, "B");
+//	ns_eigen_utils::printEigenMat(C, "C");
+//	ns_eigen_utils::printEigenMat(D, "D");
+
+
+
+//
+//	auto ss0 = ns_control_toolbox::ss<3>{{ 1, 0, 0 },
+//	                                     { 2, 2, 4 },
+//	                                     Ts };
+//
+//	ns_utils::print("Templated state-space class");
+//	ns_utils::print("----------------------------");
+//	ss0.print_discrete_system();
 
 	return 0;
 }

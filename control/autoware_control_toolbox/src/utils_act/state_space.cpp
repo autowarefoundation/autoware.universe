@@ -15,16 +15,19 @@
  */
 
 #include "utils_act/state_space.hpp"
+
+#include <utility>
 #include "utils_act/transfer_functions.hpp"
 
 
 /**
 * @brief Stores the state space model matrices either discrete, or continuous.
 * */
-ns_control_toolbox::ss_system::ss_system(const Eigen::MatrixXd& Am,
-                                         const Eigen::MatrixXd& Bm,
-                                         const Eigen::MatrixXd& Cm,
-                                         const Eigen::MatrixXd& Dm) : A(Am), B(Bm), C(Cm), D(Dm)
+ns_control_toolbox::ss_system::ss_system(Eigen::MatrixXd Am,
+                                         Eigen::MatrixXd Bm,
+                                         Eigen::MatrixXd Cm,
+                                         Eigen::MatrixXd Dm) : A(std::move(Am)), B(std::move(Bm)),
+                                                               C(std::move(Cm)), D(std::move(Dm))
 {
 
 }
@@ -129,6 +132,7 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	Cd_.resize(nx, 1);
 	Dd_.resize(1, 1);
 
+
 	// Zero padding the numerator.
 	auto num_of_zero = den.size() - num.size();
 
@@ -223,16 +227,16 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 void ns_control_toolbox::tf2ss::print() const
 {
 
-	ns_utils::print("A : \n");
+	ns_utils::print("A : ");
 	ns_eigen_utils::printEigenMat(A_);
 
-	ns_utils::print("B : \n");
+	ns_utils::print("B : ");
 	ns_eigen_utils::printEigenMat(B_);
 
-	ns_utils::print("C : \n");
+	ns_utils::print("C : ");
 	ns_eigen_utils::printEigenMat(C_);
 
-	ns_utils::print("D : \n");
+	ns_utils::print("D : ");
 	ns_eigen_utils::printEigenMat(D_);
 }
 
@@ -240,16 +244,16 @@ void ns_control_toolbox::tf2ss::print() const
 void ns_control_toolbox::tf2ss::print_discrete_system() const
 {
 
-	ns_utils::print("Ad : \n");
+	ns_utils::print("Ad : ");
 	ns_eigen_utils::printEigenMat(Ad_);
 
-	ns_utils::print("Bd : \n");
+	ns_utils::print("Bd : ");
 	ns_eigen_utils::printEigenMat(Bd_);
 
-	ns_utils::print("Cd : \n");
+	ns_utils::print("Cd : ");
 	ns_eigen_utils::printEigenMat(Cd_);
 
-	ns_utils::print("Dd : \n");
+	ns_utils::print("Dd : ");
 	ns_eigen_utils::printEigenMat(Dd_);
 }
 

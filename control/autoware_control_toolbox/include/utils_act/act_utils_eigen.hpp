@@ -140,7 +140,7 @@ namespace ns_eigen_utils
 		size_t m2c = m2.cols();
 
 		eigen_dynamic_type<T> mf = eigen_dynamic_type<T>::Zero(m1r + m2r, m1c + m2c);
-		mf.block(0, 0, m1r, m1c)     = m1;
+		mf.block(0, 0, m1r, m1c) = m1;
 		mf.block(m1r, m1c, m2r, m2c) = m2;
 
 		return mf;
@@ -212,7 +212,7 @@ namespace ns_eigen_utils
 	constexpr eigen_dynamic_type<T> kron(const Derived1& m1, const Derived2& m2)
 	{
 		size_t const m1r = m1.rows();
-		size_t       m1c = m1.cols();
+		size_t m1c = m1.cols();
 
 		size_t const m2r = m2.rows();
 		size_t const m2c = m2.cols();
@@ -234,19 +234,21 @@ namespace ns_eigen_utils
 	eigen_dynamic_type<T> convertToEigenMatrix(std::vector<std::vector<T>> data)
 	{
 		eigen_dynamic_type<T> eMatrix(data.size(), data[0].size());
-		for (size_t           i = 0; i < data.size(); ++i)
+		for (size_t i = 0; i < data.size(); ++i)
 		{
 			eMatrix.row(i) = eigen_vector_type<T>::Map(&data[i][0], data[0].size());
 		}
 		return eMatrix;
 	}
 
-	template<class M>
-	void printEigenMat(M const& mat)
+	template<class M, typename S=std::string_view>
+	void printEigenMat(M const& mat, S additional_info = "")
 	{
-		std::string     sep = "\n----------------------------------------\n";
+		std::cout << additional_info;
+		std::string sep = "\n----------------------------------------\n";
 		Eigen::IOFormat CommaInitFmt(
 				Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", " << ", ";");
+
 		Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
 		Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 		Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
@@ -254,10 +256,10 @@ namespace ns_eigen_utils
 		std::cout << '\n' << mat.format(CleanFmt) << sep;
 	}
 
-	template<typename T>
-	void printEigenMat(eigen_dynamic_type<T> const& mat)
+	template<typename T, typename S=std::string_view>
+	void printEigenMat(eigen_dynamic_type<T> const& mat, S additional_info)
 	{
-		std::string     sep = "\n----------------------------------------\n";
+		std::string sep = "\n----------------------------------------\n";
 		Eigen::IOFormat CommaInitFmt(
 				Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", " << ", ";");
 
@@ -265,7 +267,7 @@ namespace ns_eigen_utils
 		Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 		Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
 
-		std::cout << "Matrix to be printed : \n " << mat.format(CleanFmt) << sep;
+		std::cout << additional_info << " : \n" << mat.format(CleanFmt) << sep;
 	}
 
 /**
@@ -275,7 +277,7 @@ namespace ns_eigen_utils
 	template<typename T>
 	eigen_dynamic_type<T> crossProduct(eigen_dynamic_type<T> const r0, eigen_dynamic_type<T> const r1)
 	{
-		auto                  m = r0.rows();
+		auto m = r0.rows();
 		eigen_dynamic_type<T> cross_product(m, 1);
 		cross_product.setZero();
 
@@ -294,7 +296,7 @@ namespace ns_eigen_utils
 	eigen_dynamic_type<T> Curvature(
 			eigen_dynamic_type<T> const rdot, eigen_dynamic_type<T> const rdotdot)
 	{
-		auto                  m = rdot.rows();
+		auto m = rdot.rows();
 		eigen_dynamic_type<T> curvature(m, 1);
 		curvature.setZero();
 
@@ -343,7 +345,7 @@ namespace ns_eigen_utils
 
 		for (Eigen::Index k = 0; k < NNZflatind.size(); k++)
 		{
-			auto   val = arg_mat(NNZflatind[k]);
+			auto val = arg_mat(NNZflatind[k]);
 			size_t col = NNZflatind[k] / (ArgType::Flags & Eigen::RowMajorBit ? m : n);
 			size_t row = NNZflatind[k] % (ArgType::Flags & Eigen::RowMajorBit ? m : n);
 
@@ -360,8 +362,8 @@ namespace ns_eigen_utils
 	template<template<typename, typename> class ContainerType, typename ValueType, typename AllocType>
 	void printTrajectory(const ContainerType<ValueType, AllocType>& eigen_matrix_vec)
 	{
-		auto            nX   = eigen_matrix_vec.size();
-		auto const      nrow = eigen_matrix_vec[0].rows();
+		auto nX = eigen_matrix_vec.size();
+		auto const nrow = eigen_matrix_vec[0].rows();
 		Eigen::MatrixXd X(nrow, nX);
 		X.setZero();
 
@@ -376,8 +378,8 @@ namespace ns_eigen_utils
 	template<template<typename, typename> class ContainerType, typename ValueType, typename AllocType>
 	Eigen::MatrixXd getTrajectory(const ContainerType<ValueType, AllocType>& eigen_matrix_vec)
 	{
-		auto            nX   = eigen_matrix_vec.size();
-		auto const      nrow = eigen_matrix_vec[0].rows();
+		auto nX = eigen_matrix_vec.size();
+		auto const nrow = eigen_matrix_vec[0].rows();
 		Eigen::MatrixXd X(nrow, nX);
 		X.setZero();
 
@@ -483,9 +485,9 @@ namespace ns_eigen_utils
 			return;
 		}
 
-		auto const&& sign       = sgn(weight);
+		auto const&& sign = sgn(weight);
 		auto const&& weight_abs = std::fabs(weight);
-		auto const&& nrows      = U.rows();
+		auto const&& nrows = U.rows();
 
 		for (auto j = 0; j < U.cols(); ++j)
 		{
@@ -494,9 +496,9 @@ namespace ns_eigen_utils
 			for (auto k = 0; k < nrows; ++k)
 			{
 				auto const&& r_squared = R(k, k) * R(k, k) + sign * x(k, 0) * x(k, 0);
-				auto const&& r         = r_squared < 0 ? 0. : std::sqrt(r_squared);
-				auto const&& c         = r / R(k, k);
-				auto const&& s         = x(k, 0) / R(k, k);
+				auto const&& r = r_squared < 0 ? 0. : std::sqrt(r_squared);
+				auto const&& c = r / R(k, k);
+				auto const&& s = x(k, 0) / R(k, k);
 				R(k, k) = r;
 
 				R.row(k).rightCols(nrows - 1 - k) =
