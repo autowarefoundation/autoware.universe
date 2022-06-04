@@ -51,11 +51,6 @@ namespace ns_control_toolbox
 		// Currently only Tustin - Bilinear discretization is implemented.
 		void discretisize(double const& Ts);
 
-		void print() const;
-
-		void print_discrete_system() const;
-
-
 		// Getters for the system matrices.
 		// Discrete time state-space matrices.
 		[[nodiscard]] Eigen::MatrixXd Ad() const
@@ -108,7 +103,19 @@ namespace ns_control_toolbox
 			return D;
 		}
 
-		// Class methods.
+		void getSystemMatricesABCD_disc(Eigen::MatrixXd& sysMat) const
+		{
+			sysMat = sys_matABCD_disc_;
+		}
+
+		/**
+		 * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
+		 * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
+		 * */
+		void simulateOneStep(Eigen::MatrixXd& system_state_xu)
+		{
+			system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
+		}
 
 		/**
 		 * @brief Compute the system continuous time system matrices
@@ -117,10 +124,15 @@ namespace ns_control_toolbox
 		                           std::vector<double> const& den);
 
 
+		void print() const;
+
+		void print_discrete_system() const;
+
+
 	private:
 
 		double Ts_{};
-		Eigen::Index N_; // system size (A.rows+1).
+		Eigen::Index N_{}; // system size (A.rows+1).
 
 		// Data members
 
@@ -133,6 +145,8 @@ namespace ns_control_toolbox
 		 * */
 		Eigen::MatrixXd sys_matABCD_cont_{};
 		Eigen::MatrixXd sys_matABCD_disc_{};
+
+		Eigen::MatrixXd system_sim_xu0_{}; // state of system matrices [A, B;C, D]
 
 	};
 

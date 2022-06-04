@@ -49,8 +49,23 @@ int main()
 
 	// Simulate one-step.
 	const int orderN = 4;
-	ns_control_toolbox::state_type_t<orderN> x0_;
-	x0_.setOnes();
+
+	Eigen::MatrixXd sysmat(orderN + 1, orderN + 1);
+	sys_ss3.getSystemMatricesABCD_disc(sysmat);
+
+	ns_utils::print("Getting SysMat by Passing a Reference");
+	ns_eigen_utils::printEigenMat(sysmat);
+
+	Eigen::MatrixXd xu0_(orderN, 1);
+	xu0_.setOnes();
+
+	for (int k = 0; k < 10; ++k)
+	{
+		sys_ss3.simulateOneStep(xu0_);
+		ns_utils::print("Sim step k= ", k);
+		ns_eigen_utils::printEigenMat(xu0_);
+
+	}
 
 
 	return 0;
