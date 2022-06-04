@@ -120,7 +120,7 @@ namespace ns_control_toolbox
 	private:
 
 		double Ts_{};
-		Eigen::Index N_{}; // system size (A.rows+1).
+		Eigen::Index N_; // system size (A.rows+1).
 
 		// Data members
 
@@ -137,10 +137,12 @@ namespace ns_control_toolbox
 	};
 
 
-	// Type definition.
-
+	// Type definitions.
 	template<int nx, int ny>
 	using mat_type_t = Eigen::Matrix<double, nx, ny>;
+
+	template<int N>
+	using state_type_t = Eigen::Matrix<double, N, 1>;
 
 } // namespace ns_control_toolbox
 #endif //AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
