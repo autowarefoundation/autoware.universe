@@ -32,28 +32,6 @@ ns_control_toolbox::ss_system::ss_system(Eigen::MatrixXd Am,
 
 }
 
-ns_control_toolbox::tf2ss::tf2ss()
-		: A_{ Eigen::MatrixXd(1, 1) },
-		  B_{ Eigen::MatrixXd(1, 1) },
-		  C_{ Eigen::MatrixXd(1, 1) },
-		  D_{ Eigen::MatrixXd(1, 1) },
-		  Ad_{ Eigen::MatrixXd(1, 1) },
-		  Bd_{ Eigen::MatrixXd(1, 1) },
-		  Cd_{ Eigen::MatrixXd(1, 1) },
-		  Dd_{ Eigen::MatrixXd(1, 1) }
-{
-	A_.setIdentity();
-	B_.setIdentity();
-	C_.setIdentity();
-	D_.setZero();
-
-	Ad_.setIdentity();
-	Bd_.setIdentity();
-	Cd_.setIdentity();
-	Dd_.setZero();
-	// ns_eigen_utils::printEigenMat(A_);
-}
-
 
 ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
 {

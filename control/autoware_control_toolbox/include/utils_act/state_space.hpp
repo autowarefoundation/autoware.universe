@@ -59,7 +59,7 @@ namespace ns_control_toolbox
 	{
 
 		// Constructors
-		tf2ss();
+		tf2ss() = default;
 
 		explicit tf2ss(tf const& sys_tf, const double& Ts = 0.1);
 
@@ -134,7 +134,8 @@ namespace ns_control_toolbox
 		/**
 		 * @brief Compute the system continuous time system matrices
 		 * */
-		void computeSystemMatrices(std::vector<double> const& num, std::vector<double> const& den);
+		void computeSystemMatrices(std::vector<double> const& num,
+		                           std::vector<double> const& den);
 
 
 	private:
@@ -156,68 +157,7 @@ namespace ns_control_toolbox
 
 	};
 
-
-	// Templated tf2ss
-	template<int Norder>
-	struct ss : public tf2ss
-	{
-		using tf2ss::tf2ss;
-
-		using state_vec_type = Eigen::Matrix<double, Norder, 1>;
-		using mat_Atype = Eigen::Matrix<double, Norder, Norder>;
-		using mat_Btype = Eigen::Matrix<double, Norder, 1>;
-		using mat_Ctype = Eigen::Matrix<double, 1, Norder>;
-		using mat_Dtype = Eigen::Matrix<double, 1, 1>;
-
-		void getSSc(mat_Atype& A, mat_Btype& B,
-		            mat_Ctype& C, mat_Dtype& D) const;
-
-		void getSSd(mat_Atype& Ad, mat_Btype& Bd,
-		            mat_Ctype& Cd, mat_Dtype& Dd) const;
-
-	private:
-
-		double Ts_{};
-
-		// Data members
-		// Continuous time state-space model
-		mat_Atype A_{};
-		mat_Btype B_{};
-		mat_Ctype C_{};
-		mat_Dtype D_{};
-
-		// Discrete time state-space model
-		mat_Atype Ad_{};
-		mat_Btype Bd_{};
-		mat_Ctype Cd_{};
-		mat_Dtype Dd_{};
-
-	};
-
-	template<int Norder>
-	void ss<Norder>::getSSc(mat_Atype& A, mat_Btype& B,
-	                        mat_Ctype& C, mat_Dtype& D) const
-	{
-		A = A_;
-		B = B_;
-		C = C_;
-		D = D_;
-	}
-
-	template<int Norder>
-	void ss<Norder>::getSSd(mat_Atype& Ad, mat_Btype& Bd,
-	                        mat_Ctype& Cd, mat_Dtype& Dd) const
-	{
-		Ad = mat_Atype{ Ad_ };
-		ns_eigen_utils::printEigenMat(Ad_);
-		ns_eigen_utils::printEigenMat(Ad);
-
-
-		Bd = mat_Btype{ Bd_ };
-		Cd = mat_Ctype{ Cd_ };
-		Dd = mat_Dtype{ Dd_ };
-	}
-
+	// Type definition.
 	template<int nx, int ny>
 	using mat_type_t = Eigen::Matrix<double, nx, ny>;
 
