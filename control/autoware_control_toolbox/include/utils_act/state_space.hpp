@@ -60,44 +60,52 @@ namespace ns_control_toolbox
 		// Discrete time state-space matrices.
 		[[nodiscard]] Eigen::MatrixXd Ad() const
 		{
-			return Ad_;
+			auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
+			return Ad;
 		}
 
 		[[nodiscard]] Eigen::MatrixXd Bd() const
 		{
-			return Bd_;
+			auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
+			return Bd;
 		}
 
 		[[nodiscard]] Eigen::MatrixXd Cd() const
 		{
-			return Cd_;
+			auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
+			return Cd;
 		}
 
 		[[nodiscard]] Eigen::MatrixXd Dd() const
 		{
-			return Dd_;
+			auto&& Dd = sys_matABCD_disc_.bottomRightCorner(1, 1);
+			return Dd;
 		}
 
 
 		// Continuous time state-space matrices.
 		[[nodiscard]] Eigen::MatrixXd A() const
 		{
-			return A_;
+			auto&& A = sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
+			return A;
 		}
 
 		[[nodiscard]] Eigen::MatrixXd B() const
 		{
-			return B_;
+			auto&& B = sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
+			return B;
 		}
 
 		[[nodiscard]] Eigen::MatrixXd C() const
 		{
-			return C_;
+			auto&& C = sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
+			return C;
 		}
 
 		[[nodiscard]] Eigen::MatrixXd D() const
 		{
-			return D_;
+			auto&& D = sys_matABCD_cont_.bottomRightCorner(1, 1);
+			return D;
 		}
 
 		// Class methods.
@@ -112,22 +120,21 @@ namespace ns_control_toolbox
 	private:
 
 		double Ts_{};
+		Eigen::Index N_{}; // system size (A.rows+1).
 
 		// Data members
-		// Continuous time state-space model
-		Eigen::MatrixXd A_{};
-		Eigen::MatrixXd B_{};
-		Eigen::MatrixXd C_{};
-		Eigen::MatrixXd D_{};
 
-		// Discrete time state-space model
-		Eigen::MatrixXd Ad_{};
-		Eigen::MatrixXd Bd_{};
-		Eigen::MatrixXd Cd_{};
-		Eigen::MatrixXd Dd_{};
+		// system matrices  in a single matrix form of [A, B;C, D]
+		/**
+		 *	A_ = ss_system.topLeftCorner(nx, nx);
+		 *	B_ = ss_system.topRightCorner(nx, 1);
+		 *	C_ = ss_system.bottomLeftCorner(1, nx);
+		 *	D_ = ss_system.bottomRightCorner(1, 1);
+		 * */
+		Eigen::MatrixXd sys_matABCD_cont_{};
+		Eigen::MatrixXd sys_matABCD_disc_{};
 
 	};
-
 
 
 	// Type definition.
