@@ -20,19 +20,6 @@
 #include "utils_act/transfer_functions.hpp"
 
 
-/**
-* @brief Stores the state space model matrices either discrete, or continuous.
-* */
-ns_control_toolbox::ss_system::ss_system(Eigen::MatrixXd Am,
-                                         Eigen::MatrixXd Bm,
-                                         Eigen::MatrixXd Cm,
-                                         Eigen::MatrixXd Dm) : A(std::move(Am)), B(std::move(Bm)),
-                                                               C(std::move(Cm)), D(std::move(Dm))
-{
-
-}
-
-
 ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
 {
 
@@ -181,24 +168,6 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	C_ = ss_system.bottomLeftCorner(1, nx);
 	D_ = ss_system.bottomRightCorner(1, 1);
 
-//		bool debug = false;
-//		if (debug)
-//			{
-////				ns_utils::print("A : \nx");
-////				ns_eigen_utils::printEigenMat(A_);
-////
-////        ns_utils::print("B : \nx");
-////        ns_eigen_utils::printEigenMat(B_);
-////
-////        ns_utils::print("C : \nx");
-////        ns_eigen_utils::printEigenMat(C_);
-////
-////				ns_utils::print("D : \nx");
-////				ns_eigen_utils::printEigenMat(D_);
-//				ns_utils::print("Zero padded vector");
-//				ns_utils::print_container(zero_padded_num);
-//
-//			}
 
 }
 
@@ -258,37 +227,6 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	//	ns_utils::print("invA \n");
 	//	ns_eigen_utils::printEigenMat(inv1_ATs);
 
-}
-
-ns_control_toolbox::ss_system ns_control_toolbox::tf2ss::getSystem_continuous() const
-{
-
-	return ns_control_toolbox::ss_system(A_, B_, C_, D_);
-}
-
-ns_control_toolbox::ss_system ns_control_toolbox::tf2ss::getSystem_discrete() const
-{
-	return ns_control_toolbox::ss_system(Ad_, Bd_, Cd_, Dd_);
-}
-
-void ns_control_toolbox::tf2ss::getABCD_continuous(Eigen::MatrixXd& A, Eigen::MatrixXd& B,
-                                                   Eigen::MatrixXd& C, Eigen::MatrixXd& D) const
-{
-
-	A = A_;
-	B = B_;
-	C = C_;
-	D = D_;
-}
-
-void ns_control_toolbox::tf2ss::getABCD_discrete(Eigen::MatrixXd& Ad, Eigen::MatrixXd& Bd, Eigen::MatrixXd& Cd,
-                                                 Eigen::MatrixXd& Dd) const
-{
-
-	Ad = Ad_;
-	Bd = Bd_;
-	Cd = Cd_;
-	Dd = Dd_;
 }
 
 
