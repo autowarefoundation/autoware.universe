@@ -216,7 +216,10 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     object_data.object = object;
     avoidance_debug_msg.object_id = getUuidStr(object_data);
     // calc longitudinal distance from ego to closest target object footprint point.
-    object_data.longitudinal = calcDistanceToClosestFootprintPoint(reference_path, object, ego_pos);
+    std::pair<double, double> distance =
+      calcDistanceToClosestFootprintPointAndLongitudinalLength(reference_path, object, ego_pos);
+    object_data.longitudinal = distance.first;
+    object_data.length = distance.second;
     avoidance_debug_msg.longitudinal_distance = object_data.longitudinal;
 
     // object is behind ego or too far.
@@ -573,7 +576,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     AvoidPoint ap_return;
     ap_return.length = 0.0;
     ap_return.start_length = shift_length;
-    ap_return.start_longitudinal = o.longitudinal;
+    ap_return.start_longitudinal = o.longitudinal + o.length;
     ap_return.end_longitudinal =
       o.longitudinal + std::min(nominal_return_distance, return_remaining_distance);
     ap_return.id = getOriginalShiftPointUniqueId();
