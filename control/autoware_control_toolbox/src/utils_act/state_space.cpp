@@ -66,7 +66,7 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 	ns_utils::stripVectorZerosFromLeft(num);
 	ns_utils::stripVectorZerosFromLeft(den);
 
-	N_ = static_cast<Eigen::Index>(std::max(num.size(), den.size()));
+	N_ = static_cast<Eigen::Index>(std::max(num.size(), den.size())) - 1;
 
 	// Compare if the system is a proper.
 	if (den.size() < num.size())
@@ -90,7 +90,7 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>& num,
                                                       const std::vector<double>& den)
 {
-	auto&& nx = N_ - 1; //static_cast<long>(den.size() - 1);       // Order of the system.
+	auto&& nx = N_; //static_cast<long>(den.size() - 1);       // Order of the system.
 
 	// We can put system check function if the nx = 0 -- i.e throw exception.
 	// B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
@@ -229,7 +229,7 @@ void ns_control_toolbox::tf2ss::print_discrete_system() const
 void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 {
 
-	auto&& nx = N_ - 1;
+	auto&& nx = N_;
 
 	auto&& A_ = sys_matABCD_cont_.topLeftCorner(nx, nx);
 	auto&& B_ = sys_matABCD_cont_.topRightCorner(nx, 1);
