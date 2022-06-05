@@ -353,6 +353,24 @@ void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& system_state_xu
 	system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
 }
 
+double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const double& u)
+{
+	auto&& nx = N_ - 1;
+
+	auto&& Ad_ = sys_matABCD_disc_.topLeftCorner(nx, nx);
+	auto&& Bd_ = sys_matABCD_disc_.topRightCorner(nx, 1);
+	auto&& Cd_ = sys_matABCD_disc_.bottomLeftCorner(1, nx);
+	auto&& Dd_ = sys_matABCD_disc_.bottomRightCorner(1, 1);
+
+	// First compute the output y.
+	double y = (Cd_ * x0 + Dd_ * u)(0, 0);
+
+	// Then update x0;
+	x0.noalias() = Ad_ * x0 + Bd_ * u;
+
+	return 0;
+}
+
 
 
 
