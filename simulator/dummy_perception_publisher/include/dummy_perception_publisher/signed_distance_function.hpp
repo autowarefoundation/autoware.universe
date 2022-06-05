@@ -51,10 +51,10 @@ private:
   tf2::Transform tf_local_to_global_;
 };
 
-class CompisiteSDF : public AbstractSignedDistanceFunction
+class CompositeSDF : public AbstractSignedDistanceFunction
 {
 public:
-  explicit CompisiteSDF(std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs)
+  explicit CompositeSDF(std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs)
   : sdf_ptrs_(std::move(sdf_ptrs))
   {
     if (sdf_ptrs_.empty()) {

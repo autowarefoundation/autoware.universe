@@ -205,7 +205,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
       obj_info.length, obj_info.width, tf_base_link2map * obj_info.tf_map2moved_object);
     sdf_ptrs.push_back(sdf_ptr);
   }
-  const auto composite_sdf = signed_distance_function::CompisiteSDF(sdf_ptrs);
+  const auto composite_sdf = signed_distance_function::CompositeSDF(sdf_ptrs);
 
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds(obj_infos.size());
   for (size_t i = 0; i < obj_infos.size(); ++i) {

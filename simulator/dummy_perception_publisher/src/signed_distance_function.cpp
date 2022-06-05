@@ -68,13 +68,13 @@ double BoxSDF::operator()(double x, double y) const
   return negative_dist;
 }
 
-double CompisiteSDF::operator()(double x, double y) const
+double CompositeSDF::operator()(double x, double y) const
 {
   const size_t nearest_idx = nearest_sdf_index(x, y);
   return sdf_ptrs_.at(nearest_idx)->operator()(x, y);
 }
 
-size_t CompisiteSDF::nearest_sdf_index(double x, double y) const
+size_t CompositeSDF::nearest_sdf_index(double x, double y) const
 {
   double min_value = std::numeric_limits<double>::infinity();
   size_t idx_min{};
