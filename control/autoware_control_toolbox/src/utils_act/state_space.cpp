@@ -318,6 +318,15 @@ void ns_control_toolbox::tf2ss::getSystemMatricesABCD_disc(Eigen::MatrixXd& sysM
  * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
  * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
  * */
+
+
+template<int N>
+void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::Matrix<double, N, N>& system_state_xu)
+{
+	system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
+}
+
+
 void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& system_state_xu)
 {
 	system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;

@@ -82,7 +82,13 @@ namespace ns_control_toolbox
 		 * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
 		 * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
 		 * */
+
+		template<int N>
+		void simulateOneStep(Eigen::Matrix<double, N, N>& system_state_xu);
+
+
 		void simulateOneStep(Eigen::MatrixXd& system_state_xu);
+
 
 		/**
 		 * @brief Compute the system continuous time system matrices
