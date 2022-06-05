@@ -24,7 +24,7 @@ Estimates sequential steering offsets from kinematic model and state observation
 | Name                                  | Type                                    | Description                    |
 | ------------------------------------- | --------------------------------------- | ------------------------------ |
 | `~/output/steering_offset`            | `tier4_debug_msgs::msg::Float32Stamped` | steering offset                |
-| `~/output/steering_offset_covariance` | `tier4_debug_msgs::msg::Float32Stamped` | covaricance of steering offset |
+| `~/output/steering_offset_covariance` | `tier4_debug_msgs::msg::Float32Stamped` | covariance of steering offset |
 
 ## Launch Calibrator
 
