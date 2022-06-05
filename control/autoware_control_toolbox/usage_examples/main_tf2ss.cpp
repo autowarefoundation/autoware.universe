@@ -59,14 +59,34 @@ int main()
 	Eigen::MatrixXd xu0_(orderN, 1);
 	xu0_.setOnes();
 
-	for (int k = 0; k < 10; ++k)
-	{
-		sys_ss3.simulateOneStep(xu0_);
-		ns_utils::print("Sim step k= ", k);
-		ns_eigen_utils::printEigenMat(xu0_);
+//	for (int k = 0; k < 10; ++k)
+//	{
+//		sys_ss3.simulateOneStep(xu0_);
+//		ns_utils::print("Sim step k= ", k);
+//		ns_eigen_utils::printEigenMat(xu0_);
+//
+//	}
 
-	}
+	// Testing qfilter example
+	double dt = 1. / 40;
+	int order_q = 3;
+	double frq_q = 20; //Hz
+	double wc = 2 * M_PI * frq_q;
+	auto tau_q = 1 / wc;
+	ns_control_toolbox::tf_factor den_q{{ tau_q, 1 }};
+	den_q.power(order_q);
 
+	ns_utils::print("\nQfilter Transfer Function \n");
+	auto Qtf = ns_control_toolbox::tf({ 1. }, { den_q() });
+	Qtf.print();
+
+	ns_control_toolbox::tf2ss Qss(Qtf, dt);
+
+	ns_utils::print("\nQfilter Continuous State Space \n");
+	Qss.print();
+
+	ns_utils::print("\nQfilter Discrete State Space \n");
+	Qss.print_discrete_system();
 
 	return 0;
 }
