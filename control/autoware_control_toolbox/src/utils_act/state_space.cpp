@@ -23,9 +23,15 @@
 ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
 {
 	N_ = sys_tf.order(); // size of A will be order of the TF.
-	auto num = sys_tf.num();
-	auto den = sys_tf.den();
+	updateStateSpace(sys_tf);
 
+}
+
+void ns_control_toolbox::tf2ss::updateStateSpace(const ns_control_toolbox::tf& sys_tf)
+{
+
+	auto&& num = sys_tf.num();
+	auto&& den = sys_tf.den();
 
 	// Check the leading zeros to determine the order of the system, and strip the leading zeros.
 	ns_utils::stripVectorZerosFromLeft(num);
@@ -46,7 +52,7 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const dou
 	computeSystemMatrices(num, den);
 
 	// Discretisize.
-	discretisize(Ts);
+	discretisize(Ts_);
 
 }
 
@@ -87,16 +93,20 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	auto&& nx = N_ - 1; //static_cast<long>(den.size() - 1);       // Order of the system.
 
 	// We can put system check function if the nx = 0 -- i.e throw exception.
-
-
 	// B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
 
-	sys_matABCD_cont_.resize(nx + 1, nx + 1);
-	sys_matABCD_disc_.resize(nx + 1, nx + 1);
+	if (sys_matABCD_cont_.rows() != nx + 1 && sys_matABCD_cont_.cols() != nx + 1)
+	{
+		sys_matABCD_cont_.resize(nx + 1, nx + 1);
+		sys_matABCD_disc_.resize(nx + 1, nx + 1);
+	}
+
+	sys_matABCD_cont_.setZero();
+	sys_matABCD_disc_.setZero();
 
 
 	// Zero padding the numerator.
-	auto num_of_zero = den.size() - num.size();
+	auto&& num_of_zero = den.size() - num.size();
 
 	std::vector<double> zero_padded_num{ num };
 
@@ -127,10 +137,10 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	}
 
 
-//	A_ = ss_system.topLeftCorner(nx, nx);
-//	B_ = ss_system.topRightCorner(nx, 1);
-//	C_ = ss_system.bottomLeftCorner(1, nx);
-//	D_ = ss_system.bottomRightCorner(1, 1);
+	//	A_ = ss_system.topLeftCorner(nx, nx);
+	//	B_ = ss_system.topRightCorner(nx, 1);
+	//	C_ = ss_system.bottomLeftCorner(1, nx);
+	//	D_ = ss_system.bottomRightCorner(1, 1);
 
 	if (nx > 0)
 	{
@@ -170,11 +180,6 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	// Balance the matrices.
 	// Call balance method on the system matrices.
 	ns_control_toolbox::balance(sys_matABCD_cont_);
-
-	// Re-assign back to A, B, C, D. We might make this step faster with arrays.
-
-
-
 }
 
 void ns_control_toolbox::tf2ss::print() const
@@ -250,6 +255,77 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	//	ns_eigen_utils::printEigenMat(inv1_ATs);
 
 }
+
+// Getters for the system matrices.
+// Discrete time state-space matrices.
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const
+{
+	auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
+	return Ad;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const
+{
+	auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
+	return Bd;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const
+{
+	auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
+	return Cd;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Dd() const
+{
+	auto&& Dd = sys_matABCD_disc_.bottomRightCorner(1, 1);
+	return Dd;
+}
+
+
+// Continuous time state-space matrices.
+Eigen::MatrixXd ns_control_toolbox::tf2ss::A() const
+{
+	auto&& A = sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
+	return A;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::B() const
+{
+	auto&& B = sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
+	return B;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::C() const
+{
+	auto&& C = sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
+	return C;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const
+{
+	auto&& D = sys_matABCD_cont_.bottomRightCorner(1, 1);
+	return D;
+}
+
+
+void ns_control_toolbox::tf2ss::getSystemMatricesABCD_disc(Eigen::MatrixXd& sysMat) const
+{
+	sysMat = sys_matABCD_disc_;
+}
+
+/**
+ * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
+ * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
+ * */
+void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& system_state_xu)
+{
+	system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
+}
+
+
+
+
 
 
 

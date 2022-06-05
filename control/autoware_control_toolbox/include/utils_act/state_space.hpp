@@ -51,71 +51,38 @@ namespace ns_control_toolbox
 		// Currently only Tustin - Bilinear discretization is implemented.
 		void discretisize(double const& Ts);
 
+
+		// Update state-space once constructed and in case of a parameter change.
+		void updateStateSpace(tf const& sys_tf);
+
+
 		// Getters for the system matrices.
 		// Discrete time state-space matrices.
-		[[nodiscard]] Eigen::MatrixXd Ad() const
-		{
-			auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
-			return Ad;
-		}
+		[[nodiscard]] Eigen::MatrixXd Ad() const;
 
-		[[nodiscard]] Eigen::MatrixXd Bd() const
-		{
-			auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
-			return Bd;
-		}
+		[[nodiscard]] Eigen::MatrixXd Bd() const;
 
-		[[nodiscard]] Eigen::MatrixXd Cd() const
-		{
-			auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
-			return Cd;
-		}
+		[[nodiscard]] Eigen::MatrixXd Cd() const;
 
-		[[nodiscard]] Eigen::MatrixXd Dd() const
-		{
-			auto&& Dd = sys_matABCD_disc_.bottomRightCorner(1, 1);
-			return Dd;
-		}
-
+		[[nodiscard]] Eigen::MatrixXd Dd() const;
 
 		// Continuous time state-space matrices.
-		[[nodiscard]] Eigen::MatrixXd A() const
-		{
-			auto&& A = sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
-			return A;
-		}
+		[[nodiscard]] Eigen::MatrixXd A() const;
 
-		[[nodiscard]] Eigen::MatrixXd B() const
-		{
-			auto&& B = sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
-			return B;
-		}
+		[[nodiscard]] Eigen::MatrixXd B() const;
 
-		[[nodiscard]] Eigen::MatrixXd C() const
-		{
-			auto&& C = sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
-			return C;
-		}
+		[[nodiscard]] Eigen::MatrixXd C() const;
 
-		[[nodiscard]] Eigen::MatrixXd D() const
-		{
-			auto&& D = sys_matABCD_cont_.bottomRightCorner(1, 1);
-			return D;
-		}
+		[[nodiscard]] Eigen::MatrixXd D() const;
 
-		void getSystemMatricesABCD_disc(Eigen::MatrixXd& sysMat) const
-		{
-			sysMat = sys_matABCD_disc_;
-		}
+		void getSystemMatricesABCD_disc(Eigen::MatrixXd& sysMat) const;
+
 
 		/**
 		 * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
 		 * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
 		 * */
-		void simulateOneStep(Eigen::MatrixXd& system_state_xu)
-		{
-			system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
-		}
+		void simulateOneStep(Eigen::MatrixXd& system_state_xu);
 
 		/**
 		 * @brief Compute the system continuous time system matrices
