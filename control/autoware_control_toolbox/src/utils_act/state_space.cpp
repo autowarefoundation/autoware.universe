@@ -289,19 +289,19 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const
 {
 //	auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
-	return sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
+	return sys_matABCD_disc_.topLeftCorner(N_, N_);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const
 {
 //	auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
-	return sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
+	return sys_matABCD_disc_.topRightCorner(N_, 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const
 {
 //	auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
-	return sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
+	return sys_matABCD_disc_.bottomLeftCorner(1, N_);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Dd() const
@@ -355,7 +355,7 @@ void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& system_state_xu
 
 double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const double& u)
 {
-	auto&& nx = N_ - 1;
+	auto&& nx = N_;
 
 	auto&& Ad_ = sys_matABCD_disc_.topLeftCorner(nx, nx);
 	auto&& Bd_ = sys_matABCD_disc_.topRightCorner(nx, 1);
