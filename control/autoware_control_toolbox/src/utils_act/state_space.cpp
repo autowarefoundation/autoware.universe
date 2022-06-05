@@ -179,6 +179,9 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	// Balance the matrices.
 	// Call balance method on the system matrices.
+	//	ns_utils::print("Unbalanced System Matrix.");
+	//	ns_eigen_utils::printEigenMat(sys_matABCD_cont_);
+
 	ns_control_toolbox::balance(sys_matABCD_cont_);
 }
 
@@ -285,52 +288,52 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 // Discrete time state-space matrices.
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const
 {
-	auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
-	return Ad;
+//	auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
+	return sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const
 {
-	auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
-	return Bd;
+//	auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
+	return sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const
 {
-	auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
-	return Cd;
+//	auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
+	return sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Dd() const
 {
-	auto&& Dd = sys_matABCD_disc_.bottomRightCorner(1, 1);
-	return Dd;
+//	auto&& Dd = sys_matABCD_disc_.bottomRightCorner(1, 1);
+	return sys_matABCD_disc_.bottomRightCorner(1, 1);;
 }
 
 
 // Continuous time state-space matrices.
 Eigen::MatrixXd ns_control_toolbox::tf2ss::A() const
 {
-	auto&& A = sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
-	return A;
+//	auto A = sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
+	return sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::B() const
 {
-	auto&& B = sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
-	return B;
+//	auto&& B = sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
+	return sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::C() const
 {
-	auto&& C = sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
-	return C;
+//	auto&& C = sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
+	return sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const
 {
-	auto&& D = sys_matABCD_cont_.bottomRightCorner(1, 1);
-	return D;
+	// auto&& D = sys_matABCD_cont_.bottomRightCorner(1, 1);
+	return sys_matABCD_cont_.bottomRightCorner(1, 1);
 }
 
 
