@@ -233,6 +233,18 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	auto&& C_ = sys_matABCD_cont_.bottomLeftCorner(1, nx);
 	auto&& D_ = sys_matABCD_cont_.bottomRightCorner(1, 1);
 
+	ns_utils::print("A : ");
+	ns_eigen_utils::printEigenMat(A_);
+
+	ns_utils::print("B : ");
+	ns_eigen_utils::printEigenMat(B_);
+
+	ns_utils::print("C : ");
+	ns_eigen_utils::printEigenMat(C_);
+
+	ns_utils::print("D : ");
+	ns_eigen_utils::printEigenMat(D_);
+
 	// take inverse:
 	auto const&& I = Eigen::MatrixXd::Identity(nx, nx);
 
@@ -244,6 +256,19 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	auto&& Bd_ = inv1_ATs * B_ * Ts;
 	auto&& Cd_ = C_ * inv1_ATs;
 	auto&& Dd_ = D_ + C_ * Bd_ / 2.;
+
+
+	ns_utils::print("Ad : ");
+	ns_eigen_utils::printEigenMat(Ad_);
+
+	ns_utils::print("Bd : ");
+	ns_eigen_utils::printEigenMat(Bd_);
+
+	ns_utils::print("Cd : ");
+	ns_eigen_utils::printEigenMat(Cd_);
+
+	ns_utils::print("Dd : ");
+	ns_eigen_utils::printEigenMat(Dd_);
 
 	sys_matABCD_disc_.topLeftCorner(nx, nx) = Ad_;
 	sys_matABCD_disc_.topRightCorner(nx, 1) = Bd_;
@@ -318,13 +343,6 @@ void ns_control_toolbox::tf2ss::getSystemMatricesABCD_disc(Eigen::MatrixXd& sysM
  * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
  * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
  * */
-
-
-template<int N>
-void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::Matrix<double, N, 1>& system_state_xu)
-{
-	system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
-}
 
 
 void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& system_state_xu)

@@ -83,9 +83,6 @@ namespace ns_control_toolbox
 		 * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
 		 * */
 
-		template<int N>
-		void simulateOneStep(Eigen::Matrix<double, N, 1>& system_state_xu);
-
 
 		void simulateOneStep(Eigen::MatrixXd& system_state_xu);
 
