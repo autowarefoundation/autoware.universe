@@ -174,7 +174,7 @@ namespace ns_control_toolbox
 
 		[[nodiscard]] int order() const
 		{
-			return static_cast<int>(std::max(num_.size(), den_.size()));
+			return static_cast<int>(std::max(num_.size(), den_.size())) - 1;
 		}
 
 
