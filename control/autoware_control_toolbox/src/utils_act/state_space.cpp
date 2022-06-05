@@ -233,17 +233,17 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	auto&& C_ = sys_matABCD_cont_.bottomLeftCorner(1, nx);
 	auto&& D_ = sys_matABCD_cont_.bottomRightCorner(1, 1);
 
-	ns_utils::print("A : ");
-	ns_eigen_utils::printEigenMat(A_);
-
-	ns_utils::print("B : ");
-	ns_eigen_utils::printEigenMat(B_);
-
-	ns_utils::print("C : ");
-	ns_eigen_utils::printEigenMat(C_);
-
-	ns_utils::print("D : ");
-	ns_eigen_utils::printEigenMat(D_);
+//	ns_utils::print("A : ");
+//	ns_eigen_utils::printEigenMat(A_);
+//
+//	ns_utils::print("B : ");
+//	ns_eigen_utils::printEigenMat(B_);
+//
+//	ns_utils::print("C : ");
+//	ns_eigen_utils::printEigenMat(C_);
+//
+//	ns_utils::print("D : ");
+//	ns_eigen_utils::printEigenMat(D_);
 
 	// take inverse:
 	auto const&& I = Eigen::MatrixXd::Identity(nx, nx);
@@ -258,17 +258,17 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	auto&& Dd_ = D_ + C_ * Bd_ / 2.;
 
 
-	ns_utils::print("Ad : ");
-	ns_eigen_utils::printEigenMat(Ad_);
-
-	ns_utils::print("Bd : ");
-	ns_eigen_utils::printEigenMat(Bd_);
-
-	ns_utils::print("Cd : ");
-	ns_eigen_utils::printEigenMat(Cd_);
-
-	ns_utils::print("Dd : ");
-	ns_eigen_utils::printEigenMat(Dd_);
+//	ns_utils::print("Ad : ");
+//	ns_eigen_utils::printEigenMat(Ad_);
+//
+//	ns_utils::print("Bd : ");
+//	ns_eigen_utils::printEigenMat(Bd_);
+//
+//	ns_utils::print("Cd : ");
+//	ns_eigen_utils::printEigenMat(Cd_);
+//
+//	ns_utils::print("Dd : ");
+//	ns_eigen_utils::printEigenMat(Dd_);
 
 	sys_matABCD_disc_.topLeftCorner(nx, nx) = Ad_;
 	sys_matABCD_disc_.topRightCorner(nx, 1) = Bd_;
