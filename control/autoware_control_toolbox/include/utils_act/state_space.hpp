@@ -84,7 +84,7 @@ namespace ns_control_toolbox
 		 * */
 
 		template<int N>
-		void simulateOneStep(Eigen::Matrix<double, N, N>& system_state_xu);
+		void simulateOneStep(Eigen::Matrix<double, N, 1>& system_state_xu);
 
 
 		void simulateOneStep(Eigen::MatrixXd& system_state_xu);
