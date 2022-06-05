@@ -39,75 +39,50 @@ void ns_control_toolbox::permute(Eigen::MatrixXd& P)
 void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 {
 
-	// get the size of the matrix.
-	auto const& nx = A.rows();
-	bool converged{ false };
+	const int p = 1;
+	bool converged = false;
 
-
-	while (!converged)
+	do
 	{
 		converged = true;
-
-		for (auto k = 1; k < nx; ++k)
+		for (Eigen::Index k = 0; k < A.rows(); ++k)
 		{
-
-			// Compute row and column norms.
-			auto r = A.row(k).lpNorm<1>(); // instead of 1-norm, one can use other norms as well.
-			auto c = A.col(k).lpNorm<1>();
-
-			// In the lapack implementation diagonal element is ignored in the norms.
-			// r = r - std::abs(A.row(k)(k));
-			// c = c - std::abs(A.col(k)(k));
-
-			// auto s = std::pow(r, 1) + std::pow(c, 1);
-			double f{ 1. };
+			double c = A.col(k).lpNorm<p>();
+			double r = A.row(k).lpNorm<p>();
+			double s = std::pow(c, p) + std::pow(r, p);
+			double f = 1;
 
 			if ((r > EPS) && (c > EPS))
 			{
+				// In the lapack implementation diagonal element is ignored in the norms.
 
-				auto g = r / RADIX;
-				auto&& s = r + c;
 
-				while (c < g)
+				while (c < r / RADIX)
 				{
-					f = f * RADIX;
-					c = c * RADIX;
-					r = r / RADIX;
-					g = g / RADIX;
+					c *= RADIX;
+					r /= RADIX;
+					f *= RADIX;
 				}
-
-				g = c / RADIX;
-				while (g > r)
+				while (c >= r * RADIX)
 				{
-					f = f / RADIX;
-					c = c / RADIX;
-					r = r * RADIX;
-					g = g / RADIX;
+					c /= RADIX;
+					r *= RADIX;
+					f /= RADIX;
 				}
-
-				// Convergence block.
-				if (c + r < 0.95 * s)
+				if (std::pow(c, p) + std::pow(r, p) < 0.95 * s)
 				{
-					converged = true;
+					converged = false;
 
-					// Apply similarity transformation to the rows and cols.
-					A.col(k).noalias() = A.col(k) * f;
-					A.row(k).noalias() = A.row(k) / f;
-
-					// ns_utils::print("f in the balancing algorithm : ", f);
+					A.col(k) *= f;
+					A.row(k) /= f;
 				}
-
 			}
-
 			else
 			{
-				// Apply similarity transformation to the rows and cols.
-				A.col(k).noalias() = A.col(k) * f;
-				A.row(k).noalias() = A.row(k) / f;
+				converged = false;
 			}
 		}
-
-	}
+	} while (!converged);
 
 }
 
