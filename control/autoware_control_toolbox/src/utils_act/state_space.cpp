@@ -368,7 +368,7 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const dou
 	// Then update x0;
 	x0.noalias() = Ad_ * x0 + Bd_ * u;
 
-	return 0;
+	return y;
 }
 
 
