@@ -108,7 +108,7 @@ std::set<int64_t> CrosswalkModuleManager::getCrosswalkIdSetOnPath(
 }  // namespace
 
 CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName()), rtc_interface_(node, "crosswalk")
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
 
@@ -164,27 +164,6 @@ CrosswalkModuleManager::getModuleExpiredFunction(
   return [crosswalk_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return crosswalk_id_set.count(scene_module->getModuleId()) == 0;
   };
-}
-
-bool CrosswalkModuleManager::getActivation(const UUID & uuid)
-{
-  return rtc_interface_.isActivated(uuid);
-}
-
-void CrosswalkModuleManager::updateRTCStatus(
-  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
-{
-  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
-}
-
-void CrosswalkModuleManager::removeRTCStatus(const UUID & uuid)
-{
-  rtc_interface_.removeCooperateStatus(uuid);
-}
-
-void CrosswalkModuleManager::publishRTCStatus(const Time & stamp)
-{
-  rtc_interface_.publishCooperateStatus(stamp);
 }
 
 }  // namespace behavior_velocity_planner

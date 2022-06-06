@@ -29,7 +29,7 @@ namespace behavior_velocity_planner
 using lanelet::autoware::DetectionArea;
 
 DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName()), rtc_interface_(node, "detection_area")
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
@@ -69,24 +69,4 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
   };
 }
 
-bool DetectionAreaModuleManager::getActivation(const UUID & uuid)
-{
-  return rtc_interface_.isActivated(uuid);
-}
-
-void DetectionAreaModuleManager::updateRTCStatus(
-  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
-{
-  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
-}
-
-void DetectionAreaModuleManager::removeRTCStatus(const UUID & uuid)
-{
-  rtc_interface_.removeCooperateStatus(uuid);
-}
-
-void DetectionAreaModuleManager::publishRTCStatus(const Time & stamp)
-{
-  rtc_interface_.publishCooperateStatus(stamp);
-}
 }  // namespace behavior_velocity_planner

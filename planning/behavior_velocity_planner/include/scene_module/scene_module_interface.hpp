@@ -20,6 +20,7 @@
 
 #include <utilization/util.hpp>
 #include <builtin_interfaces/msg/time.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -44,6 +45,7 @@
 namespace behavior_velocity_planner
 {
 using builtin_interfaces::msg::Time;
+using rtc_interface::RTCInterface;
 using unique_identifier_msgs::msg::UUID;
 class SceneModuleInterface
 {
@@ -137,57 +139,9 @@ public:
     deleteExpiredModules(path);
   }
 
-  virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
+  virtual void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
   {
-    visualization_msgs::msg::MarkerArray debug_marker_array;
-    visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
-    tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-    stop_reason_array.header.frame_id = "map";
-    stop_reason_array.header.stamp = clock_->now();
-
-    tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
-    infrastructure_command_array.stamp = clock_->now();
-
-    first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
-    for (const auto & scene_module : scene_modules_) {
-      const UUID uuid = getUUID(scene_module->getModuleId());
-
-      scene_module->setActivation(getActivation(uuid));
-      tier4_planning_msgs::msg::StopReason stop_reason;
-      scene_module->setPlannerData(planner_data_);
-      scene_module->modifyPathVelocity(path, &stop_reason);
-
-      if (stop_reason.reason != "") {
-        stop_reason_array.stop_reasons.emplace_back(stop_reason);
-      }
-
-      updateRTCStatus(
-        uuid, scene_module->isSafe(), scene_module->getDistance(), path->header.stamp);
-
-      if (const auto command = scene_module->getInfrastructureCommand()) {
-        infrastructure_command_array.commands.push_back(*command);
-      }
-
-      if (scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
-        first_stop_path_point_index_ = scene_module->getFirstStopPathPointIndex();
-      }
-
-      for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
-        debug_marker_array.markers.push_back(marker);
-      }
-
-      for (const auto & marker : scene_module->createVirtualWallMarkerArray().markers) {
-        virtual_wall_marker_array.markers.push_back(marker);
-      }
-    }
-
-    if (!stop_reason_array.stop_reasons.empty()) {
-      pub_stop_reason_->publish(stop_reason_array);
-    }
-    pub_infrastructure_commands_->publish(infrastructure_command_array);
-    pub_debug_->publish(debug_marker_array);
-    pub_virtual_wall_->publish(virtual_wall_marker_array);
-    publishRTCStatus(path->header.stamp);
+    modifyPathVelocity(path);
   }
 
 protected:
@@ -196,20 +150,7 @@ protected:
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
   getModuleExpiredFunction(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
-  virtual bool getActivation([[maybe_unused]] const UUID & uuid) { return false; }
-
-  virtual void updateRTCStatus(
-    [[maybe_unused]] const UUID & uuid, [[maybe_unused]] const bool safe,
-    [[maybe_unused]] const double distance, [[maybe_unused]] const Time & stamp)
-  {
-    return;
-  }
-
-  virtual void removeRTCStatus([[maybe_unused]] const UUID & uuid) { return; }
-
-  virtual void publishRTCStatus([[maybe_unused]] const Time & stamp) { return; }
-
-  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  virtual void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
   {
     const auto isModuleExpired = getModuleExpiredFunction(path);
 
@@ -219,8 +160,6 @@ protected:
 
     for (const auto & scene_module : copied_scene_modules) {
       if (isModuleExpired(scene_module)) {
-        removeRTCStatus(getUUID(scene_module->getModuleId()));
-        removeUUID(scene_module->getModuleId());
         unregisterModule(scene_module);
       }
     }
@@ -248,6 +187,116 @@ protected:
     registered_module_id_set_.erase(scene_module->getModuleId());
     scene_modules_.erase(scene_module);
   }
+
+  virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
+  {
+    visualization_msgs::msg::MarkerArray debug_marker_array;
+    visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
+    tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = clock_->now();
+
+    tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
+    infrastructure_command_array.stamp = clock_->now();
+
+    first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+    for (const auto & scene_module : scene_modules_) {
+      tier4_planning_msgs::msg::StopReason stop_reason;
+      scene_module->setPlannerData(planner_data_);
+      scene_module->modifyPathVelocity(path, &stop_reason);
+
+      if (stop_reason.reason != "") {
+        stop_reason_array.stop_reasons.emplace_back(stop_reason);
+      }
+
+      if (const auto command = scene_module->getInfrastructureCommand()) {
+        infrastructure_command_array.commands.push_back(*command);
+      }
+
+      if (scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
+        first_stop_path_point_index_ = scene_module->getFirstStopPathPointIndex();
+      }
+
+      for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
+        debug_marker_array.markers.push_back(marker);
+      }
+
+      for (const auto & marker : scene_module->createVirtualWallMarkerArray().markers) {
+        virtual_wall_marker_array.markers.push_back(marker);
+      }
+    }
+
+    if (!stop_reason_array.stop_reasons.empty()) {
+      pub_stop_reason_->publish(stop_reason_array);
+    }
+    pub_infrastructure_commands_->publish(infrastructure_command_array);
+    pub_debug_->publish(debug_marker_array);
+    pub_virtual_wall_->publish(virtual_wall_marker_array);
+  }
+
+  std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
+  std::set<int64_t> registered_module_id_set_;
+
+  std::shared_ptr<const PlannerData> planner_data_;
+
+  boost::optional<int> first_stop_path_point_index_;
+  rclcpp::Clock::SharedPtr clock_;
+  // Debug
+  rclcpp::Logger logger_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
+  rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
+    pub_infrastructure_commands_;
+};
+
+class SceneModuleManagerInterfaceWithRTC : public SceneModuleManagerInterface
+{
+public:
+  SceneModuleManagerInterfaceWithRTC(rclcpp::Node & node, const char * module_name)
+  : SceneModuleManagerInterface(node, module_name), rtc_interface_(node, module_name)
+  {
+  }
+
+  void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path) override
+  {
+    setActivation();
+    modifyPathVelocity(path);
+    sendRTC(path->header.stamp);
+  }
+
+protected:
+  RTCInterface rtc_interface_;
+  std::unordered_map<int64_t, UUID> map_uuid_;
+
+  void sendRTC(const Time & stamp)
+  {
+    for (const auto & scene_module : scene_modules_) {
+      const UUID uuid = getUUID(scene_module->getModuleId());
+      updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), stamp);
+    }
+    publishRTCStatus(stamp);
+  }
+
+  void setActivation()
+  {
+    for (const auto & scene_module : scene_modules_) {
+      const UUID uuid = getUUID(scene_module->getModuleId());
+      scene_module->setActivation(getActivation(uuid));
+    }
+  }
+
+  bool getActivation(const UUID & uuid) const { return rtc_interface_.isActivated(uuid); }
+
+  void updateRTCStatus(
+    const UUID & uuid, const bool safe, const double distance, const Time & stamp)
+  {
+    rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
+  }
+
+  void removeRTCStatus(const UUID & uuid) { rtc_interface_.removeCooperateStatus(uuid); }
+
+  void publishRTCStatus(const Time & stamp) { rtc_interface_.publishCooperateStatus(stamp); }
 
   UUID getUUID(const int64_t & module_id) const
   {
@@ -277,22 +326,24 @@ protected:
     }
   }
 
-  std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
-  std::set<int64_t> registered_module_id_set_;
-  std::unordered_map<int64_t, UUID> map_uuid_;
+  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override
+  {
+    const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  std::shared_ptr<const PlannerData> planner_data_;
+    // Copy container to avoid iterator corruption
+    // due to scene_modules_.erase() in unregisterModule()
+    const auto copied_scene_modules = scene_modules_;
 
-  boost::optional<int> first_stop_path_point_index_;
-  rclcpp::Clock::SharedPtr clock_;
-  // Debug
-  rclcpp::Logger logger_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
-  rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
-    pub_infrastructure_commands_;
+    for (const auto & scene_module : copied_scene_modules) {
+      if (isModuleExpired(scene_module)) {
+        removeRTCStatus(getUUID(scene_module->getModuleId()));
+        removeUUID(scene_module->getModuleId());
+        unregisterModule(scene_module);
+      }
+    }
+  }
 };
+
 }  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_

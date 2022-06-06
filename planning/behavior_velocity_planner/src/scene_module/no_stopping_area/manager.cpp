@@ -30,7 +30,7 @@ namespace behavior_velocity_planner
 using lanelet::autoware::NoStoppingArea;
 
 NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName()), rtc_interface_(node, "no_stopping_area")
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
@@ -74,24 +74,4 @@ NoStoppingAreaModuleManager::getModuleExpiredFunction(
   };
 }
 
-bool NoStoppingAreaModuleManager::getActivation(const UUID & uuid)
-{
-  return rtc_interface_.isActivated(uuid);
-}
-
-void NoStoppingAreaModuleManager::updateRTCStatus(
-  const UUID & uuid, const bool safe, const double distance, const Time & stamp)
-{
-  rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
-}
-
-void NoStoppingAreaModuleManager::removeRTCStatus(const UUID & uuid)
-{
-  rtc_interface_.removeCooperateStatus(uuid);
-}
-
-void NoStoppingAreaModuleManager::publishRTCStatus(const Time & stamp)
-{
-  rtc_interface_.publishCooperateStatus(stamp);
-}
 }  // namespace behavior_velocity_planner

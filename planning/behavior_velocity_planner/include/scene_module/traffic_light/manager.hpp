@@ -16,7 +16,6 @@
 #define SCENE_MODULE__TRAFFIC_LIGHT__MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <scene_module/traffic_light/scene.hpp>
 
@@ -27,28 +26,22 @@
 
 namespace behavior_velocity_planner
 {
-class TrafficLightModuleManager : public SceneModuleManagerInterface
+class TrafficLightModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
 public:
   explicit TrafficLightModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override { return "traffic_light"; }
 
-  void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path) override;
-
 private:
   TrafficLightModule::PlannerParam planner_param_;
-  rtc_interface::RTCInterface rtc_interface_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
-  bool getActivation(const UUID & uuid) override;
-  void updateRTCStatus(
-    const UUID & uuid, const bool safe, const double distance, const Time & stamp) override;
-  void removeRTCStatus(const UUID & uuid) override;
-  void publishRTCStatus(const Time & stamp) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path) override;
 
   // Debug
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::LookingTrafficSignal>::SharedPtr

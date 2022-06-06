@@ -16,7 +16,6 @@
 #define SCENE_MODULE__CROSSWALK__MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 #include <scene_module/crosswalk/scene_crosswalk.hpp>
 #include <scene_module/crosswalk/scene_walkway.hpp>
 #include <scene_module/scene_module_interface.hpp>
@@ -31,7 +30,7 @@
 
 namespace behavior_velocity_planner
 {
-class CrosswalkModuleManager : public SceneModuleManagerInterface
+class CrosswalkModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
 public:
   explicit CrosswalkModuleManager(rclcpp::Node & node);
@@ -41,6 +40,7 @@ public:
 private:
   CrosswalkModule::PlannerParam crosswalk_planner_param_;
   WalkwayModule::PlannerParam walkway_planner_param_;
+  rtc_interface::RTCInterface rtc_interface_;
 
   std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -51,14 +51,8 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::LaneletMapPtr lanelet_map,
     const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
-  rtc_interface::RTCInterface rtc_interface_;
-
+  
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
-  bool getActivation(const UUID & uuid) override;
-  void updateRTCStatus(
-    const UUID & uuid, const bool safe, const double distance, const Time & stamp) override;
-  void removeRTCStatus(const UUID & uuid) override;
-  void publishRTCStatus(const Time & stamp) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
