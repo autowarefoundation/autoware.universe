@@ -74,6 +74,7 @@ class IDisturbanceInterface_TimeDelay
 public:
     // virtual ~disturbanceInterface() = default;
     virtual double getDisturbedInput(double const &input) = 0;
+	virtual ~ IDisturbanceInterface_TimeDelay()=default;
 
     [[nodiscard]] virtual double getCurrentTimeDelayValue() const = 0;
 
@@ -99,6 +100,7 @@ protected:
 class InputDisturbance_IdentityTimeDelay : public IDisturbanceInterface_TimeDelay
 {
 public:
+
     double getDisturbedInput(double const &input) override
     {
         // ns_utils::print("Identity Input Disturbance is called ...");
@@ -185,6 +187,7 @@ public:
      * @param current_ref reference value that input deviates from.
      * */
     virtual double getDisturbedInput(double const &input) = 0;
+	virtual  ~IDisturbanceInterface_DeadZone() =default;
 
     /**
     * @brief returns a pair of deadzone input and output.
@@ -286,7 +289,7 @@ private:
 class IOutputDisturbance_Interface
 {
 public:
-    // virtual ~disturbanceInterface() = default;
+     virtual ~IOutputDisturbance_Interface() = default;
     virtual double getDisturbedOutput() = 0;
 
     /**
@@ -306,6 +309,7 @@ private:
 class OutputDisturbance_AdditiveIdentity : public IOutputDisturbance_Interface
 {
 public:
+
 
 
     double getDisturbedOutput() override
