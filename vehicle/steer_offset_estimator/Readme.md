@@ -11,7 +11,7 @@ The base steer offset value is 0 by default, which is standard, is updated itera
 
 Estimates sequential steering offsets from kinematic model and state observations.
 ![image2](./image/kinematic_constraints.png)
-Calculate yaw rate error and then calculate steering error, for more details see `updateSteeringOffset()` function.
+Calculate yaw rate error and then calculate steering error recursively by least squared method, for more details see `updateSteeringOffset()` function.
 
 ## Inputs / Outputs
 
