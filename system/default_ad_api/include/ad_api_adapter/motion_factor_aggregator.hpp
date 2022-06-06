@@ -88,4 +88,4 @@ private:
 
 }  // namespace default_ad_api
 
-#endif  // AWAPI_AWIV_ADAPTER__AWAPI_MOTION_FACTOR_AGGREGATOR_HPP_
+#endif  // AD_API_ADAPTER__MOTION_FACTOR_AGGREGATOR_HPP_

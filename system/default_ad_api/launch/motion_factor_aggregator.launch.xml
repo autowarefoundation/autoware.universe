@@ -11,11 +11,11 @@
   <group>
     <push-ros-namespace namespace="default_ad_api"/>
     <node pkg="default_ad_api" exec="motion_factor_aggregator" name="motion_factor_aggregator" output="screen">
-        <remap from="input/autoware_trajectory" to="$(var input_trajectory)"/>
         <remap from="input/scene_module/motion_factor" to="$(var input_scene_module_motion_factor)"/>
         <remap from="input/obstacle_stop/motion_factor" to="$(var input_obstacle_stop_motion_factor)"/>
         <remap from="input/surround_obstacle/motion_factor" to="$(var input_surround_obstacle_motion_factor)"/>
-        <remap from="~/output/motion_factors" to="(var output_motion_factors)"/>
+        <remap from="input/autoware_trajectory" to="$(var input_trajectory)"/>
+        <remap from="~/output/motion_factors" to="$(var output_motion_factors)"/>
 
         <param name="status_pub_hz" value="$(var status_pub_hz)"/>
         <param name="timeout" value="$(var timeout)"/>
