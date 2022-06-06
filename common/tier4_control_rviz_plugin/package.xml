@@ -20,6 +20,7 @@
   <depend>rviz_common</depend>
   <depend>rviz_default_plugins</depend>
   <depend>rviz_ogre_vendor</depend>
+  <depend>tier4_api_utils</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_control_msgs</depend>
   <depend>tier4_external_api_msgs</depend>

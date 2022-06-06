@@ -267,6 +267,7 @@ void ManualController::onGear(const GearReport::ConstSharedPtr msg)
       break;
     case GearReport::DRIVE:
       gear_label_ptr_->setText("D");
+
       break;
     case GearReport::LOW:
       gear_label_ptr_->setText("L");
