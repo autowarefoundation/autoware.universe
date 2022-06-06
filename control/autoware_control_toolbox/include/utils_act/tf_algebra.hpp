@@ -23,6 +23,7 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <algorithm>
 #include <boost/optional.hpp>
 
 // BOOST POLYNOMIAL
@@ -135,7 +136,6 @@ namespace ns_control_toolbox
 
 		friend T operator*=(T const& lhs, T const& rhs)
 		{
-
 			auto&& v1 = lhs(); // we store in tf classes as x^3, x^2 ... 1
 			auto&& v2 = rhs();
 

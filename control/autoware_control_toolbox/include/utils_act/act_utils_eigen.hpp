@@ -17,10 +17,10 @@
 #ifndef UTILS__ACT_UTILS_EIGEN_HPP_
 #define UTILS__ACT_UTILS_EIGEN_HPP_
 
-#include <eigen3/Eigen/Sparse>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <eigen3/Eigen/Sparse>
 #include "eigen3/Eigen/Core"
 
 namespace ns_eigen_utils

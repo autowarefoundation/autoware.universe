@@ -17,9 +17,11 @@
 #ifndef AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
 #define AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
 
-#include "visibility_control.hpp"
 #include <utility>
 #include <vector>
+#include <algorithm>
+#include <string>
+#include "visibility_control.hpp"
 #include "act_utils.hpp"
 #include "act_utils_eigen.hpp"
 #include "act_definitions.hpp"

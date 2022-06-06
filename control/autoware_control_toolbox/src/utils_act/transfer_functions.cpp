@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <utility>
+#include <vector>
+#include <algorithm>
+#include <string>
 #include "utils_act/transfer_functions.hpp"
 
 

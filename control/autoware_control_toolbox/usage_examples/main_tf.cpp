@@ -10,7 +10,6 @@
 
 int main()
 {
-
 	std::vector<double> num{ 1. };
 	std::vector<double> den{ 5.039e-07, 0.00019, 0.02387, 1 };
 

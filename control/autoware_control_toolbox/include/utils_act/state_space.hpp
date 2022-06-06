@@ -17,8 +17,9 @@
 #ifndef AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
 #define AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
 
-#include "visibility_control.hpp"
 #include <vector>
+#include <algorithm>
+#include "visibility_control.hpp"
 #include "act_utils.hpp"
 #include "act_utils_eigen.hpp"
 #include "act_definitions.hpp"
@@ -76,7 +77,6 @@ namespace ns_control_toolbox
 		[[nodiscard]] Eigen::MatrixXd D() const;
 
 		[[nodiscard]] Eigen::MatrixXd T() const; // Similarity transformation matrix T^inv * A * T
-
 
 
 		/**

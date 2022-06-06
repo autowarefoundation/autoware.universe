@@ -1,38 +1,35 @@
-//
-// Created by ali on 30/05/22.
-//
+/*
+ * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "autoware_control_toolbox.hpp"
 #include <vector>
 
 int main()
 {
 
-//	double Td = 0.11; // time delay in seconds.
-//	size_t order = 3; // order of the Pade approximation.
-//
-//	auto tf_delay = ns_control_toolbox::pade(Td, order);
-//	tf_delay.print();
-//
-//	// Define Ts
-//	double Ts{ 0.1 };
-//	auto ss_sys = ns_control_toolbox::tf2ss(tf_delay);
-//	ss_sys.print();
-//
-//	// Test discretization and compare with Matlab.
-//	ss_sys.discretisize(Ts);
-//	ss_sys.print_discrete_system();
-//
-//	// Concat
-//	auto AB = ns_eigen_utils::hstack<double>(ss_sys.A(), ss_sys.B());
-//	auto CD = ns_eigen_utils::hstack<double>(ss_sys.C(), ss_sys.D());
-//	auto ss_system = ns_eigen_utils::vstack<double>(AB, CD);
-//
-//	ns_utils::print("Matrix to be balanced ");
-//	ns_eigen_utils::printEigenMat(ss_system);
-//
-//	ns_utils::print("Balanced matrix for the system ");
-//	ns_control_toolbox::balance_a_matrix(ss_system);
-//	ns_eigen_utils::printEigenMat(ss_system);
+	double Td = 0.11; // time delay in seconds.
+	size_t order = 3; // order of the Pade approximation.
+
+	auto tf_delay = ns_control_toolbox::pade(Td, order);
+	tf_delay.print();
+
+	// Define Ts
+	double Ts{ 0.1 };
+	auto ss_sys = ns_control_toolbox::tf2ss(tf_delay, Ts);
+	ss_sys.print();
 
 	// COMPARE with MATLAB RESULTS.
 	double tau_steer{ 0.3 };
@@ -77,9 +74,6 @@ int main()
 	Gey_ss.print();
 
 	// PERMUTATION TEST
-
-
-
 
 	return 0;
 }
