@@ -265,13 +265,14 @@ void AutowareStatePanel::onEngageStatus(
   engage_status_label_ptr_->setText(QString::fromStdString(Bool2String(current_engage_)));
 }
 
-void AutowareStatePanel::onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)
+void AutowareStatePanel::onEmergencyStatus(
+  const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)
 {
   current_emergency_ = msg->emergency;
   if (msg->emergency) {
     emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
     emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
-    } else {
+  } else {
     emergency_button_ptr_->setText(QString::fromStdString("Set Emergency"));
     emergency_button_ptr_->setStyleSheet("background-color: #00FF00;");
   }
@@ -315,7 +316,9 @@ void AutowareStatePanel::onClickEmergencyButton()
   RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
   client_emergency_stop_->async_send_request(
-    request, [this]([[maybe_unused]] rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
+    request,
+    [this]([[maybe_unused]] rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture
+             result) {
       auto response = result.get();
       if (response->status.code == tier4_external_api_msgs::msg::ResponseStatus::SUCCESS) {
         RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
