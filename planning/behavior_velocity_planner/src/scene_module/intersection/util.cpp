@@ -377,7 +377,8 @@ bool getObjectiveLanelets(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
-    const auto objective_lanelet_with_margin = generateOffsetLanelet(conflicting_lanelet, right_margin, left_margin);
+    const auto objective_lanelet_with_margin =
+      generateOffsetLanelet(conflicting_lanelet, right_margin, left_margin);
     conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
     objective_lanelets.push_back({conflicting_lanelet});
     objective_lanelets_with_margin.push_back({objective_lanelet_with_margin});
@@ -468,7 +469,8 @@ double calcArcLengthFromPath(
   return length;
 }
 
-lanelet::ConstLanelet generateOffsetLanelet(const lanelet::ConstLanelet lanelet, double right_margin, double left_margin)
+lanelet::ConstLanelet generateOffsetLanelet(
+  const lanelet::ConstLanelet lanelet, double right_margin, double left_margin)
 {
   lanelet::Points3d lefts, rights;
 
