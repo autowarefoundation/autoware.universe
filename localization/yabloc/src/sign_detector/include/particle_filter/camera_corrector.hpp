@@ -27,7 +27,8 @@ public:
     max_range_(declare_parameter<float>("max_range", 20.f)),
     gamma_(declare_parameter<float>("gamma", 3.0f)),
     score_offset_(declare_parameter<float>("score_offset", -64.f)),
-    max_raw_score_(declare_parameter<float>("max_raw_score", 5000.0))
+    max_raw_score_(declare_parameter<float>("max_raw_score", 5000.0)),
+    min_prob_(declare_parameter<float>("min_prob", 0.01))
   {
     using std::placeholders::_1;
 
@@ -63,5 +64,6 @@ private:
   const float gamma_;
   const float score_offset_;
   const float max_raw_score_;
+  const float min_prob_;
 };
 }  // namespace particle_filter

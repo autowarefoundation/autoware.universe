@@ -10,3 +10,6 @@
 [submodule "src/rosbag2_rviz_plugins"]
 	path = src/rosbag2_rviz_plugins
 	url = https://github.com/Kettenhoax/rosbag2_rviz_plugins.git
+[submodule "src/topic_tools"]
+	path = src/topic_tools
+	url = git@github.com:tier4/topic_tools.git

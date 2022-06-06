@@ -36,11 +36,9 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   cv::applyColorMap(ll2_image, rgb_ll2_image, cv::COLORMAP_JET);
 
-  auto score_convert = [this](float raw) -> float {
-    constexpr float min_prob = 1e-4f;
-    constexpr float k = -std::log(min_prob) / 2.f;
+  auto score_convert = [this, k = -std::log(min_prob_) / 2.f](float raw) -> float {
     raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
-    return min_prob * std::exp(k * (raw / this->max_raw_score_ + 1));
+    return this->min_prob_ * std::exp(k * (raw / this->max_raw_score_ + 1));
   };
 
   ParticleArray weighted_particles = opt_array.value();

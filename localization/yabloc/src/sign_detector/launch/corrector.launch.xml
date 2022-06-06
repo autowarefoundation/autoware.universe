@@ -15,7 +15,15 @@
         <param name="gamma" value="3.0"/>
         <param name="score_offset" value="-128.0"/>
         <param name="max_raw_score" value="100000.0"/>
+        <param name="min_prob" value="0.1"/>
 
-        <remap from="/weighted_particles" to="/test/weighted_particles"/>
+        <remap from="/weighted_particles" to="/camera/weighted_particles"/>
+    </node>
+
+
+    <node if="true" pkg="topic_tools" exec="relay" name="camera_corrector_relay">
+        <param name="input_topic" value="/camera/weighted_particles" />
+        <param name="output_topic" value="/weighted_particles" />
+        <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />
     </node>
 </launch>
