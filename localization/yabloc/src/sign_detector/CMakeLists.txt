@@ -74,8 +74,8 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
 
-ADD_EXE(TARGET fix_to_pose_node     SRC src/fix_to_pose_node.cpp  INC                LIB util Geographic ${PCL_LIBRARIES})
-ADD_EXE(TARGET pose_to_path_node    SRC src/pose_to_path_node.cpp INC                LIB )
+ADD_EXE(TARGET fix_to_pose_node     SRC src/trajectory/fix_to_pose_node.cpp  INC                LIB util Geographic ${PCL_LIBRARIES})
+ADD_EXE(TARGET pose_to_path_node    SRC src/trajectory/pose_to_path_node.cpp INC                LIB )
 
 ADD_EXE(TARGET lsd_node             SRC src/lsd_*.cpp             INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
 ADD_EXE(TARGET ll2_to_image_node    SRC src/ll2_to_image_*.cpp    INC                LIB util Geographic )

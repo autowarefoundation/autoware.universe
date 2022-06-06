@@ -18,6 +18,12 @@ add_definitions(${PCL_DEFINITIONS})
 
 ament_auto_find_build_dependencies()
 
+ament_auto_add_library(
+  abst_corrector 
+  SHARED 
+  src/correction/abst_corrector.cpp
+)
+
 ament_auto_add_executable(predictor
   src/prediction/predictor_node.cpp
   src/prediction/predictor.cpp
@@ -34,11 +40,6 @@ ament_auto_add_executable(gnss_pose_corrector
   src/correction/gnss_pose_corrector.cpp
 )
 
-ament_auto_add_library(
-  abst_corrector 
-  SHARED 
-  src/correction/abst_corrector.cpp
-)
 
 ament_auto_add_executable(particle_visualize
   src/visualize/particle_visualize_node.cpp
