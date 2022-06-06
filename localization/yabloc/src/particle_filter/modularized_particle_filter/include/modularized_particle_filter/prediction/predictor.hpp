@@ -25,6 +25,7 @@ public:
 
 private:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
@@ -34,14 +35,13 @@ private:
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr gnss_sub_;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_cov_sub_;
   rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
-
   rclcpp::Subscription<ParticleArray>::SharedPtr weighted_particles_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr height_sub_;
 
   // Publisher
   rclcpp::Publisher<ParticleArray>::SharedPtr predicted_particles_pub_;
-  rclcpp::Publisher<ParticleArray>::SharedPtr resampled_particles_pub_;
-  std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_ptr_;
+  rclcpp::Publisher<PoseStamped>::SharedPtr pose_pub_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -51,10 +51,11 @@ private:
   const float static_angular_covariance;
   float ground_height_;
 
-  std::shared_ptr<RetroactiveResampler> resampler_ptr_;
-  std::optional<ParticleArray> particle_array_opt_;
-  std::optional<TwistWithCovarianceStamped> twist_opt_;
+  std::shared_ptr<RetroactiveResampler> resampler_ptr_{nullptr};
+  std::optional<ParticleArray> particle_array_opt_{std::nullopt};
+  std::optional<TwistWithCovarianceStamped> twist_opt_{std::nullopt};
 
+  // Callback
   void gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void twistCovarianceCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist);
@@ -63,7 +64,7 @@ private:
   void timerCallback();
 
   geometry_msgs::msg::Pose calculateMeanPose(const ParticleArray & particle_array);
-  void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose);
+  void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_

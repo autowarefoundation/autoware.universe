@@ -23,6 +23,7 @@ private:
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
 
   const float flat_radius_;
+  const float min_prob_;
 
   void poseCallback(const PoseWithCovarianceStamped::ConstSharedPtr pose_msg);
   ParticleArray calculateWeightedParticles(

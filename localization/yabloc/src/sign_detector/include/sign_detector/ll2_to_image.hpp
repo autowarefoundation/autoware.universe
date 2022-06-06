@@ -11,6 +11,7 @@
 #include <std_msgs/msg/float32.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
@@ -36,6 +37,9 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
   cv::Mat lut_;
 
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_{nullptr};
+  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
+
   void poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped);
 
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
@@ -46,6 +50,7 @@ private:
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
 
   void makeDistanceImage(const cv::Mat & image);
+  float computeHeight(const Eigen::Vector3f & pose);
 };
 
 #endif  // SIGN_DETECTOR__LL2_TO_IMAGE_HPP_

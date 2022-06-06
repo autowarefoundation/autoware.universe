@@ -17,35 +17,30 @@ Predictor::Predictor()
 : Node("predictor"),
   number_of_particles_(declare_parameter("num_of_particles", 500)),
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
-  resampler_ptr_(nullptr),
-  particle_array_opt_(std::nullopt),
-  twist_opt_(std::nullopt),
   static_linear_covariance(declare_parameter("static_linear_covariance", 0.01)),
   static_angular_covariance(declare_parameter("static_angular_covariance", 0.01))
 {
   const double prediction_rate{declare_parameter("prediction_rate", 50.0f)};
 
-  tf2_broadcaster_ptr_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+  tf2_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   // Publishers
-  predicted_particles_pub_ = this->create_publisher<ParticleArray>("predicted_particles", 10);
-  resampled_particles_pub_ = this->create_publisher<ParticleArray>("resampled_particles", 10);
+  predicted_particles_pub_ = create_publisher<ParticleArray>("predicted_particles", 10);
+  pose_pub_ = create_publisher<PoseStamped>("particle_pose", 10);
 
   // Subscribers
   using std::placeholders::_1;
-  gnss_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
+  gnss_sub_ = create_subscription<PoseWithCovarianceStamped>(
     "gnss/pose_with_covariance", 1, std::bind(&Predictor::gnssposeCallback, this, _1));
-  initialpose_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
+  initialpose_sub_ = create_subscription<PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, _1));
-
-  twist_sub_ = this->create_subscription<TwistStamped>(
-    "twist", 10, std::bind(&Predictor::twistCallback, this, _1));
-  twist_cov_sub_ = this->create_subscription<TwistWithCovarianceStamped>(
+  twist_sub_ =
+    create_subscription<TwistStamped>("twist", 10, std::bind(&Predictor::twistCallback, this, _1));
+  twist_cov_sub_ = create_subscription<TwistWithCovarianceStamped>(
     "twist_with_covariance", 10, std::bind(&Predictor::twistCovarianceCallback, this, _1));
-
-  weighted_particles_sub_ = this->create_subscription<ParticleArray>(
+  weighted_particles_sub_ = create_subscription<ParticleArray>(
     "weighted_particles", 10, std::bind(&Predictor::weightedParticlesCallback, this, _1));
-  height_sub_ = this->create_subscription<std_msgs::msg::Float32>(
+  height_sub_ = create_subscription<std_msgs::msg::Float32>(
     "height", 10, [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; });
 
   // Timer callback
@@ -73,14 +68,12 @@ void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstShared
   const float yaw{static_cast<float>(tf2::getYaw(initialpose->pose.pose.orientation))};
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{initialpose->pose.pose};
-    pose.position.x += prediction_util::nrand(sqrt(initialpose->pose.covariance[0]));
-    pose.position.y += prediction_util::nrand(sqrt(initialpose->pose.covariance[6 * 1 + 1]));
-
+    pose.position.x += prediction_util::nrand(std::sqrt(initialpose->pose.covariance[0]));
+    pose.position.y += prediction_util::nrand(std::sqrt(initialpose->pose.covariance[6 * 1 + 1]));
+    float noised_yaw = prediction_util::normalizeRadian(
+      yaw + prediction_util::nrand(sqrt(initialpose->pose.covariance[6 * 5 + 5])));
     tf2::Quaternion q;
-    q.setRPY(
-      roll, pitch,
-      prediction_util::normalizeRadian(
-        yaw + prediction_util::nrand(sqrt(initialpose->pose.covariance[6 * 5 + 5]))));
+    q.setRPY(roll, pitch, noised_yaw);
     pose.orientation = tf2::toMsg(q);
 
     particle_array.particles[i].pose = pose;
@@ -151,7 +144,7 @@ void Predictor::timerCallback()
   predicted_particles_pub_->publish(particle_array);
 
   geometry_msgs::msg::Pose mean_pose{calculateMeanPose(particle_array)};
-  publishMeanPose(mean_pose);
+  publishMeanPose(mean_pose, current_time);
 
   particle_array_opt_ = particle_array;
 }
@@ -173,7 +166,6 @@ void Predictor::weightedParticlesCallback(
     resampler_ptr_->resampling(particle_array)};
   if (resampled_particles.has_value()) {
     particle_array = resampled_particles.value();
-    resampled_particles_pub_->publish(particle_array);
   }
 
   particle_array_opt_ = particle_array;
@@ -239,15 +231,23 @@ geometry_msgs::msg::Pose Predictor::calculateMeanPose(const ParticleArray & part
   return mean_pose;
 }
 
-void Predictor::publishMeanPose(const geometry_msgs::msg::Pose & mean_pose)
+void Predictor::publishMeanPose(
+  const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp)
 {
+  PoseStamped pose_stamped;
+  pose_stamped.header.stamp = stamp;
+  pose_stamped.header.frame_id = "map";
+
+  pose_stamped.pose = mean_pose;
+  pose_pub_->publish(pose_stamped);
+
   geometry_msgs::msg::TransformStamped transform{};
   transform.header.stamp = particle_array_opt_->header.stamp;
   transform.header.frame_id = "map";
-  transform.child_frame_id = "mpf";
+  transform.child_frame_id = "particle_fitler";
   transform.transform.translation.x = mean_pose.position.x;
   transform.transform.translation.y = mean_pose.position.y;
   transform.transform.translation.z = mean_pose.position.z;
   transform.transform.rotation = mean_pose.orientation;
-  tf2_broadcaster_ptr_->sendTransform(transform);
+  tf2_broadcaster_->sendTransform(transform);
 }

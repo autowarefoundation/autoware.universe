@@ -1,7 +1,9 @@
 #include "modularized_particle_filter/correction/gnss_pose_corrector.hpp"
 
 GNSSPoseCorrector::GNSSPoseCorrector()
-: AbstCorrector("gnss_pose_corrector"), flat_radius_(declare_parameter("flat_radius", 1.0f))
+: AbstCorrector("gnss_pose_corrector"),
+  flat_radius_(declare_parameter("flat_radius", 1.0f)),
+  min_prob_(declare_parameter("min_prob", 0.01f))
 {
   using std::placeholders::_1;
   auto pose_callback = std::bind(&GNSSPoseCorrector::poseCallback, this, _1);
@@ -41,6 +43,8 @@ GNSSPoseCorrector::ParticleArray GNSSPoseCorrector::calculateWeightedParticles(
     } else {
       weighted_particles.particles[i].weight = normalPDF(distance - flat_radius_, 0.0, sigma);
     }
+    weighted_particles.particles[i].weight =
+      std::max(weighted_particles.particles[i].weight, min_prob_);
   }
 
   return weighted_particles;

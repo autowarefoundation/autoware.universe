@@ -17,7 +17,6 @@ class Fix2Pose : public rclcpp::Node
 public:
   Fix2Pose()
   : Node("fix_to_pose"),
-    kdtree_(nullptr),
     pose_topic_(declare_parameter<std::string>("pose_topic", "/eagleye/pose")),
     covariance_(declare_parameter<float>("covariance", 16.f))
   {
@@ -54,8 +53,8 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_covariance_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
-  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_{nullptr};
+  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
 
   void publishTf(const geometry_msgs::msg::PoseStamped & pose, const rclcpp::Time &)
   {

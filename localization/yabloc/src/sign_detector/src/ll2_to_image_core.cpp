@@ -15,7 +15,6 @@ Ll2ImageConverter::Ll2ImageConverter()
   max_range_(declare_parameter<float>("max_range", 20.f))
 {
   std::string map_topic = "/map/vector_map";
-  std::string pose_topic = "/eagleye/pose";
 
   // Publisher
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
@@ -29,7 +28,7 @@ Ll2ImageConverter::Ll2ImageConverter()
     map_topic, rclcpp::QoS(10).transient_local().reliable(),
     std::bind(&Ll2ImageConverter::mapCallback, this, _1));
   sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    pose_topic, 10, std::bind(&Ll2ImageConverter::poseCallback, this, _1));
+    "/pose_topic", 10, std::bind(&Ll2ImageConverter::poseCallback, this, _1));
 
   lut_ = cv::Mat(1, 256, CV_8UC1);
   for (int i = 0; i < 256; i++) {
@@ -108,7 +107,7 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
   // makeDistanceImage(image);
 
   std_msgs::msg::Float32 height;
-  height.data = pose.z();
+  height.data = computeHeight(pose);
   pub_height_->publish(height);
 }
 
@@ -145,6 +144,15 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
   RCLCPP_INFO_STREAM(this->get_logger(), "point: " << viz_lanelet_map->pointLayer.size());
 
   linestrings_ = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+
+  auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
+    pcl::PointXYZ q;
+    q.x = p.x();
+    q.y = p.y();
+    q.z = p.z();
+    return q;
+  };
 
   for (lanelet::LineString3d & line : viz_lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
@@ -158,6 +166,7 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
 
     std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d p : line) {
+      cloud_->push_back(toPointXYZ(p));
       if (from.has_value()) {
         pcl::PointNormal pn;
         pn.x = from->x();
@@ -172,6 +181,8 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
       from = p;
     }
   }
+  kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
+  kdtree_->setInputCloud(cloud_);
 }
 
 void Ll2ImageConverter::makeDistanceImage(const cv::Mat & image)
@@ -188,4 +199,23 @@ void Ll2ImageConverter::makeDistanceImage(const cv::Mat & image)
   cv::applyColorMap(distance, distance, cv::COLORMAP_JET);
   cv::imshow("distance", distance);
   cv::waitKey(1);
+}
+
+float Ll2ImageConverter::computeHeight(const Eigen::Vector3f & pose)
+{
+  constexpr int K = 10;
+  std::vector<int> indices;
+  std::vector<float> distances;
+  pcl::PointXYZ p;
+  p.x = pose.x();
+  p.y = pose.y();
+  p.z = pose.z();
+  kdtree_->nearestKSearch(p, K, indices, distances);
+
+  float height = std::numeric_limits<float>::max();
+  for (int index : indices) {
+    Eigen::Vector3f v = cloud_->at(index).getVector3fMap();
+    height = std::min(height, v.z());
+  }
+  return height;
 }

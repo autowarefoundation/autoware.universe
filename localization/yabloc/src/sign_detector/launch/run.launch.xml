@@ -43,9 +43,9 @@
         <remap from="pose_with_covariance" to="/sensing/gnss/ublox/pose_with_covariance"/>
     </node>
 
-    <node name="pose_to_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /eagleye/pose]"/>
-        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /eagleye/path]"/>
+    <node name="pose_to_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /eagleye/pose, /particle_pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /eagleye/path, /particle_path]"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
@@ -57,7 +57,7 @@
     </node>
 
     <node name="ll2_to_image" pkg="sign_detector" exec="ll2_to_image_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <param name="pose_topic" value="/localization/pose_estimator/pose"/>
+        <remap from="/pose_topic" to="/particle_pose"/>
         <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="max_range" value="$(var max_range)"/>
@@ -77,5 +77,6 @@
         <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
-    <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /eagleye/pose /base_link"/>
+    <!-- <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /eagleye/pose /base_link"/> -->
+    <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 </launch>
