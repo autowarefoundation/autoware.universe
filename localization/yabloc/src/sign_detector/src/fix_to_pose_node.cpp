@@ -15,44 +15,45 @@
 class Fix2Pose : public rclcpp::Node
 {
 public:
-  Fix2Pose() : Node("fix_to_pose"), kdtree_(nullptr)
+  Fix2Pose()
+  : Node("fix_to_pose"),
+    kdtree_(nullptr),
+    pose_topic_(declare_parameter<std::string>("pose_topic", "/eagleye/pose")),
+    covariance_(declare_parameter<float>("covariance", 16.f))
   {
-    std::string map_topic = "/map/vector_map";
-    std::string heading_topic = "/eagleye/heading_interpolate_3rd";
-    std::string fix_topic = "/fix_topic";
-    std::string pose_topic = "/pose_topic";
-    std::string pose_with_covariance_topic = "/pose_with_covariance";
+    using autoware_auto_mapping_msgs::msg::HADMapBin;
+    using eagleye_msgs::msg::Heading;
+    using geometry_msgs::msg::PoseWithCovarianceStamped;
+    using sensor_msgs::msg::NavSatFix;
+    using std::placeholders::_1;
+    const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
-    covariance_ = this->declare_parameter<float>("covariance", 16.f);
-
-    sub_heading_ = this->create_subscription<eagleye_msgs::msg::Heading>(
-      heading_topic, 10, std::bind(&Fix2Pose::headingCallback, this, std::placeholders::_1));
-    sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
-      map_topic, rclcpp::QoS(10).transient_local().reliable(),
-      std::bind(&Fix2Pose::mapCallback, this, std::placeholders::_1));
-    sub_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-      fix_topic, 10, std::bind(&Fix2Pose::fixCallback, this, std::placeholders::_1));
+    // Subscriber
+    sub_heading_ = create_subscription<Heading>(
+      "/eagleye/heading_interpolate_3rd", 10, std::bind(&Fix2Pose::headingCallback, this, _1));
+    sub_map_ = create_subscription<HADMapBin>(
+      "/map/vector_map", map_qos, std::bind(&Fix2Pose::mapCallback, this, _1));
+    sub_fix_ =
+      create_subscription<NavSatFix>("/fix_topic", 10, std::bind(&Fix2Pose::fixCallback, this, _1));
 
     // Publisher
-    pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic, 10);
-    pub_pose_covariance_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      pose_with_covariance_topic, 10);
+    pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic_, 10);
+    pub_pose_covariance_ =
+      this->create_publisher<PoseWithCovarianceStamped>("/pose_with_covariance", 10);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-
-    pose_topic_ = pose_topic;
   }
 
 private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  std::string pose_topic_;
-  float covariance_;
+  const std::string pose_topic_;
+  const float covariance_;
+  float heading_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<eagleye_msgs::msg::Heading>::SharedPtr sub_heading_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_fix_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_covariance_;
-  float heading_;
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
 
