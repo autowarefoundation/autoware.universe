@@ -1097,7 +1097,7 @@ void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticS
     level = DiagStatus::OK;
     msg = "OK";
   } else {
-    accel_brake_map_status.status = CalibrationStatus::ERROR;
+    accel_brake_map_status.status = CalibrationStatus::UNAVAILABLE;
     level = DiagStatus::ERROR;
     msg = "Default map is not found in " + csv_default_map_dir_;
   }
@@ -1115,7 +1115,7 @@ void AccelBrakeMapCalibrator::checkUpdateSuggest(diagnostic_updater::DiagnosticS
     // Suggest to update accel brake map
     level = DiagStatus::WARN;
     msg = "Accel/brake map Calibration is required.";
-    accel_brake_map_status.status = CalibrationStatus::WARNING;
+    accel_brake_map_status.status = CalibrationStatus::CALIBRATION_REQUIRED;
   }
 
   stat.summary(level, msg);
