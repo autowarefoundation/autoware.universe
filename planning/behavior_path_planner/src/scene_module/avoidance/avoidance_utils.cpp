@@ -125,8 +125,9 @@ void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & pa
     std::vector<PathPointWithLaneId>{path.points.begin() + min_start_idx, path.points.end()};
 }
 
-std::pair<double, double> calcDistanceToClosestFootprintPointAndLongitudinalLength(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos)
+void fillLongitudinalAndLengthByClosestFootprint(
+  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
+  ObjectData & obj)
 {
   tier4_autoware_utils::Polygon2d object_poly{};
   util::calcObjectPolygon(object, &object_poly);
@@ -142,7 +143,9 @@ std::pair<double, double> calcDistanceToClosestFootprintPointAndLongitudinalLeng
     min_distance = std::min(min_distance, arc_length);
     max_distance = std::max(max_distance, arc_length);
   }
-  return std::pair<double, double>(min_distance, max_distance - min_distance);
+  obj.longitudinal = min_distance;
+  obj.length = max_distance - min_distance;
+  return;
 }
 
 double calcOverhangDistance(

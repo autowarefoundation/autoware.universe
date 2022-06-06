@@ -216,10 +216,7 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     object_data.object = object;
     avoidance_debug_msg.object_id = getUuidStr(object_data);
     // calc longitudinal distance from ego to closest target object footprint point.
-    std::pair<double, double> distance =
-      calcDistanceToClosestFootprintPointAndLongitudinalLength(reference_path, object, ego_pos);
-    object_data.longitudinal = distance.first;
-    object_data.length = distance.second;
+    fillLongitudinalAndLengthByClosestFootprint(reference_path, object, ego_pos, object_data);
     avoidance_debug_msg.longitudinal_distance = object_data.longitudinal;
 
     // object is behind ego or too far.
@@ -557,7 +554,6 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       parameters_.nominal_lateral_jerk, getNominalAvoidanceEgoSpeed(), prepare_distance,
       has_enough_distance);
 
-    // TODO(Horibe): add margin with object length. __/\__ -> __/¯¯\__
     AvoidPoint ap_avoid;
     ap_avoid.length = shift_length;
     ap_avoid.start_length = current_ego_shift;
