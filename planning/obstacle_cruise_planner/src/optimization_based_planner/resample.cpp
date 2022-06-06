@@ -108,7 +108,7 @@ geometry_msgs::msg::Pose lerpByPose(
     tf2::slerp(tf_transform1.getRotation(), tf_transform2.getRotation(), t);
 
   geometry_msgs::msg::Pose pose;
-  pose.position = toMsg(tf_point);
+  pose.position = ::toMsg(tf_point);
   pose.orientation = tf2::toMsg(tf_quaternion);
   return pose;
 }

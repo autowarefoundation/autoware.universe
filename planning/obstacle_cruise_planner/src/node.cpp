@@ -200,7 +200,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   debug_cruise_wall_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/cruise_wall_marker", 1);
   debug_stop_wall_marker_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/stop_wall_marker", 1);
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
 
   // longitudinal_info

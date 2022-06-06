@@ -20,8 +20,13 @@
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include <tf2/utils.h>
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
+#include <tf2/utils.h>
 
 constexpr double ZERO_VEL_THRESHOLD = 0.01;
 constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
