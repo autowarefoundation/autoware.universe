@@ -42,7 +42,6 @@ void ns_control_toolbox::balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& T
 	const int p = 1;
 	bool converged = false;
 
-
 	do
 	{
 		converged = true;
@@ -58,7 +57,6 @@ void ns_control_toolbox::balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& T
 			if ((r > EPS) && (c > EPS))
 			{
 				// In the lapack implementation diagonal element is ignored in the norms.
-
 
 				while (c < r / RADIX)
 				{
@@ -88,4 +86,44 @@ void ns_control_toolbox::balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& T
 	} while (!converged);
 
 }
+
+double ns_control_toolbox::balance_symmetric(double const& a, double const& b)
+{
+
+
+	double f = 1;
+	double small_number{};
+	double large_number{};
+
+
+	if (a > b)
+	{
+		large_number = a;
+		small_number = b;
+	}
+	else
+	{
+		large_number = b;
+		small_number = a;
+
+	}
+
+
+	do
+	{
+		if (large_number < small_number)
+		{
+			break;
+		}
+
+		small_number *= RADIX;
+		large_number /= RADIX;
+		f *= RADIX;
+
+
+	} while ((large_number > EPS && small_number > EPS));
+
+	return f;
+}
+
 
