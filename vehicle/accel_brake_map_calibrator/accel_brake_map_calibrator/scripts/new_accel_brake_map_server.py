@@ -136,7 +136,7 @@ class DrawGraph(Node):
             self.get_logger().warning(
                 "No default map file was found in {}".format(self.default_map_dir)
             )
-            
+
             response.graph_image = []
             print("svg data is empty")
 
@@ -147,7 +147,6 @@ class DrawGraph(Node):
             print("brake map is empty")
 
             return response
-
 
         calibrated_pedal_list, calibrated_acc_list = self.load_map(self.calibrated_map_dir)
         if len(calibrated_pedal_list) == 0 or len(calibrated_acc_list) == 0:
