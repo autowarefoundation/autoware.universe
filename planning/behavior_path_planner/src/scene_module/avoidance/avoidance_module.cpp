@@ -578,7 +578,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     ap_return.start_length = shift_length;
     ap_return.start_longitudinal = o.longitudinal + o.length;
     ap_return.end_longitudinal =
-      o.longitudinal + std::min(nominal_return_distance, return_remaining_distance);
+      o.longitudinal  + o.length + std::min(nominal_return_distance, return_remaining_distance);
     ap_return.id = getOriginalShiftPointUniqueId();
     ap_return.object = o;
     avoid_points.push_back(ap_return);
