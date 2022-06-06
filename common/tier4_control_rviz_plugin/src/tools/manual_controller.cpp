@@ -97,7 +97,7 @@ ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent
   cruise_velocity_layout->addWidget(new QLabel("  [deg]"));
 
   // Emergency Button
-  emergency_button_ptr_ = new QPushButton("Emergency Button");
+  emergency_button_ptr_ = new QPushButton();
   connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
   cruise_velocity_layout->addWidget(emergency_button_ptr_);
 
@@ -187,6 +187,12 @@ void ManualController::onInitialize()
     "/external/selected/control_cmd", rclcpp::QoS(1));
 
   pub_gear_cmd_ = raw_node_->create_publisher<GearCommand>("/external/selected/gear_cmd", 1);
+
+  sub_emergency_ = raw_node_->create_subscription<Emergency>(
+    "/api/autoware/get/emergency", 10, std::bind(&ManualController::onEmergencyStatus, this, _1));
+
+  client_emergency_stop_ = raw_node_->create_client<EmergencySrv>(
+    "/api/autoware/set/emergency", rmw_qos_profile_services_default);
 }
 
 void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
@@ -205,7 +211,7 @@ void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::Const
     default:
       gate_mode_label_ptr_->setText("UNKNOWN");
       gate_mode_label_ptr_->setStyleSheet("background-color: #FF0000;");
-       break;
+      break;
   }
 }
 void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
@@ -217,6 +223,18 @@ void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
   } else {
     engage_status_label_ptr_->setText(QString::fromStdString("Not Ready"));
     engage_status_label_ptr_->setStyleSheet("background-color: #00FF00;");
+  }
+}
+
+void ManualController::onEmergencyStatus(const Emergency::ConstSharedPtr msg)
+{
+  current_emergency_ = msg->emergency;
+  if (msg->emergency) {
+    emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
+    emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
+  } else {
+    emergency_button_ptr_->setText(QString::fromStdString("Set Emergency"));
+    emergency_button_ptr_->setStyleSheet("background-color: #00FF00;");
   }
 }
 
@@ -249,6 +267,7 @@ void ManualController::onGear(const GearReport::ConstSharedPtr msg)
       break;
     case GearReport::DRIVE:
       gear_label_ptr_->setText("D");
+
       break;
     case GearReport::LOW:
       gear_label_ptr_->setText("L");
@@ -278,17 +297,22 @@ void ManualController::onClickEnableButton()
 
 void ManualController::onClickEmergencyButton()
 {
-  auto req = std::make_shared<tier4_external_api_msgs::srv::SetEmergency::Request>();
-  req->emergency = true;
+  auto request = std::make_shared<EmergencySrv::Request>();
+  if (current_emergency_) {
+    request->emergency = false;
+  } else {
+    request->emergency = true;
+  }
+  RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
   client_emergency_stop_->async_send_request(
-    req, [this]([[maybe_unused]] 
-               rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
+    request, [this]([[maybe_unused]] rclcpp::Client<EmergencySrv>::SharedFuture result) {
       auto response = result.get();
       if (response->status.code == tier4_external_api_msgs::msg::ResponseStatus::SUCCESS) {
         RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
       } else {
-        RCLCPP_WARN(raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
+        RCLCPP_WARN(
+          raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
       }
     });
 }

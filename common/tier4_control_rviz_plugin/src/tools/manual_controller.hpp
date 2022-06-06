@@ -31,10 +31,9 @@
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
+#include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
-#include "tier4_external_api_msgs/msg/response_status.hpp"
-
 
 #include <memory>
 
@@ -48,7 +47,8 @@ using tier4_control_msgs::msg::GateMode;
 using EngageSrv = tier4_external_api_msgs::srv::Engage;
 using autoware_auto_vehicle_msgs::msg::Engage;
 using autoware_auto_vehicle_msgs::msg::GearReport;
-using tier4_external_api_msgs::srv::SetEmergency;
+using EmergencySrv = tier4_external_api_msgs::srv::SetEmergency;
+using tier4_external_api_msgs::msg::Emergency;
 
 class ManualController : public rviz_common::Panel
 {
@@ -74,6 +74,7 @@ protected:
   void onVelocity(const VelocityReport::ConstSharedPtr msg);
   void onEngageStatus(const Engage::ConstSharedPtr msg);
   void onGear(const GearReport::ConstSharedPtr msg);
+  void onEmergencyStatus(const Emergency::ConstSharedPtr msg);
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Subscription<GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;
@@ -81,9 +82,10 @@ protected:
   rclcpp::Publisher<tier4_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
   rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_command_;
   rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
-  rclcpp::Client<EngageSrv>::SharedPtr client_engage_;
   rclcpp::Subscription<GearReport>::SharedPtr sub_gear_;
-  rclcpp::Client<SetEmergency>::SharedPtr client_emergency_stop_;
+  rclcpp::Client<EngageSrv>::SharedPtr client_engage_;
+  rclcpp::Client<EmergencySrv>::SharedPtr client_emergency_stop_;
+  rclcpp::Subscription<Emergency>::SharedPtr sub_emergency_;
 
   double cruise_velocity_{0.0};
   double steering_angle_{0.0};
@@ -103,6 +105,7 @@ protected:
   QPushButton * emergency_button_ptr_;
 
   bool current_engage_;
+  bool current_emergency_;
 };
 
 }  // namespace rviz_plugins
