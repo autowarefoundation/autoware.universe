@@ -57,7 +57,6 @@ void ns_control_toolbox::balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& T
 			if ((r > EPS) && (c > EPS))
 			{
 				// In the lapack implementation diagonal element is ignored in the norms.
-
 				while (c < r / RADIX)
 				{
 					c *= RADIX;
@@ -70,17 +69,13 @@ void ns_control_toolbox::balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& T
 					r *= RADIX;
 					f /= RADIX;
 				}
-				if (std::pow(c, p) + std::pow(r, p) < 0.95 * s)
+				if (std::pow(c, p) + std::pow(r, p) <= 0.95 * s)
 				{
 					converged = false;
 					Tsimilarity(k, k) *= f;
 					A.col(k) *= f;
 					A.row(k) /= f;
 				}
-			}
-			else
-			{
-				converged = false;
 			}
 		}
 	} while (!converged);

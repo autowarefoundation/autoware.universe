@@ -230,11 +230,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	// Balance the matrices.
 	// Call balance_a_matrix method on the system matrices.
-	//	ns_utils::print("Before Balancing");
-	//	ns_eigen_utils::printEigenMat(A_);
-	//	ns_eigen_utils::printEigenMat(B_);
-	//	ns_eigen_utils::printEigenMat(C_);
-	//	ns_eigen_utils::printEigenMat(D_);
+//	ns_utils::print("Before Balancing");
+//	ns_eigen_utils::printEigenMat(A_);
+//	ns_eigen_utils::printEigenMat(B_);
+//	ns_eigen_utils::printEigenMat(C_);
+//	ns_eigen_utils::printEigenMat(D_);
 
 	ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
 

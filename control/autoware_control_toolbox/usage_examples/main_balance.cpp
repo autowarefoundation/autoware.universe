@@ -67,6 +67,15 @@ int main()
 
 	ns_utils::print("Balanced System Matrices");
 	QGinvss.print();
+
+	// Balanced vehicle model.
+	Gey.inv();
+	Gey.print();
+
+	auto Gey_ss = ns_control_toolbox::tf2ss(Gey, dt);
+
+	Gey_ss.print();
+
 	// PERMUTATION TEST
 
 
