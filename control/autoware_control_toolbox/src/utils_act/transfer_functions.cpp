@@ -24,7 +24,6 @@
 size_t ns_control_toolbox::tf::getPolynomialStringAndSize(std::vector<double> const& num_or_den,
                                                           std::ostringstream& string_stream)
 {
-
 	auto Nn = num_or_den.size();
 	int precision = 4;
 
@@ -125,9 +124,9 @@ void ns_control_toolbox::tf::print() const
 
 void ns_control_toolbox::tf::inv()
 {
-//	std::vector<double> temp_den{ std::move(den_) };
-//	den_ = std::move(num_);
-//	num_ = std::move(temp_den);
+	//	std::vector<double> temp_den{ std::move(den_) };
+	//	den_ = std::move(num_);
+	//	num_ = std::move(temp_den);
 
 	std::swap(num_, den_);
 	std::swap(num_constant_, den_constant_);

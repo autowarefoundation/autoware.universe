@@ -20,11 +20,12 @@
 #include "utils_act/transfer_functions.hpp"
 
 
-ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
+ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts },
+                                                                                           N_{ sys_tf.order() }
 {
-	N_ = sys_tf.order(); // size of A will be order of the TF.
+	//N_ = sys_tf.order(); // size of A will be order of the TF.
 
-	auto&& nx = N_;
+	auto const& nx = N_;
 	A_.resize(nx, nx);
 	B_.resize(nx, 1);
 	C_.resize(1, nx);
@@ -105,7 +106,7 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 	}
 
 	// Initialize the system matrices.
-	auto& nx = N_;
+	auto const& nx = N_;
 	A_.resize(nx, nx);
 	B_.resize(nx, 1);
 	C_.resize(1, nx);
@@ -140,7 +141,7 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>& num,
                                                       const std::vector<double>& den)
 {
-	auto&& nx = N_; //static_cast<long>(den.size() - 1);       // Order of the system.
+	auto const nx = N_; //static_cast<long>(den.size() - 1);       // Order of the system.
 
 	// We can put system check function if the nx = 0 -- i.e throw exception.
 	// B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
@@ -230,11 +231,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	// Balance the matrices.
 	// Call balance_a_matrix method on the system matrices.
-//	ns_utils::print("Before Balancing");
-//	ns_eigen_utils::printEigenMat(A_);
-//	ns_eigen_utils::printEigenMat(B_);
-//	ns_eigen_utils::printEigenMat(C_);
-//	ns_eigen_utils::printEigenMat(D_);
+	//	ns_utils::print("Before Balancing");
+	//	ns_eigen_utils::printEigenMat(A_);
+	//	ns_eigen_utils::printEigenMat(B_);
+	//	ns_eigen_utils::printEigenMat(C_);
+	//	ns_eigen_utils::printEigenMat(D_);
 
 	ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
 
@@ -315,7 +316,7 @@ void ns_control_toolbox::tf2ss::print_discrete_system() const
 void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 {
 
-	auto&& nx = N_;
+	auto const& nx = N_;
 
 	// take inverse:
 	auto const&& I = Eigen::MatrixXd::Identity(nx, nx);
@@ -349,7 +350,7 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 // Discrete time state-space matrices.
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const
 {
-//	auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
+
 	return Ad_;
 }
 
@@ -361,7 +362,6 @@ Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const
 {
-//	auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
 	return Cd_;
 }
 
@@ -405,7 +405,7 @@ Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const
 
 
 
-double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const double& u)
+double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const double& u) const
 {
 
 	// First compute the output y.

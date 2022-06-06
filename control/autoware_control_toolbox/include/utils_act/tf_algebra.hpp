@@ -58,7 +58,7 @@ namespace ns_control_toolbox
 			{
 				return it1 + it2;
 			});
-			return T(v1);;
+			return T(v1);
 		}
 
 
@@ -73,7 +73,7 @@ namespace ns_control_toolbox
 			{
 				return it1 + it2;
 			});
-			return T(v1);;
+			return T(v1);
 		}
 	};
 
@@ -91,7 +91,7 @@ namespace ns_control_toolbox
 			{
 				return it1 - it2;
 			});
-			return T(v1);;
+			return T(v1);
 		}
 
 
@@ -106,7 +106,7 @@ namespace ns_control_toolbox
 			{
 				return it1 - it2;
 			});
-			return T(v1);;
+			return T(v1);
 		}
 	};
 

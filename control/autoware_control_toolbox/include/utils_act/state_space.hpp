@@ -85,7 +85,7 @@ namespace ns_control_toolbox
 		 * */
 
 
-		double simulateOneStep(Eigen::MatrixXd& x0, double const& u);
+		double simulateOneStep(Eigen::MatrixXd& x0, double const& u) const;
 
 
 		/**
