@@ -4,11 +4,14 @@
 
 The role of this node is to automatically calibrate `steer_offset` used in the `vehicle_interface` node.
 
-The base steer offset value is 0 by default, which is standard, is updated iteratively with the loaded driving data.
+The base steer offset value is 0 by default, which is standard, is updated iteratively with the loaded driving data. This module is supposed to be used in below straight driving situation.
+![image](./image/steer_offset.png)
 
 ## Inner-workings / Algorithms
 
 Estimates sequential steering offsets from kinematic model and state observations.
+![image2](./image/kinematic_constraints.png)
+Calculate yaw rate error and then calculate steering error, for more details see `updateSteeringOffset()` function.
 
 ## Inputs / Outputs
 
