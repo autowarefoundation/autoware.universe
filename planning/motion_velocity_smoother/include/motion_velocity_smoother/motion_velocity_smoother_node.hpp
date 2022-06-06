@@ -81,6 +81,10 @@ private:
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;   // current base_waypoints
   double external_velocity_limit_;                 // current external_velocity_limit
+  double max_velocity_with_deceleration_;          // maximum velocity with deceleration
+                                                   // for external velocity limit
+  double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
+  double wheelbase_;                               // wheelbase
 
   // maximum velocity with deceleration for external velocity limit
   double max_velocity_with_deceleration_;
@@ -213,6 +217,7 @@ private:
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_vel_lim_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_latacc_filtered_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_steering_rate_limited_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_resampled_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
