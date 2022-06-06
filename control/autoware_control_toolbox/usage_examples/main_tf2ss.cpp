@@ -47,17 +47,6 @@ int main()
 	sys_ss3.print_discrete_system();
 
 
-	// Simulate one-step.
-	const int orderN = 4;
-
-	Eigen::MatrixXd sysmat(orderN + 1, orderN + 1);
-	sys_ss3.getSystemMatricesABCD_disc(sysmat);
-
-	ns_utils::print("Getting SysMat by Passing a Reference");
-	ns_eigen_utils::printEigenMat(sysmat);
-
-	Eigen::MatrixXd xu0_(orderN, 1);
-	xu0_.setOnes();
 
 //	for (int k = 0; k < 10; ++k)
 //	{

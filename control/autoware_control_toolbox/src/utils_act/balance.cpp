@@ -36,11 +36,12 @@ void ns_control_toolbox::permute(Eigen::MatrixXd& P)
  * Numerical Recipes in C: The Art of Scientific Computing, Second Edition Balancing Chapter 11.
  * */
 
-void ns_control_toolbox::balance(Eigen::MatrixXd& A)
+void ns_control_toolbox::balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& Tsimilarity)
 {
 
 	const int p = 1;
 	bool converged = false;
+
 
 	do
 	{
@@ -51,6 +52,8 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 			double r = A.row(k).lpNorm<p>();
 			double s = std::pow(c, p) + std::pow(r, p);
 			double f = 1;
+
+			// Tsimilarity = Eigen::MatrixXd::Identity(A.rows(), A.cols());
 
 			if ((r > EPS) && (c > EPS))
 			{
@@ -72,7 +75,7 @@ void ns_control_toolbox::balance(Eigen::MatrixXd& A)
 				if (std::pow(c, p) + std::pow(r, p) < 0.95 * s)
 				{
 					converged = false;
-
+					Tsimilarity(k, k) *= f;
 					A.col(k) *= f;
 					A.row(k) /= f;
 				}
