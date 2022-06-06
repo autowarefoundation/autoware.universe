@@ -145,49 +145,6 @@ public:
   }
 
 protected:
-  virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
-
-  virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-  getModuleExpiredFunction(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
-
-  virtual void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
-  {
-    const auto isModuleExpired = getModuleExpiredFunction(path);
-
-    // Copy container to avoid iterator corruption
-    // due to scene_modules_.erase() in unregisterModule()
-    const auto copied_scene_modules = scene_modules_;
-
-    for (const auto & scene_module : copied_scene_modules) {
-      if (isModuleExpired(scene_module)) {
-        unregisterModule(scene_module);
-      }
-    }
-  }
-
-  bool isModuleRegistered(const int64_t module_id)
-  {
-    return registered_module_id_set_.count(module_id) != 0;
-  }
-
-  void registerModule(const std::shared_ptr<SceneModuleInterface> & scene_module)
-  {
-    RCLCPP_INFO(
-      logger_, "register task: module = %s, id = %lu", getModuleName(),
-      scene_module->getModuleId());
-    registered_module_id_set_.emplace(scene_module->getModuleId());
-    scene_modules_.insert(scene_module);
-  }
-
-  void unregisterModule(const std::shared_ptr<SceneModuleInterface> & scene_module)
-  {
-    RCLCPP_INFO(
-      logger_, "unregister task: module = %s, id = %lu", getModuleName(),
-      scene_module->getModuleId());
-    registered_module_id_set_.erase(scene_module->getModuleId());
-    scene_modules_.erase(scene_module);
-  }
-
   virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
   {
     visualization_msgs::msg::MarkerArray debug_marker_array;
@@ -232,6 +189,49 @@ protected:
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
     pub_virtual_wall_->publish(virtual_wall_marker_array);
+  }
+
+  virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
+
+  virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+  getModuleExpiredFunction(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
+
+  virtual void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  {
+    const auto isModuleExpired = getModuleExpiredFunction(path);
+
+    // Copy container to avoid iterator corruption
+    // due to scene_modules_.erase() in unregisterModule()
+    const auto copied_scene_modules = scene_modules_;
+
+    for (const auto & scene_module : copied_scene_modules) {
+      if (isModuleExpired(scene_module)) {
+        unregisterModule(scene_module);
+      }
+    }
+  }
+
+  bool isModuleRegistered(const int64_t module_id)
+  {
+    return registered_module_id_set_.count(module_id) != 0;
+  }
+
+  void registerModule(const std::shared_ptr<SceneModuleInterface> & scene_module)
+  {
+    RCLCPP_INFO(
+      logger_, "register task: module = %s, id = %lu", getModuleName(),
+      scene_module->getModuleId());
+    registered_module_id_set_.emplace(scene_module->getModuleId());
+    scene_modules_.insert(scene_module);
+  }
+
+  void unregisterModule(const std::shared_ptr<SceneModuleInterface> & scene_module)
+  {
+    RCLCPP_INFO(
+      logger_, "unregister task: module = %s, id = %lu", getModuleName(),
+      scene_module->getModuleId());
+    registered_module_id_set_.erase(scene_module->getModuleId());
+    scene_modules_.erase(scene_module);
   }
 
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
