@@ -75,6 +75,9 @@ namespace ns_control_toolbox
 
 		[[nodiscard]] Eigen::MatrixXd D() const;
 
+		[[nodiscard]] Eigen::MatrixXd T() const; // Similarity transformation matrix T^inv * A * T
+
+
 
 		/**
 		 * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
