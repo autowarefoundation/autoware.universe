@@ -6,16 +6,16 @@
   <arg name="input_obstacle_stop_motion_factor" default="/planning/scenario_planning/status/obstacle_stop/motion_factors"/>
   <arg name="input_surround_obstacle_motion_factor" default="/planning/scenario_planning/status/surround_obstacle_checker/motion_factors"/>
   <arg name="input_trajectory" default="/planning/scenario_planning/trajectory"/>
-  <arg name="output_motion_factors" to="/planning/scenario_planning/status/motion_factors">
+  <arg name="output_motion_factors" default="/planning/scenario_planning/status/motion_factors"/>
   
   <group>
-    <push-ros-namespace namespace="ad_api"/>
-    <node pkg="motion_factor_aggregator" exec="motion_factor_aggregator" name="motion_factor_aggregator" output="screen">
+    <push-ros-namespace namespace="default_ad_api"/>
+    <node pkg="default_ad_api" exec="motion_factor_aggregator" name="motion_factor_aggregator" output="screen">
         <remap from="input/autoware_trajectory" to="$(var input_trajectory)"/>
         <remap from="input/scene_module/motion_factor" to="$(var input_scene_module_motion_factor)"/>
         <remap from="input/obstacle_stop/motion_factor" to="$(var input_obstacle_stop_motion_factor)"/>
         <remap from="input/surround_obstacle/motion_factor" to="$(var input_surround_obstacle_motion_factor)"/>
-        <remap from="output/motion_factors" to="(var output_motion_factors)">
+        <remap from="~/output/motion_factors" to="(var output_motion_factors)"/>
 
         <param name="status_pub_hz" value="$(var status_pub_hz)"/>
         <param name="timeout" value="$(var timeout)"/>
