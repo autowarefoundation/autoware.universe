@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.6)
-
+cmake_minimum_required(VERSION 3.14)
 project(simple_planning_simulator)
 
-### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -21,16 +18,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
-autoware_set_compile_options(${PROJECT_NAME})
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
 
 # Node executable
 rclcpp_components_register_node(${PROJECT_NAME}
@@ -38,13 +27,8 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_exe
 )
 
-
-### Test
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  ament_add_gtest(test_simple_planning_simulator
+  ament_add_ros_isolated_gtest(test_simple_planning_simulator
     test/test_simple_planning_simulator.cpp
     TIMEOUT 120
   )
@@ -52,16 +36,6 @@ if(BUILD_TESTING)
   target_link_libraries(test_simple_planning_simulator
     ${PROJECT_NAME}
   )
-
-  # workaround to allow deprecated header to build on both galactic and rolling
-  if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-    target_compile_definitions(test_simple_planning_simulator PRIVATE
-      USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-    )
-  endif()
 endif()
-
-
-
 
 ament_auto_package(INSTALL_TO_SHARE param launch)

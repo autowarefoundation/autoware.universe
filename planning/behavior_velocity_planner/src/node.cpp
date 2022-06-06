@@ -23,7 +23,12 @@
 
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <functional>
 #include <memory>
@@ -35,6 +40,7 @@
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/run_out/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -190,6 +196,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_occlusion_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
   }
+  if (this->declare_parameter("launch_run_out", false)) {
+    planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
+  }
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
@@ -258,7 +267,9 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
 
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(pc, *pc_transformed, affine);
+  if (!pc.empty()) {
+    pcl::transformPointCloud(pc, *pc_transformed, affine);
+  }
 
   {
     std::lock_guard<std::mutex> lock(mutex_);

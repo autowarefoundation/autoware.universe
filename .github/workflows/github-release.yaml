@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       beta-branch-or-tag-name:
+        description: The name of the beta branch or tag to release
         type: string
         required: true
 
@@ -51,9 +52,23 @@ jobs:
         id: generate-changelog
         uses: autowarefoundation/autoware-github-actions/generate-changelog@v1
 
+      - name: Select verb
+        id: select-verb
+        run: |
+          has_previous_draft=$(gh release view --json isDraft -q ".isDraft" "${{ steps.set-tag-name.outputs.tag-name }}") || true
+
+          verb=create
+          if [ "$has_previous_draft" = "true" ]; then
+            verb=edit
+          fi
+
+          echo ::set-output name=verb::"$verb"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Release to GitHub
         run: |
-          gh release create "${{ steps.set-tag-name.outputs.tag-name }}" \
+          gh release ${{ steps.select-verb.outputs.verb }} "${{ steps.set-tag-name.outputs.tag-name }}" \
             --draft \
             --target "${{ steps.set-target-name.outputs.target-name }}" \
             --title "Release ${{ steps.set-tag-name.outputs.tag-name }}" \

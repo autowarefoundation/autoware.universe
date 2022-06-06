@@ -92,8 +92,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
     param_.v.a_ego = planner_data_->current_accel.get();
-    // introduce delay ratio until system delay param will introduce
-    param_.v.delay_time = 0.5;
+    param_.v.delay_time = planner_data_->system_delay;
     const double detection_area_offset = 5.0;  // for visualization and stability
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
@@ -137,7 +136,8 @@ bool OcclusionSpotModule::modifyPathVelocity(
   }
   DEBUG_PRINT(show_time, "extract[ms]: ", stop_watch_.toc("processing_time", true));
   const auto objects_ptr = planner_data_->predicted_objects;
-  const auto vehicles = utils::extractVehicles(objects_ptr);
+  const auto vehicles =
+    utils::extractVehicles(objects_ptr, ego_pose.position, param_.detection_area_length);
   const std::vector<PredictedObject> filtered_vehicles =
     utils::filterVehiclesByDetectionArea(vehicles, debug_data_.detection_area_polygons);
   DEBUG_PRINT(show_time, "filter obj[ms]: ", stop_watch_.toc("processing_time", true));
@@ -151,9 +151,12 @@ bool OcclusionSpotModule::modifyPathVelocity(
       filtered_vehicles, stuck_vehicle_foot_prints, moving_vehicle_foot_prints,
       param_.stuck_vehicle_vel);
     // occ -> image
+    // find out occlusion from erode occlusion candidate num iter is strength of filter
+    const int num_iter = static_cast<int>(
+      (param_.detection_area.min_occlusion_spot_size / occ_grid_ptr->info.resolution) - 1);
     grid_utils::denoiseOccupancyGridCV(
       occ_grid_ptr, stuck_vehicle_foot_prints, moving_vehicle_foot_prints, grid_map, param_.grid,
-      param_.is_show_cv_window, param_.filter_occupancy_grid, param_.use_object_info,
+      param_.is_show_cv_window, num_iter, param_.use_object_info,
       param_.use_moving_object_ray_cast);
     DEBUG_PRINT(show_time, "grid [ms]: ", stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here
@@ -183,8 +186,10 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // these debug topics needs computation resource
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
-  debug_data_.path_interpolated = path_interpolated;
-  debug_data_.path_raw = clipped_path;
+  if (param_.is_show_occlusion) {
+    debug_data_.path_interpolated = path_interpolated;
+    debug_data_.path_raw.points = clipped_path.points;
+  }
   DEBUG_PRINT(show_time, "total [ms]: ", stop_watch_.toc("total_processing_time", true));
   return true;
 }

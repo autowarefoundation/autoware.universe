@@ -1,17 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(obstacle_avoidance_planner)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -29,31 +20,19 @@ ament_auto_add_library(obstacle_avoidance_planner SHARED
 )
 
 target_include_directories(obstacle_avoidance_planner
-  PUBLIC
+  SYSTEM PUBLIC
     ${OpenCV_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
 )
 
 target_link_libraries(obstacle_avoidance_planner
   ${OpenCV_LIBRARIES}
 )
 
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(obstacle_avoidance_planner PUBLIC
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-
 rclcpp_components_register_node(obstacle_avoidance_planner
   PLUGIN "ObstacleAvoidancePlanner"
   EXECUTABLE obstacle_avoidance_planner_node
 )
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE

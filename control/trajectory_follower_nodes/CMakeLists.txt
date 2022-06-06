@@ -1,22 +1,8 @@
-# Copyright 2021 The Autoware Foundation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(trajectory_follower_nodes)
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 set(LATERAL_CONTROLLER_NODE lateral_controller_node)
 ament_auto_add_library(${LATERAL_CONTROLLER_NODE} SHARED
@@ -24,14 +10,6 @@ ament_auto_add_library(${LATERAL_CONTROLLER_NODE} SHARED
   src/lateral_controller_node.cpp
 )
 
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(${LATERAL_CONTROLLER_NODE} PUBLIC
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-autoware_set_compile_options(${LATERAL_CONTROLLER_NODE})
 # TODO(lateral_controller) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 # TODO(lateral_controller) : Temporary workaround until this is fixed.
 target_compile_options(${LATERAL_CONTROLLER_NODE} PRIVATE -Wno-error=old-style-cast)
@@ -46,7 +24,6 @@ ament_auto_add_library(${LONGITUDINAL_CONTROLLER_NODE} SHARED
   src/longitudinal_controller_node.cpp
 )
 
-autoware_set_compile_options(${LONGITUDINAL_CONTROLLER_NODE})
 # TODO(longitudinal_controller) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 # TODO(longitudinal_controller) : Temporary workaround until this is fixed.
 target_compile_options(${LONGITUDINAL_CONTROLLER_NODE} PRIVATE -Wno-error=old-style-cast)
@@ -61,7 +38,6 @@ ament_auto_add_library(${LATLON_MUXER_NODE} SHARED
   src/latlon_muxer_node.cpp
 )
 
-autoware_set_compile_options(${LATLON_MUXER_NODE})
 # TODO(latlon_muxer) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 # TODO(latlon_muxer) : Temporary workaround until this is fixed.
 target_compile_options(${LATLON_MUXER_NODE} PRIVATE -Wno-error=old-style-cast)
@@ -71,9 +47,6 @@ rclcpp_components_register_node(${LATLON_MUXER_NODE}
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  # Unit tests
   set(TRAJECTORY_FOLLOWER_NODES_TEST test_trajectory_follower_nodes)
   ament_add_ros_isolated_gtest(${TRAJECTORY_FOLLOWER_NODES_TEST}
     test/trajectory_follower_test_utils.hpp
@@ -82,13 +55,18 @@ if(BUILD_TESTING)
     test/test_longitudinal_controller_node.cpp
   )
   ament_target_dependencies(${TRAJECTORY_FOLLOWER_NODES_TEST} fake_test_node)
-  autoware_set_compile_options(${TRAJECTORY_FOLLOWER_NODES_TEST})
   target_link_libraries(${TRAJECTORY_FOLLOWER_NODES_TEST} ${LATLON_MUXER_NODE} ${LATERAL_CONTROLLER_NODE} ${LONGITUDINAL_CONTROLLER_NODE})
 
-  #find_package(autoware_testing REQUIRED)
-  #add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe PARAM_FILENAME latlon_muxer_defaults.param.yaml)
-  #add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe PARAM_FILENAME lateral_controller_defaults.param.yaml)
-  #add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe PARAM_FILENAME longitudinal_controller_defaults.param.yaml)
+  find_package(autoware_testing REQUIRED)
+  add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe
+    PARAM_FILENAMES "latlon_muxer_defaults.param.yaml"
+  )
+  add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "lateral_controller_defaults.param.yaml test_vehicle_info.param.yaml"
+  )
+  add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "longitudinal_controller_defaults.param.yaml test_vehicle_info.param.yaml"
+  )
 endif()
 
 ament_auto_package(
