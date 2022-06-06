@@ -96,8 +96,8 @@ bool IntersectionModule::modifyPathVelocity(
 
   util::getObjectiveLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    planner_param_.detection_area_margin, &conflicting_area_lanelets, &detection_area_lanelets,
-    &detection_area_lanelets_with_margin, logger_);
+    planner_param_.detection_area_right_margin, planner_param_.detection_area_left_margin,
+    &conflicting_area_lanelets, &detection_area_lanelets, &detection_area_lanelets_with_margin, logger_);
   std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
     conflicting_area_lanelets, planner_param_.detection_area_length);
   std::vector<lanelet::CompoundPolygon3d> detection_areas = util::getPolygon3dFromLaneletsVec(

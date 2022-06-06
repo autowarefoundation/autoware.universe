@@ -112,6 +112,8 @@ public:
     double intersection_velocity;  //! used for intersection passing time
     double intersection_max_acc;   //! used for calculating intersection velocity
     double detection_area_margin;  //! used for detecting objects in detection area
+    double detection_area_right_margin;  //! used for detecting objects in detection area only right direction
+    double detection_area_left_margin;  //! used for detecting objects in detection area only left direction
     double detection_area_length;  //! used to create detection area polygon
     double detection_area_angle_thr;  //! threshold in checking the angle of detecting objects
     double min_predicted_path_confidence;

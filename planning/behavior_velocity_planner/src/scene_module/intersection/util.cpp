@@ -322,7 +322,7 @@ bool getStopPoseIndexFromMap(
 
 bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length, double margin,
+  const int lane_id, const double detection_area_length, double right_margin, double left_margin,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
@@ -377,7 +377,7 @@ bool getObjectiveLanelets(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
-    const auto objective_lanelet_with_margin = generateOffsetLanelet(conflicting_lanelet, margin);
+    const auto objective_lanelet_with_margin = generateOffsetLanelet(conflicting_lanelet, right_margin, left_margin);
     conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
     objective_lanelets.push_back({conflicting_lanelet});
     objective_lanelets_with_margin.push_back({objective_lanelet_with_margin});
@@ -468,14 +468,16 @@ double calcArcLengthFromPath(
   return length;
 }
 
-lanelet::ConstLanelet generateOffsetLanelet(const lanelet::ConstLanelet lanelet, double margin)
+lanelet::ConstLanelet generateOffsetLanelet(const lanelet::ConstLanelet lanelet, double right_margin, double left_margin)
 {
   lanelet::Points3d lefts, rights;
 
-  const double offset = margin;
-  const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, offset);
+  const double right_offset = right_margin;
+  const double left_offset = left_margin;
+  const auto offset_rightBound = lanelet::utils::getRightBoundWithOffset(lanelet, right_offset);
+  const auto offset_leftBound = lanelet::utils::getLeftBoundWithOffset(lanelet, left_offset);
 
-  const auto original_left_bound = lanelet.leftBound();
+  const auto original_left_bound = offset_leftBound;
   const auto original_right_bound = offset_rightBound;
 
   for (const auto & pt : original_left_bound) {
