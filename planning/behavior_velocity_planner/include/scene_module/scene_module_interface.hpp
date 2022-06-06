@@ -282,11 +282,9 @@ protected:
   {
     for (const auto & scene_module : scene_modules_) {
       const UUID uuid = getUUID(scene_module->getModuleId());
-      scene_module->setActivation(getActivation(uuid));
+      scene_module->setActivation(rtc_interface_.isActivated(uuid));
     }
   }
-
-  bool getActivation(const UUID & uuid) const { return rtc_interface_.isActivated(uuid); }
 
   void updateRTCStatus(
     const UUID & uuid, const bool safe, const double distance, const Time & stamp)
