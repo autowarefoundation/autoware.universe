@@ -23,6 +23,31 @@
 ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf& sys_tf, const double& Ts) : Ts_{ Ts }
 {
 	N_ = sys_tf.order(); // size of A will be order of the TF.
+
+	auto&& nx = N_;
+	A_.resize(nx, nx);
+	B_.resize(nx, 1);
+	C_.resize(1, nx);
+	D_.resize(1, 1);
+
+	Ad_.resize(nx, nx);
+	Bd_.resize(nx, 1);
+	Cd_.resize(1, nx);
+	Dd_.resize(1, 1);
+
+	Tsimilarity_mat_.resize(nx, nx);
+
+	A_.setZero();
+	B_.setZero();
+	C_.setZero();
+	D_.setZero();
+
+	Ad_.setZero();
+	Bd_.setZero();
+	Cd_.setZero();
+	Dd_.setZero();
+	Tsimilarity_mat_.setIdentity();
+
 	updateStateSpace(sys_tf);
 
 }
@@ -79,6 +104,31 @@ ns_control_toolbox::tf2ss::tf2ss(const std::vector<double>& numerator,
 		throw std::invalid_argument("System is a static gain not a dynamic system");
 	}
 
+	// Initialize the system matrices.
+	auto& nx = N_;
+	A_.resize(nx, nx);
+	B_.resize(nx, 1);
+	C_.resize(1, nx);
+	D_.resize(1, 1);
+
+	Ad_.resize(nx, nx);
+	Bd_.resize(nx, 1);
+	Cd_.resize(1, nx);
+	Dd_.resize(1, 1);
+
+	Tsimilarity_mat_.resize(nx, nx);
+
+	A_.setZero();
+	B_.setZero();
+	C_.setZero();
+	D_.setZero();
+
+	Ad_.setZero();
+	Bd_.setZero();
+	Cd_.setZero();
+	Dd_.setZero();
+
+
 	// Compute the system matrices.
 	computeSystemMatrices(num, den);
 
@@ -95,14 +145,33 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	// We can put system check function if the nx = 0 -- i.e throw exception.
 	// B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
 
-	if (sys_matABCD_cont_.rows() != nx + 1 && sys_matABCD_cont_.cols() != nx + 1)
+	if (A_.rows() != nx && A_.cols() != nx)
 	{
-		sys_matABCD_cont_.resize(nx + 1, nx + 1);
-		sys_matABCD_disc_.resize(nx + 1, nx + 1);
+		A_.resize(nx, nx);
+		B_.resize(nx, 1);
+		C_.resize(1, nx);
+		D_.resize(1, 1);
+
+		Ad_.resize(nx, nx);
+		Bd_.resize(nx, 1);
+		Cd_.resize(1, nx);
+		Dd_.resize(1, 1);
+
+		Tsimilarity_mat_.resize(nx, nx);
+
+		A_.setZero();
+		B_.setZero();
+		C_.setZero();
+		D_.setZero();
+
+		Ad_.setZero();
+		Bd_.setZero();
+		Cd_.setZero();
+		Dd_.setZero();
+
 	}
 
-	sys_matABCD_cont_.setZero();
-	sys_matABCD_disc_.setZero();
+	Tsimilarity_mat_.setIdentity();
 
 
 	// Zero padding the numerator.
@@ -145,7 +214,7 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	if (nx > 0)
 	{
 		// D_(0, 0) = zero_padded_num[0];
-		sys_matABCD_cont_(nx, nx) = 0;
+		D_(0, 0) = zero_padded_num[0];
 
 	}
 
@@ -155,11 +224,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	if (nx > 1)
 	{
 		// A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
-		sys_matABCD_cont_.block(1, 0, nx - 1, nx) = Eigen::MatrixXd::Identity(nx - 1, nx);
+		A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
 	}
 
-	// Assign B in system_matABCD
-	sys_matABCD_cont_(0, nx) = 1;
+	// Set B.
+	B_ = Eigen::MatrixXd::Identity(nx, 1);
 
 	// normalize the denominator and assign the first row of the A_matrix to the normalized denominator's values
 	// excluding the first item of the denominator.
@@ -167,28 +236,38 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	{
 		Eigen::Index ind_eig{ static_cast<long>(k - 1) };
 
-		// A_(0, ind_eig) = -1 * normalized_den[k];
-		sys_matABCD_cont_.topLeftCorner(nx, nx)(0, ind_eig) = -1 * normalized_den[k];
-
-
-		// C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
-		sys_matABCD_cont_.bottomLeftCorner(1, nx)(0, ind_eig) =
-				zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
+		A_(0, ind_eig) = -1 * normalized_den[k];
+		C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
 
 	}
 
 	// Balance the matrices.
-	// Call balance method on the system matrices.
+	// Call balance_a_matrix method on the system matrices.
 	//	ns_utils::print("Unbalanced System Matrix.");
 	//	ns_eigen_utils::printEigenMat(sys_matABCD_cont_);
 
-	ns_control_toolbox::balance(sys_matABCD_cont_);
+	ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
+
+	// Apply similarity transformation
+	B_.noalias() = Tsimilarity_mat_.inverse() * B_;
+	C_.noalias() = C_ * Tsimilarity_mat_;
+
+
+//	auto Tinv = Eigen::MatrixXd()
+
+
+	ns_utils::print("Aprime Balanced ");
+	ns_eigen_utils::printEigenMat(A_);
+
+	ns_utils::print("Tsimilarity ");
+	ns_eigen_utils::printEigenMat(Tsimilarity_mat_);
+
+	ns_utils::print("Tsimilarity Inverse ");
+	ns_eigen_utils::printEigenMat(Tsimilarity_mat_.inverse());
 }
 
 void ns_control_toolbox::tf2ss::print() const
 {
-	ns_utils::print("System Matrices [A, B; C, D] : ");
-	ns_eigen_utils::printEigenMat(sys_matABCD_cont_);
 
 	ns_utils::print("A : ");
 	ns_eigen_utils::printEigenMat(A());
@@ -219,8 +298,7 @@ void ns_control_toolbox::tf2ss::print_discrete_system() const
 	ns_utils::print("Dd : ");
 	ns_eigen_utils::printEigenMat(Dd());
 
-	ns_utils::print("System Matrices [Ad, Bd; Cd, Dd] : ");
-	ns_eigen_utils::printEigenMat(sys_matABCD_disc_);
+
 }
 
 /**
@@ -231,23 +309,6 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 
 	auto&& nx = N_;
 
-	auto&& A_ = sys_matABCD_cont_.topLeftCorner(nx, nx);
-	auto&& B_ = sys_matABCD_cont_.topRightCorner(nx, 1);
-	auto&& C_ = sys_matABCD_cont_.bottomLeftCorner(1, nx);
-	auto&& D_ = sys_matABCD_cont_.bottomRightCorner(1, 1);
-
-//	ns_utils::print("A : ");
-//	ns_eigen_utils::printEigenMat(A_);
-//
-//	ns_utils::print("B : ");
-//	ns_eigen_utils::printEigenMat(B_);
-//
-//	ns_utils::print("C : ");
-//	ns_eigen_utils::printEigenMat(C_);
-//
-//	ns_utils::print("D : ");
-//	ns_eigen_utils::printEigenMat(D_);
-
 	// take inverse:
 	auto const&& I = Eigen::MatrixXd::Identity(nx, nx);
 
@@ -255,10 +316,10 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 	auto const&& inv1_ATs = mat1_ATs.inverse();
 
 
-	auto&& Ad_ = inv1_ATs * (I + A_ * Ts / 2.);
-	auto&& Bd_ = inv1_ATs * B_ * Ts;
-	auto&& Cd_ = C_ * inv1_ATs;
-	auto&& Dd_ = D_ + C_ * Bd_ / 2.;
+	Ad_ = inv1_ATs * (I + A_ * Ts / 2.);
+	Bd_ = inv1_ATs * B_ * Ts;
+	Cd_ = C_ * inv1_ATs;
+	Dd_ = D_ + C_ * Bd_ / 2.;
 
 
 //	ns_utils::print("Ad : ");
@@ -273,14 +334,6 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 //	ns_utils::print("Dd : ");
 //	ns_eigen_utils::printEigenMat(Dd_);
 
-	sys_matABCD_disc_.topLeftCorner(nx, nx) = Ad_;
-	sys_matABCD_disc_.topRightCorner(nx, 1) = Bd_;
-	sys_matABCD_disc_.bottomLeftCorner(1, nx) = Cd_;
-	sys_matABCD_disc_.bottomRightCorner(1, 1) = Dd_;
-
-
-	//	ns_utils::print("invA \nx");
-	//	ns_eigen_utils::printEigenMat(inv1_ATs);
 
 }
 
@@ -289,58 +342,53 @@ void ns_control_toolbox::tf2ss::discretisize(double const& Ts)
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const
 {
 //	auto&& Ad = sys_matABCD_disc_.topLeftCorner(N_ - 1, N_ - 1);
-	return sys_matABCD_disc_.topLeftCorner(N_, N_);
+	return Ad_;
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const
 {
-//	auto&& Bd = sys_matABCD_disc_.topRightCorner(N_ - 1, 1);
-	return sys_matABCD_disc_.topRightCorner(N_, 1);
+
+	return Bd_;
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const
 {
 //	auto&& Cd = sys_matABCD_disc_.bottomLeftCorner(1, N_ - 1);
-	return sys_matABCD_disc_.bottomLeftCorner(1, N_);
+	return Cd_;
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::Dd() const
 {
-//	auto&& Dd = sys_matABCD_disc_.bottomRightCorner(1, 1);
-	return sys_matABCD_disc_.bottomRightCorner(1, 1);;
+
+	return Dd_;
 }
 
 
 // Continuous time state-space matrices.
 Eigen::MatrixXd ns_control_toolbox::tf2ss::A() const
 {
-//	auto A = sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
-	return sys_matABCD_cont_.topLeftCorner(N_ - 1, N_ - 1);
+
+	return A_;
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::B() const
 {
-//	auto&& B = sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
-	return sys_matABCD_cont_.topRightCorner(N_ - 1, 1);
+
+	return B_;
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::C() const
 {
-//	auto&& C = sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
-	return sys_matABCD_cont_.bottomLeftCorner(1, N_ - 1);
+
+	return C_;
 }
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const
 {
-	// auto&& D = sys_matABCD_cont_.bottomRightCorner(1, 1);
-	return sys_matABCD_cont_.bottomRightCorner(1, 1);
+
+	return D_;
 }
 
-
-void ns_control_toolbox::tf2ss::getSystemMatricesABCD_disc(Eigen::MatrixXd& sysMat) const
-{
-	sysMat = sys_matABCD_disc_;
-}
 
 /**
  * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
@@ -348,19 +396,9 @@ void ns_control_toolbox::tf2ss::getSystemMatricesABCD_disc(Eigen::MatrixXd& sysM
  * */
 
 
-void ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& system_state_xu)
-{
-	system_state_xu.noalias() = sys_matABCD_disc_ * system_state_xu;
-}
 
 double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const double& u)
 {
-	auto&& nx = N_;
-
-	auto&& Ad_ = sys_matABCD_disc_.topLeftCorner(nx, nx);
-	auto&& Bd_ = sys_matABCD_disc_.topRightCorner(nx, 1);
-	auto&& Cd_ = sys_matABCD_disc_.bottomLeftCorner(1, nx);
-	auto&& Dd_ = sys_matABCD_disc_.bottomRightCorner(1, 1);
 
 	// First compute the output y.
 	double y = (Cd_ * x0 + Dd_ * u)(0, 0);

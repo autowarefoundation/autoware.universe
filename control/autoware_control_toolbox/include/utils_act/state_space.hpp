@@ -75,15 +75,12 @@ namespace ns_control_toolbox
 
 		[[nodiscard]] Eigen::MatrixXd D() const;
 
-		void getSystemMatricesABCD_disc(Eigen::MatrixXd& sysMat) const;
-
 
 		/**
 		 * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as an input
 		 * is a column matrix [x;u]. This state matrix returns as [x; y] which is in the form of xy = [A B;C D]xu.
 		 * */
 
-		void simulateOneStep(Eigen::MatrixXd& system_state_xu);
 
 		double simulateOneStep(Eigen::MatrixXd& x0, double const& u);
 
@@ -114,10 +111,20 @@ namespace ns_control_toolbox
 		 *	C_ = ss_system.bottomLeftCorner(1, nx);
 		 *	D_ = ss_system.bottomRightCorner(1, 1);
 		 * */
-		Eigen::MatrixXd sys_matABCD_cont_{};
-		Eigen::MatrixXd sys_matABCD_disc_{};
+		Eigen::MatrixXd Tsimilarity_mat_{};  // Similarity mat of A, Aprime = Tinv * A *T.
 
-		Eigen::MatrixXd system_sim_xu0_{}; // state of system matrices [A, B;C, D]
+		// Data members
+		// Continuous time state-space model
+		Eigen::MatrixXd A_{};
+		Eigen::MatrixXd B_{};
+		Eigen::MatrixXd C_{};
+		Eigen::MatrixXd D_{};
+
+		// Discrete time state-space model
+		Eigen::MatrixXd Ad_{};
+		Eigen::MatrixXd Bd_{};
+		Eigen::MatrixXd Cd_{};
+		Eigen::MatrixXd Dd_{};
 
 	};
 
