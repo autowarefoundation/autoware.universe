@@ -201,7 +201,7 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
   }
 }
 
-size_t findNearestIndexWithSoftYawConstraints(
+[[maybe_unused]] size_t findNearestIndexWithSoftYawConstraints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const double dist_threshold, const double yaw_threshold)
 {
