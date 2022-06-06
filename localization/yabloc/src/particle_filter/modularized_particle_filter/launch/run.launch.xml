@@ -28,16 +28,8 @@
         <param name="flat_radius" value="5.0" />
     </node>
 
-    <node if="false" pkg="modularized_particle_filter" exec="camera_pose_corrector" name="camera_pose_corrector" args="--ros-args --log-level $(var log_level)" output="screen">
-        <remap from="/weighted_particles" to="/test/weighted_particles"/>
-        <param name="image_size" value="800"/>
-        <param name="max_range" value="20.0"/>
-        <param name="score_threshold" value="3.0"/>
-    </node>
-
-    
     <!-- ========================================= -->
-    <node pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen" args="--ros-args --log-level info">
         <remap from="/particle_array" to="/test/weighted_particles" />
         <remap from="/marker_array" to="/camera/weighted_particles/marker_array" />
     </node>

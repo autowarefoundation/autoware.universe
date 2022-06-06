@@ -6,8 +6,6 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 
-#include <boost/circular_buffer.hpp>
-
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_broadcaster.h>
 
@@ -22,16 +20,15 @@ private:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-  // Circular buffer
-  const int pose_buffer_size_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
+
   const float flat_radius_;
-  boost::circular_buffer<PoseWithCovarianceStamped> pose_circular_buffer_;
 
   void poseCallback(const PoseWithCovarianceStamped::ConstSharedPtr pose_msg);
   ParticleArray calculateWeightedParticles(
     const ParticleArray & predicted_particles, PoseWithCovarianceStamped pose);
 
-  float normalPDF(float x, float mu, float sigma, float inv_sqrt_2pi = 0.3989422804014327f);
+  float normalPDF(float x, float mu, float sigma);
 };
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__GNSS_POSE_CORRECTOR_HPP_

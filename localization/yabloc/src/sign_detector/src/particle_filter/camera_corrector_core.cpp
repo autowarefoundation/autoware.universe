@@ -36,11 +36,20 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   cv::applyColorMap(ll2_image, rgb_ll2_image, cv::COLORMAP_JET);
 
+  auto score_convert = [this](float raw) -> float {
+    constexpr float min_prob = 1e-4f;
+    constexpr float k = -std::log(min_prob) / 2.f;
+    raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
+    return min_prob * std::exp(k * (raw / this->max_raw_score_ + 1));
+  };
+
   ParticleArray weighted_particles = opt_array.value();
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = base_transform.inverse() * util::pose2Affine(particle.pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
-    particle.weight = computeScore(transformed_lsd, ll2_image);
+
+    float raw_score = computeScore(transformed_lsd, ll2_image);
+    particle.weight = score_convert(raw_score);
 
     cv::circle(rgb_ll2_image, toCvPoint(transform.translation()), 2, cv::Scalar::all(255), -1);
   }

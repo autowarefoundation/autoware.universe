@@ -1,22 +1,20 @@
 #include "modularized_particle_filter/correction/gnss_pose_corrector.hpp"
 
-#include "modularized_particle_filter/correction/correction_util.hpp"
-
-#include <iostream>
-
 GNSSPoseCorrector::GNSSPoseCorrector()
-: AbstCorrector("gnss_pose_corrector"),
-  flat_radius_(declare_parameter("flat_radius", 1.0f)),
-  pose_buffer_size_(10),
-  pose_circular_buffer_(pose_buffer_size_)
+: AbstCorrector("gnss_pose_corrector"), flat_radius_(declare_parameter("flat_radius", 1.0f))
 {
+  using std::placeholders::_1;
+  auto pose_callback = std::bind(&GNSSPoseCorrector::poseCallback, this, _1);
+  pose_cov_sub_ =
+    create_subscription<PoseWithCovarianceStamped>("/pose_with_covariance", 10, pose_callback);
+
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
 }
 
 void GNSSPoseCorrector::poseCallback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_msg)
 {
   const rclcpp::Time stamp = pose_msg->header.stamp;
-  pose_circular_buffer_.push_front(*pose_msg);
 
   std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
   if (!opt_particles.has_value()) return;
@@ -39,7 +37,7 @@ GNSSPoseCorrector::ParticleArray GNSSPoseCorrector::calculateWeightedParticles(
       predicted_particles.particles[i].pose.position.x - pose.pose.pose.position.x,
       predicted_particles.particles[i].pose.position.y - pose.pose.pose.position.y))};
     if (distance < flat_radius_) {
-      weighted_particles.particles[i].weight = normalPDF(0.0, 0.0, sigma);
+      weighted_particles.particles[i].weight = 1.0f;
     } else {
       weighted_particles.particles[i].weight = normalPDF(distance - flat_radius_, 0.0, sigma);
     }
@@ -48,8 +46,9 @@ GNSSPoseCorrector::ParticleArray GNSSPoseCorrector::calculateWeightedParticles(
   return weighted_particles;
 }
 
-float GNSSPoseCorrector::normalPDF(float x, float mu, float sigma, float inv_sqrt_2pi)
+float GNSSPoseCorrector::normalPDF(float x, float mu, float sigma)
 {
+  // NOTE: This is not exact normal distribution
   float a = (x - mu) / sigma;
-  return inv_sqrt_2pi / sigma * std::exp(-0.5f * a * a);
+  return std::exp(-0.5f * a * a);
 }
