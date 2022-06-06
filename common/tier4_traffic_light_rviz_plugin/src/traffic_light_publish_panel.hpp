@@ -30,7 +30,7 @@
 #include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #endif
 
-#include <unordered_set>
+#include <set>
 
 namespace rviz_plugins
 {
@@ -78,7 +78,7 @@ protected:
   TrafficSignalArray extra_traffic_signals_;
 
   bool enable_publish_;
-  std::unordered_set<int> traffic_light_ids_;
+  std::set<int> traffic_light_ids_;
   bool received_vector_map_;
 };
 

@@ -47,6 +47,7 @@ TrafficLightPublishPanel::TrafficLightPublishPanel(QWidget * parent) : rviz_comm
 
   // Traffic Light ID
   traffic_light_id_input_ = new QComboBox();  // init items in first onVectorMap
+  traffic_light_id_input_->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
   // Traffic Light Confidence
   traffic_light_confidence_input_ = new QDoubleSpinBox();
