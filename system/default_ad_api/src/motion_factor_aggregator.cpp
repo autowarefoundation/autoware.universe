@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware_api
+namespace default_ad_api
 {
 
 bool compareFactorsByDistance(
@@ -26,7 +26,7 @@ bool compareFactorsByDistance(
   return a.distance < b.distance;
 }
 
-MotionFactorAggregator::MotionFactorAggregator(rclcpp::NodeOptions & node_options)
+MotionFactorAggregator::MotionFactorAggregator(const rclcpp::NodeOptions & node_options)
 :Node("motion_factor_aggregator", node_options),
  clock_(this->get_clock()),
  tf_buffer_(this->get_clock()),
@@ -58,6 +58,10 @@ MotionFactorAggregator::MotionFactorAggregator(rclcpp::NodeOptions & node_option
     this->create_subscription<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "input/surround_obstacle/motion_factor", 100,
       std::bind(&MotionFactorAggregator::callbackSurroundObstacleMotionFactor, this, _1));
+  sub_trajectory_ =
+    this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+      "input/surround_obstacle/motion_factor", 100,
+      std::bind(&MotionFactorAggregator::callbackAutowareTrajectory, this, _1));
 
   // timer
   auto timer_callback = std::bind(&MotionFactorAggregator::callbackTimer, this);
@@ -247,4 +251,7 @@ void MotionFactorAggregator::getCurrentPose()
   }
 }
 
-}  // namespace autoware_api
+}  // namespace default_ad_api
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::MotionFactorAggregator)

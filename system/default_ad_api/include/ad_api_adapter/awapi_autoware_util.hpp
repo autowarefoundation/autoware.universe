@@ -58,7 +58,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_api
+namespace default_ad_api
 {
 
 // struct AutowareInfo // delete after fixing motion_factor_aggregator
@@ -149,6 +149,6 @@ double calcDistanceAlongTrajectory(
 
 }  // namespace planning_util
 
-}  // namespace autoware_api
+}  // namespace default_ad_api
 
 #endif  // AD_API_ADAPTER__AWAPI_AUTOWARE_UTIL_HPP_

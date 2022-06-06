@@ -8,19 +8,24 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/interface_version.cpp
 )
 
-ament_auto_add_library(motion_factor_aggregator SHARED
+ament_auto_add_library(motion_factor_aggregator_node SHARED
   src/awapi_autoware_util.cpp
   src/motion_factor_aggregator.cpp
 )
 
 # workaround to allow deprecated header to build on both galactic and rolling
 if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(motion_factor_aggregator PRIVATE
+  target_compile_definitions(motion_factor_aggregator_node PRIVATE
     USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
   )
 endif()
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
+
+rclcpp_components_register_node(motion_factor_aggregator_node
+  PLUGIN "default_ad_api::MotionFactorAggregator"
+  EXECUTABLE motion_factor_aggregator
+)
 
 if(BUILD_TESTING)
   add_launch_test(test/main.test.py)

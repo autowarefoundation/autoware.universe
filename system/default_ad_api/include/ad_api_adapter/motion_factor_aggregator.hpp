@@ -26,12 +26,12 @@
 
 #include <vector>
 
-namespace autoware_api
+namespace default_ad_api
 {
 class MotionFactorAggregator : public rclcpp::Node
 {
 public:
-  explicit MotionFactorAggregator(rclcpp::NodeOptions & node_options);
+  explicit MotionFactorAggregator(const rclcpp::NodeOptions & node_options);
 
 private:
   void callbackSceneModuleMotionFactor(
@@ -65,6 +65,8 @@ private:
     sub_obstacle_stop_motion_factor_;
   rclcpp::Subscription<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr
     sub_surround_obstacle_motion_factor_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_trajectory_;
   
   // rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
@@ -84,6 +86,6 @@ private:
   std::shared_ptr<geometry_msgs::msg::PoseStamped> current_pose_ptr_;
 };
 
-}  // namespace autoware_api
+}  // namespace default_ad_api
 
 #endif  // AWAPI_AWIV_ADAPTER__AWAPI_MOTION_FACTOR_AGGREGATOR_HPP_

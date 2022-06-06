@@ -16,7 +16,7 @@
 
 #include <limits>
 
-namespace autoware_api
+namespace default_ad_api
 {
 double lowpass_filter(const double current_value, const double prev_value, const double gain)
 {
@@ -105,4 +105,4 @@ double calcDistanceAlongTrajectory(
 
 }  // namespace planning_util
 
-}  // namespace autoware_api
+}  // namespace default_ad_api
