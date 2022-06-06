@@ -171,11 +171,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	}
 
+	B_ = Eigen::MatrixXd::Identity(nx, 1);
 	Tsimilarity_mat_.setIdentity();
 
-
 	// Zero padding the numerator.
-	auto&& num_of_zero = den.size() - num.size();
+	auto num_of_zero = den.size() - num.size();
 
 	std::vector<double> zero_padded_num{ num };
 
@@ -206,16 +206,9 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	}
 
 
-	//	A_ = ss_system.topLeftCorner(nx, nx);
-	//	B_ = ss_system.topRightCorner(nx, 1);
-	//	C_ = ss_system.bottomLeftCorner(1, nx);
-	//	D_ = ss_system.bottomRightCorner(1, 1);
-
 	if (nx > 0)
 	{
-		// D_(0, 0) = zero_padded_num[0];
 		D_(0, 0) = zero_padded_num[0];
-
 	}
 
 	//	auto B = Eigen::MatrixXd::Identity(nx - 1, nx);
@@ -223,41 +216,56 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	if (nx > 1)
 	{
-		// A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
 		A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
 	}
 
-	// Set B.
-	B_ = Eigen::MatrixXd::Identity(nx, 1);
 
 	// normalize the denominator and assign the first row of the A_matrix to the normalized denominator's values
 	// excluding the first item of the denominator.
 	for (size_t k = 1; k < normalized_den.size(); k++)
 	{
 		Eigen::Index ind_eig{ static_cast<long>(k - 1) };
-
 		A_(0, ind_eig) = -1 * normalized_den[k];
 		C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
-
 	}
 
 	// Balance the matrices.
 	// Call balance_a_matrix method on the system matrices.
-	//	ns_utils::print("Unbalanced System Matrix.");
-	//	ns_eigen_utils::printEigenMat(sys_matABCD_cont_);
+	ns_utils::print("Before Balancing");
+	ns_eigen_utils::printEigenMat(A_);
+	ns_eigen_utils::printEigenMat(B_);
+	ns_eigen_utils::printEigenMat(C_);
+	ns_eigen_utils::printEigenMat(D_);
+
 
 	ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
 
+	// Balance C_ and B_;
+	double nB = B_.lpNorm<1>();
+	double nC = C_.lpNorm<1>();
+
+	double alpha = ns_control_toolbox::balance_symmetric(nB, nC);
+	ns_utils::print("Alpha :", alpha);
+
+	double alpha1 = ns_control_toolbox::balance_symmetric(nC, nB);
+	ns_utils::print("Alpha :", alpha1);
+
 	// Apply similarity transformation
-	B_.noalias() = Tsimilarity_mat_.inverse() * B_;
-	C_.noalias() = C_ * Tsimilarity_mat_;
+	B_.noalias() = Tsimilarity_mat_.inverse() * B_ / alpha;
+	C_.noalias() = C_ * Tsimilarity_mat_ * alpha;
+
+	ns_utils::print("After Balancing");
+	ns_eigen_utils::printEigenMat(A_);
+	ns_eigen_utils::printEigenMat(B_);
+	ns_eigen_utils::printEigenMat(C_);
+	ns_eigen_utils::printEigenMat(D_);
+
+
+
 
 
 //	auto Tinv = Eigen::MatrixXd()
 
-
-	ns_utils::print("Aprime Balanced ");
-	ns_eigen_utils::printEigenMat(A_);
 
 	ns_utils::print("Tsimilarity ");
 	ns_eigen_utils::printEigenMat(Tsimilarity_mat_);

@@ -29,11 +29,20 @@ namespace ns_control_toolbox
 
 	/**
 	 * @brief Balances a matrix by similarity transformation of form Ab = D^{-1} A D.
+	 * see http://www.ece.northwestern.edu/local-apps/matlabhelp/toolbox/control/ref/ssbal.html.
 	 * */
 
 	void balance_a_matrix(Eigen::MatrixXd& A, Eigen::MatrixXd& Tsimilarity);
 
-	void balance_ssABCD_(Eigen::MatrixXd& ssABCD);
+	/**
+	 * @brief Used to balance a single row-r and column-c norm balancing. Finds an alpha such that r= r*alpha and
+	 * c=c/alpha. In the method, ahat = a*alpha, bhat = b/alpha order is followed.
+	 * @param c: A column norm.
+	 * @param r: A row norm. In general l1-norm is used.
+	 *
+	 *
+	 * */
+	double balance_symmetric(double const& a, double const& b);
 
 } // namespace ns_control_toolbox
 
