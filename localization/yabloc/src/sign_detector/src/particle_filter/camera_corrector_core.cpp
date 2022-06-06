@@ -11,7 +11,7 @@ cv::Point2f CameraParticleCorrector::toCvPoint(const Eigen::Vector3f & p)
   const cv::Size center(image_size_ / 2, image_size_ / 2);
   cv::Point2f pt;
   pt.x = -p.y() / max_range_ * center.width + center.width;
-  pt.y = -p.x() / max_range_ * center.height + 2 * center.height;
+  pt.y = -p.x() / max_range_ * center.height + center.height;
   return pt;
 }
 
@@ -35,14 +35,17 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   cv::Mat rgb_ll2_image;
 
   cv::applyColorMap(ll2_image, rgb_ll2_image, cv::COLORMAP_JET);
-  util::publishImage(*image_pub_, rgb_ll2_image, stamp);
 
   ParticleArray weighted_particles = opt_array.value();
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = base_transform.inverse() * util::pose2Affine(particle.pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
     particle.weight = computeScore(transformed_lsd, ll2_image);
+
+    cv::circle(rgb_ll2_image, toCvPoint(transform.translation()), 2, cv::Scalar::all(255), -1);
   }
+
+  util::publishImage(*image_pub_, rgb_ll2_image, stamp);
   this->setWeightedParticleArray(weighted_particles);
 }
 
@@ -78,7 +81,7 @@ float CameraParticleCorrector::computeScore(const LineSegment & lsd_cloud, cv::M
       Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
 
       cv::Point2f px = toCvPoint(p);
-      if (rect.contains(px)) score += ll2_image.at<uchar>(px) - 64;
+      if (rect.contains(px)) score += ll2_image.at<uchar>(px) + score_offset_;
     }
   }
   return score;

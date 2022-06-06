@@ -25,7 +25,8 @@ public:
   : AbstCorrector("camera_particle_corrector"),
     image_size_(declare_parameter<int>("image_size", 800)),
     max_range_(declare_parameter<float>("max_range", 20.f)),
-    gamma_(declare_parameter<float>("gamma", 3.0f))
+    gamma_(declare_parameter<float>("gamma", 3.0f)),
+    score_offset_(declare_parameter<float>("score_offset", -64.f))
   {
     using std::placeholders::_1;
 
@@ -59,5 +60,6 @@ private:
   const int image_size_;
   const float max_range_;
   const float gamma_;
+  const float score_offset_;
 };
 }  // namespace particle_filter

@@ -175,11 +175,13 @@ void LineSegmentDetector::projectEdgeOnPlane(
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
     cv::Scalar color = cv::Scalar(255, 255, 255);
+    int line_thick = 2;
     if (pixel_values.count(i + 1) != 0) {
       color = cv::Scalar(100, 100, 255);
+      line_thick = 4;
       reliable_edges.push_back(pn);
     }
-    cv::line(reliable_line_image, p1, p2, color, 2, cv::LineTypes::LINE_8);
+    cv::line(reliable_line_image, p1, p2, color, line_thick, cv::LineTypes::LINE_8);
   }
 
   // Publish
