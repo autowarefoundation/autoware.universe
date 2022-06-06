@@ -91,7 +91,7 @@ double ns_control_toolbox::balance_symmetric(double const& a, double const& b)
 {
 
 
-	double f = 1;
+	double f = 1; // Condition number that multiplies the small argument and divides the larger one.
 	double small_number{};
 	double large_number{};
 

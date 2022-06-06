@@ -205,7 +205,6 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 		throw std::invalid_argument("The first item in the denominator cannot be zero ...");
 	}
 
-
 	if (nx > 0)
 	{
 		D_(0, 0) = zero_padded_num[0];
@@ -231,12 +230,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 
 	// Balance the matrices.
 	// Call balance_a_matrix method on the system matrices.
-	ns_utils::print("Before Balancing");
-	ns_eigen_utils::printEigenMat(A_);
-	ns_eigen_utils::printEigenMat(B_);
-	ns_eigen_utils::printEigenMat(C_);
-	ns_eigen_utils::printEigenMat(D_);
-
+	//	ns_utils::print("Before Balancing");
+	//	ns_eigen_utils::printEigenMat(A_);
+	//	ns_eigen_utils::printEigenMat(B_);
+	//	ns_eigen_utils::printEigenMat(C_);
+	//	ns_eigen_utils::printEigenMat(D_);
 
 	ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
 
@@ -244,34 +242,36 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double>&
 	double nB = B_.lpNorm<1>();
 	double nC = C_.lpNorm<1>();
 
+	// alpha is a conditioning number that multiplies the smaller normed vector, divides the larger one.
 	double alpha = ns_control_toolbox::balance_symmetric(nB, nC);
-	ns_utils::print("Alpha :", alpha);
+	// ns_utils::print("Alpha :", alpha);
 
-	double alpha1 = ns_control_toolbox::balance_symmetric(nC, nB);
-	ns_utils::print("Alpha :", alpha1);
+	if (nB < nC)
+	{
+		// Apply similarity transformation
+		B_.noalias() = Tsimilarity_mat_.inverse() * B_ * alpha;
+		C_.noalias() = C_ * Tsimilarity_mat_ / alpha;
+	}
+	else
+	{
+		B_.noalias() = Tsimilarity_mat_.inverse() * B_ / alpha;
+		C_.noalias() = C_ * Tsimilarity_mat_ * alpha;
+	}
 
-	// Apply similarity transformation
-	B_.noalias() = Tsimilarity_mat_.inverse() * B_ / alpha;
-	C_.noalias() = C_ * Tsimilarity_mat_ * alpha;
+//	nB = B_.lpNorm<1>();
+//	ns_utils::print("After Balancing");
+//	ns_eigen_utils::printEigenMat(A_);
+//	ns_eigen_utils::printEigenMat(B_);
+//	ns_eigen_utils::printEigenMat(C_);
+//	ns_eigen_utils::printEigenMat(D_);
 
-	ns_utils::print("After Balancing");
-	ns_eigen_utils::printEigenMat(A_);
-	ns_eigen_utils::printEigenMat(B_);
-	ns_eigen_utils::printEigenMat(C_);
-	ns_eigen_utils::printEigenMat(D_);
+	// auto Tinv = Eigen::MatrixXd()
 
-
-
-
-
-//	auto Tinv = Eigen::MatrixXd()
-
-
-	ns_utils::print("Tsimilarity ");
-	ns_eigen_utils::printEigenMat(Tsimilarity_mat_);
-
-	ns_utils::print("Tsimilarity Inverse ");
-	ns_eigen_utils::printEigenMat(Tsimilarity_mat_.inverse());
+//	ns_utils::print("Tsimilarity ");
+//	ns_eigen_utils::printEigenMat(Tsimilarity_mat_);
+//
+//	ns_utils::print("Tsimilarity Inverse ");
+//	ns_eigen_utils::printEigenMat(Tsimilarity_mat_.inverse());
 }
 
 void ns_control_toolbox::tf2ss::print() const
@@ -415,6 +415,11 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd& x0, const dou
 	x0.noalias() = Ad_ * x0 + Bd_ * u;
 
 	return y;
+}
+
+Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
+{
+	return Tsimilarity_mat_;
 }
 
 
