@@ -203,12 +203,12 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 
 size_t findNearestIndexWithSoftYawConstraints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
-  const double yaw_threshold)
+  const double dist_threshold, const double yaw_threshold)
 {
   const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
 
-  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
-    points_with_yaw, pose, std::numeric_limits<double>::max(), yaw_threshold);
+  const auto nearest_idx_optional =
+    tier4_autoware_utils::findNearestIndex(points_with_yaw, pose, dist_threshold, yaw_threshold);
   return nearest_idx_optional
            ? *nearest_idx_optional
            : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
@@ -1455,7 +1455,7 @@ ObstacleAvoidancePlanner::alignVelocity(
 
     const auto & target_pose = fine_traj_points_with_vel[i].pose;
     const auto closest_seg_idx_optional = tier4_autoware_utils::findNearestSegmentIndex(
-      truncated_points, target_pose, std::numeric_limits<double>::max(),
+      truncated_points, target_pose, traj_param_.delta_dist_threshold_for_closest_point,
       traj_param_.delta_yaw_threshold_for_closest_point);
 
     const auto closest_seg_idx =
