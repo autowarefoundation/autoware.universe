@@ -325,9 +325,9 @@ void pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
 
       const auto & centroid = leaf.centroid;
       const auto distances = leaf.points | ranges::views::transform([&centroid](const auto & p) {
-                               return std::pow(p.x - centroid[0], 2) +
-                                      std::pow(p.y - centroid[1], 2) +
-                                      std::pow(p.z - centroid[2], 2);
+                               return (p.x - centroid[0]) * (p.x - centroid[0]) +
+                                      (p.y - centroid[1]) * (p.y - centroid[1]) +
+                                      (p.z - centroid[2]) * (p.z - centroid[2]);
                              });
       const auto min_itr = ranges::min_element(distances);
       const auto min_idx = ranges::distance(distances.begin(), min_itr);
