@@ -65,6 +65,7 @@
 
 #include <range/v3/all.hpp>
 
+#include <algorithm>
 #include <limits>
 #include <map>
 #include <vector>
