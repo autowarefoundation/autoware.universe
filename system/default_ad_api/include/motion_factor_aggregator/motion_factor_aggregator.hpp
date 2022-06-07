@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AD_API_ADAPTER__MOTION_FACTOR_AGGREGATOR_HPP_
-#define AD_API_ADAPTER__MOTION_FACTOR_AGGREGATOR_HPP_
+#ifndef MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
+#define MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
 
 #include "autoware_ad_api_msgs/msg/motion_factor_array.hpp"
 
-#include "ad_api_adapter/awapi_autoware_util.hpp"
+#include "motion_factor_aggregator/awapi_autoware_util.hpp"
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -88,4 +88,4 @@ private:
 
 }  // namespace default_ad_api
 
-#endif  // AD_API_ADAPTER__MOTION_FACTOR_AGGREGATOR_HPP_
+#endif  // MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_

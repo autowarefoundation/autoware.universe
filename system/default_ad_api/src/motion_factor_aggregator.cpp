@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ad_api_adapter/motion_factor_aggregator.hpp"
+#include "motion_factor_aggregator/motion_factor_aggregator.hpp"
 
 #include <memory>
 #include <vector>
@@ -27,13 +27,13 @@ bool compareFactorsByDistance(
 }
 
 MotionFactorAggregator::MotionFactorAggregator(const rclcpp::NodeOptions & node_options)
-:Node("motion_factor_aggregator", node_options),
- clock_(this->get_clock()),
- tf_buffer_(this->get_clock()),
- tf_listener_(tf_buffer_)
+: Node("motion_factor_aggregator", node_options),
+  clock_(this->get_clock()),
+  tf_buffer_(this->get_clock()),
+  tf_listener_(tf_buffer_)
 // : logger_(node.get_logger().get_child("motion_factor_aggregator")),
 //   clock_(node.get_clock()),
-//   tf_buffer_(this->get_clock()), 
+//   tf_buffer_(this->get_clock()),
 //   tf_listener_(tf_buffer_)
 {
   using std::placeholders::_1;
@@ -43,7 +43,7 @@ MotionFactorAggregator::MotionFactorAggregator(const rclcpp::NodeOptions & node_
 
   // Publisher
   pub_motion_factor_ = this->create_publisher<autoware_ad_api_msgs::msg::MotionFactorArray>(
-      "~/output/motion_factors", 100);
+    "~/output/motion_factors", 100);
 
   // Subscriber
   sub_scene_module_motion_factor_ =
@@ -58,10 +58,9 @@ MotionFactorAggregator::MotionFactorAggregator(const rclcpp::NodeOptions & node_
     this->create_subscription<autoware_ad_api_msgs::msg::MotionFactorArray>(
       "input/surround_obstacle/motion_factor", 100,
       std::bind(&MotionFactorAggregator::callbackSurroundObstacleMotionFactor, this, _1));
-  sub_trajectory_ =
-    this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
-      "input/surround_obstacle/motion_factor", 100,
-      std::bind(&MotionFactorAggregator::callbackAutowareTrajectory, this, _1));
+  sub_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+    "input/autoware_trajectory", 1,
+    std::bind(&MotionFactorAggregator::callbackAutowareTrajectory, this, _1));
 
   // timer
   auto timer_callback = std::bind(&MotionFactorAggregator::callbackTimer, this);
@@ -107,10 +106,8 @@ void MotionFactorAggregator::callbackAutowareTrajectory(
 void MotionFactorAggregator::callbackTimer()
 {
   getCurrentPose();
-  autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array_msg
-    = makeMotionFactorArray();
+  autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array_msg = makeMotionFactorArray();
   pub_motion_factor_->publish(motion_factor_array_msg);
-
 }
 
 void MotionFactorAggregator::applyUpdate(
@@ -174,8 +171,7 @@ void MotionFactorAggregator::applyTimeOut()
   }
 }
 
-autoware_ad_api_msgs::msg::MotionFactorArray
-MotionFactorAggregator::makeMotionFactorArray()
+autoware_ad_api_msgs::msg::MotionFactorArray MotionFactorAggregator::makeMotionFactorArray()
 {
   autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array_msg;
   // input header
@@ -216,8 +212,7 @@ void MotionFactorAggregator::appendMotionFactorToArray(
   motion_factor_array->motion_factors.emplace_back(motion_factor_with_dist);
 }
 
-autoware_ad_api_msgs::msg::MotionFactor
-MotionFactorAggregator::inputStopDistToMotionFactor(
+autoware_ad_api_msgs::msg::MotionFactor MotionFactorAggregator::inputStopDistToMotionFactor(
   const autoware_ad_api_msgs::msg::MotionFactor & motion_factor)
 {
   if (!autoware_planning_traj_ptr_ || !current_pose_ptr_) {

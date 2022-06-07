@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AD_API_ADAPTER__AWAPI_AUTOWARE_UTIL_HPP_
-#define AD_API_ADAPTER__AWAPI_AUTOWARE_UTIL_HPP_
+#ifndef MOTION_FACTOR_AGGREGATOR__AWAPI_AUTOWARE_UTIL_HPP_
+#define MOTION_FACTOR_AGGREGATOR__AWAPI_AUTOWARE_UTIL_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -151,4 +151,4 @@ double calcDistanceAlongTrajectory(
 
 }  // namespace default_ad_api
 
-#endif  // AD_API_ADAPTER__AWAPI_AUTOWARE_UTIL_HPP_
+#endif  // MOTION_FACTOR_AGGREGATOR__AWAPI_AUTOWARE_UTIL_HPP_

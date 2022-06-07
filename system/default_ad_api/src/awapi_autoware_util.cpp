@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ad_api_adapter/awapi_autoware_util.hpp"
+#include "motion_factor_aggregator/awapi_autoware_util.hpp"
 
 #include <limits>
 

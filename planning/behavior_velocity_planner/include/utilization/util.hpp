@@ -20,6 +20,7 @@
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
+#include <autoware_ad_api_msgs/msg/motion_factor.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -30,7 +31,6 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
-#include <autoware_ad_api_msgs/msg/motion_factor.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 

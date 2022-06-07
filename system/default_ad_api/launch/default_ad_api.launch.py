@@ -31,6 +31,30 @@ def _create_api_node(node_name, class_name, **kwargs):
 def generate_launch_description():
     components = [
         _create_api_node("interface_version", "InterfaceVersionNode"),
+        _create_api_node(
+            "motion_factor_aggregator_node",
+            "MotionFactorAggregator",
+            remappings=[
+                (
+                    "input/scene_module/motion_factor",
+                    "/planning/scenario_planning/status/scene_modules/motion_factors",
+                ),
+                (
+                    "input/obstacle_stop/motion_factor",
+                    "/planning/scenario_planning/status/obstacle_stop/motion_factors",
+                ),
+                (
+                    "input/surround_obstacle/motion_factor",
+                    "/planning/scenario_planning/status/surround_obstacle_checker/motion_factors",
+                ),
+                ("input/autoware_trajectory", "/planning/scenario_planning/trajectory"),
+                ("~/output/motion_factors", "/planning/scenario_planning/status/motion_factors"),
+            ],
+            parameters=[
+                {"status_pub_hz": 5.0},
+                {"timeout": 0.5},
+            ],
+        ),
     ]
     container = ComposableNodeContainer(
         namespace="default_ad_api",

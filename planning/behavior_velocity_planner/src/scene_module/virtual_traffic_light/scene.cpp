@@ -367,7 +367,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   } else if (command_.type == "eva_beacon_system") {
     motion_factor->detail = "eva_beacon_system";
   }
-  
+
   module_data_ = {};
 
   // Copy data
