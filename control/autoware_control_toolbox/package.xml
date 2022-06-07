@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
     <name>autoware_control_toolbox</name>
     <version>0.1.0</version>
     <description>The Autoware Control Toolbox Package</description>
@@ -7,14 +8,16 @@
     <author email="boyali@gmail.com">Ali Boyali</author>
     <license>Apache License 2.0</license>
 
-    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
     <build_depend>autoware_cmake</build_depend>
 
     <depend>rclcpp</depend>
     <depend>rclcpp_components</depend>
 
+    <test_depend>ament_cmake_ros</test_depend>
     <test_depend>ament_lint_auto</test_depend>
-    <test_depend>ament_lint_common</test_depend>
+    <test_depend>autoware_lint_common</test_depend>
+    <test_depend>eigen</test_depend>
 
     <export>
         <build_type>ament_cmake</build_type>
