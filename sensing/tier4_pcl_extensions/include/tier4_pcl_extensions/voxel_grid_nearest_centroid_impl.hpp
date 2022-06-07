@@ -324,14 +324,14 @@ void pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
       output.push_back(PointT());
 
       const auto & centroid = leaf.centroid;
-      const auto square_distances =
+      const auto squared_distances =
         leaf.points | ranges::views::transform([&centroid](const auto & p) {
           return (p.x - centroid[0]) * (p.x - centroid[0]) +
                  (p.y - centroid[1]) * (p.y - centroid[1]) +
                  (p.z - centroid[2]) * (p.z - centroid[2]);
         });
-      const auto min_itr = ranges::min_element(square_distances);
-      const auto min_idx = ranges::distance(square_distances.begin(), min_itr);
+      const auto min_itr = ranges::min_element(squared_distances);
+      const auto min_idx = ranges::distance(squared_distances.begin(), min_itr);
       output.points.back() = leaf.points.at(min_idx);
 
       // Stores the voxel indices for fast access searching
