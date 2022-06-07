@@ -1,0 +1,170 @@
+import os
+import sys
+import time
+import pytest
+
+import rclpy
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.normpath(os.path.join(current_path, './')))
+sys.path.append(os.path.normpath(os.path.join(current_path, '../')))
+sys.path.append(os.path.normpath(os.path.join(current_path, '../../')))
+
+from autoware_auto_control_msgs.msg import AckermannControlCommand
+from autoware_auto_control_msgs.msg import AckermannLateralCommand
+from autoware_auto_control_msgs.msg import LongitudinalCommand
+
+from grpc_ros2_bridge_test_automation.clients.client_event_cmd import ClientEventCmdAsync
+from grpc_ros2_bridge_test_automation.publishers.morai_ctrl_cmd import LongCmdType
+from grpc_ros2_bridge_test_automation.publishers.morai_ctrl_cmd import PublisherMoraiCtrlCmd
+from grpc_ros2_bridge_test_automation.publishers.ackermann_control_command import PublisherAckermannControlCommand
+from grpc_ros2_bridge_test_automation.subscribers.velocity_report import SubscriberVelocityReport
+
+
+class TestAckermannCtrlVelocityReport:
+
+    @classmethod
+    def setup_class(cls) -> None:
+        rclpy.init()
+        cls.msgs_rx = []
+        cls.control_cmd = {
+            'lateral': {
+                'steering_tire_angle': 0.0,
+                'steering_tire_rotation_rate': 0.0
+            },
+            'longitudinal': {
+                'speed': 0.0,
+                'acceleration': 0.0,
+                'jerk': 0.0
+            }
+        }
+        
+        cls.node = rclpy.create_node('test_ackermann_control_velocity_report')
+        cls.sub = cls.node.create_subscription(
+            AckermannControlCommand,
+            '/control/command/control_cmd',
+            lambda msg : cls.msgs_rx.append(msg),
+            10
+        )
+        cls.pub = cls.node.create_publisher(
+            AckermannControlCommand,
+            '/control/command/control_cmd',
+            10
+        )
+        cls.sub_velocity_report = SubscriberVelocityReport()
+        cls.set_vehicle_auto_mode()
+    
+    @classmethod
+    def teardown_class(cls) -> None:
+        cls.node.destroy_node()
+        rclpy.shutdown()
+    
+    @classmethod
+    def set_vehicle_auto_mode(cls):
+        event_cmd_client = ClientEventCmdAsync()
+        event_cmd_client.send_request()
+
+        while rclpy.ok():
+            rclpy.spin_once(event_cmd_client)
+            if event_cmd_client.future.done():
+                result_msg = event_cmd_client.future.result()
+            break
+    
+    @pytest.fixture
+    def setup_and_teardown(self):
+        self.control_cmd['longitudinal']['speed'] = 0.0
+        self.control_cmd['longitudinal']['acceleration'] = 0.0
+        self.set_morai_ctrl_mode(LongCmdType.VELOCITY)
+        yield time.sleep(3)
+        self.init_vehicle()
+        time.sleep(3)    
+        
+    def init_vehicle(self):
+        self.set_speed(0.0)
+    
+    def set_morai_ctrl_mode(self, long_cmd_type):
+        ctrl_cmd_publisher = PublisherMoraiCtrlCmd()
+        
+        msg = {'longCmdType': long_cmd_type.value,
+               'accel': 0.0,
+               'brake': 0.0,
+               'steering': 0.0,
+               'velocity': 0.0,
+               'acceleration': 0.0}
+        ctrl_cmd_publisher.publish_msg(msg)
+    
+    def generate_control_msg(self, control_cmd):
+        stamp = self.node.get_clock().now().to_msg()
+        msg = AckermannControlCommand()
+        lateral_cmd = AckermannLateralCommand()
+        longitudinal_cmd = LongitudinalCommand()
+        lateral_cmd.stamp.sec = stamp.sec
+        lateral_cmd.stamp.nanosec = stamp.nanosec
+        lateral_cmd.steering_tire_angle = control_cmd['lateral']['steering_tire_angle']
+        lateral_cmd.steering_tire_rotation_rate = control_cmd['lateral']['steering_tire_rotation_rate']
+        longitudinal_cmd.stamp.sec = stamp.sec
+        longitudinal_cmd.stamp.nanosec = stamp.nanosec
+        longitudinal_cmd.speed = control_cmd['longitudinal']['speed']
+        longitudinal_cmd.acceleration = control_cmd['longitudinal']['acceleration']
+        longitudinal_cmd.jerk = control_cmd['longitudinal']['jerk']
+        
+        msg.stamp.sec = stamp.sec
+        msg.stamp.nanosec = stamp.nanosec
+        msg.lateral = lateral_cmd
+        msg.longitudinal = longitudinal_cmd
+        return msg
+        
+    
+    def set_speed(self, speed):
+        self.set_morai_ctrl_mode(LongCmdType.VELOCITY)
+        self.control_cmd['longitudinal']['speed'] = speed
+        self.msgs_rx.clear()
+        while rclpy.ok():
+            rclpy.spin_once(self.node)
+            self.pub.publish(self.generate_control_msg(self.control_cmd))
+            if len(self.msgs_rx) > 2 :
+                break
+        received = self.msgs_rx[-1]
+        assert  received.longitudinal.speed == speed
+        self.msgs_rx.clear()
+    
+    def set_acceleration(self, acceleration):
+        self.set_morai_ctrl_mode(LongCmdType.ACCELERATION)
+        self.control_cmd['longitudinal']['acceleration'] = acceleration
+        self.msgs_rx.clear()
+        while rclpy.ok():
+            rclpy.spin_once(self.node)
+            self.pub.publish(self.generate_control_msg(self.control_cmd))
+            if len(self.msgs_rx) > 2 :
+                break
+        received = self.msgs_rx[-1]
+        assert  received.longitudinal.acceleration == acceleration
+        self.msgs_rx.clear()
+    
+    def get_velocity_report(self):
+        self.sub_velocity_report.received.clear()
+        received = 0.0
+        try:
+            while rclpy.ok():
+                rclpy.spin_once(self.sub_velocity_report)
+                if len(self.sub_velocity_report.received) > 2:
+                    break
+            received = self.sub_velocity_report.received.pop()
+        finally:
+            return received
+    
+    def test_1_speed_control(self, setup_and_teardown):
+        target_value = 100.0
+        self.set_speed(target_value)
+        time.sleep(3)
+        current_speed = self.get_velocity_report()
+        assert current_speed.longitudinal_velocity > 10.0
+    
+    def test_2_acceleration_control(self, setup_and_teardown):
+        target_value = 100.0
+        self.set_acceleration(target_value)
+        time.sleep(3)
+        current_speed = self.get_velocity_report()
+        assert current_speed.longitudinal_velocity > 10.0
+        
+        

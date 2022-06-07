@@ -1,0 +1,12 @@
+int32 number_of_ego_vehicle
+int32 camera_index
+int32[] ego_index
+float64[] global_position_x
+float64[] global_position_y
+float64[] global_position_z
+float32[] global_roll
+float32[] global_pitch
+float32[] global_yaw
+float32[] velocity
+int8[] gear
+int8[] ctrl_mode
