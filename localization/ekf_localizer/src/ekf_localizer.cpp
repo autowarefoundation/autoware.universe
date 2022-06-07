@@ -350,7 +350,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
 
   PoseInfo pose_info = {
     std::make_shared<geometry_msgs::msg::PoseStamped>(pose), msg->pose.covariance, 0};
-  current_pose_info_queue_.push_back(pose_info);
+  current_pose_info_queue_.push(pose_info);
 }
 
 /*
@@ -365,7 +365,7 @@ void EKFLocalizer::callbackTwistWithCovariance(
 
   TwistInfo twist_info = {
     std::make_shared<geometry_msgs::msg::TwistStamped>(twist), msg->twist.covariance, 0};
-  current_twist_info_queue_.push_back(twist_info);
+  current_twist_info_queue_.push(twist_info);
 }
 
 /*
@@ -768,3 +768,4 @@ double EKFLocalizer::normalizeYaw(const double & yaw) const
 {
   return std::atan2(std::sin(yaw), std::cos(yaw));
 }
+
