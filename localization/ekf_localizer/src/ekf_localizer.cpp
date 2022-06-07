@@ -18,9 +18,9 @@
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <algorithm>
-#include <queue>
 #include <functional>
 #include <memory>
+#include <queue>
 #include <string>
 #include <utility>
 
