@@ -153,12 +153,7 @@ private:
   };
 
   /* for model prediction */
-  // geometry_msgs::msg::TwistStamped::SharedPtr
-  //   current_twist_ptr_;                                          //!< @brief current measured
-  //   twist
   std::deque<TwistInfo> current_twist_info_deque_;  //!< @brief current measured pose
-  // geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured
-  // pose
   std::deque<PoseInfo> current_pose_info_deque_;      //!< @brief current measured pose
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
