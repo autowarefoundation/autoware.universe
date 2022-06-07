@@ -341,6 +341,71 @@ double calcArcLength(const T & points)
 
   return calcSignedArcLength(points, 0, points.size() - 1);
 }
+
+template <class T>
+double calcSignedArcLength(
+  const T & points, const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
+  const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx)
+{
+  validateNonEmpty(points);
+
+  const double signed_length_on_traj = calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
+  const double signed_length_src_offset =
+    calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
+  const double signed_length_dst_offset =
+    calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
+
+  return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
+}
+
+/**
+ * @brief PointsHandler
+ * Example Usage in each node
+ *
+ * points_handler_ = PointsHandler(*this);
+ * ---
+ * const size_t ego_idx = points_handler_.findEgoSegmentIndex(points, ego_pose);
+ * const size_t obj_idx = points_handler_.findDynamicObjectSegmentIndex(points, obj_pos);
+ * const double signed_length = calcSignedArcLength(points, ego_pose.position, ego_idx, obj_pos,
+ * obj_idx);
+ */
+class PointsHandler
+{
+public:
+  explicit PointsHandler(rclcpp::Node & node)
+  {
+    dist_threshold_ = getParameter<double>(node, "points_handler.dist_threshold");
+    yaw_threshold_ = getParameter<double>(node, "points_handler.yaw_threshold");
+  }
+
+  /**
+   * @brief findEgoSegmentIndex
+   *        find "first" nearest index to ego pose with distance and yaw threshold
+   */
+  template <class T>
+  std::optional<size_t> findEgoSegmentIndex(
+    const T & points, const geometry_msgs::msg::Pose & ego_pose);
+
+  /**
+   * @brief findDynamicObjectSegmentIndex
+   *        find nearest index to object position "without" distance and yaw threshold
+   */
+  template <class T>
+  size_t findDynamicObjectSegmentIndex(const T & points, const geometry_msgs::msg::Point & obj_pos);
+
+  /**
+   * @brief findTrafficObjectSegmentIndex
+   *        find nearest index to object position within designated indices "without" distance and
+   * yaw threshold
+   */
+  template <class T>
+  size_t findTrafficObjectSegmentIndex(
+    const T & points, const size_t start_idx, const size_t end_idx);
+
+  double dist_threshold_;
+  double yaw_threshold_;
+};
+
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__TRAJECTORY__TRAJECTORY_HPP_
