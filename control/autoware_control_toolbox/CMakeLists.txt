@@ -58,8 +58,9 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif ()
 
 ## Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
 
 ##  ----------------- Required Packages ---------------------------------------
 find_package(Eigen3 REQUIRED)
@@ -161,13 +162,8 @@ endif ()
 
 
 #ament package generation and installing
-# ament_auto_package(INSTALL_TO_SHARE)
-# ament_auto_package(INSTALL_TO_SHARE config launch)
+ament_auto_package(INSTALL_TO_SHARE)
 
-
-target_compile_options(${CONTROL_LIB} PUBLIC "-O0" PRIVATE -Wall)
-ament_auto_package(CONFIG_EXTRAS_POST "${CONTROL_LIB}-extras.cmake")
-# --------------- Other Installation Macros ------------
 
 # -------------  PROTOTYPES ____________________________
 
