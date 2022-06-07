@@ -768,4 +768,3 @@ double EKFLocalizer::normalizeYaw(const double & yaw) const
 {
   return std::atan2(std::sin(yaw), std::cos(yaw));
 }
-
