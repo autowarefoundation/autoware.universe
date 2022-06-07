@@ -176,8 +176,8 @@ bool DistortionCorrectorComponent::undistortPointCloud(
          ++twist_with_covariance_it) {
     }
 
-    float v{static_cast<float>(twist_with_covariance_it->twist.linear_velocity.x)};
-    float w{static_cast<float>(twist_with_covariance_it->twist.angular_velocity.z)};
+    float v{static_cast<float>(twist_with_covariance_it->twist.twist.linear.x)};
+    float w{static_cast<float>(twist_with_covariance_it->twist.twist.angular.z)};
 
     if (std::abs(*it_time_stamp - rclcpp::Time(twist_with_covariance_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(

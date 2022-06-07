@@ -60,11 +60,11 @@ private:
     tf2::Transform * tf2_transform_ptr);
 
   bool undistortPointCloud(
-    const std::deque<VelocityReport> & twist_with_covariance_queue,
+    const std::deque<TwistWithCovarianceStamped> & twist_with_covariance_queue,
     const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
-  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_with_covariance_sub_;
+  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr input_twist_with_covariance_sub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
 
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

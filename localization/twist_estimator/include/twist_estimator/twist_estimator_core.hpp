@@ -29,6 +29,12 @@ public:
 private:
   void callbackTwistWithCovariance(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr);
+
+  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+    sensing_twist_with_covariance_sub_;
+  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+    twist_with_covariance_pub_;
+  double message_timeout_sec_;
 };
 
 #endif  // TWIST_ESTIMATOR__TWIST_ESTIMATOR_CORE_HPP_
