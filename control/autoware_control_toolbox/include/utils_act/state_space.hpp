@@ -22,7 +22,6 @@
 #include "act_utils_eigen.hpp"
 #include "balance.hpp"
 #include "transfer_functions.hpp"
-#include "visibility_control.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -36,7 +35,7 @@ namespace ns_control_toolbox
  *
  * */
 
-class ACT_PUBLIC tf2ss
+class tf2ss
 {
 public:
   // Constructors

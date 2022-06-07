@@ -21,7 +21,6 @@
 #include "act_utils.hpp"
 #include "act_utils_eigen.hpp"
 #include "tf_algebra.hpp"
-#include "visibility_control.hpp"
 
 #include <algorithm>
 #include <string>
@@ -98,7 +97,7 @@ struct TF_algebra : public TF_multiplication<T>
  * */
 
 // For visibility, we can set for each object : __attribute__((visibility("default"))) class_name
-struct ACT_PUBLIC tf : TF_algebra<tf>
+struct tf : TF_algebra<tf>
 {
   // Constructors.
   tf() : num_{1.}, den_{1.} {}
@@ -184,13 +183,13 @@ private:
  * @param Td	: time delay value in seconds.
  * @param N		: Order of Pade approximation.
  * */
-tf ACT_PUBLIC pade(double const & Td, size_t const & order);
+tf pade(double const & Td, size_t const & order);
 
 /**
  * @bried see pade()
  * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
  * */
-tf ACT_PUBLIC padecoeff(double const & Td, size_t const & order);
+tf padecoeff(double const & Td, size_t const & order);
 
 }  // namespace ns_control_toolbox
 
