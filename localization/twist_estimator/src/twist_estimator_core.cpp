@@ -25,12 +25,12 @@
 #include <string>
 
 TwistEstimator::TwistEstimator()
-: Node("twist_estimator"),
-  message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2))
+: Node("twist_estimator"), message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2))
 {
-  sensing_twist_with_covariance_sub_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "sensing/twist_with_covariance", rclcpp::QoS{100},
-    std::bind(&TwistEstimator::callbackTwistWithCovariance, this, std::placeholders::_1));
+  sensing_twist_with_covariance_sub_ =
+    create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
+      "sensing/twist_with_covariance", rclcpp::QoS{100},
+      std::bind(&TwistEstimator::callbackTwistWithCovariance, this, std::placeholders::_1));
 
   twist_with_covariance_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "twist_with_covariance", rclcpp::QoS{10});
@@ -44,9 +44,7 @@ void TwistEstimator::callbackTwistWithCovariance(
   geometry_msgs::msg::TwistWithCovarianceStamped msg = *twist_with_cov_msg_ptr;
 
   // clear velocity and angular velocity if vehicle is stopped
-  if (
-    std::fabs(msg.twist.twist.angular.z) < 0.01 &&
-    std::fabs(msg.twist.twist.angular.x) < 0.01) {
+  if (std::fabs(msg.twist.twist.angular.z) < 0.01 && std::fabs(msg.twist.twist.angular.x) < 0.01) {
     msg.twist.twist.linear.x = 0.0;
     msg.twist.twist.linear.y = 0.0;
     msg.twist.twist.linear.z = 0.0;

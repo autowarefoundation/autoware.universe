@@ -165,8 +165,8 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
   twist_with_covariance_it = twist_with_covariance_it == std::end(twist_with_covariance_queue_)
-                         ? std::end(twist_with_covariance_queue_) - 1
-                         : twist_with_covariance_it;
+                               ? std::end(twist_with_covariance_queue_) - 1
+                               : twist_with_covariance_it;
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
@@ -179,7 +179,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     float v{static_cast<float>(twist_with_covariance_it->twist.twist.linear.x)};
     float w{static_cast<float>(twist_with_covariance_it->twist.twist.angular.z)};
 
-    if (std::abs(*it_time_stamp - rclcpp::Time(twist_with_covariance_it->header.stamp).seconds()) > 0.1) {
+    if (
+      std::abs(*it_time_stamp - rclcpp::Time(twist_with_covariance_it->header.stamp).seconds()) >
+      0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
         "twist_with_covariance time_stamp is too late. Cloud not interpolate.");

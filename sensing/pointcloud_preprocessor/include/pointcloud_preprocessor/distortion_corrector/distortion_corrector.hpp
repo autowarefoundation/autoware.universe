@@ -54,7 +54,8 @@ public:
 
 private:
   void onPointCloud(PointCloud2::UniquePtr points_msg);
-  void onTwistWithCovariance(const TwistWithCovarianceStamped::ConstSharedPtr twist_with_covariance_msg);
+  void onTwistWithCovariance(
+    const TwistWithCovarianceStamped::ConstSharedPtr twist_with_covariance_msg);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
