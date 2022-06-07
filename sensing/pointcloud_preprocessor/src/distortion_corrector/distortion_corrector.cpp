@@ -42,29 +42,29 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
     this->create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   // Subscriber
-  velocity_report_sub_ = this->create_subscription<VelocityReport>(
-    "~/input/velocity_report", 10,
-    std::bind(&DistortionCorrectorComponent::onVelocityReport, this, std::placeholders::_1));
+  input_twist_with_covariance_sub_ = this->create_subscription<TwistWithCovarianceStamped>(
+    "~/input/twist_with_covariance", 10,
+    std::bind(&DistortionCorrectorComponent::onTwistWithCovariance, this, std::placeholders::_1));
   input_points_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
 }
 
-void DistortionCorrectorComponent::onVelocityReport(
-  const VelocityReport::ConstSharedPtr velocity_report_msg)
+void DistortionCorrectorComponent::onTwistWithCovariance(
+  const TwistWithCovarianceStamped::ConstSharedPtr twist_with_covariance_msg)
 {
-  velocity_report_queue_.push_back(*velocity_report_msg);
+  twist_with_covariance_queue_.push_back(*twist_with_covariance_msg);
 
-  while (!velocity_report_queue_.empty()) {
+  while (!twist_with_covariance_queue_.empty()) {
     // for replay rosbag
     if (
-      rclcpp::Time(velocity_report_queue_.front().header.stamp) >
-      rclcpp::Time(velocity_report_msg->header.stamp)) {
-      velocity_report_queue_.pop_front();
+      rclcpp::Time(twist_with_covariance_queue_.front().header.stamp) >
+      rclcpp::Time(twist_with_covariance_msg->header.stamp)) {
+      twist_with_covariance_queue_.pop_front();
     } else if (  // NOLINT
-      rclcpp::Time(velocity_report_queue_.front().header.stamp) <
-      rclcpp::Time(velocity_report_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
-      velocity_report_queue_.pop_front();
+      rclcpp::Time(twist_with_covariance_queue_.front().header.stamp) <
+      rclcpp::Time(twist_with_covariance_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      twist_with_covariance_queue_.pop_front();
     }
     break;
   }
@@ -83,7 +83,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
   tf2::Transform tf2_base_link_to_sensor{};
   getTransform(points_msg->header.frame_id, base_link_frame_, &tf2_base_link_to_sensor);
 
-  undistortPointCloud(velocity_report_queue_, tf2_base_link_to_sensor, *points_msg);
+  undistortPointCloud(twist_with_covariance_queue_, tf2_base_link_to_sensor, *points_msg);
 
   if (points_sub_count > 0) {
     undistorted_points_pub_->publish(std::move(points_msg));
@@ -126,13 +126,13 @@ bool DistortionCorrectorComponent::getTransform(
 }
 
 bool DistortionCorrectorComponent::undistortPointCloud(
-  const std::deque<VelocityReport> & velocity_report_queue_,
+  const std::deque<TwistWithCovarianceStamped> & twist_with_covariance_queue_,
   const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points)
 {
-  if (points.data.empty() || velocity_report_queue_.empty()) {
+  if (points.data.empty() || twist_with_covariance_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 10000 /* ms */,
-      "input_pointcloud->points or velocity_report_queue_ is empty.");
+      "input_pointcloud->points or twist_with_covariance_queue_ is empty.");
     return false;
   }
 
@@ -159,30 +159,30 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   double prev_time_stamp_sec{*it_time_stamp};
   const double first_point_time_stamp_sec{*it_time_stamp};
 
-  auto velocity_report_it = std::lower_bound(
-    std::begin(velocity_report_queue_), std::end(velocity_report_queue_),
-    first_point_time_stamp_sec, [](const VelocityReport & x, const double t) {
+  auto twist_with_covariance_it = std::lower_bound(
+    std::begin(twist_with_covariance_queue_), std::end(twist_with_covariance_queue_),
+    first_point_time_stamp_sec, [](const TwistWithCovarianceStamped & x, const double t) {
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
-  velocity_report_it = velocity_report_it == std::end(velocity_report_queue_)
-                         ? std::end(velocity_report_queue_) - 1
-                         : velocity_report_it;
+  twist_with_covariance_it = twist_with_covariance_it == std::end(twist_with_covariance_queue_)
+                         ? std::end(twist_with_covariance_queue_) - 1
+                         : twist_with_covariance_it;
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     for (;
-         (velocity_report_it != std::end(velocity_report_queue_) - 1 &&
-          *it_time_stamp > rclcpp::Time(velocity_report_it->header.stamp).seconds());
-         ++velocity_report_it) {
+         (twist_with_covariance_it != std::end(twist_with_covariance_queue_) - 1 &&
+          *it_time_stamp > rclcpp::Time(twist_with_covariance_it->header.stamp).seconds());
+         ++twist_with_covariance_it) {
     }
 
-    float v{static_cast<float>(velocity_report_it->longitudinal_velocity)};
-    float w{static_cast<float>(velocity_report_it->heading_rate)};
+    float v{static_cast<float>(twist_with_covariance_it->twist.linear_velocity.x)};
+    float w{static_cast<float>(twist_with_covariance_it->twist.angular_velocity.z)};
 
-    if (std::abs(*it_time_stamp - rclcpp::Time(velocity_report_it->header.stamp).seconds()) > 0.1) {
+    if (std::abs(*it_time_stamp - rclcpp::Time(twist_with_covariance_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
-        "velocity_report time_stamp is too late. Cloud not interpolate.");
+        "twist_with_covariance time_stamp is too late. Cloud not interpolate.");
       v = 0.0f;
       w = 0.0f;
     }
