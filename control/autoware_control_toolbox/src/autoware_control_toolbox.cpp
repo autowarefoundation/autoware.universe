@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-#include <string>
-#include <algorithm>
-
-#include "utils_act/act_utils.hpp"
 #include "autoware_control_toolbox.hpp"
 
+#include "utils_act/act_utils.hpp"
 
-
+#include <algorithm>
+#include <string>
+#include <vector>

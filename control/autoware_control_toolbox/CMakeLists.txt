@@ -18,6 +18,7 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif ()
 
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
@@ -167,7 +168,6 @@ endif ()
 target_compile_options(${CONTROL_LIB} PUBLIC "-O0" PRIVATE -Wall)
 ament_auto_package(CONFIG_EXTRAS_POST "${CONTROL_LIB}-extras.cmake")
 # --------------- Other Installation Macros ------------
-
 
 # -------------  PROTOTYPES ____________________________
 
