@@ -18,7 +18,7 @@
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <algorithm>
-#include <deque>
+#include <queue>
 #include <functional>
 #include <memory>
 #include <string>
@@ -152,19 +152,21 @@ void EKFLocalizer::timerCallback()
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
   /* pose measurement update */
-  if (!current_pose_info_deque_.empty()) {
+  if (!current_pose_info_queue_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Pose -------------------------");
     DEBUG_INFO(
       get_logger(), "[EKF] measurementUpdatePose number = %d",
-      int(current_pose_info_deque_.size()));
+      int(current_pose_info_queue_.size()));
     stop_watch_.tic();
-    for (int i = 0; i < int(current_pose_info_deque_.size()); ++i) {
-      PoseInfo pose_info = current_pose_info_deque_.front();
-      current_pose_info_deque_.pop_front();
+
+    int pose_info_queue_size = int(current_pose_info_queue_.size());
+    for (int i = 0; i < pose_info_queue_size; ++i) {
+      PoseInfo pose_info = current_pose_info_queue_.front();
+      current_pose_info_queue_.pop();
       measurementUpdatePose(*pose_info.pose, pose_info.covariance);
       ++pose_info.counter;
       if (pose_info.counter < pose_smoothing_steps_) {
-        current_pose_info_deque_.push_back(pose_info);
+        current_pose_info_queue_.push(pose_info);
       }
     }
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
@@ -172,19 +174,21 @@ void EKFLocalizer::timerCallback()
   }
 
   /* twist measurement update */
-  if (!current_twist_info_deque_.empty()) {
+  if (!current_twist_info_queue_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Twist -------------------------");
     DEBUG_INFO(
       get_logger(), "[EKF] measurementUpdateTwist number = %d",
-      int(current_twist_info_deque_.size()));
+      int(current_twist_info_queue_.size()));
     stop_watch_.tic();
-    for (int i = 0; i < int(current_twist_info_deque_.size()); ++i) {
-      TwistInfo twist_info = current_twist_info_deque_.front();
-      current_twist_info_deque_.pop_front();
+
+    int twist_info_queue_size = int(current_twist_info_queue_.size());
+    for (int i = 0; i < twist_info_queue_size; ++i) {
+      TwistInfo twist_info = current_twist_info_queue_.front();
+      current_twist_info_queue_.pop();
       measurementUpdateTwist(*twist_info.twist, twist_info.covariance);
       ++twist_info.counter;
       if (twist_info.counter < twist_smoothing_steps_) {
-        current_twist_info_deque_.push_back(twist_info);
+        current_twist_info_queue_.push(twist_info);
       }
     }
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdateTwist calc time = %f [ms]", stop_watch_.toc());
@@ -219,10 +223,10 @@ void EKFLocalizer::setCurrentResult()
 
   tf2::Quaternion q_tf;
   double roll = 0.0, pitch = 0.0;
-  if (!current_pose_info_deque_.empty()) {
-    current_ekf_pose_.pose.position.z = current_pose_info_deque_.back().pose->pose.position.z;
+  if (!current_pose_info_queue_.empty()) {
+    current_ekf_pose_.pose.position.z = current_pose_info_queue_.back().pose->pose.position.z;
     tf2::fromMsg(
-      current_pose_info_deque_.back().pose->pose.orientation, q_tf); /* use Pose pitch and roll */
+      current_pose_info_queue_.back().pose->pose.orientation, q_tf); /* use Pose pitch and roll */
     double yaw_tmp;
     tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
   }
@@ -331,7 +335,7 @@ void EKFLocalizer::callbackInitialPose(
 
   ekf_.init(X, P, extend_state_step_);
 
-  current_pose_info_deque_.clear();
+  current_pose_info_queue_.clear();
 }
 
 /*
@@ -346,7 +350,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
 
   PoseInfo pose_info = {
     std::make_shared<geometry_msgs::msg::PoseStamped>(pose), msg->pose.covariance, 0};
-  current_pose_info_deque_.push_back(pose_info);
+  current_pose_info_queue_.push_back(pose_info);
 }
 
 /*
@@ -361,7 +365,7 @@ void EKFLocalizer::callbackTwistWithCovariance(
 
   TwistInfo twist_info = {
     std::make_shared<geometry_msgs::msg::TwistStamped>(twist), msg->twist.covariance, 0};
-  current_twist_info_deque_.push_back(twist_info);
+  current_twist_info_queue_.push_back(twist_info);
 }
 
 /*
@@ -739,17 +743,17 @@ void EKFLocalizer::publishEstimateResult()
   pub_odom_->publish(odometry);
 
   /* debug measured pose */
-  if (!current_pose_info_deque_.empty()) {
+  if (!current_pose_info_queue_.empty()) {
     geometry_msgs::msg::PoseStamped p;
-    p = *(current_pose_info_deque_.back().pose);
+    p = *(current_pose_info_queue_.back().pose);
     p.header.stamp = current_time;
     pub_measured_pose_->publish(p);
   }
 
   /* debug publish */
   double pose_yaw = 0.0;
-  if (!current_pose_info_deque_.empty()) {
-    pose_yaw = tf2::getYaw(current_pose_info_deque_.back().pose->pose.orientation);
+  if (!current_pose_info_queue_.empty()) {
+    pose_yaw = tf2::getYaw(current_pose_info_queue_.back().pose->pose.orientation);
   }
 
   tier4_debug_msgs::msg::Float64MultiArrayStamped msg;
