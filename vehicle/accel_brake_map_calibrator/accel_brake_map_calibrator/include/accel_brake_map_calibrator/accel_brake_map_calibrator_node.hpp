@@ -55,6 +55,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <Eigen/Dense>
 
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
@@ -212,6 +213,9 @@ private:
   void executeUpdate(
     const bool accel_mode, const int accel_pedal_index, const int accel_vel_index,
     const int brake_pedal_index, const int brake_vel_index);
+  bool updateFourCellAroundOffset(
+    const bool accel_mode, const int accel_pedal_index, const int accel_vel_index,
+    const int brake_pedal_index, const int brake_vel_index, const double measured_acc);
   bool updateEachValOffset(
     const bool accel_mode, const int accel_pedal_index, const int accel_vel_index,
     const int brake_pedal_index, const int brake_vel_index, const double measured_acc,
@@ -321,6 +325,7 @@ private:
   enum UPDATE_METHOD {
     UPDATE_OFFSET_EACH_CELL = 0,
     UPDATE_OFFSET_TOTAL = 1,
+    UPDATE_OFFSET_FOUR_CELL_AROUND = 2,
   };
 
 public:
