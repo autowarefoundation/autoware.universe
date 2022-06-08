@@ -143,6 +143,11 @@ public:
   virtual float64_t getSteer() = 0;
 
   /**
+   * @brief get vehicle gear
+   */
+  uint8_t getGear() const;
+
+  /**
    * @brief get state vector dimension
    */
   inline int getDimX() { return dim_x_; }
