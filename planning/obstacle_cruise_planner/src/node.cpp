@@ -314,9 +314,11 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("common.nearest_dist_deviation_threshold");
     nearest_yaw_deviation_threshold_ =
       declare_parameter<double>("common.nearest_yaw_deviation_threshold");
+    obstacle_velocity_threshold_from_cruise_to_stop_ =
+      declare_parameter<double>("common.obstacle_velocity_threshold_from_cruise_to_stop");
     planner_ptr_->setParams(
       is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
-      nearest_yaw_deviation_threshold_);
+      nearest_yaw_deviation_threshold_, obstacle_velocity_threshold_from_cruise_to_stop_);
   }
 
   // wait for first self pose
@@ -348,7 +350,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     parameters, "common.is_showing_debug_info", is_showing_debug_info_);
   planner_ptr_->setParams(
     is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    nearest_yaw_deviation_threshold_, obstacle_velocity_threshold_from_cruise_to_stop_);
 
   // obstacle_filtering
   tier4_autoware_utils::updateParam<double>(

@@ -16,6 +16,7 @@
       nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
       nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index
       min_behavior_stop_margin: 3.0 # [m]
+      obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
 
       cruise_obstacle_type:
         unknown: true
@@ -75,8 +76,6 @@
 
       min_cruise_target_vel: 0.0 # minimum target velocity during slow down [m/s]
 
-      obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
-
     optimization_based_planner:
       resampling_s_interval: 2.0
       dense_resampling_time_interval: 0.1
@@ -88,9 +87,6 @@
 
       # Parameters for safety distance limit time
       t_dangerous: 0.5
-
-      # Parameters for collision detection
-      object_zero_velocity_threshold: 3.0 #[m/s]
 
       # For initial Motion
       replan_vel_deviation: 5.0          # velocity deviation to replan initial velocity [m/s]

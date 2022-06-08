@@ -175,9 +175,6 @@ PIDBasedPlanner::PIDBasedPlanner(
   min_cruise_target_vel_ =
     node.declare_parameter<double>("pid_based_planner.min_cruise_target_vel");
 
-  obstacle_velocity_threshold_from_cruise_to_stop_ = node.declare_parameter<double>(
-    "pid_based_planner.obstacle_velocity_threshold_from_cruise_to_stop");
-
   // publisher
   stop_reasons_pub_ =
     node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);

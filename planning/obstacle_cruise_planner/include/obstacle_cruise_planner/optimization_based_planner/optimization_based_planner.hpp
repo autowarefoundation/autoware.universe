@@ -165,7 +165,6 @@ private:
   double dense_time_horizon_;
   double max_time_horizon_;
 
-  double object_zero_velocity_threshold_;
   double t_dangerous_;
   double velocity_margin_;
 

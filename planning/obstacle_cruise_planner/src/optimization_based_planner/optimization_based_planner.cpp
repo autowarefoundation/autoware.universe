@@ -131,8 +131,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
     node.declare_parameter<double>("optimization_based_planner.dense_time_horizon");
   max_time_horizon_ = node.declare_parameter<double>("optimization_based_planner.max_time_horizon");
 
-  object_zero_velocity_threshold_ =
-    node.declare_parameter<double>("optimization_based_planner.object_zero_velocity_threshold");
   t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
   velocity_margin_ = node.declare_parameter<double>("optimization_based_planner.velocity_margin");
 
@@ -522,7 +520,7 @@ double OptimizationBasedPlanner::getClosestStopDistance(
     // If the object is on the current ego trajectory,
     // we assume the object travels along ego trajectory
     const double obj_vel = std::abs(obj.velocity);
-    if (dist_to_collision_point && obj_vel < object_zero_velocity_threshold_) {
+    if (dist_to_collision_point && obj_vel < obstacle_velocity_threshold_from_cruise_to_stop_) {
       const double current_stop_point = std::max(*dist_to_collision_point - safety_distance, 0.0);
       closest_stop_dist = std::min(current_stop_point, closest_stop_dist);
     }
@@ -907,7 +905,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
       visualization_msgs::msg::MarkerArray wall_msg;
 
       const double obj_vel = std::abs(obj.velocity);
-      if (obj_vel < object_zero_velocity_threshold_) {
+      if (obj_vel < obstacle_velocity_threshold_from_cruise_to_stop_) {
         const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
           marker_pose.get(), "obstacle to follow", current_time, 0);
         tier4_autoware_utils::appendMarkerArray(markers, &wall_msg);
@@ -995,7 +993,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   const double v_obj = std::abs(object.velocity);
 
   double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
-  const double current_v_obj = v_obj < object_zero_velocity_threshold_ ? 0.0 : v_obj;
+  const double current_v_obj =
+    v_obj < obstacle_velocity_threshold_from_cruise_to_stop_ ? 0.0 : v_obj;
   const double initial_s_upper_bound =
     current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
   s_boundaries.front().max_s = std::clamp(initial_s_upper_bound, 0.0, s_boundaries.front().max_s);
@@ -1021,7 +1020,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
 
   const double abs_obj_vel = std::abs(object.velocity);
-  const double v_obj = abs_obj_vel < object_zero_velocity_threshold_ ? 0.0 : abs_obj_vel;
+  const double v_obj =
+    abs_obj_vel < obstacle_velocity_threshold_from_cruise_to_stop_ ? 0.0 : abs_obj_vel;
 
   SBoundaries s_boundaries(time_vec.size());
   for (size_t i = 0; i < s_boundaries.size(); ++i) {

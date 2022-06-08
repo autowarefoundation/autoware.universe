@@ -99,12 +99,15 @@ public:
 
   void setParams(
     const bool is_showing_debug_info, const double min_behavior_stop_margin,
-    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold)
+    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold,
+    const double obstacle_velocity_threshold_from_cruise_to_stop)
   {
     is_showing_debug_info_ = is_showing_debug_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
     nearest_dist_deviation_threshold_ = nearest_dist_deviation_threshold;
     nearest_yaw_deviation_threshold_ = nearest_yaw_deviation_threshold;
+    obstacle_velocity_threshold_from_cruise_to_stop_ =
+      obstacle_velocity_threshold_from_cruise_to_stop;
   }
 
   /*
@@ -171,6 +174,7 @@ protected:
   double min_behavior_stop_margin_;
   double nearest_dist_deviation_threshold_;
   double nearest_yaw_deviation_threshold_;
+  double obstacle_velocity_threshold_from_cruise_to_stop_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
