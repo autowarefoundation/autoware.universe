@@ -342,6 +342,13 @@ double calcArcLength(const T & points)
   return calcSignedArcLength(points, 0, points.size() - 1);
 }
 
+/**
+ * Example Usage of calcSignedArcLength
+ * const size_t ego_seg_idx = findEgoNearestSegmentIndex(points, ego_pose);
+ * const size_t obj_seg_idx = findDynamicObjectNearestSegmentIndex(points, obj_pos);
+ * const double signed_length = calcSignedArcLength(points, ego_pose.position, ego_seg_idx, obj_pos,
+ * obj_seg_idx);
+ */
 template <class T>
 double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
@@ -359,53 +366,117 @@ double calcSignedArcLength(
 }
 
 /**
- * @brief PointsHandler
- * Example Usage in each node
- *
- * points_handler_ = PointsHandler(*this);
- * ---
- * const size_t ego_idx = points_handler_.findEgoSegmentIndex(points, ego_pose);
- * const size_t obj_idx = points_handler_.findDynamicObjectSegmentIndex(points, obj_pos);
- * const double signed_length = calcSignedArcLength(points, ego_pose.position, ego_idx, obj_pos,
- * obj_idx);
+ * @brief findEgoNearestSegmentindex
+ *        find "first" nearest index to ego pose with distance and yaw threshold
  */
-class PointsHandler
+template <class T>
+std::optional<size_t> findEgoNearestSegmentIndex(
+  const T & points, const geometry_msgs::msg::Pose & ego_pose, const double dist_threshold,
+  const double yaw_threshold)
 {
-public:
-  explicit PointsHandler(rclcpp::Node & node)
-  {
-    dist_threshold_ = getParameter<double>(node, "points_handler.dist_threshold");
-    yaw_threshold_ = getParameter<double>(node, "points_handler.yaw_threshold");
+  validateNonEmpty(points);
+
+  // calculate nearest index within threshold
+  const size_t ego_idx = [&]() {
+    const double squared_dist_threshold = dist_threshold * dist_threshold;
+    double min_squared_dist = std::numeric_limits<double>::max();
+    size_t min_idx = 0;
+    bool is_nearest_found = false;
+    for (size_t i = 0; i < points.size(); ++i) {
+      const auto squared_dist = calcSquaredDistance2d(points.at(i), ego_pose.position);
+      const auto yaw = calcYawDeviation(getPose(points.at(i)), ego_pose);
+
+      if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
+        if (is_nearest_found) {
+          break;
+        } else {
+          continue;
+        }
+      }
+
+      if (squared_dist >= min_squared_dist) {
+        continue;
+      }
+
+      min_squared_dist = squared_dist;
+      min_idx = i;
+      is_nearest_found = true;
+    }
+
+    if (!is_nearest_found) {
+      return {};
+    }
+
+    return min_idx;
+  }();
+
+  // calculte nearest segment index
+  if (ego_idx == 0) {
+    return 0;
+  }
+  if (ego_idx == points.size() - 1) {
+    return points.size() - 2;
   }
 
-  /**
-   * @brief findEgoSegmentIndex
-   *        find "first" nearest index to ego pose with distance and yaw threshold
-   */
-  template <class T>
-  std::optional<size_t> findEgoSegmentIndex(
-    const T & points, const geometry_msgs::msg::Pose & ego_pose);
+  const double signed_length = calcLongitudinalOffsetToSegment(points, ego_idx, ego_pose.position);
+  if (signed_length <= 0) {
+    return ego_idx - 1;
+  }
 
-  /**
-   * @brief findDynamicObjectSegmentIndex
-   *        find nearest index to object position "without" distance and yaw threshold
-   */
-  template <class T>
-  size_t findDynamicObjectSegmentIndex(const T & points, const geometry_msgs::msg::Point & obj_pos);
+  return ego_idx;
+}
 
-  /**
-   * @brief findTrafficObjectSegmentIndex
-   *        find nearest index to object position within designated indices "without" distance and
-   * yaw threshold
-   */
-  template <class T>
-  size_t findTrafficObjectSegmentIndex(
-    const T & points, const size_t start_idx, const size_t end_idx);
+/**
+ * @brief findDynamicObjectNearestSegmentIndex
+ *        find "first" nearest index to object position "with" distance and "without" yaw threshold
+ */
+template <class T>
+boost::optional<size_t> findDynamicObjectNearestSegmentIndex(
+  const T & points, const geometry_msgs::msg::Point & obj_pos, const double dist_threshold)
+{
+  validateNonEmpty(points);
 
-  double dist_threshold_;
-  double yaw_threshold_;
-};
+  const double squared_dist_threshold = dist_threshold * dist_threshold;
 
+  double min_squared_dist = std::numeric_limits<double>::max();
+  bool is_nearest_found = false;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < points.size(); ++i) {
+    const auto squared_dist = calcSquaredDistance2d(points.at(i), obj_pos);
+    if (squared_dist > squared_dist_threshold) {
+      continue;
+    }
+
+    if (squared_dist >= min_squared_dist) {
+      continue;
+    }
+
+    min_squared_dist = squared_dist;
+    min_idx = i;
+    is_nearest_found = true;
+  }
+
+  if (!is_nearest_found) {
+    return {};
+  }
+
+  return min_idx;
+}
+
+/**
+ * @brief findTrafficObjectNearestSegmentIndex
+ *        find nearest index to object position within designated indices "without" distance and
+ *        yaw threshold
+ */
+template <class T>
+size_t findTrafficObjectNearestSegmentIndex(
+  const T & points, const geometry_msgs::msg::Point & obj_pos, const size_t start_idx,
+  const size_t end_idx)
+{
+  const T cropped_points(points.begin() + start_idx, points.begin() + end_idx + 1);
+  const size_t cropped_obj_idx = findNearestSegmentIndex(cropped_points, obj_pos);
+  return start_idx + cropped_obj_idx;
+}
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__TRAJECTORY__TRAJECTORY_HPP_
