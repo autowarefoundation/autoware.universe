@@ -48,7 +48,7 @@ def generate_launch_description():
                     "/planning/scenario_planning/status/surround_obstacle_checker/motion_factors",
                 ),
                 ("input/autoware_trajectory", "/planning/scenario_planning/trajectory"),
-                ("~/output/motion_factors", "/planning/scenario_planning/status/motion_factors"),
+                ("~/output/motion_factors", "/api/get/motion_factors"),
             ],
             parameters=[
                 {"status_pub_hz": 5.0},

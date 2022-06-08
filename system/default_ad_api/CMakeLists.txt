@@ -23,11 +23,6 @@ endif()
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
 rclcpp_components_register_nodes(motion_factor_aggregator_node "default_ad_api::MotionFactorAggregator")
 
-# rclcpp_components_register_node(motion_factor_aggregator_node
-#   PLUGIN "default_ad_api::MotionFactorAggregator"
-#   EXECUTABLE motion_factor_aggregator
-# )
-
 if(BUILD_TESTING)
   add_launch_test(test/main.test.py)
 endif()
