@@ -130,7 +130,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
   dense_time_horizon_ =
     node.declare_parameter<double>("optimization_based_planner.dense_time_horizon");
   max_time_horizon_ = node.declare_parameter<double>("optimization_based_planner.max_time_horizon");
-  limit_min_accel_ = node.declare_parameter<double>("optimization_based_planner.limit_min_accel");
 
   delta_yaw_threshold_of_nearest_index_ =
     tier4_autoware_utils::deg2rad(node.declare_parameter<double>(
@@ -307,7 +306,7 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
   data.v_max = v_max;
   data.a_max = longitudinal_info_.max_accel;
   data.a_min = longitudinal_info_.min_accel;
-  data.limit_a_min = limit_min_accel_;
+  data.limit_a_min = longitudinal_info_.min_strong_accel;
   data.j_max = longitudinal_info_.max_jerk;
   data.j_min = longitudinal_info_.min_jerk;
   data.t_dangerous = t_dangerous_;

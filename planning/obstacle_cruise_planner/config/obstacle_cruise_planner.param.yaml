@@ -79,7 +79,6 @@
       obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
 
     optimization_based_planner:
-      limit_min_accel: -3.0
       resampling_s_interval: 2.0
       dense_resampling_time_interval: 0.1
       sparse_resampling_time_interval: 1.0

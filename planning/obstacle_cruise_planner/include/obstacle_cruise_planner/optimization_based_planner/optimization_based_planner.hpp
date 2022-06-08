@@ -165,7 +165,6 @@ private:
   double sparse_resampling_time_interval_;
   double dense_time_horizon_;
   double max_time_horizon_;
-  double limit_min_accel_;
 
   double delta_yaw_threshold_of_nearest_index_;
   double delta_yaw_threshold_of_object_and_ego_;
