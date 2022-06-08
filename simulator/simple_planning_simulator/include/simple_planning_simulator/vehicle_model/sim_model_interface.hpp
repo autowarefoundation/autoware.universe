@@ -16,14 +16,17 @@
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
 
 #include "common/types.hpp"
+#include "disturbance_generators/disturbance_generators.hpp"
 #include "eigen3/Eigen/Core"
 
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 
+#include <limits>
+
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
-
+constexpr double EPS = std::numeric_limits<double>::epsilon();
 /**
  * @class SimModelInterface
  * @brief simple_planning_simulator vehicle model class to calculate vehicle dynamics
@@ -38,6 +41,14 @@ protected:
 
   //!< @brief gear command defined in autoware_auto_msgs/GearCommand
   uint8_t gear_ = autoware_auto_vehicle_msgs::msg::GearCommand::DRIVE;
+
+  // DISTURBANCE Generator Set
+  IDisturbanceCollection disturbance_collection_{};
+
+  void setDisturbance(IDisturbanceCollection const & dist_collection)
+  {
+    disturbance_collection_ = dist_collection;
+  }
 
 public:
   /**

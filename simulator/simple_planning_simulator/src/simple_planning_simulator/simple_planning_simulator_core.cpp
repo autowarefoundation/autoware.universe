@@ -562,6 +562,8 @@ void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
   tf_msg.transforms.emplace_back(std::move(tf));
   pub_tf_->publish(tf_msg);
 }
+
+void SimplePlanningSimulator::ReadandSetDisturbanceParams() {}
 }  // namespace simple_planning_simulator
 }  // namespace simulation
 

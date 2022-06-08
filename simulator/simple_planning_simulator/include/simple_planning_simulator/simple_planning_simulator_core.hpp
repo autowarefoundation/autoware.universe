@@ -333,6 +333,11 @@ private:
    * @param [in] state The kinematic state to publish as a TF
    */
   void publish_tf(const Odometry & odometry);
+
+  /**
+   * @brief reads and sets disturbance parameters.
+   * */
+  void ReadandSetDisturbanceParams();
 };
 }  // namespace simple_planning_simulator
 }  // namespace simulation
