@@ -430,6 +430,7 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
     // assign fix kinematics
     const size_t nearest_ref_idx = findNearestIndexWithSoftYawConstraints(
       points_utils::convertToPoints(ref_points), current_ego_pose_,
+      traj_param_.delta_dist_threshold_for_closest_point,
       traj_param_.delta_yaw_threshold_for_closest_point);
 
     // calculate cropped_ref_points.at(nearest_ref_idx) with yaw
@@ -468,6 +469,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   const auto & prev_ref_points = prev_trajs->mpt_ref_points;
   const int nearest_prev_ref_idx = static_cast<int>(findNearestIndexWithSoftYawConstraints(
     points_utils::convertToPoints(prev_ref_points), current_ego_pose_,
+    traj_param_.delta_dist_threshold_for_closest_point,
     traj_param_.delta_yaw_threshold_for_closest_point));
 
   // calculate begin_prev_ref_idx
@@ -1222,12 +1224,12 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
 
 size_t MPTOptimizer::findNearestIndexWithSoftYawConstraints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
-  const double yaw_threshold) const
+  const double dist_threshold, const double yaw_threshold) const
 {
   const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
 
-  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
-    points_with_yaw, pose, std::numeric_limits<double>::max(), yaw_threshold);
+  const auto nearest_idx_optional =
+    tier4_autoware_utils::findNearestIndex(points_with_yaw, pose, dist_threshold, yaw_threshold);
   return nearest_idx_optional
            ? *nearest_idx_optional
            : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
@@ -1330,6 +1332,7 @@ void MPTOptimizer::calcExtraPoints(
         points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
       const size_t prev_idx = findNearestIndexWithSoftYawConstraints(
         points_utils::convertToPoints(prev_ref_points), ref_points_with_yaw.at(i),
+        traj_param_.delta_dist_threshold_for_closest_point,
         traj_param_.delta_yaw_threshold_for_closest_point);
       const double dist_to_nearest_prev_ref =
         tier4_autoware_utils::calcDistance2d(prev_ref_points.at(prev_idx), ref_points.at(i));
@@ -1372,6 +1375,7 @@ void MPTOptimizer::calcBounds(
       enable_avoidance, convertRefPointsToPose(ref_point), maps, debug_data_ptr);
     sequential_bounds_candidates.push_back(bounds_candidates);
   }
+  debug_data_ptr->sequential_bounds_candidates = sequential_bounds_candidates;
 
   // search continuous and widest bounds only for front point
   for (size_t i = 0; i < sequential_bounds_candidates.size(); ++i) {
@@ -1408,6 +1412,11 @@ void MPTOptimizer::calcBounds(
           RCLCPP_INFO_EXPRESSION(
             rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
             "non-overlapped length bounds is ignored.");
+          RCLCPP_INFO_EXPRESSION(
+            rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+            "In detail, prev: lower=%f, upper=%f, candidate: lower=%f, upper=%f",
+            prev_continuous_bounds.lower_bound, prev_continuous_bounds.upper_bound,
+            bounds_candidate.lower_bound, bounds_candidate.upper_bound);
           continue;
         }
 
@@ -1429,8 +1438,8 @@ void MPTOptimizer::calcBounds(
         const auto nearest_bounds = std::min_element(
           filtered_bounds_candidates.begin(), filtered_bounds_candidates.end(),
           [](const auto & a, const auto & b) {
-            return std::abs(a.lower_bound + a.upper_bound) <
-                   std::abs(b.lower_bound + b.upper_bound);
+            return std::min(std::abs(a.lower_bound), std::abs(a.upper_bound)) <
+                   std::min(std::abs(b.lower_bound), std::abs(b.upper_bound));
           });
         if (
           filtered_bounds_candidates.begin() <= nearest_bounds &&
@@ -1442,7 +1451,7 @@ void MPTOptimizer::calcBounds(
 
       // invalid bounds
       RCLCPP_WARN_EXPRESSION(
-        rclcpp::get_logger("getBounds: front"), is_showing_debug_info_, "invalid bounds");
+        rclcpp::get_logger("getBounds: not front"), is_showing_debug_info_, "invalid bounds");
       const auto invalid_bounds =
         Bounds{-5.0, 5.0, CollisionType::OUT_OF_ROAD, CollisionType::OUT_OF_ROAD};
       ref_points.at(i).bounds = invalid_bounds;
