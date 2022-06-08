@@ -15,14 +15,14 @@
 #ifndef MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
 #define MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
 
-#include "autoware_ad_api_msgs/msg/motion_factor_array.hpp"
-
 #include "motion_factor_aggregator/awapi_autoware_util.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include "autoware_ad_api_msgs/msg/motion_factor_array.hpp"
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-
-#include <rclcpp/rclcpp.hpp>
 
 #include <vector>
 
@@ -57,17 +57,15 @@ private:
     const autoware_ad_api_msgs::msg::MotionFactor & motion_factor);
   void getCurrentPose();
 
-  rclcpp::Publisher<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr
-    pub_motion_factor_;
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr pub_motion_factor_;
   rclcpp::Subscription<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr
     sub_scene_module_motion_factor_;
   rclcpp::Subscription<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr
     sub_obstacle_stop_motion_factor_;
   rclcpp::Subscription<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr
     sub_surround_obstacle_motion_factor_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
-    sub_trajectory_;
-  
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;
+
   // rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -76,7 +74,6 @@ private:
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  
 
   std::vector<autoware_ad_api_msgs::msg::MotionFactorArray> motion_factor_array_vec_;
   autoware_ad_api_msgs::msg::MotionFactorArray obstacle_stop_factor_;

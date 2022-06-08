@@ -30,11 +30,11 @@
 namespace surround_obstacle_checker
 {
 
+using autoware_ad_api_msgs::msg::MotionFactor;
+using autoware_ad_api_msgs::msg::MotionFactorArray;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
-using autoware_ad_api_msgs::msg::MotionFactor;
-using autoware_ad_api_msgs::msg::MotionFactorArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
@@ -56,7 +56,6 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
   rclcpp::Publisher<MotionFactorArray>::SharedPtr motion_factor_pub_;
-
 
   double base_link2front_;
 
