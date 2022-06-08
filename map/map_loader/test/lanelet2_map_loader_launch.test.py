@@ -35,11 +35,10 @@ def generate_test_description():
     lanelet2_map_loader = Node(
         package="map_loader",
         executable="lanelet2_map_loader",
-        namespace="had_maps",
         parameters=[{"lanelet2_map_path": lanelet2_map_path}],
     )
 
-    context = {"lanelet2_map_loader": lanelet2_map_loader}
+    context = {}
 
     return (
         LaunchDescription(
@@ -57,6 +56,6 @@ def generate_test_description():
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
-    def test_exit_code(self, proc_output, proc_info):
+    def test_exit_code(self, proc_info):
         # Check that process exits with code 0: no error
         launch_testing.asserts.assertExitCodes(proc_info)
