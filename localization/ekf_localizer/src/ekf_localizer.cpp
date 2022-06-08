@@ -174,15 +174,19 @@ void EKFLocalizer::timerCallback()
     }
     double dummy_toc = stop_watch_.toc();
     dummy_time_list_.push_back(dummy_toc);
-    if (dummy_max_time_toc_ < dummy_toc) {dummy_max_time_toc_ = dummy_toc;}
+    if (dummy_max_time_toc_ < dummy_toc) {
+      dummy_max_time_toc_ = dummy_toc;
+    }
     double dummy_mean = 0;
     for (double a : dummy_time_list_) dummy_mean += a;
     dummy_mean /= int(dummy_time_list_.size());
     DEBUG_INFO(get_logger(), "[EKF] dummy measurementUpdatePose calc time = %f [ms]", dummy_toc);
-    DEBUG_INFO(get_logger(), "[EKF] dummy measurementUpdatePose max time = %f [ms]", dummy_max_time_toc_);
+    DEBUG_INFO(
+      get_logger(), "[EKF] dummy measurementUpdatePose max time = %f [ms]", dummy_max_time_toc_);
     DEBUG_INFO(get_logger(), "[EKF] dummy measurementUpdatePose mean time = %f [ms]", dummy_mean);
-    // DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
-    // DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
+    // DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]",
+    // stop_watch_.toc()); DEBUG_INFO(get_logger(), "------------------------- end Pose
+    // -------------------------\n");
   }
 
   /* twist measurement update */
