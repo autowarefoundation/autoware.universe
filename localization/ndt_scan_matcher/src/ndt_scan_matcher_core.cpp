@@ -256,6 +256,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_monte_carlo_initial_pose_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
+  localization_scores_pub_ = 
+    this->create_publisher<autoware_ad_api_msgs::msg::LocalizationScores>("localization_scores", 10);
 
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
@@ -656,6 +658,26 @@ void NDTScanMatcher::callbackSensorPoints(
     makeFloat32Stamped(sensor_ros_time, nearest_voxel_transformation_likelihood));
 
   iteration_num_pub_->publish(makeInt32Stamped(sensor_ros_time, iteration_num));
+
+  autoware_ad_api_msgs::msg::MatchingScore score_tp;
+  score_tp.type = "transform_probability";
+  score_tp.score = transform_probability;
+
+  autoware_ad_api_msgs::msg::MatchingScore score_nvtl;
+  score_nvtl.type = "nearest_voxel_transformation_likelihood";
+  score_nvtl.score = nearest_voxel_transformation_likelihood;
+
+  autoware_ad_api_msgs::msg::PoseCovariance pose_covariance;
+  pose_covariance.pose_covariance = output_pose_covariance_;
+
+  autoware_ad_api_msgs::msg::LocalizationScores localization_scores;
+  localization_scores.scores.emplace_back(score_tp);
+  localization_scores.scores.emplace_back(score_nvtl);
+  localization_scores.covariance = pose_covariance;
+  localization_scores.stamp = sensor_ros_time;
+  
+  localization_scores_pub_->publish(localization_scores);
+
 
   const float initial_to_result_distance =
     norm(initial_pose_cov_msg.pose.pose.position, result_pose_with_cov_msg.pose.pose.position);
