@@ -2,21 +2,22 @@
 
 ## Purpose
 
-`twist_estimator` is the package to estimate twist by combining imu and vehicle speed.
+`twist_estimator` is a package to get the twist from sensor module and publish it to `ekf_localizer`.
+The current implementation includes a function to set the velocity and angular velocity to 0 when the vehilce is stopped.
 
 ## Inputs / Outputs
 
 ### Input
 
-| Name                            | Type                                             | Description                        |
-| ------------------------------- | ------------------------------------------------ | ---------------------------------- |
-| `sensing_twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist with covariance from sensors |
+| Name                                | Type                                             | Description                        |
+| ----------------------------------- | ------------------------------------------------ | ---------------------------------- |
+| `input_twist_with_covariance_topic` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist with covariance from sensors |
 
 ### Output
 
 | Name                                 | Type                                             | Description                     |
 | ------------------------------------ | ------------------------------------------------ | ------------------------------- |
-| `localization_twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | estimated twist with covariance |
+| `output_twist_with_covariance_topic` | `geometry_msgs::msg::TwistWithCovarianceStamped` | estimated twist with covariance |
 
 ## Parameters
 
