@@ -343,7 +343,9 @@ private:
   /**
    * @brief reads and sets disturbance parameters.
    * */
-  void ReadandSetDisturbanceParams();
+  void Read_and_SetDisturbanceParams(
+    float64_t const & dt, float64_t const & acc_time_delay, float64_t const & steer_time_delay,
+    IDisturbanceCollection & disturbance_collection);
 };
 }  // namespace simple_planning_simulator
 }  // namespace simulation
