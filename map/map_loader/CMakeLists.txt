@@ -40,9 +40,6 @@ rclcpp_components_register_node(lanelet2_map_visualization_node
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
   add_ros_test(
     test/lanelet2_map_loader_launch.test.py
     TIMEOUT "30"
