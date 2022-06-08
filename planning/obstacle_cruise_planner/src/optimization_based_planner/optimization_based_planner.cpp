@@ -637,12 +637,6 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   // normal update: use closest in prev_output
   initial_vel = prev_output_closest_point.longitudinal_velocity_mps;
   initial_acc = prev_output_closest_point.acceleration_mps2;
-  /*
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
-    "calcInitialMotion : normal update. v0 = %f, a0 = %f, vehicle_speed = %f, target_vel = %f",
-    initial_vel, initial_acc, vehicle_speed, target_vel);
-  */
   return std::make_tuple(initial_vel, initial_acc);
 }
 
