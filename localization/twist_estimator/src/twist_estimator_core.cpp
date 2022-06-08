@@ -29,11 +29,11 @@ TwistEstimator::TwistEstimator()
 {
   sensing_twist_with_covariance_sub_ =
     create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-      "sensing/twist_with_covariance", rclcpp::QoS{100},
+      "in_twist_with_covariance", rclcpp::QoS{100},
       std::bind(&TwistEstimator::callbackTwistWithCovariance, this, std::placeholders::_1));
 
   twist_with_covariance_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "twist_with_covariance", rclcpp::QoS{10});
+    "out_twist_with_covariance", rclcpp::QoS{10});
 }
 
 TwistEstimator::~TwistEstimator() {}
