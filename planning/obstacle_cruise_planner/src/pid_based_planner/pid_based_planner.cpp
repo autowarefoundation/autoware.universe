@@ -245,7 +245,7 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
       debug_values_.setValues(
         DebugValues::TYPE::STOP_TARGET_OBJECT_DISTANCE, longitudinal_info_.safe_distance_margin);
       debug_values_.setValues(
-        DebugValues::TYPE::STOP_TARGET_ACCELERATION, longitudinal_info_.min_strong_accel);
+        DebugValues::TYPE::STOP_TARGET_ACCELERATION, longitudinal_info_.limit_min_accel);
       debug_values_.setValues(DebugValues::TYPE::STOP_ERROR_OBJECT_DISTANCE, error_dist);
     } else {  // cruise
       // calculate distance between ego and obstacle based on RSS
@@ -332,7 +332,7 @@ Trajectory PIDBasedPlanner::planStop(
 
     // check if the ego will collide with the obstacle with a limit acceleration
     const double feasible_dist_to_stop =
-      calcMinimumDistanceToStop(planner_data.current_vel, longitudinal_info_.min_strong_accel);
+      calcMinimumDistanceToStop(planner_data.current_vel, longitudinal_info_.limit_min_accel);
     if (local_stop_obstacle_info.dist_to_stop < feasible_dist_to_stop) {
       will_collide_with_obstacle = true;
       local_stop_obstacle_info.dist_to_stop = feasible_dist_to_stop;

@@ -306,9 +306,12 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
   data.v_max = v_max;
   data.a_max = longitudinal_info_.max_accel;
   data.a_min = longitudinal_info_.min_accel;
-  data.limit_a_min = longitudinal_info_.min_strong_accel;
   data.j_max = longitudinal_info_.max_jerk;
   data.j_min = longitudinal_info_.min_jerk;
+  data.limit_a_max = longitudinal_info_.limit_max_accel;
+  data.limit_a_min = longitudinal_info_.limit_min_accel;
+  data.limit_j_max = longitudinal_info_.limit_max_jerk;
+  data.limit_j_min = longitudinal_info_.limit_min_jerk;
   data.t_dangerous = t_dangerous_;
   data.idling_time = longitudinal_info_.idling_time;
   data.v_margin = velocity_margin_;
