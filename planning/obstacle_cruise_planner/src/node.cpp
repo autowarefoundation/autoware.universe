@@ -221,8 +221,18 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     const double safe_distance_margin = declare_parameter<double>("common.safe_distance_margin");
 
     return LongitudinalInfo{
-      max_accel, min_accel, max_jerk, min_jerk, limit_max_accel, limit_min_accel, limit_max_jerk, limit_min_jerk, idling_time,
-      min_ego_accel_for_rss, min_object_accel_for_rss, safe_distance_margin};
+      max_accel,
+      min_accel,
+      max_jerk,
+      min_jerk,
+      limit_max_accel,
+      limit_min_accel,
+      limit_max_jerk,
+      limit_min_jerk,
+      idling_time,
+      min_ego_accel_for_rss,
+      min_object_accel_for_rss,
+      safe_distance_margin};
   }();
 
   const bool is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");

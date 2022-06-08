@@ -86,15 +86,13 @@
       max_trajectory_length: 200.0
       velocity_margin: 0.1 #[m/s]
 
-      # Parameters for safe distance
-      safe_distance_margin: 5.0
+      # Parameters for safety distance limit time
       t_dangerous: 0.5
 
       # Parameters for collision detection
       object_zero_velocity_threshold: 3.0 #[m/s]
       object_low_velocity_threshold: 3.0 #[m/s]
       delta_yaw_threshold_of_object_and_ego: 90.0 # [deg]
-      delta_yaw_threshold_of_nearest_index: 60.0 # [deg]
 
       # For initial Motion
       replan_vel_deviation: 5.0         # velocity deviation to replan initial velocity [m/s]

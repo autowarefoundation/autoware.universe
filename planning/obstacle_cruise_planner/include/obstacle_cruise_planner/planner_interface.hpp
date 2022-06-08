@@ -133,6 +133,10 @@ public:
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_accel", i.min_accel);
     tier4_autoware_utils::updateParam<double>(parameters, "common.max_jerk", i.max_jerk);
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_jerk", i.min_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_accel", i.limit_max_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_accel", i.limit_min_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_jerk", i.limit_max_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_jerk", i.limit_min_jerk);
     tier4_autoware_utils::updateParam<double>(
       parameters, "common.min_ego_accel_for_rss", i.min_ego_accel_for_rss);
     tier4_autoware_utils::updateParam<double>(

@@ -166,11 +166,9 @@ private:
   double dense_time_horizon_;
   double max_time_horizon_;
 
-  double delta_yaw_threshold_of_nearest_index_;
   double delta_yaw_threshold_of_object_and_ego_;
   double object_zero_velocity_threshold_;
   double object_low_velocity_threshold_;
-  double safe_distance_margin_;
   double t_dangerous_;
   double velocity_margin_;
 

@@ -131,9 +131,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
     node.declare_parameter<double>("optimization_based_planner.dense_time_horizon");
   max_time_horizon_ = node.declare_parameter<double>("optimization_based_planner.max_time_horizon");
 
-  delta_yaw_threshold_of_nearest_index_ =
-    tier4_autoware_utils::deg2rad(node.declare_parameter<double>(
-      "optimization_based_planner.delta_yaw_threshold_of_nearest_index"));
   delta_yaw_threshold_of_object_and_ego_ =
     tier4_autoware_utils::deg2rad(node.declare_parameter<double>(
       "optimization_based_planner.delta_yaw_threshold_of_object_and_ego"));
@@ -141,8 +138,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
     node.declare_parameter<double>("optimization_based_planner.object_zero_velocity_threshold");
   object_low_velocity_threshold_ =
     node.declare_parameter<double>("optimization_based_planner.object_low_velocity_threshold");
-  safe_distance_margin_ =
-    node.declare_parameter<double>("optimization_based_planner.safe_distance_margin");
   t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
   velocity_margin_ = node.declare_parameter<double>("optimization_based_planner.velocity_margin");
 
@@ -204,7 +199,7 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
 
   // Get the nearest point on the trajectory
   const auto closest_idx = tier4_autoware_utils::findNearestIndex(
-    planner_data.traj.points, planner_data.current_pose, delta_yaw_threshold_of_nearest_index_);
+    planner_data.traj.points, planner_data.current_pose, nearest_yaw_deviation_threshold_);
   if (!closest_idx) {  // Check validity of the closest index
     RCLCPP_ERROR(
       rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
@@ -526,9 +521,10 @@ double OptimizationBasedPlanner::getClosestStopDistance(
       getDistanceToCollisionPoint(ego_traj_data, obj_data, current_delta_yaw_threshold);
 
     // Calculate Safety Distance
+    const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
     const double ego_vehicle_offset = vehicle_info_.wheel_base_m + vehicle_info_.front_overhang_m;
     const double object_offset = obj_data.length / 2.0;
-    const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin_;
+    const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin;
 
     // If the object is on the current ego trajectory,
     // we assume the object travels along ego trajectory
@@ -541,7 +537,7 @@ double OptimizationBasedPlanner::getClosestStopDistance(
     // Update Distance to the closest object on the ego trajectory
     if (dist_to_collision_point) {
       const double current_obj_distance = std::max(
-        *dist_to_collision_point - safety_distance + safe_distance_margin_, -safety_distance);
+        *dist_to_collision_point - safety_distance + safe_distance_margin, -safety_distance);
       closest_obj_distance = std::min(closest_obj_distance, current_obj_distance);
       closest_obj = obj;
     }
@@ -894,11 +890,12 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     const double obj_vel = std::abs(obj.velocity);
     const double rss_dist = calcRSSDistance(planner_data.current_vel, obj_vel);
 
+    const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
     const double ego_obj_length = tier4_autoware_utils::calcSignedArcLength(
       ego_traj_data.traj.points, planner_data.current_pose.position,
       current_object_pose.get().position);
     const double slow_down_point_length =
-      ego_obj_length - (rss_dist + object_offset + safe_distance_margin_);
+      ego_obj_length - (rss_dist + object_offset + safe_distance_margin);
 
     if (slow_down_point_length < min_slow_down_point_length) {
       min_slow_down_point_length = slow_down_point_length;
@@ -978,9 +975,10 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     getDistanceToCollisionPoint(ego_traj_data, obj_data, current_delta_yaw_threshold);
 
   // Calculate Safety Distance
+  const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
   const double ego_vehicle_offset = vehicle_info_.wheel_base_m + vehicle_info_.front_overhang_m;
   const double object_offset = obj_data.length / 2.0;
-  const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin_;
+  const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin;
 
   // If the object is on the current ego trajectory,
   // we assume the object travels along ego trajectory
