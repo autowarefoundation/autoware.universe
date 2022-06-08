@@ -162,6 +162,9 @@ private:
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
 
+  std::vector<double> dummy_time_list_;
+  double dummy_max_time_toc_;
+
   int pose_smoothing_steps_;
   int twist_smoothing_steps_;
 

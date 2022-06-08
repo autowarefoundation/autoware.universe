@@ -109,6 +109,9 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   /* debug */
   pub_debug_ = create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>("debug", 1);
   pub_measured_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("debug/measured_pose", 1);
+
+  dummy_time_list_.resize(0);
+  dummy_max_time_toc_ = 0;
 }
 
 /*
@@ -169,8 +172,17 @@ void EKFLocalizer::timerCallback()
         current_pose_info_queue_.push(pose_info);
       }
     }
-    DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
-    DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
+    double dummy_toc = stop_watch_.toc();
+    dummy_time_list_.push_back(dummy_toc);
+    if (dummy_max_time_toc_ < dummy_toc) {dummy_max_time_toc_ = dummy_toc;}
+    double dummy_mean = 0;
+    for (double a : dummy_time_list_) dummy_mean += a;
+    dummy_mean /= int(dummy_time_list_.size());
+    DEBUG_INFO(get_logger(), "[EKF] dummy measurementUpdatePose calc time = %f [ms]", dummy_toc);
+    DEBUG_INFO(get_logger(), "[EKF] dummy measurementUpdatePose max time = %f [ms]", dummy_max_time_toc_);
+    DEBUG_INFO(get_logger(), "[EKF] dummy measurementUpdatePose mean time = %f [ms]", dummy_mean);
+    // DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
+    // DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
   }
 
   /* twist measurement update */
