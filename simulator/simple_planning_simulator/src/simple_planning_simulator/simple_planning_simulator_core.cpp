@@ -117,6 +117,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
+  pub_dist_generator_ =
+    create_publisher<DisturbanceGeneratorReport>("output/disturbance_generator", QoS{1});
 
   /* set param callback */
   set_param_res_ = this->add_on_set_parameters_callback(

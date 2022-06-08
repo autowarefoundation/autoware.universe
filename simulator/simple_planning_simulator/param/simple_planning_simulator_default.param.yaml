@@ -4,7 +4,7 @@
       simple_planning_simulator:
         simulated_frame_id: "base_link"
         origin_frame_id: "map"
-        vehicle_model_type: "DELAY_STEER_ACC_GEARED"
+        vehicle_model_type: "DELAY_STEER_ACC_DIST"
         initialize_source: "INITIAL_POSE_TOPIC"
         timer_sampling_time_ms: 25
         add_measurement_noise: False
@@ -19,4 +19,44 @@
         x_stddev: 0.0001 # x standard deviation for dummy covariance in map coordinate
         y_stddev: 0.0001 # y standard deviation for dummy covariance in map coordinate
 
-# Note: vehicle characteristics parameters (e.g. wheelbase) are defined in a separate file.
+        # Note: vehicle characteristics parameters (e.g. wheelbase) are defined in a separate file.
+        ## Disturbance generator models options.
+        # --------------- STEERING TIME-VARYING TIME DELAY DISTURBANCE -------------
+        use_steering_input_delay: false
+        steer_use_time_varying_td: false  # to use input varying delay
+        steer_td_pade_order: 2 # size_t order of Pade approximation.
+
+        # the value of time delay changes every x-secs. td + delta_td where delta_td is sinusoidal.
+        steer_td_changes_every_xsecs: 5.3
+
+        # magnitude of td variation in percentage of mean of Td. If Td=1 sec, td_delta 5% = 0.05
+        steer_td_delta_sin_mag_percent: 5.0
+        steer_td_angular_speed: 0.1 # rad/sec of the sin wave. td_delta = td_delta_sin_mag * sin(wt)
+
+        # --------------- ACCELERATION TIME-VARYING TIME DELAY DISTURBANCE -------------
+        # Time-varying input delay parameters for longitudinal control input.
+        use_acceleration_input_delay: false
+        acc_use_time_varying_td: false  # to use input varying delay
+        acc_td_pade_order: 2 # size_t order of Pade approximation.
+
+        # the value of time delay changes every x-secs. td + delta_td where delta_td is sinusoidal.
+        acc_td_changes_every_xsecs: 6.3
+
+        # magnitude of td variation in percentage of mean of Td. If Td=1 sec, td_delta 5% = 0.05
+        acc_td_delta_sin_mag_percent: 5.0
+        acc_td_angular_speed: 0.1 # rad/sec of the sin wave. td_delta = td_delta_sin_mag * sin(wt)
+
+        ## ----------------- TIME-VARYING DEADZONE PARAMETERS ---------------------------------
+        use_deadzone_disturbance: true
+        dz_steer_use_time_varying_deadzone: true
+        dz_steer_mean_slope_variance: 0.1 # must be smaller than 0.5 and positive
+        dz_steer_mean_threshold: 0.05 # model dependent deadzone threshold, for steering ~ 0 - 0.2
+        dz_steer_threshold_variance: 20.0 # percentage of mean threshold
+        dz_steer_sin_mag: 0.1 # added to and must be proportional the slope
+
+        ## ----------------- ROAD SLOPE TIME-VARYING DISTURBANCE ------------------------------
+        use_road_slope_disturbance: false
+        rs_use_time_varying_slope: false # use time varying slope
+        rs_mean_road_slope: 0.0 # mean value of slope degrees
+        rs_delta_sin_mag: 5.0 # slope fluctuations in degrees
+        rs_road_slope_variation_angular_speed: 0.1 # angular speed of the sinus fluctuations
