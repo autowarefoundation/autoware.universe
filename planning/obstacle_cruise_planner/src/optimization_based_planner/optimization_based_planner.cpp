@@ -131,9 +131,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
     node.declare_parameter<double>("optimization_based_planner.dense_time_horizon");
   max_time_horizon_ = node.declare_parameter<double>("optimization_based_planner.max_time_horizon");
 
-  delta_yaw_threshold_of_object_and_ego_ =
-    tier4_autoware_utils::deg2rad(node.declare_parameter<double>(
-      "optimization_based_planner.delta_yaw_threshold_of_object_and_ego"));
   object_zero_velocity_threshold_ =
     node.declare_parameter<double>("optimization_based_planner.object_zero_velocity_threshold");
   t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
@@ -514,9 +511,7 @@ double OptimizationBasedPlanner::getClosestStopDistance(
     obj_data.length = obj.shape.dimensions.x;
     obj_data.width = obj.shape.dimensions.y;
     obj_data.time = std::max((obj_base_time - current_time).seconds(), 0.0);
-    const double current_delta_yaw_threshold = 3.14;
-    const auto dist_to_collision_point =
-      getDistanceToCollisionPoint(ego_traj_data, obj_data, current_delta_yaw_threshold);
+    const auto dist_to_collision_point = getDistanceToCollisionPoint(ego_traj_data, obj_data);
 
     // Calculate Safety Distance
     const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
@@ -962,9 +957,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   obj_data.length = object.shape.dimensions.x;
   obj_data.width = object.shape.dimensions.y;
   obj_data.time = std::max((obj_base_time - current_time).seconds(), 0.0);
-  const double current_delta_yaw_threshold = 3.14;
-  const auto current_collision_dist =
-    getDistanceToCollisionPoint(ego_traj_data, obj_data, current_delta_yaw_threshold);
+  const auto current_collision_dist = getDistanceToCollisionPoint(ego_traj_data, obj_data);
 
   // Calculate Safety Distance
   const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
@@ -1050,8 +1043,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     obj_data.width = object.shape.dimensions.y;
     obj_data.time = object_time;
 
-    const auto dist_to_collision_point =
-      getDistanceToCollisionPoint(ego_traj_data, obj_data, delta_yaw_threshold_of_object_and_ego_);
+    const auto dist_to_collision_point = getDistanceToCollisionPoint(ego_traj_data, obj_data);
     if (!dist_to_collision_point) {
       continue;
     }
@@ -1071,27 +1063,11 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
 }
 
 boost::optional<double> OptimizationBasedPlanner::getDistanceToCollisionPoint(
-  const TrajectoryData & ego_traj_data, const ObjectData & obj_data,
-  const double delta_yaw_threshold)
+  const TrajectoryData & ego_traj_data, const ObjectData & obj_data)
 {
   const auto obj_pose = obj_data.pose;
   const auto obj_length = obj_data.length;
   const auto obj_width = obj_data.width;
-
-  // check diff yaw
-  const size_t nearest_idx =
-    tier4_autoware_utils::findNearestIndex(ego_traj_data.traj.points, obj_pose.position);
-  const double ego_yaw = tf2::getYaw(ego_traj_data.traj.points.at(nearest_idx).pose.orientation);
-  const double obj_yaw = tf2::getYaw(obj_pose.orientation);
-  const double diff_yaw = tier4_autoware_utils::normalizeRadian(obj_yaw - ego_yaw);
-  if (diff_yaw > delta_yaw_threshold) {
-    // ignore object whose yaw difference from ego is too large
-    RCLCPP_DEBUG(
-      rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
-      "Ignore object since the yaw difference is above the threshold");
-    return boost::none;
-  }
-
   const auto object_box = Box2d(obj_pose, obj_length, obj_width);
   const auto object_points = object_box.getAllCorners();
 

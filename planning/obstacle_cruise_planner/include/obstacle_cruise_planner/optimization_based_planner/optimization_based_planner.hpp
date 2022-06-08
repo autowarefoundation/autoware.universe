@@ -124,8 +124,7 @@ private:
     const double horizon);
 
   boost::optional<double> getDistanceToCollisionPoint(
-    const TrajectoryData & ego_traj_data, const ObjectData & obj_data,
-    const double delta_yaw_threshold);
+    const TrajectoryData & ego_traj_data, const ObjectData & obj_data);
 
   boost::optional<size_t> getCollisionIdx(
     const TrajectoryData & ego_traj, const Box2d & obj_box, const size_t start_idx,
@@ -166,7 +165,6 @@ private:
   double dense_time_horizon_;
   double max_time_horizon_;
 
-  double delta_yaw_threshold_of_object_and_ego_;
   double object_zero_velocity_threshold_;
   double t_dangerous_;
   double velocity_margin_;
