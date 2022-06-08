@@ -52,6 +52,7 @@ public:
     autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   int64_t module_id_;

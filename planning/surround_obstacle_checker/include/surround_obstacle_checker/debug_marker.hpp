@@ -33,6 +33,8 @@ namespace surround_obstacle_checker
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
+using autoware_ad_api_msgs::msg::MotionFactor;
+using autoware_ad_api_msgs::msg::MotionFactorArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
@@ -50,14 +52,18 @@ public:
   void publish();
 
 private:
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
-  rclcpp::Publisher<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr motion_factor_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
+  rclcpp::Publisher<MotionFactorArray>::SharedPtr motion_factor_pub_;
+
+
   double base_link2front_;
 
-  visualization_msgs::msg::MarkerArray makeVisualizationMarker();
-  tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
-  autoware_ad_api_msgs::msg::MotionFactorArray makeMotionFactorArray();
+  MarkerArray makeVirtualWallMarker();
+  MarkerArray makeVisualizationMarker();
+  StopReasonArray makeStopReasonArray();
+  MotionFactorArray makeMotionFactorArray();
 
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;

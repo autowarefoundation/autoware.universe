@@ -57,6 +57,7 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason,
     autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   // Parameter

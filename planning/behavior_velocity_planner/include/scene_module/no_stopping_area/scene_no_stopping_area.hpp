@@ -89,6 +89,7 @@ public:
     autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   mutable bool pass_judged_ = false;

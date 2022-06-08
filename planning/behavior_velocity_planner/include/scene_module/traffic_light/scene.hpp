@@ -76,6 +76,7 @@ public:
     autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
   inline autoware_auto_perception_msgs::msg::LookingTrafficSignal getTrafficSignal() const
   {

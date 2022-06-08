@@ -219,6 +219,7 @@ private:
 
   void calcBounds(
     std::vector<ReferencePoint> & ref_points, const bool enable_avoidance, const CVMaps & maps,
+    const std::unique_ptr<Trajectories> & prev_trajs,
     std::shared_ptr<DebugData> debug_data_ptr) const;
 
   void calcVehicleBounds(
@@ -230,13 +231,6 @@ private:
   // const std::unique_ptr<Trajectories> & prev_trajs) const;
 
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
-
-  void calcVelocity(std::vector<ReferencePoint> & ref_points) const;
-
-  void calcVelocity(
-    std::vector<ReferencePoint> & ref_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-    const double yaw_thresh) const;
 
   void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
 
@@ -302,7 +296,7 @@ private:
 
   size_t findNearestIndexWithSoftYawConstraints(
     const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
-    const double yaw_threshold) const;
+    const double dist_threshold, const double yaw_threshold) const;
 
 public:
   MPTOptimizer(

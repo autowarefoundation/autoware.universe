@@ -38,6 +38,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const double base_link2front, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
 : base_link2front_(base_link2front), clock_(clock)
 {
+  debug_virtual_wall_pub_ =
+    node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
@@ -71,6 +73,10 @@ bool SurroundObstacleCheckerDebugNode::pushObstaclePoint(
 
 void SurroundObstacleCheckerDebugNode::publish()
 {
+  /* publish virtual_wall marker for rviz */
+  const auto virtual_wall_msg = makeVirtualWallMarker();
+  debug_virtual_wall_pub_->publish(virtual_wall_msg);
+
   /* publish debug marker for rviz */
   const auto visualization_msg = makeVisualizationMarker();
   debug_viz_pub_->publish(visualization_msg);
@@ -88,7 +94,7 @@ void SurroundObstacleCheckerDebugNode::publish()
   stop_obstacle_point_ptr_ = nullptr;
 }
 
-MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
+MarkerArray SurroundObstacleCheckerDebugNode::makeVirtualWallMarker()
 {
   MarkerArray msg;
   rclcpp::Time current_time = this->clock_->now();
@@ -99,6 +105,14 @@ MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
     const auto markers = createStopVirtualWallMarker(p, "surround obstacle", current_time, 0);
     appendMarkerArray(markers, &msg);
   }
+
+  return msg;
+}
+
+MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
+{
+  MarkerArray msg;
+  rclcpp::Time current_time = this->clock_->now();
 
   // visualize surround object
   if (stop_obstacle_point_ptr_ != nullptr) {
@@ -141,8 +155,7 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   return stop_reason_array;
 }
 
-autoware_ad_api_msgs::msg::MotionFactorArray
-SurroundObstacleCheckerDebugNode::makeMotionFactorArray()
+MotionFactorArray SurroundObstacleCheckerDebugNode::makeMotionFactorArray()
 {
   // create header
   std_msgs::msg::Header header;
@@ -150,20 +163,17 @@ SurroundObstacleCheckerDebugNode::makeMotionFactorArray()
   header.stamp = this->clock_->now();
 
   // create stop reason stamped
-  autoware_ad_api_msgs::msg::MotionFactor motion_factor_msg;
-  motion_factor_msg.reason = autoware_ad_api_msgs::msg::MotionFactor::SURROUND_OBSTACLE_CHECK;
-  motion_factor_msg.status = autoware_ad_api_msgs::msg::MotionFactor::STOP_FALSE;
+  MotionFactor motion_factor_msg;
+  motion_factor_msg.reason = MotionFactor::SURROUND_OBSTACLE_CHECK;
+  motion_factor_msg.status = MotionFactor::STOP_FALSE;
 
   if (stop_pose_ptr_ != nullptr) {
     motion_factor_msg.pose = *stop_pose_ptr_;
-    motion_factor_msg.status = autoware_ad_api_msgs::msg::MotionFactor::STOP_TRUE;
-    // if (stop_obstacle_point_ptr_ != nullptr) {
-    //   motion_factor_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
-    // }
+    motion_factor_msg.status = MotionFactor::STOP_TRUE;
   }
 
   // create stop reason array
-  autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array;
+  MotionFactorArray motion_factor_array;
   motion_factor_array.header = header;
   motion_factor_array.motion_factors.emplace_back(motion_factor_msg);
   return motion_factor_array;
