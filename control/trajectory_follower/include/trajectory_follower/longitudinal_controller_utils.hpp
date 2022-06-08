@@ -21,6 +21,7 @@
 #include "geometry/common_2d.hpp"
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
+#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
 #include "trajectory_follower/visibility_control.hpp"
 
@@ -61,7 +62,7 @@ TRAJECTORY_FOLLOWER_PUBLIC bool8_t isValidTrajectory(const Trajectory & traj);
  * @brief calculate distance to stopline from current vehicle position where velocity is 0
  */
 TRAJECTORY_FOLLOWER_PUBLIC float64_t
-calcStopDistance(const Point & current_pos, const Trajectory & traj);
+calcStopDistance(const Point & current_pos, const size_t src_idx, const Trajectory & traj);
 
 /**
  * @brief calculate pitch angle from estimated current pose

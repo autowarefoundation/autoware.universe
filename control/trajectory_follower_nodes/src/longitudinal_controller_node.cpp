@@ -425,7 +425,7 @@ LongitudinalController::ControlData LongitudinalController::getControlData(
 
   // distance to stopline
   control_data.stop_dist = trajectory_follower::longitudinal_utils::calcStopDistance(
-    current_pose.position, *m_trajectory_ptr);
+    current_pose.position, control_data.nearest_idx, *m_trajectory_ptr);
 
   // pitch
   const float64_t raw_pitch =

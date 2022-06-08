@@ -54,16 +54,17 @@ TEST(TestLongitudinalControllerUtils, calcStopDistance)
   Point current_pos;
   current_pos.x = 0.0;
   current_pos.y = 0.0;
+  size_t closest_idx = 0;
   Trajectory traj;
   // empty trajectory : exception
-  EXPECT_THROW(longitudinal_utils::calcStopDistance(current_pos, traj), std::invalid_argument);
+  EXPECT_THROW(longitudinal_utils::calcStopDistance(current_pos, closest_idx, traj), std::invalid_argument);
   // one point trajectory : exception
   TrajectoryPoint point;
   point.pose.position.x = 0.0;
   point.pose.position.y = 0.0;
   point.longitudinal_velocity_mps = 0.0;
   traj.points.push_back(point);
-  EXPECT_THROW(longitudinal_utils::calcStopDistance(current_pos, traj), std::out_of_range);
+  EXPECT_THROW(longitudinal_utils::calcStopDistance(current_pos, closest_idx, traj), std::out_of_range);
   traj.points.clear();
   // non stopping trajectory: stop distance = trajectory length
   point.pose.position.x = 0.0;
@@ -78,7 +79,7 @@ TEST(TestLongitudinalControllerUtils, calcStopDistance)
   point.pose.position.y = 0.0;
   point.longitudinal_velocity_mps = 1.0;
   traj.points.push_back(point);
-  EXPECT_EQ(longitudinal_utils::calcStopDistance(current_pos, traj), 2.0);
+  EXPECT_EQ(longitudinal_utils::calcStopDistance(current_pos, closest_idx, traj), 2.0);
   // stopping trajectory: stop distance = length until stopping point
   point.pose.position.x = 3.0;
   point.pose.position.y = 0.0;
@@ -92,7 +93,7 @@ TEST(TestLongitudinalControllerUtils, calcStopDistance)
   point.pose.position.y = 0.0;
   point.longitudinal_velocity_mps = 0.0;
   traj.points.push_back(point);
-  EXPECT_EQ(longitudinal_utils::calcStopDistance(current_pos, traj), 3.0);
+  EXPECT_EQ(longitudinal_utils::calcStopDistance(current_pos, closest_idx, traj), 3.0);
 }
 
 TEST(TestLongitudinalControllerUtils, getPitchByPose)

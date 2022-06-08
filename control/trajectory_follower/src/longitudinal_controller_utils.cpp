@@ -62,17 +62,21 @@ bool isValidTrajectory(const Trajectory & traj)
   return true;
 }
 
-float64_t calcStopDistance(const Point & current_pos, const Trajectory & traj)
+float64_t calcStopDistance(const Point & current_pos, const size_t src_idx, const Trajectory & traj)
 {
   const std::experimental::optional<size_t> stop_idx_opt =
     trajectory_common::searchZeroVelocityIndex(traj.points);
+  const float64_t signed_length_src_offset =
+    tier4_autoware_utils::calcLongitudinalOffsetToSegment(traj.points, src_idx, current_pos);
 
   // If no zero velocity point, return the length between current_pose to the end of trajectory.
   if (!stop_idx_opt) {
-    return trajectory_common::calcSignedArcLength(traj.points, current_pos, traj.points.size() - 1);
+    float64_t signed_length_on_traj = trajectory_common::calcSignedArcLength(traj.points, src_idx, traj.points.size() - 1);
+    return signed_length_on_traj - signed_length_src_offset;
   }
 
-  return trajectory_common::calcSignedArcLength(traj.points, current_pos, *stop_idx_opt);
+  float64_t signed_length_on_traj = trajectory_common::calcSignedArcLength(traj.points, src_idx, *stop_idx_opt);
+  return signed_length_on_traj - signed_length_src_offset;
 }
 
 float64_t getPitchByPose(const Quaternion & quaternion_msg)
