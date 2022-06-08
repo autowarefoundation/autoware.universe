@@ -22,8 +22,8 @@
         # Note: vehicle characteristics parameters (e.g. wheelbase) are defined in a separate file.
         ## Disturbance generator models options.
         # --------------- STEERING TIME-VARYING TIME DELAY DISTURBANCE -------------
-        use_steering_input_delay: false
-        steer_use_time_varying_td: false  # to use input varying delay
+        use_steering_input_delay: true
+        steer_use_time_varying_td: true  # to use input varying delay
         steer_td_pade_order: 2 # size_t order of Pade approximation.
 
         # the value of time delay changes every x-secs. td + delta_td where delta_td is sinusoidal.
@@ -35,8 +35,8 @@
 
         # --------------- ACCELERATION TIME-VARYING TIME DELAY DISTURBANCE -------------
         # Time-varying input delay parameters for longitudinal control input.
-        use_acceleration_input_delay: false
-        acc_use_time_varying_td: false  # to use input varying delay
+        use_acceleration_input_delay: true
+        acc_use_time_varying_td: true  # to use input varying delay
         acc_td_pade_order: 2 # size_t order of Pade approximation.
 
         # the value of time delay changes every x-secs. td + delta_td where delta_td is sinusoidal.
