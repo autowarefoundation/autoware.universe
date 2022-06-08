@@ -136,8 +136,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
       "optimization_based_planner.delta_yaw_threshold_of_object_and_ego"));
   object_zero_velocity_threshold_ =
     node.declare_parameter<double>("optimization_based_planner.object_zero_velocity_threshold");
-  object_low_velocity_threshold_ =
-    node.declare_parameter<double>("optimization_based_planner.object_low_velocity_threshold");
   t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
   velocity_margin_ = node.declare_parameter<double>("optimization_based_planner.velocity_margin");
 
@@ -992,16 +990,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   }
 
   // Ignore low velocity objects that are not on the trajectory
-  const double obj_vel = std::abs(object.velocity);
-  if (obj_vel > object_low_velocity_threshold_) {
-    // RCLCPP_DEBUG(rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"), "Off
-    // Trajectory Object");
-    return getSBoundaries(
-      current_time, ego_traj_data, time_vec, safety_distance, object, obj_base_time,
-      *predicted_path);
-  }
-
-  return boost::none;
+  return getSBoundaries(
+    current_time, ego_traj_data, time_vec, safety_distance, object, obj_base_time, *predicted_path);
 }
 
 boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(

@@ -91,7 +91,6 @@
 
       # Parameters for collision detection
       object_zero_velocity_threshold: 3.0 #[m/s]
-      object_low_velocity_threshold: 3.0 #[m/s]
       delta_yaw_threshold_of_object_and_ego: 90.0 # [deg]
 
       # For initial Motion

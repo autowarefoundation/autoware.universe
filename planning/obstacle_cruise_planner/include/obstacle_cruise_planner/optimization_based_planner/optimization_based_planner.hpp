@@ -168,7 +168,6 @@ private:
 
   double delta_yaw_threshold_of_object_and_ego_;
   double object_zero_velocity_threshold_;
-  double object_low_velocity_threshold_;
   double t_dangerous_;
   double velocity_margin_;
 
