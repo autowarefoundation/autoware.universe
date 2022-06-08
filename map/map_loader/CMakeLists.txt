@@ -39,6 +39,16 @@ rclcpp_components_register_node(lanelet2_map_visualization_node
   EXECUTABLE lanelet2_map_visualization
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+
+  add_ros_test(
+    test/lanelet2_map_loader_launch.test.py
+    TIMEOUT "30"
+  )
+endif()
+
 install(PROGRAMS
   script/map_hash_generator
   DESTINATION lib/${PROJECT_NAME}
@@ -47,4 +57,5 @@ install(PROGRAMS
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
+  data
 )
