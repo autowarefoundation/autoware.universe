@@ -94,7 +94,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     "input/manual_ackermann_control_command", QoS{1},
     [this](const AckermannControlCommand::SharedPtr msg) { current_manual_ackermann_cmd_ = *msg; });
   sub_gear_cmd_ = create_subscription<GearCommand>(
-    "input/gear_command", QoS{1}, [this](const GearCommand::SharedPtr msg) { current_gear_cmd_ = *msg; });
+    "input/gear_command", QoS{1},
+    [this](const GearCommand::SharedPtr msg) { current_gear_cmd_ = *msg; });
   sub_manual_gear_cmd_ = create_subscription<GearCommand>(
     "input/manual_gear_command", QoS{1},
     [this](const GearCommand::SharedPtr msg) { current_manual_gear_cmd_ = *msg; });
@@ -256,7 +257,7 @@ void SimplePlanningSimulator::on_timer()
   {
     const float64_t dt = delta_time_.get_dt(get_clock()->now());
 
-    if (current_control_mode_.data== ControlMode::AUTO) {
+    if (current_control_mode_.data == ControlMode::AUTO) {
       vehicle_model_ptr_->setGear(current_gear_cmd_.command);
       set_input(current_ackermann_cmd_);
     } else {
@@ -337,9 +338,7 @@ void SimplePlanningSimulator::set_input(const AckermannControlCommand & cmd)
   float acc = accel;
   if (gear == GearCommand::NONE) {
     acc = 0.0;
-  } else if (
-    gear == GearCommand::REVERSE ||
-    gear == GearCommand::REVERSE_2) {
+  } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
     acc = -accel;
   }
 
