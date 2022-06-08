@@ -44,6 +44,10 @@ if(BUILD_TESTING)
     test/lanelet2_map_loader_launch.test.py
     TIMEOUT "30"
   )
+  install(DIRECTORY
+    test/data/
+    DESTINATION share/${PROJECT_NAME}/test/data/
+  )
 endif()
 
 install(PROGRAMS
@@ -54,5 +58,4 @@ install(PROGRAMS
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
-  data
 )
