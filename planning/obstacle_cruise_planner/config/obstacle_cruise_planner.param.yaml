@@ -91,18 +91,10 @@
       t_dangerous: 0.5
 
       # Parameters for collision detection
-      collision_time_threshold: 10.0
       object_zero_velocity_threshold: 3.0 #[m/s]
       object_low_velocity_threshold: 3.0 #[m/s]
-      external_velocity_limit: 20.0 #[m/s]
       delta_yaw_threshold_of_object_and_ego: 90.0 # [deg]
       delta_yaw_threshold_of_nearest_index: 60.0 # [deg]
-      collision_duration_threshold_of_object_and_ego: 1.0 # [s]
-
-      # Switch for each functions
-      enable_adaptive_cruise: true
-      use_object_acceleration: false
-      use_hd_map: true
 
       # For initial Motion
       replan_vel_deviation: 5.0         # velocity deviation to replan initial velocity [m/s]

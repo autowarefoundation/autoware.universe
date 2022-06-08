@@ -141,18 +141,10 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
     node.declare_parameter<double>("optimization_based_planner.object_zero_velocity_threshold");
   object_low_velocity_threshold_ =
     node.declare_parameter<double>("optimization_based_planner.object_low_velocity_threshold");
-  external_velocity_limit_ =
-    node.declare_parameter<double>("optimization_based_planner.external_velocity_limit");
-  collision_time_threshold_ =
-    node.declare_parameter<double>("optimization_based_planner.collision_time_threshold");
   safe_distance_margin_ =
     node.declare_parameter<double>("optimization_based_planner.safe_distance_margin");
   t_dangerous_ = node.declare_parameter<double>("optimization_based_planner.t_dangerous");
   velocity_margin_ = node.declare_parameter<double>("optimization_based_planner.velocity_margin");
-  enable_adaptive_cruise_ =
-    node.declare_parameter<bool>("optimization_based_planner.enable_adaptive_cruise");
-  use_object_acceleration_ =
-    node.declare_parameter<bool>("optimization_based_planner.use_object_acceleration");
 
   replan_vel_deviation_ =
     node.declare_parameter<double>("optimization_based_planner.replan_vel_deviation");
@@ -272,7 +264,7 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
   }
 
   // Check if reached goal
-  if (checkHasReachedGoal(planner_data.traj, *closest_idx, v0) || !enable_adaptive_cruise_) {
+  if (checkHasReachedGoal(planner_data.traj, *closest_idx, v0)) {
     prev_output_ = planner_data.traj;
     return planner_data.traj;
   }
@@ -1026,24 +1018,16 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   }
 
   const double v_obj = std::abs(object.velocity);
-  const double a_obj = 0.0;
 
-  double current_v_obj = v_obj < object_zero_velocity_threshold_ ? 0.0 : v_obj;
   double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
-  const double initial_s_obj = current_s_obj;
+  const double current_v_obj = v_obj < object_zero_velocity_threshold_ ? 0.0 : v_obj;
   const double initial_s_upper_bound =
     current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
   s_boundaries.front().max_s = std::clamp(initial_s_upper_bound, 0.0, s_boundaries.front().max_s);
   s_boundaries.front().is_object = true;
   for (size_t i = 1; i < time_vec.size(); ++i) {
     const double dt = time_vec.at(i) - time_vec.at(i - 1);
-    if (i * dt <= 1.0 && use_object_acceleration_) {
-      current_s_obj =
-        std::max(current_s_obj + current_v_obj * dt + 0.5 * a_obj * dt * dt, initial_s_obj);
-      current_v_obj = std::max(current_v_obj + a_obj * dt, 0.0);
-    } else {
-      current_s_obj = current_s_obj + current_v_obj * dt;
-    }
+    current_s_obj = current_s_obj + current_v_obj * dt;
 
     const double s_upper_bound =
       current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
