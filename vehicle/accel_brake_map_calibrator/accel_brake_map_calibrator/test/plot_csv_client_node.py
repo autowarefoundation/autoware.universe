@@ -27,7 +27,6 @@ from tier4_external_api_msgs.srv import GetAccelBrakeMapCalibrationData as Calib
 class CalibrationDataRelay(Node):
     def __init__(self, args):
         super().__init__("plot_client")
-        # self.cli = self.create_client(CalibData, "/accel_brake_map_calibrator/get_data_service")
         self.cli = self.create_client(
             CalibData, "/api/external/get/accel_brake_map_calibrator/data"
         )

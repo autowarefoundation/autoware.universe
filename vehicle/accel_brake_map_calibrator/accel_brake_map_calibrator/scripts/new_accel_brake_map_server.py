@@ -49,7 +49,7 @@ class DrawGraph(Node):
 
         config_file = package_path + "/config/accel_brake_map_calibrator.param.yaml"
         if Path(config_file).exists():
-            print("config file exists")
+            self.get_logger().info("config file exists")
             with open(config_file) as yml:
                 data = yaml.safe_load(yml)
             self.min_vel_thr = data["/**"]["ros__parameters"]["velocity_min_threshold"]
@@ -59,7 +59,7 @@ class DrawGraph(Node):
             self.max_pitch_thr = data["/**"]["ros__parameters"]["max_pitch_threshold"]
             self.max_jerk_thr = data["/**"]["ros__parameters"]["max_jerk_threshold"]
         else:
-            print("config file is not found")
+            self.get_logger().warning("config file is not found in {}".format(config_file))
             self.min_vel_thr = 0.1
             self.vel_diff_thr = 0.556
             self.pedal_diff_thr = 0.03
@@ -70,29 +70,29 @@ class DrawGraph(Node):
         self.max_pedal_vel_thr = 0.7
 
         # debug
-        print("default map dir: {}".format(self.default_map_dir))
-        print("calibrated map dir: {}".format(self.calibrated_map_dir))
-        print("log file :", self.log_file)
-        print("min_vel_thr : ", self.min_vel_thr)
-        print("vel_diff_thr : ", self.vel_diff_thr)
-        print("pedal_diff_thr : ", self.pedal_diff_thr)
-        print("max_steer_thr : ", self.max_steer_thr)
-        print("max_pitch_thr : ", self.max_pitch_thr)
-        print("max_jerk_thr : ", self.max_jerk_thr)
-        print("max_pedal_vel_thr : ", self.max_pedal_vel_thr)
+        self.get_logger().info("default map dir: {}".format(self.default_map_dir))
+        self.get_logger().info("calibrated map dir: {}".format(self.calibrated_map_dir))
+        self.get_logger().info("log file :{}".format(self.log_file))
+        self.get_logger().info("min_vel_thr : {}".format(self.min_vel_thr))
+        self.get_logger().info("vel_diff_thr : {}".format(self.vel_diff_thr))
+        self.get_logger().info("pedal_diff_thr : {}".format(self.pedal_diff_thr))
+        self.get_logger().info("max_steer_thr : {}".format(self.max_steer_thr))
+        self.get_logger().info("max_pitch_thr : {}".format(self.max_pitch_thr))
+        self.get_logger().info("max_jerk_thr : {}".format(self.max_jerk_thr))
+        self.get_logger().info("max_pedal_vel_thr : {}".format(self.max_pedal_vel_thr))
 
     def get_data_callback(self, request, response):
         # read csv
         # If log file doesn't exsist, return empty data
         if not Path(self.log_file).exists():
             response.graph_image = []
-            print("svg data is empty")
+            self.get_logger().info("svg data is empty")
 
             response.accel_map = ""
-            print("accel map is empty")
+            self.get_logger().info("accel map is empty")
 
             response.brake_map = ""
-            print("brake map is empty")
+            self.get_logger().info("brake map is empty")
 
             return response
 
@@ -138,13 +138,13 @@ class DrawGraph(Node):
             )
 
             response.graph_image = []
-            print("svg data is empty")
+            self.get_logger().info("svg data is empty")
 
             response.accel_map = ""
-            print("accel map is empty")
+            self.get_logger().info("accel map is empty")
 
             response.brake_map = ""
-            print("brake map is empty")
+            self.get_logger().info("brake map is empty")
 
             return response
 
@@ -173,38 +173,38 @@ class DrawGraph(Node):
                 calibrated_acc_list,
             )
         plt.savefig("plot.svg")
-        print("svg saved")
+        self.get_logger().info("svg saved")
 
         # pack response data
         text = Path("plot.svg").read_text()
         if text == "":
             response.graph_image = []
-            print("svg data is empty")
+            self.get_logger().info("svg data is empty")
         else:
             byte = text.encode()
             for b in byte:
                 response.graph_image.append(b)
-            print("svg data is packed")
+            self.get_logger().info("svg data is packed")
 
         accel_map_name = Path(self.calibrated_map_dir + "accel_map.csv")
         if accel_map_name.exists():
             with open(self.calibrated_map_dir + "accel_map.csv", "r") as calibrated_accel_map:
                 for accel_data in calibrated_accel_map:
                     response.accel_map += accel_data
-            print("accel map is packed")
+            self.get_logger().info("accel map is packed")
         else:
             response.accel_map = ""
-            print("accel map is empty")
+            self.get_logger().info("accel map is empty")
 
         brake_map_name = Path(self.calibrated_map_dir + "brake_map.csv")
         if brake_map_name.exists():
             with open(self.calibrated_map_dir + "brake_map.csv", "r") as calibrated_brake_map:
                 for brake_data in calibrated_brake_map:
                     response.brake_map += brake_data
-            print("brake map is packed")
+            self.get_logger().info("brake map is packed")
         else:
             response.brake_map = ""
-            print("brake map is empty")
+            self.get_logger().info("brake map is empty")
 
         return response
 
