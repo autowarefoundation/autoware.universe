@@ -20,9 +20,11 @@
 #include "ad_service_state_monitor/state_machine.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
@@ -31,6 +33,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -60,6 +63,10 @@ private:
   tf2_ros::TransformListener tf_listener_;
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
+  // Lanelet
+  std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
+  bool is_map_msg_ready_{false};
+
   // CallbackGroups
   rclcpp::CallbackGroup::SharedPtr callback_group_subscribers_;
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
@@ -69,11 +76,13 @@ private:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr sub_route_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   void onAutowareEngage(const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void onVehicleControlMode(
     const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
+  void onMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 

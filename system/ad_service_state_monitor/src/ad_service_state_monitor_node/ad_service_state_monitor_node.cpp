@@ -14,6 +14,10 @@
 
 #include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
 
+#include "lanelet2_extension/utility/message_conversion.hpp"
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <deque>
 #include <memory>
 #include <string>
@@ -84,10 +88,38 @@ void AutowareStateMonitorNode::onVehicleControlMode(
 {
   state_input_.control_mode_ = msg;
 }
+void AutowareStateMonitorNode::onMap(
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+{
+  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
+  lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr_);
+  is_map_msg_ready_ = true;
+}
 
 void AutowareStateMonitorNode::onRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
+  if (!is_map_msg_ready_) {
+    RCLCPP_WARN(this->get_logger(), "Map msg is not ready yet. Skip route msg.");
+    return;
+  }
+
+  for (const auto & route_section : msg->segments) {
+    for (const auto & primitive : route_section.primitives) {
+      const auto id = primitive.id;
+      try {
+        lanelet_map_ptr_->laneletLayer.get(id);
+        RCLCPP_INFO(this->get_logger(), "Route set");
+      } catch (const std::exception & e) {
+        RCLCPP_WARN(
+          this->get_logger(),
+          "Error: %s. Maybe the loaded route was created on a different Map from the current one. "
+          "Try to load the other Route again.",
+          e.what());
+        return;
+      }
+    }
+  }
   state_input_.route = msg;
 
   // Get goal pose
@@ -118,11 +150,6 @@ void AutowareStateMonitorNode::onOdometry(const nav_msgs::msg::Odometry::ConstSh
       break;
     }
 
-    state_input_.odometry_buffer.pop_front();
-  }
-
-  constexpr size_t odometry_buffer_size = 200;  // 40Hz * 5sec
-  if (state_input_.odometry_buffer.size() > odometry_buffer_size) {
     state_input_.odometry_buffer.pop_front();
   }
 }
@@ -434,6 +461,9 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   sub_control_mode_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "input/control_mode", 1, std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, _1),
     subscriber_option);
+  sub_map_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+    "input/vector_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStateMonitorNode::onMap, this, _1), subscriber_option);
   sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStateMonitorNode::onRoute, this, _1), subscriber_option);
@@ -465,6 +495,5 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Timer
   const auto period_ns = rclcpp::Rate(update_rate_).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&AutowareStateMonitorNode::onTimer, this),
-    callback_group_subscribers_);
+    this, get_clock(), period_ns, std::bind(&AutowareStateMonitorNode::onTimer, this));
 }
