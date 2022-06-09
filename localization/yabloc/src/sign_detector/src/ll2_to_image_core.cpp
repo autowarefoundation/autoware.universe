@@ -21,7 +21,7 @@ Ll2ImageConverter::Ll2ImageConverter()
   pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
   pub_cloud_ = this->create_publisher<CloudWithPose>("/ll2_cloud", 10);
 
-  using std::placeholders::_1;
+  using std::placeholders::_1, std::placeholders::_2;
 
   // Subscriber
   sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -29,11 +29,6 @@ Ll2ImageConverter::Ll2ImageConverter()
     std::bind(&Ll2ImageConverter::mapCallback, this, _1));
   sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/pose_topic", 10, std::bind(&Ll2ImageConverter::poseCallback, this, _1));
-
-  lut_ = cv::Mat(1, 256, CV_8UC1);
-  for (int i = 0; i < 256; i++) {
-    lut_.at<uchar>(0, i) = 256 * std::pow(i / 256.f, 3.0f);
-  }
 }
 
 void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped)
@@ -104,8 +99,6 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
   publishImage(image, pose_stamped.header.stamp);
   publishCloud(near_linestring, pose_stamped.header.stamp, pose_stamped.pose);
 
-  // makeDistanceImage(image);
-
   std_msgs::msg::Float32 height;
   height.data = computeHeight(pose);
   pub_height_->publish(height);
@@ -162,8 +155,6 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
       attr.value() != "pedestrian_marking" && attr.value() != "stop_line")
       continue;
 
-    bool is_dual = (attr.value() == "line_thin");
-
     std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d p : line) {
       cloud_->push_back(toPointXYZ(p));
@@ -175,7 +166,6 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
         pn.normal_x = p.x();
         pn.normal_y = p.y();
         pn.normal_z = 0;
-        // if(is_dual){ TODO: }
         linestrings_->push_back(pn);
       }
       from = p;
@@ -183,22 +173,6 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
   }
   kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
   kdtree_->setInputCloud(cloud_);
-}
-
-void Ll2ImageConverter::makeDistanceImage(const cv::Mat & image)
-{
-  cv::Mat distance, gray;
-  std::vector<cv::Mat> rgb;
-  cv::split(image, rgb);
-  gray = cv::Mat::ones(image.size(), CV_8UC1) * 255 - rgb[1];
-  cv::distanceTransform(gray, distance, cv::DIST_L2, 3);
-  cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
-  distance.convertTo(distance, CV_8UC1, -2.55, 255);
-
-  cv::LUT(distance, lut_, distance);
-  cv::applyColorMap(distance, distance, cv::COLORMAP_JET);
-  cv::imshow("distance", distance);
-  cv::waitKey(1);
 }
 
 float Ll2ImageConverter::computeHeight(const Eigen::Vector3f & pose)

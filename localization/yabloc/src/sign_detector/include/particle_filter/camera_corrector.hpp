@@ -4,9 +4,9 @@
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
 
-#include <modularized_particle_filter_msgs/msg/cloud_with_pose.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sign_detector_msgs/msg/cloud_with_pose.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -18,7 +18,7 @@ class CameraParticleCorrector : public AbstCorrector
 public:
   using LineSegment = pcl::PointCloud<pcl::PointNormal>;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using CloudWithPose = modularized_particle_filter_msgs::msg::CloudWithPose;
+  using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
   using Image = sensor_msgs::msg::Image;
 
   CameraParticleCorrector()

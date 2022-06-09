@@ -244,7 +244,7 @@ void Predictor::publishMeanPose(
   geometry_msgs::msg::TransformStamped transform{};
   transform.header.stamp = particle_array_opt_->header.stamp;
   transform.header.frame_id = "map";
-  transform.child_frame_id = "particle_fitler";
+  transform.child_frame_id = "particle_filter";
   transform.transform.translation.x = mean_pose.position.x;
   transform.transform.translation.y = mean_pose.position.y;
   transform.transform.translation.z = mean_pose.position.z;

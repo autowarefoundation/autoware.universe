@@ -1,9 +1,9 @@
-#include "sign_detector/mask_lsd.hpp"
+#include "sign_detector/overlay.hpp"
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MaskLsd>());
+  rclcpp::spin(std::make_shared<Overlay>());
   rclcpp::shutdown();
   return 0;
 }

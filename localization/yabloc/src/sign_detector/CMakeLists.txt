@@ -82,6 +82,7 @@ ADD_EXE(TARGET ll2_to_image_node    SRC src/ll2_to_image_*.cpp    INC           
 ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC                LIB util)
 
 ADD_EXE(TARGET camera_corrector_node SRC src/particle_filter/camera_corrector*.cpp INC include                LIB util)
+ADD_EXE(TARGET overlay_node SRC src/overlay_*.cpp INC include                LIB util)
 
 # ===================================================
 # Python

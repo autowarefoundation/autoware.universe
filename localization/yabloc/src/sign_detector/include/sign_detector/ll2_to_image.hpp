@@ -5,9 +5,9 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <modularized_particle_filter_msgs/msg/cloud_with_pose.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sign_detector_msgs/msg/cloud_with_pose.hpp>
 #include <std_msgs/msg/float32.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -25,7 +25,7 @@ private:
   const int image_size_;
   const float max_range_;  // [m]
 
-  using CloudWithPose = modularized_particle_filter_msgs::msg::CloudWithPose;
+  using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
 
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_ = nullptr;
 
@@ -35,7 +35,6 @@ private:
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
-  cv::Mat lut_;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_{nullptr};
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
@@ -48,8 +47,6 @@ private:
     const geometry_msgs::msg::Pose & pose);
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
-
-  void makeDistanceImage(const cv::Mat & image);
   float computeHeight(const Eigen::Vector3f & pose);
 };
 

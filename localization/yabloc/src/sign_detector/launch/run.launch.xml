@@ -77,6 +77,10 @@
         <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
-    <!-- <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /eagleye/pose /base_link"/> -->
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
+
+    <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level info">
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="$(var src_info)" to="$(var resized_info)"/>
+    </node>
 </launch>
