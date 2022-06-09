@@ -450,6 +450,15 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         for (const auto & crosswalk : crosswalks_) {
           const auto entry_point = getCrosswalkEntryPoint(crosswalk);
 
+          const auto reachable_first = hasPotentialToReach(
+            object, entry_point.first, prediction_time_horizon_, min_crosswalk_user_velocity_);
+          const auto reachable_second = hasPotentialToReach(
+            object, entry_point.second, prediction_time_horizon_, min_crosswalk_user_velocity_);
+
+          if (!reachable_first && !reachable_second) {
+            continue;
+          }
+
           const auto reachable_crosswalk = isReachableEntryPoint(
             object, entry_point, lanelet_map_ptr_, prediction_time_horizon_,
             min_crosswalk_user_velocity_);

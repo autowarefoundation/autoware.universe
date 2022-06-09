@@ -22,6 +22,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -87,6 +88,7 @@ using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+using tier4_autoware_utils::StopWatch;
 
 class MapBasedPredictionNode : public rclcpp::Node
 {
@@ -135,6 +137,9 @@ private:
   double diff_dist_threshold_to_right_bound_;
   double reference_path_resolution_;
   double min_crosswalk_user_velocity_;
+
+  // Stop watch
+  StopWatch<std::chrono::milliseconds> stop_watch_;
 
   // Member Functions
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
