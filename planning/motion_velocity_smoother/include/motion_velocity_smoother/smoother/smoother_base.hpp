@@ -20,9 +20,9 @@
 #include "motion_velocity_smoother/trajectory_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "boost/optional.hpp"
 
@@ -55,7 +55,7 @@ public:
     double min_lookup_dist;
     double max_lookup_dist;
     double steering_limit_sample_rate;
-      resampling::ResampleParam resample_param;
+    resampling::ResampleParam resample_param;
   };
 
   explicit SmootherBase(rclcpp::Node & node);
@@ -72,9 +72,7 @@ public:
     [[maybe_unused]] const double a0 = 0.0,
     [[maybe_unused]] const bool enable_smooth_limit = false) const;
 
-  boost::optional<TrajectoryPoints> applySteeringRateLimit(
-    const TrajectoryPoints & input) const;
-
+  boost::optional<TrajectoryPoints> applySteeringRateLimit(const TrajectoryPoints & input) const;
 
   double getMaxAccel() const;
   double getMinDecel() const;

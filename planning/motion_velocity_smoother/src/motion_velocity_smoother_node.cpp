@@ -18,6 +18,7 @@
 #include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 #include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
+
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <algorithm>
@@ -75,12 +76,12 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
-  //Initialize the wheelbase
+  // Initialize the wheelbase
   auto p = smoother_->getBaseParam();
   p.wheel_base = wheelbase_;
   smoother_->setParam(p);
 
-    // publishers, subscribers
+  // publishers, subscribers
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_velocity_limit_ = create_publisher<VelocityLimit>(
     "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
@@ -525,14 +526,14 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   }
 
   // Steering angle rate limit
-  const auto traj_steering_rate_limited = smoother_->applySteeringRateLimit(*traj_lateral_acc_filtered);
+  const auto traj_steering_rate_limited =
+    smoother_->applySteeringRateLimit(*traj_lateral_acc_filtered);
   if (!traj_steering_rate_limited) {
     RCLCPP_ERROR(get_logger(), "Fail to do traj_steering_rate_limited");
 
     return false;
   }
-//  RCLCPP_WARN(get_logger(), "AAAAAAAAA CREATED");
-
+  //  RCLCPP_WARN(get_logger(), "AAAAAAAAA CREATED");
 
   // Resample trajectory with ego-velocity based interval distance
   const auto traj_pre_resampled_closest = motion_utils::findNearestIndex(

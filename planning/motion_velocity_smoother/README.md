@@ -105,20 +105,20 @@ After the optimization, a resampling called `post resampling` is performed befor
 
 ### Output
 
-| Name                                               | Type                                      | Description                                                                                               |
-| -------------------------------------------------- |-------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `~/output/trajectory`                              | `autoware_auto_planning_msgs/Trajectory`  | Modified trajectory                                                                                       |
-| `/planning/scenario_planning/current_max_velocity` | `std_msgs/Float32`                        | Current external velocity limit [m/s]                                                                     |
-| `~/closest_velocity`                               | `std_msgs/Float32`                        | Planned velocity closest to ego base_link (for debug)                                                     |
-| `~/closest_acceleration`                           | `std_msgs/Float32`                        | Planned acceleration closest to ego base_link (for debug)                                                 |
-| `~/closest_jerk`                                   | `std_msgs/Float32`                        | Planned jerk closest to ego base_link (for debug)                                                         |
-| `~/debug/trajectory_raw`                           | `autoware_auto_planning_msgs/Trajectory`  | Extracted trajectory (for debug)                                                                          |
-| `~/debug/trajectory_external_velocity_limited`     | `autoware_auto_planning_msgs/Trajectory`  | External velocity limited trajectory (for debug)                                                          |
-| `~/debug/trajectory_lateral_acc_filtered`          | `autoware_auto_planning_msgs/Trajectory`  | Lateral acceleration limit filtered trajectory (for debug)                                                |
-| `~/debug/trajectory_steering_rate_limited`          | `autoware_auto_planning_msgs/Trajectory`  | Steering angle rate limit filtered trajectory (for debug)                                                 |
-| `~/debug/trajectory_time_resampled`                | `autoware_auto_planning_msgs/Trajectory`  | Time resampled trajectory (for debug)                                                                     |
-| `~/distance_to_stopline`                           | `std_msgs/Float32`                        | Distance to stop line from current ego pose (max 50 m) (for debug)                                        |
-| `~/stop_speed_exceeded`                            | `std_msgs/Bool`                           | It publishes `true` if planned velocity on the point which the maximum velocity is zero is over threshold |
+| Name                                               | Type                                     | Description                                                                                               |
+| -------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `~/output/trajectory`                              | `autoware_auto_planning_msgs/Trajectory` | Modified trajectory                                                                                       |
+| `/planning/scenario_planning/current_max_velocity` | `std_msgs/Float32`                       | Current external velocity limit [m/s]                                                                     |
+| `~/closest_velocity`                               | `std_msgs/Float32`                       | Planned velocity closest to ego base_link (for debug)                                                     |
+| `~/closest_acceleration`                           | `std_msgs/Float32`                       | Planned acceleration closest to ego base_link (for debug)                                                 |
+| `~/closest_jerk`                                   | `std_msgs/Float32`                       | Planned jerk closest to ego base_link (for debug)                                                         |
+| `~/debug/trajectory_raw`                           | `autoware_auto_planning_msgs/Trajectory` | Extracted trajectory (for debug)                                                                          |
+| `~/debug/trajectory_external_velocity_limited`     | `autoware_auto_planning_msgs/Trajectory` | External velocity limited trajectory (for debug)                                                          |
+| `~/debug/trajectory_lateral_acc_filtered`          | `autoware_auto_planning_msgs/Trajectory` | Lateral acceleration limit filtered trajectory (for debug)                                                |
+| `~/debug/trajectory_steering_rate_limited`         | `autoware_auto_planning_msgs/Trajectory` | Steering angle rate limit filtered trajectory (for debug)                                                 |
+| `~/debug/trajectory_time_resampled`                | `autoware_auto_planning_msgs/Trajectory` | Time resampled trajectory (for debug)                                                                     |
+| `~/distance_to_stopline`                           | `std_msgs/Float32`                       | Distance to stop line from current ego pose (max 50 m) (for debug)                                        |
+| `~/stop_speed_exceeded`                            | `std_msgs/Bool`                          | It publishes `true` if planned velocity on the point which the maximum velocity is zero is over threshold |
 
 ## Parameters
 
@@ -200,7 +200,7 @@ After the optimization, a resampling called `post resampling` is performed befor
 ### Steering angle rate parameters
 
 | Name                      | Type     | Description                              | Default value |
-|:--------------------------| :------- |:-----------------------------------------|:--------------|
+| :------------------------ | :------- | :--------------------------------------- | :------------ |
 | `max_steering_angle_rate` | `double` | Maximum steering tire angle rate [rad/s] | 0.349066      |
 | `resample_ds`             | `double` | Distance between trajectory points [m]   | 0.5           |
 | `max_lookup_distance`     | `double` | Maximum lookup distance [m]              | 2.0           |
@@ -236,7 +236,7 @@ After the optimization, a resampling called `post resampling` is performed befor
 ### Others
 
 | Name                          | Type     | Description                                                                                       | Default value |
-|:------------------------------| :------- |:--------------------------------------------------------------------------------------------------| :------------ |
+| :---------------------------- | :------- | :------------------------------------------------------------------------------------------------ | :------------ |
 | `over_stop_velocity_warn_thr` | `double` | Threshold to judge that the optimized velocity exceeds the input velocity on the stop point [m/s] | 1.389         |
 
 <!-- Write parameters of this package.

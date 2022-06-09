@@ -25,7 +25,6 @@ namespace motion_velocity_smoother
 {
 using vehicle_info_util::VehicleInfoUtil;
 
-
 SmootherBase::SmootherBase(rclcpp::Node & node)
 {
   auto & p = base_param_;
@@ -53,17 +52,17 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
     node.declare_parameter("sparse_min_interval_distance", 4.0);
 }
 
-void SmootherBase::setParam(const BaseParam & param) {base_param_ = param;}
+void SmootherBase::setParam(const BaseParam & param) { base_param_ = param; }
 
-SmootherBase::BaseParam SmootherBase::getBaseParam() const {return base_param_;}
+SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
 
-double SmootherBase::getMaxAccel() const {return base_param_.max_accel;}
+double SmootherBase::getMaxAccel() const { return base_param_.max_accel; }
 
-double SmootherBase::getMinDecel() const {return base_param_.min_decel;}
+double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
 
-double SmootherBase::getMaxJerk() const {return base_param_.max_jerk;}
+double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
 
-double SmootherBase::getMinJerk() const {return base_param_.min_jerk;}
+double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
 
 boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
@@ -138,12 +137,10 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
 boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
   const TrajectoryPoints & input) const
 {
-  const size_t min_lookup_index =
-    std::max(
+  const size_t min_lookup_index = std::max(
     static_cast<size_t>(base_param_.min_lookup_dist / base_param_.sample_ds),
     static_cast<size_t>(1));
-  const size_t max_lookup_index =
-    std::max(
+  const size_t max_lookup_index = std::max(
     static_cast<size_t>(base_param_.max_lookup_dist / base_param_.sample_ds),
     static_cast<size_t>(1));
 
@@ -152,7 +149,8 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
   }
 
   if (input.size() < min_lookup_index + 1) {
-    return boost::optional<TrajectoryPoints>(input);  // cannot calculate the desired velocity. do nothing.
+    return boost::optional<TrajectoryPoints>(
+      input);  // cannot calculate the desired velocity. do nothing.
   }
 
   std::vector<double> out_arclength;
@@ -177,29 +175,27 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
    */
 
   for (size_t i = 0; output->size() > i; i++) {
-
     if (i < output->size() - 1) {
-      output->at(i).front_wheel_angle_rad =
-        static_cast<float>(std::atan(
-          (tf2::getYaw(output->at(i + 1).pose.orientation) -
-          tf2::getYaw(output->at(i).pose.orientation)) * base_param_.wheel_base /
-          (base_param_.sample_ds)));
+      output->at(i).front_wheel_angle_rad = static_cast<float>(std::atan(
+        (tf2::getYaw(output->at(i + 1).pose.orientation) -
+         tf2::getYaw(output->at(i).pose.orientation)) *
+        base_param_.wheel_base / (base_param_.sample_ds)));
     } else {
       output->at(i).front_wheel_angle_rad = 0.0;
     }
   }
 
   for (size_t i = 0; output->size() > i; i++) {
-
     const size_t lookup_index = std::min(
       (std::max(
-        static_cast<size_t>(output->at(output->size() - 1 - i).longitudinal_velocity_mps /
-        base_param_.sample_ds), min_lookup_index)), max_lookup_index);
+        static_cast<size_t>(
+          output->at(output->size() - 1 - i).longitudinal_velocity_mps / base_param_.sample_ds),
+        min_lookup_index)),
+      max_lookup_index);
     double ds = static_cast<double>(lookup_index) * base_param_.sample_ds;
     double mean_vel = 0.0;
 
     if (lookup_index - 1 < i) {
-
       for (size_t k = 0; k <= lookup_index; k++) {
         mean_vel += output->at(output->size() - 1 - i + k).longitudinal_velocity_mps;
       }
@@ -210,23 +206,22 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
       double dt_steering = std::max(
         std::fabs(
           (output->at(output->size() - 1 - i).front_wheel_angle_rad -
-          output->at(output->size() - 1 - i + lookup_index).front_wheel_angle_rad)) /
-        base_param_.max_steering_angle_rate, std::numeric_limits<double>::epsilon());
+           output->at(output->size() - 1 - i + lookup_index).front_wheel_angle_rad)) /
+          base_param_.max_steering_angle_rate,
+        std::numeric_limits<double>::epsilon());
 
       if (dt_steering > dt) {
-        output->at(output->size() - 1 - i).longitudinal_velocity_mps = (ds / dt_steering) * 2.0 -
+        output->at(output->size() - 1 - i).longitudinal_velocity_mps =
+          (ds / dt_steering) * 2.0 -
           output->at(output->size() - 1 - i + lookup_index).longitudinal_velocity_mps;
-        if (output->at(output->size() - 1 - i).longitudinal_velocity_mps <
-          base_param_.min_curve_velocity)
-        {
-          output->at(
-            output->size() - 1 -
-            i).longitudinal_velocity_mps = base_param_.min_curve_velocity;
-
+        if (
+          output->at(output->size() - 1 - i).longitudinal_velocity_mps <
+          base_param_.min_curve_velocity) {
+          output->at(output->size() - 1 - i).longitudinal_velocity_mps =
+            base_param_.min_curve_velocity;
         }
       }
     }
-
   }
 
   return boost::optional<TrajectoryPoints>(output);
