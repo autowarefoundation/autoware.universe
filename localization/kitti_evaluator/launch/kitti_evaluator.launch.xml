@@ -1,0 +1,8 @@
+<launch>
+  <arg name="input_odometry_topic" default="/odometry" description="input odometry topic name"/>
+
+  <arg name="input_nav_sat_fix_topic" default="/gps_fix" description="input GPS topic name"/>
+
+  <node pkg="kitti_evaluator" exec="kitti_evaluator" name="kitti_evaluator" output="screen">
+  </node>
+</launch>
