@@ -21,8 +21,8 @@
 #include "geometry/common_2d.hpp"
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
-#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
+#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 #include "trajectory_follower/visibility_control.hpp"
 
 #include <experimental/optional>  // NOLINT
@@ -61,8 +61,9 @@ TRAJECTORY_FOLLOWER_PUBLIC bool8_t isValidTrajectory(const Trajectory & traj);
 /**
  * @brief calculate distance to stopline from current vehicle position where velocity is 0
  */
-TRAJECTORY_FOLLOWER_PUBLIC float64_t
-calcStopDistance(const Pose & current_pose, const Trajectory & traj, const float64_t & max_dist, const float64_t & max_yaw);
+TRAJECTORY_FOLLOWER_PUBLIC float64_t calcStopDistance(
+  const Pose & current_pose, const Trajectory & traj, const float64_t & max_dist,
+  const float64_t & max_yaw);
 
 /**
  * @brief calculate pitch angle from estimated current pose
@@ -107,8 +108,8 @@ lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const float6
  * @param [in] point Interpolated point is nearest to this point.
  */
 template <class T>
-TRAJECTORY_FOLLOWER_PUBLIC TrajectoryPoint
-lerpTrajectoryPoint(const T & points, const Pose & pose, const float64_t & max_dist, const float64_t & max_yaw)
+TRAJECTORY_FOLLOWER_PUBLIC TrajectoryPoint lerpTrajectoryPoint(
+  const T & points, const Pose & pose, const float64_t & max_dist, const float64_t & max_yaw)
 {
   TrajectoryPoint interpolated_point;
   auto seg_idx = tier4_autoware_utils::findNearestSegmentIndex(points, pose, max_dist, max_yaw);

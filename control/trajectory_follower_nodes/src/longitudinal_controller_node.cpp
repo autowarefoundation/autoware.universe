@@ -800,8 +800,8 @@ LongitudinalController::Motion LongitudinalController::keepBrakeBeforeStop(
 
 autoware_auto_planning_msgs::msg::TrajectoryPoint
 LongitudinalController::calcInterpolatedTargetValue(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Pose & pose, const size_t nearest_idx) const
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Pose & pose,
+  const size_t nearest_idx) const
 {
   if (traj.points.size() == 1) {
     return traj.points.at(0);
@@ -815,15 +815,16 @@ LongitudinalController::calcInterpolatedTargetValue(
     }
   }
   if (nearest_idx == traj.points.size() - 1) {
-    if (motion_common::calcSignedArcLength(traj.points, pose.position, traj.points.size() - 1) < 0) {
+    if (
+      motion_common::calcSignedArcLength(traj.points, pose.position, traj.points.size() - 1) < 0) {
       return traj.points.at(traj.points.size() - 1);
     }
   }
 
   // apply linear interpolation
-  return trajectory_follower::longitudinal_utils::lerpTrajectoryPoint(traj.points, pose, 
-  m_state_transition_params.emergency_state_traj_trans_dev, 
-  m_state_transition_params.emergency_state_traj_rot_dev);
+  return trajectory_follower::longitudinal_utils::lerpTrajectoryPoint(
+    traj.points, pose, m_state_transition_params.emergency_state_traj_trans_dev,
+    m_state_transition_params.emergency_state_traj_rot_dev);
 }
 
 float64_t LongitudinalController::predictedVelocityInTargetPoint(
