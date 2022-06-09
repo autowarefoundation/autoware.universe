@@ -25,41 +25,44 @@
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
-#include <deque>
 
 class KittiEvaluator : public rclcpp::Node
 {
 public:
-    KittiEvaluator();
-    ~KittiEvaluator();
+  KittiEvaluator();
+  ~KittiEvaluator();
 
 private:
-    void initialize(double lat, double lon, double alt);
+  void initialize(double lat, double lon, double alt);
 
-    // void callbackNavSatFix(sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
-    void callbackVehicleOdometry(geometry_msgs::msg::PoseStamped::ConstSharedPtr odom_msg_ptr);
-    void callbackGroundTruthOdometry(geometry_msgs::msg::PoseStamped::ConstSharedPtr odom_ground_truth_msg_ptr);
-    
-    void calculateError(geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_vehicle, geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_groud_truth);
+  // void callbackNavSatFix(sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
+  void callbackVehicleOdometry(geometry_msgs::msg::PoseStamped::ConstSharedPtr odom_msg_ptr);
+  void callbackGroundTruthOdometry(
+    geometry_msgs::msg::PoseStamped::ConstSharedPtr odom_ground_truth_msg_ptr);
 
-    // rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr vehicle_pose_sub_;
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr groud_truth_pose_sub_;
+  void calculateError(
+    geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_vehicle,
+    geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_groud_truth);
 
-    geometry_msgs::msg::PoseStamped::ConstSharedPtr last_vehicle_pose;
-    geometry_msgs::msg::PoseStamped::ConstSharedPtr last_groud_truth_pose;
-    std::string output_path;
-    std::deque<geometry_msgs::msg::PoseStamped::ConstSharedPtr> vehicle_pose_queue;
-    double delta = 0.1;
-    double x0 = 0;
-    double y0 = 0;
-    double z0 = 0; 
-    double scale = 0;
-    bool init;
+  // rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr vehicle_pose_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr groud_truth_pose_sub_;
+
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr last_vehicle_pose;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr last_groud_truth_pose;
+  std::string output_path;
+  std::deque<geometry_msgs::msg::PoseStamped::ConstSharedPtr> vehicle_pose_queue;
+  double delta = 0.1;
+  double x0 = 0;
+  double y0 = 0;
+  double z0 = 0;
+  double scale = 0;
+  bool init;
 };
 
-#endif
+#endif  // KITTI_EVALUATOR__KITTI_EVALUATOR_CORE_HPP_

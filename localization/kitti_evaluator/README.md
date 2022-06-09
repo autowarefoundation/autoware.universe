@@ -27,4 +27,3 @@
 | `message_timeout_sec` | Double | delay tolerance time for message |
 
 ## Assumptions / Known limits
-
