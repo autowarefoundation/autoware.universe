@@ -32,6 +32,13 @@ This function is used to approach near the obstacle or improve the accuracy of s
 It applies the velocity limit to decelerate at the curve.
 It calculates the velocity limit from the curvature of the reference trajectory and the maximum lateral acceleration `max_lateral_accel`.
 The velocity limit is set as not to fall under `min_curve_velocity`.
+It also fills the desired steering angle of curvature points with respect to following equation:
+
+![desired steering angle calculation](./media/desired_steering_angle_eq.svg)
+
+#### Apply steering rate limit
+
+It applies the rate limit. If the (`steering_angle_rate` > `max_steering_angle_rate`), it decreases the velocity of the trajectory point to decrease `steering_angle_rate`.
 
 Note: velocity limit that requests larger than `nominal.jerk` is not applied. In other words, even if a sharp curve is planned just in front of the ego, no deceleration is performed.
 
@@ -98,19 +105,20 @@ After the optimization, a resampling called `post resampling` is performed befor
 
 ### Output
 
-| Name                                               | Type                                     | Description                                                                                               |
-| -------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `~/output/trajectory`                              | `autoware_auto_planning_msgs/Trajectory` | Modified trajectory                                                                                       |
-| `/planning/scenario_planning/current_max_velocity` | `std_msgs/Float32`                       | Current external velocity limit [m/s]                                                                     |
-| `~/closest_velocity`                               | `std_msgs/Float32`                       | Planned velocity closest to ego base_link (for debug)                                                     |
-| `~/closest_acceleration`                           | `std_msgs/Float32`                       | Planned acceleration closest to ego base_link (for debug)                                                 |
-| `~/closest_jerk`                                   | `std_msgs/Float32`                       | Planned jerk closest to ego base_link (for debug)                                                         |
-| `~/debug/trajectory_raw`                           | `autoware_auto_planning_msgs/Trajectory` | Extracted trajectory (for debug)                                                                          |
-| `~/debug/trajectory_external_velocity_limited`     | `autoware_auto_planning_msgs/Trajectory` | External velocity limited trajectory (for debug)                                                          |
-| `~/debug/trajectory_lateral_acc_filtered`          | `autoware_auto_planning_msgs/Trajectory` | Lateral acceleration limit filtered trajectory (for debug)                                                |
-| `~/debug/trajectory_time_resampled`                | `autoware_auto_planning_msgs/Trajectory` | Time resampled trajectory (for debug)                                                                     |
-| `~/distance_to_stopline`                           | `std_msgs/Float32`                       | Distance to stop line from current ego pose (max 50 m) (for debug)                                        |
-| `~/stop_speed_exceeded`                            | `std_msgs/Bool`                          | It publishes `true` if planned velocity on the point which the maximum velocity is zero is over threshold |
+| Name                                               | Type                                      | Description                                                                                               |
+| -------------------------------------------------- |-------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `~/output/trajectory`                              | `autoware_auto_planning_msgs/Trajectory`  | Modified trajectory                                                                                       |
+| `/planning/scenario_planning/current_max_velocity` | `std_msgs/Float32`                        | Current external velocity limit [m/s]                                                                     |
+| `~/closest_velocity`                               | `std_msgs/Float32`                        | Planned velocity closest to ego base_link (for debug)                                                     |
+| `~/closest_acceleration`                           | `std_msgs/Float32`                        | Planned acceleration closest to ego base_link (for debug)                                                 |
+| `~/closest_jerk`                                   | `std_msgs/Float32`                        | Planned jerk closest to ego base_link (for debug)                                                         |
+| `~/debug/trajectory_raw`                           | `autoware_auto_planning_msgs/Trajectory`  | Extracted trajectory (for debug)                                                                          |
+| `~/debug/trajectory_external_velocity_limited`     | `autoware_auto_planning_msgs/Trajectory`  | External velocity limited trajectory (for debug)                                                          |
+| `~/debug/trajectory_lateral_acc_filtered`          | `autoware_auto_planning_msgs/Trajectory`  | Lateral acceleration limit filtered trajectory (for debug)                                                |
+| `~/debug/trajectory_steering_rate_limited`          | `autoware_auto_planning_msgs/Trajectory`  | Steering angle rate limit filtered trajectory (for debug)                                                 |
+| `~/debug/trajectory_time_resampled`                | `autoware_auto_planning_msgs/Trajectory`  | Time resampled trajectory (for debug)                                                                     |
+| `~/distance_to_stopline`                           | `std_msgs/Float32`                        | Distance to stop line from current ego pose (max 50 m) (for debug)                                        |
+| `~/stop_speed_exceeded`                            | `std_msgs/Bool`                           | It publishes `true` if planned velocity on the point which the maximum velocity is zero is over threshold |
 
 ## Parameters
 
@@ -189,6 +197,15 @@ After the optimization, a resampling called `post resampling` is performed befor
 | `post_sparse_dt`                    | `double` | resample time interval for sparse sampling [s]         | 0.1           |
 | `post_sparse_min_interval_distance` | `double` | minimum points-interval length for sparse sampling [m] | 1.0           |
 
+### Steering angle rate parameters
+
+| Name                      | Type     | Description                              | Default value |
+|:--------------------------| :------- |:-----------------------------------------|:--------------|
+| `max_steering_angle_rate` | `double` | Maximum steering tire angle rate [rad/s] | 0.349066      |
+| `resample_ds`             | `double` | Distance between trajectory points [m]   | 0.5           |
+| `max_lookup_distance`     | `double` | Maximum lookup distance [m]              | 2.0           |
+| `min_lookup_distance`     | `double` | Minimum lookup distance [m]              | 1.0           |
+
 ### Weights for optimization
 
 #### JerkFiltered
@@ -219,7 +236,7 @@ After the optimization, a resampling called `post resampling` is performed befor
 ### Others
 
 | Name                          | Type     | Description                                                                                       | Default value |
-| :---------------------------- | :------- | :------------------------------------------------------------------------------------------------ | :------------ |
+|:------------------------------| :------- |:--------------------------------------------------------------------------------------------------| :------------ |
 | `over_stop_velocity_warn_thr` | `double` | Threshold to judge that the optimized velocity exceeds the input velocity on the stop point [m/s] | 1.389         |
 
 <!-- Write parameters of this package.

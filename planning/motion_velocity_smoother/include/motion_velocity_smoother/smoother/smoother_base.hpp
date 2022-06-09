@@ -49,8 +49,12 @@ public:
     double min_curve_velocity;           // min velocity at curve [m/s]
     double decel_distance_before_curve;  // distance before slow down for lateral acc at a curve
     double decel_distance_after_curve;   // distance after slow down for lateral acc at a curve
-    double max_steering_angle_rate;       // max steering angle rate [degree/s]
+    double max_steering_angle_rate;      // max steering angle rate [degree/s]
     double wheel_base;                   // wheel base [m]
+    double sample_ds;                    // distance between trajectory points [m]
+    double min_lookup_dist;
+    double max_lookup_dist;
+    double steering_limit_sample_rate;
       resampling::ResampleParam resample_param;
   };
 
@@ -82,10 +86,6 @@ public:
 
 protected:
   BaseParam base_param_;
-  const double points_interval = 0.1; // constant interval distance of trajectory
-                                      // for lateral acceleration calculation and
-                                      // limit steering rate. [m]
-
 };
 }  // namespace motion_velocity_smoother
 

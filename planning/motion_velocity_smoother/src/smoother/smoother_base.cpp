@@ -35,6 +35,9 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
   p.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
   p.min_jerk = node.declare_parameter("normal.min_jerk", -0.1);
   p.max_lateral_accel = node.declare_parameter("max_lateral_accel", 0.2);
+  p.sample_ds = node.declare_parameter("resample_ds", 0.5);
+  p.max_lookup_dist = node.declare_parameter("max_lookup_distance", 2.0);
+  p.min_lookup_dist = node.declare_parameter("min_lookup_distance", 1.0);
   p.max_steering_angle_rate = node.declare_parameter("max_steering_angle_rate", 5.0);
   p.decel_distance_before_curve = node.declare_parameter("decel_distance_before_curve", 3.5);
   p.decel_distance_after_curve = node.declare_parameter("decel_distance_after_curve", 0.0);
@@ -62,7 +65,6 @@ double SmootherBase::getMaxJerk() const {return base_param_.max_jerk;}
 
 double SmootherBase::getMinJerk() const {return base_param_.min_jerk;}
 
-
 boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
   [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit) const
@@ -72,10 +74,11 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   }
 
   if (input.size() < 3) {
-    return boost::optional<TrajectoryPoints>(input);          // cannot calculate lateral acc. do nothing.
+    return boost::optional<TrajectoryPoints>(input);  // cannot calculate lateral acc. do nothing.
   }
 
   // Interpolate with constant interval distance for lateral acceleration calculation.
+  constexpr double points_interval = 0.1;  // [m]
   std::vector<double> out_arclength;
   const std::vector<double> in_arclength = trajectory_utils::calcArclengthArray(input);
   for (double s = 0; s < in_arclength.back(); s += points_interval) {
@@ -88,9 +91,9 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
       "interpolation failed at lateral acceleration filter.");
     return boost::none;
   }
-  output->back() = input.back();        // keep the final speed.
+  output->back() = input.back();  // keep the final speed.
 
-  constexpr double curvature_calc_dist = 5.0;        // [m] calc curvature with 5m away points
+  constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
   const size_t idx_dist =
     static_cast<size_t>(std::max(static_cast<int>((curvature_calc_dist) / points_interval), 1));
 
@@ -120,7 +123,6 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
     for (size_t j = start; j < end; ++j) {
       curvature = std::max(curvature, std::fabs(curvature_v->at(j)));
     }
-
     double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
     v_curvature_max = std::max(v_curvature_max, base_param_.min_curve_velocity);
     if (enable_smooth_limit) {
@@ -129,85 +131,100 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
     if (output->at(i).longitudinal_velocity_mps > v_curvature_max) {
       output->at(i).longitudinal_velocity_mps = v_curvature_max;
     }
-
-    /*  Fill the steering tire angle w.r.t. orientation
-     *
-     *  delta_orientation = velocity * tan(steering_tire_angle) / wheelbase
-     *
-     *  calculate desired steering_tire_angle w.r.t. delta_orientation, velocity, and wheelbase
-     *
-     */
-
-    const size_t length =
-      static_cast<size_t>(std::max(
-        static_cast<int>(output->at(i).longitudinal_velocity_mps /
-        points_interval), 1));
-    if (i < output->size() - length) {
-      output->at(i).front_wheel_angle_rad =
-        static_cast<float>(std::atan(
-          (tf2::getYaw(output->at(i + length).pose.orientation) -
-          tf2::getYaw(output->at(i).pose.orientation)) * base_param_.wheel_base /
-          (static_cast<double>(length) * points_interval)));
-    } else {
-      output->at(i).front_wheel_angle_rad = 0.0;
-    }
   }
   return output;
 }
 
-
 boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
   const TrajectoryPoints & input) const
 {
+  const size_t min_lookup_index = std::max(static_cast<size_t>(base_param_.min_lookup_dist / base_param_.sample_ds), static_cast<size_t>(1));
+  const size_t max_lookup_index = std::max(static_cast<size_t>(base_param_.max_lookup_dist / base_param_.sample_ds), static_cast<size_t>(1));
+
   if (input.empty()) {
     return boost::none;
   }
 
-  if (input.size() < 2) {
+  if (input.size() < min_lookup_index + 1) {
     return boost::optional<TrajectoryPoints>(input);  // cannot calculate the desired velocity. do nothing.
   }
 
-  auto output = boost::optional<TrajectoryPoints>(input);
-  if (output->empty()) {
+  std::vector<double> out_arclength;
+  const std::vector<double> in_arclength = trajectory_utils::calcArclengthArray(input);
+  for (double s = 0; s < in_arclength.back(); s += base_param_.sample_ds) {
+    out_arclength.push_back(s);
+  }
+  auto output = trajectory_utils::applyLinearInterpolation(in_arclength, input, out_arclength);
+  if (!output) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("smoother").get_child("smoother_base"),
+      "interpolation failed at steering angle rate limit.");
     return boost::none;
   }
-  for (size_t i = output->size() - 1; 0 < i; i--) {
-    const size_t length =
-      static_cast<size_t>(std::max(
-        static_cast<int>(output->at(i).longitudinal_velocity_mps /
-        points_interval), 1));
-    double ds = static_cast<double>(length) * points_interval;
-    //            double prev_vel = output->at(i-1).longitudinal_velocity_mps;
-    //            double cur_vel = output->at(i).longitudinal_velocity_mps;
-    if (i < output->size() - length) {
-      double mean_vel =
-        (output->at(i).longitudinal_velocity_mps +
-        output->at(i + length).longitudinal_velocity_mps) / 2.0;
+
+  /*  Fill the steering tire angle w.r.t. orientation
+   *
+   *  delta_orientation / delta_time = velocity * tan(steering_tire_angle) / wheelbase
+   *
+   *  calculate desired steering_tire_angle w.r.t. delta_orientation, velocity, and wheelbase
+   *
+   */
+
+  for (size_t i = 0; output->size() > i; i++) {
+
+    if (i < output->size() - 1) {
+      output->at(i).front_wheel_angle_rad =
+        static_cast<float>(std::atan(
+          (tf2::getYaw(output->at(i + 1).pose.orientation) -
+          tf2::getYaw(output->at(i).pose.orientation)) * base_param_.wheel_base /
+          (base_param_.sample_ds)));
+    } else {
+      output->at(i).front_wheel_angle_rad = 0.0;
+    }
+  }
+
+  for (size_t i = 0; output->size() > i; i++) {
+
+    const size_t lookup_index = std::min(
+      (std::max(
+        static_cast<size_t>(output->at(output->size() - 1 - i).longitudinal_velocity_mps /
+                            base_param_.sample_ds), min_lookup_index)), max_lookup_index);
+    double ds = static_cast<double>(lookup_index) * base_param_.sample_ds;
+    double mean_vel = 0.0;
+
+    if (lookup_index - 1 < i) {
+
+      for (size_t k = 0; k <= lookup_index; k++) {
+        mean_vel += output->at(output->size() - 1 - i + k).longitudinal_velocity_mps;
+      }
+
+      mean_vel = mean_vel / static_cast<double>(lookup_index + 1);
       double dt = std::max(ds / mean_vel, std::numeric_limits<double>::epsilon());
+
       double dt_steering = std::max(
         std::fabs(
-          (output->at(i).front_wheel_angle_rad -
-          output->at(i + length).front_wheel_angle_rad)) /
+          (output->at(output->size() - 1 - i).front_wheel_angle_rad -
+          output->at(output->size() - 1 - i + lookup_index).front_wheel_angle_rad)) /
         base_param_.max_steering_angle_rate, std::numeric_limits<double>::epsilon());
-      if (dt_steering > dt) {
-        // change velocity of p0
 
-        output->at(i).longitudinal_velocity_mps = (ds / dt_steering) * 2.0 -
-          output->at(i + length).longitudinal_velocity_mps;
-        if (output->at(i).longitudinal_velocity_mps < base_param_.min_curve_velocity) {
-          output->at(i).longitudinal_velocity_mps = base_param_.min_curve_velocity;
+      if (dt_steering > dt) {
+        output->at(output->size() - 1 - i).longitudinal_velocity_mps = (ds / dt_steering) * 2.0 -
+          output->at(output->size() - 1 - i + lookup_index).longitudinal_velocity_mps;
+        if (output->at(output->size() - 1 - i).longitudinal_velocity_mps <
+          base_param_.min_curve_velocity)
+        {
+          output->at(
+            output->size() - 1 -
+            i).longitudinal_velocity_mps = base_param_.min_curve_velocity;
 
         }
-        RCLCPP_INFO(
-          rclcpp::get_logger("limsteer").get_child(
-            "smoother_base"),
-          "wheelbase: %f min curv vel: %f max_steeringang_rate: %f",
-          base_param_.wheel_base, base_param_.min_curve_velocity,
-          base_param_.max_steering_angle_rate);
       }
     }
 
   }
+
+  // Interpolate with constant interval distance for lateral acceleration calculation.
+
   return boost::optional<TrajectoryPoints>(output);
 }
 

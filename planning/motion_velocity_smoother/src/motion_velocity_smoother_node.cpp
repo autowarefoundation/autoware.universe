@@ -176,6 +176,9 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param("min_interval_distance", p.resample_param.dense_min_interval_distance);
     update_param("sparse_resample_dt", p.resample_param.sparse_resample_dt);
     update_param("sparse_min_interval_distance", p.resample_param.sparse_min_interval_distance);
+    update_param("resample_ds", p.sample_ds);
+    update_param("max_lookup_distance", p.max_lookup_dist);
+    update_param("min_lookup_distance", p.min_lookup_dist);
     update_param("max_steering_angle_rate", p.max_steering_angle_rate);
     smoother_->setParam(p);
   }
@@ -516,7 +519,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   const auto traj_lateral_acc_filtered =
     smoother_->applyLateralAccelerationFilter(input, initial_vel, initial_acc, true);
   if (!traj_lateral_acc_filtered) {
-    RCLCPP_WARN(get_logger(), "Fail to do traj_lateral_acc_filtered");
+    RCLCPP_ERROR(get_logger(), "Fail to do traj_lateral_acc_filtered");
 
     return false;
   }
@@ -524,11 +527,11 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   // Steering angle rate limit
   const auto traj_steering_rate_limited = smoother_->applySteeringRateLimit(*traj_lateral_acc_filtered);
   if (!traj_steering_rate_limited) {
-    RCLCPP_WARN(get_logger(), "Fail to do traj_steering_rate_limited");
+    RCLCPP_ERROR(get_logger(), "Fail to do traj_steering_rate_limited");
 
     return false;
   }
-  RCLCPP_WARN(get_logger(), "AAAAAAAAA CREATED");
+//  RCLCPP_WARN(get_logger(), "AAAAAAAAA CREATED");
 
 
   // Resample trajectory with ego-velocity based interval distance
