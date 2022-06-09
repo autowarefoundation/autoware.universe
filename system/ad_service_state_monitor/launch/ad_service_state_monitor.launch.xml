@@ -1,10 +1,10 @@
 <launch>
   <!-- Input -->
-  <arg name="input_autoware_engage" default="/api/autoware/get/engage" />
-  <arg name="input_control_mode" default="/vehicle/status/control_mode" />
-  <arg name="input_map" default="/map/vector_map" />
-  <arg name="input_route" default="/planning/mission_planning/route" />
-  <arg name="input_odometry" default="/localization/kinematic_state" />
+  <arg name="input_autoware_engage" default="/api/autoware/get/engage"/>
+  <arg name="input_control_mode" default="/vehicle/status/control_mode"/>
+  <arg name="input_map" default="/map/vector_map"/>
+  <arg name="input_route" default="/planning/mission_planning/route"/>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
 
   <!-- Output -->
   <arg name="output_autoware_state" default="/autoware/state" />
