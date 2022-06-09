@@ -6,21 +6,22 @@ autoware_package()
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
-        include/simple_planning_simulator/simple_planning_simulator_core.hpp
-        include/simple_planning_simulator/visibility_control.hpp
-        src/simple_planning_simulator/simple_planning_simulator_core.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_interface.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_vel.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
-        # DISTURBANCE MODIFICATIONS
-        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.cpp
-        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared_disturbance.cpp
-        src/disturbance_generators/disturbance_generators.cpp
-        )
+  include/simple_planning_simulator/simple_planning_simulator_core.hpp
+  include/simple_planning_simulator/visibility_control.hpp
+  src/simple_planning_simulator/simple_planning_simulator_core.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_interface.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_vel.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
+
+  # DISTURBANCE MODIFICATIONS
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared_disturbance.cpp
+  src/disturbance_generators/disturbance_generators.cpp
+  )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
