@@ -3,17 +3,17 @@
 ## ResponseStatus
 
 This message is a response status commonly used in the service type API. For details, see [the response status][docs-response-status].
-Each API defines its own error code and assigns a level to them. For example, define 12345 as the code to indicate that the parameter is invalid.
-The level of this code is an error if the process cannot be continued, or a warning if the process can be continued by using the default value or something.
-This makes it possible to know the success or failure regardless of the API by checking the level.
+Each API can define its own status codes.
+The status codes are primarily used to indicate the error cause, such as invalid parameter and timeout.
+If the API succeeds, set success to true, code to zero, and message to the empty string.
+Alternatively, codes and messages can be used for warnings or additional information.
+If the API fails, set success to false, code to the related status code, and message to the information.
+The status code zero is reserved for success. The status code 50000 or over are also reserved for typical cases.
 
-The code for frequent errors is predefined as shown below and numbers less than 10000 are reserved for these.
-Use numbers greater than or equal to 10000 for the code defined by each API.
-
-| Name                     | Code | Level | Description                                              |
-| ------------------------ | ---- | ----- | -------------------------------------------------------- |
-| INTERNAL_SERVICE_UNREADY | 101  | ERROR | The service on which this API depends was not available. |
-| INTERNAL_SERVICE_TIMEOUT | 102  | ERROR | The service on which this API depends has timed out.     |
+| Name       |  Code | Description                          |
+| ---------- | ----: | ------------------------------------ |
+| SUCCESS    |     0 | This API has completed successfully. |
+| DEPRECATED | 50000 | This API is deprecated.              |
 
 ## InterfaceVersion
 
