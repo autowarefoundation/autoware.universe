@@ -251,10 +251,7 @@ class VelocityChecker(Node):
         return
 
     def CallBackLaneDriveTrajectory(self, msg):
-        self.get_logger().info('OBSTACLE_STOP called')
-        for i in range(0, len(msg.points)):
-            vel = msg.points[i].longitudinal_velocity_mps
-            self.get_logger().info(f"long vel: {vel}")
+        # self.get_logger().info('OBSTACLE_STOP called')
         closest = self.calcClosestTrajectory(msg)
         self.data_arr[OBSTACLE_STOP] = msg.points[closest].longitudinal_velocity_mps
         return
