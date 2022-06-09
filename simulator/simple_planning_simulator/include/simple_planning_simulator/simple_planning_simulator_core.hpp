@@ -245,7 +245,7 @@ private:
   /**
    * @brief ControlModeRequest server
    */
-  void on_operation_mode_request(
+  void on_control_mode_request(
     const ControlModeRequest::Request::SharedPtr request,
     const ControlModeRequest::Response::SharedPtr response);
 
