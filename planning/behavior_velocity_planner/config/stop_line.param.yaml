@@ -4,3 +4,4 @@
       stop_margin: 0.0
       stop_check_dist: 2.0
       stop_duration_sec: 1.0
+      use_initialization_stop_line_state: true
