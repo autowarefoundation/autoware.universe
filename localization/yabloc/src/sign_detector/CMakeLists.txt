@@ -85,13 +85,4 @@ ADD_EXE(TARGET camera_corrector_node SRC src/particle_filter/camera_corrector*.c
 ADD_EXE(TARGET overlay_node SRC src/overlay_*.cpp INC include                LIB util)
 
 # ===================================================
-# Python
-ament_python_install_package(scripts)
-install(DIRECTORY
-  scripts/
-  DESTINATION lib/${PROJECT_NAME}
-  #FILES_MATCHING PATTERN "*.py" # TODO: this option disables symlink-install. i dont know why
-)
-
-# ===================================================
 ament_auto_package(INSTALL_TO_SHARE  launch config)
