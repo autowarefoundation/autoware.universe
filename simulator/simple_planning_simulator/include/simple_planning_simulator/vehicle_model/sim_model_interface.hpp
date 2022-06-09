@@ -156,12 +156,12 @@ public:
   /**
    * @brief get state vector dimension
    */
-  inline int getDimX() { return dim_x_; }
+  inline int getDimX() {return dim_x_;}
 
   /**
    * @brief get input vector demension
    */
-  inline int getDimU() { return dim_u_; }
+  inline int getDimU() {return dim_u_;}
 
   /**
    * @brief calculate derivative of states with vehicle model

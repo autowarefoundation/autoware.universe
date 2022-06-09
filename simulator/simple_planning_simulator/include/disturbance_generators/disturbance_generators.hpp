@@ -38,9 +38,9 @@ public:
 
   double getNextState(double const & u);
 
-  [[nodiscard]] double getMeanTimeDelay() const { return meanTd_; }
+  [[nodiscard]] double getMeanTimeDelay() const {return meanTd_;}
 
-  [[nodiscard]] const double & getCurrentTimeDelay() const { return Td_; }
+  [[nodiscard]] const double & getCurrentTimeDelay() const {return Td_;}
 
   void printModelTF();
 
@@ -102,7 +102,7 @@ public:
     return input;
   }
 
-  [[nodiscard]] double getCurrentTimeDelayValue() const override { return 0.0; }
+  [[nodiscard]] double getCurrentTimeDelayValue() const override {return 0.0;}
 };
 
 /**
@@ -283,7 +283,7 @@ private:
 class OutputDisturbance_AdditiveIdentity : public IOutputDisturbance_Interface
 {
 public:
-  double getDisturbedOutput() override { return 0.0; }
+  double getDisturbedOutput() override {return 0.0;}
 
   [[nodiscard]] double getCurrentDisturbanceParameterValue() const override
   {
@@ -327,12 +327,13 @@ struct IDisturbanceCollection
 {
   IDisturbanceCollection()
   : steering_inputDisturbance_time_delay_ptr_{std::make_shared<
-      InputDisturbance_IdentityTimeDelay>()},
+        InputDisturbance_IdentityTimeDelay>()},
     acc_inputDisturbance_time_delay_ptr_{std::make_shared<InputDisturbance_IdentityTimeDelay>()},
     steering_dedzone_ptr_{std::make_shared<InputDisturbance_DeadZoneIdentity>()},
-    road_slope_outputDisturbance_ptr_{std::make_shared<OutputDisturbance_AdditiveIdentity>()} {
+    road_slope_outputDisturbance_ptr_{std::make_shared<OutputDisturbance_AdditiveIdentity>()}
+  {
 
-    };
+  }
 
   // Destructor
   // ~IDisturbanceCollection() = default;

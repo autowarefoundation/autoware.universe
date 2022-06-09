@@ -23,17 +23,17 @@ SimModelIdealSteerAccGeared::SimModelIdealSteerAccGeared(float64_t wheelbase)
 {
 }
 
-float64_t SimModelIdealSteerAccGeared::getX() { return state_(IDX::X); }
-float64_t SimModelIdealSteerAccGeared::getY() { return state_(IDX::Y); }
-float64_t SimModelIdealSteerAccGeared::getYaw() { return state_(IDX::YAW); }
-float64_t SimModelIdealSteerAccGeared::getVx() { return state_(IDX::VX); }
-float64_t SimModelIdealSteerAccGeared::getVy() { return 0.0; }
-float64_t SimModelIdealSteerAccGeared::getAx() { return current_acc_; }
+float64_t SimModelIdealSteerAccGeared::getX() {return state_(IDX::X);}
+float64_t SimModelIdealSteerAccGeared::getY() {return state_(IDX::Y);}
+float64_t SimModelIdealSteerAccGeared::getYaw() {return state_(IDX::YAW);}
+float64_t SimModelIdealSteerAccGeared::getVx() {return state_(IDX::VX);}
+float64_t SimModelIdealSteerAccGeared::getVy() {return 0.0;}
+float64_t SimModelIdealSteerAccGeared::getAx() {return current_acc_;}
 float64_t SimModelIdealSteerAccGeared::getWz()
 {
   return state_(IDX::VX) * std::tan(input_(IDX_U::STEER_DES)) / wheelbase_;
 }
-float64_t SimModelIdealSteerAccGeared::getSteer() { return input_(IDX_U::STEER_DES); }
+float64_t SimModelIdealSteerAccGeared::getSteer() {return input_(IDX_U::STEER_DES);}
 void SimModelIdealSteerAccGeared::update(const float64_t & dt)
 {
   const auto prev_state = state_;
@@ -73,7 +73,8 @@ void SimModelIdealSteerAccGeared::updateStateWithGear(
     gear == GearCommand::DRIVE_12 || gear == GearCommand::DRIVE_13 ||
     gear == GearCommand::DRIVE_14 || gear == GearCommand::DRIVE_15 ||
     gear == GearCommand::DRIVE_16 || gear == GearCommand::DRIVE_17 ||
-    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2) {
+    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2)
+  {
     if (state(IDX::VX) < 0.0) {
       state(IDX::VX) = 0.0;
       state(IDX::X) = prev_state(IDX::X);

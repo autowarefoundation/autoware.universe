@@ -41,7 +41,8 @@ public:
 
 private:
   enum IDX { X = 0, Y, YAW, VX };
-  enum IDX_U {
+  enum IDX_U
+  {
     AX_DES = 0,
     STEER_DES,
   };

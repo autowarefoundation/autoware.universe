@@ -33,30 +33,29 @@ SimModelDelaySteerAccGeared_Disturbance::SimModelDelaySteerAccGeared_Disturbance
   acc_time_constant_(std::max(acc_time_constant, MIN_TIME_CONSTANT)),
   steer_delay_(steer_delay),
   steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT))
-
 {
   // initializeInputQueue(dt);
   setDisturbance(disturbance_collection);
 }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getX() { return state_(IDX::X); }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getX() {return state_(IDX::X);}
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getY() { return state_(IDX::Y); }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getY() {return state_(IDX::Y);}
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getYaw() { return state_(IDX::YAW); }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getYaw() {return state_(IDX::YAW);}
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getVx() { return state_(IDX::VX); }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getVx() {return state_(IDX::VX);}
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getVy() { return 0.0; }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getVy() {return 0.0;}
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getAx() { return state_(IDX::ACCX); }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getAx() {return state_(IDX::ACCX);}
 
 float64_t SimModelDelaySteerAccGeared_Disturbance::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
 }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getSteer() { return state_(IDX::STEER); }
+float64_t SimModelDelaySteerAccGeared_Disturbance::getSteer() {return state_(IDX::STEER);}
 
 void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
 {
@@ -80,7 +79,7 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
   // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
   auto && steer_delayed =
     disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput(
-      raw_steer_command);
+    raw_steer_command);
 
   // Apply the acceleration delay when only the vehicle is moving, as when stopping its const and we
   // do not want to send un-applied acceleration to the vehicle.
@@ -155,7 +154,7 @@ void SimModelDelaySteerAccGeared_Disturbance::initializeInputQueue(const float64
 Eigen::VectorXd SimModelDelaySteerAccGeared_Disturbance::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {
-  auto sat = [](float64_t val, float64_t u, float64_t l) { return std::max(std::min(val, u), l); };
+  auto sat = [](float64_t val, float64_t u, float64_t l) {return std::max(std::min(val, u), l);};
 
   const float64_t vel = sat(state(IDX::VX), vx_lim_, -vx_lim_);
   const float64_t acc = sat(state(IDX::ACCX), vx_rate_lim_, -vx_rate_lim_);
@@ -189,7 +188,8 @@ void SimModelDelaySteerAccGeared_Disturbance::updateStateWithGear(
     gear == GearCommand::DRIVE_12 || gear == GearCommand::DRIVE_13 ||
     gear == GearCommand::DRIVE_14 || gear == GearCommand::DRIVE_15 ||
     gear == GearCommand::DRIVE_16 || gear == GearCommand::DRIVE_17 ||
-    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2) {
+    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2)
+  {
     if (state(IDX::VX) < 0.0) {
       state(IDX::VX) = 0.0;
       state(IDX::X) = prev_state(IDX::X);

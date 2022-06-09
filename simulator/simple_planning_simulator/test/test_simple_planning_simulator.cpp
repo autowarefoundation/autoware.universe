@@ -36,20 +36,21 @@ std::string toStrInfo(const Odometry & o)
   const auto & p = o.pose.pose;
   const auto & t = o.twist.twist;
   std::stringstream ss;
-  ss << "state x: " << p.position.x << ", y: " << p.position.y
-     << ", yaw: " << tf2::getYaw(p.orientation) << ", vx = " << t.linear.x << ", vy: " << t.linear.y
-     << ", wz: " << t.angular.z;
+  ss << "state x: " << p.position.x << ", y: " << p.position.y <<
+    ", yaw: " << tf2::getYaw(p.orientation) << ", vx = " << t.linear.x << ", vy: " << t.linear.y <<
+    ", wz: " << t.angular.z;
   return ss.str();
 }
 
 class PubSubNode : public rclcpp::Node
 {
 public:
-  PubSubNode() : Node{"test_simple_planning_simulator_pubsub"}
+  PubSubNode()
+  : Node{"test_simple_planning_simulator_pubsub"}
   {
     current_odom_sub_ = create_subscription<Odometry>(
       "output/odometry", rclcpp::QoS{1},
-      [this](const Odometry::SharedPtr msg) { current_odom_ = msg; });
+      [this](const Odometry::SharedPtr msg) {current_odom_ = msg;});
     pub_ackermann_command_ =
       create_publisher<AckermannControlCommand>("input/ackermann_control_command", rclcpp::QoS{1});
     pub_initialpose_ = create_publisher<PoseWithCovarianceStamped>("/initialpose", rclcpp::QoS{1});
@@ -220,10 +221,10 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   const float32_t target_acc = 5.0f;
   const float32_t target_steer = 0.2f;
 
-  auto _resetInitialpose = [&]() { resetInitialpose(sim_node, pub_sub_node); };
-  auto _sendFwdGear = [&]() { sendGear(GearCommand::DRIVE, sim_node, pub_sub_node); };
-  auto _sendBwdGear = [&]() { sendGear(GearCommand::REVERSE, sim_node, pub_sub_node); };
-  auto _sendCommand = [&](const auto & _cmd) { sendCommand(_cmd, sim_node, pub_sub_node); };
+  auto _resetInitialpose = [&]() {resetInitialpose(sim_node, pub_sub_node);};
+  auto _sendFwdGear = [&]() {sendGear(GearCommand::DRIVE, sim_node, pub_sub_node);};
+  auto _sendBwdGear = [&]() {sendGear(GearCommand::REVERSE, sim_node, pub_sub_node);};
+  auto _sendCommand = [&](const auto & _cmd) {sendCommand(_cmd, sim_node, pub_sub_node);};
 
   // check pub-sub connections
   {

@@ -231,9 +231,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared_Disturbance>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, acc_time_delay,
       acc_time_constant, steer_time_delay, steer_time_constant, disturbance_collection);
-  }
-
-  else {
+  } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
 }
@@ -379,23 +377,27 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
     acc = 0.0;
   } else if (
     current_gear_cmd_ptr_->command == GearCommand::REVERSE ||
-    current_gear_cmd_ptr_->command == GearCommand::REVERSE_2) {
+    current_gear_cmd_ptr_->command == GearCommand::REVERSE_2)
+  {
     acc = -accel;
   }
 
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL)
+  {
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST)
+  {
     input << acc, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
+  {
     input << acc, steer;
   }
   vehicle_model_ptr_->setInput(input);
@@ -408,7 +410,8 @@ void SimplePlanningSimulator::on_gear_cmd(const GearCommand::ConstSharedPtr msg)
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
+  {
     vehicle_model_ptr_->setGear(current_gear_cmd_ptr_->command);
   }
 }
@@ -478,16 +481,19 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     state << x, y, yaw;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED) {
+    vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED)
+  {
     state << x, y, yaw, vx;
   } else if (  // NOLINT
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL)
+  {
     state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
+  {
     state << x, y, yaw, vx, steer, accx;
   }
   vehicle_model_ptr_->setState(state);
