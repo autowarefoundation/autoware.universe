@@ -2,6 +2,7 @@
 #include "sign_detector/timer.hpp"
 
 #include <eigen3/Eigen/Geometry>
+#include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -17,12 +18,13 @@
 class Overlay : public rclcpp::Node
 {
 public:
+  using Pose = geometry_msgs::msg::Pose;
   using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
 
   Overlay() : Node("overlay"), pose_buffer_{20}
   {
     using std::placeholders::_1;
-    using namespace std::chrono_literals;
+    using namespace std::literals::chrono_literals;
 
     const rclcpp::QoS qos = rclcpp::QoS(10);
     sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -35,11 +37,14 @@ public:
     sub_cloud_pose_ = create_subscription<CloudWithPose>(
       "/ll2_cloud", 10, std::bind(&Overlay::cloudPoseCallback, this, _1));
 
+    pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
+
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
 
 private:
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
   rclcpp::Subscription<CloudWithPose>::SharedPtr sub_cloud_pose_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr sub_image_;
@@ -49,12 +54,15 @@ private:
 
   std::optional<sensor_msgs::msg::CameraInfo> info_{std::nullopt};
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
-  boost::circular_buffer<geometry_msgs::msg::PoseStamped> pose_buffer_;
   std::optional<CloudWithPose> latest_cloud_with_pose_{std::nullopt};
+  boost::circular_buffer<geometry_msgs::msg::PoseStamped> pose_buffer_;
 
   void infoCallback(const sensor_msgs::msg::CameraInfo & msg);
   void imageCallback(const sensor_msgs::msg::Image & msg);
   void poseCallback(const geometry_msgs::msg::PoseStamped & msg);
   void cloudPoseCallback(const CloudWithPose & msg);
+
   void listenExtrinsicTf(const std::string & frame_id);
+
+  void overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
 };

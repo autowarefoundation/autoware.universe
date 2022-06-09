@@ -22,9 +22,6 @@ void Overlay::infoCallback(const sensor_msgs::msg::CameraInfo & msg)
 void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
 {
   cv::Mat image = util::decompress2CvMat(msg);
-  cv::imshow("hoge", image);
-  cv::waitKey(1);
-
   const rclcpp::Time stamp = msg.header.stamp;
 
   // Search synchronized pose
@@ -40,6 +37,42 @@ void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
   }
   if (min_dt > 0.1) return;
   RCLCPP_INFO_STREAM(get_logger(), "dt: " << min_dt);
+
+  overlay(image, synched_pose.pose, stamp);
+}
+
+void Overlay::overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
+{
+  if (!latest_cloud_with_pose_.has_value()) return;
+  using LineSegment = pcl::PointCloud<pcl::PointNormal>;
+
+  LineSegment ll2_cloud;
+  pcl::fromROSMsg(latest_cloud_with_pose_->cloud, ll2_cloud);
+  Eigen::Affine3f query_tf = util::pose2Affine(pose);
+  Eigen::Affine3f ref_tf = util::pose2Affine(latest_cloud_with_pose_->pose);
+  Eigen::Affine3f transform = ref_tf.inverse() * query_tf;
+
+  cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
+
+  Eigen::Matrix3f K =
+    Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
+  Eigen::Affine3f T = camera_extrinsic_.value();
+  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+    return cv::Point2i(uv1.x(), uv1.y());
+  };
+
+  for (const pcl::PointNormal & pn : ll2_cloud) {
+    auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
+    if (!p1.has_value() || !p2.has_value()) continue;
+    cv::line(overlayed_image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
+  }
+
+  cv::Mat show_image;
+  cv::addWeighted(image, 0.8, overlayed_image, 0.2, 1, show_image);
+  util::publishImage(*pub_image_, show_image, stamp);
 }
 
 void Overlay::listenExtrinsicTf(const std::string & frame_id)
