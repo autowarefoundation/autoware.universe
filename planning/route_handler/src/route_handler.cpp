@@ -322,10 +322,19 @@ void RouteHandler::setLaneletsFromRouteMsg()
   for (const auto & route_section : route_msg_.segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      route_lanelets_.push_back(llt);
-      if (id == route_section.preferred_primitive_id) {
-        preferred_lanelets_.push_back(llt);
+      try {
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        route_lanelets_.push_back(llt);
+        if (id == route_section.preferred_primitive_id) {
+          preferred_lanelets_.push_back(llt);
+        }
+      } catch (const std::exception & e) {
+        RCLCPP_WARN(
+          logger_,
+          "%s. Maybe the loaded route was created on a different Map from the current one. "
+          "Try to load the other Route again.",
+          e.what());
+        return;
       }
     }
   }
