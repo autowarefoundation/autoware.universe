@@ -1,0 +1,1 @@
+bool load_map_data
