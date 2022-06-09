@@ -65,17 +65,7 @@ private:
   std::shared_ptr<RunOutDebug> debug_ptr_;
 
   // Function
-  pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithRectangle(
-    const pcl::PointCloud<pcl::PointXYZ> & input_points,
-    const geometry_msgs::msg::Pose & current_pose) const;
-
-  void visualizeDetectionArea(const PathWithLaneId & smoothed_path) const;
-
   Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
-
-  pcl::PointCloud<pcl::PointXYZ> pointsWithinPolygon(
-    const std::vector<geometry_msgs::msg::Point> & polygon,
-    const pcl::PointCloud<pcl::PointXYZ> & candidate_points) const;
 
   boost::optional<DynamicObstacle> detectCollision(
     const std::vector<DynamicObstacle> & dynamic_obstacles,

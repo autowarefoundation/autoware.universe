@@ -65,14 +65,6 @@ struct VehicleParam
   float width;
 };
 
-struct DetectionAreaSize
-{
-  float dist_ahead;
-  float dist_behind;
-  float dist_right;
-  float dist_left;
-};
-
 struct DetectionArea
 {
   float margin_ahead;
@@ -213,9 +205,6 @@ PathPointsWithLaneId decimatePathPoints(
 PathWithLaneId trimPathFromSelfPose(
   const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
   const double trim_distance);
-
-std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
-  const geometry_msgs::msg::Pose & current_pose, const DetectionAreaSize detection_area_size);
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
 // note that this polygon is not closed
