@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+    frequency_hz: 10.0
+    engage_acceptable_limits:
+      dist_threshold: 2.0
+      yaw_threshold: 0.785
+      speed_threshold: 10.0
+    stable_check:
+      duration: 3.0
+      dist_threshold: 0.5
+      speed_threshold: 3.0
+      yaw_threshold: 0.314
