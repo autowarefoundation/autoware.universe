@@ -138,8 +138,14 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
 boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
   const TrajectoryPoints & input) const
 {
-  const size_t min_lookup_index = std::max(static_cast<size_t>(base_param_.min_lookup_dist / base_param_.sample_ds), static_cast<size_t>(1));
-  const size_t max_lookup_index = std::max(static_cast<size_t>(base_param_.max_lookup_dist / base_param_.sample_ds), static_cast<size_t>(1));
+  const size_t min_lookup_index =
+    std::max(
+    static_cast<size_t>(base_param_.min_lookup_dist / base_param_.sample_ds),
+    static_cast<size_t>(1));
+  const size_t max_lookup_index =
+    std::max(
+    static_cast<size_t>(base_param_.max_lookup_dist / base_param_.sample_ds),
+    static_cast<size_t>(1));
 
   if (input.empty()) {
     return boost::none;
@@ -188,7 +194,7 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
     const size_t lookup_index = std::min(
       (std::max(
         static_cast<size_t>(output->at(output->size() - 1 - i).longitudinal_velocity_mps /
-                            base_param_.sample_ds), min_lookup_index)), max_lookup_index);
+        base_param_.sample_ds), min_lookup_index)), max_lookup_index);
     double ds = static_cast<double>(lookup_index) * base_param_.sample_ds;
     double mean_vel = 0.0;
 
@@ -222,8 +228,6 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
     }
 
   }
-
-  // Interpolate with constant interval distance for lateral acceleration calculation.
 
   return boost::optional<TrajectoryPoints>(output);
 }
