@@ -116,8 +116,6 @@ private:
     const TargetObstacle & object, const rclcpp::Time & obj_base_time,
     const PredictedPath & predicted_path);
 
-  bool checkIsFrontObject(const TargetObstacle & object, const Trajectory & traj);
-
   boost::optional<PredictedPath> resampledPredictedPath(
     const TargetObstacle & object, const rclcpp::Time & obj_base_time,
     const rclcpp::Time & current_time, const std::vector<double> & resolutions,

@@ -484,11 +484,6 @@ double OptimizationBasedPlanner::getClosestStopDistance(
       continue;
     }
 
-    // Step2 Check object position
-    if (!checkIsFrontObject(obj, ego_traj_data.traj)) {
-      continue;
-    }
-
     // Get the predicted path, which has the most high confidence
     const auto predicted_path =
       resampledPredictedPath(obj, obj_base_time, current_time, resolutions, max_time_horizon_);
@@ -840,30 +835,21 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     const auto obj_base_time = planner_data.target_obstacles.at(o_idx).time_stamp;
 
     const auto & obj = planner_data.target_obstacles.at(o_idx);
-    // Step1 Check object position
-    if (!checkIsFrontObject(obj, ego_traj_data.traj)) {
-      continue;
-    }
-
-    // Step2 Get S boundary from the obstacle
+    // Step1 Get S boundary from the obstacle
     const auto obj_s_boundaries =
       getSBoundaries(planner_data.current_time, ego_traj_data, obj, obj_base_time, time_vec);
     if (!obj_s_boundaries) {
       continue;
     }
 
-    // Step3 update s boundaries
+    // Step2 update s boundaries
     for (size_t i = 0; i < obj_s_boundaries->size(); ++i) {
       if (obj_s_boundaries->at(i).max_s < s_boundaries.at(i).max_s) {
         s_boundaries.at(i) = obj_s_boundaries->at(i);
       }
     }
 
-    // Step4 add object to marker
-    // const auto marker = getObjectMarkerArray(obj.pose, o_idx, "objects_to_follow", 0.7, 0.7,
-    // 0.0); tier4_autoware_utils::appendMarkerArray(marker, &msg);
-
-    // Step5 search nearest obstacle to follow for rviz marker
+    // Step3 search nearest obstacle to follow for rviz marker
     const double object_offset = obj.shape.dimensions.x / 2.0;
 
     const auto predicted_path =
@@ -1128,25 +1114,6 @@ boost::optional<size_t> OptimizationBasedPlanner::getCollisionIdx(
   }
 
   return boost::none;
-}
-
-bool OptimizationBasedPlanner::checkIsFrontObject(
-  const TargetObstacle & object, const Trajectory & traj)
-{
-  const auto point = object.pose.position;
-
-  // Get nearest segment index
-  size_t nearest_idx = tier4_autoware_utils::findNearestSegmentIndex(traj.points, point);
-
-  // Calculate longitudinal length
-  const double l =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(traj.points, nearest_idx, point);
-
-  if (nearest_idx == 0 && l < 0) {
-    return false;
-  }
-
-  return true;
 }
 
 boost::optional<PredictedPath> OptimizationBasedPlanner::resampledPredictedPath(
