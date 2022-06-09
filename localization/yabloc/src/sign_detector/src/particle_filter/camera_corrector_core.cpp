@@ -42,6 +42,17 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   };
 
   ParticleArray weighted_particles = opt_array.value();
+  // auto sample = opt_array->particles.front();
+  // ParticleArray weighted_particles;
+  // for (int i = -15; i < 15; i++) {
+  //   for (int j = -15; j < 15; j++) {
+  //     modularized_particle_filter_msgs::msg::Particle p = sample;
+  //     p.pose.position.x += i;
+  //     p.pose.position.y += j;
+  //     weighted_particles.particles.push_back(p);
+  //   }
+  // }
+
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = base_transform.inverse() * util::pose2Affine(particle.pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);

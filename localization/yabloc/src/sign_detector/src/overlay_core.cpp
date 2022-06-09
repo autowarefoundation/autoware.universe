@@ -36,17 +36,43 @@ void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
     }
   }
   if (min_dt > 0.1) return;
-  RCLCPP_INFO_STREAM(get_logger(), "dt: " << min_dt);
+  auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
+  RCLCPP_INFO_STREAM(
+    get_logger(), "dt: " << min_dt << " image:" << stamp.nanoseconds()
+                         << " latest_pose:" << latest_pose_stamp.nanoseconds());
 
   overlay(image, synched_pose.pose, stamp);
+}
+
+void Overlay::cloudCallback(const PointCloud2 & msg)
+{
+  using LineSegment = pcl::PointCloud<pcl::PointNormal>;
+  const rclcpp::Time stamp = msg.header.stamp;
+
+  // Search synchronized pose
+  float min_dt = std::numeric_limits<float>::max();
+  geometry_msgs::msg::PoseStamped synched_pose;
+  for (auto pose : pose_buffer_) {
+    auto dt = (rclcpp::Time(pose.header.stamp) - stamp);
+    auto abs_dt = std::abs(dt.seconds());
+    if (abs_dt < min_dt) {
+      min_dt = abs_dt;
+      synched_pose = pose;
+    }
+  }
+  if (min_dt > 0.1) return;
+  auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
+
+  LineSegments lsd_cloud;
+  pcl::fromROSMsg(msg, lsd_cloud);
+  makeVisMarker(lsd_cloud, synched_pose.pose, stamp);
 }
 
 void Overlay::overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
 {
   if (!latest_cloud_with_pose_.has_value()) return;
-  using LineSegment = pcl::PointCloud<pcl::PointNormal>;
 
-  LineSegment ll2_cloud;
+  LineSegments ll2_cloud;
   pcl::fromROSMsg(latest_cloud_with_pose_->cloud, ll2_cloud);
   Eigen::Affine3f query_tf = util::pose2Affine(pose);
   Eigen::Affine3f ref_tf = util::pose2Affine(latest_cloud_with_pose_->pose);
@@ -71,7 +97,7 @@ void Overlay::overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Ti
   }
 
   cv::Mat show_image;
-  cv::addWeighted(image, 0.8, overlayed_image, 0.2, 1, show_image);
+  cv::addWeighted(image, 0.8, overlayed_image, 0.5, 1, show_image);
   util::publishImage(*pub_image_, show_image, stamp);
 }
 
@@ -101,4 +127,31 @@ void Overlay::listenExtrinsicTf(const std::string & frame_id)
 void Overlay::poseCallback(const geometry_msgs::msg::PoseStamped & msg)
 {
   pose_buffer_.push_back(msg);
+}
+
+void Overlay::makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp)
+{
+  Marker marker;
+  marker.type = Marker::LINE_LIST;
+  marker.header.frame_id = "map";
+  marker.header.stamp = stamp;
+  marker.pose = pose;
+  marker.scale.x = 0.1;
+  marker.color.r = 1.0f;
+  marker.color.g = 1.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 0.7f;
+
+  for (const auto pn : ls) {
+    geometry_msgs::msg::Point p1, p2;
+    p1.x = pn.x;
+    p1.y = pn.y;
+    p1.z = pn.z;
+    p2.x = pn.normal_x;
+    p2.y = pn.normal_y;
+    p2.z = pn.normal_z;
+    marker.points.push_back(p1);
+    marker.points.push_back(p2);
+  }
+  pub_vis_->publish(marker);
 }

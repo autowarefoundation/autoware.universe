@@ -8,10 +8,14 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sign_detector_msgs/msg/cloud_with_pose.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/circular_buffer.hpp>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -19,7 +23,10 @@ class Overlay : public rclcpp::Node
 {
 public:
   using Pose = geometry_msgs::msg::Pose;
+  using Marker = visualization_msgs::msg::Marker;
   using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
+  using PointCloud2 = sensor_msgs::msg::PointCloud2;
+  using LineSegments = pcl::PointCloud<pcl::PointNormal>;
 
   Overlay() : Node("overlay"), pose_buffer_{20}
   {
@@ -36,6 +43,10 @@ public:
       "/particle_pose", 10, std::bind(&Overlay::poseCallback, this, _1));
     sub_cloud_pose_ = create_subscription<CloudWithPose>(
       "/ll2_cloud", 10, std::bind(&Overlay::cloudPoseCallback, this, _1));
+    sub_cloud_ = create_subscription<PointCloud2>(
+      "/lsd_cloud", 10, std::bind(&Overlay::cloudCallback, this, _1));
+
+    pub_vis_ = create_publisher<Marker>("/marker", 10);
 
     pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
 
@@ -49,6 +60,9 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr sub_image_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_info_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_cloud_;
+
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_vis_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
@@ -61,8 +75,10 @@ private:
   void imageCallback(const sensor_msgs::msg::Image & msg);
   void poseCallback(const geometry_msgs::msg::PoseStamped & msg);
   void cloudPoseCallback(const CloudWithPose & msg);
+  void cloudCallback(const PointCloud2 & msg);
 
   void listenExtrinsicTf(const std::string & frame_id);
 
   void overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
+  void makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };
