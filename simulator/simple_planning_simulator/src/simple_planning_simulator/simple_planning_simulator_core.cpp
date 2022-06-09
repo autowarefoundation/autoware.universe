@@ -111,8 +111,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
 
   srv_mode_req_ = create_service<tier4_vehicle_msgs::srv::ControlModeRequest>(
-    "operation_mode_request",
-    std::bind(&SimplePlanningSimulator::on_operation_mode_request, this, _1, _2));
+    "control_mode_request",
+    std::bind(&SimplePlanningSimulator::on_control_mode_request, this, _1, _2));
 
   // TODO(Horibe): will be replaced by mode_request. May still be needed for scenario testing
   sub_engage_ = create_subscription<Engage>(
@@ -381,7 +381,7 @@ void SimplePlanningSimulator::on_engage(const Engage::ConstSharedPtr msg)
   simulate_motion_ = msg->engage;
 }
 
-void SimplePlanningSimulator::on_operation_mode_request(
+void SimplePlanningSimulator::on_control_mode_request(
   const ControlModeRequest::Request::SharedPtr request,
   const ControlModeRequest::Response::SharedPtr response)
 {
