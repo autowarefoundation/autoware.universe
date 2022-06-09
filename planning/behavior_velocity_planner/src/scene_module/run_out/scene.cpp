@@ -55,7 +55,7 @@ bool RunOutModule::modifyPathVelocity(
   const auto current_acc = planner_data_->current_accel.get();
   const auto & current_pose = planner_data_->current_pose.pose;
 
-  // smooth velocity of the path to calcute time to collision accurately
+  // smooth velocity of the path to calculate time to collision accurately
   PathWithLaneId smoothed_path;
   if (!smoothPath(*path, smoothed_path, planner_data_)) {
     return true;
