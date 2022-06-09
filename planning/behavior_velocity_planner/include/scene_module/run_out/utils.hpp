@@ -73,6 +73,12 @@ struct DetectionAreaSize
   float dist_left;
 };
 
+struct DetectionArea
+{
+  float margin_ahead;
+  float margin_behind;
+};
+
 struct ApproachingParam
 {
   bool enable;
@@ -95,7 +101,7 @@ struct PlannerParam
   CommonParam common;
   RunOutParam run_out;
   VehicleParam vehicle_param;
-  DetectionAreaSize detection_area;
+  DetectionArea detection_area;
   ApproachingParam approaching;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
