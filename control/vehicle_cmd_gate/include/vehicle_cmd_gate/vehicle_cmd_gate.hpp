@@ -36,8 +36,8 @@
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
+#include <tier4_system_msgs/msg/operation_mode.hpp>
 #include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
-#include <tier4_vehicle_msgs/msg/operation_mode.hpp>
 
 #include <memory>
 
@@ -54,8 +54,8 @@ using tier4_control_msgs::msg::GateMode;
 using tier4_external_api_msgs::msg::Emergency;
 using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
+using tier4_system_msgs::msg::OperationMode;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
-using tier4_vehicle_msgs::msg::OperationMode;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
 using nav_msgs::msg::Odometry;

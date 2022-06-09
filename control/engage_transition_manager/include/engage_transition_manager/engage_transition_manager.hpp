@@ -15,17 +15,15 @@
 #ifndef ENGAGE_TRANSITION_MANAGER__ENGAGE_TRANSITION_MANAGER_HPP_
 #define ENGAGE_TRANSITION_MANAGER__ENGAGE_TRANSITION_MANAGER_HPP_
 
-#include <engage_transition_manager/state.hpp>
 #include <engage_transition_manager/data.hpp>
-
-
+#include <engage_transition_manager/state.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <nav_msgs/msg/odometry.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <tier4_vehicle_msgs/srv/operation_mode_request.hpp>
-#include <tier4_vehicle_msgs/msg/operation_mode.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <tier4_system_msgs/msg/operation_mode.hpp>
+#include <tier4_system_msgs/srv/operation_mode_request.hpp>
 #include <tier4_vehicle_msgs/msg/is_autonomous_available.hpp>
 
 namespace engage_transition_manager
@@ -34,8 +32,8 @@ namespace engage_transition_manager
 using nav_msgs::msg::Odometry;
 
 using autoware_auto_planning_msgs::msg::Trajectory;
-using tier4_vehicle_msgs::srv::OperationModeRequest;
-using tier4_vehicle_msgs::msg::OperationMode;
+using tier4_system_msgs::msg::OperationMode;
+using tier4_system_msgs::srv::OperationModeRequest;
 using tier4_vehicle_msgs::msg::IsAutonomousAvailable;
 
 class EngageTransitionManager : public rclcpp::Node

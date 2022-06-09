@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "engage_transition_manager/engage_transition_manager.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -25,7 +25,6 @@ namespace engage_transition_manager
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::findNearestIndex;
-
 
 EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & options)
 : Node("engage_transition_manager", options)
@@ -44,26 +43,34 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
     "trajectory", 1, [this](const Trajectory::SharedPtr msg) { data_.trajectory = *msg; });
 
   srv_mode_change_ = create_service<OperationModeRequest>(
-    "operation_mode_request", std::bind(&EngageTransitionManager::onOperationModeRequest, this, _1, _2));
+    "operation_mode_request",
+    std::bind(&EngageTransitionManager::onOperationModeRequest, this, _1, _2));
 
-  engage_acceptable_param_.dist_threshold = declare_parameter<double>("engage_acceptable_limits.dist_threshold");
-  engage_acceptable_param_.speed_threshold = declare_parameter<double>("engage_acceptable_limits.speed_threshold");
-  engage_acceptable_param_.yaw_threshold = declare_parameter<double>("engage_acceptable_limits.yaw_threshold");
+  engage_acceptable_param_.dist_threshold =
+    declare_parameter<double>("engage_acceptable_limits.dist_threshold");
+  engage_acceptable_param_.speed_threshold =
+    declare_parameter<double>("engage_acceptable_limits.speed_threshold");
+  engage_acceptable_param_.yaw_threshold =
+    declare_parameter<double>("engage_acceptable_limits.yaw_threshold");
 
-  std::cerr << "param_.dist_threshold" << engage_acceptable_param_.dist_threshold << ", yaw_threshold" << engage_acceptable_param_.yaw_threshold << ", speed_threshold" << engage_acceptable_param_.speed_threshold << std::endl;
+  std::cerr << "param_.dist_threshold" << engage_acceptable_param_.dist_threshold
+            << ", yaw_threshold" << engage_acceptable_param_.yaw_threshold << ", speed_threshold"
+            << engage_acceptable_param_.speed_threshold << std::endl;
 
   stable_check_param_.duration = declare_parameter<double>("stable_check.duration");
   stable_check_param_.dist_threshold = declare_parameter<double>("stable_check.dist_threshold");
   stable_check_param_.speed_threshold = declare_parameter<double>("stable_check.speed_threshold");
   stable_check_param_.yaw_threshold = declare_parameter<double>("stable_check.yaw_threshold");
 
-  std::cerr << "stable_check_param_.duration" << stable_check_param_.duration << "dist_threshold" << stable_check_param_.dist_threshold << ", yaw_threshold" << stable_check_param_.yaw_threshold << ", speed_threshold" << stable_check_param_.speed_threshold << std::endl;
-
+  std::cerr << "stable_check_param_.duration" << stable_check_param_.duration << "dist_threshold"
+            << stable_check_param_.dist_threshold << ", yaw_threshold"
+            << stable_check_param_.yaw_threshold << ", speed_threshold"
+            << stable_check_param_.speed_threshold << std::endl;
 
   {
     const auto hz = declare_parameter<double>("frequency_hz");
-    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<double>(1.0 / hz));
+    const auto period_ns =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / hz));
     timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&EngageTransitionManager::onTimer, this));
   }
@@ -76,7 +83,8 @@ void EngageTransitionManager::onOperationModeRequest(
   const auto req_state = toEnum(request->mode);
 
   if (req_state == State::TRANSITION_TO_AUTO) {
-    RCLCPP_WARN(get_logger(), "mode change to TRANSITION_TO_AUTO is not supported. Request ignored.");
+    RCLCPP_WARN(
+      get_logger(), "mode change to TRANSITION_TO_AUTO is not supported. Request ignored.");
     response->success = false;
     return;
   }
@@ -118,10 +126,8 @@ void EngageTransitionManager::publishData()
   pub_auto_available_->publish(msg);
 }
 
-
 bool EngageTransitionManager::checkEngageAvailable()
 {
-
   constexpr auto dist_max = 5.0;
   constexpr auto yaw_max = M_PI_4;
 
@@ -141,7 +147,8 @@ bool EngageTransitionManager::checkEngageAvailable()
   // check for lateral deviation
   const auto lateral_deviation = calcDistance2d(closest_point.pose, data_.kinematics.pose.pose);
   if (lateral_deviation > engage_acceptable_param_.dist_threshold) {
-    RCLCPP_INFO(get_logger(), "Engage unavailable: lateral deviation is too large: %f", lateral_deviation);
+    RCLCPP_INFO(
+      get_logger(), "Engage unavailable: lateral deviation is too large: %f", lateral_deviation);
     return false;
   }
 
@@ -156,7 +163,8 @@ bool EngageTransitionManager::checkEngageAvailable()
   const auto speed_deviation =
     std::abs(closest_point.longitudinal_velocity_mps - data_.kinematics.twist.twist.linear.x);
   if (speed_deviation > engage_acceptable_param_.speed_threshold) {
-    RCLCPP_INFO(get_logger(), "Engage unavailable: speed deviation is too large: %f", speed_deviation);
+    RCLCPP_INFO(
+      get_logger(), "Engage unavailable: speed deviation is too large: %f", speed_deviation);
     return false;
   }
 

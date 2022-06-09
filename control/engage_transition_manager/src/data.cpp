@@ -15,7 +15,6 @@
 #include "engage_transition_manager/state.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-
 #include <algorithm>
 #include <cmath>
 

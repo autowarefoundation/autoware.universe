@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "engage_transition_manager/state.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -85,7 +85,6 @@ State TransitionState::update()
     return data_.requested_state;
   }
 
-
   // TODO
   const bool is_system_stable = checkSystemStable();
 
@@ -154,7 +153,6 @@ bool TransitionState::checkSystemStable()
 
   return is_system_stable;
 }
-
 
 State AutonomousState::update()
 {

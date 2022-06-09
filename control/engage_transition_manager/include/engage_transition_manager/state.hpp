@@ -16,13 +16,13 @@
 #define ENGAGE_TRANSITION_MANAGER__STATE_HPP_
 
 #include <engage_transition_manager/data.hpp>
-#include <tier4_vehicle_msgs/msg/operation_mode.hpp>
-#include <tier4_vehicle_msgs/srv/operation_mode_request.hpp>
-#include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_system_msgs/msg/operation_mode.hpp>
+#include <tier4_system_msgs/srv/operation_mode_request.hpp>
+#include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
 namespace engage_transition_manager
 {
@@ -87,7 +87,6 @@ public:
   State update() override;
 
 private:
-
   std::unique_ptr<rclcpp::Time> stable_start_time_;
   bool checkSystemStable();
 };
