@@ -282,7 +282,7 @@ lanelet::ConstLineString3d getCenterlineWithOffset(
   const int num_segments = std::max(static_cast<int>(ceil(longer_distance / resolution)), 1);
 
   // Resample points
-  const auto left_points = lanelet::utils::resamplePoints(lanelet_obj.leftBound(), num_segments);
+  const auto left_points = resamplePoints(lanelet_obj.leftBound(), num_segments);
   const auto right_points = resamplePoints(lanelet_obj.rightBound(), num_segments);
 
   // Create centerline
@@ -313,7 +313,7 @@ lanelet::ConstLineString3d getRightBoundWithOffset(
   const int num_segments = std::max(static_cast<int>(ceil(longer_distance / resolution)), 1);
 
   // Resample points
-  const auto left_points = lanelet::utils::resamplePoints(lanelet_obj.leftBound(), num_segments);
+  const auto left_points = resamplePoints(lanelet_obj.leftBound(), num_segments);
   const auto right_points = resamplePoints(lanelet_obj.rightBound(), num_segments);
 
   // Create centerline
@@ -342,7 +342,7 @@ lanelet::ConstLineString3d getLeftBoundWithOffset(
   const int num_segments = std::max(static_cast<int>(ceil(longer_distance / resolution)), 1);
 
   // Resample points
-  const auto left_points = lanelet::utils::resamplePoints(lanelet_obj.leftBound(), num_segments);
+  const auto left_points = resamplePoints(lanelet_obj.leftBound(), num_segments);
   const auto right_points = resamplePoints(lanelet_obj.rightBound(), num_segments);
 
   // Create centerline
