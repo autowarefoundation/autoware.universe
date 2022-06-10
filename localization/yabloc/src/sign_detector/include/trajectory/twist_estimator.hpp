@@ -2,9 +2,11 @@
 #include <eigen3/Eigen/StdVector>
 #include <rclcpp/rclcpp.hpp>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
 namespace trajectory
@@ -16,11 +18,15 @@ public:
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   using Imu = sensor_msgs::msg::Imu;
   using NavPVT = ublox_msgs::msg::NavPVT;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using String = std_msgs::msg::String;
 
   TwistEstimator();
 
 private:
   rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_;
+  rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
+  rclcpp::Publisher<String>::SharedPtr pub_string_;
 
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
@@ -32,6 +38,7 @@ private:
   Eigen::Matrix4f cov_;
 
   Eigen::Matrix4f cov_predict_;
+  bool last_rtk_fixed_{false};
 
   void callbackImu(const Imu & msg);
   void callbackTwistStamped(const TwistStamped & msg);
@@ -42,7 +49,9 @@ private:
   void measureTwistStamped(const float vel);
 
   void publishTwist(const Imu & msg);
+  void publishDoppler(const NavPVT & msg);
+  void publishString();
 
-  Eigen::Vector2f extractEnuVel(const NavPVT & msg) const;
+  Eigen::Vector3f extractEnuVel(const NavPVT & msg) const;
 };
 }  // namespace trajectory

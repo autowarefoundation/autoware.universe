@@ -2,6 +2,7 @@
 
 #include <GeographicLib/Geocentric.hpp>
 #include <eigen3/Eigen/Geometry>
+#include <sophus/geometry.hpp>
 
 namespace trajectory
 {
@@ -16,7 +17,10 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr")
   sub_imu_ = create_subscription<Imu>("/sensing/imu/tamagawa/imu_raw", 10, cb_imu);
   sub_twist_stamped_ = create_subscription<TwistStamped>("/vehicle/status/twist", 10, cb_twist);
   sub_navpvt_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_pvt);
+
   pub_twist_ = create_publisher<TwistStamped>("/kalman/twist", 10);
+  pub_pose_ = create_publisher<PoseStamped>("/kalman/doppler", 10);
+  pub_string_ = create_publisher<String>("/kalman/status", 10);
 
   state_ = Eigen::Vector4f(0, 0, 0, 1);
   cov_ = Eigen::Vector4f(9, 100, 0.0001, 0.0001).asDiagonal();
@@ -35,7 +39,7 @@ void TwistEstimator::callbackImu(const Imu & msg)
 
   // Update state
   float w_z = msg.angular_velocity.z;
-  state_[0] += w_z * dt;
+  state_[0] += (w_z + state_[2]) * dt;
 
   // Update covariance
   Eigen::Matrix4f F = Eigen::Matrix4f::Identity();
@@ -43,6 +47,7 @@ void TwistEstimator::callbackImu(const Imu & msg)
   cov_ = F * cov_ * F.transpose() + cov_predict_ * dt * dt;
 
   publishTwist(msg);
+  publishString();
 }
 
 void TwistEstimator::publishTwist(const Imu & imu)
@@ -75,12 +80,13 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
 
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 {
+  last_rtk_fixed_ = msg.flags == 131;
   if (msg.flags != 131) {
     RCLCPP_WARN(get_logger(), "NOT FIX!");
     return;
   }
   // Compute error and jacobian
-  Eigen::Vector2f vel_xy = extractEnuVel(msg);
+  Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[0]).toRotationMatrix();
   Eigen::Vector2f error = R * state_[1] * Eigen::Vector2f::UnitX() - vel_xy;
 
@@ -98,18 +104,57 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   // Correct state and covariance
   state_ += K * error;
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
+
+  publishDoppler(msg);
 }
 
-Eigen::Vector2f TwistEstimator::extractEnuVel(const NavPVT & msg) const
+Eigen::Vector3f TwistEstimator::extractEnuVel(const NavPVT & msg) const
 {
-  Eigen::Vector3d llh;
+  Eigen::Vector3f llh;
   llh(0) = msg.lat * 1e-7;     // [deg / 1e-7]->[deg]
   llh(1) = msg.lon * 1e-7;     // [deg / 1e-7]->[deg]
   llh(2) = msg.height * 1e-3;  // [mm]->[m]
 
-  Eigen::Vector3d enu_vel;
+  Eigen::Vector3f enu_vel;
   enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
-  return enu_vel.topRows(2).cast<float>();
+  return enu_vel;
+}
+
+void TwistEstimator::publishDoppler(const NavPVT & navpvt)
+{
+  PoseStamped msg;
+  msg.header.stamp = last_imu_stamp_.value();
+  msg.header.frame_id = "base_link";
+
+  Eigen::Vector2f vel = extractEnuVel(navpvt).topRows(2);
+  Eigen::Matrix2f R = Eigen::Rotation2D(state_[0]).toRotationMatrix();
+  vel = R.transpose() * vel;
+
+  float theta = std::atan2(vel.y(), vel.x());
+  msg.pose.orientation.x = 0;
+  msg.pose.orientation.y = 0;
+  msg.pose.orientation.z = std::sin(theta / 2.0f);
+  msg.pose.orientation.w = std::cos(theta / 2.0f);
+  pub_pose_->publish(msg);
+}
+
+void TwistEstimator::publishString()
+{
+  std::stringstream ss;
+  ss << "--- Twist Estimator Status ----" << std::endl;
+  ss << "angle: " << state_[0] << std::endl;
+  ss << "vel: " << state_[1] << std::endl;
+  ss << "bias: " << state_[2] << std::endl;
+  ss << "scale: " << state_[3] << std::endl;
+  ss << std::endl;
+  if (last_rtk_fixed_)
+    ss << "RTK: FIX" << std::endl;
+  else
+    ss << "RTK: FLOAT!!" << std::endl;
+
+  String msg;
+  msg.data = ss.str();
+  pub_string_->publish(msg);
 }
 
 }  // namespace trajectory
