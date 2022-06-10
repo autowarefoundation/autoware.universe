@@ -1,0 +1,63 @@
+// Copyright 2021 TierIV
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
+#define ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/bool_stamped.hpp>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <vector>
+
+class AccelerationEstimator : public rclcpp::Node
+{
+public:
+  AccelerationEstimator(const std::string & node_name, const rclcpp::NodeOptions & options);
+
+private:
+  rclcpp::Publisher<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr
+    pub_accel_;  //!< @brief stop flag publisher
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
+    sub_odom_;  //!< @brief measurement odometry subscriber
+  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+    sub_twist_;  //!< @brief measurement odometry subscriber
+
+  geometry_msgs::msg::TwistStamped::SharedPtr prev_twist_ptr_;
+  geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr prev_accel_ptr_;
+  double accel_lowpass_gain_;
+  bool use_odom_;
+  /**
+   * @brief set odometry measurement
+   */
+  void callbackTwistWithCovariance(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
+  void callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+
+};
+#endif  // ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_

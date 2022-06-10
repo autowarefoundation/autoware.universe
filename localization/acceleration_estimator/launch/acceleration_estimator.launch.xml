@@ -1,0 +1,14 @@
+<launch>
+  <arg name="use_odom" default="true"/>
+  <arg name="accel_lowpass_gain" default="0.5"/>
+  <arg name="input_odom_name" default="in_odom"/>
+  <arg name="input_twist_name" default="in_twist"/>
+  <arg name="output_accel_name" default="out_accel"/>
+  <node pkg="acceleration_estimator" exec="acceleration_estimator" name="acceleration_estimator" output="screen">
+    <remap from="input/odom" to="$(var input_odom_name)"/>
+    <remap from="input/twist" to="$(var input_twist_name)"/>
+    <remap from="output/accel" to="$(var output_accel_name)"/>
+    <param name="accel_lowpass_gain" value="$(var accel_lowpass_gain)"/>
+    <param name="use_odom" value="$(var use_odom)"/>
+  </node>
+</launch>
