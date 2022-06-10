@@ -3,6 +3,5 @@
 
   <arg name="input_ground_truth_pose_topic" default="/groud_truth" description="input ground truth topic name"/>
 
-  <node pkg="kitti_evaluator" exec="kitti_evaluator" name="kitti_evaluator" output="screen">
-  </node>
+  <node pkg="kitti_evaluator" exec="kitti_evaluator" name="kitti_evaluator" output="screen"/>
 </launch>
