@@ -216,7 +216,7 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     object_data.object = object;
     avoidance_debug_msg.object_id = getUuidStr(object_data);
     // calc longitudinal distance from ego to closest target object footprint point.
-    object_data.longitudinal = calcDistanceToClosestFootprintPoint(reference_path, object, ego_pos);
+    fillLongitudinalAndLengthByClosestFootprint(reference_path, object, ego_pos, object_data);
     avoidance_debug_msg.longitudinal_distance = object_data.longitudinal;
 
     // object is behind ego or too far.
@@ -465,8 +465,8 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
   const auto & lat_collision_margin = parameters_.lateral_collision_margin;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto & road_shoulder_safety_margin = parameters_.road_shoulder_safety_margin;
-  const auto max_allowable_lateral_distance =
-    lat_collision_safety_buffer + lat_collision_margin + vehicle_width;
+  const auto max_allowable_lateral_distance = lat_collision_safety_buffer + lat_collision_margin +
+                                              vehicle_width - road_shoulder_safety_margin;
 
   const auto avoid_margin =
     lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
@@ -494,20 +494,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       continue;
     }
 
-    const auto max_shift_length =
-      o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
-
-    const auto max_left_shift_limit = [&max_shift_length, this]() noexcept {
-      return std::min(getLeftShiftBound(), max_shift_length);
-    };
-
-    const auto max_right_shift_limit = [&max_shift_length, this]() noexcept {
-      return std::max(getRightShiftBound(), -max_shift_length);
-    };
-
     const auto shift_length = isOnRight(o)
-                                ? std::min(o.overhang_dist + avoid_margin, max_left_shift_limit())
-                                : std::max(o.overhang_dist - avoid_margin, max_right_shift_limit());
+                                ? std::min(o.overhang_dist + avoid_margin, getLeftShiftBound())
+                                : std::max(o.overhang_dist - avoid_margin, getRightShiftBound());
     const auto avoiding_shift = shift_length - current_ego_shift;
     const auto return_shift = shift_length;
 
@@ -554,7 +543,6 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       parameters_.nominal_lateral_jerk, getNominalAvoidanceEgoSpeed(), prepare_distance,
       has_enough_distance);
 
-    // TODO(Horibe): add margin with object length. __/\__ -> __/¯¯\__
     AvoidPoint ap_avoid;
     ap_avoid.length = shift_length;
     ap_avoid.start_length = current_ego_shift;
@@ -573,9 +561,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     AvoidPoint ap_return;
     ap_return.length = 0.0;
     ap_return.start_length = shift_length;
-    ap_return.start_longitudinal = o.longitudinal;
+    ap_return.start_longitudinal = o.longitudinal + o.length;
     ap_return.end_longitudinal =
-      o.longitudinal + std::min(nominal_return_distance, return_remaining_distance);
+      o.longitudinal + o.length + std::min(nominal_return_distance, return_remaining_distance);
     ap_return.id = getOriginalShiftPointUniqueId();
     ap_return.object = o;
     avoid_points.push_back(ap_return);
