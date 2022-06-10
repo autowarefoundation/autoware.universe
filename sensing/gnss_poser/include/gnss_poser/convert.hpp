@@ -59,14 +59,14 @@ double EllipsoidHeight2OrthometricHeight(
 }
 GNSSStat NavSatFix2LocalCartesian(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger)
+  sensor_msgs::msg::NavSatFix nav_sat_fix_origin_, const rclcpp::Logger & logger)
 {
   GNSSStat local_cartesian;
   local_cartesian.coordinate_system = CoordinateSystem::LOCAL_CARTESIAN;
 
   try {
     GeographicLib::LocalCartesian localCartesian_origin(
-      nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, nav_sat_fix_origin.altitude);
+      nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, nav_sat_fix_origin_.altitude);
     localCartesian_origin.Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude,
       local_cartesian.x, local_cartesian.y, local_cartesian.z);
