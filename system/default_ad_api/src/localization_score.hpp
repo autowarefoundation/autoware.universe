@@ -15,14 +15,13 @@
 #ifndef LOCALIZATION_SCORE_HPP_
 #define LOCALIZATION_SCORE_HPP_
 
-#include "default_ad_api/localization/interface/scores.hpp"
-#include "utils/types.hpp"
+#include "autoware_ad_api_msgs/msg/localization_scores.hpp"
 
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace default_ad_api
 {
+using autoware_ad_api_msgs::msg::LocalizationScores;
 
 class LocalizationScoreNode : public rclcpp::Node
 {
@@ -30,8 +29,10 @@ public:
   explicit LocalizationScoreNode(const rclcpp::NodeOptions & options);
 
 private:
-  Publisher<ad_api::interface::scores::T_pub>::SharedPtr pub_;
-  Subscription<ad_api::interface::scores::T_sub>::SharedPtr sub_;
+  void callbackLocalizationScores(const LocalizationScores::ConstSharedPtr msg_ptr);
+  
+  rclcpp::Publisher<LocalizationScores>::SharedPtr pub_localization_scores_;
+  rclcpp::Subscription<LocalizationScores>::SharedPtr sub_localization_scores_;
 };
 
 }  // namespace default_ad_api

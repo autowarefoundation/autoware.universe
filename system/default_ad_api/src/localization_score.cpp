@@ -19,14 +19,20 @@ namespace default_ad_api
 
 LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options) : Node("localization_score", options)
 {
-  using LocalizationScores = autoware_ad_api_msgs::msg::LocalizationScores;
+  using std::placeholders::_1;
 
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_pub(pub_);
-  const auto on_localization_score = [this](MESSAGE_ARG(LocalizationScores)){
-    pub_->publish(*message);
-  };
-  node.init_sub(sub_,on_localization_score);
+   // Publisher
+  pub_localization_scores_ = this->create_publisher<LocalizationScores>(
+    "api/get/localization_scores", 1);
+
+  // Subscriber
+  sub_localization_scores_ =
+    this->create_subscription<LocalizationScores>("/localization_scores", 1,
+      std::bind(&LocalizationScoreNode::callbackLocalizationScores, this, _1));
+}
+
+void LocalizationScoreNode::callbackLocalizationScores(const LocalizationScores::ConstSharedPtr msg_ptr){
+  pub_localization_scores_->publish(*msg_ptr);
 }
 
 }  // namespace default_ad_api
