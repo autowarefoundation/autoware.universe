@@ -43,8 +43,6 @@ private:
 
   void publishTwist(const Imu & msg);
 
-  Eigen::Vector2f extractMgrsVel(const NavPVT & msg) const;
-  Eigen::Vector3d enuVel2mgrsVel(
-    const Eigen::Vector3d & ecef_vel, const Eigen::Vector3d & llh) const;
+  Eigen::Vector2f extractEnuVel(const NavPVT & msg) const;
 };
 }  // namespace trajectory

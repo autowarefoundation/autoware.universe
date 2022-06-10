@@ -18,9 +18,8 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr")
   sub_navpvt_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_pvt);
   pub_twist_ = create_publisher<TwistStamped>("/kalman/twist", 10);
 
-  state_ = Eigen::Vector4f::Zero();
-  cov_ = Eigen::Vector4f(1, 1, 1, 1).asDiagonal();
-
+  state_ = Eigen::Vector4f(0, 0, 0, 1);
+  cov_ = Eigen::Vector4f(9, 100, 0.0001, 0.0001).asDiagonal();
   cov_predict_ = Eigen::Vector4f(0.01, 9, 0.001, 0.001).asDiagonal();
 }
 
@@ -40,7 +39,7 @@ void TwistEstimator::callbackImu(const Imu & msg)
 
   // Update covariance
   Eigen::Matrix4f F = Eigen::Matrix4f::Identity();
-  F(0, 3) = dt;
+  F(0, 2) = dt;
   cov_ = F * cov_ * F.transpose() + cov_predict_ * dt * dt;
 
   publishTwist(msg);
@@ -52,76 +51,65 @@ void TwistEstimator::publishTwist(const Imu & imu)
   msg.header.stamp = imu.header.stamp;
   msg.header.frame_id = "base_link";
   msg.twist.angular.z = imu.angular_velocity.z - state_[2];
-  msg.twist.linear.x = state_[0];
+  msg.twist.linear.x = state_[1];
   pub_twist_->publish(msg);
 }
 
 void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
 {
+  // Compute error and jacobian
   float wheel = msg.twist.linear.x;
   float error = state_[1] - state_[3] * wheel;
   Eigen::Matrix<float, 1, 4> H;
-  H << 0, 1, 0, wheel;
+  H << 0, -1, 0, wheel;
 
+  // Determain kalman gain
   float W = 1;
   float S = H * cov_ * H.transpose() + W;
   Eigen::Matrix<float, 4, 1> K = cov_ * H.transpose() / S;
+
+  // Correct state and covariance
   state_ += K * error;
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
-
-  RCLCPP_INFO_STREAM(get_logger(), "wheel: " << wheel);
 }
 
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 {
-  Eigen::Vector2f vel_xy = extractMgrsVel(msg);
-
+  if (msg.flags != 131) {
+    RCLCPP_WARN(get_logger(), "NOT FIX!");
+    return;
+  }
+  // Compute error and jacobian
+  Eigen::Vector2f vel_xy = extractEnuVel(msg);
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[0]).toRotationMatrix();
-  Eigen::Vector2f error = state_[1] * Eigen::Vector2f::UnitX() - R * vel_xy;
+  Eigen::Vector2f error = R * state_[1] * Eigen::Vector2f::UnitX() - vel_xy;
 
+  // Determain kalman gain
   Eigen::Matrix2f dR;
   dR << 0, -1, 1, 0;
-
   Eigen::Matrix<float, 2, 4> H;
   H.setZero();
-  H.block<2, 1>(0, 0) = R * dR * vel_xy;
-  H(0, 1) = 1;
-
+  H.block<2, 1>(0, 0) = -R * dR * state_[1] * Eigen::Vector2f::UnitX();
+  H.block<2, 1>(0, 1) = -R * Eigen::Vector2f::UnitX();
   Eigen::Matrix2f W = Eigen::Vector2f(1, 1).asDiagonal();
   Eigen::Matrix2f S = H * cov_ * H.transpose() + W;
   Eigen::Matrix<float, 4, 2> K = cov_ * H.transpose() * S.inverse();
+
+  // Correct state and covariance
   state_ += K * error;
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
-
-  RCLCPP_INFO_STREAM(get_logger(), "navpvt: " << vel_xy.transpose());
 }
 
-Eigen::Vector2f TwistEstimator::extractMgrsVel(const NavPVT & msg) const
+Eigen::Vector2f TwistEstimator::extractEnuVel(const NavPVT & msg) const
 {
   Eigen::Vector3d llh;
-  llh(0) = msg.lat * 1e-7 * M_PI / 180.0;  // [deg / 1e-7]->[rad]
-  llh(1) = msg.lon * 1e-7 * M_PI / 180.0;  // [deg / 1e-7]->[rad]
-  llh(2) = msg.height * 1e-3;              // [mm]->[m]
+  llh(0) = msg.lat * 1e-7;     // [deg / 1e-7]->[deg]
+  llh(1) = msg.lon * 1e-7;     // [deg / 1e-7]->[deg]
+  llh(2) = msg.height * 1e-3;  // [mm]->[m]
 
   Eigen::Vector3d enu_vel;
   enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
-
-  Eigen::Vector3d mgrs_vel = enuVel2mgrsVel(enu_vel, llh);
-  return mgrs_vel.topRows(2).cast<float>();
-}
-
-Eigen::Vector3d TwistEstimator::enuVel2mgrsVel(
-  const Eigen::Vector3d & enu_vel, const Eigen::Vector3d & llh) const
-{
-  using namespace GeographicLib;
-  Geocentric earth(Constants::WGS84_a(), Constants::WGS84_f());
-
-  std::vector<double> rotation(9);
-  double ecef_pos[3];
-  earth.Forward(llh[0], llh[1], llh[2], ecef_pos[0], ecef_pos[1], ecef_pos[2], rotation);
-
-  Eigen::Matrix3d R(rotation.data());
-  return R * enu_vel;
+  return enu_vel.topRows(2).cast<float>();
 }
 
 }  // namespace trajectory
