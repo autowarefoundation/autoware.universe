@@ -63,8 +63,8 @@ bool isValidTrajectory(const Trajectory & traj)
 }
 
 float64_t calcStopDistance(
-  const Pose & current_pose, const Trajectory & traj, const float64_t & max_dist,
-  const float64_t & max_yaw)
+  const Pose & current_pose, const Trajectory & traj, const float64_t max_dist,
+  const float64_t max_yaw)
 {
   const std::experimental::optional<size_t> stop_idx_opt =
     trajectory_common::searchZeroVelocityIndex(traj.points);

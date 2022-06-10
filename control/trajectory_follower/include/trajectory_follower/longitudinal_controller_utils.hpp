@@ -62,8 +62,8 @@ TRAJECTORY_FOLLOWER_PUBLIC bool8_t isValidTrajectory(const Trajectory & traj);
  * @brief calculate distance to stopline from current vehicle position where velocity is 0
  */
 TRAJECTORY_FOLLOWER_PUBLIC float64_t calcStopDistance(
-  const Pose & current_pose, const Trajectory & traj, const float64_t & max_dist,
-  const float64_t & max_yaw);
+  const Pose & current_pose, const Trajectory & traj, const float64_t max_dist,
+  const float64_t max_yaw);
 
 /**
  * @brief calculate pitch angle from estimated current pose
@@ -109,7 +109,7 @@ lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const float6
  */
 template <class T>
 TRAJECTORY_FOLLOWER_PUBLIC TrajectoryPoint lerpTrajectoryPoint(
-  const T & points, const Pose & pose, const float64_t & max_dist, const float64_t & max_yaw)
+  const T & points, const Pose & pose, const float64_t max_dist, const float64_t max_yaw)
 {
   TrajectoryPoint interpolated_point;
   auto seg_idx = tier4_autoware_utils::findNearestSegmentIndex(points, pose, max_dist, max_yaw);
