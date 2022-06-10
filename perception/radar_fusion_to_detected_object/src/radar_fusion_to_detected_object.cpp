@@ -90,7 +90,7 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
       }
 
       // Estimate twist of object
-      if(!radars_within_split_object.empty()) {
+      if (!radars_within_split_object.empty()) {
         split_object.kinematics.has_twist = true;
         split_object.kinematics.twist_with_covariance =
           estimateTwist(split_object, radars_within_split_object);
