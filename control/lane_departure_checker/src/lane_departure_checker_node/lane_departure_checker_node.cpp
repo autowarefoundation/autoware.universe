@@ -62,6 +62,16 @@ lanelet::ConstLanelets getRouteLanelets(
 
     for (const auto & primitive : route_sections.front().primitives) {
       const auto lane_id = primitive.id;
+      try {
+        lanelet_map.laneletLayer.get(lane_id);
+      } catch (const std::exception & e) {
+        RCLCPP_WARN(
+          rclcpp::get_logger("get_route_lanelets"),
+          "%s. Maybe the loaded route was created on a different Map from the current one. "
+          "Try to load the other Route again.",
+          e.what());
+        return route_lanelets;
+      }
       for (const auto & lanelet_sequence : lanelet::utils::query::getPrecedingLaneletSequences(
              routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
         for (const auto & preceding_lanelet : lanelet_sequence) {
@@ -74,6 +84,16 @@ lanelet::ConstLanelets getRouteLanelets(
   for (const auto & route_section : route_sections) {
     for (const auto & primitive : route_section.primitives) {
       const auto lane_id = primitive.id;
+      try {
+        lanelet_map.laneletLayer.get(lane_id);
+      } catch (const std::exception & e) {
+        RCLCPP_WARN(
+          rclcpp::get_logger("get_route_lanelets"),
+          "%s. Maybe the loaded route was created on a different Map from the current one. "
+          "Try to load the other Route again.",
+          e.what());
+        return route_lanelets;
+      }
       route_lanelets.push_back(lanelet_map.laneletLayer.get(lane_id));
     }
   }
@@ -84,6 +104,16 @@ lanelet::ConstLanelets getRouteLanelets(
 
     for (const auto & primitive : route_sections.back().primitives) {
       const auto lane_id = primitive.id;
+      try {
+        lanelet_map.laneletLayer.get(lane_id);
+      } catch (const std::exception & e) {
+        RCLCPP_WARN(
+          rclcpp::get_logger("get_route_lanelets"),
+          "%s. Maybe the loaded route was created on a different Map from the current one. "
+          "Try to load the other Route again.",
+          e.what());
+        return route_lanelets;
+      }
       for (const auto & lanelet_sequence : lanelet::utils::query::getSucceedingLaneletSequences(
              routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
         for (const auto & succeeding_lanelet : lanelet_sequence) {
