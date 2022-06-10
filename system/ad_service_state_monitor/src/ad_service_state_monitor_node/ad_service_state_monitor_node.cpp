@@ -16,8 +16,6 @@
 
 #include "lanelet2_extension/utility/message_conversion.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
 #include <deque>
 #include <memory>
 #include <string>
