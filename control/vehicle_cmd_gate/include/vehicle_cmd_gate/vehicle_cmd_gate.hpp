@@ -101,6 +101,9 @@ private:
   bool isHeartbeatTimeout(
     const std::shared_ptr<rclcpp::Time> & heartbeat_received_time, const double timeout);
 
+  // Check initialization
+  bool isDataReady();
+
   // Subscriber for auto
   Commands auto_commands_;
   rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
@@ -188,10 +191,12 @@ private:
 
   // Timer / Event
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_pub_status_;
 
   void onTimer();
   void publishControlCommands(const Commands & input_msg);
   void publishEmergencyStopControlCommands();
+  void publishStatus();
 
   // Diagnostics Updater
   diagnostic_updater::Updater updater_;
