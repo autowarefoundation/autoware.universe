@@ -1,4 +1,5 @@
 #pragma once
+#include <eigen3/Eigen/StdVector>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -11,8 +12,8 @@ namespace trajectory
 class TwistEstimator : public rclcpp::Node
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using TwistStamped = geometry_msgs::msg::TwistStamped;
-  using NavSatFix = sensor_msgs::msg::NavSatFix;
   using Imu = sensor_msgs::msg::Imu;
   using NavPVT = ublox_msgs::msg::NavPVT;
 
@@ -21,14 +22,29 @@ public:
 private:
   rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_;
 
-  rclcpp::Subscription<NavSatFix>::SharedPtr sub_fix_;
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
   rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_stamped_;
 
+  std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};
+
+  Eigen::Vector4f state_;  // rotation, velocity, bias, scale
+  Eigen::Matrix4f cov_;
+
+  Eigen::Matrix4f cov_predict_;
+
   void callbackImu(const Imu & msg);
   void callbackTwistStamped(const TwistStamped & msg);
   void callbackNavPVT(const NavPVT & msg);
-  void callbackNavSatFix(const NavSatFix & msg);
+
+  void predict();
+  void measureNavPvt(const Eigen::Vector3f & v);
+  void measureTwistStamped(const float vel);
+
+  void publishTwist(const Imu & msg);
+
+  Eigen::Vector2f extractMgrsVel(const NavPVT & msg) const;
+  Eigen::Vector3d enuVel2mgrsVel(
+    const Eigen::Vector3d & ecef_vel, const Eigen::Vector3d & llh) const;
 };
 }  // namespace trajectory
