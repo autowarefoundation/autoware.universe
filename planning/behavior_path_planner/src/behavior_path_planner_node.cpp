@@ -30,6 +30,20 @@
 #include <utility>
 #include <vector>
 
+namespace
+{
+rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
+{
+  rclcpp::CallbackGroup::SharedPtr callback_group =
+    node_ptr->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  auto sub_opt = rclcpp::SubscriptionOptions();
+  sub_opt.callback_group = callback_group;
+
+  return sub_opt;
+}
+}  // namespace
+
 namespace behavior_path_planner
 {
 using tier4_planning_msgs::msg::PathChangeModuleId;
@@ -48,21 +62,26 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 
   velocity_subscriber_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1));
+    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
+    createSubscriptionOptions(this));
   perception_subscriber_ = create_subscription<PredictedObjects>(
-    "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1));
+    "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1),
+    createSubscriptionOptions(this));
   external_approval_subscriber_ = create_subscription<ApprovalMsg>(
     "~/input/external_approval", 1,
-    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1));
+    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1),
+    createSubscriptionOptions(this));
   force_approval_subscriber_ = create_subscription<PathChangeModule>(
-    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1));
+    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1),
+    createSubscriptionOptions(this));
 
   // route_handler
   vector_map_subscriber_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&BehaviorPathPlannerNode::onMap, this, _1));
+    std::bind(&BehaviorPathPlannerNode::onMap, this, _1), createSubscriptionOptions(this));
   route_subscriber_ = create_subscription<HADMapRoute>(
-    "~/input/route", 1, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1));
+    "~/input/route", 1, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
+    createSubscriptionOptions(this));
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
@@ -444,6 +463,8 @@ void BehaviorPathPlannerNode::waitForData()
     if (planner_data_->dynamic_object && planner_data_->self_odometry) {
       break;
     }
+
+    mutex_pd_.unlock();
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "waiting for vehicle pose, vehicle_velocity, and obstacles");
