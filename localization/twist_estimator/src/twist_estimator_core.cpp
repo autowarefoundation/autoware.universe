@@ -44,7 +44,7 @@ void TwistEstimator::callbackTwistWithCovariance(
   geometry_msgs::msg::TwistWithCovarianceStamped msg = *twist_with_cov_msg_ptr;
 
   // clear velocity and angular velocity if vehicle is stopped
-  if (std::fabs(msg.twist.twist.angular.z) < 0.01 && std::fabs(msg.twist.twist.angular.x) < 0.01) {
+  if (std::fabs(msg.twist.twist.linear.x) < 0.01 && std::fabs(msg.twist.twist.angular.z) < 0.01) {
     msg.twist.twist.linear.x = 0.0;
     msg.twist.twist.linear.y = 0.0;
     msg.twist.twist.linear.z = 0.0;
