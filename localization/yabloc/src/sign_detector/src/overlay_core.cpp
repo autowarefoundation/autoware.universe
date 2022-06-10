@@ -97,7 +97,7 @@ void Overlay::overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Ti
   }
 
   cv::Mat show_image;
-  cv::addWeighted(image, 0.8, overlayed_image, 0.5, 1, show_image);
+  cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
   util::publishImage(*pub_image_, show_image, stamp);
 }
 
