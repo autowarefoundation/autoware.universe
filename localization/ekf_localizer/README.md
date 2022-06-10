@@ -150,15 +150,17 @@ note: process noise for positions x & y are calculated automatically from nonlin
 - Check header time in pose and twist message is set to sensor time appropriately, because time delay is calculated from this value. If it is difficult to set an appropriate time due to the timer synchronization problem, use `twist_additional_delay` and `pose_additional_delay` to correct the time.
 - Check if the relation between measurement pose and twist is appropriate (whether the derivative of the pose has a similar value to twist). This discrepancy is caused mainly by unit error (such as confusing radian/degree) or bias noise, and it causes large estimation errors.
 
-### 1. Set sensor parameters
+### 1. Tune sensor parameters
 
-Set sensor rate and standard deviation from the basic information of the sensor. The `pose_measure_uncertainty_time` is for the uncertainty of the header timestamp data.
+Set standard deviation for each sensor. The `pose_measure_uncertainty_time` is for the uncertainty of the header timestamp data. 
+You can also tune a number of steps for smoothing for each observed sensor data by tuning `*_smoothing_steps`.
+Increasing the number will improve the smoothness of the estimation, but may have an adverse effect on the estimation performance.
 
 - `pose_measure_uncertainty_time`
 - `pose_smoothing_steps`
 - `twist_smoothing_steps`
 
-### 2. Set process model parameters
+### 2. Tune process model parameters
 
 - `proc_stddev_vx_c` : set to maximum linear acceleration
 - `proc_stddev_wz_c` : set to maximum angular acceleration
