@@ -256,8 +256,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_monte_carlo_initial_pose_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
-  localization_scores_pub_ = 
-    this->create_publisher<autoware_ad_api_msgs::msg::LocalizationScores>("localization_scores", 10);
+  localization_scores_pub_ = this->create_publisher<autoware_ad_api_msgs::msg::LocalizationScores>(
+    "localization_scores", 10);
 
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
@@ -675,9 +675,8 @@ void NDTScanMatcher::callbackSensorPoints(
   localization_scores.scores.emplace_back(score_nvtl);
   localization_scores.covariance = pose_covariance;
   localization_scores.stamp = sensor_ros_time;
-  
-  localization_scores_pub_->publish(localization_scores);
 
+  localization_scores_pub_->publish(localization_scores);
 
   const float initial_to_result_distance =
     norm(initial_pose_cov_msg.pose.pose.position, result_pose_with_cov_msg.pose.pose.position);

@@ -15,9 +15,9 @@
 #ifndef LOCALIZATION_SCORE_HPP_
 #define LOCALIZATION_SCORE_HPP_
 
-#include "autoware_ad_api_msgs/msg/localization_scores.hpp"
-
 #include <rclcpp/rclcpp.hpp>
+
+#include "autoware_ad_api_msgs/msg/localization_scores.hpp"
 
 namespace default_ad_api
 {
@@ -30,7 +30,7 @@ public:
 
 private:
   void callbackLocalizationScores(const LocalizationScores::ConstSharedPtr msg_ptr);
-  
+
   rclcpp::Publisher<LocalizationScores>::SharedPtr pub_localization_scores_;
   rclcpp::Subscription<LocalizationScores>::SharedPtr sub_localization_scores_;
 };

@@ -17,21 +17,24 @@
 namespace default_ad_api
 {
 
-LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options) : Node("localization_score", options)
+LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options)
+: Node("localization_score", options)
 {
   using std::placeholders::_1;
 
-   // Publisher
-  pub_localization_scores_ = this->create_publisher<LocalizationScores>(
-    "api/get/localization_scores", 1);
+  // Publisher
+  pub_localization_scores_ =
+    this->create_publisher<LocalizationScores>("api/get/localization_scores", 1);
 
   // Subscriber
-  sub_localization_scores_ =
-    this->create_subscription<LocalizationScores>("/localization_scores", 1,
-      std::bind(&LocalizationScoreNode::callbackLocalizationScores, this, _1));
+  sub_localization_scores_ = this->create_subscription<LocalizationScores>(
+    "/localization_scores", 1,
+    std::bind(&LocalizationScoreNode::callbackLocalizationScores, this, _1));
 }
 
-void LocalizationScoreNode::callbackLocalizationScores(const LocalizationScores::ConstSharedPtr msg_ptr){
+void LocalizationScoreNode::callbackLocalizationScores(
+  const LocalizationScores::ConstSharedPtr msg_ptr)
+{
   pub_localization_scores_->publish(*msg_ptr);
 }
 

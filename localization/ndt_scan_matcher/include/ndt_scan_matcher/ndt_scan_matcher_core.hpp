@@ -24,6 +24,7 @@
 #include <ndt/pcl_modified.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_ad_api_msgs/msg/localization_scores.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -33,7 +34,6 @@
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <autoware_ad_api_msgs/msg/localization_scores.hpp>
 
 #include <fmt/format.h>
 #include <tf2/transform_datatypes.h>
@@ -163,7 +163,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     ndt_monte_carlo_initial_pose_marker_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
-  rclcpp::Publisher<autoware_ad_api_msgs::msg::LocalizationScores>::SharedPtr 
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::LocalizationScores>::SharedPtr
     localization_scores_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;

@@ -11,6 +11,7 @@
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>autoware_ad_api_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
@@ -31,7 +32,6 @@
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_localization_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>autoware_ad_api_msgs</depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
   <test_depend>ament_lint_auto</test_depend>
