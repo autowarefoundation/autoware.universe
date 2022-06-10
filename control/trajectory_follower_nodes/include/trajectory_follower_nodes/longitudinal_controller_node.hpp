@@ -323,8 +323,8 @@ private:
    * @param [in] nearest_idx index of the trajectory point nearest to the vehicle position
    */
   autoware_auto_planning_msgs::msg::TrajectoryPoint calcInterpolatedTargetValue(
-    const autoware_auto_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Point & point,
-    const size_t nearest_idx) const;
+    const autoware_auto_planning_msgs::msg::Trajectory & traj,
+    const geometry_msgs::msg::Pose & pose, const size_t nearest_idx) const;
 
   /**
    * @brief calculate predicted velocity after time delay based on past control commands
