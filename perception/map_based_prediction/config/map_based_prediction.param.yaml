@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     enable_delay_compensation: true
-    prediction_time_horizon: 10.0 #[s]
+    prediction_time_horizon: 15.0 #[s]
     prediction_sampling_delta_time: 0.5 #[s]
     min_velocity_for_map_based_prediction: 1.0 #[m/s]
     dist_threshold_for_searching_lanelet: 3.0 #[m]
