@@ -5,10 +5,10 @@
         show_processing_time: false
 
         stop_line_distance: 1.5 # make stop line away from crosswalk when no explicit stop line exists
-        stop_margin: 2.0
+        stop_margin: 3.0
         slow_velocity: 2.76 # 2.76 m/s = 10.0 kmph
 
-        attention_range: 5.0
+        attention_range: 1.0
 
         tl_state_timeout: 5.0
 
