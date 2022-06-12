@@ -624,6 +624,11 @@ float CrosswalkModule::calcTargetVelocity(
   const auto & ego_pos = planner_data_->current_pose.pose.position;
   const auto & ego_vel = planner_data_->current_velocity->twist.linear.x;
 
+  constexpr double no_relax_velocity = 2.78;  // 10.0 km/h
+  if (ego_vel < no_relax_velocity) {
+    return 0.0;
+  }
+
   const auto ego_acc = planner_data_->current_accel.get();
   const auto dist_deceleration =
     calcSignedArcLength(ego_path.points, ego_pos, stop_point.point.pose.position);
