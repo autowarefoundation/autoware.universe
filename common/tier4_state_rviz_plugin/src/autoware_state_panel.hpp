@@ -19,6 +19,7 @@
 
 #include <QLabel>
 #include <QPushButton>
+#include <QSlider>
 #include <QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
@@ -32,10 +33,12 @@
 #include <tier4_external_api_msgs/srv/engage.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
+#include <tier4_planning_msgs/msg/lateral_offset.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 namespace rviz_plugins
 {
+using tier4_planning_msgs::msg::LateralOffset;
 class AutowareStatePanel : public rviz_common::Panel
 {
   Q_OBJECT
@@ -50,6 +53,7 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickGateMode();
   void onClickPathChangeApproval();
   void onClickEmergencyButton();
+  void onClickLateralOffset();
 
 protected:
   void onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
@@ -76,6 +80,7 @@ protected:
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
   rclcpp::Publisher<tier4_planning_msgs::msg::Approval>::SharedPtr pub_path_change_approval_;
+  rclcpp::Publisher<LateralOffset>::SharedPtr pub_lateral_offset_;
 
   QLabel * gate_mode_label_ptr_;
   QLabel * selector_mode_label_ptr_;
@@ -91,6 +96,11 @@ protected:
 
   bool current_engage_{false};
   bool current_emergency_{false};
+  // for side shift
+  QSlider * lateral_offset_slider_ptr_;
+  QLabel * lateral_offset_value_ptr_;
+
+  double lateral_offset_ = {0.0};
 };
 
 }  // namespace rviz_plugins
