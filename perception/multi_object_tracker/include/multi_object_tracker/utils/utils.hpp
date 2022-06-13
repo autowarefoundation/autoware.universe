@@ -50,7 +50,7 @@ std::uint8_t getHighestProbLabel(
 autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
   const autoware_auto_perception_msgs::msg::DetectedObject & detected_object);
 geometry_msgs::msg::Polygon rotatePolygon(
-  const geometry_msgs::msg::Polygon & polygon, const double & angle);
+  const geometry_msgs::msg::Polygon & polygon, const double angle);
 
 enum MSG_COV_IDX {
   X_X = 0,
