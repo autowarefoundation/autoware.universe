@@ -86,6 +86,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
   }
 
+  debug_diag_publisher_ = create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/load_route", 1);
+
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
@@ -742,6 +744,14 @@ void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
 
   planner_data_->route_handler->setRoute(*msg);
+  const bool is_handler_ready = planner_data_->route_handler->isHandlerReady();
+
+  diagnostic_msgs::msg::DiagnosticStatus status;
+  status.name = "route_handler_status";
+  status.level = is_handler_ready ? diagnostic_msgs::msg::DiagnosticStatus::OK :
+                                    diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+  status.message = is_handler_ready ? "OK" : "route_handler is not ready";
+  debug_diag_publisher_->publish(status);
 
   // Reset behavior tree when new route is received,
   // so that the each modules do not have to care about the "route jump".

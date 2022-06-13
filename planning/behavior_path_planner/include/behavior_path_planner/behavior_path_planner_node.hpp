@@ -38,6 +38,7 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
@@ -78,6 +79,7 @@ using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::PathChangeModuleArray;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::MarkerArray;
+using diagnostic_msgs::msg::DiagnosticStatus;
 
 class BehaviorPathPlannerNode : public rclcpp::Node
 {
@@ -174,6 +176,7 @@ private:
   rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
+  rclcpp::Publisher<DiagnosticStatus>::SharedPtr debug_diag_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
 };
 }  // namespace behavior_path_planner
