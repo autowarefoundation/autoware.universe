@@ -475,12 +475,8 @@ double OptimizationBasedPlanner::getClosestStopDistance(
   for (const auto & obj : planner_data.target_obstacles) {
     const auto obj_base_time = obj.time_stamp;
 
-    // Step1. Ignore obstacles that are not vehicles
-    if (
-      obj.classification.label != ObjectClassification::CAR &&
-      obj.classification.label != ObjectClassification::TRUCK &&
-      obj.classification.label != ObjectClassification::BUS &&
-      obj.classification.label != ObjectClassification::MOTORCYCLE) {
+    // Step1. Ignore obstacles that are not required to stop
+    if (!isStopRequired(obj)) {
       continue;
     }
 
@@ -508,20 +504,17 @@ double OptimizationBasedPlanner::getClosestStopDistance(
 
     // Calculate Safety Distance
     const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
-    const double ego_vehicle_offset = vehicle_info_.wheel_base_m + vehicle_info_.front_overhang_m;
+    const auto & ego_vehicle_offset = vehicle_info_.max_longitudinal_offset_m;
     const double object_offset = obj_data.length / 2.0;
     const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin;
 
     // If the object is on the current ego trajectory,
     // we assume the object travels along ego trajectory
-    const double obj_vel = std::abs(obj.velocity);
-    if (dist_to_collision_point && obj_vel < obstacle_velocity_threshold_from_cruise_to_stop_) {
-      const double current_stop_point = std::max(*dist_to_collision_point - safety_distance, 0.0);
-      closest_stop_dist = std::min(current_stop_point, closest_stop_dist);
-    }
-
-    // Update Distance to the closest object on the ego trajectory
     if (dist_to_collision_point) {
+      const double stop_dist = std::max(*dist_to_collision_point - safety_distance, 0.0);
+      closest_stop_dist = std::min(stop_dist, closest_stop_dist);
+
+      // Update Distance to the closest object on the ego trajectory
       const double current_obj_distance = std::max(
         *dist_to_collision_point - safety_distance + safe_distance_margin, -safety_distance);
       closest_obj_distance = std::min(closest_obj_distance, current_obj_distance);
@@ -832,9 +825,13 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   double min_slow_down_point_length = std::numeric_limits<double>::max();
   boost::optional<size_t> min_slow_down_idx = {};
   for (size_t o_idx = 0; o_idx < planner_data.target_obstacles.size(); ++o_idx) {
-    const auto obj_base_time = planner_data.target_obstacles.at(o_idx).time_stamp;
-
     const auto & obj = planner_data.target_obstacles.at(o_idx);
+    const auto obj_base_time = planner_data.target_obstacles.at(o_idx).time_stamp;
+    // Only see cruise obstacles
+    if (!isCruiseObstacle(obj.classification.label)) {
+      continue;
+    }
+
     // Step1 Get S boundary from the obstacle
     const auto obj_s_boundaries =
       getSBoundaries(planner_data.current_time, ego_traj_data, obj, obj_base_time, time_vec);
