@@ -206,9 +206,9 @@ public:
   explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config) : config_(config)
   {
     // Get full network path
-    std::string network_prefix = ament_index_cpp::get_package_share_directory("neural_networks") +
-                                 "/networks/" + config.network_name + "/" + config.network_backend +
-                                 "/";
+    std::string network_prefix =
+      ament_index_cpp::get_package_share_directory("neural_networks_provider") + "/networks/" +
+      config.network_name + "/" + config.network_backend + "/";
     std::string network_module_path = network_prefix + config.network_module_path;
     std::string network_graph_path = network_prefix + config.network_graph_path;
     std::string network_params_path = network_prefix + config.network_params_path;
