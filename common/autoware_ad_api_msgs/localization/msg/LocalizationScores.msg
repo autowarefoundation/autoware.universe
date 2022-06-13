@@ -1,3 +1,3 @@
 builtin_interfaces/Time stamp
-autoware_ad_api_msgs/PoseCovariance covariance
+geometry_msgs/PoseWithCovariance pose_covariance
 autoware_ad_api_msgs/MatchingScore[] scores

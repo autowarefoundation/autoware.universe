@@ -7,7 +7,6 @@ autoware_package()
 rosidl_generate_interfaces(${PROJECT_NAME}
   localization/msg/LocalizationScores.msg
   localization/msg/MatchingScore.msg
-  localization/msg/PoseCovariance.msg
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
   DEPENDENCIES

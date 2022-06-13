@@ -667,13 +667,11 @@ void NDTScanMatcher::callbackSensorPoints(
   score_nvtl.type = "nearest_voxel_transformation_likelihood";
   score_nvtl.score = nearest_voxel_transformation_likelihood;
 
-  autoware_ad_api_msgs::msg::PoseCovariance pose_covariance;
-  pose_covariance.pose_covariance = output_pose_covariance_;
-
   autoware_ad_api_msgs::msg::LocalizationScores localization_scores;
   localization_scores.scores.emplace_back(score_tp);
   localization_scores.scores.emplace_back(score_nvtl);
-  localization_scores.covariance = pose_covariance;
+  localization_scores.pose_covariance.pose = result_pose_msg;
+  localization_scores.pose_covariance.covariance = output_pose_covariance_;
   localization_scores.stamp = sensor_ros_time;
 
   localization_scores_pub_->publish(localization_scores);
