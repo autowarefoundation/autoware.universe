@@ -58,7 +58,7 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
   const std::vector<autoware_auto_perception_msgs::msg::PredictedPath> & predicted_paths,
   const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time);
 
-boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
+geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
   const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time);
 }  // namespace obstacle_cruise_utils

@@ -164,7 +164,7 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
   return getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
 }
 
-boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
+geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
   const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time)
 {
@@ -175,7 +175,7 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
   const auto interpolated_pose =
     getCurrentObjectPoseFromPredictedPath(predicted_paths, obj_base_time, current_time);
 
-  return interpolated_pose ? interpolated_pose
+  return interpolated_pose ? interpolated_pose.value()
                            : predicted_object.kinematics.initial_pose_with_covariance.pose;
 }
 }  // namespace obstacle_cruise_utils
