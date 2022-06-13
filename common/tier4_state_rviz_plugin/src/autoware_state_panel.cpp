@@ -98,7 +98,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   connect(velocity_limit_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickVelocityLimit()));
 
   // Emergency Button
-  emergency_button_ptr_ = new QPushButton();
+  emergency_button_ptr_ = new QPushButton("Set Emergency");
   connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
 
   // Layout
