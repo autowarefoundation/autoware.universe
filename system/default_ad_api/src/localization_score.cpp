@@ -28,7 +28,7 @@ LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options
 
   // Subscriber
   sub_localization_scores_ = this->create_subscription<LocalizationScores>(
-    "/localization_scores", 1,
+    "/localization/pose_estimator/localization_scores", 1,
     std::bind(&LocalizationScoreNode::callbackLocalizationScores, this, _1));
 }
 
