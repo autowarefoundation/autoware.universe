@@ -138,10 +138,10 @@ void AutowareStatePanel::onInitialize()
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
   sub_engage_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::EngageStatus>(
-    "/api/autoware/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
+    "/api/external/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
 
   client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
-    "/api/autoware/set/engage", rmw_qos_profile_services_default);
+    "/api/external/set/engage", rmw_qos_profile_services_default);
 
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS(1));
