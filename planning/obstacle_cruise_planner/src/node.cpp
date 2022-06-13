@@ -462,6 +462,9 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createPlannerData(
   planner_data.target_obstacles =
     filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
 
+  // Update trajectory by inserting stop point
+  planner_data.traj = planner_ptr_->insertStopPointToTrajectory(planner_data);
+
   // print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
   RCLCPP_INFO_EXPRESSION(

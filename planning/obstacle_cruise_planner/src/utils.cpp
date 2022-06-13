@@ -183,4 +183,55 @@ geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
 
   return interpolated_pose.value();
 }
+
+autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+  const double distance_to_stop_point)
+{
+  if (trajectory.points.size() < 2) {
+    return trajectory;
+  }
+
+  autoware_auto_planning_msgs::msg::Trajectory output;
+  output.header = trajectory.header;
+
+  double accumulated_length = 0;
+  size_t insert_idx = trajectory.points.size();
+  for (size_t i = 0; i < trajectory.points.size() - 1; ++i) {
+    const auto curr_traj_point = trajectory.points.at(i);
+    const auto next_traj_point = trajectory.points.at(i + 1);
+    const auto curr_pose = curr_traj_point.pose;
+    const auto next_pose = next_traj_point.pose;
+    const double segment_length = tier4_autoware_utils::calcDistance2d(curr_pose, next_pose);
+    accumulated_length += segment_length;
+
+    if (accumulated_length > distance_to_stop_point) {
+      const double ratio = 1 - (accumulated_length - distance_to_stop_point) / segment_length;
+
+      autoware_auto_planning_msgs::msg::TrajectoryPoint stop_point;
+      stop_point.pose = lerpByPose(curr_pose, next_pose, ratio);
+      stop_point.lateral_velocity_mps = 0.0;
+      const double front_dist = tier4_autoware_utils::calcDistance2d(curr_pose, stop_point.pose);
+      const double back_dist = tier4_autoware_utils::calcDistance2d(stop_point.pose, next_pose);
+      if (front_dist < 1e-3 || back_dist < 1e-3) {
+        output.points.push_back(curr_traj_point);
+      } else {
+        output.points.push_back(curr_traj_point);
+        output.points.push_back(stop_point);
+      }
+      insert_idx = i + 1;
+      break;
+    }
+
+    output.points.push_back(curr_traj_point);
+  }
+
+  for (size_t i = insert_idx; i < trajectory.points.size() - 1; ++i) {
+    auto traj_point = trajectory.points.at(i);
+    traj_point.longitudinal_velocity_mps = 0.0;
+    output.points.push_back(traj_point);
+  }
+
+  return output;
+}
 }  // namespace obstacle_cruise_utils

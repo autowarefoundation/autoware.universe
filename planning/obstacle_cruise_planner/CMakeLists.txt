@@ -10,6 +10,7 @@ ament_auto_add_library(obstacle_cruise_planner_core SHARED
   src/node.cpp
   src/utils.cpp
   src/polygon_utils.cpp
+  src/planner_interface.cpp
   src/optimization_based_planner/resample.cpp
   src/optimization_based_planner/box2d.cpp
   src/optimization_based_planner/velocity_optimizer.cpp

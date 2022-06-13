@@ -61,6 +61,10 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
 geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
   const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time);
+
+autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+  const double distance_to_stop_point);
 }  // namespace obstacle_cruise_utils
 
 #endif  // OBSTACLE_CRUISE_PLANNER__UTILS_HPP_

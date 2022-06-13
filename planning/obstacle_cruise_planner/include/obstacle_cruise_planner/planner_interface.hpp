@@ -128,6 +128,8 @@ public:
     const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
     DebugData & debug_data) = 0;
 
+  Trajectory insertStopPointToTrajectory(const ObstacleCruisePlannerData & planner_data);
+
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {
     auto & i = longitudinal_info_;
@@ -180,6 +182,17 @@ public:
     }
 
     return false;
+  }
+
+  size_t findExtendedNearestIndex(
+    const Trajectory traj, const geometry_msgs::msg::Pose & pose) const
+  {
+    const auto nearest_idx = tier4_autoware_utils::findNearestIndex(
+      traj.points, pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    if (nearest_idx) {
+      return nearest_idx.get();
+    }
+    return tier4_autoware_utils::findNearestIndex(traj.points, pose.position);
   }
 
 protected:
