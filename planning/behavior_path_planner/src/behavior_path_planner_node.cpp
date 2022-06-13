@@ -86,7 +86,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
   }
 
-  debug_diag_publisher_ = create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/load_route", 1);
+  debug_diag_publisher_ =
+    create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/load_route", 1);
 
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
@@ -748,8 +749,8 @@ void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
 
   diagnostic_msgs::msg::DiagnosticStatus status;
   status.name = "route_handler_status";
-  status.level = is_handler_ready ? diagnostic_msgs::msg::DiagnosticStatus::OK :
-                                    diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+  status.level = is_handler_ready ? diagnostic_msgs::msg::DiagnosticStatus::OK
+                                  : diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   status.message = is_handler_ready ? "OK" : "route_handler is not ready";
   debug_diag_publisher_->publish(status);
 
