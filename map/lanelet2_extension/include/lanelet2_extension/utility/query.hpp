@@ -166,8 +166,8 @@ bool getLinkedParkingLot(
   lanelet::ConstPolygon3d * linked_parking_lot);
 // get linked parking lot from parking space
 bool getLinkedParkingLot(
-  const lanelet::ConstLineString3d & parking_space, const lanelet::ConstPolygons3d & all_parking_lots,
-  lanelet::ConstPolygon3d * linked_parking_lot);
+  const lanelet::ConstLineString3d & parking_space,
+  const lanelet::ConstPolygons3d & all_parking_lots, lanelet::ConstPolygon3d * linked_parking_lot);
 
 // query linked parking space from parking lot
 lanelet::ConstLineStrings3d getLinkedParkingSpaces(
