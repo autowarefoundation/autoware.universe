@@ -271,8 +271,6 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
 double PIDBasedPlanner::calcDistanceToObstacle(
   const ObstacleCruisePlannerData & planner_data, const TargetObstacle & obstacle)
 {
-  const double offset = vehicle_info_.max_longitudinal_offset_m;
-
   // TODO(murooka) enable this option considering collision_point (precise obstacle point to measure
   // distance) if (use_predicted_obstacle_pose_) {
   //   // interpolate current obstacle pose from predicted path
@@ -292,6 +290,11 @@ double PIDBasedPlanner::calcDistanceToObstacle(
   // }
 
   const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
+  const double segment_offset = std::max(
+    0.0, tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+           planner_data.traj.points, ego_idx, planner_data.current_pose.position));
+  const double offset = vehicle_info_.max_longitudinal_offset_m + segment_offset;
+
   return tier4_autoware_utils::calcSignedArcLength(
            planner_data.traj.points, ego_idx, obstacle.collision_point) -
          offset;
