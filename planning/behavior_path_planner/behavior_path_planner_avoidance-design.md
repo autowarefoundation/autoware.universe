@@ -260,7 +260,7 @@ To compute the shift length, in addition to the vehicle's width and the paramete
 - The `road_shoulder_safety_margin` will prevent the module from generating a path that might cause the vehicle to go too near the road shoulder.
 
 ![shift_length_parameters](./image/shift_length_parameters.drawio.svg)
-
+q
 <!-- spell-checker:disable -->
 
 ```plantuml
@@ -446,6 +446,35 @@ TODO
 
 ## How to debug
 
-The behavior_path_planner will publish debug marker when `publish_debug_marker` parameter is `true`. It will visualize all outputs of the each avoidance planning process such as target vehicles, shift points for each object, shift points after each filtering process, etc., so that developer can see what is going on in the each process one by one.
+### Publishing Visualization Marker
+
+Developers can see what is going on in each process by visualizing all the avoidance planning process outputs. The example includes target vehicles, shift points for each object, shift points after each filtering process, etc.
 
 ![fig1](./image/avoidance_design/avoidance-debug-marker.png)
+
+The debug marker can be enable via `avoidance.param.yaml`. Simply set the `publish_debug_marker` to `true`, restart `rviz2` and add the marker `planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/markers/MarkerArray`.
+
+### Echoing debug message to find out why the objects were ignored
+
+If for some reason, no shift point is generated for your object, you can check for the failure reason via `ros2 topic echo`.
+
+![avoidance_debug_message_array](./image/avoidance_design/avoidance_debug_message_array.png)
+
+To print the debug message, just run the following 
+```
+ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
+```
+
+### Showing drivable area boundary
+
+Sometimes, the developers might get a different result between two maps that may look identical during visual inspection.
+
+For example, in the same area, one can perform avoidance and another cannot. This might be related to the drivable area issues due to the non-compliance vector map design from the user.
+
+To debug the issue, the drivable area boundary can be visualized.
+
+![drivable_area_boundary_marker1](./image/avoidance_design/drivable_area_boundary_marker_example1.png)
+
+![drivable_area_boundary_marker2](./image/avoidance_design/drivable_area_boundary_marker_example2.png)
+
+The boundary can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_boundary`
