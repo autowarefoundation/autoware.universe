@@ -12,9 +12,9 @@
   <build_depend>autoware_cmake</build_depend>
 
   <depend>geometry_msgs</depend>
-  <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
 

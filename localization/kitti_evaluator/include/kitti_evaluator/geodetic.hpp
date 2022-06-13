@@ -15,22 +15,21 @@
 #ifndef KITTI_EVALUATOR__GEODETIC_HPP_
 #define KITTI_EVALUATOR__GEODETIC_HPP_
 
-#include <cmath>
 #include <vector>
+#include <cmath>
 
 namespace geodetic
 {
-const double semimajor_axis = 6378137.0;
-const double semiminor_axis = 6356752.31424518;
-const double pi = 3.14159265359;
+    const double semimajor_axis = 6378137.0;
+    const double semiminor_axis = 6356752.31424518;
+    const double pi = 3.14159265359;
 
-std::vector<double> se3_translation(double lat, double lon, double h, double scale)
-{
-  double tx, ty, tz;
-  tx = scale * lon * pi * semimajor_axis / 180.0;
-  ty = scale * semimajor_axis * log(tan((90.0 + lat) * pi / 360.0));
-  tz = h;
-  return {tx, ty, tz};
+    std::vector<double> se3_translation(double lat, double lon, double h, double scale) {
+        double tx,ty,tz;
+        tx = scale * lon * pi * semimajor_axis / 180.0;
+        ty = scale * semimajor_axis * log(tan((90.0 + lat) * pi / 360.0));
+        tz = h;
+        return {tx,ty,tz};
+    }
 }
-}  // namespace geodetic
-#endif  // KITTI_EVALUATOR__GEODETIC_HPP_
+#endif
