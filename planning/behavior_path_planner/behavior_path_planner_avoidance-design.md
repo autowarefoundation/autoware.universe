@@ -261,6 +261,7 @@ To compute the shift length, in addition to the vehicle's width and the paramete
 
 ![shift_length_parameters](./image/shift_length_parameters.drawio.svg)
 q
+
 <!-- spell-checker:disable -->
 
 ```plantuml
@@ -460,7 +461,8 @@ If for some reason, no shift point is generated for your object, you can check f
 
 ![avoidance_debug_message_array](./image/avoidance_design/avoidance_debug_message_array.png)
 
-To print the debug message, just run the following 
+To print the debug message, just run the following
+
 ```
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
 ```
