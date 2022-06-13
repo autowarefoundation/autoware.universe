@@ -212,7 +212,7 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
   }
 
   // Get Closest Stop Point for static obstacles
-  double closest_stop_dist = getClosestStopDistance(planner_data, base_traj_data, time_vec);
+  double closest_stop_dist = getClosestStopDistance(planner_data, base_traj_data);
 
   // Compute maximum velocity
   double v_max = 0.0;
@@ -459,8 +459,7 @@ std::vector<double> OptimizationBasedPlanner::createTimeVector()
 }
 
 double OptimizationBasedPlanner::getClosestStopDistance(
-  const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data,
-  const std::vector<double> & resolutions)
+  const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data)
 {
   const auto & current_time = planner_data.current_time;
   double closest_stop_dist = ego_traj_data.s.back();
@@ -475,21 +474,14 @@ double OptimizationBasedPlanner::getClosestStopDistance(
   for (const auto & obj : planner_data.target_obstacles) {
     const auto obj_base_time = obj.time_stamp;
 
-    // Step1. Ignore obstacles that are not required to stop
+    // Ignore obstacles that are not required to stop
     if (!isStopRequired(obj)) {
-      continue;
-    }
-
-    // Get the predicted path, which has the most high confidence
-    const auto predicted_path =
-      resampledPredictedPath(obj, obj_base_time, current_time, resolutions, max_time_horizon_);
-    if (!predicted_path) {
       continue;
     }
 
     // Get current pose from object's predicted path
     const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
-      *predicted_path, obj_base_time, current_time);
+      obj.predicted_paths, obj_base_time, current_time);
     if (!current_object_pose) {
       continue;
     }

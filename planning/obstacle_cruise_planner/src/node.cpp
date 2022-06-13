@@ -488,6 +488,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
   const PredictedObjects & predicted_objects, const Trajectory & traj,
   const geometry_msgs::msg::Pose & current_pose, const double current_vel, DebugData & debug_data)
 {
+  const auto current_time = now();
   const auto time_stamp = rclcpp::Time(predicted_objects.header.stamp);
 
   const size_t ego_idx = findExtendedNearestIndex(
@@ -518,11 +519,13 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       continue;
     }
 
-    const auto & object_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    // const auto & object_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    const auto object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+      predicted_object, time_stamp, current_time);
     const auto & object_velocity =
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
-    const bool is_front_obstacle = isFrontObstacle(traj, ego_idx, object_pose.position);
+    const bool is_front_obstacle = isFrontObstacle(traj, ego_idx, object_pose->position);
     if (!is_front_obstacle) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), is_showing_debug_info_, "Ignore obstacles since its not front obstacle.");
@@ -531,7 +534,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
 
     // rough detection area filtering without polygons
     const double dist_from_obstacle_to_traj = [&]() {
-      return tier4_autoware_utils::calcLateralOffset(decimated_traj.points, object_pose.position);
+      return tier4_autoware_utils::calcLateralOffset(decimated_traj.points, object_pose->position);
     }();
     if (dist_from_obstacle_to_traj > obstacle_filtering_param_.rough_detection_area_expand_width) {
       RCLCPP_INFO_EXPRESSION(
@@ -542,7 +545,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
 
     // calculate collision points
     const auto obstacle_polygon =
-      polygon_utils::convertObstacleToPolygon(object_pose, predicted_object.shape);
+      polygon_utils::convertObstacleToPolygon(*object_pose, predicted_object.shape);
     std::vector<geometry_msgs::msg::Point> collision_points;
     const auto first_within_idx = polygon_utils::getFirstCollisionIndex(
       decimated_traj_polygons, obstacle_polygon, collision_points);
@@ -556,7 +559,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       debug_data.collision_points.push_back(nearest_collision_point);
 
       const bool is_angle_aligned = isAngleAlignedWithTrajectory(
-        decimated_traj, object_pose,
+        decimated_traj, *object_pose,
         obstacle_filtering_param_.crossing_obstacle_traj_angle_threshold);
       const double has_high_speed =
         std::abs(object_velocity) > obstacle_filtering_param_.crossing_obstacle_velocity_threshold;
@@ -596,7 +599,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
         obstacle_filtering_param_.max_prediction_time_for_collision_check);
 
       // TODO(murooka) think later
-      nearest_collision_point = object_pose.position;
+      nearest_collision_point = object_pose->position;
 
       if (!will_collide) {
         // Ignore condition 2
