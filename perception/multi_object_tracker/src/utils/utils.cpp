@@ -279,7 +279,7 @@ autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
 }
 
 geometry_msgs::msg::Polygon rotatePolygon(
-  const geometry_msgs::msg::Polygon & polygon, const double & angle)
+  const geometry_msgs::msg::Polygon & polygon, const double angle)
 {
   const double cos = std::cos(angle);
   const double sin = std::sin(angle);
