@@ -15,28 +15,29 @@
 #ifndef KITTI_EVALUATOR__INTERPOLATION_HPP_
 #define KITTI_EVALUATOR__INTERPOLATION_HPP_
 
+#include <eigen3/Eigen/Geometry>
 #include <rclcpp/time.hpp>
-
-#include <eigen3/Eigen/Geometry> 
 
 namespace interpolation
 {
-    double getTimeCoeffients(rclcpp::Time & curr_time, rclcpp::Time & prev_time, rclcpp::Time & post_time)
-    {
-        auto duration = post_time - prev_time;
-        auto step = curr_time - prev_time;
-        return step.nanoseconds() / static_cast<double>(duration.nanoseconds());
-    }
-    
-    void interpolateTransform(double t, Eigen::Affine3d & prev_pose, Eigen::Affine3d & post_pose, Eigen::Affine3d & out_pose)
-    {
-        Eigen::Vector3d prev_translation = prev_pose.translation();
-        Eigen::Vector3d post_translation = post_pose.translation();
-        Eigen::Translation3d out_translation((1-t) * prev_translation + t * post_translation);
-        Eigen::Quaterniond prev_q(prev_pose.rotation());
-        Eigen::Quaterniond post_q(post_pose.rotation());
-        Eigen::Quaterniond out_q = prev_q.slerp(t, post_q);
-        out_pose = out_translation * out_q;
-    }
+double getTimeCoeffients(
+  rclcpp::Time & curr_time, rclcpp::Time & prev_time, rclcpp::Time & post_time)
+{
+  auto duration = post_time - prev_time;
+  auto step = curr_time - prev_time;
+  return step.nanoseconds() / static_cast<double>(duration.nanoseconds());
 }
-#endif
+
+void interpolateTransform(
+  double t, Eigen::Affine3d & prev_pose, Eigen::Affine3d & post_pose, Eigen::Affine3d & out_pose)
+{
+  Eigen::Vector3d prev_translation = prev_pose.translation();
+  Eigen::Vector3d post_translation = post_pose.translation();
+  Eigen::Translation3d out_translation((1 - t) * prev_translation + t * post_translation);
+  Eigen::Quaterniond prev_q(prev_pose.rotation());
+  Eigen::Quaterniond post_q(post_pose.rotation());
+  Eigen::Quaterniond out_q = prev_q.slerp(t, post_q);
+  out_pose = out_translation * out_q;
+}
+}  // namespace interpolation
+#endif  // KITTI_EVALUATOR__INTERPOLATION_HPP_
