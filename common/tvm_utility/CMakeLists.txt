@@ -20,10 +20,10 @@ autoware_package()
 
 # Configure
 
-set(tvm_utility_NETWORKS_DIR ${neural_networks_NETWORKS_DIR})
+set(tvm_utility_NETWORKS_DIR ${neural_networks_provider_NETWORKS_DIR})
 configure_file(tvm_utility-extras.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/tvm_utility-extras.cmake @ONLY)
 
-foreach(network_name ${neural_networks_NAMES})
+foreach(network_name ${neural_networks_provider_NAMES})
   list(APPEND MODEL_INCLUDES_LIST
     "#define INCLUDE <${network_name}/NETWORKS_BACKEND/inference_engine_tvm_config.hpp>"
     "#include INCLUDE"

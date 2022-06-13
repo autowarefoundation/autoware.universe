@@ -1,4 +1,4 @@
-# Copyright 2021 Arm Ltd.
+# Copyright 2021-2022 Arm Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 #
-# Search through the neural networks made available by the neural_networks
+# Search through the neural networks made available by the neural_networks_provider
 # package and check if the targeted network exists.
 #
 # :param target_network_name: the name of the targeted network
