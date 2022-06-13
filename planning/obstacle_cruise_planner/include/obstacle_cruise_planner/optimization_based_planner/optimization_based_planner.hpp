@@ -115,7 +115,7 @@ private:
     const TargetObstacle & object, const rclcpp::Time & obj_base_time,
     const PredictedPath & predicted_path);
 
-  boost::optional<PredictedPath> resampledPredictedPath(
+  boost::optional<PredictedPath> resamplePredictedPath(
     const TargetObstacle & object, const rclcpp::Time & obj_base_time,
     const rclcpp::Time & current_time, const std::vector<double> & resolutions,
     const double horizon);

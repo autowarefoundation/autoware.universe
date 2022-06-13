@@ -841,11 +841,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     // Step3 search nearest obstacle to follow for rviz marker
     const double object_offset = obj.shape.dimensions.x / 2.0;
 
-    const auto predicted_path =
-      resampledPredictedPath(obj, obj_base_time, current_time, time_vec, max_time_horizon_);
-
     const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
-      *predicted_path, obj_base_time, current_time);
+      obj.predicted_paths, obj_base_time, current_time);
 
     const double obj_vel = std::abs(obj.velocity);
     const double rss_dist = calcRSSDistance(planner_data.current_vel, obj_vel);
@@ -867,11 +864,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   if (min_slow_down_idx) {
     const auto & obj = planner_data.target_obstacles.at(min_slow_down_idx.get());
 
-    const auto predicted_path =
-      resampledPredictedPath(obj, obj.time_stamp, current_time, time_vec, max_time_horizon_);
-
     const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
-      *predicted_path, obj.time_stamp, current_time);
+      obj.predicted_paths, obj.time_stamp, current_time);
 
     const auto marker_pose = calcForwardPose(
       ego_traj_data.traj, planner_data.current_pose.position, min_slow_down_point_length);
@@ -906,7 +900,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   // Get the predicted path, which has the most high confidence
   const double max_horizon = time_vec.back();
   const auto predicted_path =
-    resampledPredictedPath(object, obj_base_time, current_time, time_vec, max_horizon);
+    resamplePredictedPath(object, obj_base_time, current_time, time_vec, max_horizon);
   if (!predicted_path) {
     RCLCPP_DEBUG(
       rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
@@ -1105,7 +1099,7 @@ boost::optional<size_t> OptimizationBasedPlanner::getCollisionIdx(
   return boost::none;
 }
 
-boost::optional<PredictedPath> OptimizationBasedPlanner::resampledPredictedPath(
+boost::optional<PredictedPath> OptimizationBasedPlanner::resamplePredictedPath(
   const TargetObstacle & object, const rclcpp::Time & obj_base_time,
   const rclcpp::Time & current_time, const std::vector<double> & resolutions, const double horizon)
 {
