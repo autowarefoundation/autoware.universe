@@ -175,7 +175,12 @@ geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
   const auto interpolated_pose =
     getCurrentObjectPoseFromPredictedPath(predicted_paths, obj_base_time, current_time);
 
-  return interpolated_pose ? interpolated_pose.value()
-                           : predicted_object.kinematics.initial_pose_with_covariance.pose;
+  if (!interpolated_pose) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("ObstacleCruisePlanner"), "Failed to find the interpolated obstacle pose");
+    return predicted_object.kinematics.initial_pose_with_covariance.pose;
+  }
+
+  return interpolated_pose.value();
 }
 }  // namespace obstacle_cruise_utils
