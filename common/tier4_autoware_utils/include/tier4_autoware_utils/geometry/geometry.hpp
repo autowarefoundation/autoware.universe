@@ -348,6 +348,37 @@ inline geometry_msgs::msg::Pose calcOffsetPose(
   tf2::toMsg(tf_pose * tf_offset, pose);
   return pose;
 }
+
+/**
+ * @brief Calculate a point by linear interpolation.
+ */
+template <class Point1, class Point2>
+geometry_msgs::msg::Point calcInterpolatedPoint(
+  const Point1 & src, const Point2 & dst, const double ratio)
+{
+  const auto src_point = getPoint(src);
+  const auto dst_point = getPoint(dst);
+
+  tf2::Vector3 src_vec;
+  src_vec.setX(src_point.x);
+  src_vec.setY(src_point.y);
+  src_vec.setZ(src_point.z);
+
+  tf2::Vector3 dst_vec;
+  dst_vec.setX(dst_point.x);
+  dst_vec.setY(dst_point.y);
+  dst_vec.setZ(dst_point.z);
+
+  // Get pose by linear interpolation
+  const auto & vec = tf2::lerp(src_vec, dst_vec, ratio);
+
+  geometry_msgs::msg::Point point;
+  point.x = vec.x();
+  point.y = vec.y();
+  point.z = vec.z();
+
+  return point;
+}
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
