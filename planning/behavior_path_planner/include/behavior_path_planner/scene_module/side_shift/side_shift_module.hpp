@@ -134,8 +134,11 @@ private:
     const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
-};
 
+  // debug
+  mutable SideShiftDebugData debug_data_;
+  void setDebugMarkersVisualization() const;
+};
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
