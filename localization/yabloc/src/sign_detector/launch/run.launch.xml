@@ -84,6 +84,7 @@
     <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
-        <remap from="particle_pose" to="/sensing/gnss/ublox/pose"/>
+        <!-- <remap from="particle_pose" to="/sensing/gnss/ublox/pose"/> -->
+        <remap from="particle_pose" to="/particle_pose"/>
     </node>
 </launch>

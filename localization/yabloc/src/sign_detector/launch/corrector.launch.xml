@@ -24,7 +24,7 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="min_prob" value="0.5"/>
         <param name="flat_radisu" value="5.0"/>
-        <param name="sigma" value="25.0"/>
+        <param name="sigma" value="9.0"/>
 
         <remap from="/weighted_particles" to="/camera/weighted_particles"/>
     </node>
