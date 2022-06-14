@@ -26,7 +26,7 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
                                                      planner_data.traj.points, 0, *closest_stop_id)
                                                  : traj_length;
 
-  const double offset = vehicle_info_.max_longitudinal_offset_m;
+  const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
 
   for (const auto & obstacle : planner_data.target_obstacles) {
     // Ignore obstacle that is not required to stop
