@@ -6,7 +6,7 @@
 
 namespace trajectory
 {
-TwistEstimator::TwistEstimator() : Node("twist_estimaotr")
+TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
 {
   using std::placeholders::_1;
 
@@ -27,11 +27,15 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr")
   cov_predict_ = Eigen::Vector4f(0.01, 9, 0.001, 0.001).asDiagonal();
 }
 
-void TwistEstimator::callbackImu(const Imu & msg)
+void TwistEstimator::callbackImu(const Imu & raw_msg)
 {
   if (!last_imu_stamp_.has_value()) {
-    last_imu_stamp_ = msg.header.stamp;
+    last_imu_stamp_ = raw_msg.header.stamp;
     return;
+  }
+  Imu msg = raw_msg;
+  if (upside_down) {
+    msg.angular_velocity.z = -msg.angular_velocity.z;
   }
 
   auto dt = (rclcpp::Time(msg.header.stamp) - last_imu_stamp_.value()).seconds();
@@ -55,9 +59,10 @@ void TwistEstimator::publishTwist(const Imu & imu)
   TwistStamped msg;
   msg.header.stamp = imu.header.stamp;
   msg.header.frame_id = "base_link";
-  msg.twist.angular.z = imu.angular_velocity.z - state_[2];
+  msg.twist.angular.z = imu.angular_velocity.z + state_[2];
   msg.twist.linear.x = state_[1];
   pub_twist_->publish(msg);
+  std::cout << "imu: " << imu.angular_velocity.z << " " << state_[2] << std::endl;
 }
 
 void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
