@@ -42,7 +42,6 @@ AccelerationEstimator::AccelerationEstimator(
   pub_accel_ = create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>("output/accel", 1);
 
   prev_twist_ptr_ = nullptr;
-  prev_accel_ptr_ = nullptr;
   accel_lowpass_gain_ = declare_parameter("accel_lowpass_gain", 0.5);
   use_odom_ = declare_parameter("use_odom", true);
 
@@ -80,17 +79,17 @@ void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped
   geometry_msgs::msg::AccelWithCovarianceStamped accel_msg;
   accel_msg.header = msg->header;
 
-  if (prev_accel_ptr_ != nullptr && prev_twist_ptr_ != nullptr) {
+  if (prev_twist_ptr_ != nullptr) {
     const double dt = std::max(
       (rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_twist_ptr_->header.stamp)).seconds(),
       1.0e-3);
-    double alx, aly, alz, aax, aay, aaz;
-    alx = (msg->twist.linear.x - prev_twist_ptr_->twist.linear.x) / dt;
-    aly = (msg->twist.linear.y - prev_twist_ptr_->twist.linear.y) / dt;
-    alz = (msg->twist.linear.z - prev_twist_ptr_->twist.linear.z) / dt;
-    aax = (msg->twist.angular.x - prev_twist_ptr_->twist.angular.x) / dt;
-    aay = (msg->twist.angular.y - prev_twist_ptr_->twist.angular.y) / dt;
-    aaz = (msg->twist.angular.z - prev_twist_ptr_->twist.angular.z) / dt;
+
+    double alx = (msg->twist.linear.x - prev_twist_ptr_->twist.linear.x) / dt;
+    double aly = (msg->twist.linear.y - prev_twist_ptr_->twist.linear.y) / dt;
+    double alz = (msg->twist.linear.z - prev_twist_ptr_->twist.linear.z) / dt;
+    double aax = (msg->twist.angular.x - prev_twist_ptr_->twist.angular.x) / dt;
+    double aay = (msg->twist.angular.y - prev_twist_ptr_->twist.angular.y) / dt;
+    double aaz = (msg->twist.angular.z - prev_twist_ptr_->twist.angular.z) / dt;
 
     accel_msg.accel.accel.linear.x = lpf_alx_ptr_->filter(alx);
     accel_msg.accel.accel.linear.y = lpf_aly_ptr_->filter(aly);
@@ -110,5 +109,4 @@ void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped
 
   pub_accel_->publish(accel_msg);
   prev_twist_ptr_ = msg;
-  prev_accel_ptr_ = std::make_shared<geometry_msgs::msg::AccelWithCovarianceStamped>(accel_msg);
 }

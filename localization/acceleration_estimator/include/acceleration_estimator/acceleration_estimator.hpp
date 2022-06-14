@@ -51,7 +51,6 @@ private:
     sub_twist_;  //!< @brief measurement odometry subscriber
 
   geometry_msgs::msg::TwistStamped::SharedPtr prev_twist_ptr_;
-  geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr prev_accel_ptr_;
   double accel_lowpass_gain_;
   bool use_odom_;
   std::shared_ptr<LowpassFilter1d> lpf_aax_ptr_;
