@@ -65,6 +65,10 @@ geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
 autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
   const double distance_to_stop_point);
+
+double calcDistanceFromEgoPoseToStopPoint(
+  const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
+  const geometry_msgs::msg::Pose & current_pose);
 }  // namespace obstacle_cruise_utils
 
 #endif  // OBSTACLE_CRUISE_PLANNER__UTILS_HPP_

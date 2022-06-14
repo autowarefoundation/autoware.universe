@@ -213,7 +213,11 @@ autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
       stop_point.lateral_velocity_mps = 0.0;
       const double front_dist = tier4_autoware_utils::calcDistance2d(curr_pose, stop_point.pose);
       const double back_dist = tier4_autoware_utils::calcDistance2d(stop_point.pose, next_pose);
-      if (front_dist < 1e-3 || back_dist < 1e-3) {
+      if (front_dist < 1e-3) {
+        auto traj_point = trajectory.points.at(i);
+        traj_point.longitudinal_velocity_mps = 0.0;
+        output.points.push_back(traj_point);
+      } else if (back_dist < 1e-3) {
         output.points.push_back(curr_traj_point);
       } else {
         output.points.push_back(curr_traj_point);
@@ -233,5 +237,21 @@ autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
   }
 
   return output;
+}
+
+double calcDistanceFromEgoPoseToStopPoint(
+  const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
+  const geometry_msgs::msg::Pose & current_pose)
+{
+  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(input_traj.points);
+  if (stop_idx) {
+    return std::max(
+      0.0, tier4_autoware_utils::calcSignedArcLength(
+             input_traj.points, current_pose.position, *stop_idx));
+  }
+
+  return std::max(
+    0.0, tier4_autoware_utils::calcSignedArcLength(
+           input_traj.points, current_pose.position, input_traj.points.size() - 1));
 }
 }  // namespace obstacle_cruise_utils
