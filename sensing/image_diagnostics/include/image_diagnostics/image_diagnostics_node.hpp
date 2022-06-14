@@ -58,12 +58,12 @@ struct ImageParam
   int lowVis_region_num_error_thresh = 4;
   int backlight_region_num_error_thresh = 3;
 
-  float blockage_ratio_thresh = 90.0f;
+  float blockage_ratio_thresh = 0.9f;
   int blockage_intensity_thresh = 10;
-  float blockage_freq_ratio_thresh = 30.0f;
+  float blockage_freq_ratio_thresh = 0.3f;
 
   int dark_intensity_thresh = 10;
-  float lowVis_freq_thresh = 400.0f;
+  float lowVis_freq_thresh = 4.0f;
   int backlight_intensity_thresh = 230;
 };
 

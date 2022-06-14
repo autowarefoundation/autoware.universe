@@ -102,6 +102,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
   float region_freq_average = 0.0;
   cv::Mat imgDFT(size, CV_32FC1);
   imgDFT.setTo(0.0);
+  // calculate the features of each small block in image
   for (int v = 0; v < params_.number_block_vertical; v++) {
     for (int h = 0; h < params_.number_block_horizontal; h++) {
       int x = h * block_size_h;
@@ -139,17 +140,17 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
 
   std::vector<int> region_state_vec;
   int region_state;
-
+  // estimate the state of each small block in image
   for (int region = 0; region < params_.number_block_horizontal * params_.number_block_vertical;
        region += 1) {
     if (region_average_vec[region] < params_.dark_intensity_thresh) {
       region_state = Image_State::DARK;
     } else if (
-      region_blockage_ratio_vec[region] > params_.blockage_ratio_thresh / 100 &&
-      region_freq_sum_vec[region] < params_.blockage_freq_ratio_thresh / 100) {
+      region_blockage_ratio_vec[region] > params_.blockage_ratio_thresh &&
+      region_freq_sum_vec[region] < params_.blockage_freq_ratio_thresh) {
       region_state = Image_State::BLOCKAGE;
     } else if (
-      region_freq_sum_vec[region] < params_.lowVis_freq_thresh / 100 &&
+      region_freq_sum_vec[region] < params_.lowVis_freq_thresh &&
       region_average_vec[region] < params_.backlight_intensity_thresh) {
       region_state = Image_State::LOW_VIS;
     } else if (region_average_vec[region] > params_.backlight_intensity_thresh) {
@@ -162,6 +163,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
 
   cv::Mat diag_block_image(size, CV_8UC3);
   int j = 0;
+  // colorize image block state
   for (int v = 0; v < params_.number_block_vertical; v++) {
     for (int h = 0; h < params_.number_block_horizontal; h++) {
       int x = h * block_size_h;
@@ -190,7 +192,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
       j = j + 1;
     }
   }
-
+  // draw boundary of blocks
   for (int v = 1; v < params_.number_block_vertical; v++) {
     cv::line(
       diag_block_image, cv::Point(0, v * block_size_v), cv::Point(size.width, v * block_size_v),
@@ -202,6 +204,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
       state_color_map_["BORDER"], 1, cv::LINE_AA, 0);
   }
 
+  // summary image status based on all blocks state
   params_.num_of_regions_normal =
     std::count(region_state_vec.begin(), region_state_vec.end(), Image_State::NORMAL);
   params_.num_of_regions_dark =
@@ -213,6 +216,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
   params_.num_of_regions_backlight =
     std::count(region_state_vec.begin(), region_state_vec.end(), Image_State::BACKLIGHT);
 
+  // diagnose whole image status
   if (
     (params_.num_of_regions_dark > params_.dark_regions_num_error_thresh) ||
     (params_.num_of_regions_blockage > params_.blockage_region_num_error_thresh) ||
@@ -235,6 +239,7 @@ void ImageDiagNode::ImageChecker(const sensor_msgs::msg::Image::ConstSharedPtr i
   img_gray.convertTo(img_gray, CV_8UC1);
   imgDFT.convertTo(imgDFT, CV_8UC1);
 
+  // publish topics
   sensor_msgs::msg::Image::SharedPtr gray_image_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", img_gray).toImageMsg();
   sensor_msgs::msg::Image::SharedPtr dft_image_msg =
