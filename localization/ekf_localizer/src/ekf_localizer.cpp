@@ -33,7 +33,6 @@
 
 using std::placeholders::_1;
 
-
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
 {
@@ -225,8 +224,8 @@ void EKFLocalizer::setCurrentResult()
   // tf2::Quaternion q_tf;
   // double roll = 0.0, pitch = 0.0;
   // if (!current_pose_info_queue_.empty()) {
-  //   current_ekf_pose_.pose.position.z = current_pose_info_queue_.back().pose->pose.pose.position.z;
-  //   tf2::fromMsg(
+  //   current_ekf_pose_.pose.position.z =
+  //   current_pose_info_queue_.back().pose->pose.pose.position.z; tf2::fromMsg(
   //     current_pose_info_queue_.back().pose->pose.pose.orientation,
   //     q_tf); /* use Pose pitch and roll */
   //   double yaw_tmp;
@@ -354,9 +353,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
 
   if (!z_filter_.initialized()) {
     initializeSimple1DFilters(*msg);
-  }
-  else
-  {
+  } else {
     updateSimple1DFilters(*msg);
   }
 }
@@ -773,7 +770,9 @@ double EKFLocalizer::normalizeYaw(const double & yaw) const
   return std::atan2(std::sin(yaw), std::cos(yaw));
 }
 
-void EKFLocalizer::initializeSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose) {
+void EKFLocalizer::initializeSimple1DFilters(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+{
   double z = pose.pose.pose.position.z;
   double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
 
@@ -786,7 +785,8 @@ void EKFLocalizer::initializeSimple1DFilters(const geometry_msgs::msg::PoseWithC
   pitch_filter_.init(pitch, 1.0, pose.header.stamp);
 }
 
-void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose) {
+void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+{
   double z = pose.pose.pose.position.z;
   double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
 
