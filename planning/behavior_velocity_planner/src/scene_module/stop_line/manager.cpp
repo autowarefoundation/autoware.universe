@@ -44,7 +44,8 @@ std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnP
 {
   std::vector<StopLineWithLaneId> stop_lines_with_lane_id;
 
-  for (const auto & m : getRegElemMapOnPath<TrafficSign>(path, lanelet_map)) {
+  for (const auto & m : planning_utils::getRegElemMapOnPath<TrafficSign>(
+         path, lanelet_map, planner_data_->current_pose.pose)) {
     const auto & traffic_sign_reg_elem = m.first;
     const int64_t lane_id = m.second.id();
     // Is stop sign?

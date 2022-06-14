@@ -48,8 +48,9 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 void NoStoppingAreaModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & m : getRegElemMapOnPath<NoStoppingArea>(
-         path, planner_data_->route_handler_->getLaneletMapPtr())) {
+  for (const auto & m : planning_utils::getRegElemMapOnPath<NoStoppingArea>(
+         path, planner_data_->route_handler_->getLaneletMapPtr(),
+         planner_data_->current_pose.pose)) {
     // Use lanelet_id to unregister module when the route is changed
     const auto module_id = m.first->id();
     if (!isModuleRegistered(module_id)) {
@@ -64,8 +65,8 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 NoStoppingAreaModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto no_stopping_area_id_set =
-    getRegElemIdSetOnPath<NoStoppingArea>(path, planner_data_->route_handler_->getLaneletMapPtr());
+  const auto no_stopping_area_id_set = planning_utils::getRegElemIdSetOnPath<NoStoppingArea>(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
 
   return [no_stopping_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return no_stopping_area_id_set.count(scene_module->getModuleId()) == 0;

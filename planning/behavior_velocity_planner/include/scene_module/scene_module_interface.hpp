@@ -25,13 +25,9 @@
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 
-#include <limits>
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>
@@ -164,126 +160,6 @@ public:
   }
 
 protected:
-  template <class T>
-  std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> getRegElemMapOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map)
-  {
-    std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet>
-      reg_elem_map_on_path;
-    std::set<int64_t> unique_lane_ids;
-    auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-      path.points, planner_data_->current_pose.pose, std::numeric_limits<double>::max(), M_PI_2);
-
-    // Add current lane id
-    lanelet::ConstLanelets current_lanes;
-    if (
-      lanelet::utils::query::getCurrentLanelets(
-        lanelet::utils::query::laneletLayer(lanelet_map), planner_data_->current_pose.pose,
-        &current_lanes) &&
-      nearest_segment_idx) {
-      for (const auto & ll : current_lanes) {
-        if (
-          ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
-          ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
-          unique_lane_ids.insert(ll.id());
-        }
-      }
-    }
-
-    // Add forward path lane_id
-    const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
-    for (size_t i = start_idx; i < path.points.size(); i++) {
-      unique_lane_ids.insert(
-        path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
-    }
-
-    for (const auto lane_id : unique_lane_ids) {
-      const auto ll = lanelet_map->laneletLayer.get(lane_id);
-
-      for (const auto & reg_elem : ll.regulatoryElementsAs<const T>()) {
-        reg_elem_map_on_path.insert(std::make_pair(reg_elem, ll));
-      }
-    }
-
-    return reg_elem_map_on_path;
-  }
-
-  template <class T>
-  std::set<int64_t> getRegElemIdSetOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map)
-  {
-    std::set<int64_t> reg_elem_id_set;
-    for (const auto & m : getRegElemMapOnPath<const T>(path, lanelet_map)) {
-      reg_elem_id_set.insert(m.first->id());
-    }
-    return reg_elem_id_set;
-  }
-
-  template <class T>
-  std::set<int64_t> getLaneletIdSetOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map)
-  {
-    std::set<int64_t> id_set;
-    for (const auto & m : getRegElemMapOnPath<const T>(path, lanelet_map)) {
-      id_set.insert(m.second.id());
-    }
-    return id_set;
-  }
-
-  virtual std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map)
-  {
-    std::set<int64_t> unique_lane_ids;
-    auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-      path.points, planner_data_->current_pose.pose, std::numeric_limits<double>::max(), M_PI_2);
-
-    // Add current lane id
-    lanelet::ConstLanelets current_lanes;
-    if (
-      lanelet::utils::query::getCurrentLanelets(
-        lanelet::utils::query::laneletLayer(lanelet_map), planner_data_->current_pose.pose,
-        &current_lanes) &&
-      nearest_segment_idx) {
-      for (const auto & ll : current_lanes) {
-        if (
-          ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
-          ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
-          unique_lane_ids.insert(ll.id());
-        }
-      }
-    }
-
-    // Add forward path lane_id
-    const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
-    for (size_t i = start_idx; i < path.points.size(); i++) {
-      unique_lane_ids.insert(
-        path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
-    }
-
-    std::vector<lanelet::ConstLanelet> lanelets;
-    for (const auto lane_id : unique_lane_ids) {
-      lanelets.push_back(lanelet_map->laneletLayer.get(lane_id));
-    }
-
-    return lanelets;
-  }
-
-  virtual std::set<int64_t> getLaneIdSetOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const lanelet::LaneletMapPtr lanelet_map)
-  {
-    std::set<int64_t> lane_id_set;
-    for (const auto & lane : getLaneletsOnPath(path, lanelet_map)) {
-      lane_id_set.insert(lane.id());
-    }
-
-    return lane_id_set;
-  }
-
   virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
