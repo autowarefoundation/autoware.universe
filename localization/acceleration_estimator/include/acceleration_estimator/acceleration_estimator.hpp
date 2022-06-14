@@ -19,9 +19,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
 
@@ -64,9 +64,9 @@ private:
   /**
    * @brief set odometry measurement
    */
-  void callbackTwistWithCovariance(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
+  void callbackTwistWithCovariance(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
   void callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
   void estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
-
 };
 #endif  // ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
