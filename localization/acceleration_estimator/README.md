@@ -8,10 +8,10 @@ This package is responsible for estimating acceleration using the output of `ekf
 
 ### Input
 
-| Name           | Type                                             | Description            |
-| -------------- | ------------------------------------------------ | ---------------------- |
-| `input/odom`   | `nav_msgs::msg::Odometry`                        | localization odometry  |
-| `input/twist`  | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist                  |
+| Name          | Type                                             | Description           |
+| ------------- | ------------------------------------------------ | --------------------- |
+| `input/odom`  | `nav_msgs::msg::Odometry`                        | localization odometry |
+| `input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist                 |
 
 ### Output
 
