@@ -12,7 +12,6 @@ This package is responsible for estimating acceleration using the output of `ekf
 | -------------- | ------------------------------------------------ | ---------------------- |
 | `input/odom`   | `nav_msgs::msg::Odometry`                        | localization odometry  |
 | `input/twist`  | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist                  |
-| `output/accel` | `geometry_msgs::msg::AccelWithCovarianceStamped` | estimated acceleration |
 
 ### Output
 
