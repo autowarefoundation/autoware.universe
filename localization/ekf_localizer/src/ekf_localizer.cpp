@@ -165,7 +165,7 @@ void EKFLocalizer::timerCallback()
       current_pose_info_queue_.pop();
       measurementUpdatePose(*pose_info.pose, pose_info.covariance);
       ++pose_info.counter;
-      if (pose_info.counter < pose_smoothing_steps_) {
+      if (pose_info.counter < pose_info.smoothing_steps) {
         current_pose_info_queue_.push(pose_info);
       }
     }
@@ -187,7 +187,7 @@ void EKFLocalizer::timerCallback()
       current_twist_info_queue_.pop();
       measurementUpdateTwist(*twist_info.twist, twist_info.covariance);
       ++twist_info.counter;
-      if (twist_info.counter < twist_smoothing_steps_) {
+      if (twist_info.counter < twist_info.smoothing_steps) {
         current_twist_info_queue_.push(twist_info);
       }
     }
@@ -349,7 +349,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   pose.pose = msg->pose.pose;
 
   PoseInfo pose_info = {
-    std::make_shared<geometry_msgs::msg::PoseStamped>(pose), msg->pose.covariance, 0};
+    std::make_shared<geometry_msgs::msg::PoseStamped>(pose), msg->pose.covariance, 0, pose_smoothing_steps_};
   current_pose_info_queue_.push(pose_info);
 }
 
@@ -364,7 +364,7 @@ void EKFLocalizer::callbackTwistWithCovariance(
   twist.twist = msg->twist.twist;
 
   TwistInfo twist_info = {
-    std::make_shared<geometry_msgs::msg::TwistStamped>(twist), msg->twist.covariance, 0};
+    std::make_shared<geometry_msgs::msg::TwistStamped>(twist), msg->twist.covariance, 0, twist_smoothing_steps_};
   current_twist_info_queue_.push(twist_info);
 }
 

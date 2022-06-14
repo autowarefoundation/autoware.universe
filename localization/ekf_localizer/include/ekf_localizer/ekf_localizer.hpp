@@ -48,6 +48,7 @@ struct PoseInfo
   geometry_msgs::msg::PoseStamped::SharedPtr pose;
   std::array<double, 36ul> covariance;
   int counter;
+  int smoothing_steps;
 };
 
 struct TwistInfo
@@ -55,6 +56,7 @@ struct TwistInfo
   geometry_msgs::msg::TwistStamped::SharedPtr twist;
   std::array<double, 36ul> covariance;
   int counter;
+  int smoothing_steps;
 };
 
 class EKFLocalizer : public rclcpp::Node
