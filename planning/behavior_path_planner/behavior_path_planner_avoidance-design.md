@@ -260,7 +260,6 @@ To compute the shift length, in addition to the vehicle's width and the paramete
 - The `road_shoulder_safety_margin` will prevent the module from generating a path that might cause the vehicle to go too near the road shoulder.
 
 ![shift_length_parameters](./image/shift_length_parameters.drawio.svg)
-q
 
 <!-- spell-checker:disable -->
 
