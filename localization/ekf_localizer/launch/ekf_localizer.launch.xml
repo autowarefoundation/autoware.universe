@@ -1,5 +1,5 @@
 <launch>
-  <arg name="show_debug_info" default="true"/>
+  <arg name="show_debug_info" default="false"/>
   <arg name="enable_yaw_bias_estimation" default="True"/>
   <arg name="predict_frequency" default="50.0"/>
   <arg name="tf_rate" default="10.0"/>
