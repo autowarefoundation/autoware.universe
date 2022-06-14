@@ -209,15 +209,13 @@ private:
    * @brief compute EKF update with pose measurement
    * @param pose measurement value
    */
-  void measurementUpdatePose(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+  void measurementUpdatePose(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   /**
    * @brief compute EKF update with pose measurement
    * @param twist measurement value
    */
-  void measurementUpdateTwist(
-    const geometry_msgs::msg::TwistWithCovarianceStamped & twist);
+  void measurementUpdateTwist(const geometry_msgs::msg::TwistWithCovarianceStamped & twist);
 
   /**
    * @brief check whether a measurement value falls within the mahalanobis distance threshold

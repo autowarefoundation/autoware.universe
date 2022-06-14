@@ -226,7 +226,8 @@ void EKFLocalizer::setCurrentResult()
   if (!current_pose_info_queue_.empty()) {
     current_ekf_pose_.pose.position.z = current_pose_info_queue_.back().pose->pose.pose.position.z;
     tf2::fromMsg(
-      current_pose_info_queue_.back().pose->pose.pose.orientation, q_tf); /* use Pose pitch and roll */
+      current_pose_info_queue_.back().pose->pose.pose.orientation,
+      q_tf); /* use Pose pitch and roll */
     double yaw_tmp;
     tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
   }
@@ -455,8 +456,7 @@ void EKFLocalizer::predictKinematicsModel()
 /*
  * measurementUpdatePose
  */
-void EKFLocalizer::measurementUpdatePose(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
 {
   if (pose.header.frame_id != pose_frame_id_) {
     RCLCPP_WARN_THROTTLE(
