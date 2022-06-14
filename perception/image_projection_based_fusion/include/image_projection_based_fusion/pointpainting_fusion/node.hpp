@@ -50,6 +50,7 @@ protected:
 
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
+  std::vector<double> point_cloud_range;
   bool rename_car_to_truck_and_bus_{false};
   bool has_twist_{false};
 

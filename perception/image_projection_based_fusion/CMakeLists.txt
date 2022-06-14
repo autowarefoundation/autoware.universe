@@ -67,40 +67,44 @@ else()
 endif()
 
 # Download trained models
-find_program(GDOWN_AVAIL "gdown")
-if(NOT GDOWN_AVAIL)
-  message("gdown: command not found. External files could not be downloaded.")
+execute_process(COMMAND echo "start to download" 1>&2)
+find_program(CURL_AVAIL "curl")
+if(NOT CURL_AVAIL)
+  message("curl: command not found. External files could not be downloaded.")
 endif()
 
 set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
 execute_process(COMMAND mkdir -p ${DATA_PATH})
 
-function(download FILE_NAME GFILE_ID FILE_HASH)
+function(download FILE_NAME FILE_HASH)
   # https://drive.google.com/file/d/GFILE_ID/view
   message(STATUS "Checking and downloading ${FILE_NAME}")
   set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
+  execute_process(COMMAND echo "start ${FILE_NAME}" 1>&2)
   if(EXISTS ${FILE_PATH})
+    execute_process(COMMAND echo "found ${FILE_NAME}")
     file(MD5 ${FILE_PATH} EXISTING_FILE_HASH)
     if(${FILE_HASH} EQUAL ${EXISTING_FILE_HASH})
       message(STATUS "File already exists.")
     else()
+      execute_process(COMMAND echo "diff ${FILE_NAME}")
       message(STATUS "File hash changes. Downloading now ...")
-      execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
+      execute_process(COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/pointpainting/pts_voxel_encoder_pointpainting.onnx" -o ${FILE_PATH})
       # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
       message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
     endif()
   else()
+    execute_process(COMMAND echo "not found ${FILE_NAME}")
     message(STATUS "File doesn't exists. Downloading now ...")
-    execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
+    execute_process(COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/pointpainting/pts_backbone_neck_head_pointpainting.onnx" -o ${FILE_PATH})
     # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
     message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
   endif()
 endfunction()
 
 # default model
-download(pts_voxel_encoder_pointpainting.onnx 1XrC2ANVfHJ7ivmatDNfjD2lJnGLJz1HP 19e51669233e943724e834021c382cae)
-download(pts_backbone_neck_head_pointpainting.onnx 1lQCiIJAZyok-HiIVQU9WAnEagy82y1SU 19e51669233e943724e834021c382cae)
-
+download(pts_voxel_encoder_pointpainting.onnx 19e51669233e943724e834021c382cae)
+download(pts_backbone_neck_head_pointpainting.onnx 19e51669233e943724e834021c382cae)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 

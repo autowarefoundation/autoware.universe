@@ -125,7 +125,7 @@ FusionNode<Msg, ObjType>::FusionNode(
     std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
 
   // publisher
-  pub_ptr_ = this->create_publisher<Msg>("~/debug/pointcloud_painted", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<Msg>("output", rclcpp::QoS{1});
 
   // debugger
   if (declare_parameter("debug_mode", false)) {

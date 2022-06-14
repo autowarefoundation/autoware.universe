@@ -51,7 +51,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
   const std::size_t max_voxel_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_voxel_size"));
-  const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
+  point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
   const std::size_t downsample_factor =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
@@ -102,7 +102,9 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
        iter_z(tmp, "z");
        iter_x != iter_x.end();
        ++iter_x, ++iter_y, ++iter_z, ++iter_painted_x, ++iter_painted_y, ++iter_painted_z) {
-    if (*iter_x <= -76.8 || *iter_x >= 76.8 || *iter_y <= -76.8 || *iter_y >= 76.8) {
+    if (
+      *iter_x <= point_cloud_range.at(0) || *iter_x >= point_cloud_range.at(3) ||
+      *iter_y <= point_cloud_range.at(1) || *iter_y >= point_cloud_range.at(4)) {
       continue;
     } else {
       *iter_painted_x = *iter_x;
