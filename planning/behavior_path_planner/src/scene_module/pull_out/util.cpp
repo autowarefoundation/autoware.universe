@@ -397,8 +397,7 @@ bool hasEnoughDistance(
 bool isPullOutPathSafe(
   const behavior_path_planner::PullOutPath & path, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & shoulder_lanes,
-  const PredictedObjects::ConstSharedPtr dynamic_objects,
-  const PullOutParameters & ros_parameters,
+  const PredictedObjects::ConstSharedPtr dynamic_objects, const PullOutParameters & ros_parameters,
   const tier4_autoware_utils::LinearRing2d & local_vehicle_footprint, const bool use_buffer,
   const bool use_dynamic_object)
 {
