@@ -489,7 +489,6 @@ void BehaviorPathPlannerNode::run()
 
   // NOTE: planner_data must not be referenced for multithreading
   const auto planner_data = planner_data_;
-  mutex_pd_.unlock();
 
   // run behavior planner
   const auto output = bt_manager_->run(planner_data);
@@ -499,7 +498,6 @@ void BehaviorPathPlannerNode::run()
   const auto path_candidate = getPathCandidate(output, planner_data);
 
   // update planner data
-  mutex_pd_.lock();  // for planner_data_
   planner_data_->prev_output_path = path;
   mutex_pd_.unlock();
 
