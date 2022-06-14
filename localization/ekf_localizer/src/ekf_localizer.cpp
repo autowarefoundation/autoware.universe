@@ -781,9 +781,9 @@ void EKFLocalizer::initializeSimple1DFilters(const geometry_msgs::msg::PoseWithC
   tf2::fromMsg(pose.pose.pose.orientation, q_tf);
   tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
 
-  z_filter_.init(z, 1.0, pose.header.stamp);
-  roll_filter_.init(roll, 1.0, pose.header.stamp);
-  pitch_filter_.init(pitch, 1.0, pose.header.stamp);
+  z_filter_.init(z, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
+  roll_filter_.init(roll, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
+  pitch_filter_.init(pitch, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
 }
 
 void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose) {
