@@ -20,7 +20,6 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -38,7 +37,6 @@
 
 namespace behavior_path_planner
 {
-using rtc_interface::RTCInterface;
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
@@ -57,53 +55,12 @@ public:
 
   void setParameters(const AvoidanceParameters & parameters);
 
-  void publishRTCStatus() override
-  {
-    rtc_interface_left_.publishCooperateStatus(clock_->now());
-    rtc_interface_right_.publishCooperateStatus(clock_->now());
-  }
-
-  bool isActivated() const override
-  {
-    if (rtc_interface_left_.isRegistered(next_uuid_)) {
-      return rtc_interface_left_.isActivated(next_uuid_);
-    } else if (rtc_interface_right_.isRegistered(next_uuid_)) {
-      return rtc_interface_right_.isActivated(next_uuid_);
-    }
-    return false;
-  }
-
 private:
   AvoidanceParameters parameters_;
 
   AvoidancePlanningData avoidance_data_;
 
   PathShifter path_shifter_;
-
-  // for RTC
-  RTCInterface rtc_interface_left_;
-  RTCInterface rtc_interface_right_;
-  UUID next_uuid_;
-  std::vector<std::pair<UUID, TurnSignalInfo>> registered_uuids_;
-
-  void updateRTCStatus(const CandidateOutput & candidate)
-  {
-    if (candidate.lateral_shift > 0.0) {
-      rtc_interface_left_.updateCooperateStatus(
-        next_uuid_, true, candidate.distance_to_path_change, clock_->now());
-    } else if (candidate.lateral_shift < 0.0) {
-      rtc_interface_right_.updateCooperateStatus(
-        next_uuid_, true, candidate.distance_to_path_change, clock_->now());
-    }
-  }
-
-  void waitApproval() { is_waiting_approval_ = true; }
-
-  void removeRTCStatus() override
-  {
-    rtc_interface_left_.clearCooperateStatus();
-    rtc_interface_right_.clearCooperateStatus();
-  }
 
   // data used in previous planning
   ShiftedPath prev_output_;

@@ -38,11 +38,9 @@ namespace behavior_path_planner
 {
 PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node, const PullOutParameters & parameters)
-: SceneModuleInterface{name, node},
-  parameters_{parameters},
-  rtc_interface_{node, "pull_out"},
-  uuid_{generateUUID()}
+: SceneModuleInterface{name, node}, parameters_{parameters}
 {
+  rtc_interface_left_ = std::make_shared<RTCInterface>(node, "pull_out");
 }
 
 BehaviorModuleOutput PullOutModule::run()
@@ -203,6 +201,7 @@ CandidateOutput PullOutModule::planCandidate() const
         output_retreat.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
           selected_retreat_path.pull_out_path.path.points, current_pose.position,
           selected_retreat_path.backed_pose.position);
+        output_retreat.lateral_shift = 1.0;
         return output_retreat;
       }
     }
@@ -213,6 +212,7 @@ CandidateOutput PullOutModule::planCandidate() const
   CandidateOutput output(selected_path.path);
   output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.start.position);
+  output.lateral_shift = 1.0;
   return output;
 }
 
@@ -234,7 +234,9 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     const double resolution = common_parameters.drivable_area_resolution;
     candidate_path.drivable_area = util::generateDrivableArea(
       lanes, resolution, common_parameters.vehicle_length, planner_data_);
-    waitApproval(isExecutionReady(), candidate.distance_to_path_change);
+
+    updateRTCStatus(candidate);
+    waitApproval();
   }
   for (size_t i = 1; i < candidate_path.points.size(); i++) {
     candidate_path.points.at(i).point.longitudinal_velocity_mps = 0.0;

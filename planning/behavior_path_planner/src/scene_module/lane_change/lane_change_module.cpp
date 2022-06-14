@@ -37,13 +37,10 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters)
-: SceneModuleInterface{name, node},
-  parameters_{parameters},
-  rtc_interface_left_(node, "lane_change_left"),
-  rtc_interface_right_(node, "lane_change_right"),
-  uuid_left_(generateUUID()),
-  uuid_right_(generateUUID())
+: SceneModuleInterface{name, node}, parameters_{parameters}
 {
+  rtc_interface_left_ = std::make_shared<RTCInterface>(node, "lane_change_left");
+  rtc_interface_right_ = std::make_shared<RTCInterface>(node, "lane_change_right");
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
@@ -206,14 +203,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
-  if (candidate.lateral_shift > 0.0) {
-    waitApprovalLeft(isExecutionReady(), candidate.distance_to_path_change);
-  } else if (candidate.lateral_shift < 0.0) {
-    waitApprovalRight(isExecutionReady(), candidate.distance_to_path_change);
-  } else {
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Direction is UNKNOWN distance = " << candidate.distance_to_path_change);
-  }
+  updateRTCStatus(candidate);
   return out;
 }
 

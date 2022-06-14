@@ -20,6 +20,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
+#include <rtc_interface/rtc_interface.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
@@ -48,6 +49,7 @@ using route_handler::LaneChangeDirection;
 using route_handler::PullOutDirection;
 using route_handler::PullOverDirection;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+using rtc_interface::RTCInterface;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
@@ -98,6 +100,8 @@ public:
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
+    uuid_left_(generateUUID()),
+    uuid_right_(generateUUID()),
     is_waiting_approval_{false},
     current_state_{BT::NodeStatus::IDLE}
   {
@@ -208,11 +212,47 @@ public:
   }
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
-  virtual void publishRTCStatus() { return; }
+  void publishRTCStatus()
+  {
+    if (!rtc_interface_left_ && !rtc_interface_right_) {
+      return;
+    }
+    if (rtc_interface_left_) {
+      rtc_interface_left_->publishCooperateStatus(clock_->now());
+    }
+    if (rtc_interface_right_) {
+      rtc_interface_right_->publishCooperateStatus(clock_->now());
+    }
+  }
 
-  virtual void removeRTCStatus() { return; }
+  void removeRTCStatus()
+  {
+    if (!rtc_interface_left_ && !rtc_interface_right_) {
+      return;
+    }
+    if (rtc_interface_left_) {
+      rtc_interface_left_->clearCooperateStatus();
+    }
+    if (rtc_interface_right_) {
+      rtc_interface_right_->clearCooperateStatus();
+    }
+  }
 
-  virtual bool isActivated() const { return true; }
+  bool isActivated() const
+  {
+    if (!rtc_interface_left_ && !rtc_interface_right_) {
+      return true;
+    }
+
+    if (rtc_interface_left_->isRegistered(uuid_left_)) {
+      RCLCPP_WARN_STREAM(getLogger(), "LEFT check");
+      return rtc_interface_left_->isActivated(uuid_left_);
+    } else if (rtc_interface_right_->isRegistered(uuid_right_)) {
+      RCLCPP_WARN_STREAM(getLogger(), "RIGHT check");
+      return rtc_interface_right_->isActivated(uuid_right_);
+    }
+    return false;
+  }
 
 private:
   std::string name_;
@@ -222,7 +262,40 @@ protected:
   MarkerArray debug_marker_;
   rclcpp::Clock::SharedPtr clock_;
   mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
+
+  std::shared_ptr<RTCInterface> rtc_interface_left_;
+  std::shared_ptr<RTCInterface> rtc_interface_right_;
+  UUID uuid_left_;
+  UUID uuid_right_;
   bool is_waiting_approval_;
+
+  void waitApprovalLeft(const bool safe, const double distance)
+  {
+    rtc_interface_left_->updateCooperateStatus(uuid_left_, safe, distance, clock_->now());
+    is_waiting_approval_ = true;
+  }
+
+  void waitApprovalRight(const bool safe, const double distance)
+  {
+    rtc_interface_right_->updateCooperateStatus(uuid_right_, safe, distance, clock_->now());
+    is_waiting_approval_ = true;
+  }
+
+  void updateRTCStatus(const CandidateOutput & candidate)
+  {
+    if (candidate.lateral_shift > 0.0) {
+      rtc_interface_left_->updateCooperateStatus(
+        uuid_left_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+    } else if (candidate.lateral_shift < 0.0) {
+      rtc_interface_right_->updateCooperateStatus(
+        uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+    } else {
+      RCLCPP_WARN_STREAM(
+        getLogger(), "Direction is UNKNOWN distance = " << candidate.distance_to_path_change);
+    }
+  }
+
+  void waitApproval() { is_waiting_approval_ = true; }
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
 

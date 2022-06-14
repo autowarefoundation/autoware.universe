@@ -22,7 +22,6 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -36,7 +35,6 @@
 
 namespace behavior_path_planner
 {
-using rtc_interface::RTCInterface;
 
 struct PullOutParameters
 {
@@ -101,30 +99,9 @@ public:
 
   void setParameters(const PullOutParameters & parameters);
 
-  void publishRTCStatus() override { rtc_interface_.publishCooperateStatus(clock_->now()); }
-
-  bool isActivated() const override
-  {
-    if (rtc_interface_.isRegistered(uuid_)) {
-      return rtc_interface_.isActivated(uuid_);
-    }
-    return false;
-  }
-
 private:
   PullOutParameters parameters_;
   PullOutStatus status_;
-
-  RTCInterface rtc_interface_;
-  UUID uuid_;
-
-  void waitApproval(const bool safe, const double distance)
-  {
-    rtc_interface_.updateCooperateStatus(uuid_, safe, distance, clock_->now());
-    is_waiting_approval_ = true;
-  }
-
-  void removeRTCStatus() override { rtc_interface_.clearCooperateStatus(); }
 
   double pull_out_lane_length_ = 200.0;
   double check_distance_ = 100.0;

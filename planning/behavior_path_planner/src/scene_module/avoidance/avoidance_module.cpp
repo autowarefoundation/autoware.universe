@@ -48,13 +48,11 @@ using tier4_autoware_utils::findNearestIndex;
 
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
-: SceneModuleInterface{name, node},
-  parameters_{parameters},
-  rtc_interface_left_(node, "avoidance_left"),
-  rtc_interface_right_(node, "avoidance_right"),
-  next_uuid_{generateUUID()}
+: SceneModuleInterface{name, node}, parameters_{parameters}
 {
   using std::placeholders::_1;
+  rtc_interface_left_ = std::make_shared<RTCInterface>(node, "avoidance_left");
+  rtc_interface_right_ = std::make_shared<RTCInterface>(node, "avoidance_right");
 }
 
 bool AvoidanceModule::isExecutionRequested() const
@@ -2186,8 +2184,8 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     }
 
-    registered_uuids_.push_back({next_uuid_, turn_signal_info});
-    next_uuid_ = generateUUID();
+    uuid_left_ = generateUUID();
+    uuid_right_ = generateUUID();
 
     DEBUG_PRINT("shift_point size: %lu -> %lu", prev_size, path_shifter_.getShiftPointsSize());
   } else {
