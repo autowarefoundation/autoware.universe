@@ -96,8 +96,16 @@ void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped
     accel_msg.accel.accel.linear.y = lpf_aly_ptr_->filter(aly);
     accel_msg.accel.accel.linear.z = lpf_alz_ptr_->filter(alz);
     accel_msg.accel.accel.angular.x = lpf_aax_ptr_->filter(aax);
-    accel_msg.accel.accel.angular.x = lpf_aay_ptr_->filter(aay);
-    accel_msg.accel.accel.angular.x = lpf_aaz_ptr_->filter(aaz);
+    accel_msg.accel.accel.angular.y = lpf_aay_ptr_->filter(aay);
+    accel_msg.accel.accel.angular.z = lpf_aaz_ptr_->filter(aaz);
+
+    // Ideally speaking, these covariance should be properly estimated.
+    accel_msg.accel.covariance[0 * 6 + 0] = 1.0;
+    accel_msg.accel.covariance[1 * 6 + 1] = 1.0;
+    accel_msg.accel.covariance[2 * 6 + 2] = 1.0;
+    accel_msg.accel.covariance[3 * 6 + 3] = 0.05;
+    accel_msg.accel.covariance[4 * 6 + 4] = 0.05;
+    accel_msg.accel.covariance[5 * 6 + 5] = 0.05;
   }
 
   pub_accel_->publish(accel_msg);
