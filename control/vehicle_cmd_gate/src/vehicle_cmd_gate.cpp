@@ -136,33 +136,26 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
-  double wheel_base = vehicle_info.wheel_base_m;
   {
-    double vel_lim = declare_parameter("nominal.vel_lim", 25.0);
-    double lon_acc_lim = declare_parameter("nominal.lon_acc_lim", 5.0);
-    double lon_jerk_lim = declare_parameter("nominal.lon_jerk_lim", 5.0);
-    double lat_acc_lim = declare_parameter("nominal.lat_acc_lim", 5.0);
-    double lat_jerk_lim = declare_parameter("nominal.lat_jerk_lim", 5.0);
-    filter_.setWheelBase(wheel_base);
-    filter_.setVelLim(vel_lim);
-    filter_.setLonAccLim(lon_acc_lim);
-    filter_.setLonJerkLim(lon_jerk_lim);
-    filter_.setLatAccLim(lat_acc_lim);
-    filter_.setLatJerkLim(lat_jerk_lim);
+    VehicleCmdFilterParam p;
+    p.wheel_base = vehicle_info.wheel_base_m;
+    p.vel_lim = declare_parameter("nominal.vel_lim", 25.0);
+    p.lon_acc_lim = declare_parameter("nominal.lon_acc_lim", 5.0);
+    p.lon_jerk_lim = declare_parameter("nominal.lon_jerk_lim", 5.0);
+    p.lat_acc_lim = declare_parameter("nominal.lat_acc_lim", 5.0);
+    p.lat_jerk_lim = declare_parameter("nominal.lat_jerk_lim", 5.0);
+    filter_.setParam(p);
   }
 
   {
-    double vel_lim = declare_parameter("on_transition.vel_lim", 25.0);
-    double lon_acc_lim = declare_parameter("on_transition.lon_acc_lim", 0.5);
-    double lon_jerk_lim = declare_parameter("on_transition.lon_jerk_lim", 0.25);
-    double lat_acc_lim = declare_parameter("on_transition.lat_acc_lim", 0.5);
-    double lat_jerk_lim = declare_parameter("on_transition.lat_jerk_lim", 0.25);
-    filter_on_transition_.setWheelBase(wheel_base);
-    filter_on_transition_.setVelLim(vel_lim);
-    filter_on_transition_.setLonAccLim(lon_acc_lim);
-    filter_on_transition_.setLonJerkLim(lon_jerk_lim);
-    filter_on_transition_.setLatAccLim(lat_acc_lim);
-    filter_on_transition_.setLatJerkLim(lat_jerk_lim);
+    VehicleCmdFilterParam p;
+    p.wheel_base = vehicle_info.wheel_base_m;
+    p.vel_lim = declare_parameter("on_transition.vel_lim", 25.0);
+    p.lon_acc_lim = declare_parameter("on_transition.lon_acc_lim", 0.5);
+    p.lon_jerk_lim = declare_parameter("on_transition.lon_jerk_lim", 0.25);
+    p.lat_acc_lim = declare_parameter("on_transition.lat_acc_lim", 0.5);
+    p.lat_jerk_lim = declare_parameter("on_transition.lat_jerk_lim", 0.25);
+    filter_on_transition_.setParam(p);
   }
 
   // Set default value
@@ -512,19 +505,12 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   const double dt = getDt();
 
   if (current_operation_mode_.mode == OperationMode::TRANSITION_TO_AUTO) {
-    filter_on_transition_.limitLongitudinalWithVel(out);
-    filter_on_transition_.limitLongitudinalWithAcc(dt, out);
-    filter_on_transition_.limitLongitudinalWithJerk(dt, out);
-    filter_on_transition_.limitLateralWithLatAcc(dt, out);
-    filter_on_transition_.limitLateralWithLatJerk(dt, out);
+    filter_on_transition_.filterAll(dt, out);
   } else {
-    filter_.limitLongitudinalWithVel(out);
-    filter_.limitLongitudinalWithAcc(dt, out);
-    filter_.limitLongitudinalWithJerk(dt, out);
-    filter_.limitLateralWithLatAcc(dt, out);
-    filter_.limitLateralWithLatJerk(dt, out);
+    filter_.filterAll(dt, out);
   }
 
+  // set prev value for both to keep consistency over switching
   filter_.setPrevCmd(out);
   filter_on_transition_.setPrevCmd(out);
 
