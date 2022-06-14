@@ -92,7 +92,6 @@ private:
   double prevent_zero_division_value_;
   double lpf_gain;
 
-
   // Variables Received Outside
   std::shared_ptr<PoseArray> current_waypoints_ptr_;
   std::shared_ptr<std::vector<double>> current_waypoints_vel_ptr_;

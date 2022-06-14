@@ -24,8 +24,7 @@ namespace control_performance_analysis
 {
 using geometry_msgs::msg::Quaternion;
 
-ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
-: wheelbase_{2.74}
+ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore() : wheelbase_{2.74}
 {
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
   prev_driving_vars_ = std::make_unique<msg::DrivingMonitorStamped>();
@@ -103,23 +102,23 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
   std::vector<double> projection_distances_ds;
 
   auto f_projection_dist = [this](auto pose_1, auto pose_0) {
-      // Vector of intervals.
-      std::vector<double> int_vec{
-        pose_1.position.x - pose_0.position.x, pose_1.position.y - pose_0.position.y};
+    // Vector of intervals.
+    std::vector<double> int_vec{
+      pose_1.position.x - pose_0.position.x, pose_1.position.y - pose_0.position.y};
 
-      // Compute the magnitude of path interval vector
-      double ds_mag = std::hypot(int_vec[0], int_vec[1]);
+    // Compute the magnitude of path interval vector
+    double ds_mag = std::hypot(int_vec[0], int_vec[1]);
 
-      // Vector to vehicle from the origin waypoints.
-      std::vector<double> vehicle_vec{
-        this->current_vec_pose_ptr_->position.x - pose_0.position.x,
-        this->current_vec_pose_ptr_->position.y - pose_0.position.y};
+    // Vector to vehicle from the origin waypoints.
+    std::vector<double> vehicle_vec{
+      this->current_vec_pose_ptr_->position.x - pose_0.position.x,
+      this->current_vec_pose_ptr_->position.y - pose_0.position.y};
 
-      double projection_distance_onto_interval =
-        (int_vec[0] * vehicle_vec[0] + int_vec[1] * vehicle_vec[1]) / ds_mag;
+    double projection_distance_onto_interval =
+      (int_vec[0] * vehicle_vec[0] + int_vec[1] * vehicle_vec[1]) / ds_mag;
 
-      return projection_distance_onto_interval;
-    };
+    return projection_distance_onto_interval;
+  };
 
   // Fill the projection_distances vector.
   std::transform(
@@ -129,8 +128,8 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
 
   // Lambda function to replace negative numbers with a large number.
   auto fnc_check_if_negative = [](auto x) {
-      return x < 0 ? std::numeric_limits<double>::max() : x;
-    };
+    return x < 0 ? std::numeric_limits<double>::max() : x;
+  };
 
   std::vector<double> projections_distances_all_positive;
   std::transform(
@@ -151,9 +150,9 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
     std::distance(current_waypoints_ptr_->poses.cbegin(), current_waypoints_ptr_->poses.cend());
 
   return ((min_distance_ds <= acceptable_min_waypoint_distance_) && (*idx_prev_wp_ >= 0) &&
-         (*idx_prev_wp_ <= length_of_trajectory)) ?
-         std::make_pair(true, *idx_prev_wp_) :
-         std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
+          (*idx_prev_wp_ <= length_of_trajectory))
+           ? std::make_pair(true, *idx_prev_wp_)
+           : std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
 }
 
 bool ControlPerformanceAnalysisCore::isDataReady() const
@@ -203,8 +202,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
 
   if (
     !pair_pose_interp_wp_.first || !interpolated_pose_ptr_ || !interpolated_velocity_ptr_ ||
-    !interpolated_acceleration_ptr_)
-  {
+    !interpolated_acceleration_ptr_) {
     RCLCPP_WARN_THROTTLE(
       logger_, clock_, 1000,
       "Cannot get interpolated pose, velocity, and acceleration into control_performance "
@@ -260,16 +258,16 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   double & Vx = odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
   // Current acceleration calculation
   double && d_x = odom_history_ptr_->at(odom_size - 1).pose.pose.position.x -
-    odom_history_ptr_->at(odom_size - 2).pose.pose.position.x;
+                  odom_history_ptr_->at(odom_size - 2).pose.pose.position.x;
   double && d_y = odom_history_ptr_->at(odom_size - 1).pose.pose.position.y -
-    odom_history_ptr_->at(odom_size - 2).pose.pose.position.y;
+                  odom_history_ptr_->at(odom_size - 2).pose.pose.position.y;
   double && ds = std::hypot(d_x, d_y);
 
   double && vel_mean = (odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x +
-    odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x) /
-    2.0;
+                        odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x) /
+                       2.0;
   double && dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
-    odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
+                 odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
   double && dt = ds / std::max(vel_mean, prevent_zero_division_value_);
   double && Ax = dv / std::max(dt, prevent_zero_division_value_);  // current acceleration
 
@@ -283,7 +281,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   error_vars.error.control_effort_energy = contR * steering_cmd * steering_cmd;  // u*R*u';
 
   double && heading_velocity_error = (Vx * tan(current_steering_val)) / wheelbase_ -
-    *this->interpolated_velocity_ptr_ * curvature_est;
+                                     *this->interpolated_velocity_ptr_ * curvature_est;
 
   double && lateral_acceleration_error =
     -curvature_est * *interpolated_acceleration_ptr_ * longitudinal_error -
@@ -320,48 +318,47 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     // LPF for error vars
 
     error_vars.error.curvature_estimate = lpf_gain * prev_target_vars_->error.curvature_estimate +
-      (1 - lpf_gain) * error_vars.error.curvature_estimate;
+                                          (1 - lpf_gain) * error_vars.error.curvature_estimate;
 
-    error_vars.error.curvature_estimate_pp = lpf_gain *
-      prev_target_vars_->error.curvature_estimate_pp +
+    error_vars.error.curvature_estimate_pp =
+      lpf_gain * prev_target_vars_->error.curvature_estimate_pp +
       (1 - lpf_gain) * error_vars.error.curvature_estimate_pp;
 
     error_vars.error.lateral_error = lpf_gain * prev_target_vars_->error.lateral_error +
-      (1 - lpf_gain) * error_vars.error.lateral_error;
+                                     (1 - lpf_gain) * error_vars.error.lateral_error;
 
-    error_vars.error.lateral_error_velocity = lpf_gain *
-      prev_target_vars_->error.lateral_error_velocity +
+    error_vars.error.lateral_error_velocity =
+      lpf_gain * prev_target_vars_->error.lateral_error_velocity +
       (1 - lpf_gain) * error_vars.error.lateral_error_velocity;
 
-    error_vars.error.lateral_error_acceleration = lpf_gain *
-      prev_target_vars_->error.lateral_error_acceleration +
+    error_vars.error.lateral_error_acceleration =
+      lpf_gain * prev_target_vars_->error.lateral_error_acceleration +
       (1 - lpf_gain) * error_vars.error.lateral_error_acceleration;
 
     error_vars.error.longitudinal_error = lpf_gain * prev_target_vars_->error.longitudinal_error +
-      (1 - lpf_gain) * error_vars.error.longitudinal_error;
+                                          (1 - lpf_gain) * error_vars.error.longitudinal_error;
 
-    error_vars.error.longitudinal_error_velocity = lpf_gain *
-      prev_target_vars_->error.longitudinal_error_velocity +
+    error_vars.error.longitudinal_error_velocity =
+      lpf_gain * prev_target_vars_->error.longitudinal_error_velocity +
       (1 - lpf_gain) * error_vars.error.longitudinal_error_velocity;
 
-    error_vars.error.longitudinal_error_acceleration = lpf_gain *
-      prev_target_vars_->error.longitudinal_error_acceleration +
+    error_vars.error.longitudinal_error_acceleration =
+      lpf_gain * prev_target_vars_->error.longitudinal_error_acceleration +
       (1 - lpf_gain) * error_vars.error.longitudinal_error_acceleration;
 
     error_vars.error.heading_error = lpf_gain * prev_target_vars_->error.heading_error +
-      (1 - lpf_gain) * error_vars.error.heading_error;
+                                     (1 - lpf_gain) * error_vars.error.heading_error;
 
-    error_vars.error.heading_error_velocity = lpf_gain *
-      prev_target_vars_->error.heading_error_velocity +
+    error_vars.error.heading_error_velocity =
+      lpf_gain * prev_target_vars_->error.heading_error_velocity +
       (1 - lpf_gain) * error_vars.error.heading_error_velocity;
 
-    error_vars.error.control_effort_energy = lpf_gain *
-      prev_target_vars_->error.control_effort_energy +
+    error_vars.error.control_effort_energy =
+      lpf_gain * prev_target_vars_->error.control_effort_energy +
       (1 - lpf_gain) * error_vars.error.control_effort_energy;
 
     error_vars.error.error_energy = lpf_gain * prev_target_vars_->error.error_energy +
-      (1 - lpf_gain) * error_vars.error.error_energy;
-
+                                    (1 - lpf_gain) * error_vars.error.error_energy;
   }
 
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>(error_vars);
@@ -387,11 +384,11 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         // Calculate longitudinal acceleration
 
         double dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
-          odom_history_ptr_->at(odom_size - odom_interval_ - 2).twist.twist.linear.x;
+                    odom_history_ptr_->at(odom_size - odom_interval_ - 2).twist.twist.linear.x;
 
         auto duration =
           (rclcpp::Time(odom_history_ptr_->at(odom_size - 1).header.stamp) -
-          rclcpp::Time(odom_history_ptr_->at(odom_size - odom_interval_ - 2).header.stamp));
+           rclcpp::Time(odom_history_ptr_->at(odom_size - odom_interval_ - 2).header.stamp));
 
         double dt = duration.seconds();
 
@@ -403,7 +400,7 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         //  Calculate lateral jerk
 
         double d_lateral_jerk = driving_status_vars.lateral_acceleration.data -
-          prev_driving_vars_->lateral_acceleration.data;
+                                prev_driving_vars_->lateral_acceleration.data;
 
         //  We already know the delta time from above. same as longitudinal acceleration
 
@@ -415,10 +412,10 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
       if (odom_history_ptr_->size() == 2 * odom_interval_ + 3) {
         // calculate longitudinal jerk
         double d_a = driving_status_vars.longitudinal_acceleration.data -
-          prev_driving_vars_->longitudinal_acceleration.data;
+                     prev_driving_vars_->longitudinal_acceleration.data;
         auto duration =
           (rclcpp::Time(driving_status_vars.longitudinal_acceleration.header.stamp) -
-          rclcpp::Time(prev_driving_vars_->longitudinal_acceleration.header.stamp));
+           rclcpp::Time(prev_driving_vars_->longitudinal_acceleration.header.stamp));
         double dt = duration.seconds();
         driving_status_vars.longitudinal_jerk.data = d_a / dt;
         driving_status_vars.longitudinal_jerk.header.set__stamp(
@@ -428,23 +425,24 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
       if (prev_driving_vars_) {
         // LPF for driving status vars
 
-        driving_status_vars.longitudinal_acceleration.data = lpf_gain *
-          prev_driving_vars_->longitudinal_acceleration.data +
+        driving_status_vars.longitudinal_acceleration.data =
+          lpf_gain * prev_driving_vars_->longitudinal_acceleration.data +
           (1 - lpf_gain) * driving_status_vars.longitudinal_acceleration.data;
 
-        driving_status_vars.lateral_acceleration.data = lpf_gain *
-          prev_driving_vars_->lateral_acceleration.data +
+        driving_status_vars.lateral_acceleration.data =
+          lpf_gain * prev_driving_vars_->lateral_acceleration.data +
           (1 - lpf_gain) * driving_status_vars.lateral_acceleration.data;
 
-        driving_status_vars.lateral_jerk.data = lpf_gain * prev_driving_vars_->lateral_jerk.data +
+        driving_status_vars.lateral_jerk.data =
+          lpf_gain * prev_driving_vars_->lateral_jerk.data +
           (1 - lpf_gain) * driving_status_vars.lateral_jerk.data;
 
-        driving_status_vars.longitudinal_jerk.data = lpf_gain *
-          prev_driving_vars_->longitudinal_jerk.data +
+        driving_status_vars.longitudinal_jerk.data =
+          lpf_gain * prev_driving_vars_->longitudinal_jerk.data +
           (1 - lpf_gain) * driving_status_vars.longitudinal_jerk.data;
 
-        driving_status_vars.controller_processing_time.data = lpf_gain *
-          prev_driving_vars_->controller_processing_time.data +
+        driving_status_vars.controller_processing_time.data =
+          lpf_gain * prev_driving_vars_->controller_processing_time.data +
           (1 - lpf_gain) * driving_status_vars.controller_processing_time.data;
       }
 
@@ -492,12 +490,12 @@ void ControlPerformanceAnalysisCore::findCurveRefIdx()
   }
 
   auto fun_distance_cond = [this](auto pose_t) {
-      double dist = std::hypot(
-        pose_t.position.x - this->interpolated_pose_ptr_->position.x,
-        pose_t.position.y - this->interpolated_pose_ptr_->position.y);
+    double dist = std::hypot(
+      pose_t.position.x - this->interpolated_pose_ptr_->position.x,
+      pose_t.position.y - this->interpolated_pose_ptr_->position.y);
 
-      return dist > wheelbase_;
-    };
+    return dist > wheelbase_;
+  };
 
   auto it = std::find_if(
     current_waypoints_ptr_->poses.cbegin() + *idx_prev_wp_, current_waypoints_ptr_->poses.cend(),
@@ -553,10 +551,10 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
 
   // Previous waypoint to next waypoint.
   double && dx_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
-    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
+                           current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
 
   double && dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
-    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
+                           current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
   double && delta_psi_prev2next = utils::angleDistance(next_yaw, prev_yaw);
   double && d_vel_prev2next = next_velocity - prev_velocity;
@@ -619,15 +617,15 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
     prev_wp_acc = 0.0;
   } else {
     double && d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
-      current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.x;
+                    current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.x;
     double && d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
-      current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.y;
+                    current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.y;
     double && ds = std::hypot(d_x, d_y);
     double && vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_) +
-      current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1)) /
-      2.0;
+                          current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1)) /
+                         2.0;
     double && dv = current_waypoints_vel_ptr_->at(*idx_next_wp_) -
-      current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1);
+                   current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1);
     double && dt = ds / std::max(vel_mean, prevent_zero_division_value_);
     prev_wp_acc = dv / std::max(dt, prevent_zero_division_value_);
   }
@@ -636,15 +634,15 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
     next_wp_acc = 0.0;
   } else {
     double && d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
-      current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
+                    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
     double && d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
-      current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
+                    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
     double && ds = std::hypot(d_x, d_y);
     double && vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) +
-      current_waypoints_vel_ptr_->at(*idx_prev_wp_)) /
-      2.0;
+                          current_waypoints_vel_ptr_->at(*idx_prev_wp_)) /
+                         2.0;
     double && dv = current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) -
-      current_waypoints_vel_ptr_->at(*idx_prev_wp_);
+                   current_waypoints_vel_ptr_->at(*idx_prev_wp_);
     double && dt = ds / std::max(vel_mean, prevent_zero_division_value_);
     next_wp_acc = dv / std::max(dt, prevent_zero_division_value_);
   }
@@ -693,9 +691,9 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
     std::distance(current_waypoints_ptr_->poses.cbegin(), current_waypoints_ptr_->poses.cend());
 
   auto num_of_forward_indices = num_of_back_indices;
-  int32_t loc_of_forward_idx = (*idx_curve_ref_wp_ + num_of_forward_indices > max_idx) ?
-    max_idx - 1 :
-    *idx_curve_ref_wp_ + num_of_forward_indices - 1;
+  int32_t loc_of_forward_idx = (*idx_curve_ref_wp_ + num_of_forward_indices > max_idx)
+                                 ? max_idx - 1
+                                 : *idx_curve_ref_wp_ + num_of_forward_indices - 1;
 
   // We have three indices of the three trajectory poses.
   // We compute a curvature estimate from these points.
@@ -732,12 +730,12 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
   double look_ahead_distance_pp = std::max(wheelbase_, 2 * Vx);
 
   auto fun_distance_cond = [this, &look_ahead_distance_pp](auto pose_t) {
-      double dist = std::hypot(
-        pose_t.position.x - this->interpolated_pose_ptr_->position.x,
-        pose_t.position.y - this->interpolated_pose_ptr_->position.y);
+    double dist = std::hypot(
+      pose_t.position.x - this->interpolated_pose_ptr_->position.x,
+      pose_t.position.y - this->interpolated_pose_ptr_->position.y);
 
-      return dist > look_ahead_distance_pp;
-    };
+    return dist > look_ahead_distance_pp;
+  };
 
   auto it = std::find_if(
     current_waypoints_ptr_->poses.cbegin() + *idx_prev_wp_, current_waypoints_ptr_->poses.cend(),

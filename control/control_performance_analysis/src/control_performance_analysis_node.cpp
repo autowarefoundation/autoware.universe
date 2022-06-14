@@ -50,8 +50,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   param_.odom_interval = declare_parameter("odom_interval", 2);
   param_.acceptable_min_waypoint_distance =
     declare_parameter("acceptable_min_waypoint_distance", 2.0);
-  param_.lpf_gain =
-    declare_parameter("low_pass_filter_gain", 0.8);
+  param_.lpf_gain = declare_parameter("low_pass_filter_gain", 0.8);
 
   // Prepare error computation class with the wheelbase parameter.
   control_performance_core_ptr_ = std::make_unique<ControlPerformanceAnalysisCore>(
@@ -221,22 +220,20 @@ bool ControlPerformanceAnalysisNode::isDataReady() const
 
 bool ControlPerformanceAnalysisNode::isValidTrajectory(const Trajectory & traj)
 {
-  bool check_condition = std::all_of(
-    traj.points.cbegin(), traj.points.cend(), [](auto point) {
-      const auto & p = point.pose.position;
-      const auto & o = point.pose.orientation;
-      const auto & t = point.longitudinal_velocity_mps;
-      const auto & a = point.acceleration_mps2;
+  bool check_condition = std::all_of(traj.points.cbegin(), traj.points.cend(), [](auto point) {
+    const auto & p = point.pose.position;
+    const auto & o = point.pose.orientation;
+    const auto & t = point.longitudinal_velocity_mps;
+    const auto & a = point.acceleration_mps2;
 
-      if (
-        !isfinite(p.x) || !isfinite(p.y) || !isfinite(p.z) || !isfinite(o.x) || !isfinite(o.y) ||
-        !isfinite(o.z) || !isfinite(o.w) || !isfinite(t) || !isfinite(a))
-      {
-        return false;
-      } else {
-        return true;
-      }
-    });
+    if (
+      !isfinite(p.x) || !isfinite(p.y) || !isfinite(p.z) || !isfinite(o.x) || !isfinite(o.y) ||
+      !isfinite(o.z) || !isfinite(o.w) || !isfinite(t) || !isfinite(a)) {
+      return false;
+    } else {
+      return true;
+    }
+  });
 
   return check_condition;
 }
