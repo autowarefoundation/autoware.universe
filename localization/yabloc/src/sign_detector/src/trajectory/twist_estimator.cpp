@@ -1,6 +1,5 @@
 #include "trajectory/twist_estimator.hpp"
 
-#include <GeographicLib/Geocentric.hpp>
 #include <eigen3/Eigen/Geometry>
 #include <sophus/geometry.hpp>
 
@@ -22,9 +21,10 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
   pub_pose_ = create_publisher<PoseStamped>("/kalman/doppler", 10);
   pub_string_ = create_publisher<String>("/kalman/status", 10);
 
+  // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 0, 0, 1);
-  cov_ = Eigen::Vector4f(9, 100, 0.0001, 0.0001).asDiagonal();
-  cov_predict_ = Eigen::Vector4f(0.01, 9, 0.001, 0.001).asDiagonal();
+  cov_ = Eigen::Vector4f(9, 100, 0.0001, 0.00001).asDiagonal();
+  cov_predict_ = Eigen::Vector4f(0.01, 25, 0.001, 0.00001).asDiagonal();
 }
 
 void TwistEstimator::callbackImu(const Imu & raw_msg)
@@ -74,7 +74,7 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
   H << 0, -1, 0, wheel;
 
   // Determain kalman gain
-  float W = 1;
+  float W = 0.09;  // [(m/s)^2]
   float S = H * cov_ * H.transpose() + W;
   Eigen::Matrix<float, 4, 1> K = cov_ * H.transpose() / S;
 
@@ -85,7 +85,7 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
 
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 {
-  last_rtk_fixed_ = msg.flags == 131;
+  last_rtk_fixed_ = (msg.flags == 131);
   if (msg.flags != 131) {
     RCLCPP_WARN(get_logger(), "NOT FIX!");
     return;
@@ -155,7 +155,7 @@ void TwistEstimator::publishString()
   if (last_rtk_fixed_)
     ss << "RTK: FIX" << std::endl;
   else
-    ss << "RTK: FLOAT!!" << std::endl;
+    ss << "RTK: !!NOT FIX!!" << std::endl;
 
   String msg;
   msg.data = ss.str();

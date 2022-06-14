@@ -79,9 +79,9 @@
 
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
-    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" />
+    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" output="screen"/>
 
-    <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level info">
+    <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
         <remap from="particle_pose" to="/sensing/gnss/ublox/pose"/>

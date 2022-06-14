@@ -58,7 +58,6 @@ private:
   // Callback
   void gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
   void initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
-  void twistCovarianceCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist);
   void twistCallback(const TwistStamped::ConstSharedPtr twist);
   void weightedParticlesCallback(const ParticleArray::ConstSharedPtr weighted_particles);
   void timerCallback();

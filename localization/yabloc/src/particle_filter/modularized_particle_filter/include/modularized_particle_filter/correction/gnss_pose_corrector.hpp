@@ -17,7 +17,6 @@ public:
   GNSSPoseCorrector();
 
 private:
-  using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;

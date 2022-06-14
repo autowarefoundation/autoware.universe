@@ -36,8 +36,6 @@ Predictor::Predictor()
     "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, _1));
   twist_sub_ =
     create_subscription<TwistStamped>("twist", 10, std::bind(&Predictor::twistCallback, this, _1));
-  twist_cov_sub_ = create_subscription<TwistWithCovarianceStamped>(
-    "twist_with_covariance", 10, std::bind(&Predictor::twistCovarianceCallback, this, _1));
   weighted_particles_sub_ = create_subscription<ParticleArray>(
     "weighted_particles", 10, std::bind(&Predictor::weightedParticlesCallback, this, _1));
   height_sub_ = create_subscription<std_msgs::msg::Float32>(
@@ -97,11 +95,6 @@ void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
   twist_covariance.twist.covariance.at(28) = 1e4;
   twist_covariance.twist.covariance.at(35) = static_angular_covariance;
   twist_opt_ = twist_covariance;
-}
-
-void Predictor::twistCovarianceCallback(const TwistWithCovarianceStamped::ConstSharedPtr twist)
-{
-  twist_opt_ = *twist;
 }
 
 void Predictor::timerCallback()
