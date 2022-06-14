@@ -160,12 +160,20 @@ void MissionPlannerLanelet2::visualizeRoute(
 
   for (const auto & route_section : route.segments) {
     for (const auto & lane_id : route_section.primitives) {
-      auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id.id);
-      route_lanelets.push_back(lanelet);
-      if (route_section.preferred_primitive_id == lane_id.id) {
-        goal_lanelets.push_back(lanelet);
-      } else {
-        end_lanelets.push_back(lanelet);
+      try {
+        auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id.id);
+        route_lanelets.push_back(lanelet);
+        if (route_section.preferred_primitive_id == lane_id.id) {
+          goal_lanelets.push_back(lanelet);
+        } else {
+          end_lanelets.push_back(lanelet);
+        }
+      } catch (const std::exception & e) {
+        RCLCPP_WARN(
+          get_logger(),
+          "%s. Maybe the loaded route was created on a different Map from the current one. "
+          "Try to load the other Route again.",
+          e.what());
       }
     }
   }
