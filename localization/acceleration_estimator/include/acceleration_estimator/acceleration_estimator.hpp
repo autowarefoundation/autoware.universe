@@ -15,6 +15,8 @@
 #ifndef ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
 #define ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
 
+#include "signal_processing/lowpass_filter_1d.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
@@ -52,6 +54,13 @@ private:
   geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr prev_accel_ptr_;
   double accel_lowpass_gain_;
   bool use_odom_;
+  std::shared_ptr<LowpassFilter1d> lpf_aax_ptr_;
+  std::shared_ptr<LowpassFilter1d> lpf_aay_ptr_;
+  std::shared_ptr<LowpassFilter1d> lpf_aaz_ptr_;
+  std::shared_ptr<LowpassFilter1d> lpf_alx_ptr_;
+  std::shared_ptr<LowpassFilter1d> lpf_aly_ptr_;
+  std::shared_ptr<LowpassFilter1d> lpf_alz_ptr_;
+
   /**
    * @brief set odometry measurement
    */

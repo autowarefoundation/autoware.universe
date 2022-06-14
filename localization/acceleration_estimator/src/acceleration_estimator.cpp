@@ -45,6 +45,12 @@ AccelerationEstimator::AccelerationEstimator(const std::string & node_name, cons
   accel_lowpass_gain_ = declare_parameter("accel_lowpass_gain", 0.5);
   use_odom_ = declare_parameter("use_odom", true);
 
+  lpf_alx_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
+  lpf_aly_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
+  lpf_alz_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
+  lpf_aax_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
+  lpf_aay_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
+  lpf_aaz_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
 }
 
 void AccelerationEstimator::callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -81,19 +87,20 @@ void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped
       (rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_twist_ptr_->header.stamp)).seconds(),
       1.0e-3
     );
-    accel_msg.accel.accel.linear.x = (msg->twist.linear.x - prev_twist_ptr_->twist.linear.x) / dt;
-    accel_msg.accel.accel.linear.y = (msg->twist.linear.y - prev_twist_ptr_->twist.linear.y) / dt;
-    accel_msg.accel.accel.linear.z = (msg->twist.linear.z - prev_twist_ptr_->twist.linear.z) / dt;
-    accel_msg.accel.accel.angular.x = (msg->twist.angular.x - prev_twist_ptr_->twist.angular.x) / dt;
-    accel_msg.accel.accel.angular.y = (msg->twist.angular.y - prev_twist_ptr_->twist.angular.y) / dt;
-    accel_msg.accel.accel.angular.z = (msg->twist.angular.z - prev_twist_ptr_->twist.angular.z) / dt;
+    double alx, aly, alz, aax, aay, aaz;
+    alx = (msg->twist.linear.x - prev_twist_ptr_->twist.linear.x) / dt;
+    aly = (msg->twist.linear.y - prev_twist_ptr_->twist.linear.y) / dt;
+    alz = (msg->twist.linear.z - prev_twist_ptr_->twist.linear.z) / dt;
+    aax = (msg->twist.angular.x - prev_twist_ptr_->twist.angular.x) / dt;
+    aay = (msg->twist.angular.y - prev_twist_ptr_->twist.angular.y) / dt;
+    aaz = (msg->twist.angular.z - prev_twist_ptr_->twist.angular.z) / dt;
 
-    accel_msg.accel.accel.linear.x = accel_lowpass_gain_ * accel_msg.accel.accel.linear.x + (1 - accel_lowpass_gain_) * prev_accel_ptr_->accel.accel.linear.x;
-    accel_msg.accel.accel.linear.y = accel_lowpass_gain_ * accel_msg.accel.accel.linear.y + (1 - accel_lowpass_gain_) * prev_accel_ptr_->accel.accel.linear.y;
-    accel_msg.accel.accel.linear.z = accel_lowpass_gain_ * accel_msg.accel.accel.linear.z + (1 - accel_lowpass_gain_) * prev_accel_ptr_->accel.accel.linear.z;
-    accel_msg.accel.accel.angular.x = accel_lowpass_gain_ * accel_msg.accel.accel.angular.x + (1 - accel_lowpass_gain_) * prev_accel_ptr_->accel.accel.angular.x;
-    accel_msg.accel.accel.angular.y = accel_lowpass_gain_ * accel_msg.accel.accel.angular.y + (1 - accel_lowpass_gain_) * prev_accel_ptr_->accel.accel.angular.y;
-    accel_msg.accel.accel.angular.z = accel_lowpass_gain_ * accel_msg.accel.accel.angular.z + (1 - accel_lowpass_gain_) * prev_accel_ptr_->accel.accel.angular.z;
+    accel_msg.accel.accel.linear.x = lpf_alx_ptr_->filter(alx);
+    accel_msg.accel.accel.linear.y = lpf_aly_ptr_->filter(aly);
+    accel_msg.accel.accel.linear.z = lpf_alz_ptr_->filter(alz);
+    accel_msg.accel.accel.angular.x = lpf_aax_ptr_->filter(aax);
+    accel_msg.accel.accel.angular.x = lpf_aay_ptr_->filter(aay);
+    accel_msg.accel.accel.angular.x = lpf_aaz_ptr_->filter(aaz);
   }
 
   pub_accel_->publish(accel_msg);
