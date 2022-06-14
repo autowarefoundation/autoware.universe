@@ -57,6 +57,52 @@ struct TwistInfo
   int smoothing_steps;
 };
 
+
+class Simple1DFilter
+{
+  public:
+    Simple1DFilter(){
+      initialized_ = false;
+      x_ = 0;
+      stddev_ = 1e9;
+      proc_stddev_x_c_ = 1e9;
+      return;
+    };
+    void init(const double init_x, const double proc_stddev_x, const rclcpp::Time time){
+      x_ = init_x;
+      proc_stddev_x_c_ = proc_stddev_x;
+      latest_time_ = time;
+      initialized_ = true;
+      return;
+    };
+    double get_x() {
+      return x_;
+    };
+    bool initialized() {
+      return initialized_;
+    };
+    void update(const double obs, const double obs_stddev, const rclcpp::Time time) {
+      // Prediction step (current stddev_)
+      double dt = (time - latest_time_).seconds();
+      double proc_stddev_x_d = proc_stddev_x_c_ * dt;
+      stddev_ = std::sqrt(stddev_ * stddev_ + proc_stddev_x_d * proc_stddev_x_d);
+
+      // Update step
+      double kalman_gain = stddev_ * stddev_ / (stddev_ * stddev_ + obs_stddev * obs_stddev);
+      x_ = x_ + kalman_gain * (obs - x_);
+      stddev_ = std::sqrt(1 - kalman_gain) * stddev_;
+
+      latest_time_ = time;
+      return;
+    };
+  private:
+    bool initialized_;
+    double x_;
+    double stddev_;
+    double proc_stddev_x_c_;
+    rclcpp::Time latest_time_;
+};
+
 class EKFLocalizer : public rclcpp::Node
 {
 public:
@@ -102,6 +148,9 @@ private:
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
   //!< @brief  extended kalman filter instance.
   TimeDelayKalmanFilter ekf_;
+  Simple1DFilter z_filter_;
+  Simple1DFilter roll_filter_;
+  Simple1DFilter pitch_filter_;
 
   /* parameters */
   bool show_debug_info_;
@@ -257,6 +306,11 @@ private:
    * @brief for debug
    */
   void showCurrentX();
+
+  void initializeSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+
+  void updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
