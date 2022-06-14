@@ -126,6 +126,9 @@ private:
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
   std::shared_ptr<const rclcpp::Time> last_running_time_;
+
+  // mutex
+  mutable std::mutex mutex_;
 };
 }  // namespace surround_obstacle_checker
 

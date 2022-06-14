@@ -191,23 +191,30 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
 
 void SurroundObstacleCheckerNode::onTimer()
 {
+  mutex_.lock();
+
   if (node_param_.use_pointcloud && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for pointcloud info...");
+    mutex_.unlock();
     return;
   }
 
   if (node_param_.use_dynamic_object && !object_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for dynamic object info...");
+    mutex_.unlock();
     return;
   }
 
   if (!odometry_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for current velocity...");
+    mutex_.unlock();
     return;
   }
+
+  mutex_.unlock();
 
   const auto nearest_obstacle = getNearestObstacle();
   const auto is_vehicle_stopped = isVehicleStopped();
@@ -222,7 +229,9 @@ void SurroundObstacleCheckerNode::onTimer()
         break;
       }
 
+      mutex_.lock();
       state_ = State::STOP;
+      mutex_.unlock();
 
       auto velocity_limit = std::make_shared<VelocityLimit>();
       velocity_limit->stamp = this->now();
@@ -248,7 +257,9 @@ void SurroundObstacleCheckerNode::onTimer()
         break;
       }
 
+      mutex_.lock();
       state_ = State::PASS;
+      mutex_.unlock();
 
       auto velocity_limit_clear_command = std::make_shared<VelocityLimitClearCommand>();
       velocity_limit_clear_command->stamp = this->now();
@@ -264,6 +275,8 @@ void SurroundObstacleCheckerNode::onTimer()
       break;
   }
 
+  mutex_.lock();
+
   if (nearest_obstacle) {
     debug_ptr_->pushObstaclePoint(nearest_obstacle.get().second, PointType::NoStart);
   }
@@ -274,6 +287,8 @@ void SurroundObstacleCheckerNode::onTimer()
     no_start_reason_diag = makeStopReasonDiag("obstacle", odometry_ptr_->pose.pose);
   }
 
+  mutex_.unlock();
+
   pub_stop_reason_->publish(no_start_reason_diag);
   debug_ptr_->publish();
 }
@@ -281,16 +296,22 @@ void SurroundObstacleCheckerNode::onTimer()
 void SurroundObstacleCheckerNode::onPointCloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   pointcloud_ptr_ = msg;
 }
 
 void SurroundObstacleCheckerNode::onDynamicObjects(const PredictedObjects::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   object_ptr_ = msg;
 }
 
 void SurroundObstacleCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   odometry_ptr_ = msg;
 }
 
@@ -402,6 +423,8 @@ boost::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNod
   const std::string & source, const std::string & target, const rclcpp::Time & stamp,
   double duration_sec) const
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   geometry_msgs::msg::TransformStamped transform_stamped;
 
   try {
@@ -417,6 +440,8 @@ boost::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNod
 bool SurroundObstacleCheckerNode::isStopRequired(
   const bool is_obstacle_found, const bool is_vehicle_stopped)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   if (!is_vehicle_stopped) {
     return false;
   }
@@ -444,6 +469,8 @@ bool SurroundObstacleCheckerNode::isStopRequired(
 
 bool SurroundObstacleCheckerNode::isVehicleStopped()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   const auto current_velocity = std::abs(odometry_ptr_->twist.twist.linear.x);
 
   if (node_param_.stop_state_ego_speed < current_velocity) {
