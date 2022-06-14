@@ -17,7 +17,12 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <vector>
 
@@ -130,15 +135,16 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   AbstractPlanningAlgorithm::setMap(costmap);
 
+  clearNodes();
+
   const auto height = costmap_.info.height;
   const auto width = costmap_.info.width;
 
   // Initialize nodes
-  nodes_.clear();
   nodes_.resize(height);
-  for (uint32_t i = 0; i < height; i++) {
+  for (size_t i = 0; i < height; i++) {
     nodes_[i].resize(width);
-    for (uint32_t j = 0; j < width; j++) {
+    for (size_t j = 0; j < width; j++) {
       nodes_[i][j].resize(planner_common_param_.theta_size);
     }
   }
@@ -159,6 +165,14 @@ bool AstarSearch::makePlan(
   }
 
   return search();
+}
+
+void AstarSearch::clearNodes()
+{
+  // clearing openlist is necessary because otherwise remaining elements of openlist
+  // point to deleted node.
+  nodes_.clear();
+  openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
 }
 
 bool AstarSearch::setStartNode()

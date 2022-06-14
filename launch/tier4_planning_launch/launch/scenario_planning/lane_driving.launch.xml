@@ -1,7 +1,11 @@
 <launch>
   <!-- common param -->
   <arg name="common_param_path"/>
-  <arg name="vehicle_info_param_file" />
+  <arg name="vehicle_info_param_file"/>
+
+  <!-- pointcloud container -->
+  <arg name="use_pointcloud_container"/>
+  <arg name="pointcloud_container_name"/>
 
   <!-- lane_driving scenario -->
   <group>
@@ -10,8 +14,18 @@
     <group>
       <push-ros-namespace namespace="behavior_planning"/>
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.py">
-        <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
-        <arg name="use_multithread" value="true" />
+        <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+        <arg name="use_multithread" value="true"/>
+        <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
+        <arg name="container_name" value="$(var pointcloud_container_name)"/>
+      </include>
+
+      <arg
+        name="rtc_auto_approver_param_path"
+        default="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/lane_driving/behavior_planning/rtc_auto_approver/rtc_auto_approver.param.yaml"
+      />
+      <include file="$(find-pkg-share rtc_auto_approver)/launch/rtc_auto_approver.launch.xml">
+        <arg name="param_path" value="$(var rtc_auto_approver_param_path)"/>
       </include>
     </group>
 
@@ -19,8 +33,8 @@
     <group>
       <push-ros-namespace namespace="motion_planning"/>
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.py">
-        <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
-        <arg name="use_multithread" value="true" />
+        <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+        <arg name="use_multithread" value="true"/>
       </include>
     </group>
   </group>

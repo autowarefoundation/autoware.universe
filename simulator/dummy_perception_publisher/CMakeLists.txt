@@ -1,24 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(dummy_perception_publisher)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-# Dependencies for messages
-find_package(ament_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-find_package(autoware_auto_perception_msgs REQUIRED)
-find_package(tier4_perception_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(unique_identifier_msgs REQUIRED)
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/InitialState.msg"
@@ -28,8 +12,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 # See ndt_omp package for documentation on why PCL is special
 find_package(PCL REQUIRED COMPONENTS common filters)
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
 
 set(${PROJECT_NAME}_DEPENDENCIES
   autoware_auto_perception_msgs
@@ -43,9 +25,18 @@ set(${PROJECT_NAME}_DEPENDENCIES
   tf2_ros
 )
 
+ament_auto_add_library(signed_distance_function SHARED
+  src/signed_distance_function.cpp
+)
+
 ament_auto_add_executable(dummy_perception_publisher_node
   src/main.cpp
   src/node.cpp
+  src/pointcloud_creator.cpp
+)
+
+target_link_libraries(dummy_perception_publisher_node
+  signed_distance_function
 )
 
 ament_target_dependencies(dummy_perception_publisher_node ${${PROJECT_NAME}_DEPENDENCIES})
@@ -56,10 +47,16 @@ target_include_directories(dummy_perception_publisher_node
     $<INSTALL_INTERFACE:include>)
 
 # For using message definitions from the same package
-rosidl_target_interfaces(dummy_perception_publisher_node
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
+  rosidl_target_interfaces(dummy_perception_publisher_node
+    ${PROJECT_NAME} "rosidl_typesupport_cpp")
+else()
+  rosidl_get_typesupport_target(
+    cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+  target_link_libraries(dummy_perception_publisher_node "${cpp_typesupport_target}")
+endif()
 
-# PCL dependencies – `ament_target_dependencies` doesn't respect the
+# PCL dependencies - `ament_target_dependencies` doesn't respect the
 # components/modules selected above and only links in `common` ,so we need
 # to do this manually.
 target_compile_definitions(dummy_perception_publisher_node PRIVATE ${PCL_DEFINITIONS})
@@ -77,8 +74,12 @@ ament_auto_add_executable(empty_objects_publisher
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  ament_add_ros_isolated_gtest(signed_distance_function-test
+    test/src/test_signed_distance_function.cpp
+  )
+  target_link_libraries(signed_distance_function-test
+    signed_distance_function
+  )
 endif()
 
 ament_auto_package(

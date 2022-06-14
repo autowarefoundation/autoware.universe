@@ -34,7 +34,12 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -82,6 +87,7 @@ enum PASS_JUDGE { SMOOTH_VELOCITY, CURRENT_VELOCITY };
 
 struct DetectionArea
 {
+  double min_longitudinal_offset;  // [m] detection area safety buffer from front bumper
   double max_lateral_distance;     // [m] distance to care about occlusion spot
   double slice_length;             // [m] size of each slice
   double min_occlusion_spot_size;  // [m] minumum size to care about the occlusion spot
@@ -112,14 +118,19 @@ struct PlannerParam
 {
   DETECTION_METHOD detection_method;
   PASS_JUDGE pass_judge;
-  bool debug;                  // [-]
-  bool use_partition_lanelet;  // [-]
+  bool is_show_occlusion;           // [-]
+  bool is_show_cv_window;           // [-]
+  bool is_show_processing_time;     // [-]
+  bool use_object_info;             // [-]
+  bool use_moving_object_ray_cast;  // [-]
+  bool use_partition_lanelet;       // [-]
   // parameters in yaml
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
   double stuck_vehicle_vel;          // [m/s]
   double lateral_distance_thr;       // [m] lateral distance threshold to consider
   double pedestrian_vel;             // [m/s]
+  double pedestrian_radius;          // [m]
 
   double dist_thr;   // [m]
   double angle_thr;  // [rad]
@@ -182,14 +193,15 @@ struct DebugData
   std::string road_type = "";
   std::string detection_type = "";
   Polygons2d detection_area_polygons;
-  std::vector<lanelet::BasicPolygon2d> partition_lanelets;
+  std::vector<lanelet::BasicPolygon2d> close_partition;
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;
   std::vector<geometry_msgs::msg::Point> occlusion_points;
   PathWithLaneId path_raw;
-  PathWithLaneId interp_path;
+  PathWithLaneId path_interpolated;
   void resetData()
   {
+    close_partition.clear();
     detection_area_polygons.clear();
     parked_vehicle_point.clear();
     possible_collisions.clear();
@@ -200,20 +212,26 @@ struct DebugData
 PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
 //!< @brief wrapper for detection area polygon generation
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const double offset,
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
   const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
 void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);
 void clipPathByLength(
   const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
-bool isStuckVehicle(PredictedObject obj, const double min_vel);
-std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
-  std::vector<PredictedObject> & objs, const Polygons2d & polys);
-std::vector<PredictedObject> getParkedVehicles(
-  const PredictedObjects & dyn_objects, const PlannerParam & param,
-  std::vector<Point> & debug_point);
-bool generatePossibleCollisionBehindParkedVehicle(
+//!< @brief extract target vehicles
+bool isStuckVehicle(const PredictedObject & obj, const double min_vel);
+bool isMovingVehicle(const PredictedObject & obj, const double min_vel);
+std::vector<PredictedObject> extractVehicles(
+  const PredictedObjects::ConstSharedPtr objects_ptr, const Point ego_position,
+  const double distance);
+std::vector<PredictedObject> filterVehiclesByDetectionArea(
+  const std::vector<PredictedObject> & objs, const Polygons2d & polys);
+bool isVehicle(const ObjectClassification & obj_class);
+void categorizeVehicles(
+  const std::vector<PredictedObject> & vehicles, Polygons2d & stuck_vehicle_foot_prints,
+  Polygons2d & moving_vehicle_foot_prints, const double stuck_vehicle_vel);
+bool generatePossibleCollisionsFromObjects(
   std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
   const PlannerParam & param, const double offset_from_start_to_ego,
   const std::vector<PredictedObject> & dyn_objects);
@@ -224,11 +242,6 @@ void calculateCollisionPathPointFromOcclusionSpot(
   PossibleCollisionInfo & pc, const lanelet::BasicPoint2d & obstacle_point,
   const double offset_from_ego_to_target, const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param);
-//!< @brief create hidden collision behind parked car
-void createPossibleCollisionBehindParkedVehicle(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
-  const PlannerParam & param, const double offset_from_ego_to_target,
-  const PredictedObjects::ConstSharedPtr & dyn_obj_arr);
 //!< @brief set velocity and orientation to collision point based on previous Path with laneId
 void calcSlowDownPointsForPossibleCollision(
   const int closest_idx, const PathWithLaneId & path, const double offset,
@@ -239,7 +252,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
   const double offset_from_start_to_ego, const Point2d base_point,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
-bool createPossibleCollisionsInDetectionArea(
+bool generatePossibleCollisionsFromGridMap(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
   DebugData & debug_data);

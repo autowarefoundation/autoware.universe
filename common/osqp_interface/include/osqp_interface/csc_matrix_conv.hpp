@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,11 @@
 #ifndef OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
 #define OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
 
-#include <vector>
-
 #include "eigen3/Eigen/Core"
 #include "osqp/glob_opts.h"  // for 'c_int' type ('long' or 'long long')
 #include "osqp_interface/visibility_control.hpp"
+
+#include <vector>
 
 namespace autoware
 {

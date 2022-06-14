@@ -79,9 +79,6 @@ MarkerArray createPathMarkerArray(
   const PathWithLaneId & path, const std::string & ns, const int64_t lane_id, const double r,
   const double g, const double b);
 
-MarkerArray createVirtualWallMarkerArray(
-  const Pose & pose, const int64_t lane_id, const std::string & stop_factor);
-
 MarkerArray createPoseLineMarkerArray(
   const Pose & pose, const std::string & ns, const int64_t id, const double r, const double g,
   const double b);
@@ -93,9 +90,11 @@ MarkerArray createPoseMarkerArray(
 MarkerArray makeOverhangToRoadShoulderMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects);
 
-MarkerArray createOvehangFurthestLineStringMarkerArray(
+MarkerArray createOverhangFurthestLineStringMarkerArray(
   const lanelet::ConstLineStrings3d & linestrings, const std::string & ns, const double r,
   const double g, const double b);
+
+MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3d & linestrings);
 }  // namespace marker_utils
 
 std::string toStrInfo(const behavior_path_planner::ShiftPointArray & sp_arr);

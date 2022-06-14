@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -43,8 +44,9 @@ double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap);
 
 void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & path);
 
-double calcDistanceToClosestFootprintPoint(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos);
+void fillLongitudinalAndLengthByClosestFootprint(
+  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
+  ObjectData & obj);
 
 double calcOverhangDistance(
   const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
@@ -57,6 +59,9 @@ void setStartData(
   AvoidPoint & ap, const double start_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist);
 
+std::string getUuidStr(const ObjectData & obj);
+
+std::vector<std::string> getUuidStr(const ObjectDataArray & objs);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_

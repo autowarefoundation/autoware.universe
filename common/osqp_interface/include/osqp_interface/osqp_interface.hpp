@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,7 +33,7 @@ namespace common
 {
 namespace osqp
 {
-constexpr c_float INF = OSQP_INFTY;
+constexpr c_float INF = 1e30;
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
 
@@ -132,8 +132,8 @@ public:
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<float64_t> & q,
     const std::vector<float64_t> & l, const std::vector<float64_t> & u);
   int64_t initializeProblem(
-    CSC_Matrix P, CSC_Matrix A, const std::vector<float64_t> & q,
-    const std::vector<float64_t> & l, const std::vector<float64_t> & u);
+    CSC_Matrix P, CSC_Matrix A, const std::vector<float64_t> & q, const std::vector<float64_t> & l,
+    const std::vector<float64_t> & u);
 
   // Updates problem parameters while keeping solution in memory.
   //

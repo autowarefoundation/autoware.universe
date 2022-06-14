@@ -28,7 +28,13 @@
 #include <boost/circular_buffer.hpp>
 
 #include <tf2/transform_datatypes.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -84,6 +90,7 @@ private:
   std::string gnss_base_frame_;
   std::string map_frame_;
 
+  sensor_msgs::msg::NavSatFix nav_sat_fix_origin_;
   bool use_ublox_receiver_;
 
   int plane_zone_;

@@ -1,33 +1,17 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(dummy_diag_publisher)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-
-### Target executable
-set(DUMMY_DIAG_PUBLISHER_SRC
-  src/dummy_diag_publisher_node/dummy_diag_publisher_node.cpp)
-
-ament_auto_add_executable(${PROJECT_NAME}
-  src/dummy_diag_publisher_node/main.cpp
-  ${DUMMY_DIAG_PUBLISHER_SRC}
+ament_auto_add_library(dummy_diag_publisher SHARED
+  src/dummy_diag_publisher_node/dummy_diag_publisher_node.cpp
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
+rclcpp_components_register_node(dummy_diag_publisher
+  PLUGIN "DummyDiagPublisherNode"
+  EXECUTABLE dummy_diag_publisher_node
+)
 
 ament_auto_package(INSTALL_TO_SHARE
   launch

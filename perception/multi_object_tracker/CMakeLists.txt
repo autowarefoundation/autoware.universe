@@ -1,30 +1,22 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(multi_object_tracker)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # Ignore -Wnonportable-include-path in Clang for mussp
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wno-nonportable-include-path)
 endif()
 
-### Find Packages
-find_package(ament_cmake_auto REQUIRED)
-
 ### Find Eigen Dependencies
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-### Find dependencies listed in the package.xml
-ament_auto_find_build_dependencies()
+include_directories(
+  SYSTEM
+    ${EIGEN3_INCLUDE_DIR}
+)
 
 # Generate exe file
 set(MULTI_OBJECT_TRACKER_SRC
@@ -38,6 +30,7 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/tracker/model/pedestrian_tracker.cpp
   src/tracker/model/pedestrian_and_bicycle_tracker.cpp
   src/tracker/model/unknown_tracker.cpp
+  src/tracker/model/pass_through_tracker.cpp
   src/data_association/data_association.cpp
 )
 
@@ -58,11 +51,6 @@ rclcpp_components_register_node(multi_object_tracker_node
   PLUGIN "MultiObjectTracker"
   EXECUTABLE multi_object_tracker
 )
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 ament_auto_package(INSTALL_TO_SHARE
   launch

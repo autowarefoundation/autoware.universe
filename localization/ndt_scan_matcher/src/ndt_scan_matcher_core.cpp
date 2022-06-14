@@ -22,10 +22,13 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
-#include <boost/shared_ptr.hpp>
-
 #include <pcl_conversions/pcl_conversions.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -102,7 +105,9 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
+  converged_param_type_(ConvergedParamType::TRANSFORM_PROBABILITY),
   converged_param_transform_probability_(4.5),
+  converged_param_nearest_voxel_transformation_likelihood_(2.3),
   initial_estimate_particles_num_(100),
   initial_pose_timeout_sec_(1.0),
   initial_pose_distance_tolerance_m_(10.0),
@@ -165,8 +170,23 @@ NDTScanMatcher::NDTScanMatcher()
     get_logger(), "trans_epsilon: %lf, step_size: %lf, resolution: %lf, max_iterations: %d",
     trans_epsilon, step_size, resolution, max_iterations);
 
+  int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
+  converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
+  if (
+    ndt_implement_type_ != NDTImplementType::OMP &&
+    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD is only available when "
+      "NDTImplementType::OMP is selected.");
+    return;
+  }
+
   converged_param_transform_probability_ = this->declare_parameter(
     "converged_param_transform_probability", converged_param_transform_probability_);
+  converged_param_nearest_voxel_transformation_likelihood_ = this->declare_parameter(
+    "converged_param_nearest_voxel_transformation_likelihood",
+    converged_param_nearest_voxel_transformation_likelihood_);
 
   initial_estimate_particles_num_ =
     this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
@@ -219,6 +239,9 @@ NDTScanMatcher::NDTScanMatcher()
   exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
+  nearest_voxel_transformation_likelihood_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+      "nearest_voxel_transformation_likelihood", 10);
   iteration_num_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
   initial_to_result_distance_pub_ =
@@ -233,6 +256,7 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_monte_carlo_initial_pose_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
+
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
@@ -389,7 +413,7 @@ void NDTScanMatcher::callbackMapPoints(
   new_ndt_ptr_->setResolution(resolution);
   new_ndt_ptr_->setMaximumIterations(max_iterations);
 
-  boost::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
+  pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
   new_ndt_ptr_->setInputTarget(map_points_ptr);
   // create Thread
@@ -421,7 +445,7 @@ void NDTScanMatcher::callbackSensorPoints(
   getTransform(base_frame_, sensor_frame, TF_base_to_sensor_ptr);
   const Eigen::Affine3d base_to_sensor_affine = tf2::transformToEigen(*TF_base_to_sensor_ptr);
   const Eigen::Matrix4f base_to_sensor_matrix = base_to_sensor_affine.matrix().cast<float>();
-  boost::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr(
+  pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr(
     new pcl::PointCloud<PointSource>);
   pcl::transformPointCloud(
     *sensor_points_sensorTF_ptr, *sensor_points_baselinkTF_ptr, base_to_sensor_matrix);
@@ -503,6 +527,8 @@ void NDTScanMatcher::callbackSensorPoints(
     1000.0;
 
   const float transform_probability = ndt_ptr_->getTransformationProbability();
+  const float nearest_voxel_transformation_likelihood =
+    ndt_ptr_->getNearestVoxelTransformationLikelihood();
 
   const int iteration_num = ndt_ptr_->getFinalNumIteration();
 
@@ -518,22 +544,54 @@ void NDTScanMatcher::callbackSensorPoints(
   These bugs are now resolved in original pcl implementation.
   https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
   *****************************************************************************/
+  bool is_ok_iteration_num = iteration_num < ndt_ptr_->getMaximumIterations() + 2;
+  if (!is_ok_iteration_num) {
+    RCLCPP_WARN(
+      get_logger(),
+      "The number of iterations has reached its upper limit. The number of iterations: %d, Limit: "
+      "%d",
+      iteration_num, ndt_ptr_->getMaximumIterations() + 2);
+  }
+
   bool is_local_optimal_solution_oscillation = false;
-  if (iteration_num >= ndt_ptr_->getMaximumIterations() + 2) {
+  if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = isLocalOptimalSolutionOscillation(
       result_pose_matrix_array, oscillation_threshold_, inversion_vector_threshold_);
   }
 
-  bool is_converged = true;
+  bool is_ok_converged_param = false;
+  if (converged_param_type_ == ConvergedParamType::TRANSFORM_PROBABILITY) {
+    is_ok_converged_param = transform_probability > converged_param_transform_probability_;
+    if (!is_ok_converged_param) {
+      RCLCPP_WARN(
+        get_logger(), "Transform Probability is below the threshold. Score: %lf, Threshold: %lf",
+        transform_probability, converged_param_transform_probability_);
+    }
+  } else if (converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
+    is_ok_converged_param = nearest_voxel_transformation_likelihood >
+                            converged_param_nearest_voxel_transformation_likelihood_;
+    if (!is_ok_converged_param) {
+      RCLCPP_WARN(
+        get_logger(),
+        "Nearest Voxel Transform Probability is below the threshold. Score: %lf, Threshold: %lf",
+        nearest_voxel_transformation_likelihood,
+        converged_param_nearest_voxel_transformation_likelihood_);
+    }
+  } else {
+    is_ok_converged_param = false;
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1, "Unknown converged param type.");
+  }
+
+  bool is_converged = false;
   static size_t skipping_publish_num = 0;
-  if (
-    iteration_num >= ndt_ptr_->getMaximumIterations() + 2 ||
-    transform_probability < converged_param_transform_probability_) {
+  if (is_ok_iteration_num && is_ok_converged_param) {
+    is_converged = true;
+    skipping_publish_num = 0;
+  } else {
     is_converged = false;
     ++skipping_publish_num;
     RCLCPP_WARN(get_logger(), "Not Converged");
-  } else {
-    skipping_publish_num = 0;
   }
 
   // publish
@@ -594,6 +652,8 @@ void NDTScanMatcher::callbackSensorPoints(
   exe_time_pub_->publish(makeFloat32Stamped(sensor_ros_time, exe_time));
 
   transform_probability_pub_->publish(makeFloat32Stamped(sensor_ros_time, transform_probability));
+  nearest_voxel_transformation_likelihood_pub_->publish(
+    makeFloat32Stamped(sensor_ros_time, nearest_voxel_transformation_likelihood));
 
   iteration_num_pub_->publish(makeInt32Stamped(sensor_ros_time, iteration_num));
 
@@ -613,6 +673,8 @@ void NDTScanMatcher::callbackSensorPoints(
     makeFloat32Stamped(sensor_ros_time, initial_to_result_distance_new));
 
   key_value_stdmap_["transform_probability"] = std::to_string(transform_probability);
+  key_value_stdmap_["nearest_voxel_transformation_likelihood"] =
+    std::to_string(nearest_voxel_transformation_likelihood);
   key_value_stdmap_["iteration_num"] = std::to_string(iteration_num);
   key_value_stdmap_["skipping_publish_num"] = std::to_string(skipping_publish_num);
   if (is_local_optimal_solution_oscillation) {

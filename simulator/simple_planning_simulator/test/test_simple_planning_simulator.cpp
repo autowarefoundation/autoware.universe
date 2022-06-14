@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,12 @@
 #include "gtest/gtest.h"
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 #include "tf2/utils.h"
+
+#ifdef ROS_DISTRO_GALACTIC
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#else
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#endif
 
 #include <memory>
 
@@ -42,9 +48,8 @@ public:
   PubSubNode() : Node{"test_simple_planning_simulator_pubsub"}
   {
     current_odom_sub_ = create_subscription<Odometry>(
-      "output/odometry", rclcpp::QoS{1}, [this](const Odometry::SharedPtr msg) {
-        current_odom_ = msg;
-      });
+      "output/odometry", rclcpp::QoS{1},
+      [this](const Odometry::SharedPtr msg) { current_odom_ = msg; });
     pub_ackermann_command_ =
       create_publisher<AckermannControlCommand>("input/ackermann_control_command", rclcpp::QoS{1});
     pub_initialpose_ = create_publisher<PoseWithCovarianceStamped>("/initialpose", rclcpp::QoS{1});
@@ -185,9 +190,8 @@ void declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
   node_options.append_parameter_override("left_overhang", 0.5);
   node_options.append_parameter_override("right_overhang", 0.5);
   node_options.append_parameter_override("vehicle_height", 1.5);
+  node_options.append_parameter_override("max_steer_angle", 0.7);
 }
-
-
 
 // Send a control command and run the simulation.
 // Then check if the vehicle is moving in the desired direction.
@@ -263,14 +267,12 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   rclcpp::shutdown();
 }
 
-const std::string VEHICLE_MODEL_LIST[] = {
-  "IDEAL_STEER_VEL",
-  "IDEAL_STEER_ACC",
-  "IDEAL_STEER_ACC_GEARED",
-  "DELAY_STEER_VEL",
-  "DELAY_STEER_ACC",
-  "DELAY_STEER_ACC_GEARED",
+// clang-format off
+const std::string VEHICLE_MODEL_LIST[] = {   // NOLINT
+  "IDEAL_STEER_VEL", "IDEAL_STEER_ACC", "IDEAL_STEER_ACC_GEARED",
+  "DELAY_STEER_VEL", "DELAY_STEER_ACC", "DELAY_STEER_ACC_GEARED",
 };
+// clang-format on
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   TestForEachVehicleModel, TestSimplePlanningSimulator, ::testing::ValuesIn(VEHICLE_MODEL_LIST));

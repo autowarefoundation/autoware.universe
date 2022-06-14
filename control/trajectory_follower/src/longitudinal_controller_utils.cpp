@@ -14,15 +14,20 @@
 
 #include "trajectory_follower/longitudinal_controller_utils.hpp"
 
-#include <algorithm>
-#include <experimental/optional>  // NOLINT
-#include <limits>
-
 #include "motion_common/motion_common.hpp"
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
+#include <experimental/optional>  // NOLINT
+
+#ifdef ROS_DISTRO_GALACTIC
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#else
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#endif
+
+#include <algorithm>
+#include <limits>
 
 namespace autoware
 {
@@ -44,8 +49,7 @@ bool isValidTrajectory(const Trajectory & traj)
       !isfinite(p.pose.orientation.x) || !isfinite(p.pose.orientation.y) ||
       !isfinite(p.pose.orientation.z) || !isfinite(p.longitudinal_velocity_mps) ||
       !isfinite(p.lateral_velocity_mps) || !isfinite(p.acceleration_mps2) ||
-      !isfinite(p.heading_rate_rps))
-    {
+      !isfinite(p.heading_rate_rps)) {
       return false;
     }
   }
@@ -59,17 +63,30 @@ bool isValidTrajectory(const Trajectory & traj)
 }
 
 float64_t calcStopDistance(
-  const Point & current_pos, const Trajectory & traj)
+  const Pose & current_pose, const Trajectory & traj, const float64_t max_dist,
+  const float64_t max_yaw)
 {
   const std::experimental::optional<size_t> stop_idx_opt =
     trajectory_common::searchZeroVelocityIndex(traj.points);
 
+  auto seg_idx =
+    tier4_autoware_utils::findNearestSegmentIndex(traj.points, current_pose, max_dist, max_yaw);
+  if (!seg_idx) {  // if not fund idx
+    seg_idx = tier4_autoware_utils::findNearestSegmentIndex(traj.points, current_pose);
+  }
+  const float64_t signed_length_src_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+    traj.points, *seg_idx, current_pose.position);
+
   // If no zero velocity point, return the length between current_pose to the end of trajectory.
   if (!stop_idx_opt) {
-    return trajectory_common::calcSignedArcLength(traj.points, current_pos, traj.points.size() - 1);
+    float64_t signed_length_on_traj =
+      tier4_autoware_utils::calcSignedArcLength(traj.points, *seg_idx, traj.points.size() - 1);
+    return signed_length_on_traj - signed_length_src_offset;
   }
 
-  return trajectory_common::calcSignedArcLength(traj.points, current_pos, *stop_idx_opt);
+  float64_t signed_length_on_traj =
+    tier4_autoware_utils::calcSignedArcLength(traj.points, *seg_idx, *stop_idx_opt);
+  return signed_length_on_traj - signed_length_src_offset;
 }
 
 float64_t getPitchByPose(const Quaternion & quaternion_msg)
@@ -96,8 +113,7 @@ float64_t getPitchByTraj(
       distance_2d<float64_t>(trajectory.points.at(nearest_idx), trajectory.points.at(i));
     if (dist > wheel_base) {
       // calculate pitch from trajectory between rear wheel (nearest) and front center (i)
-      return calcElevationAngle(
-        trajectory.points.at(nearest_idx), trajectory.points.at(i));
+      return calcElevationAngle(trajectory.points.at(nearest_idx), trajectory.points.at(i));
     }
   }
 
@@ -109,15 +125,12 @@ float64_t getPitchByTraj(
     if (dist > wheel_base) {
       // calculate pitch from trajectory
       // between wheelbase behind the end of trajectory (i) and the end of trajectory (back)
-      return calcElevationAngle(
-        trajectory.points.at(i), trajectory.points.back());
+      return calcElevationAngle(trajectory.points.at(i), trajectory.points.back());
     }
   }
 
   // calculate pitch from trajectory between the beginning and end of trajectory
-  return calcElevationAngle(
-    trajectory.points.at(0),
-    trajectory.points.back());
+  return calcElevationAngle(trajectory.points.at(0), trajectory.points.back());
 }
 
 float64_t calcElevationAngle(const TrajectoryPoint & p_from, const TrajectoryPoint & p_to)

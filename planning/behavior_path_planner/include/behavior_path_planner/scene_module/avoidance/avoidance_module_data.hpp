@@ -23,6 +23,9 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <memory>
 #include <string>
@@ -33,6 +36,11 @@ namespace behavior_path_planner
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+
+using tier4_planning_msgs::msg::AvoidanceDebugFactor;
+using tier4_planning_msgs::msg::AvoidanceDebugMsg;
+using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
@@ -146,6 +154,18 @@ struct AvoidanceParameters
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
   double avoidance_execution_lateral_threshold;
 
+  // true by default
+  bool avoid_car{true};      // avoidance is performed for type object car
+  bool avoid_truck{true};    // avoidance is performed for type object truck
+  bool avoid_bus{true};      // avoidance is performed for type object bus
+  bool avoid_trailer{true};  // avoidance is performed for type object trailer
+
+  // false by default
+  bool avoid_unknown{false};     // avoidance is performed for type object unknown
+  bool avoid_bicycle{false};     // avoidance is performed for type object bicycle
+  bool avoid_motorcycle{false};  // avoidance is performed for type object motorbike
+  bool avoid_pedestrian{false};  // avoidance is performed for type object pedestrian
+
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;
@@ -154,8 +174,8 @@ struct AvoidanceParameters
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
-  ObjectData(const PredictedObject & obj, double lat, double lon, double overhang)
-  : object(obj), lateral(lat), longitudinal(lon), overhang_dist(overhang)
+  ObjectData(const PredictedObject & obj, double lat, double lon, double len, double overhang)
+  : object(obj), lateral(lat), longitudinal(lon), length(len), overhang_dist(overhang)
   {
   }
 
@@ -166,6 +186,9 @@ struct ObjectData  // avoidance target
 
   // longitudinal position of the CoM, in Frenet coordinate from ego-pose
   double longitudinal;
+
+  // longitudinal length of vehicle, in Frenet coordinate
+  double length;
 
   // lateral distance to the closest footprint, in Frenet coordinate
   double overhang_dist;
@@ -294,6 +317,7 @@ struct DebugData
 
   // tmp for plot
   PathWithLaneId center_line;
+  AvoidanceDebugMsgArray avoidance_debug_msg_array;
 };
 
 }  // namespace behavior_path_planner

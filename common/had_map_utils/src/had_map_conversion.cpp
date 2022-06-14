@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +14,20 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
-//lint -e537 pclint vs cpplint NOLINT
+// lint -e537 pclint vs cpplint NOLINT
 
-#include <lanelet2_io/io_handlers/Serialize.h>
+#include "had_map_utils/had_map_conversion.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+
+#include <lanelet2_io/io_handlers/Serialize.h>
 
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "had_map_utils/had_map_conversion.hpp"
-
 
 namespace autoware
 {

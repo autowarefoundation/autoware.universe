@@ -166,8 +166,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
         (points_distance <
          (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
 
+      float global_slope = std::atan2(p->orig_point->z, p->radius);
       // check points which is far enough from previous point
-      if (
+      if (global_slope > global_slope_max_angle) {
+        p->point_state = PointLabel::NON_GROUND;
+        calculate_slope = false;
+      } else if (
         (prev_point_label == PointLabel::NON_GROUND) &&
         (std::abs(height_from_obj) >= split_height_distance_)) {
         calculate_slope = true;
@@ -178,16 +182,14 @@ void ScanGroundFilterComponent::classifyPointCloud(
       } else {
         calculate_slope = true;
       }
+      if (is_point_close_to_prev) {
+        height_from_gnd = p->orig_point->z - ground_cluster.getAverageHeight();
+        radius_distance_from_gnd = p->radius - ground_cluster.getAverageRadius();
+      }
       if (calculate_slope) {
         // far from the previous point
-
-        float global_slope = std::atan2(p->orig_point->z, p->radius);
         local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
-
-        if (global_slope > global_slope_max_angle) {
-          // the point is outside of the global slope threshold
-          p->point_state = PointLabel::NON_GROUND;
-        } else if (local_slope - prev_gnd_slope > local_slope_max_angle) {
+        if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
           p->point_state = PointLabel::NON_GROUND;
         } else {

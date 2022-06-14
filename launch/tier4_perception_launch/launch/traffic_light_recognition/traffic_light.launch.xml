@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <launch>
   <arg name="enable_fine_detection" default="true" description="enable fine position adjustment of traffic light"/>
   <arg name="input/image" default="/sensing/camera/traffic_light/image_raw" description="image raw topic name for traffic light"/>
@@ -24,10 +23,9 @@
     <arg name="input/image" value="$(var input/image)"/>
     <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
     <arg name="use_intra_process" value="true"/>
-    <arg name="use_multithread" value="false"/>
+    <arg name="use_multithread" value="true"/>
   </include>
 
   <!-- visualizer -->
-  <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml">
-  </include>
+  <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>
 </launch>

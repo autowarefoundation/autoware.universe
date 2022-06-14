@@ -60,6 +60,16 @@ namespace pointcloud_preprocessor
 CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("CropBoxFilter", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "crop_box_filter");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
   // set initial parameters
   {
     auto & p = param_;
@@ -90,8 +100,8 @@ void CropBoxFilterComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
-  boost::mutex::scoped_lock lock(mutex_);
-
+  std::scoped_lock lock(mutex_);
+  stop_watch_ptr_->toc("processing_time", true);
   output.data.resize(input->data.size());
   Eigen::Vector3f pt(Eigen::Vector3f::Zero());
   size_t j = 0;
@@ -123,7 +133,7 @@ void CropBoxFilterComponent::filter(
 
   output.data.resize(j);
   output.header.frame_id = input->header.frame_id;
-  output.height = input->height;
+  output.height = 1;
   output.fields = input->fields;
   output.is_bigendian = input->is_bigendian;
   output.point_step = input->point_step;
@@ -132,6 +142,15 @@ void CropBoxFilterComponent::filter(
   output.row_step = static_cast<uint32_t>(output.data.size() / output.height);
 
   publishCropBoxPolygon();
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 void CropBoxFilterComponent::publishCropBoxPolygon()
@@ -188,7 +207,7 @@ void CropBoxFilterComponent::publishCropBoxPolygon()
 rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
   const std::vector<rclcpp::Parameter> & p)
 {
-  boost::mutex::scoped_lock lock(mutex_);
+  std::scoped_lock lock(mutex_);
 
   CropBoxParam new_param{};
 

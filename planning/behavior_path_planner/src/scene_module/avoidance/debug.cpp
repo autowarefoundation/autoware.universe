@@ -383,43 +383,6 @@ MarkerArray createPathMarkerArray(
   return msg;
 }
 
-MarkerArray createVirtualWallMarkerArray(
-  const Pose & pose, const int64_t lane_id, const std::string & stop_factor)
-{
-  MarkerArray msg;
-
-  Marker marker_virtual_wall{};
-  marker_virtual_wall.header.frame_id = "map";
-  marker_virtual_wall.header.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
-  marker_virtual_wall.ns = "stop_virtual_wall";
-  marker_virtual_wall.id = lane_id;
-  marker_virtual_wall.lifetime = rclcpp::Duration::from_seconds(0.2);
-  marker_virtual_wall.type = Marker::CUBE;
-  marker_virtual_wall.action = Marker::ADD;
-  marker_virtual_wall.pose = pose;
-  marker_virtual_wall.pose.position.z += 1.0;
-  marker_virtual_wall.scale = tier4_autoware_utils::createMarkerScale(0.1, 5.0, 2.0);
-  marker_virtual_wall.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.5);
-  msg.markers.push_back(marker_virtual_wall);
-
-  Marker marker_factor_text{};
-  marker_factor_text.header.frame_id = "map";
-  marker_factor_text.header.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
-  marker_factor_text.ns = "factor_text";
-  marker_factor_text.id = lane_id;
-  marker_factor_text.lifetime = rclcpp::Duration::from_seconds(0.2);
-  marker_factor_text.type = Marker::TEXT_VIEW_FACING;
-  marker_factor_text.action = Marker::ADD;
-  marker_factor_text.pose = pose;
-  marker_factor_text.pose.position.z += 2.0;
-  marker_factor_text.scale = tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0);
-  marker_factor_text.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.999);
-  marker_factor_text.text = stop_factor;
-  msg.markers.push_back(marker_factor_text);
-
-  return msg;
-}
-
 MarkerArray createPoseLineMarkerArray(
   const Pose & pose, const std::string & ns, const int64_t id, const double r, const double g,
   const double b)
@@ -512,7 +475,7 @@ MarkerArray makeOverhangToRoadShoulderMarkerArray(
   return msg;
 }
 
-MarkerArray createOvehangFurthestLineStringMarkerArray(
+MarkerArray createOverhangFurthestLineStringMarkerArray(
   const lanelet::ConstLineStrings3d & linestrings, const std::string & ns, const double r,
   const double g, const double b)
 {
@@ -557,6 +520,98 @@ MarkerArray createOvehangFurthestLineStringMarkerArray(
 
   return msg;
 }
+
+MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3d & linestrings)
+{
+  const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
+
+  MarkerArray msg;
+  if (linestrings.empty()) {
+    return msg;
+  }
+
+  Marker marker{};
+  marker.header.frame_id = "map";
+  marker.header.stamp = current_time;
+  marker.ns = "shared_linestring_lanelets";
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker.type = Marker::LINE_STRIP;
+  marker.action = Marker::ADD;
+  marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+  marker.scale = tier4_autoware_utils::createMarkerScale(0.3, 0.0, 0.0);
+  marker.color = tier4_autoware_utils::createMarkerColor(0.996, 0.658, 0.466, 0.999);
+
+  const auto reserve_size = linestrings.size() / 2;
+  lanelet::ConstLineStrings3d lefts;
+  lanelet::ConstLineStrings3d rights;
+  lefts.reserve(reserve_size);
+  rights.reserve(reserve_size);
+  for (size_t idx = 1; idx < linestrings.size(); idx += 2) {
+    rights.emplace_back(linestrings.at(idx - 1));
+    lefts.emplace_back(linestrings.at(idx));
+  }
+
+  const auto & first_ls = lefts.front().basicLineString();
+  for (const auto & ls : first_ls) {
+    Point p;
+    p.x = ls.x();
+    p.y = ls.y();
+    p.z = ls.z();
+    marker.points.push_back(p);
+  }
+
+  for (auto idx = lefts.cbegin() + 1; idx != lefts.cend(); ++idx) {
+    const auto & marker_back = marker.points.back();
+    Point front;
+    front.x = idx->basicLineString().front().x();
+    front.y = idx->basicLineString().front().y();
+    front.z = idx->basicLineString().front().z();
+    Point front_inverted;
+    front_inverted.x = idx->invert().basicLineString().front().x();
+    front_inverted.y = idx->invert().basicLineString().front().y();
+    front_inverted.z = idx->invert().basicLineString().front().z();
+    const bool isFrontNear = tier4_autoware_utils::calcDistance2d(marker_back, front) <
+                             tier4_autoware_utils::calcDistance2d(marker_back, front_inverted);
+    const auto & left_ls = (isFrontNear) ? idx->basicLineString() : idx->invert().basicLineString();
+    for (auto ls = left_ls.cbegin(); ls != left_ls.cend(); ++ls) {
+      Point p;
+      p.x = ls->x();
+      p.y = ls->y();
+      p.z = ls->z();
+      marker.points.push_back(p);
+    }
+  }
+
+  for (auto idx = rights.crbegin(); idx != rights.crend(); ++idx) {
+    const auto & marker_back = marker.points.back();
+    Point front;
+    front.x = idx->basicLineString().front().x();
+    front.y = idx->basicLineString().front().y();
+    front.z = idx->basicLineString().front().z();
+    Point front_inverted;
+    front_inverted.x = idx->invert().basicLineString().front().x();
+    front_inverted.y = idx->invert().basicLineString().front().y();
+    front_inverted.z = idx->invert().basicLineString().front().z();
+    const bool isFrontFurther = tier4_autoware_utils::calcDistance2d(marker_back, front) >
+                                tier4_autoware_utils::calcDistance2d(marker_back, front_inverted);
+    const auto & right_ls =
+      (isFrontFurther) ? idx->basicLineString() : idx->invert().basicLineString();
+    for (auto ls = right_ls.crbegin(); ls != right_ls.crend(); ++ls) {
+      Point p;
+      p.x = ls->x();
+      p.y = ls->y();
+      p.z = ls->z();
+      marker.points.push_back(p);
+    }
+  }
+
+  if (!marker.points.empty()) {
+    marker.points.push_back(marker.points.front());
+  }
+
+  msg.markers.push_back(marker);
+  return msg;
+}
 }  // namespace marker_utils
 
 std::string toStrInfo(const behavior_path_planner::ShiftPointArray & sp_arr)
@@ -593,7 +648,6 @@ std::string toStrInfo(const behavior_path_planner::AvoidPointArray & ap_arr)
   }
   return ss.str();
 }
-
 std::string toStrInfo(const behavior_path_planner::AvoidPoint & ap)
 {
   std::stringstream pids;

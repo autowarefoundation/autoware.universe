@@ -4,7 +4,7 @@ ci:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.3.0
     hooks:
       - id: check-json
       - id: check-merge-conflict
@@ -19,13 +19,13 @@ repos:
         args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.30.0
+    rev: v0.31.1
     hooks:
       - id: markdownlint
         args: [-c, .markdownlint.yaml, --fix]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.5.1
+    rev: v2.6.2
     hooks:
       - id: prettier
 
@@ -35,19 +35,22 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/tier4/pre-commit-hooks-ros
-    rev: v0.5.1
+    rev: v0.7.1
     hooks:
+      - id: flake8-ros
+      - id: prettier-xacro
+      - id: prettier-launch-xml
       - id: prettier-package-xml
-      - id: sort-package-xml
       - id: ros-include-guard
+      - id: sort-package-xml
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.3
+    rev: v0.8.0.4
     hooks:
       - id: shellcheck
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.4.2-1
+    rev: v3.5.1-1
     hooks:
       - id: shfmt
         args: [-w, -s, -i=4]
@@ -58,37 +61,22 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
       - id: black
         args: [--line-length=100]
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-        additional_dependencies:
-          [
-            flake8-blind-except,
-            flake8-builtins,
-            flake8-class-newline,
-            flake8-comprehensions,
-            flake8-deprecated,
-            flake8-docstrings,
-            flake8-import-order,
-            flake8-quotes,
-          ]
-
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v13.0.0
+    rev: v14.0.4-1
     hooks:
       - id: clang-format
+        types_or: [c++, c, cuda]
 
   - repo: https://github.com/cpplint/cpplint
-    rev: 1.5.5
+    rev: 1.6.0
     hooks:
       - id: cpplint
         args: [--quiet]
         exclude: .cu
 
-exclude: .svg|control/trajectory_follower|control/trajectory_follower_nodes|common/autoware_auto_cmake|common/autoware_auto_common|common/autoware_auto_geometry|common/autoware_auto_tf2|common/autoware_testing|common/fake_test_node|common/had_map_utils|common/motion_common|common/motion_testing|common/time_utils|common/vehicle_constants_manager|common/autoware_auto_perception_rviz_plugin|common/osqp_interface|simulator/simple_planning_simulator|planning/freespace_planner|planning/astar_search|planning/costmap_generator
+exclude: .svg

@@ -27,8 +27,6 @@ void applySafeVelocityConsideringPossibleCollision(
   PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
   const PlannerParam & param)
 {
-  const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
-  rclcpp::Clock clock{RCL_ROS_TIME};
   // return nullptr or too few points
   if (!inout_path || inout_path->points.size() < 2) {
     return;
@@ -50,28 +48,14 @@ void applySafeVelocityConsideringPossibleCollision(
       (l_obs < 0 && v0 <= v_safe)
         ? v_safe
         : planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
+    // skip non effective velocity insertion
+    if (original_vel < v_safe) continue;
     // compare safe velocity consider EBS, minimum allowed velocity and original velocity
     const double safe_velocity = calculateInsertVelocity(v_slow_down, v_safe, v_min, original_vel);
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;
     insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
   }
-}
-
-bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
-{
-  geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
-  bool is_target_ahead = (p.position.x > 0.0);
-  return is_target_ahead;
-}
-
-bool setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input)
-{
-  for (size_t i = idx; i < input->points.size(); ++i) {
-    input->points.at(i).point.longitudinal_velocity_mps =
-      std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
-  }
-  return true;
 }
 
 int insertSafeVelocityToPath(
@@ -88,7 +72,7 @@ int insertSafeVelocityToPath(
   size_t insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point
   // if original path has narrow points it's better to set higher distance threshold
-  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
     if (insert_idx == static_cast<size_t>(inout_path->points.size())) return -1;
   }

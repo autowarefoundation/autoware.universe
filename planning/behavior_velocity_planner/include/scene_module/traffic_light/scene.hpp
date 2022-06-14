@@ -75,6 +75,7 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
   inline autoware_auto_perception_msgs::msg::LookingTrafficSignal getTrafficSignal() const
   {
@@ -101,7 +102,7 @@ private:
 
   bool isPassthrough(const double & signed_arc_length) const;
 
-  bool hasTrafficLightColor(
+  bool hasTrafficLightCircleColor(
     const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
     const uint8_t & lamp_color) const;
 

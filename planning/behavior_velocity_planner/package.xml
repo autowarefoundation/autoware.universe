@@ -4,12 +4,13 @@
   <name>behavior_velocity_planner</name>
   <version>0.1.0</version>
   <description>The behavior_velocity_planner package</description>
-
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
@@ -18,10 +19,12 @@
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>grid_map_ros</depend>
+  <depend>grid_map_utils</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>
+  <depend>motion_velocity_smoother</depend>
   <depend>nav_msgs</depend>
   <depend>nlohmann-json-dev</depend>
   <depend>pcl_conversions</depend>
@@ -40,7 +43,7 @@
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
-  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 

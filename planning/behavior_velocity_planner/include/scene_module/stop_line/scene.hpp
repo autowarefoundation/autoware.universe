@@ -63,6 +63,8 @@ public:
   {
     double base_link2front;
     boost::optional<geometry_msgs::msg::Pose> stop_pose;
+    std::vector<LineString2d> search_segments;
+    LineString2d search_stopline;
   };
 
   struct PlannerParam
@@ -70,6 +72,8 @@ public:
     double stop_margin;
     double stop_check_dist;
     double stop_duration_sec;
+    bool use_initialization_stop_line_state;
+    bool show_stopline_collision_check;
   };
 
 public:
@@ -83,6 +87,7 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   int64_t module_id_;

@@ -21,7 +21,12 @@
 
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <algorithm>
 #include <memory>
@@ -103,7 +108,7 @@ RadiusSearch2dfilter::RadiusSearch2dfilter(rclcpp::Node & node)
     node.declare_parameter("radius_search_2d_filter.min_points_and_distance_ratio", 400.0f);
   min_points_ = node.declare_parameter("radius_search_2d_filter.min_points", 4);
   max_points_ = node.declare_parameter("radius_search_2d_filter.max_points", 70);
-  kd_tree_ = boost::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
+  kd_tree_ = pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
 }
 
 void RadiusSearch2dfilter::filter(
@@ -126,7 +131,8 @@ void RadiusSearch2dfilter::filter(
     const int min_points_threshold = std::min(
       std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
       max_points_);
-    const int points_num = kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists);
+    const int points_num =
+      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists, min_points_threshold);
 
     if (min_points_threshold <= points_num) {
       output.points.push_back(xyz_cloud.points.at(i));
@@ -162,7 +168,8 @@ void RadiusSearch2dfilter::filter(
     const int min_points_threshold = std::min(
       std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
       max_points_);
-    const int points_num = kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists);
+    const int points_num =
+      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists, min_points_threshold);
 
     if (min_points_threshold <= points_num) {
       output.points.push_back(low_conf_xyz_cloud.points.at(i));
@@ -176,6 +183,16 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
 : Node("OccupancyGridMapOutlierFilter", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "occupancy_grid_map_outlier_filter");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
   /* params */
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
@@ -210,6 +227,7 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
 {
+  stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
   if (!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
@@ -250,6 +268,16 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     debugger_ptr_->publishHighConfidence(high_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishLowConfidence(filtered_low_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishOutlier(outlier_pc, ogm_frame_pc.header);
+  }
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
   }
 }
 

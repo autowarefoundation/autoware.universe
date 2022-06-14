@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
 #ifndef LIDAR_CENTERPOINT__NODE_HPP_
 #define LIDAR_CENTERPOINT__NODE_HPP_
 
-#include <centerpoint_trt.hpp>
-#include <config.hpp>
+#include <lidar_centerpoint/centerpoint_trt.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
@@ -31,7 +30,6 @@
 
 namespace centerpoint
 {
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 class LidarCenterPointNode : public rclcpp::Node
 {
@@ -41,30 +39,16 @@ public:
 private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg);
 
-  static uint8_t getSemanticType(const std::string & class_name);
-  static bool isCarLikeVehicleLabel(const uint8_t label);
-
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
 
   float score_threshold_{0.0};
-  bool use_encoder_trt_{false};
-  bool use_head_trt_{false};
-  std::string trt_precision_;
-
-  std::string encoder_onnx_path_;
-  std::string encoder_engine_path_;
-  std::string encoder_pt_path_;
-  std::string head_onnx_path_;
-  std::string head_engine_path_;
-  std::string head_pt_path_;
-
   std::vector<std::string> class_names_;
   bool rename_car_to_truck_and_bus_{false};
+  bool has_twist_{false};
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
 };

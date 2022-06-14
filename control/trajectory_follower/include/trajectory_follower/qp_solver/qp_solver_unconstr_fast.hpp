@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,15 +15,14 @@
 #ifndef TRAJECTORY_FOLLOWER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
 #define TRAJECTORY_FOLLOWER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_
 
-#include "trajectory_follower/qp_solver/qp_solver_interface.hpp"
-
-#include <cmath>
-
 #include "common/types.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
 #include "eigen3/Eigen/LU"
+#include "trajectory_follower/qp_solver/qp_solver_interface.hpp"
 #include "trajectory_follower/visibility_control.hpp"
+
+#include <cmath>
 
 namespace autoware
 {

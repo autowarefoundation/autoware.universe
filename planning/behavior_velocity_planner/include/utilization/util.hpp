@@ -38,6 +38,8 @@
 #include <boost/geometry/geometries/point_xy.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <pcl/point_types.h>
 #include <tf2/utils.h>
@@ -127,11 +129,13 @@ inline geometry_msgs::msg::Pose getPose(
 
 // create detection area from given range return false if creation failure
 bool createDetectionAreaPolygons(
-  Polygons2d & slices, const PathWithLaneId & path, const DetectionRange da_range,
-  const double obstacle_vel_mps);
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & current_pose,
+  const DetectionRange & da_range, const double obstacle_vel_mps, const double min_velocity = 1.0);
 PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, const double ratio);
-Point2d calculateLateralOffsetPoint2d(const Pose & p, const double offset);
-
+Point2d calculateOffsetPoint2d(const Pose & pose, const double offset_x, const double offset_y);
+void extractClosePartition(
+  const geometry_msgs::msg::Point position, const BasicPolygons2d & all_partitions,
+  BasicPolygons2d & close_partition, const double distance_thresh = 30.0);
 void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons2d & polys);
 void setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input);
 void insertVelocity(
@@ -218,6 +222,7 @@ PointWithSearchRangeIndex findFirstNearSearchRangeIndex(
   tier4_autoware_utils::validateNonEmpty(points);
 
   bool min_idx_found = false;
+  bool max_idx_found = false;
   PointWithSearchRangeIndex point_with_range = {point, {static_cast<size_t>(0), points.size() - 1}};
   for (size_t i = 0; i < points.size(); i++) {
     const auto & p = points.at(i).point.pose.position;
@@ -227,7 +232,10 @@ PointWithSearchRangeIndex findFirstNearSearchRangeIndex(
         point_with_range.index.min_idx = i;
         min_idx_found = true;
       }
-      point_with_range.index.max_idx = i;
+      if (!max_idx_found) point_with_range.index.max_idx = i;
+    } else if (min_idx_found) {
+      // found close index and farther than distance_thresh, stop update max index
+      max_idx_found = true;
     }
   }
   return point_with_range;
@@ -294,6 +302,7 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   concat_vec.insert(std::end(concat_vec), std::begin(vec2), std::end(vec2));
   return concat_vec;
 }
+
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 

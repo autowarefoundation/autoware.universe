@@ -16,6 +16,7 @@
 
 #include "autoware_state_panel.hpp"
 
+#include <QHBoxLayout>
 #include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
@@ -80,13 +81,45 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   engage_button_ptr_ = new QPushButton("Engage");
   connect(engage_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutowareEngage()));
 
+  // Gate Mode Button
+  gate_mode_button_ptr_ = new QPushButton("Gate Mode");
+  connect(gate_mode_button_ptr_, SIGNAL(clicked()), SLOT(onClickGateMode()));
+
+  // Path Change Approval Button
+  path_change_approval_button_ptr_ = new QPushButton("Path Change Approval");
+  connect(path_change_approval_button_ptr_, SIGNAL(clicked()), SLOT(onClickPathChangeApproval()));
+
+  // Velocity Limit
+  velocity_limit_button_ptr_ = new QPushButton("Send Velocity Limit");
+  pub_velocity_limit_input_ = new QSpinBox();
+  pub_velocity_limit_input_->setRange(-100.0, 100.0);
+  pub_velocity_limit_input_->setValue(0.0);
+  pub_velocity_limit_input_->setSingleStep(5.0);
+  connect(velocity_limit_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickVelocityLimit()));
+
+  // Emergency Button
+  emergency_button_ptr_ = new QPushButton("Set Emergency");
+  connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
+
+  // Layout
   auto * v_layout = new QVBoxLayout;
+  auto * gate_mode_path_change_approval_layout = new QHBoxLayout;
+  auto * velocity_limit_layout = new QHBoxLayout();
   v_layout->addLayout(gate_layout);
   v_layout->addLayout(selector_layout);
   v_layout->addLayout(state_layout);
   v_layout->addLayout(gear_layout);
   v_layout->addLayout(engage_status_layout);
   v_layout->addWidget(engage_button_ptr_);
+  v_layout->addLayout(engage_status_layout);
+  gate_mode_path_change_approval_layout->addWidget(gate_mode_button_ptr_);
+  gate_mode_path_change_approval_layout->addWidget(path_change_approval_button_ptr_);
+  v_layout->addLayout(gate_mode_path_change_approval_layout);
+  velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
+  velocity_limit_layout->addWidget(pub_velocity_limit_input_);
+  velocity_limit_layout->addWidget(new QLabel("  [km/h]"));
+  velocity_limit_layout->addWidget(emergency_button_ptr_);
+  v_layout->addLayout(velocity_limit_layout);
   setLayout(v_layout);
 }
 
@@ -112,8 +145,25 @@ void AutowareStatePanel::onInitialize()
   sub_engage_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::EngageStatus>(
     "/api/external/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
 
+  sub_emergency_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::Emergency>(
+    "/api/autoware/get/emergency", 10, std::bind(&AutowareStatePanel::onEmergencyStatus, this, _1));
+
   client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
     "/api/external/set/engage", rmw_qos_profile_services_default);
+
+  client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
+    "/api/autoware/set/emergency", rmw_qos_profile_services_default);
+
+  pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
+    "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
+
+  pub_gate_mode_ = raw_node_->create_publisher<tier4_control_msgs::msg::GateMode>(
+    "/control/gate_mode_cmd", rclcpp::QoS{1}.transient_local());
+
+  pub_path_change_approval_ = raw_node_->create_publisher<tier4_planning_msgs::msg::Approval>(
+    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/"
+    "path_change_approval",
+    rclcpp::QoS{1}.transient_local());
 }
 
 void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
@@ -215,6 +265,26 @@ void AutowareStatePanel::onEngageStatus(
   engage_status_label_ptr_->setText(QString::fromStdString(Bool2String(current_engage_)));
 }
 
+void AutowareStatePanel::onEmergencyStatus(
+  const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)
+{
+  current_emergency_ = msg->emergency;
+  if (msg->emergency) {
+    emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
+    emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
+  } else {
+    emergency_button_ptr_->setText(QString::fromStdString("Set Emergency"));
+    emergency_button_ptr_->setStyleSheet("background-color: #00FF00;");
+  }
+}
+
+void AutowareStatePanel::onClickVelocityLimit()
+{
+  auto velocity_limit = std::make_shared<tier4_planning_msgs::msg::VelocityLimit>();
+  velocity_limit->max_velocity = pub_velocity_limit_input_->value() / 3.6;
+  pub_velocity_limit_->publish(*velocity_limit);
+}
+
 void AutowareStatePanel::onClickAutowareEngage()
 {
   auto req = std::make_shared<tier4_external_api_msgs::srv::Engage::Request>();
@@ -235,6 +305,46 @@ void AutowareStatePanel::onClickAutowareEngage()
     });
 }
 
+void AutowareStatePanel::onClickEmergencyButton()
+{
+  auto request = std::make_shared<tier4_external_api_msgs::srv::SetEmergency::Request>();
+  if (current_emergency_) {
+    request->emergency = false;
+  } else {
+    request->emergency = true;
+  }
+  RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
+
+  client_emergency_stop_->async_send_request(
+    request,
+    [this]([[maybe_unused]] rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture
+             result) {
+      auto response = result.get();
+      if (response->status.code == tier4_external_api_msgs::msg::ResponseStatus::SUCCESS) {
+        RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
+      } else {
+        RCLCPP_WARN(
+          raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
+      }
+    });
+}
+void AutowareStatePanel::onClickGateMode()
+{
+  const auto data = gate_mode_label_ptr_->text().toStdString() == "AUTO"
+                      ? tier4_control_msgs::msg::GateMode::EXTERNAL
+                      : tier4_control_msgs::msg::GateMode::AUTO;
+  RCLCPP_INFO(raw_node_->get_logger(), "data : %d", data);
+  pub_gate_mode_->publish(
+    tier4_control_msgs::build<tier4_control_msgs::msg::GateMode>().data(data));
+}
+
+void AutowareStatePanel::onClickPathChangeApproval()
+{
+  pub_path_change_approval_->publish(
+    tier4_planning_msgs::build<tier4_planning_msgs::msg::Approval>()
+      .stamp(raw_node_->now())
+      .approval(true));
+}
 }  // namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>

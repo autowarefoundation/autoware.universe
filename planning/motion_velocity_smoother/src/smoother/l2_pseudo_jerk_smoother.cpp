@@ -24,9 +24,13 @@
 
 namespace motion_velocity_smoother
 {
-L2PseudoJerkSmoother::L2PseudoJerkSmoother(const Param & smoother_param)
-: smoother_param_{smoother_param}
+L2PseudoJerkSmoother::L2PseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
+  auto & p = smoother_param_;
+  p.pseudo_jerk_weight = node.declare_parameter("pseudo_jerk_weight", 100.0);
+  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
+  p.over_a_weight = node.declare_parameter("over_a_weight", 1000.0);
+
   qp_solver_.updateMaxIter(4000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -38,6 +42,8 @@ void L2PseudoJerkSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
 }
+
+L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam() const { return smoother_param_; }
 
 bool L2PseudoJerkSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -51,7 +57,7 @@ bool L2PseudoJerkSmoother::apply(
 
   if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
     RCLCPP_DEBUG(logger_, "closest v_max < 0.1. assume vehicle stopped. return.");
-    return false;
+    return true;
   }
 
   const unsigned int N = input.size();

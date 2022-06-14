@@ -30,7 +30,15 @@
 
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 namespace motion_planning
 {
@@ -445,6 +453,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.hunting_threshold = declare_parameter("hunting_threshold", 0.5);
     p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
     lpf_acc_ = std::make_shared<LowpassFilter1d>(0.0, p.lowpass_gain);
+    const double max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 90.0);
+    p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(max_yaw_deviation_deg);
   }
 
   {
@@ -506,9 +516,10 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
-  pub_clear_velocity_limit_ =
-    this->create_publisher<VelocityLimitClearCommand>("~/output/velocity_limit_clear_command", 1);
-  pub_velocity_limit_ = this->create_publisher<VelocityLimit>("~/output/max_velocity", 1);
+  pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
+    "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
+  pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
+    "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
   // Subscribers
   obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -821,12 +832,14 @@ void ObstacleStopPlannerNode::insertVelocity(
     }
   }
 
-  for (size_t i = 0; i < output.size() - 2; ++i) {
-    const auto & p_base = output.at(i).pose;
-    const auto & p_target = output.at(i + 1).pose;
-    const auto & p_next = output.at(i + 2).pose;
-    if (!checkValidIndex(p_base, p_next, p_target)) {
-      RCLCPP_ERROR(get_logger(), "detect bad index");
+  if (output.size() >= 2) {
+    for (size_t i = 0; i < output.size() - 2; ++i) {
+      const auto & p_base = output.at(i).pose;
+      const auto & p_target = output.at(i + 1).pose;
+      const auto & p_next = output.at(i + 2).pose;
+      if (!checkValidIndex(p_base, p_next, p_target)) {
+        RCLCPP_ERROR(get_logger(), "detect bad index");
+      }
     }
   }
 
@@ -1219,18 +1232,13 @@ TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
 {
   TrajectoryPoints output{};
 
-  double min_distance = 0.0;
   size_t min_distance_index = 0;
-  bool is_init = false;
-  for (size_t i = 0; i < input.size(); ++i) {
-    const double x = input.at(i).pose.position.x - self_pose.position.x;
-    const double y = input.at(i).pose.position.y - self_pose.position.y;
-    const double squared_distance = x * x + y * y;
-    if (!is_init || squared_distance < min_distance * min_distance) {
-      is_init = true;
-      min_distance = std::sqrt(squared_distance);
-      min_distance_index = i;
-    }
+  const auto nearest_index = tier4_autoware_utils::findNearestIndex(
+    input, self_pose, 10.0, node_param_.max_yaw_deviation_rad);
+  if (!nearest_index) {
+    min_distance_index = tier4_autoware_utils::findNearestIndex(input, self_pose.position);
+  } else {
+    min_distance_index = nearest_index.value();
   }
   for (size_t i = min_distance_index; i < input.size(); ++i) {
     output.push_back(input.at(i));
