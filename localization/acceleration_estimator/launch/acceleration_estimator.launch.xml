@@ -1,6 +1,10 @@
 <launch>
   <arg name="use_odom" default="true"/>
+<<<<<<< HEAD
   <arg name="accel_lowpass_gain" default="0.9"/>
+=======
+  <arg name="accel_lowpass_gain" default="0.5"/>
+>>>>>>> 6b0340ba25a81d6847188176555e1834751c5340
   <arg name="in_odom" default="in_odom"/>
   <arg name="in_twist" default="in_twist"/>
   <arg name="out_accel" default="out_accel"/>
