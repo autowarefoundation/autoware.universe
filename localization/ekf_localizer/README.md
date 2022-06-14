@@ -117,20 +117,20 @@ The parameters are set in `launch/ekf_localizer.launch` .
 
 ### For pose measurement
 
-| Name                          | Type   | Description                                                       | Default value |
-| :---------------------------- | :----- | :---------------------------------------------------------------- | :------------ |
-| pose_additional_delay         | double | Additional delay time for pose measurement [s]                    | 0.0           |
-| pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s]     | 0.01          |
-| pose_smoothing_steps          | int    | A value for smoothing steps                                       | 5             |
-| pose_gate_dist                | double | Limit of Mahalanobis distance used for outliers detection         | 10000.0       |
+| Name                          | Type   | Description                                                   | Default value |
+| :---------------------------- | :----- | :------------------------------------------------------------ | :------------ |
+| pose_additional_delay         | double | Additional delay time for pose measurement [s]                | 0.0           |
+| pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s] | 0.01          |
+| pose_smoothing_steps          | int    | A value for smoothing steps                                   | 5             |
+| pose_gate_dist                | double | Limit of Mahalanobis distance used for outliers detection     | 10000.0       |
 
 ### For twist measurement
 
-| Name                   | Type   | Description                                                        | Default value |
-| :--------------------- | :----- | :----------------------------------------------------------------- | :------------ |
-| twist_additional_delay | double | Additional delay time for twist [s]                                | 0.0           |
-| twist_smoothing_steps  | int    | A value for smoothing steps                                        | 2             |
-| twist_gate_dist        | double | Limit of Mahalanobis distance used for outliers detection          | 10000.0       |
+| Name                   | Type   | Description                                               | Default value |
+| :--------------------- | :----- | :-------------------------------------------------------- | :------------ |
+| twist_additional_delay | double | Additional delay time for twist [s]                       | 0.0           |
+| twist_smoothing_steps  | int    | A value for smoothing steps                               | 2             |
+| twist_gate_dist        | double | Limit of Mahalanobis distance used for outliers detection | 10000.0       |
 
 ### For process noise
 
@@ -152,7 +152,7 @@ note: process noise for positions x & y are calculated automatically from nonlin
 
 ### 1. Tune sensor parameters
 
-Set standard deviation for each sensor. The `pose_measure_uncertainty_time` is for the uncertainty of the header timestamp data. 
+Set standard deviation for each sensor. The `pose_measure_uncertainty_time` is for the uncertainty of the header timestamp data.
 You can also tune a number of steps for smoothing for each observed sensor data by tuning `*_smoothing_steps`.
 Increasing the number will improve the smoothness of the estimation, but may have an adverse effect on the estimation performance.
 
