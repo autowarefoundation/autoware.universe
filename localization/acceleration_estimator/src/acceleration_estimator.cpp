@@ -30,7 +30,8 @@
 // clang-format on
 using std::placeholders::_1;
 
-AccelerationEstimator::AccelerationEstimator(const std::string & node_name, const rclcpp::NodeOptions & node_options)
+AccelerationEstimator::AccelerationEstimator(
+  const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -60,21 +61,18 @@ void AccelerationEstimator::callbackOdometry(const nav_msgs::msg::Odometry::Shar
   geometry_msgs::msg::TwistStamped twist;
   twist.header = msg->header;
   twist.twist = msg->twist.twist;
-  estimateAccel(
-    std::make_shared<geometry_msgs::msg::TwistStamped>(twist)
-  );
+  estimateAccel(std::make_shared<geometry_msgs::msg::TwistStamped>(twist));
 }
 
-void AccelerationEstimator::callbackTwistWithCovariance(const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
+void AccelerationEstimator::callbackTwistWithCovariance(
+  const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
 {
   if (use_odom_) return;
 
   geometry_msgs::msg::TwistStamped twist;
   twist.header = msg->header;
   twist.twist = msg->twist.twist;
-  estimateAccel(
-    std::make_shared<geometry_msgs::msg::TwistStamped>(twist)
-  );
+  estimateAccel(std::make_shared<geometry_msgs::msg::TwistStamped>(twist));
 }
 
 void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
@@ -85,8 +83,7 @@ void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped
   if (prev_accel_ptr_ != nullptr && prev_twist_ptr_ != nullptr) {
     const double dt = std::max(
       (rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_twist_ptr_->header.stamp)).seconds(),
-      1.0e-3
-    );
+      1.0e-3);
     double alx, aly, alz, aax, aay, aaz;
     alx = (msg->twist.linear.x - prev_twist_ptr_->twist.linear.x) / dt;
     aly = (msg->twist.linear.y - prev_twist_ptr_->twist.linear.y) / dt;
