@@ -45,16 +45,14 @@
 
 struct PoseInfo
 {
-  geometry_msgs::msg::PoseStamped::SharedPtr pose;
-  std::array<double, 36ul> covariance;
+  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose;
   int counter;
   int smoothing_steps;
 };
 
 struct TwistInfo
 {
-  geometry_msgs::msg::TwistStamped::SharedPtr twist;
-  std::array<double, 36ul> covariance;
+  geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr twist;
   int counter;
   int smoothing_steps;
 };
@@ -212,15 +210,14 @@ private:
    * @param pose measurement value
    */
   void measurementUpdatePose(
-    const geometry_msgs::msg::PoseStamped & pose, std::array<double, 36ul> current_pose_covariance);
+    const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   /**
    * @brief compute EKF update with pose measurement
    * @param twist measurement value
    */
   void measurementUpdateTwist(
-    const geometry_msgs::msg::TwistStamped & twist,
-    std::array<double, 36ul> current_twist_covariance);
+    const geometry_msgs::msg::TwistWithCovarianceStamped & twist);
 
   /**
    * @brief check whether a measurement value falls within the mahalanobis distance threshold
