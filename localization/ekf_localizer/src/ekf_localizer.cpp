@@ -169,8 +169,8 @@ void EKFLocalizer::timerCallback()
         current_pose_info_queue_.push(pose_info);
       }
     }
-    DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc()); DEBUG_INFO(get_logger(), "------------------------- end Pose
-    -------------------------\n");
+    DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
+    DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
   }
 
   /* twist measurement update */
