@@ -243,7 +243,10 @@ double calcDistanceFromEgoPoseToStopPoint(
   const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
   const geometry_msgs::msg::Pose & current_pose)
 {
-  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(input_traj.points);
+  const auto nearest_segment_idx =
+    tier4_autoware_utils::findNearestSegmentIndex(input_traj.points, current_pose.position);
+  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(
+    input_traj.points, nearest_segment_idx + 1, input_traj.points.size());
   if (stop_idx) {
     return std::max(
       0.0, tier4_autoware_utils::calcSignedArcLength(

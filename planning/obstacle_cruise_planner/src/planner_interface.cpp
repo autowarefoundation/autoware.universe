@@ -17,14 +17,12 @@
 Trajectory PlannerInterface::insertStopPointToTrajectory(
   const ObstacleCruisePlannerData & planner_data)
 {
-  const double traj_length = tier4_autoware_utils::calcSignedArcLength(
-    planner_data.traj.points, 0, planner_data.traj.points.size() - 1);
-
-  const auto closest_stop_id =
-    tier4_autoware_utils::searchZeroVelocityIndex(planner_data.traj.points);
-  double closest_stop_distance = closest_stop_id ? tier4_autoware_utils::calcSignedArcLength(
-                                                     planner_data.traj.points, 0, *closest_stop_id)
-                                                 : traj_length;
+  const double ego_offset = std::max(
+    0.0, tier4_autoware_utils::calcSignedArcLength(
+           planner_data.traj.points, 0, planner_data.current_pose.position));
+  double closest_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
+                               planner_data.traj, planner_data.current_pose) +
+                             ego_offset;
 
   const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
 
@@ -37,8 +35,8 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
     const double stop_dist = tier4_autoware_utils::calcSignedArcLength(
                                planner_data.traj.points, 0, obstacle.collision_point) -
                              offset;
-    closest_stop_distance = std::clamp(stop_dist, 0.0, closest_stop_distance);
+    closest_stop_dist = std::clamp(stop_dist, 0.0, closest_stop_dist);
   }
 
-  return obstacle_cruise_utils::insertStopPoint(planner_data.traj, closest_stop_distance);
+  return obstacle_cruise_utils::insertStopPoint(planner_data.traj, closest_stop_dist);
 }

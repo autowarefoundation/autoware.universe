@@ -619,9 +619,8 @@ OptimizationBasedPlanner::TrajectoryData OptimizationBasedPlanner::resampleTraje
   // Obtain trajectory length until the velocity is zero or stop dist
   const auto closest_stop_id =
     tier4_autoware_utils::searchZeroVelocityIndex(base_traj_data.traj.points);
-  const double closest_stop_dist =
-    closest_stop_id ? base_traj_data.s.at(*closest_stop_id) : base_traj_data.s.back();
-  const double traj_length = std::min(max_traj_length, closest_stop_dist);
+  const double closest_stop_dist = closest_stop_id ? base_s.at(*closest_stop_id) : base_s.back();
+  const double traj_length = std::min(closest_stop_dist, std::min(base_s.back(), max_traj_length));
 
   // Create Query Keys
   std::vector<double> resampled_s;
@@ -629,7 +628,7 @@ OptimizationBasedPlanner::TrajectoryData OptimizationBasedPlanner::resampleTraje
     resampled_s.push_back(s);
   }
 
-  if (traj_length - resampled_s.back() < CLOSE_S_DIST_THRESHOLD) {
+  if (!resampled_s.empty() && traj_length - resampled_s.back() < CLOSE_S_DIST_THRESHOLD) {
     resampled_s.back() = traj_length;
   } else {
     resampled_s.push_back(traj_length);
