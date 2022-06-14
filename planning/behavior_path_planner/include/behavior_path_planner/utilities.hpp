@@ -161,7 +161,6 @@ PredictedPath convertToPredictedPath(
   const double duration, const double resolution, const double acceleration);
 
 bool checkIfPositionIsOnTheLine(const double & linestring_length, const FrenetCoordinate3d & pose);
-
 FrenetCoordinate3d convertToFrenetCoordinate3d(
   const std::vector<Point> & linestring, const Point & search_point_geom);
 
