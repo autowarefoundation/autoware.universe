@@ -3,7 +3,7 @@
 <package format="3">
   <name>acceleration_estimator</name>
   <version>0.0.0</version>
-  <description>The stop filter package</description>
+  <description>The acceleration estimation package</description>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <license>Apache License 2.0</license>
 
