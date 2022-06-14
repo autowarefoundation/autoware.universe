@@ -474,11 +474,7 @@ TEST_F(FakeNodeFixture, longitudinal_set_param_smoke_test)
 {
   // Node
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
-
-  // give the node some time to initialize completely
-  std::this_thread::sleep_for(std::chrono::milliseconds{100LL});
-
-  // Change some parameter value
+  rclcpp::spin_some(node);
   auto result = node->set_parameter(rclcpp::Parameter("kp", 1.0));
   EXPECT_TRUE(result.successful);
 }
