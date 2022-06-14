@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
-#define ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
+#ifndef TWIST2ACCEL__TWIST2ACCEL_HPP_
+#define TWIST2ACCEL__TWIST2ACCEL_HPP_
 
 #include "signal_processing/lowpass_filter_1d.hpp"
 
@@ -37,10 +37,10 @@
 #include <string>
 #include <vector>
 
-class AccelerationEstimator : public rclcpp::Node
+class Twist2Accel : public rclcpp::Node
 {
 public:
-  AccelerationEstimator(const std::string & node_name, const rclcpp::NodeOptions & options);
+  Twist2Accel(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
   rclcpp::Publisher<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr
@@ -68,4 +68,4 @@ private:
   void callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
   void estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
 };
-#endif  // ACCELERATION_ESTIMATOR__ACCELERATION_ESTIMATOR_HPP_
+#endif  // TWIST2ACCEL__TWIST2ACCEL_HPP_

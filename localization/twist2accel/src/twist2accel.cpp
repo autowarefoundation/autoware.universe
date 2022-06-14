@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "acceleration_estimator/acceleration_estimator.hpp"
+#include "twist2accel/twist2accel.hpp"
 
 #include <rclcpp/logging.hpp>
 
@@ -30,14 +30,14 @@
 // clang-format on
 using std::placeholders::_1;
 
-AccelerationEstimator::AccelerationEstimator(
+Twist2Accel::Twist2Accel(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "input/odom", 1, std::bind(&AccelerationEstimator::callbackOdometry, this, _1));
+    "input/odom", 1, std::bind(&Twist2Accel::callbackOdometry, this, _1));
   sub_twist_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "input/twist", 1, std::bind(&AccelerationEstimator::callbackTwistWithCovariance, this, _1));
+    "input/twist", 1, std::bind(&Twist2Accel::callbackTwistWithCovariance, this, _1));
 
   pub_accel_ = create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>("output/accel", 1);
 
@@ -53,7 +53,7 @@ AccelerationEstimator::AccelerationEstimator(
   lpf_aaz_ptr_ = std::make_shared<LowpassFilter1d>(0.0, accel_lowpass_gain_);
 }
 
-void AccelerationEstimator::callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
+void Twist2Accel::callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   if (!use_odom_) return;
 
@@ -63,7 +63,7 @@ void AccelerationEstimator::callbackOdometry(const nav_msgs::msg::Odometry::Shar
   estimateAccel(std::make_shared<geometry_msgs::msg::TwistStamped>(twist));
 }
 
-void AccelerationEstimator::callbackTwistWithCovariance(
+void Twist2Accel::callbackTwistWithCovariance(
   const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
 {
   if (use_odom_) return;
@@ -74,7 +74,7 @@ void AccelerationEstimator::callbackTwistWithCovariance(
   estimateAccel(std::make_shared<geometry_msgs::msg::TwistStamped>(twist));
 }
 
-void AccelerationEstimator::estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+void Twist2Accel::estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
   geometry_msgs::msg::AccelWithCovarianceStamped accel_msg;
   accel_msg.header = msg->header;

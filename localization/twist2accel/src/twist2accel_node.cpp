@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "acceleration_estimator/acceleration_estimator.hpp"
+#include "twist2accel/twist2accel.hpp"
 
 #include <memory>
 
@@ -20,7 +20,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions node_options;
-  auto node = std::make_shared<AccelerationEstimator>("acceleration_estimator", node_options);
+  auto node = std::make_shared<Twist2Accel>("twist2accel", node_options);
 
   rclcpp::spin(node);
 

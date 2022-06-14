@@ -1,4 +1,4 @@
-# acceleration_estimator
+# twist2accel
 
 ## Purpose
 
