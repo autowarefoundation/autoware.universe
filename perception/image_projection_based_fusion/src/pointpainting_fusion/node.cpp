@@ -84,20 +84,13 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
   sensor_msgs::PointCloud2Modifier pcd_modifier(painted_pointcloud_msg);
   pcd_modifier.clear();
   painted_pointcloud_msg.width = tmp.width;
-  pcd_modifier.setPointCloud2Fields(
-    7, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "z", 1, sensor_msgs::msg::PointField::FLOAT32, "intensity", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "CAR", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1,
-    sensor_msgs::msg::PointField::FLOAT32);
-  painted_pointcloud_msg.point_step = 28;
   constexpr int num_fields = 7;
   pcd_modifier.setPointCloud2Fields(
-    7, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "z", 1, sensor_msgs::msg::PointField::FLOAT32, "intensity", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "CAR", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1,
-    sensor_msgs::msg::PointField::FLOAT32);
+    num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
+    sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, "CAR", 1,
+    sensor_msgs::msg::PointField::FLOAT32, "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "BICYCLE", 1, sensor_msgs::msg::PointField::FLOAT32);
   painted_pointcloud_msg.point_step = num_fields * sizeof(float);
 
   // filter points out of range
