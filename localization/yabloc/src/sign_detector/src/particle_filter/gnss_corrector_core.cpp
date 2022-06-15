@@ -21,8 +21,8 @@ GnssParticleCorrector::GnssParticleCorrector()
 void GnssParticleCorrector::fixCallback(const NavSatFix::ConstSharedPtr fix_msg)
 {
   const rclcpp::Time stamp = fix_msg->header.stamp;
-  const int NO_FIX_FLAG = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
-  if (fix_msg->status.status == NO_FIX_FLAG) return;
+  const int FIX_FLAG = sensor_msgs::msg::NavSatStatus::STATUS_GBAS_FIX;
+  if (fix_msg->status.status != FIX_FLAG) return;
 
   std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
   if (!opt_particles.has_value()) return;

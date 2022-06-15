@@ -5,7 +5,8 @@
 
     <!-- ========================================= -->
     <node pkg="modularized_particle_filter" exec="predictor" name="predictor" output="screen" args="--ros-args --log-level warn">
-        <remap from="twist" to="/kalman/twist" />
+        <!-- <remap from="twist" to="/kalman/twist" /> -->
+        <remap from="twist" to="/eagleye/twist" />
         <remap from="initialpose" to="/initialpose" />
         <remap from="gnss/pose_with_covariance" to="/eagleye/pose_with_covariance"/> 
 
@@ -28,7 +29,7 @@
     <!-- ========================================= -->
     <node pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="/particle_array" to="/predicted_particles" />
-        <!-- <remap from="/particle_array" to="/camera/weighted_particles" /> -->
+        <!-- <remap from="/particle_array" to="/gnss/weighted_particles" /> -->
         <remap from="/marker_array" to="/camera/weighted_particles/marker_array" />
     </node>
 </launch>

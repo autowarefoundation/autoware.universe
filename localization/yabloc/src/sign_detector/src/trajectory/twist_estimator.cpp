@@ -23,8 +23,8 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
 
   // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 0, 0, 1);
-  cov_ = Eigen::Vector4f(9, 100, 0.0001, 0.00001).asDiagonal();
-  cov_predict_ = Eigen::Vector4f(0.01, 25, 0.001, 0.00001).asDiagonal();
+  cov_ = Eigen::Vector4f(81, 400, 1e-7f, 0.00001).asDiagonal();
+  cov_predict_ = Eigen::Vector4f(0.01, 25, 0.0001, 0.00001).asDiagonal();
 }
 
 void TwistEstimator::callbackImu(const Imu & raw_msg)
@@ -86,10 +86,11 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 {
   last_rtk_fixed_ = (msg.flags == 131);
-  if (msg.flags != 131) {
+  if ((msg.flags != 131) && (msg.flags != 67)) {
     RCLCPP_WARN(get_logger(), "NOT FIX!");
     return;
   }
+
   // Compute error and jacobian
   Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[0]).toRotationMatrix();
