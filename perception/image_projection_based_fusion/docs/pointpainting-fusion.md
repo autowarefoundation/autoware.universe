@@ -1,4 +1,4 @@
-  # pointpainting_fusion
+# pointpainting_fusion
 
 ## Purpose
 
