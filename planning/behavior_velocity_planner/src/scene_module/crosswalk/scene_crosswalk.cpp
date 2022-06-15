@@ -978,7 +978,24 @@ bool CrosswalkModule::isTargetType(const PredictedObject & object) const
   }
 
   const auto & label = object.classification.front().label;
-  return label == ObjectClassification::PEDESTRIAN || label == ObjectClassification::BICYCLE;
+
+  if (label == ObjectClassification::UNKNOWN && planner_param_.look_unknown) {
+    return true;
+  }
+
+  if (label == ObjectClassification::BICYCLE && planner_param_.look_bicycle) {
+    return true;
+  }
+
+  if (label == ObjectClassification::MOTORCYCLE && planner_param_.look_motorcycle) {
+    return true;
+  }
+
+  if (label == ObjectClassification::PEDESTRIAN && planner_param_.look_pedestrian) {
+    return true;
+  }
+
+  return false;
 }
 
 bool CrosswalkModule::isTargetExternalInputStatus(const int target_status) const

@@ -112,6 +112,10 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.max_slow_down_accel = node.declare_parameter(ns + ".crosswalk.max_slow_down_accel", -2.5);
   cp.stop_line_margin = node.declare_parameter(ns + ".crosswalk.stop_line_margin", 5.0);
   cp.tl_state_timeout = node.declare_parameter(ns + ".crosswalk.tl_state_timeout", 1.0);
+  cp.look_unknown = node.declare_parameter(ns + ".crosswalk.target_object.unknown", true);
+  cp.look_bicycle = node.declare_parameter(ns + ".crosswalk.target_object.bicycle", true);
+  cp.look_motorcycle = node.declare_parameter(ns + ".crosswalk.target_object.motorcycle", true);
+  cp.look_pedestrian = node.declare_parameter(ns + ".crosswalk.target_object.pedestrian", true);
 }
 
 void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)

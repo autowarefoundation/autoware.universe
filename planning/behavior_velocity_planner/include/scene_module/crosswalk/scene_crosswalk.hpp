@@ -78,6 +78,10 @@ public:
     double max_slow_down_accel;
     double stop_line_margin;
     double tl_state_timeout;
+    bool look_unknown;
+    bool look_bicycle;
+    bool look_motorcycle;
+    bool look_pedestrian;
   };
 
   CrosswalkModule(
