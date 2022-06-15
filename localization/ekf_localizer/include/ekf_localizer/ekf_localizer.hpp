@@ -311,8 +311,6 @@ private:
    */
   void showCurrentX();
 
-  void initializeSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
-
   void updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
