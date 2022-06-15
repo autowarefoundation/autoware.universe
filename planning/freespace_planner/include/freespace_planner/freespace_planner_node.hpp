@@ -56,6 +56,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <route_handler/route_handler.hpp>
 
 namespace freespace_planner
 {
@@ -127,6 +128,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
   Scenario::ConstSharedPtr scenario_;
   Odometry::ConstSharedPtr odom_;
+  std::shared_ptr<route_handler::RouteHandler> route_handler_;
 
   std::deque<Odometry::ConstSharedPtr> odom_buffer_;
 

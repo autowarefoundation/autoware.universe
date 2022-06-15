@@ -307,12 +307,14 @@ void FreespacePlannerNode::getAstarParam()
 
 void FreespacePlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
 {
-  route_ = msg;
+  if (scenario_ != nullptr) {
+    route_ = msg;
 
-  goal_pose_.header = msg->header;
-  goal_pose_.pose = msg->goal_pose;
+    goal_pose_.header = msg->header;
+    goal_pose_.pose = msg->goal_pose;
 
-  reset();
+    reset();
+  }
 }
 
 void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
