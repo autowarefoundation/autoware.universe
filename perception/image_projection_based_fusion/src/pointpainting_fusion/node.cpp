@@ -98,7 +98,7 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     sensor_msgs::msg::PointField::FLOAT32, "CAR", 1, sensor_msgs::msg::PointField::FLOAT32,
     "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1,
     sensor_msgs::msg::PointField::FLOAT32);
-  painted_pointcloud_msg.point_step = num_fields * 4;
+  painted_pointcloud_msg.point_step = num_fields * sizeof(float);
 
   // filter points out of range
   const auto painted_point_step = painted_pointcloud_msg.point_step;
