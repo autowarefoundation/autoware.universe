@@ -18,8 +18,7 @@ namespace default_ad_api
 {
 
 LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options)
-: Node("localization_score", options),
-  clock_(this->get_clock())
+: Node("localization_score", options), clock_(this->get_clock())
 {
   using std::placeholders::_1;
 
@@ -42,7 +41,7 @@ LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options
   sub_nearest_voxel_transformation_likelihood_ = this->create_subscription<Float32Stamped>(
     "/localization/pose_estimator/nearest_voxel_transformation_likelihood", 1,
     std::bind(&LocalizationScoreNode::callbackNvtlScore, this, _1));
-  
+
   // Timer callback
   auto timer_callback = std::bind(&LocalizationScoreNode::callbackTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -53,17 +52,22 @@ LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-void LocalizationScoreNode::callbackPoseWithCovariance(const PoseWithCovarianceStamped::ConstSharedPtr msg_ptr){
+void LocalizationScoreNode::callbackPoseWithCovariance(
+  const PoseWithCovarianceStamped::ConstSharedPtr msg_ptr)
+{
   pose_covariance_ = msg_ptr->pose;
 }
-void LocalizationScoreNode::callbackTpScore(const Float32Stamped::ConstSharedPtr msg_ptr){
-  score_tp_.value = msg_ptr->data; 
+void LocalizationScoreNode::callbackTpScore(const Float32Stamped::ConstSharedPtr msg_ptr)
+{
+  score_tp_.value = msg_ptr->data;
 }
-void LocalizationScoreNode::callbackNvtlScore(const Float32Stamped::ConstSharedPtr msg_ptr){
-  score_nvtl_.value = msg_ptr->data; 
+void LocalizationScoreNode::callbackNvtlScore(const Float32Stamped::ConstSharedPtr msg_ptr)
+{
+  score_nvtl_.value = msg_ptr->data;
 }
 
-void LocalizationScoreNode::callbackTimer(){
+void LocalizationScoreNode::callbackTimer()
+{
   LocalizationScores localizatoin_scores_msg;
 
   localizatoin_scores_msg.header.frame_id = "map";

@@ -50,7 +50,6 @@ private:
   autoware_ad_api_msgs::msg::ReferenceValue score_tp_;
   autoware_ad_api_msgs::msg::ReferenceValue score_nvtl_;
   geometry_msgs::msg::PoseWithCovariance pose_covariance_;
-
 };
 
 }  // namespace default_ad_api
