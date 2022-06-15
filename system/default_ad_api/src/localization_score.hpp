@@ -21,6 +21,9 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
+#include<memory>
+#include<utility>
+
 namespace default_ad_api
 {
 using autoware_ad_api_msgs::msg::LocalizationScores;
