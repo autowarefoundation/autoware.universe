@@ -299,7 +299,7 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     debug_data_avoidance = avoidance_debug_msg_array;
     if (!debug_avoidance_initializer_for_shift_point_.empty()) {
       const bool is_info_old_ =
-        (clock_->now() - debug_avoidance_initializer_for_shift_point_time_).seconds() > 1.0;
+        (clock_->now() - debug_avoidance_initializer_for_shift_point_time_).seconds() > 0.1;
       if (!is_info_old_) {
         debug_data_avoidance.insert(
           debug_data_avoidance.end(), debug_avoidance_initializer_for_shift_point_.begin(),
