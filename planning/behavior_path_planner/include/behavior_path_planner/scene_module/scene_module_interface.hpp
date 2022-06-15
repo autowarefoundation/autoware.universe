@@ -244,11 +244,9 @@ public:
       return true;
     }
 
-    if (rtc_interface_left_->isRegistered(uuid_left_)) {
-      RCLCPP_WARN_STREAM(getLogger(), "LEFT check");
+    if (rtc_interface_left_ && rtc_interface_left_->isRegistered(uuid_left_)) {
       return rtc_interface_left_->isActivated(uuid_left_);
-    } else if (rtc_interface_right_->isRegistered(uuid_right_)) {
-      RCLCPP_WARN_STREAM(getLogger(), "RIGHT check");
+    } else if (rtc_interface_right_ && rtc_interface_right_->isRegistered(uuid_right_)) {
       return rtc_interface_right_->isActivated(uuid_right_);
     }
     return false;
