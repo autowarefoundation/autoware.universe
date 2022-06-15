@@ -181,7 +181,7 @@ geometry_msgs::msg::Pose getCurrentObjectPoseFromPredictedPath(
     return predicted_object.kinematics.initial_pose_with_covariance.pose;
   }
 
-  return interpolated_pose.value();
+  return interpolated_pose.get();
 }
 
 autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(

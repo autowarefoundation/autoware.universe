@@ -72,6 +72,9 @@ private:
   // Member Functions
   std::vector<double> createTimeVector();
 
+  double getClosestStopDistance(
+    const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data);
+
   std::tuple<double, double> calcInitialMotion(
     const ObstacleCruisePlannerData & planner_data, const size_t input_closest,
     const Trajectory & prev_traj);

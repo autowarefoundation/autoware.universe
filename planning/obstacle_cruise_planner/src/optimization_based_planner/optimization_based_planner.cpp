@@ -442,6 +442,80 @@ std::vector<double> OptimizationBasedPlanner::createTimeVector()
   return time_vec;
 }
 
+double OptimizationBasedPlanner::getClosestStopDistance(
+  const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data)
+{
+  const auto & current_time = planner_data.current_time;
+  double closest_stop_dist = ego_traj_data.s.back();
+  const auto closest_stop_id =
+    tier4_autoware_utils::searchZeroVelocityIndex(ego_traj_data.traj.points);
+  closest_stop_dist = closest_stop_id
+                        ? std::min(closest_stop_dist, ego_traj_data.s.at(*closest_stop_id))
+                        : closest_stop_dist;
+
+  double closest_obj_distance = ego_traj_data.s.back();
+  boost::optional<TargetObstacle> closest_obj;
+  for (const auto & obj : planner_data.target_obstacles) {
+    const auto obj_base_time = obj.time_stamp;
+
+    // Ignore obstacles that are not required to stop
+    if (!isStopRequired(obj)) {
+      continue;
+    }
+
+    // Get current pose from object's predicted path
+    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+      obj.predicted_paths, obj_base_time, current_time);
+    if (!current_object_pose) {
+      continue;
+    }
+
+    // Get current object.kinematics
+    ObjectData obj_data;
+    obj_data.pose = current_object_pose.get();
+    obj_data.length = obj.shape.dimensions.x;
+    obj_data.width = obj.shape.dimensions.y;
+    obj_data.time = std::max((obj_base_time - current_time).seconds(), 0.0);
+    const auto dist_to_collision_point = getDistanceToCollisionPoint(ego_traj_data, obj_data);
+
+    // Calculate Safety Distance
+    const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
+    const auto & ego_vehicle_offset = vehicle_info_.max_longitudinal_offset_m;
+    const double object_offset = obj_data.length / 2.0;
+    const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin;
+
+    // If the object is on the current ego trajectory,
+    // we assume the object travels along ego trajectory
+    if (dist_to_collision_point) {
+      const double stop_dist = std::max(*dist_to_collision_point - safety_distance, 0.0);
+      closest_stop_dist = std::min(stop_dist, closest_stop_dist);
+
+      // Update Distance to the closest object on the ego trajectory
+      const double current_obj_distance = std::max(
+        *dist_to_collision_point - safety_distance + safe_distance_margin, -safety_distance);
+      closest_obj_distance = std::min(closest_obj_distance, current_obj_distance);
+      closest_obj = obj;
+    }
+  }
+
+  // Publish distance from the ego vehicle to the object which is on the trajectory
+  if (closest_obj && closest_obj_distance < ego_traj_data.s.back()) {
+    Float32Stamped dist_to_obj;
+    dist_to_obj.stamp = planner_data.current_time;
+    dist_to_obj.data = closest_obj_distance;
+    distance_to_closest_obj_pub_->publish(dist_to_obj);
+
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
+      "Closest Object Distance %f", closest_obj_distance);
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
+      "Closest Object Velocity %f", closest_obj.get().velocity);
+  }
+
+  return closest_stop_dist;
+}
+
 // v0, a0
 std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const ObstacleCruisePlannerData & planner_data, const size_t input_closest,
