@@ -25,6 +25,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <vector>
+#include <memory>
 
 namespace default_ad_api
 {
