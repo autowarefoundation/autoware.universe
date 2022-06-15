@@ -26,6 +26,9 @@ namespace marker_utils::avoidance_marker
 {
 using behavior_path_planner::AvoidPoint;
 using behavior_path_planner::util::shiftPose;
+using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerScale;
+using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
 
 MarkerArray createAvoidPointMarkerArray(
@@ -36,21 +39,20 @@ MarkerArray createAvoidPointMarkerArray(
   if (shift_points_local.empty()) {
     shift_points_local.push_back(AvoidPoint());
   }
-  int32_t id = 0;
+
+  int32_t id{0};
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;
 
   for (const auto & sp : shift_points_local) {
     // ROS_ERROR("sp: s = (%f, %f), g = (%f, %f)", sp.start.x, sp.start.y, sp.end.x, sp.end.y);
-    Marker marker = initializeMarker("map", ns, Marker::CUBE);
-    marker.header.stamp = current_time;
-    marker.action = Marker::ADD;
-    marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
-    marker.scale = tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5);
-    marker.color = tier4_autoware_utils::createMarkerColor(r, g, b, 0.9);
+    Marker basic_marker = createDefaultMarker(
+      "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
+      createMarkerColor(r, g, b, 0.9));
+    basic_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
     {
       // start point
-      auto marker_s = marker;
+      auto marker_s = basic_marker;
       marker_s.id = id++;
       marker_s.pose = sp.start;
       // shiftPose(&marker_s.pose, current_shift);  // old
@@ -58,14 +60,14 @@ MarkerArray createAvoidPointMarkerArray(
       msg.markers.push_back(marker_s);
 
       // end point
-      auto marker_e = marker;
+      auto marker_e = basic_marker;
       marker_e.id = id++;
       marker_e.pose = sp.end;
       shiftPose(&marker_e.pose, sp.length);
       msg.markers.push_back(marker_e);
 
       // start-to-end line
-      auto marker_l = marker;
+      auto marker_l = basic_marker;
       marker_l.id = id++;
       marker_l.type = Marker::LINE_STRIP;
       marker_l.scale = tier4_autoware_utils::createMarkerScale(w, 0.0, 0.0);
@@ -82,19 +84,17 @@ MarkerArray createAvoidPointMarkerArray(
 MarkerArray createAvoidanceObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, const std::string & ns)
 {
-  Marker marker = initializeMarker("map", ns, Marker::CUBE);
-  marker.header.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
-
   const auto normal_color = tier4_autoware_utils::createMarkerColor(0.9, 0.0, 0.0, 0.8);
   const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
 
-  int32_t i = 0;
+  Marker marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+    createMarkerScale(3.0, 1.5, 1.5), normal_color);
+  int32_t i{0};
   MarkerArray msg;
   for (const auto & object : objects) {
     marker.id = i++;
-    marker.action = Marker::ADD;
     marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
     marker.color = object.lost_count == 0 ? normal_color : disappearing_color;
     msg.markers.push_back(marker);
   }
@@ -105,19 +105,15 @@ MarkerArray createAvoidanceObjectsMarkerArray(
 MarkerArray makeOverhangToRoadShoulderMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects)
 {
-  Marker marker = initializeMarker("map", "overhang", Marker::TEXT_VIEW_FACING);
-  marker.header.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
+  Marker marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "overhang", 0L, Marker::TEXT_VIEW_FACING,
+    createMarkerScale(1.0, 1.0, 1.0), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
-  const auto normal_color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 0.0, 1.0);
-
-  int32_t i = 0;
+  int32_t i{0};
   MarkerArray msg;
   for (const auto & object : objects) {
     marker.id = i++;
-    // marker.action = Marker::ADD;
     marker.pose = object.overhang_pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 1.0);
-    marker.color = normal_color;
     std::ostringstream string_stream;
     string_stream << "(to_road_shoulder_distance = " << object.to_road_shoulder_distance << " [m])";
     marker.text = string_stream.str();
@@ -128,41 +124,36 @@ MarkerArray makeOverhangToRoadShoulderMarkerArray(
 }
 
 MarkerArray createOverhangFurthestLineStringMarkerArray(
-  const lanelet::ConstLineStrings3d & linestrings, const std::string & ns, const double r,
-  const double g, const double b)
+  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float r, const float g,
+  const float b)
 {
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;
 
   for (const auto & linestring : linestrings) {
-    Marker marker = initializeMarker("map", ns, linestring.id(), Marker::LINE_STRIP);
-    marker.header.stamp = current_time;
+    const auto id = static_cast<int>(linestring.id());
+    Marker marker = createDefaultMarker(
+      "map", current_time, ns, id, Marker::LINE_STRIP, createMarkerScale(0.4, 0.0, 0.0),
+      createMarkerColor(r, g, b, 0.999));
 
-    marker.action = Marker::ADD;
     marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
-    marker.scale = tier4_autoware_utils::createMarkerScale(0.4, 0.0, 0.0);
-    marker.color = tier4_autoware_utils::createMarkerColor(r, g, b, 0.999);
     for (const auto & p : linestring.basicLineString()) {
-      Point point;
-      point.x = p.x();
-      point.y = p.y();
-      point.z = p.z();
-      marker.points.push_back(point);
+      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
     }
     msg.markers.push_back(marker);
-    marker.ns = "linestring id";
-    marker.type = Marker::TEXT_VIEW_FACING;
+
+    Marker marker_linestring_id = createDefaultMarker(
+      "map", current_time, "linestring_id", id, Marker::TEXT_VIEW_FACING,
+      createMarkerScale(1.5, 1.5, 1.5), createMarkerColor(1.0, 1.0, 1.0, 0.8));
     Pose text_id_pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(1.5, 1.5, 1.5);
-    marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.8);
     text_id_pose.position.x = linestring.front().x();
     text_id_pose.position.y = linestring.front().y();
     text_id_pose.position.z = linestring.front().z();
-    marker.pose = text_id_pose;
+    marker_linestring_id.pose = text_id_pose;
     std::ostringstream ss;
-    ss << "(ID : " << linestring.id() << ") ";
-    marker.text = ss.str();
-    msg.markers.push_back(marker);
+    ss << "(ID : " << id << ") ";
+    marker_linestring_id.text = ss.str();
+    msg.markers.push_back(marker_linestring_id);
   }
 
   return msg;

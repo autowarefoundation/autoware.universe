@@ -54,8 +54,8 @@ MarkerArray makeOverhangToRoadShoulderMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects);
 
 MarkerArray createOverhangFurthestLineStringMarkerArray(
-  const lanelet::ConstLineStrings3d & linestrings, const std::string & ns, const double r,
-  const double g, const double b);
+  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float r, const float g,
+  const float b);
 
 }  // namespace marker_utils::avoidance_marker
 

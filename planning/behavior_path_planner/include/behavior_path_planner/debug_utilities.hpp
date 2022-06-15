@@ -40,23 +40,55 @@ using behavior_path_planner::ShiftPointArray;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Vector3;
+using std_msgs::msg::ColorRGBA;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 inline int64_t bitShift(int64_t original_id) { return original_id << (sizeof(int32_t) * 8 / 2); }
 
-Marker initializeMarker(
-  std::string && frame_id, const std::string & ns, const Marker::_type_type & type);
+inline Marker createDefaultMarker(
+  const std::string & frame_id, const rclcpp::Time & now, const std::string & ns, const int32_t id,
+  const int & type, const Vector3 & scale, const ColorRGBA & color)
+{
+  Marker marker{};
 
-Marker initializeMarker(
-  std::string && frame_id, const std::string & ns, const int id, const Marker::_type_type & type);
+  marker.header.frame_id = frame_id;
+  marker.header.stamp = now;
+  marker.ns = ns;
+  marker.id = id;
+  marker.type = type;
+  marker.action = Marker::ADD;
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+
+  marker.scale = scale;
+  marker.color = color;
+
+  return marker;
+}
+
+inline Marker createDefaultMarker(
+  std::string && frame_id, const rclcpp::Time & now, std::string && ns, const int32_t id,
+  const int & type, const Vector3 & scale, const ColorRGBA & color)
+{
+  Marker marker{};
+
+  marker.header.frame_id = frame_id;
+  marker.header.stamp = now;
+  marker.ns = ns;
+  marker.id = id;
+  marker.type = type;
+  marker.action = Marker::ADD;
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+
+  marker.scale = scale;
+  marker.color = color;
+
+  return marker;
+}
 
 MarkerArray createPoseMarkerArray(
-  const Pose & pose, const std::string & ns, const int id, const float r, const float g,
-  const float b);
-
-MarkerArray createPoseLineMarkerArray(
-  const Pose & pose, const std::string & ns, const int64_t id, const float r, const float g,
+  const Pose & pose, const std::string & ns, const int32_t id, const float r, const float g,
   const float b);
 
 MarkerArray createPathMarkerArray(
