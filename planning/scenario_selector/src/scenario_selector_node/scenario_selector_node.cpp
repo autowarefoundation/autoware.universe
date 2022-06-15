@@ -63,7 +63,7 @@ bool isInLane(
 
   const lanelet::Point2d search_point(lanelet::InvalId, current_pos.x, current_pos.y);
 
-  const auto load_contains_search_point =
+  const auto is_overlapping_road_lanelet =
     [&search_point](const BoundingBox2d & llt_box, const lanelet::Lanelet & llt) -> bool {
     // filter only road lanelets
     if (!llt.hasAttribute(lanelet::AttributeName::Subtype)) return false;
@@ -84,9 +84,9 @@ bool isInLane(
     BasicPoint2d(current_pos.x - search_width, current_pos.y - search_width),
     BasicPoint2d(current_pos.x + search_width, current_pos.y + search_width));
 
-  const auto result =
-    lanelet_map_ptr->laneletLayer.searchUntil(search_box, load_contains_search_point);
-  return (result != boost::none);
+  const auto overlapping_road_lanelet =
+    lanelet_map_ptr->laneletLayer.searchUntil(search_box, is_overlapping_road_lanelet);
+  return (overlapping_road_lanelet != boost::none);
 }
 
 bool isInParkingLot(
