@@ -46,8 +46,13 @@ rclcpp_components_register_node(behavior_path_planner_node
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_utilities
+    test/input.cpp
+    test/test_utilities.cpp
+  )
+  target_link_libraries(test_${PROJECT_NAME}_utilities
+    behavior_path_planner_node
+  )
 endif()
 
 ament_auto_package(

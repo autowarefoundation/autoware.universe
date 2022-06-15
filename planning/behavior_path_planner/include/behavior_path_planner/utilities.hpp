@@ -254,7 +254,8 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
 // goal management
 
 /**
- * @brief Modify the path points near the goal to smoothly connect the input path and the goal point
+ * @brief Modify the path points near the goal to smoothly connect the input path and the goal
+ * point
  * @details Remove the path points that are forward from the goal by the distance of
  * search_radius_range. Then insert the goal into the path. The previous goal point generated
  * from the goal posture information is also inserted for the smooth connection of the goal pose.

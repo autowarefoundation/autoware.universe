@@ -300,8 +300,8 @@ PredictedPath convertToPredictedPath(
   }
 
   const auto & geometry_points = convertToGeometryPointArray(path);
-  FrenetCoordinate3d vehicle_pose_frenet;
-  convertToFrenetCoordinate3d(geometry_points, vehicle_pose.position, &vehicle_pose_frenet);
+  FrenetCoordinate3d vehicle_pose_frenet =
+    convertToFrenetCoordinate3d(geometry_points, vehicle_pose.position);
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
   rclcpp::Time start_time = clock.now();
   double vehicle_speed = std::abs(vehicle_twist.linear.x);
