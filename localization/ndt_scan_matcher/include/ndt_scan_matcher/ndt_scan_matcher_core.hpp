@@ -24,7 +24,6 @@
 #include <ndt/pcl_modified.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/localization_scores.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
