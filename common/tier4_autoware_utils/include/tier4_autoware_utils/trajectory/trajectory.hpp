@@ -256,7 +256,7 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
  */
 template <class T>
 double calcSignedArcLength(
-  const T & points, const geometry_msgs::msg::Point & src_point, const size_t & dst_idx)
+  const T & points, const geometry_msgs::msg::Point & src_point, const size_t dst_idx)
 {
   validateNonEmpty(points);
 
@@ -274,7 +274,7 @@ double calcSignedArcLength(
  */
 template <class T>
 boost::optional<double> calcSignedArcLength(
-  const T & points, const geometry_msgs::msg::Pose & src_pose, const size_t & dst_idx,
+  const T & points, const geometry_msgs::msg::Pose & src_pose, const size_t dst_idx,
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
