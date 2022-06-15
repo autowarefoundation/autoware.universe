@@ -89,7 +89,7 @@ void L2ping::thread()
       stop = stop_;
     }
     if (stop) {
-       break;
+      break;
     }
 
     // Get device information if not provided
