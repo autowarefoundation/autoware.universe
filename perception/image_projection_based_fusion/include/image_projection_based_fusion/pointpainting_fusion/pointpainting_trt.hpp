@@ -1,4 +1,4 @@
-// Copyright 2021 TIER IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@
 #include <image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp>
 #include <lidar_centerpoint/centerpoint_trt.hpp>
 
-namespace centerpoint
+namespace image_projection_based_fusion
 {
-class PointPaintingTRT : public CenterPointTRT
+class PointPaintingTRT : public centerpoint::CenterPointTRT
 {
 public:
-  using CenterPointTRT::CenterPointTRT;
+  using centerpoint::CenterPointTRT::CenterPointTRT;
 
   explicit PointPaintingTRT(
-    const NetworkParam & encoder_param, const NetworkParam & head_param,
-    const DensificationParam & densification_param, const CenterPointConfig & config);
+    const centerpoint::NetworkParam & encoder_param, const centerpoint::NetworkParam & head_param,
+    const centerpoint::DensificationParam & densification_param,
+    const centerpoint::CenterPointConfig & config);
 
   ~PointPaintingTRT();
 
@@ -36,8 +37,8 @@ protected:
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
     const tf2_ros::Buffer & tf_buffer) override;
 
-  std::unique_ptr<image_projection_based_fusion::VoxelGenerator> vg_ptr_pp{nullptr};
+  std::unique_ptr<image_projection_based_fusion::VoxelGenerator> vg_ptr_pp_{nullptr};
 };
-}  // namespace centerpoint
+}  // namespace image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_

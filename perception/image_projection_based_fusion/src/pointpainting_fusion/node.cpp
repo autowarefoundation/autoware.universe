@@ -67,7 +67,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold);
 
   // create detector
-  detector_ptr_ = std::make_unique<centerpoint::PointPaintingTRT>(
+  detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
 
   // sub and pub
@@ -91,6 +91,14 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1,
     sensor_msgs::msg::PointField::FLOAT32);
   painted_pointcloud_msg.point_step = 28;
+  constexpr int num_fields = 7;
+  pcd_modifier.setPointCloud2Fields(
+    7, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "z", 1, sensor_msgs::msg::PointField::FLOAT32, "intensity", 1,
+    sensor_msgs::msg::PointField::FLOAT32, "CAR", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1,
+    sensor_msgs::msg::PointField::FLOAT32);
+  painted_pointcloud_msg.point_step = num_fields * 4;
 
   // filter points out of range
   const auto painted_point_step = painted_pointcloud_msg.point_step;
@@ -173,17 +181,17 @@ void PointpaintingFusionNode::fuseOnSingleImage(
       projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
 
     // iterate 2d bbox
-    for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
-      sensor_msgs::msg::RegionOfInterest roi = input_roi_msg.feature_objects.at(i).feature.roi;
+    for (const auto & feature_object : input_roi_msg.feature_objects) {
+      sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
       // paint current point if it is inside bbox
       if (
         normalized_projected_point.x() >= roi.x_offset &&
         normalized_projected_point.x() <= roi.x_offset + roi.width &&
         normalized_projected_point.y() >= roi.y_offset &&
         normalized_projected_point.y() <= roi.y_offset + roi.height &&
-        input_roi_msg.feature_objects.at(i).object.classification.front().label !=
+        feature_object.object.classification.front().label !=
           autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
-        switch (input_roi_msg.feature_objects.at(i).object.classification.front().label) {
+        switch (feature_object.object.classification.front().label) {
           case autoware_auto_perception_msgs::msg::ObjectClassification::CAR:
             *iter_car = 1.0;
             break;
@@ -210,8 +218,8 @@ void PointpaintingFusionNode::fuseOnSingleImage(
       }
     }
   }
-  for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
-    debug_image_rois.push_back(input_roi_msg.feature_objects.at(i).feature.roi);
+  for (const auto & feature_object : input_roi_msg.feature_objects) {
+    debug_image_rois.push_back(feature_object.feature.roi);
   }
 
   if (debugger_) {

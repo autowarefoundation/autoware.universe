@@ -1,4 +1,4 @@
-// Copyright 2021 TIER IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,25 +24,26 @@
 #include <string>
 #include <vector>
 
-namespace centerpoint
+namespace image_projection_based_fusion
 {
 PointPaintingTRT::PointPaintingTRT(
-  const NetworkParam & encoder_param, const NetworkParam & head_param,
-  const DensificationParam & densification_param, const CenterPointConfig & config)
-: CenterPointTRT(encoder_param, head_param, densification_param, config)
+  const centerpoint::NetworkParam & encoder_param, const centerpoint::NetworkParam & head_param,
+  const centerpoint::DensificationParam & densification_param,
+  const centerpoint::CenterPointConfig & config)
+: centerpoint::CenterPointTRT(encoder_param, head_param, densification_param, config)
 {
-  vg_ptr_pp =
+  vg_ptr_pp_ =
     std::make_unique<image_projection_based_fusion::VoxelGenerator>(densification_param, config_);
 }
 
 bool PointPaintingTRT::preprocess(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
 {
-  bool is_success = vg_ptr_pp->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
+  bool is_success = vg_ptr_pp_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
   if (!is_success) {
     return false;
   }
-  num_voxels_ = vg_ptr_pp->pointsToVoxels(voxels_, coordinates_, num_points_per_voxel_);
+  num_voxels_ = vg_ptr_pp_->pointsToVoxels(voxels_, coordinates_, num_points_per_voxel_);
   if (num_voxels_ == 0) {
     return false;
   }
@@ -69,4 +70,4 @@ bool PointPaintingTRT::preprocess(
   return true;
 }
 
-}  // namespace centerpoint
+}  // namespace image_projection_based_fusion

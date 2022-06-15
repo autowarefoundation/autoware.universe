@@ -54,7 +54,7 @@ protected:
   bool rename_car_to_truck_and_bus_{false};
   bool has_twist_{false};
 
-  std::unique_ptr<centerpoint::PointPaintingTRT> detector_ptr_{nullptr};
+  std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};
 
   bool out_of_scope(const DetectedObjects & obj);
 };

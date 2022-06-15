@@ -1,4 +1,4 @@
-// Copyright 2021 TIER IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ std::size_t VoxelGenerator::pointsToVoxels(
   // num_points_per_voxel (float): (max_num_voxels)
 
   const std::size_t grid_size = config_.grid_size_z_ * config_.grid_size_y_ * config_.grid_size_x_;
-  std::vector<int> coord_to_voxel_idx(grid_size, -1);
+  std::vector<std::optional<int>> coord_to_voxel_idx(grid_size, -1);
 
   std::size_t voxel_cnt = 0;  // @return
   // std::array<float, config_.point_feature_size> point;
@@ -73,7 +73,7 @@ std::size_t VoxelGenerator::pointsToVoxels(
 
       coord_idx = coord_zyx[0] * config_.grid_size_y_ * config_.grid_size_x_ +
                   coord_zyx[1] * config_.grid_size_x_ + coord_zyx[2];
-      voxel_idx = coord_to_voxel_idx[coord_idx];
+      voxel_idx = coord_to_voxel_idx[coord_idx].value();
       if (voxel_idx == -1) {
         voxel_idx = voxel_cnt;
         if (voxel_cnt >= config_.max_voxel_size_) {
