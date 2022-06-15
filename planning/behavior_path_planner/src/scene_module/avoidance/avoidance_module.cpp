@@ -2133,8 +2133,6 @@ CandidateOutput AvoidanceModule::planCandidate() const
   auto debug_data = debug_data_;
   auto current_raw_shift_points = current_raw_shift_points_;
 
-  TurnSignalInfo turn_signal_info;
-
   const auto shift_points = calcShiftPoints(current_raw_shift_points, debug_data);
   const auto new_shift_points = findNewShiftPoint(shift_points, path_shifter);
   if (new_shift_points) {
