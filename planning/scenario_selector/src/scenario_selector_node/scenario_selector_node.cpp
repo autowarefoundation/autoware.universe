@@ -21,6 +21,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <deque>
 #include <memory>
@@ -62,8 +63,8 @@ bool isInLane(
 
   const lanelet::Point2d search_point(lanelet::InvalId, current_pos.x, current_pos.y);
 
-  const auto search_func = [&search_point](
-                             const BoundingBox2d & llt_box, const lanelet::Lanelet & llt) -> bool {
+  const auto load_contains_search_point =
+    [&search_point](const BoundingBox2d & llt_box, const lanelet::Lanelet & llt) -> bool {
     // filter only road lanelets
     if (!llt.hasAttribute(lanelet::AttributeName::Subtype)) return false;
     const lanelet::Attribute & attr = llt.attribute(lanelet::AttributeName::Subtype);
@@ -78,8 +79,14 @@ bool isInLane(
     return is_inside;
   };
 
-  const auto result = lanelet_map_ptr->laneletLayer.nearestUntil(search_point, search_func);
-  return result != boost::none;
+  const double search_width = 20;  // [m]
+  const auto search_box = BoundingBox2d(
+    BasicPoint2d(current_pos.x - search_width, current_pos.y - search_width),
+    BasicPoint2d(current_pos.x + search_width, current_pos.y + search_width));
+
+  const auto result =
+    lanelet_map_ptr->laneletLayer.searchUntil(search_box, load_contains_search_point);
+  return (result != boost::none);
 }
 
 bool isInParkingLot(
