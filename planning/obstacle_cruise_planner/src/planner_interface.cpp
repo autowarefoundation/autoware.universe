@@ -17,12 +17,13 @@
 Trajectory PlannerInterface::insertStopPointToTrajectory(
   const ObstacleCruisePlannerData & planner_data)
 {
-  const double ego_offset = std::max(
-    0.0, tier4_autoware_utils::calcSignedArcLength(
-           planner_data.traj.points, 0, planner_data.current_pose.position));
-  double closest_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-                               planner_data.traj, planner_data.current_pose) +
-                             ego_offset;
+  const auto closest_stop_idx =
+    tier4_autoware_utils::searchZeroVelocityIndex(planner_data.traj.points);
+  double closest_stop_dist =
+    closest_stop_idx
+      ? tier4_autoware_utils::calcSignedArcLength(planner_data.traj.points, 0, *closest_stop_idx)
+      : tier4_autoware_utils::calcSignedArcLength(
+          planner_data.traj.points, 0, planner_data.traj.points.size() - 1);
 
   const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
 

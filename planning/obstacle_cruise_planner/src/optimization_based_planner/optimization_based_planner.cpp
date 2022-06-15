@@ -328,14 +328,19 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
   }
 
   // Get Zero Velocity Position
-  double closest_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-    planner_data.traj, planner_data.current_pose);
+  double closest_stop_dist = std::numeric_limits<double>::max();
   for (size_t i = 0; i < opt_velocity.size(); ++i) {
     if (opt_velocity.at(i) < ZERO_VEL_THRESHOLD) {
       const double zero_vel_s = opt_position.at(i);
       closest_stop_dist = std::min(closest_stop_dist, zero_vel_s);
       break;
     }
+  }
+  const auto traj_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
+    planner_data.traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
+  if (traj_stop_dist) {
+    closest_stop_dist = std::min(*traj_stop_dist, closest_stop_dist);
   }
 
   size_t break_id = base_traj_data.s.size();
@@ -564,21 +569,22 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const double engage_vel_thr = engage_velocity_ * engage_exit_ratio_;
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= engage_velocity_) {
-      const double stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-        input_traj, planner_data.current_pose);
-      if (stop_dist > stop_dist_to_prohibit_engage_) {
+      const auto stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
+        input_traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+        nearest_yaw_deviation_threshold_);
+      if (stop_dist || *stop_dist > stop_dist_to_prohibit_engage_) {
         initial_vel = engage_velocity_;
         initial_acc = engage_acceleration_;
         RCLCPP_DEBUG(
           rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
           "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
-          vehicle_speed, target_vel, engage_velocity_, engage_vel_thr, stop_dist);
+          vehicle_speed, target_vel, engage_velocity_, engage_vel_thr, stop_dist.get());
         return std::make_tuple(initial_vel, initial_acc);
-      } else {
+      } else if (stop_dist) {
         RCLCPP_DEBUG(
           rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
-          "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
+          "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist.get());
       }
     } else if (target_vel > 0.0) {
       auto clock{rclcpp::Clock{RCL_ROS_TIME}};
@@ -641,9 +647,10 @@ TrajectoryPoint OptimizationBasedPlanner::calcInterpolatedTrajectoryPoint(
 bool OptimizationBasedPlanner::checkHasReachedGoal(const ObstacleCruisePlannerData & planner_data)
 {
   // If goal is close and current velocity is low, we don't optimize trajectory
-  const double closest_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-    planner_data.traj, planner_data.current_pose);
-  if (closest_stop_dist < 0.5 && planner_data.current_vel < 0.6) {
+  const auto closest_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
+    planner_data.traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
+  if (closest_stop_dist && *closest_stop_dist < 0.5 && planner_data.current_vel < 0.6) {
     return true;
   }
 

@@ -90,26 +90,6 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
   return target_pose;
 }
 
-geometry_msgs::msg::Pose lerpByPose(
-  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, const double t)
-{
-  tf2::Transform tf_transform1, tf_transform2;
-  tf2::fromMsg(p1, tf_transform1);
-  tf2::fromMsg(p2, tf_transform2);
-  const auto & tf_point = tf2::lerp(tf_transform1.getOrigin(), tf_transform2.getOrigin(), t);
-  const auto & tf_quaternion =
-    tf2::slerp(tf_transform1.getRotation(), tf_transform2.getRotation(), t);
-
-  geometry_msgs::msg::Pose pose;
-  {
-    pose.position.x = tf_point.x();
-    pose.position.y = tf_point.y();
-    pose.position.z = tf_point.z();
-  }
-  pose.orientation = tf2::toMsg(tf_quaternion);
-  return pose;
-}
-
 boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
   const autoware_auto_perception_msgs::msg::PredictedPath & path, const rclcpp::Duration & rel_time)
 {
@@ -126,7 +106,7 @@ boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
     if (rel_time <= rclcpp::Duration(path.time_step) * static_cast<double>(i)) {
       const auto offset = rel_time - rclcpp::Duration(path.time_step) * static_cast<double>(i - 1);
       const auto ratio = offset.seconds() / rclcpp::Duration(path.time_step).seconds();
-      return lerpByPose(prev_pt, pt, ratio);
+      return tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
     }
   }
 
@@ -209,7 +189,7 @@ autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
       const double ratio = 1 - (accumulated_length - distance_to_stop_point) / segment_length;
 
       autoware_auto_planning_msgs::msg::TrajectoryPoint stop_point;
-      stop_point.pose = lerpByPose(curr_pose, next_pose, ratio);
+      stop_point.pose = tier4_autoware_utils::calcInterpolatedPose(curr_pose, next_pose, ratio);
       stop_point.lateral_velocity_mps = 0.0;
       const double front_dist = tier4_autoware_utils::calcDistance2d(curr_pose, stop_point.pose);
       const double back_dist = tier4_autoware_utils::calcDistance2d(stop_point.pose, next_pose);
@@ -239,22 +219,31 @@ autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
   return output;
 }
 
-double calcDistanceFromEgoPoseToStopPoint(
+boost::optional<double> calcDistanceFromEgoPoseToStopPoint(
   const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
-  const geometry_msgs::msg::Pose & current_pose)
+  const geometry_msgs::msg::Pose & current_pose, const double max_dist, const double max_yaw)
 {
-  const auto nearest_segment_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(input_traj.points, current_pose.position);
-  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(
-    input_traj.points, nearest_segment_idx + 1, input_traj.points.size());
-  if (stop_idx) {
-    return std::max(
-      0.0, tier4_autoware_utils::calcSignedArcLength(
-             input_traj.points, current_pose.position, *stop_idx));
+  const auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+    input_traj.points, current_pose, max_dist, max_yaw);
+
+  if (!nearest_segment_idx) {
+    return boost::none;
   }
 
-  return std::max(
-    0.0, tier4_autoware_utils::calcSignedArcLength(
-           input_traj.points, current_pose.position, input_traj.points.size() - 1));
+  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(
+    input_traj.points, *nearest_segment_idx + 1, input_traj.points.size());
+
+  if (!stop_idx) {
+    return boost::none;
+  }
+
+  const auto closest_stop_dist = tier4_autoware_utils::calcSignedArcLength(
+    input_traj.points, current_pose, *stop_idx, max_dist, max_yaw);
+
+  if (!closest_stop_dist) {
+    return boost::none;
+  }
+
+  return std::max(0.0, *closest_stop_dist);
 }
 }  // namespace obstacle_cruise_utils
