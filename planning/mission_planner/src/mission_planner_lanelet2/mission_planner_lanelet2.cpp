@@ -184,16 +184,16 @@ void MissionPlannerLanelet2::visualizeRoute(
       lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
     insertMarkerArray(
       &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                            "route_lanelets", route_lanelets, cl_route));
+                             "route_lanelets", route_lanelets, cl_route));
     insertMarkerArray(
       &route_marker_array,
       lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
     insertMarkerArray(
       &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                            "normal_lanelets", normal_lanelets, cl_normal));
+                             "normal_lanelets", normal_lanelets, cl_normal));
     insertMarkerArray(
-      &route_marker_array,
-      lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
+      &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
+                             "goal_lanelets", goal_lanelets, cl_goal));
     marker_publisher_->publish(route_marker_array);
   }
 }
