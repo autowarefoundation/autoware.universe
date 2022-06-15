@@ -379,6 +379,32 @@ geometry_msgs::msg::Point calcInterpolatedPoint(
 
   return point;
 }
+
+/**
+ * @brief Calculate a pose by linear interpolation.
+ */
+template <class Pose1, class Pose2>
+geometry_msgs::msg::Pose calcInterpolatedPose(
+  const Pose1 & src_pose, const Pose2 & dst_pose, const double ratio)
+{
+  tf2::Transform src_tf, dst_tf;
+  tf2::fromMsg(getPose(src_pose), src_tf);
+  tf2::fromMsg(getPose(dst_pose), dst_tf);
+
+  // Get pose by linear interpolation
+  const auto & point = tf2::lerp(src_tf.getOrigin(), dst_tf.getOrigin(), ratio);
+
+  // Get quaternion by spherical linear interpolation
+  const auto & quaternion = tf2::slerp(src_tf.getRotation(), dst_tf.getRotation(), ratio);
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = point.x();
+  pose.position.y = point.y();
+  pose.position.z = point.z();
+  pose.orientation = tf2::toMsg(quaternion);
+
+  return pose;
+}
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
