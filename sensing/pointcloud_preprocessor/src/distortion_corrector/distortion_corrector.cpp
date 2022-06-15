@@ -36,6 +36,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
 
   // Parameter
   time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
+  use_imu_ = declare_parameter("use_imu", true);
 
   // Publisher
   undistorted_points_pub_ =
@@ -45,6 +46,9 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   velocity_report_sub_ = this->create_subscription<VelocityReport>(
     "~/input/velocity_report", 10,
     std::bind(&DistortionCorrectorComponent::onVelocityReport, this, std::placeholders::_1));
+  imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
+    "~/input/imu", 10,
+    std::bind(&DistortionCorrectorComponent::onImu, this, std::placeholders::_1));
   input_points_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
@@ -70,6 +74,29 @@ void DistortionCorrectorComponent::onVelocityReport(
   }
 }
 
+void DistortionCorrectorComponent::onImu(
+  const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
+{
+  if (!use_imu_) { return; }
+  imu_queue_.push_back(*imu_msg);
+  
+  // TODO: transform from imu_link to base_link
+
+  while (!imu_queue_.empty()) {
+    // for replay rosbag
+    if (
+      rclcpp::Time(imu_queue_.front().header.stamp) >
+      rclcpp::Time(imu_msg->header.stamp)) {
+      imu_queue_.pop_front();
+    } else if (  // NOLINT
+      rclcpp::Time(imu_queue_.front().header.stamp) <
+      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      imu_queue_.pop_front();
+    }
+    break;
+  }
+}
+
 void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_msg)
 {
   stop_watch_ptr_->toc("processing_time", true);
@@ -83,7 +110,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
   tf2::Transform tf2_base_link_to_sensor{};
   getTransform(points_msg->header.frame_id, base_link_frame_, &tf2_base_link_to_sensor);
 
-  undistortPointCloud(velocity_report_queue_, tf2_base_link_to_sensor, *points_msg);
+  undistortPointCloud(tf2_base_link_to_sensor, *points_msg);
 
   if (points_sub_count > 0) {
     undistorted_points_pub_->publish(std::move(points_msg));
@@ -126,7 +153,6 @@ bool DistortionCorrectorComponent::getTransform(
 }
 
 bool DistortionCorrectorComponent::undistortPointCloud(
-  const std::deque<VelocityReport> & velocity_report_queue_,
   const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points)
 {
   if (points.data.empty() || velocity_report_queue_.empty()) {
@@ -168,6 +194,18 @@ bool DistortionCorrectorComponent::undistortPointCloud(
                          ? std::end(velocity_report_queue_) - 1
                          : velocity_report_it;
 
+  decltype(imu_queue_)::iterator imu_it;
+  if (use_imu_) {
+    imu_it = std::lower_bound(
+    std::begin(imu_queue_), std::end(imu_queue_),
+    first_point_time_stamp_sec, [](const sensor_msgs::msg::Imu & x, const double t) {
+      return rclcpp::Time(x.header.stamp).seconds() < t;
+    });
+    imu_it = imu_it == std::end(imu_queue_)
+                        ? std::end(imu_queue_) - 1
+                        : imu_it;
+  }
+
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     for (;
@@ -185,6 +223,21 @@ bool DistortionCorrectorComponent::undistortPointCloud(
         "velocity_report time_stamp is too late. Cloud not interpolate.");
       v = 0.0f;
       w = 0.0f;
+    }
+
+    if (use_imu_) {
+      for (;
+          (imu_it != std::end(imu_queue_) - 1 &&
+            *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
+          ++imu_it) {
+      }
+      if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
+        RCLCPP_WARN_STREAM_THROTTLE(
+          get_logger(), *get_clock(), 10000 /* ms */,
+          "imu time_stamp is too late. Cloud not interpolate.");
+      } else {
+        w = static_cast<float>(imu_it->angular_velocity.z);
+      }
     }
 
     const float time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);

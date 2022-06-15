@@ -19,6 +19,7 @@
 
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <tf2/convert.h>
@@ -55,15 +56,16 @@ public:
 private:
   void onPointCloud(PointCloud2::UniquePtr points_msg);
   void onVelocityReport(const VelocityReport::ConstSharedPtr velocity_report_msg);
+  void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
 
   bool undistortPointCloud(
-    const std::deque<VelocityReport> & velocity_report_queue,
     const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_report_sub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
 
@@ -74,9 +76,11 @@ private:
   tf2_ros::TransformListener tf2_listener_{tf2_buffer_};
 
   std::deque<autoware_auto_vehicle_msgs::msg::VelocityReport> velocity_report_queue_;
+  std::deque<sensor_msgs::msg::Imu> imu_queue_;
 
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
+  bool use_imu_;
 };
 
 }  // namespace pointcloud_preprocessor
