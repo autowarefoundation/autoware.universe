@@ -130,7 +130,8 @@ void GNSSPoser::callbackNavSatFix(
   gnss_base_pose_cov_msg.pose.covariance[6 * 1 + 1] =
     canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[4] : 10.0;
   gnss_base_pose_cov_msg.pose.covariance[6 * 2 + 2] =
-    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] * 100 : 1000.0;
+    canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] * 100
+                                           : 1000.0;
   gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] = 0.1;
   gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] = 0.1;
   gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] = 1.0;
