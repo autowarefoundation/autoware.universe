@@ -800,9 +800,9 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   tf2::fromMsg(pose.pose.pose.orientation, q_tf);
   tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
 
-  double z_stddev = std::sqrt(pose.pose.covariance[3 * 6 + 3]);
-  double roll_stddev = std::sqrt(pose.pose.covariance[4 * 6 + 4]);
-  double pitch_stddev = std::sqrt(pose.pose.covariance[5 * 6 + 5]);
+  double z_stddev = std::sqrt(pose.pose.covariance[2 * 6 + 2]);
+  double roll_stddev = std::sqrt(pose.pose.covariance[3 * 6 + 3]);
+  double pitch_stddev = std::sqrt(pose.pose.covariance[4 * 6 + 4]);
 
   z_filter_.update(z, z_stddev, pose.header.stamp);
   roll_filter_.update(roll, roll_stddev, pose.header.stamp);
