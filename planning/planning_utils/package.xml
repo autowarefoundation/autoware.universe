@@ -14,6 +14,7 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>builtin_interfaces</depend>
   <depend>geometry_msgs</depend>
+  <depend>libboost-dev</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
