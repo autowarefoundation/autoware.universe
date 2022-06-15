@@ -89,7 +89,7 @@ private:
 
   TrajectoryData resampleTrajectoryData(
     const TrajectoryData & base_traj_data, const double resampling_s_interval,
-    const double max_traj_lengthi);
+    const double max_traj_length);
 
   Trajectory resampleTrajectory(
     const std::vector<double> & base_index, const Trajectory & base_trajectory,
