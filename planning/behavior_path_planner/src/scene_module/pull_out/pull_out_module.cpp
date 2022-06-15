@@ -67,6 +67,7 @@ void PullOutModule::onEntry()
 void PullOutModule::onExit()
 {
   clearWaitingApproval();
+  removeRTCStatus();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }

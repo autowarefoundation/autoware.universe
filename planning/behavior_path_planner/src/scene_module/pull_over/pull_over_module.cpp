@@ -64,6 +64,7 @@ void PullOverModule::onEntry()
 void PullOverModule::onExit()
 {
   clearWaitingApproval();
+  removeRTCStatus();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "PULL_OVER onExit");
 }

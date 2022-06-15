@@ -225,19 +225,6 @@ public:
     }
   }
 
-  void removeRTCStatus()
-  {
-    if (!rtc_interface_left_ && !rtc_interface_right_) {
-      return;
-    }
-    if (rtc_interface_left_) {
-      rtc_interface_left_->clearCooperateStatus();
-    }
-    if (rtc_interface_right_) {
-      rtc_interface_right_->clearCooperateStatus();
-    }
-  }
-
   bool isActivated() const
   {
     if (!rtc_interface_left_ && !rtc_interface_right_) {
@@ -290,6 +277,19 @@ protected:
     } else {
       RCLCPP_WARN_STREAM(
         getLogger(), "Direction is UNKNOWN distance = " << candidate.distance_to_path_change);
+    }
+  }
+
+  void removeRTCStatus()
+  {
+    if (!rtc_interface_left_ && !rtc_interface_right_) {
+      return;
+    }
+    if (rtc_interface_left_) {
+      rtc_interface_left_->clearCooperateStatus();
+    }
+    if (rtc_interface_right_) {
+      rtc_interface_right_->clearCooperateStatus();
     }
   }
 
