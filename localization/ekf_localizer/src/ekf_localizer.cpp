@@ -343,6 +343,8 @@ void EKFLocalizer::callbackInitialPose(
 
   ekf_.init(X, P, extend_state_step_);
 
+  updateSimple1DFilters(*initialpose);
+
   while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
 }
 
