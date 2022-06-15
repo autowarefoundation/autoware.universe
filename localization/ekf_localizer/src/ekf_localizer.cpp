@@ -106,6 +106,10 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   initEKF();
 
+  z_filter_.set_proc_stddev(1.0);
+  roll_filter_.set_proc_stddev(0.1);
+  pitch_filter_.set_proc_stddev(0.1);
+
   /* debug */
   pub_debug_ = create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>("debug", 1);
   pub_measured_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("debug/measured_pose", 1);
@@ -351,11 +355,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   PoseInfo pose_info = {msg, 0, pose_smoothing_steps_};
   current_pose_info_queue_.push(pose_info);
 
-  if (!z_filter_.initialized()) {
-    initializeSimple1DFilters(*msg);
-  } else {
-    updateSimple1DFilters(*msg);
-  }
+  updateSimple1DFilters(*msg);
 }
 
 /*
@@ -770,20 +770,24 @@ double EKFLocalizer::normalizeYaw(const double & yaw) const
   return std::atan2(std::sin(yaw), std::cos(yaw));
 }
 
-void EKFLocalizer::initializeSimple1DFilters(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
-{
-  double z = pose.pose.pose.position.z;
-  double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
+// void EKFLocalizer::initializeSimple1DFilters(
+//   const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+// {
+//   double z = pose.pose.pose.position.z;
+//   double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
 
-  tf2::Quaternion q_tf;
-  tf2::fromMsg(pose.pose.pose.orientation, q_tf);
-  tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
+//   tf2::Quaternion q_tf;
+//   tf2::fromMsg(pose.pose.pose.orientation, q_tf);
+//   tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
 
-  z_filter_.init(z, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
-  roll_filter_.init(roll, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
-  pitch_filter_.init(pitch, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
-}
+//   double z_stddev = std::sqrt(pose.pose.covariance[3 * 6 + 3]);
+//   double roll_stddev = std::sqrt(pose.pose.covariance[4 * 6 + 4]);
+//   double pitch_stddev = std::sqrt(pose.pose.covariance[5 * 6 + 5]);
+
+//   z_filter_.init(z, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
+//   roll_filter_.init(roll, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
+//   pitch_filter_.init(pitch, 1.0, pose.header.stamp); // TODO: choose an appropriate proc_stddev
+// }
 
 void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
 {

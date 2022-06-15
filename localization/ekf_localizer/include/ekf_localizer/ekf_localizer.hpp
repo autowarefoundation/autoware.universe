@@ -65,21 +65,24 @@ public:
     initialized_ = false;
     x_ = 0;
     stddev_ = 1e9;
-    proc_stddev_x_c_ = 1e9;
+    proc_stddev_x_c_ = 0.0;
     return;
   };
-  void init(const double init_x, const double proc_stddev_x, const rclcpp::Time time)
+  void init(const double init_obs, const double obs_stddev, const rclcpp::Time time)
   {
-    x_ = init_x;
-    proc_stddev_x_c_ = proc_stddev_x;
+    x_ = init_obs;
+    stddev_ = obs_stddev;
     latest_time_ = time;
     initialized_ = true;
     return;
   };
-  double get_x() { return x_; };
-  bool initialized() { return initialized_; };
   void update(const double obs, const double obs_stddev, const rclcpp::Time time)
   {
+    if (!initialized_) {
+      init(obs, obs_stddev, time);
+      return;
+    }
+
     // Prediction step (current stddev_)
     double dt = (time - latest_time_).seconds();
     double proc_stddev_x_d = proc_stddev_x_c_ * dt;
@@ -93,6 +96,8 @@ public:
     latest_time_ = time;
     return;
   };
+  void set_proc_stddev(const double proc_stddev) { proc_stddev_x_c_ = proc_stddev; };
+  double get_x() { return x_; };
 
 private:
   bool initialized_;
