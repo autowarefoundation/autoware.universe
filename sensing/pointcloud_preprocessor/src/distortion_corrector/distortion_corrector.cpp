@@ -76,7 +76,9 @@ void DistortionCorrectorComponent::onVelocityReport(
 
 void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
-  if (!use_imu_) { return; }
+  if (!use_imu_) {
+    return;
+  }
 
   tf2::Transform tf2_imu_link_to_base_link{};
   getTransform(base_link_frame_, imu_msg->header.frame_id, &tf2_imu_link_to_base_link);
@@ -205,15 +207,14 @@ bool DistortionCorrectorComponent::undistortPointCloud(
                          : velocity_report_it;
 
   decltype(angular_velocity_queue_)::iterator imu_it;
-  if (use_imu_) {
+  if (use_imu_ && !angular_velocity_queue_.empty()) {
     imu_it = std::lower_bound(
-    std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
-    first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
-      return rclcpp::Time(x.header.stamp).seconds() < t;
-    });
-    imu_it = imu_it == std::end(angular_velocity_queue_)
-                        ? std::end(angular_velocity_queue_) - 1
-                        : imu_it;
+      std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
+      first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
+        return rclcpp::Time(x.header.stamp).seconds() < t;
+      });
+    imu_it =
+      imu_it == std::end(angular_velocity_queue_) ? std::end(angular_velocity_queue_) - 1 : imu_it;
   }
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
@@ -236,9 +237,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       w = 0.0f;
     }
 
-    if (use_imu_) {
+    if (use_imu_ && !angular_velocity_queue_.empty()) {
       for (;
-          (imu_it != std::end(angular_velocity_queue_) - 1 &&
+           (imu_it != std::end(angular_velocity_queue_) - 1 &&
             *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
            ++imu_it) {
       }
