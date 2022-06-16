@@ -682,3 +682,16 @@ TEST(trajectory, convertToTrajectoryPointArray)
     EXPECT_EQ(traj.at(i), traj_input.points.at(i));
   }
 }
+
+TEST(trajectory, calcDistanceToForwardStopPoint)
+{
+  using tier4_autoware_utils::calcDistanceToForwardStopPoint;
+
+  auto traj_input = generateTestTrajectory<Trajectory>(100, 1.0, 3.0);
+  traj_input.points.at(50).longitudinal_velocity_mps = 0.0;
+
+  const auto pose = createPose(3.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+
+  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+  std::cerr << "dist: " << *dist << std::endl;
+}

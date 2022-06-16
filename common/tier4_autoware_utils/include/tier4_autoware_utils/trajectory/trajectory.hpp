@@ -366,11 +366,11 @@ double calcArcLength(const T & points)
 }
 
 /**
- * @brief Calculate distance to the closest stop point ahead of the pose
+ * @brief Calculate distance to the closest forward stop point from the given pose
  */
 template <class T>
-boost::optional<double> calcDistanceToStopPoint(
-  const T & points_with_twist, const geometry_msgs::msg::Pose & pose, const size_t dst_idx,
+boost::optional<double> calcDistanceToForwardStopPoint(
+  const T & points_with_twist, const geometry_msgs::msg::Pose & pose,
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
