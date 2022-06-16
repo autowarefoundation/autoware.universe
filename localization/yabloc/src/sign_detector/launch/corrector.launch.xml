@@ -9,7 +9,7 @@
     <!-- ========================================= -->
     <node name="camera_corrector" pkg="sign_detector" exec="camera_corrector_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="image_size" value="1000"/>
+        <param name="image_size" value="800"/>
         <!-- <param name="max_range" value="$(var max_range)"/> -->
         <param name="max_range" value="40.0"/>
         <param name="gamma" value="3.0"/>
@@ -33,7 +33,8 @@
         <param name="output_topic" value="/weighted_particles" />
         <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />
     </node>
-    <node if="true" pkg="topic_tools" exec="relay" name="camera_corrector_relay">
+
+    <node if="false" pkg="topic_tools" exec="relay" name="camera_corrector_relay">
         <param name="input_topic" value="/camera/weighted_particles" />
         <param name="output_topic" value="/weighted_particles" />
         <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />

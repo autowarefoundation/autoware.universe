@@ -60,7 +60,6 @@ private:
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
   std::optional<CloudWithPose> latest_cloud_with_pose_{std::nullopt};
 
-  HierarchicalCostMap cost_map_;
   // GammaConverter gamma_converter{4.0f};
   const int image_size_;
   const float max_range_;
@@ -68,5 +67,6 @@ private:
   const float score_offset_;
   const float max_raw_score_;
   const float min_prob_;
+  HierarchicalCostMap cost_map_;
 };
 }  // namespace particle_filter

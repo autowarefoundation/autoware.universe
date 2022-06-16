@@ -8,7 +8,7 @@ namespace particle_filter
 {
 float Area::unit_length_ = -1;
 
-cv::Point HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vector2f p)
+cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vector2f p)
 {
   Eigen::Vector2f relative = p - area.realScale();
   float px = relative.x() / max_range_ * image_size_;
@@ -17,7 +17,7 @@ cv::Point HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vector2
 }
 
 HierarchicalCostMap::HierarchicalCostMap(float max_range, float image_size, float gamma)
-: max_range_(max_range_), image_size_(image_size)
+: max_range_(max_range), image_size_(image_size)
 {
   Area::unit_length_ = max_range;
   gamma_converter.reset(gamma);
@@ -29,7 +29,8 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
   if (cost_maps.count(key) == 0) {
     buildMap(key);
   }
-  return cost_maps.at(key).at<uchar>(toCvPoint(key, position));
+  cv::Point2i tmp = toCvPoint(key, position);
+  return cost_maps.at(key).at<uchar>(tmp);
 }
 
 void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
@@ -40,7 +41,7 @@ void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & clo
 void HierarchicalCostMap::buildMap(const Area & area)
 {
   cv::Mat cost_map;
-  cv::Mat image = 255 - cv::Mat::ones(cv::Size(image_size_, image_size_), CV_8UC1);
+  cv::Mat image = 255 * cv::Mat::ones(cv::Size(image_size_, image_size_), CV_8UC1);
 
   auto cvPoint = [this, area](const Eigen::Vector3f & p) -> cv::Point {
     return this->toCvPoint(area, p.topRows(2));
@@ -66,6 +67,7 @@ void HierarchicalCostMap::buildMap(const Area & area)
     cost_maps.erase(key);
     std::cerr << "old cost map is poped" << std::endl;
   }
+  std::cout << "successed to build map " << generated_map_history_.size() << std::endl;
 }
 
 }  // namespace particle_filter

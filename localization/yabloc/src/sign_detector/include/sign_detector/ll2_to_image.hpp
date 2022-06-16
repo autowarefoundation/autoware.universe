@@ -26,10 +26,11 @@ private:
   const float max_range_;  // [m]
 
   using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
+  using Cloud2 = sensor_msgs::msg::PointCloud2;
 
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_ = nullptr;
 
-  rclcpp::Publisher<CloudWithPose>::SharedPtr pub_cloud_;
+  rclcpp::Publisher<Cloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_height_;
 

@@ -19,7 +19,9 @@ Ll2ImageConverter::Ll2ImageConverter()
   // Publisher
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
   pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
-  pub_cloud_ = this->create_publisher<CloudWithPose>("/ll2_cloud", 10);
+
+  rclcpp::QoS latch = rclcpp::QoS(10).transient_local();
+  pub_cloud_ = this->create_publisher<Cloud2>("/ll2_cloud", latch);
 
   using std::placeholders::_1, std::placeholders::_2;
 
@@ -97,7 +99,11 @@ void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pos
 
   // Publish
   publishImage(image, pose_stamped.header.stamp);
-  publishCloud(near_linestring, pose_stamped.header.stamp, pose_stamped.pose);
+  // TODO:
+  static bool first_publish_cloud = true;
+  if (first_publish_cloud)
+    publishCloud(*linestrings_, pose_stamped.header.stamp, pose_stamped.pose);
+  first_publish_cloud = false;
 
   std_msgs::msg::Float32 height;
   height.data = computeHeight(pose);
@@ -121,12 +127,9 @@ void Ll2ImageConverter::publishCloud(
   // Convert to msg
   sensor_msgs::msg::PointCloud2 cloud_msg;
   pcl::toROSMsg(cloud, cloud_msg);
-  CloudWithPose msg;
-  msg.pose = pose;
-  msg.cloud = cloud_msg;
-  msg.header.stamp = stamp;
-  msg.header.frame_id = "map";
-  pub_cloud_->publish(msg);
+  cloud_msg.header.stamp = stamp;
+  cloud_msg.header.frame_id = "map";
+  pub_cloud_->publish(cloud_msg);
 }
 
 void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
