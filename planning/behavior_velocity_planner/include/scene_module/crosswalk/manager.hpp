@@ -40,7 +40,6 @@ public:
 private:
   CrosswalkModule::PlannerParam crosswalk_planner_param_;
   WalkwayModule::PlannerParam walkway_planner_param_;
-  rtc_interface::RTCInterface rtc_interface_;
 
   std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -51,7 +50,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::LaneletMapPtr lanelet_map,
     const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
-  
+
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(

@@ -17,10 +17,9 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 
-
-#include <utilization/util.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <rtc_interface/rtc_interface.hpp>
+#include <utilization/util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
