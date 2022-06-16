@@ -76,7 +76,7 @@ private:
   tf2_ros::TransformListener tf2_listener_{tf2_buffer_};
 
   std::deque<autoware_auto_vehicle_msgs::msg::VelocityReport> velocity_report_queue_;
-  std::deque<sensor_msgs::msg::Imu> imu_queue_;
+  std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;

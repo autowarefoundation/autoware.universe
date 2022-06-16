@@ -78,20 +78,31 @@ void DistortionCorrectorComponent::onImu(
   const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   if (!use_imu_) { return; }
-  imu_queue_.push_back(*imu_msg);
-  
-  // TODO: transform from imu_link to base_link
 
-  while (!imu_queue_.empty()) {
+  tf2::Transform tf2_imu_link_to_base_link{};
+  getTransform(base_link_frame_, imu_msg->header.frame_id, &tf2_imu_link_to_base_link);
+  geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
+    std::make_shared<geometry_msgs::msg::TransformStamped>();
+  tf_base2imu_ptr->transform.rotation = tf2::toMsg(tf2_imu_link_to_base_link.getRotation());
+
+  geometry_msgs::msg::Vector3Stamped angular_velocity;
+  angular_velocity.vector = imu_msg->angular_velocity;
+
+  geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
+  tf2::doTransform(angular_velocity, transformed_angular_velocity, *tf_base2imu_ptr);
+  transformed_angular_velocity.header = imu_msg->header;
+  angular_velocity_queue_.push_back(transformed_angular_velocity);
+
+  while (!angular_velocity_queue_.empty()) {
     // for replay rosbag
     if (
-      rclcpp::Time(imu_queue_.front().header.stamp) >
+      rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
       rclcpp::Time(imu_msg->header.stamp)) {
-      imu_queue_.pop_front();
+      angular_velocity_queue_.pop_front();
     } else if (  // NOLINT
-      rclcpp::Time(imu_queue_.front().header.stamp) <
+      rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
       rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
-      imu_queue_.pop_front();
+      angular_velocity_queue_.pop_front();
     }
     break;
   }
@@ -194,15 +205,15 @@ bool DistortionCorrectorComponent::undistortPointCloud(
                          ? std::end(velocity_report_queue_) - 1
                          : velocity_report_it;
 
-  decltype(imu_queue_)::iterator imu_it;
+  decltype(angular_velocity_queue_)::iterator imu_it;
   if (use_imu_) {
     imu_it = std::lower_bound(
-    std::begin(imu_queue_), std::end(imu_queue_),
-    first_point_time_stamp_sec, [](const sensor_msgs::msg::Imu & x, const double t) {
+    std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
+    first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
-    imu_it = imu_it == std::end(imu_queue_)
-                        ? std::end(imu_queue_) - 1
+    imu_it = imu_it == std::end(angular_velocity_queue_)
+                        ? std::end(angular_velocity_queue_) - 1
                         : imu_it;
   }
 
@@ -217,6 +228,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     float v{static_cast<float>(velocity_report_it->longitudinal_velocity)};
     float w{static_cast<float>(velocity_report_it->heading_rate)};
 
+
     if (std::abs(*it_time_stamp - rclcpp::Time(velocity_report_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
@@ -227,7 +239,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     if (use_imu_) {
       for (;
-          (imu_it != std::end(imu_queue_) - 1 &&
+          (imu_it != std::end(angular_velocity_queue_) - 1 &&
             *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
           ++imu_it) {
       }
@@ -236,7 +248,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
           get_logger(), *get_clock(), 10000 /* ms */,
           "imu time_stamp is too late. Cloud not interpolate.");
       } else {
-        w = static_cast<float>(imu_it->angular_velocity.z);
+        w = static_cast<float>(imu_it->vector.z);
       }
     }
 
