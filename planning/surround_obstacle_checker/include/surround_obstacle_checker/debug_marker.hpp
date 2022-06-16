@@ -19,6 +19,8 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+// #include <tier4_planning_msgs/msg/motion_factor_array.hpp>
+#include <autoware_ad_api_msgs/msg/motion_factor_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -28,6 +30,8 @@
 namespace surround_obstacle_checker
 {
 
+using autoware_ad_api_msgs::msg::MotionFactor;
+using autoware_ad_api_msgs::msg::MotionFactorArray;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
@@ -51,11 +55,14 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
+  rclcpp::Publisher<MotionFactorArray>::SharedPtr motion_factor_pub_;
+
   double base_link2front_;
 
   MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
   StopReasonArray makeStopReasonArray();
+  MotionFactorArray makeMotionFactorArray();
 
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;

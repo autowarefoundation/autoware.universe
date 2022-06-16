@@ -5,6 +5,8 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  motion/msg/MotionFactor.msg
+  motion/msg/MotionFactorArray.msg
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
   DEPENDENCIES

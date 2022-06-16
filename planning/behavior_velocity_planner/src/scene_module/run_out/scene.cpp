@@ -45,7 +45,8 @@ void RunOutModule::setPlannerParam(const PlannerParam & planner_param)
 
 bool RunOutModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
+  [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason,
+  [[maybe_unused]] autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
 {
   // timer starts
   const auto t1_modify_path = std::chrono::system_clock::now();

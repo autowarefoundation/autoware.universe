@@ -547,6 +547,14 @@ tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & st
   return stop_reason_msg;
 }
 
+autoware_ad_api_msgs::msg::MotionFactor initializeMotionFactor(const uint16_t stop_reason)
+{
+  autoware_ad_api_msgs::msg::MotionFactor motion_factor_msg;
+  motion_factor_msg.reason = stop_reason;
+  motion_factor_msg.status = autoware_ad_api_msgs::msg::MotionFactor::STOP_FALSE;
+  return motion_factor_msg;
+}
+
 void appendStopReason(
   const tier4_planning_msgs::msg::StopFactor stop_factor,
   tier4_planning_msgs::msg::StopReason * stop_reason)

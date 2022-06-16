@@ -72,7 +72,8 @@ public:
 
   bool modifyPathVelocity(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason) override;
+    tier4_planning_msgs::msg::StopReason * stop_reason,
+    autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -98,7 +99,8 @@ private:
   autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPose(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
     const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
-    tier4_planning_msgs::msg::StopReason * stop_reason);
+    tier4_planning_msgs::msg::StopReason * stop_reason,
+    autoware_ad_api_msgs::msg::MotionFactor * motion_factor);
 
   bool isPassthrough(const double & signed_arc_length) const;
 

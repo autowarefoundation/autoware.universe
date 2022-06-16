@@ -173,7 +173,8 @@ boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPo
 autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const StopLineModule::SegmentIndexWithPose & stop_pose_with_index,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
 {
   auto modified_path = path;
 
@@ -196,6 +197,9 @@ autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
     stop_factor.stop_pose = stop_point_with_lane_id.point.pose;
     stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    motion_factor->status = autoware_ad_api_msgs::msg::MotionFactor::STOP_TRUE;
+    motion_factor->pose = stop_point_with_lane_id.point.pose;
+    // motion_factor->stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
   }
 
   return modified_path;
@@ -203,7 +207,8 @@ autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
 
 bool StopLineModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  tier4_planning_msgs::msg::StopReason * stop_reason,
+  autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
 {
   debug_data_ = DebugData();
   if (path->points.empty()) return true;
@@ -212,6 +217,8 @@ bool StopLineModule::modifyPathVelocity(
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::STOP_LINE);
+  *motion_factor =
+    planning_utils::initializeMotionFactor(autoware_ad_api_msgs::msg::MotionFactor::STOP_LINE);
 
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
@@ -257,7 +264,7 @@ bool StopLineModule::modifyPathVelocity(
     stop_line_margin;
   if (state_ == State::APPROACH) {
     // Insert stop pose
-    *path = insertStopPose(*path, *stop_pose_with_index, stop_reason);
+    *path = insertStopPose(*path, *stop_pose_with_index, stop_reason, motion_factor);
 
     // Move to stopped state if stopped
     if (

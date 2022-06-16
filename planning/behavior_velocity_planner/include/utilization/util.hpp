@@ -20,6 +20,7 @@
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
+#include <autoware_ad_api_msgs/msg/motion_factor.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -290,6 +291,7 @@ double findReachTime(
   const double t_min, const double t_max);
 
 tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
+autoware_ad_api_msgs::msg::MotionFactor initializeMotionFactor(const uint16_t stop_reason);
 
 void appendStopReason(
   const tier4_planning_msgs::msg::StopFactor stop_factor,
