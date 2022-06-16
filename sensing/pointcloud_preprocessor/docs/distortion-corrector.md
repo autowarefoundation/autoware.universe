@@ -38,8 +38,9 @@ $ ExactPointTime = TimeStamp + TimeOffset $
 
 ### Core Parameters
 
-| Name                   | Type   | Default Value | Description           |
-| ---------------------- | ------ | ------------- | --------------------- |
-| `timestamp_field_name` | string | "time_stamp"  | time stamp field name |
+| Name                   | Type   | Default Value | Description                                                 |
+| ---------------------- | ------ | ------------- | ----------------------------------------------------------- |
+| `timestamp_field_name` | string | "time_stamp"  | time stamp field name                                       |
+| `use_imu`              | bool   | true          | use gyroscope for yaw rate if true, else use vehicle status |
 
 ## Assumptions / Known limits
