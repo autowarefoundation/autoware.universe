@@ -38,16 +38,16 @@ public:
     lsd_sub_ = create_subscription<PointCloud2>("/lsd_cloud", 10, lsd_callback);
 
     auto ll2_callback = std::bind(&CameraParticleCorrector::ll2Callback, this, _1);
-    ll2_sub_ = create_subscription<CloudWithPose>("/ll2_cloud", 10, ll2_callback);
+    ll2_sub_ = create_subscription<PointCloud2>("/ll2_cloud", 10, ll2_callback);
 
     image_pub_ = create_publisher<Image>("/match_image", 10);
 
-    gamma_converter.reset(gamma_);
+    // gamma_converter.reset(gamma_);
   }
 
 private:
   void lsdCallback(const PointCloud2 & msg);
-  void ll2Callback(const CloudWithPose & msg);
+  void ll2Callback(const PointCloud2 & msg);
   cv::Mat buildLl2Image(const LineSegment & cloud);
   cv::Point2f toCvPoint(const Eigen::Vector3f & p);
 
@@ -55,13 +55,13 @@ private:
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr lsd_sub_;
-  rclcpp::Subscription<CloudWithPose>::SharedPtr ll2_sub_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr ll2_sub_;
 
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
   std::optional<CloudWithPose> latest_cloud_with_pose_{std::nullopt};
 
   HierarchicalCostMap cost_map_;
-  GammaConverter gamma_converter{4.0f};
+  // GammaConverter gamma_converter{4.0f};
   const int image_size_;
   const float max_range_;
   const float gamma_;

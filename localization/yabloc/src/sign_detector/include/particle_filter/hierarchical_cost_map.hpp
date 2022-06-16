@@ -20,14 +20,17 @@ struct Area
     x = static_cast<long>(std::floor(v.x() / unit_length_));
     y = static_cast<long>(std::floor(v.y() / unit_length_));
   }
+
+  Eigen::Vector2f realScale() const { return {x * unit_length_, y * unit_length_}; };
+
   void throwError() const
   {
     std::cerr << "Are::unit_length_ is not initialized" << std::endl;
     exit(EXIT_FAILURE);
   }
-
   int x, y;
   static float unit_length_;
+  static float image_size_;
 
   friend bool operator==(const Area & one, const Area & other)
   {
@@ -41,8 +44,6 @@ struct Area
     boost::hash_combine(seed, index.y);
     return seed;
   }
-
-  static cv::Point toCvPoint(const Eigen::Vector3f);
 };
 
 class HierarchicalCostMap
@@ -58,9 +59,11 @@ private:
   const float max_range_;
   const float image_size_;
 
+  cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);
   GammaConverter gamma_converter{4.0f};
 
+  std::list<Area> generated_map_history_;
   std::optional<pcl::PointCloud<pcl::PointNormal>> cloud_;
   std::unordered_map<Area, cv::Mat, Area> cost_maps;
 };
