@@ -228,7 +228,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     float v{static_cast<float>(velocity_report_it->longitudinal_velocity)};
     float w{static_cast<float>(velocity_report_it->heading_rate)};
 
-
     if (std::abs(*it_time_stamp - rclcpp::Time(velocity_report_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
