@@ -17,8 +17,15 @@
 Trajectory PlannerInterface::insertStopPointToTrajectory(
   const ObstacleCruisePlannerData & planner_data)
 {
-  const auto closest_stop_idx =
-    tier4_autoware_utils::searchZeroVelocityIndex(planner_data.traj.points);
+  const auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
+  if (!nearest_segment_idx) {
+    return planner_data.traj;
+  }
+
+  const auto closest_stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(
+    planner_data.traj.points, *nearest_segment_idx + 1, planner_data.traj.points.size());
   double closest_stop_dist =
     closest_stop_idx
       ? tier4_autoware_utils::calcSignedArcLength(planner_data.traj.points, 0, *closest_stop_idx)
@@ -26,7 +33,6 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
           planner_data.traj.points, 0, planner_data.traj.points.size() - 1);
 
   const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
-
   for (const auto & obstacle : planner_data.target_obstacles) {
     // Ignore obstacle that is not required to stop
     if (!isStopRequired(obstacle)) {
