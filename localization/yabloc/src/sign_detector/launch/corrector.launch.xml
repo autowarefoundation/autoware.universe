@@ -11,7 +11,7 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="1000"/>
         <!-- <param name="max_range" value="$(var max_range)"/> -->
-        <param name="max_range" value="50.0"/>
+        <param name="max_range" value="40.0"/>
         <param name="gamma" value="3.0"/>
         <param name="score_offset" value="-128.0"/>
         <param name="max_raw_score" value="100000.0"/>
@@ -22,9 +22,9 @@
 
     <node name="gnss_corrector" pkg="sign_detector" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="min_prob" value="0.3"/>
+        <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="3.0"/>
-        <param name="sigma" value="4.0"/>
+        <param name="sigma" value="2.0"/>
         <remap from="/weighted_particles" to="/gnss/weighted_particles"/>
     </node>
 

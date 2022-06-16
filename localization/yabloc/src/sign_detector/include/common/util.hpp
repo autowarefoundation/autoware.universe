@@ -6,9 +6,12 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 
 namespace util
 {
+std_msgs::msg::ColorRGBA toRgba(float value);
+
 cv::Mat decompress2CvMat(const sensor_msgs::msg::Image & img);
 
 sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(
