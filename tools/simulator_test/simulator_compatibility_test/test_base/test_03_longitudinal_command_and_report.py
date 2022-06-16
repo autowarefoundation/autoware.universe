@@ -1,10 +1,12 @@
 import time
-import pytest
-import rclpy
+
 from autoware_auto_control_msgs.msg import AckermannControlCommand
 from autoware_auto_control_msgs.msg import AckermannLateralCommand
 from autoware_auto_control_msgs.msg import LongitudinalCommand
-from simulator_compatibility_test.subscribers.velocity_report import SubscriberVelocityReport
+import pytest
+import rclpy
+from simulator_compatibility_test.subscribers.velocity_report \
+    import SubscriberVelocityReport
 
 
 class Test03LongitudinalCommandAndReportBase:
@@ -30,12 +32,13 @@ class Test03LongitudinalCommandAndReportBase:
                 'jerk': 0.0
             }
         }
-        
-        cls.node = rclpy.create_node('test_03_longitudinal_command_and_report_base')
+
+        cls.node = rclpy.create_node(
+            'test_03_longitudinal_command_and_report_base')
         cls.sub = cls.node.create_subscription(
             AckermannControlCommand,
             '/control/command/control_cmd',
-            lambda msg : cls.msgs_rx.append(msg),
+            lambda msg: cls.msgs_rx.append(msg),
             10
         )
         cls.pub = cls.node.create_publisher(
@@ -44,23 +47,23 @@ class Test03LongitudinalCommandAndReportBase:
             10
         )
         cls.sub_velocity_report = SubscriberVelocityReport()
-    
+
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
         rclpy.shutdown()
-    
+
     @pytest.fixture
     def setup_and_teardown(self):
         self.control_cmd['longitudinal']['speed'] = 0.0
         self.control_cmd['longitudinal']['acceleration'] = 0.0
         yield time.sleep(3)
         self.init_vehicle()
-        time.sleep(3)    
-        
+        time.sleep(3)
+
     def init_vehicle(self):
         self.set_speed(0.0)
-    
+
     def generate_control_msg(self, control_cmd):
         stamp = self.node.get_clock().now().to_msg()
         msg = AckermannControlCommand()
@@ -68,44 +71,47 @@ class Test03LongitudinalCommandAndReportBase:
         longitudinal_cmd = LongitudinalCommand()
         lateral_cmd.stamp.sec = stamp.sec
         lateral_cmd.stamp.nanosec = stamp.nanosec
-        lateral_cmd.steering_tire_angle = control_cmd['lateral']['steering_tire_angle']
-        lateral_cmd.steering_tire_rotation_rate = control_cmd['lateral']['steering_tire_rotation_rate']
+        lateral_cmd.steering_tire_angle = \
+            control_cmd['lateral']['steering_tire_angle']
+        lateral_cmd.steering_tire_rotation_rate = \
+            control_cmd['lateral']['steering_tire_rotation_rate']
         longitudinal_cmd.stamp.sec = stamp.sec
         longitudinal_cmd.stamp.nanosec = stamp.nanosec
         longitudinal_cmd.speed = control_cmd['longitudinal']['speed']
-        longitudinal_cmd.acceleration = control_cmd['longitudinal']['acceleration']
+        longitudinal_cmd.acceleration = \
+            control_cmd['longitudinal']['acceleration']
         longitudinal_cmd.jerk = control_cmd['longitudinal']['jerk']
-        
+
         msg.stamp.sec = stamp.sec
         msg.stamp.nanosec = stamp.nanosec
         msg.lateral = lateral_cmd
         msg.longitudinal = longitudinal_cmd
         return msg
-        
+
     def set_speed(self, speed):
         self.control_cmd['longitudinal']['speed'] = speed
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)
             self.pub.publish(self.generate_control_msg(self.control_cmd))
-            if len(self.msgs_rx) > 2 :
+            if len(self.msgs_rx) > 2:
                 break
         received = self.msgs_rx[-1]
-        assert  received.longitudinal.speed == speed
+        assert received.longitudinal.speed == speed
         self.msgs_rx.clear()
-    
+
     def set_acceleration(self, acceleration):
         self.control_cmd['longitudinal']['acceleration'] = acceleration
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)
             self.pub.publish(self.generate_control_msg(self.control_cmd))
-            if len(self.msgs_rx) > 2 :
+            if len(self.msgs_rx) > 2:
                 break
         received = self.msgs_rx[-1]
-        assert  received.longitudinal.acceleration == acceleration
+        assert received.longitudinal.acceleration == acceleration
         self.msgs_rx.clear()
-    
+
     def get_velocity_report(self):
         self.sub_velocity_report.received.clear()
         received = 0.0
@@ -117,4 +123,3 @@ class Test03LongitudinalCommandAndReportBase:
             received = self.sub_velocity_report.received.pop()
         finally:
             return received
-    

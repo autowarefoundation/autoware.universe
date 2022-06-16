@@ -1,11 +1,10 @@
 import time
-import pytest
-from enum import Enum
-import rclpy
+
 from autoware_auto_vehicle_msgs.msg import GearCommand
-from autoware_auto_vehicle_msgs.msg import GearReport
+import rclpy
 from simulator_compatibility_test.subscribers.gear_report import GearMode
-from simulator_compatibility_test.subscribers.gear_report import SubscriberGearReport
+from simulator_compatibility_test.subscribers.gear_report \
+    import SubscriberGearReport
 
 
 class Test02ChangeGearAndReportBase:
@@ -23,7 +22,7 @@ class Test02ChangeGearAndReportBase:
         cls.sub = cls.node.create_subscription(
             GearCommand,
             '/control/command/gear_cmd',
-            lambda msg : cls.msgs_rx.append(msg),
+            lambda msg: cls.msgs_rx.append(msg),
             10
         )
         cls.pub = cls.node.create_publisher(
@@ -32,12 +31,12 @@ class Test02ChangeGearAndReportBase:
             10
         )
         cls.sub_gear_report = SubscriberGearReport()
-    
+
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
         rclpy.shutdown()
-    
+
     def generate_gear_msg(self, gear_mode):
         stamp = self.node.get_clock().now().to_msg()
         msg = GearCommand()
@@ -45,18 +44,18 @@ class Test02ChangeGearAndReportBase:
         msg.stamp.nanosec = stamp.nanosec
         msg.command = gear_mode.value
         return msg
-    
+
     def set_gear_mode(self, gear_mode):
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)
             self.pub.publish(self.generate_gear_msg(gear_mode))
-            if len(self.msgs_rx) > 2 :
+            if len(self.msgs_rx) > 2:
                 break
         received = self.msgs_rx[-1]
-        assert  received.command == gear_mode.value
+        assert received.command == gear_mode.value
         self.msgs_rx.clear()
-    
+
     def get_gear_mode(self):
         time.sleep(1)
         self.sub_gear_report.received.clear()
@@ -69,4 +68,3 @@ class Test02ChangeGearAndReportBase:
             received = self.sub_gear_report.received.pop()
         finally:
             return received
-    

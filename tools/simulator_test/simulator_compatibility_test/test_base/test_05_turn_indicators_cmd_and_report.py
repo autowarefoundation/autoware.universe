@@ -1,12 +1,14 @@
-import time
-import pytest
 from enum import Enum
+import time
+
+from autoware_auto_vehicle_msgs.msg import TurnIndicatorsCommand
+import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from autoware_auto_vehicle_msgs.msg import TurnIndicatorsCommand
-from autoware_auto_vehicle_msgs.msg import TurnIndicatorsReport
-from simulator_compatibility_test.subscribers.turn_indicators_report import TurnIndicatorsReport_Constants
-from simulator_compatibility_test.subscribers.turn_indicators_report import SubscriberTurnIndicatorsReport
+from simulator_compatibility_test.subscribers.turn_indicators_report \
+    import SubscriberTurnIndicatorsReport
+from simulator_compatibility_test.subscribers.turn_indicators_report \
+    import TurnIndicatorsReport_Constants
 
 
 class TurnIndicatorsCommand_Constants(Enum):
@@ -32,7 +34,7 @@ class Test05TurnIndicatorsCmdAndReportBase:
         cls.sub = cls.node.create_subscription(
             TurnIndicatorsCommand,
             '/control/command/turn_indicators_cmd',
-            lambda msg : cls.msgs_rx.append(msg),
+            lambda msg: cls.msgs_rx.append(msg),
             10
         )
         cls.pub = cls.node.create_publisher(
@@ -44,26 +46,26 @@ class Test05TurnIndicatorsCmdAndReportBase:
         cls.executor = MultiThreadedExecutor()
         cls.executor.add_node(cls.sub_turn_indicators_status)
         cls.executor.add_node(cls.node)
-    
+
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
         cls.executor.shutdown()
         rclpy.shutdown()
-    
+
     @pytest.fixture
     def setup_method(self):
         self.msgs_rx.clear()
-    
+
     def set_turn_indicators(self, command):
         while rclpy.ok():
             self.executor.spin_once(timeout_sec=1)
             self.pub.publish(self.generate_turn_indicators_cmd_msg(command))
-            if len(self.msgs_rx) > 2 :
+            if len(self.msgs_rx) > 2:
                 break
         received = self.msgs_rx[-1]
-        assert  received.command == command.value
-    
+        assert received.command == command.value
+
     def generate_turn_indicators_cmd_msg(self, command):
         stamp = self.node.get_clock().now().to_msg()
         msg = TurnIndicatorsCommand()
@@ -71,7 +73,7 @@ class Test05TurnIndicatorsCmdAndReportBase:
         msg.stamp.nanosec = stamp.nanosec
         msg.command = command.value
         return msg
-    
+
     def get_turn_indicators_status(self):
         time.sleep(1)
         self.sub_turn_indicators_status.received.clear()
@@ -84,4 +86,3 @@ class Test05TurnIndicatorsCmdAndReportBase:
             received = self.sub_turn_indicators_status.received.pop()
         finally:
             return received
-    

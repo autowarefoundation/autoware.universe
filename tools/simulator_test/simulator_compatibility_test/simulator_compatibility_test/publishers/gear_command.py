@@ -1,20 +1,12 @@
-import os
-import sys
 from enum import Enum
 
+from autoware_auto_vehicle_msgs.msg import GearCommand
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
-
-from autoware_auto_vehicle_msgs.msg import GearCommand
-
-current_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.normpath(os.path.join(current_path, './')))
-sys.path.append(os.path.normpath(os.path.join(current_path, '../')))
-sys.path.append(os.path.normpath(os.path.join(current_path, '../../')))
 
 
 class GearMode(Enum):
@@ -35,24 +27,21 @@ class PublisherGearCommand(Node):
         qos_depth = self.get_parameter('qos_depth').value
 
         QOS_RKL10V = QoSProfile(
-            reliability = QoSReliabilityPolicy.RELIABLE,
-            history = QoSHistoryPolicy.KEEP_LAST,
-            depth = qos_depth,
-            durability = QoSDurabilityPolicy.VOLATILE
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=qos_depth,
+            durability=QoSDurabilityPolicy.VOLATILE
         )
-
+        self.topic = '/control/command/gear_cmd'
         self.publisher_ = self.create_publisher(GearCommand,
-                                                '/control/command/gear_cmd',
+                                                self.topic,
                                                 QOS_RKL10V)
-        
-        #self.timer = self.create_timer(1, self.publish_msg)
-    
+
     def publish_msg(self, gear_mode):
         stamp = self.get_clock().now().to_msg()
         msg = GearCommand()
         msg.stamp.sec = stamp.sec
         msg.stamp.nanosec = stamp.nanosec
-        #msg.command = GearMode.PARK.value
         msg.command = gear_mode.value
         self.publisher_.publish(msg)
 

@@ -1,12 +1,12 @@
 import time
-from math import pi
-import pytest
-import rclpy
+
 from autoware_auto_control_msgs.msg import AckermannControlCommand
 from autoware_auto_control_msgs.msg import AckermannLateralCommand
 from autoware_auto_control_msgs.msg import LongitudinalCommand
-from simulator_compatibility_test.publishers.ackermann_control_command import PublisherAckermannControlCommand
-from simulator_compatibility_test.subscribers.steering_report import SubscriberSteeringReport
+import pytest
+import rclpy
+from simulator_compatibility_test.subscribers.steering_report \
+    import SubscriberSteeringReport
 
 
 class Test04LateralCommandAndReportBase:
@@ -36,7 +36,7 @@ class Test04LateralCommandAndReportBase:
         cls.sub = cls.node.create_subscription(
             AckermannControlCommand,
             '/control/command/control_cmd',
-            lambda msg : cls.msgs_rx.append(msg),
+            lambda msg: cls.msgs_rx.append(msg),
             10
         )
         cls.pub = cls.node.create_publisher(
@@ -45,23 +45,23 @@ class Test04LateralCommandAndReportBase:
             10
         )
         cls.sub_steering_report = SubscriberSteeringReport()
-    
+
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
         rclpy.shutdown()
-    
+
     @pytest.fixture
     def setup_and_teardown(self):
         self.control_cmd['lateral']['steering_tire_angle'] = 0.0
         self.control_cmd['longitudinal']['speed'] = 0.0
         yield time.sleep(3)
         self.init_vehicle()
-        time.sleep(3)    
-        
+        time.sleep(3)
+
     def init_vehicle(self):
         self.set_steering_tire_angle(0.0)
-    
+
     def generate_control_msg(self, control_cmd):
         stamp = self.node.get_clock().now().to_msg()
         msg = AckermannControlCommand()
@@ -69,32 +69,36 @@ class Test04LateralCommandAndReportBase:
         longitudinal_cmd = LongitudinalCommand()
         lateral_cmd.stamp.sec = stamp.sec
         lateral_cmd.stamp.nanosec = stamp.nanosec
-        lateral_cmd.steering_tire_angle = control_cmd['lateral']['steering_tire_angle']
-        lateral_cmd.steering_tire_rotation_rate = control_cmd['lateral']['steering_tire_rotation_rate']
+        lateral_cmd.steering_tire_angle = \
+            control_cmd['lateral']['steering_tire_angle']
+        lateral_cmd.steering_tire_rotation_rate = \
+            control_cmd['lateral']['steering_tire_rotation_rate']
         longitudinal_cmd.stamp.sec = stamp.sec
         longitudinal_cmd.stamp.nanosec = stamp.nanosec
         longitudinal_cmd.speed = control_cmd['longitudinal']['speed']
-        longitudinal_cmd.acceleration = control_cmd['longitudinal']['acceleration']
+        longitudinal_cmd.acceleration = \
+            control_cmd['longitudinal']['acceleration']
         longitudinal_cmd.jerk = control_cmd['longitudinal']['jerk']
-        
+
         msg.stamp.sec = stamp.sec
         msg.stamp.nanosec = stamp.nanosec
         msg.lateral = lateral_cmd
         msg.longitudinal = longitudinal_cmd
         return msg
-        
+
     def set_steering_tire_angle(self, angle_rad):
         self.control_cmd['lateral']['steering_tire_angle'] = angle_rad
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)
             self.pub.publish(self.generate_control_msg(self.control_cmd))
-            if len(self.msgs_rx) > 2 :
+            if len(self.msgs_rx) > 2:
                 break
         received = self.msgs_rx[-1]
-        assert  round(received.lateral.steering_tire_angle, 2) == round(angle_rad, 2)
+        assert round(received.lateral.steering_tire_angle, 2) == \
+            round(angle_rad, 2)
         self.msgs_rx.clear()
-    
+
     def get_steering_report(self):
         self.sub_steering_report.received.clear()
         received = 0.0
@@ -106,4 +110,3 @@ class Test04LateralCommandAndReportBase:
             received = self.sub_steering_report.received.pop()
         finally:
             return received
-    
