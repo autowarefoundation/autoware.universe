@@ -207,13 +207,12 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   decltype(angular_velocity_queue_)::iterator imu_it;
   if (use_imu_) {
     imu_it = std::lower_bound(
-    std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
-    first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
-      return rclcpp::Time(x.header.stamp).seconds() < t;
-    });
-    imu_it = imu_it == std::end(angular_velocity_queue_)
-                        ? std::end(angular_velocity_queue_) - 1
-                        : imu_it;
+      std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
+      first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
+        return rclcpp::Time(x.header.stamp).seconds() < t;
+      });
+    imu_it =
+      imu_it == std::end(angular_velocity_queue_) ? std::end(angular_velocity_queue_) - 1 : imu_it;
   }
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
@@ -226,7 +225,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     float v{static_cast<float>(velocity_report_it->longitudinal_velocity)};
     float w{static_cast<float>(velocity_report_it->heading_rate)};
-
 
     if (std::abs(*it_time_stamp - rclcpp::Time(velocity_report_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
