@@ -1,5 +1,6 @@
 #pragma once
 #include "common/gammma_conveter.hpp"
+#include "particle_filter/hierarchical_cost_map.hpp"
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
@@ -28,7 +29,8 @@ public:
     gamma_(declare_parameter<float>("gamma", 3.0f)),
     score_offset_(declare_parameter<float>("score_offset", -64.f)),
     max_raw_score_(declare_parameter<float>("max_raw_score", 5000.0)),
-    min_prob_(declare_parameter<float>("min_prob", 0.01))
+    min_prob_(declare_parameter<float>("min_prob", 0.01)),
+    cost_map_(max_range_, image_size_, gamma_)
   {
     using std::placeholders::_1;
 
@@ -58,6 +60,7 @@ private:
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
   std::optional<CloudWithPose> latest_cloud_with_pose_{std::nullopt};
 
+  HierarchicalCostMap cost_map_;
   GammaConverter gamma_converter{4.0f};
   const int image_size_;
   const float max_range_;
