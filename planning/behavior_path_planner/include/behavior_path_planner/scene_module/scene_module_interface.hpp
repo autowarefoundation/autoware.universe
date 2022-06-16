@@ -100,8 +100,7 @@ public:
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
-    uuid_left_(generateUUID()),
-    uuid_right_(generateUUID()),
+    uuid_(generateUUID()),
     is_waiting_approval_{false},
     current_state_{BT::NodeStatus::IDLE}
   {
@@ -191,6 +190,31 @@ public:
   virtual void onExit() = 0;
 
   /**
+   * @brief Publish status if the module is requested to run
+   */
+  virtual void publishRTCStatus()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->publishCooperateStatus(clock_->now());
+  }
+
+  /**
+   * @brief Return true if the activation command is received
+   */
+  virtual bool isActivated() const
+  {
+    if (!rtc_interface_ptr_) {
+      return true;
+    }
+    if (rtc_interface_ptr_->isRegistered(uuid_)) {
+      return rtc_interface_ptr_->isActivated(uuid_);
+    }
+    return false;
+  }
+
+  /**
    * @brief set planner data
    */
   void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
@@ -212,33 +236,6 @@ public:
   }
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
-  void publishRTCStatus()
-  {
-    if (!rtc_interface_left_ && !rtc_interface_right_) {
-      return;
-    }
-    if (rtc_interface_left_) {
-      rtc_interface_left_->publishCooperateStatus(clock_->now());
-    }
-    if (rtc_interface_right_) {
-      rtc_interface_right_->publishCooperateStatus(clock_->now());
-    }
-  }
-
-  bool isActivated() const
-  {
-    if (!rtc_interface_left_ && !rtc_interface_right_) {
-      return true;
-    }
-
-    if (rtc_interface_left_ && rtc_interface_left_->isRegistered(uuid_left_)) {
-      return rtc_interface_left_->isActivated(uuid_left_);
-    } else if (rtc_interface_right_ && rtc_interface_right_->isRegistered(uuid_right_)) {
-      return rtc_interface_right_->isActivated(uuid_right_);
-    }
-    return false;
-  }
-
 private:
   std::string name_;
   rclcpp::Logger logger_;
@@ -248,49 +245,25 @@ protected:
   rclcpp::Clock::SharedPtr clock_;
   mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
 
-  std::shared_ptr<RTCInterface> rtc_interface_left_;
-  std::shared_ptr<RTCInterface> rtc_interface_right_;
-  UUID uuid_left_;
-  UUID uuid_right_;
+  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
+  UUID uuid_;
   bool is_waiting_approval_;
 
-  void waitApprovalLeft(const bool safe, const double distance)
+  void updateRTCStatus(const double distance)
   {
-    rtc_interface_left_->updateCooperateStatus(uuid_left_, safe, distance, clock_->now());
-    is_waiting_approval_ = true;
-  }
-
-  void waitApprovalRight(const bool safe, const double distance)
-  {
-    rtc_interface_right_->updateCooperateStatus(uuid_right_, safe, distance, clock_->now());
-    is_waiting_approval_ = true;
-  }
-
-  void updateRTCStatus(const CandidateOutput & candidate)
-  {
-    if (candidate.lateral_shift > 0.0) {
-      rtc_interface_left_->updateCooperateStatus(
-        uuid_left_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
-    } else if (candidate.lateral_shift < 0.0) {
-      rtc_interface_right_->updateCooperateStatus(
-        uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
-    } else {
-      RCLCPP_WARN_STREAM(
-        getLogger(), "Direction is UNKNOWN distance = " << candidate.distance_to_path_change);
-    }
-  }
-
-  void removeRTCStatus()
-  {
-    if (!rtc_interface_left_ && !rtc_interface_right_) {
+    if (!rtc_interface_ptr_) {
       return;
     }
-    if (rtc_interface_left_) {
-      rtc_interface_left_->clearCooperateStatus();
+    rtc_interface_ptr_->updateCooperateStatus(uuid_, isExecutionReady(), distance, clock_->now());
+    waitApproval();
+  }
+
+  virtual void removeRTCStatus()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
     }
-    if (rtc_interface_right_) {
-      rtc_interface_right_->clearCooperateStatus();
-    }
+    rtc_interface_ptr_->clearCooperateStatus();
   }
 
   void waitApproval() { is_waiting_approval_ = true; }

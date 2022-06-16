@@ -37,10 +37,13 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+: SceneModuleInterface{name, node},
+  parameters_{parameters},
+  rtc_interface_left_(node, "lane_change_left"),
+  rtc_interface_right_(node, "lane_change_right"),
+  uuid_left_{generateUUID()},
+  uuid_right_{generateUUID()}
 {
-  rtc_interface_left_ = std::make_shared<RTCInterface>(node, "lane_change_left");
-  rtc_interface_right_ = std::make_shared<RTCInterface>(node, "lane_change_right");
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
@@ -50,9 +53,9 @@ BehaviorModuleOutput LaneChangeModule::run()
   const auto output = plan();
   const auto turn_signal_info = output.turn_signal_info;
   if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    waitApprovalLeft(isExecutionReady(), turn_signal_info.signal_distance);
+    waitApprovalLeft(turn_signal_info.signal_distance);
   } else if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    waitApprovalRight(isExecutionReady(), turn_signal_info.signal_distance);
+    waitApprovalRight(turn_signal_info.signal_distance);
   }
   return output;
 }

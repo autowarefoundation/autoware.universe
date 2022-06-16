@@ -39,7 +39,7 @@ PullOverModule::PullOverModule(
   const std::string & name, rclcpp::Node & node, const PullOverParameters & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
-  rtc_interface_left_ = std::make_shared<RTCInterface>(node, "pull_over");
+  rtc_interface_ptr_ = std::make_shared<RTCInterface>(node, "pull_over");
 }
 
 BehaviorModuleOutput PullOverModule::run()
@@ -174,7 +174,6 @@ CandidateOutput PullOverModule::planCandidate() const
   output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.start.position);
-  output.lateral_shift = 1.0;
 
   const auto hazard_info = getHazard(
     status_.pull_over_lanes, planner_data_->self_pose->pose,
@@ -205,7 +204,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
-  updateRTCStatus(candidate);
+  updateRTCStatus(candidate.distance_to_path_change);
   return out;
 }
 

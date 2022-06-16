@@ -48,11 +48,14 @@ using tier4_autoware_utils::findNearestIndex;
 
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
-: SceneModuleInterface{name, node}, parameters_{parameters}
+: SceneModuleInterface{name, node},
+  parameters_{parameters},
+  rtc_interface_left_(node, "avoidance_left"),
+  rtc_interface_right_(node, "avoidance_right"),
+  uuid_left_{generateUUID()},
+  uuid_right_{generateUUID()}
 {
   using std::placeholders::_1;
-  rtc_interface_left_ = std::make_shared<RTCInterface>(node, "avoidance_left");
-  rtc_interface_right_ = std::make_shared<RTCInterface>(node, "avoidance_right");
 }
 
 bool AvoidanceModule::isExecutionRequested() const
