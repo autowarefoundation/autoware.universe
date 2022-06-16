@@ -7,9 +7,6 @@
   <maintainer email="shpark@morai.ai">shpark</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>rclpy</depend>
-  <depend>unittest</depend>
-  <!--depend>morai_msgs</depend-->
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_geometry_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
@@ -18,12 +15,15 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>rclpy</depend>
+  <depend>unittest</depend>
+  <!--depend>morai_msgs</depend-->
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
-  <test_depend>python3-pytest</test_depend>
   <test_depend>morai_msgs</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

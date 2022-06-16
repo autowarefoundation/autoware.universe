@@ -16,24 +16,22 @@ class TurnIndicatorsReport_Constants(Enum):
 
 
 class SubscriberTurnIndicatorsReport(Node):
-
     def __init__(self):
-        super().__init__('turn_indicators_report_subscriber')
+        super().__init__("turn_indicators_report_subscriber")
 
-        self.declare_parameter('qos_depth', 10)
-        qos_depth = self.get_parameter('qos_depth').value
+        self.declare_parameter("qos_depth", 10)
+        qos_depth = self.get_parameter("qos_depth").value
 
         QOS_RKL10V = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=qos_depth,
-            durability=QoSDurabilityPolicy.VOLATILE
+            durability=QoSDurabilityPolicy.VOLATILE,
         )
-        self.topic = '/vehicle/status/turn_indicators_status'
-        self.subscription_ = self.create_subscription(TurnIndicatorsReport,
-                                                      self.topic,
-                                                      self.get_status,
-                                                      QOS_RKL10V)
+        self.topic = "/vehicle/status/turn_indicators_status"
+        self.subscription_ = self.create_subscription(
+            TurnIndicatorsReport, self.topic, self.get_status, QOS_RKL10V
+        )
 
         self.received = []
 
@@ -54,5 +52,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

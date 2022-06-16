@@ -5,8 +5,7 @@ from autoware_auto_control_msgs.msg import AckermannLateralCommand
 from autoware_auto_control_msgs.msg import LongitudinalCommand
 import pytest
 import rclpy
-from simulator_compatibility_test.subscribers.velocity_report \
-    import SubscriberVelocityReport
+from simulator_compatibility_test.subscribers.velocity_report import SubscriberVelocityReport
 
 
 class Test03LongitudinalCommandAndReportBase:
@@ -22,29 +21,19 @@ class Test03LongitudinalCommandAndReportBase:
         rclpy.init()
         cls.msgs_rx = []
         cls.control_cmd = {
-            'lateral': {
-                'steering_tire_angle': 0.0,
-                'steering_tire_rotation_rate': 0.0
-            },
-            'longitudinal': {
-                'speed': 0.0,
-                'acceleration': 0.0,
-                'jerk': 0.0
-            }
+            "lateral": {"steering_tire_angle": 0.0, "steering_tire_rotation_rate": 0.0},
+            "longitudinal": {"speed": 0.0, "acceleration": 0.0, "jerk": 0.0},
         }
 
-        cls.node = rclpy.create_node(
-            'test_03_longitudinal_command_and_report_base')
+        cls.node = rclpy.create_node("test_03_longitudinal_command_and_report_base")
         cls.sub = cls.node.create_subscription(
             AckermannControlCommand,
-            '/control/command/control_cmd',
+            "/control/command/control_cmd",
             lambda msg: cls.msgs_rx.append(msg),
-            10
+            10,
         )
         cls.pub = cls.node.create_publisher(
-            AckermannControlCommand,
-            '/control/command/control_cmd',
-            10
+            AckermannControlCommand, "/control/command/control_cmd", 10
         )
         cls.sub_velocity_report = SubscriberVelocityReport()
 
@@ -55,8 +44,8 @@ class Test03LongitudinalCommandAndReportBase:
 
     @pytest.fixture
     def setup_and_teardown(self):
-        self.control_cmd['longitudinal']['speed'] = 0.0
-        self.control_cmd['longitudinal']['acceleration'] = 0.0
+        self.control_cmd["longitudinal"]["speed"] = 0.0
+        self.control_cmd["longitudinal"]["acceleration"] = 0.0
         yield time.sleep(3)
         self.init_vehicle()
         time.sleep(3)
@@ -71,16 +60,15 @@ class Test03LongitudinalCommandAndReportBase:
         longitudinal_cmd = LongitudinalCommand()
         lateral_cmd.stamp.sec = stamp.sec
         lateral_cmd.stamp.nanosec = stamp.nanosec
-        lateral_cmd.steering_tire_angle = \
-            control_cmd['lateral']['steering_tire_angle']
-        lateral_cmd.steering_tire_rotation_rate = \
-            control_cmd['lateral']['steering_tire_rotation_rate']
+        lateral_cmd.steering_tire_angle = control_cmd["lateral"]["steering_tire_angle"]
+        lateral_cmd.steering_tire_rotation_rate = control_cmd["lateral"][
+            "steering_tire_rotation_rate"
+        ]
         longitudinal_cmd.stamp.sec = stamp.sec
         longitudinal_cmd.stamp.nanosec = stamp.nanosec
-        longitudinal_cmd.speed = control_cmd['longitudinal']['speed']
-        longitudinal_cmd.acceleration = \
-            control_cmd['longitudinal']['acceleration']
-        longitudinal_cmd.jerk = control_cmd['longitudinal']['jerk']
+        longitudinal_cmd.speed = control_cmd["longitudinal"]["speed"]
+        longitudinal_cmd.acceleration = control_cmd["longitudinal"]["acceleration"]
+        longitudinal_cmd.jerk = control_cmd["longitudinal"]["jerk"]
 
         msg.stamp.sec = stamp.sec
         msg.stamp.nanosec = stamp.nanosec
@@ -89,7 +77,7 @@ class Test03LongitudinalCommandAndReportBase:
         return msg
 
     def set_speed(self, speed):
-        self.control_cmd['longitudinal']['speed'] = speed
+        self.control_cmd["longitudinal"]["speed"] = speed
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)
@@ -101,7 +89,7 @@ class Test03LongitudinalCommandAndReportBase:
         self.msgs_rx.clear()
 
     def set_acceleration(self, acceleration):
-        self.control_cmd['longitudinal']['acceleration'] = acceleration
+        self.control_cmd["longitudinal"]["acceleration"] = acceleration
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)

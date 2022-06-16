@@ -5,10 +5,8 @@ from autoware_auto_vehicle_msgs.msg import ControlModeCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from simulator_compatibility_test.subscribers.control_mode_report \
-    import ControlModeReport_Constants
-from simulator_compatibility_test.subscribers.control_mode_report \
-    import SubscriberControlModeReport
+from simulator_compatibility_test.subscribers.control_mode_report import ControlModeReport_Constants
+from simulator_compatibility_test.subscribers.control_mode_report import SubscriberControlModeReport
 
 
 class ControlModeCommand_Constants(Enum):
@@ -29,17 +27,15 @@ class Test01ControlModeAndReportBase:
     def setup_class(cls) -> None:
         rclpy.init()
         cls.msgs_rx = []
-        cls.node = rclpy.create_node('test_01_control_mode_and_report_base')
+        cls.node = rclpy.create_node("test_01_control_mode_and_report_base")
         cls.sub = cls.node.create_subscription(
             ControlModeCommand,
-            '/control/command/control_mode_cmd',
+            "/control/command/control_mode_cmd",
             lambda msg: cls.msgs_rx.append(msg),
-            10
+            10,
         )
         cls.pub = cls.node.create_publisher(
-            ControlModeCommand,
-            '/control/command/control_mode_cmd',
-            10
+            ControlModeCommand, "/control/command/control_mode_cmd", 10
         )
         cls.sub_control_mode_report = SubscriberControlModeReport()
         cls.executor = MultiThreadedExecutor()

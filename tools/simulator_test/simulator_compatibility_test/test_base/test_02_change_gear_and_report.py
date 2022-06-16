@@ -3,8 +3,7 @@ import time
 from autoware_auto_vehicle_msgs.msg import GearCommand
 import rclpy
 from simulator_compatibility_test.subscribers.gear_report import GearMode
-from simulator_compatibility_test.subscribers.gear_report \
-    import SubscriberGearReport
+from simulator_compatibility_test.subscribers.gear_report import SubscriberGearReport
 
 
 class Test02ChangeGearAndReportBase:
@@ -18,18 +17,11 @@ class Test02ChangeGearAndReportBase:
     def setup_class(cls) -> None:
         rclpy.init()
         cls.msgs_rx = []
-        cls.node = rclpy.create_node('test_02_change_gear_and_report_base')
+        cls.node = rclpy.create_node("test_02_change_gear_and_report_base")
         cls.sub = cls.node.create_subscription(
-            GearCommand,
-            '/control/command/gear_cmd',
-            lambda msg: cls.msgs_rx.append(msg),
-            10
+            GearCommand, "/control/command/gear_cmd", lambda msg: cls.msgs_rx.append(msg), 10
         )
-        cls.pub = cls.node.create_publisher(
-            GearCommand,
-            '/control/command/gear_cmd',
-            10
-        )
+        cls.pub = cls.node.create_publisher(GearCommand, "/control/command/gear_cmd", 10)
         cls.sub_gear_report = SubscriberGearReport()
 
     @classmethod

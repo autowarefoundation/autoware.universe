@@ -2,19 +2,13 @@ import time
 
 import pytest
 import rclpy
-from simulator_compatibility_test.clients.moraisim.morai_client_event_cmd \
-    import ClientEventCmdAsync
-from simulator_compatibility_test.publishers.moraisim.morai_ctrl_cmd \
-    import LongCmdType
-from simulator_compatibility_test.publishers.moraisim.morai_ctrl_cmd \
-    import PublisherMoraiCtrlCmd
-from test_base.test_03_longitudinal_command_and_report \
-    import Test03LongitudinalCommandAndReportBase
+from simulator_compatibility_test.clients.moraisim.morai_client_event_cmd import ClientEventCmdAsync
+from simulator_compatibility_test.publishers.moraisim.morai_ctrl_cmd import LongCmdType
+from simulator_compatibility_test.publishers.moraisim.morai_ctrl_cmd import PublisherMoraiCtrlCmd
+from test_base.test_03_longitudinal_command_and_report import Test03LongitudinalCommandAndReportBase
 
 
-class Test03LongitudinalCommandAndReportMorai\
-        (Test03LongitudinalCommandAndReportBase):
-
+class Test03LongitudinalCommandAndReportMorai(Test03LongitudinalCommandAndReportBase):
     @classmethod
     def setup_class(cls) -> None:
         super().setup_class()
@@ -33,8 +27,8 @@ class Test03LongitudinalCommandAndReportMorai\
 
     @pytest.fixture
     def setup_and_teardown(self):
-        self.control_cmd['longitudinal']['speed'] = 0.0
-        self.control_cmd['longitudinal']['acceleration'] = 0.0
+        self.control_cmd["longitudinal"]["speed"] = 0.0
+        self.control_cmd["longitudinal"]["acceleration"] = 0.0
         self.set_morai_ctrl_mode(LongCmdType.VELOCITY)
         yield time.sleep(3)
         self.init_vehicle()
@@ -43,17 +37,19 @@ class Test03LongitudinalCommandAndReportMorai\
     def set_morai_ctrl_mode(self, long_cmd_type):
         ctrl_cmd_publisher = PublisherMoraiCtrlCmd()
 
-        msg = {'longCmdType': long_cmd_type.value,
-               'accel': 0.0,
-               'brake': 0.0,
-               'steering': 0.0,
-               'velocity': 0.0,
-               'acceleration': 0.0}
+        msg = {
+            "longCmdType": long_cmd_type.value,
+            "accel": 0.0,
+            "brake": 0.0,
+            "steering": 0.0,
+            "velocity": 0.0,
+            "acceleration": 0.0,
+        }
         ctrl_cmd_publisher.publish_msg(msg)
 
     def set_speed(self, speed):
         self.set_morai_ctrl_mode(LongCmdType.VELOCITY)
-        self.control_cmd['longitudinal']['speed'] = speed
+        self.control_cmd["longitudinal"]["speed"] = speed
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)
@@ -66,7 +62,7 @@ class Test03LongitudinalCommandAndReportMorai\
 
     def set_acceleration(self, acceleration):
         self.set_morai_ctrl_mode(LongCmdType.ACCELERATION)
-        self.control_cmd['longitudinal']['acceleration'] = acceleration
+        self.control_cmd["longitudinal"]["acceleration"] = acceleration
         self.msgs_rx.clear()
         while rclpy.ok():
             rclpy.spin_once(self.node)

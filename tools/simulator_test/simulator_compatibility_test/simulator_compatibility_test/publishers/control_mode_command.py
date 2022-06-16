@@ -16,23 +16,20 @@ class ControlModeCommand_Constants(Enum):
 
 
 class PublisherControlModeCommand(Node):
-
     def __init__(self):
-        super().__init__('control_mode_command_publisher')
+        super().__init__("control_mode_command_publisher")
 
-        self.declare_parameter('qos_depth', 10)
-        qos_depth = self.get_parameter('qos_depth').value
+        self.declare_parameter("qos_depth", 10)
+        qos_depth = self.get_parameter("qos_depth").value
 
         QOS_RKL10V = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=qos_depth,
-            durability=QoSDurabilityPolicy.VOLATILE
+            durability=QoSDurabilityPolicy.VOLATILE,
         )
-        self.topic = '/control/command/control_mode_cmd'
-        self.publisher_ = self.create_publisher(ControlModeCommand,
-                                                self.topic,
-                                                QOS_RKL10V)
+        self.topic = "/control/command/control_mode_cmd"
+        self.publisher_ = self.create_publisher(ControlModeCommand, self.topic, QOS_RKL10V)
 
     def publish_msg(self, control_mode):
         stamp = self.get_clock().now().to_msg()
@@ -56,5 +53,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

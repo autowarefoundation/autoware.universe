@@ -1,12 +1,9 @@
 import time
 
-from test_base.test_03_longitudinal_command_and_report \
-    import Test03LongitudinalCommandAndReportBase
+from test_base.test_03_longitudinal_command_and_report import Test03LongitudinalCommandAndReportBase
 
 
-class Test03LongitudinalCommandAndReportSim\
-        (Test03LongitudinalCommandAndReportBase):
-
+class Test03LongitudinalCommandAndReportSim(Test03LongitudinalCommandAndReportBase):
     @classmethod
     def setup_class(cls) -> None:
         super().setup_class()

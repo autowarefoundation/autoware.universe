@@ -18,24 +18,22 @@ class ControlModeReport_Constants(Enum):
 
 
 class SubscriberControlModeReport(Node):
-
     def __init__(self):
-        super().__init__('control_mode_report_subscriber')
+        super().__init__("control_mode_report_subscriber")
 
-        self.declare_parameter('qos_depth', 10)
-        qos_depth = self.get_parameter('qos_depth').value
+        self.declare_parameter("qos_depth", 10)
+        qos_depth = self.get_parameter("qos_depth").value
 
         QOS_RKL10V = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=qos_depth,
-            durability=QoSDurabilityPolicy.VOLATILE
+            durability=QoSDurabilityPolicy.VOLATILE,
         )
-        self.topic = '/vehicle/status/control_mode'
-        self.subscription_ = self.create_subscription(ControlModeReport,
-                                                      self.topic,
-                                                      self.get_control_mode,
-                                                      QOS_RKL10V)
+        self.topic = "/vehicle/status/control_mode"
+        self.subscription_ = self.create_subscription(
+            ControlModeReport, self.topic, self.get_control_mode, QOS_RKL10V
+        )
         self.received = []
 
     def get_control_mode(self, msg):
@@ -55,5 +53,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

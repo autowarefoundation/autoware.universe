@@ -1,12 +1,10 @@
 from math import pi
 import time
 
-from test_base.test_04_lateral_command_and_report \
-    import Test04LateralCommandAndReportBase
+from test_base.test_04_lateral_command_and_report import Test04LateralCommandAndReportBase
 
 
 class Test04LateralCommandAndReportSim(Test04LateralCommandAndReportBase):
-
     @classmethod
     def setup_class(cls) -> None:
         super().setup_class()

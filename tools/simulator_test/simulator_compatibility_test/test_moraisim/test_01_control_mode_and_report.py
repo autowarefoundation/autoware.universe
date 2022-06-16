@@ -1,13 +1,11 @@
-from simulator_compatibility_test.publishers.control_mode_command \
-    import ControlModeCommand_Constants
-from simulator_compatibility_test.subscribers.control_mode_report \
-    import ControlModeReport_Constants
-from test_base.test_01_control_mode_and_report \
-    import Test01ControlModeAndReportBase
+from simulator_compatibility_test.publishers.control_mode_command import (
+    ControlModeCommand_Constants,
+)
+from simulator_compatibility_test.subscribers.control_mode_report import ControlModeReport_Constants
+from test_base.test_01_control_mode_and_report import Test01ControlModeAndReportBase
 
 
 class Test01ControlModeAndReportMorai(Test01ControlModeAndReportBase):
-
     def test_1_manual_mode(self, setup_method):
         self.set_control_mode(ControlModeCommand_Constants.MANUAL)
         result = self.get_control_mode_report()

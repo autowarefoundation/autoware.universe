@@ -5,10 +5,12 @@ from autoware_auto_vehicle_msgs.msg import TurnIndicatorsCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from simulator_compatibility_test.subscribers.turn_indicators_report \
-    import SubscriberTurnIndicatorsReport
-from simulator_compatibility_test.subscribers.turn_indicators_report \
-    import TurnIndicatorsReport_Constants
+from simulator_compatibility_test.subscribers.turn_indicators_report import (
+    SubscriberTurnIndicatorsReport,
+)
+from simulator_compatibility_test.subscribers.turn_indicators_report import (
+    TurnIndicatorsReport_Constants,
+)
 
 
 class TurnIndicatorsCommand_Constants(Enum):
@@ -30,17 +32,15 @@ class Test05TurnIndicatorsCmdAndReportBase:
     def setup_class(cls) -> None:
         rclpy.init()
         cls.msgs_rx = []
-        cls.node = rclpy.create_node('test_turn_indicator_cmd_and_report_base')
+        cls.node = rclpy.create_node("test_turn_indicator_cmd_and_report_base")
         cls.sub = cls.node.create_subscription(
             TurnIndicatorsCommand,
-            '/control/command/turn_indicators_cmd',
+            "/control/command/turn_indicators_cmd",
             lambda msg: cls.msgs_rx.append(msg),
-            10
+            10,
         )
         cls.pub = cls.node.create_publisher(
-            TurnIndicatorsCommand,
-            '/control/command/turn_indicators_cmd',
-            10
+            TurnIndicatorsCommand, "/control/command/turn_indicators_cmd", 10
         )
         cls.sub_turn_indicators_status = SubscriberTurnIndicatorsReport()
         cls.executor = MultiThreadedExecutor()

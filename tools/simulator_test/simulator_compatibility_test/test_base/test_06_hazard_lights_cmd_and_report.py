@@ -5,10 +5,12 @@ from autoware_auto_vehicle_msgs.msg import HazardLightsCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from simulator_compatibility_test.subscribers.hazard_lights_report \
-    import HazardLightsReport_Constants
-from simulator_compatibility_test.subscribers.hazard_lights_report \
-    import SubscriberHazardLightsReport
+from simulator_compatibility_test.subscribers.hazard_lights_report import (
+    HazardLightsReport_Constants,
+)
+from simulator_compatibility_test.subscribers.hazard_lights_report import (
+    SubscriberHazardLightsReport,
+)
 
 
 class HazardLightsCommand_Constants(Enum):
@@ -29,17 +31,15 @@ class Test06HazardLightsCmdAndReportBase:
     def setup_class(cls) -> None:
         rclpy.init()
         cls.msgs_rx = []
-        cls.node = rclpy.create_node('test_hazard_lights_cmd_and_report_base')
+        cls.node = rclpy.create_node("test_hazard_lights_cmd_and_report_base")
         cls.sub = cls.node.create_subscription(
             HazardLightsCommand,
-            '/control/command/hazard_lights_cmd',
+            "/control/command/hazard_lights_cmd",
             lambda msg: cls.msgs_rx.append(msg),
-            10
+            10,
         )
         cls.pub = cls.node.create_publisher(
-            HazardLightsCommand,
-            '/control/command/hazard_lights_cmd',
-            10
+            HazardLightsCommand, "/control/command/hazard_lights_cmd", 10
         )
         cls.sub_hazard_lights_status = SubscriberHazardLightsReport()
         cls.executor = MultiThreadedExecutor()

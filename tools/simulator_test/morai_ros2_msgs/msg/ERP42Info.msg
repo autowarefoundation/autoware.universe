@@ -10,4 +10,3 @@ float32 yaw
 
 float32 velocity
 float32 steering
-

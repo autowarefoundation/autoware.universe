@@ -10,23 +10,20 @@ from rclpy.qos import QoSReliabilityPolicy
 
 
 class PublisherAckermannControlCommand(Node):
-
     def __init__(self):
-        super().__init__('ackermann_control_command_publisher')
+        super().__init__("ackermann_control_command_publisher")
 
-        self.declare_parameter('qos_depth', 10)
-        qos_depth = self.get_parameter('qos_depth').value
+        self.declare_parameter("qos_depth", 10)
+        qos_depth = self.get_parameter("qos_depth").value
 
         QOS_RKL10V = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=qos_depth,
-            durability=QoSDurabilityPolicy.VOLATILE
+            durability=QoSDurabilityPolicy.VOLATILE,
         )
-        self.topic = '/control/command/control_cmd'
-        self.publisher_ = self.create_publisher(AckermannControlCommand,
-                                                self.topic,
-                                                QOS_RKL10V)
+        self.topic = "/control/command/control_cmd"
+        self.publisher_ = self.create_publisher(AckermannControlCommand, self.topic, QOS_RKL10V)
 
     def publish_msg(self, control_cmd):
         stamp = self.get_clock().now().to_msg()
@@ -35,16 +32,15 @@ class PublisherAckermannControlCommand(Node):
         longitudinal_cmd = LongitudinalCommand()
         lateral_cmd.stamp.sec = stamp.sec
         lateral_cmd.stamp.nanosec = stamp.nanosec
-        lateral_cmd.steering_tire_angle = \
-            control_cmd['lateral']['steering_tire_angle']
-        lateral_cmd.steering_tire_rotation_rate = \
-            control_cmd['lateral']['steering_tire_rotation_rate']
+        lateral_cmd.steering_tire_angle = control_cmd["lateral"]["steering_tire_angle"]
+        lateral_cmd.steering_tire_rotation_rate = control_cmd["lateral"][
+            "steering_tire_rotation_rate"
+        ]
         longitudinal_cmd.stamp.sec = stamp.sec
         longitudinal_cmd.stamp.nanosec = stamp.nanosec
-        longitudinal_cmd.speed = control_cmd['longtitudinal']['speed']
-        longitudinal_cmd.acceleration = \
-            control_cmd['longtitudinal']['acceleration']
-        longitudinal_cmd.jerk = control_cmd['longtitudinal']['jerk']
+        longitudinal_cmd.speed = control_cmd["longtitudinal"]["speed"]
+        longitudinal_cmd.acceleration = control_cmd["longtitudinal"]["acceleration"]
+        longitudinal_cmd.jerk = control_cmd["longtitudinal"]["jerk"]
 
         msg.stamp.sec = stamp.sec
         msg.stamp.nanosec = stamp.nanosec
@@ -67,5 +63,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

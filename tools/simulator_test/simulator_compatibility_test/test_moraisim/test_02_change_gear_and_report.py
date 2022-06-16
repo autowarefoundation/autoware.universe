@@ -1,14 +1,10 @@
 import rclpy
-
-from simulator_compatibility_test.clients.moraisim.morai_client_event_cmd \
-    import ClientEventCmdAsync
+from simulator_compatibility_test.clients.moraisim.morai_client_event_cmd import ClientEventCmdAsync
 from test_base.test_02_change_gear_and_report import GearMode
-from test_base.test_02_change_gear_and_report \
-    import Test02ChangeGearAndReportBase
+from test_base.test_02_change_gear_and_report import Test02ChangeGearAndReportBase
 
 
 class Test02ChangeGearAndReportMorai(Test02ChangeGearAndReportBase):
-
     @classmethod
     def setup_class(cls) -> None:
         super().setup_class()

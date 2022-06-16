@@ -1,10 +1,8 @@
 from test_base.test_02_change_gear_and_report import GearMode
-from test_base.test_02_change_gear_and_report \
-    import Test02ChangeGearAndReportBase
+from test_base.test_02_change_gear_and_report import Test02ChangeGearAndReportBase
 
 
 class Test02ChangeGearAndReportSim(Test02ChangeGearAndReportBase):
-
     @classmethod
     def setup_class(cls) -> None:
         super().setup_class()
