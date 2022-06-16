@@ -241,7 +241,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
           (imu_it != std::end(angular_velocity_queue_) - 1 &&
             *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
            ++imu_it) {
-q      }
+      }
       if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(
           get_logger(), *get_clock(), 10000 /* ms */,
