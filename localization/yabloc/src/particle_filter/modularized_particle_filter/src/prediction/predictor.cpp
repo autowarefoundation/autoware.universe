@@ -50,26 +50,26 @@ Predictor::Predictor()
 void Predictor::gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
 {
   if (particle_array_opt_.has_value()) return;
-  initialposeCallback(initialpose);
+  initializeParticles(*initialpose);
 }
 
-void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpose)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "initiposeCallback");
   modularized_particle_filter_msgs::msg::ParticleArray particle_array{};
-  particle_array.header = initialpose->header;
+  particle_array.header = initialpose.header;
   particle_array.id = 0;
   particle_array.particles.resize(number_of_particles_);
 
   const float roll{0.0f};
   const float pitch{0.0f};
-  const float yaw{static_cast<float>(tf2::getYaw(initialpose->pose.pose.orientation))};
+  const float yaw{static_cast<float>(tf2::getYaw(initialpose.pose.pose.orientation))};
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
-    geometry_msgs::msg::Pose pose{initialpose->pose.pose};
-    pose.position.x += prediction_util::nrand(std::sqrt(initialpose->pose.covariance[0]));
-    pose.position.y += prediction_util::nrand(std::sqrt(initialpose->pose.covariance[6 * 1 + 1]));
+    geometry_msgs::msg::Pose pose{initialpose.pose.pose};
+    pose.position.x += prediction_util::nrand(std::sqrt(initialpose.pose.covariance[0]));
+    pose.position.y += prediction_util::nrand(std::sqrt(initialpose.pose.covariance[6 * 1 + 1]));
     float noised_yaw = prediction_util::normalizeRadian(
-      yaw + prediction_util::nrand(sqrt(initialpose->pose.covariance[6 * 5 + 5])));
+      yaw + prediction_util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
     tf2::Quaternion q;
     q.setRPY(roll, pitch, noised_yaw);
     pose.orientation = tf2::toMsg(q);
@@ -81,6 +81,15 @@ void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstShared
 
   resampler_ptr_ =
     std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_);
+}
+
+void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+{
+  PoseWithCovarianceStamped pose = *initialpose;
+  pose.pose.covariance[0] = 0.25;
+  pose.pose.covariance[6 * 1 + 1] = 0.25;
+  pose.pose.covariance[6 * 5 + 1] = 0.04;
+  initializeParticles(pose);
 }
 
 void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
