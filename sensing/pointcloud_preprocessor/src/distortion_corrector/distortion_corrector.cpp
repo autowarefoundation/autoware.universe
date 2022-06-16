@@ -74,19 +74,18 @@ void DistortionCorrectorComponent::onVelocityReport(
   }
 }
 
-void DistortionCorrectorComponent::onImu(
-  const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
+void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
-  if (!use_imu_) { return; }
+  if (!use_imu_) {
+    return;
+  }
   imu_queue_.push_back(*imu_msg);
-  
+
   // TODO: transform from imu_link to base_link
 
   while (!imu_queue_.empty()) {
     // for replay rosbag
-    if (
-      rclcpp::Time(imu_queue_.front().header.stamp) >
-      rclcpp::Time(imu_msg->header.stamp)) {
+    if (rclcpp::Time(imu_queue_.front().header.stamp) > rclcpp::Time(imu_msg->header.stamp)) {
       imu_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(imu_queue_.front().header.stamp) <
@@ -197,13 +196,11 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   decltype(imu_queue_)::iterator imu_it;
   if (use_imu_) {
     imu_it = std::lower_bound(
-    std::begin(imu_queue_), std::end(imu_queue_),
-    first_point_time_stamp_sec, [](const sensor_msgs::msg::Imu & x, const double t) {
-      return rclcpp::Time(x.header.stamp).seconds() < t;
-    });
-    imu_it = imu_it == std::end(imu_queue_)
-                        ? std::end(imu_queue_) - 1
-                        : imu_it;
+      std::begin(imu_queue_), std::end(imu_queue_), first_point_time_stamp_sec,
+      [](const sensor_msgs::msg::Imu & x, const double t) {
+        return rclcpp::Time(x.header.stamp).seconds() < t;
+      });
+    imu_it = imu_it == std::end(imu_queue_) ? std::end(imu_queue_) - 1 : imu_it;
   }
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
@@ -227,9 +224,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     if (use_imu_) {
       for (;
-          (imu_it != std::end(imu_queue_) - 1 &&
+           (imu_it != std::end(imu_queue_) - 1 &&
             *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
-          ++imu_it) {
+           ++imu_it) {
       }
       if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(

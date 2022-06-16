@@ -18,8 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <tf2/convert.h>
@@ -61,8 +61,7 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
 
-  bool undistortPointCloud(
-    const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
+  bool undistortPointCloud(const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
