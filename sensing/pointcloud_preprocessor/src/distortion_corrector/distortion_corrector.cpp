@@ -74,8 +74,7 @@ void DistortionCorrectorComponent::onVelocityReport(
   }
 }
 
-void DistortionCorrectorComponent::onImu(
-  const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
+void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   if (!use_imu_) { return; }
 
@@ -241,7 +240,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       for (;
           (imu_it != std::end(angular_velocity_queue_) - 1 &&
             *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
-          ++imu_it) {
+           ++imu_it) {
       }
       if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(
