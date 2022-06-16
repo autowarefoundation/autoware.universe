@@ -24,7 +24,7 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
   // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 0, 0, 1);
   cov_ = Eigen::Vector4f(81, 400, 1e-7f, 0.00001).asDiagonal();
-  cov_predict_ = Eigen::Vector4f(0.01, 25, 0.0001, 0.00001).asDiagonal();
+  cov_predict_ = Eigen::Vector4f(0.01, 100, 0.0001, 0.00001).asDiagonal();
 }
 
 void TwistEstimator::callbackImu(const Imu & raw_msg)
@@ -62,7 +62,6 @@ void TwistEstimator::publishTwist(const Imu & imu)
   msg.twist.angular.z = imu.angular_velocity.z + state_[2];
   msg.twist.linear.x = state_[1];
   pub_twist_->publish(msg);
-  std::cout << "imu: " << imu.angular_velocity.z << " " << state_[2] << std::endl;
 }
 
 void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
@@ -81,6 +80,8 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
   // Correct state and covariance
   state_ += K * error;
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
+
+  RCLCPP_INFO_STREAM(get_logger(), state_[1] << " " << state_[3] * wheel << " " << wheel);
 }
 
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)

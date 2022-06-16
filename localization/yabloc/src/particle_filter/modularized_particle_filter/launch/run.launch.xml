@@ -5,8 +5,8 @@
 
     <!-- ========================================= -->
     <node pkg="modularized_particle_filter" exec="predictor" name="predictor" output="screen" args="--ros-args --log-level warn">
-        <!-- <remap from="twist" to="/kalman/twist" /> -->
-        <remap from="twist" to="/eagleye/twist" />
+        <remap from="twist" to="/kalman/twist" />
+        <!-- <remap from="twist" to="/eagleye/twist" /> -->
         <remap from="initialpose" to="/initialpose" />
         <remap from="gnss/pose_with_covariance" to="/eagleye/pose_with_covariance"/> 
 

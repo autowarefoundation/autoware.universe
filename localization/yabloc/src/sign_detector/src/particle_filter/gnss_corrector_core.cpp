@@ -13,9 +13,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   sigma_(declare_parameter("sigma", 25.0f))
 {
   using std::placeholders::_1;
-  auto fix_callback = std::bind(&GnssParticleCorrector::fixCallback, this, _1);
   auto ublox_callback = std::bind(&GnssParticleCorrector::ubloxCallback, this, _1);
-  // fix_sub_ = create_subscription<NavSatFix>("/sensing/gnss/ublox/nav_sat_fix", 10, fix_callback);
   ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, ublox_callback);
 
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
