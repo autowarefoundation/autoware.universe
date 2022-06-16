@@ -497,6 +497,14 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     const auto shift_length = isOnRight(o)
                                 ? std::min(o.overhang_dist + avoid_margin, getLeftShiftBound())
                                 : std::max(o.overhang_dist - avoid_margin, getRightShiftBound());
+
+    if (
+      std::fabs(shift_length) <
+      std::fabs(o.overhang_dist) - vehicle_width - lat_collision_safety_buffer) {
+      avoidance_debug_array_false_and_push_back("TooShortShift");
+      continue;
+    }
+
     const auto avoiding_shift = shift_length - current_ego_shift;
     const auto return_shift = shift_length;
 
