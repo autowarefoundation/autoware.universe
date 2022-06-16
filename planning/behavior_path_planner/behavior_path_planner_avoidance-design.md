@@ -462,7 +462,7 @@ If for some reason, no shift point is generated for your object, you can check f
 
 To print the debug message, just run the following
 
-```
+```bash
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
 ```
 
