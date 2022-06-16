@@ -14,10 +14,59 @@ GnssParticleCorrector::GnssParticleCorrector()
 {
   using std::placeholders::_1;
   auto fix_callback = std::bind(&GnssParticleCorrector::fixCallback, this, _1);
-  fix_sub_ = create_subscription<NavSatFix>("/sensing/gnss/ublox/nav_sat_fix", 10, fix_callback);
+  auto ublox_callback = std::bind(&GnssParticleCorrector::ubloxCallback, this, _1);
+  // fix_sub_ = create_subscription<NavSatFix>("/sensing/gnss/ublox/nav_sat_fix", 10, fix_callback);
+  ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, ublox_callback);
 
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
   marker_pub_ = create_publisher<MarkerArray>("/gnss/effect_marker", 10);
+}
+
+#include <time.h>
+rclcpp::Time GnssParticleCorrector::ubloxTime2Stamp(const NavPVT & msg)
+{
+  struct tm t;
+  t.tm_year = msg.year - 1900;  // from 1900
+  t.tm_mon = msg.month - 1;     // january = 0
+  t.tm_mday = msg.day;
+  t.tm_hour = msg.hour + 9;
+  t.tm_min = msg.min;
+  t.tm_sec = msg.sec;
+  t.tm_isdst = 0;
+  time_t t_of_day = mktime(&t);
+
+  rclcpp::Time stamp(t_of_day, msg.nano, RCL_ROS_TIME);
+  return stamp;
+}
+
+void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg)
+{
+  const rclcpp::Time stamp = ubloxTime2Stamp(*ublox_msg);
+
+  const int FIX_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FIXED;
+  const int FLOAT_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FLOAT;
+
+  if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) return;
+
+  std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
+  if (!opt_particles.has_value()) {
+    RCLCPP_WARN_STREAM(get_logger(), "ubloxCallback does not have opt_particles");
+    return;
+  }
+
+  auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
+  RCLCPP_INFO_STREAM(this->get_logger(), "dt: " << dt.seconds());
+
+  NavSatFix fix;
+  fix.latitude = ublox_msg->lat * 1e-7f;
+  fix.longitude = ublox_msg->lon * 1e-7f;
+  fix.altitude = ublox_msg->height * 1e-3f;
+
+  Eigen::Vector3f position = fix2Mgrs(fix).cast<float>();
+  ParticleArray weighted_particles{weightParticles(opt_particles.value(), position)};
+  setWeightedParticleArray(weighted_particles);
+
+  publishMarker(position);
 }
 
 void GnssParticleCorrector::fixCallback(const NavSatFix::ConstSharedPtr fix_msg)

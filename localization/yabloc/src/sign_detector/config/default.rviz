@@ -7,7 +7,8 @@ Panels:
         - /Global Options1
         - /TF1/Frames1
         - /ParticleArray1/Topic1
-        - /String1
+        - /MarkerArray1
+        - /MarkerArray1/Status1
       Splitter Ratio: 0.38787877559661865
     Tree Height: 741
   - Class: rviz_common/Selection
@@ -327,6 +328,18 @@ Visualization Manager:
       Topic: /kalman/status
       Value: true
       Width: 400
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /gnss/effect_marker
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -372,7 +385,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -3.180006742477417
+      Angle: -3.160007953643799
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -382,11 +395,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 13.307098388671875
+      Scale: 27.571767807006836
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 10.02471923828125
-      Y: -14.601083755493164
+      X: 6.316126346588135
+      Y: -1.8883724212646484
     Saved: ~
 Window Geometry:
   Displays:
