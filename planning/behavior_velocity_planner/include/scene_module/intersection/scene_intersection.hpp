@@ -123,6 +123,8 @@ public:
     double collision_start_margin_time;  //! start margin time to check collision
     double collision_end_margin_time;    //! end margin time to check collision
     bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
+    double frontcar_expected_decel;  //! the expected deceleration of frontcar when frontcar as well
+                                     //! as ego are turning
   };
 
   IntersectionModule(

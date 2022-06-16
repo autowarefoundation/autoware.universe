@@ -274,6 +274,15 @@ bool IntersectionModule::checkCollision(
     const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
     const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);
     if (is_in_ego_lane) {
+      if (!planning_utils::isAheadOf(planner_data_->current_pose.pose, object_pose)) {
+        continue;
+      }
+      const auto vel =
+        object.kinematics.initial_twist_with_covariance.twist.linear.x;  // longitudional velocity
+      const double a = planner_param_.frontcar_expected_decel;
+      const double stopping_distance = vel * vel / (2 * a);
+      std::cout << "detected frontcar on the same lane, stopping_distance = " << stopping_distance
+                << std::endl;
       continue;  // TODO(Kenji Miyake): check direction?
     }
 

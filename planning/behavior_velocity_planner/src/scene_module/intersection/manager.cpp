@@ -51,6 +51,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.collision_start_margin_time = node.declare_parameter(ns + ".collision_start_margin_time", 5.0);
   ip.collision_end_margin_time = node.declare_parameter(ns + ".collision_end_margin_time", 2.0);
   ip.use_stuck_stopline = node.declare_parameter(ns + ".use_stuck_stopline", true);
+  ip.frontcar_expected_decel = node.declare_parameter(ns + ".frontcar_expected_decel", 1.0);
 }
 
 MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node)
