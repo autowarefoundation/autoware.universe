@@ -86,21 +86,6 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
-    map_tf_generator = ComposableNode(
-        package="map_tf_generator",
-        plugin="MapTFGeneratorNode",
-        name="map_tf_generator",
-        remappings=[
-            ("pointcloud_map", "/map/pointcloud_map/whole")],
-        parameters=[
-            {
-                "map_frame": "map",
-                "viewer_frame": "viewer",
-            }
-        ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
-    )
-
     container = ComposableNodeContainer(
         name="map_container",
         namespace="",
@@ -109,7 +94,6 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             lanelet2_map_loader,
             lanelet2_map_visualization,
-            # map_tf_generator,
             pointcloud_map_loader,
         ],
         output="screen",

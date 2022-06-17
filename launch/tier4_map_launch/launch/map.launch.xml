@@ -13,9 +13,5 @@
       <remap from="output/pointcloud_map/whole" to="/map/pointcloud_map/whole"/>
       <param name="pcd_paths_or_directory" value="[$(var pointcloud_map_path)]"/>
     </node>
-
-    <include file="$(find-pkg-share map_tf_generator)/launch/map_tf_generator.launch.xml">
-      <arg name="input_map_points_topic" value="/map/pointcloud_map/whole"/>
-    </include>
   </group>
 </launch>
