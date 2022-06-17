@@ -77,7 +77,9 @@ def launch_setup(context, *args, **kwargs):
         package="map_loader",
         plugin="PointCloudMapLoaderNode",
         name="pointcloud_map_loader",
-        remappings=[("output/pointcloud_map", "pointcloud_map")],
+        remappings=[
+            ("output/pointcloud_map/whole", "pointcloud_map/whole"),
+            ("output/pointcloud_map/partial", "pointcloud_map/partial")],
         parameters=[
             {"pcd_paths_or_directory": ["[", LaunchConfiguration("pointcloud_map_path"), "]"]}
         ],

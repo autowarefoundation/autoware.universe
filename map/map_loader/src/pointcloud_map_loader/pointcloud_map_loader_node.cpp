@@ -112,6 +112,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 
   const auto pcd_paths_or_directory =
     declare_parameter("pcd_paths_or_directory", std::vector<std::string>({}));
+  // RCLCPP_ERROR(get_logger(), " ");
 
   enable_whole_load_ = declare_parameter("enable_whole_load", true);
   enable_partial_load_ = declare_parameter("enable_partial_load", true);
@@ -119,22 +120,6 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   leaf_size_ = declare_parameter("leaf_size", 1.0);
 
   std::vector<std::string> pcd_paths{};
-
-  if (enable_partial_load_) {
-    pub_partial_pointcloud_map_ =
-      this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/partial", durable_qos);
-    pcd_file_metadata_array_ = generatePCDMetadata(pcd_paths_or_directory);
-    load_pcd_partially_service_ = this->create_service<autoware_map_srvs::srv::LoadPCDPartially>(
-      "load_pcd_partially", std::bind(
-                              &PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback, this,
-                              std::placeholders::_1, std::placeholders::_2));
-    load_pcd_partially_for_publish_service_ =
-      this->create_service<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>(
-        "load_pcd_partially/publish",
-        std::bind(
-          &PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback, this,
-          std::placeholders::_1, std::placeholders::_2));
-  }
 
   if (enable_whole_load_) {
     pub_whole_pointcloud_map_ =
@@ -176,6 +161,23 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
     whole_pcd.header.frame_id = "map";
     pub_whole_pointcloud_map_->publish(whole_pcd);
   }
+
+  if (enable_partial_load_) {
+    pub_partial_pointcloud_map_ =
+      this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/partial", durable_qos);
+    pcd_file_metadata_array_ = generatePCDMetadata(pcd_paths_or_directory);
+    load_pcd_partially_service_ = this->create_service<autoware_map_srvs::srv::LoadPCDPartially>(
+      "load_pcd_partially", std::bind(
+                              &PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback, this,
+                              std::placeholders::_1, std::placeholders::_2));
+    load_pcd_partially_for_publish_service_ =
+      this->create_service<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>(
+        "load_pcd_partially/publish",
+        std::bind(
+          &PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback, this,
+          std::placeholders::_1, std::placeholders::_2));
+  }
+
 }
 
 // TODO: pcl::PointCloud<PointType> -> sensor_msgs::msg::PointCloud2
@@ -185,6 +187,7 @@ pcl::PointCloud<PointType> PointCloudMapLoaderNode::loadPCDFiles(
   pcl::PointCloud<PointType> whole_pcd{};
 
   pcl::PointCloud<PointType> partial_pcd;
+
   for (const auto & path : pcd_paths) {
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
