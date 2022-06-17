@@ -35,7 +35,6 @@ visualization_msgs::msg::Marker getObjectMarker(
     tier4_autoware_utils::createMarkerScale(2.0, 2.0, 2.0),
     tier4_autoware_utils::createMarkerColor(r, g, b, 0.8));
 
-  marker.lifetime = rclcpp::Duration::from_seconds(0.8);
   marker.pose = obstacle_pose;
 
   return marker;
