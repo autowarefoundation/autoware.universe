@@ -27,11 +27,11 @@ HierarchicalCostMap::HierarchicalCostMap(float max_range, float image_size, floa
 float HierarchicalCostMap::at(const Eigen::Vector2f & position)
 {
   Area key(position);
-  if (cost_maps.count(key) == 0) {
+  if (cost_maps_.count(key) == 0) {
     buildMap(key);
   }
   cv::Point2i tmp = toCvPoint(key, position);
-  return cost_maps.at(key).at<uchar>(tmp);
+  return cost_maps_.at(key).at<uchar>(tmp);
 }
 
 void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
@@ -58,14 +58,14 @@ void HierarchicalCostMap::buildMap(const Area & area)
   cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
-  cost_maps[area] = gamma_converter(distance);
+  cost_maps_[area] = gamma_converter(distance);
   generated_map_history_.push_back(area);
 
   // It can have MAX_MAP_COUNT local maps at most.
   if (generated_map_history_.size() > max_map_count_) {
     auto key = generated_map_history_.front();
     generated_map_history_.pop_front();
-    cost_maps.erase(key);
+    cost_maps_.erase(key);
   }
   std::cout << "successed to build map " << area(area) << " " << area.realScale().transpose()
             << std::endl;
@@ -99,6 +99,17 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
     array_msg.markers.push_back(marker);
   }
   return array_msg;
+}
+
+cv::Mat HierarchicalCostMap::getMapImage() const
+{
+  if (generated_map_history_.empty())
+    return cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
+
+  cv::Mat rgb_image;
+  cv::Mat map_image = cost_maps_.at(generated_map_history_.front());
+  cv::applyColorMap(map_image, rgb_image, cv::COLORMAP_JET);
+  return rgb_image;
 }
 
 }  // namespace particle_filter

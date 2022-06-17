@@ -1,5 +1,4 @@
 #pragma once
-#include "common/gammma_conveter.hpp"
 #include "particle_filter/hierarchical_cost_map.hpp"
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
@@ -48,8 +47,6 @@ public:
 private:
   void lsdCallback(const PointCloud2 & msg);
   void ll2Callback(const PointCloud2 & msg);
-  cv::Mat buildLl2Image(const LineSegment & cloud);
-  cv::Point2f toCvPoint(const Eigen::Vector3f & p);
 
   float computeScore(const LineSegment & ls_cloud, cv::Mat & ll2_image);
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform);
@@ -59,7 +56,6 @@ private:
 
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
-  std::optional<CloudWithPose> latest_cloud_with_pose_{std::nullopt};
 
   const int image_size_;
   const float max_range_;

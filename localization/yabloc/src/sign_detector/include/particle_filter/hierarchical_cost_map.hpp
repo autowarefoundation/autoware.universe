@@ -62,6 +62,8 @@ public:
 
   MarkerArray showMapRange() const;
 
+  cv::Mat getMapImage() const;
+
 private:
   const float max_range_;
   const float image_size_;
@@ -73,6 +75,6 @@ private:
 
   std::list<Area> generated_map_history_;
   std::optional<pcl::PointCloud<pcl::PointNormal>> cloud_;
-  std::unordered_map<Area, cv::Mat, Area> cost_maps;
+  std::unordered_map<Area, cv::Mat, Area> cost_maps_;
 };
 }  // namespace particle_filter

@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /TF1/Frames1
         - /ParticleArray1/Topic1
-        - /CostMapRange1/Status1
       Splitter Ratio: 0.38787877559661865
     Tree Height: 741
   - Class: rviz_common/Selection
@@ -258,15 +257,15 @@ Visualization Manager:
         - Alpha: 0.10000000149011612
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 400
+          Height: 200
           Image Topic Style: true
           Left: 400
-          Name: match
+          Name: CostMap
           Top: 400
           Topic: /match_image
           Value: true
-          Width: 400
-      Enabled: false
+          Width: 200
+      Enabled: true
       Name: Overlay
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -284,7 +283,7 @@ Visualization Manager:
       Enabled: true
       Name: ProjectedLsd
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -313,7 +312,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /kalman/doppler
       Value: true
-    - Background Alpha: 0.10000000149011612
+    - Background Alpha: 0
       Background Color: 50; 50; 50
       Class: rviz_plugins/String
       Enabled: true
@@ -396,7 +395,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -3.160007953643799
+      Angle: -2.4000070095062256
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -406,11 +405,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 8.066350936889648
+      Scale: 6.546570301055908
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -4.650617599487305
-      Y: -14.118558883666992
+      X: 9.50823974609375
+      Y: -4.745294570922852
     Saved: ~
 Window Geometry:
   Displays:
