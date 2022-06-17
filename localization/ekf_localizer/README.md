@@ -189,6 +189,9 @@ Note that, although the dimension gets larger since the analytical expansion can
 <img src="./media/ekf_autoware_res.png" width="600">
 </p>
 
+## Known issues
+- In the presence of multiple inputs with yaw estimation, yaw bias `b_k` in the current EKF state would not make any sense, since it is intended to capture the extrinsic parameter's calibration error of a sensor. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
+
 ## reference
 
 [1] Anderson, B. D. O., & Moore, J. B. (1979). Optimal filtering. Englewood Cliffs, NJ: Prentice-Hall.
