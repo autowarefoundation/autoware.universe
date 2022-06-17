@@ -1,0 +1,12 @@
+<launch>
+
+  <node pkg="map_provider" exec="map_provider" name="map_provider" output="log">
+    <remap from="output/pointcloud_map" to="pointcloud_map" />
+    <remap from="pcd_loader_service" to="/map/load_pcd_partially/publish" />
+    <remap from="pcd_provider_service" to="/map_provider/provide_map" />
+
+    <param name="pointcloud_map_radius" value="300.0" />
+    <param name="update_threshold_distance" value="100.0" />
+  </node>
+
+</launch>

@@ -210,11 +210,17 @@ NDTScanMatcher::NDTScanMatcher()
   rclcpp::CallbackGroup::SharedPtr main_callback_group;
   main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+  rclcpp::CallbackGroup::SharedPtr map_callback_group;
+  map_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
   auto initial_pose_sub_opt = rclcpp::SubscriptionOptions();
   initial_pose_sub_opt.callback_group = initial_pose_callback_group;
 
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
+
+  auto map_sub_opt = rclcpp::SubscriptionOptions();
+  map_sub_opt.callback_group = map_callback_group;
 
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_pose_with_covariance", 100,
@@ -225,7 +231,7 @@ NDTScanMatcher::NDTScanMatcher()
     std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1), main_sub_opt);
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
-    std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1), main_sub_opt);
+    std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1), map_sub_opt);
 
   sensor_aligned_pose_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);

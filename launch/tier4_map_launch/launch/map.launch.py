@@ -138,7 +138,7 @@ def generate_launch_description():
     ),
     add_launch_arg(
         "pointcloud_map_path",
-        [LaunchConfiguration("map_path"), "/pointcloud_map.pcd"],
+        [LaunchConfiguration("map_path"), "/pointcloud_map"],
         "path to pointcloud map file",
     ),
     add_launch_arg(

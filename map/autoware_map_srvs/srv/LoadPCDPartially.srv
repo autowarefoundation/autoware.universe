@@ -1,0 +1,6 @@
+geometry_msgs/Point position
+float32 radius  # [m]
+---
+geometry_msgs/Point position
+float32 radius
+sensor_msgs/PointCloud2 map

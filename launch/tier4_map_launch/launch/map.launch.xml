@@ -1,7 +1,7 @@
 <launch>
   <arg name="map_path" default=""/>
   <arg name="lanelet2_map_path" default="$(var map_path)/lanelet2_map.osm"/>
-  <arg name="pointcloud_map_path" default="$(var map_path)/pointcloud_map.pcd"/>
+  <arg name="pointcloud_map_path" default="$(var map_path)/pointcloud_map"/>
 
   <group>
     <push-ros-namespace namespace="map"/>

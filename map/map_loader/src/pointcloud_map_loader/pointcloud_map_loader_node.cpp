@@ -33,6 +33,7 @@
 #include <glob.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <filesystem>
 #include <string>
@@ -111,6 +112,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 
   const auto pcd_paths_or_directory =
     declare_parameter("pcd_paths_or_directory", std::vector<std::string>({}));
+
   enable_whole_load_ = declare_parameter("enable_whole_load", true);
   enable_partial_load_ = declare_parameter("enable_partial_load", true);
   use_downsample_ = declare_parameter("use_downsample", false);
@@ -176,12 +178,13 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   }
 }
 
-sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
+// TODO: pcl::PointCloud<PointType> -> sensor_msgs::msg::PointCloud2
+pcl::PointCloud<PointType> PointCloudMapLoaderNode::loadPCDFiles(
   const std::vector<std::string> & pcd_paths)
 {
-  sensor_msgs::msg::PointCloud2 whole_pcd{};
+  pcl::PointCloud<PointType> whole_pcd{};
 
-  sensor_msgs::msg::PointCloud2 partial_pcd;
+  pcl::PointCloud<PointType> partial_pcd;
   for (const auto & path : pcd_paths) {
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
@@ -190,10 +193,11 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
     if (whole_pcd.width == 0) {
       whole_pcd = partial_pcd;
     } else {
-      whole_pcd.width += partial_pcd.width;
-      whole_pcd.row_step += partial_pcd.row_step;
-      whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
-      whole_pcd.data.insert(whole_pcd.data.end(), partial_pcd.data.begin(), partial_pcd.data.end());
+      // whole_pcd.width += partial_pcd.width;
+      // whole_pcd.row_step += partial_pcd.row_step;
+      // whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
+      // whole_pcd.data.insert(whole_pcd.data.end(), partial_pcd.data.begin(), partial_pcd.data.end());
+      whole_pcd += partial_pcd;
     }
   }
 
@@ -217,6 +221,52 @@ std::vector<PointCloudMapLoaderNode::PCDFileMetadata> PointCloudMapLoaderNode::g
     metadata_array.push_back(metadata);
   }
   return metadata_array;
+}
+
+sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
+  const geometry_msgs::msg::Point position, const float radius,
+  std::vector<PointCloudMapLoaderNode::PCDFileMetadata> pcd_file_metadata_array) const
+{
+  sensor_msgs::msg::PointCloud2 filtered_pcd{};
+  sensor_msgs::msg::PointCloud2 pcd;
+  for (const auto & metadata : pcd_file_metadata_array) {
+    if (sphere_and_box_overlap_exists(position, radius, metadata.min, metadata.max)) {
+      if (pcl::io::loadPCDFile(metadata.path, pcd) == -1) {
+        RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << metadata.path);
+      }
+      if (filtered_pcd.width == 0) {
+        filtered_pcd = pcd;
+      } else {
+        filtered_pcd.width += pcd.width;
+        filtered_pcd.row_step += pcd.row_step;
+        filtered_pcd.data.reserve(filtered_pcd.data.size() + pcd.data.size());
+        filtered_pcd.data.insert(filtered_pcd.data.end(), pcd.data.begin(), pcd.data.end());
+      }
+    }
+  }
+  filtered_pcd.header.frame_id = "map";
+  return filtered_pcd;
+}
+
+bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
+  autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request::SharedPtr req,
+  autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Response::SharedPtr res)
+{
+  res->position = req->position;
+  res->radius = req->radius;
+  pub_partial_pointcloud_map_->publish(
+    loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_));
+  return true;
+}
+
+bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
+  autoware_map_srvs::srv::LoadPCDPartially::Request::SharedPtr req,
+  autoware_map_srvs::srv::LoadPCDPartially::Response::SharedPtr res)
+{
+  res->position = req->position;
+  res->radius = req->radius;
+  res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
+  return true;
 }
 
 
