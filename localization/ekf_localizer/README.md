@@ -190,6 +190,7 @@ Note that, although the dimension gets larger since the analytical expansion can
 </p>
 
 ## Known issues
+
 - In the presence of multiple inputs with yaw estimation, yaw bias `b_k` in the current EKF state would not make any sense, since it is intended to capture the extrinsic parameter's calibration error of a sensor. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
 
 ## reference
