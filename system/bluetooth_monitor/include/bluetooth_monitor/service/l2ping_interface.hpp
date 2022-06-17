@@ -20,6 +20,7 @@
 #include <boost/serialization/vector.hpp>
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 // 7634-7647 Unassigned
