@@ -500,7 +500,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
 
     if (
       std::fabs(shift_length) <
-      std::fabs(o.overhang_dist) - vehicle_width - lat_collision_safety_buffer) {
+      std::fabs(o.overhang_dist) - 0.5 * vehicle_width - lat_collision_safety_buffer) {
       avoidance_debug_array_false_and_push_back("TooShortShift");
       continue;
     }
