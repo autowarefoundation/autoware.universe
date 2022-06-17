@@ -34,25 +34,29 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <deque>
 #include <memory>
 #include <string>
-
 namespace pointcloud_preprocessor
 {
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using rcl_interfaces::msg::SetParametersResult;
 using sensor_msgs::msg::PointCloud2;
 
+using diagnostic_updater::DiagnosticStatusWrapper;
+using diagnostic_updater::Updater;
 class DistortionCorrectorComponent : public rclcpp::Node
 {
 public:
   explicit DistortionCorrectorComponent(const rclcpp::NodeOptions & options);
 
 private:
+  void VehicleReportCheck(DiagnosticStatusWrapper & stat);
+  Updater updater_{this};
   void onPointCloud(PointCloud2::UniquePtr points_msg);
   void onVelocityReport(const VelocityReport::ConstSharedPtr velocity_report_msg);
   bool getTransform(

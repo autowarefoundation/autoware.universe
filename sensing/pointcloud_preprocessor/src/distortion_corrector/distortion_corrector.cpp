@@ -20,6 +20,7 @@
 
 namespace pointcloud_preprocessor
 {
+using diagnostic_msgs::msg::DiagnosticStatus;
 /** @brief Constructor. */
 DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOptions & options)
 : Node("distortion_corrector_node", options)
@@ -42,12 +43,17 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
     this->create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   // Subscriber
+
   velocity_report_sub_ = this->create_subscription<VelocityReport>(
     "~/input/velocity_report", 10,
     std::bind(&DistortionCorrectorComponent::onVelocityReport, this, std::placeholders::_1));
   input_points_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
+
+  updater_.setHardwareID("velocity_status ");
+  updater_.add(": velocity_status", this, &DistortionCorrectorComponent::VehicleReportCheck);
+  updater_.setPeriod(0.1);
 }
 
 void DistortionCorrectorComponent::onVelocityReport(
@@ -68,6 +74,22 @@ void DistortionCorrectorComponent::onVelocityReport(
     }
     break;
   }
+}
+
+void DistortionCorrectorComponent::VehicleReportCheck(DiagnosticStatusWrapper & stat)
+{
+  stat.add("Topic publisher number ", std::to_string(velocity_report_sub_->get_publisher_count()));
+  auto level = DiagnosticStatus::OK;
+  std::string msg;
+  if (velocity_report_sub_->get_publisher_count() == 0) {
+    level = DiagnosticStatus::WARN;
+    msg = "WARNING: topic [" + std::string(velocity_report_sub_->get_topic_name()) +
+          "] does not appear to be published yet";
+  } else {
+    level = DiagnosticStatus::OK;
+    msg = "OK";
+  }
+  stat.summary(level, msg);
 }
 
 void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_msg)
