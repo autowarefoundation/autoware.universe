@@ -53,6 +53,7 @@ class HierarchicalCostMap
 public:
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+  using Pose = geometry_msgs::msg::Pose;
 
   HierarchicalCostMap(float max_range, float image_size, float gamma);
 
@@ -62,7 +63,7 @@ public:
 
   MarkerArray showMapRange() const;
 
-  cv::Mat getMapImage() const;
+  cv::Mat getMapImage(const Pose & pose);
 
 private:
   const float max_range_;

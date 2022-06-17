@@ -101,14 +101,34 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
   return array_msg;
 }
 
-cv::Mat HierarchicalCostMap::getMapImage() const
+cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
 {
   if (generated_map_history_.empty())
     return cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
 
+  Eigen::Vector2f center;
+  center << pose.position.x, pose.position.y;
+
+  float w = pose.orientation.w;
+  float z = pose.orientation.z;
+  Eigen::Matrix2f R = Eigen::Rotation2Df(2.f * std::atan2(z, w) - M_PI_2).toRotationMatrix();
+
+  auto toVector2f = [this, center, R](float h, float w) -> Eigen::Vector2f {
+    Eigen::Vector2f offset;
+    offset.x() = (w / this->image_size_ - 0.5f) * this->max_range_;
+    offset.y() = -(h / this->image_size_ - 0.5f) * this->max_range_;
+    return center + R * offset;
+  };
+
+  cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
+  for (int w = 0; w < image_size_; w++) {
+    for (int h = 0; h < image_size_; h++) {
+      image.at<uchar>(h, w) = this->at(toVector2f(h, w));
+    }
+  }
+
   cv::Mat rgb_image;
-  cv::Mat map_image = cost_maps_.at(generated_map_history_.front());
-  cv::applyColorMap(map_image, rgb_image, cv::COLORMAP_JET);
+  cv::applyColorMap(image, rgb_image, cv::COLORMAP_JET);
   return rgb_image;
 }
 

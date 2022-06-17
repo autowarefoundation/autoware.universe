@@ -4,6 +4,7 @@
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sign_detector_msgs/msg/cloud_with_pose.hpp>
@@ -18,7 +19,7 @@ class CameraParticleCorrector : public AbstCorrector
 public:
   using LineSegment = pcl::PointCloud<pcl::PointNormal>;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
   using Image = sensor_msgs::msg::Image;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
@@ -40,6 +41,9 @@ public:
     auto ll2_callback = std::bind(&CameraParticleCorrector::ll2Callback, this, _1);
     ll2_sub_ = create_subscription<PointCloud2>("/ll2_cloud", 10, ll2_callback);
 
+    auto pose_callback = std::bind(&CameraParticleCorrector::poseCallback, this, _1);
+    pose_sub_ = create_subscription<PoseStamped>("/particle_pose", 10, pose_callback);
+
     image_pub_ = create_publisher<Image>("/match_image", 10);
     marker_pub_ = create_publisher<MarkerArray>("/cost_map_range", 10);
   }
@@ -47,12 +51,14 @@ public:
 private:
   void lsdCallback(const PointCloud2 & msg);
   void ll2Callback(const PointCloud2 & msg);
+  void poseCallback(const PoseStamped & msg);
 
   float computeScore(const LineSegment & ls_cloud, cv::Mat & ll2_image);
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr lsd_sub_;
   rclcpp::Subscription<PointCloud2>::SharedPtr ll2_sub_;
+  rclcpp::Subscription<PoseStamped>::SharedPtr pose_sub_;
 
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
