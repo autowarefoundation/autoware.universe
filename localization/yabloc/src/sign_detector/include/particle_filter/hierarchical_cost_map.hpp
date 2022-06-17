@@ -4,6 +4,8 @@
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/core.hpp>
 
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <boost/functional/hash.hpp>
 
 #include <pcl/point_cloud.h>
@@ -49,15 +51,21 @@ struct Area
 class HierarchicalCostMap
 {
 public:
+  using Marker = visualization_msgs::msg::Marker;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
+
   HierarchicalCostMap(float max_range, float image_size, float gamma);
 
   void setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
 
   float at(const Eigen::Vector2f & position);
 
+  MarkerArray showMapRange() const;
+
 private:
   const float max_range_;
   const float image_size_;
+  const int max_map_count_;
 
   cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);

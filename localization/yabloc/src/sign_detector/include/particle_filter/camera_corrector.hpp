@@ -21,6 +21,7 @@ public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
   using Image = sensor_msgs::msg::Image;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
 
   CameraParticleCorrector()
   : AbstCorrector("camera_particle_corrector"),
@@ -41,8 +42,7 @@ public:
     ll2_sub_ = create_subscription<PointCloud2>("/ll2_cloud", 10, ll2_callback);
 
     image_pub_ = create_publisher<Image>("/match_image", 10);
-
-    // gamma_converter.reset(gamma_);
+    marker_pub_ = create_publisher<MarkerArray>("/cost_map_range", 10);
   }
 
 private:
@@ -58,9 +58,9 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr ll2_sub_;
 
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
   std::optional<CloudWithPose> latest_cloud_with_pose_{std::nullopt};
 
-  // GammaConverter gamma_converter{4.0f};
   const int image_size_;
   const float max_range_;
   const float gamma_;

@@ -1,6 +1,7 @@
 #include "particle_filter/hierarchical_cost_map.hpp"
 
 #include "common/gammma_conveter.hpp"
+#include "common/util.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
 
@@ -17,7 +18,7 @@ cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vecto
 }
 
 HierarchicalCostMap::HierarchicalCostMap(float max_range, float image_size, float gamma)
-: max_range_(max_range), image_size_(image_size)
+: max_range_(max_range), image_size_(image_size), max_map_count_(20)
 {
   Area::unit_length_ = max_range;
   gamma_converter.reset(gamma);
@@ -60,14 +61,44 @@ void HierarchicalCostMap::buildMap(const Area & area)
   cost_maps[area] = gamma_converter(distance);
   generated_map_history_.push_back(area);
 
-  // It can have a maximum of 10 local maps.
-  if (generated_map_history_.size() > 10) {
+  // It can have MAX_MAP_COUNT local maps at most.
+  if (generated_map_history_.size() > max_map_count_) {
     auto key = generated_map_history_.front();
     generated_map_history_.pop_front();
     cost_maps.erase(key);
-    std::cerr << "old cost map is poped" << std::endl;
   }
-  std::cout << "successed to build map " << generated_map_history_.size() << std::endl;
+  std::cout << "successed to build map " << area(area) << " " << area.realScale().transpose()
+            << std::endl;
+}
+
+HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
+{
+  MarkerArray array_msg;
+
+  auto gpoint = [](float x, float y) -> geometry_msgs::msg::Point {
+    geometry_msgs::msg::Point gp;
+    gp.x = x;
+    gp.y = y;
+    return gp;
+  };
+
+  int id = 0;
+  for (const Area & area : generated_map_history_) {
+    Marker marker;
+    marker.header.frame_id = "map";
+    marker.id = id++;
+    marker.type = Marker::LINE_STRIP;
+    marker.color = util::color(0, 0, 1.0f, 1.0f);
+    marker.scale.x = 0.1;
+    Eigen::Vector2f xy = area.realScale();
+    marker.points.push_back(gpoint(xy.x(), xy.y()));
+    marker.points.push_back(gpoint(xy.x() + area.unit_length_, xy.y()));
+    marker.points.push_back(gpoint(xy.x() + area.unit_length_, xy.y() + area.unit_length_));
+    marker.points.push_back(gpoint(xy.x(), xy.y() + area.unit_length_));
+    marker.points.push_back(gpoint(xy.x(), xy.y()));
+    array_msg.markers.push_back(marker);
+  }
+  return array_msg;
 }
 
 }  // namespace particle_filter

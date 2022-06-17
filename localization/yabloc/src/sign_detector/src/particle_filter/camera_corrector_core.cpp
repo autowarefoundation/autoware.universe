@@ -53,6 +53,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   // util::publishImage(*image_pub_, rgb_ll2_image, stamp);
   this->setWeightedParticleArray(weighted_particles);
+  marker_pub_->publish(cost_map_.showMapRange());
 }
 
 void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)

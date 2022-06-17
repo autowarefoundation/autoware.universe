@@ -32,6 +32,16 @@ std_msgs::msg::ColorRGBA toRgba(float value)
   return rgba;
 }
 
+std_msgs::msg::ColorRGBA color(float red, float green, float blue, float alpha)
+{
+  std_msgs::msg::ColorRGBA rgba;
+  rgba.r = red;
+  rgba.g = green;
+  rgba.b = blue;
+  rgba.a = alpha;
+  return rgba;
+}
+
 cv_bridge::CvImage decompressImage(const sensor_msgs::msg::CompressedImage & compressed_img)
 {
   cv_bridge::CvImage raw_image;
