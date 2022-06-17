@@ -78,7 +78,6 @@ private:
     boost::optional<CruiseObstacleInfo> & cruise_obstacle_info);
   double calcDistanceToObstacle(
     const ObstacleCruisePlannerData & planner_data, const TargetObstacle & obstacle);
-  bool isStopRequired(const TargetObstacle & obstacle);
 
   void planCruise(
     const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
@@ -107,6 +106,17 @@ private:
       return nearest_idx.get();
     }
     return tier4_autoware_utils::findNearestIndex(traj.points, pose.position);
+  }
+
+  size_t findExtendedNearestSegmentIndex(
+    const Trajectory traj, const geometry_msgs::msg::Pose & pose) const
+  {
+    const auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+      traj.points, pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    if (nearest_segment_idx) {
+      return nearest_segment_idx.get();
+    }
+    return tier4_autoware_utils::findNearestSegmentIndex(traj.points, pose.position);
   }
 
   // ROS parameters

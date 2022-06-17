@@ -30,8 +30,7 @@
 // clang-format on
 using std::placeholders::_1;
 
-Twist2Accel::Twist2Accel(
-  const std::string & node_name, const rclcpp::NodeOptions & node_options)
+Twist2Accel::Twist2Accel(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
