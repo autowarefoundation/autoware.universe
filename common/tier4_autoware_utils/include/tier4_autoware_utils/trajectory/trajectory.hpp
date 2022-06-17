@@ -480,7 +480,7 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
 
     const auto dist_res = offset - dist_sum;
     if (dist_res <= 0.0) {
-      return calcInterpolatePoint(p_back, p_front, std::abs(dist_res / dist_segment));
+      return calcInterpolatedPoint(p_back, p_front, std::abs(dist_res / dist_segment));
     }
   }
 
