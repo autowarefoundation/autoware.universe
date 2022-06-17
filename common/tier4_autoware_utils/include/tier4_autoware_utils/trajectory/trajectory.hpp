@@ -366,7 +366,7 @@ double calcArcLength(const T & points)
 }
 
 /**
- * @brief Calculate distance to the closest forward stop point from the given pose
+ * @brief Calculate distance to the forward stop point from the given pose
  */
 template <class T>
 boost::optional<double> calcDistanceToForwardStopPoint(
