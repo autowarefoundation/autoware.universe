@@ -47,6 +47,12 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pointcloud_map_;
 
   sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths);
+  struct PCDFileMetadata
+  {
+    pcl::PointXYZ min;
+    pcl::PointXYZ max;
+    std::string path;
+  };
 };
 
 #endif  // MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
