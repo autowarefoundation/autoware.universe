@@ -449,7 +449,7 @@ boost::optional<double> calcDistanceToForwardStopPoint(
  * @return offset point
  */
 template <class T>
-boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
+boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const size_t src_idx, const double offset)
 {
   validateNonEmpty(points);
@@ -465,22 +465,21 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   if (offset < 0.0) {
     auto reverse_points = points;
     std::reverse(reverse_points.begin(), reverse_points.end());
-    return calcLongitudinalOffsetPoint(
-      reverse_points, reverse_points.size() - src_idx - 1, -offset);
+    return calcLongitudinalOffsetPose(reverse_points, reverse_points.size() - src_idx - 1, -offset);
   }
 
   double dist_sum = 0.0;
 
   for (size_t i = src_idx; i < points.size() - 1; ++i) {
-    const auto & p_front = getPoint(points.at(i));
-    const auto & p_back = getPoint(points.at(i + 1));
+    const auto & p_front = points.at(i);
+    const auto & p_back = points.at(i + 1);
 
     const auto dist_segment = calcDistance2d(p_front, p_back);
     dist_sum += dist_segment;
 
     const auto dist_res = offset - dist_sum;
     if (dist_res <= 0.0) {
-      return calcInterpolatedPoint(p_back, p_front, std::abs(dist_res / dist_segment));
+      return calcInterpolatedPose(p_back, p_front, std::abs(dist_res / dist_segment));
     }
   }
 
@@ -495,7 +494,7 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
  * @return offset point
  */
 template <class T>
-boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
+boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
 {
   validateNonEmpty(points);
@@ -503,14 +502,14 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   if (offset < 0.0) {
     auto reverse_points = points;
     std::reverse(reverse_points.begin(), reverse_points.end());
-    return calcLongitudinalOffsetPoint(reverse_points, src_point, -offset);
+    return calcLongitudinalOffsetPose(reverse_points, src_point, -offset);
   }
 
   const size_t src_seg_idx = findNearestSegmentIndex(points, src_point);
   const double signed_length_src_offset =
     calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
 
-  return calcLongitudinalOffsetPoint(points, src_seg_idx, offset + signed_length_src_offset);
+  return calcLongitudinalOffsetPose(points, src_seg_idx, offset + signed_length_src_offset);
 }
 
 /**

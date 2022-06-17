@@ -953,75 +953,74 @@ TEST(trajectory, calcDistanceToForwardStopPoint_DistThreshold)
   }
 }
 
-TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
+TEST(trajectory, calcLongitudinalOffsetPoseFromIndex)
 {
   using tier4_autoware_utils::calcArcLength;
-  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
   // Empty
-  EXPECT_THROW(calcLongitudinalOffsetPoint(Trajectory{}.points, {}, {}), std::invalid_argument);
+  EXPECT_THROW(calcLongitudinalOffsetPose(Trajectory{}.points, {}, {}), std::invalid_argument);
 
   // Out of range
   EXPECT_THROW(
-    calcLongitudinalOffsetPoint(traj.points, traj.points.size() + 1, 1.0), std::out_of_range);
-  EXPECT_THROW(calcLongitudinalOffsetPoint(traj.points, -1, 1.0), std::out_of_range);
+    calcLongitudinalOffsetPose(traj.points, traj.points.size() + 1, 1.0), std::out_of_range);
+  EXPECT_THROW(calcLongitudinalOffsetPose(traj.points, -1, 1.0), std::out_of_range);
 
   // Same Point
   {
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, 0.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 3, 0.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 0, 9.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, 9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 9, -9.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 9, -9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, 2.25);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 3, 2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 5.25, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 5.25, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 3, -2.25);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 3, -2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.75, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.75, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // No found
   {
-    const auto p_out =
-      calcLongitudinalOffsetPoint(traj.points, 0, calcArcLength(traj.points) + 1.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, calcArcLength(traj.points) + 1.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
@@ -1029,7 +1028,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
   // No found
   {
     const auto p_out =
-      calcLongitudinalOffsetPoint(traj.points, 9, -calcArcLength(traj.points) - 1.0);
+      calcLongitudinalOffsetPose(traj.points, 9, -calcArcLength(traj.points) - 1.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
@@ -1037,81 +1036,81 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
   // No found(Trajectory size is 1)
   {
     const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
-    const auto p_out = calcLongitudinalOffsetPoint(one_point_traj.points, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPose(one_point_traj.points, 0.0, 0.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
 }
 
-TEST(trajectory, calcLongitudinalOffsetPointFromIndex_PathWithLaneId)
+TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_PathWithLaneId)
 {
   using tier4_autoware_utils::calcArcLength;
-  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
 
   const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
 
   // Empty
-  EXPECT_THROW(calcLongitudinalOffsetPoint(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+  EXPECT_THROW(calcLongitudinalOffsetPose(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
 
   // Out of range
   EXPECT_THROW(
-    calcLongitudinalOffsetPoint(path_with_lane_id.points, path_with_lane_id.points.size() + 1, 1.0),
+    calcLongitudinalOffsetPose(path_with_lane_id.points, path_with_lane_id.points.size() + 1, 1.0),
     std::out_of_range);
-  EXPECT_THROW(calcLongitudinalOffsetPoint(path_with_lane_id.points, -1, 1.0), std::out_of_range);
+  EXPECT_THROW(calcLongitudinalOffsetPose(path_with_lane_id.points, -1, 1.0), std::out_of_range);
 
   // Same Point
   {
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, 0.0);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 3, 0.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 0, 9.0);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 0, 9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 9, -9.0);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 9, -9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, 2.25);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 3, 2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 5.25, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 5.25, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, 3, -2.25);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 3, -2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.75, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.75, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // No found
   {
-    const auto p_out = calcLongitudinalOffsetPoint(
+    const auto p_out = calcLongitudinalOffsetPose(
       path_with_lane_id.points, 0, calcArcLength(path_with_lane_id.points) + 1.0);
 
     EXPECT_EQ(p_out, boost::none);
@@ -1119,7 +1118,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_PathWithLaneId)
 
   // No found
   {
-    const auto p_out = calcLongitudinalOffsetPoint(
+    const auto p_out = calcLongitudinalOffsetPose(
       path_with_lane_id.points, 9, -calcArcLength(path_with_lane_id.points) - 1.0);
 
     EXPECT_EQ(p_out, boost::none);
@@ -1128,16 +1127,16 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_PathWithLaneId)
   // No found(Trajectory size is 1)
   {
     const auto one_point_path = generateTestTrajectory<PathWithLaneId>(1, 1.0);
-    const auto p_out = calcLongitudinalOffsetPoint(one_point_path.points, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPose(one_point_path.points, 0.0, 0.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
 }
 
-TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
+TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_CurveTrajectory)
 {
   using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
 
   Trajectory curve_traj{};
 
@@ -1178,140 +1177,138 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex_CurveTrajectory)
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 0, 4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, 0, 4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 2.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 4, -4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, 4, -4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 1, 3.0);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, 1, 3.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 2.707106781186547524, epsilon);
-    EXPECT_NEAR(p_out.get().y, 1.707106781186547524, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 2.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset
   {
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, 4, -4.0);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, 4, -4.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.41421356237309505, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.41421356237309505, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 }
 
-TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
+TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
 {
   using tier4_autoware_utils::calcArcLength;
-  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
   using tier4_autoware_utils::createPoint;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
   // Empty
-  EXPECT_THROW(calcLongitudinalOffsetPoint(Trajectory{}.points, {}, {}), std::invalid_argument);
+  EXPECT_THROW(calcLongitudinalOffsetPose(Trajectory{}.points, {}, {}), std::invalid_argument);
 
   // Same Point
   {
     const auto p_src = createPoint(3.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 0.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, 0.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 9.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, 9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_EQ(p_out.get(), createPoint(9.0, 0.0, 0.0));
-    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
     const auto p_src = createPoint(9.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -9.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, -9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_EQ(p_out.get(), createPoint(0.0, 0.0, 0.0));
-    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.25, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 2.25);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, 2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.5, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.5, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset(Lateral deviation)
   {
     const auto p_src = createPoint(-1.25, 1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, 4.25);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, 4.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset
   {
     const auto p_src = createPoint(6.25, 1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -2.25);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, -2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 4.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 4.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset(Lateral deviation)
   {
     const auto p_src = createPoint(6.25, -1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -4.25);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, -4.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 2.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // No found
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
     const auto p_out =
-      calcLongitudinalOffsetPoint(traj.points, p_src, calcArcLength(traj.points) + 1.0);
+      calcLongitudinalOffsetPose(traj.points, p_src, calcArcLength(traj.points) + 1.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
@@ -1320,7 +1317,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
   {
     const auto p_src = createPoint(9.0, 0.0, 0.0);
     const auto p_out =
-      calcLongitudinalOffsetPoint(traj.points, p_src, -calcArcLength(traj.points) - 1.0);
+      calcLongitudinalOffsetPose(traj.points, p_src, -calcArcLength(traj.points) - 1.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
@@ -1329,105 +1326,103 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
   {
     const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
     EXPECT_THROW(
-      calcLongitudinalOffsetPoint(one_point_traj.points, geometry_msgs::msg::Point{}, {}),
+      calcLongitudinalOffsetPose(one_point_traj.points, geometry_msgs::msg::Point{}, {}),
       std::out_of_range);
   }
 }
 
-TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
+TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_PathWithLaneId)
 {
   using tier4_autoware_utils::calcArcLength;
-  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
   using tier4_autoware_utils::createPoint;
 
   const auto path_with_lane_id = generateTestTrajectory<PathWithLaneId>(10, 1.0);
 
   // Empty
-  EXPECT_THROW(calcLongitudinalOffsetPoint(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+  EXPECT_THROW(calcLongitudinalOffsetPose(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
 
   // Same Point
   {
     const auto p_src = createPoint(3.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 0.0);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 0.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 9.0);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_EQ(p_out.get(), createPoint(9.0, 0.0, 0.0));
-    EXPECT_NEAR(p_out.get().x, 9.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 9.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
     const auto p_src = createPoint(9.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, -9.0);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, -9.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_EQ(p_out.get(), createPoint(0.0, 0.0, 0.0));
-    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.25, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 2.25);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.5, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.5, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset(Lateral deviation)
   {
     const auto p_src = createPoint(-1.25, 1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, 4.25);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 4.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset
   {
     const auto p_src = createPoint(6.25, 1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, -2.25);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, -2.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 4.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 4.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset(Lateral deviation)
   {
     const auto p_src = createPoint(6.25, -1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(path_with_lane_id.points, p_src, -4.25);
+    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, -4.25);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 2.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // No found
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(
+    const auto p_out = calcLongitudinalOffsetPose(
       path_with_lane_id.points, p_src, calcArcLength(path_with_lane_id.points) + 1.0);
 
     EXPECT_EQ(p_out, boost::none);
@@ -1436,7 +1431,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
   // No found
   {
     const auto p_src = createPoint(9.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(
+    const auto p_out = calcLongitudinalOffsetPose(
       path_with_lane_id.points, p_src, -calcArcLength(path_with_lane_id.points) - 1.0);
 
     EXPECT_EQ(p_out, boost::none);
@@ -1446,15 +1441,15 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
   {
     const auto one_point_path = generateTestTrajectory<PathWithLaneId>(1, 1.0);
     EXPECT_THROW(
-      calcLongitudinalOffsetPoint(one_point_path.points, geometry_msgs::msg::Point{}, {}),
+      calcLongitudinalOffsetPose(one_point_path.points, geometry_msgs::msg::Point{}, {}),
       std::out_of_range);
   }
 }
 
-TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
+TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_CurveTrajectory)
 {
   using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
 
   Trajectory curve_traj{};
 
@@ -1496,67 +1491,67 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint_CurveTrajectory)
   // Whole length
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, 4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, p_src, 4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 2.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 2.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Whole length
   {
     const auto p_src = createPoint(3.0, 2.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, -4.41421356237309505);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, p_src, -4.41421356237309505);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, 3.0);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, p_src, 3.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 2.707106781186547524, epsilon);
-    EXPECT_NEAR(p_out.get().y, 1.707106781186547524, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 2.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.707106781186547524, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Forward offset(Lateral deviation)
   {
     const auto p_src = createPoint(0.75, 0.25, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, 1.0);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, p_src, 1.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 1.25, epsilon);
-    EXPECT_NEAR(p_out.get().y, 1.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 1.25, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset(No lateral deviation)
   {
     const auto p_src = createPoint(3.0, 2.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, -4.0);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, p_src, -4.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 0.41421356237309505, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 0.41421356237309505, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 
   // Backward offset(No lateral deviation)
   {
     const auto p_src = createPoint(1.75, 1.25, 0.0);
-    const auto p_out = calcLongitudinalOffsetPoint(curve_traj.points, p_src, -1.0);
+    const auto p_out = calcLongitudinalOffsetPose(curve_traj.points, p_src, -1.0);
 
     EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().x, 1.0, epsilon);
-    EXPECT_NEAR(p_out.get().y, 0.75, epsilon);
-    EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.x, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 0.75, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
   }
 }
 
