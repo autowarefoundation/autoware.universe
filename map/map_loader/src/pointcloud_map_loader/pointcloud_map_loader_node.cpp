@@ -91,15 +91,17 @@ bool sphere_and_box_overlap_exists(
   return false;
 }
 
-pcl::PointCloud<PointType> downsample(pcl::PointCloud<PointType> points, float leaf_size)
+sensor_msgs::msg::PointCloud2 downsample(sensor_msgs::msg::PointCloud2 points, float leaf_size)
 {
-  pcl::PointCloud<PointType>::Ptr input_points(new pcl::PointCloud<PointType>(points));
-  pcl::PointCloud<PointType>::Ptr downsampled_points(new pcl::PointCloud<PointType>);
-  pcl::VoxelGrid<PointType> voxel_grid_filter;
-  voxel_grid_filter.setLeafSize(leaf_size, leaf_size, leaf_size);
-  voxel_grid_filter.setInputCloud(input_points);
-  voxel_grid_filter.filter(*downsampled_points);
-  return *downsampled_points.get();
+  // sensor_msgs::msg::PointCloud2::Ptr input_points(new sensor_msgs::msg::PointCloud2(points));
+  // sensor_msgs::msg::PointCloud2::Ptr downsampled_points(new sensor_msgs::msg::PointCloud2);
+  // pcl::VoxelGrid<PointType> voxel_grid_filter;
+  // voxel_grid_filter.setLeafSize(leaf_size, leaf_size, leaf_size);
+  // voxel_grid_filter.setInputCloud(input_points);
+  // voxel_grid_filter.filter(*downsampled_points);
+  // return *downsampled_points.get();
+  std::cout << "!!!!!!!!!!!!!IMPLEMENT HERE" << leaf_size << std::endl;
+  return points;
 }
 
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
@@ -107,24 +109,21 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 {
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
-  // pub_whole_pointcloud_map_ =
-  //   this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/whole", durable_qos);
-
   const auto pcd_paths_or_directory =
     declare_parameter("pcd_paths_or_directory", std::vector<std::string>({}));
-  // RCLCPP_ERROR(get_logger(), " ");
 
   enable_whole_load_ = declare_parameter("enable_whole_load", true);
   enable_partial_load_ = declare_parameter("enable_partial_load", true);
   use_downsample_ = declare_parameter("use_downsample", false);
   leaf_size_ = declare_parameter("leaf_size", 1.0);
 
+  static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
+
   std::vector<std::string> pcd_paths{};
 
   if (enable_whole_load_) {
     pub_whole_pointcloud_map_ =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/whole", durable_qos);
-
     for (const auto & p : pcd_paths_or_directory) {
       if (!fs::exists(p)) {
         RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p);
@@ -144,22 +143,19 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       }
     }
 
-    const auto pcd = loadPCDFiles(pcd_paths);
+    sensor_msgs::msg::PointCloud2 pcd = loadPCDFiles(pcd_paths);
 
     if (pcd.width == 0) {
       RCLCPP_ERROR(get_logger(), "No PCD was loaded: pcd_paths.size() = %zu", pcd_paths.size());
       return;
     }
 
-    sensor_msgs::msg::PointCloud2 whole_pcd;
-    if (use_downsample_) {
-      const auto downsampled_pcd = downsample(pcd, leaf_size_);
-      pcl::toROSMsg(downsampled_pcd, whole_pcd);
-    } else {
-      pcl::toROSMsg(pcd, whole_pcd);
-    }
-    whole_pcd.header.frame_id = "map";
-    pub_whole_pointcloud_map_->publish(whole_pcd);
+    // if (use_downsample_) {
+    //   pcd = downsample(pcd, leaf_size_);
+    // }
+    pcd.header.frame_id = "map";
+    generateTF(pcd);
+    pub_whole_pointcloud_map_->publish(pcd);
   }
 
   if (enable_partial_load_) {
@@ -181,14 +177,15 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 }
 
 // TODO: pcl::PointCloud<PointType> -> sensor_msgs::msg::PointCloud2
-pcl::PointCloud<PointType> PointCloudMapLoaderNode::loadPCDFiles(
+sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   const std::vector<std::string> & pcd_paths)
 {
-  pcl::PointCloud<PointType> whole_pcd{};
+  sensor_msgs::msg::PointCloud2 whole_pcd{};
 
-  pcl::PointCloud<PointType> partial_pcd;
+  sensor_msgs::msg::PointCloud2 partial_pcd;
 
   for (const auto & path : pcd_paths) {
+    RCLCPP_INFO_STREAM(get_logger(), "LOOOOOOOOOOOOOOODING " << path);
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
     }
@@ -196,11 +193,11 @@ pcl::PointCloud<PointType> PointCloudMapLoaderNode::loadPCDFiles(
     if (whole_pcd.width == 0) {
       whole_pcd = partial_pcd;
     } else {
-      // whole_pcd.width += partial_pcd.width;
-      // whole_pcd.row_step += partial_pcd.row_step;
-      // whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
-      // whole_pcd.data.insert(whole_pcd.data.end(), partial_pcd.data.begin(), partial_pcd.data.end());
-      whole_pcd += partial_pcd;
+      whole_pcd.width += partial_pcd.width;
+      whole_pcd.row_step += partial_pcd.row_step;
+      whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
+      whole_pcd.data.insert(whole_pcd.data.end(), partial_pcd.data.begin(), partial_pcd.data.end());
+      // whole_pcd += partial_pcd;
     }
   }
 
@@ -270,6 +267,48 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
   res->radius = req->radius;
   res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
   return true;
+}
+
+void PointCloudMapLoaderNode::generateTF(sensor_msgs::msg::PointCloud2 & pcd_msg)
+{
+  // fix random seed to produce the same viewer position every time
+  // 3939 is just the author's favorite number
+  srand(3939);
+
+  pcl::PointCloud<pcl::PointXYZ> pcd_pcl;
+  pcl::fromROSMsg<pcl::PointXYZ>(pcd_msg, pcd_pcl);
+
+  const std::vector<size_t> indices = UniformRandom(pcd_pcl.size(), N_SAMPLES);
+  double coordinate[3] = {0, 0, 0};
+  for (const auto i : indices) {
+    coordinate[0] += pcd_pcl.points[i].x;
+    coordinate[1] += pcd_pcl.points[i].y;
+    coordinate[2] += pcd_pcl.points[i].z;
+  }
+  coordinate[0] = coordinate[0] / indices.size();
+  coordinate[1] = coordinate[1] / indices.size();
+  coordinate[2] = coordinate[2] / indices.size();
+
+  geometry_msgs::msg::TransformStamped static_transformStamped;
+  static_transformStamped.header.stamp = this->now();
+  static_transformStamped.header.frame_id = map_frame_;
+  static_transformStamped.child_frame_id = viewer_frame_;
+  static_transformStamped.transform.translation.x = coordinate[0];
+  static_transformStamped.transform.translation.y = coordinate[1];
+  static_transformStamped.transform.translation.z = coordinate[2];
+  tf2::Quaternion quat;
+  quat.setRPY(0, 0, 0);
+  static_transformStamped.transform.rotation.x = quat.x();
+  static_transformStamped.transform.rotation.y = quat.y();
+  static_transformStamped.transform.rotation.z = quat.z();
+  static_transformStamped.transform.rotation.w = quat.w();
+
+  static_broadcaster_->sendTransform(static_transformStamped);
+
+  RCLCPP_INFO_STREAM(
+    get_logger(), "broadcast static tf. map_frame:"
+                    << map_frame_ << ", viewer_frame:" << viewer_frame_ << ", x:" << coordinate[0]
+                    << ", y:" << coordinate[1] << ", z:" << coordinate[2]);
 }
 
 

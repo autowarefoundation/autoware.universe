@@ -37,15 +37,31 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <pcl/common/common.h>
 #include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 
 #include <string>
 #include <vector>
+#include <random>
 
+using PointTye = pcl::PointXYZI;
+constexpr size_t N_SAMPLES = 20;
 
-using PointType = pcl::PointXYZI;
+std::vector<size_t> UniformRandom(const size_t max_exclusive, const size_t n)
+{
+  std::default_random_engine generator;
+  std::uniform_int_distribution<size_t> distribution(0, max_exclusive - 1);
+
+  std::vector<size_t> v(n);
+  for (size_t i = 0; i < n; i++) {
+    v[i] = distribution(generator);
+  }
+  return v;
+}
+
 
 class PointCloudMapLoaderNode : public rclcpp::Node
 {
@@ -59,13 +75,17 @@ private:
   bool enable_partial_load_;
   float leaf_size_;
 
+  std::string map_frame_;
+  std::string viewer_frame_;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
+
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_whole_pointcloud_map_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_partial_pointcloud_map_;
   rclcpp::Service<autoware_map_srvs::srv::LoadPCDPartially>::SharedPtr load_pcd_partially_service_;
   rclcpp::Service<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedPtr
     load_pcd_partially_for_publish_service_;
 
-  pcl::PointCloud<PointType> loadPCDFiles(const std::vector<std::string> & pcd_paths);
+  sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths);
   struct PCDFileMetadata
   {
     pcl::PointXYZ min;
@@ -86,6 +106,7 @@ private:
   bool loadPCDPartiallyServiceCallback(
     autoware_map_srvs::srv::LoadPCDPartially::Request::SharedPtr req,
     autoware_map_srvs::srv::LoadPCDPartially::Response::SharedPtr res);
+  void generateTF(sensor_msgs::msg::PointCloud2 & pcd_msg);
 };
 
 #endif  // MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_

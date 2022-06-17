@@ -109,8 +109,8 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             lanelet2_map_loader,
             lanelet2_map_visualization,
+            # map_tf_generator,
             pointcloud_map_loader,
-            map_tf_generator,
         ],
         output="screen",
     )
@@ -142,7 +142,7 @@ def generate_launch_description():
     ),
     add_launch_arg(
         "pointcloud_map_path",
-        [LaunchConfiguration("map_path"), "/pointcloud_map"],
+        [LaunchConfiguration("map_path"), "/pointcloud_map.pcd"],
         "path to pointcloud map file",
     ),
     add_launch_arg(
