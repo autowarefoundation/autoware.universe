@@ -11,7 +11,34 @@
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-void Overlay::cloudPoseCallback(const CloudWithPose & msg) { latest_cloud_with_pose_ = msg; }
+void Overlay::ll2Callback(const PointCloud2 & msg) { pcl::fromROSMsg(msg, ll2_cloud_); }
+
+Overlay::Overlay() : Node("overlay"), pose_buffer_{20}
+{
+  using std::placeholders::_1;
+  // Subscriber
+  {
+    sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
+      "/sensing/camera/traffic_light/camera_info", 10, std::bind(&Overlay::infoCallback, this, _1));
+    sub_image_ = create_subscription<sensor_msgs::msg::Image>(
+      "/sensing/camera/traffic_light/image_raw/compressed", 10,
+      std::bind(&Overlay::imageCallback, this, _1));
+    sub_pose_ = create_subscription<PoseStamped>(
+      "/particle_pose", 10, std::bind(&Overlay::poseCallback, this, _1));
+    sub_ll2_ = create_subscription<PointCloud2>(
+      "/ll2_cloud", 10, std::bind(&Overlay::ll2Callback, this, _1));
+    sub_lsd_ = create_subscription<PointCloud2>(
+      "/lsd_cloud", 10, std::bind(&Overlay::lsdCallback, this, _1));
+
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  }
+  // Publisher
+  {
+    pub_vis_ = create_publisher<Marker>("/marker", 10);
+    pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
+  }
+}
 
 void Overlay::infoCallback(const sensor_msgs::msg::CameraInfo & msg)
 {
@@ -41,12 +68,11 @@ void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
     get_logger(), "dt: " << min_dt << " image:" << stamp.nanoseconds()
                          << " latest_pose:" << latest_pose_stamp.nanoseconds());
 
-  overlay(image, synched_pose.pose, stamp);
+  drawOverlay(image, synched_pose.pose, stamp);
 }
 
-void Overlay::cloudCallback(const PointCloud2 & msg)
+void Overlay::lsdCallback(const PointCloud2 & msg)
 {
-  using LineSegment = pcl::PointCloud<pcl::PointNormal>;
   const rclcpp::Time stamp = msg.header.stamp;
 
   // Search synchronized pose
@@ -68,21 +94,20 @@ void Overlay::cloudCallback(const PointCloud2 & msg)
   makeVisMarker(lsd_cloud, synched_pose.pose, stamp);
 }
 
-void Overlay::overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
+void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
 {
-  if (!latest_cloud_with_pose_.has_value()) return;
+  if (ll2_cloud_.empty()) return;
 
-  LineSegments ll2_cloud;
-  pcl::fromROSMsg(latest_cloud_with_pose_->cloud, ll2_cloud);
-  Eigen::Affine3f query_tf = util::pose2Affine(pose);
-  Eigen::Affine3f ref_tf = util::pose2Affine(latest_cloud_with_pose_->pose);
-  Eigen::Affine3f transform = ref_tf.inverse() * query_tf;
+  auto tmp = pose;
+  tmp.position.z = 0;  // Because ll2_cloud doesnt have z-value
+  Eigen::Affine3f transform = util::pose2Affine(tmp);
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
 
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
+
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
     Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
     if (from_camera.z() < 1e-3f) return std::nullopt;
@@ -90,7 +115,8 @@ void Overlay::overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Ti
     return cv::Point2i(uv1.x(), uv1.y());
   };
 
-  for (const pcl::PointNormal & pn : ll2_cloud) {
+  LineSegments near_segments = extractNaerLineSegments(pose);
+  for (const pcl::PointNormal & pn : near_segments) {
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
     cv::line(overlayed_image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
@@ -154,4 +180,35 @@ void Overlay::makeVisMarker(const LineSegments & ls, const Pose & pose, const rc
     marker.points.push_back(p2);
   }
   pub_vis_->publish(marker);
+}
+
+Overlay::LineSegments Overlay::extractNaerLineSegments(const Pose & pose)
+{
+  Eigen::Vector3f pose_vector;
+  pose_vector << pose.position.x, pose.position.y, pose.position.z;
+
+  // Compute distance between pose and linesegment of linestring
+  auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
+    const float max_range = 40;
+
+    const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
+    const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
+    Eigen::Vector3f dir = to - from;
+    float inner = from.dot(dir);
+    if (std::abs(inner) < 1e-3f) {
+      return from.norm() < 1.42 * max_range;
+    }
+
+    float mu = std::clamp(dir.squaredNorm() / inner, 0.f, 1.0f);
+    Eigen::Vector3f nearest = from + dir * mu;
+    return nearest.norm() < 2 * 1.42 * max_range;
+  };
+
+  LineSegments near_linestring;
+  for (const pcl::PointNormal & pn : ll2_cloud_) {
+    if (checkIntersection(pn)) {
+      near_linestring.push_back(pn);
+    }
+  }
+  return near_linestring;
 }
