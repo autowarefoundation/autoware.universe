@@ -90,6 +90,8 @@ def launch_setup(context, *args, **kwargs):
         package="map_tf_generator",
         plugin="MapTFGeneratorNode",
         name="map_tf_generator",
+        remappings=[
+            ("pointcloud_map", "/map/pointcloud_map/whole")],
         parameters=[
             {
                 "map_frame": "map",
