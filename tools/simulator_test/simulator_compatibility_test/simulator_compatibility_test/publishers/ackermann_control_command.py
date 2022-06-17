@@ -38,9 +38,9 @@ class PublisherAckermannControlCommand(Node):
         ]
         longitudinal_cmd.stamp.sec = stamp.sec
         longitudinal_cmd.stamp.nanosec = stamp.nanosec
-        longitudinal_cmd.speed = control_cmd["longtitudinal"]["speed"]
-        longitudinal_cmd.acceleration = control_cmd["longtitudinal"]["acceleration"]
-        longitudinal_cmd.jerk = control_cmd["longtitudinal"]["jerk"]
+        longitudinal_cmd.speed = control_cmd["longitudinal"]["speed"]
+        longitudinal_cmd.acceleration = control_cmd["longitudinal"]["acceleration"]
+        longitudinal_cmd.jerk = control_cmd["longitudinal"]["jerk"]
 
         msg.stamp.sec = stamp.sec
         msg.stamp.nanosec = stamp.nanosec
