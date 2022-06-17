@@ -27,4 +27,5 @@ This package is responsible for estimating acceleration using the output of `ekf
 | `accel_lowpass_gain` | double | lowpass gain for lowpass filter in estimating acceleration (default: 0.5) |
 
 ## Future work
+
 Future work includes integrating acceleration into the EKF state.
