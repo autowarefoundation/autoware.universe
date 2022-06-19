@@ -204,7 +204,7 @@ if(BUILD_TESTING)
   #   ${CPU_MONITOR_SOURCE}
   # )
 
-  # ament_add_ros_isolated_gtest(test_cpu_monitor
+  # ament_target_dependencies(test_cpu_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
@@ -220,7 +220,7 @@ if(BUILD_TESTING)
   #   src/hdd_monitor/hdd_monitor.cpp
   # )
 
-  # ament_add_ros_isolated_gtest(test_hdd_monitor
+  # ament_target_dependencies(test_hdd_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
@@ -237,7 +237,7 @@ if(BUILD_TESTING)
   #   src/mem_monitor/mem_monitor.cpp
   # )
 
-  # ament_add_ros_isolated_gtest(test_mem_monitor
+  # ament_target_dependencies(test_mem_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
@@ -254,7 +254,7 @@ if(BUILD_TESTING)
   #   src/net_monitor/nl80211.cpp
   # )
 
-  # ament_add_ros_isolated_gtest(test_net_monitor
+  # ament_target_dependencies(test_net_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
@@ -270,7 +270,7 @@ if(BUILD_TESTING)
   #   src/ntp_monitor/ntp_monitor.cpp
   # )
 
-  # ament_add_ros_isolated_gtest(test_ntp_monitor
+  # ament_target_dependencies(test_ntp_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
@@ -286,7 +286,7 @@ if(BUILD_TESTING)
   #   src/process_monitor/process_monitor.cpp
   # )
 
-  # ament_add_ros_isolated_gtest(test_process_monitor
+  # ament_target_dependencies(test_process_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
@@ -302,7 +302,7 @@ if(BUILD_TESTING)
   #   ${GPU_MONITOR_SOURCE}
   # )
 
-  # ament_add_ros_isolated_gtest(test_gpu_monitor
+  # ament_target_dependencies(test_gpu_monitor
   #   "rclcpp"
   #   "diagnostic_msgs"
   # )
