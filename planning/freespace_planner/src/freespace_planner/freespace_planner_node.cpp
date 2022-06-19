@@ -230,8 +230,6 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
 
   // Planning
   getPlanningCommonParam();
-  getAstarParam();
-  getRRTStarParam();
   initializePlanningAlgorithm();
 
   // Subscribers
@@ -296,24 +294,6 @@ void FreespacePlannerNode::getPlanningCommonParam()
 
   // costmap configs
   p.obstacle_threshold = declare_parameter("obstacle_threshold", 100);
-}
-
-void FreespacePlannerNode::getAstarParam()
-{
-  auto & p = astar_param_;
-  p.only_behind_solutions = declare_parameter("astar.only_behind_solutions", false);
-  p.use_back = declare_parameter("astar.use_back", true);
-  p.distance_heuristic_weight = declare_parameter("astar.distance_heuristic_weight", 1.0);
-}
-
-void FreespacePlannerNode::getRRTStarParam()
-{
-  auto & p = rrtstar_param_;
-  p.enable_update = declare_parameter("rrtstar.enable_update", true);
-  p.use_informed_sampling = declare_parameter("rrtstar.use_informed_sampling", true);
-  p.mu = declare_parameter("rrtstar.neighbour_radius", 8.0);
-  p.max_planning_time = declare_parameter("rrtstar.max_planning_time", 150);
-  p.margin = declare_parameter("rrtstar.margin", 0.1);
 }
 
 void FreespacePlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
@@ -538,11 +518,21 @@ void FreespacePlannerNode::initializePlanningAlgorithm()
   const auto algo_name = node_param_.planning_algorithm;
 
   if (algo_name == "astar") {
-    algo_ =
-      std::make_unique<AstarSearch>(planner_common_param_, extended_vehicle_shape, astar_param_);
+    AstarParam p;
+    p.only_behind_solutions = declare_parameter("astar.only_behind_solutions", false);
+    p.use_back = declare_parameter("astar.use_back", true);
+    p.distance_heuristic_weight = declare_parameter("astar.distance_heuristic_weight", 1.0);
+
+    algo_ = std::make_unique<AstarSearch>(planner_common_param_, extended_vehicle_shape, p);
+
   } else if (algo_name == "rrtstar") {
-    algo_ =
-      std::make_unique<RRTStar>(planner_common_param_, extended_vehicle_shape, rrtstar_param_);
+    RRTStarParam p;
+    p.enable_update = declare_parameter("rrtstar.enable_update", true);
+    p.use_informed_sampling = declare_parameter("rrtstar.use_informed_sampling", true);
+    p.mu = declare_parameter("rrtstar.neighbour_radius", 8.0);
+    p.max_planning_time = declare_parameter("rrtstar.max_planning_time", 150);
+    p.margin = declare_parameter("rrtstar.margin", 0.1);
+    algo_ = std::make_unique<RRTStar>(planner_common_param_, extended_vehicle_shape, p);
   } else {
     throw std::runtime_error("No such algorithm named " + algo_name + " exists.");
   }

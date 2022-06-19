@@ -115,8 +115,6 @@ private:
   // params
   NodeParam node_param_;
   PlannerCommonParam planner_common_param_;
-  AstarParam astar_param_;
-  RRTStarParam rrtstar_param_;
   VehicleShape vehicle_shape_;
 
   // variables
@@ -140,8 +138,6 @@ private:
 
   // functions used in the constructor
   void getPlanningCommonParam();
-  void getAstarParam();
-  void getRRTStarParam();
 
   // functions, callback
   void onRoute(const HADMapRoute::ConstSharedPtr msg);
