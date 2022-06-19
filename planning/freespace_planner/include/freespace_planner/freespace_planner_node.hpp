@@ -114,7 +114,6 @@ private:
 
   // params
   NodeParam node_param_;
-  PlannerCommonParam planner_common_param_;
   VehicleShape vehicle_shape_;
 
   // variables
@@ -137,7 +136,7 @@ private:
   std::deque<Odometry::ConstSharedPtr> odom_buffer_;
 
   // functions used in the constructor
-  void getPlanningCommonParam();
+  PlannerCommonParam getPlannerCommonParam();
 
   // functions, callback
   void onRoute(const HADMapRoute::ConstSharedPtr msg);

@@ -30,6 +30,8 @@
 
 #include "freespace_planner/freespace_planner_node.hpp"
 
+#include "freespace_planning_algorithms/abstract_algorithm.hpp"
+
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
@@ -228,8 +230,15 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
     declare_parameter<bool>("is_completed", false);
   }
 
+  // set vehicle_info
+  {
+    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+    vehicle_shape_.length = vehicle_info.vehicle_length_m;
+    vehicle_shape_.width = vehicle_info.vehicle_width_m;
+    vehicle_shape_.base2back = vehicle_info.rear_overhang_m;
+  }
+
   // Planning
-  getPlanningCommonParam();
   initializePlanningAlgorithm();
 
   // Subscribers
@@ -268,14 +277,9 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
   }
 }
 
-void FreespacePlannerNode::getPlanningCommonParam()
+PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
 {
-  auto & p = planner_common_param_;
-
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
-  vehicle_shape_.length = vehicle_info.vehicle_length_m;
-  vehicle_shape_.width = vehicle_info.vehicle_width_m;
-  vehicle_shape_.base2back = vehicle_info.rear_overhang_m;
+  PlannerCommonParam p;
 
   // search configs
   p.time_limit = declare_parameter("time_limit", 5000.0);
@@ -294,6 +298,8 @@ void FreespacePlannerNode::getPlanningCommonParam()
 
   // costmap configs
   p.obstacle_threshold = declare_parameter("obstacle_threshold", 100);
+
+  return p;
 }
 
 void FreespacePlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
@@ -515,15 +521,17 @@ void FreespacePlannerNode::initializePlanningAlgorithm()
   extended_vehicle_shape.width += margin;
   extended_vehicle_shape.base2back += margin / 2;
 
+  const auto planner_common_param = getPlannerCommonParam();
+
   const auto algo_name = node_param_.planning_algorithm;
 
+  // initialize specified algorithm
   if (algo_name == "astar") {
     AstarParam p;
     p.only_behind_solutions = declare_parameter("astar.only_behind_solutions", false);
     p.use_back = declare_parameter("astar.use_back", true);
     p.distance_heuristic_weight = declare_parameter("astar.distance_heuristic_weight", 1.0);
-
-    algo_ = std::make_unique<AstarSearch>(planner_common_param_, extended_vehicle_shape, p);
+    algo_ = std::make_unique<AstarSearch>(planner_common_param, extended_vehicle_shape, p);
 
   } else if (algo_name == "rrtstar") {
     RRTStarParam p;
@@ -532,7 +540,7 @@ void FreespacePlannerNode::initializePlanningAlgorithm()
     p.mu = declare_parameter("rrtstar.neighbour_radius", 8.0);
     p.max_planning_time = declare_parameter("rrtstar.max_planning_time", 150);
     p.margin = declare_parameter("rrtstar.margin", 0.1);
-    algo_ = std::make_unique<RRTStar>(planner_common_param_, extended_vehicle_shape, p);
+    algo_ = std::make_unique<RRTStar>(planner_common_param, extended_vehicle_shape, p);
   } else {
     throw std::runtime_error("No such algorithm named " + algo_name + " exists.");
   }
