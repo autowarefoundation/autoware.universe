@@ -12,25 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROUTE__TEST_ROUTE_CHECKER_HPP_
-#define ROUTE__TEST_ROUTE_CHECKER_HPP_
+#ifndef LANELET2_EXTENSION__UTILITY__ROUTE_CHECKER_HPP_
+#define LANELET2_EXTENSION__UTILITY__ROUTE_CHECKER_HPP_
+
+#include <lanelet2_extension/utility/query.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 
+#include <deque>
+#include <memory>
+
+namespace lanelet
+{
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
-
-inline Route generateRoute(const HADMapRoute::ConstSharedPtr route)
+namespace utils
 {
-  Route r;
-  for (const auto & lanelet : route->lanelets)
-  {
-    r.lanelets.push_back(lanelet);
-  }
-  return r
+namespace route
 {
+bool isRouteValid(const HADMapRoute::ConstSharedPtr route, const HADMapBin::ConstSharedPtr map_msg);
+lanelet::LaneletMapPtr lanelet_map_ptr_;
+}  // namespace route
+}  // namespace utils
+}  // namespace lanelet
 
-} // namespace tier4_autoware_utils
-
-#endif // ROUTE__TEST_ROUTE_CHECKER_HPP_
+#endif  // LANELET2_EXTENSION__UTILITY__ROUTE_CHECKER_HPP_

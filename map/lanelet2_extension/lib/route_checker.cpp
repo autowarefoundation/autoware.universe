@@ -12,53 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/route/route_checker.hpp"
+#include "lanelet2_extension/utility/route_checker.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
 #include <string>
 
-namespace tier4_autoware_utils
+namespace lanelet
 {
-RouteChecker::RouteChecker(rclcpp::Node * node)
-: clock_(node->get_clock()), logger_(node->get_logger())
+namespace utils
 {
-  using std::placeholders::_1;
-
-  sub_map_ = node->create_subscription<HADMapBin>(
-    "/map/vector_map", rclcpp::QoS(1), std::bind(&RouteChecker::onMap, this, _1));
-}
-
-void RouteChecker::onMap(const HADMapBin::ConstSharedPtr map_msg)
+bool route::isRouteValid(
+  const HADMapRoute::ConstSharedPtr route_msg, const HADMapBin::ConstSharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
-  is_map_msg_ready_ = true;
-  is_handler_ready_ = false;
-}
 
-bool RouteChecker::isRouteValid(const HADMapRoute::ConstSharedPtr route_msg)
-{
-  if (!is_map_msg_ready_)
-  {
-    return false;
-  }
   for (const auto & route_section : route_msg->segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
       try {
         lanelet_map_ptr_->laneletLayer.get(id);
-        RCLCPP_INFO(logger_, "Route set");
+        std::cout << "Route is valid" << std::endl;
       } catch (const std::exception & e) {
-        RCLCPP_WARN(
-          logger_,
-          "Error: %s. Maybe the loaded route was created on a different Map from the current one. "
-          "Try to load the other Route again.",
-          e.what());
+        std::cerr << e.what()
+                  << "Maybe the loaded route was created on a different Map from the current one. "
+                     "Try to load the other Route again."
+                  << std::endl;
       }
     }
   }
   return true;
 }
 
-} // namespace tier4_autoware_utils
+}  // namespace utils
+}  // namespace lanelet
