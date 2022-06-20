@@ -46,26 +46,27 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
     "operation_mode_request",
     std::bind(&EngageTransitionManager::onOperationModeRequest, this, _1, _2));
 
-  engage_acceptable_param_.dist_threshold =
-    declare_parameter<double>("engage_acceptable_limits.dist_threshold");
-  engage_acceptable_param_.speed_threshold =
-    declare_parameter<double>("engage_acceptable_limits.speed_threshold");
-  engage_acceptable_param_.yaw_threshold =
-    declare_parameter<double>("engage_acceptable_limits.yaw_threshold");
+  {
+    auto & p = engage_acceptable_param_;
+    p.dist_threshold = declare_parameter<double>("engage_acceptable_limits.dist_threshold");
+    p.speed_threshold = declare_parameter<double>("engage_acceptable_limits.speed_threshold");
+    p.yaw_threshold = declare_parameter<double>("engage_acceptable_limits.yaw_threshold");
 
-  std::cerr << "param_.dist_threshold" << engage_acceptable_param_.dist_threshold
-            << ", yaw_threshold" << engage_acceptable_param_.yaw_threshold << ", speed_threshold"
-            << engage_acceptable_param_.speed_threshold << std::endl;
+    std::cerr << "param_.dist_threshold" << p.dist_threshold << ", yaw_threshold" << p.yaw_threshold
+              << ", speed_threshold" << p.speed_threshold << std::endl;
+  }
 
-  stable_check_param_.duration = declare_parameter<double>("stable_check.duration");
-  stable_check_param_.dist_threshold = declare_parameter<double>("stable_check.dist_threshold");
-  stable_check_param_.speed_threshold = declare_parameter<double>("stable_check.speed_threshold");
-  stable_check_param_.yaw_threshold = declare_parameter<double>("stable_check.yaw_threshold");
+  {
+    auto & p = stable_check_param_;
+    p.duration = declare_parameter<double>("stable_check.duration");
+    p.dist_threshold = declare_parameter<double>("stable_check.dist_threshold");
+    p.speed_threshold = declare_parameter<double>("stable_check.speed_threshold");
+    p.yaw_threshold = declare_parameter<double>("stable_check.yaw_threshold");
 
-  std::cerr << "stable_check_param_.duration" << stable_check_param_.duration << "dist_threshold"
-            << stable_check_param_.dist_threshold << ", yaw_threshold"
-            << stable_check_param_.yaw_threshold << ", speed_threshold"
-            << stable_check_param_.speed_threshold << std::endl;
+    std::cerr << "stable_check_param_.duration" << p.duration << "dist_threshold"
+              << p.dist_threshold << ", yaw_threshold" << p.yaw_threshold << ", speed_threshold"
+              << p.speed_threshold << std::endl;
+  }
 
   {
     const auto hz = declare_parameter<double>("frequency_hz");
@@ -132,7 +133,8 @@ bool EngageTransitionManager::checkEngageAvailable()
   constexpr auto yaw_max = M_PI_4;
 
   if (data_.trajectory.points.size() < 2) {
-    RCLCPP_INFO(get_logger(), "Engage unavailable: trajectory size must be > 2");
+    RCLCPP_WARN(get_logger(), "Engage unavailable: trajectory size must be > 2");
+    debug_info_ = EngageTransitionManagerDebug{};  // all false
     return false;
   }
 
@@ -140,33 +142,31 @@ bool EngageTransitionManager::checkEngageAvailable()
     findNearestIndex(data_.trajectory.points, data_.kinematics.pose.pose, dist_max, yaw_max);
   if (!closest_idx) {
     RCLCPP_INFO(get_logger(), "Engage unavailable: closest point not found");
+    debug_info_ = EngageTransitionManagerDebug{};  // all false
     return false;  // closest trajectory point not found.
   }
   const auto closest_point = data_.trajectory.points.at(*closest_idx);
+  debug_info_.trajectory_available_ok = true;
 
   // check for lateral deviation
   const auto lateral_deviation = calcDistance2d(closest_point.pose, data_.kinematics.pose.pose);
-  if (lateral_deviation > engage_acceptable_param_.dist_threshold) {
-    RCLCPP_INFO(
-      get_logger(), "Engage unavailable: lateral deviation is too large: %f", lateral_deviation);
-    return false;
-  }
+  const bool lateral_deviation_ok = lateral_deviation < engage_acceptable_param_.dist_threshold;
+  debug_info_.lateral_deviation_ok = lateral_deviation_ok;
 
   // check for yaw deviation
   const auto yaw_deviation = calcYawDeviation(closest_point.pose, data_.kinematics.pose.pose);
-  if (yaw_deviation > engage_acceptable_param_.yaw_threshold) {
-    RCLCPP_INFO(get_logger(), "Engage unavailable: yaw deviation is too large: %f", yaw_deviation);
-    return false;
-  }
+  const bool yaw_deviation_ok = yaw_deviation < engage_acceptable_param_.yaw_threshold;
+  debug_info_.yaw_deviation_ok = yaw_deviation_ok;
 
   // check for speed deviation
   const auto speed_deviation =
     std::abs(closest_point.longitudinal_velocity_mps - data_.kinematics.twist.twist.linear.x);
-  if (speed_deviation > engage_acceptable_param_.speed_threshold) {
-    RCLCPP_INFO(
-      get_logger(), "Engage unavailable: speed deviation is too large: %f", speed_deviation);
-    return false;
-  }
+  const bool speed_deviation_ok = speed_deviation < engage_acceptable_param_.speed_threshold;
+  debug_info_.speed_deviation_ok = speed_deviation_ok;
+
+  debug_info_.no_stop_ok = true;
+  debug_info_.no_large_acceleration_ok = true;
+
 
   return true;
 }

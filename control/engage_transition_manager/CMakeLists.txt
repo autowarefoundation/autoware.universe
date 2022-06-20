@@ -15,6 +15,25 @@ rclcpp_components_register_node(engage_transition_manager_node
   EXECUTABLE engage_transition_manager_exe
 )
 
+rosidl_generate_interfaces(
+  engage_transition_manager
+  "msg/EngageTransitionManagerDebug.msg"
+  DEPENDENCIES builtin_interfaces
+)
+
+if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
+    rosidl_target_interfaces(engage_transition_manager_node
+        engage_transition_manager "rosidl_typesupport_cpp")
+    rosidl_target_interfaces(engage_transition_manager_node
+        engage_transition_manager "rosidl_typesupport_cpp")
+else()
+    rosidl_get_typesupport_target(
+            cpp_typesupport_target engage_transition_manager "rosidl_typesupport_cpp")
+    target_link_libraries(engage_transition_manager_node "${cpp_typesupport_target}")
+    target_link_libraries(engage_transition_manager_node "${cpp_typesupport_target}")
+
+endif()
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

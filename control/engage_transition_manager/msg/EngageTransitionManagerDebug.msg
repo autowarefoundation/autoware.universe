@@ -1,0 +1,8 @@
+builtin_interfaces/Time stamp
+
+bool trajectory_available_ok
+bool lateral_deviation_ok
+bool yaw_deviation_ok
+bool speed_deviation_ok
+bool no_stop_ok
+bool no_large_acceleration_ok

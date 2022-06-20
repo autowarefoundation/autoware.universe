@@ -17,6 +17,7 @@
 
 #include <engage_transition_manager/data.hpp>
 #include <engage_transition_manager/state.hpp>
+#include <engage_transition_manager/msg/engage_transition_manager_debug.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
@@ -35,6 +36,7 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using tier4_system_msgs::msg::OperationMode;
 using tier4_system_msgs::srv::OperationModeRequest;
 using tier4_vehicle_msgs::msg::IsAutonomousAvailable;
+using engage_transition_manager::msg::EngageTransitionManagerDebug;
 
 class EngageTransitionManager : public rclcpp::Node
 {
@@ -70,6 +72,8 @@ private:
   void onOperationModeRequest(
     const OperationModeRequest::Request::SharedPtr request,
     const OperationModeRequest::Response::SharedPtr response);
+
+  mutable EngageTransitionManagerDebug debug_info_;
 };
 
 }  // namespace engage_transition_manager
