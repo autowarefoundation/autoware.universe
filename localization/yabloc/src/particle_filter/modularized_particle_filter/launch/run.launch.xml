@@ -18,13 +18,6 @@
         <param name="static_angular_covariance" value="0.01" />
     </node>
 
-    <node if="false" pkg="modularized_particle_filter" exec="gnss_pose_corrector" name="gnss_pose_corrector" args="--ros-args --log-level $(var log_level)">
-        <remap from="weighted_particles" to="/weighted_particles" />
-        <remap from="pose_with_covariance" to="/eagleye/pose_with_covariance" />
-        <param name="flat_radius" value="5.0" />
-        <param name="min_prob" value="0.5" />
-    </node>
-
     <!-- ========================================= -->
     <node pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="/particle_array" to="/predicted_particles" />

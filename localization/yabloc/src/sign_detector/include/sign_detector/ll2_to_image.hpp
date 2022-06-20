@@ -7,7 +7,6 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sign_detector_msgs/msg/cloud_with_pose.hpp>
 #include <std_msgs/msg/float32.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -25,7 +24,6 @@ private:
   const int image_size_;
   const float max_range_;  // [m]
 
-  using CloudWithPose = sign_detector_msgs::msg::CloudWithPose;
   using Cloud2 = sensor_msgs::msg::PointCloud2;
 
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_ = nullptr;

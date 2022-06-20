@@ -7,7 +7,6 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sign_detector_msgs/msg/cloud_with_pose.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

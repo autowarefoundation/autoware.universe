@@ -88,7 +88,7 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 {
   last_rtk_fixed_ = (msg.flags == 131);
   if ((msg.flags != 131) && (msg.flags != 67)) {
-    RCLCPP_WARN(get_logger(), "NOT FIX!");
+    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "NOT FIX!");
     return;
   }
 
