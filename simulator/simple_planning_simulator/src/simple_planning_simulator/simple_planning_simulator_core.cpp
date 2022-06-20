@@ -385,7 +385,15 @@ void SimplePlanningSimulator::on_control_mode_request(
   const ControlModeRequest::Request::SharedPtr request,
   const ControlModeRequest::Response::SharedPtr response)
 {
+  RCLCPP_ERROR(get_logger(), "on_control_mode_request is called.");
   current_control_mode_ = request->mode;
+
+  // take some time
+  for (int i = 0; i < 50; ++i) {
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+    std::cerr << "simple planning sim: changing control mode..." << std::endl;
+  }
+
   response->success = true;
   return;
 }
