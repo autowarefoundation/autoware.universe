@@ -55,28 +55,28 @@ protected:
 class NoneState : public EngageStateBase
 {
 public:
-  NoneState(rclcpp::Node * node) : EngageStateBase(State::NONE, node){};
+  NoneState(rclcpp::Node * node) : EngageStateBase(State::STOP, node){};
   State update() override { return defaultUpdateOnManual(); };
 };
 
 class RemoteState : public EngageStateBase
 {
 public:
-  RemoteState(rclcpp::Node * node) : EngageStateBase(State::REMOTE, node){};
+  RemoteState(rclcpp::Node * node) : EngageStateBase(State::REMOTE_OPERATOR, node){};
   State update() override { return defaultUpdateOnManual(); };
 };
 
 class DirectState : public EngageStateBase
 {
 public:
-  DirectState(rclcpp::Node * node) : EngageStateBase(State::DIRECT, node){};
+  DirectState(rclcpp::Node * node) : EngageStateBase(State::MANUAL_DIRECT, node){};
   State update() override { return defaultUpdateOnManual(); };
 };
 
 class LocalState : public EngageStateBase
 {
 public:
-  LocalState(rclcpp::Node * node) : EngageStateBase(State::LOCAL, node){};
+  LocalState(rclcpp::Node * node) : EngageStateBase(State::LOCAL_OPERATOR, node){};
   State update() override { return defaultUpdateOnManual(); };
 };
 

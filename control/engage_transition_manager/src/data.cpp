@@ -23,43 +23,45 @@ namespace engage_transition_manager
 
 uint8_t toMsg(const State s)
 {
-  if (s == State::NONE) {
-    return OperationMode::NONE;
-  } else if (s == State::REMOTE) {
-    return OperationMode::REMOTE;
-  } else if (s == State::DIRECT) {
-    return OperationMode::DIRECT;
-  } else if (s == State::LOCAL) {
-    return OperationMode::LOCAL;
+  if (s == State::STOP) {
+    return OperationMode::STOP;
+  } else if (s == State::REMOTE_OPERATOR) {
+    return OperationMode::REMOTE_OPERATOR;
+  } else if (s == State::MANUAL_DIRECT) {
+    return OperationMode::MANUAL_DIRECT;
+  } else if (s == State::LOCAL_OPERATOR) {
+    return OperationMode::LOCAL_OPERATOR;
   } else if (s == State::TRANSITION_TO_AUTO) {
     return OperationMode::TRANSITION_TO_AUTO;
   } else if (s == State::AUTONOMOUS) {
     return OperationMode::AUTONOMOUS;
   }
-  return OperationMode::NONE;
+  return OperationMode::STOP;
 }
 
 State toEnum(const OperationMode m)
 {
-  if (m.mode == OperationMode::NONE) {
-    return State::NONE;
-  } else if (m.mode == OperationMode::REMOTE) {
-    return State::REMOTE;
-  } else if (m.mode == OperationMode::DIRECT) {
-    return State::DIRECT;
-  } else if (m.mode == OperationMode::LOCAL) {
-    return State::LOCAL;
+  if (m.mode == OperationMode::STOP) {
+    return State::STOP;
+  } else if (m.mode == OperationMode::REMOTE_OPERATOR) {
+    return State::REMOTE_OPERATOR;
+  } else if (m.mode == OperationMode::MANUAL_DIRECT) {
+    return State::MANUAL_DIRECT;
+  } else if (m.mode == OperationMode::LOCAL_OPERATOR) {
+    return State::LOCAL_OPERATOR;
   } else if (m.mode == OperationMode::TRANSITION_TO_AUTO) {
     return State::TRANSITION_TO_AUTO;
   } else if (m.mode == OperationMode::AUTONOMOUS) {
     return State::AUTONOMOUS;
   }
-  return State::NONE;
+  return State::STOP;
 }
 
 bool isManual(const State s)
 {
-  if (s == State::NONE || s == State::REMOTE || s == State::DIRECT || s == State::LOCAL) {
+  if (
+    s == State::STOP || s == State::REMOTE_OPERATOR || s == State::MANUAL_DIRECT ||
+    s == State::LOCAL_OPERATOR) {
     return true;
   } else {
     return false;
@@ -77,14 +79,14 @@ bool isAuto(const State s)
 
 std::string toStr(const State s)
 {
-  if (s == State::NONE) {
-    return "NONE";
-  } else if (s == State::REMOTE) {
-    return "REMOTE";
-  } else if (s == State::DIRECT) {
-    return "DIRECT";
-  } else if (s == State::LOCAL) {
-    return "LOCAL";
+  if (s == State::STOP) {
+    return "STOP";
+  } else if (s == State::REMOTE_OPERATOR) {
+    return "REMOTE_OPERATOR";
+  } else if (s == State::MANUAL_DIRECT) {
+    return "MANUAL_DIRECT";
+  } else if (s == State::LOCAL_OPERATOR) {
+    return "LOCAL_OPERATOR";
   } else if (s == State::TRANSITION_TO_AUTO) {
     return "TRANSITION_TO_AUTO";
   } else if (s == State::AUTONOMOUS) {

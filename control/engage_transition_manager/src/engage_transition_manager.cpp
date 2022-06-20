@@ -185,16 +185,16 @@ State EngageTransitionManager::updateState(const Data & data)
 
   // transit state
   switch (next_state) {
-    case State::NONE:
+    case State::STOP:
       engage_transition_manager_ = std::make_unique<NoneState>(this);
       break;
-    case State::REMOTE:
+    case State::REMOTE_OPERATOR:
       engage_transition_manager_ = std::make_unique<RemoteState>(this);
       break;
-    case State::DIRECT:
+    case State::MANUAL_DIRECT:
       engage_transition_manager_ = std::make_unique<DirectState>(this);
       break;
-    case State::LOCAL:
+    case State::LOCAL_OPERATOR:
       engage_transition_manager_ = std::make_unique<LocalState>(this);
       break;
     case State::TRANSITION_TO_AUTO:

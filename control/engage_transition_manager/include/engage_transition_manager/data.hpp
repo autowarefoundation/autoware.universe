@@ -37,10 +37,10 @@ using tier4_vehicle_msgs::msg::ControlMode;
 using tier4_vehicle_msgs::srv::ControlModeRequest;
 
 enum class State {
-  NONE = 0,
-  REMOTE,
-  DIRECT,
-  LOCAL,
+  STOP = 0,
+  MANUAL_DIRECT,
+  REMOTE_OPERATOR,
+  LOCAL_OPERATOR,
   TRANSITION_TO_AUTO,
   AUTONOMOUS,
 };
