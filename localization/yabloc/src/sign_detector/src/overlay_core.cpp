@@ -13,7 +13,7 @@
 
 void Overlay::ll2Callback(const PointCloud2 & msg) { pcl::fromROSMsg(msg, ll2_cloud_); }
 
-Overlay::Overlay() : Node("overlay"), pose_buffer_{20}
+Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
 {
   using std::placeholders::_1;
   // Subscriber

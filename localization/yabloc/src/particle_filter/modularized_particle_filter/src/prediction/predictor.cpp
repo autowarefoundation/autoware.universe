@@ -122,7 +122,10 @@ void Predictor::timerCallback()
   rclcpp::Time current_time{this->now()};
   const float dt =
     static_cast<float>((current_time - rclcpp::Time(particle_array.header.stamp)).seconds());
-  if (dt < 0.0f) return;
+  if (dt < 0.0f) {
+    RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
+    return;
+  }
 
   particle_array.header.stamp = current_time;
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
