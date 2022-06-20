@@ -13,9 +13,12 @@
     <remap from="steering" to="/vehicle/status/steering_status"/>
     <remap from="trajectory" to="/planning/scenario_planning/trajectory"/>
     <remap from="control_cmd" to="/control/trajectory_follower/control_cmd"/>
-    <remap from="operation_mode_request" to="operation_mode_request"/>
+    <remap from="control_mode_report" to="/vehicle/status/control_mode"/>
+    <remap from="operation_mode_request" to="operation_mode_request"/> <!-- from system -->
+
 
     <!-- rename output topics -->
     <remap from="engage_state" to="engage_state"/>
+    <remap from="control_mode_request" to="/control/control_mode_request"/> <!-- to vehicle -->
   </node>
 </launch>

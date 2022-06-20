@@ -16,22 +16,18 @@ rclcpp_components_register_node(engage_transition_manager_node
 )
 
 rosidl_generate_interfaces(
-  engage_transition_manager
+  ${PROJECT_NAME}
   "msg/EngageTransitionManagerDebug.msg"
   DEPENDENCIES builtin_interfaces
 )
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
     rosidl_target_interfaces(engage_transition_manager_node
-        engage_transition_manager "rosidl_typesupport_cpp")
-    rosidl_target_interfaces(engage_transition_manager_node
-        engage_transition_manager "rosidl_typesupport_cpp")
+    ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
     rosidl_get_typesupport_target(
-            cpp_typesupport_target engage_transition_manager "rosidl_typesupport_cpp")
+            cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
     target_link_libraries(engage_transition_manager_node "${cpp_typesupport_target}")
-    target_link_libraries(engage_transition_manager_node "${cpp_typesupport_target}")
-
 endif()
 
 

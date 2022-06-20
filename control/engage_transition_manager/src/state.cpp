@@ -29,7 +29,8 @@ using tier4_autoware_utils::findNearestIndex;
 EngageStateBase::EngageStateBase(const State state, rclcpp::Node * node)
 : logger_(node->get_logger()), clock_(node->get_clock()), state_(state)
 {
-  srv_mode_change_client_ = node->create_client<ControlModeRequest>("control_mode_cmd");
+  // TODO: move to manager.
+  srv_mode_change_client_ = node->create_client<ControlModeRequest>("control_mode_request");
 }
 
 State EngageStateBase::defaultUpdateOnManual()
@@ -85,7 +86,6 @@ State TransitionState::update()
     return data_.requested_state;
   }
 
-  // TODO
   const bool is_system_stable = checkSystemStable();
 
   if (is_system_stable) {
@@ -104,6 +104,11 @@ bool TransitionState::checkSystemStable()
     stable_start_time_.reset();
     return false;
   };
+
+  if (data_.current_control_mode.mode != ControlModeReport::AUTONOMOUS) {
+    RCLCPP_INFO(logger_, "Not stable yet: vehicle control_mode is still NOT Autonomous");
+    return unstable();
+  }
 
   if (data_.trajectory.points.size() < 2) {
     RCLCPP_INFO(logger_, "Not stable yet: trajectory size must be > 2");

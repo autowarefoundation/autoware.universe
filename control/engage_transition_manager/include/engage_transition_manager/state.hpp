@@ -50,6 +50,7 @@ protected:
 
   State defaultUpdateOnManual();
   bool sendAutonomousModeRequest();
+  bool sendManualModeRequest();
 };
 
 class NoneState : public EngageStateBase

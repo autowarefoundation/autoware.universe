@@ -35,6 +35,7 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
 
   pub_operation_mode_ = create_publisher<OperationMode>("engage_state", 1);
   pub_auto_available_ = create_publisher<IsAutonomousAvailable>("is_auto_available", 1);
+  pub_debug_info_ = create_publisher<EngageTransitionManagerDebug>("debug_info", 1);
 
   sub_vehicle_kinematics_ = create_subscription<Odometry>(
     "kinematics", 1, [this](const Odometry::SharedPtr msg) { data_.kinematics = *msg; });
@@ -42,7 +43,15 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
   sub_trajectory_ = create_subscription<Trajectory>(
     "trajectory", 1, [this](const Trajectory::SharedPtr msg) { data_.trajectory = *msg; });
 
-  srv_mode_change_ = create_service<OperationModeRequest>(
+  sub_control_cmd_ = create_subscription<AckermannControlCommand>(
+    "control_cmd", 1,
+    [this](const AckermannControlCommand::SharedPtr msg) { data_.control_cmd = *msg; });
+
+  sub_control_mode_ = create_subscription<ControlModeReport>(
+    "control_mode_report", 1,
+    [this](const ControlModeReport::SharedPtr msg) { data_.current_control_mode = *msg; });
+
+  srv_mode_change_server_ = create_service<OperationModeRequest>(
     "operation_mode_request",
     std::bind(&EngageTransitionManager::onOperationModeRequest, this, _1, _2));
 
@@ -52,6 +61,7 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
     p.speed_threshold = declare_parameter<double>("engage_acceptable_limits.speed_threshold");
     p.yaw_threshold = declare_parameter<double>("engage_acceptable_limits.yaw_threshold");
 
+    // TODO: remove
     std::cerr << "param_.dist_threshold" << p.dist_threshold << ", yaw_threshold" << p.yaw_threshold
               << ", speed_threshold" << p.speed_threshold << std::endl;
   }
@@ -63,6 +73,7 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
     p.speed_threshold = declare_parameter<double>("stable_check.speed_threshold");
     p.yaw_threshold = declare_parameter<double>("stable_check.yaw_threshold");
 
+    // TODO: remove
     std::cerr << "stable_check_param_.duration" << p.duration << "dist_threshold"
               << p.dist_threshold << ", yaw_threshold" << p.yaw_threshold << ", speed_threshold"
               << p.speed_threshold << std::endl;
@@ -81,8 +92,12 @@ void EngageTransitionManager::onOperationModeRequest(
   const OperationModeRequest::Request::SharedPtr request,
   const OperationModeRequest::Response::SharedPtr response)
 {
+  // TODO: remove
+  RCLCPP_INFO_STREAM(get_logger(), "onOperationModeRequest callback()");
+
   const auto req_state = toEnum(request->mode);
 
+  // invalid case
   if (req_state == State::TRANSITION_TO_AUTO) {
     RCLCPP_WARN(
       get_logger(), "mode change to TRANSITION_TO_AUTO is not supported. Request ignored.");
@@ -92,9 +107,21 @@ void EngageTransitionManager::onOperationModeRequest(
 
   data_.requested_state = toEnum(request->mode);
 
-  // TODO(Horibe) multithreadで回して、遷移できない場合は却下しないといけない
-  // 別にmultithreadにしなくても、今遷移できるかここで判断すれば良くない？
-  response->success = true;
+  const auto state = updateState(data_);
+
+  // write success/failure condition one by one for the state transition result.
+  if (req_state == state) {
+    response->success = true;
+    return;
+  }
+  if (isAuto(req_state) && state == State::TRANSITION_TO_AUTO) {
+    response->success = true;
+    return;
+  }
+
+  // not satisfy any success conditions.
+  response->success = false;
+  return;
 }
 
 void EngageTransitionManager::onTimer()
@@ -105,9 +132,10 @@ void EngageTransitionManager::onTimer()
 
   publishData();
 
+  // TODO: remove
   RCLCPP_INFO_STREAM(
     get_logger(), "Timer: engage_available: "
-                    << data_.is_auto_available
+                    << (data_.is_auto_available ? "True" : "False")
                     << ", requested_state: " << toStr(data_.requested_state)
                     << ", current state: " << toStr(engage_transition_manager_->getCurrentState()));
 }
@@ -125,6 +153,9 @@ void EngageTransitionManager::publishData()
   msg.stamp = time;
   msg.is_autonomous_available = data_.is_auto_available;
   pub_auto_available_->publish(msg);
+
+  debug_info_.stamp = time;
+  pub_debug_info_->publish(debug_info_);
 }
 
 bool EngageTransitionManager::checkEngageAvailable()
@@ -143,32 +174,47 @@ bool EngageTransitionManager::checkEngageAvailable()
   if (!closest_idx) {
     RCLCPP_INFO(get_logger(), "Engage unavailable: closest point not found");
     debug_info_ = EngageTransitionManagerDebug{};  // all false
-    return false;  // closest trajectory point not found.
+    return false;                                  // closest trajectory point not found.
   }
   const auto closest_point = data_.trajectory.points.at(*closest_idx);
   debug_info_.trajectory_available_ok = true;
 
-  // check for lateral deviation
+  // No engagement is lateral control error is large
   const auto lateral_deviation = calcDistance2d(closest_point.pose, data_.kinematics.pose.pose);
   const bool lateral_deviation_ok = lateral_deviation < engage_acceptable_param_.dist_threshold;
-  debug_info_.lateral_deviation_ok = lateral_deviation_ok;
 
-  // check for yaw deviation
+  // No engagement is yaw control error is large
   const auto yaw_deviation = calcYawDeviation(closest_point.pose, data_.kinematics.pose.pose);
   const bool yaw_deviation_ok = yaw_deviation < engage_acceptable_param_.yaw_threshold;
-  debug_info_.yaw_deviation_ok = yaw_deviation_ok;
 
-  // check for speed deviation
+  // No engagement if speed control error is large
   const auto speed_deviation =
     std::abs(closest_point.longitudinal_velocity_mps - data_.kinematics.twist.twist.linear.x);
   const bool speed_deviation_ok = speed_deviation < engage_acceptable_param_.speed_threshold;
+
+  // No engagement if the vehicle is moving but the target speed is zero.
+  const bool no_stop_ok =
+    !(std::abs(data_.kinematics.twist.twist.linear.x) > 0.1 &&
+      std::abs(data_.control_cmd.longitudinal.speed) < 0.01);
+
+  // No engagement if the large acceleration is commanded.
+  const bool no_large_acceleration_ok = std::abs(data_.control_cmd.longitudinal.acceleration) <
+                                        engage_acceptable_param_.large_acc_threshold;
+
+  // No engagement if a stop is expected within a certain period of time
+  // TODO: write me
+  // ...
+
+  debug_info_.lateral_deviation_ok = lateral_deviation_ok;
+  debug_info_.yaw_deviation_ok = yaw_deviation_ok;
   debug_info_.speed_deviation_ok = speed_deviation_ok;
+  debug_info_.no_stop_ok = no_stop_ok;
+  debug_info_.no_large_acceleration_ok = no_large_acceleration_ok;
 
-  debug_info_.no_stop_ok = true;
-  debug_info_.no_large_acceleration_ok = true;
+  const bool is_all_ok = lateral_deviation_ok && yaw_deviation_ok && speed_deviation_ok &&
+                         no_stop_ok && no_large_acceleration_ok;
 
-
-  return true;
+  return is_all_ok;
 }
 
 State EngageTransitionManager::updateState(const Data & data)
