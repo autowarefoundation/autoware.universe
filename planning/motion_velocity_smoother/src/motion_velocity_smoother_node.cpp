@@ -533,7 +533,6 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
     return false;
   }
-  //  RCLCPP_WARN(get_logger(), "AAAAAAAAA CREATED");
 
   // Resample trajectory with ego-velocity based interval distance
   const auto traj_pre_resampled_closest = motion_utils::findNearestIndex(
