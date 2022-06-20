@@ -220,12 +220,16 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
   debug_values_.setValues(DebugValues::TYPE::CURRENT_VELOCITY, planner_data.current_vel);
   debug_values_.setValues(DebugValues::TYPE::CURRENT_ACCELERATION, planner_data.current_acc);
 
+  auto modified_target_obstacles = planner_data.target_obstacles;
+
   // search highest probability obstacle for stop and cruise
-  for (const auto & obstacle : planner_data.target_obstacles) {
+  for (size_t o_idx = 0; o_idx < planner_data.target_obstacles.size(); ++o_idx) {
+    const auto & obstacle = planner_data.target_obstacles.at(o_idx);
+
     // NOTE: from ego's front to obstacle's back
     const double dist_to_obstacle = calcDistanceToObstacle(planner_data, obstacle);
 
-    const bool is_stop_required = isStopRequired(obstacle);
+    const bool is_stop_required = isStopRequired(obstacle, modified_target_obstacles.at(o_idx));
     if (is_stop_required) {  // stop
       // calculate error distance (= distance to stop)
       const double error_dist = dist_to_obstacle - longitudinal_info_.safe_distance_margin;
@@ -266,6 +270,9 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
       debug_values_.setValues(DebugValues::TYPE::CRUISE_ERROR_OBJECT_DISTANCE, error_dist);
     }
   }
+
+  // TODO(shimizu) refactor obstacle stop;
+  prev_target_obstacles_ = modified_target_obstacles;
 }
 
 double PIDBasedPlanner::calcDistanceToObstacle(
