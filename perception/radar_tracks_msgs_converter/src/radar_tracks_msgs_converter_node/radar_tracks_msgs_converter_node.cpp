@@ -101,15 +101,11 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
   try {
     // Node Parameter
     {
-      // Copy to local variable
-      auto p = node_param_;
+      auto & p = node_param_;
 
       // Update params
       update_param(params, "update_rate_hz", p.update_rate_hz);
       update_param(params, "use_twist_compensation", p.use_twist_compensation);
-
-      // Copy back to member variable
-      node_param_ = p;
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
