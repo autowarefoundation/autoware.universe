@@ -449,7 +449,7 @@ boost::optional<double> calcDistanceToForwardStopPoint(
  * @return offset point
  */
 template <class T>
-boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
+inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const size_t src_idx, const double offset)
 {
   validateNonEmpty(points);
@@ -494,7 +494,7 @@ boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
  * @return offset point
  */
 template <class T>
-boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
+inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
 {
   validateNonEmpty(points);
@@ -528,7 +528,7 @@ inline size_t insertTargetPoint(
 
   const auto p_front = getPoint(points.at(seg_idx));
   const auto p_back = getPoint(points.at(seg_idx + 1));
-  const auto yaw = calcAzimuthAngle(p_front, p_back);
+  const auto yaw = calcAzimuthAngle(p_target, p_back);
 
   validateNonSharpAngle(p_front, p_target, p_back);
 
