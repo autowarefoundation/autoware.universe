@@ -145,7 +145,7 @@ void LineSegmentDetector::projectEdgeOnPlane(
       return;
     }
     auto & hull = contours.front();
-    for (int i = 0; i < hull.size(); i++) {
+    for (size_t i = 0; i < hull.size(); i++) {
       Eigen::Vector2f u(hull.at(i).x, hull.at(i).y);
       auto v_opt = conv(u);
       if (v_opt.has_value()) projected_hull.front().push_back(toCvPoint(v_opt.value()));
@@ -155,7 +155,7 @@ void LineSegmentDetector::projectEdgeOnPlane(
   }
 
   cv::Mat line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
-  for (int i = 0; i < edges.size(); i++) {
+  for (size_t i = 0; i < edges.size(); i++) {
     auto & pn = edges.at(i);
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
@@ -170,7 +170,7 @@ void LineSegmentDetector::projectEdgeOnPlane(
   pcl::PointCloud<pcl::PointNormal> reliable_edges;
   cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   cv::drawContours(reliable_line_image, projected_hull, 0, cv::Scalar(0, 155, 155), -1);
-  for (int i = 0; i < edges.size(); i++) {
+  for (size_t i = 0; i < edges.size(); i++) {
     auto & pn = edges.at(i);
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());

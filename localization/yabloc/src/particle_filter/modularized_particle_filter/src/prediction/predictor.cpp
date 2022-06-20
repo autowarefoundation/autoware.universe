@@ -30,8 +30,8 @@ Predictor::Predictor()
 
   // Subscribers
   using std::placeholders::_1;
-  gnss_sub_ = create_subscription<PoseWithCovarianceStamped>(
-    "gnss/pose_with_covariance", 1, std::bind(&Predictor::gnssposeCallback, this, _1));
+  gnss_sub_ = create_subscription<PoseStamped>(
+    "gnss/pose", 1, std::bind(&Predictor::gnssposeCallback, this, _1));
   initialpose_sub_ = create_subscription<PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, _1));
   twist_sub_ =
@@ -47,10 +47,16 @@ Predictor::Predictor()
   timer_ = this->create_wall_timer(chrono_period, std::bind(&Predictor::timerCallback, this));
 }
 
-void Predictor::gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+void Predictor::gnssposeCallback(const PoseStamped::ConstSharedPtr pose)
 {
   if (particle_array_opt_.has_value()) return;
-  initializeParticles(*initialpose);
+  PoseWithCovarianceStamped pose_cov;
+  pose_cov.header = pose->header;
+  pose_cov.pose.pose = pose->pose;
+  pose_cov.pose.covariance[0] = 0.25;
+  pose_cov.pose.covariance[6 * 1 + 1] = 0.25;
+  pose_cov.pose.covariance[6 * 5 + 1] = 0.04;
+  initializeParticles(pose_cov);
 }
 
 void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpose)

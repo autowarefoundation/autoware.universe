@@ -6,9 +6,8 @@
     <!-- ========================================= -->
     <node pkg="modularized_particle_filter" exec="predictor" name="predictor" output="screen" args="--ros-args --log-level warn">
         <remap from="twist" to="/kalman/twist" />
-        <!-- <remap from="twist" to="/eagleye/twist" /> -->
         <remap from="initialpose" to="/initialpose" />
-        <remap from="gnss/pose_with_covariance" to="/eagleye/pose_with_covariance"/> 
+        <remap from="gnss/pose" to="/sensing/gnss/ublox/pose"/> 
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="num_of_particles" value="500" />

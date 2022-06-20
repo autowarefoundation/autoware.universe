@@ -32,7 +32,7 @@ private:
 
   // Subscriber
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr gnss_sub_;
+  rclcpp::Subscription<PoseStamped>::SharedPtr gnss_sub_;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_cov_sub_;
   rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
   rclcpp::Subscription<ParticleArray>::SharedPtr weighted_particles_sub_;
@@ -56,7 +56,7 @@ private:
   std::optional<TwistWithCovarianceStamped> twist_opt_{std::nullopt};
 
   // Callback
-  void gnssposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
+  void gnssposeCallback(const PoseStamped::ConstSharedPtr initialpose);
   void initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
 
   void initializeParticles(const PoseWithCovarianceStamped & initialpose);
