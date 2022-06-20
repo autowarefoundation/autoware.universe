@@ -17,7 +17,7 @@ repositories:
     type: git
     url: https://github.com/tier4/tier4_autoware_msgs.git
     version: tier4/universe
-  universe/external/grid_map: # TODO: Use upstream after https://github.com/ANYbotics/grid_map/pull/349 is merged
+  universe/external/grid_map:
     type: git
     url: https://github.com/ANYbotics/grid_map.git
     version: 74333f037cfce321248dfa7b954a815d4f67d79d
