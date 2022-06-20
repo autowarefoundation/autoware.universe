@@ -44,18 +44,18 @@ using geometry_msgs::msg::Pose;
 using visualization_msgs::msg::MarkerArray;
 
 MarkerArray createAvoidPointMarkerArray(
-  const AvoidPointArray & shift_points, const std::string & ns, const float r, const float g,
-  const float b, const double w);
+  const AvoidPointArray & shift_points, std::string && ns, const float & r, const float & g,
+  const float & b, const double & w);
 
 MarkerArray createAvoidanceObjectsMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects, const std::string & ns);
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns);
 
 MarkerArray makeOverhangToRoadShoulderMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects);
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns);
 
 MarkerArray createOverhangFurthestLineStringMarkerArray(
-  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float r, const float g,
-  const float b);
+  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float & r,
+  const float & g, const float & b);
 
 }  // namespace marker_utils::avoidance_marker
 

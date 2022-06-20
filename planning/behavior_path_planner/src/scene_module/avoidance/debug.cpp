@@ -32,8 +32,8 @@ using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
 
 MarkerArray createAvoidPointMarkerArray(
-  const AvoidPointArray & shift_points, const std::string & ns, const float r, const float g,
-  const float b, const double w)
+  const AvoidPointArray & shift_points, std::string && ns, const float & r, const float & g,
+  const float & b, const double & w)
 {
   AvoidPointArray shift_points_local = shift_points;
   if (shift_points_local.empty()) {
@@ -47,7 +47,7 @@ MarkerArray createAvoidPointMarkerArray(
   for (const auto & sp : shift_points_local) {
     // ROS_ERROR("sp: s = (%f, %f), g = (%f, %f)", sp.start.x, sp.start.y, sp.end.x, sp.end.y);
     Marker basic_marker = createDefaultMarker(
-      "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
+      "map", current_time, std::move(ns), 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
       createMarkerColor(r, g, b, 0.9));
     basic_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
     {
@@ -82,18 +82,18 @@ MarkerArray createAvoidPointMarkerArray(
 }
 
 MarkerArray createAvoidanceObjectsMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects, const std::string & ns)
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
   const auto normal_color = tier4_autoware_utils::createMarkerColor(0.9, 0.0, 0.0, 0.8);
   const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
 
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), 0L, Marker::CUBE,
     createMarkerScale(3.0, 1.5, 1.5), normal_color);
   int32_t i{0};
   MarkerArray msg;
   for (const auto & object : objects) {
-    marker.id = i++;
+    marker.id = ++i;
     marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
     marker.color = object.lost_count == 0 ? normal_color : disappearing_color;
     msg.markers.push_back(marker);
@@ -103,16 +103,16 @@ MarkerArray createAvoidanceObjectsMarkerArray(
 }
 
 MarkerArray makeOverhangToRoadShoulderMarkerArray(
-  const behavior_path_planner::ObjectDataArray & objects)
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "overhang", 0L, Marker::TEXT_VIEW_FACING,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), 0L, Marker::TEXT_VIEW_FACING,
     createMarkerScale(1.0, 1.0, 1.0), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
   int32_t i{0};
   MarkerArray msg;
   for (const auto & object : objects) {
-    marker.id = i++;
+    marker.id = ++i;
     marker.pose = object.overhang_pose;
     std::ostringstream string_stream;
     string_stream << "(to_road_shoulder_distance = " << object.to_road_shoulder_distance << " [m])";
@@ -124,8 +124,8 @@ MarkerArray makeOverhangToRoadShoulderMarkerArray(
 }
 
 MarkerArray createOverhangFurthestLineStringMarkerArray(
-  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float r, const float g,
-  const float b)
+  const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float & r,
+  const float & g, const float & b)
 {
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;

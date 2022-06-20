@@ -88,35 +88,35 @@ inline Marker createDefaultMarker(
 }
 
 MarkerArray createPoseMarkerArray(
-  const Pose & pose, const std::string & ns, const int32_t id, const float r, const float g,
-  const float b);
+  const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,
+  const float & b);
 
 MarkerArray createPathMarkerArray(
-  const PathWithLaneId & path, const std::string & ns, const int64_t lane_id, const float r,
-  const float g, const float b);
+  const PathWithLaneId & path, std::string && ns, const int64_t & lane_id, const float & r,
+  const float & g, const float & b);
 
 MarkerArray createShiftPointMarkerArray(
-  const ShiftPointArray & shift_points, const double base_shift, const std::string & ns,
+  const ShiftPointArray & shift_points, const double & base_shift, std::string && ns,
   const float & r, const float & g, const float & b, const float & w);
 
 MarkerArray createShiftLengthMarkerArray(
   const std::vector<double> & shift_distance,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & reference, const std::string & ns,
-  const float r, const float g, const float b);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & reference, std::string && ns,
+  const float & r, const float & g, const float & b);
 
 MarkerArray createLaneletsAreaMarkerArray(
-  const std::vector<lanelet::ConstLanelet> & lanelets, const std::string & ns, const float r,
-  const float g, const float b);
+  const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,
+  const float & g, const float & b);
 
 MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3d & linestrings);
 
 MarkerArray createPolygonMarkerArray(
-  const Polygon & polygon, const std::string & ns, const int64_t lane_id, const float r,
-  const float g, const float b);
+  const Polygon & polygon, std::string && ns, const int64_t & lane_id, const float & r,
+  const float & g, const float & b);
 
 MarkerArray createObjectsMarkerArray(
-  const PredictedObjects & objects, const std::string & ns, const int64_t lane_id, const float r,
-  const float g, const float b);
+  const PredictedObjects & objects, std::string && ns, const int64_t & lane_id, const float & r,
+  const float & g, const float & b);
 
 }  // namespace marker_utils
 
