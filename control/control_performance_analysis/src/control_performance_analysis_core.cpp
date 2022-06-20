@@ -33,7 +33,7 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore() : wheelbase_{2.
   curvature_interval_length_ = 10.0;
   acceptable_min_waypoint_distance_ = 2.0;
   prevent_zero_division_value_ = 0.001;
-  lpf_gain = 0.8;
+  lpf_gain_ = 0.8;
 }
 
 ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(
@@ -44,7 +44,7 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(
   odom_interval_{odom_interval},
   acceptable_min_waypoint_distance_{acceptable_min_waypoint_distance},
   prevent_zero_division_value_{prevent_zero_division_value},
-  lpf_gain{lpf_gain_val}
+  lpf_gain_{lpf_gain_val}
 {
   // prepare control performance struct
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
@@ -317,48 +317,48 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   if (prev_target_vars_) {
     // LPF for error vars
 
-    error_vars.error.curvature_estimate = lpf_gain * prev_target_vars_->error.curvature_estimate +
-                                          (1 - lpf_gain) * error_vars.error.curvature_estimate;
+    error_vars.error.curvature_estimate = lpf_gain_ * prev_target_vars_->error.curvature_estimate +
+                                          (1 - lpf_gain_) * error_vars.error.curvature_estimate;
 
     error_vars.error.curvature_estimate_pp =
-      lpf_gain * prev_target_vars_->error.curvature_estimate_pp +
-      (1 - lpf_gain) * error_vars.error.curvature_estimate_pp;
+      lpf_gain_ * prev_target_vars_->error.curvature_estimate_pp +
+      (1 - lpf_gain_) * error_vars.error.curvature_estimate_pp;
 
-    error_vars.error.lateral_error = lpf_gain * prev_target_vars_->error.lateral_error +
-                                     (1 - lpf_gain) * error_vars.error.lateral_error;
+    error_vars.error.lateral_error = lpf_gain_ * prev_target_vars_->error.lateral_error +
+                                     (1 - lpf_gain_) * error_vars.error.lateral_error;
 
     error_vars.error.lateral_error_velocity =
-      lpf_gain * prev_target_vars_->error.lateral_error_velocity +
-      (1 - lpf_gain) * error_vars.error.lateral_error_velocity;
+      lpf_gain_ * prev_target_vars_->error.lateral_error_velocity +
+      (1 - lpf_gain_) * error_vars.error.lateral_error_velocity;
 
     error_vars.error.lateral_error_acceleration =
-      lpf_gain * prev_target_vars_->error.lateral_error_acceleration +
-      (1 - lpf_gain) * error_vars.error.lateral_error_acceleration;
+      lpf_gain_ * prev_target_vars_->error.lateral_error_acceleration +
+      (1 - lpf_gain_) * error_vars.error.lateral_error_acceleration;
 
-    error_vars.error.longitudinal_error = lpf_gain * prev_target_vars_->error.longitudinal_error +
-                                          (1 - lpf_gain) * error_vars.error.longitudinal_error;
+    error_vars.error.longitudinal_error = lpf_gain_ * prev_target_vars_->error.longitudinal_error +
+                                          (1 - lpf_gain_) * error_vars.error.longitudinal_error;
 
     error_vars.error.longitudinal_error_velocity =
-      lpf_gain * prev_target_vars_->error.longitudinal_error_velocity +
-      (1 - lpf_gain) * error_vars.error.longitudinal_error_velocity;
+      lpf_gain_ * prev_target_vars_->error.longitudinal_error_velocity +
+      (1 - lpf_gain_) * error_vars.error.longitudinal_error_velocity;
 
     error_vars.error.longitudinal_error_acceleration =
-      lpf_gain * prev_target_vars_->error.longitudinal_error_acceleration +
-      (1 - lpf_gain) * error_vars.error.longitudinal_error_acceleration;
+      lpf_gain_ * prev_target_vars_->error.longitudinal_error_acceleration +
+      (1 - lpf_gain_) * error_vars.error.longitudinal_error_acceleration;
 
-    error_vars.error.heading_error = lpf_gain * prev_target_vars_->error.heading_error +
-                                     (1 - lpf_gain) * error_vars.error.heading_error;
+    error_vars.error.heading_error = lpf_gain_ * prev_target_vars_->error.heading_error +
+                                     (1 - lpf_gain_) * error_vars.error.heading_error;
 
     error_vars.error.heading_error_velocity =
-      lpf_gain * prev_target_vars_->error.heading_error_velocity +
-      (1 - lpf_gain) * error_vars.error.heading_error_velocity;
+      lpf_gain_ * prev_target_vars_->error.heading_error_velocity +
+      (1 - lpf_gain_) * error_vars.error.heading_error_velocity;
 
     error_vars.error.control_effort_energy =
-      lpf_gain * prev_target_vars_->error.control_effort_energy +
-      (1 - lpf_gain) * error_vars.error.control_effort_energy;
+      lpf_gain_ * prev_target_vars_->error.control_effort_energy +
+      (1 - lpf_gain_) * error_vars.error.control_effort_energy;
 
-    error_vars.error.error_energy = lpf_gain * prev_target_vars_->error.error_energy +
-                                    (1 - lpf_gain) * error_vars.error.error_energy;
+    error_vars.error.error_energy = lpf_gain_ * prev_target_vars_->error.error_energy +
+                                    (1 - lpf_gain_) * error_vars.error.error_energy;
   }
 
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>(error_vars);
@@ -426,24 +426,24 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         // LPF for driving status vars
 
         driving_status_vars.longitudinal_acceleration.data =
-          lpf_gain * prev_driving_vars_->longitudinal_acceleration.data +
-          (1 - lpf_gain) * driving_status_vars.longitudinal_acceleration.data;
+          lpf_gain_ * prev_driving_vars_->longitudinal_acceleration.data +
+          (1 - lpf_gain_) * driving_status_vars.longitudinal_acceleration.data;
 
         driving_status_vars.lateral_acceleration.data =
-          lpf_gain * prev_driving_vars_->lateral_acceleration.data +
-          (1 - lpf_gain) * driving_status_vars.lateral_acceleration.data;
+          lpf_gain_ * prev_driving_vars_->lateral_acceleration.data +
+          (1 - lpf_gain_) * driving_status_vars.lateral_acceleration.data;
 
         driving_status_vars.lateral_jerk.data =
-          lpf_gain * prev_driving_vars_->lateral_jerk.data +
-          (1 - lpf_gain) * driving_status_vars.lateral_jerk.data;
+          lpf_gain_ * prev_driving_vars_->lateral_jerk.data +
+          (1 - lpf_gain_) * driving_status_vars.lateral_jerk.data;
 
         driving_status_vars.longitudinal_jerk.data =
-          lpf_gain * prev_driving_vars_->longitudinal_jerk.data +
-          (1 - lpf_gain) * driving_status_vars.longitudinal_jerk.data;
+          lpf_gain_ * prev_driving_vars_->longitudinal_jerk.data +
+          (1 - lpf_gain_) * driving_status_vars.longitudinal_jerk.data;
 
         driving_status_vars.controller_processing_time.data =
-          lpf_gain * prev_driving_vars_->controller_processing_time.data +
-          (1 - lpf_gain) * driving_status_vars.controller_processing_time.data;
+          lpf_gain_ * prev_driving_vars_->controller_processing_time.data +
+          (1 - lpf_gain_) * driving_status_vars.controller_processing_time.data;
       }
 
       prev_driving_vars_ =

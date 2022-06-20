@@ -90,7 +90,7 @@ private:
   uint odom_interval_;
   double acceptable_min_waypoint_distance_;
   double prevent_zero_division_value_;
-  double lpf_gain;
+  double lpf_gain_;
 
   // Variables Received Outside
   std::shared_ptr<PoseArray> current_waypoints_ptr_;
