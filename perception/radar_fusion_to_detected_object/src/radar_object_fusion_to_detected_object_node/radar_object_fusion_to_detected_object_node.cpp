@@ -17,6 +17,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 using namespace std::literals;
 using std::chrono::duration;
 using std::chrono::duration_cast;
