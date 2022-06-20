@@ -366,6 +366,24 @@ double calcArcLength(const T & points)
 }
 
 /**
+ * @brief Calculate distance to the forward stop point from the given src index
+ */
+template <class T>
+boost::optional<double> calcDistanceToForwardStopPoint(
+  const T & points_with_twist, const size_t src_idx = 0)
+{
+  validateNonEmpty(points_with_twist);
+
+  const auto closest_stop_idx =
+    searchZeroVelocityIndex(points_with_twist, src_idx, points_with_twist.size());
+  if (!closest_stop_idx) {
+    return boost::none;
+  }
+
+  return std::max(0.0, calcSignedArcLength(points_with_twist, src_idx, *closest_stop_idx));
+}
+
+/**
  * @brief Calculate distance to the forward stop point from the given pose
  */
 template <class T>

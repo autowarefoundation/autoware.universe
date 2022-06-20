@@ -684,7 +684,7 @@ TEST(trajectory, convertToTrajectoryPointArray)
   }
 }
 
-TEST(trajectory, calcDistanceToForwardStopPoint)
+TEST(trajectory, calcDistanceToForwardStopPointFromIndex)
 {
   using tier4_autoware_utils::calcDistanceToForwardStopPoint;
 
@@ -692,9 +692,77 @@ TEST(trajectory, calcDistanceToForwardStopPoint)
   traj_input.points.at(50).longitudinal_velocity_mps = 0.0;
 
   // Empty
-  EXPECT_THROW(
-    calcDistanceToForwardStopPoint(Trajectory{}.points, geometry_msgs::msg::Pose{}),
-    std::invalid_argument);
+  {
+    EXPECT_THROW(calcDistanceToForwardStopPoint(Trajectory{}.points), std::invalid_argument);
+  }
+
+  // No Stop Point
+  {
+    const auto traj_no_stop_point = generateTestTrajectory<Trajectory>(10, 1.0, 3.0);
+    for (size_t i = 0; i < 10; ++i) {
+      const auto dist = calcDistanceToForwardStopPoint(traj_no_stop_point.points, i);
+      EXPECT_FALSE(dist);
+    }
+  }
+
+  // Boundary1 (Edge of the input trajectory)
+  {
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, 0);
+    EXPECT_NEAR(dist.get(), 50.0, epsilon);
+  }
+
+  // Boundary2 (Edge of the input trajectory)
+  {
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, 99);
+    EXPECT_FALSE(dist);
+  }
+
+  // Boundary3 (On the Stop Point)
+  {
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, 50);
+    EXPECT_NEAR(dist.get(), 0.0, epsilon);
+  }
+
+  // Boundary4 (Right before the stop point)
+  {
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, 49);
+    EXPECT_NEAR(dist.get(), 1.0, epsilon);
+  }
+
+  // Boundary5 (Right behind the stop point)
+  {
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, 51);
+    EXPECT_FALSE(dist);
+  }
+
+  // Random
+  {
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, 20);
+    EXPECT_NEAR(dist.get(), 30.0, epsilon);
+  }
+}
+
+TEST(trajectory, calcDistanceToForwardStopPointFromPose)
+{
+  using tier4_autoware_utils::calcDistanceToForwardStopPoint;
+
+  auto traj_input = generateTestTrajectory<Trajectory>(100, 1.0, 3.0);
+  traj_input.points.at(50).longitudinal_velocity_mps = 0.0;
+
+  // Empty
+  {
+    EXPECT_THROW(
+      calcDistanceToForwardStopPoint(Trajectory{}.points, geometry_msgs::msg::Pose{}),
+      std::invalid_argument);
+  }
+
+  // No Stop Point
+  {
+    const auto traj_no_stop_point = generateTestTrajectory<Trajectory>(100, 1.0, 3.0);
+    const auto pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_no_stop_point.points, pose);
+    EXPECT_FALSE(dist);
+  }
 
   // Trajectory Edge1
   {
@@ -710,50 +778,54 @@ TEST(trajectory, calcDistanceToForwardStopPoint)
     EXPECT_FALSE(dist);
   }
 
-  // Out of Trajectory
-  {{const auto pose = createPose(-10.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-  EXPECT_NEAR(dist.get(), 60.0, epsilon);
-}
+  // Out of Trajectory1
+  {
+    const auto pose = createPose(-10.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_NEAR(dist.get(), 60.0, epsilon);
+  }
 
-{
-  const auto pose = createPose(200.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-  EXPECT_FALSE(dist);
-}
+  // Out of Trajectory2
+  {
+    const auto pose = createPose(200.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_FALSE(dist);
+  }
 
-{
-  const auto pose = createPose(-30.0, 50.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-  EXPECT_NEAR(dist.get(), 80.0, epsilon);
-}
-}
+  // Out of Trajectory3
+  {
+    const auto pose = createPose(-30.0, 50.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_NEAR(dist.get(), 80.0, epsilon);
+  }
 
-// Boundary Condition
-{{const auto pose = createPose(50.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-EXPECT_NEAR(dist.get(), 0.0, epsilon);
-}
+  // Boundary Condition1
+  {
+    const auto pose = createPose(50.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_NEAR(dist.get(), 0.0, epsilon);
+  }
 
-{
-  const auto pose = createPose(50.1, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-  EXPECT_FALSE(dist);
-}
+  // Boundary Condition2
+  {
+    const auto pose = createPose(50.1, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_FALSE(dist);
+  }
 
-{
-  const auto pose = createPose(49.9, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-  EXPECT_NEAR(dist.get(), 0.1, epsilon);
-}
-}
+  // Boundary Condition3
+  {
+    const auto pose = createPose(49.9, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_NEAR(dist.get(), 0.1, epsilon);
+  }
 
-// Random
-{
-  const auto pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
-  EXPECT_NEAR(dist.get(), 47.0, epsilon);
-}
+  // Random
+  {
+    const auto pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose);
+    EXPECT_NEAR(dist.get(), 47.0, epsilon);
+  }
 }
 
 TEST(trajectory, calcDistanceToForwardStopPoint_DistThreshold)
@@ -763,39 +835,41 @@ TEST(trajectory, calcDistanceToForwardStopPoint_DistThreshold)
   auto traj_input = generateTestTrajectory<Trajectory>(100, 1.0, 3.0);
   traj_input.points.at(50).longitudinal_velocity_mps = 0.0;
 
-  // Boundary Condition
-  {{const auto pose = createPose(-4.9, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
-  EXPECT_NEAR(dist.get(), 54.9, epsilon);
-}
-
-{
-  const auto pose = createPose(-5.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
-  EXPECT_NEAR(dist.get(), 55.0, epsilon);
-}
-
-{
-  const auto pose = createPose(-5.1, 0.0, 0.0, 0.0, 0.0, 0.0);
-  const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
-  EXPECT_FALSE(dist);
-}
-}
-
-// Random
-{
+  // Boundary Condition1
   {
-    const auto pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
+    const auto pose = createPose(-4.9, 0.0, 0.0, 0.0, 0.0, 0.0);
     const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
-    EXPECT_NEAR(dist.get(), 47.0, epsilon);
+    EXPECT_NEAR(dist.get(), 54.9, epsilon);
   }
 
+  // Boundary Condition2
   {
-    const auto pose = createPose(200.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto pose = createPose(-5.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
+    EXPECT_NEAR(dist.get(), 55.0, epsilon);
+  }
+
+  // Boundary Condition3
+  {
+    const auto pose = createPose(-5.1, 0.0, 0.0, 0.0, 0.0, 0.0);
     const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
     EXPECT_FALSE(dist);
   }
-}
+
+  // Random
+  {
+    {
+      const auto pose = createPose(3.0, 2.0, 0.0, 0.0, 0.0, 0.0);
+      const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
+      EXPECT_NEAR(dist.get(), 47.0, epsilon);
+    }
+
+    {
+      const auto pose = createPose(200.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+      const auto dist = calcDistanceToForwardStopPoint(traj_input.points, pose, 5.0);
+      EXPECT_FALSE(dist);
+    }
+  }
 }
 
 TEST(trajectory, calcDistanceToForwardStopPoint_YawThreshold)
