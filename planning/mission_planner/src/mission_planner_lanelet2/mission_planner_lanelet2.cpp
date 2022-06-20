@@ -128,9 +128,11 @@ double projectGoalToMap(T lanelet_component, const lanelet::ConstPoint3d & goal_
   return lanelet::utils::getAverageProjectionHeight(lanelet_component, goal_point);
 }
 
-double projectGoalToMap(const lanelet::ConstLineString3d & lanelet_component, const lanelet::ConstPoint3d & goal_point)
+double projectGoalToMap(
+  const lanelet::ConstLineString3d & lanelet_component, const lanelet::ConstPoint3d & goal_point)
 {
-  lanelet::BasicPoint3d project = lanelet::geometry::project(lanelet_component, goal_point.basicPoint());
+  lanelet::BasicPoint3d project =
+    lanelet::geometry::project(lanelet_component, goal_point.basicPoint());
   return project.z();
 }
 
@@ -227,7 +229,8 @@ bool MissionPlannerLanelet2::isGoalValid()
     constexpr double th_angle = M_PI / 4;
 
     if (std::abs(angle_diff) < th_angle) {
-      const lanelet::ConstLineString3d closest_center_line = lanelet::utils::generateFineCenterline(closest_lanelet);
+      const lanelet::ConstLineString3d closest_center_line =
+        lanelet::utils::generateFineCenterline(closest_lanelet);
       goal_height = projectGoalToMap(closest_center_line, goal_lanelet_pt);
       return true;
     }
@@ -262,7 +265,8 @@ bool MissionPlannerLanelet2::isGoalValid()
 
     constexpr double th_angle = M_PI / 4;
     if (std::abs(angle_diff) < th_angle) {
-      const lanelet::ConstLineString3d closest_center_line = lanelet::utils::generateFineCenterline(closest_shoulder_lanelet);
+      const lanelet::ConstLineString3d closest_center_line =
+        lanelet::utils::generateFineCenterline(closest_shoulder_lanelet);
       goal_height = projectGoalToMap(closest_center_line, goal_lanelet_pt);
       return true;
     }
