@@ -393,9 +393,13 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
 
   if (set_orientation_from_position_direction) {
     // Get orientation from interpolated point and src_pose
-    const double pitch = calcElevationAngle(getPoint(output_pose), getPoint(dst_pose));
-    const double yaw = calcAzimuthAngle(output_pose.position, getPoint(dst_pose));
-    output_pose.orientation = createQuaternionFromRPY(0.0, pitch, yaw);
+    if (ratio < 1.0) {
+      const double pitch = calcElevationAngle(getPoint(output_pose), getPoint(dst_pose));
+      const double yaw = calcAzimuthAngle(output_pose.position, getPoint(dst_pose));
+      output_pose.orientation = createQuaternionFromRPY(0.0, pitch, yaw);
+    } else {
+      output_pose.orientation = getPose(dst_pose).orientation;
+    }
   } else {
     // Get orientation by spherical linear interpolation
     tf2::Transform src_tf, dst_tf;
