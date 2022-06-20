@@ -43,11 +43,12 @@ Error acceleration calculations are made based on the velocity calculations abov
 #### control_performance_analysis::msg::DrivingMonitorStamped
 
 | Name                         | Type  | Description                                              |
-| ---------------------------- | ----- | -------------------------------------------------------- |
+|------------------------------| ----- |----------------------------------------------------------|
 | `longitudinal_acceleration`  | float | [m / s^2]                                                |
 | `longitudinal_jerk`          | float | [m / s^3]                                                |
 | `lateral_acceleration`       | float | [m / s^2]                                                |
 | `lateral_jerk`               | float | [m / s^3]                                                |
+| `desired_steering_angle`     | float | [rad]                                                    |
 | `controller_processing_time` | float | Timestamp between last two control command messages [ms] |
 
 #### control_performance_analysis::msg::ErrorStamped
@@ -87,6 +88,7 @@ Error acceleration calculations are made based on the velocity calculations abov
 - After import the layout, please specify the topics that are listed below.
 
 > - /localization/kinematic_state
+> - /vehicle/status/steering_status
 > - /control_performance/driving_status
 > - /control_performance/performance_vars
 
