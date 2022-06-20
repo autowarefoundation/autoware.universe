@@ -98,8 +98,8 @@ PoseInitializer::PoseInitializer()
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   pcd_provider_client_ =
     this->create_client<autoware_map_srvs::srv::ProvidePCD>(
-      "/map/load_pcd_partially", rmw_qos_profile_services_default, pcd_provider_service_group_);
-      // "pcd_provider_service", rmw_qos_profile_services_default, pcd_provider_service_group_);
+      // "/map/load_pcd_partially", rmw_qos_profile_services_default, pcd_provider_service_group_);
+      "pcd_provider_service", rmw_qos_profile_services_default, pcd_provider_service_group_);
   while (!pcd_provider_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for pcd provider service...");
   }
