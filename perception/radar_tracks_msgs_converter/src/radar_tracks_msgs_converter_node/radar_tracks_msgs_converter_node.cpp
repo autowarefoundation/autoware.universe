@@ -54,6 +54,18 @@ bool update_param(
 
 namespace radar_tracks_msgs_converter
 {
+
+enum class RadarTrackObjectID {
+  UNKNOWN = 32000,
+  CAR = 32001,
+  TRUCK = 32002,
+  BUS = 32003,
+  TRAILER = 32004,
+  MOTORCYCLE = 32005,
+  BICYCLE = 32006,
+  PEDESTRIAN = 32007
+};
+
 RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOptions & node_options)
 : Node("radar_tracks_msgs_converter", node_options)
 {
@@ -233,21 +245,21 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
 
 uint8_t RadarTracksMsgsConverterNode::convertClassification(const uint16_t classification)
 {
-  if (classification == 32000) {
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::UNKNOWN)) {
     return ObjectClassification::UNKNOWN;
-  } else if (classification == 32001) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::CAR)) {
     return ObjectClassification::CAR;
-  } else if (classification == 32002) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::TRUCK)) {
     return ObjectClassification::TRUCK;
-  } else if (classification == 32003) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::BUS)) {
     return ObjectClassification::BUS;
-  } else if (classification == 32004) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::TRAILER)) {
     return ObjectClassification::TRAILER;
-  } else if (classification == 32005) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::MOTORCYCLE)) {
     return ObjectClassification::MOTORCYCLE;
-  } else if (classification == 32006) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::BICYCLE)) {
     return ObjectClassification::BICYCLE;
-  } else if (classification == 32007) {
+  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::PEDESTRIAN)) {
     return ObjectClassification::PEDESTRIAN;
   } else {
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Receive unknown label for RadarTracks");
