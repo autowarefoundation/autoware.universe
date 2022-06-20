@@ -520,9 +520,11 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
     first_stop_point = p_stop_line.get().second;
   }
 
-  const auto stop_at_stop_line =
+  const auto within_stop_line_margin =
     p_stop_line.get().first < minimum_stop_dist &&
     minimum_stop_dist < p_stop_line.get().first + planner_param_.stop_line_margin;
+
+  const auto stop_at_stop_line = !found_pedestrians || within_stop_line_margin;
 
   const auto & p_stop = stop_at_stop_line ? p_stop_line.get().second : first_stop_point;
   const auto & margin =
