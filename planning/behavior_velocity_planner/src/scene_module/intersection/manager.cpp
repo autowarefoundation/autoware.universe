@@ -25,42 +25,8 @@
 
 namespace behavior_velocity_planner
 {
-namespace
-{
-std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::vector<lanelet::ConstLanelet> lanelets;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    const auto lane = lanelet_map->laneletLayer.get(lane_id);
-    if (!lanelet::utils::contains(lanelets, lane)) {
-      lanelets.push_back(lane);
-    }
-  }
-
-  return lanelets;
-}
-
-std::set<int64_t> getLaneIdSetOnPath(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
-{
-  std::set<int64_t> lane_id_set;
-
-  for (const auto & p : path.points) {
-    for (const auto & lane_id : p.lane_ids) {
-      lane_id_set.insert(lane_id);
-    }
-  }
-
-  return lane_id_set;
-}
-
-}  // namespace
-
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
@@ -75,6 +41,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.intersection_velocity = node.declare_parameter(ns + ".intersection_velocity", 10.0 / 3.6);
   ip.intersection_max_acc = node.declare_parameter(ns + ".intersection_max_accel", 0.5);
   ip.detection_area_margin = node.declare_parameter(ns + ".detection_area_margin", 0.5);
+  ip.detection_area_right_margin = node.declare_parameter(ns + ".detection_area_right_margin", 0.5);
+  ip.detection_area_left_margin = node.declare_parameter(ns + ".detection_area_left_margin", 0.5);
   ip.detection_area_length = node.declare_parameter(ns + ".detection_area_length", 200.0);
   ip.detection_area_angle_thr =
     node.declare_parameter(ns + ".detection_area_angle_threshold", M_PI / 4.0);
@@ -100,7 +68,8 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
 void IntersectionModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lanelets = getLaneletsOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());
+  const auto lanelets = planning_utils::getLaneletsOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -120,13 +89,15 @@ void IntersectionModuleManager::launchNewModules(
     registerModule(std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_,
       logger_.get_child("intersection_module"), clock_));
+    generateUUID(module_id);
   }
 }
 
 void MergeFromPrivateModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lanelets = getLaneletsOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());
+  const auto lanelets = planning_utils::getLaneletsOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -162,7 +133,8 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 IntersectionModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_id_set = getLaneIdSetOnPath(path);
+  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
 
   return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return lane_id_set.count(scene_module->getModuleId()) == 0;
@@ -172,10 +144,12 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 MergeFromPrivateModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_id_set = getLaneIdSetOnPath(path);
+  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
 
   return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return lane_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
+
 }  // namespace behavior_velocity_planner

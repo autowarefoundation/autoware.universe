@@ -204,6 +204,11 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     current_time, &debug_marker_array);
 
   appendMarkerArray(
+    createLaneletPolygonsMarkerArray(
+      debug_data_.detection_area_with_margin, "detection_area_with_margin", lane_id_),
+    current_time, &debug_marker_array);
+
+  appendMarkerArray(
     createPolygonMarkerArray(debug_data_.ego_lane_polygon, "ego_lane", lane_id_, 0.0, 0.3, 0.7),
     current_time, &debug_marker_array);
 
@@ -257,18 +262,16 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   const auto now = this->clock_->now();
   const auto state = state_machine_.getState();
 
-  if (state == IntersectionModule::State::STOP) {
-    if (debug_data_.stop_required) {
-      appendMarkerArray(
-        tier4_autoware_utils::createStopVirtualWallMarker(
-          debug_data_.stop_wall_pose, "intersection", now, lane_id_),
-        now, &wall_marker);
-    } else {
-      appendMarkerArray(
-        tier4_autoware_utils::createStopVirtualWallMarker(
-          debug_data_.slow_wall_pose, "intersection", now, lane_id_),
-        now, &wall_marker);
-    }
+  if (debug_data_.stop_required) {
+    appendMarkerArray(
+      tier4_autoware_utils::createStopVirtualWallMarker(
+        debug_data_.stop_wall_pose, "intersection", now, lane_id_),
+      now, &wall_marker);
+  } else if (state == IntersectionModule::State::STOP) {
+    appendMarkerArray(
+      tier4_autoware_utils::createStopVirtualWallMarker(
+        debug_data_.slow_wall_pose, "intersection", now, lane_id_),
+      now, &wall_marker);
   }
   return wall_marker;
 }

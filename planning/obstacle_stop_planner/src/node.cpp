@@ -516,9 +516,10 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
-  pub_clear_velocity_limit_ =
-    this->create_publisher<VelocityLimitClearCommand>("~/output/velocity_limit_clear_command", 1);
-  pub_velocity_limit_ = this->create_publisher<VelocityLimit>("~/output/max_velocity", 1);
+  pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
+    "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
+  pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
+    "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
   // Subscribers
   obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -831,12 +832,14 @@ void ObstacleStopPlannerNode::insertVelocity(
     }
   }
 
-  for (size_t i = 0; i < output.size() - 2; ++i) {
-    const auto & p_base = output.at(i).pose;
-    const auto & p_target = output.at(i + 1).pose;
-    const auto & p_next = output.at(i + 2).pose;
-    if (!checkValidIndex(p_base, p_next, p_target)) {
-      RCLCPP_ERROR(get_logger(), "detect bad index");
+  if (output.size() >= 2) {
+    for (size_t i = 0; i < output.size() - 2; ++i) {
+      const auto & p_base = output.at(i).pose;
+      const auto & p_target = output.at(i + 1).pose;
+      const auto & p_next = output.at(i + 2).pose;
+      if (!checkValidIndex(p_base, p_next, p_target)) {
+        RCLCPP_ERROR(get_logger(), "detect bad index");
+      }
     }
   }
 
