@@ -215,6 +215,8 @@ namespace util
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
+using tf2::fromMsg;
+using tier4_autoware_utils::Point2d;
 
 std::vector<Point> convertToPointArray(const PathWithLaneId & path)
 {
@@ -660,73 +662,23 @@ std::vector<size_t> filterObjectsByLanelets(
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon)
 {
-  const double obj_x = object.kinematics.initial_pose_with_covariance.pose.position.x;
-  const double obj_y = object.kinematics.initial_pose_with_covariance.pose.position.y;
   if (object.shape.type == Shape::BOUNDING_BOX) {
-    const double len_x = object.shape.dimensions.x;
-    const double len_y = object.shape.dimensions.y;
-
-    tf2::Transform tf_map2obj;
-    tf2::fromMsg(object.kinematics.initial_pose_with_covariance.pose, tf_map2obj);
-
-    // set vertices at map coordinate
-    tf2::Vector3 p1_map, p2_map, p3_map, p4_map;
-
-    p1_map.setX(len_x / 2);
-    p1_map.setY(len_y / 2);
-    p1_map.setZ(0.0);
-    p1_map.setW(1.0);
-
-    p2_map.setX(-len_x / 2);
-    p2_map.setY(len_y / 2);
-    p2_map.setZ(0.0);
-    p2_map.setW(1.0);
-
-    p3_map.setX(-len_x / 2);
-    p3_map.setY(-len_y / 2);
-    p3_map.setZ(0.0);
-    p3_map.setW(1.0);
-
-    p4_map.setX(len_x / 2);
-    p4_map.setY(-len_y / 2);
-    p4_map.setZ(0.0);
-    p4_map.setW(1.0);
-
-    // transform vertices from map coordinate to object coordinate
-    tf2::Vector3 p1_obj, p2_obj, p3_obj, p4_obj;
-
-    p1_obj = tf_map2obj * p1_map;
-    p2_obj = tf_map2obj * p2_map;
-    p3_obj = tf_map2obj * p3_map;
-    p4_obj = tf_map2obj * p4_map;
-
-    object_polygon->outer().emplace_back(p1_obj.x(), p1_obj.y());
-    object_polygon->outer().emplace_back(p2_obj.x(), p2_obj.y());
-    object_polygon->outer().emplace_back(p3_obj.x(), p3_obj.y());
-    object_polygon->outer().emplace_back(p4_obj.x(), p4_obj.y());
+    const double & len_x = object.shape.dimensions.x;
+    const double & len_y = object.shape.dimensions.y;
+    *object_polygon = convertBoundingBoxObjectToGeometryPolygon(
+      object.kinematics.initial_pose_with_covariance.pose, len_x, len_y);
 
   } else if (object.shape.type == Shape::CYLINDER) {
-    const size_t N = 20;
-    const double r = object.shape.dimensions.x / 2;
-    for (size_t i = 0; i < N; ++i) {
-      object_polygon->outer().emplace_back(
-        obj_x + r * std::cos(2.0 * M_PI / N * i), obj_y + r * std::sin(2.0 * M_PI / N * i));
-    }
+    *object_polygon = convertCylindricalObjectToGeometryPolygon(
+      object.kinematics.initial_pose_with_covariance.pose, object.shape);
   } else if (object.shape.type == Shape::POLYGON) {
-    tf2::Transform tf_map2obj;
-    tf2::fromMsg(object.kinematics.initial_pose_with_covariance.pose, tf_map2obj);
-    const auto obj_points = object.shape.footprint.points;
-    for (const auto & obj_point : obj_points) {
-      tf2::Vector3 obj(obj_point.x, obj_point.y, obj_point.z);
-      tf2::Vector3 tf_obj = tf_map2obj * obj;
-      object_polygon->outer().emplace_back(tf_obj.x(), tf_obj.y());
-    }
+    *object_polygon = convertPolygonObjectToGeometryPolygon(
+      object.kinematics.initial_pose_with_covariance.pose, object.shape);
   } else {
     RCLCPP_WARN(
       rclcpp::get_logger("behavior_path_planner").get_child("utilities"), "Object shape unknown!");
     return false;
   }
-  object_polygon->outer().push_back(object_polygon->outer().front());
 
   return true;
 }
@@ -1817,5 +1769,89 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
   return label;
 }
 
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & length, const double & width)
+{
+  Polygon2d object_polygon;
+
+  tf2::Transform tf_map2obj;
+  tf2::fromMsg(current_pose, tf_map2obj);
+
+  // set vertices at map coordinate
+  tf2::Vector3 p1_map;
+  p1_map.setX(length / 2);
+  p1_map.setY(width / 2);
+  p1_map.setZ(0.0);
+  p1_map.setW(1.0);
+
+  tf2::Vector3 p2_map;
+  p2_map.setX(-length / 2);
+  p2_map.setY(width / 2);
+  p2_map.setZ(0.0);
+  p2_map.setW(1.0);
+
+  tf2::Vector3 p3_map;
+  p3_map.setX(-length / 2);
+  p3_map.setY(-width / 2);
+  p3_map.setZ(0.0);
+  p3_map.setW(1.0);
+
+  tf2::Vector3 p4_map;
+  p4_map.setX(length / 2);
+  p4_map.setY(-width / 2);
+  p4_map.setZ(0.0);
+  p4_map.setW(1.0);
+
+  // transform vertices from map coordinate to object coordinate
+  tf2::Vector3 p1_obj = tf_map2obj * p1_map;
+  tf2::Vector3 p2_obj = tf_map2obj * p2_map;
+  tf2::Vector3 p3_obj = tf_map2obj * p3_map;
+  tf2::Vector3 p4_obj = tf_map2obj * p4_map;
+
+  object_polygon.outer().emplace_back(p1_obj.x(), p1_obj.y());
+  object_polygon.outer().emplace_back(p2_obj.x(), p2_obj.y());
+  object_polygon.outer().emplace_back(p3_obj.x(), p3_obj.y());
+  object_polygon.outer().emplace_back(p4_obj.x(), p4_obj.y());
+
+  object_polygon.outer().push_back(object_polygon.outer().front());
+
+  return object_polygon;
+}
+
+Polygon2d convertCylindricalObjectToGeometryPolygon(
+  const Pose & current_pose, const Shape & obj_shape)
+{
+  Polygon2d object_polygon;
+
+  const double obj_x = current_pose.position.x;
+  const double obj_y = current_pose.position.y;
+
+  constexpr int N = 20;
+  const double r = obj_shape.dimensions.x / 2;
+  for (int i = 0; i < N; ++i) {
+    object_polygon.outer().emplace_back(
+      obj_x + r * std::cos(2.0 * M_PI / N * i), obj_y + r * std::sin(2.0 * M_PI / N * i));
+  }
+
+  object_polygon.outer().push_back(object_polygon.outer().front());
+
+  return object_polygon;
+}
+
+Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape)
+{
+  Polygon2d object_polygon;
+  tf2::Transform tf_map2obj;
+  fromMsg(current_pose, tf_map2obj);
+  const auto obj_points = obj_shape.footprint.points;
+  for (const auto & obj_point : obj_points) {
+    tf2::Vector3 obj(obj_point.x, obj_point.y, obj_point.z);
+    tf2::Vector3 tf_obj = tf_map2obj * obj;
+    object_polygon.outer().emplace_back(tf_obj.x(), tf_obj.y());
+  }
+  object_polygon.outer().push_back(object_polygon.outer().front());
+
+  return object_polygon;
+}
 }  // namespace util
 }  // namespace behavior_path_planner

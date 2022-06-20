@@ -335,6 +335,11 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
   p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
   p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
+  p.safety_time_margin_for_control = dp("safety_time_margin_for_control", 2.0);
+  p.rear_vehicle_reaction_time = dp("rear_vehicle_reaction_time", 1.0);
+  p.lateral_distance_threshold = dp("lateral_distance_threshold", 5.0);
+  p.expected_front_deceleration = dp("expected_front_deceleration", -1.0);
+  p.expected_rear_deceleration = dp("expected_rear_deceleration", -1.0);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {

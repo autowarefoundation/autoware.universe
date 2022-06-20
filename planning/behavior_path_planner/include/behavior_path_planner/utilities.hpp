@@ -108,6 +108,8 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
+
+using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -120,7 +122,6 @@ using geometry_msgs::msg::Vector3;
 using nav_msgs::msg::OccupancyGrid;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
-using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
 struct FrenetCoordinate3d
@@ -323,6 +324,13 @@ bool checkLaneIsInIntersection(
 // object label
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & length, const double & width);
+
+Polygon2d convertCylindricalObjectToGeometryPolygon(
+  const Pose & current_pose, const Shape & obj_shape);
+
+Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
 }  // namespace util
 }  // namespace behavior_path_planner
 

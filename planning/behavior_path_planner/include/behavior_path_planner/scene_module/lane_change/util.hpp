@@ -31,10 +31,9 @@
 #include <memory>
 #include <vector>
 
-namespace behavior_path_planner
+namespace behavior_path_planner::lane_change_utils
 {
-namespace lane_change_utils
-{
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -59,14 +58,14 @@ bool selectSafePath(
   const std::vector<LaneChangePath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
+  const Twist & current_twist, const double & vehicle_width, const double & vehicle_length,
   const behavior_path_planner::LaneChangeParameters & ros_parameters,
   LaneChangePath * selected_path);
 bool isLaneChangePathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
+  const Twist & current_twist, const double & vehicle_width, const double & vehicle_length,
   const behavior_path_planner::LaneChangeParameters & ros_parameters, const bool use_buffer = true,
   const double acceleration = 0.0);
 bool hasEnoughDistance(
@@ -74,8 +73,36 @@ bool hasEnoughDistance(
   const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
   const bool isInGoalRouteSection, const Pose & goal_pose,
   const lanelet::routing::RoutingGraphContainer & overall_graphs);
+
+std::vector<PredictedPath> getPredictedPathFromObj(
+  const PredictedObject & obj, const bool & is_use_all_predicted_path);
+
+Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
+
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
-}  // namespace lane_change_utils
-}  // namespace behavior_path_planner
+
+double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel);
+
+double stoppingDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time);
+
+double frontVehicleStopDistance(
+  const double & front_vehicle_velocity, const double & front_vehicle_accel,
+  const double & distance_to_collision);
+
+double rearVehicleStopDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time, const double & safety_time_margin_for_control);
+
+bool isUnderThresholdDistanceSafe(
+  const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold);
+
+bool hasEnoughDistance(
+  const Pose & expected_ego_pose, const Twist & ego_current_twist,
+  const Pose & expected_object_pose, const Twist & object_current_twist,
+  const LaneChangeParameters & param);
+
+}  // namespace behavior_path_planner::lane_change_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_

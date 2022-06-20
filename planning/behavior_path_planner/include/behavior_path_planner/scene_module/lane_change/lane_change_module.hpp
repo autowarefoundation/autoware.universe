@@ -61,6 +61,11 @@ struct LaneChangeParameters
   bool use_all_predicted_path;
   bool enable_blocked_by_obstacle;
   double lane_change_search_distance;
+  double safety_time_margin_for_control;
+  double rear_vehicle_reaction_time;
+  double lateral_distance_threshold;
+  double expected_front_deceleration;
+  double expected_rear_deceleration;
 };
 
 struct LaneChangeStatus
@@ -172,7 +177,6 @@ private:
   void updateLaneChangeStatus();
 
   bool isSafe() const;
-  bool isLaneBlocked(const lanelet::ConstLanelets & lanes) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied() const;
