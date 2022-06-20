@@ -7,6 +7,7 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
+#include <ublox_msgs/msg/nav_pvt.hpp>
 
 namespace util
 {
@@ -27,4 +28,6 @@ void publishImage(
   const rclcpp::Time & stamp);
 
 Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose);
+
+rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg);
 }  // namespace util

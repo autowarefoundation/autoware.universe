@@ -11,8 +11,6 @@
 #include <memory>
 #include <numeric>
 
-namespace mpf_msgs = modularized_particle_filter_msgs;
-
 Predictor::Predictor()
 : Node("predictor"),
   number_of_particles_(declare_parameter("num_of_particles", 500)),
@@ -30,16 +28,17 @@ Predictor::Predictor()
 
   // Subscribers
   using std::placeholders::_1;
-  gnss_sub_ = create_subscription<PoseStamped>(
-    "gnss/pose", 1, std::bind(&Predictor::gnssposeCallback, this, _1));
-  initialpose_sub_ = create_subscription<PoseWithCovarianceStamped>(
-    "initialpose", 1, std::bind(&Predictor::initialposeCallback, this, _1));
-  twist_sub_ =
-    create_subscription<TwistStamped>("twist", 10, std::bind(&Predictor::twistCallback, this, _1));
-  weighted_particles_sub_ = create_subscription<ParticleArray>(
-    "weighted_particles", 10, std::bind(&Predictor::weightedParticlesCallback, this, _1));
-  height_sub_ = create_subscription<std_msgs::msg::Float32>(
-    "height", 10, [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; });
+  auto gnss_cb = std::bind(&Predictor::gnssposeCallback, this, _1);
+  auto initial_cb = std::bind(&Predictor::initialposeCallback, this, _1);
+  auto twist_cb = std::bind(&Predictor::twistCallback, this, _1);
+  auto particle_cb = std::bind(&Predictor::weightedParticlesCallback, this, _1);
+  auto height_cb = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
+
+  gnss_sub_ = create_subscription<PoseStamped>("pose", 1, gnss_cb);
+  initialpose_sub_ = create_subscription<PoseWithCovarianceStamped>("initialpose", 1, initial_cb);
+  twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
+  particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, particle_cb);
+  height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, height_cb);
 
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -57,6 +56,15 @@ void Predictor::gnssposeCallback(const PoseStamped::ConstSharedPtr pose)
   pose_cov.pose.covariance[6 * 1 + 1] = 0.25;
   pose_cov.pose.covariance[6 * 5 + 1] = 0.04;
   initializeParticles(pose_cov);
+}
+
+void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+{
+  PoseWithCovarianceStamped pose = *initialpose;
+  pose.pose.covariance[0] = 0.25;
+  pose.pose.covariance[6 * 1 + 1] = 0.25;
+  pose.pose.covariance[6 * 5 + 1] = 0.04;
+  initializeParticles(pose);
 }
 
 void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpose)
@@ -87,15 +95,6 @@ void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpos
 
   resampler_ptr_ =
     std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_);
-}
-
-void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
-{
-  PoseWithCovarianceStamped pose = *initialpose;
-  pose.pose.covariance[0] = 0.25;
-  pose.pose.covariance[6 * 1 + 1] = 0.25;
-  pose.pose.covariance[6 * 5 + 1] = 0.04;
-  initializeParticles(pose);
 }
 
 void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)

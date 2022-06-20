@@ -95,6 +95,7 @@ ADD_EXE(TARGET camera_corrector_node SRC
 ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
 
 ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Geographic)
+ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

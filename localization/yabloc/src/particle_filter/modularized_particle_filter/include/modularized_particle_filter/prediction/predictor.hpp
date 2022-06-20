@@ -35,7 +35,7 @@ private:
   rclcpp::Subscription<PoseStamped>::SharedPtr gnss_sub_;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_cov_sub_;
   rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
-  rclcpp::Subscription<ParticleArray>::SharedPtr weighted_particles_sub_;
+  rclcpp::Subscription<ParticleArray>::SharedPtr particles_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr height_sub_;
 
   // Publisher

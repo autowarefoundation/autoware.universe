@@ -117,11 +117,6 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 
 Eigen::Vector3f TwistEstimator::extractEnuVel(const NavPVT & msg) const
 {
-  Eigen::Vector3f llh;
-  llh(0) = msg.lat * 1e-7;     // [deg / 1e-7]->[deg]
-  llh(1) = msg.lon * 1e-7;     // [deg / 1e-7]->[deg]
-  llh(2) = msg.height * 1e-3;  // [mm]->[m]
-
   Eigen::Vector3f enu_vel;
   enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
   return enu_vel;

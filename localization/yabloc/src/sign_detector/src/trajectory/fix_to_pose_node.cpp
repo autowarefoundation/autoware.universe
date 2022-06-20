@@ -23,14 +23,13 @@ public:
     const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
     // Subscriber
-    sub_map_ = create_subscription<HADMapBin>(
-      "/map/vector_map", map_qos, std::bind(&Fix2Pose::mapCallback, this, _1));
-    sub_fix_ =
-      create_subscription<NavSatFix>("/fix_topic", 10, std::bind(&Fix2Pose::fixCallback, this, _1));
+    auto map_cb = std::bind(&Fix2Pose::mapCallback, this, _1);
+    auto fix_cb = std::bind(&Fix2Pose::fixCallback, this, _1);
+    sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, map_cb);
+    sub_fix_ = create_subscription<NavSatFix>("/fix_topic", 10, fix_cb);
 
     // Publisher
     pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/pose", 10);
-
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     pose_topic_ = pub_pose_stamped_->get_topic_name();

@@ -117,4 +117,21 @@ Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
   return t * q;
 }
 
+#include <time.h>
+rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
+{
+  struct tm t;
+  t.tm_year = msg.year - 1900;  // from 1900
+  t.tm_mon = msg.month - 1;     // january = 0
+  t.tm_mday = msg.day;
+  t.tm_hour = msg.hour + 9;
+  t.tm_min = msg.min;
+  t.tm_sec = msg.sec;
+  t.tm_isdst = 0;
+  time_t t_of_day = mktime(&t);
+
+  rclcpp::Time stamp(t_of_day, msg.nano, RCL_ROS_TIME);
+  return stamp;
+}
+
 }  // namespace util

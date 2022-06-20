@@ -20,26 +20,9 @@ GnssParticleCorrector::GnssParticleCorrector()
   marker_pub_ = create_publisher<MarkerArray>("/gnss/effect_marker", 10);
 }
 
-#include <time.h>
-rclcpp::Time GnssParticleCorrector::ubloxTime2Stamp(const NavPVT & msg)
-{
-  struct tm t;
-  t.tm_year = msg.year - 1900;  // from 1900
-  t.tm_mon = msg.month - 1;     // january = 0
-  t.tm_mday = msg.day;
-  t.tm_hour = msg.hour + 9;
-  t.tm_min = msg.min;
-  t.tm_sec = msg.sec;
-  t.tm_isdst = 0;
-  time_t t_of_day = mktime(&t);
-
-  rclcpp::Time stamp(t_of_day, msg.nano, RCL_ROS_TIME);
-  return stamp;
-}
-
 void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg)
 {
-  const rclcpp::Time stamp = ubloxTime2Stamp(*ublox_msg);
+  const rclcpp::Time stamp = util::ubloxTime2Stamp(*ublox_msg);
 
   const int FIX_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FIXED;
   const int FLOAT_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FLOAT;

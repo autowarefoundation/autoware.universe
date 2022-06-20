@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
-        - /ParticleArray1/Topic1
+        - /Particles1/Topic1
       Splitter Ratio: 0.38787877559661865
     Tree Height: 741
   - Class: rviz_common/Selection
@@ -68,68 +68,6 @@ Visualization Manager:
         Value: /map/vector_map_marker
       Value: true
     - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz_default_plugins/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: RGB8
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: PointCloudMap
-      Position Transformer: XYZ
-      Selectable: true
-      Size (Pixels): 1
-      Size (m): 0.009999999776482582
-      Style: Points
-      Topic:
-        Depth: 5
-        Durability Policy: Transient Local
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /map/pointcloud_map
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz_default_plugins/Path
-      Color: 138; 226; 52
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: eagleye
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /eagleye/path
-      Value: true
-    - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
       Color: 252; 233; 79
@@ -185,83 +123,188 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /sensing/gnss/ublox/path
       Value: true
-    - Alpha: 1
-      Axes Length: 0.20000000298023224
-      Axes Radius: 0.029999999329447746
-      Class: rviz_default_plugins/Pose
-      Color: 252; 233; 79
-      Enabled: false
-      Head Length: 0.5
-      Head Radius: 0.5
-      Name: Pose
-      Shaft Length: 1
-      Shaft Radius: 0.20000000298023224
-      Shape: Arrow
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /particle_pose
-      Value: false
     - Class: rviz_default_plugins/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_link:
+          Value: true
+        camera0/camera_link:
+          Value: true
+        camera0/camera_optical_link:
+          Value: true
+        camera1/camera_link:
+          Value: true
+        camera1/camera_optical_link:
+          Value: true
+        camera2/camera_link:
+          Value: true
+        camera2/camera_optical_link:
+          Value: true
+        camera3/camera_link:
+          Value: true
+        camera3/camera_optical_link:
+          Value: true
+        camera4/camera_link:
+          Value: true
+        camera4/camera_optical_link:
+          Value: true
+        camera5/camera_link:
+          Value: true
+        camera5/camera_optical_link:
+          Value: true
+        gnss_link:
+          Value: true
+        livox_front_left:
+          Value: true
+        livox_front_left_base_link:
+          Value: true
+        livox_front_right:
+          Value: true
+        livox_front_right_base_link:
+          Value: true
+        map:
+          Value: true
+        particle_filter:
+          Value: true
+        sensing/gnss/ublox/pose:
+          Value: true
+        sensor_kit_base_link:
+          Value: true
+        tamagawa/imu_link:
+          Value: true
+        traffic_light_left_camera/camera_link:
+          Value: true
+        traffic_light_left_camera/camera_optical_link:
+          Value: true
+        traffic_light_right_camera/camera_link:
+          Value: true
+        traffic_light_right_camera/camera_optical_link:
+          Value: true
+        velodyne_left:
+          Value: true
+        velodyne_left_base_link:
+          Value: true
+        velodyne_rear:
+          Value: true
+        velodyne_rear_base_link:
+          Value: true
+        velodyne_right:
+          Value: true
+        velodyne_right_base_link:
+          Value: true
+        velodyne_top:
+          Value: true
+        velodyne_top_base_link:
+          Value: true
+        viewer:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
       Tree:
-        {}
+        map:
+          particle_filter:
+            base_link:
+              livox_front_left_base_link:
+                livox_front_left:
+                  {}
+              livox_front_right_base_link:
+                livox_front_right:
+                  {}
+              sensor_kit_base_link:
+                camera0/camera_link:
+                  camera0/camera_optical_link:
+                    {}
+                camera1/camera_link:
+                  camera1/camera_optical_link:
+                    {}
+                camera2/camera_link:
+                  camera2/camera_optical_link:
+                    {}
+                camera3/camera_link:
+                  camera3/camera_optical_link:
+                    {}
+                camera4/camera_link:
+                  camera4/camera_optical_link:
+                    {}
+                camera5/camera_link:
+                  camera5/camera_optical_link:
+                    {}
+                gnss_link:
+                  {}
+                tamagawa/imu_link:
+                  {}
+                traffic_light_left_camera/camera_link:
+                  traffic_light_left_camera/camera_optical_link:
+                    {}
+                traffic_light_right_camera/camera_link:
+                  traffic_light_right_camera/camera_optical_link:
+                    {}
+                velodyne_left_base_link:
+                  velodyne_left:
+                    {}
+                velodyne_right_base_link:
+                  velodyne_right:
+                    {}
+                velodyne_top_base_link:
+                  velodyne_top:
+                    {}
+              velodyne_rear_base_link:
+                velodyne_rear:
+                  {}
+          sensing/gnss/ublox/pose:
+            {}
+          viewer:
+            {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Class: rviz_common/Group
       Displays:
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 400
+          Height: 500
           Image Topic Style: true
           Left: 0
           Name: Overlay
-          Top: 400
+          Top: 0
           Topic: /overlay_image
           Value: true
-          Width: 400
+          Width: 800
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 400
+          Height: 300
           Image Topic Style: true
-          Left: 400
+          Left: 300
           Name: ProjectedLSD
-          Top: 0
+          Top: 500
           Topic: /projected_image
           Value: true
-          Width: 400
+          Width: 300
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 400
+          Height: 300
           Image Topic Style: true
           Left: 0
           Name: LSD
-          Top: 0
+          Top: 500
           Topic: /lsd_image
           Value: true
-          Width: 400
+          Width: 300
         - Alpha: 0.10000000149011612
           Class: rviz_plugins/Image
           Enabled: true
           Height: 200
           Image Topic Style: true
-          Left: 400
+          Left: 600
           Name: CostMap
-          Top: 400
+          Top: 500
           Topic: /match_image
           Value: true
           Width: 200
@@ -269,7 +312,7 @@ Visualization Manager:
       Name: Overlay
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: ParticleArray
+      Name: Particles
       Namespaces:
         "": true
       Topic:
@@ -339,17 +382,17 @@ Visualization Manager:
         Value: /gnss/effect_marker
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: CostMapRange
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /cost_map_range
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -395,7 +438,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -2.4000070095062256
+      Angle: -3.9000070095062256
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -405,11 +448,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 6.546570301055908
+      Scale: 13.156122207641602
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 9.50823974609375
-      Y: -4.745294570922852
+      X: 0.9373278021812439
+      Y: -18.234655380249023
     Saved: ~
 Window Geometry:
   Displays:
