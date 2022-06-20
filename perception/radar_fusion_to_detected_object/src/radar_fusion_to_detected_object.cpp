@@ -19,7 +19,10 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <numeric>
+#include <string>
+#include <vector>
 
 namespace radar_fusion_to_detected_object
 {
