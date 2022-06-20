@@ -47,6 +47,7 @@ public:
 
 private:
   bool is_graph_ready_;
+  double goal_height;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
@@ -57,7 +58,7 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  bool isGoalValid() const;
+  bool isGoalValid();
 
   // virtual functions
   bool isRoutingGraphReady() const;

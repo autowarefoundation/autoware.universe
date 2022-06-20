@@ -122,6 +122,18 @@ bool isInParkingLot(
   return false;
 }
 
+template <class T>
+double projectGoalToMap(T lanelet_component, const lanelet::ConstPoint3d & goal_point)
+{
+  return lanelet::utils::getAverageProjectionHeight(lanelet_component, goal_point);
+}
+
+double projectGoalToMap(const lanelet::ConstLineString3d & lanelet_component, const lanelet::ConstPoint3d & goal_point)
+{
+  lanelet::BasicPoint3d project = lanelet::geometry::project(lanelet_component, goal_point.basicPoint());
+  return project.z();
+}
+
 }  // anonymous namespace
 
 namespace mission_planner
@@ -197,7 +209,7 @@ void MissionPlannerLanelet2::visualizeRoute(
   marker_publisher_->publish(route_marker_array);
 }
 
-bool MissionPlannerLanelet2::isGoalValid() const
+bool MissionPlannerLanelet2::isGoalValid()
 {
   lanelet::Lanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
@@ -215,6 +227,8 @@ bool MissionPlannerLanelet2::isGoalValid() const
     constexpr double th_angle = M_PI / 4;
 
     if (std::abs(angle_diff) < th_angle) {
+      const lanelet::ConstLineString3d closest_center_line = lanelet::utils::generateFineCenterline(closest_lanelet);
+      goal_height = projectGoalToMap(closest_center_line, goal_lanelet_pt);
       return true;
     }
   }
@@ -222,12 +236,14 @@ bool MissionPlannerLanelet2::isGoalValid() const
   // check if goal is in parking space
   const auto parking_spaces = lanelet::utils::query::getAllParkingSpaces(lanelet_map_ptr_);
   if (isInParkingSpace(parking_spaces, goal_lanelet_pt)) {
+    goal_height = projectGoalToMap(parking_spaces, goal_lanelet_pt);
     return true;
   }
 
   // check if goal is in parking lot
   const auto parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_);
   if (isInParkingLot(parking_lots, goal_lanelet_pt)) {
+    goal_height = projectGoalToMap(parking_lots, goal_lanelet_pt);
     return true;
   }
 
@@ -246,6 +262,8 @@ bool MissionPlannerLanelet2::isGoalValid() const
 
     constexpr double th_angle = M_PI / 4;
     if (std::abs(angle_diff) < th_angle) {
+      const lanelet::ConstLineString3d closest_center_line = lanelet::utils::generateFineCenterline(closest_shoulder_lanelet);
+      goal_height = projectGoalToMap(closest_center_line, goal_lanelet_pt);
       return true;
     }
   }
@@ -272,6 +290,9 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
     return route_msg;
   }
 
+  goal_pose_.pose.position.z = goal_height;
+  checkpoints_.back().pose.position.z = goal_height;
+
   for (std::size_t i = 1; i < checkpoints_.size(); i++) {
     const auto start_checkpoint = checkpoints_.at(i - 1);
     const auto goal_checkpoint = checkpoints_.at(i);
@@ -296,6 +317,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   route_msg.segments = route_sections;
   route_msg.goal_pose = goal_pose_.pose;
 
+  RCLCPP_WARN(get_logger(), "Goal Pose Z : %lf", goal_height);
   return route_msg;
 }
 

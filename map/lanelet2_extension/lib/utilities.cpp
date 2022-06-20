@@ -685,5 +685,22 @@ bool isInLanelet(
   return false;
 }
 
+template <class T>
+double getAverageProjectionHeight(
+  const std::vector<T> & linestrings, const lanelet::ConstPoint3d & point)
+{
+  double height = 0;
+  for(const auto & it : linestrings)
+  {
+    lanelet::ConstLineString3d line(it);
+    auto p_point = lanelet::geometry::project(line, point);
+    height += p_point.z();
+  }
+  return height / linestrings.size();
+}
+
+template double getAverageProjectionHeight<lanelet::ConstLineString3d>(const std::vector<lanelet::ConstLineString3d> &, const lanelet::ConstPoint3d &);
+template double getAverageProjectionHeight<lanelet::ConstPolygon3d>(const std::vector<lanelet::ConstPolygon3d> &, const lanelet::ConstPoint3d &);
+
 }  // namespace utils
 }  // namespace lanelet
