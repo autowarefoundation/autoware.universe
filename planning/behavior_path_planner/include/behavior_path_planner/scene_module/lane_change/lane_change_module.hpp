@@ -174,7 +174,6 @@ private:
   void updateLaneChangeStatus();
 
   bool isSafe() const;
-  bool isLaneBlocked(const lanelet::ConstLanelets & lanes) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied() const;

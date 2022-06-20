@@ -209,6 +209,11 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.base_link2front = vehicle_info.max_longitudinal_offset_m;
   p.base_link2rear = p.rear_overhang;
 
+  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 3.0);
+  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -1.0);
+  p.expected_rear_deceleration = declare_parameter("expected_rear_deceleration", -1.0);
+  p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 1.0);
+  p.safety_time_margin_for_control = declare_parameter("safety_time_margin_for_control", 2.0);
   return p;
 }
 

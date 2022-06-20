@@ -18,3 +18,9 @@
     intersection_search_distance: 30.0
 
     visualize_drivable_area_for_shared_linestrings_lanelet: true
+
+    lateral_distance_max_threshold: 5.0
+    expected_front_deceleration: -1.0
+    expected_rear_deceleration: -1.0
+    rear_vehicle_reaction_time: 1.0
+    safety_time_margin_for_control: 2.0
