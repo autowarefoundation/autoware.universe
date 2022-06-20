@@ -395,7 +395,6 @@ void NDTScanMatcher::callbackInitialPose(
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
-  
   const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
   const auto step_size = ndt_ptr_->getStepSize();
   const auto resolution = ndt_ptr_->getResolution();
@@ -421,7 +420,7 @@ void NDTScanMatcher::callbackMapPoints(
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
   new_ndt_ptr_->setInputTarget(map_points_ptr);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity()); // This line is heavy 
+  new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity());  // This line is heavy
 
   // swap
   ndt_map_mtx_.lock();

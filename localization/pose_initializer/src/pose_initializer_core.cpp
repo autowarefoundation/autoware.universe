@@ -94,12 +94,10 @@ PoseInitializer::PoseInitializer()
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
-  pcd_provider_service_group_ =
-    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  pcd_provider_client_ =
-    this->create_client<autoware_map_srvs::srv::ProvidePCD>(
-      // "/map/load_pcd_partially", rmw_qos_profile_services_default, pcd_provider_service_group_);
-      "pcd_provider_service", rmw_qos_profile_services_default, pcd_provider_service_group_);
+  pcd_provider_service_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  pcd_provider_client_ = this->create_client<autoware_map_srvs::srv::ProvidePCD>(
+    // "/map/load_pcd_partially", rmw_qos_profile_services_default, pcd_provider_service_group_);
+    "pcd_provider_service", rmw_qos_profile_services_default, pcd_provider_service_group_);
   while (!pcd_provider_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for pcd provider service...");
   }
@@ -156,23 +154,17 @@ void PoseInitializer::callbackInitialPose(
   }
   auto request = std::make_shared<autoware_map_srvs::srv::ProvidePCD::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
-  request->radius = -1.0; // Should be removed somehow
-  auto result {
-    pcd_provider_client_->async_send_request(
-      request,
-      [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response)
-      {
-        (void)response;
-        std::lock_guard<std::mutex> lock {mutex_};
-        value_ready_ = true;
-        condition_.notify_all();
-      }
-    )
-  };
-  std::unique_lock<std::mutex> lock {mutex_};
-  condition_.wait(lock, [this](){return value_ready_;});
-
-
+  request->radius = -1.0;  // Should be removed somehow
+  auto result{pcd_provider_client_->async_send_request(
+    request,
+    [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response) {
+      (void)response;
+      std::lock_guard<std::mutex> lock{mutex_};
+      value_ready_ = true;
+      condition_.notify_all();
+    })};
+  std::unique_lock<std::mutex> lock{mutex_};
+  condition_.wait(lock, [this]() { return value_ready_; });
 
   add_height_pose_msg_ptr->pose.covariance = initialpose_particle_covariance_;
 
@@ -204,21 +196,17 @@ void PoseInitializer::callbackGNSSPoseCov(
 
   auto request = std::make_shared<autoware_map_srvs::srv::ProvidePCD::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
-  request->radius = -1.0; // Should be removed somehow
-  auto result {
-    pcd_provider_client_->async_send_request(
-      request,
-      [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response)
-      {
-        (void)response;
-        std::lock_guard<std::mutex> lock {mutex_};
-        value_ready_ = true;
-        condition_.notify_all();
-      }
-    )
-  };
-  std::unique_lock<std::mutex> lock {mutex_};
-  condition_.wait(lock, [this](){return value_ready_;});
+  request->radius = -1.0;  // Should be removed somehow
+  auto result{pcd_provider_client_->async_send_request(
+    request,
+    [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response) {
+      (void)response;
+      std::lock_guard<std::mutex> lock{mutex_};
+      value_ready_ = true;
+      condition_.notify_all();
+    })};
+  std::unique_lock<std::mutex> lock{mutex_};
+  condition_.wait(lock, [this]() { return value_ready_; });
 
   add_height_pose_msg_ptr->pose.covariance = gnss_particle_covariance_;
 

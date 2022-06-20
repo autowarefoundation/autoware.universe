@@ -37,15 +37,16 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/common/common.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <pcl/common/common.h>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
 
+#include <random>
 #include <string>
 #include <vector>
-#include <random>
 
 using PointTye = pcl::PointXYZI;
 constexpr size_t N_SAMPLES = 20;
@@ -61,7 +62,6 @@ std::vector<size_t> UniformRandom(const size_t max_exclusive, const size_t n)
   }
   return v;
 }
-
 
 class PointCloudMapLoaderNode : public rclcpp::Node
 {

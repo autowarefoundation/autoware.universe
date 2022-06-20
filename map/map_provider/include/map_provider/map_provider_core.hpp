@@ -17,19 +17,19 @@
 #ifndef MAP_PROVIDER__MAP_PROVIDER_CORE_HPP_
 #define MAP_PROVIDER__MAP_PROVIDER_CORE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-
 #include "autoware_map_srvs/srv/load_pcd_partially.hpp"
 #include "autoware_map_srvs/srv/provide_pcd.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <boost/optional.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <condition_variable>
 #include <memory>
 #include <mutex>
-#include <condition_variable>
 #include <utility>
 
 class MapProvider : public rclcpp::Node
@@ -65,4 +65,4 @@ private:
   void updateMapTimerCallback();
 };
 
-#endif
+#endif  // MAP_PROVIDER__MAP_PROVIDER_CORE_HPP_

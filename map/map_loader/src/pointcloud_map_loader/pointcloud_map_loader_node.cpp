@@ -31,9 +31,9 @@
 #include "map_loader/pointcloud_map_loader_node.hpp"
 
 #include <glob.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/filters/voxel_grid.h>
 
 #include <filesystem>
 #include <string>
@@ -128,8 +128,8 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   std::vector<std::string> pcd_paths{};
 
   if (enable_whole_load_) {
-    pub_whole_pointcloud_map_ =
-      this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/whole", durable_qos);
+    pub_whole_pointcloud_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+      "output/pointcloud_map/whole", durable_qos);
     for (const auto & p : pcd_paths_or_directory) {
       if (!fs::exists(p)) {
         RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p);
@@ -167,8 +167,8 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   }
 
   if (enable_partial_load_) {
-    pub_partial_pointcloud_map_ =
-      this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/partial", durable_qos);
+    pub_partial_pointcloud_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+      "output/pointcloud_map/partial", durable_qos);
     pcd_file_metadata_array_ = generatePCDMetadata(pcd_paths);
     load_pcd_partially_service_ = this->create_service<autoware_map_srvs::srv::LoadPCDPartially>(
       "load_pcd_partially", std::bind(
@@ -181,7 +181,6 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
           &PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback, this,
           std::placeholders::_1, std::placeholders::_2));
   }
-
 }
 
 sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
@@ -194,7 +193,9 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   // for (const auto & path : pcd_paths) {
   for (int i = 0; i < int(pcd_paths.size()); ++i) {
     auto & path = pcd_paths[i];
-    RCLCPP_INFO_STREAM(get_logger(), "KOJI Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      "KOJI Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
@@ -323,7 +324,6 @@ void PointCloudMapLoaderNode::generateTF(sensor_msgs::msg::PointCloud2 & pcd_msg
                     << map_frame_ << ", viewer_frame:" << viewer_frame_ << ", x:" << coordinate[0]
                     << ", y:" << coordinate[1] << ", z:" << coordinate[2]);
 }
-
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(PointCloudMapLoaderNode)
