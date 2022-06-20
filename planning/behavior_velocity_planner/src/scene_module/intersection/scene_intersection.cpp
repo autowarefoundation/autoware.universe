@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <scene_module/intersection/scene_intersection.hpp>
@@ -258,6 +259,11 @@ bool IntersectionModule::checkCollision(
   /* generate ego-lane polygon */
   const auto ego_poly =
     generateEgoIntersectionLanePolygon(lanelet_map_ptr, path, closest_idx, closest_idx, 0.0, 0.0);
+  lanelet::ConstLanelets ego_lane_with_next_lane = getEgoLaneWithNextLane(lanelet_map_ptr, path);
+  lanelet::ConstLanelet closest_lanelet;
+  lanelet::utils::query::getClosestLanelet(
+    ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point),
+    &closest_lanelet);
 
   debug_data_.ego_lane_polygon = toGeomMsg(ego_poly);
 
@@ -283,6 +289,51 @@ bool IntersectionModule::checkCollision(
       const double stopping_distance = vel * vel / (2 * a);
       std::cout << "detected frontcar on the same lane, stopping_distance = " << stopping_distance
                 << std::endl;
+      const auto centerline = closest_lanelet.centerline();
+      std::vector<geometry_msgs::msg::Point> converted_centerline;
+      for (const auto & p : centerline) {
+        const auto converted_p = lanelet::utils::conversion::toGeomMsgPt(p);
+        converted_centerline.push_back(converted_p);
+      }
+      const double lat_offset = std::fabs(tier4_autoware_utils::calcLateralOffset(
+        converted_centerline,
+        tier4_autoware_utils::getPose(path.points.at(closest_idx).point).position));
+      double acc_dist1 = 0.0, acc_dist2 = 0.0;
+      // if stoppind_distance is longer than the centerline, then the stopping_point is the end of
+      // centerline
+      auto & p1 = converted_centerline.at(0);
+      auto & p2 = converted_centerline.at(1);  // TODO(Mamoru Sobue): need to check the size?
+      for (unsigned i = 0; i < converted_centerline.size() - 1; ++i) {
+        p1 = converted_centerline.at(i);
+        p2 = converted_centerline.at(i + 1);
+        const double d_p1p2 = tier4_autoware_utils::calcDistance2d(p1, p2);
+        acc_dist1 = acc_dist2;
+        acc_dist2 += d_p1p2;
+        if (acc_dist1 > stopping_distance) {
+          break;
+        }
+      }
+      geometry_msgs::msg::Point stopping_point_projected;
+      geometry_msgs::msg::Point stopping_point;
+      if (acc_dist1 <= stopping_distance) {
+        stopping_point_projected.x = p2.x;
+        stopping_point_projected.y = p2.y;
+        stopping_point_projected.z = p2.z;
+      } else {
+        const double ratio = (acc_dist2 - stopping_distance) / (stopping_distance - acc_dist1);
+        stopping_point_projected.x = (p1.x * ratio + p2.x) / (1 + ratio);
+        stopping_point_projected.y = (p1.y * ratio + p2.y) / (1 + ratio);
+        stopping_point_projected.z = (p1.z * ratio + p2.z) / (1 + ratio);
+      }
+      // geometry_msgs::msg::Point stopping_point;
+      const double lane_yaw =
+        lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point_projected);
+      std::cout << "lat_offset = " << lat_offset << ", lane_yaw = " << lane_yaw << std::endl;
+      stopping_point.x = stopping_point_projected.x + lat_offset * std::cos(lane_yaw + M_PI / 2.0);
+      stopping_point.y = stopping_point_projected.y + lat_offset * std::sin(lane_yaw + M_PI / 2.0);
+      std::cout << "stopping_point: x = " << stopping_point.x << ", y = " << stopping_point.y
+                << std::endl;
+      // const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
       continue;  // TODO(Kenji Miyake): check direction?
     }
 
@@ -300,7 +351,6 @@ bool IntersectionModule::checkCollision(
   const double passing_time = time_distance_array.back().first;
   cutPredictPathWithDuration(&target_objects, passing_time);
 
-  lanelet::ConstLanelets ego_lane_with_next_lane = getEgoLaneWithNextLane(lanelet_map_ptr, path);
   const auto closest_arc_coords = getArcCoordinates(
     ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point));
   const double distance_until_intersection =
