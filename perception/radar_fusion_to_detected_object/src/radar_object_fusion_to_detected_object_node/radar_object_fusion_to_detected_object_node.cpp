@@ -122,20 +122,16 @@ rcl_interfaces::msg::SetParametersResult RadarObjectFusionToDetectedObjectNode::
   try {
     // Node Parameter
     {
-      // Copy to local variable
-      auto p = node_param_;
+      auto & p = node_param_;
 
       // Update params
       update_param(params, "node_params.update_rate_hz", p.update_rate_hz);
-
-      // Copy back to member variable
-      node_param_ = p;
     }
 
     // Core Parameter
     {
       // Copy to local variable
-      auto p = core_param_;
+      auto & p = core_param_;
 
       // Update params
       update_param(params, "core_params.bounding_box_margin", p.bounding_box_margin);
@@ -147,9 +143,6 @@ rcl_interfaces::msg::SetParametersResult RadarObjectFusionToDetectedObjectNode::
         p.velocity_weight_target_value_average);
       update_param(
         params, "core_params.velocity_weight_target_value_top", p.velocity_weight_target_value_top);
-
-      // Copy back to member variable
-      core_param_ = p;
 
       // Set parameter to instance
       if (radar_fusion_to_detected_object_) {
