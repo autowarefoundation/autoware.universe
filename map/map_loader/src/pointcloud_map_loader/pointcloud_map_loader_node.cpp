@@ -148,6 +148,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
         }
       }
     }
+    RCLCPP_ERROR_STREAM(get_logger(), "KOJI Start loading whole map...");
 
     sensor_msgs::msg::PointCloud2 pcd = loadPCDFiles(pcd_paths);
 
@@ -155,10 +156,11 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       RCLCPP_ERROR(get_logger(), "No PCD was loaded: pcd_paths.size() = %zu", pcd_paths.size());
       return;
     }
+    RCLCPP_ERROR_STREAM(get_logger(), "KOJI Whole map load complete!");
 
-    if (use_downsample_) {
-      pcd = downsample(pcd, leaf_size_);
-    }
+    // if (use_downsample_) {
+    //   pcd = downsample(pcd, leaf_size_);
+    // }
     pcd.header.frame_id = "map";
     generateTF(pcd);
     pub_whole_pointcloud_map_->publish(pcd);
@@ -189,9 +191,17 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
 
   sensor_msgs::msg::PointCloud2 partial_pcd;
 
-  for (const auto & path : pcd_paths) {
+  // for (const auto & path : pcd_paths) {
+  for (int i = 0; i < int(pcd_paths.size()); ++i) {
+    auto & path = pcd_paths[i];
+    RCLCPP_INFO_STREAM(get_logger(), "KOJI Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
+
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
+    }
+
+    if (use_downsample_) {
+      partial_pcd = downsample(partial_pcd, leaf_size_);
     }
 
     if (whole_pcd.width == 0) {
