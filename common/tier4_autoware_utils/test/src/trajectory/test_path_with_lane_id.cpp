@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 #include "tier4_autoware_utils/trajectory/path_with_lane_id.hpp"
 
 #include <gtest/gtest.h>
@@ -60,112 +61,242 @@ PathWithLaneId generateTestTrajectory(
 }
 }  // namespace
 
-TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_PathWithLaneId)
+TEST(trajectory, calcLongitudinalOffsetPointFromIndex_PathWithLaneId)
 {
   using tier4_autoware_utils::calcArcLength;
-  using tier4_autoware_utils::calcLongitudinalOffsetPose;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcSignedArcLength;
+  using tier4_autoware_utils::getPoint;
 
-  const auto path_with_lane_id = generateTestTrajectory(10, 1.0);
+  const auto traj = generateTestTrajectory(10, 1.0);
+  const auto total_length = calcArcLength(traj.points);
 
   // Empty
-  EXPECT_THROW(calcLongitudinalOffsetPose(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+  EXPECT_THROW(calcLongitudinalOffsetPoint(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
 
   // Out of range
   EXPECT_THROW(
-    calcLongitudinalOffsetPose(path_with_lane_id.points, path_with_lane_id.points.size() + 1, 1.0),
-    std::out_of_range);
-  EXPECT_THROW(calcLongitudinalOffsetPose(path_with_lane_id.points, -1, 1.0), std::out_of_range);
+    calcLongitudinalOffsetPoint(traj.points, traj.points.size() + 1, 1.0), std::out_of_range);
+  EXPECT_THROW(calcLongitudinalOffsetPoint(traj.points, -1, 1.0), std::out_of_range);
 
-  // Same Point
-  {
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 3, 0.0);
+  // Found Pose(forward)
+  for (size_t i = 0; i < traj.points.size(); ++i) {
+    double x_ans = getPoint(traj.points.at(i)).x;
 
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+    const auto d_back = calcSignedArcLength(traj.points, i, traj.points.size() - 1);
+
+    for (double len = 0.0; len < d_back + epsilon; len += 0.1) {
+      const auto p_out = calcLongitudinalOffsetPoint(traj.points, i, std::min(len, d_back));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+
+      x_ans += 0.1;
+    }
   }
 
-  // Whole length
-  {
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 0, 9.0);
+  // Found Pose(backward)
+  for (size_t i = 0; i < traj.points.size(); ++i) {
+    double x_ans = getPoint(traj.points.at(i)).x;
 
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 9.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
+    const auto d_front = calcSignedArcLength(traj.points, i, 0);
 
-  // Whole length
-  {
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 9, -9.0);
+    for (double len = 0.0; d_front - epsilon < len; len -= 0.1) {
+      const auto p_out = calcLongitudinalOffsetPoint(traj.points, i, std::max(len, d_front));
 
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
 
-  // Forward offset
-  {
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 3, 2.25);
-
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 5.25, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
-
-  // Backward offset
-  {
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, 3, -2.25);
-
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 0.75, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+      x_ans -= 0.1;
+    }
   }
 
   // No found
   {
-    const auto p_out = calcLongitudinalOffsetPose(
-      path_with_lane_id.points, 0, calcArcLength(path_with_lane_id.points) + 1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 0, total_length + epsilon);
 
     EXPECT_EQ(p_out, boost::none);
   }
 
   // No found
   {
-    const auto p_out = calcLongitudinalOffsetPose(
-      path_with_lane_id.points, 9, -calcArcLength(path_with_lane_id.points) - 1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, 9, -total_length - epsilon);
 
     EXPECT_EQ(p_out, boost::none);
   }
 
   // No found(Trajectory size is 1)
   {
-    const auto one_point_path = generateTestTrajectory(1, 1.0);
-    const auto p_out = calcLongitudinalOffsetPose(one_point_path.points, 0.0, 0.0);
+    const auto one_point_traj = generateTestTrajectory(1, 1.0);
+    const auto p_out = calcLongitudinalOffsetPoint(one_point_traj.points, 0.0, 0.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPointFromPoint_PathWithLaneId)
+{
+  using tier4_autoware_utils::calcArcLength;
+  using tier4_autoware_utils::calcLongitudinalOffsetPoint;
+  using tier4_autoware_utils::calcSignedArcLength;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::getPoint;
+
+  const auto traj = generateTestTrajectory(10, 1.0);
+  const auto total_length = calcArcLength(traj.points);
+
+  // Empty
+  EXPECT_THROW(calcLongitudinalOffsetPoint(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+
+  // Found Pose(forward)
+  for (double x_start = 0.0; x_start < total_length + epsilon; x_start += 0.1) {
+    constexpr double lateral_deviation = 0.5;
+    double x_ans = x_start;
+
+    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto d_back = calcSignedArcLength(traj.points, p_src, traj.points.size() - 1);
+
+    for (double len = 0.0; len < d_back + epsilon; len += 0.1) {
+      const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, std::min(len, d_back));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+
+      x_ans += 0.1;
+    }
+  }
+
+  // Found Pose(backward)
+  for (double x_start = 0.0; x_start < total_length + epsilon; x_start += 0.1) {
+    constexpr double lateral_deviation = 0.5;
+    double x_ans = x_start;
+
+    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto d_front = calcSignedArcLength(traj.points, p_src, 0);
+
+    for (double len = 0.0; d_front - epsilon < len; len -= 0.1) {
+      const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, std::max(len, d_front));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().z, 0.0, epsilon);
+
+      x_ans -= 0.1;
+    }
+  }
+
+  // No found
+  {
+    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, total_length + 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found
+  {
+    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -total_length - 1.0);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // Out of range(Trajectory size is 1)
+  {
+    const auto one_point_traj = generateTestTrajectory(1, 1.0);
+    EXPECT_THROW(
+      calcLongitudinalOffsetPoint(one_point_traj.points, geometry_msgs::msg::Point{}, {}),
+      std::out_of_range);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_PathWithLaneId)
+{
+  using tier4_autoware_utils::calcArcLength;
+  using tier4_autoware_utils::calcLongitudinalOffsetPose;
+  using tier4_autoware_utils::calcSignedArcLength;
+  using tier4_autoware_utils::getPoint;
+
+  const auto traj = generateTestTrajectory(10, 1.0);
+  const auto total_length = calcArcLength(traj.points);
+
+  // Empty
+  EXPECT_THROW(calcLongitudinalOffsetPose(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
+
+  // Out of range
+  EXPECT_THROW(
+    calcLongitudinalOffsetPose(traj.points, traj.points.size() + 1, 1.0), std::out_of_range);
+  EXPECT_THROW(calcLongitudinalOffsetPose(traj.points, -1, 1.0), std::out_of_range);
+
+  // Found Pose(forward)
+  for (size_t i = 0; i < traj.points.size(); ++i) {
+    double x_ans = getPoint(traj.points.at(i)).x;
+
+    const auto d_back = calcSignedArcLength(traj.points, i, traj.points.size() - 1);
+
+    for (double len = 0.0; len < d_back + epsilon; len += 0.1) {
+      const auto p_out = calcLongitudinalOffsetPose(traj.points, i, std::min(len, d_back));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().position.x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+
+      x_ans += 0.1;
+    }
+  }
+
+  // Found Pose(backward)
+  for (size_t i = 0; i < traj.points.size(); ++i) {
+    double x_ans = getPoint(traj.points.at(i)).x;
+
+    const auto d_front = calcSignedArcLength(traj.points, i, 0);
+
+    for (double len = 0.0; d_front - epsilon < len; len -= 0.1) {
+      const auto p_out = calcLongitudinalOffsetPose(traj.points, i, std::max(len, d_front));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().position.x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+
+      x_ans -= 0.1;
+    }
+  }
+
+  // No found
+  {
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, total_length + epsilon);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found
+  {
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 9, -total_length - epsilon);
+
+    EXPECT_EQ(p_out, boost::none);
+  }
+
+  // No found(Trajectory size is 1)
+  {
+    const auto one_point_traj = generateTestTrajectory(1, 1.0);
+    const auto p_out = calcLongitudinalOffsetPose(one_point_traj.points, 0.0, 0.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
@@ -175,123 +306,68 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_PathWithLaneId)
 {
   using tier4_autoware_utils::calcArcLength;
   using tier4_autoware_utils::calcLongitudinalOffsetPose;
+  using tier4_autoware_utils::calcSignedArcLength;
   using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::getPoint;
 
-  const auto path_with_lane_id = generateTestTrajectory(10, 1.0);
+  const auto traj = generateTestTrajectory(10, 1.0);
+  const auto total_length = calcArcLength(traj.points);
 
   // Empty
   EXPECT_THROW(calcLongitudinalOffsetPose(PathWithLaneId{}.points, {}, {}), std::invalid_argument);
 
-  // Same Point
-  {
-    const auto p_src = createPoint(3.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 0.0);
+  // Found Pose(forward)
+  for (double x_start = 0.0; x_start < total_length + epsilon; x_start += 0.1) {
+    constexpr double lateral_deviation = 0.5;
+    double x_ans = x_start;
 
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto d_back = calcSignedArcLength(traj.points, p_src, traj.points.size() - 1);
+
+    for (double len = 0.0; len < d_back + epsilon; len += 0.1) {
+      const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, std::min(len, d_back));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().position.x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+
+      x_ans += 0.1;
+    }
   }
 
-  // Whole length
-  {
-    const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 9.0);
+  // Found Pose(backward)
+  for (double x_start = 0.0; x_start < total_length + epsilon; x_start += 0.1) {
+    constexpr double lateral_deviation = 0.5;
+    double x_ans = x_start;
 
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 9.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
+    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto d_front = calcSignedArcLength(traj.points, p_src, 0);
 
-  // Whole length
-  {
-    const auto p_src = createPoint(9.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, -9.0);
+    for (double len = 0.0; d_front - epsilon < len; len -= 0.1) {
+      const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, std::max(len, d_front));
 
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(p_out.get().position.x, x_ans, epsilon);
+      EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
 
-  // Forward offset(No lateral deviation)
-  {
-    const auto p_src = createPoint(1.25, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 2.25);
-
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 3.5, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
-
-  // Forward offset(Lateral deviation)
-  {
-    const auto p_src = createPoint(-1.25, 1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, 4.25);
-
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 3.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
-
-  // Backward offset
-  {
-    const auto p_src = createPoint(6.25, 1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, -2.25);
-
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 4.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
-  }
-
-  // Backward offset(Lateral deviation)
-  {
-    const auto p_src = createPoint(6.25, -1.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(path_with_lane_id.points, p_src, -4.25);
-
-    EXPECT_NE(p_out, boost::none);
-    EXPECT_NEAR(p_out.get().position.x, 2.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.x, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.y, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.z, 0.0, epsilon);
-    EXPECT_NEAR(p_out.get().orientation.w, 1.0, epsilon);
+      x_ans -= 0.1;
+    }
   }
 
   // No found
   {
     const auto p_src = createPoint(0.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(
-      path_with_lane_id.points, p_src, calcArcLength(path_with_lane_id.points) + 1.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, total_length + 1.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
@@ -299,112 +375,228 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_PathWithLaneId)
   // No found
   {
     const auto p_src = createPoint(9.0, 0.0, 0.0);
-    const auto p_out = calcLongitudinalOffsetPose(
-      path_with_lane_id.points, p_src, -calcArcLength(path_with_lane_id.points) - 1.0);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, -total_length - 1.0);
 
     EXPECT_EQ(p_out, boost::none);
   }
 
   // Out of range(Trajectory size is 1)
   {
-    const auto one_point_path = generateTestTrajectory(1, 1.0);
+    const auto one_point_traj = generateTestTrajectory(1, 1.0);
     EXPECT_THROW(
-      calcLongitudinalOffsetPose(one_point_path.points, geometry_msgs::msg::Point{}, {}),
+      calcLongitudinalOffsetPose(one_point_traj.points, geometry_msgs::msg::Point{}, {}),
       std::out_of_range);
   }
 }
 
 TEST(trajectory, insertTargetPoint_PathWithLaneId)
 {
+  using tier4_autoware_utils::calcArcLength;
   using tier4_autoware_utils::calcDistance2d;
   using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::deg2rad;
   using tier4_autoware_utils::findNearestSegmentIndex;
-  using tier4_autoware_utils::getPoint;
+  using tier4_autoware_utils::getPose;
   using tier4_autoware_utils::insertTargetPoint;
 
-  const auto path_with_lane_id = generateTestTrajectory(10, 1.0);
+  const auto traj = generateTestTrajectory(10, 1.0);
+  const auto total_length = calcArcLength(traj.points);
 
-  // Insert between trajectory front and back
-  {
-    auto path_out = path_with_lane_id;
+  // Insert
+  for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
+    auto traj_out = traj;
 
-    const auto p_target = createPoint(3.5, 0.0, 0.0);
-    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
-    const auto insert_idx = insertTargetPoint(base_idx, p_target, path_out.points);
+    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_EQ(insert_idx, 4U);
-    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size() + 1);
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
-    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
-      const auto & p_front = getPoint(path_out.points.at(i));
-      const auto & p_back = getPoint(path_out.points.at(i + 1));
-      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
-    const auto & p_insert = getPoint(path_out.points.at(insert_idx));
-    EXPECT_EQ(p_insert.x, p_target.x);
-    EXPECT_EQ(p_insert.y, p_target.y);
-    EXPECT_EQ(p_insert.z, p_target.z);
-  }
+    {
+      const auto p_insert = getPose(traj_out.points.at(insert_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      EXPECT_EQ(p_insert.position.x, p_target.x);
+      EXPECT_EQ(p_insert.position.y, p_target.y);
+      EXPECT_EQ(p_insert.position.z, p_target.z);
+      EXPECT_NEAR(p_insert.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_insert.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_insert.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_insert.orientation.w, ans_quat.w, epsilon);
+    }
 
-  // Overlap base_idx point
-  {
-    auto path_out = path_with_lane_id;
-
-    const auto p_target = createPoint(3.0, 0.0, 0.0);
-    const auto insert_idx = insertTargetPoint(3, p_target, path_out.points);
-
-    EXPECT_EQ(insert_idx, 3U);
-    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
-
-    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
-      const auto & p_front = getPoint(path_out.points.at(i));
-      const auto & p_back = getPoint(path_out.points.at(i + 1));
-      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    {
+      const auto p_base = getPose(traj_out.points.at(base_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_base.orientation.w, ans_quat.w, epsilon);
     }
   }
 
-  // Overlap base_idx + 1 point
-  {
-    auto path_out = path_with_lane_id;
+  // Insert(Boundary condition)
+  for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
+    auto traj_out = traj;
 
-    const auto p_target = createPoint(4.0, 0.0, 0.0);
-    const auto insert_idx = insertTargetPoint(3, p_target, path_out.points);
+    const auto p_target = createPoint(x_start + 1.1e-3, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_EQ(insert_idx, 4U);
-    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
-    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
-      const auto & p_front = getPoint(path_out.points.at(i));
-      const auto & p_back = getPoint(path_out.points.at(i + 1));
-      EXPECT_TRUE(calcDistance2d(p_front, p_back) > 1e-3);
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+    }
+
+    {
+      const auto p_insert = getPose(traj_out.points.at(insert_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      EXPECT_EQ(p_insert.position.x, p_target.x);
+      EXPECT_EQ(p_insert.position.y, p_target.y);
+      EXPECT_EQ(p_insert.position.z, p_target.z);
+      EXPECT_NEAR(p_insert.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_insert.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_insert.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_insert.orientation.w, ans_quat.w, epsilon);
+    }
+
+    {
+      const auto p_base = getPose(traj_out.points.at(base_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_base.orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // Insert(Quaternion interpolation)
+  for (double x_start = 0.25; x_start < total_length; x_start += 1.0) {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+    }
+
+    {
+      const auto p_insert = getPose(traj_out.points.at(insert_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
+      EXPECT_EQ(p_insert.position.x, p_target.x);
+      EXPECT_EQ(p_insert.position.y, p_target.y);
+      EXPECT_EQ(p_insert.position.z, p_target.z);
+      EXPECT_NEAR(p_insert.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_insert.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_insert.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_insert.orientation.w, ans_quat.w, epsilon);
+    }
+
+    {
+      const auto p_base = getPose(traj_out.points.at(base_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
+      EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_base.orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // Not insert(Overlap base_idx point)
+  for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(x_start + 1e-4, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_EQ(insert_idx, base_idx);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+    }
+  }
+
+  // Not insert(Overlap base_idx + 1 point)
+  for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(x_start - 1e-4, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
   // Invalid target point(In front of begin point)
   {
-    auto path_out = path_with_lane_id;
+    testing::internal::CaptureStderr();
+    auto traj_out = traj;
 
     const auto p_target = createPoint(-1.0, 0.0, 0.0);
-    EXPECT_THROW(insertTargetPoint(0, p_target, path_out.points), std::invalid_argument);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+    }
   }
 
   // Invalid target point(Behind of end point)
   {
-    auto path_out = path_with_lane_id;
+    testing::internal::CaptureStderr();
+    auto traj_out = traj;
 
     const auto p_target = createPoint(10.0, 0.0, 0.0);
-    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
-    EXPECT_THROW(insertTargetPoint(base_idx, p_target, path_out.points), std::invalid_argument);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+    }
   }
 
   // Invalid target point(Huge lateral offset)
   {
-    auto path_out = path_with_lane_id;
+    testing::internal::CaptureStderr();
+    auto traj_out = traj;
 
     const auto p_target = createPoint(4.0, 10.0, 0.0);
-    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
-    EXPECT_THROW(insertTargetPoint(base_idx, p_target, path_out.points), std::invalid_argument);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
+
+    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+    }
   }
 
   // Empty
@@ -417,74 +609,90 @@ TEST(trajectory, insertTargetPoint_PathWithLaneId)
 
 TEST(trajectory, insertTargetPoint_OverlapThreshold_PathWithLaneId)
 {
+  using tier4_autoware_utils::calcArcLength;
   using tier4_autoware_utils::calcDistance2d;
   using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::deg2rad;
   using tier4_autoware_utils::findNearestSegmentIndex;
-  using tier4_autoware_utils::getPoint;
+  using tier4_autoware_utils::getPose;
   using tier4_autoware_utils::insertTargetPoint;
 
   constexpr double overlap_threshold = 1e-4;
-  const auto path_with_lane_id = generateTestTrajectory(10, 1.0);
+  const auto traj = generateTestTrajectory(10, 1.0);
+  const auto total_length = calcArcLength(traj.points);
 
-  // Insert between trajectory front and back
-  {
-    auto path_out = path_with_lane_id;
+  // Insert(Boundary condition)
+  for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
+    auto traj_out = traj;
 
-    const auto p_target = createPoint(3.0001, 0.0, 0.0);
-    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    const auto p_target = createPoint(x_start + 1.1e-4, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx =
-      insertTargetPoint(base_idx, p_target, path_out.points, overlap_threshold);
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
 
-    EXPECT_EQ(insert_idx, 4U);
-    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size() + 1);
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
-    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
-      const auto & p_front = getPoint(path_out.points.at(i));
-      const auto & p_back = getPoint(path_out.points.at(i + 1));
-      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(
+        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
     }
 
-    const auto & p_insert = getPoint(path_out.points.at(insert_idx));
-    EXPECT_EQ(p_insert.x, p_target.x);
-    EXPECT_EQ(p_insert.y, p_target.y);
-    EXPECT_EQ(p_insert.z, p_target.z);
-  }
+    {
+      const auto p_insert = getPose(traj_out.points.at(insert_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      EXPECT_EQ(p_insert.position.x, p_target.x);
+      EXPECT_EQ(p_insert.position.y, p_target.y);
+      EXPECT_EQ(p_insert.position.z, p_target.z);
+      EXPECT_NEAR(p_insert.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_insert.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_insert.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_insert.orientation.w, ans_quat.w, epsilon);
+    }
 
-  // Overlap base_idx point
-  {
-    auto path_out = path_with_lane_id;
-
-    const auto p_target = createPoint(3.00001, 0.0, 0.0);
-    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
-    const auto insert_idx =
-      insertTargetPoint(base_idx, p_target, path_out.points, overlap_threshold);
-
-    EXPECT_EQ(insert_idx, 3U);
-    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
-
-    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
-      const auto & p_front = getPoint(path_out.points.at(i));
-      const auto & p_back = getPoint(path_out.points.at(i + 1));
-      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    {
+      const auto p_base = getPose(traj_out.points.at(base_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_base.orientation.w, ans_quat.w, epsilon);
     }
   }
 
-  // Overlap base_idx + 1 point
-  {
-    auto path_out = path_with_lane_id;
+  // Not insert(Overlap base_idx point)
+  for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
+    auto traj_out = traj;
 
-    const auto p_target = createPoint(3.99999, 0.0, 0.0);
-    const size_t base_idx = findNearestSegmentIndex(path_with_lane_id.points, p_target);
+    const auto p_target = createPoint(x_start + 1e-5, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx =
-      insertTargetPoint(base_idx, p_target, path_out.points, overlap_threshold);
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
 
-    EXPECT_EQ(insert_idx, 4U);
-    EXPECT_EQ(path_out.points.size(), path_with_lane_id.points.size());
+    EXPECT_EQ(insert_idx, base_idx);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
-    for (size_t i = 0; i < path_out.points.size() - 1; ++i) {
-      const auto & p_front = getPoint(path_out.points.at(i));
-      const auto & p_back = getPoint(path_out.points.at(i + 1));
-      EXPECT_TRUE(calcDistance2d(p_front, p_back) > overlap_threshold);
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(
+        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
+    }
+  }
+
+  // Not insert(Overlap base_idx + 1 point)
+  for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(x_start - 1e-5, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
+
+    EXPECT_EQ(insert_idx, base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size());
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(
+        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
     }
   }
 }
