@@ -91,21 +91,21 @@ bool sphere_and_box_overlap_exists(
   return false;
 }
 
-sensor_msgs::msg::PointCloud2 downsample(sensor_msgs::msg::PointCloud2 msg, float leaf_size)
+sensor_msgs::msg::PointCloud2 downsample(sensor_msgs::msg::PointCloud2 msg_input, float leaf_size)
 {
-  // STRONG TODO: THIS FUNCTION IS VERY INEFFECTIVE, MAY INCLUDE DEEPCOPY(COPIES)
-  pcl::PointCloud<pcl::PointXYZ> input_points;
-  pcl::PointCloud<pcl::PointXYZ> output_points;
-  pcl::fromROSMsg(msg, input_points);
-  pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_filter;
-  voxel_grid_filter.setLeafSize(leaf_size, leaf_size, leaf_size);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_points_ptr;
-  input_points_ptr = input_points.makeShared();
-  voxel_grid_filter.setInputCloud(input_points_ptr);
-  voxel_grid_filter.filter(output_points);
-  sensor_msgs::msg::PointCloud2 output_msg;
-  pcl::toROSMsg(output_points, output_msg);
-  return output_msg;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(msg_input, *pcl_input);
+  pcl::VoxelGrid<pcl::PointXYZ> filter;
+  filter.setInputCloud(pcl_input);
+  // filter.setSaveLeafLayout(true);
+  filter.setLeafSize(leaf_size, leaf_size, leaf_size);
+  filter.filter(*pcl_output);
+
+  sensor_msgs::msg::PointCloud2 msg_output;
+  pcl::toROSMsg(*pcl_output, msg_output);
+  msg_output.header = msg_input.header;
+  return msg_output;
 }
 
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
@@ -230,8 +230,6 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
   const geometry_msgs::msg::Point position, const float radius,
   std::vector<PointCloudMapLoaderNode::PCDFileMetadata> pcd_file_metadata_array) const
 {
-  RCLCPP_INFO_STREAM(get_logger(), "loadPCDPartially");
-
   sensor_msgs::msg::PointCloud2 filtered_pcd{};
   sensor_msgs::msg::PointCloud2 pcd;
   for (const auto & metadata : pcd_file_metadata_array) {
@@ -257,8 +255,6 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
   autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request::SharedPtr req,
   autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Response::SharedPtr res)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "request received (/publish)!");
-
   res->position = req->position;
   res->radius = req->radius;
   pub_partial_pointcloud_map_->publish(
@@ -272,11 +268,7 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
 {
   res->position = req->position;
   res->radius = req->radius;
-  RCLCPP_ERROR(get_logger(), "Start Loading map! @(%f, %f), radius=%f",
-    res->position.x, res->position.y, res->radius);
   res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
-  RCLCPP_INFO_STREAM(get_logger(), "finished loading partial map!");
-
   return true;
 }
 

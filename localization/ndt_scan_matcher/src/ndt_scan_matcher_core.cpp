@@ -135,13 +135,12 @@ NDTScanMatcher::NDTScanMatcher()
     int search_method = static_cast<int>(omp_params_.search_method);
     search_method = this->declare_parameter("omp_neighborhood_search_method", search_method);
     omp_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
-    // TODO(Tier IV): check search_method is valid value.
+    // TODO(TIER IV): check search_method is valid value.
     ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
 
     omp_params_.num_threads = this->declare_parameter("omp_num_threads", omp_params_.num_threads);
     omp_params_.num_threads = std::max(omp_params_.num_threads, 1);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-    ndt_ptr_ = ndt_omp_ptr;
   }
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
@@ -350,14 +349,12 @@ void NDTScanMatcher::serviceNDTAlign(
     RCLCPP_WARN(get_logger(), "No InputSource");
     return;
   }
-  RCLCPP_WARN(get_logger(), "KOJI Start Aligning using MonteCarlo...");
 
   // mutex Map
   std::lock_guard<std::mutex> lock(ndt_map_mtx_);
 
   key_value_stdmap_["state"] = "Aligning";
   res->pose_with_covariance = alignUsingMonteCarlo(ndt_ptr_, mapTF_initial_pose_msg);
-  RCLCPP_WARN(get_logger(), "KOJI Finished Aligning!");
   key_value_stdmap_["state"] = "Sleeping";
   res->success = true;
   res->seq = req->seq;
@@ -398,57 +395,44 @@ void NDTScanMatcher::callbackInitialPose(
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
-  // std::thread thread([this, map_points_msg_ptr]{
-    const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
-    const auto step_size = ndt_ptr_->getStepSize();
-    const auto resolution = ndt_ptr_->getResolution();
-    const auto max_iterations = ndt_ptr_->getMaximumIterations();
+  
+  const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
+  const auto step_size = ndt_ptr_->getStepSize();
+  const auto resolution = ndt_ptr_->getResolution();
+  const auto max_iterations = ndt_ptr_->getMaximumIterations();
 
-    using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
-    std::shared_ptr<NDTBase> new_ndt_ptr_ = getNDT<PointSource, PointTarget>(ndt_implement_type_);
+  using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
+  std::shared_ptr<NDTBase> new_ndt_ptr_ = getNDT<PointSource, PointTarget>(ndt_implement_type_);
 
-    if (ndt_implement_type_ == NDTImplementType::OMP) {
-      using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
+  if (ndt_implement_type_ == NDTImplementType::OMP) {
+    using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
 
-      // FIXME(IshitaTakeshi) Not sure if this is safe
-      std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
-      ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
-      ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-      new_ndt_ptr_ = ndt_omp_ptr;
-    }
+    // FIXME(IshitaTakeshi) Not sure if this is safe
+    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(new_ndt_ptr_);
+    ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
+    ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
+  }
+  new_ndt_ptr_->setTransformationEpsilon(trans_epsilon);
+  new_ndt_ptr_->setStepSize(step_size);
+  new_ndt_ptr_->setResolution(resolution);
+  new_ndt_ptr_->setMaximumIterations(max_iterations);
 
-    new_ndt_ptr_->setTransformationEpsilon(trans_epsilon);
-    new_ndt_ptr_->setStepSize(step_size);
-    new_ndt_ptr_->setResolution(resolution);
-    new_ndt_ptr_->setMaximumIterations(max_iterations);
+  pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
+  pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
+  new_ndt_ptr_->setInputTarget(map_points_ptr);
+  auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
+  new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity()); // This line is heavy 
 
-    pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
-    pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
-    RCLCPP_WARN(get_logger(), "KOJI map points: %d", int(map_points_msg_ptr->data.size()));
-    new_ndt_ptr_->setInputTarget(map_points_ptr);
-    // create Thread
-    // detach
-    auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-    // RCLCPP_WARN(get_logger(), "KOJI Start Aligning at cbMap! @(%f, %f), Src size: %d, Tgt size: %d",
-    //   0.0, 0.0,
-    //   int(new_ndt_ptr_->getInputSource()->size()),
-    //   int(new_ndt_ptr_->getInputTarget()->size()));
-    // new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity());
-    RCLCPP_WARN(get_logger(), "KOJI finished aligning at map_callback");
-
-    // swap
-    ndt_map_mtx_.lock();
-    ndt_ptr_ = new_ndt_ptr_;
-    ndt_map_mtx_.unlock();
-  // });
-  // thread.detach();
+  // swap
+  ndt_map_mtx_.lock();
+  ndt_ptr_ = new_ndt_ptr_;
+  ndt_map_mtx_.unlock();
 }
 
 void NDTScanMatcher::callbackSensorPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_sensorTF_msg_ptr)
 {
   const auto exe_start_time = std::chrono::system_clock::now();
-  // mutex Map
   std::lock_guard<std::mutex> lock(ndt_map_mtx_);
 
   const std::string & sensor_frame = sensor_points_sensorTF_msg_ptr->header.frame_id;
@@ -466,7 +450,6 @@ void NDTScanMatcher::callbackSensorPoints(
     new pcl::PointCloud<PointSource>);
   pcl::transformPointCloud(
     *sensor_points_sensorTF_ptr, *sensor_points_baselinkTF_ptr, base_to_sensor_matrix);
-  // RCLCPP_WARN(get_logger(), "KOJI Input pointcloud detected!");
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
 
   // start of critical section for initial_pose_msg_ptr_array_
@@ -521,11 +504,6 @@ void NDTScanMatcher::callbackSensorPoints(
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   key_value_stdmap_["state"] = "Aligning";
-  // RCLCPP_WARN(get_logger(), "KOJI Start Aligning at cbSensorPoints! @(%f, %f), Src size: %d, Tgt size: %d",
-  //   initial_pose_cov_msg.pose.pose.position.x,
-  //   initial_pose_cov_msg.pose.pose.position.y,
-  //   int(ndt_ptr_->getInputSource()->size()),
-  //   int(ndt_ptr_->getInputTarget()->size()));
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
   key_value_stdmap_["state"] = "Sleeping";
 
@@ -716,10 +694,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
     return geometry_msgs::msg::PoseWithCovarianceStamped();
   }
 
-  RCLCPP_WARN(get_logger(), "KOJI Generate Random initial poses! @(%f, %f)",
-    initial_pose_with_cov.pose.pose.position.x,
-    initial_pose_with_cov.pose.pose.position.y);
-
   // generateParticle
   const auto initial_poses =
     createRandomPoseArray(initial_pose_with_cov, initial_estimate_particles_num_);
@@ -732,11 +706,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
 
     const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose);
     const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
-    // RCLCPP_WARN(get_logger(), "KOJI Start Aligning at alignUsingMC! @(%f, %f), Src size: %d, Tgt size: %d",
-    //   initial_pose.position.x,
-    //   initial_pose.position.y,
-    //   int(ndt_ptr_->getInputSource()->size()),
-    //   int(ndt_ptr_->getInputTarget()->size()));
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
 
     const Eigen::Matrix4f result_pose_matrix = ndt_ptr->getFinalTransformation();
@@ -763,8 +732,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
     sensor_points_mapTF_msg.header.frame_id = map_frame_;
     sensor_aligned_pose_pub_->publish(sensor_points_mapTF_msg);
   }
-
-  RCLCPP_WARN(get_logger(), "KOJI Choose the best particle!");
 
   auto best_particle_ptr = std::max_element(
     std::begin(particle_array), std::end(particle_array),
