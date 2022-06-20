@@ -8,6 +8,8 @@ This package is for development of path planning algorithms in free space.
 
 - Hybrid A\* and RRT\* (includes RRT and informed RRT\*)
 
+Please see [rrtstar.md](rrtstar.md) for a note on the implementation for informed-RRT\*.
+
 NOTE: As for RRT\*, one can choose whether update after feasible solution found in RRT\*.
 If not doing so, the algorithm is the almost (but exactly because of rewiring procedure) same as vanilla RRT.
 If you choose update, then you have option if the sampling after feasible solution found is "informed".
