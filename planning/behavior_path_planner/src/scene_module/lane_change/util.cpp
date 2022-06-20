@@ -33,6 +33,8 @@
 
 namespace behavior_path_planner::lane_change_utils
 {
+using tier4_autoware_utils::Polygon2d;
+
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
 {
   PathWithLaneId path;
