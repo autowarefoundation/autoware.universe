@@ -3,6 +3,7 @@
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/core.hpp>
+#include <rclcpp/logger.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -55,7 +56,8 @@ public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Pose = geometry_msgs::msg::Pose;
 
-  HierarchicalCostMap(float max_range, float image_size, float gamma);
+  HierarchicalCostMap(
+    const rclcpp::Logger & logger, float max_range, float image_size, float gamma);
 
   void setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
 
@@ -69,6 +71,7 @@ private:
   const float max_range_;
   const float image_size_;
   const int max_map_count_;
+  rclcpp::Logger logger_;
 
   cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);

@@ -19,8 +19,6 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   LineSegment lsd_cloud;
   pcl::fromROSMsg(lsd_msg, lsd_cloud);
 
-  cv::Mat ll2_image;
-
   auto score_convert = [this, k = -std::log(min_prob_) / 2.f](float raw) -> float {
     raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
     return this->min_prob_ * std::exp(k * (raw / this->max_raw_score_ + 1));
@@ -32,7 +30,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
     Eigen::Affine3f transform = util::pose2Affine(particle.pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
 
-    float raw_score = computeScore(transformed_lsd, ll2_image);
+    float raw_score = computeScore(transformed_lsd);
     particle.weight = score_convert(raw_score);
   }
 
@@ -53,7 +51,7 @@ void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)
   RCLCPP_INFO_STREAM(get_logger(), "Set LL2 cloud into Hierarchical cost map");
 }
 
-float CameraParticleCorrector::computeScore(const LineSegment & lsd_cloud, cv::Mat & ll2_image)
+float CameraParticleCorrector::computeScore(const LineSegment & lsd_cloud)
 {
   float score = 0;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {

@@ -30,7 +30,7 @@ public:
     score_offset_(declare_parameter<float>("score_offset", -64.f)),
     max_raw_score_(declare_parameter<float>("max_raw_score", 5000.0)),
     min_prob_(declare_parameter<float>("min_prob", 0.01)),
-    cost_map_(max_range_, image_size_, gamma_)
+    cost_map_(this->get_logger(), max_range_, image_size_, gamma_)
   {
     using std::placeholders::_1;
 
@@ -52,7 +52,7 @@ private:
   void ll2Callback(const PointCloud2 & msg);
   void poseCallback(const PoseStamped & msg);
 
-  float computeScore(const LineSegment & ls_cloud, cv::Mat & ll2_image);
+  float computeScore(const LineSegment & ls_cloud);
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr lsd_sub_;

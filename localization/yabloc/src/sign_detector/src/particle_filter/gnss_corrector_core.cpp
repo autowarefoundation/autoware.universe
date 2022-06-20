@@ -14,9 +14,10 @@ GnssParticleCorrector::GnssParticleCorrector()
 {
   using std::placeholders::_1;
   auto ublox_callback = std::bind(&GnssParticleCorrector::ubloxCallback, this, _1);
-  ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, ublox_callback);
+  auto height_callback = [this](const Float32 & height) { this->latest_height_ = height; };
 
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
+  ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, ublox_callback);
+  height_sub_ = create_subscription<Float32>("/height", 10, height_callback);
   marker_pub_ = create_publisher<MarkerArray>("/gnss/effect_marker", 10);
 }
 
@@ -71,7 +72,6 @@ void GnssParticleCorrector::fixCallback(const NavSatFix::ConstSharedPtr fix_msg)
 
 void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position)
 {
-  MarkerArray array_msg;
   using namespace std::literals::chrono_literals;
   using Point = geometry_msgs::msg::Point;
 
@@ -85,6 +85,7 @@ void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position)
     }
   };
 
+  MarkerArray array_msg;
   for (int i = 0; i < 5; i++) {
     Marker marker;
     marker.header.stamp = get_clock()->now();
@@ -94,11 +95,11 @@ void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position)
     marker.lifetime = rclcpp::Duration(500ms);
     marker.pose.position.x = position.x();
     marker.pose.position.y = position.y();
-    marker.pose.position.z = position.z();
+    marker.pose.position.z = latest_height_.data;
 
     float prob = (1 - min_prob_) * i / 4 + min_prob_;
     marker.color = util::toRgba(prob);
-    marker.color.a = 0.2f;
+    marker.color.a = 0.3f;
     marker.scale.x = 0.1;
     drawCircle(marker.points, inversePdf(prob));
     array_msg.markers.push_back(marker);
@@ -119,7 +120,7 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weightParticles(
     if (distance < flat_radius_) {
       weighted_particles.particles[i].weight = 1.0f;
     } else {
-      weighted_particles.particles[i].weight = normalPDF(distance - flat_radius_, 0.0, sigma_);
+      weighted_particles.particles[i].weight = normalPdf(distance - flat_radius_, 0.0, sigma_);
     }
 
     weighted_particles.particles[i].weight =
@@ -129,7 +130,7 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weightParticles(
   return weighted_particles;
 }
 
-float GnssParticleCorrector::normalPDF(float x, float mu, float sigma)
+float GnssParticleCorrector::normalPdf(float x, float mu, float sigma)
 {
   // NOTE: This is not exact normal distribution
   float a = (x - mu) / sigma;

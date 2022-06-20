@@ -17,8 +17,9 @@ cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vecto
   return {px, py};
 }
 
-HierarchicalCostMap::HierarchicalCostMap(float max_range, float image_size, float gamma)
-: max_range_(max_range), image_size_(image_size), max_map_count_(20)
+HierarchicalCostMap::HierarchicalCostMap(
+  const rclcpp::Logger & logger, float max_range, float image_size, float gamma)
+: logger_(logger), max_range_(max_range), image_size_(image_size), max_map_count_(20)
 {
   Area::unit_length_ = max_range;
   gamma_converter.reset(gamma);
@@ -67,8 +68,8 @@ void HierarchicalCostMap::buildMap(const Area & area)
     generated_map_history_.pop_front();
     cost_maps_.erase(key);
   }
-  std::cout << "successed to build map " << area(area) << " " << area.realScale().transpose()
-            << std::endl;
+  RCLCPP_INFO_STREAM(
+    logger_, "successed to build map " << area(area) << " " << area.realScale().transpose());
 }
 
 HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const

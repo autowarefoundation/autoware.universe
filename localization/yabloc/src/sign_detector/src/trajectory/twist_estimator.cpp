@@ -124,6 +124,8 @@ Eigen::Vector3f TwistEstimator::extractEnuVel(const NavPVT & msg) const
 
 void TwistEstimator::publishDoppler(const NavPVT & navpvt)
 {
+  if (!last_imu_stamp_.has_value()) return;
+
   PoseStamped msg;
   msg.header.stamp = last_imu_stamp_.value();
   msg.header.frame_id = "base_link";
