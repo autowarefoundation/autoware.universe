@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <include file="$(find-pkg-share ndt_scan_matcher)/launch/ndt_scan_matcher.launch.xml">
-    <arg name="input_map_points_topic" value="/map/pointcloud_map/whole"/>
+    <arg name="input_map_points_topic" value="/map/pointcloud_map/partial"/>
     <arg name="input/pointcloud" value="/localization/util/downsample/pointcloud"/>
     <arg name="input_initial_pose_topic" value="/localization/pose_twist_fusion_filter/pose_with_covariance_without_yawbias"/>
 

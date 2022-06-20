@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef _MAP_PROVIDER_HPP_
-#define _MAP_PROVIDER_HPP_
+#ifndef MAP_PROVIDER__MAP_PROVIDER_CORE_HPP_
+#define MAP_PROVIDER__MAP_PROVIDER_CORE_HPP_
+
+#include <rclcpp/rclcpp.hpp>
 
 #include "autoware_map_srvs/srv/load_pcd_partially.hpp"
 #include "autoware_map_srvs/srv/provide_pcd.hpp"
@@ -24,6 +26,11 @@
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+
+#include <memory>
+#include <mutex>
+#include <condition_variable>
+#include <utility>
 
 class MapProvider : public rclcpp::Node
 {
@@ -45,6 +52,12 @@ private:
   rclcpp::Service<autoware_map_srvs::srv::ProvidePCD>::SharedPtr pcd_provider_server_;
   rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartially>::SharedPtr pcd_loader_client_;
   rclcpp::TimerBase::SharedPtr update_map_timer_;
+
+  rclcpp::CallbackGroup::SharedPtr pcd_loader_service_group_;
+
+  std::mutex mutex_;
+  std::condition_variable condition_;
+  bool value_ready_ = false;
 
   bool pcdProviderServiceCallback(
     autoware_map_srvs::srv::ProvidePCD::Request::SharedPtr req,

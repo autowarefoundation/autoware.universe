@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-#include "map_provider/map_provider_core.h"
+#include "map_provider/map_provider_core.hpp"
+
+#include <algorithm>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <string>
 
 bool needs_update_map(
   const geometry_msgs::msg::Vector3 p1, const geometry_msgs::msg::Point p2, const double e)
@@ -25,23 +31,25 @@ bool needs_update_map(
 
 MapProvider::MapProvider() : Node("map_provider"), tf2_listener_(tf2_buffer_)
 {
-  pointcloud_map_radius_ = this->declare_parameter("pointcloud_map_radius", 300.0);
+  pointcloud_map_radius_ = this->declare_parameter("pointcloud_map_radius", 50.0);
   update_threshold_distance_ = this->declare_parameter("update_threshold_distance", 100.0);
 
   map_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "output/pointcloud_map", rclcpp::QoS(1).transient_local());
 
-  pcd_provider_server_ = this->create_service<autoware_map_srvs::srv::ProvidePCD>(
-    "pcd_provider_service", std::bind(
-                              &MapProvider::pcdProviderServiceCallback, this, std::placeholders::_1,
-                              std::placeholders::_2));
-
+  pcd_loader_service_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   pcd_loader_client_ =
-    this->create_client<autoware_map_srvs::srv::LoadPCDPartially>("pcd_loader_service");
+    this->create_client<autoware_map_srvs::srv::LoadPCDPartially>(
+      "pcd_loader_service", rmw_qos_profile_services_default, pcd_loader_service_group_);
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_DEBUG(get_logger(), "Waiting for pcd_loader_service...");
   }
 
+  pcd_provider_server_ = this->create_service<autoware_map_srvs::srv::ProvidePCD>(
+    "pcd_provider_service", std::bind(
+                              &MapProvider::pcdProviderServiceCallback, this, std::placeholders::_1,
+                              std::placeholders::_2));
   update_map_timer_ = create_wall_timer(
     std::chrono::microseconds(1000), std::bind(&MapProvider::updateMapTimerCallback, this));
 }
@@ -53,15 +61,32 @@ bool MapProvider::pcdProviderServiceCallback(
   auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartially::Request>();
   request->position = req->position;
   request->radius = req->radius;
-  auto result = pcd_loader_client_->async_send_request(request);
-  if (
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) ==
-    rclcpp::FutureReturnCode::TIMEOUT) {
-    RCLCPP_ERROR(get_logger(), "Failed to call service pcd_loader");
-    return false;
+  if (req->radius < 0.0) {
+    request->radius = pointcloud_map_radius_;
   }
+  RCLCPP_INFO(get_logger(), "request received! Start sending request to map_loader...");
+
+  auto result {
+    pcd_loader_client_->async_send_request(
+      request,
+      [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartially>::SharedFuture response)
+      {
+        std::lock_guard<std::mutex> lock {mutex_};
+        value_ready_ = true;
+        std::cout << sizeof(response); // Unnecessary, just here to avoid build warning
+        condition_.notify_all();
+      }
+    )
+  };
+  std::unique_lock<std::mutex> lock {mutex_};
+  condition_.wait(lock, [this](){return value_ready_;});
+  RCLCPP_INFO(get_logger(), "request received! Finish waiting response from map_loader!!!! Goodbye");
+
   res->position = req->position;
   res->radius = req->radius;
+  if (req->radius < 0.0) {
+    res->radius = pointcloud_map_radius_;
+  }
   res->map = result.get()->map;
 
   if (res->map.width == 0) {
@@ -72,6 +97,8 @@ bool MapProvider::pcdProviderServiceCallback(
   }
 
   map_points_pub_->publish(res->map);
+  value_ready_ = false;
+
   return true;
 }
 
@@ -104,16 +131,30 @@ void MapProvider::updateMapTimerCallback()
   request->position.y = transform_stamped.transform.translation.y;
   request->position.z = transform_stamped.transform.translation.z;
   request->radius = pointcloud_map_radius_;
-  auto result = pcd_loader_client_->async_send_request(request);
-  RCLCPP_INFO(get_logger(), "test");
-  if (
-    rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) ==
-    rclcpp::FutureReturnCode::SUCCESS) {
-    RCLCPP_INFO(get_logger(), "Success");
-  } else {
-    RCLCPP_ERROR(get_logger(), "Failed to call service pcd_loader");
-    return;
-  }
+  // auto result = pcd_loader_client_->async_send_request(request);
+  // RCLCPP_INFO(get_logger(), "test");
+  // if (
+  //   rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) ==
+  //   rclcpp::FutureReturnCode::SUCCESS) {
+  //   RCLCPP_INFO(get_logger(), "Success");
+  // } else {
+  //   RCLCPP_ERROR(get_logger(), "Failed to call service pcd_loader");
+  //   return;
+  // }
+  auto result {
+    pcd_loader_client_->async_send_request(
+      request,
+      [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartially>::SharedFuture response){
+        std::lock_guard<std::mutex> lock {mutex_};
+        value_ready_ = true;
+        std::cout << sizeof(response); // Unnecessary, just here to avoid build warning
+        condition_.notify_all();
+      }
+    )
+  };
+  std::unique_lock<std::mutex> lock {mutex_};
+  condition_.wait(lock, [this](){return value_ready_;});
+  // TODO: This may be wrong. Maybe must return when failed to call pcd_loader_ server?
 
   pcd_loader_res_ = result.get();
 

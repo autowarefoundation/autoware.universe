@@ -94,6 +94,16 @@ PoseInitializer::PoseInitializer()
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
+  pcd_provider_service_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  pcd_provider_client_ =
+    this->create_client<autoware_map_srvs::srv::ProvidePCD>(
+      // "/map/load_pcd_partially", rmw_qos_profile_services_default, pcd_provider_service_group_);
+      "pcd_provider_service", rmw_qos_profile_services_default, pcd_provider_service_group_);
+  while (!pcd_provider_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+    RCLCPP_INFO(get_logger(), "Waiting for pcd provider service...");
+  }
+
   initialize_pose_service_ =
     this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
       "service/initialize_pose", std::bind(
@@ -137,9 +147,48 @@ void PoseInitializer::callbackInitialPose(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
+  try {
+    const auto stamped = tf2_buffer_.lookupTransform(
+      map_frame_, add_height_pose_msg_ptr->header.frame_id, tf2::TimePointZero);
+    tf2::doTransform(*add_height_pose_msg_ptr, *add_height_pose_msg_ptr, stamped);
+  } catch (tf2::TransformException & exception) {
+    RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
+  }
+  auto request = std::make_shared<autoware_map_srvs::srv::ProvidePCD::Request>();
+  request->position = add_height_pose_msg_ptr->pose.pose.position;
+  request->radius = -1.0; // Should be removed somehow
+  // auto result = pcd_provider_client_->async_send_request(request);
+  // if (
+  //   rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) ==
+  //   rclcpp::FutureReturnCode::SUCCESS) {
+  //   RCLCPP_ERROR(get_logger(), "[pose_initializer] OK");
+  // } else {
+  //   RCLCPP_ERROR(get_logger(), "[pose_initializer] could not call pcd_provider_client_");
+  //   return;
+  // }
+  auto result {
+    pcd_provider_client_->async_send_request(
+      request,
+      [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response)
+      {
+        std::lock_guard<std::mutex> lock {mutex_};
+        value_ready_ = true;
+        std::cout << sizeof(response); // Unnecessary, just here to avoid build warning
+        condition_.notify_all();
+      }
+    )
+  };
+  RCLCPP_ERROR(get_logger(), "============================================");
+  RCLCPP_ERROR(get_logger(), "pose initializer start waiting for response @ InitialPoseCallback");
+  std::unique_lock<std::mutex> lock {mutex_};
+  condition_.wait(lock, [this](){return value_ready_;});
+  RCLCPP_ERROR(get_logger(), "pose initializer end waiting for response!!!");
+
   add_height_pose_msg_ptr->pose.covariance = initialpose_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
+
+  value_ready_ = false;
 }
 
 // NOTE Still not usable callback
@@ -155,9 +204,40 @@ void PoseInitializer::callbackGNSSPoseCov(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
+  try {
+    const auto stamped = tf2_buffer_.lookupTransform(
+      map_frame_, add_height_pose_msg_ptr->header.frame_id, tf2::TimePointZero);
+    tf2::doTransform(*add_height_pose_msg_ptr, *add_height_pose_msg_ptr, stamped);
+  } catch (tf2::TransformException & exception) {
+    RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
+  }
+
+  auto request = std::make_shared<autoware_map_srvs::srv::ProvidePCD::Request>();
+  request->position = add_height_pose_msg_ptr->pose.pose.position;
+  request->radius = -1.0; // Should be removed somehow
+  auto result {
+    pcd_provider_client_->async_send_request(
+      request,
+      [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response)
+      {
+        std::lock_guard<std::mutex> lock {mutex_};
+        value_ready_ = true;
+        std::cout << sizeof(response); // Unnecessary, just here to avoid build warning
+        condition_.notify_all();
+      }
+    )
+  };
+  RCLCPP_ERROR(get_logger(), "============================================");
+  RCLCPP_ERROR(get_logger(), "pose initializer start waiting for response @ GNSSCallback");
+  std::unique_lock<std::mutex> lock {mutex_};
+  condition_.wait(lock, [this](){return value_ready_;});
+  RCLCPP_ERROR(get_logger(), "pose initializer end waiting for response!!!");
+
   add_height_pose_msg_ptr->pose.covariance = gnss_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
+
+  value_ready_ = false;
 }
 
 void PoseInitializer::serviceInitializePoseAuto(

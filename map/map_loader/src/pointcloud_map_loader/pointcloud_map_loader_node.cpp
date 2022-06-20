@@ -91,17 +91,21 @@ bool sphere_and_box_overlap_exists(
   return false;
 }
 
-sensor_msgs::msg::PointCloud2 downsample(sensor_msgs::msg::PointCloud2 points, float leaf_size)
+sensor_msgs::msg::PointCloud2 downsample(sensor_msgs::msg::PointCloud2 msg, float leaf_size)
 {
-  // sensor_msgs::msg::PointCloud2::Ptr input_points(new sensor_msgs::msg::PointCloud2(points));
-  // sensor_msgs::msg::PointCloud2::Ptr downsampled_points(new sensor_msgs::msg::PointCloud2);
-  // pcl::VoxelGrid<PointType> voxel_grid_filter;
-  // voxel_grid_filter.setLeafSize(leaf_size, leaf_size, leaf_size);
-  // voxel_grid_filter.setInputCloud(input_points);
-  // voxel_grid_filter.filter(*downsampled_points);
-  // return *downsampled_points.get();
-  std::cout << "!!!!!!!!!!!!!IMPLEMENT HERE" << leaf_size << std::endl;
-  return points;
+  // STRONG TODO: THIS FUNCTION IS VERY INEFFECTIVE, MAY INCLUDE DEEPCOPY(COPIES)
+  pcl::PointCloud<pcl::PointXYZ> input_points;
+  pcl::PointCloud<pcl::PointXYZ> output_points;
+  pcl::fromROSMsg(msg, input_points);
+  pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_filter;
+  voxel_grid_filter.setLeafSize(leaf_size, leaf_size, leaf_size);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_points_ptr;
+  input_points_ptr = input_points.makeShared();
+  voxel_grid_filter.setInputCloud(input_points_ptr);
+  voxel_grid_filter.filter(output_points);
+  sensor_msgs::msg::PointCloud2 output_msg;
+  pcl::toROSMsg(output_points, output_msg);
+  return output_msg;
 }
 
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
@@ -114,8 +118,10 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 
   enable_whole_load_ = declare_parameter("enable_whole_load", true);
   enable_partial_load_ = declare_parameter("enable_partial_load", true);
-  use_downsample_ = declare_parameter("use_downsample", false);
-  leaf_size_ = declare_parameter("leaf_size", 1.0);
+  use_downsample_ = declare_parameter("use_downsample", true);
+  leaf_size_ = declare_parameter("leaf_size", 2.0);
+  map_frame_ = declare_parameter("map_frame", "map");
+  viewer_frame_ = declare_parameter("viewer_frame", "viewer");
 
   static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
 
@@ -150,9 +156,9 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       return;
     }
 
-    // if (use_downsample_) {
-    //   pcd = downsample(pcd, leaf_size_);
-    // }
+    if (use_downsample_) {
+      pcd = downsample(pcd, leaf_size_);
+    }
     pcd.header.frame_id = "map";
     generateTF(pcd);
     pub_whole_pointcloud_map_->publish(pcd);
@@ -161,7 +167,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   if (enable_partial_load_) {
     pub_partial_pointcloud_map_ =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map/partial", durable_qos);
-    pcd_file_metadata_array_ = generatePCDMetadata(pcd_paths_or_directory);
+    pcd_file_metadata_array_ = generatePCDMetadata(pcd_paths);
     load_pcd_partially_service_ = this->create_service<autoware_map_srvs::srv::LoadPCDPartially>(
       "load_pcd_partially", std::bind(
                               &PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback, this,
@@ -176,7 +182,6 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 
 }
 
-// TODO: pcl::PointCloud<PointType> -> sensor_msgs::msg::PointCloud2
 sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   const std::vector<std::string> & pcd_paths)
 {
@@ -185,7 +190,6 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   sensor_msgs::msg::PointCloud2 partial_pcd;
 
   for (const auto & path : pcd_paths) {
-    RCLCPP_INFO_STREAM(get_logger(), "LOOOOOOOOOOOOOOODING " << path);
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
     }
@@ -197,7 +201,6 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
       whole_pcd.row_step += partial_pcd.row_step;
       whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
       whole_pcd.data.insert(whole_pcd.data.end(), partial_pcd.data.begin(), partial_pcd.data.end());
-      // whole_pcd += partial_pcd;
     }
   }
 
@@ -227,6 +230,8 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
   const geometry_msgs::msg::Point position, const float radius,
   std::vector<PointCloudMapLoaderNode::PCDFileMetadata> pcd_file_metadata_array) const
 {
+  RCLCPP_INFO_STREAM(get_logger(), "loadPCDPartially");
+
   sensor_msgs::msg::PointCloud2 filtered_pcd{};
   sensor_msgs::msg::PointCloud2 pcd;
   for (const auto & metadata : pcd_file_metadata_array) {
@@ -252,6 +257,8 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
   autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request::SharedPtr req,
   autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Response::SharedPtr res)
 {
+  RCLCPP_INFO_STREAM(get_logger(), "request received (/publish)!");
+
   res->position = req->position;
   res->radius = req->radius;
   pub_partial_pointcloud_map_->publish(
@@ -265,7 +272,11 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
 {
   res->position = req->position;
   res->radius = req->radius;
+  RCLCPP_ERROR(get_logger(), "Start Loading map! @(%f, %f), radius=%f",
+    res->position.x, res->position.y, res->radius);
   res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
+  RCLCPP_INFO_STREAM(get_logger(), "finished loading partial map!");
+
   return true;
 }
 
