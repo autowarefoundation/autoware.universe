@@ -167,11 +167,17 @@ bool IntersectionModule::modifyPathVelocity(
   /* get dynamic object */
   const auto objects_ptr = planner_data_->predicted_objects;
 
+  // std::vector<lanelet::ConstLanelets> stuck_vehicle_detect_area_lanelets;
   /* calculate dynamic collision around detection area */
-  bool has_collision =
-    checkCollision(lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx);
-  bool is_stuck = checkStuckVehicleInIntersection(
-    lanelet_map_ptr, *path, closest_idx, stop_line_idx, objects_ptr);
+  const double detect_length =
+    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
+  const auto stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
+    lanelet_map_ptr, *path, closest_idx, stop_line_idx, detect_length,
+    planner_param_.stuck_vehicle_detect_dist);
+  bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
+  bool has_collision = checkCollision(
+    lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx,
+    stuck_vehicle_detect_area);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
     is_entry_prohibited = false;
@@ -251,7 +257,7 @@ bool IntersectionModule::checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<int> & detection_area_lanelet_ids,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const int closest_idx)
+  const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -333,7 +339,12 @@ bool IntersectionModule::checkCollision(
       stopping_point.y = stopping_point_projected.y + lat_offset * std::sin(lane_yaw + M_PI / 2.0);
       std::cout << "stopping_point: x = " << stopping_point.x << ", y = " << stopping_point.y
                 << std::endl;
-      // const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
+      autoware_auto_perception_msgs::msg::PredictedObject stopping_object = object;
+      // TODO(Mamoru Sobue): also align the orientation as well
+      stopping_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
+      Polygon2d frontcar_footprint = toFootprintPolygon(stopping_object);
+      const bool is_in_stuck_area = !bg::disjoint(frontcar_footprint, stuck_vehicle_detect_area);
+      std::cout << "is_in_stuck_area: " << is_in_stuck_area << std::endl;
       continue;  // TODO(Kenji Miyake): check direction?
     }
 
@@ -530,16 +541,9 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
 }
 
 bool IntersectionModule::checkStuckVehicleInIntersection(
-  lanelet::LaneletMapConstPtr lanelet_map_ptr,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const int stop_idx,
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const Polygon2d & stuck_vehicle_detect_area) const
 {
-  const double detect_length =
-    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
-  const auto stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
-    lanelet_map_ptr, path, closest_idx, stop_idx, detect_length,
-    planner_param_.stuck_vehicle_ignore_dist);
   debug_data_.stuck_vehicle_detect_area = toGeomMsg(stuck_vehicle_detect_area);
 
   for (const auto & object : objects_ptr->objects) {

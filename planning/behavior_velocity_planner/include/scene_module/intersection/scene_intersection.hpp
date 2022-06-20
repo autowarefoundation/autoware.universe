@@ -167,7 +167,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<int> & detection_area_lanelet_ids,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx);
+    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -178,10 +178,8 @@ private:
    * @return true if exists
    */
   bool checkStuckVehicleInIntersection(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int stop_idx,
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const;
+    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+    const Polygon2d & stuck_vehicle_detect_area) const;
 
   /**
    * @brief Calculate the polygon of the path from the ego-car position to the end of the
