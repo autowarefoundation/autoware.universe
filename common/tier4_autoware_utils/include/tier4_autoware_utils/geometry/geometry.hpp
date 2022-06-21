@@ -351,6 +351,10 @@ inline geometry_msgs::msg::Pose calcOffsetPose(
 
 /**
  * @brief Calculate a point by linear interpolation.
+ * @param src source point
+ * @param dst destination point
+ * @param ratio interpolation ratio, which should be [0.0, 1.0]
+ * @return interpolated point
  */
 template <class Point1, class Point2>
 geometry_msgs::msg::Point calcInterpolatedPoint(
@@ -386,6 +390,11 @@ geometry_msgs::msg::Point calcInterpolatedPoint(
  * Note that if ratio>=1.0 or dist(src_pose, dst_pose)<=0.01
  * the orientation of the output pose is same as the orientation
  * of the dst_pose
+ * @param src source point
+ * @param dst destination point
+ * @param ratio interpolation ratio, which should be [0.0, 1.0]
+ * @param set_orientation_from_position_direction set position by spherical interpolation if false
+ * @return interpolated point
  */
 template <class Pose1, class Pose2>
 geometry_msgs::msg::Pose calcInterpolatedPose(
