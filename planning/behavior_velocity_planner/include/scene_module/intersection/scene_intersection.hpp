@@ -97,6 +97,7 @@ public:
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
+    geometry_msgs::msg::Pose frontcar_stopping_pose;
   };
 
 public:

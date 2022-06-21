@@ -295,20 +295,25 @@ bool IntersectionModule::checkCollision(
       const double stopping_distance = vel * vel / (2 * a);
       std::cout << "detected frontcar on the same lane, stopping_distance = " << stopping_distance
                 << std::endl;
-      const auto centerline = closest_lanelet.centerline();
+      lanelet::LineString3d concat_centerline;
+      const auto & centerline1 = ego_lane_with_next_lane[0].centerline();
       std::vector<geometry_msgs::msg::Point> converted_centerline;
-      for (const auto & p : centerline) {
+      for (const auto & p : centerline1) {
+        const auto converted_p = lanelet::utils::conversion::toGeomMsgPt(p);
+        converted_centerline.push_back(converted_p);
+      }
+      const auto & centerline2 = ego_lane_with_next_lane[1].centerline();
+      for (const auto & p : centerline2) {
         const auto converted_p = lanelet::utils::conversion::toGeomMsgPt(p);
         converted_centerline.push_back(converted_p);
       }
       const double lat_offset = std::fabs(tier4_autoware_utils::calcLateralOffset(
-        converted_centerline,
-        tier4_autoware_utils::getPose(path.points.at(closest_idx).point).position));
+        converted_centerline, planner_data_->current_pose.pose.position));
       double acc_dist1 = 0.0, acc_dist2 = 0.0;
       // if stoppind_distance is longer than the centerline, then the stopping_point is the end of
       // centerline
       auto & p1 = converted_centerline.at(0);
-      auto & p2 = converted_centerline.at(1);  // TODO(Mamoru Sobue): need to check the size?
+      auto & p2 = converted_centerline.at(1);  // NOTE: need to check the size?
       for (unsigned i = 0; i < converted_centerline.size() - 1; ++i) {
         p1 = converted_centerline.at(i);
         p2 = converted_centerline.at(i + 1);
@@ -331,7 +336,7 @@ bool IntersectionModule::checkCollision(
         stopping_point_projected.y = (p1.y * ratio + p2.y) / (1 + ratio);
         stopping_point_projected.z = (p1.z * ratio + p2.z) / (1 + ratio);
       }
-      // geometry_msgs::msg::Point stopping_point;
+
       const double lane_yaw =
         lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point_projected);
       std::cout << "lat_offset = " << lat_offset << ", lane_yaw = " << lane_yaw << std::endl;
@@ -340,11 +345,13 @@ bool IntersectionModule::checkCollision(
       std::cout << "stopping_point: x = " << stopping_point.x << ", y = " << stopping_point.y
                 << std::endl;
       autoware_auto_perception_msgs::msg::PredictedObject stopping_object = object;
-      // TODO(Mamoru Sobue): also align the orientation as well
       stopping_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
+      stopping_object.kinematics.initial_pose_with_covariance.pose.orientation =
+        tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
       Polygon2d frontcar_footprint = toFootprintPolygon(stopping_object);
-      const bool is_in_stuck_area = !bg::disjoint(frontcar_footprint, stuck_vehicle_detect_area);
+      const bool is_in_stuck_area = bg::disjoint(frontcar_footprint, stuck_vehicle_detect_area);
       std::cout << "is_in_stuck_area: " << is_in_stuck_area << std::endl;
+      debug_data_.frontcar_stopping_pose.position = stopping_point;
       continue;  // TODO(Kenji Miyake): check direction?
     }
 
