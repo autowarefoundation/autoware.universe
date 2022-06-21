@@ -175,6 +175,11 @@ PIDBasedPlanner::PIDBasedPlanner(
   min_cruise_target_vel_ =
     node.declare_parameter<double>("pid_based_planner.min_cruise_target_vel");
 
+  // low pass filter
+  const double lpf_cruise_gain =
+    node.declare_parameter<double>("pid_based_planner.lpf_cruise_gain");
+  lpf_cruise_ptr_ = std::make_shared<LowpassFilter1d>(lpf_cruise_gain);
+
   // publisher
   stop_reasons_pub_ =
     node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
@@ -437,6 +442,7 @@ void PIDBasedPlanner::planCruise(
   } else {
     // reset previous target velocity if adaptive cruise is not enabled
     prev_target_vel_ = {};
+    lpf_cruise_ptr_->reset();
   }
 }
 
@@ -446,17 +452,20 @@ VelocityLimit PIDBasedPlanner::doCruise(
   visualization_msgs::msg::MarkerArray & debug_wall_marker)
 {
   const double dist_to_cruise = cruise_obstacle_info.dist_to_cruise;
-  const double normalized_dist_to_cruise = cruise_obstacle_info.normalized_dist_to_cruise;
+  const double filtered_normalized_dist_to_cruise = [&]() {
+    const double normalized_dist_to_cruise = cruise_obstacle_info.normalized_dist_to_cruise;
+    return lpf_cruise_ptr_->filter(normalized_dist_to_cruise);
+  }();
 
   const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
   // calculate target velocity with acceleration limit by PID controller
-  const double pid_output_vel = pid_controller_->calc(normalized_dist_to_cruise);
+  const double pid_output_vel = pid_controller_->calc(filtered_normalized_dist_to_cruise);
   [[maybe_unused]] const double prev_vel =
     prev_target_vel_ ? prev_target_vel_.get() : planner_data.current_vel;
 
   const double additional_vel = [&]() {
-    if (normalized_dist_to_cruise > 0) {
+    if (filtered_normalized_dist_to_cruise > 0) {
       return pid_output_vel * output_ratio_during_accel_;
     }
     return pid_output_vel;

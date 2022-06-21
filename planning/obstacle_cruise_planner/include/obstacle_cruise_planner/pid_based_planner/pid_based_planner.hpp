@@ -18,6 +18,7 @@
 #include "obstacle_cruise_planner/pid_based_planner/debug_values.hpp"
 #include "obstacle_cruise_planner/pid_based_planner/pid_controller.hpp"
 #include "obstacle_cruise_planner/planner_interface.hpp"
+#include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
@@ -142,6 +143,8 @@ private:
   boost::optional<double> prev_target_vel_;
 
   DebugValues debug_values_;
+
+  std::shared_ptr<LowpassFilter1d> lpf_cruise_ptr_;
 };
 
 #endif  // OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
