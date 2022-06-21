@@ -94,12 +94,11 @@ PoseInitializer::PoseInitializer()
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
-  pcd_provider_service_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  pcd_provider_client_ = this->create_client<autoware_map_srvs::srv::ProvidePCD>(
-    // "/map/load_pcd_partially", rmw_qos_profile_services_default, pcd_provider_service_group_);
-    "pcd_provider_service", rmw_qos_profile_services_default, pcd_provider_service_group_);
-  while (!pcd_provider_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-    RCLCPP_INFO(get_logger(), "Waiting for pcd provider service...");
+  pcd_loader_service_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  pcd_loader_client_ = this->create_client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>(
+    "pcd_loader_service", rmw_qos_profile_services_default, pcd_loader_service_group_);
+  while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+    RCLCPP_INFO(get_logger(), "Waiting for pcd loader service...");
   }
 
   initialize_pose_service_ =
@@ -152,12 +151,12 @@ void PoseInitializer::callbackInitialPose(
   } catch (tf2::TransformException & exception) {
     RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
   }
-  auto request = std::make_shared<autoware_map_srvs::srv::ProvidePCD::Request>();
+  auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
   request->radius = -1.0;  // Should be removed somehow
-  auto result{pcd_provider_client_->async_send_request(
+  auto result{pcd_loader_client_->async_send_request(
     request,
-    [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response) {
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture response) {
       (void)response;
       std::lock_guard<std::mutex> lock{mutex_};
       value_ready_ = true;
@@ -194,12 +193,12 @@ void PoseInitializer::callbackGNSSPoseCov(
     RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
   }
 
-  auto request = std::make_shared<autoware_map_srvs::srv::ProvidePCD::Request>();
+  auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
   request->radius = -1.0;  // Should be removed somehow
-  auto result{pcd_provider_client_->async_send_request(
+  auto result{pcd_loader_client_->async_send_request(
     request,
-    [this](const rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture response) {
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture response) {
       (void)response;
       std::lock_guard<std::mutex> lock{mutex_};
       value_ready_ = true;

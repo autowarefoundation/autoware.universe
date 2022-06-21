@@ -395,6 +395,8 @@ void NDTScanMatcher::callbackInitialPose(
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
+  const auto KOJI_exe_start_time = std::chrono::system_clock::now();
+
   const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
   const auto step_size = ndt_ptr_->getStepSize();
   const auto resolution = ndt_ptr_->getResolution();
@@ -421,6 +423,12 @@ void NDTScanMatcher::callbackMapPoints(
   new_ndt_ptr_->setInputTarget(map_points_ptr);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity());  // This line is heavy
+
+  const auto KOJI_exe_end_time = std::chrono::system_clock::now();
+  const double KOJI_exe_time =
+    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time).count() /
+    1000.0;
+  RCLCPP_INFO_STREAM(get_logger(), "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms]");
 
   // swap
   ndt_map_mtx_.lock();

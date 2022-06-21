@@ -18,7 +18,6 @@ ament_auto_find_build_dependencies()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/LoadPCDPartially.srv"
   "srv/LoadPCDPartiallyForPublish.srv"
-  "srv/ProvidePCD.srv"
   DEPENDENCIES
     std_msgs
     geometry_msgs

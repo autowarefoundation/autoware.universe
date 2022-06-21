@@ -119,7 +119,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   enable_whole_load_ = declare_parameter("enable_whole_load", true);
   enable_partial_load_ = declare_parameter("enable_partial_load", true);
   use_downsample_ = declare_parameter("use_downsample", true);
-  leaf_size_ = declare_parameter("leaf_size", 2.0);
+  leaf_size_ = declare_parameter("leaf_size", 3.0);
   map_frame_ = declare_parameter("map_frame", "map");
   viewer_frame_ = declare_parameter("viewer_frame", "viewer");
 
@@ -243,6 +243,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
 {
   sensor_msgs::msg::PointCloud2 filtered_pcd{};
   sensor_msgs::msg::PointCloud2 pcd;
+  const auto KOJI_exe_start_time = std::chrono::system_clock::now();
   for (const auto & metadata : pcd_file_metadata_array) {
     if (sphere_and_box_overlap_exists(position, radius, metadata.min, metadata.max)) {
       if (pcl::io::loadPCDFile(metadata.path, pcd) == -1) {
@@ -258,6 +259,13 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
       }
     }
   }
+
+  const auto KOJI_exe_end_time = std::chrono::system_clock::now();
+  const double KOJI_exe_time =
+    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time).count() /
+    1000.0;
+  RCLCPP_INFO_STREAM(get_logger(), "KOJI loadPCDPartially @map_loader: " << KOJI_exe_time << " [ms]");
+
   filtered_pcd.header.frame_id = "map";
   return filtered_pcd;
 }

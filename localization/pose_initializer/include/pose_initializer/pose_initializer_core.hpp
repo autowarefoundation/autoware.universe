@@ -15,8 +15,7 @@
 #ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
-#include "autoware_map_srvs/srv/load_pcd_partially.hpp"
-#include "autoware_map_srvs/srv/provide_pcd.hpp"
+#include "autoware_map_srvs/srv/load_pcd_partially_for_publish.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
@@ -58,7 +57,7 @@ private:
     const tier4_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr
       request_msg_ptr);  // NOLINT
   // void serviceResponseCallback(
-  //   rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedFuture future);
+  //   rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture future);
 
   bool getHeight(
     const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
@@ -77,10 +76,10 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
 
   rclcpp::Client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
-  rclcpp::Client<autoware_map_srvs::srv::ProvidePCD>::SharedPtr pcd_provider_client_;
+  rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedPtr pcd_loader_client_;
 
   rclcpp::CallbackGroup::SharedPtr initialize_pose_service_group_;
-  rclcpp::CallbackGroup::SharedPtr pcd_provider_service_group_;
+  rclcpp::CallbackGroup::SharedPtr pcd_loader_service_group_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr
     initialize_pose_service_;

@@ -18,7 +18,6 @@
 #define MAP_PROVIDER__MAP_PROVIDER_CORE_HPP_
 
 #include "autoware_map_srvs/srv/load_pcd_partially.hpp"
-#include "autoware_map_srvs/srv/provide_pcd.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -49,7 +48,6 @@ private:
   autoware_map_srvs::srv::LoadPCDPartially::Response::SharedPtr pcd_loader_res_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub_;
-  rclcpp::Service<autoware_map_srvs::srv::ProvidePCD>::SharedPtr pcd_provider_server_;
   rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartially>::SharedPtr pcd_loader_client_;
   rclcpp::TimerBase::SharedPtr update_map_timer_;
 
@@ -59,9 +57,6 @@ private:
   std::condition_variable condition_;
   bool value_ready_ = false;
 
-  bool pcdProviderServiceCallback(
-    autoware_map_srvs::srv::ProvidePCD::Request::SharedPtr req,
-    autoware_map_srvs::srv::ProvidePCD::Response::SharedPtr res);
   void updateMapTimerCallback();
 };
 
