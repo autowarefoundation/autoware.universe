@@ -93,11 +93,11 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
     objs->objects.push_back(object);
     
     grid_map::GridMap gridmap = construct_gridmap();
-    ObjectsToCostmap otct;
+    ObjectsToCostmap objectsToCostmap;
 
     const double expand_polygon_size = 0.0;
     const double size_of_expansion_kernel = 1;//do not expand for easy test check
-    grid_map::Matrix objects_costmap = otct.makeCostmapFromObjects(gridmap,expand_polygon_size,
+    grid_map::Matrix objects_costmap = objectsToCostmap.makeCostmapFromObjects(gridmap,expand_polygon_size,
                                 size_of_expansion_kernel,
                                 objs);
     
