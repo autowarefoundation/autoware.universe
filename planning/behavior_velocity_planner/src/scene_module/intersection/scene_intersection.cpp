@@ -307,31 +307,48 @@ bool IntersectionModule::checkCollision(
         const auto converted_p = lanelet::utils::conversion::toGeomMsgPt(p);
         converted_centerline.push_back(converted_p);
       }
-      const double lat_offset = std::fabs(tier4_autoware_utils::calcLateralOffset(
-        converted_centerline, planner_data_->current_pose.pose.position));
+      const double lat_offset = std::fabs(
+        tier4_autoware_utils::calcLateralOffset(converted_centerline, object_pose.position));
       double acc_dist1 = 0.0, acc_dist2 = 0.0;
       // if stoppind_distance is longer than the centerline, then the stopping_point is the end of
       // centerline
-      auto & p1 = converted_centerline.at(0);
-      auto & p2 = converted_centerline.at(1);  // NOTE: need to check the size?
-      for (unsigned i = 0; i < converted_centerline.size() - 1; ++i) {
+      // get the nearest point to object_pose
+      int closest_centerline_point_idx = 0;
+      double d = std::numeric_limits<double>::max();
+      for (unsigned i = 0; i < converted_centerline.size(); ++i) {
+        const double dist =
+          tier4_autoware_utils::calcDistance2d(object_pose.position, converted_centerline[i]);
+        if (dist < d) {
+          d = dist;
+          closest_centerline_point_idx = i;
+        }
+      }
+      auto & p1 = converted_centerline[closest_centerline_point_idx];
+      auto & p2 =
+        converted_centerline[closest_centerline_point_idx + 1];  // NOTE: need to check the size?
+      std::cout << "converted_centerline().size = " << converted_centerline.size() << std::endl;
+      for (unsigned i = closest_centerline_point_idx; i < converted_centerline.size() - 1; ++i) {
         p1 = converted_centerline.at(i);
         p2 = converted_centerline.at(i + 1);
         const double d_p1p2 = tier4_autoware_utils::calcDistance2d(p1, p2);
         acc_dist1 = acc_dist2;
         acc_dist2 += d_p1p2;
-        if (acc_dist1 > stopping_distance) {
+        if (acc_dist2 > stopping_distance) {
           break;
         }
       }
       geometry_msgs::msg::Point stopping_point_projected;
       geometry_msgs::msg::Point stopping_point;
-      if (acc_dist1 <= stopping_distance) {
+      std::cout << "acc_dist2 > stopping_distance: " << (acc_dist2 > stopping_distance)
+                << std::endl;
+      if (acc_dist2 <= stopping_distance) {
         stopping_point_projected.x = p2.x;
         stopping_point_projected.y = p2.y;
         stopping_point_projected.z = p2.z;
       } else {
+        // linear interpolation
         const double ratio = (acc_dist2 - stopping_distance) / (stopping_distance - acc_dist1);
+        std::cout << "ratio = " << ratio << std::endl;
         stopping_point_projected.x = (p1.x * ratio + p2.x) / (1 + ratio);
         stopping_point_projected.y = (p1.y * ratio + p2.y) / (1 + ratio);
         stopping_point_projected.z = (p1.z * ratio + p2.z) / (1 + ratio);
@@ -349,9 +366,11 @@ bool IntersectionModule::checkCollision(
       stopping_object.kinematics.initial_pose_with_covariance.pose.orientation =
         tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
       Polygon2d frontcar_footprint = toFootprintPolygon(stopping_object);
-      const bool is_in_stuck_area = bg::disjoint(frontcar_footprint, stuck_vehicle_detect_area);
+      const bool is_in_stuck_area = !bg::disjoint(frontcar_footprint, stuck_vehicle_detect_area);
       std::cout << "is_in_stuck_area: " << is_in_stuck_area << std::endl;
       debug_data_.frontcar_stopping_pose.position = stopping_point;
+      debug_data_.frontcar_stopping_pose.orientation =
+        tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
       continue;  // TODO(Kenji Miyake): check direction?
     }
 
