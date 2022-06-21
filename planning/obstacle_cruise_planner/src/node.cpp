@@ -67,7 +67,7 @@ bool isFrontObstacle(
   const double ego_to_obj_distance =
     tier4_autoware_utils::calcSignedArcLength(traj.points, ego_idx, obj_idx);
 
-  if (obj_idx == 0 && ego_to_obj_distance < 0) {
+  if (ego_to_obj_distance < 0) {
     return false;
   }
 
@@ -537,7 +537,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
     }();
     if (
       std::fabs(dist_from_obstacle_to_traj) >
-      obstacle_filtering_param_.rough_detection_area_expand_width) {
+      vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_detection_area_expand_width) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), is_showing_debug_info_,
         "Ignore obstacles since it is far from the trajectory.");
@@ -593,16 +593,15 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       const auto predicted_path_with_highest_confidence =
         getHighestConfidencePredictedPath(predicted_object);
 
-      const bool will_collide = polygon_utils::willCollideWithSurroundObstacle(
+      std::vector<geometry_msgs::msg::Point> future_collision_points;
+      const auto collision_traj_poly_idx = polygon_utils::willCollideWithSurroundObstacle(
         decimated_traj, decimated_traj_polygons, predicted_path_with_highest_confidence,
-        predicted_object.shape, obstacle_filtering_param_.rough_detection_area_expand_width,
+        predicted_object.shape,
+        vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_detection_area_expand_width,
         obstacle_filtering_param_.ego_obstacle_overlap_time_threshold,
-        obstacle_filtering_param_.max_prediction_time_for_collision_check);
+        obstacle_filtering_param_.max_prediction_time_for_collision_check, future_collision_points);
 
-      // TODO(murooka) think later
-      nearest_collision_point = object_pose.position;
-
-      if (!will_collide) {
+      if (!collision_traj_poly_idx) {
         // Ignore condition 2
         // Ignore vehicle obstacles outside the trajectory, whose predicted path
         // overlaps the ego trajectory in a certain time.
@@ -613,6 +612,10 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
         debug_data.intentionally_ignored_obstacles.push_back(predicted_object);
         continue;
       }
+
+      nearest_collision_point = calcNearestCollisionPoint(
+        collision_traj_poly_idx.get(), future_collision_points, decimated_traj);
+      debug_data.collision_points.push_back(nearest_collision_point);
     }
 
     // convert to obstacle type

@@ -231,7 +231,7 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
       const double error_dist = dist_to_obstacle - longitudinal_info_.safe_distance_margin;
       if (stop_obstacle_info) {
         if (error_dist > stop_obstacle_info->dist_to_stop) {
-          return;
+          continue;
         }
       }
       stop_obstacle_info = StopObstacleInfo(obstacle, error_dist);
@@ -253,7 +253,7 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
       const double error_dist = dist_to_obstacle - rss_dist;
       if (cruise_obstacle_info) {
         if (error_dist > cruise_obstacle_info->dist_to_cruise) {
-          return;
+          continue;
         }
       }
       const double normalized_dist_to_cruise = error_dist / dist_to_obstacle;
@@ -400,7 +400,6 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
   const auto marker_pose = obstacle_cruise_utils::calcForwardPose(
     planner_data.traj, ego_idx, modified_dist_to_stop + vehicle_info_.max_longitudinal_offset_m);
   if (marker_pose) {
-    visualization_msgs::msg::MarkerArray wall_msg;
     const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
       marker_pose.get(), "obstacle stop", planner_data.current_time, 0);
     tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
