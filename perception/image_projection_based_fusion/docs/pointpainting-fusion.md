@@ -39,7 +39,7 @@ The lidar points are projected onto the output of an image-only 2d object detect
 | ------------------------------- | ------ | ------------- | ----------------------------------------------------------- |
 | `score_threshold`               | float  | `0.4`         | detected objects with score less than threshold are ignored |
 | `densification_world_frame_id`  | string | `map`         | the world frame id to fuse multi-frame pointcloud           |
-| `densification_num_past_frames` | int    | `1`           | the number of past frames to fuse with the current frame    |
+| `densification_num_past_frames` | int    | `0`           | the number of past frames to fuse with the current frame    |
 | `trt_precision`                 | string | `fp16`        | TensorRT inference precision: `fp32` or `fp16`              |
 | `encoder_onnx_path`             | string | `""`          | path to VoxelFeatureEncoder ONNX file                       |
 | `encoder_engine_path`           | string | `""`          | path to VoxelFeatureEncoder TensorRT Engine file            |

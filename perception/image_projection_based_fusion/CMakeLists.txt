@@ -66,87 +66,98 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
+message(STATUS "start to download")
+if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 # Download trained models
-execute_process(COMMAND echo "start to download" 1>&2)
-find_program(CURL_AVAIL "curl")
-if(NOT CURL_AVAIL)
-  message("curl: command not found. External files could not be downloaded.")
-endif()
+  set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
+  execute_process(COMMAND mkdir -p ${DATA_PATH})
 
-set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
-execute_process(COMMAND mkdir -p ${DATA_PATH})
-
-function(download FILE_NAME FILE_HASH)
-  # https://drive.google.com/file/d/GFILE_ID/view
-  message(STATUS "Checking and downloading ${FILE_NAME}")
-  set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
-  execute_process(COMMAND echo "start ${FILE_NAME}" 1>&2)
-  if(EXISTS ${FILE_PATH})
-    execute_process(COMMAND echo "found ${FILE_NAME}")
-    file(MD5 ${FILE_PATH} EXISTING_FILE_HASH)
-    if(${FILE_HASH} EQUAL ${EXISTING_FILE_HASH})
-      message(STATUS "File already exists.")
+  function(download FILE_NAME FILE_HASH)
+    message(STATUS "Checking and downloading ${FILE_NAME}")
+    set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
+    set(STATUS_CODE 0)
+    message(STATUS "start ${FILE_NAME}")
+    if(EXISTS ${FILE_PATH})
+      message(STATUS "found ${FILE_NAME}")
+      file(MD5 ${FILE_PATH} EXISTING_FILE_HASH)
+      if("${FILE_HASH}" STREQUAL "${EXISTING_FILE_HASH}")
+        message(STATUS "same ${FILE_NAME}")
+        message(STATUS "File already exists.")
+      else()
+        message(STATUS "diff ${FILE_NAME}")
+        message(STATUS "File hash changes. Downloading now ...")
+        file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+        list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+        list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+      endif()
     else()
-      execute_process(COMMAND echo "diff ${FILE_NAME}")
-      message(STATUS "File hash changes. Downloading now ...")
-      execute_process(COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/pointpainting/pts_voxel_encoder_pointpainting.onnx" -o ${FILE_PATH})
-      # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
-      message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
+      message(STATUS "not found ${FILE_NAME}")
+      message(STATUS "File doesn't exists. Downloading now ...")
+      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+      list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+      list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
     endif()
-  else()
-    execute_process(COMMAND echo "not found ${FILE_NAME}")
-    message(STATUS "File doesn't exists. Downloading now ...")
-    execute_process(COMMAND curl -s "https://awf.ml.dev.web.auto/perception/models/pointpainting/pts_backbone_neck_head_pointpainting.onnx" -o ${FILE_PATH})
-    # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
-    message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
-  endif()
-endfunction()
+    if(${STATUS_CODE} EQUAL 0)
+      message(STATUS "Download completed successfully!")
+    else()
+      message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE}")
+    endif()
+  endfunction()
 
-# default model
-download(pts_voxel_encoder_pointpainting.onnx 19e51669233e943724e834021c382cae)
-download(pts_backbone_neck_head_pointpainting.onnx 19e51669233e943724e834021c382cae)
-find_package(OpenCV REQUIRED)
-find_package(Eigen3 REQUIRED)
+  # default model
+  download(pts_voxel_encoder_pointpainting.onnx 19e51669233e943724e834021c382cae)
+  download(pts_backbone_neck_head_pointpainting.onnx 19e51669233e943724e834021c382cae)
+  find_package(OpenCV REQUIRED)
+  find_package(Eigen3 REQUIRED)
 
-include_directories(
-  include
-  ${OpenCV_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
-)
+  include_directories(
+    include
+    ${OpenCV_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+  )
 
-ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/fusion_node.cpp
-  src/debugger.cpp
-  src/utils/geometry.cpp
-  src/utils/utils.cpp
-  src/roi_cluster_fusion/node.cpp
-  src/roi_detected_object_fusion/node.cpp
-  src/pointpainting_fusion/node.cpp
-  src/pointpainting_fusion/pointpainting_trt.cpp
-  src/pointpainting_fusion/voxel_generator.cpp
-)
+  ament_auto_add_library(${PROJECT_NAME} SHARED
+    src/fusion_node.cpp
+    src/debugger.cpp
+    src/utils/geometry.cpp
+    src/utils/utils.cpp
+    src/roi_cluster_fusion/node.cpp
+    src/roi_detected_object_fusion/node.cpp
+    src/pointpainting_fusion/node.cpp
+    src/pointpainting_fusion/pointpainting_trt.cpp
+    src/pointpainting_fusion/voxel_generator.cpp
+  )
 
-cuda_add_library(pointpainting_cuda_lib SHARED
-  src/pointpainting_fusion/preprocess_kernel.cu
-)
+  cuda_add_library(pointpainting_cuda_lib SHARED
+    src/pointpainting_fusion/preprocess_kernel.cu
+  )
 
-target_link_libraries(${PROJECT_NAME}
-  ${OpenCV_LIBRARIES}
-  ${EIGEN3_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${NVINFER}
-  ${CUDA_LIBRARIES}
-  ${CUBLAS_LIBRARIES}
-  ${CUDA_curand_LIBRARY}
-  ${CUDNN_LIBRARY}
-  pointpainting_cuda_lib
-)
+  target_link_libraries(${PROJECT_NAME}
+    ${OpenCV_LIBRARIES}
+    ${EIGEN3_LIBRARIES}
+    ${PCL_LIBRARIES}
+    ${NVINFER}
+    ${CUDA_LIBRARIES}
+    ${CUBLAS_LIBRARIES}
+    ${CUDA_curand_LIBRARY}
+    ${CUDNN_LIBRARY}
+    pointpainting_cuda_lib
+  )
 
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
-  EXECUTABLE roi_cluster_fusion_node
-)
+  rclcpp_components_register_node(${PROJECT_NAME}
+    PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
+    EXECUTABLE roi_cluster_fusion_node
+  )
+else()
+  find_package(ament_cmake_auto REQUIRED)
+  ament_auto_find_build_dependencies()
+
+  ament_auto_package(
+    INSTALL_TO_SHARE
+      launch
+  )
+endif()
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "image_projection_based_fusion::RoiDetectedObjectFusionNode"

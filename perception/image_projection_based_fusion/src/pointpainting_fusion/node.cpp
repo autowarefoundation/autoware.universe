@@ -37,7 +37,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
   const int densification_num_past_frames =
-    this->declare_parameter("densification_num_past_frames", 1);
+    this->declare_parameter("densification_num_past_frames", 0);
   // network param
   const std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
   const std::string encoder_onnx_path = this->declare_parameter("encoder_onnx_path", "");
@@ -51,7 +51,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
   const std::size_t max_voxel_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_voxel_size"));
-  point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
+  pointcloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
   const std::size_t downsample_factor =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
@@ -63,7 +63,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   centerpoint::CenterPointConfig config(
-    class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
+    class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold);
 
   // create detector
@@ -104,8 +104,8 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
        iter_x != iter_x.end();
        ++iter_x, ++iter_y, ++iter_z, ++iter_painted_x, ++iter_painted_y, ++iter_painted_z) {
     if (
-      *iter_x <= point_cloud_range.at(0) || *iter_x >= point_cloud_range.at(3) ||
-      *iter_y <= point_cloud_range.at(1) || *iter_y >= point_cloud_range.at(4)) {
+      *iter_x <= pointcloud_range.at(0) || *iter_x >= pointcloud_range.at(3) ||
+      *iter_y <= pointcloud_range.at(1) || *iter_y >= pointcloud_range.at(4)) {
       continue;
     } else {
       *iter_painted_x = *iter_x;
