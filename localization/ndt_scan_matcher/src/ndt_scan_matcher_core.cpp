@@ -426,9 +426,12 @@ void NDTScanMatcher::callbackMapPoints(
 
   const auto KOJI_exe_end_time = std::chrono::system_clock::now();
   const double KOJI_exe_time =
-    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time).count() /
+    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time)
+      .count() /
     1000.0;
-  RCLCPP_INFO_STREAM(get_logger(), "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms]");
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms]");
 
   // swap
   ndt_map_mtx_.lock();

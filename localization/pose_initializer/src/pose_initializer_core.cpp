@@ -156,7 +156,8 @@ void PoseInitializer::callbackInitialPose(
   request->radius = -1.0;  // Should be removed somehow
   auto result{pcd_loader_client_->async_send_request(
     request,
-    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture response) {
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture
+             response) {
       (void)response;
       std::lock_guard<std::mutex> lock{mutex_};
       value_ready_ = true;
@@ -198,7 +199,8 @@ void PoseInitializer::callbackGNSSPoseCov(
   request->radius = -1.0;  // Should be removed somehow
   auto result{pcd_loader_client_->async_send_request(
     request,
-    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture response) {
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture
+             response) {
       (void)response;
       std::lock_guard<std::mutex> lock{mutex_};
       value_ready_ = true;
