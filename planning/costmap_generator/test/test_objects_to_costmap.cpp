@@ -21,7 +21,7 @@
 #endif
 #include <gtest/gtest.h>
 
-using LABEL=autoware_auto_perception_msgs::msg::ObjectClassification;
+using LABEL = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 class ObjectsToCostMapTest : public ::testing::Test
 {
@@ -68,10 +68,11 @@ grid_y
 |     map_x---
 |            |
 |            |
-|            map_y  
+|            map_y
 |--------grid_x
 */
 TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
+<<<<<<< HEAD
 {    
     auto objs = std::make_shared<autoware_auto_perception_msgs::msg::PredictedObjects>();
     autoware_auto_perception_msgs::msg::PredictedObject object;
@@ -120,27 +121,73 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
           // std::cout<<"i="<<i<<",j="<<j<<std::endl;
           non_empty_cost_grid_num += 1;
         }
+=======
+{
+  auto objs = std::make_shared<autoware_auto_perception_msgs::msg::PredictedObjects>();
+  autoware_auto_perception_msgs::msg::PredictedObject object;
+
+  object.classification.push_back(autoware_auto_perception_msgs::msg::ObjectClassification{});
+  object.classification.at(0).label = LABEL::CAR;
+  object.classification.at(0).probability = 0.8;
+
+  object.kinematics.initial_pose_with_covariance.pose.position.x = 1;
+  object.kinematics.initial_pose_with_covariance.pose.position.y = 2;
+  object.kinematics.initial_pose_with_covariance.pose.position.z = 1;
+  // yaw=0 for easy test
+  object.kinematics.initial_pose_with_covariance.pose.orientation.x = 0;
+  object.kinematics.initial_pose_with_covariance.pose.orientation.y = 0;
+  object.kinematics.initial_pose_with_covariance.pose.orientation.z = 0;
+  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1;
+
+  object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  object.shape.dimensions.x = 5;
+  object.shape.dimensions.y = 3;
+  object.shape.dimensions.z = 2;
+
+  objs->objects.push_back(object);
+
+  grid_map::GridMap gridmap = construct_gridmap();
+  ObjectsToCostmap otct;
+
+  const double expand_polygon_size = 0.0;
+  const double size_of_expansion_kernel = 1;  // do not expand for easy test check
+  grid_map::Matrix objects_costmap =
+    otct.makeCostmapFromObjects(gridmap, expand_polygon_size, size_of_expansion_kernel, objs);
+
+  // yaw = 0,so we can just calculate like this easily
+  int expected_non_empty_cost_grid_num =
+    (object.shape.dimensions.x * object.shape.dimensions.y) / grid_resolution_;
+
+  // check if cost is correct
+  int non_empty_cost_grid_num = 0;
+  for (int i = 0; i < objects_costmap.rows(); i++) {
+    for (int j = 0; j < objects_costmap.cols(); j++) {
+      if (objects_costmap(i, j) == object.classification.at(0).probability) {
+        // std::cout<<"i="<<i<<",j="<<j<<std::endl;
+        non_empty_cost_grid_num += 1;
+>>>>>>> d2ece450027faf83582724286a6284d63cf34304
       }
     }
+  }
 
-    EXPECT_EQ(non_empty_cost_grid_num,expected_non_empty_cost_grid_num);
+  EXPECT_EQ(non_empty_cost_grid_num, expected_non_empty_cost_grid_num);
 
-    float obj_center_x = grid_length_x_/2 - object.kinematics.initial_pose_with_covariance.pose.position.x;
-    float obj_center_y = grid_length_y_/2 - object.kinematics.initial_pose_with_covariance.pose.position.y;
-    float obj_left_x = obj_center_x - object.shape.dimensions.x/2.;
-    float obj_right_x = obj_center_x + object.shape.dimensions.x/2.;
-    float obj_bottom_y = obj_center_y - object.shape.dimensions.y/2.;
-    float obj_top_y  = obj_center_y + object.shape.dimensions.y/2.;
-    int index_x_min = int(obj_left_x/grid_resolution_);
-    int index_x_max = int(obj_right_x/grid_resolution_);
-    int index_y_min = int(obj_bottom_y/grid_resolution_);
-    int index_y_max = int(obj_top_y/grid_resolution_);
-    for(int i = index_x_min;i<index_x_max;i++)
-    {
-      for(int j = index_y_min;j< index_y_max;j++)
-      {
-        // std::cout<<"i:"<<i<<",j:"<<j<<std::endl;
-        EXPECT_DOUBLE_EQ(objects_costmap(i,j),object.classification.at(0).probability);
-      }
+  float obj_center_x =
+    grid_length_x_ / 2 - object.kinematics.initial_pose_with_covariance.pose.position.x;
+  float obj_center_y =
+    grid_length_y_ / 2 - object.kinematics.initial_pose_with_covariance.pose.position.y;
+  float obj_left_x = obj_center_x - object.shape.dimensions.x / 2.;
+  float obj_right_x = obj_center_x + object.shape.dimensions.x / 2.;
+  float obj_bottom_y = obj_center_y - object.shape.dimensions.y / 2.;
+  float obj_top_y = obj_center_y + object.shape.dimensions.y / 2.;
+  int index_x_min = int(obj_left_x / grid_resolution_);
+  int index_x_max = int(obj_right_x / grid_resolution_);
+  int index_y_min = int(obj_bottom_y / grid_resolution_);
+  int index_y_max = int(obj_top_y / grid_resolution_);
+  for (int i = index_x_min; i < index_x_max; i++) {
+    for (int j = index_y_min; j < index_y_max; j++) {
+      // std::cout<<"i:"<<i<<",j:"<<j<<std::endl;
+      EXPECT_DOUBLE_EQ(objects_costmap(i, j), object.classification.at(0).probability);
     }
+  }
 }
