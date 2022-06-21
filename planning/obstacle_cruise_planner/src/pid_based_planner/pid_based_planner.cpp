@@ -266,7 +266,8 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
         }
       }
       const double normalized_dist_to_cruise = error_dist / dist_to_obstacle;
-      cruise_obstacle_info = CruiseObstacleInfo(obstacle, error_dist, normalized_dist_to_cruise);
+      cruise_obstacle_info =
+        CruiseObstacleInfo(obstacle, error_dist, normalized_dist_to_cruise, dist_to_obstacle);
 
       // update debug values
       debug_values_.setValues(DebugValues::TYPE::CRUISE_CURRENT_OBJECT_VELOCITY, obstacle.velocity);
@@ -456,6 +457,7 @@ VelocityLimit PIDBasedPlanner::doCruise(
     const double normalized_dist_to_cruise = cruise_obstacle_info.normalized_dist_to_cruise;
     return lpf_cruise_ptr_->filter(normalized_dist_to_cruise);
   }();
+  const double dist_to_obstacle = cruise_obstacle_info.dist_to_obstacle;
 
   const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
@@ -491,7 +493,9 @@ VelocityLimit PIDBasedPlanner::doCruise(
     longitudinal_info_.max_jerk, longitudinal_info_.min_jerk);
 
   // virtual wall marker for cruise
-  const double dist_to_rss_wall = dist_to_cruise + vehicle_info_.max_longitudinal_offset_m;
+  const double dist_to_rss_wall = std::min(
+    dist_to_cruise + vehicle_info_.max_longitudinal_offset_m,
+    dist_to_obstacle + vehicle_info_.max_longitudinal_offset_m);
   const size_t wall_idx =
     getIndexWithLongitudinalOffset(planner_data.traj.points, dist_to_rss_wall, ego_idx);
 

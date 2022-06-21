@@ -41,15 +41,17 @@ public:
   {
     CruiseObstacleInfo(
       const TargetObstacle & obstacle_arg, const double dist_to_cruise_arg,
-      const double normalized_dist_to_cruise_arg)
+      const double normalized_dist_to_cruise_arg, double dist_to_obstacle_arg)
     : obstacle(obstacle_arg),
       dist_to_cruise(dist_to_cruise_arg),
-      normalized_dist_to_cruise(normalized_dist_to_cruise_arg)
+      normalized_dist_to_cruise(normalized_dist_to_cruise_arg),
+      dist_to_obstacle(dist_to_obstacle_arg)
     {
     }
     TargetObstacle obstacle;
     double dist_to_cruise;
     double normalized_dist_to_cruise;
+    double dist_to_obstacle;
   };
 
   struct StopObstacleInfo
