@@ -73,53 +73,48 @@ grid_y
 */
 TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
 {    
-    auto objs = std::make_shared<autoware_auto_perception_msgs::msg::PredictedObjects>();
-    autoware_auto_perception_msgs::msg::PredictedObject object;
-    
-    object.classification.push_back(autoware_auto_perception_msgs::msg::ObjectClassification{});
-    object.classification.at(0).label = LABEL::CAR;
-    object.classification.at(0).probability = 0.8;
+  auto objs = std::make_shared<autoware_auto_perception_msgs::msg::PredictedObjects>();
+  autoware_auto_perception_msgs::msg::PredictedObject object;
 
-    object.kinematics.initial_pose_with_covariance.pose.position.x = 1;
-    object.kinematics.initial_pose_with_covariance.pose.position.y = 2;
-    object.kinematics.initial_pose_with_covariance.pose.position.z = 1;
-    //yaw=0 for easy test
-    object.kinematics.initial_pose_with_covariance.pose.orientation.x = 0;
-    object.kinematics.initial_pose_with_covariance.pose.orientation.y = 0;
-    object.kinematics.initial_pose_with_covariance.pose.orientation.z = 0;
-    object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1;
+  object.classification.push_back(autoware_auto_perception_msgs::msg::ObjectClassification{});
+  object.classification.at(0).label = LABEL::CAR;
+  object.classification.at(0).probability = 0.8;
 
+  object.kinematics.initial_pose_with_covariance.pose.position.x = 1;
+  object.kinematics.initial_pose_with_covariance.pose.position.y = 2;
+  object.kinematics.initial_pose_with_covariance.pose.position.z = 1;
+  // yaw=0 for easy test
+  object.kinematics.initial_pose_with_covariance.pose.orientation.x = 0;
+  object.kinematics.initial_pose_with_covariance.pose.orientation.y = 0;
+  object.kinematics.initial_pose_with_covariance.pose.orientation.z = 0;
+  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1;
 
-    object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-    object.shape.dimensions.x = 5;
-    object.shape.dimensions.y = 3;
-    object.shape.dimensions.z = 2;
-    
-    objs->objects.push_back(object);
-    
-    grid_map::GridMap gridmap = construct_gridmap();
-    ObjectsToCostmap objectsToCostmap;
+  object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  object.shape.dimensions.x = 5;
+  object.shape.dimensions.y = 3;
+  object.shape.dimensions.z = 2;
 
-    const double expand_polygon_size = 0.0;
-    const double size_of_expansion_kernel = 1;//do not expand for easy test check
-    grid_map::Matrix objects_costmap = objectsToCostmap.makeCostmapFromObjects(gridmap,expand_polygon_size,
-                                size_of_expansion_kernel,
-                                objs);
-    
-    //yaw = 0,so we can just calculate like this easily
-    int expected_non_empty_cost_grid_num = (object.shape.dimensions.x * object.shape.dimensions.y)/grid_resolution_;
+  objs->objects.push_back(object);
 
-    //check if cost is correct
-    int non_empty_cost_grid_num = 0;
-    for(int i = 0; i < objects_costmap.rows(); i++)
-    {
-      for(int j = 0; j < objects_costmap.cols();j++)
-      {
-        if(objects_costmap(i,j) == object.classification.at(0).probability)
-        {
-          // std::cout<<"i="<<i<<",j="<<j<<std::endl;
-          non_empty_cost_grid_num += 1;
-        }
+  grid_map::GridMap gridmap = construct_gridmap();
+  ObjectsToCostmap objectsToCostmap;
+
+  const double expand_polygon_size = 0.0;
+  const double size_of_expansion_kernel = 1;  // do not expand for easy test check
+  grid_map::Matrix objects_costmap = objectsToCostmap.makeCostmapFromObjects(
+    gridmap, expand_polygon_size, size_of_expansion_kernel, objs);
+
+  // yaw = 0,so we can just calculate like this easily
+  int expected_non_empty_cost_grid_num =
+    (object.shape.dimensions.x * object.shape.dimensions.y) / grid_resolution_;
+
+  // check if cost is correct
+  int non_empty_cost_grid_num = 0;
+  for (int i = 0; i < objects_costmap.rows(); i++) {
+    for (int j = 0; j < objects_costmap.cols(); j++) {
+      if (objects_costmap(i, j) == object.classification.at(0).probability) {
+        // std::cout<<"i="<<i<<",j="<<j<<std::endl;
+        non_empty_cost_grid_num += 1;
       }
     }
   }
@@ -145,3 +140,4 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
     }
   }
 }
+
