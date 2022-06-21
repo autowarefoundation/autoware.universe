@@ -238,8 +238,8 @@ bool BigVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
-  // pos x, pos y, yaw, vx depending on Pose output
-  bool has_large_velocity_deviation = false;
+  // Decide dimension of measurement vector
+  bool enable_velocity_measurement = false;
   if (object.kinematics.has_twist) {
     Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
     ekf_.getX(X_t);
@@ -247,10 +247,12 @@ bool BigVehicleTracker::measureWithPose(
     const double observed_vx = object.kinematics.twist_with_covariance.twist.linear.x;
 
     if (std::fabs(current_vx - observed_vx) > velocity_deviation_threshold_) {
-      has_large_velocity_deviation = true;
+      // Velocity deviation is large
+      enable_velocity_measurement = true;
     }
   }
-  const int dim_y = has_large_velocity_deviation ? 3 : 4;
+  // pos x, pos y, yaw, vx depending on pose measurement
+  const int dim_y = enable_velocity_measurement ? 3 : 4;
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   {
