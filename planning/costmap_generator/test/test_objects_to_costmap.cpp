@@ -113,7 +113,6 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
   for (int i = 0; i < objects_costmap.rows(); i++) {
     for (int j = 0; j < objects_costmap.cols(); j++) {
       if (objects_costmap(i, j) == object.classification.at(0).probability) {
-        // std::cout<<"i="<<i<<",j="<<j<<std::endl;
         non_empty_cost_grid_num += 1;
       }
     }
@@ -135,7 +134,6 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
   int index_y_max = int(obj_top_y / grid_resolution_);
   for (int i = index_x_min; i < index_x_max; i++) {
     for (int j = index_y_min; j < index_y_max; j++) {
-      // std::cout<<"i:"<<i<<",j:"<<j<<std::endl;
       EXPECT_DOUBLE_EQ(objects_costmap(i, j), object.classification.at(0).probability);
     }
   }
