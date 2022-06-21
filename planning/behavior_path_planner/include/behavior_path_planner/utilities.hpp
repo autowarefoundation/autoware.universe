@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
 
@@ -126,6 +127,7 @@ using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 namespace bg = boost::geometry;
 using geometry_msgs::msg::Pose;
+using marker_utils::CollisionCheckDebug;
 
 struct FrenetCoordinate3d
 {
@@ -359,6 +361,8 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
 
 Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
 
+std::string getUuidStr(const PredictedObject & obj);
+
 std::vector<PredictedPath> getPredictedPathFromObj(
   const PredictedObject & obj, const bool & is_use_all_predicted_path);
 
@@ -397,7 +401,7 @@ bool isLongitudinalDistanceEnough(
 bool hasEnoughDistance(
   const Pose & expected_ego_pose, const Twist & ego_current_twist,
   const Pose & expected_object_pose, const Twist & object_current_twist,
-  const CollisionCheckParameters & param);
+  const CollisionCheckParameters & param, CollisionCheckDebug & debug);
 
 bool isLateralDistanceEnough(
   const double & relative_lateral_distance, const double & lateral_distance_threshold);
@@ -407,14 +411,15 @@ bool isSafeInLaneletCollisionCheck(
   const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
   const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const CollisionCheckParameters & check_param);
+  const PredictedPath & target_object_path, const CollisionCheckParameters & check_param,
+  CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
   const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
-  const CollisionCheckParameters & check_param);
+  const CollisionCheckParameters & check_param, CollisionCheckDebug & debug);
 }  // namespace util
 }  // namespace behavior_path_planner
 

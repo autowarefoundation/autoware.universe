@@ -24,3 +24,4 @@
       lateral_distance_threshold: 5.0
       expected_front_deceleration: -1.0
       expected_rear_deceleration: -1.0
+      publish_debug_marker: true

@@ -340,6 +340,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.lateral_distance_threshold = dp("lateral_distance_threshold", 5.0);
   p.expected_front_deceleration = dp("expected_front_deceleration", -1.0);
   p.expected_rear_deceleration = dp("expected_rear_deceleration", -1.0);
+  p.publish_debug_marker = dp("publish_debug_marker", true);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {

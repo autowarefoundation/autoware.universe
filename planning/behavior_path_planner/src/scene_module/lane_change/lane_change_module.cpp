@@ -77,6 +77,7 @@ void LaneChangeModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
+  debug_marker_.markers.clear();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
 }
@@ -193,9 +194,6 @@ CandidateOutput LaneChangeModule::planCandidate() const
   if (selected_path.path.points.empty()) {
     return output;
   }
-  // if (selected_path.path.points.empty()) {
-  //   return CandidateOutput{};
-  // }
 
   const auto start_idx = selected_path.shift_point.start_idx;
   const auto end_idx = selected_path.shift_point.end_idx;
@@ -392,12 +390,21 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
     if (valid_paths.empty()) {
       return std::make_pair(false, false);
     }
+    candidate_path_ = valid_paths;
 
     // select safe path
+    object_debug_.clear();
     bool found_safe_path = lane_change_utils::selectSafePath(
       valid_paths, current_lanes, check_lanes, planner_data_->dynamic_object, current_pose,
       current_twist, common_parameters.vehicle_width, common_parameters.vehicle_length, parameters_,
-      &safe_path);
+      &safe_path, object_debug_);
+
+    if (parameters_.publish_debug_marker) {
+      setObjectDebugVisualization();
+    } else {
+      debug_marker_.markers.clear();
+    }
+
     return std::make_pair(true, found_safe_path);
   }
 
@@ -463,10 +470,11 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
     const auto check_lanes = route_handler->getCheckTargetLanesFromPath(
       path.path, status_.lane_change_lanes, check_distance_with_path);
 
+    std::unordered_map<std::string, CollisionCheckDebug> debug_data;
     is_path_safe = lane_change_utils::isLaneChangePathSafe(
       path.path, current_lanes, check_lanes, objects, current_pose, current_twist,
-      common_parameters.vehicle_width, common_parameters.vehicle_length, parameters_, false,
-      status_.lane_change_path.acceleration);
+      common_parameters.vehicle_width, common_parameters.vehicle_length, parameters_, debug_data,
+      false, status_.lane_change_path.acceleration);
   }
 
   // check vehicle velocity thresh
@@ -531,6 +539,26 @@ bool LaneChangeModule::hasFinishedLaneChange() const
                                  status_.lane_change_path.lane_change_length +
                                  parameters_.lane_change_finish_judge_buffer;
   return travel_distance > finish_distance;
+}
+
+void LaneChangeModule::setObjectDebugVisualization() const
+{
+  using marker_utils::lane_change_markers::showAllLaneChangeLanes;
+  using marker_utils::lane_change_markers::showEgoPolygon;
+  using marker_utils::lane_change_markers::showEgoPredictedPaths;
+  using marker_utils::lane_change_markers::showLerpedPose;
+  using marker_utils::lane_change_markers::showObjectInfo;
+
+  debug_marker_.markers.clear();
+  const auto add = [this](const MarkerArray & added) {
+    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
+  };
+
+  add(showObjectInfo(object_debug_, "object_debug_info"));
+  add(showAllLaneChangeLanes(candidate_path_, "candidate_path"));
+  add(showLerpedPose(object_debug_, "lerp_pose_before_true"));
+  add(showEgoPredictedPaths(object_debug_, "ego_predicted_paths"));
+  add(showEgoPolygon(object_debug_, "ego_lerped_polygon"));
 }
 
 }  // namespace behavior_path_planner
