@@ -81,7 +81,7 @@ struct Flags
 class StateMachine
 {
 public:
-  explicit StateMachine(const StateParam & state_param) : state_param_(state_param) {}
+  explicit StateMachine(const StateParam & state_param, rclcpp::Logger logger) : state_param_(state_param), logger_(logger) {}
 
   AutowareState getCurrentState() const { return autoware_state_; }
   AutowareState updateState(const StateInput & state_input);
@@ -96,6 +96,7 @@ private:
   mutable Times times_;
   mutable Flags flags_;
   mutable autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr executing_route_ = nullptr;
+  rclcpp::Logger logger_;
 
   AutowareState judgeAutowareState() const;
 

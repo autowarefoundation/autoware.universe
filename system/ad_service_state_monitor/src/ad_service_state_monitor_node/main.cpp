@@ -18,8 +18,13 @@
 
 #include <memory>
 
+#include <glog/logging.h>
+
 int main(int argc, char * argv[])
 {
+  google::InitGoogleLogging(argv[0]);
+  google::InstallFailureSignalHandler();
+
   rclcpp::init(argc, argv);
   auto node = std::make_shared<AutowareStateMonitorNode>();
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(ad_service_state_monitor)
 
+set(CMAKE_BUILD_TYPE "Debug")
+
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -28,6 +30,8 @@ ament_auto_add_executable(ad_service_state_monitor
   src/ad_service_state_monitor_node/main.cpp
   ${AD_SERVICE_STATE_MONITOR_SRC}
 )
+
+target_link_libraries(ad_service_state_monitor glog)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

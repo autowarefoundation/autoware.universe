@@ -404,7 +404,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   state_param_.th_stopped_velocity_mps = this->declare_parameter("th_stopped_velocity_mps", 0.01);
 
   // State Machine
-  state_machine_ = std::make_shared<StateMachine>(state_param_);
+  state_machine_ = std::make_shared<StateMachine>(state_param_, this->get_logger());
 
   // Config
   topic_configs_ = getConfigs<TopicConfig>(this->get_node_parameters_interface(), "topic_configs");

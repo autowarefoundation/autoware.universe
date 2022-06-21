@@ -54,6 +54,10 @@ bool isStopped(
   const double th_stopped_velocity_mps)
 {
   for (const auto & odometry : odometry_buffer) {
+    if (!odometry)
+    {
+      std::cerr << __func__ << ": odometry is nullptr" << std::endl;
+    }
     if (std::abs(odometry->twist.twist.linear.x) > th_stopped_velocity_mps) {
       return false;
     }
@@ -185,6 +189,16 @@ bool StateMachine::isOverridden() const { return !isEngaged(); }
 
 bool StateMachine::hasArrivedGoal() const
 {
+  if (!state_input_.current_pose)
+  {
+    RCLCPP_WARN(logger_, "current_pose is nullptr");
+  }
+
+  if (!state_input_.goal_pose)
+  {
+    RCLCPP_WARN(logger_, "goal_pose is nullptr");
+  }
+
   const auto is_valid_goal_angle = isValidAngle(
     state_input_.current_pose->pose, *state_input_.goal_pose, state_param_.th_arrived_angle);
   const auto is_near_goal = isNearGoal(
