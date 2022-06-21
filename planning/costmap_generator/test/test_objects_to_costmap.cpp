@@ -72,7 +72,7 @@ grid_y
 |--------grid_x
 */
 TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
-{    
+{
   auto objs = std::make_shared<autoware_auto_perception_msgs::msg::PredictedObjects>();
   autoware_auto_perception_msgs::msg::PredictedObject object;
 
@@ -140,4 +140,3 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
     }
   }
 }
-
