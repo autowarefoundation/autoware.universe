@@ -35,7 +35,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
 
 namespace behavior_path_planner
 {
