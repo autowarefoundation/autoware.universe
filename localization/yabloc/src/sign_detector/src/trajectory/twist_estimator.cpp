@@ -86,9 +86,20 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
 
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 {
-  last_rtk_fixed_ = (msg.flags == 131);
+  switch (msg.flags) {
+    case 131:
+      last_rtk_quality_ = 2;
+      break;
+    case 67:
+      last_rtk_quality_ = 1;
+      break;
+    default:
+      last_rtk_quality_ = 0;
+      break;
+  }
+
   if ((msg.flags != 131) && (msg.flags != 67)) {
-    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "NOT FIX!");
+    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "GNSS is unreliable!");
     return;
   }
 
@@ -151,10 +162,16 @@ void TwistEstimator::publishString()
   ss << "bias: " << state_[2] << std::endl;
   ss << "scale: " << state_[3] << std::endl;
   ss << std::endl;
-  if (last_rtk_fixed_)
-    ss << "RTK: FIX" << std::endl;
-  else
-    ss << "RTK: !!NOT FIX!!" << std::endl;
+  switch (last_rtk_quality_) {
+    case 2:
+      ss << "RTK: FIX" << std::endl;
+      break;
+    case 1:
+      ss << "RTK: FLOAT" << std::endl;
+      break;
+    default:
+      ss << "RTK: UNRELIABLE" << std::endl;
+  }
 
   String msg;
   msg.data = ss.str();

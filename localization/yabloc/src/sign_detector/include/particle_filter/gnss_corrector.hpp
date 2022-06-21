@@ -29,18 +29,18 @@ private:
   const float flat_radius_;
   const float min_prob_;
   const float sigma_;
+  const float float_range_gain_;
   Float32 latest_height_;
 
-  void fixCallback(const NavSatFix::ConstSharedPtr fix_msg);
   void ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg);
   rclcpp::Time ubloxTime2Stamp(const NavPVT & msg);
 
   ParticleArray weightParticles(
-    const ParticleArray & predicted_particles, const Eigen::Vector3f & pose);
+    const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, bool fixed);
 
   float normalPdf(float x, float mu, float sigma);
-  float inversePdf(float prob) const;
+  float inversePdf(float prob, bool fixed) const;
 
-  void publishMarker(const Eigen::Vector3f & position);
+  void publishMarker(const Eigen::Vector3f & position, bool fixed);
 };
 }  // namespace particle_filter

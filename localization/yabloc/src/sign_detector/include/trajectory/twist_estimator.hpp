@@ -39,7 +39,7 @@ private:
   const bool upside_down;
 
   Eigen::Matrix4f cov_predict_;
-  bool last_rtk_fixed_{false};
+  int last_rtk_quality_{0};
 
   void callbackImu(const Imu & msg);
   void callbackTwistStamped(const TwistStamped & msg);
