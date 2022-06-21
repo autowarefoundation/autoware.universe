@@ -454,8 +454,8 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
           (1 - lpf_gain_) * driving_status_vars.controller_processing_time.data;
 
         driving_status_vars.desired_steering_angle.data =
-            lpf_gain_ * prev_driving_vars_->desired_steering_angle.data +
-                (1 - lpf_gain_) * driving_status_vars.desired_steering_angle.data;
+          lpf_gain_ * prev_driving_vars_->desired_steering_angle.data +
+          (1 - lpf_gain_) * driving_status_vars.desired_steering_angle.data;
       }
 
       prev_driving_vars_ =
