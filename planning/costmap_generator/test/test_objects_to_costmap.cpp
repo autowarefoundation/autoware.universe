@@ -14,6 +14,7 @@
 
 #include <costmap_generator/objects_to_costmap.hpp>
 #include <rclcpp/rclcpp.hpp>
+
 #include <gtest/gtest.h>
 
 using LABEL = autoware_auto_perception_msgs::msg::ObjectClassification;
