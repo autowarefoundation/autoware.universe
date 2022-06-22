@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
+
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/route_checker.hpp"
 
