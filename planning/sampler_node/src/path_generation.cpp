@@ -39,21 +39,17 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   const autoware_auto_planning_msgs::msg::Path & path_msg, plot::Plotter & plotter,
   const Parameters & params)
 {
-  const auto reuse_length_step = params.sampling.reuse_max_length_max / 2.0;
+  const auto reuse_length_step =
+    params.sampling.reuse_max_length_max / params.sampling.reuse_samples;
 
   std::vector<sampler_common::Path> paths;
   sampler_common::Path base_path;
-  if (
-    !previous_path.points.empty() &&
-    !sampler_common::tryToReusePath(
-      previous_path, initial_state.pose, params.sampling.minimum_committed_length,
-      params.sampling.reuse_max_deviation, params.constraints, base_path))
-    return {};
   const auto move_to_paths = [&](auto & paths_to_move) {
     paths.insert(
       paths.end(), std::make_move_iterator(paths_to_move.begin()),
       std::make_move_iterator(paths_to_move.end()));
   };
+
   if (params.sampling.enable_frenet) {
     auto frenet_paths =
       generateFrenetPaths(initial_state, base_path, path_msg, path_spline, params);
