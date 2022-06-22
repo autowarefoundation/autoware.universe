@@ -14,22 +14,22 @@
 
 #include "obstacle_cruise_planner/planner_interface.hpp"
 
-Trajectory PlannerInterface::insertStopPointToTrajectory(
-  const ObstacleCruisePlannerData & planner_data)
+Trajectory PlannerInterface::generateStopTrajectory(
+  const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose,
+  const std::vector<TargetObstacle> & target_obstacles)
 {
   const auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    traj.points, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   if (!nearest_segment_idx) {
-    return planner_data.traj;
+    return traj;
   }
 
   // Get Closest Behavior Stop Distance
-  const double traj_length = tier4_autoware_utils::calcArcLength(planner_data.traj.points);
-  const double dist_to_segment = tier4_autoware_utils::calcSignedArcLength(
-    planner_data.traj.points, 0, *nearest_segment_idx + 1);
-  const auto closest_forward_stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
-    planner_data.traj.points, *nearest_segment_idx + 1);
+  const double traj_length = tier4_autoware_utils::calcArcLength(traj.points);
+  const double dist_to_segment =
+    tier4_autoware_utils::calcSignedArcLength(traj.points, 0, *nearest_segment_idx + 1);
+  const auto closest_forward_stop_dist =
+    tier4_autoware_utils::calcDistanceToForwardStopPoint(traj.points, *nearest_segment_idx + 1);
   const double closest_behavior_stop_dist =
     closest_forward_stop_dist
       ? std::min(dist_to_segment + closest_forward_stop_dist.get(), traj_length)
@@ -38,15 +38,14 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
   // Get Closest Obstacle Stop Distance
   double closest_obstacle_stop_dist = closest_behavior_stop_dist;
   const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
-  for (const auto & obstacle : planner_data.target_obstacles) {
+  for (const auto & obstacle : target_obstacles) {
     // Ignore obstacle that is not required to stop
     if (!isStopRequired(obstacle)) {
       continue;
     }
 
-    const double stop_dist = tier4_autoware_utils::calcSignedArcLength(
-                               planner_data.traj.points, 0, obstacle.collision_point) -
-                             offset;
+    const double stop_dist =
+      tier4_autoware_utils::calcSignedArcLength(traj.points, 0, obstacle.collision_point) - offset;
     closest_obstacle_stop_dist = std::clamp(stop_dist, 0.0, closest_obstacle_stop_dist);
   }
 
@@ -59,5 +58,5 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
 
   const double closest_stop_dist = std::min(closest_behavior_stop_dist, closest_obstacle_stop_dist);
 
-  return obstacle_cruise_utils::insertStopPoint(planner_data.traj, closest_stop_dist);
+  return obstacle_cruise_utils::insertStopPoint(traj, closest_stop_dist);
 }

@@ -451,19 +451,18 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createPlannerData(
 
   const double current_vel = current_twist_ptr_->twist.linear.x;
   const double current_accel = calcCurrentAccel();
+  const auto target_obstacles =
+    filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
 
   // create planner_data
   ObstacleCruisePlannerData planner_data;
   planner_data.current_time = now();
-  planner_data.traj = trajectory;
+  planner_data.traj =
+    planner_ptr_->generateStopTrajectory(trajectory, current_pose, target_obstacles);
   planner_data.current_pose = current_pose;
   planner_data.current_vel = current_vel;
   planner_data.current_acc = current_accel;
-  planner_data.target_obstacles =
-    filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
-
-  // Update trajectory by inserting stop point
-  planner_data.traj = planner_ptr_->insertStopPointToTrajectory(planner_data);
+  planner_data.target_obstacles = target_obstacles;
 
   // print calculation time
   const double calculation_time = stop_watch_.toc(__func__);

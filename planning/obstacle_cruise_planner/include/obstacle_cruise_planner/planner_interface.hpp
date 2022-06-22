@@ -128,7 +128,9 @@ public:
     const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
     DebugData & debug_data) = 0;
 
-  Trajectory insertStopPointToTrajectory(const ObstacleCruisePlannerData & planner_data);
+  Trajectory generateStopTrajectory(
+    const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose,
+    const std::vector<TargetObstacle> & target_obstacles);
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {

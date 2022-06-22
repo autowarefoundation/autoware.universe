@@ -68,26 +68,12 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
   const auto & pre_pose = traj.points.at(search_idx - 1).pose;
   const auto & next_pose = traj.points.at(search_idx).pose;
 
-  geometry_msgs::msg::Pose target_pose;
-
   // lerp position
   const double seg_length =
     tier4_autoware_utils::calcDistance2d(pre_pose.position, next_pose.position);
   const double lerp_ratio = (length_to_search_idx - target_length) / seg_length;
-  target_pose.position.x =
-    pre_pose.position.x + (next_pose.position.x - pre_pose.position.x) * lerp_ratio;
-  target_pose.position.y =
-    pre_pose.position.y + (next_pose.position.y - pre_pose.position.y) * lerp_ratio;
-  target_pose.position.z =
-    pre_pose.position.z + (next_pose.position.z - pre_pose.position.z) * lerp_ratio;
 
-  // lerp orientation
-  const double pre_yaw = tf2::getYaw(pre_pose.orientation);
-  const double next_yaw = tf2::getYaw(next_pose.orientation);
-  target_pose.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(pre_yaw + (next_yaw - pre_yaw) * lerp_ratio);
-
-  return target_pose;
+  return tier4_autoware_utils::calcInterpolatedPose(pre_pose, next_pose, lerp_ratio);
 }
 
 boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
