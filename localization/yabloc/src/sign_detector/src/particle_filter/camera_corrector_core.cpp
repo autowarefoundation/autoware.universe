@@ -13,8 +13,10 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   if (!opt_array.has_value()) return;
 
-  float dt = (stamp - opt_array->header.stamp).seconds();
-  RCLCPP_INFO_STREAM(get_logger(), "opt_arary stamp delay: " << dt * 1000.f << " ms");
+  auto dt = (stamp - opt_array->header.stamp);
+  if (std::abs(dt.seconds()) > 0.1)
+    RCLCPP_WARN_STREAM(
+      get_logger(), "Timestamp gap between image and particles is LARGE " << dt.seconds());
 
   LineSegment lsd_cloud;
   pcl::fromROSMsg(lsd_msg, lsd_cloud);

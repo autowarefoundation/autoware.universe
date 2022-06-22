@@ -41,7 +41,7 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
   if (std::abs(dt.seconds()) > 0.1)
     RCLCPP_WARN_STREAM(
-      this->get_logger(), "Timestamp gap between gnss and particles is LARGE " << dt.seconds());
+      get_logger(), "Timestamp gap between gnss and particles is LARGE " << dt.seconds());
 
   NavSatFix fix;
   fix.latitude = ublox_msg->lat * 1e-7f;

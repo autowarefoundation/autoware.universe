@@ -42,6 +42,8 @@ void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & clo
 
 void HierarchicalCostMap::buildMap(const Area & area)
 {
+  if (!cloud_.has_value()) return;
+
   cv::Mat cost_map;
   cv::Mat image = 255 * cv::Mat::ones(cv::Size(image_size_, image_size_), CV_8UC1);
 

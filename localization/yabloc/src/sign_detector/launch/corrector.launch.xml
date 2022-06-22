@@ -34,7 +34,7 @@
         <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />
     </node>
 
-    <node if="true" pkg="topic_tools" exec="relay" name="camera_corrector_relay">
+    <node if="true" pkg="topic_tools" exec="relay" name="camera_corrector_relay" args="--ros-args --log-level warn">
         <param name="input_topic" value="/camera/weighted_particles" />
         <param name="output_topic" value="/weighted_particles" />
         <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />

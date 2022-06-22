@@ -20,17 +20,18 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
   using std::placeholders::_1;
   // Subscriber
   {
+    auto cb_info = std::bind(&Overlay::infoCallback, this, _1);
+    auto cb_image = std::bind(&Overlay::imageCallback, this, _1);
+    auto cb_particle = std::bind(&Overlay::poseCallback, this, _1);
+    auto cb_ll2 = std::bind(&Overlay::ll2Callback, this, _1);
+    auto cb_lsd = std::bind(&Overlay::lsdCallback, this, _1);
     sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
-      "/sensing/camera/traffic_light/camera_info", 10, std::bind(&Overlay::infoCallback, this, _1));
+      "/sensing/camera/traffic_light/camera_info", 10, cb_info);
     sub_image_ = create_subscription<sensor_msgs::msg::Image>(
-      "/sensing/camera/traffic_light/image_raw/compressed", 10,
-      std::bind(&Overlay::imageCallback, this, _1));
-    sub_pose_ = create_subscription<PoseStamped>(
-      "/particle_pose", 10, std::bind(&Overlay::poseCallback, this, _1));
-    sub_ll2_ = create_subscription<PointCloud2>(
-      "/ll2_cloud", 10, std::bind(&Overlay::ll2Callback, this, _1));
-    sub_lsd_ = create_subscription<PointCloud2>(
-      "/lsd_cloud", 10, std::bind(&Overlay::lsdCallback, this, _1));
+      "/sensing/camera/traffic_light/image_raw/compressed", 10, cb_image);
+    sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_particle);
+    sub_ll2_ = create_subscription<PointCloud2>("/ll2_cloud", 10, cb_ll2);
+    sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, cb_lsd);
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
