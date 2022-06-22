@@ -32,15 +32,13 @@ public:
   {
     // NOLINT
     // create sample lanelets
-    Point3d p1, p2, p3, p4;
+    const Point3d p1(getId(), 0.0, 0.0, 0.0);
+    const Point3d p2(getId(), 0.0, 1.0, 0.0);
 
-    p1 = Point3d(getId(), 0., 0., 0.);
-    p2 = Point3d(getId(), 0., 1., 0.);
+    const LineString3d ls_left(getId(), {p1, p2});
 
-    LineString3d ls_left(getId(), {p1, p2});  // NOLINT
-
-    p3 = Point3d(getId(), 1., 0., 0.);
-    p4 = Point3d(getId(), 1., 1., 0.);
+    const Point3d p3(getId(), 1.0, 0.0, 0.0);
+    const Point3d p4(getId(), 1.0, 0.0, 0.0);
 
     LineString3d ls_right(getId(), {p3, p4});  // NOLINT
 
