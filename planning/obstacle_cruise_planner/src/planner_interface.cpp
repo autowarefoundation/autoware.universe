@@ -24,14 +24,19 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
     return planner_data.traj;
   }
 
-  const auto closest_stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(
-    planner_data.traj.points, *nearest_segment_idx + 1, planner_data.traj.points.size());
-  double closest_stop_dist =
-    closest_stop_idx
-      ? tier4_autoware_utils::calcSignedArcLength(planner_data.traj.points, 0, *closest_stop_idx)
-      : tier4_autoware_utils::calcSignedArcLength(
-          planner_data.traj.points, 0, planner_data.traj.points.size() - 1);
+  // Get Closest Behavior Stop Distance
+  const double traj_length = tier4_autoware_utils::calcArcLength(planner_data.traj.points);
+  const double dist_to_segment = tier4_autoware_utils::calcSignedArcLength(
+    planner_data.traj.points, 0, *nearest_segment_idx + 1);
+  const auto closest_forward_stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
+    planner_data.traj.points, *nearest_segment_idx + 1);
+  const double closest_behavior_stop_dist =
+    closest_forward_stop_dist
+      ? std::min(dist_to_segment + closest_forward_stop_dist.get(), traj_length)
+      : traj_length;
 
+  // Get Closest Obstacle Stop Distance
+  double closest_obstacle_stop_dist = closest_behavior_stop_dist;
   const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
   for (const auto & obstacle : planner_data.target_obstacles) {
     // Ignore obstacle that is not required to stop
@@ -42,8 +47,17 @@ Trajectory PlannerInterface::insertStopPointToTrajectory(
     const double stop_dist = tier4_autoware_utils::calcSignedArcLength(
                                planner_data.traj.points, 0, obstacle.collision_point) -
                              offset;
-    closest_stop_dist = std::clamp(stop_dist, 0.0, closest_stop_dist);
+    closest_obstacle_stop_dist = std::clamp(stop_dist, 0.0, closest_obstacle_stop_dist);
   }
+
+  // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
+  // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
+  const double stop_dist_diff = closest_behavior_stop_dist - closest_obstacle_stop_dist;
+  if (0 < stop_dist_diff && stop_dist_diff < longitudinal_info_.safe_distance_margin) {
+    closest_obstacle_stop_dist = closest_behavior_stop_dist;
+  }
+
+  const double closest_stop_dist = std::min(closest_behavior_stop_dist, closest_obstacle_stop_dist);
 
   return obstacle_cruise_utils::insertStopPoint(planner_data.traj, closest_stop_dist);
 }

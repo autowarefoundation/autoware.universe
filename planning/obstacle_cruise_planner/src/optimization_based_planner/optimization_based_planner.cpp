@@ -336,8 +336,8 @@ Trajectory OptimizationBasedPlanner::generateTrajectory(
       break;
     }
   }
-  const auto traj_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-    planner_data.traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+  const auto traj_stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
+    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
     nearest_yaw_deviation_threshold_);
   if (traj_stop_dist) {
     closest_stop_dist = std::min(*traj_stop_dist, closest_stop_dist);
@@ -569,10 +569,10 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const double engage_vel_thr = engage_velocity_ * engage_exit_ratio_;
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= engage_velocity_) {
-      const auto stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-        input_traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+      const auto stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
+        input_traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
         nearest_yaw_deviation_threshold_);
-      if (stop_dist || *stop_dist > stop_dist_to_prohibit_engage_) {
+      if ((stop_dist && *stop_dist > stop_dist_to_prohibit_engage_) || !stop_dist) {
         initial_vel = engage_velocity_;
         initial_acc = engage_acceleration_;
         RCLCPP_DEBUG(
@@ -647,8 +647,8 @@ TrajectoryPoint OptimizationBasedPlanner::calcInterpolatedTrajectoryPoint(
 bool OptimizationBasedPlanner::checkHasReachedGoal(const ObstacleCruisePlannerData & planner_data)
 {
   // If goal is close and current velocity is low, we don't optimize trajectory
-  const auto closest_stop_dist = obstacle_cruise_utils::calcDistanceFromEgoPoseToStopPoint(
-    planner_data.traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+  const auto closest_stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
+    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
     nearest_yaw_deviation_threshold_);
   if (closest_stop_dist && *closest_stop_dist < 0.5 && planner_data.current_vel < 0.6) {
     return true;

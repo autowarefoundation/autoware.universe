@@ -172,6 +172,11 @@ autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
     return trajectory;
   }
 
+  const double traj_length = tier4_autoware_utils::calcArcLength(trajectory.points);
+  if (traj_length < distance_to_stop_point) {
+    return trajectory;
+  }
+
   autoware_auto_planning_msgs::msg::Trajectory output;
   output.header = trajectory.header;
 
@@ -216,34 +221,9 @@ autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
     output.points.push_back(traj_point);
   }
 
+  // Terminal Velocity Should be zero
+  output.points.back().longitudinal_velocity_mps = 0.0;
+
   return output;
-}
-
-boost::optional<double> calcDistanceFromEgoPoseToStopPoint(
-  const autoware_auto_planning_msgs::msg::Trajectory & input_traj,
-  const geometry_msgs::msg::Pose & current_pose, const double max_dist, const double max_yaw)
-{
-  const auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-    input_traj.points, current_pose, max_dist, max_yaw);
-
-  if (!nearest_segment_idx) {
-    return boost::none;
-  }
-
-  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(
-    input_traj.points, *nearest_segment_idx + 1, input_traj.points.size());
-
-  if (!stop_idx) {
-    return boost::none;
-  }
-
-  const auto closest_stop_dist = tier4_autoware_utils::calcSignedArcLength(
-    input_traj.points, current_pose, *stop_idx, max_dist, max_yaw);
-
-  if (!closest_stop_dist) {
-    return boost::none;
-  }
-
-  return std::max(0.0, *closest_stop_dist);
 }
 }  // namespace obstacle_cruise_utils
