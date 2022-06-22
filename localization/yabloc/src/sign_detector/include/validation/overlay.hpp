@@ -1,5 +1,5 @@
 #pragma once
-#include "sign_detector/timer.hpp"
+#include "common/timer.hpp"
 
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
@@ -18,6 +18,8 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+namespace validation
+{
 class Overlay : public rclcpp::Node
 {
 public:
@@ -61,3 +63,4 @@ private:
   void drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
   void makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };
+}  // namespace validation

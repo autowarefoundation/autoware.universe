@@ -14,26 +14,23 @@ Ll2ImageConverter::Ll2ImageConverter()
   image_size_(declare_parameter<int>("image_size", 800)),
   max_range_(declare_parameter<float>("max_range", 20.f))
 {
-  std::string map_topic = "/map/vector_map";
+  using std::placeholders::_1;
+  const rclcpp::QoS latch_qos = rclcpp::QoS(10).transient_local();
+  const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
   // Publisher
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
   pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
-
-  rclcpp::QoS latch = rclcpp::QoS(10).transient_local();
-  pub_cloud_ = this->create_publisher<Cloud2>("/ll2_cloud", latch);
-
-  using std::placeholders::_1, std::placeholders::_2;
+  pub_cloud_ = create_publisher<Cloud2>("/ll2_cloud", latch_qos);
 
   // Subscriber
-  sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
-    map_topic, rclcpp::QoS(10).transient_local().reliable(),
-    std::bind(&Ll2ImageConverter::mapCallback, this, _1));
-  sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    "/pose_topic", 10, std::bind(&Ll2ImageConverter::poseCallback, this, _1));
+  auto cb_map = std::bind(&Ll2ImageConverter::mapCallback, this, _1);
+  auto cb_pose = std::bind(&Ll2ImageConverter::poseCallback, this, _1);
+  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
+  sub_pose_stamped_ = create_subscription<PoseStamped>("/pose_topic", 10, cb_pose);
 }
 
-void Ll2ImageConverter::poseCallback(const geometry_msgs::msg::PoseStamped & pose_stamped)
+void Ll2ImageConverter::poseCallback(const PoseStamped & pose_stamped)
 {
   if (linestrings_ == nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -150,13 +147,13 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
     return q;
   };
 
+  const std::set<std::string> visible_labels = {
+    "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
+
   for (lanelet::LineString3d & line : viz_lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
-    if (
-      attr.value() != "zebra_marking" && attr.value() != "virtual" && attr.value() != "line_thin" &&
-      attr.value() != "pedestrian_marking" && attr.value() != "stop_line")
-      continue;
+    if (visible_labels.count(attr.value()) == 0) continue;
 
     std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d p : line) {

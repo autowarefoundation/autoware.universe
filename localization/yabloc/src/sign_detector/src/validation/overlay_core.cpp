@@ -1,6 +1,6 @@
 #include "common/util.hpp"
 #include "sign_detector/ll2_util.hpp"
-#include "sign_detector/overlay.hpp"
+#include "validation/overlay.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -11,6 +11,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+namespace validation
+{
 void Overlay::ll2Callback(const PointCloud2 & msg) { pcl::fromROSMsg(msg, ll2_cloud_); }
 
 Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
@@ -212,3 +214,5 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(const Pose & pose)
   }
   return near_linestring;
 }
+
+}  // namespace validation
