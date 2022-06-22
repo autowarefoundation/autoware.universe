@@ -296,7 +296,9 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
   res->radius = req->radius;
   if (isLoadingSamePCDMapsAsBefore(req->position, req->radius, pcd_file_metadata_array_)) {
     RCLCPP_INFO_STREAM(
-      get_logger(), "skip loading pcd files (request demands for the same set of pcd files that currently exists)");
+      get_logger(),
+      "skip loading pcd files (request demands for the same set of pcd files that currently "
+      "exists)");
     return true;
   }
   pub_partial_pointcloud_map_->publish(
@@ -312,7 +314,9 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
   res->radius = req->radius;
   if (isLoadingSamePCDMapsAsBefore(req->position, req->radius, pcd_file_metadata_array_)) {
     RCLCPP_INFO_STREAM(
-      get_logger(), "skip loading pcd files (request demands for the same set of pcd files that currently exists)");
+      get_logger(),
+      "skip loading pcd files (request demands for the same set of pcd files that currently "
+      "exists)");
     return true;
   }
   res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
