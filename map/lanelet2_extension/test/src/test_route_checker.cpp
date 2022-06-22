@@ -79,8 +79,8 @@ TEST_F(TestSuite, isRouteValid)
 
   // toBinMsg is tested at test_message_conversion.cpp
   lanelet::utils::conversion::toBinMsg(sample_map_ptr, &bin_msg);
-  //autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_ptr;
-  //map_ptr = std::make_shared<autoware_auto_mapping_msgs::msg::HADMapBin>(bin_msg);
+  // autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_ptr;
+  // map_ptr = std::make_shared<autoware_auto_mapping_msgs::msg::HADMapBin>(bin_msg);
 
   ASSERT_TRUE(lanelet::utils::route::isRouteValid(route_ptr1, sample_map_ptr))
     << "The route should be valid, which should be created on the same map as the current one";
