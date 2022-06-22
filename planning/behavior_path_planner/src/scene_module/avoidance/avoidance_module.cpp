@@ -2552,7 +2552,7 @@ void AvoidanceModule::initVariables()
 
   debug_avoidance_msg_array_ptr_.reset();
   debug_data_ = DebugData();
-
+  debug_marker_.markers.clear();
   registered_raw_shift_points_ = {};
   current_raw_shift_points_ = {};
   original_unique_id = 0;
