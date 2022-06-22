@@ -21,9 +21,9 @@ namespace lanelet
 namespace utils
 {
 bool route::isRouteValid(
-  const HADMapRoute::ConstSharedPtr route_msg, const lanelet::LaneletMapPtr lanelet_map_ptr_)
+  const HADMapRoute route_msg, const lanelet::LaneletMapPtr lanelet_map_ptr_)
 {
-  for (const auto & route_section : route_msg->segments) {
+  for (const auto & route_section : route_msg.segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
       try {
