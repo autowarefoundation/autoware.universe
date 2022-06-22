@@ -41,7 +41,7 @@ visualization_msgs::msg::Marker getObjectMarker(
   const double r, const double g, const double b);
 
 boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t nearest_idx,
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t & start_idx,
   const double target_length);
 
 boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(

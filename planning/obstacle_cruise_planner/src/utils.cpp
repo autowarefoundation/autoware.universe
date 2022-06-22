@@ -42,18 +42,18 @@ visualization_msgs::msg::Marker getObjectMarker(
 }
 
 boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t nearest_idx,
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t & start_idx,
   const double target_length)
 {
   if (traj.points.empty()) {
     return {};
   }
 
-  size_t search_idx = nearest_idx;
+  size_t search_idx = start_idx;
   double length_to_search_idx = 0.0;
   for (; search_idx < traj.points.size(); ++search_idx) {
     length_to_search_idx =
-      tier4_autoware_utils::calcSignedArcLength(traj.points, nearest_idx, search_idx);
+      tier4_autoware_utils::calcSignedArcLength(traj.points, start_idx, search_idx);
     if (length_to_search_idx > target_length) {
       break;
     } else if (search_idx == traj.points.size() - 1) {

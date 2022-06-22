@@ -130,7 +130,11 @@ public:
 
   Trajectory generateStopTrajectory(
     const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose,
-    const std::vector<TargetObstacle> & target_obstacles);
+    const std::vector<TargetObstacle> & target_obstacles, const rclcpp::Time & current_time,
+    DebugData & debug_data);
+
+  boost::optional<TargetObstacle> getClosestStopObstacle(
+    const Trajectory & traj, const std::vector<TargetObstacle> & target_obstacles);
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {
