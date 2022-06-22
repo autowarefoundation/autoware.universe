@@ -21,17 +21,13 @@ namespace lanelet
 namespace utils
 {
 bool route::isRouteValid(
-  const HADMapRoute::ConstSharedPtr route_msg, const HADMapBin::ConstSharedPtr map_msg)
+  const HADMapRoute::ConstSharedPtr route_msg, const lanelet::LaneletMapPtr lanelet_map_ptr_)
 {
-  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
-  lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
-
   for (const auto & route_section : route_msg->segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
       try {
         lanelet_map_ptr_->laneletLayer.get(id);
-        std::cout << "Route is valid" << std::endl;
       } catch (const std::exception & e) {
         std::cerr
           << e.what()

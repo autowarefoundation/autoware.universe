@@ -26,8 +26,7 @@ namespace lanelet::utils::route
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
 
-bool isRouteValid(const HADMapRoute::ConstSharedPtr route, const HADMapBin::ConstSharedPtr map_msg);
-lanelet::LaneletMapPtr lanelet_map_ptr_;
+bool isRouteValid(const HADMapRoute::ConstSharedPtr route, const lanelet::LaneletMapPtr lanelet_map_ptr_);
 }  // namespace lanelet::utils::route
 
 #endif  // LANELET2_EXTENSION__UTILITY__ROUTE_CHECKER_HPP_
