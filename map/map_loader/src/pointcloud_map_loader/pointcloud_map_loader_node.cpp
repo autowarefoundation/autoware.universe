@@ -262,9 +262,11 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
 
   const auto KOJI_exe_end_time = std::chrono::system_clock::now();
   const double KOJI_exe_time =
-    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time).count() /
+    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time)
+      .count() /
     1000.0;
-  RCLCPP_INFO_STREAM(get_logger(), "KOJI loadPCDPartially @map_loader: " << KOJI_exe_time << " [ms]");
+  RCLCPP_INFO_STREAM(
+    get_logger(), "KOJI loadPCDPartially @map_loader: " << KOJI_exe_time << " [ms]");
 
   filtered_pcd.header.frame_id = "map";
   return filtered_pcd;

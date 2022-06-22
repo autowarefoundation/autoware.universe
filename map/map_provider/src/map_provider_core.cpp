@@ -37,11 +37,9 @@ MapProvider::MapProvider() : Node("map_provider"), tf2_listener_(tf2_buffer_)
   map_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "output/pointcloud_map", rclcpp::QoS(1).transient_local());
 
-  pcd_loader_service_group_ =
-    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  pcd_loader_client_ =
-    this->create_client<autoware_map_srvs::srv::LoadPCDPartially>(
-      "pcd_loader_service", rmw_qos_profile_services_default, pcd_loader_service_group_);
+  pcd_loader_service_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  pcd_loader_client_ = this->create_client<autoware_map_srvs::srv::LoadPCDPartially>(
+    "pcd_loader_service", rmw_qos_profile_services_default, pcd_loader_service_group_);
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_DEBUG(get_logger(), "Waiting for pcd_loader_service...");
   }
@@ -81,20 +79,18 @@ void MapProvider::updateMapTimerCallback()
   request->position.y = transform_stamped.transform.translation.y;
   request->position.z = transform_stamped.transform.translation.z;
   request->radius = pointcloud_map_radius_;
-  auto result {
-    pcd_loader_client_->async_send_request(
-      request,
-      [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartially>::SharedFuture response){
-        (void)response;
-        std::lock_guard<std::mutex> lock {mutex_};
-        value_ready_ = true;
-        condition_.notify_all();
-      }
-    )
-  };
-  std::unique_lock<std::mutex> lock {mutex_};
-  condition_.wait(lock, [this](){return value_ready_;});
-  // TODO: This may be wrong. Maybe must return when failed to call pcd_loader_ server? (koji minoda)
+  auto result{pcd_loader_client_->async_send_request(
+    request,
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartially>::SharedFuture response) {
+      (void)response;
+      std::lock_guard<std::mutex> lock{mutex_};
+      value_ready_ = true;
+      condition_.notify_all();
+    })};
+  std::unique_lock<std::mutex> lock{mutex_};
+  condition_.wait(lock, [this]() { return value_ready_; });
+  // TODO: This may be wrong. Maybe must return when failed to call pcd_loader_ server? (koji
+  // minoda)
 
   pcd_loader_res_ = result.get();
 
