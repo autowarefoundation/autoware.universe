@@ -397,6 +397,7 @@ void MultiObjectTracker::sanitizeTracker(
       if (should_delete_tracker1) {
         itr1 = list_tracker.erase(itr1);
         --itr1;
+        break;
       } else if (should_delete_tracker2) {
         itr2 = list_tracker.erase(itr2);
         --itr2;
