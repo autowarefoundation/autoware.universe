@@ -332,10 +332,6 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   const auto ego_path = *path;
 
-  if (isRedSignalForPedestrians()) {
-    return true;
-  }
-
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step1: %f ms",
     stop_watch_.toc("total_processing_time", false));
@@ -443,6 +439,10 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
 
     if (!isTargetType(object)) {
       found_stuck_vehicle = found_stuck_vehicle || isStuckVehicle(ego_path, object);
+      continue;
+    }
+
+    if (isRedSignalForPedestrians()) {
       continue;
     }
 
