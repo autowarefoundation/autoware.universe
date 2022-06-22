@@ -48,26 +48,29 @@ public:
 
     LineString3d ls_right(getId(), {p3, p4});  // NOLINT
 
-    const int64_t last_unique_id = getId();
-    Lanelet lanelet(last_unique_id, ls_left, ls_right);
+    Lanelet lanelet(getId(), ls_left, ls_right);
 
     sample_map_ptr->add(lanelet);
 
+    // create sample routes
     autoware_auto_mapping_msgs::msg::MapPrimitive map_primitive;
-    autoware_auto_mapping_msgs::msg::HADMapSegment map_segment;
+    autoware_auto_mapping_msgs::msg::HADMapSegment map_segment1;
+    autoware_auto_mapping_msgs::msg::HADMapSegment map_segment2;
+
     for (size_t i = 0; i < 2; i++) {
-      for (size_t j = 0; j < 2; j++) {
-        map_primitive.id = getId() - 5;
-      }
-      map_segment.primitives.push_back(map_primitive);
-      map_segment.preferred_primitive_id = getId() - 5;
+      map_primitive.id = lanelet.id();
+      map_segment1.primitives.push_back(map_primitive);
+      map_primitive.id = ls_left.id();
+      map_segment2.primitives.push_back(map_primitive);
     }
-    sample_route_ptr->segments.push_back(map_segment);
+    sample_route1.segments.push_back(map_segment1);
+    sample_route2.segments.push_back(map_segment2);
   }
   ~TestSuite() {}
 
   lanelet::LaneletMapPtr sample_map_ptr;
-  autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr sample_route_ptr;
+  autoware_auto_planning_msgs::msg::HADMapRoute sample_route1;
+  autoware_auto_planning_msgs::msg::HADMapRoute sample_route2;
 
 private:
 };
@@ -76,14 +79,20 @@ TEST_F(TestSuite, isRouteValid)
 {
   autoware_auto_mapping_msgs::msg::HADMapBin bin_msg;
 
+  autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_ptr1;
+  route_ptr1 = std::make_shared<autoware_auto_planning_msgs::msg::HADMapRoute>(sample_route1);
+  autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_ptr2;
+  route_ptr2 = std::make_shared<autoware_auto_planning_msgs::msg::HADMapRoute>(sample_route2);
+
   // toBinMsg is tested at test_message_conversion.cpp
-  autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_ptr = sample_route_ptr;
   lanelet::utils::conversion::toBinMsg(sample_map_ptr, &bin_msg);
   autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_ptr;
   map_ptr = std::make_shared<autoware_auto_mapping_msgs::msg::HADMapBin>(bin_msg);
 
-  ASSERT_TRUE(lanelet::utils::route::isRouteValid(route_ptr, map_ptr))
-    << "The route was created on a different map from the current one";
+  ASSERT_TRUE(lanelet::utils::route::isRouteValid(route_ptr1, map_ptr))
+    << "The route should be valid, which should be created on the same map as the current one";
+  ASSERT_FALSE(lanelet::utils::route::isRouteValid(route_ptr2, map_ptr))
+    << "The route should be invalid, which should be created on the different map from the current one";
 }
 
 int main(int argc, char ** argv)

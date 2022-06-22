@@ -35,10 +35,12 @@ bool route::isRouteValid(
         lanelet_map_ptr_->laneletLayer.get(id);
         std::cout << "Route is valid" << std::endl;
       } catch (const std::exception & e) {
-        std::cerr << e.what()
-                  << "Maybe the loaded route was created on a different Map from the current one. "
-                     "Try to load the other Route again."
-                  << std::endl;
+        std::cerr
+          << e.what()
+          << ". Maybe the loaded route was created on a different Map from the current one. "
+             "Try to load the other Route again."
+          << std::endl;
+        return false;
       }
     }
   }
