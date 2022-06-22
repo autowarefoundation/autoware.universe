@@ -72,8 +72,10 @@ TEST_F(TestSuite, isRouteValid)
 {
   autoware_auto_mapping_msgs::msg::HADMapBin bin_msg;
 
-  const auto route_ptr1 = std::make_shared<autoware_auto_planning_msgs::msg::HADMapRoute>(sample_route1);
-  const auto route_ptr2 = std::make_shared<autoware_auto_planning_msgs::msg::HADMapRoute>(sample_route2);
+  const auto route_ptr1 =
+    std::make_shared<autoware_auto_planning_msgs::msg::HADMapRoute>(sample_route1);
+  const auto route_ptr2 =
+    std::make_shared<autoware_auto_planning_msgs::msg::HADMapRoute>(sample_route2);
 
   // toBinMsg is tested at test_message_conversion.cpp
   lanelet::utils::conversion::toBinMsg(sample_map_ptr, &bin_msg);
