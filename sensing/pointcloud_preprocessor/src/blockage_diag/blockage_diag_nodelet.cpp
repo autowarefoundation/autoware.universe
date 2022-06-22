@@ -75,8 +75,6 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
   stat.add(
     "sky_blockage_range_deg", "[" + std::to_string(sky_blockage_range_deg_[0]) + "," +
                                 std::to_string(sky_blockage_range_deg_[1]) + "]");
-  stat.add("buffering_frames", std::to_string(buffering_frames_));
-  stat.add("buffering_interval", std::to_string(buffering_interval_));
   // TODO(badai-nguyen): consider sky_blockage_ratio_ for DiagnosticsStatus." [todo]
 
   auto level = DiagnosticStatus::OK;
