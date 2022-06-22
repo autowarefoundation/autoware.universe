@@ -76,6 +76,8 @@ private:
     const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
     const std::unordered_map<uint32_t, TrafficSignal> & traffic_light_id_map);
 
+  std::unordered_map<uint32_t, uint8_t> last_detect_color_;
+
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
 

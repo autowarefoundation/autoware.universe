@@ -179,7 +179,29 @@ void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::Co
         const auto highest_traffic_signal =
           getHighestConfidenceTrafficSignal(traffic_lights_for_vehicle, traffic_light_id_map);
 
+        bool was_green = false;
+        if (last_detect_color_.count(tl_reg_elem_for_vehicle->id()) == 0) {
+          if (highest_traffic_signal != TrafficLight::UNKNOWN) {
+            last_detect_color_.insert(
+              std::make_pair(tl_reg_elem_for_vehicle->id(), highest_traffic_signal));
+          }
+        } else {
+          if (last_detect_color_.at(tl_reg_elem_for_vehicle->id()) == TrafficLight::GREEN) {
+            was_green = true;
+          }
+
+          if (highest_traffic_signal != TrafficLight::UNKNOWN) {
+            last_detect_color_.at(tl_reg_elem_for_vehicle->id()) = highest_traffic_signal;
+          }
+        }
+
         if (highest_traffic_signal == TrafficLight::GREEN) {
+          is_green = true;
+          green_lanes.push_back(lanelet);
+          break;
+        }
+
+        if (highest_traffic_signal == TrafficLight::UNKNOWN && was_green) {
           is_green = true;
           green_lanes.push_back(lanelet);
           break;
