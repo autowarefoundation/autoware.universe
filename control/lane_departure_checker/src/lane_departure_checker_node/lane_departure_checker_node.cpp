@@ -52,8 +52,8 @@ std::array<geometry_msgs::msg::Point, 3> triangle2points(
 }
 
 lanelet::ConstLanelets getRouteLanelets(
-  const lanelet::LaneletMap & lanelet_map, const lanelet::routing::RoutingGraphPtr & routing_graph,
-  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_ptr, const double vehicle_length)
+  const lanelet::LaneletMapPtr & lanelet_map, const lanelet::routing::RoutingGraphPtr & routing_graph,
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr & route_ptr, const double vehicle_length)
 {
   lanelet::ConstLanelets route_lanelets;
 
@@ -302,7 +302,7 @@ void LaneDepartureCheckerNode::onTimer()
   // In order to wait for both of map and route will be ready, write this not in callback but here
   if (last_route_ != route_) {
     route_lanelets_ =
-      getRouteLanelets(*lanelet_map_, routing_graph_, route_, vehicle_length_m_);
+      getRouteLanelets(lanelet_map_, routing_graph_, route_, vehicle_length_m_);
     last_route_ = route_;
   }
   processing_time_map["Node: getRouteLanelets"] = stop_watch.toc(true);
