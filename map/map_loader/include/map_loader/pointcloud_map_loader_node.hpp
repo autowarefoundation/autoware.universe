@@ -47,6 +47,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <set>
 
 using PointTye = pcl::PointXYZI;
 constexpr size_t N_SAMPLES = 20;
@@ -75,6 +76,8 @@ private:
   bool enable_partial_load_;
   float leaf_size_;
 
+  std::set<std::string> previously_loaded_pcd_paths_;
+
   std::string map_frame_;
   std::string viewer_frame_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
@@ -100,6 +103,8 @@ private:
     const geometry_msgs::msg::Point position, const float radius,
     std::vector<PCDFileMetadata> pcd_file_metadata_array) const;
 
+  bool isLoadingSamePCDMapsAsBefore(const geometry_msgs::msg::Point position, const float radius,
+    std::vector<PCDFileMetadata> pcd_file_metadata_array);
   bool loadPCDPartiallyForPublishServiceCallback(
     autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request::SharedPtr req,
     autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Response::SharedPtr res);

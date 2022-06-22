@@ -244,6 +244,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
   sensor_msgs::msg::PointCloud2 filtered_pcd{};
   sensor_msgs::msg::PointCloud2 pcd;
   const auto KOJI_exe_start_time = std::chrono::system_clock::now();
+
   for (const auto & metadata : pcd_file_metadata_array) {
     if (sphere_and_box_overlap_exists(position, radius, metadata.min, metadata.max)) {
       if (pcl::io::loadPCDFile(metadata.path, pcd) == -1) {
@@ -272,12 +273,32 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
   return filtered_pcd;
 }
 
+bool PointCloudMapLoaderNode::isLoadingSamePCDMapsAsBefore(
+  const geometry_msgs::msg::Point position, const float radius,
+  std::vector<PointCloudMapLoaderNode::PCDFileMetadata> pcd_file_metadata_array)
+{
+  std::set<std::string> pcd_maps_to_load;
+  for (const auto & metadata : pcd_file_metadata_array) {
+    if (sphere_and_box_overlap_exists(position, radius, metadata.min, metadata.max)) {
+      pcd_maps_to_load.insert(metadata.path);
+    }
+  }
+  bool res = pcd_maps_to_load == previously_loaded_pcd_paths_;
+  previously_loaded_pcd_paths_ = pcd_maps_to_load;
+  return res;
+}
+
 bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
   autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request::SharedPtr req,
   autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Response::SharedPtr res)
 {
   res->position = req->position;
   res->radius = req->radius;
+  if (isLoadingSamePCDMapsAsBefore(req->position, req->radius, pcd_file_metadata_array_)) {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "skip loading pcd files (request demands for the same set of pcd files that currently exists)");
+    return true;
+  }
   pub_partial_pointcloud_map_->publish(
     loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_));
   return true;
@@ -289,6 +310,11 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
 {
   res->position = req->position;
   res->radius = req->radius;
+  if (isLoadingSamePCDMapsAsBefore(req->position, req->radius, pcd_file_metadata_array_)) {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "skip loading pcd files (request demands for the same set of pcd files that currently exists)");
+    return true;
+  }
   res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
   return true;
 }
