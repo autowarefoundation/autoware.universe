@@ -18,6 +18,8 @@
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 #include "freespace_planning_algorithms/reeds_shepp.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <nav_msgs/msg/path.hpp>
 #include <std_msgs/msg/header.hpp>
 
@@ -108,6 +110,18 @@ public:
   AstarSearch(
     const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
     const AstarParam & astar_param);
+
+  AstarSearch(
+    const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
+    rclcpp::Node & node)
+  : AstarSearch(
+      planner_common_param, collision_vehicle_shape,
+      AstarParam{
+        node.declare_parameter("astar.only_behind_solutions", false),
+        node.declare_parameter("astar.use_back", true),
+        node.declare_parameter("astar.distance_heuristic_weight", 1.0)})
+  {
+  }
 
   void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(

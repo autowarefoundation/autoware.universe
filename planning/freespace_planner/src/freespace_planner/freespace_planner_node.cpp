@@ -527,20 +527,9 @@ void FreespacePlannerNode::initializePlanningAlgorithm()
 
   // initialize specified algorithm
   if (algo_name == "astar") {
-    AstarParam p;
-    p.only_behind_solutions = declare_parameter("astar.only_behind_solutions", false);
-    p.use_back = declare_parameter("astar.use_back", true);
-    p.distance_heuristic_weight = declare_parameter("astar.distance_heuristic_weight", 1.0);
-    algo_ = std::make_unique<AstarSearch>(planner_common_param, extended_vehicle_shape, p);
-
+    algo_ = std::make_unique<AstarSearch>(planner_common_param, extended_vehicle_shape, *this);
   } else if (algo_name == "rrtstar") {
-    RRTStarParam p;
-    p.enable_update = declare_parameter("rrtstar.enable_update", true);
-    p.use_informed_sampling = declare_parameter("rrtstar.use_informed_sampling", true);
-    p.mu = declare_parameter("rrtstar.neighbour_radius", 8.0);
-    p.max_planning_time = declare_parameter("rrtstar.max_planning_time", 150);
-    p.margin = declare_parameter("rrtstar.margin", 0.1);
-    algo_ = std::make_unique<RRTStar>(planner_common_param, extended_vehicle_shape, p);
+    algo_ = std::make_unique<RRTStar>(planner_common_param, extended_vehicle_shape, *this);
   } else {
     throw std::runtime_error("No such algorithm named " + algo_name + " exists.");
   }
