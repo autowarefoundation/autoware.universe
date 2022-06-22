@@ -50,6 +50,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
+  debug_image_pub_ = image_transport::create_publisher(this,"blockage_diag/debug/debug_image");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
@@ -151,6 +152,12 @@ void BlockageDiagComponent::filter(
     lidar_depth_map.convertTo(lidar_depth_map, CV_8UC1, 1.0 / 100.0);
     cv::Mat no_return_mask;
     cv::inRange(lidar_depth_map_8u, 0, 1, no_return_mask);
+    static std::vector<cv::Mat> depth_map_buffer;
+    depth_map_buffer.emplace_back(lidar_depth_map);
+    static cv::Mat depth_map_diff_sum(cv::Size(horizontal_bins,vertical_bins),CV_8UC1,cv::Scalar(0));
+      for (auto ite = depth_map_buffer.begin();ite!=depth_map_buffer.end();++ite){
+          depth_map_diff_sum += *ite;
+      }
     cv::Mat erosion_dst;
     cv::Mat element = cv::getStructuringElement(
       cv::MORPH_RECT, cv::Size(2 * erode_kernel_ + 1, 2 * erode_kernel_ + 1),
@@ -208,6 +215,13 @@ void BlockageDiagComponent::filter(
       cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", blockage_mask_colorized).toImageMsg();
     blockage_mask_msg->header = input->header;
     blockage_mask_pub_.publish(blockage_mask_msg);
+    cv::Mat depth_map_sum_colorized;
+    cv::applyColorMap(depth_map_diff_sum, depth_map_sum_colorized, cv::COLORMAP_JET);
+    sensor_msgs::msg::Image::SharedPtr depth_map_sum_msg =
+           cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", depth_map_sum_colorized).toImageMsg();
+    depth_map_sum_msg->header = input->header;
+    debug_image_pub_.publish(depth_map_sum_msg);
+
   }
 
   tier4_debug_msgs::msg::Float32Stamped ground_blockage_ratio_msg;
