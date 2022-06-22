@@ -21,18 +21,13 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 
-namespace lanelet
+namespace lanelet::utils::route
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
-namespace utils
-{
-namespace route
-{
+
 bool isRouteValid(const HADMapRoute::ConstSharedPtr route, const HADMapBin::ConstSharedPtr map_msg);
 lanelet::LaneletMapPtr lanelet_map_ptr_;
-}  // namespace route
-}  // namespace utils
-}  // namespace lanelet
+}  // namespace lanelet::utils::route
 
 #endif  // LANELET2_EXTENSION__UTILITY__ROUTE_CHECKER_HPP_

@@ -30,7 +30,6 @@ class TestSuite : public ::testing::Test
 public:
   TestSuite() : sample_map_ptr(new lanelet::LaneletMap())
   {
-    // NOLINT
     // create sample lanelets
     const Point3d p1(getId(), 0.0, 0.0, 0.0);
     const Point3d p2(getId(), 0.0, 1.0, 0.0);
@@ -40,9 +39,9 @@ public:
     const Point3d p3(getId(), 1.0, 0.0, 0.0);
     const Point3d p4(getId(), 1.0, 0.0, 0.0);
 
-    LineString3d ls_right(getId(), {p3, p4});  // NOLINT
+    const LineString3d ls_right(getId(), {p3, p4});
 
-    Lanelet lanelet(getId(), ls_left, ls_right);
+    const Lanelet lanelet(getId(), ls_left, ls_right);
 
     sample_map_ptr->add(lanelet);
 
