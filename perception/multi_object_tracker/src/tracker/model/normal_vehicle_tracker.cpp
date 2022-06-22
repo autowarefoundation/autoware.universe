@@ -291,7 +291,6 @@ bool NormalVehicleTracker::measureWithPose(
     R(0, 0) = r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;  // x - x
     R(0, 1) = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;                      // x - y
     R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
-    std::cout << R(0, 0) << ", " << R(1, 1) << std::endl;
     R(1, 0) = R(0, 1);                                                    // y - x
     R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
   } else {
