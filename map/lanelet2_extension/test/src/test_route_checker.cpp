@@ -92,7 +92,8 @@ TEST_F(TestSuite, isRouteValid)
   ASSERT_TRUE(lanelet::utils::route::isRouteValid(route_ptr1, map_ptr))
     << "The route should be valid, which should be created on the same map as the current one";
   ASSERT_FALSE(lanelet::utils::route::isRouteValid(route_ptr2, map_ptr))
-    << "The route should be invalid, which should be created on the different map from the current one";
+    << "The route should be invalid, which should be created on the different map from the current "
+       "one";
 }
 
 int main(int argc, char ** argv)
