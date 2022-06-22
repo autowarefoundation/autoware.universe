@@ -346,6 +346,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     path_intersects_.push_back(createPoint(p.x(), p.y(), ego_pos.z));
   }
 
+  for (const auto & p : crosswalk_.polygon2d().basicPolygon()) {
+    debug_data_.crosswalk_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
+
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step2: %f ms",
     stop_watch_.toc("total_processing_time", false));
@@ -432,6 +436,8 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
 
   const auto now = clock_->now();
 
+  const auto ignore_crosswalk = debug_data_.ignore_crosswalk = isRedSignalForPedestrians();
+
   for (const auto & object : objects_ptr->objects) {
     const auto & obj_pos = object.kinematics.initial_pose_with_covariance.pose.position;
     const auto & obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear;
@@ -442,7 +448,7 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
       continue;
     }
 
-    if (isRedSignalForPedestrians()) {
+    if (ignore_crosswalk) {
       continue;
     }
 

@@ -118,6 +118,20 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     }
   }
 
+  // Crosswalk polygon
+  if (!debug_data.crosswalk_polygon.empty()) {
+    auto marker = createDefaultMarker(
+      "map", now, "crosswalk polygon", uid, Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0),
+      createMarkerColor(1.0, 1.0, 1.0, 0.999));
+    for (const auto & p : debug_data.crosswalk_polygon) {
+      marker.points.push_back(createPoint(p.x, p.y, p.z));
+    }
+    marker.points.push_back(marker.points.front());
+    marker.color = debug_data.ignore_crosswalk ? createMarkerColor(1.0, 1.0, 1.0, 0.999)
+                                               : createMarkerColor(1.0, 0.0, 0.0, 0.999);
+    msg.markers.push_back(marker);
+  }
+
   // Collision point
   if (!debug_data.collision_points.empty()) {
     auto marker = createDefaultMarker(

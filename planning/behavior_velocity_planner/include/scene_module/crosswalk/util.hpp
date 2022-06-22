@@ -51,6 +51,7 @@ struct CollisionPoint
 
 struct DebugData
 {
+  bool ignore_crosswalk{false};
   double base_link2front;
   double stop_judge_range;
 
@@ -65,6 +66,7 @@ struct DebugData
   std::vector<geometry_msgs::msg::Pose> stop_poses;
   std::vector<geometry_msgs::msg::Pose> slow_poses;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
+  std::vector<geometry_msgs::msg::Point> crosswalk_polygon;
   std::vector<geometry_msgs::msg::Polygon> ego_polygons;
   std::vector<geometry_msgs::msg::Polygon> obj_polygons;
 };
