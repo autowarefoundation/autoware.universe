@@ -292,8 +292,8 @@ bool NormalVehicleTracker::measureWithPose(
     R(0, 1) = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;                      // x - y
     R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
     std::cout << R(0, 0) << ", " << R(1, 1) << std::endl;
-    R(1, 0) = R(0, 1);                                                    // y - x
-    R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
+    R(1, 0) = R(0, 1);                // y - x
+    R(2, 2) = ekf_params_.r_cov_yaw;  // yaw - yaw
   } else {
     R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
