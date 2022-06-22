@@ -382,9 +382,7 @@ void MultiObjectTracker::sanitizeTracker(
             should_delete_tracker2 = true;
           }
         }
-      }
-      // If neither is UNKNOWN, delete the one with lower IOU.
-      else {
+      } else {  // If neither is UNKNOWN, delete the one with lower IOU.
         if (min_iou < iou) {
           if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
             should_delete_tracker1 = true;
