@@ -69,8 +69,8 @@ public:
   ~TestSuite() {}
 
   lanelet::LaneletMapPtr sample_map_ptr;
-  autoware_auto_planning_msgs::msg::HADMapRoute sample_route1;
-  autoware_auto_planning_msgs::msg::HADMapRoute sample_route2;
+  autoware_auto_planning_msgs::msg::HADMapRoute sample_route1; // valid route
+  autoware_auto_planning_msgs::msg::HADMapRoute sample_route2; // invalid route
 
 private:
 };
