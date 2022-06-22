@@ -160,7 +160,6 @@ void BlockageDiagComponent::filter(
     cv::erode(no_return_mask, erosion_dst, element);
     cv::dilate(erosion_dst, no_return_mask, element);
 
-
     static boost::circular_buffer<cv::Mat> no_return_mask_buffer(buffering_frames_);
 
     cv::Mat no_return_mask_result(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
@@ -186,12 +185,13 @@ void BlockageDiagComponent::filter(
     } else {
       no_return_mask.copyTo(no_return_mask_result);
     }
-      cv::Mat ground_no_return_mask;
-      cv::Mat sky_no_return_mask;
-      no_return_mask_result(cv::Rect(0, 0, horizontal_bins, horizontal_ring_id_)).copyTo(sky_no_return_mask);
-      no_return_mask_result(
-              cv::Rect(0, horizontal_ring_id_, horizontal_bins, vertical_bins - horizontal_ring_id_))
-              .copyTo(ground_no_return_mask);
+    cv::Mat ground_no_return_mask;
+    cv::Mat sky_no_return_mask;
+    no_return_mask_result(cv::Rect(0, 0, horizontal_bins, horizontal_ring_id_))
+      .copyTo(sky_no_return_mask);
+    no_return_mask_result(
+      cv::Rect(0, horizontal_ring_id_, horizontal_bins, vertical_bins - horizontal_ring_id_))
+      .copyTo(ground_no_return_mask);
     ground_blockage_ratio_ =
       static_cast<float>(cv::countNonZero(ground_no_return_mask)) /
       static_cast<float>(horizontal_bins * (vertical_bins - horizontal_ring_id_));
@@ -237,7 +237,6 @@ void BlockageDiagComponent::filter(
       cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", blockage_mask_colorized).toImageMsg();
     blockage_mask_msg->header = input->header;
     blockage_mask_pub_.publish(blockage_mask_msg);
-
   }
 
   tier4_debug_msgs::msg::Float32Stamped ground_blockage_ratio_msg;
