@@ -153,7 +153,7 @@ void PoseInitializer::callbackInitialPose(
   }
   auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
-  request->radius = -1.0;  // Should be removed somehow
+  request->radius = 300.0;  // Should be removed somehow
   auto result{pcd_loader_client_->async_send_request(
     request,
     [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture response) {
@@ -195,7 +195,7 @@ void PoseInitializer::callbackGNSSPoseCov(
 
   auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
-  request->radius = -1.0;  // Should be removed somehow
+  request->radius = 300.0;  // Should be removed somehow
   auto result{pcd_loader_client_->async_send_request(
     request,
     [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture response) {
