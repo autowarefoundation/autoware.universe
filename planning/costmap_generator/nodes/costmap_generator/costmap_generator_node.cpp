@@ -274,7 +274,7 @@ void CostmapGenerator::onLaneletMapBin(
 
   if (use_parkinglot_) {
     loadParkingAreasFromLaneletMap(lanelet_map_, &primitives_points_);
-  }  
+  }
 }
 
 void CostmapGenerator::onObjects(
