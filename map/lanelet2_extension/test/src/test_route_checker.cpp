@@ -19,10 +19,6 @@
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 
 #include <gtest/gtest.h>
-#include <stdio.h>
-
-#include <memory>
-#include <vector>
 
 using lanelet::Lanelet;
 using lanelet::LineString3d;

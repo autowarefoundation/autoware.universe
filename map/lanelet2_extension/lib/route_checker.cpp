@@ -16,8 +16,6 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
-#include <string>
-
 namespace lanelet
 {
 namespace utils

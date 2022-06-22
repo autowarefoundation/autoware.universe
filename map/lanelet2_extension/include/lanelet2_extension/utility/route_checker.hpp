@@ -21,9 +21,6 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 
-#include <deque>
-#include <memory>
-
 namespace lanelet
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
