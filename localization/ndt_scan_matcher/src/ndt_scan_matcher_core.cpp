@@ -346,7 +346,8 @@ void NDTScanMatcher::serviceNDTAlign(
     rclcpp::sleep_for(std::chrono::milliseconds(100));
     RCLCPP_INFO_STREAM(
       get_logger(),
-      "KOJI current map is not compatible with the received initial position. Waiting for new map...");
+      "KOJI current map is not compatible with the received initial position. Waiting for new "
+      "map...");
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
@@ -370,8 +371,6 @@ void NDTScanMatcher::serviceNDTAlign(
 void NDTScanMatcher::callbackInitialPose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
-
-
   // lock mutex for initial pose
   std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
   // if rosbag restart, clear buffer
@@ -410,11 +409,20 @@ void NDTScanMatcher::callbackMapPoints(
   double new_max_x = *iter_x;
   double new_max_y = *iter_y;
   while (iter_x != iter_x.end()) {
-    if (new_min_x > *iter_x) {new_min_x = *iter_x;}
-    if (new_min_y > *iter_y) {new_min_y = *iter_y;}
-    if (new_max_x < *iter_x) {new_max_x = *iter_x;}
-    if (new_max_y < *iter_y) {new_max_y = *iter_y;}
-    ++iter_x; ++iter_y;
+    if (new_min_x > *iter_x) {
+      new_min_x = *iter_x;
+    }
+    if (new_min_y > *iter_y) {
+      new_min_y = *iter_y;
+    }
+    if (new_max_x < *iter_x) {
+      new_max_x = *iter_x;
+    }
+    if (new_max_y < *iter_y) {
+      new_max_y = *iter_y;
+    }
+    ++iter_x;
+    ++iter_y;
   }
   const auto KOJI_exe_start_time = std::chrono::system_clock::now();
 
@@ -843,7 +851,6 @@ bool NDTScanMatcher::validatePositionDifference(
   }
   return true;
 }
-
 
 bool NDTScanMatcher::validateInitialPositionCompatibility(
   const geometry_msgs::msg::Point & initial_point)
