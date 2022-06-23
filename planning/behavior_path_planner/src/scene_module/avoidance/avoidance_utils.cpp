@@ -41,10 +41,8 @@ lanelet::ConstLanelets calcLaneAroundPose(
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
-    RCLCPP_ERROR_THROTTLE(
-      rclcpp::getLogger("behavior_path_planner").get_child("avoidance"),
-      *get_clock(),
-      5000,
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
       "failed to find closest lanelet within route!!!");
     return {};  // TODO(Horibe)
   }
