@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_utils.hpp"
 
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utilities.hpp"
