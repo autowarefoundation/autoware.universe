@@ -34,15 +34,6 @@ constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 // TODO(shimizu) Is is ok to use planner_data.current_time instead of get_clock()->now()?
 namespace
 {
-[[maybe_unused]] std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-  }
-  return ss.str();
-}
-
 inline void convertEulerAngleToMonotonic(std::vector<double> & a)
 {
   for (unsigned int i = 1; i < a.size(); ++i) {
@@ -60,57 +51,6 @@ inline tf2::Vector3 getTransVector3(
   return tf2::Vector3(dx, dy, dz);
 }
 
-// TODO(shimizu) consider dist/yaw threshold for nearest index
-boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Point & point, const double target_length)
-{
-  if (traj.points.empty()) {
-    return {};
-  }
-
-  const size_t nearest_idx = tier4_autoware_utils::findNearestIndex(traj.points, point);
-
-  size_t search_idx = nearest_idx;
-  double length_to_search_idx = 0.0;
-  for (; search_idx < traj.points.size(); ++search_idx) {
-    length_to_search_idx =
-      tier4_autoware_utils::calcSignedArcLength(traj.points, nearest_idx, search_idx);
-    if (length_to_search_idx > target_length) {
-      break;
-    } else if (search_idx == traj.points.size() - 1) {
-      return {};
-    }
-  }
-
-  if (search_idx == 0 && !traj.points.empty()) {
-    return traj.points.at(0).pose;
-  }
-
-  const auto & pre_pose = traj.points.at(search_idx - 1).pose;
-  const auto & next_pose = traj.points.at(search_idx).pose;
-
-  geometry_msgs::msg::Pose target_pose;
-
-  // lerp position
-  const double seg_length =
-    tier4_autoware_utils::calcDistance2d(pre_pose.position, next_pose.position);
-  const double lerp_ratio = (length_to_search_idx - target_length) / seg_length;
-  target_pose.position.x =
-    pre_pose.position.x + (next_pose.position.x - pre_pose.position.x) * lerp_ratio;
-  target_pose.position.y =
-    pre_pose.position.y + (next_pose.position.y - pre_pose.position.y) * lerp_ratio;
-  target_pose.position.z =
-    pre_pose.position.z + (next_pose.position.z - pre_pose.position.z) * lerp_ratio;
-
-  // lerp orientation
-  const double pre_yaw = tf2::getYaw(pre_pose.orientation);
-  const double next_yaw = tf2::getYaw(next_pose.orientation);
-  target_pose.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(pre_yaw + (next_yaw - pre_yaw) * lerp_ratio);
-
-  return target_pose;
-}
 }  // namespace
 
 OptimizationBasedPlanner::OptimizationBasedPlanner(
@@ -447,80 +387,6 @@ std::vector<double> OptimizationBasedPlanner::createTimeVector()
   return time_vec;
 }
 
-double OptimizationBasedPlanner::getClosestStopDistance(
-  const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data)
-{
-  const auto & current_time = planner_data.current_time;
-  double closest_stop_dist = ego_traj_data.s.back();
-  const auto closest_stop_id =
-    tier4_autoware_utils::searchZeroVelocityIndex(ego_traj_data.traj.points);
-  closest_stop_dist = closest_stop_id
-                        ? std::min(closest_stop_dist, ego_traj_data.s.at(*closest_stop_id))
-                        : closest_stop_dist;
-
-  double closest_obj_distance = ego_traj_data.s.back();
-  boost::optional<TargetObstacle> closest_obj;
-  for (const auto & obj : planner_data.target_obstacles) {
-    const auto obj_base_time = obj.time_stamp;
-
-    // Ignore obstacles that are not required to stop
-    if (!isStopRequired(obj)) {
-      continue;
-    }
-
-    // Get current pose from object's predicted path
-    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
-      obj.predicted_paths, obj_base_time, current_time);
-    if (!current_object_pose) {
-      continue;
-    }
-
-    // Get current object.kinematics
-    ObjectData obj_data;
-    obj_data.pose = current_object_pose.get();
-    obj_data.length = obj.shape.dimensions.x;
-    obj_data.width = obj.shape.dimensions.y;
-    obj_data.time = std::max((obj_base_time - current_time).seconds(), 0.0);
-    const auto dist_to_collision_point = getDistanceToCollisionPoint(ego_traj_data, obj_data);
-
-    // Calculate Safety Distance
-    const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
-    const auto & ego_vehicle_offset = vehicle_info_.max_longitudinal_offset_m;
-    const double object_offset = obj_data.length / 2.0;
-    const double safety_distance = ego_vehicle_offset + object_offset + safe_distance_margin;
-
-    // If the object is on the current ego trajectory,
-    // we assume the object travels along ego trajectory
-    if (dist_to_collision_point) {
-      const double stop_dist = std::max(*dist_to_collision_point - safety_distance, 0.0);
-      closest_stop_dist = std::min(stop_dist, closest_stop_dist);
-
-      // Update Distance to the closest object on the ego trajectory
-      const double current_obj_distance = std::max(
-        *dist_to_collision_point - safety_distance + safe_distance_margin, -safety_distance);
-      closest_obj_distance = std::min(closest_obj_distance, current_obj_distance);
-      closest_obj = obj;
-    }
-  }
-
-  // Publish distance from the ego vehicle to the object which is on the trajectory
-  if (closest_obj && closest_obj_distance < ego_traj_data.s.back()) {
-    Float32Stamped dist_to_obj;
-    dist_to_obj.stamp = planner_data.current_time;
-    dist_to_obj.data = closest_obj_distance;
-    distance_to_closest_obj_pub_->publish(dist_to_obj);
-
-    RCLCPP_DEBUG(
-      rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
-      "Closest Object Distance %f", closest_obj_distance);
-    RCLCPP_DEBUG(
-      rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
-      "Closest Object Velocity %f", closest_obj.get().velocity);
-  }
-
-  return closest_stop_dist;
-}
-
 // v0, a0
 std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const ObstacleCruisePlannerData & planner_data, const size_t input_closest,
@@ -628,17 +494,14 @@ TrajectoryPoint OptimizationBasedPlanner::calcInterpolatedTrajectoryPoint(
   // calc internal proportion
   const double prop{std::max(0.0, std::min(1.0, v1.dot(v2) / v1.length2()))};
 
-  auto interpolate = [&prop](double x1, double x2) { return prop * x1 + (1.0 - prop) * x2; };
-
   {
-    const auto & seg_pt = trajectory.points.at(segment_idx);
+    const auto & curr_pt = trajectory.points.at(segment_idx);
     const auto & next_pt = trajectory.points.at(segment_idx + 1);
-    traj_p.longitudinal_velocity_mps =
-      interpolate(next_pt.longitudinal_velocity_mps, seg_pt.longitudinal_velocity_mps);
-    traj_p.acceleration_mps2 = interpolate(next_pt.acceleration_mps2, seg_pt.acceleration_mps2);
-    traj_p.pose.position.x = interpolate(next_pt.pose.position.x, seg_pt.pose.position.x);
-    traj_p.pose.position.y = interpolate(next_pt.pose.position.y, seg_pt.pose.position.y);
-    traj_p.pose.position.z = interpolate(next_pt.pose.position.z, seg_pt.pose.position.z);
+    traj_p.pose = tier4_autoware_utils::calcInterpolatedPose(curr_pt, next_pt, prop);
+    traj_p.longitudinal_velocity_mps = interpolation::lerp(
+      curr_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
+    traj_p.acceleration_mps2 =
+      interpolation::lerp(curr_pt.acceleration_mps2, next_pt.acceleration_mps2, prop);
   }
 
   return traj_p;
@@ -661,17 +524,17 @@ OptimizationBasedPlanner::TrajectoryData OptimizationBasedPlanner::getTrajectory
   const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose)
 {
   TrajectoryData base_traj;
-  const auto closest_segment_idx =
+  const auto nearest_segment_idx =
     tier4_autoware_utils::findNearestSegmentIndex(traj.points, current_pose.position);
   const auto interpolated_point = calcInterpolatedTrajectoryPoint(traj, current_pose);
   const auto dist = tier4_autoware_utils::calcDistance2d(
-    interpolated_point.pose.position, traj.points.at(closest_segment_idx).pose.position);
+    interpolated_point.pose.position, traj.points.at(nearest_segment_idx).pose.position);
   const auto current_point =
-    dist > CLOSE_S_DIST_THRESHOLD ? interpolated_point : traj.points.at(closest_segment_idx);
+    dist > CLOSE_S_DIST_THRESHOLD ? interpolated_point : traj.points.at(nearest_segment_idx);
   base_traj.traj.points.push_back(current_point);
   base_traj.s.push_back(0.0);
 
-  for (size_t id = closest_segment_idx + 1; id < traj.points.size(); ++id) {
+  for (size_t id = nearest_segment_idx + 1; id < traj.points.size(); ++id) {
     const auto prev_point = base_traj.traj.points.back();
     const double ds = tier4_autoware_utils::calcDistance2d(
       prev_point.pose.position, traj.points.at(id).pose.position);
@@ -851,8 +714,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
       obj.predicted_paths, obj.time_stamp, current_time);
 
-    const auto marker_pose = calcForwardPose(
-      ego_traj_data.traj, planner_data.current_pose.position, min_slow_down_point_length);
+    const auto marker_pose =
+      obstacle_cruise_utils::calcForwardPose(ego_traj_data.traj, 0, min_slow_down_point_length);
 
     if (marker_pose) {
       visualization_msgs::msg::MarkerArray wall_msg;
