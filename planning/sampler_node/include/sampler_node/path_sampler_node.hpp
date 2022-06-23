@@ -21,6 +21,7 @@
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/path_generation.hpp"
 #include "sampler_node/plot/debug_window.hpp"
+#include "vehicle_info_util/vehicle_info.hpp"
 
 #include <QApplication>
 #include <rclcpp/rclcpp.hpp>
@@ -67,7 +68,13 @@ private:
   Parameters params_;
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
+  // TF
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+  std::unique_ptr<rclcpp::Time> prev_replanned_time_ptr_;
+
   // Cached data
+  vehicle_info_util::VehicleInfo vehicle_info_;
   std::shared_ptr<autoware_auto_vehicle_msgs::msg::SteeringReport> current_steer_ptr_{};
   std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> in_objects_ptr_;
@@ -75,11 +82,6 @@ private:
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::Ids drivable_ids_;
   lanelet::Ids prefered_ids_;
-
-  // TF
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
-  std::unique_ptr<rclcpp::Time> prev_replanned_time_ptr_;
 
   // ROS pub / sub
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
