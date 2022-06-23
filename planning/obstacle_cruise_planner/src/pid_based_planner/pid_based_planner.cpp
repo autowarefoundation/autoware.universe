@@ -377,12 +377,16 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
 {
   const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
-  // TODO(murooka) Should I use interpolation?
-  const auto modified_stop_info = [&]() -> boost::optional<std::pair<size_t, double>> {
+  // TODO(murooka) use interpolation to calculate stop point and marker pose
+  const auto modified_stop_info = [&]() -> boost::optional<std::pair<size_t, size_t>> {
     const double dist_to_stop = stop_obstacle_info.dist_to_stop;
 
-    const size_t obstacle_zero_vel_idx =
-      getIndexWithLongitudinalOffset(planner_data.traj.points, dist_to_stop, ego_idx);
+    const size_t collision_idx = tier4_autoware_utils::findNearestIndex(
+      planner_data.traj.points, stop_obstacle_info.obstacle.collision_point);
+    const size_t obstacle_zero_vel_idx = getIndexWithLongitudinalOffset(
+      planner_data.traj.points,
+      -longitudinal_info_.safe_distance_margin - vehicle_info_.max_longitudinal_offset_m,
+      collision_idx);
 
     // check if there is already stop line between obstacle and zero_vel_idx
     const auto behavior_zero_vel_idx =
@@ -390,33 +394,34 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
     if (behavior_zero_vel_idx) {
       const double zero_vel_diff_length = tier4_autoware_utils::calcSignedArcLength(
         planner_data.traj.points, obstacle_zero_vel_idx, behavior_zero_vel_idx.get());
+      std::cerr << zero_vel_diff_length << std::endl;
       if (
         0 < zero_vel_diff_length &&
         zero_vel_diff_length < longitudinal_info_.safe_distance_margin) {
-        const double modified_dist_to_stop =
-          dist_to_stop + longitudinal_info_.safe_distance_margin - min_behavior_stop_margin_;
-        const size_t modified_obstacle_zero_vel_idx =
-          getIndexWithLongitudinalOffset(planner_data.traj.points, modified_dist_to_stop, ego_idx);
-        return std::make_pair(modified_obstacle_zero_vel_idx, modified_dist_to_stop);
+        const size_t modified_obstacle_zero_vel_idx = getIndexWithLongitudinalOffset(
+          planner_data.traj.points,
+          -min_behavior_stop_margin_ - vehicle_info_.max_longitudinal_offset_m, collision_idx);
+        const size_t modified_wall_idx = getIndexWithLongitudinalOffset(
+          planner_data.traj.points, -min_behavior_stop_margin_, collision_idx);
+        return std::make_pair(modified_obstacle_zero_vel_idx, modified_wall_idx);
       }
     }
 
-    return std::make_pair(obstacle_zero_vel_idx, dist_to_stop);
+    const size_t wall_idx = getIndexWithLongitudinalOffset(
+      planner_data.traj.points, -longitudinal_info_.safe_distance_margin, collision_idx);
+    return std::make_pair(obstacle_zero_vel_idx, wall_idx);
   }();
   if (!modified_stop_info) {
     return {};
   }
   const size_t modified_zero_vel_idx = modified_stop_info->first;
-  const double modified_dist_to_stop = modified_stop_info->second;
+  const size_t modified_wall_idx = modified_stop_info->second;
 
   // virtual wall marker for stop
-  const auto marker_pose = obstacle_cruise_utils::calcForwardPose(
-    planner_data.traj, ego_idx, modified_dist_to_stop + vehicle_info_.max_longitudinal_offset_m);
-  if (marker_pose) {
-    const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
-      marker_pose.get(), "obstacle stop", planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
-  }
+  const auto marker_pose = planner_data.traj.points.at(modified_wall_idx).pose;
+  const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
+    marker_pose, "obstacle stop", planner_data.current_time, 0);
+  tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
 
   debug_obstacles_to_stop.push_back(stop_obstacle_info.obstacle);
   return modified_zero_vel_idx;
