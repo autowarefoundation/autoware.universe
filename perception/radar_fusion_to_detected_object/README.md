@@ -19,7 +19,6 @@ The document of core algorithm is [here](docs/algorithm.md)
 | bounding_box_margin      | double | The margin distance from bird's-eye view to choose radar pointcloud/objects within 3D bounding box [m] | 2.0           |
 | split_threshold_velocity | double | The threshold velocity to judge splitting two objects from radar information (now unused) [m/s]        | 5.0           |
 
-
 ### Weight parameters for velocity estimation
 
 | Name                                 | Type   | Description                                                                                                                                                                             | Default value |
