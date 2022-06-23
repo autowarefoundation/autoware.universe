@@ -1,5 +1,6 @@
 #pragma once
 #include <Eigen/Geometry>
+#include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -51,5 +52,7 @@ private:
   void poseCallback(const PoseStamped & msg);
   void particleCallback(const ParticleArray & msg);
   void infoCallback(const CameraInfo & msg);
+
+  void incrementAlongLine(cv::Mat image, const cv::Point2i & from, const cv::Point2i & to);
 };
 }  // namespace validation

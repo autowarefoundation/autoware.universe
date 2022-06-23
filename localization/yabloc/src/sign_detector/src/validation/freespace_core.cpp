@@ -40,7 +40,7 @@ void FreeSpace::particleCallback(const ParticleArray & particles)
   if (!camera_extrinsic_.has_value()) return;
 
   const rclcpp::Time stamp = particles.header.stamp;
-  cv::Mat image = cv::Mat::zeros(cv::Size(camera_info_->width, camera_info_->height), CV_8UC3);
+  cv::Mat image = cv::Mat::zeros(cv::Size(camera_info_->width, camera_info_->height), CV_8UC1);
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(camera_info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
@@ -61,10 +61,11 @@ void FreeSpace::particleCallback(const ParticleArray & particles)
       auto opt_to = project(pn.getNormalVector3fMap());
       if (!opt_from.has_value() || !opt_to.has_value()) continue;
 
-      cv::line(image, opt_from.value(), opt_to.value(), cv::Scalar::all(255), 1);
+      incrementAlongLine(image, opt_from.value(), opt_to.value());
     }
   }
 
+  cv::applyColorMap(image, image, cv::COLORMAP_JET);
   util::publishImage(*pub_image_, image, stamp);
 }
 
@@ -134,6 +135,21 @@ void FreeSpace::listenExtrinsicTf(const std::string & frame_id)
     camera_extrinsic_->translation() = p;
     camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
   } catch (tf2::TransformException & ex) {
+  }
+}
+
+void FreeSpace::incrementAlongLine(cv::Mat image, const cv::Point2i & from, const cv::Point2i & to)
+{
+  if (image.elemSize() != 1) {
+    std::cerr << "In addLine() image.elemSize() must be 1" << std::endl;
+    exit(1);
+  }
+
+  cv::LineIterator iterator(image, from, to, cv::LINE_4, true);
+  const int count = iterator.count;
+  for (int i = 0; i < count; i++, ++iterator) {
+    uchar * ptr = *iterator;
+    ptr[0] = std::min(uchar(254), ptr[0]) + 1;
   }
 }
 
