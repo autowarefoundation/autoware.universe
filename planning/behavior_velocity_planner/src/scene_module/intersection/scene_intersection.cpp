@@ -296,30 +296,30 @@ bool IntersectionModule::checkCollision(
       const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
 
       std::vector<geometry_msgs::msg::Point> centerpoints;
-      for (const auto & p : ego_lane_with_next_lane[0].centerline())
+      for (auto && p : ego_lane_with_next_lane[0].centerline())
         centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
-      for (const auto & p : ego_lane_with_next_lane[1].centerline())
+      for (auto && p : ego_lane_with_next_lane[1].centerline())
         centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
       const double lat_offset =
         std::fabs(tier4_autoware_utils::calcLateralOffset(centerpoints, object_pose.position));
       // get the nearest centerpoint to object
-      unsigned obj_closest_centerpoint_idx = 0;
       std::vector<double> dist_obj_centerpoints;
-      std::transform(
-        centerpoints.begin(), centerpoints.end(), std::back_inserter(dist_obj_centerpoints),
-        [&object_pose](const auto & p) {
-          return tier4_autoware_utils::calcDistance2d(object_pose.position, p);
-        });
-      obj_closest_centerpoint_idx =
-        *std::min_element(dist_obj_centerpoints.begin(), dist_obj_centerpoints.end());
+      for (const auto & p : centerpoints)
+        dist_obj_centerpoints.push_back(
+          tier4_autoware_utils::calcDistance2d(object_pose.position, p));
+      const int obj_closest_centerpoint_idx = std::distance(
+        dist_obj_centerpoints.begin(),
+        std::min_element(dist_obj_centerpoints.begin(), dist_obj_centerpoints.end()));
       // find two centerpoints whose distances from `closest_centerpoint` cross stopping_distance
       double acc_dist_prev = 0.0, acc_dist = 0.0;
-      auto & p1 = centerpoints[obj_closest_centerpoint_idx];
-      auto & p2 = centerpoints[obj_closest_centerpoint_idx];
+      auto p1 = centerpoints[obj_closest_centerpoint_idx];
+      auto p2 = centerpoints[obj_closest_centerpoint_idx];
       for (unsigned i = obj_closest_centerpoint_idx; i < centerpoints.size() - 1; ++i) {
+        p1 = centerpoints[i];
+        p2 = centerpoints[i + 1];
         acc_dist_prev = acc_dist;
-        acc_dist +=
-          tier4_autoware_utils::calcDistance2d(centerpoints.at(i), centerpoints.at(i + 1));
+        const double delta = tier4_autoware_utils::calcDistance2d(p1, p2);
+        acc_dist += delta;
         if (acc_dist > stopping_distance) {
           break;
         }
@@ -328,7 +328,6 @@ bool IntersectionModule::checkCollision(
       const double ratio = (acc_dist <= stopping_distance)
                              ? 0.0
                              : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
-
       // linear interpolation
       geometry_msgs::msg::Point stopping_point;
       const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
@@ -373,11 +372,9 @@ bool IntersectionModule::checkCollision(
           break;
         }
       }
-      std::cout << "is_in_stuck_area: " << is_in_stuck_area
-                << ", is_behind_point_in_detection_are: " << is_behind_point_in_detection_area
-                << std::endl;
       if (is_in_stuck_area && is_behind_point_in_detection_area) {
-        std::cout << "will return collision_detected" << std::endl;
+        RCLCPP_INFO(logger_, "will return collision_detected");
+        return true;
       }
       continue;
     }
