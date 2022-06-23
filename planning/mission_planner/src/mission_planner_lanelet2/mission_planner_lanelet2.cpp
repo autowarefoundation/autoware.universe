@@ -153,49 +153,48 @@ bool MissionPlannerLanelet2::isRoutingGraphReady() const { return is_graph_ready
 void MissionPlannerLanelet2::visualizeRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
-  if (route_handler_.isHandlerReady()) {
-    lanelet::ConstLanelets route_lanelets;
-    lanelet::ConstLanelets end_lanelets;
-    lanelet::ConstLanelets normal_lanelets;
-    lanelet::ConstLanelets goal_lanelets;
+  if (!route_handler_.isHandlerReady()) return;
+  lanelet::ConstLanelets route_lanelets;
+  lanelet::ConstLanelets end_lanelets;
+  lanelet::ConstLanelets normal_lanelets;
+  lanelet::ConstLanelets goal_lanelets;
 
-    for (const auto & route_section : route.segments) {
-      for (const auto & lane_id : route_section.primitives) {
-        auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id.id);
-        route_lanelets.push_back(lanelet);
-        if (route_section.preferred_primitive_id == lane_id.id) {
-          goal_lanelets.push_back(lanelet);
-        } else {
-          end_lanelets.push_back(lanelet);
-        }
+  for (const auto & route_section : route.segments) {
+    for (const auto & lane_id : route_section.primitives) {
+      auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id.id);
+      route_lanelets.push_back(lanelet);
+      if (route_section.preferred_primitive_id == lane_id.id) {
+        goal_lanelets.push_back(lanelet);
+      } else {
+        end_lanelets.push_back(lanelet);
       }
     }
-
-    std_msgs::msg::ColorRGBA cl_route, cl_ll_borders, cl_end, cl_normal, cl_goal;
-    setColor(&cl_route, 0.2, 0.4, 0.2, 0.05);
-    setColor(&cl_goal, 0.2, 0.4, 0.4, 0.05);
-    setColor(&cl_end, 0.2, 0.2, 0.4, 0.05);
-    setColor(&cl_normal, 0.2, 0.4, 0.2, 0.05);
-    setColor(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
-
-    visualization_msgs::msg::MarkerArray route_marker_array;
-    insertMarkerArray(
-      &route_marker_array,
-      lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
-    insertMarkerArray(
-      &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                            "route_lanelets", route_lanelets, cl_route));
-    insertMarkerArray(
-      &route_marker_array,
-      lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
-    insertMarkerArray(
-      &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                            "normal_lanelets", normal_lanelets, cl_normal));
-    insertMarkerArray(
-      &route_marker_array,
-      lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
-    marker_publisher_->publish(route_marker_array);
   }
+
+  std_msgs::msg::ColorRGBA cl_route, cl_ll_borders, cl_end, cl_normal, cl_goal;
+  setColor(&cl_route, 0.2, 0.4, 0.2, 0.05);
+  setColor(&cl_goal, 0.2, 0.4, 0.4, 0.05);
+  setColor(&cl_end, 0.2, 0.2, 0.4, 0.05);
+  setColor(&cl_normal, 0.2, 0.4, 0.2, 0.05);
+  setColor(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
+
+  visualization_msgs::msg::MarkerArray route_marker_array;
+  insertMarkerArray(
+    &route_marker_array,
+    lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
+  insertMarkerArray(
+    &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
+                          "route_lanelets", route_lanelets, cl_route));
+  insertMarkerArray(
+    &route_marker_array,
+    lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
+  insertMarkerArray(
+    &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
+                          "normal_lanelets", normal_lanelets, cl_normal));
+  insertMarkerArray(
+    &route_marker_array,
+    lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
+  marker_publisher_->publish(route_marker_array);
 }
 
 bool MissionPlannerLanelet2::isGoalValid() const
