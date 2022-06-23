@@ -96,6 +96,18 @@ TEST(spline_interpolation, slerp)
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
   }
+
+  {  // curve: query_keys is random. size of base_keys is 3 (edge case in the implementation)
+    const std::vector<double> base_keys{-1.5, 1.0, 5.0};
+    const std::vector<double> base_values{-1.2, 0.5, 1.0};
+    const std::vector<double> query_keys{-1.0, 0.0, 4.0};
+    const std::vector<double> ans{-0.808769, -0.077539, 1.035096};
+
+    const auto query_values = interpolation::slerp(base_keys, base_values, query_keys);
+    for (size_t i = 0; i < query_values.size(); ++i) {
+      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
+    }
+  }
 }
 
 TEST(spline_interpolation, slerpYawFromPoints)
