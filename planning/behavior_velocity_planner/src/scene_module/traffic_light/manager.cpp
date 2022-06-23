@@ -24,43 +24,10 @@
 
 namespace behavior_velocity_planner
 {
-namespace
-{
-std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet>
-getTrafficLightRegElemsOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet> traffic_light_reg_elems;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    const auto ll = lanelet_map->laneletLayer.get(lane_id);
-
-    const auto tls = ll.regulatoryElementsAs<const lanelet::TrafficLight>();
-    for (const auto & tl : tls) {
-      traffic_light_reg_elems.insert(std::make_pair(tl, ll));
-    }
-  }
-
-  return traffic_light_reg_elems;
-}
-
-std::set<int64_t> getLaneletIdSetOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::set<int64_t> lanelet_id_set;
-  for (const auto & traffic_light_reg_elem : getTrafficLightRegElemsOnPath(path, lanelet_map)) {
-    lanelet_id_set.insert(traffic_light_reg_elem.second.id());
-  }
-  return lanelet_id_set;
-}
-
-}  // namespace
+using lanelet::TrafficLight;
 
 TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
@@ -95,6 +62,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
     traffic_light_scene_module->setPlannerData(planner_data_);
     traffic_light_scene_module->modifyPathVelocity(path, &stop_reason);
     stop_reason_array.stop_reasons.emplace_back(stop_reason);
+
     if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
       first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
     }
@@ -127,8 +95,9 @@ void TrafficLightModuleManager::modifyPathVelocity(
 void TrafficLightModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & traffic_light_reg_elem :
-       getTrafficLightRegElemsOnPath(path, planner_data_->route_handler_->getLaneletMapPtr())) {
+  for (const auto & traffic_light_reg_elem : planning_utils::getRegElemMapOnPath<TrafficLight>(
+         path, planner_data_->route_handler_->getLaneletMapPtr(),
+         planner_data_->current_pose.pose)) {
     const auto stop_line = traffic_light_reg_elem.first->stopLine();
 
     if (!stop_line) {
@@ -144,6 +113,7 @@ void TrafficLightModuleManager::launchNewModules(
       registerModule(std::make_shared<TrafficLightModule>(
         module_id, *(traffic_light_reg_elem.first), traffic_light_reg_elem.second, planner_param_,
         logger_.get_child("traffic_light_module"), clock_));
+      generateUUID(module_id);
     }
   }
 }
@@ -152,11 +122,12 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 TrafficLightModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lanelet_id_set =
-    getLaneletIdSetOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());
+  const auto lanelet_id_set = planning_utils::getLaneletIdSetOnPath<TrafficLight>(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
 
   return [lanelet_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return lanelet_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
+
 }  // namespace behavior_velocity_planner
