@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -186,6 +187,10 @@ CandidateOutput LaneChangeModule::planCandidate() const
   std::tie(found_valid_path, found_safe_path) =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
+
+  if (selected_path.path.points.empty()) {
+    return CandidateOutput{};
+  }
 
   const auto start_idx = selected_path.shift_point.start_idx;
   const auto end_idx = selected_path.shift_point.end_idx;
