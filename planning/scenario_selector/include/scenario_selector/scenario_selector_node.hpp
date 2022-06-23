@@ -32,14 +32,14 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
+#include <route_handler/route_handler.hpp>
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <deque>
 #include <memory>
 #include <string>
-
-#include <route_handler/route_handler.hpp>
 
 class ScenarioSelectorNode : public rclcpp::Node
 {
