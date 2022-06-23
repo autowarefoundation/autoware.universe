@@ -17,15 +17,24 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 
+#include <builtin_interfaces/msg/time.hpp>
+#include <rtc_interface/rtc_interface.hpp>
+#include <utilization/util.hpp>
+
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
+#include <random>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>
@@ -34,12 +43,19 @@
 
 namespace behavior_velocity_planner
 {
+using builtin_interfaces::msg::Time;
+using rtc_interface::RTCInterface;
+using unique_identifier_msgs::msg::UUID;
 class SceneModuleInterface
 {
 public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
-  : module_id_(module_id), logger_(logger), clock_(clock)
+  : module_id_(module_id),
+    safe_(false),
+    distance_(std::numeric_limits<double>::lowest()),
+    logger_(logger),
+    clock_(clock)
   {
   }
   virtual ~SceneModuleInterface() = default;
@@ -48,6 +64,7 @@ public:
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     tier4_planning_msgs::msg::StopReason * stop_reason) = 0;
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
+  virtual visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() = 0;
 
   int64_t getModuleId() const { return module_id_; }
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
@@ -68,13 +85,24 @@ public:
 
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
+  void setActivation(const bool activated) { activated_ = activated; }
+  bool isActivated() const { return activated_; }
+  bool isSafe() const { return safe_; }
+  double getDistance() const { return distance_; }
+
 protected:
   const int64_t module_id_;
+  bool activated_;
+  bool safe_;
+  double distance_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   boost::optional<int> first_stop_path_point_index_;
+
+  void setSafe(const bool safe) { safe_ = safe; }
+  void setDistance(const double distance) { distance_ = distance; }
 };
 
 class SceneModuleManagerInterface
@@ -85,6 +113,8 @@ public:
   {
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
+    pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
+      std::string("~/virtual_wall/") + module_name, 20);
     pub_stop_reason_ =
       node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 20);
     pub_infrastructure_commands_ =
@@ -108,9 +138,16 @@ public:
     deleteExpiredModules(path);
   }
 
+  virtual void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
+  {
+    modifyPathVelocity(path);
+  }
+
+protected:
   virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
   {
     visualization_msgs::msg::MarkerArray debug_marker_array;
+    visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
@@ -123,7 +160,10 @@ public:
       tier4_planning_msgs::msg::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason);
-      stop_reason_array.stop_reasons.emplace_back(stop_reason);
+
+      if (stop_reason.reason != "") {
+        stop_reason_array.stop_reasons.emplace_back(stop_reason);
+      }
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
         infrastructure_command_array.commands.push_back(*command);
@@ -136,6 +176,10 @@ public:
       for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
         debug_marker_array.markers.push_back(marker);
       }
+
+      for (const auto & marker : scene_module->createVirtualWallMarkerArray().markers) {
+        virtual_wall_marker_array.markers.push_back(marker);
+      }
     }
 
     if (!stop_reason_array.stop_reasons.empty()) {
@@ -143,15 +187,15 @@ public:
     }
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
+    pub_virtual_wall_->publish(virtual_wall_marker_array);
   }
 
-protected:
   virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
   getModuleExpiredFunction(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
-  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  virtual void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
   {
     const auto isModuleExpired = getModuleExpiredFunction(path);
 
@@ -198,11 +242,105 @@ protected:
   rclcpp::Clock::SharedPtr clock_;
   // Debug
   rclcpp::Logger logger_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
 };
+
+class SceneModuleManagerInterfaceWithRTC : public SceneModuleManagerInterface
+{
+public:
+  SceneModuleManagerInterfaceWithRTC(rclcpp::Node & node, const char * module_name)
+  : SceneModuleManagerInterface(node, module_name), rtc_interface_(node, module_name)
+  {
+  }
+
+  void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path) override
+  {
+    setActivation();
+    modifyPathVelocity(path);
+    sendRTC(path->header.stamp);
+  }
+
+protected:
+  RTCInterface rtc_interface_;
+  std::unordered_map<int64_t, UUID> map_uuid_;
+
+  void sendRTC(const Time & stamp)
+  {
+    for (const auto & scene_module : scene_modules_) {
+      const UUID uuid = getUUID(scene_module->getModuleId());
+      updateRTCStatus(uuid, scene_module->isSafe(), scene_module->getDistance(), stamp);
+    }
+    publishRTCStatus(stamp);
+  }
+
+  void setActivation()
+  {
+    for (const auto & scene_module : scene_modules_) {
+      const UUID uuid = getUUID(scene_module->getModuleId());
+      scene_module->setActivation(rtc_interface_.isActivated(uuid));
+    }
+  }
+
+  void updateRTCStatus(
+    const UUID & uuid, const bool safe, const double distance, const Time & stamp)
+  {
+    rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
+  }
+
+  void removeRTCStatus(const UUID & uuid) { rtc_interface_.removeCooperateStatus(uuid); }
+
+  void publishRTCStatus(const Time & stamp) { rtc_interface_.publishCooperateStatus(stamp); }
+
+  UUID getUUID(const int64_t & module_id) const
+  {
+    if (map_uuid_.count(module_id) == 0) {
+      const UUID uuid;
+      return uuid;
+    }
+    return map_uuid_.at(module_id);
+  }
+
+  void generateUUID(const int64_t & module_id)
+  {
+    // Generate random number
+    UUID uuid;
+    std::mt19937 gen(std::random_device{}());
+    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
+    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
+    map_uuid_.insert({module_id, uuid});
+  }
+
+  void removeUUID(const int64_t & module_id)
+  {
+    const auto result = map_uuid_.erase(module_id);
+    if (result == 0) {
+      RCLCPP_WARN_STREAM(
+        logger_, "[removeUUID] module_id = " << module_id << " is not registered.");
+    }
+  }
+
+  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override
+  {
+    const auto isModuleExpired = getModuleExpiredFunction(path);
+
+    // Copy container to avoid iterator corruption
+    // due to scene_modules_.erase() in unregisterModule()
+    const auto copied_scene_modules = scene_modules_;
+
+    for (const auto & scene_module : copied_scene_modules) {
+      if (isModuleExpired(scene_module)) {
+        removeRTCStatus(getUUID(scene_module->getModuleId()));
+        removeUUID(scene_module->getModuleId());
+        unregisterModule(scene_module);
+      }
+    }
+  }
+};
+
 }  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_

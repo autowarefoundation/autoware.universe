@@ -15,7 +15,8 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/logging.hpp>
+#include <rclcpp/service.hpp>
 
 namespace component_interface_utils
 {
@@ -26,13 +27,11 @@ class Service
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
-
-  template <class NodeT>
-  using CallbackType = void (NodeT::*)(
-    typename SpecT::Service::Request::SharedPtr, typename SpecT::Service::Response::SharedPtr);
+  using SpecType = SpecT;
+  using WrapType = rclcpp::Service<typename SpecT::Service>;
 
   /// Constructor.
-  explicit Service(typename rclcpp::Service<typename SpecT::Service>::SharedPtr service)
+  explicit Service(typename WrapType::SharedPtr service)
   {
     service_ = service;  // to keep the reference count
   }
@@ -44,7 +43,9 @@ public:
     auto wrapped = [logger, callback](
                      typename SpecT::Service::Request::SharedPtr request,
                      typename SpecT::Service::Response::SharedPtr response) {
+#ifdef ROS_DISTRO_GALACTIC
       using rosidl_generator_traits::to_yaml;
+#endif
       RCLCPP_INFO_STREAM(logger, "service call: " << SpecT::name << "\n" << to_yaml(*request));
       callback(request, response);
       RCLCPP_INFO_STREAM(logger, "service exit: " << SpecT::name << "\n" << to_yaml(*response));
@@ -54,7 +55,7 @@ public:
 
 private:
   RCLCPP_DISABLE_COPY(Service)
-  typename rclcpp::Service<typename SpecT::Service>::SharedPtr service_;
+  typename WrapType::SharedPtr service_;
 };
 
 }  // namespace component_interface_utils

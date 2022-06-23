@@ -53,12 +53,10 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
   const std::string & name = module->name();
   const auto status = std::make_shared<SceneModuleStatus>(name);
 
-  // simple condition node for "isRequested" and "isReady"
+  // simple condition node for "isRequested"
   bt_factory_.registerSimpleCondition(name + "_Request", [module, status](BT::TreeNode &) {
     return isExecutionRequested(module, status);
   });
-  bt_factory_.registerSimpleCondition(
-    name + "_Ready", [module, status](BT::TreeNode &) { return isExecutionReady(module, status); });
 
   // simple action node for "planCandidate"
   auto bt_node =
@@ -77,13 +75,6 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
 
   scene_modules_.push_back(module);
   modules_status_.push_back(status);
-}
-
-void BehaviorTreeManager::registerForceApproval(const std::string & name)
-{
-  bt_factory_.registerSimpleCondition(name + "_ForceApproval", [this, name](BT::TreeNode &) {
-    return BehaviorTreeManager::checkForceApproval(name);
-  });
 }
 
 BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData> & data)
@@ -106,6 +97,12 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
 
   RCLCPP_DEBUG(logger_, "BehaviorPathPlanner::run end status = %s", BT::toStr(res).c_str());
 
+  std::for_each(scene_modules_.begin(), scene_modules_.end(), [](const auto & m) {
+    if (!m->isExecutionRequested()) {
+      m->onExit();
+    }
+    m->publishRTCStatus();
+  });
   return output;
 }
 
@@ -122,6 +119,22 @@ std::vector<MarkerArray> BehaviorTreeManager::getDebugMarkers()
     data.push_back(module->getDebugMarker());
   }
   return data;
+}
+
+AvoidanceDebugMsgArray BehaviorTreeManager::getAvoidanceDebugMsgArray()
+{
+  const auto avoidance_module = std::find_if(
+    scene_modules_.begin(), scene_modules_.end(),
+    [](const std::shared_ptr<SceneModuleInterface> & module_ptr) {
+      return module_ptr->name() == "Avoidance";
+    });
+  if (avoidance_module != scene_modules_.end()) {
+    const auto & ptr = avoidance_module->get()->getAvoidanceDebugMsgArray();
+    if (ptr) {
+      return *ptr;
+    }
+  }
+  return AvoidanceDebugMsgArray();
 }
 
 BT::NodeStatus BehaviorTreeManager::checkForceApproval(const std::string & name)

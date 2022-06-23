@@ -69,6 +69,16 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   const rclcpp::NodeOptions & node_options)
 : Node("point_cloud_concatenator_component", node_options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, "concatenate_data_synchronizer");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
   // Set parameters
   {
     output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
@@ -112,6 +122,12 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
   }
 
+  // tf2 listener
+  {
+    tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+    tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+  }
+
   // Publishers
   {
     pub_output_ = this->create_publisher<PointCloud2>(
@@ -135,7 +151,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       cloud_stdmap_tmp_ = cloud_stdmap_;
 
       // CAN'T use auto type here.
-      std::function<void(const sensor_msgs::msg::PointCloud2::SharedPtr msg)> cb = std::bind(
+      std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> cb = std::bind(
         &PointCloudConcatenateDataSynchronizerComponent::cloud_callback, this,
         std::placeholders::_1, input_topics_[d]);
 
@@ -260,6 +276,7 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
 
 void PointCloudConcatenateDataSynchronizerComponent::publish()
 {
+  stop_watch_ptr_->toc("processing_time", true);
   sensor_msgs::msg::PointCloud2::SharedPtr concat_cloud_ptr_ = nullptr;
   not_subscribed_topic_names_.clear();
 
@@ -293,6 +310,15 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
     e.second = nullptr;
   });
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -351,11 +377,12 @@ void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
-  const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
-  convertToXYZICloud(input_ptr, xyzi_input_ptr);
+  convertToXYZICloud(input, xyzi_input_ptr);
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(

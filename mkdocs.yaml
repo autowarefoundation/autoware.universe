@@ -50,7 +50,7 @@ plugins:
   - awesome-pages
   - exclude:
       regex:
-        - ^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?jpg).*$
+        - ^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?gif|(.*\.)?jpg).*$
         - ^(.*/)?[^.]*$
   - macros
   - same-dir
@@ -66,7 +66,6 @@ markdown_extensions:
   - mdx_math
   - mdx_truly_sane_lists:
       nested_indent: 2
-  - mdx_unimoji
   - plantuml_markdown:
       server: http://www.plantuml.com/plantuml
       format: svg

@@ -31,6 +31,7 @@
 #include <message_filters/synchronizer.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/search/kdtree.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/message_filter.h>
 #include <tf2_ros/transform_listener.h>
@@ -114,6 +115,8 @@ private:
 
   // Debugger
   std::shared_ptr<Debugger> debugger_ptr_;
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 
   // ROS Parameters
   std::string map_frame_;

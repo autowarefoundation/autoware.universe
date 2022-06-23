@@ -21,7 +21,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -48,8 +48,8 @@ BigVehicleTracker::BigVehicleTracker(
 
   // initialize params
   ekf_params_.use_measurement_covariance = false;
-  float q_stddev_x = 0.0;                                     // [m/s]
-  float q_stddev_y = 0.0;                                     // [m/s]
+  float q_stddev_x = 1.5;                                     // [m/s]
+  float q_stddev_y = 1.5;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(10);     // [m/(s*s)]
   float q_stddev_wz = tier4_autoware_utils::deg2rad(20);      // [rad/(s*s)]
@@ -76,8 +76,9 @@ BigVehicleTracker::BigVehicleTracker(
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
   ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
-  max_vx_ = tier4_autoware_utils::kmph2mps(100);  // [m/s]
-  max_wz_ = tier4_autoware_utils::deg2rad(30);    // [rad/s]
+  max_vx_ = tier4_autoware_utils::kmph2mps(100);                       // [m/s]
+  max_wz_ = tier4_autoware_utils::deg2rad(30);                         // [rad/s]
+  velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
 
   // initialize X matrix
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -239,8 +240,21 @@ bool BigVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
-  const int dim_y =
-    object.kinematics.has_twist ? 4 : 3;  // pos x, pos y, yaw, vx depending on Pose output
+  // Decide dimension of measurement vector
+  bool enable_velocity_measurement = false;
+  if (object.kinematics.has_twist) {
+    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
+    ekf_.getX(X_t);
+    const double current_vx = X_t(IDX::VX);
+    const double observed_vx = object.kinematics.twist_with_covariance.twist.linear.x;
+
+    if (std::fabs(current_vx - observed_vx) > velocity_deviation_threshold_) {
+      // Velocity deviation is large
+      enable_velocity_measurement = true;
+    }
+  }
+  // pos x, pos y, yaw, vx depending on pose measurement
+  const int dim_y = enable_velocity_measurement ? 3 : 4;
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   {
@@ -293,7 +307,7 @@ bool BigVehicleTracker::measureWithPose(
     R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
 
-  if (object.kinematics.has_twist) {
+  if (dim_y == 4) {
     Y(IDX::VX, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
     C(3, IDX::VX) = 1.0;  // for vx
 

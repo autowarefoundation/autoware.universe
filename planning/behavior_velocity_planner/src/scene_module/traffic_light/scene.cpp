@@ -20,7 +20,7 @@
 
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -237,6 +237,7 @@ bool TrafficLightModule::modifyPathVelocity(
   stop_line_point_msg.y = stop_line_point.y();
   const double signed_arc_length_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
     input_path.points, self_pose.pose.position, stop_line_point_msg);
+  setDistance(signed_arc_length_to_stop_point);
 
   // Check state
   if (state_ == State::APPROACH) {
@@ -251,7 +252,8 @@ bool TrafficLightModule::modifyPathVelocity(
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
     // Check if stop is coming.
-    if (!isStopSignal(traffic_lights)) {
+    setSafe(!isStopSignal(traffic_lights));
+    if (isActivated()) {
       is_prev_state_stop_ = false;
       return true;
     }

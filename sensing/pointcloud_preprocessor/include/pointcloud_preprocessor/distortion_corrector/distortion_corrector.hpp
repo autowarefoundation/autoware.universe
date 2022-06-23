@@ -23,11 +23,22 @@
 
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+// Include tier4 autoware utils
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <deque>
+#include <memory>
 #include <string>
 
 namespace pointcloud_preprocessor
@@ -55,6 +66,9 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_report_sub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
+
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 
   tf2_ros::Buffer tf2_buffer_{get_clock()};
   tf2_ros::TransformListener tf2_listener_{tf2_buffer_};

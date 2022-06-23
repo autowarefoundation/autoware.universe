@@ -27,7 +27,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -50,8 +50,8 @@ PedestrianTracker::PedestrianTracker(
 
   // initialize params
   ekf_params_.use_measurement_covariance = false;
-  float q_stddev_x = 0.0;                                     // [m/s]
-  float q_stddev_y = 0.0;                                     // [m/s]
+  float q_stddev_x = 0.4;                                     // [m/s]
+  float q_stddev_y = 0.4;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(5);      // [m/(s*s)]
   float q_stddev_wz = tier4_autoware_utils::deg2rad(20);      // [rad/(s*s)]

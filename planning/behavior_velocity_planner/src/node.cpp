@@ -24,7 +24,7 @@
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -40,6 +40,7 @@
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/run_out/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -130,7 +131,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/external_intersection_states", 10,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
-    "~/input/external_velocity_limit_mps", 1,
+    "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
@@ -165,6 +166,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Initialize PlannerManager
   if (this->declare_parameter("launch_crosswalk", true)) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
+    planner_manager_.launchSceneModule(std::make_shared<WalkwayModuleManager>(*this));
   }
   if (this->declare_parameter("launch_traffic_light", true)) {
     planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
@@ -194,6 +196,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // to calculate ttc it's better to be after stop line
   if (this->declare_parameter("launch_occlusion_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
+  }
+  if (this->declare_parameter("launch_run_out", false)) {
+    planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
   }
 }
 
@@ -263,7 +268,9 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
 
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(pc, *pc_transformed, affine);
+  if (!pc.empty()) {
+    pcl::transformPointCloud(pc, *pc_transformed, affine);
+  }
 
   {
     std::lock_guard<std::mutex> lock(mutex_);

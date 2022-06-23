@@ -19,7 +19,7 @@
 
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -426,9 +426,12 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 
   // Step4. Check if the closest lanelet is valid, and add all
   // of the lanelets that are below max_dist and max_delta_yaw
+  const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+  const bool is_yaw_reversed =
+    M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta && object_vel < 0.0;
   if (
     lanelet.first < dist_threshold_for_searching_lanelet_ &&
-    abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
+    (is_yaw_reversed || abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_)) {
     return true;
   }
 

@@ -46,7 +46,7 @@
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -74,7 +74,6 @@ inline geometry_msgs::msg::Pose getPose(
 }
 }  // namespace tier4_autoware_utils
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
 namespace tf2
 {
 inline void fromMsg(const geometry_msgs::msg::PoseStamped & msg, tf2::Stamped<tf2::Transform> & out)
@@ -85,7 +84,7 @@ inline void fromMsg(const geometry_msgs::msg::PoseStamped & msg, tf2::Stamped<tf
   fromMsg(msg.pose, tmp);
   out.setData(tmp);
 }
-
+#ifdef ROS_DISTRO_GALACTIC
 // Remove after this commit is released
 // https://github.com/ros2/geometry2/commit/e9da371d81e388a589540357c050e262442f1b4a
 inline geometry_msgs::msg::Point & toMsg(const tf2::Vector3 & in, geometry_msgs::msg::Point & out)
@@ -115,8 +114,8 @@ inline void doTransform(
   tf2::Vector3 v_out = t * v_in;
   toMsg(v_out, t_out);
 }
-}  // namespace tf2
 #endif
+}  // namespace tf2
 
 namespace behavior_path_planner
 {
@@ -160,6 +159,10 @@ PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
   const double duration, const double resolution, const double acceleration);
+
+bool checkIfPositionIsOnTheLine(const double & linestring_length, const FrenetCoordinate3d & pose);
+FrenetCoordinate3d convertToFrenetCoordinate3d(
+  const std::vector<Point> & linestring, const Point & search_point_geom);
 
 bool convertToFrenetCoordinate3d(
   const PathWithLaneId & path, const Point & search_point_geom,
@@ -263,7 +266,8 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
 // goal management
 
 /**
- * @brief Modify the path points near the goal to smoothly connect the input path and the goal point
+ * @brief Modify the path points near the goal to smoothly connect the input path and the goal
+ * point
  * @details Remove the path points that are forward from the goal by the distance of
  * search_radius_range. Then insert the goal into the path. The previous goal point generated
  * from the goal posture information is also inserted for the smooth connection of the goal pose.
