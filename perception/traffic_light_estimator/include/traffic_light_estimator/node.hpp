@@ -72,10 +72,24 @@ private:
   void onRoute(const HADMapRoute::ConstSharedPtr msg);
   void onTrafficLightArray(const TrafficSignalArray::ConstSharedPtr msg);
 
+  void updateLastDetectedSignal(const lanelet::Id & id, const uint8_t color);
+  void setCrosswalkTrafficSignal(
+    const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg) const;
+
+  lanelet::ConstLanelets getGreenLanelets(
+    const lanelet::ConstLanelets & lanelets,
+    const std::unordered_map<lanelet::Id, TrafficSignal> & traffic_light_id_map);
+
+  uint8_t estimateCrosswalkTrafficSignal(
+    const lanelet::ConstLanelet & crosswalk, const lanelet::ConstLanelets & green_lanelets) const;
+
   uint8_t getHighestConfidenceTrafficSignal(
     const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-    const std::unordered_map<uint32_t, TrafficSignal> & traffic_light_id_map);
+    const std::unordered_map<lanelet::Id, TrafficSignal> & traffic_light_id_map) const;
 
+  uint8_t getLastDetectedTrafficSignal(const lanelet::Id & id) const;
+
+  // Signal history
   std::unordered_map<uint32_t, uint8_t> last_detect_color_;
 
   // Stop watch
