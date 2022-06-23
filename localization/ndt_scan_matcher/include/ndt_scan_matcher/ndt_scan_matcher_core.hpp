@@ -191,6 +191,7 @@ private:
   float inversion_vector_threshold_;
   float oscillation_threshold_;
   std::array<double, 36> output_pose_covariance_;
+  double initial_ndt_align_timeout_sec_;
 
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     initial_pose_msg_ptr_array_;

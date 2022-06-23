@@ -112,7 +112,8 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_timeout_sec_(1.0),
   initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
-  oscillation_threshold_(10)
+  oscillation_threshold_(10),
+  initial_ndt_align_timeout_sec_(3.0)
 {
   key_value_stdmap_["state"] = "Initializing";
 
@@ -336,17 +337,18 @@ void NDTScanMatcher::serviceNDTAlign(
   // transform pose_frame to map_frame
   const auto mapTF_initial_pose_msg = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
-  // if (ndt_ptr_->getInputTarget() == nullptr) {
-  //   res->success = false;
-  //   res->seq = req->seq;
-  //   RCLCPP_WARN(get_logger(), "No InputTarget");
-  //   return;
-  // }
+  double timeout_counter = 0;
+  int validation_period = 100; // [ms]
   while (!validateInitialPositionCompatibility(mapTF_initial_pose_msg.pose.pose.position)) {
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "KOJI current map is not compatible with the received initial position. Waiting for new map...");
+    rclcpp::sleep_for(std::chrono::milliseconds(validation_period));
+    timeout_counter += validation_period;
+    if (timeout_counter > initial_ndt_align_timeout_sec_ * 1e3)
+    {
+      res->success = false;
+      res->seq = req->seq;
+      RCLCPP_WARN(get_logger(), "Failed to receive valid pcd map for given initial pose");
+      return;
+    }
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
