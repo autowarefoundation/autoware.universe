@@ -243,7 +243,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   appendMarkerArray(
     createPoseMarkerArray(
-      debug_data_.frontcar_stopping_pose, "frontcar_stopping_pose", lane_id_, 1.0, 0.0, 0.0),
+      debug_data_.predicted_obj_pose, "predicted_obj_pose", lane_id_, 1.0, 0.0, 0.0),
     current_time, &debug_marker_array);
 
   if (state == IntersectionModule::State::STOP) {

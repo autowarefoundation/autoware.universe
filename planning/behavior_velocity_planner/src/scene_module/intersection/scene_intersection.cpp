@@ -176,7 +176,7 @@ bool IntersectionModule::modifyPathVelocity(
     planner_param_.stuck_vehicle_detect_dist);
   bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_area_lanelet_ids, detection_areas, objects_ptr, closest_idx,
+    lanelet_map_ptr, *path, detection_area_lanelet_ids, conflicting_areas, objects_ptr, closest_idx,
     stuck_vehicle_detect_area);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
@@ -256,7 +256,7 @@ bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<int> & detection_area_lanelet_ids,
-  const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
 {
@@ -283,126 +283,108 @@ bool IntersectionModule::checkCollision(
       continue;
     }
 
-    // ignore vehicle in ego-lane. (TODO update check algorithm)
+    // ignore vehicle in ego-lane && behind ego
     const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
     const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);
     if (is_in_ego_lane) {
       if (!planning_utils::isAheadOf(planner_data_->current_pose.pose, object_pose)) {
         continue;
       }
-      const auto vel =
-        object.kinematics.initial_twist_with_covariance.twist.linear.x;  // longitudional velocity
-      const double a = planner_param_.frontcar_expected_decel;
-      const double stopping_distance = vel * vel / (2 * a);
-      std::cout << "detected frontcar on the same lane, stopping_distance = " << stopping_distance
-                << std::endl;
-      lanelet::LineString3d concat_centerline;
-      const auto & centerline1 = ego_lane_with_next_lane[0].centerline();
-      std::vector<geometry_msgs::msg::Point> converted_centerline;
-      for (const auto & p : centerline1) {
-        const auto converted_p = lanelet::utils::conversion::toGeomMsgPt(p);
-        converted_centerline.push_back(converted_p);
-      }
-      const auto & centerline2 = ego_lane_with_next_lane[1].centerline();
-      for (const auto & p : centerline2) {
-        const auto converted_p = lanelet::utils::conversion::toGeomMsgPt(p);
-        converted_centerline.push_back(converted_p);
-      }
-      const double lat_offset = std::fabs(
-        tier4_autoware_utils::calcLateralOffset(converted_centerline, object_pose.position));
-      double acc_dist1 = 0.0, acc_dist2 = 0.0;
-      // if stoppind_distance is longer than the centerline, then the stopping_point is the end of
-      // centerline
-      // get the nearest point to object_pose
-      int closest_centerline_point_idx = 0;
-      double d = std::numeric_limits<double>::max();
-      for (unsigned i = 0; i < converted_centerline.size(); ++i) {
-        const double dist =
-          tier4_autoware_utils::calcDistance2d(object_pose.position, converted_centerline[i]);
-        if (dist < d) {
-          d = dist;
-          closest_centerline_point_idx = i;
-        }
-      }
-      auto & p1 = converted_centerline[closest_centerline_point_idx];
-      auto & p2 =
-        converted_centerline[closest_centerline_point_idx + 1];  // NOTE: need to check the size?
-      std::cout << "converted_centerline().size = " << converted_centerline.size() << std::endl;
-      for (unsigned i = closest_centerline_point_idx; i < converted_centerline.size() - 1; ++i) {
-        p1 = converted_centerline.at(i);
-        p2 = converted_centerline.at(i + 1);
-        const double d_p1p2 = tier4_autoware_utils::calcDistance2d(p1, p2);
-        acc_dist1 = acc_dist2;
-        acc_dist2 += d_p1p2;
-        if (acc_dist2 > stopping_distance) {
+      // consider vehicle in ego-lane && in front of ego
+      const auto lon_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+      const double object_decel = planner_param_.object_expected_decel;  // NOTE: this is positive
+      const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
+
+      std::vector<geometry_msgs::msg::Point> centerpoints;
+      for (const auto & p : ego_lane_with_next_lane[0].centerline())
+        centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
+      for (const auto & p : ego_lane_with_next_lane[1].centerline())
+        centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
+      const double lat_offset =
+        std::fabs(tier4_autoware_utils::calcLateralOffset(centerpoints, object_pose.position));
+      // get the nearest centerpoint to object
+      unsigned obj_closest_centerpoint_idx = 0;
+      std::vector<double> dist_obj_centerpoints;
+      std::transform(
+        centerpoints.begin(), centerpoints.end(), std::back_inserter(dist_obj_centerpoints),
+        [&object_pose](const auto & p) {
+          return tier4_autoware_utils::calcDistance2d(object_pose.position, p);
+        });
+      obj_closest_centerpoint_idx =
+        *std::min_element(dist_obj_centerpoints.begin(), dist_obj_centerpoints.end());
+      // find two centerpoints whose distances from `closest_centerpoint` cross stopping_distance
+      double acc_dist_prev = 0.0, acc_dist = 0.0;
+      auto & p1 = centerpoints[obj_closest_centerpoint_idx];
+      auto & p2 = centerpoints[obj_closest_centerpoint_idx];
+      for (unsigned i = obj_closest_centerpoint_idx; i < centerpoints.size() - 1; ++i) {
+        acc_dist_prev = acc_dist;
+        acc_dist +=
+          tier4_autoware_utils::calcDistance2d(centerpoints.at(i), centerpoints.at(i + 1));
+        if (acc_dist > stopping_distance) {
           break;
         }
       }
-      geometry_msgs::msg::Point stopping_point_projected;
-      geometry_msgs::msg::Point stopping_point;
-      std::cout << "acc_dist2 > stopping_distance: " << (acc_dist2 > stopping_distance)
-                << std::endl;
-      if (acc_dist2 <= stopping_distance) {
-        stopping_point_projected.x = p2.x;
-        stopping_point_projected.y = p2.y;
-        stopping_point_projected.z = p2.z;
-      } else {
-        // linear interpolation
-        const double ratio = (acc_dist2 - stopping_distance) / (stopping_distance - acc_dist1);
-        std::cout << "ratio = " << ratio << std::endl;
-        stopping_point_projected.x = (p1.x * ratio + p2.x) / (1 + ratio);
-        stopping_point_projected.y = (p1.y * ratio + p2.y) / (1 + ratio);
-        stopping_point_projected.z = (p1.z * ratio + p2.z) / (1 + ratio);
-      }
+      // if stopping_distance >= centerpoints, stopping_point is centerpoints[end]
+      const double ratio = (acc_dist <= stopping_distance)
+                             ? 0.0
+                             : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
 
-      const double lane_yaw =
-        lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point_projected);
-      std::cout << "lat_offset = " << lat_offset << ", lane_yaw = " << lane_yaw << std::endl;
-      stopping_point.x = stopping_point_projected.x + lat_offset * std::cos(lane_yaw + M_PI / 2.0);
-      stopping_point.y = stopping_point_projected.y + lat_offset * std::sin(lane_yaw + M_PI / 2.0);
-      std::cout << "stopping_point: x = " << stopping_point.x << ", y = " << stopping_point.y
-                << std::endl;
-      autoware_auto_perception_msgs::msg::PredictedObject stopping_object = object;
-      stopping_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
-      stopping_object.kinematics.initial_pose_with_covariance.pose.orientation =
+      // linear interpolation
+      geometry_msgs::msg::Point stopping_point;
+      const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
+      stopping_point.x = (p1.x * ratio + p2.x) / (1 + ratio);
+      stopping_point.y = (p1.y * ratio + p2.y) / (1 + ratio);
+      stopping_point.z = (p1.z * ratio + p2.z) / (1 + ratio);
+      stopping_point.x += lat_offset * std::cos(lane_yaw + M_PI / 2.0);
+      stopping_point.y += lat_offset * std::sin(lane_yaw + M_PI / 2.0);
+
+      // calculate footprint of predicted stopping pose
+      autoware_auto_perception_msgs::msg::PredictedObject predicted_object = object;
+      predicted_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
+      predicted_object.kinematics.initial_pose_with_covariance.pose.orientation =
         tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
-      Polygon2d frontcar_footprint = toFootprintPolygon(stopping_object);
-      const bool is_in_stuck_area = !bg::disjoint(frontcar_footprint, stuck_vehicle_detect_area);
-      std::cout << "is_in_stuck_area: " << is_in_stuck_area << std::endl;
-      debug_data_.frontcar_stopping_pose.position = stopping_point;
-      debug_data_.frontcar_stopping_pose.orientation =
+      Polygon2d predicted_obj_footprint = toFootprintPolygon(predicted_object);
+      const bool is_in_stuck_area =
+        !bg::disjoint(predicted_obj_footprint, stuck_vehicle_detect_area);
+      debug_data_.predicted_obj_pose.position = stopping_point;
+      debug_data_.predicted_obj_pose.orientation =
         tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
-      // find the centerline position `ego_vehicle_length` [m] behind stopping_point
-      const auto & info = planner_data_->vehicle_info_;
-      const double vehicle_length =
-        info.front_overhang_m + info.wheel_tread_m + info.rear_overhang_m;
-      double acc_dist = 0;
-      unsigned behind_stopping_point_idx = 0;
-      for (unsigned i = closest_centerline_point_idx; i >= 1; --i) {
-        const auto & p1 = converted_centerline[i];
-        const auto & p2 = converted_centerline[i - 1];
+
+      // find the centerpoint ego_vehicle_length[m] behind stopping_point
+      const double vehicle_length = planner_data_->vehicle_info_.vehicle_length_m;
+      acc_dist = 0;
+      unsigned behind_predicted_obj_point_idx = 0;
+      for (unsigned i = obj_closest_centerpoint_idx; i >= 1; --i) {
+        const auto & p1 = centerpoints[i];
+        const auto & p2 = centerpoints[i - 1];
         acc_dist += tier4_autoware_utils::calcDistance2d(p1, p2);
-        behind_stopping_point_idx = i;
+        behind_predicted_obj_point_idx = i;
         if (acc_dist > vehicle_length) break;
       }
-      const auto & behind_stopping_point = converted_centerline[behind_stopping_point_idx];
-
-      stopping_object.kinematics.initial_pose_with_covariance.pose.position = behind_stopping_point;
-      // TODO(Mamoru Sobue): should use the size of ego
-      const auto behind_stopping_point_footprint = toFootprintPolygon(stopping_object);
+      geometry_msgs::msg::Pose behind_predicted_obj_pose;
+      behind_predicted_obj_pose.position = centerpoints[behind_predicted_obj_point_idx];
+      behind_predicted_obj_pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(
+        0, 0, lane_yaw);  // reuse lane_yaw for simplicity
+      geometry_msgs::msg::Vector3 ego_shape = geometry_msgs::build<geometry_msgs::msg::Vector3>()
+                                                .x(planner_data_->vehicle_info_.vehicle_length_m)
+                                                .y(planner_data_->vehicle_info_.vehicle_width_m)
+                                                .z(0);
+      const auto behind_predicted_object_footprint =
+        obj2polygon(behind_predicted_obj_pose, {ego_shape});
       bool is_behind_point_in_detection_area = false;
-      for (const auto & detection_area : detection_areas) {
-        const auto a = lanelet::utils::to2D(detection_area);
+      for (const auto & conflicting_area : conflicting_areas) {
+        const auto a = lanelet::utils::to2D(conflicting_area);
         Polygon2d b{};
         for (const auto & a_ : a) {
           b.outer().emplace_back(a_.x(), a_.y());
         }
-        if (!bg::disjoint(behind_stopping_point_footprint, b)) {
+        if (!bg::disjoint(behind_predicted_object_footprint, b)) {
           is_behind_point_in_detection_area = true;
           break;
         }
       }
-      std::cout << "is_behind_point_in_detection_are" << is_behind_point_in_detection_area
+      std::cout << "is_in_stuck_area: " << is_in_stuck_area
+                << ", is_behind_point_in_detection_are: " << is_behind_point_in_detection_area
                 << std::endl;
       continue;  // TODO(Kenji Miyake): check direction?
     }
