@@ -56,7 +56,8 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
 : Node("path_sampler_node", node_options),
   qapplication_(argc_, argv_.data()),
   tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_)
+  tf_listener_(tf_buffer_),
+  vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
   w_.show();
   trajectory_pub_ =
@@ -117,13 +118,12 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
   params_.sampling.bezier.mt_min = declare_parameter<double>("sampling.bezier.mt_min");
   params_.sampling.bezier.mt_max = declare_parameter<double>("sampling.bezier.mt_max");
 
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
-  // const auto half_wheel_tread = vehicle_info.wheel_tread_m / 2.0;
-  const auto left_offset = vehicle_info.vehicle_width_m / 2.0;
-  const auto right_offset = -vehicle_info.vehicle_width_m / 2.0;
-  // const auto right_offset = -(half_wheel_tread + vehicle_info.right_overhang_m);
-  const auto rear_offset = -vehicle_info.rear_overhang_m;
-  const auto front_offset = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
+  // const auto half_wheel_tread = vehicle_info_.wheel_tread_m / 2.0;
+  const auto left_offset = vehicle_info_.vehicle_width_m / 2.0;
+  const auto right_offset = -vehicle_info_.vehicle_width_m / 2.0;
+  // const auto right_offset = -(half_wheel_tread + vehicle_info_.right_overhang_m);
+  const auto rear_offset = -vehicle_info_.rear_overhang_m;
+  const auto front_offset = vehicle_info_.wheel_base_m + vehicle_info_.front_overhang_m;
   params_.constraints.vehicle_offsets.left_rear = Eigen::Vector2d(rear_offset, left_offset);
   params_.constraints.vehicle_offsets.left_front = Eigen::Vector2d(front_offset, left_offset);
   params_.constraints.vehicle_offsets.right_rear = Eigen::Vector2d(rear_offset, right_offset);
@@ -313,8 +313,7 @@ std::optional<sampler_common::State> PathSamplerNode::getCurrentEgoState()
   auto state = sampler_common::State();
   state.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
   state.heading = tf2::getYaw(tf_current_pose.transform.rotation);
-  const auto wheel_base = 2.0;  // TODO(Maxime CLEMENT): get from parameter
-  state.curvature = std::sin(current_steer_ptr_->steering_tire_angle) / wheel_base;
+  state.curvature = std::sin(current_steer_ptr_->steering_tire_angle) / vehicle_info_.wheel_base_m;
   return state;
 }
 
