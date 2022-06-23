@@ -159,6 +159,9 @@ void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::Co
   }
 
   for (const auto & crosswalk : conflicting_crosswalks_) {
+    const std::string related_vehicle_trafic_light =
+      crosswalk.attributeOr("related_traffic_light", "none");
+
     constexpr int VEHICLE_GRAPH_ID = 0;
     const auto conflict_lls = overall_graphs_ptr_->conflictingInGraph(crosswalk, VEHICLE_GRAPH_ID);
 
@@ -166,6 +169,7 @@ void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::Co
     bool has_right_green_lane = false;
     bool has_straight_green_lane = false;
     bool has_straight_lane = false;
+    bool related_green_traffic_light = false;
 
     lanelet::ConstLanelets green_lanes;
     for (const auto & lanelet : conflict_lls) {
@@ -198,12 +202,18 @@ void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::Co
         if (highest_traffic_signal == TrafficLight::GREEN) {
           is_green = true;
           green_lanes.push_back(lanelet);
+          related_green_traffic_light =
+            related_green_traffic_light ||
+            tl_reg_elem_for_vehicle->id() == std::atoi(related_vehicle_trafic_light.c_str());
           break;
         }
 
         if (highest_traffic_signal == TrafficLight::UNKNOWN && was_green) {
           is_green = true;
           green_lanes.push_back(lanelet);
+          related_green_traffic_light =
+            related_green_traffic_light ||
+            tl_reg_elem_for_vehicle->id() == std::atoi(related_vehicle_trafic_light.c_str());
           break;
         }
       }
@@ -227,6 +237,8 @@ void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::Co
     } else {
       is_red_crosswalk = !has_merge_lane && has_left_green_lane && has_right_green_lane;
     }
+
+    is_red_crosswalk = is_red_crosswalk || related_green_traffic_light;
 
     const auto tl_reg_elems_for_pedestrian =
       crosswalk.regulatoryElementsAs<const lanelet::TrafficLight>();
