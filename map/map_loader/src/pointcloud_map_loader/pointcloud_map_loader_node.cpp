@@ -210,7 +210,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
     } else {
       whole_pcd.width += partial_pcd.width;
       whole_pcd.row_step += partial_pcd.row_step;
-      whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
+      // whole_pcd.data.reserve(whole_pcd.data.size() + partial_pcd.data.size());
       whole_pcd.data.insert(whole_pcd.data.end(), partial_pcd.data.begin(), partial_pcd.data.end());
     }
   }
@@ -255,7 +255,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
       } else {
         filtered_pcd.width += pcd.width;
         filtered_pcd.row_step += pcd.row_step;
-        filtered_pcd.data.reserve(filtered_pcd.data.size() + pcd.data.size());
+        // filtered_pcd.data.reserve(filtered_pcd.data.size() + pcd.data.size()); // ToDo (koji minoda): erasing this line significantly improved the computation speed. WHY???
         filtered_pcd.data.insert(filtered_pcd.data.end(), pcd.data.begin(), pcd.data.end());
       }
     }
@@ -267,7 +267,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
       .count() /
     1000.0;
   RCLCPP_INFO_STREAM(
-    get_logger(), "KOJI loadPCDPartially @map_loader: " << KOJI_exe_time << " [ms]");
+    get_logger(), "KOJI loadPCDPartially @map_loader: " << KOJI_exe_time << " [ms], num points: " << int(filtered_pcd.data.size()));
 
   filtered_pcd.header.frame_id = "map";
   return filtered_pcd;

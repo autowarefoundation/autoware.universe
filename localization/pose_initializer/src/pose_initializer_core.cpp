@@ -51,6 +51,7 @@ PoseInitializer::PoseInitializer()
 : Node("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
 {
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
+  radius_to_load_map_ = this->declare_parameter("radius_to_load_map", 300.0);
 
   const std::vector<double> initialpose_particle_covariance =
     this->declare_parameter<std::vector<double>>("initialpose_particle_covariance");
@@ -153,7 +154,7 @@ void PoseInitializer::callbackInitialPose(
   }
   auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
-  request->radius = 300.0;  // Should be removed somehow
+  request->radius = radius_to_load_map_;  // Should be removed somehow
   auto result{pcd_loader_client_->async_send_request(
     request,
     [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture
@@ -196,7 +197,7 @@ void PoseInitializer::callbackGNSSPoseCov(
 
   auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
   request->position = add_height_pose_msg_ptr->pose.pose.position;
-  request->radius = 300.0;  // Should be removed somehow
+  request->radius = radius_to_load_map_;  // Should be removed somehow
   auto result{pcd_loader_client_->async_send_request(
     request,
     [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture

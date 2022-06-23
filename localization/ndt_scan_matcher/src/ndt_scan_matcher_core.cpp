@@ -403,6 +403,8 @@ void NDTScanMatcher::callbackInitialPose(
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
+  const auto KOJI_exe_start_time_dummy = std::chrono::system_clock::now();
+
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(*map_points_msg_ptr, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(*map_points_msg_ptr, "y");
   double new_min_x = *iter_x;
@@ -425,6 +427,16 @@ void NDTScanMatcher::callbackMapPoints(
     ++iter_x;
     ++iter_y;
   }
+  const auto KOJI_exe_end_time_dummy = std::chrono::system_clock::now();
+  const double KOJI_exe_time_dummy =
+    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time_dummy - KOJI_exe_start_time_dummy)
+      .count() /
+    1000.0;
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher (only for minmax operation): " << KOJI_exe_time_dummy << " [ms]");
+  ////////////////////
+
   const auto KOJI_exe_start_time = std::chrono::system_clock::now();
 
   const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
@@ -451,6 +463,12 @@ void NDTScanMatcher::callbackMapPoints(
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
   new_ndt_ptr_->setInputTarget(map_points_ptr);
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher: (before align)" <<     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - KOJI_exe_start_time)
+      .count() /
+    1000.0 << " [ms]");
+
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity());  // This line is heavy
 
@@ -461,7 +479,7 @@ void NDTScanMatcher::callbackMapPoints(
     1000.0;
   RCLCPP_INFO_STREAM(
     get_logger(),
-    "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms]");
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms], numIter = " << new_ndt_ptr_->getFinalNumIteration());
 
   // swap
   ndt_map_mtx_.lock();
