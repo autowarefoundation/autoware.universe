@@ -98,14 +98,18 @@ Trajectory PlannerInterface::generateStopTrajectory(
   if (!traj_to_ego) {
     return traj;
   }
+  const double traj_to_ego_offset = std::fabs(*traj_to_ego);
 
   // Get Closest Behavior Stop Distance
   const double traj_length = tier4_autoware_utils::calcArcLength(traj.points);
-  const auto closest_forward_stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
-    traj.points, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+  const auto closest_forward_stop_dist_from_ego =
+    tier4_autoware_utils::calcDistanceToForwardStopPoint(
+      traj.points, current_pose, nearest_dist_deviation_threshold_,
+      nearest_yaw_deviation_threshold_);
   const double closest_behavior_stop_dist =
-    closest_forward_stop_dist ? std::min(*traj_to_ego + *closest_forward_stop_dist, traj_length)
-                              : traj_length;
+    closest_forward_stop_dist_from_ego
+      ? std::min(traj_to_ego_offset + *closest_forward_stop_dist_from_ego, traj_length)
+      : traj_length;
 
   // Get Closest Stop Obstacle
   const auto closest_stop_obstacle = getClosestStopObstacle(traj, target_obstacles);
@@ -138,12 +142,13 @@ Trajectory PlannerInterface::generateStopTrajectory(
   // Calculate closest stop distance (Check the feasibility)
   const double feasible_dist_to_stop_from_ego =
     calcMinimumDistanceToStop(current_vel, longitudinal_info_.limit_min_accel);
-  const double closest_obstacle_stop_dist_from_ego = closest_obstacle_stop_dist - *traj_to_ego;
+  const double closest_obstacle_stop_dist_from_ego =
+    closest_obstacle_stop_dist - traj_to_ego_offset;
 
   bool will_collide_with_obstacle = false;
   double closest_stop_dist = closest_obstacle_stop_dist;
   if (closest_obstacle_stop_dist_from_ego < feasible_dist_to_stop_from_ego) {
-    closest_stop_dist = *traj_to_ego + feasible_dist_to_stop_from_ego;
+    closest_stop_dist = traj_to_ego_offset + feasible_dist_to_stop_from_ego;
     will_collide_with_obstacle = true;
   }
 
