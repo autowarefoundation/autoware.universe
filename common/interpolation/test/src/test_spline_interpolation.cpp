@@ -61,7 +61,7 @@ TEST(spline_interpolation, slerp)
     }
   }
 
-  {  // curve: query_keys is same as random
+  {  // curve: query_keys is random
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
