@@ -25,7 +25,6 @@
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <rclcpp_components/register_node_macro.hpp>
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
