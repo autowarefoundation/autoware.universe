@@ -45,9 +45,9 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 
 #include <random>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 using PointTye = pcl::PointXYZI;
 constexpr size_t N_SAMPLES = 20;
@@ -103,7 +103,8 @@ private:
     const geometry_msgs::msg::Point position, const float radius,
     std::vector<PCDFileMetadata> pcd_file_metadata_array) const;
 
-  bool isLoadingSamePCDMapsAsBefore(const geometry_msgs::msg::Point position, const float radius,
+  bool isLoadingSamePCDMapsAsBefore(
+    const geometry_msgs::msg::Point position, const float radius,
     std::vector<PCDFileMetadata> pcd_file_metadata_array);
   bool loadPCDPartiallyForPublishServiceCallback(
     autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request::SharedPtr req,
