@@ -361,24 +361,14 @@ bool IntersectionModule::checkCollision(
         behind_predicted_obj_point_idx = i;
         if (acc_dist > vehicle_length) break;
       }
-      geometry_msgs::msg::Pose behind_predicted_obj_pose;
-      behind_predicted_obj_pose.position = centerpoints[behind_predicted_obj_point_idx];
-      behind_predicted_obj_pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(
-        0, 0, lane_yaw);  // reuse lane_yaw for simplicity
-      geometry_msgs::msg::Vector3 ego_shape = geometry_msgs::build<geometry_msgs::msg::Vector3>()
-                                                .x(planner_data_->vehicle_info_.vehicle_length_m)
-                                                .y(planner_data_->vehicle_info_.vehicle_width_m)
-                                                .z(0);
-      const auto behind_predicted_object_footprint =
-        obj2polygon(behind_predicted_obj_pose, {ego_shape});
       bool is_behind_point_in_detection_area = false;
       for (const auto & conflicting_area : conflicting_areas) {
-        const auto a = lanelet::utils::to2D(conflicting_area);
-        Polygon2d b{};
-        for (const auto & a_ : a) {
-          b.outer().emplace_back(a_.x(), a_.y());
+        const auto conflicting_area_ = lanelet::utils::to2D(conflicting_area);
+        Polygon2d poly{};
+        for (const auto & p : conflicting_area_) {
+          poly.outer().emplace_back(p.x(), p.y());
         }
-        if (!bg::disjoint(behind_predicted_object_footprint, b)) {
+        if (bg::within(to_bg2d(centerpoints[behind_predicted_obj_point_idx]), poly)) {
           is_behind_point_in_detection_area = true;
           break;
         }
@@ -386,7 +376,10 @@ bool IntersectionModule::checkCollision(
       std::cout << "is_in_stuck_area: " << is_in_stuck_area
                 << ", is_behind_point_in_detection_are: " << is_behind_point_in_detection_area
                 << std::endl;
-      continue;  // TODO(Kenji Miyake): check direction?
+      if (is_in_stuck_area && is_behind_point_in_detection_area) {
+        std::cout << "will return collision_detected" << std::endl;
+      }
+      continue;
     }
 
     // check direction of objects
