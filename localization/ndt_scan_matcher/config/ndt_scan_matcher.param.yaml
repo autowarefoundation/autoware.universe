@@ -46,6 +46,9 @@
     # Tolerance of distance difference between two initial poses used for linear interpolation. [m]
     initial_pose_distance_tolerance_m: 10.0
 
+    # Timeout duration for waiting a valid map given an initial pose. [sec]
+    initial_ndt_align_timeout_sec: 3.0
+
     # neighborhood search method in OMP
     # 0=KDTREE, 1=DIRECT26, 2=DIRECT7, 3=DIRECT1
     omp_neighborhood_search_method: 0

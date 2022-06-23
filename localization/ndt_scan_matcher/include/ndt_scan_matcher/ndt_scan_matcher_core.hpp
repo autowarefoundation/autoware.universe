@@ -25,9 +25,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -138,8 +138,7 @@ private:
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
 
   void timerDiagnostic();
-  bool validateInitialPositionCompatibility(
-    const geometry_msgs::msg::Point & initial_point);
+  bool validateInitialPositionCompatibility(const geometry_msgs::msg::Point & initial_point);
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
@@ -199,9 +198,9 @@ private:
   std::mutex initial_pose_array_mtx_;
 
   OMPParams omp_params_;
-  
+
   double min_x_{0}, min_y_{0}, max_x_{0}, max_y_{0};
- 
+
   std::thread diagnostic_thread_;
   std::map<std::string, std::string> key_value_stdmap_;
 };
