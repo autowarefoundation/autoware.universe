@@ -147,7 +147,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr boundary_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_sv_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_st_graph_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr distance_to_closest_obj_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_marker_pub_;
 

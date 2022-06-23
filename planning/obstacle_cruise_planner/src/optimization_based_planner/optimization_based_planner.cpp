@@ -108,8 +108,6 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
   optimized_sv_pub_ = node.create_publisher<Trajectory>("~/optimized_sv_trajectory", 1);
   optimized_st_graph_pub_ = node.create_publisher<Trajectory>("~/optimized_st_graph", 1);
   boundary_pub_ = node.create_publisher<Trajectory>("~/boundary", 1);
-  distance_to_closest_obj_pub_ =
-    node.create_publisher<Float32Stamped>("~/distance_to_closest_obj", 1);
   debug_calculation_time_ = node.create_publisher<Float32Stamped>("~/calculation_time", 1);
   debug_wall_marker_pub_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", 1);
@@ -488,11 +486,12 @@ TrajectoryPoint OptimizationBasedPlanner::calcInterpolatedTrajectoryPoint(
   const size_t segment_idx =
     tier4_autoware_utils::findNearestSegmentIndex(trajectory.points, target_pose.position);
 
-  auto v1 = getTransVector3(
+  const auto v1 = getTransVector3(
     trajectory.points.at(segment_idx).pose, trajectory.points.at(segment_idx + 1).pose);
-  auto v2 = getTransVector3(trajectory.points.at(segment_idx).pose, target_pose);
-  // calc internal proportion
-  const double prop{std::max(0.0, std::min(1.0, v1.dot(v2) / v1.length2()))};
+  const auto v2 = getTransVector3(trajectory.points.at(segment_idx).pose, target_pose);
+
+  // Calc interpolation ratio
+  const double prop{std::clamp(v1.dot(v2) / v1.length2(), 0.0, 1.0)};
 
   {
     const auto & curr_pt = trajectory.points.at(segment_idx);
