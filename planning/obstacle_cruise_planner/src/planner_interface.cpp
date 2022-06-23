@@ -64,7 +64,7 @@ boost::optional<TargetObstacle> PlannerInterface::getClosestStopObstacle(
     return boost::none;
   }
 
-  TargetObstacle closest_stop_obstacle = target_obstacles.front();
+  boost::optional<TargetObstacle> closest_stop_obstacle = boost::none;
   double dist_to_closest_stop_obstacle = std::numeric_limits<double>::max();
   for (const auto & obstacle : target_obstacles) {
     // Ignore obstacle that is not required to stop
@@ -115,7 +115,8 @@ Trajectory PlannerInterface::generateStopTrajectory(
   }
 
   // Get Closest Obstacle Stop Distance
-  const double offset = vehicle_info_.max_longitudinal_offset_m + min_behavior_stop_margin_;
+  const double offset =
+    vehicle_info_.max_longitudinal_offset_m + longitudinal_info_.safe_distance_margin;
   const double closest_obstacle_stop_dist =
     tier4_autoware_utils::calcSignedArcLength(
       traj.points, 0, closest_stop_obstacle->collision_point) -
@@ -129,7 +130,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
   // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
   // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
   const double stop_dist_diff = closest_behavior_stop_dist - closest_obstacle_stop_dist;
-  if (0 < stop_dist_diff && stop_dist_diff < longitudinal_info_.safe_distance_margin) {
+  if (0 < stop_dist_diff && stop_dist_diff < min_behavior_stop_margin_) {
     // Use original stop point on the trajectory
     return traj;
   }

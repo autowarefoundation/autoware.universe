@@ -149,9 +149,8 @@ Trajectory PIDBasedPlanner::generateTrajectory(
   debug_values_.resetValues();
 
   // calc obstacles to cruise and stop
-  boost::optional<StopObstacleInfo> stop_obstacle_info;
   boost::optional<CruiseObstacleInfo> cruise_obstacle_info;
-  calcObstaclesToCruiseAndStop(planner_data, stop_obstacle_info, cruise_obstacle_info);
+  calcObstaclesToCruiseAndStop(planner_data, cruise_obstacle_info);
 
   // plan cruise
   planCruise(planner_data, vel_limit, cruise_obstacle_info, debug_data);
@@ -169,7 +168,6 @@ Trajectory PIDBasedPlanner::generateTrajectory(
 
 void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
   const ObstacleCruisePlannerData & planner_data,
-  boost::optional<StopObstacleInfo> & stop_obstacle_info,
   boost::optional<CruiseObstacleInfo> & cruise_obstacle_info)
 {
   debug_values_.setValues(DebugValues::TYPE::CURRENT_VELOCITY, planner_data.current_vel);
@@ -181,25 +179,7 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
     const double dist_to_obstacle = calcDistanceToObstacle(planner_data, obstacle);
 
     const bool is_stop_required = isStopRequired(obstacle);
-    if (is_stop_required) {  // stop
-      // calculate error distance (= distance to stop)
-      const double error_dist = dist_to_obstacle - longitudinal_info_.safe_distance_margin;
-      if (stop_obstacle_info) {
-        if (error_dist > stop_obstacle_info->dist_to_stop) {
-          return;
-        }
-      }
-      stop_obstacle_info = StopObstacleInfo(obstacle, error_dist);
-
-      // update debug values
-      debug_values_.setValues(DebugValues::TYPE::STOP_CURRENT_OBJECT_DISTANCE, dist_to_obstacle);
-      debug_values_.setValues(DebugValues::TYPE::STOP_CURRENT_OBJECT_VELOCITY, obstacle.velocity);
-      debug_values_.setValues(
-        DebugValues::TYPE::STOP_TARGET_OBJECT_DISTANCE, longitudinal_info_.safe_distance_margin);
-      debug_values_.setValues(
-        DebugValues::TYPE::STOP_TARGET_ACCELERATION, longitudinal_info_.limit_min_accel);
-      debug_values_.setValues(DebugValues::TYPE::STOP_ERROR_OBJECT_DISTANCE, error_dist);
-    } else {  // cruise
+    if (!is_stop_required) {  // cruise
       // calculate distance between ego and obstacle based on RSS
       const double rss_dist = calcRSSDistance(
         planner_data.current_vel, obstacle.velocity, longitudinal_info_.safe_distance_margin);

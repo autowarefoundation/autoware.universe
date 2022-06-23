@@ -74,7 +74,6 @@ public:
 private:
   void calcObstaclesToCruiseAndStop(
     const ObstacleCruisePlannerData & planner_data,
-    boost::optional<StopObstacleInfo> & stop_obstacle_info,
     boost::optional<CruiseObstacleInfo> & cruise_obstacle_info);
   double calcDistanceToObstacle(
     const ObstacleCruisePlannerData & planner_data, const TargetObstacle & obstacle);
