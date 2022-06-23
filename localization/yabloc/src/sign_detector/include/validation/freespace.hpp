@@ -9,6 +9,8 @@
 #include <sensor_msgs/msg/image.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -21,6 +23,7 @@ public:
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using Image = sensor_msgs::msg::Image;
   using CameraInfo = sensor_msgs::msg::CameraInfo;
+  using Particle = modularized_particle_filter_msgs::msg::Particle;
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   FreeSpace();
 
@@ -32,6 +35,7 @@ private:
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
+  pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_{nullptr};
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
   std::optional<CameraInfo> camera_info_{std::nullopt};
 
@@ -41,7 +45,7 @@ private:
 
   void listenExtrinsicTf(const std::string & frame_id);
 
-  void execute(const PoseStamped & pose_stamped);
+  void extractNearLanelet(const PoseStamped & pose_stamped);
 
   void mapCallback(const HADMapBin & msg);
   void poseCallback(const PoseStamped & msg);

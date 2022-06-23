@@ -33,61 +33,79 @@ void FreeSpace::mapCallback(const HADMapBin & msg)
   RCLCPP_INFO_STREAM(get_logger(), "point: " << lanelet_map_->pointLayer.size());
 }
 
-void FreeSpace::particleCallback(const ParticleArray &) {}
-
-void FreeSpace::poseCallback(const PoseStamped & msg) { execute(msg); }
-
-void FreeSpace::execute(const PoseStamped & pose_stamped)
+void FreeSpace::particleCallback(const ParticleArray & particles)
 {
-  if (lanelet_map_ == nullptr) return;
+  if (linestrings_ == nullptr) return;
   if (!camera_info_.has_value()) return;
   if (!camera_extrinsic_.has_value()) return;
 
+  const rclcpp::Time stamp = particles.header.stamp;
   cv::Mat image = cv::Mat::zeros(cv::Size(camera_info_->width, camera_info_->height), CV_8UC3);
-  auto pos = pose_stamped.pose.position;
-
-  const rclcpp::Time stamp = pose_stamped.header.stamp;
-  Eigen::Vector3f position;
-  position << pos.x, pos.y, 0;  // pos.z;
-
   Eigen::Matrix3f K =
-    Eigen::Map<Eigen::Matrix<double, 3, 3> >(camera_info_->k.data()).cast<float>().transpose();
+    Eigen::Map<Eigen::Matrix<double, 3, 3>>(camera_info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
-  auto tmp_pose = pose_stamped.pose;
-  tmp_pose.position.z = 0;
-  Eigen::Affine3f transform = util::pose2Affine(tmp_pose);
 
-  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
-    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
-    if (from_camera.z() < 1e-3f) return std::nullopt;
-    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
-    return cv::Point2i(uv1.x(), uv1.y());
-  };
+  for (const Particle & p : particles.particles) {
+    auto tmp = p.pose;
+    tmp.position.z = 0;
+    Eigen::Affine3f transform = util::pose2Affine(tmp);
+    auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+      Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+      if (from_camera.z() < 1e-3f) return std::nullopt;
+      Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+      return cv::Point2i(uv1.x(), uv1.y());
+    };
 
-  for (const auto lanelet : lanelet_map_->laneletLayer) {
-    auto itr = lanelet.centerline2d().begin();
-    auto end = lanelet.centerline2d().end();
-    Eigen::Vector3f from(itr->x(), itr->y(), 0);
+    for (const pcl::PointNormal & pn : *linestrings_) {
+      auto opt_from = project(pn.getVector3fMap());
+      auto opt_to = project(pn.getNormalVector3fMap());
+      if (!opt_from.has_value() || !opt_to.has_value()) continue;
 
-    while (itr != end) {
-      Eigen::Vector3f to(itr->x(), itr->y(), 0);
-
-      if ((position - from).norm() > 50) {
-        from = to;
-        itr++;
-        continue;
-      }
-
-      auto from_opt = project(from);
-      auto to_opt = project(to);
-      if (from_opt.has_value() && to_opt.has_value())
-        cv::line(image, from_opt.value(), to_opt.value(), cv::Scalar(255, 255, 255), 3);
-      from = to;
-      itr++;
+      cv::line(image, opt_from.value(), opt_to.value(), cv::Scalar::all(255), 1);
     }
   }
 
   util::publishImage(*pub_image_, image, stamp);
+}
+
+void FreeSpace::poseCallback(const PoseStamped & msg) { extractNearLanelet(msg); }
+
+void FreeSpace::extractNearLanelet(const PoseStamped & pose_stamped)
+{
+  if (lanelet_map_ == nullptr) return;
+
+  linestrings_ = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+
+  const rclcpp::Time stamp = pose_stamped.header.stamp;
+  auto pos = pose_stamped.pose.position;
+  Eigen::Vector3f position;
+  position << pos.x, pos.y, 0;  // pos.z;
+
+  const std::set<std::string> visible_labels = {
+    "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
+
+  for (lanelet::LineString3d & line : lanelet_map_->lineStringLayer) {
+    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
+    if (visible_labels.count(attr.value()) == 0) continue;
+
+    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
+    for (const lanelet::ConstPoint3d p : line) {
+      Eigen::Vector3f p_vec(p.x(), p.y(), 0);
+
+      if (((p_vec - position).norm() < 50) & from.has_value()) {
+        pcl::PointNormal pn;
+        pn.x = from->x();
+        pn.y = from->y();
+        pn.z = 0;
+        pn.normal_x = p.x();
+        pn.normal_y = p.y();
+        pn.normal_z = 0;
+        linestrings_->push_back(pn);
+      }
+      from = p;
+    }
+  }
 }
 
 void FreeSpace::infoCallback(const CameraInfo & msg)
