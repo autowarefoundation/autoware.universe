@@ -302,7 +302,7 @@ void LaneDepartureCheckerNode::onTimer()
   processing_time_map["Node: checkData"] = stop_watch.toc(true);
 
   // In order to wait for both of map and route will be ready, write this not in callback but here
-  if (last_route_ != route_) {
+  if (last_route_ != route_ && !route_->segments.empty()) {
     route_lanelets_ = getRouteLanelets(lanelet_map_, routing_graph_, route_, vehicle_length_m_);
     last_route_ = route_;
   }
