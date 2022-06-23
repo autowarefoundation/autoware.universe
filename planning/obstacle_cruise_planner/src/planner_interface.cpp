@@ -14,6 +14,49 @@
 
 #include "obstacle_cruise_planner/planner_interface.hpp"
 
+namespace
+{
+StopSpeedExceeded createStopSpeedExceededMsg(
+  const rclcpp::Time & current_time, const bool stop_flag)
+{
+  StopSpeedExceeded msg{};
+  msg.stamp = current_time;
+  msg.stop_speed_exceeded = stop_flag;
+  return msg;
+}
+
+tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
+  const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose,
+  const TargetObstacle & stop_obstacle)
+{
+  // create header
+  std_msgs::msg::Header header;
+  header.frame_id = "map";
+  header.stamp = current_time;
+
+  // create stop factor
+  tier4_planning_msgs::msg::StopFactor stop_factor;
+  stop_factor.stop_pose = stop_pose;
+  stop_factor.stop_factor_points.emplace_back(stop_obstacle.collision_point);
+
+  // create stop reason stamped
+  tier4_planning_msgs::msg::StopReason stop_reason_msg;
+  stop_reason_msg.reason = tier4_planning_msgs::msg::StopReason::OBSTACLE_STOP;
+  stop_reason_msg.stop_factors.emplace_back(stop_factor);
+
+  // create stop reason array
+  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+  stop_reason_array.header = header;
+  stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
+  return stop_reason_array;
+}
+
+double calcMinimumDistanceToStop(const double initial_vel, const double min_acc)
+{
+  return -std::pow(initial_vel, 2) / 2.0 / min_acc;
+}
+}  // namespace
+
 boost::optional<TargetObstacle> PlannerInterface::getClosestStopObstacle(
   const Trajectory & traj, const std::vector<TargetObstacle> & target_obstacles)
 {
@@ -41,7 +84,7 @@ boost::optional<TargetObstacle> PlannerInterface::getClosestStopObstacle(
 }
 
 Trajectory PlannerInterface::generateStopTrajectory(
-  const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose,
+  const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose, const double current_vel,
   const std::vector<TargetObstacle> & target_obstacles, const rclcpp::Time & current_time,
   DebugData & debug_data)
 {
@@ -49,22 +92,20 @@ Trajectory PlannerInterface::generateStopTrajectory(
     return traj;
   }
 
-  const auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-    traj.points, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
-  if (!nearest_segment_idx) {
+  const auto traj_to_ego = tier4_autoware_utils::calcSignedArcLength(
+    traj.points, current_pose, 0, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
+  if (!traj_to_ego) {
     return traj;
   }
 
   // Get Closest Behavior Stop Distance
   const double traj_length = tier4_autoware_utils::calcArcLength(traj.points);
-  const double dist_to_segment =
-    tier4_autoware_utils::calcSignedArcLength(traj.points, 0, *nearest_segment_idx + 1);
-  const auto closest_forward_stop_dist =
-    tier4_autoware_utils::calcDistanceToForwardStopPoint(traj.points, *nearest_segment_idx + 1);
+  const auto closest_forward_stop_dist = tier4_autoware_utils::calcDistanceToForwardStopPoint(
+    traj.points, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   const double closest_behavior_stop_dist =
-    closest_forward_stop_dist
-      ? std::min(dist_to_segment + closest_forward_stop_dist.get(), traj_length)
-      : traj_length;
+    closest_forward_stop_dist ? std::min(*traj_to_ego + *closest_forward_stop_dist, traj_length)
+                              : traj_length;
 
   // Get Closest Stop Obstacle
   const auto closest_stop_obstacle = getClosestStopObstacle(traj, target_obstacles);
@@ -93,16 +134,47 @@ Trajectory PlannerInterface::generateStopTrajectory(
     return traj;
   }
 
+  // Calculate closest stop distance (Check the feasibility)
+  const double feasible_dist_to_stop_from_ego =
+    calcMinimumDistanceToStop(current_vel, longitudinal_info_.limit_min_accel);
+  const double closest_obstacle_stop_dist_from_ego = closest_obstacle_stop_dist - *traj_to_ego;
+
+  bool will_collide_with_obstacle = false;
+  double closest_stop_dist = closest_obstacle_stop_dist;
+  if (closest_obstacle_stop_dist_from_ego < feasible_dist_to_stop_from_ego) {
+    closest_stop_dist = *traj_to_ego + feasible_dist_to_stop_from_ego;
+    will_collide_with_obstacle = true;
+  }
+
+  // Generate Output Trajectory
+  const auto output_traj = obstacle_cruise_utils::insertStopPoint(traj, closest_stop_dist);
+
+  /***********
+   ** Debug **
+   ***********/
   // virtual wall marker for stop obstacle
   const auto marker_pose = obstacle_cruise_utils::calcForwardPose(
-    traj, 0, closest_obstacle_stop_dist + vehicle_info_.max_longitudinal_offset_m);
+    traj, 0, closest_stop_dist + vehicle_info_.max_longitudinal_offset_m);
   if (marker_pose) {
     const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
       marker_pose.get(), "obstacle stop", current_time, 0);
     tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
   }
-
   debug_data.obstacles_to_stop.push_back(*closest_stop_obstacle);
 
-  return obstacle_cruise_utils::insertStopPoint(traj, closest_obstacle_stop_dist);
+  // Publish Stop Reason
+  const auto stop_idx = tier4_autoware_utils::searchZeroVelocityIndex(traj.points);
+  if (stop_idx) {
+    const auto stop_pose = traj.points.at(*stop_idx).pose;
+    const auto stop_reasons_msg =
+      makeStopReasonArray(current_time, stop_pose, *closest_stop_obstacle);
+    stop_reasons_pub_->publish(stop_reasons_msg);
+  }
+
+  // Publish if ego vehicle collides with the obstacle with a limit acceleration
+  const auto stop_speed_exceeded_msg =
+    createStopSpeedExceededMsg(current_time, will_collide_with_obstacle);
+  stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
+
+  return output_traj;
 }

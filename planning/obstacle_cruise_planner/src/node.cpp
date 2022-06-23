@@ -458,7 +458,7 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createPlannerData(
   ObstacleCruisePlannerData planner_data;
   planner_data.current_time = now();
   planner_data.traj = planner_ptr_->generateStopTrajectory(
-    trajectory, current_pose, target_obstacles, now(), debug_data);
+    trajectory, current_pose, current_vel, target_obstacles, now(), debug_data);
   planner_data.current_pose = current_pose;
   planner_data.current_vel = current_vel;
   planner_data.current_acc = current_accel;

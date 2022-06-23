@@ -21,15 +21,6 @@
 
 namespace
 {
-StopSpeedExceeded createStopSpeedExceededMsg(
-  const rclcpp::Time & current_time, const bool stop_flag)
-{
-  StopSpeedExceeded msg{};
-  msg.stamp = current_time;
-  msg.stop_speed_exceeded = stop_flag;
-  return msg;
-}
-
 VelocityLimit createVelocityLimitMsg(
   const rclcpp::Time & current_time, const double vel, const double acc, const double max_jerk,
   const double min_jerk)
@@ -115,39 +106,6 @@ size_t getIndexWithLongitudinalOffset(
   }
   return 0;
 }
-
-double calcMinimumDistanceToStop(const double initial_vel, const double min_acc)
-{
-  return -std::pow(initial_vel, 2) / 2.0 / min_acc;
-}
-
-tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
-  const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose,
-  const boost::optional<PIDBasedPlanner::StopObstacleInfo> & stop_obstacle_info)
-{
-  // create header
-  std_msgs::msg::Header header;
-  header.frame_id = "map";
-  header.stamp = current_time;
-
-  // create stop factor
-  tier4_planning_msgs::msg::StopFactor stop_factor;
-  stop_factor.stop_pose = stop_pose;
-  if (stop_obstacle_info) {
-    stop_factor.stop_factor_points.emplace_back(stop_obstacle_info->obstacle.collision_point);
-  }
-
-  // create stop reason stamped
-  tier4_planning_msgs::msg::StopReason stop_reason_msg;
-  stop_reason_msg.reason = tier4_planning_msgs::msg::StopReason::OBSTACLE_STOP;
-  stop_reason_msg.stop_factors.emplace_back(stop_factor);
-
-  // create stop reason array
-  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-  stop_reason_array.header = header;
-  stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
-  return stop_reason_array;
-}
 }  // namespace
 
 PIDBasedPlanner::PIDBasedPlanner(
@@ -198,9 +156,6 @@ Trajectory PIDBasedPlanner::generateTrajectory(
   // plan cruise
   planCruise(planner_data, vel_limit, cruise_obstacle_info, debug_data);
 
-  // plan stop
-  const auto output_traj = planStop(planner_data, stop_obstacle_info, debug_data);
-
   // publish debug values
   publishDebugValues(planner_data);
 
@@ -209,7 +164,7 @@ Trajectory PIDBasedPlanner::generateTrajectory(
     rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
     "  %s := %f [ms]", __func__, calculation_time);
 
-  return output_traj;
+  return planner_data.traj;
 }
 
 void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
@@ -299,115 +254,6 @@ double PIDBasedPlanner::calcDistanceToObstacle(
   return tier4_autoware_utils::calcSignedArcLength(
            planner_data.traj.points, ego_segment_idx, obstacle.collision_point) -
          offset;
-}
-
-Trajectory PIDBasedPlanner::planStop(
-  const ObstacleCruisePlannerData & planner_data,
-  const boost::optional<StopObstacleInfo> & stop_obstacle_info, DebugData & debug_data)
-{
-  bool will_collide_with_obstacle = false;
-
-  size_t zero_vel_idx = 0;
-  bool zero_vel_found = false;
-  if (stop_obstacle_info) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
-      "stop planning");
-
-    auto local_stop_obstacle_info = stop_obstacle_info.get();
-
-    // check if the ego will collide with the obstacle with a limit acceleration
-    const double feasible_dist_to_stop =
-      calcMinimumDistanceToStop(planner_data.current_vel, longitudinal_info_.limit_min_accel);
-    if (local_stop_obstacle_info.dist_to_stop < feasible_dist_to_stop) {
-      will_collide_with_obstacle = true;
-      local_stop_obstacle_info.dist_to_stop = feasible_dist_to_stop;
-    }
-
-    // set zero velocity index
-    const auto opt_zero_vel_idx = doStop(
-      planner_data, local_stop_obstacle_info, debug_data.obstacles_to_stop,
-      debug_data.stop_wall_marker);
-    if (opt_zero_vel_idx) {
-      zero_vel_idx = opt_zero_vel_idx.get();
-      zero_vel_found = true;
-    }
-  }
-
-  // generate output trajectory
-  auto output_traj = planner_data.traj;
-  if (zero_vel_found) {
-    // publish stop reason
-    const auto stop_pose = planner_data.traj.points.at(zero_vel_idx).pose;
-    const auto stop_reasons_msg =
-      makeStopReasonArray(planner_data.current_time, stop_pose, stop_obstacle_info);
-    stop_reasons_pub_->publish(stop_reasons_msg);
-
-    // insert zero_velocity
-    for (size_t traj_idx = zero_vel_idx; traj_idx < output_traj.points.size(); ++traj_idx) {
-      output_traj.points.at(traj_idx).longitudinal_velocity_mps = 0.0;
-    }
-  }
-
-  // publish stop_speed_exceeded if the ego will collide with the obstacle
-  const auto stop_speed_exceeded_msg =
-    createStopSpeedExceededMsg(planner_data.current_time, will_collide_with_obstacle);
-  stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
-
-  return output_traj;
-}
-
-boost::optional<size_t> PIDBasedPlanner::doStop(
-  const ObstacleCruisePlannerData & planner_data, const StopObstacleInfo & stop_obstacle_info,
-  std::vector<TargetObstacle> & debug_obstacles_to_stop,
-  visualization_msgs::msg::MarkerArray & debug_wall_marker) const
-{
-  const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
-
-  // TODO(murooka) Should I use interpolation?
-  const auto modified_stop_info = [&]() -> boost::optional<std::pair<size_t, double>> {
-    const double dist_to_stop = stop_obstacle_info.dist_to_stop;
-
-    const size_t obstacle_zero_vel_idx =
-      getIndexWithLongitudinalOffset(planner_data.traj.points, dist_to_stop, ego_idx);
-
-    // check if there is already stop line between obstacle and zero_vel_idx
-    const auto behavior_zero_vel_idx =
-      tier4_autoware_utils::searchZeroVelocityIndex(planner_data.traj.points);
-    if (behavior_zero_vel_idx) {
-      const double zero_vel_diff_length = tier4_autoware_utils::calcSignedArcLength(
-        planner_data.traj.points, obstacle_zero_vel_idx, behavior_zero_vel_idx.get());
-      if (
-        0 < zero_vel_diff_length &&
-        zero_vel_diff_length < longitudinal_info_.safe_distance_margin) {
-        const double modified_dist_to_stop =
-          dist_to_stop + longitudinal_info_.safe_distance_margin - min_behavior_stop_margin_;
-        const size_t modified_obstacle_zero_vel_idx =
-          getIndexWithLongitudinalOffset(planner_data.traj.points, modified_dist_to_stop, ego_idx);
-        return std::make_pair(modified_obstacle_zero_vel_idx, modified_dist_to_stop);
-      }
-    }
-
-    return std::make_pair(obstacle_zero_vel_idx, dist_to_stop);
-  }();
-  if (!modified_stop_info) {
-    return {};
-  }
-  const size_t modified_zero_vel_idx = modified_stop_info->first;
-  const double modified_dist_to_stop = modified_stop_info->second;
-
-  // virtual wall marker for stop
-  const auto marker_pose = obstacle_cruise_utils::calcForwardPose(
-    planner_data.traj, ego_idx, modified_dist_to_stop + vehicle_info_.max_longitudinal_offset_m);
-  if (marker_pose) {
-    visualization_msgs::msg::MarkerArray wall_msg;
-    const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
-      marker_pose.get(), "obstacle stop", planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
-  }
-
-  debug_obstacles_to_stop.push_back(stop_obstacle_info.obstacle);
-  return modified_zero_vel_idx;
 }
 
 void PIDBasedPlanner::planCruise(

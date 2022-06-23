@@ -21,7 +21,10 @@
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "tier4_planning_msgs/msg/stop_reason_array.hpp"
+#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <boost/optional.hpp>
 
@@ -30,6 +33,7 @@
 
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using tier4_planning_msgs::msg::StopSpeedExceeded;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class PlannerInterface
@@ -93,6 +97,11 @@ public:
         stop_obstacle_types_.push_back(ObjectClassification::PEDESTRIAN);
       }
     }
+
+    stop_reasons_pub_ =
+      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
+    stop_speed_exceeded_pub_ =
+      node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
   }
 
   PlannerInterface() = default;
@@ -130,8 +139,8 @@ public:
 
   Trajectory generateStopTrajectory(
     const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose,
-    const std::vector<TargetObstacle> & target_obstacles, const rclcpp::Time & current_time,
-    DebugData & debug_data);
+    const double current_vel, const std::vector<TargetObstacle> & target_obstacles,
+    const rclcpp::Time & current_time, DebugData & debug_data);
 
   boost::optional<TargetObstacle> getClosestStopObstacle(
     const Trajectory & traj, const std::vector<TargetObstacle> & target_obstacles);
@@ -209,6 +218,9 @@ protected:
   double nearest_dist_deviation_threshold_;
   double nearest_yaw_deviation_threshold_;
   double obstacle_velocity_threshold_from_cruise_to_stop_;
+
+  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reasons_pub_;
+  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
