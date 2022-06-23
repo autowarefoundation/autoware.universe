@@ -427,13 +427,14 @@ void NDTScanMatcher::callbackMapPoints(
     ++iter_y;
   }
   const auto KOJI_exe_end_time_dummy = std::chrono::system_clock::now();
-  const double KOJI_exe_time_dummy =
-    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time_dummy - KOJI_exe_start_time_dummy)
-      .count() /
-    1000.0;
+  const double KOJI_exe_time_dummy = std::chrono::duration_cast<std::chrono::microseconds>(
+                                       KOJI_exe_end_time_dummy - KOJI_exe_start_time_dummy)
+                                       .count() /
+                                     1000.0;
   RCLCPP_INFO_STREAM(
     get_logger(),
-    "KOJI until align in callbackMapPoints @ndt_scan_matcher (only for minmax operation): " << KOJI_exe_time_dummy << " [ms]");
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher (only for minmax operation): "
+      << KOJI_exe_time_dummy << " [ms]");
   ////////////////////
 
   const auto KOJI_exe_start_time = std::chrono::system_clock::now();
@@ -463,10 +464,12 @@ void NDTScanMatcher::callbackMapPoints(
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
   new_ndt_ptr_->setInputTarget(map_points_ptr);
   RCLCPP_INFO_STREAM(
-    get_logger(),
-    "KOJI until align in callbackMapPoints @ndt_scan_matcher: (before align)" <<     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - KOJI_exe_start_time)
-      .count() /
-    1000.0 << " [ms]");
+    get_logger(), "KOJI until align in callbackMapPoints @ndt_scan_matcher: (before align)"
+                    << std::chrono::duration_cast<std::chrono::microseconds>(
+                         std::chrono::system_clock::now() - KOJI_exe_start_time)
+                           .count() /
+                         1000.0
+                    << " [ms]");
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   new_ndt_ptr_->align(*output_cloud, Eigen::Matrix4f::Identity());  // This line is heavy
@@ -477,8 +480,9 @@ void NDTScanMatcher::callbackMapPoints(
       .count() /
     1000.0;
   RCLCPP_INFO_STREAM(
-    get_logger(),
-    "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms], numIter = " << new_ndt_ptr_->getFinalNumIteration());
+    get_logger(), "KOJI until align in callbackMapPoints @ndt_scan_matcher: "
+                    << KOJI_exe_time
+                    << " [ms], numIter = " << new_ndt_ptr_->getFinalNumIteration());
 
   // swap
   ndt_map_mtx_.lock();
