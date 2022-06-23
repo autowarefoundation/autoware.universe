@@ -14,6 +14,7 @@
 
 #include "object_association_merger/node.hpp"
 #include "object_association_merger/utils/utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <boost/optional.hpp>
 #include <chrono>
@@ -81,10 +82,13 @@ bool isUnknownObjectOverlapped(
 {
   constexpr double precision_threshold = 0.4;
   constexpr double recall_threshold = 0.5;
+  constexpr double sq_distance_threshold = std::pow(5.0, 2.0);
+  const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
+    unknown_object.kinematics.pose_with_covariance.pose,
+    known_object.kinematics.pose_with_covariance.pose);
+  if (sq_distance_threshold < sq_distance) return false;
   const auto precision = utils::get2dPrecision(unknown_object, known_object);
   const auto recall = utils::get2dRecall(unknown_object, known_object);
-  std::cout << "precision: " << precision << std::endl;
-  std::cout << "recall: " << recall << std::endl;
   return precision > precision_threshold || recall > recall_threshold;
 }
 }  // namespace
@@ -186,8 +190,6 @@ void ObjectAssociationMergerNode::objectsCallback(
     output_msg.objects.clear();
     output_msg.objects = known_objects;
     for (const auto & unknown_object : unknown_objects) {
-        std::cout << "testttttt" << __LINE__ << ":"<<unknown_objects.size()<< std::endl;
-
       bool is_overlapped = false;
       for (const auto & known_object : known_objects) {
         if (isUnknownObjectOverlapped(unknown_object, known_object)) {
@@ -195,11 +197,7 @@ void ObjectAssociationMergerNode::objectsCallback(
           break;
         }
       }
-      std::cout << "testttttt" << __LINE__ << ":" << is_overlapped << ", " << unknown_objects.size()
-                << std::endl;
-
       if (!is_overlapped) {
-        std::cout << "testttttt" << __LINE__ << std::endl;
         output_msg.objects.push_back(unknown_object);
       }
     }
