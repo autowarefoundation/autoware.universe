@@ -26,8 +26,6 @@
 #include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
 #include <autoware_auto_planning_msgs/srv/modify_trajectory.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
-#include <motion_common/motion_common.hpp>
-#include <motion_common/config.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <common/types.hpp>
@@ -54,7 +52,6 @@ using autoware_auto_planning_msgs::action::RecordTrajectory;
 using autoware_auto_planning_msgs::action::ReplayTrajectory;
 using State = autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
 using Transform = geometry_msgs::msg::TransformStamped;
-using motion::motion_common::Real;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 

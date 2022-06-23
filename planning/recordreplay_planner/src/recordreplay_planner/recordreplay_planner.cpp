@@ -15,8 +15,7 @@
 #include "recordreplay_planner/recordreplay_planner.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
-#include <time_utils/time_utils.hpp>
-#include <motion_common/motion_common.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <common/types.hpp>
 
 #include <algorithm>
@@ -226,8 +225,8 @@ std::size_t RecordReplayPlanner::get_closest_state(const State & current_state)
       return (s1.pose.position.x - s2.pose.position.x) * (s1.pose.position.x - s2.pose.position.x) +
              (s1.pose.position.y - s2.pose.position.y) * (s1.pose.position.y - s2.pose.position.y) +
              m_heading_weight * std::abs(
-        ::motion::motion_common::to_angle(
-          s1.pose.orientation - s2.pose.orientation));
+        tier4_autoware_utils::getRPY(
+          s1.pose.orientation - s2.pose.orientation).z);
     };
   const auto comparison_function =
     [&distance_from_current_state](State & one, State & two)
@@ -280,7 +279,7 @@ const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
   // Assemble the trajectory as desired
   trajectory.header = current_state.header;
 
-  const auto t0 = time_utils::from_message(m_record_buffer[m_traj_start_idx].header.stamp);
+  const auto t0 = rclcpp::Time(m_record_buffer[m_traj_start_idx].header.stamp);
 
   if (!m_enable_loop || m_traj_start_idx < m_traj_end_idx) {
     // If not looping, we simply copy points between start index and end index
@@ -289,8 +288,8 @@ const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
     for (std::size_t i = 0; i < publication_len; ++i) {
       // Make the time spacing of the points match the recorded timing
       trajectory.points[i] = m_record_buffer[m_traj_start_idx + i].state;
-      trajectory.points[i].time_from_start = time_utils::to_message(
-        time_utils::from_message(m_record_buffer[m_traj_start_idx + i].header.stamp) - t0);
+      trajectory.points[i].time_from_start = rclcpp::Time(
+        m_record_buffer[m_traj_start_idx + i].header.stamp) - t0;
     }
   } else {
     // We need two loops here - first fills from current position to end of original traj,
@@ -300,8 +299,8 @@ const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
     for (std::size_t i = m_traj_start_idx; i < record_length; ++i) {
       auto idx = i - m_traj_start_idx;
       trajectory.points[idx] = m_record_buffer[i].state;
-      t1 = time_utils::from_message(m_record_buffer[i].header.stamp);
-      trajectory.points[idx].time_from_start = time_utils::to_message(t1 - t0);
+      t1 = m_record_buffer[i].header.stamp;
+      trajectory.points[idx].time_from_start = t1 - t0;
     }
     // At this stage, t1 is relative time of the final point in the record buffer
 
@@ -456,7 +455,7 @@ bool8_t RecordReplayPlanner::reached_goal(
     ego_state.pose.position.x - goal_state.pose.position.x,
     ego_state.pose.position.y - goal_state.pose.position.y);
   const auto angle_diff_rad = std::abs(
-    ::motion::motion_common::to_angle(ego_state.pose.orientation - goal_state.pose.orientation));
+    tier4_autoware_utils::getRPY(ego_state.pose.orientation - goal_state.pose.orientation).z);
   if (distance2d < distance_thresh &&
     angle_diff_rad < angle_thresh)
   {

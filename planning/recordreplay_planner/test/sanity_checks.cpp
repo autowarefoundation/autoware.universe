@@ -17,8 +17,6 @@
 #include <motion_testing/motion_testing.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <motion_common/config.hpp>
-#include <motion_common/motion_common.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 
 #include <common/types.hpp>
@@ -394,7 +392,6 @@ TEST(RecordreplayLoopingTrajectories, correctLoopHandling) {
   vehicle_state.state.acceleration_mps2 = vehicle_trajectory_point.acceleration_mps2;
   vehicle_state.state.heading_rate_rps = vehicle_trajectory_point.heading_rate_rps;
   vehicle_state.state.lateral_velocity_mps = vehicle_trajectory_point.lateral_velocity_mps;
-  vehicle_state.header.stamp = time_utils::to_message(system_clock::from_time_t({}));
 
   auto traj = planner.plan(vehicle_state);
 

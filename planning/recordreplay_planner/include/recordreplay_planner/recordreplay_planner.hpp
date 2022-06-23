@@ -18,7 +18,6 @@
 #include <recordreplay_planner/visibility_control.hpp>
 #include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <motion_common/config.hpp>
 #include <common/types.hpp>
 
 #include <deque>

@@ -17,7 +17,6 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <motion_testing/motion_testing.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <motion_common/config.hpp>
 
 #include <chrono>
 #include <algorithm>
@@ -32,8 +31,6 @@ using motion::motion_testing::make_state;
 using std::chrono::system_clock;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using State = autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
-
-using motion::motion_common::VehicleConfig;
 
 TEST(MytestBase, Basic)
 {

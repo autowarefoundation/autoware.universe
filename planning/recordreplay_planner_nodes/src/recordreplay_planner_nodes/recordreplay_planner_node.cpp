@@ -190,7 +190,7 @@ void RecordReplayPlannerNode::on_ego(const State::SharedPtr & msg)
       "Failed to transform ego pose to world frame.");
     return;
   }
-  motion::motion_common::doTransform(*msg, msg_world, tf_map2odom);
+  tf2::doTransform(*msg.state.pose, msg_world.state.pose, tf_map2odom)
   msg_world.header.frame_id = m_recording_frame;
 
   if (m_planner->is_recording()) {
