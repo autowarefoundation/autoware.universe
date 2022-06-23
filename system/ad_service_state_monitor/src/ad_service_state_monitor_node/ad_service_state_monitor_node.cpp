@@ -17,7 +17,11 @@
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/route_checker.hpp"
 
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <deque>
 #include <memory>
