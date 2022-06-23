@@ -336,11 +336,17 @@ void NDTScanMatcher::serviceNDTAlign(
   // transform pose_frame to map_frame
   const auto mapTF_initial_pose_msg = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
-  if (ndt_ptr_->getInputTarget() == nullptr) {
-    res->success = false;
-    res->seq = req->seq;
-    RCLCPP_WARN(get_logger(), "No InputTarget");
-    return;
+  // if (ndt_ptr_->getInputTarget() == nullptr) {
+  //   res->success = false;
+  //   res->seq = req->seq;
+  //   RCLCPP_WARN(get_logger(), "No InputTarget");
+  //   return;
+  // }
+  while (!validateInitialPositionCompatibility(mapTF_initial_pose_msg.pose.pose.position)) {
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      "KOJI current map is not compatible with the received initial position. Waiting for new map...");
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
@@ -364,6 +370,8 @@ void NDTScanMatcher::serviceNDTAlign(
 void NDTScanMatcher::callbackInitialPose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
+
+
   // lock mutex for initial pose
   std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
   // if rosbag restart, clear buffer
@@ -395,6 +403,19 @@ void NDTScanMatcher::callbackInitialPose(
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
+  sensor_msgs::PointCloud2ConstIterator<float> iter_x(*map_points_msg_ptr, "x");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_y(*map_points_msg_ptr, "y");
+  double new_min_x = *iter_x;
+  double new_min_y = *iter_y;
+  double new_max_x = *iter_x;
+  double new_max_y = *iter_y;
+  while (iter_x != iter_x.end()) {
+    if (new_min_x > *iter_x) {new_min_x = *iter_x;}
+    if (new_min_y > *iter_y) {new_min_y = *iter_y;}
+    if (new_max_x < *iter_x) {new_max_x = *iter_x;}
+    if (new_max_y < *iter_y) {new_max_y = *iter_y;}
+    ++iter_x; ++iter_y;
+  }
   const auto KOJI_exe_start_time = std::chrono::system_clock::now();
 
   const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
@@ -436,6 +457,10 @@ void NDTScanMatcher::callbackMapPoints(
   // swap
   ndt_map_mtx_.lock();
   ndt_ptr_ = new_ndt_ptr_;
+  min_x_ = new_min_x;
+  min_y_ = new_min_y;
+  max_x_ = new_max_x;
+  max_y_ = new_max_y;
   ndt_map_mtx_.unlock();
 }
 
@@ -817,4 +842,14 @@ bool NDTScanMatcher::validatePositionDifference(
     return false;
   }
   return true;
+}
+
+
+bool NDTScanMatcher::validateInitialPositionCompatibility(
+  const geometry_msgs::msg::Point & initial_point)
+{
+  bool is_x_axis_ok = (initial_point.x > min_x_) && (initial_point.x < max_x_);
+  bool is_y_axis_ok = (initial_point.y > min_y_) && (initial_point.y < max_y_);
+
+  return is_x_axis_ok || is_y_axis_ok;
 }
