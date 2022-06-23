@@ -344,8 +344,8 @@ double calcArcLength(const T & points)
 
 /**
  * Example Usage of calcSignedArcLength
- * const size_t ego_seg_idx = findEgoNearestSegmentIndex(points, ego_pose);
- * const size_t obj_seg_idx = findDynamicObjectNearestSegmentIndex(points, obj_pos);
+ * const size_t ego_seg_idx = findEgoNearestSegmentIndex(points, ego_pose, ego_dist_threshold, ego_yaw_threshold);
+ * const size_t obj_seg_idx = findDynamicObjectNearestSegmentIndex(points, obj_pos, obj_dist_threshold, obj_yaw_threshold);
  * const double signed_length = calcSignedArcLength(points, ego_pose.position, ego_seg_idx, obj_pos,
  * obj_seg_idx);
  */
@@ -376,41 +376,38 @@ std::optional<size_t> findEgoNearestSegmentIndex(
 {
   validateNonEmpty(points);
 
-  // calculate nearest index within threshold
-  const size_t ego_idx = [&]() {
-    const double squared_dist_threshold = dist_threshold * dist_threshold;
-    double min_squared_dist = std::numeric_limits<double>::max();
-    size_t min_idx = 0;
-    bool is_nearest_found = false;
-    for (size_t i = 0; i < points.size(); ++i) {
-      const auto squared_dist = calcSquaredDistance2d(points.at(i), ego_pose.position);
-      const auto yaw = calcYawDeviation(getPose(points.at(i)), ego_pose);
+  // calculate nearest ego index within threshold
+  const double squared_dist_threshold = dist_threshold * dist_threshold;
+  double min_squared_dist = std::numeric_limits<double>::max();
+  size_t min_idx = 0;
+  bool is_nearest_found = false;
+  for (size_t i = 0; i < points.size(); ++i) {
+    const auto squared_dist = calcSquaredDistance2d(points.at(i), ego_pose.position);
+    const auto yaw = calcYawDeviation(getPose(points.at(i)), ego_pose);
 
-      if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
-        if (is_nearest_found) {
-          break;
-        } else {
-          continue;
-        }
-      }
-
-      if (squared_dist >= min_squared_dist) {
+    if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
+      if (is_nearest_found) {
+        break;
+      } else {
         continue;
       }
-
-      min_squared_dist = squared_dist;
-      min_idx = i;
-      is_nearest_found = true;
     }
 
-    if (!is_nearest_found) {
-      return {};
+    if (min_squared_dist <= squared_dist) {
+      continue;
     }
 
-    return min_idx;
-  }();
+    min_squared_dist = squared_dist;
+    min_idx = i;
+    is_nearest_found = true;
+  }
 
-  // calculte nearest segment index
+  if (!is_nearest_found) {
+    return {};
+  }
+  const size_t ego_idx = min_idx;
+
+  // calculte nearest ego segment index
   if (ego_idx == 0) {
     return 0;
   }
@@ -443,11 +440,11 @@ boost::optional<size_t> findDynamicObjectNearestSegmentIndex(
   size_t min_idx = 0;
   for (size_t i = 0; i < points.size(); ++i) {
     const auto squared_dist = calcSquaredDistance2d(points.at(i), obj_pos);
-    if (squared_dist > squared_dist_threshold) {
+    if (squared_dist_threshold < squared_dist) {
       continue;
     }
 
-    if (squared_dist >= min_squared_dist) {
+    if (min_squared_dist <= squared_dist) {
       continue;
     }
 
