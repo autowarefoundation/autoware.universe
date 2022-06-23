@@ -78,6 +78,7 @@
 
     <node if="true" name="freespace" pkg="sign_detector" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
         <remap from="camera_info" to="$(var resized_info)"/>
+        <remap from="image" to="$(var resized_image)"/>
     </node>
 
     <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">

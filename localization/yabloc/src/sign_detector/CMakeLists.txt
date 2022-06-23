@@ -66,6 +66,7 @@ ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${Open
 ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd/regulatory_elements/include)
 ADD_LIB(TARGET util SRC lib/*.cpp INC 3rd/regulatory_elements/include include)
 ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp INC include)
+ADD_LIB(TARGET modified_seg SRC src/validation/graph_segmentation.cpp INC include)
 
 # ===================================================
 # Executable
@@ -97,7 +98,7 @@ ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Ge
 ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
 
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
-ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util)
+ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util modified_seg)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

@@ -17,12 +17,16 @@ FreeSpace::FreeSpace() : rclcpp::Node("freespace")
   auto cb_particle = std::bind(&FreeSpace::particleCallback, this, _1);
   auto cb_pose = std::bind(&FreeSpace::poseCallback, this, _1);
   auto cb_info = std::bind(&FreeSpace::infoCallback, this, _1);
+  auto cb_image = std::bind(&FreeSpace::imageCallback, this, _1);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
   sub_particle_ = create_subscription<ParticleArray>("/predicted_particles", 10, cb_particle);
   sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
   sub_info_ = create_subscription<CameraInfo>("/camera_info", 10, cb_info);
+  sub_image_ = create_subscription<Image>("/image", 10, cb_image);
 
   pub_image_ = create_publisher<Image>("/freespace_image", 10);
+
+  segmentation_ = cv::ximgproc::modified::createGraphSegmentation();
 }
 
 void FreeSpace::mapCallback(const HADMapBin & msg) { lanelet_map_ = fromBinMsg(msg); }
@@ -60,6 +64,11 @@ void FreeSpace::particleCallback(const ParticleArray & particles)
   }
 
   cv::applyColorMap(image, image, cv::COLORMAP_JET);
+
+  if (segmented_.size() == image.size()) {
+    cv::addWeighted(segmented_, 0.5, image, 0.8, 1, image);
+  }
+
   util::publishImage(*pub_image_, image, stamp);
 }
 
@@ -126,6 +135,37 @@ void FreeSpace::infoCallback(const CameraInfo & msg)
 {
   camera_info_ = msg;
   listenExtrinsicTf(msg.header.frame_id);
+}
+void FreeSpace::imageCallback(const Image & msg)
+{
+  cv::Mat image = util::decompress2CvMat(msg);
+  cv::Mat resized;
+  cv::resize(image, resized, cv::Size(), 0.5, 0.5);
+  cv::Mat dst_image;
+  segmentation_->processImage(resized, dst_image);
+  cv::resize(dst_image, dst_image, image.size(), 0, 0, cv::INTER_NEAREST);
+
+  auto color_mapping = [](int segment_id) -> cv::Scalar {
+    double base = (double)(segment_id)*0.618033988749895 + 0.24443434;
+    return cv::Scalar(std::fmod(base, 1.2) * 360, 0.95 * 255, 0.80 * 255);
+  };
+
+  cv::COLOR_BGR2HSV;
+  segmented_ = cv::Mat::zeros(dst_image.size(), CV_8UC3);
+
+  uint * p;
+  uchar * p2;
+  for (int i = 0; i < segmented_.rows; i++) {
+    p = dst_image.ptr<uint>(i);
+    p2 = segmented_.ptr<uchar>(i);
+    for (int j = 0; j < segmented_.cols; j++) {
+      cv::Scalar color = color_mapping(p[j]);
+      p2[j * 3] = (uchar)color[0];
+      p2[j * 3 + 1] = (uchar)color[1];
+      p2[j * 3 + 2] = (uchar)color[2];
+    }
+  }
+  cv::cvtColor(segmented_, segmented_, cv::COLOR_HSV2BGR);
 }
 
 void FreeSpace::listenExtrinsicTf(const std::string & frame_id)
