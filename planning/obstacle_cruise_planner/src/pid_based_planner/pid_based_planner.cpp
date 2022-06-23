@@ -284,24 +284,6 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
 double PIDBasedPlanner::calcDistanceToObstacle(
   const ObstacleCruisePlannerData & planner_data, const TargetObstacle & obstacle)
 {
-  // TODO(murooka) enable this option considering collision_point (precise obstacle point to measure
-  // distance) if (use_predicted_obstacle_pose_) {
-  //   // interpolate current obstacle pose from predicted path
-  //   const auto current_interpolated_obstacle_pose =
-  //     obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
-  //       obstacle.predicted_paths.at(0), obstacle.time_stamp, planner_data.current_time);
-  //   if (current_interpolated_obstacle_pose) {
-  //     return tier4_autoware_utils::calcSignedArcLength(
-  //       planner_data.traj.points, planner_data.current_pose.position,
-  //       current_interpolated_obstacle_pose->position) - offset;
-  //   }
-  //
-  //   RCLCPP_INFO_EXPRESSION(
-  //     rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), true,
-  //     "Failed to interpolated obstacle pose from predicted path. Use non-interpolated obstacle
-  //     pose.");
-  // }
-
   const size_t ego_segment_idx =
     findExtendedNearestSegmentIndex(planner_data.traj, planner_data.current_pose);
   const double segment_offset = std::max(

@@ -477,7 +477,7 @@ double OptimizationBasedPlanner::getClosestStopDistance(
     }
 
     // Get current pose from object's predicted path
-    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPaths(
       obj.predicted_paths, obj_base_time, current_time);
     if (!current_object_pose) {
       continue;
@@ -841,7 +841,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     // Step3 search nearest obstacle to follow for rviz marker
     const double object_offset = obj.shape.dimensions.x / 2.0;
 
-    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPaths(
       obj.predicted_paths, obj_base_time, current_time);
 
     const double obj_vel = std::abs(obj.velocity);
@@ -864,7 +864,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   if (min_slow_down_idx) {
     const auto & obj = planner_data.target_obstacles.at(min_slow_down_idx.get());
 
-    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPaths(
       obj.predicted_paths, obj.time_stamp, current_time);
 
     const auto marker_pose = calcForwardPose(

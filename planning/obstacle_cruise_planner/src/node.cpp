@@ -529,8 +529,8 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       continue;
     }
 
-    const auto object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
-      predicted_object, time_stamp, current_time);
+    const auto object_pose = obstacle_cruise_utils::getCurrentObjectPose(
+      predicted_object, time_stamp, current_time, false);
     const auto & object_velocity =
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
