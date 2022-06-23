@@ -2,7 +2,7 @@
 <launch>
   <arg name="input/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
-  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`"/>
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `clustering`"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
   <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
   <arg name="container_name" default=""/>
@@ -28,6 +28,15 @@
       <arg name="input_pointcloud" value="$(var clustering/input/pointcloud)"/>
       <arg name="output_clusters" value="clusters"/>
       <arg name="use_pointcloud_map" value="false"/>
+    </include>
+    <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml" if="$(eval &quot;'$(var lidar_detection_model)'=='clustering'&quot;)">
+      <arg name="input/objects" value="clusters"/>
+      <arg name="output/objects" value="clusters_with_feature"/>
+      <arg name="use_vehicle_reference_yaw" value="true"/>
+    </include>
+    <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml" if="$(eval &quot;'$(var lidar_detection_model)'=='clustering'&quot;)">
+      <arg name="input" value="clusters_with_feature"/>
+      <arg name="output" value="objects"/>
     </include>
   </group>
 
