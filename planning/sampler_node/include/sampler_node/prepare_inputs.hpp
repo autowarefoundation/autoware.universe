@@ -43,7 +43,7 @@ void prepareConstraints(
   sampler_common::Constraints & constraints,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
   const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids,
-  const lanelet::Ids & prefered_ids);
+  const lanelet::Ids & prefered_ids, const nav_msgs::msg::OccupancyGrid & drivable_area);
 /// @brief prepare sampling parameters to generate trajectories in Frenet frame
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const frenet_planner::FrenetState & initial_state,

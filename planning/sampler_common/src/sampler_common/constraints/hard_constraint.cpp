@@ -30,7 +30,7 @@
 
 namespace sampler_common::constraints
 {
-bool satisfyMinMax(const std::vector<double> & values, const double min, const double max)
+inline bool satisfyMinMax(const std::vector<double> & values, const double min, const double max)
 {
   for (const auto value : values) {
     if (value < min || value > max) return false;
@@ -38,10 +38,12 @@ bool satisfyMinMax(const std::vector<double> & values, const double min, const d
   return true;
 }
 
-bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygons)
+// TODO(Maxime CLEMENT): remove if unused
+inline bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygons)
 {
   for (const auto & polygon : polygons) {
     for (const auto & point : path.points) {
+      // TODO(Maxime CLEMENT): arbitrary distance threshold
       if (boost::geometry::distance(point, polygon) < 1.0) {
         return true;
       }
@@ -50,17 +52,17 @@ bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygon
   return false;
 }
 
-bool collideWithPolygons(const Polygon & footprint, const std::vector<Polygon> & polygons)
+inline bool collideWithPolygons(const Polygon & footprint, const MultiPolygon & polygons)
 {
-  for (const auto & polygon : polygons) {
-    if (boost::geometry::intersects(footprint, polygon)) {
+  for (const auto & footprint_point : footprint.outer()) {
+    if (boost::geometry::within(footprint_point, polygons)) {
       return true;
     }
   }
   return false;
 }
 
-bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
+inline bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
 {
   for (const auto & point : path.points) {
     bool within_at_least_one_poly = false;
@@ -75,7 +77,7 @@ bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
   return true;
 }
 
-bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
+inline bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
 {
   return boost::geometry::within(footprint, polygons);
 }
@@ -89,7 +91,7 @@ NumberOfViolations checkHardConstraints(Path & path, const Constraints & constra
     ++number_of_violations.collision;
     path.valid = false;
   }
-  if (!withinPolygons(footprint, constraints.drivable_polygon)) {
+  if (collideWithPolygons(footprint, constraints.drivable_polygons)) {
     ++number_of_violations.outside;
     path.valid = false;
   }
