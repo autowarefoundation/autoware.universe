@@ -220,7 +220,8 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
 
   const auto path_spline = preparePathSpline(*msg);
   prepareConstraints(
-    params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_);
+    params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
+    msg->drivable_area);
 
   auto paths =
     generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, *w_.plotter_, params_);
@@ -246,9 +247,8 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
 
   // Plot //
   const auto plot_begin = calc_end;
-  // w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
-  // w_.plotter_->plotPolygons(
-  //   {params_.constraints.drivable_polygon, params_.constraints.prefered_polygon});
+  w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
+  w_.plotter_->plotPolygons(params_.constraints.drivable_polygons);
   std::vector<double> x;
   std::vector<double> y;
   x.reserve(msg->points.size());
@@ -364,12 +364,15 @@ void PathSamplerNode::publishPath(
   trajectory_pub_->publish(traj_msg);
 }
 
+// TODO(Maxime CLEMENT): unused in favor of the Path's drivable area
 void PathSamplerNode::mapCallback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
 }
+
+// TODO(Maxime CLEMENT): unused in favor of the Path's drivable area
 void PathSamplerNode::routeCallback(
   const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr route_msg)
 {

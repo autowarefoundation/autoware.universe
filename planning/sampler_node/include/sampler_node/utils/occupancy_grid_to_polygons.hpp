@@ -35,8 +35,7 @@
 
 namespace sampler_node::utils
 {
-inline std::vector<sampler_common::Polygon> occupancyGridToPolygons(
-  const nav_msgs::msg::OccupancyGrid & og)
+inline sampler_common::MultiPolygon occupancyGridToPolygons(const nav_msgs::msg::OccupancyGrid & og)
 {
   // Convert to CV format
   cv::Mat drivable_area =
@@ -61,7 +60,7 @@ inline std::vector<sampler_common::Polygon> occupancyGridToPolygons(
   double pitch{};
   double roll{};
   tf2::getEulerYPR(og.info.origin.orientation, yaw, pitch, roll);
-  std::vector<sampler_common::Polygon> polygons;
+  sampler_common::MultiPolygon polygons;
   polygons.reserve(contours.size());
   for (const auto & cv_poly : contours) {
     auto & polygon = polygons.emplace_back();
@@ -75,6 +74,7 @@ inline std::vector<sampler_common::Polygon> occupancyGridToPolygons(
       const auto map_y = x * std::sin(yaw) + y * std::cos(yaw);
       polygon.outer().emplace_back(origin.x() + map_x, origin.y() + map_y);
     }
+    if (!polygon.outer().empty()) polygon.outer().push_back(polygon.outer().front());
   }
   return polygons;
 }

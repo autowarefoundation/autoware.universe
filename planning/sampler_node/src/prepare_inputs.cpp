@@ -41,8 +41,10 @@ namespace sampler_node
 void prepareConstraints(
   sampler_common::Constraints & constraints,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
-  const lanelet::LaneletMap & map, const lanelet::Ids & drivable_ids,
-  const lanelet::Ids & prefered_ids)
+  [[maybe_unused]] const lanelet::LaneletMap & map,
+  [[maybe_unused]] const lanelet::Ids & drivable_ids,
+  [[maybe_unused]] const lanelet::Ids & prefered_ids,
+  const nav_msgs::msg::OccupancyGrid & drivable_area)
 {
   constraints.obstacle_polygons = sampler_common::MultiPolygon();
   for (auto & dynamic_obstacle_polygon : utils::predictedObjectsToPolygons(predicted_objects)) {
@@ -50,6 +52,10 @@ void prepareConstraints(
     constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
   }
 
+  constraints.drivable_polygons = utils::occupancyGridToPolygons(drivable_area);
+  constraints.prefered_polygons = constraints.drivable_polygons;
+  // TODO(Maxime CLEMENT): making polygons from the lanelet map often fails
+  /*
   const auto drivable_lanelet_polygon =
     autoware::common::had_map_utils::coalesce_lanelets(drivable_ids, map);
   constraints.drivable_polygon = sampler_common::Polygon();
@@ -58,7 +64,6 @@ void prepareConstraints(
   }
   // TODO(Maxime CLEMENT): investigate why correcting the polygon breaks the collision detection
   // boost::geometry::correct(constraints.drivable_polygon);
-
   const auto prefered_lanelet_polygon =
     autoware::common::had_map_utils::coalesce_lanelets(prefered_ids, map);
   constraints.prefered_polygon = sampler_common::Polygon();
@@ -66,6 +71,7 @@ void prepareConstraints(
     constraints.prefered_polygon.outer().emplace_back(point.x(), point.y());
   }
   boost::geometry::correct(constraints.prefered_polygon);
+  */
 }
 
 frenet_planner::SamplingParameters prepareSamplingParameters(

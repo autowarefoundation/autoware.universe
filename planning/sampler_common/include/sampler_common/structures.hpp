@@ -31,6 +31,7 @@ using Point = boost::geometry::model::d2::point_xy<double>;
 using Polygon = boost::geometry::model::polygon<Point>;
 using MultiPolygon = boost::geometry::model::multi_polygon<Polygon>;
 
+// TODO(Maxime CLEMENT): split in multiple files
 struct FrenetPoint
 {
   FrenetPoint(double s_, double d_) : s(s_), d(d_) {}
@@ -238,10 +239,10 @@ struct Constraints
     Eigen::Vector2d left_front;
     Eigen::Vector2d right_rear;
     Eigen::Vector2d right_front;
-  } vehicle_offsets;
+  } vehicle_offsets{};
   MultiPolygon obstacle_polygons;
-  Polygon drivable_polygon;
-  Polygon prefered_polygon;
+  MultiPolygon drivable_polygons;
+  MultiPolygon prefered_polygons;
 };
 }  // namespace sampler_common
 
