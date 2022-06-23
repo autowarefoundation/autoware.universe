@@ -176,7 +176,7 @@ bool IntersectionModule::modifyPathVelocity(
     planner_param_.stuck_vehicle_detect_dist);
   bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx,
+    lanelet_map_ptr, *path, detection_area_lanelet_ids, detection_areas, objects_ptr, closest_idx,
     stuck_vehicle_detect_area);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
@@ -256,6 +256,7 @@ bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<int> & detection_area_lanelet_ids,
+  const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
 {
@@ -371,6 +372,38 @@ bool IntersectionModule::checkCollision(
       debug_data_.frontcar_stopping_pose.position = stopping_point;
       debug_data_.frontcar_stopping_pose.orientation =
         tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
+      // find the centerline position `ego_vehicle_length` [m] behind stopping_point
+      const auto & info = planner_data_->vehicle_info_;
+      const double vehicle_length =
+        info.front_overhang_m + info.wheel_tread_m + info.rear_overhang_m;
+      double acc_dist = 0;
+      unsigned behind_stopping_point_idx = 0;
+      for (unsigned i = closest_centerline_point_idx; i >= 1; --i) {
+        const auto & p1 = converted_centerline[i];
+        const auto & p2 = converted_centerline[i - 1];
+        acc_dist += tier4_autoware_utils::calcDistance2d(p1, p2);
+        behind_stopping_point_idx = i;
+        if (acc_dist > vehicle_length) break;
+      }
+      const auto & behind_stopping_point = converted_centerline[behind_stopping_point_idx];
+
+      stopping_object.kinematics.initial_pose_with_covariance.pose.position = behind_stopping_point;
+      // TODO(Mamoru Sobue): should use the size of ego
+      const auto behind_stopping_point_footprint = toFootprintPolygon(stopping_object);
+      bool is_behind_point_in_detection_area = false;
+      for (const auto & detection_area : detection_areas) {
+        const auto a = lanelet::utils::to2D(detection_area);
+        Polygon2d b{};
+        for (const auto & a_ : a) {
+          b.outer().emplace_back(a_.x(), a_.y());
+        }
+        if (!bg::disjoint(behind_stopping_point_footprint, b)) {
+          is_behind_point_in_detection_area = true;
+          break;
+        }
+      }
+      std::cout << "is_behind_point_in_detection_are" << is_behind_point_in_detection_area
+                << std::endl;
       continue;  // TODO(Kenji Miyake): check direction?
     }
 
