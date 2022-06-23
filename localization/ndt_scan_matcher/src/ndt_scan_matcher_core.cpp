@@ -338,12 +338,11 @@ void NDTScanMatcher::serviceNDTAlign(
   const auto mapTF_initial_pose_msg = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
   double timeout_counter = 0;
-  int validation_period = 100; // [ms]
+  int validation_period = 100;  // [ms]
   while (!validateInitialPositionCompatibility(mapTF_initial_pose_msg.pose.pose.position)) {
     rclcpp::sleep_for(std::chrono::milliseconds(validation_period));
     timeout_counter += validation_period;
-    if (timeout_counter > initial_ndt_align_timeout_sec_ * 1e3)
-    {
+    if (timeout_counter > initial_ndt_align_timeout_sec_ * 1e3) {
       res->success = false;
       res->seq = req->seq;
       RCLCPP_WARN(get_logger(), "Failed to receive valid pcd map for given initial pose");
