@@ -25,13 +25,7 @@ FreeSpace::FreeSpace() : rclcpp::Node("freespace")
   pub_image_ = create_publisher<Image>("/freespace_image", 10);
 }
 
-void FreeSpace::mapCallback(const HADMapBin & msg)
-{
-  lanelet_map_ = fromBinMsg(msg);
-  RCLCPP_INFO_STREAM(get_logger(), "lanelet: " << lanelet_map_->laneletLayer.size());
-  RCLCPP_INFO_STREAM(get_logger(), "line: " << lanelet_map_->lineStringLayer.size());
-  RCLCPP_INFO_STREAM(get_logger(), "point: " << lanelet_map_->pointLayer.size());
-}
+void FreeSpace::mapCallback(const HADMapBin & msg) { lanelet_map_ = fromBinMsg(msg); }
 
 void FreeSpace::particleCallback(const ParticleArray & particles)
 {
@@ -82,13 +76,32 @@ void FreeSpace::extractNearLanelet(const PoseStamped & pose_stamped)
   Eigen::Vector3f position;
   position << pos.x, pos.y, 0;  // pos.z;
 
-  const std::set<std::string> visible_labels = {
+  const std::unordered_set<std::string> visible_labels = {
     "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
+
+  auto ori = pose_stamped.pose.orientation;
+  float theta = 2.0f * std::atan2(ori.z, ori.w);
+  Eigen::Vector2f self_direction(std::cos(theta), std::sin(theta));
+
+  std::unordered_set<lanelet::Id> forward_lane_indices;
+  for (lanelet::Lanelet & lane : lanelet_map_->laneletLayer) {
+    auto front = lane.centerline2d().front();
+    auto back = lane.centerline2d().back();
+
+    Eigen::Vector2f lane_direction;
+    lane_direction << front.x() - back.x(), front.y() - back.y();
+    lane_direction.normalize();
+
+    if (lane_direction.dot(self_direction) > 0) continue;
+    forward_lane_indices.insert(lane.leftBound().id());
+    forward_lane_indices.insert(lane.rightBound().id());
+  }
 
   for (lanelet::LineString3d & line : lanelet_map_->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
+    if (forward_lane_indices.count(line.id()) == 0) continue;
 
     std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d p : line) {
@@ -149,7 +162,7 @@ void FreeSpace::incrementAlongLine(cv::Mat image, const cv::Point2i & from, cons
   const int count = iterator.count;
   for (int i = 0; i < count; i++, ++iterator) {
     uchar * ptr = *iterator;
-    ptr[0] = std::min(uchar(254), ptr[0]) + 1;
+    ptr[0] = std::min(255, int(ptr[0]) + 5);
   }
 }
 
