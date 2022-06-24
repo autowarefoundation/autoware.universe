@@ -124,10 +124,10 @@ TEST_F(ObjectsToCostMapTest, TestMakeCostmapFromObjects)
   float obj_right_x = obj_center_x + object.shape.dimensions.x / 2.;
   float obj_bottom_y = obj_center_y - object.shape.dimensions.y / 2.;
   float obj_top_y = obj_center_y + object.shape.dimensions.y / 2.;
-  int index_x_min = int(obj_left_x / grid_resolution_);
-  int index_x_max = int(obj_right_x / grid_resolution_);
-  int index_y_min = int(obj_bottom_y / grid_resolution_);
-  int index_y_max = int(obj_top_y / grid_resolution_);
+  int index_x_min = static_cast<int>(obj_left_x / grid_resolution_);
+  int index_x_max = static_cast<int>(obj_right_x / grid_resolution_);
+  int index_y_min = static_cast<int>(obj_bottom_y / grid_resolution_);
+  int index_y_max = static_cast<int>(obj_top_y / grid_resolution_);
   for (int i = index_x_min; i < index_x_max; i++) {
     for (int j = index_y_min; j < index_y_max; j++) {
       EXPECT_DOUBLE_EQ(objects_costmap(i, j), object.classification.at(0).probability);
