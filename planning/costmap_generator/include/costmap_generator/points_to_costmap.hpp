@@ -46,15 +46,7 @@
 #define COSTMAP_GENERATOR__POINTS_TO_COSTMAP_HPP_
 
 #include <grid_map_ros/grid_map_ros.hpp>
-#include <rclcpp/rclcpp.hpp>
-
 #include <pcl_conversions/pcl_conversions.h>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
 
 #include <string>
 #include <vector>
