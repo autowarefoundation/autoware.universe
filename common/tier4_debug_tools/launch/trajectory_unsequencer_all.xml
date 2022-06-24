@@ -1,0 +1,17 @@
+<launch>
+  <include file="$(find-pkg-share tier4_debug_tools)/launch/trajectory_unsequencer.xml">
+    <arg name="trajectory_topic" value="/planning/scenario_planning/lane_driving/trajectory"/>
+  </include>
+  <include file="$(find-pkg-share tier4_debug_tools)/launch/trajectory_unsequencer.xml">
+    <arg name="trajectory_topic" value="/planning/scenario_planning/trajectory"/>
+  </include>
+  <include file="$(find-pkg-share tier4_debug_tools)/launch/trajectory_unsequencer.xml">
+    <arg name="trajectory_topic" value="/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory"/>
+  </include>
+  <include file="$(find-pkg-share tier4_debug_tools)/launch/trajectory_unsequencer.xml">
+    <arg name="trajectory_topic" value="/planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/trajectory"/>
+  </include>
+  <include file="$(find-pkg-share tier4_debug_tools)/launch/trajectory_unsequencer.xml">
+    <arg name="trajectory_topic" value="/planning/scenario_planning/scenario_selector/trajectory"/>
+  </include>
+</launch>
