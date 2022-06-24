@@ -133,14 +133,15 @@ rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
   t.tm_min = msg.min;
   t.tm_sec = msg.sec;
   t.tm_isdst = 0;
+
   time_t t_of_day = mktime(&t);
 
   uint32_t nano = 0;
   if (msg.nano >= 0) {
     nano = msg.nano;
   } else {
-    nano = 1e9f - msg.nano;
-    t.tm_sec--;
+    t_of_day--;
+    nano = 1e9 + msg.nano;
   }
 
   rclcpp::Time stamp(t_of_day, nano, RCL_ROS_TIME);
