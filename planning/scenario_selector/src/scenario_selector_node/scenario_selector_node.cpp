@@ -222,10 +222,9 @@ void ScenarioSelectorNode::onRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   route_handler_->setRoute(*msg);
-  if (route_handler_->isHandlerReady()) {
-    route_ = msg;
-    current_scenario_ = tier4_planning_msgs::msg::Scenario::EMPTY;
-  }
+  if (!route_handler_->isHandlerReady()) return;
+  route_ = msg;
+  current_scenario_ = tier4_planning_msgs::msg::Scenario::EMPTY;
 }
 
 void ScenarioSelectorNode::onOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
