@@ -47,6 +47,7 @@ public:
     double min_curve_velocity;           // min velocity at curve [m/s]
     double decel_distance_before_curve;  // distance before slow down for lateral acc at a curve
     double decel_distance_after_curve;   // distance after slow down for lateral acc at a curve
+    double wheel_base;                   // wheel base [m]
     resampling::ResampleParam resample_param;
   };
 

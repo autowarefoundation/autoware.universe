@@ -239,6 +239,36 @@ boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
   return boost::optional<std::vector<double>>(k_arr);
 }
 
+boost::optional<std::vector<double>> calcTrajectoryCurvatureFromFrontSteeringAngle(
+  const TrajectoryPoints & trajectory, const double & wheelbase)
+{
+  std::vector<double> k_arr;
+  if (trajectory.size() < 2) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
+      "cannot calc curvature from steering angle, trajectory.size() = %lu", trajectory.size());
+    return {};
+  }
+
+  // calculate curvature by desired front wheel steering angle
+
+  for (size_t i = 0; i < trajectory.size(); ++i) {
+    const double steering_angle = trajectory.at(i).front_wheel_angle_rad;
+    const double curvature = tan(steering_angle) / wheelbase;
+    k_arr.push_back(curvature);
+  }
+
+  // for debug
+  if (k_arr.empty()) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
+      "k_arr.size() = 0, something wrong. pls check.");
+    return {};
+  }
+
+  return boost::optional<std::vector<double>>(k_arr);
+}
+
 void setZeroVelocity(TrajectoryPoints & trajectory)
 {
   for (auto & tp : trajectory) {

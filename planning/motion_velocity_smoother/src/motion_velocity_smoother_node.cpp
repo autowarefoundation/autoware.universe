@@ -38,6 +38,8 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
 
   // set common params
   initCommonParam();
+  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  wheelbase_ = vehicle_info.wheel_base_m;
   over_stop_velocity_warn_thr_ =
     declare_parameter("over_stop_velocity_warn_thr", tier4_autoware_utils::kmph2mps(5.0));
 
@@ -72,6 +74,10 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
+  // Initialize the wheelbase
+  auto p = smoother_->getBaseParam();
+  p.wheel_base = wheelbase_;
+  smoother_->setParam(p);
 
   // publishers, subscribers
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);

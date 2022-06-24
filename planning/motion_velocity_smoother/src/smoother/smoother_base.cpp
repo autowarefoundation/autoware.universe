@@ -85,12 +85,32 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   }
   output->back() = input.back();  // keep the final speed.
 
-  constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
-  const size_t idx_dist =
-    static_cast<size_t>(std::max(static_cast<int>((curvature_calc_dist) / points_interval), 1));
+  /*  Fill the steering tire angle w.r.t. orientation
+   *
+   *  delta_orientation / delta_time = velocity * tan(steering_tire_angle) / wheelbase
+   *
+   *  calculate desired steering_tire_angle w.r.t. delta_orientation, velocity, and wheelbase
+   *
+   */
+
+  for (size_t i = 0; output->size() > i; i++) {
+    if (i < output->size() - 1) {
+      output->at(i).front_wheel_angle_rad = static_cast<float>(std::atan(
+        (tf2::getYaw(output->at(i + 1).pose.orientation) -
+         tf2::getYaw(output->at(i).pose.orientation)) *
+        base_param_.wheel_base / (points_interval)));
+    } else {
+      output->at(i).front_wheel_angle_rad = 0.0;
+    }
+  }
+
+  //  constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
+  //  const size_t idx_dist =
+  //    static_cast<size_t>(std::max(static_cast<int>((curvature_calc_dist) / points_interval), 1));
 
   // Calculate curvature assuming the trajectory points interval is constant
-  const auto curvature_v = trajectory_utils::calcTrajectoryCurvatureFrom3Points(*output, idx_dist);
+  const auto curvature_v = trajectory_utils::calcTrajectoryCurvatureFromFrontSteeringAngle(
+    *output, base_param_.wheel_base);
   if (!curvature_v) {
     return boost::optional<TrajectoryPoints>(input);
   }

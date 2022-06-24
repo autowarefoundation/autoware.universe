@@ -53,6 +53,9 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
 boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
   const TrajectoryPoints & trajectory, const size_t & idx_dist);
 
+boost::optional<std::vector<double>> calcTrajectoryCurvatureFromFrontSteeringAngle(
+  const TrajectoryPoints & trajectory, const double & wheelbase);
+
 void setZeroVelocity(TrajectoryPoints & trajectory);
 
 double getMaxVelocity(const TrajectoryPoints & trajectory);

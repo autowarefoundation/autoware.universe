@@ -33,6 +33,8 @@
 #include "tier4_autoware_utils/trajectory/tmp_conversion.hpp"
 #include "tier4_autoware_utils/trajectory/trajectory.hpp"
 
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -57,6 +59,7 @@ using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
+using vehicle_info_util::VehicleInfoUtil;
 
 class MotionVelocitySmootherNode : public rclcpp::Node
 {
@@ -82,6 +85,7 @@ private:
   double max_velocity_with_deceleration_;          // maximum velocity with deceleration
                                                    // for external velocity limit
   double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
+  double wheelbase_;                               // wheelbase
 
   TrajectoryPoints prev_output_;                           // previously published trajectory
   boost::optional<TrajectoryPoint> prev_closest_point_{};  // previous trajectory point
