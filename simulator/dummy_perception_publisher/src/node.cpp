@@ -144,7 +144,8 @@ void DummyPerceptionPublisherNode::timerCallback()
   }
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr detected_merged_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr detected_merged_pointcloud_ptr(
+    new pcl::PointCloud<pcl::PointXYZ>);
 
   if (objects_.empty()) {
     pcl::toROSMsg(*merged_pointcloud_ptr, output_pointcloud_msg);
