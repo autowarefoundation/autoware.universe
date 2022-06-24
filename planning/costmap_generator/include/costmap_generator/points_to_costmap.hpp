@@ -46,6 +46,7 @@
 #define COSTMAP_GENERATOR__POINTS_TO_COSTMAP_HPP_
 
 #include <grid_map_ros/grid_map_ros.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <string>

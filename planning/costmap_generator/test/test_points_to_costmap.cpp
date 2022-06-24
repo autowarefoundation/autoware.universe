@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <costmap_generator/points_to_costmap.hpp>
+
 #include <gtest/gtest.h>
 using pointcloud = pcl::PointCloud<pcl::PointXYZ>;
 class PointsToCostmapTest : public ::testing::Test
