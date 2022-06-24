@@ -12,7 +12,7 @@
         <param name="image_size" value="800"/>
         <!-- <param name="max_range" value="$(var max_range)"/> -->
         <param name="max_range" value="40.0"/>
-        <param name="gamma" value="3.0"/>
+        <param name="gamma" value="5.0"/>
         <param name="score_offset" value="-128.0"/>
         <param name="max_raw_score" value="100000.0"/>
         <param name="min_prob" value="0.1"/>

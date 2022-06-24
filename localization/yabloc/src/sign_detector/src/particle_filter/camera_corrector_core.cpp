@@ -32,7 +32,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
     Eigen::Affine3f transform = util::pose2Affine(particle.pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
 
-    float raw_score = computeScore(transformed_lsd);
+    float raw_score = computeScore(transformed_lsd, transform.translation());
     particle.weight = score_convert(raw_score);
   }
 
@@ -53,7 +53,8 @@ void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)
   RCLCPP_INFO_STREAM(get_logger(), "Set LL2 cloud into Hierarchical cost map");
 }
 
-float CameraParticleCorrector::computeScore(const LineSegment & lsd_cloud)
+float CameraParticleCorrector::computeScore(
+  const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
   float score = 0;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
@@ -63,7 +64,10 @@ float CameraParticleCorrector::computeScore(const LineSegment & lsd_cloud)
     for (float distance = 0; distance < l1; distance += 0.1f) {
       Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
 
-      score += cost_map_.at(p.topRows(2)) + score_offset_;
+      // NOTE: Close points are prioritized
+      float squared_norm = (p - self_position).topRows(2).squaredNorm();
+      float gain = std::exp(-1e-3f * squared_norm);
+      score += gain * cost_map_.at(p.topRows(2)) + score_offset_;
     }
   }
   return score;

@@ -52,7 +52,7 @@ private:
   void ll2Callback(const PointCloud2 & msg);
   void poseCallback(const PoseStamped & msg);
 
-  float computeScore(const LineSegment & ls_cloud);
+  float computeScore(const LineSegment & ls_cloud, const Eigen::Vector3f & self_position);
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr lsd_sub_;
