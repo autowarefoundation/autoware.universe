@@ -23,16 +23,6 @@
 #include <string>
 #include <vector>
 
-namespace tier4_autoware_utils
-{
-template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose;
-}
-}  // namespace tier4_autoware_utils
-
 namespace behavior_velocity_planner
 {
 namespace
@@ -372,7 +362,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   }
 
   // Do nothing if vehicle is after any end line
-  if (isAfterAnyEndLine()) {
+  if (isAfterAnyEndLine() || state_ == State::FINALIZED) {
     RCLCPP_DEBUG(logger_, "after end_line");
     state_ = State::FINALIZED;
     updateInfrastructureCommand();

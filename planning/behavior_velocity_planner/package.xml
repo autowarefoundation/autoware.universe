@@ -19,6 +19,7 @@
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>grid_map_ros</depend>
+  <depend>grid_map_utils</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
@@ -30,6 +31,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>
+  <depend>rtc_interface</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
