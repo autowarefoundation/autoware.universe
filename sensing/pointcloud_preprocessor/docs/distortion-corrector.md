@@ -27,7 +27,7 @@ $ ExactPointTime = TimeStamp + TimeOffset $
 | ---------------- | ------------------------------------------------ | ---------------- |
 | `~/input/points` | `sensor_msgs::msg::PointCloud2`                  | reference points |
 | `~/input/twist`  | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist            |
-| `~/input/imu  `  | `sensor_msgs::msg::Imu`                          | imu data         |
+| `~/input/imu`    | `sensor_msgs::msg::Imu`                          | imu data         |
 
 ### Output
 
