@@ -52,7 +52,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_points_to_costmap
-    costmap_generator_node
+    costmap_generator_lib
   )
 endif()
 
