@@ -18,6 +18,9 @@
 #include <image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp>
 #include <lidar_centerpoint/centerpoint_trt.hpp>
 
+#include <memory>
+#include <string>
+
 namespace image_projection_based_fusion
 {
 class PointPaintingTRT : public centerpoint::CenterPointTRT
