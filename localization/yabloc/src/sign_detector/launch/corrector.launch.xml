@@ -16,6 +16,7 @@
         <param name="score_offset" value="-128.0"/>
         <param name="max_raw_score" value="100000.0"/>
         <param name="min_prob" value="0.1"/>
+        <param name="far_weight_gain" value="0.001"/>
 
         <remap from="/weighted_particles" to="/camera/weighted_particles"/>
     </node>

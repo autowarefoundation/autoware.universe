@@ -11,7 +11,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   flat_radius_(declare_parameter("flat_radius", 1.0f)),
   min_prob_(declare_parameter("min_prob", 0.01f)),
   sigma_(declare_parameter("sigma", 25.0f)),
-  float_range_gain_(2.0f)
+  float_range_gain_(3.0f)
 {
   using std::placeholders::_1;
   auto ublox_callback = std::bind(&GnssParticleCorrector::ubloxCallback, this, _1);

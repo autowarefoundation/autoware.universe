@@ -66,8 +66,8 @@ float CameraParticleCorrector::computeScore(
 
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
-      float gain = std::exp(-1e-3f * squared_norm);
-      score += gain * cost_map_.at(p.topRows(2)) + score_offset_;
+      float gain = std::exp(-far_weight_gain_ * squared_norm);
+      score += gain * (cost_map_.at(p.topRows(2)) + score_offset_);
     }
   }
   return score;
