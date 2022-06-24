@@ -357,11 +357,11 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
   std::vector<TargetObstacle> & debug_obstacles_to_stop,
   visualization_msgs::msg::MarkerArray & debug_wall_marker) const
 {
-  const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
+  // const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
   // TODO(murooka) use interpolation to calculate stop point and marker pose
   const auto modified_stop_info = [&]() -> boost::optional<std::pair<size_t, size_t>> {
-    const double dist_to_stop = stop_obstacle_info.dist_to_stop;
+    // const double dist_to_stop = stop_obstacle_info.dist_to_stop;
 
     const size_t collision_idx = tier4_autoware_utils::findNearestIndex(
       planner_data.traj.points, stop_obstacle_info.obstacle.collision_point);
