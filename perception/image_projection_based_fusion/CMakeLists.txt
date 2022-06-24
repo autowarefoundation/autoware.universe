@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(image_projection_based_fusion)
+add_compile_options(-Wall -Wno-unknown-pragmas)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
