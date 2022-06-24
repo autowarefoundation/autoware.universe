@@ -17,11 +17,11 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
@@ -55,7 +55,8 @@ public:
 
 private:
   void onPointCloud(PointCloud2::UniquePtr points_msg);
-  void onTwistWithCovarianceStamped(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
+  void onTwistWithCovarianceStamped(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
   void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,

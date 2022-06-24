@@ -45,7 +45,8 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Subscriber
   twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "~/input/twist", 10,
-    std::bind(&DistortionCorrectorComponent::onTwistWithCovarianceStamped, this, std::placeholders::_1));
+    std::bind(
+      &DistortionCorrectorComponent::onTwistWithCovarianceStamped, this, std::placeholders::_1));
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     "~/input/imu", 10,
     std::bind(&DistortionCorrectorComponent::onImu, this, std::placeholders::_1));
@@ -64,9 +65,7 @@ void DistortionCorrectorComponent::onTwistWithCovarianceStamped(
 
   while (!twist_queue_.empty()) {
     // for replay rosbag
-    if (
-      rclcpp::Time(twist_queue_.front().header.stamp) >
-      rclcpp::Time(twist_msg->header.stamp)) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(twist_msg->header.stamp)) {
       twist_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(twist_queue_.front().header.stamp) <
@@ -201,13 +200,11 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   const double first_point_time_stamp_sec{*it_time_stamp};
 
   auto twist_it = std::lower_bound(
-    std::begin(twist_queue_), std::end(twist_queue_),
-    first_point_time_stamp_sec, [](const geometry_msgs::msg::TwistStamped & x, const double t) {
+    std::begin(twist_queue_), std::end(twist_queue_), first_point_time_stamp_sec,
+    [](const geometry_msgs::msg::TwistStamped & x, const double t) {
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
-  twist_it = twist_it == std::end(twist_queue_)
-                         ? std::end(twist_queue_) - 1
-                         : twist_it;
+  twist_it = twist_it == std::end(twist_queue_) ? std::end(twist_queue_) - 1 : twist_it;
 
   decltype(angular_velocity_queue_)::iterator imu_it;
   if (use_imu_ && !angular_velocity_queue_.empty()) {
