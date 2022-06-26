@@ -15,17 +15,10 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__COLLISION_DISTANCE_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__COLLISION_DISTANCE_HPP_
 
+#include "apparent_safe_velocity_limiter/types.hpp"
+
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-
-#include <boost/assign.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
-#include <boost/geometry/algorithms/intersection.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/multi_linestring.hpp>
-#include <boost/geometry/geometries/multi_point.hpp>
-#include <boost/geometry/geometries/segment.hpp>
 
 #include <tf2/utils.h>
 
@@ -36,14 +29,6 @@
 
 namespace apparent_safe_velocity_limiter
 {
-namespace bg = boost::geometry;
-using point_t = bg::model::d2::point_xy<double>;
-using polygon_t = bg::model::polygon<point_t>;
-using multipolygon_t = bg::model::multi_polygon<polygon_t>;
-using segment_t = bg::model::segment<point_t>;
-using linestring_t = bg::model::linestring<point_t>;
-using multilinestring_t = bg::model::multi_linestring<linestring_t>;
-
 /// @brief generate a segment to where ego would reach with constant velocity and heading
 /// @param [in] trajectory_point origin of the segment
 /// @param [in] duration duration of the forward projection
@@ -73,6 +58,7 @@ polygon_t generateFootprint(const linestring_t & linestring, const double latera
 std::optional<double> distanceToClosestCollision(
   const segment_t & segment, const polygon_t & footprint, const multilinestring_t & obstacles);
 
+// TODO(Maxime CLEMENT): move to occupancy_grid_utils
 /// @brief create a polygon from an object represented by a pose and a size
 /// @param [in] pose pose of the object
 /// @param [in] dimensions dimensions of the object

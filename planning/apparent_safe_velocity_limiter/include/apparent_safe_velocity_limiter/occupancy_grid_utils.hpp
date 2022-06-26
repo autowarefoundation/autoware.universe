@@ -15,13 +15,10 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_
 
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
-#include "grid_map_core/TypeDefs.hpp"
+#include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <grid_map_core/GridMap.hpp>
 #include <opencv2/core/types.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/opencv.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
@@ -37,11 +34,6 @@ void maskPolygons(grid_map::GridMap & grid_map, const multipolygon_t & polygons)
 /// @param[in, out] grid_map the grid map to modify
 /// @param[in] threshold cells above this value are set to the max value, the other are set to 0
 void threshold(grid_map::GridMap & grid_map, const float threshold);
-
-/// @brief apply a threshold to the grid map
-/// @param[in, out] cv_image opencv image to modify
-/// @param[in] num_iter optional parameter for the number of iteration performed for noise removal
-void denoise(cv::Mat & cv_image, const int num_iter = 2);
 
 /// @brief extract from an occupancy grid the lines representing static obstacles
 /// @param[in] occupancy_grid input occupancy grid

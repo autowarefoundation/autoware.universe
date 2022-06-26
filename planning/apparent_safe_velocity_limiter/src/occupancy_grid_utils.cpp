@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <apparent_safe_velocity_limiter/occupancy_grid_utils.hpp>
+#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
+
 #include <grid_map_core/Polygon.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_cv/GridMapCvConverter.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_utils/polygon_iterator.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -64,12 +67,6 @@ void threshold(grid_map::GridMap & grid_map, const float threshold)
   }
 }
 
-void denoise(cv::Mat & cv_image, const int num_iter)
-{
-  cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), num_iter);
-  cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), num_iter);
-}
-
 multilinestring_t extractStaticObstaclePolygons(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_in_masks,
   const polygon_t & polygon_out_mask, const int8_t occupied_threshold)
@@ -80,7 +77,8 @@ multilinestring_t extractStaticObstaclePolygons(
   maskPolygons(grid_map, polygon_in_masks, polygon_out_mask);
   threshold(grid_map, occupied_threshold);
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, cv_image);
-  denoise(cv_image);
+  cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
+  cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
   multilinestring_t polygons;

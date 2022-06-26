@@ -20,6 +20,8 @@
 #include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
+
 #include <gtest/gtest.h>
 #include <pcl/common/generate.h>
 #include <pcl/common/random.h>

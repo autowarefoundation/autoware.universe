@@ -14,8 +14,15 @@
 
 #include <apparent_safe_velocity_limiter/collision_distance.hpp>
 
+#include <boost/assign.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
+
 namespace apparent_safe_velocity_limiter
 {
+namespace bg = boost::geometry;
+
 segment_t forwardSimulatedSegment(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point, const double duration,
   const double extra_distance)

@@ -15,6 +15,8 @@
 #include "apparent_safe_velocity_limiter/collision_distance.hpp"
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 
+#include <boost/geometry/algorithms/correct.hpp>
+
 #include <gtest/gtest.h>
 
 TEST(TestOccupancyGridUtils, extractStaticObstaclePolygons)

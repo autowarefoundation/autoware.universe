@@ -14,9 +14,13 @@
 
 #include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter_node.hpp"
 
+#include "apparent_safe_velocity_limiter/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/debug.hpp"
+#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include <numeric>
+#include <boost/geometry/algorithms/correct.hpp>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -157,7 +161,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
       forwardSimulatedSegment(*it, time_buffer_, extra_vehicle_length);
     envelope_polygon.outer().push_back(forward_simulated_vector.second);
   }
-  bg::correct(envelope_polygon);
+  boost::geometry::correct(envelope_polygon);
   obs_envelope_duration += stopwatch.toc("obs_envelope_duration");
   stopwatch.tic("obs_filter_duration");
   // Filter obstacles outside the envelope polygon
@@ -201,7 +205,12 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 
   safe_trajectory.header.stamp = now();
   pub_trajectory_->publish(safe_trajectory);
-  publishDebugMarkers(*msg, safe_trajectory, obstacles);
+
+  ForwardProjectionFunction fn = [&](const TrajectoryPoint & p) {
+    return forwardSimulatedSegment(p, time_buffer_, distance_buffer_ + vehicle_front_offset_);
+  };
+  pub_debug_markers_->publish(makeDebugMarkers(
+    *msg, safe_trajectory, obstacles, fn, occupancy_grid_ptr_->info.origin.position.z));
   // TODO(Maxime CLEMENT): removes or change to RCLCPP_DEBUG before merging
   RCLCPP_WARN(get_logger(), "Runtimes");
   RCLCPP_WARN(get_logger(), "  obstacles poly       = %2.2fms", obs_poly_duration);
@@ -227,79 +236,6 @@ Float ApparentSafeVelocityLimiterNode::calculateSafeVelocity(
   return std::min(
     trajectory_point.longitudinal_velocity_mps,
     std::max(min_adjusted_velocity_, static_cast<Float>(dist_to_collision / time_buffer_)));
-}
-
-visualization_msgs::msg::Marker ApparentSafeVelocityLimiterNode::makePolygonMarker(
-  const linestring_t & polygon, const int id) const
-{
-  visualization_msgs::msg::Marker marker;
-  marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  marker.scale.x = 0.1;
-  marker.color.b = 1.0;
-  marker.color.a = 1.0;
-  marker.id = id;
-  marker.ns = "obstacles";
-  for (const auto & point : polygon) {
-    geometry_msgs::msg::Point p;
-    p.x = point.x();
-    p.y = point.y();
-    p.z = occupancy_grid_ptr_->info.origin.position.z;
-    marker.points.push_back(p);
-  }
-  return marker;
-}
-
-visualization_msgs::msg::Marker ApparentSafeVelocityLimiterNode::makeEnvelopeMarker(
-  const Trajectory & trajectory) const
-{
-  visualization_msgs::msg::Marker envelope;
-  envelope.header = trajectory.header;
-  envelope.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  envelope.scale.x = 0.1;
-  envelope.color.a = 1.0;
-  for (const auto & point : trajectory.points) {
-    const auto vector =
-      forwardSimulatedSegment(point, time_buffer_, distance_buffer_ + vehicle_front_offset_);
-    geometry_msgs::msg::Point p;
-    p.x = vector.second.x();
-    p.y = vector.second.y();
-    p.z = point.pose.position.z;
-    envelope.points.push_back(p);
-  }
-  return envelope;
-}
-
-void ApparentSafeVelocityLimiterNode::publishDebugMarkers(
-  const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & polygons) const
-{
-  visualization_msgs::msg::MarkerArray debug_markers;
-  auto original_envelope = makeEnvelopeMarker(original_trajectory);
-  original_envelope.color.r = 1.0;
-  original_envelope.ns = "original";
-  debug_markers.markers.push_back(original_envelope);
-  auto adjusted_envelope = makeEnvelopeMarker(adjusted_trajectory);
-  adjusted_envelope.color.g = 1.0;
-  adjusted_envelope.ns = "adjusted";
-  debug_markers.markers.push_back(adjusted_envelope);
-
-  static auto max_id = 0;
-  auto id = 0;
-  for (const auto & poly : polygons) {
-    auto marker = makePolygonMarker(poly, id++);
-    marker.header.frame_id = occupancy_grid_ptr_->header.frame_id;
-    marker.header.stamp = now();
-    debug_markers.markers.push_back(marker);
-  }
-  max_id = std::max(id, max_id);
-  while (id <= max_id) {
-    visualization_msgs::msg::Marker marker;
-    marker.action = visualization_msgs::msg::Marker::DELETE;
-    marker.ns = "obstacles";
-    marker.id = id++;
-    debug_markers.markers.push_back(marker);
-  }
-  pub_debug_markers_->publish(debug_markers);
 }
 
 size_t ApparentSafeVelocityLimiterNode::calculateStartIndex(

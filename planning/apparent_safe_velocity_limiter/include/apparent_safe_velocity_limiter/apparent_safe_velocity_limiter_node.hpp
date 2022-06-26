@@ -15,8 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_NODE_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_NODE_HPP_
 
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
-#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <grid_map_ros/GridMapRosConverter.hpp>
@@ -55,12 +54,6 @@
 
 namespace apparent_safe_velocity_limiter
 {
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using nav_msgs::msg::OccupancyGrid;
-using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
 
 class ApparentSafeVelocityLimiterNode : public rclcpp::Node
 {
@@ -127,18 +120,6 @@ private:
   /// @return apparent safe velocity
   Float calculateSafeVelocity(
     const TrajectoryPoint & trajectory_point, const Float dist_to_collision) const;
-
-  /// @brief make the visualization Marker of the given polygon
-  /// @param[in] polygon polygon to turn into a marker
-  /// @param[in] id id of the marker
-  /// @return marker representing the polygon
-  visualization_msgs::msg::Marker makePolygonMarker(
-    const linestring_t & polygon, const int id) const;
-
-  /// @brief make the Marker showing the apparent safety envelope of the given trajectory
-  /// @param[in] trajectory trajectory for which to make the apparent safety envelope
-  /// @return marker representing the apparent safety envelope of the trajectory
-  visualization_msgs::msg::Marker makeEnvelopeMarker(const Trajectory & trajectory) const;
 
   /// @brief create and publish debug markers for the given trajectories and polygons
   /// @param[in] original_trajectory original input trajectory

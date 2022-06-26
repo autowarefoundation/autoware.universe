@@ -16,6 +16,7 @@
 
 from autoware_auto_planning_msgs.msg import Trajectory
 import matplotlib.pyplot as plt
+from nav_msgs.msg import Odometry
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -40,6 +41,12 @@ class TrajectoryVisualizer(Node):
             self.plotAdjustedTrajectory,
             1,
         )
+        self.sub_odom = self.create_subscription(
+            Odometry,
+            "/localization/kinematic_state",
+            self.plotEgoVel,
+            1,
+        )
 
         self.initPlotTrajectoryVelocity()
 
@@ -61,10 +68,16 @@ class TrajectoryVisualizer(Node):
         plt.draw()
         plt.pause(0.01)
 
+    def plotEgoVel(self, odom_msg):
+        self.ego_vel.set_ydata(
+            [odom_msg.twist.twist.linear.x for _ in range(len(self.ego_vel.get_xdata()))]
+        )
+
     def initPlotTrajectoryVelocity(self):
         self.ax1 = plt.subplot(1, 1, 1)  # row, col, index(<raw*col)
         (self.im1,) = self.ax1.plot([], [], label="0: original trajectory", marker="", ls="-")
         (self.im2,) = self.ax1.plot([], [], label="1: adjusted trajectory", marker="", ls="--")
+        self.ego_vel = self.ax1.axhline(y=0, color="blue", linestyle=":")
         self.ax1.set_title("trajectory's velocity")
         self.ax1.legend()
         self.ax1.set_ylabel("vel [m/s]")
