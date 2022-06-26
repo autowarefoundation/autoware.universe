@@ -27,12 +27,23 @@ FreeSpace::FreeSpace() : rclcpp::Node("freespace")
   pub_image_ = create_publisher<Image>("/freespace_image", 10);
 
   segmentation_ = cv::ximgproc::modified::createGraphSegmentation();
+
+  cv::SimpleBlobDetector::Params params;
+  params.filterByConvexity = true;
+  params.minConvexity = 0.9;
+  params.filterByArea = true;
+  params.minArea = 100;
+  params.maxArea = 1e4;
+  detector_ = cv::SimpleBlobDetector::create(params);
 }
 
 void FreeSpace::mapCallback(const HADMapBin & msg) { lanelet_map_ = fromBinMsg(msg); }
 
 void FreeSpace::particleCallback(const ParticleArray & particles)
 {
+  // TODO:
+  return;
+
   if (linestrings_ == nullptr) return;
   if (!camera_info_.has_value()) return;
   if (!camera_extrinsic_.has_value()) return;
@@ -136,36 +147,51 @@ void FreeSpace::infoCallback(const CameraInfo & msg)
   camera_info_ = msg;
   listenExtrinsicTf(msg.header.frame_id);
 }
+
 void FreeSpace::imageCallback(const Image & msg)
 {
   cv::Mat image = util::decompress2CvMat(msg);
-  cv::Mat resized;
-  cv::resize(image, resized, cv::Size(), 0.5, 0.5);
-  cv::Mat dst_image;
-  segmentation_->processImage(resized, dst_image);
-  cv::resize(dst_image, dst_image, image.size(), 0, 0, cv::INTER_NEAREST);
+  // cv::Mat resized;
+  // cv::resize(image, resized, cv::Size(), 0.5, 0.5);
+  // cv::Mat dst_image;
+  // segmentation_->processImage(resized, dst_image);
+  // cv::resize(dst_image, dst_image, image.size(), 0, 0, cv::INTER_NEAREST);
 
-  auto color_mapping = [](int segment_id) -> cv::Scalar {
-    double base = (double)(segment_id)*0.618033988749895 + 0.24443434;
-    return cv::Scalar(std::fmod(base, 1.2) * 360, 0.95 * 255, 0.80 * 255);
-  };
+  // auto color_mapping = [](int segment_id) -> cv::Scalar {
+  //   double base = (double)(segment_id)*0.618033988749895 + 0.24443434;
+  //   return cv::Scalar(std::fmod(base, 1.2) * 360, 0.95 * 255, 0.80 * 255);
+  // };
 
-  cv::COLOR_BGR2HSV;
-  segmented_ = cv::Mat::zeros(dst_image.size(), CV_8UC3);
+  // cv::COLOR_BGR2HSV;
+  // segmented_ = cv::Mat::zeros(dst_image.size(), CV_8UC3);
 
-  uint * p;
-  uchar * p2;
-  for (int i = 0; i < segmented_.rows; i++) {
-    p = dst_image.ptr<uint>(i);
-    p2 = segmented_.ptr<uchar>(i);
-    for (int j = 0; j < segmented_.cols; j++) {
-      cv::Scalar color = color_mapping(p[j]);
-      p2[j * 3] = (uchar)color[0];
-      p2[j * 3 + 1] = (uchar)color[1];
-      p2[j * 3 + 2] = (uchar)color[2];
-    }
-  }
-  cv::cvtColor(segmented_, segmented_, cv::COLOR_HSV2BGR);
+  // uint * p;
+  // uchar * p2;
+  // for (int i = 0; i < segmented_.rows; i++) {
+  //   p = dst_image.ptr<uint>(i);
+  //   p2 = segmented_.ptr<uchar>(i);
+  //   for (int j = 0; j < segmented_.cols; j++) {
+  //     cv::Scalar color = color_mapping(p[j]);
+  //     p2[j * 3] = (uchar)color[0];
+  //     p2[j * 3 + 1] = (uchar)color[1];
+  //     p2[j * 3 + 2] = (uchar)color[2];
+  //   }
+  // }
+  // cv::cvtColor(segmented_, segmented_, cv::COLOR_HSV2BGR);
+
+  cv::Mat edge_image;
+  int size = 3;
+  cv::GaussianBlur(image, image, cv::Size(2 * size + 1, 2 * size + 1), 0, 0);
+  cv::Canny(image, edge_image, 20, 3 * 20, 3);
+
+  edge_image = cv::Mat::ones(image.size(), CV_8UC1) * 255 - edge_image;
+  std::vector<std::vector<cv::Point>> contours;
+  std::vector<cv::Vec4i> hierarchy;
+  cv::findContours(edge_image, contours, hierarchy, cv::RETR_CCOMP, cv::CHAIN_APPROX_SIMPLE);
+
+  cv::cvtColor(edge_image, edge_image, cv::COLOR_GRAY2BGR);
+  cv::drawContours(edge_image, contours, -1, cv::Scalar(0, 0, 255), 1);
+  util::publishImage(*pub_image_, edge_image, msg.header.stamp);
 }
 
 void FreeSpace::listenExtrinsicTf(const std::string & frame_id)

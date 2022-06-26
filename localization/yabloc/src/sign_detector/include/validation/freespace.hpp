@@ -3,6 +3,7 @@
 
 #include <Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
+#include <opencv4/opencv2/features2d.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -47,6 +48,8 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
   cv::Mat segmented_;
+
+  cv::Ptr<cv::SimpleBlobDetector> detector_;
 
   void listenExtrinsicTf(const std::string & frame_id);
 

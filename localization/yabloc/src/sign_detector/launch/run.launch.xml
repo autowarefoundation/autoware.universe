@@ -76,7 +76,7 @@
         <remap from="pose" to="/init/pose"/>
     </node>
 
-    <node if="false" name="freespace" pkg="sign_detector" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
+    <node if="true" name="freespace" pkg="sign_detector" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="image" to="$(var resized_image)"/>
     </node>
