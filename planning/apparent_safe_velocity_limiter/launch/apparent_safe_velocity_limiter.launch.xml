@@ -3,6 +3,7 @@
   <arg name="input_trajectory" default="/planning/scenario_planning/scenario_selector/trajectory"/>
   <arg name="input_dynamic_obstacles" default="/perception/object_recognition/objects"/>
   <arg name="input_occupancy_grid" default="/perception/occupancy_grid_map/map"/>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
   <arg name="output_trajectory" default="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory"/>
   <arg name="output_debug_markers" default="/planning/scenario_planning/apparent_safe_velocity_limiter/debug_markers"/>
 
@@ -18,6 +19,7 @@
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/input/dynamic_obstacles" to="$(var input_dynamic_obstacles)"/>
+    <remap from="~/input/odometry" to="$(var input_odometry)"/>
     <remap from="~/output/trajectory" to="$(var output_trajectory)"/>
     <remap from="~/output/debug_markers" to="$(var output_debug_markers)"/>
   </node>

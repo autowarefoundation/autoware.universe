@@ -3,6 +3,7 @@
     time_buffer: 1.5  # [s] required time without collision in forward simulation
     distance_buffer: 1.5  # [m] distance from obstacles to consider a collision
     min_adjusted_velocity: 1.5  # [m/s] minimum velocity that the module can set
+    max_deceleration: 2.0 # [m/s²] maximum deceleration caused by the adjusted velocity
     start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
     downsample_factor: 1  # factor by which to downsample the input trajectory for calculation
     occupancy_grid_obstacle_threshold: 60 # occupancy grid values higher than this are considered to be obstacles

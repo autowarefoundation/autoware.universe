@@ -14,6 +14,8 @@
 
 #include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter_node.hpp"
 
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
 #include <numeric>
 
 namespace apparent_safe_velocity_limiter
@@ -30,6 +32,10 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   sub_objects_ = create_subscription<PredictedObjects>(
     "~/input/dynamic_obstacles", 1,
     [this](const PredictedObjects::ConstSharedPtr msg) { dynamic_obstacles_ptr_ = msg; });
+  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/odometry", rclcpp::QoS{1}, [&](const nav_msgs::msg::Odometry::ConstSharedPtr msg) {
+      current_ego_velocity_ = static_cast<Float>(msg->twist.twist.linear.x);
+    });
 
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
@@ -52,13 +58,25 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
   result.successful = true;
   for (const auto & parameter : parameters) {
     if (parameter.get_name() == "time_buffer") {
-      time_buffer_ = static_cast<Float>(parameter.as_double());
+      const auto new_time_buffer = static_cast<Float>(parameter.as_double());
+      if (new_time_buffer > 0.0) {
+        time_buffer_ = new_time_buffer;
+      } else {
+        result.successful = false;
+        result.reason = "time_buffer must be positive";
+      }
     } else if (parameter.get_name() == "distance_buffer") {
       distance_buffer_ = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == "start_distance") {
       start_distance_ = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == "downsample_factor") {
-      downsample_factor_ = static_cast<int>(parameter.as_int());
+      const auto new_downsample_factor = static_cast<int>(parameter.as_int());
+      if (new_downsample_factor > 0) {
+        downsample_factor_ = new_downsample_factor;
+      } else {
+        result.successful = false;
+        result.reason = "downsample_factor must be positive";
+      }
     } else if (parameter.get_name() == "occupancy_grid_obstacle_threshold") {
       occupancy_grid_obstacle_threshold_ = static_cast<int8_t>(parameter.as_int());
     } else if (parameter.get_name() == "dynamic_obstacles_buffer") {
@@ -67,6 +85,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       dynamic_obstacles_min_vel_ = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == "min_adjusted_velocity") {
       min_adjusted_velocity_ = static_cast<Float>(parameter.as_double());
+    } else if (parameter.get_name() == "max_deceleration") {
+      max_deceleration_ = static_cast<Float>(parameter.as_double());
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -79,7 +99,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 {
   const auto ego_idx =
     tier4_autoware_utils::findNearestIndex(msg->points, self_pose_listener_.getCurrentPose()->pose);
-  if (!occupancy_grid_ptr_ || !dynamic_obstacles_ptr_ || !ego_idx) {
+  if (!occupancy_grid_ptr_ || !dynamic_obstacles_ptr_ || !ego_idx || !current_ego_velocity_) {
     constexpr auto one_sec = rcutils_duration_value_t(1000);
     if (!occupancy_grid_ptr_)
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
@@ -89,6 +109,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     if (!ego_idx)
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
+    if (!current_ego_velocity_)
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), one_sec, "Current ego velocity not yet received");
     return;
   }
   const auto extra_vehicle_length = vehicle_front_offset_ + distance_buffer_;
@@ -143,8 +166,15 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   obs_filter_duration += stopwatch.toc("obs_filter_duration");
   pub_debug_occupancy_grid_->publish(debug_occ_grid);
 
-  Trajectory safe_trajectory = *msg;
-  for (auto & trajectory_point : downsampled_traj.points) {
+  Float time = 0.0;
+  for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
+    auto & trajectory_point = downsampled_traj.points[i];
+    if (i > 0) {
+      const auto & prev_point = downsampled_traj.points[i - 1];
+      time += static_cast<Float>(
+        tier4_autoware_utils::calcDistance2d(prev_point, trajectory_point) /
+        prev_point.longitudinal_velocity_mps);
+    }
     const auto forward_simulated_vector =
       forwardSimulatedSegment(trajectory_point, time_buffer_, extra_vehicle_length);
     stopwatch.tic("footprint_duration");
@@ -155,11 +185,15 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
       distanceToClosestCollision(forward_simulated_vector, footprint, obstacles);
     dist_poly_duration += stopwatch.toc("dist_poly_duration");
     if (dist_to_collision) {
-      trajectory_point.longitudinal_velocity_mps = calculateSafeVelocity(
-        trajectory_point, static_cast<Float>(*dist_to_collision - extra_vehicle_length));
+      const auto min_feasible_velocity = *current_ego_velocity_ - max_deceleration_ * time;
+      trajectory_point.longitudinal_velocity_mps = std::max(
+        min_feasible_velocity,
+        calculateSafeVelocity(
+          trajectory_point, static_cast<Float>(*dist_to_collision - extra_vehicle_length)));
     }
   }
 
+  Trajectory safe_trajectory = *msg;
   for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
     safe_trajectory.points[start_idx + i * downsample_step].longitudinal_velocity_mps =
       downsampled_traj.points[i].longitudinal_velocity_mps;
@@ -188,7 +222,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 }
 
 Float ApparentSafeVelocityLimiterNode::calculateSafeVelocity(
-  const TrajectoryPoint & trajectory_point, const Float & dist_to_collision) const
+  const TrajectoryPoint & trajectory_point, const Float dist_to_collision) const
 {
   return std::min(
     trajectory_point.longitudinal_velocity_mps,

@@ -33,12 +33,9 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <grid_map_msgs/msg/detail/grid_map__struct.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
-#include <nav_msgs/msg/detail/occupancy_grid__struct.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-#include <visualization_msgs/msg/detail/marker__struct.hpp>
-#include <visualization_msgs/msg/detail/marker_array__struct.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -85,6 +82,8 @@ private:
     sub_objects_;  //!< @brief subscribe for dynamic objects
   rclcpp::Subscription<OccupancyGrid>::SharedPtr
     sub_occupancy_grid_;  //!< @brief subscriber for occupancy grid
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
+    sub_odom_;  //!< @brief subscriber for the current velocity
 
   // cached inputs
   PredictedObjects::ConstSharedPtr dynamic_obstacles_ptr_;
@@ -106,8 +105,10 @@ private:
     static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_buffer"));
   Float dynamic_obstacles_min_vel_ =
     static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_min_vel"));
+  Float max_deceleration_ = static_cast<Float>(declare_parameter<Float>("max_deceleration"));
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
+  std::optional<Float> current_ego_velocity_;
 
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
@@ -125,7 +126,7 @@ private:
   /// @param[in] dist_to_collision distance from the trajectory point to the apparent collision
   /// @return apparent safe velocity
   Float calculateSafeVelocity(
-    const TrajectoryPoint & trajectory_point, const Float & dist_to_collision) const;
+    const TrajectoryPoint & trajectory_point, const Float dist_to_collision) const;
 
   /// @brief make the visualization Marker of the given polygon
   /// @param[in] polygon polygon to turn into a marker
