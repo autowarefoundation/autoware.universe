@@ -39,6 +39,7 @@ using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using tier4_autoware_utils::Polygon2d;
 
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2);
 bool isPathInLanelets(

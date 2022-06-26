@@ -32,8 +32,6 @@
 
 namespace behavior_path_planner::lane_change_utils
 {
-using tier4_autoware_utils::Polygon2d;
-
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
 {
   PathWithLaneId path;
@@ -282,6 +280,13 @@ bool selectSafePath(
       *selected_path = path;
       return true;
     }
+
+    if (isLaneChangePathSafe(
+          paths.front().path, current_lanes, target_lanes, dynamic_objects, current_pose,
+          current_twist, vehicle_width, vehicle_length, ros_parameters, true, path.acceleration)) {
+      *selected_path = path;
+      return true;
+    }
   }
 
   return false;
@@ -328,6 +333,7 @@ bool isLaneChangePathSafe(
   const LaneChangeParameters & ros_parameters, const bool use_buffer, const double acceleration)
 {
   if (dynamic_objects == nullptr) {
+    [[maybe_unused]] const auto a = acceleration;
     return true;
   }
 
@@ -345,16 +351,17 @@ bool isLaneChangePathSafe(
     (!ros_parameters.enable_collision_check_at_prepare_phase) ? lane_change_prepare_duration : 0.0;
   const double target_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
   const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, acceleration);
+    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, 0.0);
 
   const auto getEgoExpectedPoseAndConvertToPolygon =
     [](
-      const PredictedPath & pred_path, Pose & expected_pose,
+      const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
       tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
       const double & length, const double & width) {
       if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
         return false;
       }
+      expected_pose.orientation = current_pose.orientation;
       ego_polygon = util::convertBoundingBoxObjectToGeometryPolygon(expected_pose, length, width);
 
       return true;
@@ -391,7 +398,7 @@ bool isLaneChangePathSafe(
   const auto current_lane_object_indices = util::filterObjectsByPath(
     *dynamic_objects, current_lane_object_indices_lanelet, path,
     vehicle_width / 2 + lateral_buffer);
-  constexpr double safety_buffer = 0.5;
+  constexpr double safety_buffer = 0.0;
   const auto vehicle_width_with_buffer = vehicle_width + safety_buffer;
 
   for (const auto & i : current_lane_object_indices) {
@@ -411,8 +418,8 @@ bool isLaneChangePathSafe(
         Pose expected_ego_pose;
         tier4_autoware_utils::Polygon2d ego_polygon;
         if (!getEgoExpectedPoseAndConvertToPolygon(
-              vehicle_predicted_path, expected_ego_pose, ego_polygon, t, vehicle_length,
-              vehicle_width_with_buffer)) {
+              current_pose, vehicle_predicted_path, expected_ego_pose, ego_polygon, t,
+              vehicle_length, vehicle_width_with_buffer)) {
           continue;
         }
 
@@ -460,8 +467,8 @@ bool isLaneChangePathSafe(
           Pose expected_ego_pose;
           tier4_autoware_utils::Polygon2d ego_polygon;
           if (!getEgoExpectedPoseAndConvertToPolygon(
-                vehicle_predicted_path, expected_ego_pose, ego_polygon, t, vehicle_length,
-                vehicle_width_with_buffer)) {
+                current_pose, vehicle_predicted_path, expected_ego_pose, ego_polygon, t,
+                vehicle_length, vehicle_width_with_buffer)) {
             continue;
           }
 
@@ -487,8 +494,8 @@ bool isLaneChangePathSafe(
         Pose expected_ego_pose;
         tier4_autoware_utils::Polygon2d ego_polygon;
         if (!getEgoExpectedPoseAndConvertToPolygon(
-              vehicle_predicted_path, expected_ego_pose, ego_polygon, t, vehicle_length,
-              vehicle_width_with_buffer)) {
+              current_pose, vehicle_predicted_path, expected_ego_pose, ego_polygon, t,
+              vehicle_length, vehicle_width_with_buffer)) {
           continue;
         }
 
