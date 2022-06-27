@@ -99,11 +99,12 @@ Using a planning simulator
 ### Interactive manipulation
 You can interactively manipulate the object.
 1. Select "Tool Properties" in rviz.
-2. Select corresponding object tab in the Tool Properties.
-3. Turn on "Interactive".
+2. Select the corresponding object tab in the Tool Properties.
+3. Turn the "Interactive" checkbox on.
    ![tool_properties](./images/tool_properties.png)
 4. Select the item in the tool tab in you haven't chosen yet.
-5. Key commands are as follows. 
+5. Key commands are as follows.
+
 | action | key command |
 | ---- | ---- |
 | ADD  | Shift + Click Right Button |
