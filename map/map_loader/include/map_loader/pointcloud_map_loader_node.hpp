@@ -103,7 +103,7 @@ private:
     const geometry_msgs::msg::Point position, const float radius,
     std::vector<PCDFileMetadata> pcd_file_metadata_array) const;
 
-  bool isLoadingSamePCDMapsAsBefore(
+  bool continueToLoadMaps(
     const geometry_msgs::msg::Point position, const float radius,
     std::vector<PCDFileMetadata> pcd_file_metadata_array);
   bool loadPCDPartiallyForPublishServiceCallback(

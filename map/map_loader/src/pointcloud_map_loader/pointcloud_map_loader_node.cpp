@@ -148,19 +148,13 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
         }
       }
     }
-    RCLCPP_ERROR_STREAM(get_logger(), "KOJI Start loading whole map...");
-
     sensor_msgs::msg::PointCloud2 pcd = loadPCDFiles(pcd_paths);
 
     if (pcd.width == 0) {
       RCLCPP_ERROR(get_logger(), "No PCD was loaded: pcd_paths.size() = %zu", pcd_paths.size());
       return;
     }
-    RCLCPP_ERROR_STREAM(get_logger(), "KOJI Whole map load complete!");
 
-    // if (use_downsample_) {
-    //   pcd = downsample(pcd, leaf_size_);
-    // }
     pcd.header.frame_id = "map";
     generateTF(pcd);
     pub_whole_pointcloud_map_->publish(pcd);
@@ -193,9 +187,10 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   // for (const auto & path : pcd_paths) {
   for (int i = 0; i < int(pcd_paths.size()); ++i) {
     auto & path = pcd_paths[i];
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "KOJI Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
+    if (i % 50 == 0) {
+      RCLCPP_INFO_STREAM(get_logger(),
+        "Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
+    }
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
@@ -273,7 +268,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
   return filtered_pcd;
 }
 
-bool PointCloudMapLoaderNode::isLoadingSamePCDMapsAsBefore(
+bool PointCloudMapLoaderNode::continueToLoadMaps(
   const geometry_msgs::msg::Point position, const float radius,
   std::vector<PointCloudMapLoaderNode::PCDFileMetadata> pcd_file_metadata_array)
 {
@@ -283,9 +278,21 @@ bool PointCloudMapLoaderNode::isLoadingSamePCDMapsAsBefore(
       pcd_maps_to_load.insert(metadata.path);
     }
   }
-  bool res = pcd_maps_to_load == previously_loaded_pcd_paths_;
-  previously_loaded_pcd_paths_ = pcd_maps_to_load;
-  return res;
+
+  if (int(pcd_maps_to_load.size()) == 0) {
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      "Empty pcd map! (Please check if you are using the right pcd maps and giving an appropriate initial pose.)");
+    return false;
+  }
+
+  if (pcd_maps_to_load == previously_loaded_pcd_paths_) {
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      "The same request received as before! Skip loading");
+    return false;
+  }
+  return true;
 }
 
 bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
@@ -294,11 +301,7 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback(
 {
   res->position = req->position;
   res->radius = req->radius;
-  if (isLoadingSamePCDMapsAsBefore(req->position, req->radius, pcd_file_metadata_array_)) {
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "skip loading pcd files (request demands for the same set of pcd files that currently "
-      "exists)");
+  if (!continueToLoadMaps(req->position, req->radius, pcd_file_metadata_array_)) {
     return true;
   }
   pub_partial_pointcloud_map_->publish(
@@ -312,11 +315,7 @@ bool PointCloudMapLoaderNode::loadPCDPartiallyServiceCallback(
 {
   res->position = req->position;
   res->radius = req->radius;
-  if (isLoadingSamePCDMapsAsBefore(req->position, req->radius, pcd_file_metadata_array_)) {
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "skip loading pcd files (request demands for the same set of pcd files that currently "
-      "exists)");
+  if (!continueToLoadMaps(req->position, req->radius, pcd_file_metadata_array_)) {
     return true;
   }
   res->map = loadPCDPartially(req->position, req->radius, pcd_file_metadata_array_);
