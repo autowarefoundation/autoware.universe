@@ -1,3 +1,4 @@
+#include "common/timer.hpp"
 #include "common/util.hpp"
 #include "particle_filter/sign_corrector.hpp"
 #include "sign_detector/ll2_util.hpp"
@@ -102,10 +103,12 @@ std::optional<std::vector<cv::Point2i>> SignCorrector::projectBoard(
   return projected;
 }
 
-void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat image)
+void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat grad_image)
 {
   if (!camera_info_.has_value()) return;
   if (!camera_extrinsic_.has_value()) return;
+
+  Timer timer;
 
   std::optional<ParticleArray> opt_array = this->getSyncronizedParticleArray(stamp);
   if (!opt_array.has_value()) return;
@@ -114,26 +117,56 @@ void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat image)
     RCLCPP_WARN_STREAM(
       get_logger(), "Timestamp gap between image and particles is LARGE " << dt.seconds());
 
-  RCLCPP_WARN_STREAM(
-    get_logger(), "There are visible sign-board around here " << sign_boards_.size());
-
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(camera_info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
-  cv::Mat board_image = cv::Mat::zeros(image.size(), CV_8UC3);
-  for (const Particle & p : opt_array->particles) {
+  cv::Mat total_board_image = cv::Mat::zeros(grad_image.size(), CV_8UC1);
+
+  for (Particle & p : opt_array->particles) {
     Eigen::Affine3f transform = util::pose2Affine(p.pose);
+    cv::Mat board_image = cv::Mat::zeros(grad_image.size(), CV_8UC1);
 
     for (const auto board : sign_boards_) {
       std::optional<std::vector<cv::Point2i>> board_opt = projectBoard(K, T, transform, board);
-      if (board_opt.has_value())
-        cv::fillConvexPoly(board_image, board_opt.value(), cv::Scalar(0, 255, 255), 1);
-      // cv::polylines(board_image, board_opt.value(), false, cv::Scalar(0, 255, 255), 1);
+      if (board_opt.has_value()) {
+        cv::fillConvexPoly(board_image, board_opt.value(), cv::Scalar::all(255), 1);
+      }
     }
+    total_board_image += board_image;
+
+    cv::Mat masked_grad;
+    cv::bitwise_and(grad_image, board_image, masked_grad);
+    float count = cv::countNonZero(masked_grad);
+    if (count > 10)
+      p.weight = cv::sum(masked_grad)[0] / count;
+    else
+      p.weight = -1;
   }
-  cv::addWeighted(image, 0.8, board_image, 0.8, 1, board_image);
-  util::publishImage(*pub_image_, board_image, stamp);
+
+  cv::Mat masked_grad;
+  cv::bitwise_and(grad_image, total_board_image, masked_grad);
+  float count = 1 + cv::countNonZero(masked_grad);
+  float normal_grad_density = cv::sum(masked_grad)[0] / count;
+  for (Particle & p : opt_array->particles) {
+    if (p.weight > 0)
+      p.weight /= normal_grad_density;
+    else
+      p.weight = 1;
+  }
+
+  cv::cvtColor(total_board_image, total_board_image, cv::COLOR_GRAY2BGR);
+
+  cv::Mat rgb_grad_image;
+  cv::applyColorMap(grad_image, rgb_grad_image, cv::COLORMAP_JET);
+  cv::addWeighted(rgb_grad_image, 0.8, total_board_image, 0.2, 1, total_board_image);
+  util::publishImage(*pub_image_, total_board_image, stamp);
+
+  this->setWeightedParticleArray(*opt_array);
+
+  RCLCPP_WARN_STREAM(
+    get_logger(),
+    "There are " << sign_boards_.size() << " visible sign-board " << timer.milliSeconds());
 }
 
 void SignCorrector::imageCallback(const Image & msg)
@@ -150,8 +183,6 @@ void SignCorrector::imageCallback(const Image & msg)
 
   cv::Mat rgb_edge_image;
   cv::convertScaleAbs(edge_image, rgb_edge_image, 1.0f);
-  cv::applyColorMap(rgb_edge_image, rgb_edge_image, cv::COLORMAP_JET);
-
   execute(stamp, rgb_edge_image);
 }
 

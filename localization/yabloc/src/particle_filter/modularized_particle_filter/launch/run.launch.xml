@@ -17,12 +17,4 @@
         <param name="static_linear_covariance" value="0.09" />
         <param name="static_angular_covariance" value="0.01" />
     </node>
-
-    <!-- ========================================= -->
-    <node pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen" args="--ros-args --log-level $(var log_level)">
-        <remap from="/particle_array" to="/predicted_particles" />
-        <!-- <remap from="/particle_array" to="/gnss/weighted_particles" /> -->
-        <!-- <remap from="/particle_array" to="/camera/weighted_particles" /> -->
-        <remap from="/marker_array" to="/camera/weighted_particles/marker_array" />
-    </node>
 </launch>

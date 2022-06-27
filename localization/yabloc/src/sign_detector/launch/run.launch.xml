@@ -81,12 +81,6 @@
         <remap from="image" to="$(var resized_image)"/>
     </node>
 
-    <node if="true" name="sign_corrector" pkg="sign_detector" exec="sign_corrector_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="camera_info" to="$(var resized_info)"/>
-        <remap from="image" to="$(var resized_image)"/>
-        <param name="blur_size" value="5"/>
-    </node>
-
     <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
