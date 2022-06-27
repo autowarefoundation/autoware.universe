@@ -230,92 +230,29 @@ double l2Norm(const Vector3 vector)
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
 }
 
-bool convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom,
-  FrenetCoordinate3d * frenet_coordinate)
+FrenetCoordinate3d convertToFrenetCoordinate3d(
+  const std::vector<Point> & linestring, const Point & search_point_geom)
 {
-  const auto linestring = convertToPointArray(path);
-  return convertToFrenetCoordinate3d(linestring, search_point_geom, frenet_coordinate);
+  FrenetCoordinate3d frenet_coordinate;
+
+  const size_t nearest_segment_idx =
+    tier4_autoware_utils::findNearestSegmentIndex(linestring, search_point_geom);
+  const double longitudinal_length = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+    linestring, nearest_segment_idx, search_point_geom);
+  frenet_coordinate.length =
+    tier4_autoware_utils::calcSignedArcLength(linestring, 0, nearest_segment_idx) +
+    longitudinal_length;
+  frenet_coordinate.distance =
+    tier4_autoware_utils::calcLateralOffset(linestring, search_point_geom);
+
+  return frenet_coordinate;
 }
 
-// returns false when search point is off the linestring
-bool convertToFrenetCoordinate3d(
-  const std::vector<Point> & linestring, const Point search_point_geom,
-  FrenetCoordinate3d * frenet_coordinate)
+FrenetCoordinate3d convertToFrenetCoordinate3d(
+  const PathWithLaneId & path, const Point & search_point_geom)
 {
-  if (linestring.empty()) {
-    return false;
-  }
-
-  const auto search_pt = tier4_autoware_utils::fromMsg(search_point_geom);
-  double min_distance = std::numeric_limits<double>::max();
-
-  // get frenet coordinate based on points
-  // this is done because linestring is not differentiable at vertices
-  {
-    double accumulated_length = 0;
-
-    for (std::size_t i = 0; i < linestring.size(); i++) {
-      const auto geom_pt = linestring.at(i);
-      const auto current_pt = tier4_autoware_utils::fromMsg(geom_pt);
-      const auto current2search_pt = (search_pt - current_pt);
-      // update accumulated length
-      if (i != 0) {
-        const auto p1 = tier4_autoware_utils::fromMsg(linestring.at(i - 1));
-        const auto p2 = current_pt;
-        accumulated_length += (p2 - p1).norm();
-      }
-      // update frenet coordinate
-
-      const double tmp_distance = current2search_pt.norm();
-      if (tmp_distance < min_distance) {
-        min_distance = tmp_distance;
-        frenet_coordinate->distance = tmp_distance;
-        frenet_coordinate->length = accumulated_length;
-      } else {
-        break;
-      }
-    }
-  }
-
-  // get frenet coordinate based on lines
-  bool found_on_line = false;
-  {
-    auto prev_geom_pt = linestring.front();
-    double accumulated_length = 0;
-    for (const auto & geom_pt : linestring) {
-      const auto start_pt = tier4_autoware_utils::fromMsg(prev_geom_pt);
-      const auto end_pt = tier4_autoware_utils::fromMsg(geom_pt);
-
-      const auto line_segment = end_pt - start_pt;
-      const double line_segment_length = line_segment.norm();
-      const auto direction = line_segment / line_segment_length;
-      const auto start2search_pt = (search_pt - start_pt);
-
-      double tmp_length = direction.dot(start2search_pt);
-      if (tmp_length >= 0 && tmp_length <= line_segment_length) {
-        double tmp_distance = direction.cross(start2search_pt).norm();
-        if (tmp_distance < min_distance) {
-          min_distance = tmp_distance;
-          frenet_coordinate->distance = tmp_distance;
-          frenet_coordinate->length = accumulated_length + tmp_length;
-
-          if (found_on_line) {
-            break;
-          }
-
-          found_on_line = true;
-        } else if (found_on_line) {
-          break;
-        }
-      } else if (found_on_line) {
-        break;
-      }
-      accumulated_length += line_segment_length;
-      prev_geom_pt = geom_pt;
-    }
-  }
-  return found_on_line;
+  const auto linestring = convertToPointArray(path);
+  return convertToFrenetCoordinate3d(linestring, search_point_geom);
 }
 
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path)
