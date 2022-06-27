@@ -24,7 +24,7 @@ ament_auto_add_library(traffic_light_estimator SHARED
 
 rclcpp_components_register_node(traffic_light_estimator
   PLUGIN "traffic_light::TrafficLightEstimatorNode"
-  EXECUTABLE traffic_light_estimater_node
+  EXECUTABLE traffic_light_estimator_node
 )
 
 if(BUILD_TESTING)

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_ESTIMATER__NODE_HPP_
-#define TRAFFIC_LIGHT_ESTIMATER__NODE_HPP_
+#ifndef TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
+#define TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
 
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -101,4 +101,4 @@ private:
 
 }  // namespace traffic_light
 
-#endif  // TRAFFIC_LIGHT_ESTIMATER__NODE_HPP_
+#endif  // TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
