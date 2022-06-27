@@ -126,9 +126,8 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
 
   undistortPointCloud(tf2_base_link_to_sensor, *points_msg);
 
-  if (points_sub_count > 0) {
-    undistorted_points_pub_->publish(std::move(points_msg));
-  }
+  undistorted_points_pub_->publish(std::move(points_msg));
+
   // add processing time for debug
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
@@ -231,7 +230,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     if (std::abs(*it_time_stamp - rclcpp::Time(twist_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
-        "twist time_stamp is too late. Cloud not interpolate.");
+        "twist time_stamp is too late. Could not interpolate.");
       v = 0.0f;
       w = 0.0f;
     }
@@ -245,7 +244,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(
           get_logger(), *get_clock(), 10000 /* ms */,
-          "imu time_stamp is too late. Cloud not interpolate.");
+          "imu time_stamp is too late. Could not interpolate.");
       } else {
         w = static_cast<float>(imu_it->vector.z);
       }
