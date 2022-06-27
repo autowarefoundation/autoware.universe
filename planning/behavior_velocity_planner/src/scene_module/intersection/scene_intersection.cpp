@@ -183,7 +183,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  setSafe(!is_entry_prohibited || (state_machine_.getState() == State::GO));
+  setSafe(!is_entry_prohibited);
   setDistance(tier4_autoware_utils::calcSignedArcLength(
     input_path.points, planner_data_->current_pose.pose.position,
     input_path.points.at(stop_line_idx).point.pose.position));
