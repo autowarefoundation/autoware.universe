@@ -10,6 +10,7 @@
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <pcl/point_cloud.h>
@@ -28,9 +29,12 @@ public:
   using CameraInfo = sensor_msgs::msg::CameraInfo;
   using Particle = modularized_particle_filter_msgs::msg::Particle;
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
+  using Marker = visualization_msgs::msg::Marker;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
   SignCorrector();
 
 private:
+  const int blur_size_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<ParticleArray>::SharedPtr sub_particle_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
@@ -38,6 +42,7 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_{nullptr};
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
@@ -50,6 +55,7 @@ private:
   void execute(const rclcpp::Time & stamp, cv::Mat image);
   void listenExtrinsicTf(const std::string & frame_id);
   void extractNearSign(const PoseStamped & pose_stamped);
+  void publishSignMarker();
 
   void mapCallback(const HADMapBin & msg);
   void poseCallback(const PoseStamped & msg);

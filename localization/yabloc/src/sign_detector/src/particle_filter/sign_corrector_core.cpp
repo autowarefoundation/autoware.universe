@@ -7,7 +7,8 @@
 
 namespace particle_filter
 {
-SignCorrector::SignCorrector() : AbstCorrector("sign_corrector")
+SignCorrector::SignCorrector()
+: AbstCorrector("sign_corrector"), blur_size_(declare_parameter<int>("blur_size", 3))
 {
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -23,10 +24,16 @@ SignCorrector::SignCorrector() : AbstCorrector("sign_corrector")
   sub_info_ = create_subscription<CameraInfo>("/camera_info", 10, cb_info);
   sub_image_ = create_subscription<Image>("/image", 10, cb_image);
 
+  const rclcpp::QoS latch_qos = rclcpp::QoS{1}.transient_local();
   pub_image_ = create_publisher<Image>("/sign_image", 10);
+  pub_marker_ = create_publisher<MarkerArray>("/sign_marker", latch_qos);
 }
 
-void SignCorrector::mapCallback(const HADMapBin & msg) { lanelet_map_ = fromBinMsg(msg); }
+void SignCorrector::mapCallback(const HADMapBin & msg)
+{
+  lanelet_map_ = fromBinMsg(msg);
+  publishSignMarker();
+}
 
 void SignCorrector::poseCallback(const PoseStamped & msg) { extractNearSign(msg); }
 
@@ -41,12 +48,12 @@ void SignCorrector::extractNearSign(const PoseStamped & pose_stamped)
   Eigen::Vector3f position;
   position << pos.x, pos.y, pos.z;
 
-  const std::unordered_set<std::string> visible_labels = {"sign-board"};
-
   float w = pose_stamped.pose.orientation.w;
   float z = pose_stamped.pose.orientation.z;
   Eigen::Matrix3f rotation =
     Eigen::AngleAxisf(2.f * std::atan2(z, w), Eigen::Vector3f::UnitZ()).matrix();
+
+  const std::unordered_set<std::string> visible_labels = {"sign-board"};
 
   for (lanelet::LineString3d & line : lanelet_map_->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
@@ -129,7 +136,7 @@ void SignCorrector::imageCallback(const Image & msg)
 
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-  cv::Size kernel_size(2 * 3 + 1, 2 * 3 + 1);
+  cv::Size kernel_size(2 * blur_size_ + 1, 2 * blur_size_ + 1);
   cv::GaussianBlur(gray_image, gray_image, kernel_size, 0, 0);
   cv::Mat edge_image;
   cv::Laplacian(gray_image, edge_image, CV_16SC1, 5);
@@ -162,5 +169,41 @@ void SignCorrector::listenExtrinsicTf(const std::string & frame_id)
     camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
   } catch (tf2::TransformException & ex) {
   }
+}
+
+void SignCorrector::publishSignMarker()
+{
+  const std::unordered_set<std::string> visible_labels = {"sign-board"};
+
+  lanelet::LineStrings3d sign_boards;
+  for (const lanelet::LineString3d & line : lanelet_map_->lineStringLayer) {
+    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
+    if (visible_labels.count(attr.value()) == 0) continue;
+    sign_boards.push_back(line);
+  }
+
+  MarkerArray marker_array;
+  int id = 0;
+  for (const lanelet::LineString3d & sign_boards : sign_boards) {
+    Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = get_clock()->now();
+    marker.type = Marker::LINE_STRIP;
+    marker.color = util::color(1.0f, 1.0f, 1.0f, 1.0f);
+    marker.scale.x = 0.1;
+    marker.id = id++;
+
+    for (const lanelet::ConstPoint3d & p : sign_boards) {
+      geometry_msgs::msg::Point gp;
+      gp.x = p.x();
+      gp.y = p.y();
+      gp.z = p.z();
+      marker.points.push_back(gp);
+    }
+    marker_array.markers.push_back(marker);
+  }
+
+  pub_marker_->publish(marker_array);
 }
 }  // namespace particle_filter
