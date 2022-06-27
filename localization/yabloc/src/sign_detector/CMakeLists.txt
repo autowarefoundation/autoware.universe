@@ -93,6 +93,7 @@ ADD_EXE(TARGET camera_corrector_node SRC
   INC include LIB util cost_map)
 
 ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
+ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp INC include LIB util)
 
 ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Geographic)
 ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
