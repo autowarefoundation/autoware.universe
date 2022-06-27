@@ -31,6 +31,7 @@ public:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+  using Vec3Vec = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
   SignCorrector();
 
 private:
@@ -44,13 +45,17 @@ private:
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_{nullptr};
+  std::vector<Vec3Vec> sign_boards_;
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
   std::optional<CameraInfo> camera_info_{std::nullopt};
 
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
+
+  std::optional<std::vector<cv::Point2i>> projectBoard(
+    const Eigen::Matrix3f & K, const Eigen::Affine3f & T, const Eigen::Affine3f & transform,
+    const Vec3Vec & contour);
 
   void execute(const rclcpp::Time & stamp, cv::Mat image);
   void listenExtrinsicTf(const std::string & frame_id);

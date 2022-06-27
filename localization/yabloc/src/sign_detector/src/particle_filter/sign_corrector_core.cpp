@@ -41,8 +41,6 @@ void SignCorrector::extractNearSign(const PoseStamped & pose_stamped)
 {
   if (lanelet_map_ == nullptr) return;
 
-  linestrings_ = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-
   const rclcpp::Time stamp = pose_stamped.header.stamp;
   auto pos = pose_stamped.pose.position;
   Eigen::Vector3f position;
@@ -54,31 +52,27 @@ void SignCorrector::extractNearSign(const PoseStamped & pose_stamped)
     Eigen::AngleAxisf(2.f * std::atan2(z, w), Eigen::Vector3f::UnitZ()).matrix();
 
   const std::unordered_set<std::string> visible_labels = {"sign-board"};
+  sign_boards_.clear();
 
   for (lanelet::LineString3d & line : lanelet_map_->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
 
-    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
+    Vec3Vec board;
+    Eigen::Vector3f center = Eigen::Vector3f::Zero();
+    int count = 0;
     for (const lanelet::ConstPoint3d p : line) {
-      Eigen::Vector3f p_vec(p.x(), p.y(), p.z());
-
-      Eigen::Vector3f relative = rotation.transpose() * (p_vec - position);
-      if (
-        (relative.x() > 0) & (relative.x() < 50) & (std::abs(relative.y()) < 10) &
-        from.has_value()) {
-        pcl::PointNormal pn;
-        pn.x = from->x();
-        pn.y = from->y();
-        pn.z = from->z();
-        pn.normal_x = p.x();
-        pn.normal_y = p.y();
-        pn.normal_z = p.z();
-        linestrings_->push_back(pn);
-      }
-      from = p;
+      Eigen::Vector3f vp;
+      vp << p.x(), p.y(), p.z();
+      board.push_back(vp);
+      center += vp;
+      count++;
     }
+    center /= count;
+    Eigen::Vector3f relative = rotation.transpose() * (center - position);
+    if ((relative.x() > 0) & (relative.x() < 50) & (std::abs(relative.y()) < 10))
+      sign_boards_.push_back(board);
   }
 }
 
@@ -88,9 +82,28 @@ void SignCorrector::infoCallback(const CameraInfo & msg)
   listenExtrinsicTf(msg.header.frame_id);
 }
 
+std::optional<std::vector<cv::Point2i>> SignCorrector::projectBoard(
+  const Eigen::Matrix3f & K, const Eigen::Affine3f & T, const Eigen::Affine3f & transform,
+  const Vec3Vec & contour)
+{
+  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+    return cv::Point2i(uv1.x(), uv1.y());
+  };
+
+  std::vector<cv::Point2i> projected;
+  for (const Eigen::Vector3f & p : contour) {
+    auto opt = project(p);
+    if (!opt.has_value()) return std::nullopt;
+    projected.push_back(*opt);
+  }
+  return projected;
+}
+
 void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat image)
 {
-  if (linestrings_ == nullptr) return;
   if (!camera_info_.has_value()) return;
   if (!camera_extrinsic_.has_value()) return;
 
@@ -101,28 +114,22 @@ void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat image)
     RCLCPP_WARN_STREAM(
       get_logger(), "Timestamp gap between image and particles is LARGE " << dt.seconds());
 
-  RCLCPP_WARN_STREAM(get_logger(), "There are visible sign-board around here");
+  RCLCPP_WARN_STREAM(
+    get_logger(), "There are visible sign-board around here " << sign_boards_.size());
 
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(camera_info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
   cv::Mat board_image = cv::Mat::zeros(image.size(), CV_8UC3);
-
   for (const Particle & p : opt_array->particles) {
     Eigen::Affine3f transform = util::pose2Affine(p.pose);
-    auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
-      Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
-      if (from_camera.z() < 1e-3f) return std::nullopt;
-      Eigen::Vector3f uv1 = from_camera /= from_camera.z();
-      return cv::Point2i(uv1.x(), uv1.y());
-    };
 
-    for (const auto pn : *linestrings_) {
-      auto from_opt = project(pn.getVector3fMap());
-      auto to_opt = project(pn.getNormalVector3fMap());
-      if (from_opt.has_value() & to_opt.has_value())
-        cv::line(board_image, from_opt.value(), to_opt.value(), cv::Scalar(0, 255, 255), 1);
+    for (const auto board : sign_boards_) {
+      std::optional<std::vector<cv::Point2i>> board_opt = projectBoard(K, T, transform, board);
+      if (board_opt.has_value())
+        cv::fillConvexPoly(board_image, board_opt.value(), cv::Scalar(0, 255, 255), 1);
+      // cv::polylines(board_image, board_opt.value(), false, cv::Scalar(0, 255, 255), 1);
     }
   }
   cv::addWeighted(image, 0.8, board_image, 0.8, 1, board_image);
