@@ -32,8 +32,8 @@ bool hasMergeLane(
   const auto next_lanelets_1 = routing_graph_ptr->following(lanelet_1);
   const auto next_lanelets_2 = routing_graph_ptr->following(lanelet_2);
 
-  for (const auto next_lanelet_1 : next_lanelets_1) {
-    for (const auto next_lanelet_2 : next_lanelets_2) {
+  for (const auto & next_lanelet_1 : next_lanelets_1) {
+    for (const auto & next_lanelet_2 : next_lanelets_2) {
       if (next_lanelet_1.id() == next_lanelet_2.id()) {
         return true;
       }
