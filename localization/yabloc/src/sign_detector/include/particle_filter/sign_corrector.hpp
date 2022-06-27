@@ -1,5 +1,6 @@
 #pragma once
 #include <Eigen/Geometry>
+#include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/features2d.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -18,7 +19,7 @@
 
 namespace particle_filter
 {
-class SignCorrector : public rclcpp::Node
+class SignCorrector : public AbstCorrector
 {
 public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
@@ -46,13 +47,12 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
 
+  void execute(const rclcpp::Time & stamp, cv::Mat image);
   void listenExtrinsicTf(const std::string & frame_id);
-
   void extractNearSign(const PoseStamped & pose_stamped);
 
   void mapCallback(const HADMapBin & msg);
   void poseCallback(const PoseStamped & msg);
-  void particleCallback(const ParticleArray & msg);
   void infoCallback(const CameraInfo & msg);
   void imageCallback(const Image & msg);
 };
