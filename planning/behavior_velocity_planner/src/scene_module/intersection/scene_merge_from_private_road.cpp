@@ -110,7 +110,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
 
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {
-    double v = 0.0;
+    constexpr double v = 0.0;
     util::setVelocityFrom(stop_line_idx, v, path);
 
     /* get stop point and stop factor */
