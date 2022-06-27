@@ -55,7 +55,7 @@ if(BUILD_TESTING)
   target_link_libraries(test_points_to_costmap
     costmap_generator_lib
   )
-  
+
   ament_add_ros_isolated_gtest(test_objects_to_costmap
     test/test_objects_to_costmap.cpp
   )
