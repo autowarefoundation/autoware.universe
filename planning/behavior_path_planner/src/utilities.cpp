@@ -1888,7 +1888,7 @@ void getProjectedDistancePointFromPolygons(
   ProjectedDistancePoint nearest;
   std::unique_ptr<Point2d> current_point;
 
-  std::size_t count{0};
+  size_t idx{0};
 
   for (const auto & [ego_to_polygon, polygon_to_ego] :
        {std::tie(ego_polygon, object_polygon), std::tie(object_polygon, ego_polygon)}) {
@@ -1898,19 +1898,20 @@ void getProjectedDistancePointFromPolygons(
       boost::make_iterator_range(bg::points_begin(polygon_to_ego), bg::points_end(polygon_to_ego));
 
     for (auto && segment : segments) {
-      count = 0;
+      std::size_t count{0};
       for (auto && point : points) {
         const auto projected = pointToSegment(point, *segment.first, *segment.second);
         if (!current_point || projected.distance < nearest.distance) {
           current_point = std::make_unique<Point2d>(point);
           nearest = projected;
+          idx = count;
         }
         ++count;
       }
     }
   }
 
-  if (count < object_polygon.outer().size()) {
+  if (idx < object_polygon.outer().size()) {
     point_on_object.position.x = current_point->x();
     point_on_object.position.y = current_point->y();
     point_on_ego.position.x = nearest.projected_point.x();

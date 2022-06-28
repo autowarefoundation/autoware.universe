@@ -367,6 +367,7 @@ bool isLaneChangePathSafe(
       if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
         return false;
       }
+      expected_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
 
       if (!util::calcObjectPolygon(object, &obj_polygon)) {
         return false;
