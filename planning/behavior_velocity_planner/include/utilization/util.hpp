@@ -16,8 +16,7 @@
 #define UTILIZATION__UTIL_HPP_
 
 #include <lanelet2_extension/utility/query.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
