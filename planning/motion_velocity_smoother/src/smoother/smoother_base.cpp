@@ -94,10 +94,10 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
    */
 
   for (size_t i = 0; i < output->size() - 1; i++) {
-      output->at(i).front_wheel_angle_rad = static_cast<float>(std::atan(
-        (tf2::getYaw(output->at(i + 1).pose.orientation) -
-         tf2::getYaw(output->at(i).pose.orientation)) *
-        base_param_.wheel_base / (points_interval)));
+    output->at(i).front_wheel_angle_rad = static_cast<float>(std::atan(
+      (tf2::getYaw(output->at(i + 1).pose.orientation) -
+       tf2::getYaw(output->at(i).pose.orientation)) *
+      base_param_.wheel_base / (points_interval)));
   }
   output->back().front_wheel_angle_rad = 0.0;
 

@@ -251,7 +251,7 @@ boost::optional<std::vector<double>> calcTrajectoryCurvatureFromFrontSteeringAng
   std::vector<double> k_arr;
 
   // calculate curvature by desired front wheel steering angle
-  for (const auto & trajectory_point: trajectory){
+  for (const auto & trajectory_point : trajectory) {
     const double steering_angle = trajectory_point.front_wheel_angle_rad;
     const double curvature = tan(steering_angle) / wheelbase;
     k_arr.push_back(curvature);
