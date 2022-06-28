@@ -241,6 +241,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/path", LaunchConfiguration("input_path_topic")),
             ("~/input/vector_map", LaunchConfiguration("input_map_topic")),
             ("~/input/route", LaunchConfiguration("input_route_topic")),
+            ("~/input/fallback", "obstacle_avoidance_planner/trajectory"),
         ],
         parameters=[
             common_param,
@@ -263,7 +264,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
-            # obstacle_avoidance_planner_component,
+            obstacle_avoidance_planner_component,
         ],
     )
 

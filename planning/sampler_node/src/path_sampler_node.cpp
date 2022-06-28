@@ -78,9 +78,13 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
   route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "~/input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&PathSamplerNode::routeCallback, this, std::placeholders::_1));
+  fallback_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+    "~/input/fallback", rclcpp::QoS{1},
+    std::bind(&PathSamplerNode::fallbackCallback, this, std::placeholders::_1));
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
 
+  fallback_timeout_ = declare_parameter<double>("fallback_trajectory_timeout");
   params_.constraints.hard.max_curvature =
     declare_parameter<double>("constraints.hard.max_curvature");
   params_.constraints.hard.min_curvature =
@@ -142,7 +146,9 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   for (const auto & parameter : parameters) {
-    if (parameter.get_name() == "constraints.hard.max_curvature") {
+    if (parameter.get_name() == "fallback_trajectory_timeout") {
+      fallback_timeout_ = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.max_curvature") {
       params_.constraints.hard.max_curvature = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.min_curvature") {
       params_.constraints.hard.min_curvature = parameter.as_double();
@@ -199,7 +205,7 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
 }
 
 // ROS callback functions
-void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr msg)
+void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
   w_.plotter_->clear();
   sampler_node::debug::Debug debug;
@@ -239,9 +245,17 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
     prev_path_ = *selected_path;
   } else {
     RCLCPP_WARN(
-      get_logger(), "[PathSampler] All candidates rejected: out=%d coll=%d curv=%d",
-      debug.violations.outside, debug.violations.collision, debug.violations.curvature);
-    publishPath(prev_path_, msg);
+      get_logger(), "All candidates rejected: out=%d coll=%d curv=%d", debug.violations.outside,
+      debug.violations.collision, debug.violations.curvature);
+    if (
+      fallback_traj_ptr_ &&
+      (now() - fallback_traj_ptr_->header.stamp).seconds() < fallback_timeout_) {
+      RCLCPP_WARN(get_logger(), "Using fallback trajectory");
+      trajectory_pub_->publish(*fallback_traj_ptr_);
+      prev_path_.clear();
+    } else {
+      publishPath(prev_path_, msg);
+    }
   }
   std::chrono::steady_clock::time_point calc_end = std::chrono::steady_clock::now();
 
@@ -293,7 +307,7 @@ std::optional<sampler_common::Path> PathSamplerNode::selectBestPath(
 }
 
 void PathSamplerNode::steerCallback(
-  const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg)
+  const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr msg)
 {
   current_steer_ptr_ = msg;
 }
@@ -318,14 +332,14 @@ std::optional<sampler_common::State> PathSamplerNode::getCurrentEgoState()
 }
 
 void PathSamplerNode::objectsCallback(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg)
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>(*msg);
 }
 
 void PathSamplerNode::publishPath(
   const sampler_common::Path & path,
-  const autoware_auto_planning_msgs::msg::Path::SharedPtr path_msg)
+  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr path_msg)
 {
   if (path.points.size() < 2) {
     return;
@@ -366,7 +380,7 @@ void PathSamplerNode::publishPath(
 
 // TODO(Maxime CLEMENT): unused in favor of the Path's drivable area
 void PathSamplerNode::mapCallback(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr map_msg)
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
@@ -374,7 +388,7 @@ void PathSamplerNode::mapCallback(
 
 // TODO(Maxime CLEMENT): unused in favor of the Path's drivable area
 void PathSamplerNode::routeCallback(
-  const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr route_msg)
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_msg)
 {
   prefered_ids_.clear();
   drivable_ids_.clear();
@@ -386,6 +400,12 @@ void PathSamplerNode::routeCallback(
       }
     }
   }
+}
+
+void PathSamplerNode::fallbackCallback(
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr fallback_msg)
+{
+  fallback_traj_ptr_ = fallback_msg;
 }
 }  // namespace sampler_node
 
