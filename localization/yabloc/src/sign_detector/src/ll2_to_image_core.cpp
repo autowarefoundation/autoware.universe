@@ -22,6 +22,7 @@ Ll2ImageConverter::Ll2ImageConverter()
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
   pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
   pub_cloud_ = create_publisher<Cloud2>("/ll2_cloud", latch_qos);
+  pub_sign_board_ = create_publisher<Cloud2>("/sign_board", latch_qos);
 
   // Subscriber
   auto cb_map = std::bind(&Ll2ImageConverter::mapCallback, this, _1);
@@ -98,8 +99,7 @@ void Ll2ImageConverter::poseCallback(const PoseStamped & pose_stamped)
   publishImage(image, pose_stamped.header.stamp);
   // TODO:
   static bool first_publish_cloud = true;
-  if (first_publish_cloud)
-    publishCloud(*linestrings_, pose_stamped.header.stamp, pose_stamped.pose);
+  if (first_publish_cloud) publishCloud(*linestrings_, pose_stamped.header.stamp);
   first_publish_cloud = false;
 
   std_msgs::msg::Float32 height;
@@ -118,8 +118,7 @@ void Ll2ImageConverter::publishImage(const cv::Mat & image, const rclcpp::Time &
 }
 
 void Ll2ImageConverter::publishCloud(
-  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp,
-  const geometry_msgs::msg::Pose & pose)
+  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp)
 {
   // Convert to msg
   sensor_msgs::msg::PointCloud2 cloud_msg;
@@ -131,10 +130,10 @@ void Ll2ImageConverter::publishCloud(
 
 void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
 {
-  lanelet::LaneletMapPtr viz_lanelet_map = fromBinMsg(msg);
-  RCLCPP_INFO_STREAM(this->get_logger(), "lanelet: " << viz_lanelet_map->laneletLayer.size());
-  RCLCPP_INFO_STREAM(this->get_logger(), "line: " << viz_lanelet_map->lineStringLayer.size());
-  RCLCPP_INFO_STREAM(this->get_logger(), "point: " << viz_lanelet_map->pointLayer.size());
+  lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
+  RCLCPP_INFO_STREAM(this->get_logger(), "lanelet: " << lanelet_map->laneletLayer.size());
+  RCLCPP_INFO_STREAM(this->get_logger(), "line: " << lanelet_map->lineStringLayer.size());
+  RCLCPP_INFO_STREAM(this->get_logger(), "point: " << lanelet_map->pointLayer.size());
 
   linestrings_ = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
   cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -150,7 +149,7 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
   const std::set<std::string> visible_labels = {
     "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
 
-  for (lanelet::LineString3d & line : viz_lanelet_map->lineStringLayer) {
+  for (lanelet::LineString3d & line : lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
@@ -173,6 +172,53 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
   }
   kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
   kdtree_->setInputCloud(cloud_);
+
+  publishSignBoard(lanelet_map->lineStringLayer, msg.header.stamp);
+}
+
+void Ll2ImageConverter::publishSignBoard(
+  const lanelet::LineStringLayer & line_strings, const rclcpp::Time & stamp)
+{
+  pcl::PointCloud<pcl::PointNormal>::Ptr sign_board =
+    boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+
+  auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
+    pcl::PointXYZ q;
+    q.x = p.x();
+    q.y = p.y();
+    q.z = p.z();
+    return q;
+  };
+
+  const std::set<std::string> visible_labels = {"sign-board"};
+
+  for (const lanelet::ConstLineString3d & line : line_strings) {
+    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
+    if (visible_labels.count(attr.value()) == 0) continue;
+
+    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
+    for (const lanelet::ConstPoint3d p : line) {
+      if (from.has_value()) {
+        pcl::PointNormal pn;
+        pn.x = from->x();
+        pn.y = from->y();
+        pn.z = from->z();
+        pn.normal_x = p.x();
+        pn.normal_y = p.y();
+        pn.normal_z = p.z();
+        sign_board->push_back(pn);
+      }
+      from = p;
+    }
+  }
+
+  // Convert to msg
+  sensor_msgs::msg::PointCloud2 cloud_msg;
+  pcl::toROSMsg(*sign_board, cloud_msg);
+  cloud_msg.header.stamp = stamp;
+  cloud_msg.header.frame_id = "map";
+  pub_sign_board_->publish(cloud_msg);
 }
 
 float Ll2ImageConverter::computeHeight(const Eigen::Vector3f & pose)

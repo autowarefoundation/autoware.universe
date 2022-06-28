@@ -25,6 +25,7 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
     auto cb_particle = std::bind(&Overlay::poseCallback, this, _1);
     auto cb_ll2 = std::bind(&Overlay::ll2Callback, this, _1);
     auto cb_lsd = std::bind(&Overlay::lsdCallback, this, _1);
+
     sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
       "/sensing/camera/traffic_light/camera_info", 10, cb_info);
     sub_image_ = create_subscription<sensor_msgs::msg::Image>(
@@ -32,6 +33,9 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
     sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_particle);
     sub_ll2_ = create_subscription<PointCloud2>("/ll2_cloud", 10, cb_ll2);
     sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, cb_lsd);
+    sub_sign_board_ = create_subscription<PointCloud2>(
+      "/sign_board", 10,
+      [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, sign_board_); });
 
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -106,6 +110,7 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
   Eigen::Affine3f transform = util::pose2Affine(tmp);
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
+  drawOverlaySignBoard(overlayed_image, pose, stamp);
 
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
@@ -214,6 +219,27 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(const Pose & pose)
     }
   }
   return near_linestring;
+}
+
+void Overlay::drawOverlaySignBoard(cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
+{
+  Eigen::Matrix3f K =
+    Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
+  Eigen::Affine3f T = camera_extrinsic_.value();
+
+  Eigen::Affine3f transform = util::pose2Affine(pose);
+  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+    return cv::Point2i(uv1.x(), uv1.y());
+  };
+
+  for (const pcl::PointNormal & pn : sign_board_) {
+    auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
+    if (!p1.has_value() || !p2.has_value()) continue;
+    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
+  }
 }
 
 }  // namespace validation

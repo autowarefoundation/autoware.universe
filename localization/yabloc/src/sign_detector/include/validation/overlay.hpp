@@ -41,6 +41,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_info_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_sign_board_;
 
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_vis_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
@@ -48,7 +49,7 @@ private:
 
   std::optional<sensor_msgs::msg::CameraInfo> info_{std::nullopt};
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
-  LineSegments ll2_cloud_;
+  LineSegments ll2_cloud_, sign_board_;
   boost::circular_buffer<PoseStamped> pose_buffer_;
 
   void infoCallback(const sensor_msgs::msg::CameraInfo & msg);
@@ -60,6 +61,7 @@ private:
   void listenExtrinsicTf(const std::string & frame_id);
   LineSegments extractNaerLineSegments(const Pose & pose);
 
+  void drawOverlaySignBoard(cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
   void drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
   void makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };

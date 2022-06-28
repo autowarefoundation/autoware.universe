@@ -32,6 +32,7 @@ private:
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_ = nullptr;
 
   rclcpp::Publisher<Cloud2>::SharedPtr pub_cloud_;
+  rclcpp::Publisher<Cloud2>::SharedPtr pub_sign_board_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_height_;
 
@@ -44,8 +45,8 @@ private:
   void poseCallback(const PoseStamped & pose_stamped);
 
   void publishImage(const cv::Mat & image, const rclcpp::Time & stamp);
-  void publishCloud(
-    const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp, const Pose & pose);
+  void publishCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp);
+  void publishSignBoard(const lanelet::LineStringLayer & line_strings, const rclcpp::Time & stamp);
 
   void mapCallback(const HADMapBin & msg);
   float computeHeight(const Eigen::Vector3f & pose);
