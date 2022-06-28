@@ -14,8 +14,6 @@
 
 #include "obstacle_cruise_planner/utils.hpp"
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
 namespace obstacle_cruise_utils
 {
 bool isVehicle(const uint8_t label)

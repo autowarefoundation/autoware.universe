@@ -71,24 +71,21 @@ private:
 
   // Member Functions
   std::vector<double> createTimeVector();
-
   std::tuple<double, double> calcInitialMotion(
     const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj,
     const size_t input_closest, const Trajectory & prev_traj);
 
   TrajectoryPoint calcInterpolatedTrajectoryPoint(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose);
-
   bool checkHasReachedGoal(
     const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj);
-
   TrajectoryData getTrajectoryData(
     const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose);
 
   TrajectoryData resampleTrajectoryData(
     const TrajectoryData & base_traj_data, const double resampling_s_interval,
     const double max_traj_length);
-  ￼ Trajectory resampleTrajectory(
+  Trajectory resampleTrajectory(
     const std::vector<double> & base_index, const Trajectory & base_trajectory,
     const std::vector<double> & query_index, const bool use_spline_for_pose = false);
 
@@ -134,7 +131,6 @@ private:
     const rclcpp::Time & current_time, const Trajectory & traj, const size_t closest_idx,
     const std::vector<double> & time_vec, const SBoundaries & s_boundaries,
     const VelocityOptimizer::OptimizationResult & opt_result);
-
   // Calculation time watcher
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 

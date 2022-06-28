@@ -31,7 +31,6 @@
 constexpr double ZERO_VEL_THRESHOLD = 0.01;
 constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 
-// TODO(shimizu) Is is ok to use planner_data.current_time instead of get_clock()->now()?
 namespace
 {
 inline void convertEulerAngleToMonotonic(std::vector<double> & a)
@@ -159,7 +158,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   // Get Current Velocity
   double v0;
   double a0;
-  std::tie(v0, a0) = calcInitialMotion(planner_data, *closest_idx, prev_output_);
+  std::tie(v0, a0) = calcInitialMotion(planner_data, stop_traj, *closest_idx, prev_output_);
   a0 = std::min(longitudinal_info_.max_accel, std::max(a0, longitudinal_info_.min_accel));
 
   // Check trajectory size
@@ -172,7 +171,7 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   }
 
   // Check if reached goal
-  if (checkHasReachedGoal(planner_data)) {
+  if (checkHasReachedGoal(planner_data, stop_traj)) {
     prev_output_ = stop_traj;
     return stop_traj;
   }
@@ -666,7 +665,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     const auto & obj = planner_data.target_obstacles.at(o_idx);
     const auto obj_base_time = planner_data.target_obstacles.at(o_idx).time_stamp;
     // Only see cruise obstacles
-    if (!isCruiseObstacle(obj.classification.label)) {
+    if (obj.has_stopped) {
       continue;
     }
 
@@ -687,7 +686,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     // Step3 search nearest obstacle to follow for rviz marker
     const double object_offset = obj.shape.dimensions.x / 2.0;
 
-    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPaths(
       obj.predicted_paths, obj_base_time, current_time);
 
     const double obj_vel = std::abs(obj.velocity);
@@ -710,7 +709,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   if (min_slow_down_idx) {
     const auto & obj = planner_data.target_obstacles.at(min_slow_down_idx.get());
 
-    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+    const auto current_object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPaths(
       obj.predicted_paths, obj.time_stamp, current_time);
 
     const auto marker_pose =
@@ -720,7 +719,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
       visualization_msgs::msg::MarkerArray wall_msg;
 
       const double obj_vel = std::abs(obj.velocity);
-      if (obj_vel < obstacle_velocity_threshold_from_cruise_to_stop_) {
+      if (obj.has_stopped) {
         const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
           marker_pose.get(), "obstacle to follow", current_time, 0);
         tier4_autoware_utils::appendMarkerArray(markers, &wall_msg);
@@ -808,8 +807,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   const double v_obj = std::abs(object.velocity);
 
   double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
-  const double current_v_obj =
-    v_obj < obstacle_velocity_threshold_from_cruise_to_stop_ ? 0.0 : v_obj;
+  const double current_v_obj = object.has_stopped ? 0.0 : v_obj;
   const double initial_s_upper_bound =
     current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
   s_boundaries.front().max_s = std::clamp(initial_s_upper_bound, 0.0, s_boundaries.front().max_s);
@@ -835,8 +833,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
 
   const double abs_obj_vel = std::abs(object.velocity);
-  const double v_obj =
-    abs_obj_vel < obstacle_velocity_threshold_from_cruise_to_stop_ ? 0.0 : abs_obj_vel;
+  const double v_obj = object.has_stopped ? 0.0 : abs_obj_vel;
 
   SBoundaries s_boundaries(time_vec.size());
   for (size_t i = 0; i < s_boundaries.size(); ++i) {

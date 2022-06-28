@@ -50,62 +50,6 @@ Float32MultiArrayStamped convertDebugValuesToMsg(
   }
   return debug_msg;
 }
-
-template <class T>
-size_t getIndexWithLongitudinalOffset(
-  const T & points, const double longitudinal_offset, boost::optional<size_t> start_idx)
-{
-  if (points.empty()) {
-    throw std::logic_error("points is empty.");
-  }
-
-  if (start_idx) {
-    if (/*start_idx.get() < 0 || */ points.size() <= start_idx.get()) {
-      throw std::out_of_range("start_idx is out of range.");
-    }
-  } else {
-    if (longitudinal_offset > 0) {
-      start_idx = 0;
-    } else {
-      start_idx = points.size() - 1;
-    }
-  }
-
-  double sum_length = 0.0;
-  if (longitudinal_offset > 0) {
-    for (size_t i = start_idx.get(); i < points.size() - 1; ++i) {
-      const double segment_length =
-        tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
-      sum_length += segment_length;
-      if (sum_length >= longitudinal_offset) {
-        const double front_length = segment_length;
-        const double back_length = sum_length - longitudinal_offset;
-        if (front_length < back_length) {
-          return i;
-        } else {
-          return i + 1;
-        }
-      }
-    }
-    return points.size() - 1;
-  }
-
-  for (size_t i = start_idx.get(); i > 0; --i) {
-    const double segment_length =
-      tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
-    sum_length += segment_length;
-    if (sum_length >= -longitudinal_offset) {
-      const double front_length = segment_length;
-      const double back_length = sum_length + longitudinal_offset;
-      if (front_length < back_length) {
-        return i;
-      } else {
-        return i + 1;
-      }
-    }
-  }
-  return 0;
-}
 }  // namespace
 
 PIDBasedPlanner::PIDBasedPlanner(
@@ -183,8 +127,7 @@ void PIDBasedPlanner::calcObstaclesToCruise(
     // NOTE: from ego's front to obstacle's back
     const double dist_to_obstacle = calcDistanceToObstacle(planner_data, obstacle);
 
-    const bool is_stop_required = isStopRequired(obstacle, modified_target_obstacles.at(o_idx));
-    if (!is_stop_required) {  // cruise
+    if (!obstacle.has_stopped) {  // cruise
       // calculate distance between ego and obstacle based on RSS
       const double rss_dist = calcRSSDistance(
         planner_data.current_vel, obstacle.velocity, longitudinal_info_.safe_distance_margin);
@@ -207,8 +150,6 @@ void PIDBasedPlanner::calcObstaclesToCruise(
       debug_values_.setValues(DebugValues::TYPE::CRUISE_ERROR_OBJECT_DISTANCE, error_dist);
     }
   }
-
-  prev_target_obstacles_ = modified_target_obstacles;
 }
 
 double PIDBasedPlanner::calcDistanceToObstacle(
@@ -415,8 +356,8 @@ VelocityLimit PIDBasedPlanner::doCruise(
   const double dist_to_rss_wall = std::min(
     dist_to_cruise + vehicle_info_.max_longitudinal_offset_m,
     dist_to_obstacle + vehicle_info_.max_longitudinal_offset_m);
-  const size_t wall_idx =
-    getIndexWithLongitudinalOffset(planner_data.traj.points, dist_to_rss_wall, ego_idx);
+  const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
+    planner_data.traj.points, dist_to_rss_wall, ego_idx);
 
   const auto markers = tier4_autoware_utils::createSlowDownVirtualWallMarker(
     planner_data.traj.points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time, 0);
