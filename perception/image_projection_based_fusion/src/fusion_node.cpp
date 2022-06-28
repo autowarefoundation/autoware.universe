@@ -167,10 +167,6 @@ void FusionNode<Msg, Obj>::fusionCallback(
   DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg)
 {
-  if (pub_ptr_->get_subscription_count() < 1) {
-    return;
-  }
-
   Msg output_msg = *input_msg;
 
   preprocess(output_msg);
@@ -233,6 +229,9 @@ void FusionNode<Msg, Obj>::postprocess(Msg & output_msg __attribute__((unused)))
 template <class Msg, class Obj>
 void FusionNode<Msg, Obj>::publish(const Msg & output_msg)
 {
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
   pub_ptr_->publish(output_msg);
 }
 

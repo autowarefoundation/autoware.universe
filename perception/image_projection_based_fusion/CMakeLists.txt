@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
 project(image_projection_based_fusion)
-add_compile_options(-Wall -Wno-unknown-pragmas)
+add_compile_options(-Wno-unknown-pragmas)
 
 find_package(autoware_cmake REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
 autoware_package()
 
-set(CUDA_VERBOSE ON)
+set(CUDA_VERBOSE OFF)
 
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
