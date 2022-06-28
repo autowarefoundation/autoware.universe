@@ -200,7 +200,7 @@ After the optimization, a resampling called `post resampling` is performed befor
 ### Limit steering angle rate parameters
 
 | Name                      | Type     | Description                              | Default value |
-|:--------------------------| :------- |:-----------------------------------------|:--------------|
+| :------------------------ | :------- | :--------------------------------------- | :------------ |
 | `max_steering_angle_rate` | `double` | Maximum steering tire angle rate [rad/s] | 0.349066      |
 | `resample_ds`             | `double` | Distance between trajectory points [m]   | 0.5           |
 | `lookup_distance`         | `double` | Lookup distance [m]                      | 2.5           |

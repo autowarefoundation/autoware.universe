@@ -51,17 +51,17 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
     node.declare_parameter("sparse_min_interval_distance", 4.0);
 }
 
-void SmootherBase::setParam(const BaseParam & param) {base_param_ = param;}
+void SmootherBase::setParam(const BaseParam & param) { base_param_ = param; }
 
-SmootherBase::BaseParam SmootherBase::getBaseParam() const {return base_param_;}
+SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
 
-double SmootherBase::getMaxAccel() const {return base_param_.max_accel;}
+double SmootherBase::getMaxAccel() const { return base_param_.max_accel; }
 
-double SmootherBase::getMinDecel() const {return base_param_.min_decel;}
+double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
 
-double SmootherBase::getMaxJerk() const {return base_param_.max_jerk;}
+double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
 
-double SmootherBase::getMinJerk() const {return base_param_.min_jerk;}
+double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
 
 boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
@@ -136,7 +136,6 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
 boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
   const TrajectoryPoints & input) const
 {
-
   if (input.empty()) {
     return boost::none;
   }
@@ -170,17 +169,17 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
   for (size_t i = 0; output->size() > i; i++) {
     if (i < output->size() - 1) {
       output->at(i).front_wheel_angle_rad = static_cast<float>(std::atan(
-          (tf2::getYaw(output->at(i + 1).pose.orientation) -
-          tf2::getYaw(output->at(i).pose.orientation)) *
-          base_param_.wheel_base / (base_param_.sample_ds)));
+        (tf2::getYaw(output->at(i + 1).pose.orientation) -
+         tf2::getYaw(output->at(i).pose.orientation)) *
+        base_param_.wheel_base / (base_param_.sample_ds)));
     } else {
       output->at(i).front_wheel_angle_rad = 0.0;
     }
   }
 
   for (size_t i = 0; output->size() > i; i++) {
-
-    const size_t lookup_index = static_cast<size_t>(base_param_.lookup_dist / base_param_.sample_ds);
+    const size_t lookup_index =
+      static_cast<size_t>(base_param_.lookup_dist / base_param_.sample_ds);
     double ds = static_cast<double>(lookup_index) * base_param_.sample_ds;
     double tot_vel = 0.0;
 
@@ -195,17 +194,21 @@ boost::optional<TrajectoryPoints> SmootherBase::applySteeringRateLimit(
       double dt_steering = std::max(
         std::fabs(
           (output->at(output->size() - 1 - i).front_wheel_angle_rad -
-          output->at(output->size() - 1 - i + lookup_index).front_wheel_angle_rad)) /
-        base_param_.max_steering_angle_rate,
+           output->at(output->size() - 1 - i + lookup_index).front_wheel_angle_rad)) /
+          base_param_.max_steering_angle_rate,
         std::numeric_limits<double>::epsilon());
 
       if (dt_steering > dt) {
         const double target_mean_vel = (ds / dt_steering);
         for (size_t k = 0; k <= lookup_index; k++) {
-          output->at(output->size() - 1 - i + k).longitudinal_velocity_mps = target_mean_vel * (output->at(output->size() - 1 - i + k).longitudinal_velocity_mps / mean_vel);
-          if (output->at(output->size() - 1 - i + k).longitudinal_velocity_mps < base_param_.min_curve_velocity)
-          {
-            output->at(output->size() - 1 - i + k).longitudinal_velocity_mps = base_param_.min_curve_velocity;
+          output->at(output->size() - 1 - i + k).longitudinal_velocity_mps =
+            target_mean_vel *
+            (output->at(output->size() - 1 - i + k).longitudinal_velocity_mps / mean_vel);
+          if (
+            output->at(output->size() - 1 - i + k).longitudinal_velocity_mps <
+            base_param_.min_curve_velocity) {
+            output->at(output->size() - 1 - i + k).longitudinal_velocity_mps =
+              base_param_.min_curve_velocity;
           }
         }
       }
