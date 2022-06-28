@@ -421,7 +421,7 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
     return {};
   }
 
-  const auto attention_range = getAttensionRange(ego_path);
+  const auto attention_range = getAttentionRange(ego_path);
   const auto & ego_pos = planner_data_->current_pose.pose.position;
   const auto & objects_ptr = planner_data_->predicted_objects;
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -550,31 +550,31 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
   return stop_point;
 }
 
-std::pair<double, double> CrosswalkModule::getAttensionRange(const PathWithLaneId & ego_path)
+std::pair<double, double> CrosswalkModule::getAttentionRange(const PathWithLaneId & ego_path)
 {
   stop_watch_.tic(__func__);
 
   const auto & ego_pos = planner_data_->current_pose.pose.position;
 
-  double near_attension_range = 0.0;
-  double far_attension_range = 0.0;
+  double near_attention_range = 0.0;
+  double far_attention_range = 0.0;
   if (path_intersects_.size() < 2) {
-    return std::make_pair(near_attension_range, far_attension_range);
+    return std::make_pair(near_attention_range, far_attention_range);
   }
 
-  near_attension_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.front());
-  far_attension_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.back());
+  near_attention_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.front());
+  far_attention_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.back());
 
-  near_attension_range -= planner_param_.attention_range;
-  far_attension_range += planner_param_.attention_range;
+  near_attention_range -= planner_param_.attention_range;
+  far_attention_range += planner_param_.attention_range;
 
-  clampAttensionRangeByNeighborCrosswalks(ego_path, near_attension_range, far_attension_range);
+  clampAttentionRangeByNeighborCrosswalks(ego_path, near_attention_range, far_attention_range);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "%s : %f ms", __func__,
     stop_watch_.toc(__func__, true));
 
-  return std::make_pair(std::max(0.0, near_attension_range), std::max(0.0, far_attension_range));
+  return std::make_pair(std::max(0.0, near_attention_range), std::max(0.0, far_attention_range));
 }
 
 void CrosswalkModule::insertDecelPoint(
@@ -647,8 +647,8 @@ float CrosswalkModule::calcTargetVelocity(
   return margin_velocity < feasible_velocity ? feasible_velocity : 0.0;
 }
 
-void CrosswalkModule::clampAttensionRangeByNeighborCrosswalks(
-  const PathWithLaneId & ego_path, double & near_attension_range, double & far_attension_range)
+void CrosswalkModule::clampAttentionRangeByNeighborCrosswalks(
+  const PathWithLaneId & ego_path, double & near_attention_range, double & far_attention_range)
 {
   stop_watch_.tic(__func__);
 
@@ -657,9 +657,9 @@ void CrosswalkModule::clampAttensionRangeByNeighborCrosswalks(
   const auto residual_length = calcLongitudinalOffsetToSegment(ego_path.points, base_idx, ego_pos);
 
   const auto p_near =
-    getForwardInsertPointFromBasePoint(base_idx, ego_path, near_attension_range + residual_length);
+    getForwardInsertPointFromBasePoint(base_idx, ego_path, near_attention_range + residual_length);
   const auto p_far =
-    getForwardInsertPointFromBasePoint(base_idx, ego_path, far_attension_range + residual_length);
+    getForwardInsertPointFromBasePoint(base_idx, ego_path, far_attention_range + residual_length);
 
   if (!p_near || !p_far) {
     return;
@@ -727,7 +727,7 @@ void CrosswalkModule::clampAttensionRangeByNeighborCrosswalks(
         createPoint(
           prev_crosswalk_intersects.front().x(), prev_crosswalk_intersects.front().y(), ego_pos.z));
 
-      near_attension_range = std::max(near_attension_range, dist_to_prev_crosswalk);
+      near_attention_range = std::max(near_attention_range, dist_to_prev_crosswalk);
     }
   }
 
@@ -741,14 +741,14 @@ void CrosswalkModule::clampAttensionRangeByNeighborCrosswalks(
         createPoint(
           next_crosswalk_intersects.front().x(), next_crosswalk_intersects.front().y(), ego_pos.z));
 
-      far_attension_range = std::min(far_attension_range, dist_to_next_crosswalk);
+      far_attention_range = std::min(far_attention_range, dist_to_next_crosswalk);
     }
   }
 
   const auto update_p_near =
-    getForwardInsertPointFromBasePoint(base_idx, ego_path, near_attension_range + residual_length);
+    getForwardInsertPointFromBasePoint(base_idx, ego_path, near_attention_range + residual_length);
   const auto update_p_far =
-    getForwardInsertPointFromBasePoint(base_idx, ego_path, far_attension_range + residual_length);
+    getForwardInsertPointFromBasePoint(base_idx, ego_path, far_attention_range + residual_length);
 
   if (update_p_near && update_p_far) {
     debug_data_.range_near_point = getPoint(update_p_near.get().second.point);
@@ -928,21 +928,21 @@ bool CrosswalkModule::isStuckVehicle(
 
   const auto & ego_pos = planner_data_->current_pose.pose.position;
 
-  double near_attension_range = 0.0;
-  double far_attension_range = 0.0;
+  double near_attention_range = 0.0;
+  double far_attention_range = 0.0;
   if (path_intersects_.size() < 2) {
     return false;
   }
 
-  near_attension_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.front());
-  far_attension_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.back());
-  constexpr double stuck_vehicle_attension_range = 10.0;
-  near_attension_range = far_attension_range;
-  far_attension_range += stuck_vehicle_attension_range;
+  near_attention_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.front());
+  far_attention_range = calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.back());
+  constexpr double stuck_vehicle_attention_range = 10.0;
+  near_attention_range = far_attention_range;
+  far_attention_range += stuck_vehicle_attention_range;
 
   const auto dist_ego2obj = calcSignedArcLength(ego_path.points, ego_pos, obj_pos);
 
-  return near_attension_range < dist_ego2obj && dist_ego2obj < far_attension_range;
+  return near_attention_range < dist_ego2obj && dist_ego2obj < far_attention_range;
 }
 
 bool CrosswalkModule::isRedSignalForPedestrians() const

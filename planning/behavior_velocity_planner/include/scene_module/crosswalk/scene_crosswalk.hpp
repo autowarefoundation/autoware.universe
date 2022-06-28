@@ -107,13 +107,13 @@ private:
     const PathWithLaneId & ego_path, const PredictedObject & object,
     const std::pair<double, double> & attention_range);
 
-  std::pair<double, double> getAttensionRange(const PathWithLaneId & ego_path);
+  std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
   void insertDecelPoint(
     const std::pair<size_t, PathPointWithLaneId> & stop_point, PathWithLaneId & output);
 
-  void clampAttensionRangeByNeighborCrosswalks(
-    const PathWithLaneId & ego_path, double & near_attension_range, double & far_attension_range);
+  void clampAttentionRangeByNeighborCrosswalks(
+    const PathWithLaneId & ego_path, double & near_attention_range, double & far_attention_range);
 
   CollisionPoint createCollisionPoint(
     const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
