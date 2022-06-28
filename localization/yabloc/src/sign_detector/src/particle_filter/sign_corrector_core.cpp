@@ -108,6 +108,13 @@ void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat grad_image)
   if (!camera_info_.has_value()) return;
   if (!camera_extrinsic_.has_value()) return;
 
+  if (sign_boards_.empty()) {
+    cv::Mat rgb_grad_image;
+    cv::applyColorMap(grad_image, rgb_grad_image, cv::COLORMAP_JET);
+    util::publishImage(*pub_image_, rgb_grad_image, stamp);
+    return;
+  }
+
   Timer timer;
 
   std::optional<ParticleArray> opt_array = this->getSyncronizedParticleArray(stamp);
@@ -159,7 +166,7 @@ void SignCorrector::execute(const rclcpp::Time & stamp, cv::Mat grad_image)
 
   cv::Mat rgb_grad_image;
   cv::applyColorMap(grad_image, rgb_grad_image, cv::COLORMAP_JET);
-  cv::addWeighted(rgb_grad_image, 0.8, total_board_image, 0.2, 1, total_board_image);
+  cv::addWeighted(rgb_grad_image, 0.8, total_board_image, 0.5, 1, total_board_image);
   util::publishImage(*pub_image_, total_board_image, stamp);
 
   this->setWeightedParticleArray(*opt_array);

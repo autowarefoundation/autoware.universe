@@ -6,6 +6,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
@@ -20,6 +21,7 @@ public:
   using NavPVT = ublox_msgs::msg::NavPVT;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using String = std_msgs::msg::String;
+  using Float = std_msgs::msg::Float32;
 
   TwistEstimator();
 
@@ -27,6 +29,7 @@ private:
   rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
   rclcpp::Publisher<String>::SharedPtr pub_string_;
+  rclcpp::Publisher<Float>::SharedPtr pub_doppler_vel_;
 
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;

@@ -20,6 +20,7 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
   pub_twist_ = create_publisher<TwistStamped>("/kalman/twist", 10);
   pub_pose_ = create_publisher<PoseStamped>("/kalman/doppler", 10);
   pub_string_ = create_publisher<String>("/kalman/status", 10);
+  pub_doppler_vel_ = create_publisher<Float>("/kalman/doppler_vel", 10);
 
   // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 0, 0, 1);
@@ -123,6 +124,9 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   state_ += K * error;
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
 
+  Float float_msg;
+  float_msg.data = vel_xy.norm();
+  pub_doppler_vel_->publish(float_msg);
   publishDoppler(msg);
 }
 
