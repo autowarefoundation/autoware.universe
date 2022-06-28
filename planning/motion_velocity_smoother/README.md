@@ -197,14 +197,13 @@ After the optimization, a resampling called `post resampling` is performed befor
 | `post_sparse_dt`                    | `double` | resample time interval for sparse sampling [s]         | 0.1           |
 | `post_sparse_min_interval_distance` | `double` | minimum points-interval length for sparse sampling [m] | 1.0           |
 
-### Steering angle rate parameters
+### Limit steering angle rate parameters
 
 | Name                      | Type     | Description                              | Default value |
-| :------------------------ | :------- | :--------------------------------------- | :------------ |
+|:--------------------------| :------- |:-----------------------------------------|:--------------|
 | `max_steering_angle_rate` | `double` | Maximum steering tire angle rate [rad/s] | 0.349066      |
 | `resample_ds`             | `double` | Distance between trajectory points [m]   | 0.5           |
-| `max_lookup_distance`     | `double` | Maximum lookup distance [m]              | 2.0           |
-| `min_lookup_distance`     | `double` | Minimum lookup distance [m]              | 1.0           |
+| `lookup_distance`         | `double` | Lookup distance [m]                      | 2.5           |
 
 ### Weights for optimization
 

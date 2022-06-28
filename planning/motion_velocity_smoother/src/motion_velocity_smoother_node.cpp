@@ -178,8 +178,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param("sparse_resample_dt", p.resample_param.sparse_resample_dt);
     update_param("sparse_min_interval_distance", p.resample_param.sparse_min_interval_distance);
     update_param("resample_ds", p.sample_ds);
-    update_param("max_lookup_distance", p.max_lookup_dist);
-    update_param("min_lookup_distance", p.min_lookup_dist);
+    update_param("lookup_distance", p.lookup_dist);
     update_param("max_steering_angle_rate", p.max_steering_angle_rate);
     smoother_->setParam(p);
   }

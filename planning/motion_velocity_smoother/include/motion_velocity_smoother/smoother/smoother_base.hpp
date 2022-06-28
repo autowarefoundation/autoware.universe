@@ -52,8 +52,7 @@ public:
     double max_steering_angle_rate;      // max steering angle rate [degree/s]
     double wheel_base;                   // wheel base [m]
     double sample_ds;                    // distance between trajectory points [m]
-    double min_lookup_dist;  // minimum look-up distance for calculation of steering angle limit
-    double max_lookup_dist;  // maximum look-up distance for calculation of steering angle limit
+    double lookup_dist;  // look-up distance for calculation of steering angle limit
     resampling::ResampleParam resample_param;
   };
 
