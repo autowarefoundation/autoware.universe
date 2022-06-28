@@ -40,7 +40,7 @@ grid_map::GridMap PointsToCostmapTest::construct_gridmap()
   gm.setFrameId("map");
   // set gridmap size,resolution
   gm.setGeometry(grid_map::Length(grid_length_x_, grid_length_y_), grid_resolution_);
-  //center of grid to position p in map frame
+  // center of grid to position p in map frame
   gm.setPosition(grid_map::Position(grid_position_x_, grid_position_y_));
 
   // set initial value
@@ -187,7 +187,8 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_outOfGrid)
   in_sensor_points.resize(in_sensor_points.width * in_sensor_points.height);
 
   // when we construct gridmap,we set grid map center to (0,0) in map frame
-  // so it would be outside of grid map if absolute value of point.x bigger than half of grid_length_x_
+  // so it would be outside of grid map if absolute value of point.x bigger than half of
+  // grid_length_x_
   in_sensor_points.points[0].x = 1 + grid_length_x_ / 2.0;
   in_sensor_points.points[0].y = 1 + grid_length_y_ / 2.0;
   in_sensor_points.points[0].z = 0.5;
