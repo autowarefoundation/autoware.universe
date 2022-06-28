@@ -52,9 +52,14 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
 
 boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
   const TrajectoryPoints & trajectory, const size_t & idx_dist);
-
+/**
+ * This function takes the trajectory points that include the steering angle, and wheelbase
+ * as an input and calculates the curvature array by using steering angles.
+ *
+ * @return Curvature array.
+ */
 boost::optional<std::vector<double>> calcTrajectoryCurvatureFromFrontSteeringAngle(
-  const TrajectoryPoints & trajectory, const double & wheelbase);
+  const TrajectoryPoints & trajectory, const double wheelbase);
 
 void setZeroVelocity(TrajectoryPoints & trajectory);
 
