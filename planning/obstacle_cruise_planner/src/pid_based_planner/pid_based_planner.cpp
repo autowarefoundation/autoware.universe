@@ -21,15 +21,6 @@
 
 namespace
 {
-StopSpeedExceeded createStopSpeedExceededMsg(
-  const rclcpp::Time & current_time, const bool stop_flag)
-{
-  StopSpeedExceeded msg{};
-  msg.stamp = current_time;
-  msg.stop_speed_exceeded = stop_flag;
-  return msg;
-}
-
 VelocityLimit createVelocityLimitMsg(
   const rclcpp::Time & current_time, const double vel, const double acc, const double max_jerk,
   const double min_jerk)
@@ -115,39 +106,6 @@ size_t getIndexWithLongitudinalOffset(
   }
   return 0;
 }
-
-double calcMinimumDistanceToStop(const double initial_vel, const double min_acc)
-{
-  return -std::pow(initial_vel, 2) / 2.0 / min_acc;
-}
-
-tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
-  const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose,
-  const boost::optional<PIDBasedPlanner::StopObstacleInfo> & stop_obstacle_info)
-{
-  // create header
-  std_msgs::msg::Header header;
-  header.frame_id = "map";
-  header.stamp = current_time;
-
-  // create stop factor
-  tier4_planning_msgs::msg::StopFactor stop_factor;
-  stop_factor.stop_pose = stop_pose;
-  if (stop_obstacle_info) {
-    stop_factor.stop_factor_points.emplace_back(stop_obstacle_info->obstacle.collision_point);
-  }
-
-  // create stop reason stamped
-  tier4_planning_msgs::msg::StopReason stop_reason_msg;
-  stop_reason_msg.reason = tier4_planning_msgs::msg::StopReason::OBSTACLE_STOP;
-  stop_reason_msg.stop_factors.emplace_back(stop_factor);
-
-  // create stop reason array
-  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-  stop_reason_array.header = header;
-  stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
-  return stop_reason_array;
-}
 }  // namespace
 
 PIDBasedPlanner::PIDBasedPlanner(
@@ -181,30 +139,22 @@ PIDBasedPlanner::PIDBasedPlanner(
   lpf_cruise_ptr_ = std::make_shared<LowpassFilter1d>(lpf_cruise_gain);
 
   // publisher
-  stop_reasons_pub_ =
-    node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-  stop_speed_exceeded_pub_ =
-    node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
   debug_values_pub_ = node.create_publisher<Float32MultiArrayStamped>("~/debug/values", 1);
 }
 
-Trajectory PIDBasedPlanner::generateTrajectory(
-  const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
-  DebugData & debug_data)
+Trajectory PIDBasedPlanner::generateCruiseTrajectory(
+  const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj,
+  boost::optional<VelocityLimit> & vel_limit, DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
   debug_values_.resetValues();
 
-  // calc obstacles to cruise and stop
-  boost::optional<StopObstacleInfo> stop_obstacle_info;
+  // calc obstacles to cruise
   boost::optional<CruiseObstacleInfo> cruise_obstacle_info;
-  calcObstaclesToCruiseAndStop(planner_data, stop_obstacle_info, cruise_obstacle_info);
+  calcObstaclesToCruise(planner_data, cruise_obstacle_info);
 
   // plan cruise
   planCruise(planner_data, vel_limit, cruise_obstacle_info, debug_data);
-
-  // plan stop
-  const auto output_traj = planStop(planner_data, stop_obstacle_info, debug_data);
 
   // publish debug values
   publishDebugValues(planner_data);
@@ -214,12 +164,11 @@ Trajectory PIDBasedPlanner::generateTrajectory(
     rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), is_showing_debug_info_,
     "  %s := %f [ms]", __func__, calculation_time);
 
-  return output_traj;
+  return stop_traj;
 }
 
-void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
+void PIDBasedPlanner::calcObstaclesToCruise(
   const ObstacleCruisePlannerData & planner_data,
-  boost::optional<StopObstacleInfo> & stop_obstacle_info,
   boost::optional<CruiseObstacleInfo> & cruise_obstacle_info)
 {
   debug_values_.setValues(DebugValues::TYPE::CURRENT_VELOCITY, planner_data.current_vel);
@@ -227,7 +176,7 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
 
   auto modified_target_obstacles = planner_data.target_obstacles;
 
-  // search highest probability obstacle for stop and cruise
+  // search highest probability obstacle for cruise
   for (size_t o_idx = 0; o_idx < planner_data.target_obstacles.size(); ++o_idx) {
     const auto & obstacle = planner_data.target_obstacles.at(o_idx);
 
@@ -235,25 +184,7 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
     const double dist_to_obstacle = calcDistanceToObstacle(planner_data, obstacle);
 
     const bool is_stop_required = isStopRequired(obstacle, modified_target_obstacles.at(o_idx));
-    if (is_stop_required) {  // stop
-      // calculate error distance (= distance to stop)
-      const double error_dist = dist_to_obstacle - longitudinal_info_.safe_distance_margin;
-      if (stop_obstacle_info) {
-        if (error_dist > stop_obstacle_info->dist_to_stop) {
-          continue;
-        }
-      }
-      stop_obstacle_info = StopObstacleInfo(obstacle, error_dist);
-
-      // update debug values
-      debug_values_.setValues(DebugValues::TYPE::STOP_CURRENT_OBJECT_DISTANCE, dist_to_obstacle);
-      debug_values_.setValues(DebugValues::TYPE::STOP_CURRENT_OBJECT_VELOCITY, obstacle.velocity);
-      debug_values_.setValues(
-        DebugValues::TYPE::STOP_TARGET_OBJECT_DISTANCE, longitudinal_info_.safe_distance_margin);
-      debug_values_.setValues(
-        DebugValues::TYPE::STOP_TARGET_ACCELERATION, longitudinal_info_.limit_min_accel);
-      debug_values_.setValues(DebugValues::TYPE::STOP_ERROR_OBJECT_DISTANCE, error_dist);
-    } else {  // cruise
+    if (!is_stop_required) {  // cruise
       // calculate distance between ego and obstacle based on RSS
       const double rss_dist = calcRSSDistance(
         planner_data.current_vel, obstacle.velocity, longitudinal_info_.safe_distance_margin);
@@ -277,7 +208,6 @@ void PIDBasedPlanner::calcObstaclesToCruiseAndStop(
     }
   }
 
-  // TODO(shimizu) refactor obstacle stop;
   prev_target_obstacles_ = modified_target_obstacles;
 }
 
@@ -296,6 +226,7 @@ double PIDBasedPlanner::calcDistanceToObstacle(
          offset;
 }
 
+/*
 Trajectory PIDBasedPlanner::planStop(
   const ObstacleCruisePlannerData & planner_data,
   const boost::optional<StopObstacleInfo> & stop_obstacle_info, DebugData & debug_data)
@@ -357,11 +288,11 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
   std::vector<TargetObstacle> & debug_obstacles_to_stop,
   visualization_msgs::msg::MarkerArray & debug_wall_marker) const
 {
-  // const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
+  const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
 
   // TODO(murooka) use interpolation to calculate stop point and marker pose
   const auto modified_stop_info = [&]() -> boost::optional<std::pair<size_t, size_t>> {
-    // const double dist_to_stop = stop_obstacle_info.dist_to_stop;
+    const double dist_to_stop = stop_obstacle_info.dist_to_stop;
 
     const size_t collision_idx = tier4_autoware_utils::findNearestIndex(
       planner_data.traj.points, stop_obstacle_info.obstacle.collision_point);
@@ -408,6 +339,7 @@ boost::optional<size_t> PIDBasedPlanner::doStop(
   debug_obstacles_to_stop.push_back(stop_obstacle_info.obstacle);
   return modified_zero_vel_idx;
 }
+*/
 
 void PIDBasedPlanner::planCruise(
   const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,

@@ -21,7 +21,10 @@
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "tier4_planning_msgs/msg/stop_reason_array.hpp"
+#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <boost/optional.hpp>
 
@@ -30,6 +33,7 @@
 
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using tier4_planning_msgs::msg::StopSpeedExceeded;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class PlannerInterface
@@ -93,6 +97,11 @@ public:
         stop_obstacle_types_.push_back(ObjectClassification::PEDESTRIAN);
       }
     }
+
+    stop_reasons_pub_ =
+      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
+    stop_speed_exceeded_pub_ =
+      node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
   }
 
   PlannerInterface() = default;
@@ -113,23 +122,12 @@ public:
       obstacle_velocity_threshold_from_stop_to_cruise;
   }
 
-  /*
-  // two kinds of velocity planning is supported.
-  // 1. getZeroVelocityIndexWithVelocityLimit
-  //   returns zero velocity index and velocity limit
-  // 2. generateTrajectory
-  //   returns trajectory with planned velocity
-  virtual boost::optional<size_t> getZeroVelocityIndexWithVelocityLimit(
-    [[maybe_unused]] const ObstacleCruisePlannerData & planner_data,
-    [[maybe_unused]] boost::optional<VelocityLimit> & vel_limit)
-  {
-    return {};
-  };
-  */
+  Trajectory generateStopTrajectory(
+    const ObstacleCruisePlannerData & planner_data, DebugData & debug_data);
 
-  virtual Trajectory generateTrajectory(
-    const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
-    DebugData & debug_data) = 0;
+  virtual Trajectory generateCruiseTrajectory(
+    const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj,
+    boost::optional<VelocityLimit> & vel_limit, DebugData & debug_data) = 0;
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {
@@ -213,6 +211,10 @@ protected:
   double nearest_yaw_deviation_threshold_;
   double obstacle_velocity_threshold_from_cruise_to_stop_;
   double obstacle_velocity_threshold_from_stop_to_cruise_;
+
+  // Publishers
+  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reasons_pub_;
+  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;

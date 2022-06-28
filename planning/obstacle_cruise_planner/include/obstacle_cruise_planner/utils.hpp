@@ -26,6 +26,7 @@
 
 #include <boost/optional.hpp>
 
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -40,11 +41,8 @@ visualization_msgs::msg::Marker getObjectMarker(
   const double r, const double g, const double b);
 
 boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t nearest_idx,
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t start_idx,
   const double target_length);
-
-geometry_msgs::msg::Pose lerpByPose(
-  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, const double t);
 
 boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
   const autoware_auto_perception_msgs::msg::PredictedPath & path,
@@ -60,7 +58,11 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths
 
 geometry_msgs::msg::Pose getCurrentObjectPose(
   const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
-  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time, const bool use_prediction);
+  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time, const bool use_predi);
+
+autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+  const double distance_to_stop_point);
 }  // namespace obstacle_cruise_utils
 
 #endif  // OBSTACLE_CRUISE_PLANNER__UTILS_HPP_

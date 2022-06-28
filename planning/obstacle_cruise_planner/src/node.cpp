@@ -429,9 +429,13 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   DebugData debug_data;
   const auto planner_data = createPlannerData(*msg, current_pose_ptr->pose, debug_data);
 
-  // generate Trajectory
+  // stop planning
+  const auto stop_traj = planner_ptr_->generateStopTrajectory(planner_data, debug_data);
+
+  // cruise planning
   boost::optional<VelocityLimit> vel_limit;
-  const auto output_traj = planner_ptr_->generateTrajectory(planner_data, vel_limit, debug_data);
+  const auto output_traj =
+    planner_ptr_->generateCruiseTrajectory(planner_data, stop_traj, vel_limit, debug_data);
 
   // publisher external velocity limit if required
   publishVelocityLimit(vel_limit);
@@ -456,18 +460,20 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createPlannerData(
 {
   stop_watch_.tic(__func__);
 
+  const auto current_time = now();
   const double current_vel = current_twist_ptr_->twist.linear.x;
   const double current_accel = calcCurrentAccel();
+  const auto target_obstacles =
+    filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
 
   // create planner_data
   ObstacleCruisePlannerData planner_data;
-  planner_data.current_time = now();
+  planner_data.current_time = current_time;
   planner_data.traj = trajectory;
   planner_data.current_pose = current_pose;
   planner_data.current_vel = current_vel;
   planner_data.current_acc = current_accel;
-  planner_data.target_obstacles =
-    filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
+  planner_data.target_obstacles = target_obstacles;
 
   // print calculation time
   const double calculation_time = stop_watch_.toc(__func__);

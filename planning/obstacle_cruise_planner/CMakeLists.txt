@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(obstacle_cruise_planner)
 
-find_package(autoware_cmake REQUIRED)
-autoware_package()
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 find_package(Eigen3 REQUIRED)
 
@@ -15,6 +15,7 @@ ament_auto_add_library(obstacle_cruise_planner_core SHARED
   src/optimization_based_planner/velocity_optimizer.cpp
   src/optimization_based_planner/optimization_based_planner.cpp
   src/pid_based_planner/pid_based_planner.cpp
+  src/planner_interface.cpp
 )
 
 rclcpp_components_register_node(obstacle_cruise_planner_core
