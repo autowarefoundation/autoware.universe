@@ -122,7 +122,10 @@ using geometry_msgs::msg::Vector3;
 using nav_msgs::msg::OccupancyGrid;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
+using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+namespace bg = boost::geometry;
+using geometry_msgs::msg::Pose;
 
 struct FrenetCoordinate3d
 {
@@ -130,6 +133,20 @@ struct FrenetCoordinate3d
   double distance{0.0};  // lateral
 };
 
+struct ProjectedDistancePoint
+{
+  Point2d projected_point;
+  double distance{0.0};
+};
+
+template <typename Pythagoras = bg::strategy::distance::pythagoras<> >
+ProjectedDistancePoint pointToSegment(
+  const Point2d & reference_point, const Point2d & point_from_ego,
+  const Point2d & point_from_object);
+
+void getProjectedDistancePointFromPolygons(
+  const Polygon2d & ego_polygon, const Polygon2d & object_polygon, Pose & point_on_ego,
+  Pose & point_on_object);
 // data conversions
 
 Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);

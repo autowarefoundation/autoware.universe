@@ -281,12 +281,13 @@ bool selectSafePath(
       return true;
     }
 
-    if (isLaneChangePathSafe(
-          paths.front().path, current_lanes, target_lanes, dynamic_objects, current_pose,
-          current_twist, vehicle_width, vehicle_length, ros_parameters, true, path.acceleration)) {
-      *selected_path = path;
-      return true;
-    }
+    // if (isLaneChangePathSafe(
+    //       paths.front().path, current_lanes, target_lanes, dynamic_objects, current_pose,
+    //       current_twist, vehicle_width, vehicle_length, ros_parameters, true, path.acceleration))
+    //       {
+    //   *selected_path = path;
+    //   return true;
+    // }
   }
 
   return false;
@@ -330,10 +331,10 @@ bool isLaneChangePathSafe(
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const double & vehicle_width, const double & vehicle_length,
-  const LaneChangeParameters & ros_parameters, const bool use_buffer, const double acceleration)
+  const LaneChangeParameters & ros_parameters, const bool use_buffer,
+  [[maybe_unused]] const double acceleration)
 {
   if (dynamic_objects == nullptr) {
-    [[maybe_unused]] const auto a = acceleration;
     return true;
   }
 
@@ -427,6 +428,8 @@ bool isLaneChangePathSafe(
           return false;
         }
 
+        util::getProjectedDistancePointFromPolygons(
+          ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
         const auto & object_twist = obj.kinematics.initial_twist_with_covariance.twist;
         if (!hasEnoughDistance(
               expected_ego_pose, current_twist, expected_obj_pose, object_twist, ros_parameters)) {
@@ -476,6 +479,9 @@ bool isLaneChangePathSafe(
             return false;
           }
 
+          util::getProjectedDistancePointFromPolygons(
+            ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
+
           const auto & object_twist = obj.kinematics.initial_twist_with_covariance.twist;
           if (!hasEnoughDistance(
                 expected_ego_pose, current_twist, expected_obj_pose, object_twist,
@@ -502,6 +508,11 @@ bool isLaneChangePathSafe(
         if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
           return false;
         }
+
+        Pose expected_obj_pose = obj.kinematics.initial_pose_with_covariance.pose;
+        util::getProjectedDistancePointFromPolygons(
+          ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
+
         const auto object_twist = obj.kinematics.initial_twist_with_covariance.twist;
         if (!hasEnoughDistance(
               expected_ego_pose, current_twist, obj.kinematics.initial_pose_with_covariance.pose,

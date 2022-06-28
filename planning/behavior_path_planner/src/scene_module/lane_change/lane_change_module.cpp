@@ -182,14 +182,16 @@ CandidateOutput LaneChangeModule::planCandidate() const
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
   // Find lane change path
-  bool found_valid_path, found_safe_path;
+  bool found_valid_path = false;
+  bool found_safe_path = false;
+
   LaneChangePath selected_path;
   std::tie(found_valid_path, found_safe_path) =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
   if (selected_path.path.points.empty()) {
-    return CandidateOutput{};
+    return output;
   }
 
   const auto start_idx = selected_path.shift_point.start_idx;

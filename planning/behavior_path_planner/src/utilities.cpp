@@ -1853,5 +1853,75 @@ Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const
 
   return object_polygon;
 }
+
+template <typename Pythagoras>
+ProjectedDistancePoint pointToSegment(
+  const Point2d & reference_point, const Point2d & point_from_ego,
+  const Point2d & point_from_object)
+{
+  auto copied_point_from_object = point_from_object;
+  auto copied_point_from_reference = reference_point;
+  bg::subtract_point(copied_point_from_object, point_from_ego);
+  bg::subtract_point(copied_point_from_reference, point_from_ego);
+
+  const auto c1 = bg::dot_product(copied_point_from_reference, copied_point_from_object);
+  if (!(c1 > 0)) {
+    return {point_from_ego, Pythagoras::apply(reference_point, point_from_ego)};
+  }
+
+  const auto c2 = bg::dot_product(copied_point_from_object, copied_point_from_object);
+  if (!(c2 > c1)) {
+    return {point_from_object, Pythagoras::apply(reference_point, point_from_object)};
+  }
+
+  Point2d projected = point_from_ego;
+  bg::multiply_value(copied_point_from_object, c1 / c2);
+  bg::add_point(projected, copied_point_from_object);
+
+  return {projected, Pythagoras::apply(reference_point, projected)};
+}
+
+void getProjectedDistancePointFromPolygons(
+  const Polygon2d & ego_polygon, const Polygon2d & object_polygon, Pose & point_on_ego,
+  Pose & point_on_object)
+{
+  ProjectedDistancePoint nearest;
+  std::unique_ptr<Point2d> current_point;
+
+  std::size_t count{0};
+
+  for (const auto & [ego_to_polygon, polygon_to_ego] :
+       {std::tie(ego_polygon, object_polygon), std::tie(object_polygon, ego_polygon)}) {
+    const auto segments = boost::make_iterator_range(
+      bg::segments_begin(ego_to_polygon), bg::segments_end(ego_to_polygon));
+    const auto points =
+      boost::make_iterator_range(bg::points_begin(polygon_to_ego), bg::points_end(polygon_to_ego));
+
+    for (auto && segment : segments) {
+      count = 0;
+      for (auto && point : points) {
+        const auto projected = pointToSegment(point, *segment.first, *segment.second);
+        if (!current_point || projected.distance < nearest.distance) {
+          current_point = std::make_unique<Point2d>(point);
+          nearest = projected;
+        }
+        ++count;
+      }
+    }
+  }
+
+  if (count < object_polygon.outer().size()) {
+    point_on_object.position.x = current_point->x();
+    point_on_object.position.y = current_point->y();
+    point_on_ego.position.x = nearest.projected_point.x();
+    point_on_ego.position.y = nearest.projected_point.y();
+  } else {
+    point_on_ego.position.x = current_point->x();
+    point_on_ego.position.y = current_point->y();
+    point_on_object.position.x = nearest.projected_point.x();
+    point_on_object.position.y = nearest.projected_point.y();
+  }
+}
+
 }  // namespace util
 }  // namespace behavior_path_planner
