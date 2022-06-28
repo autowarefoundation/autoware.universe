@@ -280,14 +280,6 @@ bool selectSafePath(
       *selected_path = path;
       return true;
     }
-
-    // if (isLaneChangePathSafe(
-    //       paths.front().path, current_lanes, target_lanes, dynamic_objects, current_pose,
-    //       current_twist, vehicle_width, vehicle_length, ros_parameters, true, path.acceleration))
-    //       {
-    //   *selected_path = path;
-    //   return true;
-    // }
   }
 
   return false;
