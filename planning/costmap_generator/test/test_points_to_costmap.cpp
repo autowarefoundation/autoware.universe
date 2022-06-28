@@ -26,31 +26,25 @@ protected:
   grid_map::GridMap construct_gridmap();
 
 public:
-  double grid_resolution_ = 1;
-  double grid_length_x_ = 20;
-  double grid_length_y_ = 20;
-  double grid_position_x_ = 0;
-  double grid_position_y_ = 0;
+  const double grid_resolution_ = 1.0;
+  const double grid_length_x_ = 20.0;
+  const double grid_length_y_ = 20.0;
+  const double grid_position_x_ = 0.0;
+  const double grid_position_y_ = 0.0;
 };
 
 grid_map::GridMap PointsToCostmapTest::construct_gridmap()
 {
   grid_map::GridMap gm;
 
-  // set gridmap size
   gm.setFrameId("map");
-  gm.setGeometry(
-    grid_map::Length(grid_length_x_, grid_length_y_), grid_resolution_,
-    grid_map::Position(grid_position_x_, grid_position_y_));
+  // set gridmap size,resolution
+  gm.setGeometry(grid_map::Length(grid_length_x_, grid_length_y_), grid_resolution_);
+  //center of grid to position p in map frame
+  gm.setPosition(grid_map::Position(grid_position_x_, grid_position_y_));
 
   // set initial value
   gm.add("points", 0);
-
-  // set car postion in map frame to center of grid
-  grid_map::Position p;
-  p.x() = 0;
-  p.y() = 0;
-  gm.setPosition(p);
 
   return gm;
 }
@@ -87,12 +81,11 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_validPoints)
   grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
-  double maximum_height_thres = 5;
-  double minimum_lidar_height_thres = 0;
-  double grid_min_value = 0;
-  double grid_max_value = 1;
-
-  std::string gridmap_layer_name = "points";
+  const double maximum_height_thres = 5.0;
+  const double minimum_lidar_height_thres = 0.0;
+  const double grid_min_value = 0.0;
+  const double grid_max_value = 1.0;
+  const std::string gridmap_layer_name = "points";
   grid_map::Matrix costmap_data = point2costmap.makeCostmapFromPoints(
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
@@ -126,12 +119,11 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_biggerThanMa
   grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
-  double maximum_height_thres = 0.99;
-  double minimum_lidar_height_thres = 0;
-  double grid_min_value = 0;
-  double grid_max_value = 1;
-
-  std::string gridmap_layer_name = "points";
+  const double maximum_height_thres = 0.99;
+  const double minimum_lidar_height_thres = 0.0;
+  const double grid_min_value = 0.0;
+  const double grid_max_value = 1.0;
+  const std::string gridmap_layer_name = "points";
   grid_map::Matrix costmap_data = point2costmap.makeCostmapFromPoints(
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
@@ -164,12 +156,11 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_lessThanMini
   grid_map::GridMap gridmap = construct_gridmap();
 
   PointsToCostmap point2costmap;
-  double maximum_height_thres = 0.99;
-  double minimum_lidar_height_thres = 0;
-  double grid_min_value = 0;
-  double grid_max_value = 1;
-
-  std::string gridmap_layer_name = "points";
+  const double maximum_height_thres = 0.99;
+  const double minimum_lidar_height_thres = 0.0;
+  const double grid_min_value = 0.0;
+  const double grid_max_value = 1.0;
+  const std::string gridmap_layer_name = "points";
   grid_map::Matrix costmap_data = point2costmap.makeCostmapFromPoints(
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
@@ -195,6 +186,8 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_outOfGrid)
   in_sensor_points.is_dense = false;
   in_sensor_points.resize(in_sensor_points.width * in_sensor_points.height);
 
+  // when we construct gridmap,we set grid map center to (0,0) in map frame
+  // so it would be outside of grid map if absolute value of point.x bigger than half of grid_length_x_
   in_sensor_points.points[0].x = 1 + grid_length_x_ / 2.0;
   in_sensor_points.points[0].y = 1 + grid_length_y_ / 2.0;
   in_sensor_points.points[0].z = 0.5;
@@ -203,11 +196,10 @@ TEST_F(PointsToCostmapTest, TestMakeCostmapFromPoints_invalidPoints_outOfGrid)
 
   PointsToCostmap point2costmap;
   const double maximum_height_thres = 0.99;
-  const double minimum_lidar_height_thres = 0;
-  const double grid_min_value = 0;
-  const double grid_max_value = 1;
-
-  std::string gridmap_layer_name = "points";
+  const double minimum_lidar_height_thres = 0.0;
+  const double grid_min_value = 0.0;
+  const double grid_max_value = 1.0;
+  const std::string gridmap_layer_name = "points";
   grid_map::Matrix costmap_data = point2costmap.makeCostmapFromPoints(
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, in_sensor_points);
