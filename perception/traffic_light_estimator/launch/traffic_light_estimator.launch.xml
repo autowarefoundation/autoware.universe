@@ -3,7 +3,7 @@
   <node pkg="traffic_light_estimator" exec="traffic_light_estimator_node" name="traffic_light_estimator" output="screen">
     <remap from="~/input/vector_map" to="/map/vector_map"/>
     <remap from="~/input/route" to="/planning/mission_planning/route"/>
-    <remap from="~/input/observed/traffic_signals" to="observed/traffic_signals"/>
+    <remap from="~/input/classified/traffic_signals" to="classified/traffic_signals"/>
     <remap from="~/output/traffic_signals" to="traffic_signals"/>
   </node>
 </launch>

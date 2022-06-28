@@ -87,7 +87,7 @@ TrafficLightEstimatorNode::TrafficLightEstimatorNode(const rclcpp::NodeOptions &
     "~/input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightEstimatorNode::onRoute, this, _1));
   sub_traffic_light_array_ = create_subscription<TrafficSignalArray>(
-    "~/input/observed/traffic_signals", rclcpp::QoS{1},
+    "~/input/classified/traffic_signals", rclcpp::QoS{1},
     std::bind(&TrafficLightEstimatorNode::onTrafficLightArray, this, _1));
 
   pub_traffic_light_array_ =
