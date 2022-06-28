@@ -2,11 +2,22 @@
   ros__parameters:
     crosswalk:
       crosswalk:
+        show_processing_time: false
+
         stop_line_distance: 1.5 # make stop line away from crosswalk when no explicit stop line exists
-        stop_margin: 1.0
-        slow_margin: 2.0
+        stop_margin: 2.0
         slow_velocity: 2.76 # 2.76 m/s = 10.0 kmph
-        stop_predicted_object_prediction_time_margin: 3.0
+
+        attention_range: 5.0
+
+        tl_state_timeout: 5.0
+
+        ego_pass_first_margin: 6.0
+        ego_pass_later_margin: 10.0
+        max_yield_timeout: 3.0
+
+        max_slow_down_jerk: -1.5
+        max_slow_down_accel: -2.5
 
       walkway:
         stop_line_distance: 1.5 # make stop line away from walkway when no explicit stop line exists

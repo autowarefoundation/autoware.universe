@@ -38,8 +38,7 @@ WalkwayModule::WalkwayModule(
 }
 
 bool WalkwayModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  PathWithLaneId * path, tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
