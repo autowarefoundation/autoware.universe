@@ -48,7 +48,7 @@
     <!-- ========================================= -->
     <!-- ========== sign-board correction ======== -->
     <!-- ========================================= -->
-    <node if="true" name="sign_corrector" pkg="sign_detector" exec="sign_corrector_node" output="screen" args="--ros-args --log-level warn">
+    <node if="true" name="sign_corrector" pkg="sign_detector" exec="sign_corrector_node" output="screen" args="--ros-args --log-level fatal">
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="image" to="$(var resized_image)"/>
         <param name="blur_size" value="5"/>

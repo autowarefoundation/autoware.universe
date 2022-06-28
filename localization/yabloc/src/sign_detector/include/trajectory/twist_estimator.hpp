@@ -26,6 +26,13 @@ public:
   TwistEstimator();
 
 private:
+  enum {
+    ANGLE = 0,
+    VELOCITY = 1,
+    BIAS = 2,
+    SCALE = 3,
+  };
+
   rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
   rclcpp::Publisher<String>::SharedPtr pub_string_;
@@ -44,6 +51,11 @@ private:
   Eigen::Matrix4f cov_predict_;
   int last_rtk_quality_{0};
 
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  bool scale_covariance_reset_flag{false};
+  void callbackTimer();
+
   void callbackImu(const Imu & msg);
   void callbackTwistStamped(const TwistStamped & msg);
   void callbackNavPVT(const NavPVT & msg);
@@ -55,6 +67,8 @@ private:
   void publishTwist(const Imu & msg);
   void publishDoppler(const NavPVT & msg);
   void publishString();
+
+  Eigen::MatrixXf rectifyPositiveSemiDefinite(const Eigen::MatrixXf & matrix);
 
   Eigen::Vector3f extractEnuVel(const NavPVT & msg) const;
 };

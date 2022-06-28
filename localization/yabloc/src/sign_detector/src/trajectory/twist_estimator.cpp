@@ -1,6 +1,8 @@
 #include "trajectory/twist_estimator.hpp"
 
-#include <eigen3/Eigen/Geometry>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/QR>
+#include <eigen3/Eigen/SVD>
 #include <sophus/geometry.hpp>
 
 namespace trajectory
@@ -8,6 +10,7 @@ namespace trajectory
 TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
 {
   using std::placeholders::_1;
+  using namespace std::literals::chrono_literals;
 
   auto cb_imu = std::bind(&TwistEstimator::callbackImu, this, _1);
   auto cb_pvt = std::bind(&TwistEstimator::callbackNavPVT, this, _1);
@@ -23,9 +26,22 @@ TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
   pub_doppler_vel_ = create_publisher<Float>("/kalman/doppler_vel", 10);
 
   // rotation, velocity, bias, scale
-  state_ = Eigen::Vector4f(0, 0, 0, 1);
-  cov_ = Eigen::Vector4f(81, 400, 1e-7f, 0.00001).asDiagonal();
-  cov_predict_ = Eigen::Vector4f(0.01, 100, 0.0001, 0.00001).asDiagonal();
+  state_ = Eigen::Vector4f(0, 20, 0, 1);
+  cov_ = Eigen::Vector4f(81, 400, 1e-6f, 1e-5f).asDiagonal();
+  cov_predict_ = Eigen::Vector4f(0.01, 100, 1e-4f, 1e-4f).asDiagonal();
+
+  timer_ = create_wall_timer(3s, std::bind(&TwistEstimator::callbackTimer, this));
+}
+
+void TwistEstimator::callbackTimer()
+{
+  if (scale_covariance_reset_flag) {
+    cov_ = rectifyPositiveSemiDefinite(cov_);
+    cov_(1, 3) = 0;
+    cov_(3, 1) = 0;
+    RCLCPP_WARN_STREAM(get_logger(), "reset covariance");
+  }
+  scale_covariance_reset_flag = true;
 }
 
 void TwistEstimator::callbackImu(const Imu & raw_msg)
@@ -44,7 +60,7 @@ void TwistEstimator::callbackImu(const Imu & raw_msg)
 
   // Update state
   float w_z = msg.angular_velocity.z;
-  state_[0] += (w_z + state_[2]) * dt;
+  state_[ANGLE] += (w_z + state_[BIAS]) * dt;
 
   // Update covariance
   Eigen::Matrix4f F = Eigen::Matrix4f::Identity();
@@ -60,16 +76,25 @@ void TwistEstimator::publishTwist(const Imu & imu)
   TwistStamped msg;
   msg.header.stamp = imu.header.stamp;
   msg.header.frame_id = "base_link";
-  msg.twist.angular.z = imu.angular_velocity.z + state_[2];
-  msg.twist.linear.x = state_[1];
+  msg.twist.angular.z = imu.angular_velocity.z + state_[BIAS];
+  msg.twist.linear.x = state_[VELOCITY];
   pub_twist_->publish(msg);
 }
 
 void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
 {
+  static bool first_subscirbe = true;
+  if (first_subscirbe) {
+    float wheel = msg.twist.linear.x;
+    state_[VELOCITY] = wheel;
+    RCLCPP_INFO_STREAM(get_logger(), "first twist subscription: " << state_[VELOCITY]);
+    first_subscirbe = false;
+    return;
+  }
+
   // Compute error and jacobian
   float wheel = msg.twist.linear.x;
-  float error = state_[1] - state_[3] * wheel;
+  float error = state_[VELOCITY] - state_[SCALE] * wheel;
   Eigen::Matrix<float, 1, 4> H;
   H << 0, -1, 0, wheel;
 
@@ -81,8 +106,6 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
   // Correct state and covariance
   state_ += K * error;
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
-
-  RCLCPP_INFO_STREAM(get_logger(), state_[1] << " " << state_[3] * wheel << " " << wheel);
 }
 
 void TwistEstimator::callbackNavPVT(const NavPVT & msg)
@@ -104,10 +127,25 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
     return;
   }
 
+  static bool first_subscirbe = true;
+  if (first_subscirbe) {
+    Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
+    state_[ANGLE] = std::atan2(vel_xy.y(), vel_xy.x());
+    RCLCPP_INFO_STREAM(get_logger(), "first navpvt subscription: " << state_[ANGLE]);
+    first_subscirbe = false;
+    return;
+  }
+
   // Compute error and jacobian
   Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
-  Eigen::Matrix2f R = Eigen::Rotation2D(state_[0]).toRotationMatrix();
-  Eigen::Vector2f error = R * state_[1] * Eigen::Vector2f::UnitX() - vel_xy;
+  Eigen::Matrix2f R = Eigen::Rotation2D(state_[ANGLE]).toRotationMatrix();
+  Eigen::Vector2f error = R * state_[VELOCITY] * Eigen::Vector2f::UnitX() - vel_xy;
+
+  RCLCPP_INFO_STREAM(
+    get_logger(), state_[VELOCITY] << " " << vel_xy.norm() << " " << error.transpose());
+
+  // std::cout << cov_ << std::endl;
+  cov_ = rectifyPositiveSemiDefinite(cov_);
 
   // Determain kalman gain
   Eigen::Matrix2f dR;
@@ -128,6 +166,8 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   float_msg.data = vel_xy.norm();
   pub_doppler_vel_->publish(float_msg);
   publishDoppler(msg);
+
+  scale_covariance_reset_flag = false;
 }
 
 Eigen::Vector3f TwistEstimator::extractEnuVel(const NavPVT & msg) const
@@ -146,7 +186,7 @@ void TwistEstimator::publishDoppler(const NavPVT & navpvt)
   msg.header.frame_id = "base_link";
 
   Eigen::Vector2f vel = extractEnuVel(navpvt).topRows(2);
-  Eigen::Matrix2f R = Eigen::Rotation2D(state_[0]).toRotationMatrix();
+  Eigen::Matrix2f R = Eigen::Rotation2D(state_[ANGLE]).toRotationMatrix();
   vel = R.transpose() * vel;
 
   float theta = std::atan2(vel.y(), vel.x());
@@ -180,6 +220,17 @@ void TwistEstimator::publishString()
   String msg;
   msg.data = ss.str();
   pub_string_->publish(msg);
+}
+
+Eigen::MatrixXf TwistEstimator::rectifyPositiveSemiDefinite(const Eigen::MatrixXf & matrix)
+{
+  Eigen::JacobiSVD<Eigen::MatrixXf> svd;
+  svd.compute(matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  Eigen::MatrixXf U = svd.matrixU();
+  Eigen::VectorXf singular = svd.singularValues();
+  singular = singular.cwiseMax(1e-6f);
+  Eigen::MatrixXf S = singular.asDiagonal();
+  return U * S * U.transpose();
 }
 
 }  // namespace trajectory
