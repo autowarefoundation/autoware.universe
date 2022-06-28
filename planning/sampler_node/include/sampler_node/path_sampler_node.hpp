@@ -65,6 +65,7 @@ private:
   plot::MainWindow w_;
 
   // Parameters
+  double fallback_timeout_{};
   Parameters params_;
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
@@ -75,9 +76,10 @@ private:
 
   // Cached data
   vehicle_info_util::VehicleInfo vehicle_info_;
-  std::shared_ptr<autoware_auto_vehicle_msgs::msg::SteeringReport> current_steer_ptr_{};
+  autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr current_steer_ptr_{};
   std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> in_objects_ptr_;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr fallback_traj_ptr_{};
   sampler_common::Path prev_path_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::Ids drivable_ids_;
@@ -91,22 +93,24 @@ private:
     objects_sub_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr fallback_sub_;
 
   rclcpp::TimerBase::SharedPtr gui_process_timer_;
 
   // callback functions
   rcl_interfaces::msg::SetParametersResult onParameter(
     const std::vector<rclcpp::Parameter> & parameters);
-  void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
-  void steerCallback(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr);
-  void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr);
-  void routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::SharedPtr);
+  void pathCallback(const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr);
+  void steerCallback(const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr);
+  void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr);
+  void routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr);
+  void fallbackCallback(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr);
 
   // other functions
   void publishPath(
     const sampler_common::Path & path,
-    const autoware_auto_planning_msgs::msg::Path::SharedPtr path_msg);
+    const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr path_msg);
   std::optional<sampler_common::State> getCurrentEgoState();
   static std::optional<sampler_common::Path> selectBestPath(
     const std::vector<sampler_common::Path> & paths);

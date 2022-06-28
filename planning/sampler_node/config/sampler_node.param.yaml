@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+    fallback_trajectory_timeout: 0.1  # [s] age below which a fallback trajectory can be used
     constraints:
       hard:
         max_curvature: 0.3
@@ -17,7 +18,7 @@
       minimum_committed_length: 5.0
       reuse_max_length_max: 50.0
       reuse_samples: 2
-      reuse_max_deviation: 1.0  # TODO(Maxime CLEMENT): use parameter from the lateral_deviation_checker
+      reuse_max_deviation: 1.0
       target_lengths: [40.0, 60.0]
       frenet:
         target_lateral_positions: [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
