@@ -193,6 +193,9 @@ CandidateOutput LaneChangeModule::planCandidate() const
   if (selected_path.path.points.empty()) {
     return output;
   }
+  // if (selected_path.path.points.empty()) {
+  //   return CandidateOutput{};
+  // }
 
   const auto start_idx = selected_path.shift_point.start_idx;
   const auto end_idx = selected_path.shift_point.end_idx;
