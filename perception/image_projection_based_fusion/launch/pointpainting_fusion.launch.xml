@@ -80,4 +80,4 @@
       <param name="debug_mode" value="$(var debug_mode)"/>
     </node>
   </group>
-  </launch>
+</launch>
