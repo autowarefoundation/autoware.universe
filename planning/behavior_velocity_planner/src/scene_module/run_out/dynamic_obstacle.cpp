@@ -197,6 +197,12 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
 void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
+  if (msg->data.empty()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    dynamic_obstacle_data_.compare_map_filtered_pointcloud.clear();
+    return;
+  }
+
   geometry_msgs::msg::TransformStamped transform;
   try {
     transform = tf_buffer_.lookupTransform(
