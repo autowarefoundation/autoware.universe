@@ -411,8 +411,18 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
 {
   // if plan from ego
   constexpr double epsilon = 1e-04;
-  const bool plan_from_ego =
-    mpt_param_.plan_from_ego && std::abs(current_ego_vel_) < epsilon && ref_points.size() > 1;
+  const double trajectory_length = [&]() {
+    double sum_length = 0;
+    for (size_t i = 1; i < ref_points.size(); ++i) {
+      sum_length +=
+        tier4_autoware_utils::calcDistance2d(ref_points.at(i - 1).p, ref_points.at(i).p);
+    }
+    return sum_length;
+  }();
+
+  const bool plan_from_ego = mpt_param_.plan_from_ego && std::abs(current_ego_vel_) < epsilon &&
+                             ref_points.size() > 1 &&
+                             trajectory_length < mpt_param_.max_plan_from_ego_length;
   if (plan_from_ego) {
     for (auto & ref_point : ref_points) {
       ref_point.fix_kinematic_state = boost::none;
