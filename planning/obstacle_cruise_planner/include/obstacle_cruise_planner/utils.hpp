@@ -60,7 +60,7 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths
 
 geometry_msgs::msg::Pose getCurrentObjectPose(
   const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
-  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time, const bool use_predi);
+  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time, const bool use_prediction);
 
 template <class T>
 size_t getIndexWithLongitudinalOffset(
