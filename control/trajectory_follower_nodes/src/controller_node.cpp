@@ -94,7 +94,6 @@ Controller::LateralControllerMode Controller::getLateralControllerMode(
   if (controller_mode == "mpc_follower") return LateralControllerMode::MPC;
   if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
 
-  throw std::domain_error("[LateralController] undesired algorithm is selected.");
   return LateralControllerMode::INVALID;
 }
 
@@ -103,7 +102,6 @@ Controller::LongitudinalControllerMode Controller::getLongitudinalControllerMode
 {
   if (controller_mode == "pid") return LongitudinalControllerMode::PID;
 
-  throw std::domain_error("[LongitudinalController] undesired algorithm is selected.");
   return LongitudinalControllerMode::INVALID;
 }
 
