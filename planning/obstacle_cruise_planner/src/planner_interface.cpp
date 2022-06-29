@@ -124,8 +124,6 @@ Trajectory PlannerInterface::generateStopTrajectory(
 
       const double stop_dist_diff =
         *closest_behavior_stop_dist_from_ego - closest_obstacle_stop_dist_from_ego;
-      std::cerr << stop_dist_diff << " " << *closest_behavior_stop_dist_from_ego << " "
-                << closest_obstacle_stop_dist_from_ego << std::endl;
       if (0.0 < stop_dist_diff && stop_dist_diff < longitudinal_info_.safe_distance_margin) {
         // Use shorter margin (min_behavior_stop_margin) for obstacle stop
         return min_behavior_stop_margin_;
