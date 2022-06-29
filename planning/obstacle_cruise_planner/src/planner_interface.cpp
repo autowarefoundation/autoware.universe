@@ -107,7 +107,6 @@ Trajectory PlannerInterface::generateStopTrajectory(
     return planner_data.traj;
   }
   const double dist_to_ego = -negative_dist_to_ego.get();
-  const double dist_to_ego_front = dist_to_ego + vehicle_info_.max_longitudinal_offset_m;
 
   // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
   // we set closest_obstacle_stop_distance to closest_behavior_stop_distance

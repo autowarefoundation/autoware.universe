@@ -718,7 +718,6 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     if (marker_pose) {
       visualization_msgs::msg::MarkerArray wall_msg;
 
-      const double obj_vel = std::abs(obj.velocity);
       if (obj.has_stopped) {
         const auto markers = tier4_autoware_utils::createStopVirtualWallMarker(
           marker_pose.get(), "obstacle to follow", current_time, 0);
