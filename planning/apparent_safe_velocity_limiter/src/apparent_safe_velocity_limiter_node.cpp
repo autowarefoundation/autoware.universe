@@ -17,10 +17,15 @@
 #include "apparent_safe_velocity_limiter/collision_distance.hpp"
 #include "apparent_safe_velocity_limiter/debug.hpp"
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/pointcloud_utils.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
+#include <pcl_ros/transforms.hpp>
+
 #include <boost/geometry/algorithms/correct.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -33,6 +38,9 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   sub_occupancy_grid_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
     "~/input/occupancy_grid", 1,
     [this](const OccupancyGrid::ConstSharedPtr msg) { occupancy_grid_ptr_ = msg; });
+  sub_pointcloud_ = create_subscription<PointCloud>(
+    "~/input/obstacle_pointcloud", rclcpp::QoS(1).best_effort(),
+    [this](const PointCloud::ConstSharedPtr msg) { pointcloud_ptr_ = msg; });
   sub_objects_ = create_subscription<PredictedObjects>(
     "~/input/dynamic_obstacles", 1,
     [this](const PredictedObjects::ConstSharedPtr msg) { dynamic_obstacles_ptr_ = msg; });
@@ -44,11 +52,22 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-  pub_debug_occupancy_grid_ = create_publisher<OccupancyGrid>("~/output/occupancy_grid", 1);
+  pub_debug_occupancy_grid_ = create_publisher<OccupancyGrid>("~/output/debug_occupancy_grid", 1);
+  pub_debug_pointcloud_ = create_publisher<PointCloud>("~/output/debug_pointcloud", 1);
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
   vehicle_front_offset_ = static_cast<Float>(vehicle_info.max_longitudinal_offset_m);
+
+  auto obstacle_type = declare_parameter<std::string>("obstacle_type");
+  if (obstacle_type == "pointcloud")
+    obstacle_type_ = POINTCLOUD;
+  else if (obstacle_type == "occupancy_grid")
+    obstacle_type_ = OCCUPANCYGRID;
+  else
+    RCLCPP_WARN(
+      get_logger(), "Unknown obstacle_type value: '%s'. Using default POINTCLOUD type.",
+      obstacle_type.c_str());
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
@@ -91,6 +110,15 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       min_adjusted_velocity_ = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == "max_deceleration") {
       max_deceleration_ = static_cast<Float>(parameter.as_double());
+    } else if (parameter.get_name() == "obstacle_type") {
+      if (parameter.as_string() == "pointcloud") {
+        obstacle_type_ = POINTCLOUD;
+      } else if (parameter.as_string() == "occupancy_grid") {
+        obstacle_type_ = OCCUPANCYGRID;
+      } else {
+        result.successful = false;
+        result.reason = "obstacle_type value must be 'pointcloud' or 'occupancy_grid'";
+      }
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -165,8 +193,21 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   obs_envelope_duration += stopwatch.toc("obs_envelope_duration");
   stopwatch.tic("obs_filter_duration");
   // Filter obstacles outside the envelope polygon
-  const auto obstacles = extractStaticObstaclePolygons(
-    *occupancy_grid_ptr_, polygon_masks, envelope_polygon, occupancy_grid_obstacle_threshold_);
+  const auto obstacles =
+    obstacle_type_ == OCCUPANCYGRID
+      ? extractStaticObstaclePolygons(
+          *occupancy_grid_ptr_, polygon_masks, envelope_polygon, occupancy_grid_obstacle_threshold_)
+      : [&]() {
+          const auto filtered_pcd = transformAndFilterPointCloud(
+            *pointcloud_ptr_, polygon_masks, envelope_polygon, transform_listener_,
+            downsampled_traj.header.frame_id);
+          PointCloud ros_pointcloud;
+          pcl::toROSMsg(*filtered_pcd, ros_pointcloud);
+          ros_pointcloud.header.stamp = now();
+          ros_pointcloud.header.frame_id = downsampled_traj.header.frame_id;
+          pub_debug_pointcloud_->publish(ros_pointcloud);
+          return extractObstacleLines(filtered_pcd, vehicle_lateral_offset_ * 2);
+        }();
   obs_filter_duration += stopwatch.toc("obs_filter_duration");
   pub_debug_occupancy_grid_->publish(debug_occ_grid);
 

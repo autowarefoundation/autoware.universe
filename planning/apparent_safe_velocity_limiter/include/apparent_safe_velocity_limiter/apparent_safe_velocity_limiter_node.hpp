@@ -38,7 +38,6 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
 #include <rcutils/time.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -69,18 +68,23 @@ private:
     pub_debug_markers_;  //!< @brief publisher for debug markers
   rclcpp::Publisher<OccupancyGrid>::SharedPtr
     pub_debug_occupancy_grid_;  //!< @brief publisher for filtered occupancy grid
+  rclcpp::Publisher<PointCloud>::SharedPtr
+    pub_debug_pointcloud_;  //!< @brief publisher for filtered pointcloud
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
   rclcpp::Subscription<PredictedObjects>::SharedPtr
     sub_objects_;  //!< @brief subscribe for dynamic objects
   rclcpp::Subscription<OccupancyGrid>::SharedPtr
     sub_occupancy_grid_;  //!< @brief subscriber for occupancy grid
+  rclcpp::Subscription<PointCloud>::SharedPtr
+    sub_pointcloud_;  //!< @brief subscriber for obstacle pointcloud
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
     sub_odom_;  //!< @brief subscriber for the current velocity
 
   // cached inputs
   PredictedObjects::ConstSharedPtr dynamic_obstacles_ptr_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
+  PointCloud::ConstSharedPtr pointcloud_ptr_;
 
   // Benchmarking
   std::multiset<double> runtimes;
@@ -99,6 +103,7 @@ private:
   Float dynamic_obstacles_min_vel_ =
     static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_min_vel"));
   Float max_deceleration_ = static_cast<Float>(declare_parameter<Float>("max_deceleration"));
+  ObstacleType obstacle_type_ = POINTCLOUD;
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
   std::optional<Float> current_ego_velocity_;

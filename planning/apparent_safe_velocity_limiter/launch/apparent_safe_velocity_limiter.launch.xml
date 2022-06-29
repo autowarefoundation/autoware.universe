@@ -3,6 +3,7 @@
   <arg name="input_trajectory" default="/planning/scenario_planning/scenario_selector/trajectory"/>
   <arg name="input_dynamic_obstacles" default="/perception/object_recognition/objects"/>
   <arg name="input_occupancy_grid" default="/perception/occupancy_grid_map/map"/>
+  <arg name="input_obstacle_pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="input_odometry" default="/localization/kinematic_state"/>
   <arg name="output_trajectory" default="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory"/>
   <arg name="output_debug_markers" default="/planning/scenario_planning/apparent_safe_velocity_limiter/debug_markers"/>
@@ -13,10 +14,11 @@
   <let name="callgrind-launch-prefix" value="valgrind --tool=callgrind --dump-instr=yes -v --instr-atstart=no"/>
   <let name="gdb-launch-prefix" value="konsole -e gdb -ex run --args"/>
   <let name="gdb-gnome-launch-prefix" value="gnome-terminal -- gdb -ex run --args"/>
-  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="">
+  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="$(var gdb-launch-prefix)">
     <param from="$(var param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>
+    <remap from="~/input/obstacle_pointcloud" to="$(var input_obstacle_pointcloud)"/>
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/input/dynamic_obstacles" to="$(var input_dynamic_obstacles)"/>
     <remap from="~/input/odometry" to="$(var input_odometry)"/>

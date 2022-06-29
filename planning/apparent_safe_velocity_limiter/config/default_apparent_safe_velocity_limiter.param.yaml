@@ -6,6 +6,7 @@
     max_deceleration: 2.0 # [m/s²] maximum deceleration caused by the adjusted velocity
     start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
     downsample_factor: 1  # factor by which to downsample the input trajectory for calculation
+    obstacle_type: pointcloud  # type used for obstacle detection. Must be 'pointcloud' or 'occupancy_grid'
     occupancy_grid_obstacle_threshold: 60 # occupancy grid values higher than this are considered to be obstacles
     dynamic_obstacles_buffer: 1.0 # [m] extra distance around dynamic obstacles used to mask the occupancy grid and avoid false obstacle detection
     dynamic_obstacles_min_vel: 0.5 # [m/s] velocity above which a dynamic obstacle is ignored by the module

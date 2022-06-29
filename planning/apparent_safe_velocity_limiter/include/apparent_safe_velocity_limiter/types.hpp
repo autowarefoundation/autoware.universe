@@ -19,6 +19,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/multi_linestring.hpp>
@@ -36,8 +37,11 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using nav_msgs::msg::OccupancyGrid;
+using PointCloud = sensor_msgs::msg::PointCloud2;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
+
+enum ObstacleType { POINTCLOUD, OCCUPANCYGRID };
 
 using point_t = boost::geometry::model::d2::point_xy<double>;
 using polygon_t = boost::geometry::model::polygon<point_t>;
