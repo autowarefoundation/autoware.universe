@@ -463,10 +463,9 @@ void FreespacePlannerNode::planTrajectory()
   // Extend robot shape
   freespace_planning_algorithms::VehicleShape extended_vehicle_shape =
     planner_common_param_.vehicle_shape;
-  constexpr double margin = 1.0;
-  extended_vehicle_shape.length += margin;
-  extended_vehicle_shape.width += margin;
-  extended_vehicle_shape.base2back += margin / 2;
+  extended_vehicle_shape.length += node_param_.margin;
+  extended_vehicle_shape.width += node_param_.margin;
+  extended_vehicle_shape.base2back += node_param_.margin / 2;
 
   // Provide robot shape and map for the planner
   algo_->setVehicleShape(extended_vehicle_shape);
