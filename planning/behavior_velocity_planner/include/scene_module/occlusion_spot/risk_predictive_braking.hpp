@@ -42,8 +42,7 @@ int insertSafeVelocityToPath(
 SafeMotion calculateSafeMotion(const Velocity & v, const double ttc);
 
 double calculateInsertVelocity(
-  const double min_allowed_vel, const double safe_vel, const double min_vel,
-  const double original_vel);
+  const double min_allowed_vel, const double safe_vel, const double original_vel);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

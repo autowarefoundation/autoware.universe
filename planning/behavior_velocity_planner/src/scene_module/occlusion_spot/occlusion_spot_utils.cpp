@@ -321,11 +321,22 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
    */
   PossibleCollisionInfo pc;
   const double ttc = std::abs(arc_coord_occlusion_with_offset.distance / param.pedestrian_vel);
-  SafeMotion sm = calculateSafeMotion(param.v, ttc);
-  double distance_to_stop = arc_coord_occlusion_with_offset.length - sm.stop_dist;
+  SafeMotion sm;
+  // TODO(tanaka): consider how to define better safe motion
+  {
+    const double v_min = param.v.min_allowed_velocity;
+    if(!param.insert_stop_point){
+      // this module calulates safe motion according to defined acc/jerk 
+      sm = calculateSafeMotion(param.v, ttc);
+      sm.safe_velocity = std::max(v_min, sm.safe_velocity);
+    } else {
+      // this module is plan to insert stop point(almost zero velocity) in front of occlusion spot
+      sm = {param.v.safe_margin, v_min};
+    }
+  }
   const double eps = 0.1;
   // avoid inserting path point behind original path
-  if (distance_to_stop < eps) distance_to_stop = eps;
+  double distance_to_stop = std::max(arc_coord_occlusion_with_offset.length - sm.stop_dist , eps);
   pc.arc_lane_dist_at_collision = {distance_to_stop, arc_coord_occlusion_with_offset.distance};
   pc.obstacle_info.safe_motion = sm;
   pc.obstacle_info.ttc = ttc;

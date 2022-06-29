@@ -108,6 +108,8 @@ struct PlannerParam
 {
   DETECTION_METHOD detection_method;
   PASS_JUDGE pass_judge;
+  bool insert_stop_point;           // [-]
+  bool consider_pass_judge;         // [-]
   bool is_show_occlusion;           // [-]
   bool is_show_cv_window;           // [-]
   bool is_show_processing_time;     // [-]

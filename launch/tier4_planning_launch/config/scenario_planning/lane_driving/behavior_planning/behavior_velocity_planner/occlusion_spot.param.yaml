@@ -3,6 +3,8 @@
     occlusion_spot:
       detection_method: "occupancy_grid"    # [-] candidate is "occupancy_grid" or "predicted_object"
       pass_judge: "smooth_velocity"         # [-] candidate is "smooth_velocity" or "current_velocity"
+      insert_stop_point: true               # [-] whether to insert stop point for occlusion spot
+      consider_pass_judge: false            # [-] whether to consider pass judge for occlusion spot
       use_object_info: true                 # [-] whether to reflect object info to occupancy grid map or not
       use_moving_object_ray_cast: true      # [-] whether to reflect moving object ray_cast to occupancy grid map or not
       use_partition_lanelet: true           # [-] whether to use partition lanelet map data
@@ -13,7 +15,7 @@
         is_show_cv_window: false            # [-] whether to show open_cv debug window
         is_show_processing_time: false      # [-] whether to show processing time
       threshold:
-        detection_area_length: 100.0        # [m] the length of path to consider perception range
+        detection_area_length: 70.0         # [m] the length of path to consider perception range
         stuck_vehicle_vel: 1.0              # [m/s] velocity below this value is assumed to stop
         lateral_distance: 1.5               # [m] maximum lateral distance to consider hidden collision
       motion:
