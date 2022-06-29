@@ -154,7 +154,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     msg.markers.push_back(marker);
   }
 
-  // Stop foctor point
+  // Stop factor point
   if (!debug_data.stop_factor_points.empty()) {
     auto marker = createDefaultMarker(
       "map", now, "stop factor point", uid, Marker::POINTS, createMarkerScale(0.25, 0.25, 0.0),
