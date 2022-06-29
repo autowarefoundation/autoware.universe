@@ -39,14 +39,14 @@ namespace behavior_velocity_planner
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-enum class TTCTTVState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
+enum class CollisionPointState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
 
 struct CollisionPoint
 {
   geometry_msgs::msg::Point collision_point{};
   double time_to_collision;
   double time_to_vehicle;
-  TTCTTVState state{TTCTTVState::EGO_PASS_FIRST};
+  CollisionPointState state{CollisionPointState::EGO_PASS_FIRST};
 };
 
 struct DebugData

@@ -48,19 +48,19 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
         createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
       std::ostringstream string_stream;
       string_stream << std::fixed << std::setprecision(2);
-      string_stream << "(module, ttc, ttv, STATE)=(" << module_id << " , " << p.time_to_collision
+      string_stream << "(module, ttc, ttv, state)=(" << module_id << " , " << p.time_to_collision
                     << " , " << p.time_to_vehicle;
       switch (p.state) {
-        case TTCTTVState::YIELD:
+        case CollisionPointState::YIELD:
           string_stream << " , YIELD)";
           break;
-        case TTCTTVState::EGO_PASS_FIRST:
+        case CollisionPointState::EGO_PASS_FIRST:
           string_stream << " , EGO_PASS_FIRST)";
           break;
-        case TTCTTVState::EGO_PASS_LATER:
+        case CollisionPointState::EGO_PASS_LATER:
           string_stream << " , EGO_PASS_LATER)";
           break;
-        case TTCTTVState::IGNORE:
+        case CollisionPointState::IGNORE:
           string_stream << " , IGNORE)";
           break;
         default:

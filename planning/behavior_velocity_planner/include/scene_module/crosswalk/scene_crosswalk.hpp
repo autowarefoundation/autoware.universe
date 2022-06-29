@@ -120,7 +120,7 @@ private:
     const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
     const geometry_msgs::msg::Vector3 & obj_vel) const;
 
-  TTCTTVState getCollisionPointState(const double ttc, const double ttv) const;
+  CollisionPointState getCollisionPointState(const double ttc, const double ttv) const;
 
   float calcTargetVelocity(
     const PathPointWithLaneId & stop_point, const PathWithLaneId & ego_path) const;

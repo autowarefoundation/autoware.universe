@@ -455,7 +455,7 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
     for (auto & cp : getCollisionPoints(ego_path, object, attention_range)) {
       const auto is_ignore_object = ignore_objects_.count(obj_uuid) != 0;
       if (is_ignore_object) {
-        cp.state = TTCTTVState::IGNORE;
+        cp.state = CollisionPointState::IGNORE;
       }
 
       constexpr double stop_velocity_th = 0.14;  // [m/s]
@@ -467,7 +467,7 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
 
       debug_data_.collision_points.push_back(cp);
 
-      if (cp.state != TTCTTVState::YIELD) {
+      if (cp.state != CollisionPointState::YIELD) {
         continue;
       }
 
@@ -888,17 +888,18 @@ CollisionPoint CrosswalkModule::createCollisionPoint(
   return collision_point;
 }
 
-TTCTTVState CrosswalkModule::getCollisionPointState(const double ttc, const double ttv) const
+CollisionPointState CrosswalkModule::getCollisionPointState(
+  const double ttc, const double ttv) const
 {
   if (ttc + planner_param_.ego_pass_first_margin < ttv) {
-    return TTCTTVState::EGO_PASS_FIRST;
+    return CollisionPointState::EGO_PASS_FIRST;
   } else if (ttv + planner_param_.ego_pass_later_margin < ttc) {
-    return TTCTTVState::EGO_PASS_LATER;
+    return CollisionPointState::EGO_PASS_LATER;
   } else {
-    return TTCTTVState::YIELD;
+    return CollisionPointState::YIELD;
   }
 
-  return TTCTTVState::IGNORE;
+  return CollisionPointState::IGNORE;
 }
 
 bool CrosswalkModule::isStuckVehicle(
