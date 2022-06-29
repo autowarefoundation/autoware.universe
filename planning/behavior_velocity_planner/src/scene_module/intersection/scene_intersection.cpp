@@ -189,7 +189,7 @@ bool IntersectionModule::modifyPathVelocity(
     input_path.points.at(stop_line_idx).point.pose.position));
 
   if (!isActivated()) {
-    const double v = 0.0;
+    constexpr double v = 0.0;
     util::setVelocityFrom(stop_line_idx, v, path);
 
     debug_data_.stop_required = true;
