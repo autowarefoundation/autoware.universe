@@ -219,7 +219,9 @@ std::pair<std::vector<double>, int64_t> EBPathOptimizer::solveQP()
   const auto optimized_points = std::get<0>(result);
   const auto status = std::get<3>(result);
 
-  return std::make_pair(optimized_points, status);
+  utils::logOSQPSolutionStatus(std::get<3>(result), "EB: ");
+
+  return optimized_points;
 }
 
 std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
