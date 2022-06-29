@@ -477,9 +477,8 @@ void NDTScanMatcher::callbackMapPoints(
       .count() /
     1000.0;
   RCLCPP_INFO_STREAM(
-    get_logger(), "KOJI until align in callbackMapPoints @ndt_scan_matcher: "
-                    << KOJI_exe_time
-                    << " [ms]");
+    get_logger(),
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms]");
 
   // swap
   ndt_map_mtx_.lock();
