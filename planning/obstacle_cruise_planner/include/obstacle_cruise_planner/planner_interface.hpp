@@ -119,7 +119,7 @@ protected:
   {
     const auto & i = longitudinal_info_;
     const double rss_dist_with_margin =
-      ego_vel * i.idling_time + std::pow(ego_vel, 2) * 0.5 / std::abs(i.min_accel) -
+      ego_vel * i.idling_time + std::pow(ego_vel, 2) * 0.5 / std::abs(i.min_ego_accel_for_rss) -
       std::pow(obj_vel, 2) * 0.5 / std::abs(i.min_object_accel_for_rss) + margin;
     return rss_dist_with_margin;
   }
