@@ -89,6 +89,9 @@ private:
 
   uint8_t getLastDetectedTrafficSignal(const lanelet::Id & id) const;
 
+  // Node param
+  bool use_last_detect_color_;
+
   // Signal history
   std::unordered_map<uint32_t, uint8_t> last_detect_color_;
 

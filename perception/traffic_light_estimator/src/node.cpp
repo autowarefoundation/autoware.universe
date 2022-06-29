@@ -80,6 +80,8 @@ TrafficLightEstimatorNode::TrafficLightEstimatorNode(const rclcpp::NodeOptions &
 {
   using std::placeholders::_1;
 
+  use_last_detect_color_ = this->declare_parameter("use_last_detect_color", true);
+
   sub_map_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightEstimatorNode::onMap, this, _1));
@@ -231,7 +233,7 @@ lanelet::ConstLanelets TrafficLightEstimatorNode::getGreenLanelets(
 
     const auto last_detected_signal = getLastDetectedTrafficSignal(tl_reg_elem->id());
     const auto was_green = current_detected_signal == TrafficLight::UNKNOWN &&
-                           last_detected_signal == TrafficLight::GREEN;
+                           last_detected_signal == TrafficLight::GREEN && use_last_detect_color_;
 
     updateLastDetectedSignal(tl_reg_elem->id(), current_detected_signal);
 
