@@ -113,7 +113,9 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
-  initial_ndt_align_timeout_sec_(3.0)
+  initial_ndt_align_timeout_sec_(3.0),
+  regularization_enabled_(declare_parameter("regularization_enabled", false)),
+  regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
 {
   key_value_stdmap_["state"] = "Initializing";
 
@@ -166,6 +168,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_ptr_->setStepSize(step_size);
   ndt_ptr_->setResolution(resolution);
   ndt_ptr_->setMaximumIterations(max_iterations);
+  ndt_ptr_->setRegularizationScaleFactor(regularization_scale_factor_);
+
   RCLCPP_INFO(
     get_logger(), "trans_epsilon: %lf, step_size: %lf, resolution: %lf, max_iterations: %d",
     trans_epsilon, step_size, resolution, max_iterations);
@@ -232,6 +236,10 @@ NDTScanMatcher::NDTScanMatcher()
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
     std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1), main_sub_opt);
+  regularization_pose_sub_ =
+    this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "regularization_pose_with_covariance", 100,
+      std::bind(&NDTScanMatcher::callbackRegularizationPose, this, std::placeholders::_1));
 
   sensor_aligned_pose_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
@@ -399,6 +407,12 @@ void NDTScanMatcher::callbackInitialPose(
   }
 }
 
+void NDTScanMatcher::callbackRegularizationPose(
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
+{
+  regularization_pose_msg_ptr_array_.push_back(pose_conv_msg_ptr);
+}
+
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
@@ -433,7 +447,7 @@ void NDTScanMatcher::callbackMapPoints(
   const auto max_iterations = ndt_ptr_->getMaximumIterations();
 
   using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
-  std::shared_ptr<NDTBase> new_ndt_ptr_ = getNDT<PointSource, PointTarget>(ndt_implement_type_);
+  std::shared_ptr<NDTBase> new_ndt_ptr = getNDT<PointSource, PointTarget>(ndt_implement_type_);
 
   if (ndt_implement_type_ == NDTImplementType::OMP) {
     using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
@@ -472,6 +486,7 @@ void NDTScanMatcher::callbackMapPoints(
   min_y_ = new_min_y;
   max_x_ = new_max_x;
   max_y_ = new_max_y;
+
   ndt_map_mtx_.unlock();
 }
 
@@ -528,6 +543,16 @@ void NDTScanMatcher::callbackSensorPoints(
   if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
     RCLCPP_WARN(get_logger(), "Validation error.");
     return;
+  }
+
+  // If regularization is enabled and available, set pose to NDT for regularization
+  if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP)) {
+    ndt_ptr_->unsetRegularizationPose();
+    std::optional<Eigen::Matrix4f> pose_opt = interpolateRegularizationPose(sensor_ros_time);
+    if (pose_opt.has_value()) {
+      ndt_ptr_->setRegularizationPose(pose_opt.value());
+      RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
+    }
   }
 
   const auto initial_pose_msg =
@@ -862,4 +887,32 @@ bool NDTScanMatcher::validateInitialPositionCompatibility(
   bool is_y_axis_ok = (initial_point.y > min_y_) && (initial_point.y < max_y_);
 
   return is_x_axis_ok || is_y_axis_ok;
+
+std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(
+  const rclcpp::Time & sensor_ros_time)
+{
+  if (regularization_pose_msg_ptr_array_.empty()) {
+    return std::nullopt;
+  }
+
+  // synchronization
+  auto regularization_old_msg_ptr =
+    std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
+  auto regularization_new_msg_ptr =
+    std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
+  getNearestTimeStampPose(
+    regularization_pose_msg_ptr_array_, sensor_ros_time, regularization_old_msg_ptr,
+    regularization_new_msg_ptr);
+  popOldPose(regularization_pose_msg_ptr_array_, sensor_ros_time);
+
+  const geometry_msgs::msg::PoseStamped regularization_pose_msg =
+    interpolatePose(*regularization_old_msg_ptr, *regularization_new_msg_ptr, sensor_ros_time);
+  // if the interpolatePose fails, 0.0 is stored in the stamp
+  if (rclcpp::Time(regularization_pose_msg.header.stamp).seconds() == 0.0) {
+    return std::nullopt;
+  }
+
+  Eigen::Affine3d regularization_pose_affine;
+  tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
+  return regularization_pose_affine.matrix().cast<float>();
 }

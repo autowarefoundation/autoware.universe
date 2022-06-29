@@ -19,6 +19,7 @@
 
     <remap from="ndt_pose" to="$(var output_pose_topic)"/>
     <remap from="ndt_pose_with_covariance" to="$(var output_pose_with_covariance_topic)"/>
+    <remap from="regularization_pose_with_covariance" to="$(var input_regularization_pose_topic)"/>
 
     <param from="$(var param_file)"/>
   </node>
