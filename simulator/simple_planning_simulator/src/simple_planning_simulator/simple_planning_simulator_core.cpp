@@ -112,7 +112,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     "input/control_mode_request",
     std::bind(&SimplePlanningSimulator::on_control_mode_request, this, _1, _2));
 
-  // TODO(Horibe): will be replaced by mode_request. May still be needed for scenario testing
+  // TODO(Horibe): should be replaced by mode_request. Keep for the backward compatibility.
   sub_engage_ = create_subscription<Engage>(
     "input/engage", rclcpp::QoS{1}, std::bind(&SimplePlanningSimulator::on_engage, this, _1));
 
@@ -178,6 +178,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
 
   // control mode
   current_control_mode_.data = ControlMode::AUTO;
+  current_manual_gear_cmd_.command = GearCommand::DRIVE;
 }
 
 void SimplePlanningSimulator::initialize_vehicle_model()
