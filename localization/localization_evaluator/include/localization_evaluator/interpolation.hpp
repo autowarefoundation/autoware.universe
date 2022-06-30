@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KITTI_EVALUATOR__INTERPOLATION_HPP_
-#define KITTI_EVALUATOR__INTERPOLATION_HPP_
+#ifndef LOCALIZATION_EVALUATOR__INTERPOLATION_HPP_
+#define LOCALIZATION_EVALUATOR__INTERPOLATION_HPP_
 
 #include <eigen3/Eigen/Geometry>
 #include <rclcpp/time.hpp>
@@ -40,4 +40,4 @@ void interpolateTransform(
   out_pose = out_translation * out_q;
 }
 }  // namespace interpolation
-#endif  // KITTI_EVALUATOR__INTERPOLATION_HPP_
+#endif  // LOCALIZATION_EVALUATOR__INTERPOLATION_HPP_

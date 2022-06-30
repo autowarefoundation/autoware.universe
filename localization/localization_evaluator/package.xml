@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>kitti_evaluator</name>
+  <name>localization_evaluator</name>
   <version>0.1.0</version>
-  <description>Kitti Evaluator Node</description>
+  <description>Localization Evaluator Node</description>
   <maintainer email="xinyu.wang@tier4.jp">Xinyu Wang</maintainer>
   <license>Apache License 2.0</license>
 

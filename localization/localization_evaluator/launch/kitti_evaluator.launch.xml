@@ -2,10 +2,8 @@
   <arg name="input_vehicle_pose_topic" default="/localization/pose_twist_fusion_filter/pose" description="input odometry topic name"/>
   <arg name="input_ground_truth_pose_topic" default="/ground_truth" description="input ground truth topic name"/>
   <arg name="output_pose_error_topic" default="/relative_pose_error" description="output pose error topic name"/>
-  <arg name="time_delta" default="0.1" description="timestamp differrence for vehicle pose and ground truth matching"/>
 
-  <node pkg="kitti_evaluator" exec="kitti_evaluator" name="kitti_evaluator" output="screen">
-    <param name="time_delta" value="$(var time_delta)"/>
+  <node pkg="localization_evaluator" exec="localization_evaluator" name="localization_evaluator" output="screen">
     <param name="input_vehicle_pose_topic" value="$(var input_vehicle_pose_topic)"/>
     <param name="input_ground_truth_pose_topic" value="$(var input_ground_truth_pose_topic)"/>
     <param name="output_pose_error_topic" value="$(var output_pose_error_topic)"/>

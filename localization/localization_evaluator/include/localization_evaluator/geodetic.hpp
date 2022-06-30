@@ -12,18 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kitti_evaluator/kitti_evaluator_core.hpp"
+#ifndef LOCALIZATION_EVALUATOR__GEODETIC_HPP_
+#define LOCALIZATION_EVALUATOR__GEODETIC_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <cmath>
+#include <vector>
 
-#include <memory>
-
-int main(int argc, char ** argv)
+namespace geodetic
 {
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<KittiEvaluator>();
-  rclcpp::spin(node);
-  rclcpp::shutdown();
+const double semimajor_axis = 6378137.0;
+const double semiminor_axis = 6356752.31424518;
+const double pi = 3.14159265359;
 
-  return 0;
+std::vector<double> se3_translation(double lat, double lon, double h, double scale)
+{
+  double tx, ty, tz;
+  tx = scale * lon * pi * semimajor_axis / 180.0;
+  ty = scale * semimajor_axis * log(tan((90.0 + lat) * pi / 360.0));
+  tz = h;
+  return {tx, ty, tz};
 }
+}  // namespace geodetic
+#endif  // LOCALIZATION_EVALUATOR__GEODETIC_HPP_

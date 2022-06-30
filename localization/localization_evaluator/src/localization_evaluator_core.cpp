@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kitti_evaluator/kitti_evaluator_core.hpp"
+#include "localization_evaluator/localization_evaluator_core.hpp"
 
-#include "kitti_evaluator/geodetic.hpp"
-#include "kitti_evaluator/interpolation.hpp"
+#include "localization_evaluator/geodetic.hpp"
+#include "localization_evaluator/interpolation.hpp"
 
 #include <deque>
 
@@ -44,7 +44,7 @@ void msgToMatrix(geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_ptr, Eig
   out = t * q;
 }
 
-KittiEvaluator::KittiEvaluator() : rclcpp::Node("kitti_evaluator")
+LocalizationEvaluator::LocalizationEvaluator() : rclcpp::Node("localization_evaluator")
 {
   std::string vehicle_pose_topic =
     declare_parameter("input_vehicle_pose_topic", "/localization/pose_twist_fusion_filter/pose");
@@ -54,26 +54,26 @@ KittiEvaluator::KittiEvaluator() : rclcpp::Node("kitti_evaluator")
     declare_parameter("output_pose_error_topic", "/relative_pose_error");
   vehicle_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     vehicle_pose_topic, rclcpp::QoS{100},
-    std::bind(&KittiEvaluator::callbackVehicleOdometry, this, std::placeholders::_1));
-  groud_truth_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
+    std::bind(&LocalizationEvaluator::callbackVehicleOdometry, this, std::placeholders::_1));
+  ground_truth_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     ground_truth_pose_topic, rclcpp::QoS{100},
-    std::bind(&KittiEvaluator::callbackGroundTruthOdometry, this, std::placeholders::_1));
+    std::bind(&LocalizationEvaluator::callbackGroundTruthOdometry, this, std::placeholders::_1));
   pose_error_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>(error_pose_topic, 1);
   has_ground_truth_ = false;
   last_vehicle_trans_.setIdentity();
   last_ground_truth_trans_.setIdentity();
 }
 
-KittiEvaluator::~KittiEvaluator() {}
+LocalizationEvaluator::~LocalizationEvaluator() {}
 
-void KittiEvaluator::callbackGroundTruthOdometry(
+void LocalizationEvaluator::callbackGroundTruthOdometry(
   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_ground_truth_msg_ptr)
 {
   curr_ground_truth_pose_ = pose_ground_truth_msg_ptr;
   has_ground_truth_ = true;
 }
 
-void KittiEvaluator::callbackVehicleOdometry(
+void LocalizationEvaluator::callbackVehicleOdometry(
   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg_ptr)
 {
   if (
@@ -189,11 +189,11 @@ void KittiEvaluator::callbackVehicleOdometry(
 //   vehicle_pose_queue_.push_back(pose_msg_ptr);
 // }
 
-void KittiEvaluator::calculateError(
-  Eigen::Affine3d & vehicle_trans, Eigen::Affine3d & groud_truth_trans,
+void LocalizationEvaluator::calculateError(
+  Eigen::Affine3d & vehicle_trans, Eigen::Affine3d & ground_truth_trans,
   Eigen::Affine3d & error_trans)
 {
-  Eigen::Affine3d delta_ground_truth = last_ground_truth_trans_.inverse() * groud_truth_trans;
+  Eigen::Affine3d delta_ground_truth = last_ground_truth_trans_.inverse() * ground_truth_trans;
   Eigen::Affine3d delta_vehicle = last_vehicle_trans_.inverse() * vehicle_trans;
   error_trans = delta_vehicle.inverse() * delta_ground_truth;
 
@@ -209,7 +209,7 @@ void KittiEvaluator::calculateError(
     euler(2));
 }
 
-void KittiEvaluator::publishError(Eigen::Affine3d & error_trans)
+void LocalizationEvaluator::publishError(Eigen::Affine3d & error_trans)
 {
   geometry_msgs::msg::PoseStamped pose;
   Eigen::Quaterniond q(error_trans.rotation());
