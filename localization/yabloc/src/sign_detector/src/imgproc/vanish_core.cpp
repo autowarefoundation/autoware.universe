@@ -66,7 +66,8 @@ void VanishPoint::callbackImage(const Image & msg)
   }
 
   Eigen::Vector2f vanish = estimateVanishPoint(horizontal, mid_and_theta, image);
-  cv::circle(image, toCvPoint(vanish), 20, cv::Scalar(0, 255, 0), -1, cv::LINE_8);
+  cv::circle(image, toCvPoint(vanish), 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);
+  cv::circle(image, toCvPoint(vanish), 20, cv::Scalar(0, 255, 0), 2, cv::LINE_8);
 
   cv::imshow("lsd", image);
   cv::waitKey(1);
@@ -78,17 +79,19 @@ Eigen::Vector2f VanishPoint::estimateVanishPoint(
 {
   assert(mid_and_theta.size() != horizontals.size());
 
-  constexpr int max_iteration = 100;
-  constexpr int sample_count = 6;  // must be equal or larther than 2
-  const float error_threshold = std::cos(5 * 3.14 / 180);
+  constexpr int max_iteration = 500;
+  constexpr int sample_count = 4;  // must be equal or larther than 2
+  constexpr float inlier_ratio = 0.2;
+  const float error_threshold = std::cos(2 * 3.14 / 180);  // 5[deg]
 
   using CoeffMatrix = Eigen::Matrix<float, sample_count, 2>;
   using CoeffVector = Eigen::Matrix<float, sample_count, 1>;
 
   std::random_device seed_gen;
   std::mt19937 engine{seed_gen()};
+
   Eigen::Vector2f best_candidate;
-  float best_inliers_count = 0;
+  float best_residual;
 
   const int N = horizontals.size();
 
@@ -98,6 +101,8 @@ Eigen::Vector2f VanishPoint::estimateVanishPoint(
     cv::Point2i p2(W, (-abc.x() * W - abc.z()) / (abc.y() + 1e-4f));
     cv::line(image, p1, p2, cv::Scalar(0, 255, 0), 1);
   };
+
+  int enough_inlier_samples = 0;
 
   for (int itr = 0; itr < max_iteration; itr++) {
     Vec3Vec samples;
@@ -111,13 +116,14 @@ Eigen::Vector2f VanishPoint::estimateVanishPoint(
       A(i, 1) = samples.at(i).y();
       b(i) = -samples.at(i).z();
 
-      if (itr == 0) drawLine(samples.at(i));
+      // if (itr == 0) drawLine(samples.at(i));
     }
     Eigen::VectorXf candidate = A.householderQr().solve(b);
     Eigen::Vector2f candidate2(candidate.x(), candidate.y());
     Eigen::Vector3f candidate3(candidate.x(), candidate.y(), 1);
 
     int inliers_count = 0;
+    Vec3Vec inliers;
     for (int i = 0; i < N; i++) {
       const Eigen::Vector2f mid = mid_and_theta.at(i).topRows(2);
       const float theta = mid_and_theta.at(i).z();
@@ -126,17 +132,35 @@ Eigen::Vector2f VanishPoint::estimateVanishPoint(
       Eigen::Vector2f target = (candidate2 - mid);
       tangent.normalize();
       target.normalize();
-      if (std::abs(target.dot(tangent)) < error_threshold) inliers_count++;
+      if (std::abs(target.dot(tangent)) > error_threshold) {
+        inliers.push_back(horizontals.at(i));
+      }
     }
 
-    if (best_inliers_count < inliers_count) {
-      best_inliers_count = inliers_count;
-      best_candidate = candidate;
+    if (inliers.size() < inlier_ratio * N) continue;
+    enough_inlier_samples++;
+
+    {
+      Eigen::MatrixXf A(inliers.size(), 2);
+      Eigen::MatrixXf b(inliers.size(), 1);
+      for (int i = 0; i < inliers.size(); i++) {
+        A(i, 0) = inliers.at(i).x();
+        A(i, 1) = inliers.at(i).y();
+        b(i) = -inliers.at(i).z();
+      }
+      Eigen::VectorXf new_candidate = A.householderQr().solve(b);
+      float residual = (A * new_candidate - b).squaredNorm() / inliers.size();
+
+      if (residual < best_residual) {
+        best_residual = residual;
+        best_candidate = new_candidate;
+      }
     }
+
+    best_candidate = candidate;
   }
 
-  RCLCPP_INFO_STREAM(
-    get_logger(), "best_inliers_count " << best_inliers_count << " " << best_candidate.transpose());
+  RCLCPP_INFO_STREAM(get_logger(), " enough " << enough_inlier_samples << " " << N);
   return best_candidate;
 }
 
