@@ -69,7 +69,7 @@
 
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
-    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" output="screen" args="--ros-args --log-level info">
+    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
