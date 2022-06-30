@@ -99,9 +99,11 @@ ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Ge
 ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
 
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
-ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util modified_seg)
 
-ADD_EXE(TARGET snake SRC src/snake.cpp INC include LIB)
+# ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util modified_seg)
+
+# ADD_EXE(TARGET snake SRC src/snake.cpp INC include LIB)
+ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

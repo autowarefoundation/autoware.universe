@@ -47,7 +47,7 @@
     </node>
 
     <node name="ll2_to_image" pkg="sign_detector" exec="ll2_to_image_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <remap from="/pose_topic" to="/particle_pose"/>
+        <remap from="pose_topic" to="/particle_pose"/>
         <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="max_range" value="$(var max_range)"/>
@@ -69,7 +69,9 @@
 
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
-    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" output="screen" args="--ros-args --log-level info"/>
+    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" output="screen" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
 
     <node name="pose_initializer" pkg="sign_detector" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
@@ -79,6 +81,11 @@
     <node if="false" name="freespace" pkg="sign_detector" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="image" to="$(var resized_image)"/>
+    </node>
+
+    <node if="true" name="vanish" pkg="sign_detector" exec="vanish_node" output="screen" args="--ros-args --log-level info">
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
     <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">

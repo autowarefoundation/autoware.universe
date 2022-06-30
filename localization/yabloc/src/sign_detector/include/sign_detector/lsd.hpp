@@ -12,7 +12,6 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <cv_bridge/cv_bridge.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <tf2_ros/buffer.h>
