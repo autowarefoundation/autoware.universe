@@ -3,22 +3,35 @@
     crosswalk:
       show_processing_time: false
 
+      # param for stop position
       stop_line_distance: 3.5 # make stop line away from crosswalk when no explicit stop line exists
       stop_line_margin: 10.0
       stop_margin: 2.0
-      slow_velocity: 2.76 # 2.76 m/s = 10.0 kmph
+      stop_position_threshold: 1.0
 
-      attention_range: 1.0
-
-      tl_state_timeout: 5.0
-
-      ego_pass_first_margin: 6.0
-      ego_pass_later_margin: 10.0
-      max_yield_timeout: 3.0
-
+      # param for ego velocity
+      slow_velocity: 2.78 # 2.78 m/s = 10.0 kmph
       max_slow_down_jerk: -1.5
       max_slow_down_accel: -2.5
+      no_relax_velocity: 2.78 # 2.78 m/s = 10 kmph
 
+      # param for stuck vehicle
+      stuck_vehicle_velocity: 1.0
+      max_lateral_offset: 2.0
+      stuck_vehicle_attention_range: 10.0
+
+      # param for pass judge logic
+      ego_pass_first_margin: 6.0
+      ego_pass_later_margin: 10.0
+      stop_object_velocity_threshold: 0.28 # 0.28 m/s = 1.0 kmph
+      min_object_velocity: 1.39 # 1.39 m/s = 5.0 kmph
+
+      # param for input data
+      tl_state_timeout: 3.0
+      max_yield_timeout: 3.0
+
+      # param for target area & object
+      crosswalk_attention_range: 1.0
       target_object:
         unknown: true
         bicycle: true

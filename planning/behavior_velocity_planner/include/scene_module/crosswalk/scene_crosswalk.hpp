@@ -62,22 +62,31 @@ public:
   struct PlannerParam
   {
     bool show_processing_time;
+    // param for stop position
     double stop_margin;
     double stop_line_distance;
-    double slow_margin;
+    double stop_line_margin;
+    double stop_position_threshold;
+    // param for ego velocity
     double slow_velocity;
-    double stop_predicted_object_prediction_time_margin;
-    double slowdown_predicted_object_prediction_time_margin;
-    double external_input_timeout;
-    double attention_range;
-    double ego_pass_first_margin;
-    double ego_pass_later_margin;
-    double min_crosswalk_user_velocity;
-    double max_yield_timeout;
     double max_slow_down_jerk;
     double max_slow_down_accel;
-    double stop_line_margin;
+    double no_relax_velocity;
+    // param for stuck vehicle
+    double stuck_vehicle_velocity;
+    double max_lateral_offset;
+    double stuck_vehicle_attention_range;
+    // param for pass judge logic
+    double ego_pass_first_margin;
+    double ego_pass_later_margin;
+    double stop_object_velocity;
+    double min_object_velocity;
+    double max_yield_timeout;
+    // param for input data
+    double external_input_timeout;
     double tl_state_timeout;
+    // param for target area & object
+    double crosswalk_attention_range;
     bool look_unknown;
     bool look_bicycle;
     bool look_motorcycle;
@@ -105,7 +114,7 @@ private:
 
   std::vector<CollisionPoint> getCollisionPoints(
     const PathWithLaneId & ego_path, const PredictedObject & object,
-    const std::pair<double, double> & attention_range);
+    const std::pair<double, double> & crosswalk_attention_range);
 
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
