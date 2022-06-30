@@ -116,7 +116,8 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
   return output;
 }
 
-// Choose radar pointcloud/objects within 3D bounding box from lidar-base detection with margin space from bird's-eye view.
+// Choose radar pointcloud/objects within 3D bounding box from lidar-base detection with margin
+// space from bird's-eye view.
 std::shared_ptr<std::vector<RadarFusionToDetectedObject::RadarInput>>
 RadarFusionToDetectedObject::filterRadarWithinObject(
   const DetectedObject & object,
@@ -148,7 +149,8 @@ RadarFusionToDetectedObject::filterRadarWithinObject(
 // }
 
 // Estimate twist from chosen radar pointcloud/objects using twist and target value
-// (Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects).
+// (Target value is amplitude if using radar pointcloud. Target value is probability if using radar
+// objects).
 TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
   const DetectedObject & object, std::shared_ptr<std::vector<RadarInput>> & radars)
 {
