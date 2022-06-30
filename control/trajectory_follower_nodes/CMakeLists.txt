@@ -46,6 +46,20 @@ rclcpp_components_register_node(${LATLON_MUXER_NODE}
   EXECUTABLE ${LATLON_MUXER_NODE}_exe
 )
 
+# simple trajectory follower
+set(SIMPLE_TRAJECTORY_FOLLOWER_NODE simple_trajectory_follower)
+ament_auto_add_library(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} SHARED
+  include/trajectory_follower_nodes/simple_trajectory_follower.hpp
+  src/simple_trajectory_follower.cpp
+)
+
+autoware_set_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE})
+target_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} PRIVATE -Wno-error=old-style-cast)
+rclcpp_components_register_node(${SIMPLE_TRAJECTORY_FOLLOWER_NODE}
+  PLUGIN "simple_trajectory_follower::SimpleTrajectoryFollower"
+  EXECUTABLE ${SIMPLE_TRAJECTORY_FOLLOWER_NODE}_exe
+)
+
 if(BUILD_TESTING)
   set(TRAJECTORY_FOLLOWER_NODES_TEST test_trajectory_follower_nodes)
   ament_add_ros_isolated_gtest(${TRAJECTORY_FOLLOWER_NODES_TEST}
@@ -72,4 +86,5 @@ endif()
 ament_auto_package(
   INSTALL_TO_SHARE
   param
+  launch
 )
