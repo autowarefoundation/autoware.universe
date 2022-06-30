@@ -37,6 +37,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
@@ -84,6 +85,7 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_whole_pointcloud_map_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_partial_pointcloud_map_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr pub_debug_loading_time_ms_;
   rclcpp::Service<autoware_map_srvs::srv::LoadPCDPartially>::SharedPtr load_pcd_partially_service_;
   rclcpp::Service<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedPtr
     load_pcd_partially_for_publish_service_;

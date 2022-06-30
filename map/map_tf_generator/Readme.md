@@ -15,7 +15,7 @@ Note that there is no module to need `viewer` frames and this is used only for v
 
 | Name                  | Type                            | Description                                                       |
 | --------------------- | ------------------------------- | ----------------------------------------------------------------- |
-| `/map/pointcloud_map` | `sensor_msgs::msg::PointCloud2` | Subscribe pointcloud map to calculate position of `viewer` frames |
+| `/map/pointcloud_map/partial` | `sensor_msgs::msg::PointCloud2` | Subscribe pointcloud map to calculate position of `viewer` frames |
 
 ### Output
 

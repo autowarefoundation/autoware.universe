@@ -174,6 +174,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
         std::bind(
           &PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback, this,
           std::placeholders::_1, std::placeholders::_2));
+    pub_debug_loading_time_ms_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("/map/pointcloud_map_loader/loading_time_ms", 10);
   }
 }
 
@@ -238,7 +239,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
 {
   sensor_msgs::msg::PointCloud2 filtered_pcd{};
   sensor_msgs::msg::PointCloud2 pcd;
-  const auto KOJI_exe_start_time = std::chrono::system_clock::now();
+  const auto loading_start_time = std::chrono::system_clock::now();
 
   for (const auto & metadata : pcd_file_metadata_array) {
     if (sphere_and_box_overlap_exists(position, radius, metadata.min, metadata.max)) {
@@ -257,13 +258,17 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
     }
   }
 
-  const auto KOJI_exe_end_time = std::chrono::system_clock::now();
-  const double KOJI_exe_time =
-    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time)
+  const auto loading_end_time = std::chrono::system_clock::now();
+  const double loading_time =
+    std::chrono::duration_cast<std::chrono::microseconds>(loading_end_time - loading_start_time)
       .count() /
     1000.0;
+  tier4_debug_msgs::msg::Float32Stamped msg;
+  msg.stamp = this->now();
+  msg.data = loading_time;
+  pub_debug_loading_time_ms_->publish(msg);
   RCLCPP_INFO_STREAM(
-    get_logger(), "KOJI loadPCDPartially @map_loader: " << KOJI_exe_time << " [ms], num points: "
+    get_logger(), "KOJI loadPCDPartially @map_loader: " << loading_time << " [ms], num points: "
                                                         << int(filtered_pcd.data.size()));
 
   filtered_pcd.header.frame_id = "map";

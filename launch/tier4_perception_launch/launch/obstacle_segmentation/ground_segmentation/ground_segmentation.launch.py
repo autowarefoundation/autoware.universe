@@ -319,7 +319,7 @@ class GroundSegmentationPipeline:
                 namespace="elevation_map",
                 remappings=[
                     ("output/elevation_map", "map"),
-                    ("input/pointcloud_map", "/map/pointcloud_map"),
+                    ("input/pointcloud_map", "/map/pointcloud_map/partial"),
                     ("input/vector_map", "/map/vector_map"),
                 ],
                 parameters=[
