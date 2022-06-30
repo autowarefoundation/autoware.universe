@@ -195,21 +195,21 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
 
 /**
  * @brief calculate the point offset from source point along the trajectory (or path)
- * @param seg_idx segment index of point at beginning of length
  * @param p_target point to be inserted
  * @param points output points of trajectory, path, ...
  * @return index of insert point
  */
 template <>
 inline size_t insertTargetPoint(
-  const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  const geometry_msgs::msg::Point & p_target,
   std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const double overlap_threshold)
 {
   validateNonEmpty(points);
 
-  const auto p_front = getPoint(points.at(seg_idx));
-  const auto p_back = getPoint(points.at(seg_idx + 1));
+  const size_t base_idx = findNearestSegmentIndex(points, p_target);
+  const auto p_front = getPoint(points.at(base_idx));
+  const auto p_back = getPoint(points.at(base_idx + 1));
 
   try {
     validateNonSharpAngle(p_front, p_target, p_back);
@@ -229,7 +229,7 @@ inline size_t insertTargetPoint(
     target_pose.orientation = createQuaternionFromRPY(0.0, pitch, yaw);
   }
 
-  auto p_insert = points.at(seg_idx);
+  auto p_insert = points.at(base_idx);
   setPose(target_pose, p_insert);
 
   geometry_msgs::msg::Pose front_pose;
@@ -237,21 +237,21 @@ inline size_t insertTargetPoint(
     const auto pitch = calcElevationAngle(p_front, p_target);
     const auto yaw = calcAzimuthAngle(p_front, p_target);
 
-    front_pose.position = getPoint(points.at(seg_idx));
+    front_pose.position = getPoint(points.at(base_idx));
     front_pose.orientation = createQuaternionFromRPY(0.0, pitch, yaw);
   }
 
   if (!overlap_with_front && !overlap_with_back) {
-    setPose(front_pose, points.at(seg_idx));
-    points.insert(points.begin() + seg_idx + 1, p_insert);
-    return seg_idx + 1;
+    setPose(front_pose, points.at(base_idx));
+    points.insert(points.begin() + base_idx + 1, p_insert);
+    return base_idx + 1;
   }
 
   if (overlap_with_back) {
-    return seg_idx + 1;
+    return base_idx + 1;
   }
 
-  return seg_idx;
+  return base_idx;
 }
 }  // namespace tier4_autoware_utils
 
