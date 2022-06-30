@@ -21,8 +21,8 @@
 
 ## Parameters
 
-| Parameter    | Type   | Description                                                      |
-| ------------ | ------ | ---------------------------------------------------------------- |
+| Parameter    | Type   | Description                                                     |
+| ------------ | ------ | --------------------------------------------------------------- |
 | `time_delta` | Double | timestamp difference for vehicle pose and ground truth matching |
 
 ## Assumptions / Known limits
