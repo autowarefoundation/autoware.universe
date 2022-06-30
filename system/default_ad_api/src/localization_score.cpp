@@ -24,17 +24,14 @@ LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options
 
   status_pub_hz_ = this->declare_parameter("status_pub_hz", 10.0);
 
-  score_tp_.type = "transform_probability";
-  score_nvtl_.type = "nearest_voxel_transformation_likelihood";
+  score_tp_.name = "transform_probability";
+  score_nvtl_.name = "nearest_voxel_transformation_likelihood";
 
   // Publisher
   pub_localization_scores_ =
-    this->create_publisher<LocalizationScores>("api/get/localization_scores", 1);
+    this->create_publisher<LocalizationScoreArray>("api/get/localization_scores", 1);
 
   // Subscriber
-  sub_pose_with_covariance_ = this->create_subscription<PoseWithCovarianceStamped>(
-    "/localization/pose_with_covariance", 1,
-    std::bind(&LocalizationScoreNode::callbackPoseWithCovariance, this, _1));
   sub_transform_probability_ = this->create_subscription<Float32Stamped>(
     "/localization/pose_estimator/transform_probability", 1,
     std::bind(&LocalizationScoreNode::callbackTpScore, this, _1));
@@ -52,11 +49,6 @@ LocalizationScoreNode::LocalizationScoreNode(const rclcpp::NodeOptions & options
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-void LocalizationScoreNode::callbackPoseWithCovariance(
-  const PoseWithCovarianceStamped::ConstSharedPtr msg_ptr)
-{
-  pose_covariance_ = msg_ptr->pose;
-}
 void LocalizationScoreNode::callbackTpScore(const Float32Stamped::ConstSharedPtr msg_ptr)
 {
   score_tp_.value = msg_ptr->data;
@@ -68,11 +60,8 @@ void LocalizationScoreNode::callbackNvtlScore(const Float32Stamped::ConstSharedP
 
 void LocalizationScoreNode::callbackTimer()
 {
-  LocalizationScores localizatoin_scores_msg;
+  LocalizationScoreArray localizatoin_scores_msg;
 
-  localizatoin_scores_msg.header.frame_id = "map";
-  localizatoin_scores_msg.header.stamp = clock_->now();
-  localizatoin_scores_msg.pose_covariance = pose_covariance_;
   localizatoin_scores_msg.values.emplace_back(score_tp_);
   localizatoin_scores_msg.values.emplace_back(score_nvtl_);
 

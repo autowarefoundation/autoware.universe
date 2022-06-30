@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_ad_api_msgs/msg/localization_scores.hpp"
+#include "autoware_ad_api_msgs/msg/localization_score_array.hpp"
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
@@ -26,7 +26,7 @@
 
 namespace default_ad_api
 {
-using autoware_ad_api_msgs::msg::LocalizationScores;
+using autoware_ad_api_msgs::msg::LocalizationScoreArray;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 using tier4_debug_msgs::msg::Float32Stamped;
 
@@ -36,13 +36,11 @@ public:
   explicit LocalizationScoreNode(const rclcpp::NodeOptions & options);
 
 private:
-  void callbackPoseWithCovariance(const PoseWithCovarianceStamped::ConstSharedPtr msg_ptr);
   void callbackTpScore(const Float32Stamped::ConstSharedPtr msg_ptr);
   void callbackNvtlScore(const Float32Stamped::ConstSharedPtr msg_ptr);
   void callbackTimer();
 
-  rclcpp::Publisher<LocalizationScores>::SharedPtr pub_localization_scores_;
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_pose_with_covariance_;
+  rclcpp::Publisher<LocalizationScoreArray>::SharedPtr pub_localization_scores_;
   rclcpp::Subscription<Float32Stamped>::SharedPtr sub_transform_probability_;
   rclcpp::Subscription<Float32Stamped>::SharedPtr sub_nearest_voxel_transformation_likelihood_;
 
@@ -50,9 +48,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   double status_pub_hz_;
 
-  autoware_ad_api_msgs::msg::ReferenceValue score_tp_;
-  autoware_ad_api_msgs::msg::ReferenceValue score_nvtl_;
-  geometry_msgs::msg::PoseWithCovariance pose_covariance_;
+  autoware_ad_api_msgs::msg::LocalizationScore score_tp_;
+  autoware_ad_api_msgs::msg::LocalizationScore score_nvtl_;
 };
 
 }  // namespace default_ad_api

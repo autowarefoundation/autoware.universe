@@ -1,2 +1,2 @@
-string type
+string name
 float32 value
