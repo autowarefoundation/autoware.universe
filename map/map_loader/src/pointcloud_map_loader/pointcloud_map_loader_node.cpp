@@ -189,7 +189,8 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   for (int i = 0; i < int(pcd_paths.size()); ++i) {
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
-      RCLCPP_INFO_STREAM(get_logger(),
+      RCLCPP_INFO_STREAM(
+        get_logger(),
         "Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
     }
 
@@ -289,14 +290,13 @@ bool PointCloudMapLoaderNode::continueToLoadMaps(
   if (int(pcd_maps_to_load.size()) == 0) {
     RCLCPP_INFO_STREAM(
       get_logger(),
-      "Empty pcd map! (Please check if you are using the right pcd maps and giving an appropriate initial pose.)");
+      "Empty pcd map! (Please check if you are using the right pcd maps and giving an appropriate "
+      "initial pose.)");
     return false;
   }
 
   if (pcd_maps_to_load == previously_loaded_pcd_paths_) {
-    RCLCPP_INFO_STREAM(
-      get_logger(),
-      "The same request received as before! Skip loading");
+    RCLCPP_INFO_STREAM(get_logger(), "The same request received as before! Skip loading");
     return false;
   }
   return true;
