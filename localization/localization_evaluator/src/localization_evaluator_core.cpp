@@ -95,8 +95,7 @@ void LocalizationEvaluator::callbackVehicleOdometry(
 
     double t = interpolation::getTimeCoeffients(curr_time, prev_time, post_time);
     RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
-    if(t > 1.0 || t < 0.0)
-    {
+    if (t > 1.0 || t < 0.0) {
       RCLCPP_WARN(get_logger(), "Interpolate Coefficient has to be in range of [0,1]");
       return;
       // RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time -
