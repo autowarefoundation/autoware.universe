@@ -174,7 +174,8 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
         std::bind(
           &PointCloudMapLoaderNode::loadPCDPartiallyForPublishServiceCallback, this,
           std::placeholders::_1, std::placeholders::_2));
-    pub_debug_loading_time_ms_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("/map/pointcloud_map_loader/loading_time_ms", 10);
+    pub_debug_loading_time_ms_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+      "/map/pointcloud_map_loader/loading_time_ms", 10);
   }
 }
 

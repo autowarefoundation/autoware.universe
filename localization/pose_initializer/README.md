@@ -15,7 +15,7 @@ Finally, it publishes the initial pose to `ekf_localizer`.
 | ------------------------------------ | --------------------------------------------- | ---------------------- |
 | `/initialpose`                       | geometry_msgs::msg::PoseWithCovarianceStamped | initial pose from rviz |
 | `/sensing/gnss/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | pose from gnss         |
-| `/map/pointcloud_map/partial`                | sensor_msgs::msg::PointCloud2                 | pointcloud map         |
+| `/map/pointcloud_map/partial`        | sensor_msgs::msg::PointCloud2                 | pointcloud map         |
 
 ### Output topics
 
