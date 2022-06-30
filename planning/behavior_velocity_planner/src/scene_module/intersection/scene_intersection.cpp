@@ -167,16 +167,20 @@ bool IntersectionModule::modifyPathVelocity(
   /* get dynamic object */
   const auto objects_ptr = planner_data_->predicted_objects;
 
+  int stuck_stop_idx = -1;
   /* calculate dynamic collision around detection area */
   bool has_collision =
     checkCollision(lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx);
   bool is_stuck = checkStuckVehicleInIntersection(
-    lanelet_map_ptr, *path, closest_idx, stop_line_idx, objects_ptr);
+    lanelet_map_ptr, *path, closest_idx, stop_line_idx, &stuck_stop_idx, objects_ptr);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
     is_entry_prohibited = true;
+  }
+  if(stuck_stop_idx > 0){
+    stop_line_idx = stuck_stop_idx;
   }
   state_machine_.setStateWithMarginTime(
     isActivated() ? State::GO : State::STOP, logger_.get_child("state_machine"), *clock_);
@@ -466,7 +470,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
 bool IntersectionModule::checkStuckVehicleInIntersection(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const int stop_idx,
+  const int stop_idx, int * stuck_stop_idx,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const
 {
   const double detect_length =
@@ -489,6 +493,20 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
     const Polygon2d obj_footprint = toFootprintPolygon(object);
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
     if (is_in_stuck_area) {
+      const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
+      // const auto & lane_first_point = assigned_lanelet.centerline2d().front();
+      const auto first_itr = std::find_if(
+        path.points.begin(), path.points.end(),
+        [this](const auto & p) { return p.lane_ids.front() == lane_id_; });
+
+      /* insert stop_point */
+      const auto inserted_stop_point = path.points.at(first_itr).point.pose;
+      // if path has too close (= duplicated) point to the stop point, do not insert it
+      // and consider the index of the duplicated point as stop_line_idx
+      if (!util::hasDuplicatedPoint(path, inserted_stop_point.position, stop_idx)) {
+        *stuck_stop_idx = util::insertPoint(inserted_stop_point, stop_idx);
+      }
+      // *stuck_stop_idx = first_itr;
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
       debug_data_.stuck_targets.objects.push_back(object);
       return true;

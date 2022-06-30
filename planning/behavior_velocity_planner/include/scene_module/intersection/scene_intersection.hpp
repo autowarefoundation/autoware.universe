@@ -177,7 +177,7 @@ private:
   bool checkStuckVehicleInIntersection(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int stop_idx,
+    const int stop_idx, int * stuck_stop_idx,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const;
 
   /**
