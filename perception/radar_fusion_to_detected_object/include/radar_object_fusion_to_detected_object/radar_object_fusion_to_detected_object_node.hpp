@@ -81,8 +81,8 @@ private:
   std::unique_ptr<RadarFusionToDetectedObject> radar_fusion_to_detected_object_{};
 
   // Lapper
-  std::shared_ptr<RadarFusionToDetectedObject::RadarInput> setRadarInput(
-    const TrackedObject & radar_object, std_msgs::msg::Header header_);
+  RadarFusionToDetectedObject::RadarInput setRadarInput(
+    const TrackedObject & radar_object, const std_msgs::msg::Header & header_);
 };
 
 }  // namespace radar_fusion_to_detected_object

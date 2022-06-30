@@ -71,7 +71,7 @@ public:
 
   struct Input
   {
-    std::vector<std::shared_ptr<RadarInput>> radars{};
+    std::shared_ptr<std::vector<RadarInput>> radars{};
     DetectedObjects::ConstSharedPtr objects{};
   };
 
@@ -86,14 +86,14 @@ public:
 private:
   rclcpp::Logger logger_;
   Param param_{};
-  std::vector<std::shared_ptr<RadarInput>> filterRadarWithinObject(
-    const DetectedObject & object, const std::vector<std::shared_ptr<RadarInput>> & radars);
+  std::shared_ptr<std::vector<RadarInput>> filterRadarWithinObject(
+    const DetectedObject & object, const std::shared_ptr<std::vector<RadarInput>> & radars);
   std::vector<DetectedObject> splitObject(
-    const DetectedObject & object, const std::vector<RadarInput> & radars);
+    const DetectedObject & object, const std::shared_ptr<std::vector<RadarInput>> & radars);
   TwistWithCovariance estimateTwist(
-    const DetectedObject & object, std::vector<std::shared_ptr<RadarInput>> & radars);
+    const DetectedObject & object, std::shared_ptr<std::vector<RadarInput>> & radars);
   bool isQualified(
-    const DetectedObject & object, std::vector<std::shared_ptr<RadarInput>> & radars);
+    const DetectedObject & object, std::shared_ptr<std::vector<RadarInput>> & radars);
   TwistWithCovariance convertDopplerToTwist(
     const DetectedObject & object, const TwistWithCovariance & twist_with_covariance);
   Twist addTwist(const Twist & twist_1, const Twist & twist_2);
