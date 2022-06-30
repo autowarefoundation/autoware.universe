@@ -150,7 +150,7 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(
     best_candidate = candidate;
   }
 
-  std::cout << " enough " << enough_inlier_samples << " " << N;
+  std::cout << " enough " << enough_inlier_samples << " " << N << std::endl;
   return best_candidate;
 }
 

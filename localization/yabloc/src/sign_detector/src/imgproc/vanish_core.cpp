@@ -6,7 +6,7 @@
 
 namespace imgproc
 {
-VanishPoint::VanishPoint() : Node("vanish_point")
+VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
 {
   using std::placeholders::_1;
   auto cb_image = std::bind(&VanishPoint::callbackImage, this, _1);
@@ -20,7 +20,22 @@ VanishPoint::VanishPoint() : Node("vanish_point")
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
 }
 
-void VanishPoint::callbackImu(const Imu & msg) {}
+void VanishPoint::callbackImu(const Imu & msg)
+{
+  auto opt_ex =
+    tf_subscriber_("traffic_light_left_camera/camera_optical_link", "tamagawa/imu_link");
+  if (!opt_ex.has_value()) return;
+
+  Sophus::SO3f ex_rot(opt_ex->rotation());
+
+  Eigen::Vector3f w;
+  w << msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z;
+
+  float dt = 0;
+
+  Eigen::Vector3f wdt = dt * w;
+  rotation_ *= Sophus::SO3f::exp(ex_rot * wdt);
+}
 
 void VanishPoint::callbackImage(const Image & msg)
 {
