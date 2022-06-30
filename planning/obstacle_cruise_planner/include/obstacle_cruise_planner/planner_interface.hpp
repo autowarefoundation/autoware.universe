@@ -99,12 +99,18 @@ public:
 
   void setParams(
     const bool is_showing_debug_info, const double min_behavior_stop_margin,
-    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold)
+    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold,
+    const double obstacle_velocity_threshold_from_cruise_to_stop,
+    const double obstacle_velocity_threshold_from_stop_to_cruise)
   {
     is_showing_debug_info_ = is_showing_debug_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
     nearest_dist_deviation_threshold_ = nearest_dist_deviation_threshold;
     nearest_yaw_deviation_threshold_ = nearest_yaw_deviation_threshold;
+    obstacle_velocity_threshold_from_cruise_to_stop_ =
+      obstacle_velocity_threshold_from_cruise_to_stop;
+    obstacle_velocity_threshold_from_stop_to_cruise_ =
+      obstacle_velocity_threshold_from_stop_to_cruise;
   }
 
   /*
@@ -133,6 +139,10 @@ public:
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_accel", i.min_accel);
     tier4_autoware_utils::updateParam<double>(parameters, "common.max_jerk", i.max_jerk);
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_jerk", i.min_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_accel", i.limit_max_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_accel", i.limit_min_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_jerk", i.limit_max_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_jerk", i.limit_min_jerk);
     tier4_autoware_utils::updateParam<double>(
       parameters, "common.min_ego_accel_for_rss", i.min_ego_accel_for_rss);
     tier4_autoware_utils::updateParam<double>(
@@ -160,6 +170,40 @@ public:
     return std::find(types.begin(), types.end(), label) != types.end();
   }
 
+  bool isStopRequired(const TargetObstacle & obstacle, TargetObstacle & modified_obstacle)
+  {
+    const bool is_cruise_obstacle = isCruiseObstacle(obstacle.classification.label);
+    const bool is_stop_obstacle = isStopObstacle(obstacle.classification.label);
+
+    if (is_stop_obstacle && !is_cruise_obstacle) {
+      modified_obstacle.has_stopped = true;
+      return true;
+    }
+
+    if (is_cruise_obstacle) {
+      const auto itr = std::find_if(
+        prev_target_obstacles_.begin(), prev_target_obstacles_.end(),
+        [&](const auto & prev_target_obstacle) {
+          return obstacle.uuid == prev_target_obstacle.uuid;
+        });
+      const bool has_already_stopped = (itr != prev_target_obstacles_.end()) && itr->has_stopped;
+      if (has_already_stopped) {
+        if (std::abs(obstacle.velocity) < obstacle_velocity_threshold_from_stop_to_cruise_) {
+          modified_obstacle.has_stopped = true;
+          return true;
+        }
+      } else {
+        if (std::abs(obstacle.velocity) < obstacle_velocity_threshold_from_cruise_to_stop_) {
+          modified_obstacle.has_stopped = true;
+          return true;
+        }
+      }
+    }
+
+    modified_obstacle.has_stopped = false;
+    return false;
+  }
+
 protected:
   // Parameters
   bool is_showing_debug_info_{false};
@@ -167,12 +211,16 @@ protected:
   double min_behavior_stop_margin_;
   double nearest_dist_deviation_threshold_;
   double nearest_yaw_deviation_threshold_;
+  double obstacle_velocity_threshold_from_cruise_to_stop_;
+  double obstacle_velocity_threshold_from_stop_to_cruise_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   // TODO(shimizu) remove these parameters
   Trajectory::ConstSharedPtr smoothed_trajectory_ptr_;
+
+  std::vector<TargetObstacle> prev_target_obstacles_;
 
   double calcRSSDistance(
     const double ego_vel, const double obj_vel, const double margin = 0.0) const

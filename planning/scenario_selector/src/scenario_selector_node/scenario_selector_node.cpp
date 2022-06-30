@@ -39,21 +39,13 @@ void onData(const T & data, T * buffer)
 
 std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
-  const lanelet::BasicPoint2d & search_point)
+  const lanelet::BasicPoint2d & current_position)
 {
-  std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelets =
-    lanelet::geometry::findNearest(lanelet_map_ptr->laneletLayer, search_point, 1);
-
-  if (nearest_lanelets.empty()) {
-    return {};
-  }
-
-  const auto nearest_lanelet = nearest_lanelets.front().second;
   const auto all_parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr);
 
   const auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
   const auto result = lanelet::utils::query::getLinkedParkingLot(
-    nearest_lanelet, all_parking_lots, linked_parking_lot.get());
+    current_position, all_parking_lots, linked_parking_lot.get());
 
   if (result) {
     return linked_parking_lot;
@@ -223,11 +215,14 @@ void ScenarioSelectorNode::onMap(
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+  route_handler_ = std::make_shared<route_handler::RouteHandler>(*msg);
 }
 
 void ScenarioSelectorNode::onRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
+  route_handler_->setRoute(*msg);
+  if (!route_handler_->isHandlerReady()) return;
   route_ = msg;
   current_scenario_ = tier4_planning_msgs::msg::Scenario::EMPTY;
 }
