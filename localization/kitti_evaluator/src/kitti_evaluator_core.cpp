@@ -76,18 +76,16 @@ void KittiEvaluator::callbackGroundTruthOdometry(
 void KittiEvaluator::callbackVehicleOdometry(
   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg_ptr)
 {
-  if(has_ground_truth_ && rclcpp::Time(pose_msg_ptr->header.stamp) > rclcpp::Time(curr_ground_truth_pose_->header.stamp))
-  {
+  if (
+    has_ground_truth_ && rclcpp::Time(pose_msg_ptr->header.stamp) >
+                           rclcpp::Time(curr_ground_truth_pose_->header.stamp)) {
     Eigen::Affine3d prev_trans, post_trans, curr_trans;
     rclcpp::Time prev_time, post_time, curr_time;
     prev_trans.setIdentity();
-    if(prev_vehicle_pose_)
-    {
+    if (prev_vehicle_pose_) {
       msgToMatrix(prev_vehicle_pose_, prev_trans);
       prev_time = rclcpp::Time(prev_vehicle_pose_->header.stamp);
-    }
-    else
-    {
+    } else {
       prev_time = get_clock()->now();
       RCLCPP_INFO(get_logger(), "No prev pose");
     }
@@ -99,10 +97,11 @@ void KittiEvaluator::callbackVehicleOdometry(
     RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
     // if(t > 1.0)
     // {
-    //   RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time - prev_time).nanoseconds()));
-    //   RCLCPP_INFO(get_logger(), "step : %lf", static_cast<double>((curr_time - prev_time).nanoseconds()));
-    //   RCLCPP_INFO(get_logger(), "post > curr ? : %d", static_cast<int>(post_time > curr_time));
-    //   RCLCPP_INFO(get_logger(), "prev < curr ? : %d", static_cast<int>(prev_time < curr_time));
+    //   RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time -
+    //   prev_time).nanoseconds())); RCLCPP_INFO(get_logger(), "step : %lf",
+    //   static_cast<double>((curr_time - prev_time).nanoseconds())); RCLCPP_INFO(get_logger(),
+    //   "post > curr ? : %d", static_cast<int>(post_time > curr_time)); RCLCPP_INFO(get_logger(),
+    //   "prev < curr ? : %d", static_cast<int>(prev_time < curr_time));
     // }
 
     interpolation::interpolateTransform(t, prev_trans, post_trans, curr_trans);
@@ -134,7 +133,8 @@ void KittiEvaluator::callbackVehicleOdometry(
 
 //   rclcpp::Time curr_time(pose_ground_truth_msg_ptr->header.stamp);
 //   geometry_msgs::msg::PoseStamped::ConstSharedPtr prev_pose;
-//   while (!vehicle_pose_queue_.empty() && rclcpp::Time(vehicle_pose_queue_.front()->header.stamp) <
+//   while (!vehicle_pose_queue_.empty() && rclcpp::Time(vehicle_pose_queue_.front()->header.stamp)
+//   <
 //                                           curr_time - rclcpp::Duration::from_seconds(delta)) {
 //     prev_pose = vehicle_pose_queue_.front();
 //     vehicle_pose_queue_.pop_front();
@@ -164,9 +164,10 @@ void KittiEvaluator::callbackVehicleOdometry(
 //     interpolation::interpolateTransform(t, prev_trans, post_trans, vehicle_trans);
 
 //     // RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(0,0), vehicle_trans(0,1),
-//     // vehicle_trans(0,2), vehicle_trans(0,3)); RCLCPP_INFO(get_loggerrocker 
+//     // vehicle_trans(0,2), vehicle_trans(0,3)); RCLCPP_INFO(get_loggerrocker
 //     // "%lf %lf %lf %lf", vehicle_trans(1,0),
-//     // vehicle_trans(1,1), vehicle_trans(1,2), vehicle_trans(1,3)); RCLCPP_INFO(get_logger(), "%lf
+//     // vehicle_trans(1,1), vehicle_trans(1,2), vehicle_trans(1,3)); RCLCPP_INFO(get_logger(),
+//     "%lf
 //     // %lf %lf %lf", vehicle_trans(2,0), vehicle_trans(2,1), vehicle_trans(2,2),
 //     // vehicle_trans(2,3)); RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(3,0),
 //     // vehicle_trans(3,1), vehicle_trans(3,2), vehicle_trans(3,3));
