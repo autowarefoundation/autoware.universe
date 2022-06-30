@@ -122,8 +122,6 @@ void Controller::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringRepor
 
 bool Controller::isTimeOut()
 {
-  if (!longitudinal_output_ || !lateral_output_) return true;
-
   const auto now = this->now();
   if ((now - lateral_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
     RCLCPP_ERROR_THROTTLE(
@@ -146,12 +144,16 @@ void Controller::callbackTimerControl()
   lateral_controller_->setInputData(input_data_);       // trajectory, odometry, steering
 
   const auto lon_out = longitudinal_controller_->run();
-  longitudinal_output_ = lon_out ? lon_out : longitudinal_output_;
+  longitudinal_output_ = lon_out ? lon_out : longitudinal_output_;  // use previous value if none.
   const auto lat_out = lateral_controller_->run();
-  lateral_output_ = lat_out ? lat_out : lateral_output_;
+  lateral_output_ = lat_out ? lat_out : lateral_output_;  // use previous value if none.
 
-  if (lateral_output_) longitudinal_controller_->sync(lateral_output_->sync_data);
-  if (longitudinal_output_) lateral_controller_->sync(longitudinal_output_->sync_data);
+  if (!longitudinal_output_ || !lateral_output_) return;
+
+  longitudinal_controller_->sync(lateral_output_->sync_data);
+  lateral_controller_->sync(longitudinal_output_->sync_data);
+
+  // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut()) return;
 
   autoware_auto_control_msgs::msg::AckermannControlCommand out;

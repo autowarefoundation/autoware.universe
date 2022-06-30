@@ -73,8 +73,10 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_stop_state_entry_target_speed =
     node_->declare_parameter<float64_t>("stop_state_entry_target_speed");
   m_converged_steer_rad = node_->declare_parameter<float64_t>("converged_steer_rad");
-  m_check_steer_converged_for_stopped_state =
-    node_->declare_parameter<bool8_t>("check_steer_converged_for_stopped_state");
+  m_keep_steer_control_until_converged =
+    node_->declare_parameter<bool8_t>("keep_steer_control_until_converged");
+  m_new_traj_duration_time = node_->declare_parameter<float64_t>("new_traj_duration_time");  // [s]
+  m_new_traj_end_dist = node_->declare_parameter<float64_t>("new_traj_end_dist");            // [m]
 
   /* mpc parameters */
   const float64_t steer_lim_deg = node_->declare_parameter<float64_t>("steer_lim_deg");
@@ -180,6 +182,16 @@ boost::optional<LateralOutput> MpcLateralController::run()
     *m_current_steering_ptr, m_current_odometry_ptr->twist.twist.linear.x, m_current_pose_ptr->pose,
     ctrl_cmd, predicted_traj, diagnostic);
 
+  publishPredictedTraj(predicted_traj);
+  publishDiagnostic(diagnostic);
+
+  const auto createLateralOutput = [this](const auto & cmd) {
+    LateralOutput output;
+    output.control_cmd = createCtrlCmdMsg(cmd);
+    output.sync_data.is_steer_converged = isSteerConverged(cmd);
+    return boost::optional<LateralOutput>(output);
+  };
+
   if (isStoppedState()) {
     // Reset input buffer
     for (auto & value : m_mpc.m_input_buffer) {
@@ -187,16 +199,7 @@ boost::optional<LateralOutput> MpcLateralController::run()
     }
     // Use previous command value as previous raw steer command
     m_mpc.m_raw_steer_cmd_prev = m_ctrl_cmd_prev.steering_tire_angle;
-
-    const auto cmd_msg = createCtrlCmdMsg(m_ctrl_cmd_prev);
-    publishPredictedTraj(predicted_traj);
-    publishDiagnostic(diagnostic);
-    LateralOutput output;
-    output.control_cmd = cmd_msg;
-    output.sync_data.is_steer_converged =
-      std::abs(cmd_msg.steering_tire_angle - m_current_steering_ptr->steering_tire_angle) <
-      static_cast<float>(m_converged_steer_rad);
-    return boost::optional<LateralOutput>(output);
+    return createLateralOutput(m_ctrl_cmd_prev);
   }
 
   if (!is_mpc_solved) {
@@ -207,16 +210,7 @@ boost::optional<LateralOutput> MpcLateralController::run()
   }
 
   m_ctrl_cmd_prev = ctrl_cmd;
-  const auto cmd_msg = createCtrlCmdMsg(ctrl_cmd);
-  publishPredictedTraj(predicted_traj);
-  publishDiagnostic(diagnostic);
-  LateralOutput output;
-  output.control_cmd = cmd_msg;
-  output.sync_data.is_steer_converged =
-    std::abs(cmd_msg.steering_tire_angle - m_current_steering_ptr->steering_tire_angle) <
-    static_cast<float>(m_converged_steer_rad);
-
-  return boost::optional<LateralOutput>(output);
+  return createLateralOutput(ctrl_cmd);
 }
 
 void MpcLateralController::setInputData(InputData const & input_data)
@@ -224,6 +218,22 @@ void MpcLateralController::setInputData(InputData const & input_data)
   setTrajectory(input_data.current_trajectory_ptr);
   m_current_odometry_ptr = input_data.current_odometry_ptr;
   m_current_steering_ptr = input_data.current_steering_ptr;
+}
+
+bool MpcLateralController::isSteerConverged(
+  const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd) const
+{
+  // wait for a while to propagate the trajectory shape to the output command when the trajectory
+  // shape is changed.
+  if (isTrajectoryShapeChanged()) {
+    return false;
+  }
+
+  const bool is_converged =
+    std::abs(cmd.steering_tire_angle - m_current_steering_ptr->steering_tire_angle) <
+    static_cast<float>(m_converged_steer_rad);
+
+  return is_converged;
 }
 
 bool8_t MpcLateralController::checkData() const
@@ -284,6 +294,17 @@ void MpcLateralController::setTrajectory(
   m_mpc.setReferenceTrajectory(
     *msg, m_traj_resample_dist, m_enable_path_smoothing, m_path_filter_moving_ave_num,
     m_curvature_smoothing_num_traj, m_curvature_smoothing_num_ref_steer, m_current_pose_ptr);
+
+  // update trajectory buffer to check the trajectory shape change.
+  m_trajectory_buffer.push_back(*m_current_trajectory_ptr);
+  while (rclcpp::ok()) {
+    const auto time_diff = rclcpp::Time(m_trajectory_buffer.back().header.stamp) -
+                           rclcpp::Time(m_trajectory_buffer.front().header.stamp);
+    if (time_diff.seconds() < m_new_traj_duration_time) {
+      break;
+    }
+    m_trajectory_buffer.pop_front();
+  }
 }
 
 bool8_t MpcLateralController::updateCurrentPose()
@@ -346,12 +367,15 @@ bool8_t MpcLateralController::isStoppedState() const
   const float64_t current_vel = m_current_odometry_ptr->twist.twist.linear.x;
   const float64_t target_vel =
     m_current_trajectory_ptr->points.at(static_cast<size_t>(nearest)).longitudinal_velocity_mps;
+
+  const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
+  if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
+    return false;  // not stopState: keep control
+  }
+
   if (
     std::fabs(current_vel) < m_stop_state_entry_ego_speed &&
-    std::fabs(target_vel) < m_stop_state_entry_target_speed &&
-    (!m_check_steer_converged_for_stopped_state ||
-     std::abs(m_ctrl_cmd_prev.steering_tire_angle - m_current_steering_ptr->steering_tire_angle) <
-       static_cast<float>(m_converged_steer_rad))) {
+    std::fabs(target_vel) < m_stop_state_entry_target_speed) {
     return true;
   } else {
     return false;
@@ -494,6 +518,21 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
   }
 
   return result;
+}
+
+bool MpcLateralController::isTrajectoryShapeChanged() const
+{
+  // TODO(Horibe): update implementation to check trajectory shape around ego vehicle.
+  // Now temporally check the goal position.
+  for (const auto & trajectory : m_trajectory_buffer) {
+    if (
+      tier4_autoware_utils::calcDistance2d(
+        trajectory.points.back().pose, m_current_trajectory_ptr->points.back().pose) >
+      m_new_traj_end_dist) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool8_t MpcLateralController::isValidTrajectory(

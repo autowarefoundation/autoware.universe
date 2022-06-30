@@ -104,7 +104,12 @@ private:
   float64_t m_stop_state_entry_ego_speed;
   float64_t m_stop_state_entry_target_speed;
   float64_t m_converged_steer_rad;
-  bool m_check_steer_converged_for_stopped_state;
+  float64_t m_new_traj_duration_time;  // check trajectory shape change
+  float64_t m_new_traj_end_dist;       // check trajectory shape change
+  bool m_keep_steer_control_until_converged;
+
+  // trajectory buffer for detecting new trajectory
+  std::deque<autoware_auto_planning_msgs::msg::Trajectory> m_trajectory_buffer;
 
   // MPC object
   trajectory_follower::MPC m_mpc;
@@ -197,6 +202,10 @@ private:
    * @brief check if the trajectory has valid value
    */
   bool8_t isValidTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & traj) const;
+
+  bool8_t isTrajectoryShapeChanged() const;
+
+  bool isSteerConverged(const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd) const;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
