@@ -67,6 +67,7 @@ ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd
 ADD_LIB(TARGET util SRC lib/*.cpp INC 3rd/regulatory_elements/include include)
 ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC src/validation/graph_segmentation.cpp INC include)
+ADD_LIB(TARGET vanish SRC src/imgproc/ransac_vanish_point.cpp INC include)
 
 # ===================================================
 # Executable
@@ -100,10 +101,10 @@ ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC includ
 
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 
-# ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util modified_seg)
+ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish)
 
+# ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util modified_seg)
 # ADD_EXE(TARGET snake SRC src/snake.cpp INC include LIB)
-ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)
