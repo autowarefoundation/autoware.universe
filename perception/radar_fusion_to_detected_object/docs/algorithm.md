@@ -14,8 +14,17 @@ Choose radar pointcloud/objects within 3D bounding box from lidar-base detection
 
 ### 3. Estimate twist of object
 
-Estimate twist from chosen radar pointcloud/objects.
-Attach object to twist information of estimated twist.
+Estimate twist from chosen radar pointcloud/objects using twist and target value (Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects).
+First, the estimation function calculate
+
+- Average twist for radar pointcloud/objects.
+- Median twist for radar pointcloud/objects.
+- Twist for radar pointcloud/objects nearest of the center of bounding box in velocity.
+- Weighted average twist with target value of radar pointcloud/objects.
+- Twist with max target value of radar pointcloud/objects.
+
+Second, the estimation function calculate weighted average of these list.
+Third, twist information of estimated twist is attached to an object.
 
 ![estimate_doppler_velocity](radar_fusion_to_detected_object_2.drawio.svg)
 

@@ -21,7 +21,7 @@
 #include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
 #include "geometry_msgs/msg/twist_with_covariance.hpp"
-#include "std_msgs/msg/header.hpp"
+// #include "std_msgs/msg/header.hpp"
 
 #include <memory>
 #include <string>
@@ -71,8 +71,8 @@ public:
 
   struct Input
   {
-    std::vector<RadarInput> radars = {};
-    DetectedObjects objects{};
+    std::vector<std::shared_ptr<RadarInput>> radars{};
+    DetectedObjects::ConstSharedPtr objects{};
   };
 
   struct Output
@@ -86,13 +86,14 @@ public:
 private:
   rclcpp::Logger logger_;
   Param param_{};
-  std::vector<RadarInput> filterRadarWithinObject(
-    const DetectedObject & object, const std::vector<RadarInput> & radars);
+  std::vector<std::shared_ptr<RadarInput>> filterRadarWithinObject(
+    const DetectedObject & object, const std::vector<std::shared_ptr<RadarInput>> & radars);
   std::vector<DetectedObject> splitObject(
     const DetectedObject & object, const std::vector<RadarInput> & radars);
   TwistWithCovariance estimateTwist(
-    const DetectedObject & object, std::vector<RadarInput> & radars);
-  bool isQualified(const DetectedObject & object, const std::vector<RadarInput> & radars);
+    const DetectedObject & object, std::vector<std::shared_ptr<RadarInput>> & radars);
+  bool isQualified(
+    const DetectedObject & object, std::vector<std::shared_ptr<RadarInput>> & radars);
   TwistWithCovariance convertDopplerToTwist(
     const DetectedObject & object, const TwistWithCovariance & twist_with_covariance);
   Twist addTwist(const Twist & twist_1, const Twist & twist_2);

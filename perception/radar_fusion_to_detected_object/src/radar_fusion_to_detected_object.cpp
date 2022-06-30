@@ -70,11 +70,17 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
   const RadarFusionToDetectedObject::Input & input)
 {
   RadarFusionToDetectedObject::Output output{};
-  output.objects.header = input.objects.header;
 
-  for (const auto & object : input.objects.objects) {
+  output.objects.header = input.objects->header;
+
+  if (input.objects->objects.empty()) {
+    return output;
+  }
+
+  for (auto & object : input.objects->objects) {
     // Link between 3d bounding box and radar data
-    std::vector<RadarInput> radars_within_object = filterRadarWithinObject(object, input.radars);
+    std::vector<std::shared_ptr<RadarInput>> radars_within_object =
+      filterRadarWithinObject(object, input.radars);
 
     // [TODO] (Satoshi Tanaka) Implement
     // Split the object going in a different direction
@@ -83,7 +89,7 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
     split_objects.emplace_back(object);
 
     for (auto & split_object : split_objects) {
-      std::vector<RadarInput> radars_within_split_object;
+      std::vector<std::shared_ptr<RadarInput>> radars_within_split_object;
       if (split_objects.size() == 1) {
         // If object is not split, radar data within object is same
         radars_within_split_object = radars_within_object;
@@ -110,11 +116,12 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
   return output;
 }
 
-std::vector<RadarFusionToDetectedObject::RadarInput>
+std::vector<std::shared_ptr<RadarFusionToDetectedObject::RadarInput>>
 RadarFusionToDetectedObject::filterRadarWithinObject(
-  const DetectedObject & object, const std::vector<RadarInput> & radars)
+  const DetectedObject & object,
+  const std::vector<std::shared_ptr<RadarFusionToDetectedObject::RadarInput>> & radars)
 {
-  std::vector<RadarInput> outputs{};
+  std::vector<std::shared_ptr<RadarInput>> outputs{};
 
   tier4_autoware_utils::Point2d object_size{object.shape.dimensions.x, object.shape.dimensions.y};
   LinearRing2d object_box = createObject2dWithMargin(object_size, param_.bounding_box_margin);
@@ -123,7 +130,7 @@ RadarFusionToDetectedObject::filterRadarWithinObject(
 
   for (const auto & radar : radars) {
     Point2d radar_point{
-      radar.pose_with_covariance.pose.position.x, radar.pose_with_covariance.pose.position.y};
+      radar->pose_with_covariance.pose.position.x, radar->pose_with_covariance.pose.position.y};
     if (boost::geometry::within(radar_point, object_box)) {
       outputs.emplace_back(radar);
     }
@@ -140,7 +147,7 @@ RadarFusionToDetectedObject::filterRadarWithinObject(
 // }
 
 TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
-  const DetectedObject & object, std::vector<RadarInput> & radars)
+  const DetectedObject & object, std::vector<std::shared_ptr<RadarInput>> & radars)
 {
   TwistWithCovariance twist_with_covariance{};
   if (radars.empty()) {
@@ -150,37 +157,39 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
   // calculate twist for radar data with min distance
   Twist twist_min_distance{};
   if (param_.velocity_weight_min_distance > 0.0) {
-    auto comp_func = [&](const RadarInput & a, const RadarInput & b) {
-      return tier4_autoware_utils::calcSquaredDistance2d(
-               a.pose_with_covariance.pose.position,
-               object.kinematics.pose_with_covariance.pose.position) <
-             tier4_autoware_utils::calcSquaredDistance2d(
-               b.pose_with_covariance.pose.position,
-               object.kinematics.pose_with_covariance.pose.position);
-    };
+    auto comp_func =
+      [&](const std::shared_ptr<RadarInput> & a, const std::shared_ptr<RadarInput> & b) {
+        return tier4_autoware_utils::calcSquaredDistance2d(
+                 a->pose_with_covariance.pose.position,
+                 object.kinematics.pose_with_covariance.pose.position) <
+               tier4_autoware_utils::calcSquaredDistance2d(
+                 b->pose_with_covariance.pose.position,
+                 object.kinematics.pose_with_covariance.pose.position);
+      };
     auto iter = std::min_element(std::begin(radars), std::end(radars), comp_func);
-    twist_min_distance = iter->twist_with_covariance.twist;
+    twist_min_distance = (*iter)->twist_with_covariance.twist;
   }
 
   // calculate twist for radar data with median twist
   Twist twist_median{};
   if (param_.velocity_weight_median > 0.0) {
-    auto ascending_func = [&](const RadarInput & a, const RadarInput & b) {
-      return getTwistNorm(a.twist_with_covariance.twist) <
-             getTwistNorm(b.twist_with_covariance.twist);
-    };
+    auto ascending_func =
+      [&](const std::shared_ptr<RadarInput> & a, const std::shared_ptr<RadarInput> & b) {
+        return getTwistNorm(a->twist_with_covariance.twist) <
+               getTwistNorm(b->twist_with_covariance.twist);
+      };
     std::sort(radars.begin(), radars.end(), ascending_func);
 
     if (radars.size() % 2 == 1) {
       int median_index = (radars.size() - 1) / 2;
-      twist_median = radars.at(median_index).twist_with_covariance.twist;
+      twist_median = radars.at(median_index)->twist_with_covariance.twist;
     } else {
       int median_index = radars.size() / 2;
 
       twist_median = scaleTwist(
         addTwist(
-          radars.at(median_index - 1).twist_with_covariance.twist,
-          radars.at(median_index).twist_with_covariance.twist),
+          radars.at(median_index - 1)->twist_with_covariance.twist,
+          radars.at(median_index)->twist_with_covariance.twist),
         0.5);
     }
   }
@@ -189,7 +198,7 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
   Twist twist_average{};
   if (param_.velocity_weight_average > 0.0) {
     for (const auto & radar : radars) {
-      twist_average = addTwist(twist_average, radar.twist_with_covariance.twist);
+      twist_average = addTwist(twist_average, radar->twist_with_covariance.twist);
     }
     twist_average = scaleTwist(twist_average, (1.0 / radars.size()));
   }
@@ -197,11 +206,12 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
   // calculate twist for radar data with top target value
   Twist twist_top_target_value{};
   if (param_.velocity_weight_target_value_top > 0.0) {
-    auto comp_func = [](const RadarInput & a, const RadarInput & b) {
-      return a.target_value < b.target_value;
-    };
+    auto comp_func =
+      [](const std::shared_ptr<RadarInput> & a, const std::shared_ptr<RadarInput> & b) {
+        return a->target_value < b->target_value;
+      };
     auto iter = std::max_element(std::begin(radars), std::end(radars), comp_func);
-    twist_top_target_value = iter->twist_with_covariance.twist;
+    twist_top_target_value = (*iter)->twist_with_covariance.twist;
   }
 
   // calculate twist for radar data with target_value * average
@@ -210,9 +220,9 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
   if (param_.velocity_weight_target_value_average > 0.0) {
     for (const auto & radar : radars) {
       twist_target_value_average = scaleTwist(
-        addTwist(twist_target_value_average, radar.twist_with_covariance.twist),
-        radar.target_value);
-      sum_target_value += radar.target_value;
+        addTwist(twist_target_value_average, radar->twist_with_covariance.twist),
+        radar->target_value);
+      sum_target_value += radar->target_value;
     }
     twist_target_value_average = scaleTwist(twist_target_value_average, 1.0 / sum_target_value);
   }
@@ -238,7 +248,7 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
 }
 
 bool RadarFusionToDetectedObject::isQualified(
-  const DetectedObject & object, const std::vector<RadarInput> & radars)
+  const DetectedObject & object, std::vector<std::shared_ptr<RadarInput>> & radars)
 {
   if (object.classification[0].probability > param_.threshold_probability) {
     return true;

@@ -188,11 +188,17 @@ void RadarObjectFusionToDetectedObjectNode::onTimer()
     return;
   }
 
+  if (radar_objects_->objects.empty()) {
+    pub_objects_->publish(*detected_objects_);
+    return;
+  }
+
   // Set input data
   RadarFusionToDetectedObject::Input input{};
-  input.objects = *detected_objects_;
+  input.objects = detected_objects_;
   for (const auto & radar_object_ : radar_objects_->objects) {
-    input.radars.emplace_back(setRadarInput(radar_object_, radar_objects_->header));
+    auto radar_ptr = setRadarInput(radar_object_, radar_objects_->header);
+    input.radars.emplace_back(radar_ptr);
   }
 
   // Update
@@ -200,15 +206,18 @@ void RadarObjectFusionToDetectedObjectNode::onTimer()
   pub_objects_->publish(output_.objects);
 }
 
-RadarFusionToDetectedObject::RadarInput RadarObjectFusionToDetectedObjectNode::setRadarInput(
-  TrackedObject radar_object, std_msgs::msg::Header header)
+std::shared_ptr<RadarFusionToDetectedObject::RadarInput>
+RadarObjectFusionToDetectedObjectNode::setRadarInput(
+  const TrackedObject & radar_object, std_msgs::msg::Header header_)
 {
   RadarFusionToDetectedObject::RadarInput output{};
-  output.header = header;
   output.pose_with_covariance = radar_object.kinematics.pose_with_covariance;
   output.twist_with_covariance = radar_object.kinematics.twist_with_covariance;
   output.target_value = radar_object.classification.at(0).probability;
-  return output;
+  output.header = header_;
+  std::shared_ptr<RadarFusionToDetectedObject::RadarInput> output_ =
+    std::make_shared<RadarFusionToDetectedObject::RadarInput>(output);
+  return output_;
 }
 
 }  // namespace radar_fusion_to_detected_object

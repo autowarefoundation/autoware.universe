@@ -1,10 +1,9 @@
 # radar_fusion_to_detected_object
 
-This package is radar-based sensor fusion module to 3d detected object.
-Main feature of this package are as following.
+This package contains a sensor fusion module for radar-detected objects and 3D detected objects. The fusion node can:
 
-- Attach velocity to lidar detection result from radar data to improve for tracking result and planning like adaptive cruise.
-- Improve detection result with radar sensor information. If both lidar 3d detected objects with low score and high confidence of radar pointcloud / objects, then improve score of objects.
+- Attach velocity to 3D detections when successfully matching radar data. The tracking modules use the velocity information to enhance the tracking results while planning modules use it to execute actions like adaptive cruise control.
+- Improve the low confidence 3D detections when corresponding radar detections are found.
 
 ![process_low_confidence](docs/radar_fusion_to_detected_object_6.drawio.svg)
 
@@ -14,18 +13,20 @@ The document of core algorithm is [here](docs/algorithm.md)
 
 ### Parameters for sensor fusion
 
-| Name                     | Type   | Description                                                                                            | Default value |
-| :----------------------- | :----- | :----------------------------------------------------------------------------------------------------- | :------------ |
-| bounding_box_margin      | double | The margin distance from bird's-eye view to choose radar pointcloud/objects within 3D bounding box [m] | 2.0           |
-| split_threshold_velocity | double | The threshold velocity to judge splitting two objects from radar information (now unused) [m/s]        | 5.0           |
+| Name                     | Type   | Description                                                                                                                                                                | Default value |
+| :----------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| bounding_box_margin      | double | The distance to extend the 2D bird's-eye view Bounding Box on each side. This distance is used as a threshold to find radar centroids falling inside the extended box. [m] | 2.0           |
+| split_threshold_velocity | double | The object's velocity threshold to decide to split for two objects from radar information (currently not implemented) [m/s]                                                | 5.0           |
 
 ### Weight parameters for velocity estimation
+
+To tune these weight parameters, please see [docs/algorithm.md](document) in detail.
 
 | Name                                 | Type   | Description                                                                                                                                                                             | Default value |
 | :----------------------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | velocity_weight_average              | double | The twist coefficient of average twist of radar data in velocity estimation.                                                                                                            | 0.0           |
 | velocity_weight_median               | double | The twist coefficient of median twist of radar data in velocity estimation.                                                                                                             | 0.0           |
-| velocity_weight_min_distance         | double | The twist coefficient of nearest radar data to the center of bounding box in velocity estimation.                                                                                       | 1.0           |
+| velocity_weight_min_distance         | double | The twist coefficient of radar data nearest to the center of bounding box in velocity estimation.                                                                                       | 1.0           |
 | velocity_weight_target_value_average | double | The twist coefficient of target value weighted average in velocity estimation. Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects. |
 | 0.0                                  |
 | velocity_weight_target_value_top     | double | The twist coefficient of top target value radar data in velocity estimation. Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects.   | 0.0           |
@@ -48,15 +49,15 @@ Sensor fusion with radar objects and a detected object.
 ### How to launch
 
 ```sh
-roslaunch radar_fusion_to_detected_object radar_object_to_detected_object.launch
+ros2 launch radar_fusion_to_detected_object radar_object_to_detected_object.launch.xml
 ```
 
 ### Input
 
-| Name                    | Type                                                 | Description          |
-| ----------------------- | ---------------------------------------------------- | -------------------- |
-| `~/input/objects`       | autoware_auto_perception_msgs/msg/DetectedObject.msg | 3D detected objects. |
-| `~/input/radar_objects` | autoware_auto_perception_msgs/msg/TrackedObjects.msg | Radar objects.       |
+| Name                    | Type                                                 | Description                                                            |
+| ----------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| `~/input/objects`       | autoware_auto_perception_msgs/msg/DetectedObject.msg | 3D detected objects.                                                   |
+| `~/input/radar_objects` | autoware_auto_perception_msgs/msg/TrackedObjects.msg | Radar objects. Note that frame_id need to be same as `~/input/objects` |
 
 ### Output
 
