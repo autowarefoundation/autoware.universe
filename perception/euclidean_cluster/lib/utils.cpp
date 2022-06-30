@@ -13,6 +13,8 @@
 // limitations under the License.
 #include "euclidean_cluster/utils.hpp"
 
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <sensor_msgs/msg/point_field.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
