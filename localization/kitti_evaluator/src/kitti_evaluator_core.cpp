@@ -46,16 +46,12 @@ void msgToMatrix(geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_ptr, Eig
 
 KittiEvaluator::KittiEvaluator() : rclcpp::Node("kitti_evaluator")
 {
-  delta = declare_parameter("time_delta", 0.1);
   std::string vehicle_pose_topic =
     declare_parameter("input_vehicle_pose_topic", "/localization/pose_twist_fusion_filter/pose");
   std::string ground_truth_pose_topic =
     declare_parameter("input_ground_truth_pose_topic", "/ground_truth");
   std::string error_pose_topic =
     declare_parameter("output_pose_error_topic", "/relative_pose_error");
-  // nav_sat_fix_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
-  //     "/gps_fix", rclcpp::QoS{100},
-  //     std::bind(&KittiEvaluator::callbackNavSatFix, this, std::placeholders::_1));
   vehicle_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     vehicle_pose_topic, rclcpp::QoS{100},
     std::bind(&KittiEvaluator::callbackVehicleOdometry, this, std::placeholders::_1));
@@ -63,122 +59,141 @@ KittiEvaluator::KittiEvaluator() : rclcpp::Node("kitti_evaluator")
     ground_truth_pose_topic, rclcpp::QoS{100},
     std::bind(&KittiEvaluator::callbackGroundTruthOdometry, this, std::placeholders::_1));
   pose_error_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>(error_pose_topic, 1);
-  init = false;
-  last_vehicle_trans.setIdentity();
-  last_groud_truth_trans.setIdentity();
+  has_ground_truth_ = false;
+  last_vehicle_trans_.setIdentity();
+  last_ground_truth_trans_.setIdentity();
 }
 
 KittiEvaluator::~KittiEvaluator() {}
 
-void KittiEvaluator::initialize(double lat, double lon, double alt)
-{
-  init = true;
-  scale = cos(lat * geodetic::pi / 180.0);
-  std::vector<double> t = geodetic::se3_translation(lat, lon, alt, scale);
-  x0 = t[0];
-  y0 = t[1];
-  z0 = t[2];
-}
-
-// void KittiEvaluator::callbackNavSatFix(sensor_msgs::msg::NavSatFix::ConstSharedPtr
-// nav_sat_fix_msg_ptr)
-// {
-//     RCLCPP_INFO(get_logger(), "Get GPS");
-//     if(!init)
-//     {
-//         initialize(nav_sat_fix_msg_ptr->latitude, nav_sat_fix_msg_ptr->longitude,
-//         nav_sat_fix_msg_ptr->altitude);
-//     }
-//     auto curr_time = nav_sat_fix_msg_ptr->header.stamp;
-//     while(!odom_queue.empty() && rclcpp::Time(odom_queue.front()->header.stamp) <
-//     rclcpp::Time(curr_time) - rclcpp::Duration::from_seconds(delta))
-//     {
-//         odom_queue.pop_front();
-//     }
-//     if(!odom_queue.empty())
-//     {
-//         // calculateError(odom_queue.front(), nav_sat_fix_msg_ptr);
-//     }
-//     else
-//     {
-//         RCLCPP_INFO(get_logger(), "Cannot Find Valid Pose!");
-//     }
-// }
-
 void KittiEvaluator::callbackGroundTruthOdometry(
   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_ground_truth_msg_ptr)
 {
-  if (!vehicle_pose_queue.empty()) {
-    RCLCPP_INFO(get_logger(), "We have ekf pose! Size : %ld", vehicle_pose_queue.size());
-  }
-
-  Eigen::Affine3d ground_truth_trans;
-  msgToMatrix(pose_ground_truth_msg_ptr, ground_truth_trans);
-
-  rclcpp::Time curr_time(pose_ground_truth_msg_ptr->header.stamp);
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr prev_pose;
-  while (!vehicle_pose_queue.empty() && rclcpp::Time(vehicle_pose_queue.front()->header.stamp) <
-                                          curr_time - rclcpp::Duration::from_seconds(delta)) {
-    prev_pose = vehicle_pose_queue.front();
-    vehicle_pose_queue.pop_front();
-  }
-  if (!vehicle_pose_queue.empty()) {
-    auto post_pose = vehicle_pose_queue.front();
-    vehicle_pose_queue.pop_front();
-
-    Eigen::Affine3d prev_trans;
-    rclcpp::Time prev_time = get_clock()->now();
-    prev_trans.setIdentity();
-    if (prev_pose) {
-      prev_time = rclcpp::Time(prev_pose->header.stamp);
-      msgToMatrix(prev_pose, prev_trans);
-    }
-    Eigen::Affine3d post_trans;
-    rclcpp::Time post_time(post_pose->header.stamp);
-    msgToMatrix(post_pose, post_trans);
-
-    rclcpp::Time fake_time = curr_time - rclcpp::Duration::from_seconds(delta);
-    double t = interpolation::getTimeCoeffients(fake_time, prev_time, post_time);
-    if (t > 1 || t < 0) {
-      RCLCPP_INFO(get_logger(), "????????????");
-    }
-    RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
-    Eigen::Affine3d vehicle_trans;
-    interpolation::interpolateTransform(t, prev_trans, post_trans, vehicle_trans);
-
-    // RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(0,0), vehicle_trans(0,1),
-    // vehicle_trans(0,2), vehicle_trans(0,3)); RCLCPP_INFO(get_loggerrocker -e
-    // LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/adehome --
-    // ghcr.io/autowarefoundation/autoware-universe:latest(), "%lf %lf %lf %lf", vehicle_trans(1,0),
-    // vehicle_trans(1,1), vehicle_trans(1,2), vehicle_trans(1,3)); RCLCPP_INFO(get_logger(), "%lf
-    // %lf %lf %lf", vehicle_trans(2,0), vehicle_trans(2,1), vehicle_trans(2,2),
-    // vehicle_trans(2,3)); RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(3,0),
-    // vehicle_trans(3,1), vehicle_trans(3,2), vehicle_trans(3,3));
-
-    Eigen::Affine3d error_trans;
-    calculateError(vehicle_trans, ground_truth_trans, error_trans);
-    last_vehicle_trans = vehicle_trans;
-    publishError(error_trans);
-  } else {
-    RCLCPP_INFO(get_logger(), "Cannot Find Valid Pose!");
-  }
-
-  last_groud_truth_trans = ground_truth_trans;
+  curr_ground_truth_pose_ = pose_ground_truth_msg_ptr;
+  has_ground_truth_ = true;
 }
 
 void KittiEvaluator::callbackVehicleOdometry(
   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg_ptr)
 {
-  // RCLCPP_INFO(get_logger(), "Get Vehicle Pose");
-  vehicle_pose_queue.push_back(pose_msg_ptr);
+  if(has_ground_truth_ && rclcpp::Time(pose_msg_ptr->header.stamp) > rclcpp::Time(curr_ground_truth_pose_->header.stamp))
+  {
+    Eigen::Affine3d prev_trans, post_trans, curr_trans;
+    rclcpp::Time prev_time, post_time, curr_time;
+    prev_trans.setIdentity();
+    if(prev_vehicle_pose_)
+    {
+      msgToMatrix(prev_vehicle_pose_, prev_trans);
+      prev_time = rclcpp::Time(prev_vehicle_pose_->header.stamp);
+    }
+    else
+    {
+      prev_time = get_clock()->now();
+      RCLCPP_INFO(get_logger(), "No prev pose");
+    }
+    msgToMatrix(pose_msg_ptr, post_trans);
+    post_time = rclcpp::Time(pose_msg_ptr->header.stamp);
+    curr_time = rclcpp::Time(curr_ground_truth_pose_->header.stamp);
+
+    double t = interpolation::getTimeCoeffients(curr_time, prev_time, post_time);
+    RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
+    // if(t > 1.0)
+    // {
+    //   RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time - prev_time).nanoseconds()));
+    //   RCLCPP_INFO(get_logger(), "step : %lf", static_cast<double>((curr_time - prev_time).nanoseconds()));
+    //   RCLCPP_INFO(get_logger(), "post > curr ? : %d", static_cast<int>(post_time > curr_time));
+    //   RCLCPP_INFO(get_logger(), "prev < curr ? : %d", static_cast<int>(prev_time < curr_time));
+    // }
+
+    interpolation::interpolateTransform(t, prev_trans, post_trans, curr_trans);
+
+    Eigen::Affine3d curr_ground_truth_trans, error_trans;
+    msgToMatrix(curr_ground_truth_pose_, curr_ground_truth_trans);
+
+    calculateError(curr_trans, curr_ground_truth_trans, error_trans);
+    publishError(error_trans);
+
+    last_vehicle_trans_ = curr_trans;
+    last_ground_truth_trans_ = curr_ground_truth_trans;
+    last_ground_truth_pose_ = curr_ground_truth_pose_;
+    has_ground_truth_ = false;
+  }
+
+  prev_vehicle_pose_ = pose_msg_ptr;
 }
+
+// void KittiEvaluator::callbackGroundTruthOdometry(
+//   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_ground_truth_msg_ptr)
+// {
+//   if (!vehicle_pose_queue_.empty()) {
+//     RCLCPP_INFO(get_logger(), "We have ekf pose! Size : %ld", vehicle_pose_queue_.size());
+//   }
+
+//   Eigen::Affine3d ground_truth_trans;
+//   msgToMatrix(pose_ground_truth_msg_ptr, ground_truth_trans);
+
+//   rclcpp::Time curr_time(pose_ground_truth_msg_ptr->header.stamp);
+//   geometry_msgs::msg::PoseStamped::ConstSharedPtr prev_pose;
+//   while (!vehicle_pose_queue_.empty() && rclcpp::Time(vehicle_pose_queue_.front()->header.stamp) <
+//                                           curr_time - rclcpp::Duration::from_seconds(delta)) {
+//     prev_pose = vehicle_pose_queue_.front();
+//     vehicle_pose_queue_.pop_front();
+//   }
+//   if (!vehicle_pose_queue_.empty()) {
+//     auto post_pose = vehicle_pose_queue_.front();
+//     vehicle_pose_queue_.pop_front();
+
+//     Eigen::Affine3d prev_trans;
+//     rclcpp::Time prev_time = get_clock()->now();
+//     prev_trans.setIdentity();
+//     if (prev_pose) {
+//       prev_time = rclcpp::Time(prev_pose->header.stamp);
+//       msgToMatrix(prev_pose, prev_trans);
+//     }
+//     Eigen::Affine3d post_trans;
+//     rclcpp::Time post_time(post_pose->header.stamp);
+//     msgToMatrix(post_pose, post_trans);
+
+//     rclcpp::Time fake_time = curr_time - rclcpp::Duration::from_seconds(delta);
+//     double t = interpolation::getTimeCoeffients(fake_time, prev_time, post_time);
+//     if (t > 1 || t < 0) {
+//       RCLCPP_INFO(get_logger(), "????????????");
+//     }
+//     RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
+//     Eigen::Affine3d vehicle_trans;
+//     interpolation::interpolateTransform(t, prev_trans, post_trans, vehicle_trans);
+
+//     // RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(0,0), vehicle_trans(0,1),
+//     // vehicle_trans(0,2), vehicle_trans(0,3)); RCLCPP_INFO(get_loggerrocker 
+//     // "%lf %lf %lf %lf", vehicle_trans(1,0),
+//     // vehicle_trans(1,1), vehicle_trans(1,2), vehicle_trans(1,3)); RCLCPP_INFO(get_logger(), "%lf
+//     // %lf %lf %lf", vehicle_trans(2,0), vehicle_trans(2,1), vehicle_trans(2,2),
+//     // vehicle_trans(2,3)); RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(3,0),
+//     // vehicle_trans(3,1), vehicle_trans(3,2), vehicle_trans(3,3));
+
+//     Eigen::Affine3d error_trans;
+//     calculateError(vehicle_trans, ground_truth_trans, error_trans);
+//     last_vehicle_trans_ = vehicle_trans;
+//     publishError(error_trans);
+//   } else {
+//     RCLCPP_INFO(get_logger(), "Cannot Find Valid Pose!");
+//   }
+
+//   last_groud_truth_trans_ = ground_truth_trans;
+// }
+
+// void KittiEvaluator::callbackVehicleOdometry(
+//   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg_ptr)
+// {
+//   vehicle_pose_queue_.push_back(pose_msg_ptr);
+// }
 
 void KittiEvaluator::calculateError(
   Eigen::Affine3d & vehicle_trans, Eigen::Affine3d & groud_truth_trans,
   Eigen::Affine3d & error_trans)
 {
-  Eigen::Affine3d delta_ground_truth = last_groud_truth_trans.inverse() * groud_truth_trans;
-  Eigen::Affine3d delta_vehicle = last_vehicle_trans.inverse() * vehicle_trans;
+  Eigen::Affine3d delta_ground_truth = last_ground_truth_trans_.inverse() * groud_truth_trans;
+  Eigen::Affine3d delta_vehicle = last_vehicle_trans_.inverse() * vehicle_trans;
   error_trans = delta_vehicle.inverse() * delta_ground_truth;
 
   Eigen::Matrix4d trans = error_trans.matrix();
