@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -31,6 +32,19 @@
 namespace behavior_path_planner
 {
 bool isOnRight(const ObjectData & obj) { return obj.lateral < 0.0; }
+
+double calcShiftLength(
+  const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin)
+{
+  const auto shift_length =
+    is_object_on_right ? (overhang_dist + avoid_margin) : (overhang_dist - avoid_margin);
+  return std::fabs(shift_length) > 1e-3 ? shift_length : 0.0;
+}
+
+bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length)
+{
+  return (is_object_on_right == std::signbit(shift_length));
+}
 
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<const PlannerData> & planner_data, const geometry_msgs::msg::Pose & pose,
@@ -125,20 +139,27 @@ void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & pa
     std::vector<PathPointWithLaneId>{path.points.begin() + min_start_idx, path.points.end()};
 }
 
-double calcDistanceToClosestFootprintPoint(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos)
+void fillLongitudinalAndLengthByClosestFootprint(
+  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
+  ObjectData & obj)
 {
   tier4_autoware_utils::Polygon2d object_poly{};
   util::calcObjectPolygon(object, &object_poly);
 
-  double distance = tier4_autoware_utils::calcSignedArcLength(
+  const double distance = tier4_autoware_utils::calcSignedArcLength(
     path.points, ego_pos, object.kinematics.initial_pose_with_covariance.pose.position);
+  double min_distance = distance;
+  double max_distance = distance;
   for (const auto & p : object_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    distance =
-      std::min(distance, tier4_autoware_utils::calcSignedArcLength(path.points, ego_pos, point));
+    const double arc_length =
+      tier4_autoware_utils::calcSignedArcLength(path.points, ego_pos, point);
+    min_distance = std::min(min_distance, arc_length);
+    max_distance = std::max(max_distance, arc_length);
   }
-  return distance;
+  obj.longitudinal = min_distance;
+  obj.length = max_distance - min_distance;
+  return;
 }
 
 double calcOverhangDistance(

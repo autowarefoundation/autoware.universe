@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,19 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#ifndef OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__ST_POINT_HPP_
+#define OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__ST_POINT_HPP_
 
-#ifndef OBJECT_ASSOCIATION_MERGER__SUCCESSIVE_SHORTEST_PATH_HPP_
-#define OBJECT_ASSOCIATION_MERGER__SUCCESSIVE_SHORTEST_PATH_HPP_
-
-#include <unordered_map>
 #include <vector>
 
-namespace assignment_problem
+class STPoint
 {
-// See IMPORTANT NOTE at the top of the file.
-void MaximizeLinearAssignment(
-  const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
-  std::unordered_map<int, int> * reverse_assignment);
-}  // namespace assignment_problem
+public:
+  STPoint(const double _s, const double _t) : s(_s), t(_t) {}
+  STPoint() : s(0.0), t(0.0) {}
 
-#endif  // OBJECT_ASSOCIATION_MERGER__SUCCESSIVE_SHORTEST_PATH_HPP_
+  double s;
+  double t;
+};
+
+using STPoints = std::vector<STPoint>;
+
+#endif  // OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__ST_POINT_HPP_
