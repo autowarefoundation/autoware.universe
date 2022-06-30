@@ -125,6 +125,7 @@ public:
     double collision_end_margin_time;    //! end margin time to check collision
     bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
     double frontcar_expected_decel;  //! the expected deceleration of frontcar when frontcar as well
+    bool enable_front_car_decel_prediction;  //! flag for using above feature
   };
 
   IntersectionModule(

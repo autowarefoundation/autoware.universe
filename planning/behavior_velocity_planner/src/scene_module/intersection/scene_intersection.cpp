@@ -297,9 +297,11 @@ bool IntersectionModule::checkCollision(
       if (!planning_utils::isAheadOf(planner_data_->current_pose.pose, object_pose)) {
         continue;
       }
-      if (checkFrontVehicleDeceleration(
-            ego_lane_with_next_lane, closest_lanelet, conflicting_areas, stuck_vehicle_detect_area,
-            object))
+      if (
+        planner_param_.enable_front_car_decel_prediction &&
+        checkFrontVehicleDeceleration(
+          ego_lane_with_next_lane, closest_lanelet, conflicting_areas, stuck_vehicle_detect_area,
+          object))
         return true;
     }
 
