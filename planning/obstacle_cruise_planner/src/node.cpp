@@ -67,7 +67,7 @@ bool isFrontObstacle(
   const double ego_to_obj_distance =
     tier4_autoware_utils::calcSignedArcLength(traj.points, ego_idx, obj_idx);
 
-  if (obj_idx == 0 && ego_to_obj_distance < 0) {
+  if (ego_to_obj_distance < 0) {
     return false;
   }
 
@@ -145,7 +145,10 @@ bool isAngleAlignedWithTrajectory(
 
   const double diff_yaw = tier4_autoware_utils::normalizeRadian(obj_yaw - traj_yaw);
 
-  const bool is_aligned = std::abs(diff_yaw) <= threshold_angle;
+  // TODO(perception team) Currently predicted objects does not have orientation availability even
+  // though sometimes orientation is not available.
+  const bool is_aligned =
+    std::abs(diff_yaw) <= threshold_angle || std::abs(M_PI - std::abs(diff_yaw)) <= threshold_angle;
   return is_aligned;
 }
 
@@ -209,24 +212,37 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     const double min_accel = declare_parameter<double>("normal.min_acc");
     const double max_jerk = declare_parameter<double>("normal.max_jerk");
     const double min_jerk = declare_parameter<double>("normal.min_jerk");
+    const double limit_max_accel = declare_parameter<double>("limit.max_acc");
+    const double limit_min_accel = declare_parameter<double>("limit.min_acc");
+    const double limit_max_jerk = declare_parameter<double>("limit.max_jerk");
+    const double limit_min_jerk = declare_parameter<double>("limit.min_jerk");
 
-    const double min_strong_accel = declare_parameter<double>("common.min_strong_accel");
     const double min_ego_accel_for_rss = declare_parameter<double>("common.min_ego_accel_for_rss");
     const double min_object_accel_for_rss =
       declare_parameter<double>("common.min_object_accel_for_rss");
     const double idling_time = declare_parameter<double>("common.idling_time");
     const double safe_distance_margin = declare_parameter<double>("common.safe_distance_margin");
 
-    return LongitudinalInfo(
-      max_accel, min_accel, max_jerk, min_jerk, min_strong_accel, idling_time,
-      min_ego_accel_for_rss, min_object_accel_for_rss, safe_distance_margin);
+    return LongitudinalInfo{
+      max_accel,
+      min_accel,
+      max_jerk,
+      min_jerk,
+      limit_max_accel,
+      limit_min_accel,
+      limit_max_jerk,
+      limit_min_jerk,
+      idling_time,
+      min_ego_accel_for_rss,
+      min_object_accel_for_rss,
+      safe_distance_margin};
   }();
 
-  const bool is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");
+  is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");
 
   // low pass filter for ego acceleration
   const double lpf_gain_for_accel = declare_parameter<double>("common.lpf_gain_for_accel");
-  lpf_acc_ptr_ = std::make_shared<LowpassFilter1d>(0.0, lpf_gain_for_accel);
+  lpf_acc_ptr_ = std::make_shared<LowpassFilter1d>(lpf_gain_for_accel);
 
   {  // Obstacle filtering parameters
     obstacle_filtering_param_.rough_detection_area_expand_width =
@@ -239,6 +255,8 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("obstacle_filtering.crossing_obstacle_velocity_threshold");
     obstacle_filtering_param_.collision_time_margin =
       declare_parameter<double>("obstacle_filtering.collision_time_margin");
+    obstacle_filtering_param_.outside_rough_detection_area_expand_width =
+      declare_parameter<double>("obstacle_filtering.outside_rough_detection_area_expand_width");
     obstacle_filtering_param_.ego_obstacle_overlap_time_threshold =
       declare_parameter<double>("obstacle_filtering.ego_obstacle_overlap_time_threshold");
     obstacle_filtering_param_.max_prediction_time_for_collision_check =
@@ -301,9 +319,67 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("common.nearest_dist_deviation_threshold");
     nearest_yaw_deviation_threshold_ =
       declare_parameter<double>("common.nearest_yaw_deviation_threshold");
+    obstacle_velocity_threshold_from_cruise_to_stop_ =
+      declare_parameter<double>("common.obstacle_velocity_threshold_from_cruise_to_stop");
+    obstacle_velocity_threshold_from_stop_to_cruise_ =
+      declare_parameter<double>("common.obstacle_velocity_threshold_from_stop_to_cruise");
     planner_ptr_->setParams(
       is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
       nearest_yaw_deviation_threshold_);
+  }
+
+  {  // cruise obstacle type
+    if (declare_parameter<bool>("common.cruise_obstacle_type.unknown")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::UNKNOWN);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.car")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::CAR);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.truck")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::TRUCK);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.bus")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::BUS);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.trailer")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::TRAILER);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.motorcycle")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::MOTORCYCLE);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.bicycle")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::BICYCLE);
+    }
+    if (declare_parameter<bool>("common.cruise_obstacle_type.pedestrian")) {
+      cruise_obstacle_types_.push_back(ObjectClassification::PEDESTRIAN);
+    }
+  }
+
+  {  // stop obstacle type
+    if (declare_parameter<bool>("common.stop_obstacle_type.unknown")) {
+      stop_obstacle_types_.push_back(ObjectClassification::UNKNOWN);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.car")) {
+      stop_obstacle_types_.push_back(ObjectClassification::CAR);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.truck")) {
+      stop_obstacle_types_.push_back(ObjectClassification::TRUCK);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.bus")) {
+      stop_obstacle_types_.push_back(ObjectClassification::BUS);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.trailer")) {
+      stop_obstacle_types_.push_back(ObjectClassification::TRAILER);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.motorcycle")) {
+      stop_obstacle_types_.push_back(ObjectClassification::MOTORCYCLE);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.bicycle")) {
+      stop_obstacle_types_.push_back(ObjectClassification::BICYCLE);
+    }
+    if (declare_parameter<bool>("common.stop_obstacle_type.pedestrian")) {
+      stop_obstacle_types_.push_back(ObjectClassification::PEDESTRIAN);
+    }
   }
 
   // wait for first self pose
@@ -353,6 +429,9 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "obstacle_filtering.collision_time_margin",
     obstacle_filtering_param_.collision_time_margin);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "obstacle_filtering.outside_rough_detection_area_expand_width",
+    obstacle_filtering_param_.outside_rough_detection_area_expand_width);
   tier4_autoware_utils::updateParam<double>(
     parameters, "obstacle_filtering.ego_obstacle_overlap_time_threshold",
     obstacle_filtering_param_.ego_obstacle_overlap_time_threshold);
@@ -407,9 +486,13 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   DebugData debug_data;
   const auto planner_data = createPlannerData(*msg, current_pose_ptr->pose, debug_data);
 
-  // generate Trajectory
+  // stop planning
+  const auto stop_traj = planner_ptr_->generateStopTrajectory(planner_data, debug_data);
+
+  // cruise planning
   boost::optional<VelocityLimit> vel_limit;
-  const auto output_traj = planner_ptr_->generateTrajectory(planner_data, vel_limit, debug_data);
+  const auto output_traj =
+    planner_ptr_->generateCruiseTrajectory(planner_data, stop_traj, vel_limit, debug_data);
 
   // publisher external velocity limit if required
   publishVelocityLimit(vel_limit);
@@ -428,24 +511,39 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
     calculation_time);
 }
 
+bool ObstacleCruisePlannerNode::isCruiseObstacle(const uint8_t label)
+{
+  const auto & types = cruise_obstacle_types_;
+  return std::find(types.begin(), types.end(), label) != types.end();
+}
+
+bool ObstacleCruisePlannerNode::isStopObstacle(const uint8_t label)
+{
+  const auto & types = stop_obstacle_types_;
+  return std::find(types.begin(), types.end(), label) != types.end();
+}
+
 ObstacleCruisePlannerData ObstacleCruisePlannerNode::createPlannerData(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
   DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
 
+  const auto current_time = now();
   const double current_vel = current_twist_ptr_->twist.linear.x;
   const double current_accel = calcCurrentAccel();
+  auto target_obstacles =
+    filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
+  updateHasStopped(target_obstacles);
 
   // create planner_data
   ObstacleCruisePlannerData planner_data;
-  planner_data.current_time = now();
+  planner_data.current_time = current_time;
   planner_data.traj = trajectory;
   planner_data.current_pose = current_pose;
   planner_data.current_vel = current_vel;
   planner_data.current_acc = current_accel;
-  planner_data.target_obstacles =
-    filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
+  planner_data.target_obstacles = target_obstacles;
 
   // print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
@@ -473,6 +571,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
   const PredictedObjects & predicted_objects, const Trajectory & traj,
   const geometry_msgs::msg::Pose & current_pose, const double current_vel, DebugData & debug_data)
 {
+  const auto current_time = now();
   const auto time_stamp = rclcpp::Time(predicted_objects.header.stamp);
 
   const size_t ego_idx = findExtendedNearestIndex(
@@ -493,24 +592,28 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
 
   std::vector<TargetObstacle> target_obstacles;
   for (const auto & predicted_object : predicted_objects.objects) {
+    const auto object_id = toHexString(predicted_object.object_id).substr(0, 4);
+
     // filter object whose label is not cruised or stopped
-    const bool is_target_obstacle =
-      planner_ptr_->isStopObstacle(predicted_object.classification.front().label) ||
-      planner_ptr_->isCruiseObstacle(predicted_object.classification.front().label);
+    const bool is_target_obstacle = isStopObstacle(predicted_object.classification.front().label) ||
+                                    isCruiseObstacle(predicted_object.classification.front().label);
     if (!is_target_obstacle) {
       RCLCPP_INFO_EXPRESSION(
-        get_logger(), is_showing_debug_info_, "Ignore obstacles since its label is not target.");
+        get_logger(), is_showing_debug_info_, "Ignore obstacle (%s) since its label is not target.",
+        object_id.c_str());
       continue;
     }
 
-    const auto & object_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    const auto object_pose = obstacle_cruise_utils::getCurrentObjectPose(
+      predicted_object, time_stamp, current_time, false);
     const auto & object_velocity =
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
     const bool is_front_obstacle = isFrontObstacle(traj, ego_idx, object_pose.position);
     if (!is_front_obstacle) {
       RCLCPP_INFO_EXPRESSION(
-        get_logger(), is_showing_debug_info_, "Ignore obstacles since its not front obstacle.");
+        get_logger(), is_showing_debug_info_,
+        "Ignore obstacle (%s) since it is not front obstacle.", object_id.c_str());
       continue;
     }
 
@@ -518,10 +621,12 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
     const double dist_from_obstacle_to_traj = [&]() {
       return tier4_autoware_utils::calcLateralOffset(decimated_traj.points, object_pose.position);
     }();
-    if (dist_from_obstacle_to_traj > obstacle_filtering_param_.rough_detection_area_expand_width) {
+    if (
+      std::fabs(dist_from_obstacle_to_traj) >
+      vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_detection_area_expand_width) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), is_showing_debug_info_,
-        "Ignore obstacles since it is far from the trajectory.");
+        "Ignore obstacle (%s) since it is far from the trajectory.", object_id.c_str());
       continue;
     }
 
@@ -552,13 +657,12 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
           current_pose, current_vel, nearest_collision_point, predicted_object,
           first_within_idx.get(), decimated_traj, decimated_traj_polygons);
         if (collision_time_margin > obstacle_filtering_param_.collision_time_margin) {
-          // Ignore condition 1
           // Ignore vehicle obstacles inside the trajectory, which is crossing the trajectory with
           // high speed and does not collide with ego in a certain time.
           RCLCPP_INFO_EXPRESSION(
             get_logger(), is_showing_debug_info_,
-            "Ignore inside obstacles since it will not collide with the ego.");
-
+            "Ignore inside obstacle (%s) since it will not collide with the ego.",
+            object_id.c_str());
           debug_data.intentionally_ignored_obstacles.push_back(predicted_object);
           continue;
         }
@@ -568,32 +672,47 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       if (
         std::find(types.begin(), types.end(), predicted_object.classification.front().label) !=
         types.end()) {
+        RCLCPP_INFO_EXPRESSION(
+          get_logger(), is_showing_debug_info_,
+          "Ignore outside obstacle (%s) since its type is not designated.", object_id.c_str());
+        continue;
+      }
+
+      if (
+        std::fabs(dist_from_obstacle_to_traj) >
+        vehicle_info_.vehicle_width_m +
+          obstacle_filtering_param_.outside_rough_detection_area_expand_width) {
+        RCLCPP_INFO_EXPRESSION(
+          get_logger(), is_showing_debug_info_,
+          "Ignore outside obstacle (%s) since it is far from the trajectory.", object_id.c_str());
         continue;
       }
 
       const auto predicted_path_with_highest_confidence =
         getHighestConfidencePredictedPath(predicted_object);
 
-      const bool will_collide = polygon_utils::willCollideWithSurroundObstacle(
+      std::vector<geometry_msgs::msg::Point> future_collision_points;
+      const auto collision_traj_poly_idx = polygon_utils::willCollideWithSurroundObstacle(
         decimated_traj, decimated_traj_polygons, predicted_path_with_highest_confidence,
-        predicted_object.shape, obstacle_filtering_param_.rough_detection_area_expand_width,
+        predicted_object.shape,
+        vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_detection_area_expand_width,
         obstacle_filtering_param_.ego_obstacle_overlap_time_threshold,
-        obstacle_filtering_param_.max_prediction_time_for_collision_check);
+        obstacle_filtering_param_.max_prediction_time_for_collision_check, future_collision_points);
 
-      // TODO(murooka) think later
-      nearest_collision_point = object_pose.position;
-
-      if (!will_collide) {
-        // Ignore condition 2
+      if (!collision_traj_poly_idx) {
         // Ignore vehicle obstacles outside the trajectory, whose predicted path
         // overlaps the ego trajectory in a certain time.
         RCLCPP_INFO_EXPRESSION(
           get_logger(), is_showing_debug_info_,
-          "Ignore outside obstacles since it will not collide with the ego.");
-
+          "Ignore outside obstacle (%s) since it will not collide with the ego.",
+          object_id.c_str());
         debug_data.intentionally_ignored_obstacles.push_back(predicted_object);
         continue;
       }
+
+      nearest_collision_point = calcNearestCollisionPoint(
+        collision_traj_poly_idx.get(), future_collision_points, decimated_traj);
+      debug_data.collision_points.push_back(nearest_collision_point);
     }
 
     // convert to obstacle type
@@ -605,6 +724,43 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
   }
 
   return target_obstacles;
+}
+
+void ObstacleCruisePlannerNode::updateHasStopped(std::vector<TargetObstacle> & target_obstacles)
+{
+  for (auto & obstacle : target_obstacles) {
+    const bool is_cruise_obstacle = isCruiseObstacle(obstacle.classification.label);
+    const bool is_stop_obstacle = isStopObstacle(obstacle.classification.label);
+
+    if (is_stop_obstacle && !is_cruise_obstacle) {
+      obstacle.has_stopped = true;
+      continue;
+    }
+
+    if (is_cruise_obstacle) {
+      const auto itr = std::find_if(
+        prev_target_obstacles_.begin(), prev_target_obstacles_.end(),
+        [&](const auto & prev_target_obstacle) {
+          return obstacle.uuid == prev_target_obstacle.uuid;
+        });
+      const bool has_already_stopped = (itr != prev_target_obstacles_.end()) && itr->has_stopped;
+      if (has_already_stopped) {
+        if (std::abs(obstacle.velocity) < obstacle_velocity_threshold_from_stop_to_cruise_) {
+          obstacle.has_stopped = true;
+          continue;
+        }
+      } else {
+        if (std::abs(obstacle.velocity) < obstacle_velocity_threshold_from_cruise_to_stop_) {
+          obstacle.has_stopped = true;
+          continue;
+        }
+      }
+    }
+
+    obstacle.has_stopped = false;
+  }
+
+  prev_target_obstacles_ = target_obstacles;
 }
 
 geometry_msgs::msg::Point ObstacleCruisePlannerNode::calcNearestCollisionPoint(

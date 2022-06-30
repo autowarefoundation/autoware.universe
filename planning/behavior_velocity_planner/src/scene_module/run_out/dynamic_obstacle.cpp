@@ -108,7 +108,7 @@ DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(rclcpp::Node & 
 {
 }
 
-std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObstacles() const
+std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObstacles()
 {
   // create dynamic obstacles from predicted objects
   std::vector<DynamicObstacle> dynamic_obstacles;
@@ -145,7 +145,6 @@ DynamicObstacleCreatorForObjectWithoutPath::DynamicObstacleCreatorForObjectWitho
 }
 
 std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createDynamicObstacles()
-  const
 {
   std::vector<DynamicObstacle> dynamic_obstacles;
 
@@ -184,8 +183,9 @@ DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(rclcpp::Node & 
     std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
 }
 
-std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles() const
+std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   std::vector<DynamicObstacle> dynamic_obstacles;
   for (const auto & point : dynamic_obstacle_data_.compare_map_filtered_pointcloud) {
     DynamicObstacle dynamic_obstacle;
@@ -227,6 +227,12 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
 void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
+  if (msg->data.empty()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    dynamic_obstacle_data_.compare_map_filtered_pointcloud.clear();
+    return;
+  }
+
   geometry_msgs::msg::TransformStamped transform;
   try {
     transform = tf_buffer_.lookupTransform(
@@ -244,6 +250,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
   pcl::transformPointCloud(pc, *pc_transformed, affine);
 
   const auto voxel_grid_filtered_points = applyVoxelGridFilter(pc_transformed);
+  std::lock_guard<std::mutex> lock(mutex_);
   dynamic_obstacle_data_.compare_map_filtered_pointcloud = extractObstaclePointsWithinPolygon(
     voxel_grid_filtered_points, dynamic_obstacle_data_.detection_area_polygon);
 }

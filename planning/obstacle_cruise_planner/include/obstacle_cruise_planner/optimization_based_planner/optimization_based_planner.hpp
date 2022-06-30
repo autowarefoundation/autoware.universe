@@ -48,9 +48,9 @@ public:
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const vehicle_info_util::VehicleInfo & vehicle_info);
 
-  Trajectory generateTrajectory(
-    const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
-    DebugData & debug_data) override;
+  Trajectory generateCruiseTrajectory(
+    const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj,
+    boost::optional<VelocityLimit> & vel_limit, DebugData & debug_data) override;
 
 private:
   struct TrajectoryData
@@ -71,27 +71,20 @@ private:
 
   // Member Functions
   std::vector<double> createTimeVector();
-
-  double getClosestStopDistance(
-    const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data,
-    const std::vector<double> & resolutions);
-
   std::tuple<double, double> calcInitialMotion(
-    const double current_vel, const Trajectory & input_traj, const size_t input_closest,
-    const Trajectory & prev_traj, const double closest_stop_dist);
+    const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj,
+    const size_t input_closest, const Trajectory & prev_traj);
 
   TrajectoryPoint calcInterpolatedTrajectoryPoint(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose);
-
-  bool checkHasReachedGoal(const Trajectory & traj, const size_t closest_idx, const double v0);
-
+  bool checkHasReachedGoal(
+    const ObstacleCruisePlannerData & planner_data, const Trajectory & stop_traj);
   TrajectoryData getTrajectoryData(
     const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose);
 
   TrajectoryData resampleTrajectoryData(
     const TrajectoryData & base_traj_data, const double resampling_s_interval,
-    const double max_traj_length, const double stop_dist);
-
+    const double max_traj_length);
   Trajectory resampleTrajectory(
     const std::vector<double> & base_index, const Trajectory & base_trajectory,
     const std::vector<double> & query_index, const bool use_spline_for_pose = false);
@@ -116,16 +109,13 @@ private:
     const TargetObstacle & object, const rclcpp::Time & obj_base_time,
     const PredictedPath & predicted_path);
 
-  bool checkIsFrontObject(const TargetObstacle & object, const Trajectory & traj);
-
-  boost::optional<PredictedPath> resampledPredictedPath(
+  boost::optional<PredictedPath> resamplePredictedPath(
     const TargetObstacle & object, const rclcpp::Time & obj_base_time,
     const rclcpp::Time & current_time, const std::vector<double> & resolutions,
     const double horizon);
 
   boost::optional<double> getDistanceToCollisionPoint(
-    const TrajectoryData & ego_traj_data, const ObjectData & obj_data,
-    const double delta_yaw_threshold);
+    const TrajectoryData & ego_traj_data, const ObjectData & obj_data);
 
   boost::optional<size_t> getCollisionIdx(
     const TrajectoryData & ego_traj, const Box2d & obj_box, const size_t start_idx,
@@ -141,7 +131,6 @@ private:
     const rclcpp::Time & current_time, const Trajectory & traj, const size_t closest_idx,
     const std::vector<double> & time_vec, const SBoundaries & s_boundaries,
     const VelocityOptimizer::OptimizationResult & opt_result);
-
   // Calculation time watcher
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
@@ -154,7 +143,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr boundary_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_sv_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_st_graph_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr distance_to_closest_obj_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_marker_pub_;
 
@@ -165,19 +153,9 @@ private:
   double sparse_resampling_time_interval_;
   double dense_time_horizon_;
   double max_time_horizon_;
-  double limit_min_accel_;
 
-  double delta_yaw_threshold_of_nearest_index_;
-  double delta_yaw_threshold_of_object_and_ego_;
-  double object_zero_velocity_threshold_;
-  double object_low_velocity_threshold_;
-  double external_velocity_limit_;
-  double collision_time_threshold_;
-  double safe_distance_margin_;
   double t_dangerous_;
   double velocity_margin_;
-  bool enable_adaptive_cruise_;
-  bool use_object_acceleration_;
 
   double replan_vel_deviation_;
   double engage_velocity_;

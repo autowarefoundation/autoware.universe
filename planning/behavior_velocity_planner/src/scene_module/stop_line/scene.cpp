@@ -230,7 +230,7 @@ bool StopLineModule::modifyPathVelocity(
 
   // If no collision found, do nothing
   if (!collision) {
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000 /* ms */, "is no collision");
+    RCLCPP_DEBUG_THROTTLE(logger_, *clock_, 5000 /* ms */, "is no collision");
     return true;
   }
   const double center_line_z = (stop_line_[0].z() + stop_line_[1].z()) / 2.0;
@@ -278,8 +278,7 @@ bool StopLineModule::modifyPathVelocity(
     }
   } else if (state_ == State::START) {
     // Initialize if vehicle is far from stop_line
-    constexpr bool use_initialization_after_start = false;
-    if (use_initialization_after_start) {
+    if (planner_param_.use_initialization_stop_line_state) {
       if (signed_arc_dist_to_stop_point > planner_param_.stop_check_dist) {
         RCLCPP_INFO(logger_, "START -> APPROACH");
         state_ = State::APPROACH;

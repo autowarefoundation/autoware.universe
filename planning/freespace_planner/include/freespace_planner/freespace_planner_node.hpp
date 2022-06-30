@@ -48,6 +48,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <route_handler/route_handler.hpp>
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -81,6 +83,7 @@ struct NodeParam
   double th_stopped_time_sec;
   double th_stopped_velocity_mps;
   double th_course_out_distance_m;
+  double vehicle_shape_margin_m;
   bool replan_when_obstacle_found;
   bool replan_when_course_out;
 };
@@ -127,6 +130,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
   Scenario::ConstSharedPtr scenario_;
   Odometry::ConstSharedPtr odom_;
+  std::shared_ptr<route_handler::RouteHandler> route_handler_;
 
   std::deque<Odometry::ConstSharedPtr> odom_buffer_;
 
