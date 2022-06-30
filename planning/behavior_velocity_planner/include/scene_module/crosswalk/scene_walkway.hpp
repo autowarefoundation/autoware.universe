@@ -40,7 +40,6 @@ public:
 public:
   struct PlannerParam
   {
-    double stop_margin;
     double stop_line_distance;
     double stop_duration_sec;
     double external_input_timeout;

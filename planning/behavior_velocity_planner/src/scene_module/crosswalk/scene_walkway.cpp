@@ -62,14 +62,14 @@ bool WalkwayModule::modifyPathVelocity(
       getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
     if (!!stop_line_opt) {
       if (!insertTargetVelocityPoint(
-            input, stop_line_opt.get(), planner_param_.stop_margin, 0.0, *planner_data_, *path,
-            debug_data_, first_stop_path_point_index_)) {
+            input, stop_line_opt.get(), 0.0, 0.0, *planner_data_, *path, debug_data_,
+            first_stop_path_point_index_)) {
         return false;
       }
     } else {
       if (!insertTargetVelocityPoint(
-            input, polygon, planner_param_.stop_line_distance + planner_param_.stop_margin, 0.0,
-            *planner_data_, *path, debug_data_, first_stop_path_point_index_)) {
+            input, polygon, planner_param_.stop_line_distance, 0.0, *planner_data_, *path,
+            debug_data_, first_stop_path_point_index_)) {
         return false;
       }
     }
