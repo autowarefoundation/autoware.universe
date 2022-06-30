@@ -95,14 +95,16 @@ void LocalizationEvaluator::callbackVehicleOdometry(
 
     double t = interpolation::getTimeCoeffients(curr_time, prev_time, post_time);
     RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
-    // if(t > 1.0)
-    // {
-    //   RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time -
-    //   prev_time).nanoseconds())); RCLCPP_INFO(get_logger(), "step : %lf",
-    //   static_cast<double>((curr_time - prev_time).nanoseconds())); RCLCPP_INFO(get_logger(),
-    //   "post > curr ? : %d", static_cast<int>(post_time > curr_time)); RCLCPP_INFO(get_logger(),
-    //   "prev < curr ? : %d", static_cast<int>(prev_time < curr_time));
-    // }
+    if(t > 1.0 || t < 0.0)
+    {
+      RCLCPP_WARN(get_logger(), "Interpolate Coefficient has to be in range of [0,1]");
+      return;
+      // RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time -
+      // prev_time).nanoseconds())); RCLCPP_INFO(get_logger(), "step : %lf",
+      // static_cast<double>((curr_time - prev_time).nanoseconds())); RCLCPP_INFO(get_logger(),
+      // "post > curr ? : %d", static_cast<int>(post_time > curr_time)); RCLCPP_INFO(get_logger(),
+      // "prev < curr ? : %d", static_cast<int>(prev_time < curr_time));
+    }
 
     interpolation::interpolateTransform(t, prev_trans, post_trans, curr_trans);
 
