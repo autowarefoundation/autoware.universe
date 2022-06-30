@@ -13,7 +13,6 @@ struct StaticTfSubscriber
 {
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::optional<Eigen::Affine3f> extrinsic_{std::nullopt};
 
   StaticTfSubscriber(rclcpp::Clock::SharedPtr clock)
   {
@@ -24,8 +23,7 @@ struct StaticTfSubscriber
   std::optional<Eigen::Affine3f> operator()(
     const std::string & frame_id, const std::string & parent_frame_id = "base_link")
   {
-    if (extrinsic_.has_value()) return extrinsic_.value();
-
+    std::optional<Eigen::Affine3f> extrinsic_{std::nullopt};
     try {
       geometry_msgs::msg::TransformStamped ts =
         tf_buffer_->lookupTransform(parent_frame_id, frame_id, tf2::TimePointZero);
