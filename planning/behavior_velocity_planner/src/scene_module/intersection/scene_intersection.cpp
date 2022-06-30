@@ -50,6 +50,13 @@ static geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
+static geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position = p;
+  return pose;
+}
+
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
@@ -290,93 +297,10 @@ bool IntersectionModule::checkCollision(
       if (!planning_utils::isAheadOf(planner_data_->current_pose.pose, object_pose)) {
         continue;
       }
-      // consider vehicle in ego-lane && in front of ego
-      const auto lon_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
-      const double object_decel = planner_param_.object_expected_decel;  // NOTE: this is positive
-      const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
-
-      std::vector<geometry_msgs::msg::Point> centerpoints;
-      for (auto && p : ego_lane_with_next_lane[0].centerline())
-        centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
-      for (auto && p : ego_lane_with_next_lane[1].centerline())
-        centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
-      const double lat_offset =
-        std::fabs(tier4_autoware_utils::calcLateralOffset(centerpoints, object_pose.position));
-      // get the nearest centerpoint to object
-      std::vector<double> dist_obj_centerpoints;
-      for (const auto & p : centerpoints)
-        dist_obj_centerpoints.push_back(
-          tier4_autoware_utils::calcDistance2d(object_pose.position, p));
-      const int obj_closest_centerpoint_idx = std::distance(
-        dist_obj_centerpoints.begin(),
-        std::min_element(dist_obj_centerpoints.begin(), dist_obj_centerpoints.end()));
-      // find two centerpoints whose distances from `closest_centerpoint` cross stopping_distance
-      double acc_dist_prev = 0.0, acc_dist = 0.0;
-      auto p1 = centerpoints[obj_closest_centerpoint_idx];
-      auto p2 = centerpoints[obj_closest_centerpoint_idx];
-      for (unsigned i = obj_closest_centerpoint_idx; i < centerpoints.size() - 1; ++i) {
-        p1 = centerpoints[i];
-        p2 = centerpoints[i + 1];
-        acc_dist_prev = acc_dist;
-        const double delta = tier4_autoware_utils::calcDistance2d(p1, p2);
-        acc_dist += delta;
-        if (acc_dist > stopping_distance) {
-          break;
-        }
-      }
-      // if stopping_distance >= centerpoints, stopping_point is centerpoints[end]
-      const double ratio = (acc_dist <= stopping_distance)
-                             ? 0.0
-                             : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
-      // linear interpolation
-      geometry_msgs::msg::Point stopping_point;
-      const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
-      stopping_point.x = (p1.x * ratio + p2.x) / (1 + ratio);
-      stopping_point.y = (p1.y * ratio + p2.y) / (1 + ratio);
-      stopping_point.z = (p1.z * ratio + p2.z) / (1 + ratio);
-      stopping_point.x += lat_offset * std::cos(lane_yaw + M_PI / 2.0);
-      stopping_point.y += lat_offset * std::sin(lane_yaw + M_PI / 2.0);
-
-      // calculate footprint of predicted stopping pose
-      autoware_auto_perception_msgs::msg::PredictedObject predicted_object = object;
-      predicted_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
-      predicted_object.kinematics.initial_pose_with_covariance.pose.orientation =
-        tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
-      Polygon2d predicted_obj_footprint = toFootprintPolygon(predicted_object);
-      const bool is_in_stuck_area =
-        !bg::disjoint(predicted_obj_footprint, stuck_vehicle_detect_area);
-      debug_data_.predicted_obj_pose.position = stopping_point;
-      debug_data_.predicted_obj_pose.orientation =
-        tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
-
-      // find the centerpoint ego_vehicle_length[m] behind stopping_point
-      const double vehicle_length = planner_data_->vehicle_info_.vehicle_length_m;
-      acc_dist = 0;
-      unsigned behind_predicted_obj_point_idx = 0;
-      for (unsigned i = obj_closest_centerpoint_idx; i >= 1; --i) {
-        const auto & p1 = centerpoints[i];
-        const auto & p2 = centerpoints[i - 1];
-        acc_dist += tier4_autoware_utils::calcDistance2d(p1, p2);
-        behind_predicted_obj_point_idx = i;
-        if (acc_dist > vehicle_length) break;
-      }
-      bool is_behind_point_in_detection_area = false;
-      for (const auto & conflicting_area : conflicting_areas) {
-        const auto conflicting_area_ = lanelet::utils::to2D(conflicting_area);
-        Polygon2d poly{};
-        for (const auto & p : conflicting_area_) {
-          poly.outer().emplace_back(p.x(), p.y());
-        }
-        if (bg::within(to_bg2d(centerpoints[behind_predicted_obj_point_idx]), poly)) {
-          is_behind_point_in_detection_area = true;
-          break;
-        }
-      }
-      if (is_in_stuck_area && is_behind_point_in_detection_area) {
-        RCLCPP_INFO(logger_, "will return collision_detected");
+      if (checkFrontVehicleDeceleration(
+            ego_lane_with_next_lane, closest_lanelet, conflicting_areas, stuck_vehicle_detect_area,
+            object))
         return true;
-      }
-      continue;
     }
 
     // check direction of objects
@@ -766,6 +690,104 @@ double IntersectionModule::calcDistanceUntilIntersectionLanelet(
     path.points.at(dst_idx).point.pose.position.x - lane_first_point.x(),
     path.points.at(dst_idx).point.pose.position.y - lane_first_point.y());
   return distance;
+}
+
+bool IntersectionModule::checkFrontVehicleDeceleration(
+  lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const Polygon2d & stuck_vehicle_detect_area,
+  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
+{
+  const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
+  // consider vehicle in ego-lane && in front of ego
+  const auto lon_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+  const double object_decel = planner_param_.assumed_front_car_decel;  // NOTE: this is positive
+  const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
+
+  std::vector<geometry_msgs::msg::Point> centerpoints;
+  for (auto && p : ego_lane_with_next_lane[0].centerline())
+    centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
+  for (auto && p : ego_lane_with_next_lane[1].centerline())
+    centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
+  const double lat_offset =
+    std::fabs(tier4_autoware_utils::calcLateralOffset(centerpoints, object_pose.position));
+  // get the nearest centerpoint to object
+  std::vector<double> dist_obj_centerpoints;
+  for (const auto & p : centerpoints)
+    dist_obj_centerpoints.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position, p));
+  const int obj_closest_centerpoint_idx = std::distance(
+    dist_obj_centerpoints.begin(),
+    std::min_element(dist_obj_centerpoints.begin(), dist_obj_centerpoints.end()));
+  // find two centerpoints whose distances from `closest_centerpoint` cross stopping_distance
+  double acc_dist_prev = 0.0, acc_dist = 0.0;
+  auto p1 = centerpoints[obj_closest_centerpoint_idx];
+  auto p2 = centerpoints[obj_closest_centerpoint_idx];
+  for (unsigned i = obj_closest_centerpoint_idx; i < centerpoints.size() - 1; ++i) {
+    p1 = centerpoints[i];
+    p2 = centerpoints[i + 1];
+    acc_dist_prev = acc_dist;
+    const auto arc_position_p1 =
+      lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, toPose(p1));
+    const auto arc_position_p2 =
+      lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, toPose(p2));
+    const double delta = arc_position_p2.length - arc_position_p1.length;
+    acc_dist += delta;
+    if (acc_dist > stopping_distance) {
+      break;
+    }
+  }
+  // if stopping_distance >= centerpoints, stopping_point is centerpoints[end]
+  const double ratio = (acc_dist <= stopping_distance)
+                         ? 0.0
+                         : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
+  // linear interpolation
+  geometry_msgs::msg::Point stopping_point;
+  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
+  stopping_point.x = (p1.x * ratio + p2.x) / (1 + ratio);
+  stopping_point.y = (p1.y * ratio + p2.y) / (1 + ratio);
+  stopping_point.z = (p1.z * ratio + p2.z) / (1 + ratio);
+  stopping_point.x += lat_offset * std::cos(lane_yaw + M_PI / 2.0);
+  stopping_point.y += lat_offset * std::sin(lane_yaw + M_PI / 2.0);
+
+  // calculate footprint of predicted stopping pose
+  autoware_auto_perception_msgs::msg::PredictedObject predicted_object = object;
+  predicted_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
+  predicted_object.kinematics.initial_pose_with_covariance.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
+  Polygon2d predicted_obj_footprint = toFootprintPolygon(predicted_object);
+  const bool is_in_stuck_area = !bg::disjoint(predicted_obj_footprint, stuck_vehicle_detect_area);
+  debug_data_.predicted_obj_pose.position = stopping_point;
+  debug_data_.predicted_obj_pose.orientation =
+    tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
+
+  // find the centerpoint ego_vehicle_length[m] behind stopping_point
+  const double vehicle_length = planner_data_->vehicle_info_.vehicle_length_m;
+  acc_dist = 0;
+  unsigned behind_predicted_obj_point_idx = 0;
+  for (unsigned i = obj_closest_centerpoint_idx; i >= 1; --i) {
+    const auto & p1 = centerpoints[i];
+    const auto & p2 = centerpoints[i - 1];
+    acc_dist += tier4_autoware_utils::calcDistance2d(p1, p2);
+    behind_predicted_obj_point_idx = i;
+    if (acc_dist > vehicle_length) break;
+  }
+  bool is_behind_point_in_detection_area = false;
+  for (const auto & conflicting_area : conflicting_areas) {
+    const auto conflicting_area_ = lanelet::utils::to2D(conflicting_area);
+    Polygon2d poly{};
+    for (const auto & p : conflicting_area_) {
+      poly.outer().emplace_back(p.x(), p.y());
+    }
+    if (bg::intersects(to_bg2d(centerpoints[behind_predicted_obj_point_idx]), poly)) {
+      is_behind_point_in_detection_area = true;
+      break;
+    }
+  }
+  if (is_in_stuck_area && is_behind_point_in_detection_area) {
+    RCLCPP_INFO(logger_, "will return collision_detected");
+    return true;
+  }
+  return false;
 }
 
 }  // namespace behavior_velocity_planner
