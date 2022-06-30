@@ -96,8 +96,8 @@ public:
     latest_time_ = time;
     return;
   };
-  void set_proc_stddev(const double proc_stddev) { proc_stddev_x_c_ = proc_stddev; };
-  double get_x() { return x_; };
+  void set_proc_stddev(const double proc_stddev) { proc_stddev_x_c_ = proc_stddev; }
+  double get_x() { return x_; }
 
 private:
   bool initialized_;
