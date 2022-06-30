@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP
-#define TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP
+#ifndef TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP_
+#define TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -31,36 +31,36 @@ namespace simple_trajectory_follower
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using nav_msgs::msg::Odometry;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using nav_msgs::msg::Odometry;
 
 class SimpleTrajectoryFollower : public rclcpp::Node
 {
 public:
-    SimpleTrajectoryFollower(const rclcpp::NodeOptions & options);
-    ~SimpleTrajectoryFollower() = default;
+  explicit SimpleTrajectoryFollower(const rclcpp::NodeOptions & options);
+  ~SimpleTrajectoryFollower() = default;
 
 private:
-    rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
-    rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
-    rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_cmd_;
-    rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
+  rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_cmd_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-    Trajectory::SharedPtr trajectory_;
-    Odometry::SharedPtr odometry_;
-    TrajectoryPoint closest_traj_point_;
-    bool use_external_target_vel_;
-    double external_target_vel_;
-    double lateral_deviation_;
+  Trajectory::SharedPtr trajectory_;
+  Odometry::SharedPtr odometry_;
+  TrajectoryPoint closest_traj_point_;
+  bool use_external_target_vel_;
+  double external_target_vel_;
+  double lateral_deviation_;
 
-    void onTimer();
-    bool checkData();
-    void updateClosest();
-    double calcSteerCmd();
-    double calcAccCmd();
+  void onTimer();
+  bool checkData();
+  void updateClosest();
+  double calcSteerCmd();
+  double calcAccCmd();
 };
 
 }  // namespace simple_trajectory_follower
 
-#endif  // TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP
+#endif  // TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP_

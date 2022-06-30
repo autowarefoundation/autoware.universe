@@ -21,7 +21,8 @@
 namespace simple_trajectory_follower
 {
 
-using namespace tier4_autoware_utils;
+using tier4_autoware_utils::calcLateralDeviation;
+using tier4_autoware_utils::calcYawDeviation;
 
 SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & options)
 : Node("simple_trajectory_follower", options)
@@ -84,8 +85,9 @@ double SimpleTrajectoryFollower::calcSteerCmd()
   constexpr auto steer_lim = 0.6;
 
   const auto steer = std::clamp(-kp * lat_err - kd * yaw_err, -steer_lim, steer_lim);
-  // RCLCPP_INFO(get_logger(), "kp = %f, lat_err = %f, kd - %f, yaw_err = %f, steer = %f", kp,
-  // lat_err, kd, yaw_err, steer);
+  RCLCPP_DEBUG(
+    get_logger(), "kp = %f, lat_err = %f, kd - %f, yaw_err = %f, steer = %f", kp, lat_err, kd,
+    yaw_err, steer);
   return steer;
 }
 
@@ -101,7 +103,7 @@ double SimpleTrajectoryFollower::calcAccCmd()
   constexpr auto acc_lim = 2.0;
 
   const auto acc = std::clamp(-kp * vel_err, -acc_lim, acc_lim);
-  // RCLCPP_INFO(get_logger(), "vel_err = %f, acc = %f", vel_err, acc);
+  RCLCPP_DEBUG(get_logger(), "vel_err = %f, acc = %f", vel_err, acc);
   return acc;
 }
 
