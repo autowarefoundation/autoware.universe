@@ -128,7 +128,7 @@ public:
   virtual float64_t getVy() = 0;
 
   /**
-   * @brief get vehicle longiudinal acceleration
+   * @brief get vehicle longitudinal acceleration
    */
   virtual float64_t getAx() = 0;
 
@@ -153,7 +153,7 @@ public:
   inline int getDimX() { return dim_x_; }
 
   /**
-   * @brief get input vector demension
+   * @brief get input vector dimension
    */
   inline int getDimU() { return dim_u_; }
 
