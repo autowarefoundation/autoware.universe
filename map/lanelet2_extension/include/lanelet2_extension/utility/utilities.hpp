@@ -26,7 +26,6 @@
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <map>
-#include <vector>
 
 namespace lanelet
 {

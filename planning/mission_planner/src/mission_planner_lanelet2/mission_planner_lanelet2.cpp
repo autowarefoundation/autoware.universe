@@ -307,7 +307,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   route_msg.segments = route_sections;
   route_msg.goal_pose = goal_pose_.pose;
 
-  RCLCPP_WARN(get_logger(), "Goal Pose Z : %lf", goal_pose_.pose.position.z);
+  RCLCPP_DEBUG(get_logger(), "Goal Pose Z : %lf", goal_pose_.pose.position.z);
   return route_msg;
 }
 
