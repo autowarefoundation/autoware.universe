@@ -31,14 +31,24 @@
 ```plantuml
 
 start
-:subscribe detected traffic signals;
-:get crosswalk lanelets;
+:subscribe detected traffic signals & HDMap;
+:extract crosswalk lanelets from HDMap;
 :extract road lanelets that conflicts crosswalk;
-if (Is there **STRAIGHT-GREEN** road lanelet?) then (yes)
+:initialize green_lanelets(lanelet::ConstLanelets);
+if (Latest detection result is **GREEN**?) then (yes)
+  :push back green_lanelets;
+else (no)
+  if (use_last_detect_color is **true**?) then (yes)
+    if (Latest detection result is **UNKNOWN** and last detection result is **GREEN**?) then (yes)
+     :push back green_lanelets;
+    endif
+  endif
+endif
+if (Is there **STRAIGHT-GREEN** road lanelet in green_lanelets?) then (yes)
   :estimate related pedestrian's traffic signal as **RED**;
-else if (Is there both **LEFT-GREEN** and **RIGHT-GREEN** road lanelet?) then (yes)
+else if (Is there both **LEFT-GREEN** and **RIGHT-GREEN** road lanelet in green_lanelets?) then (yes)
   :estimate related pedestrian's traffic signal as **RED**;
-else
+else (no)
   :estimate related pedestrian's traffic signal as **UNKNOWN**;
 endif
 end
