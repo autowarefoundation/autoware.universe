@@ -1,8 +1,8 @@
-# traffic_light_estimator
+# crosswalk_traffic_light_estimator
 
 ## Purpose
 
-`traffic_light_estimator` is a module that estimates pedestrian traffic signals from HDMap and detected vehicle traffic signals.
+`crosswalk_traffic_light_estimator` is a module that estimates pedestrian traffic signals from HDMap and detected vehicle traffic signals.
 
 ## Inputs / Outputs
 

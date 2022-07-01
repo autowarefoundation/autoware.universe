@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "traffic_light_estimator/node.hpp"
+#include "crosswalk_traffic_light_estimator/node.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
@@ -75,8 +75,9 @@ bool hasMergeLane(
 
 }  // namespace
 
-TrafficLightEstimatorNode::TrafficLightEstimatorNode(const rclcpp::NodeOptions & options)
-: Node("traffic_light_estimator", options)
+CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
+  const rclcpp::NodeOptions & options)
+: Node("crosswalk_traffic_light_estimator", options)
 {
   using std::placeholders::_1;
 
@@ -84,22 +85,22 @@ TrafficLightEstimatorNode::TrafficLightEstimatorNode(const rclcpp::NodeOptions &
 
   sub_map_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&TrafficLightEstimatorNode::onMap, this, _1));
+    std::bind(&CrosswalkTrafficLightEstimatorNode::onMap, this, _1));
   sub_route_ = create_subscription<HADMapRoute>(
     "~/input/route", rclcpp::QoS{1}.transient_local(),
-    std::bind(&TrafficLightEstimatorNode::onRoute, this, _1));
+    std::bind(&CrosswalkTrafficLightEstimatorNode::onRoute, this, _1));
   sub_traffic_light_array_ = create_subscription<TrafficSignalArray>(
     "~/input/classified/traffic_signals", rclcpp::QoS{1},
-    std::bind(&TrafficLightEstimatorNode::onTrafficLightArray, this, _1));
+    std::bind(&CrosswalkTrafficLightEstimatorNode::onTrafficLightArray, this, _1));
 
   pub_traffic_light_array_ =
     this->create_publisher<TrafficSignalArray>("~/output/traffic_signals", rclcpp::QoS{1});
   pub_processing_time_ = std::make_shared<DebugPublisher>(this, "~/debug");
 }
 
-void TrafficLightEstimatorNode::onMap(const HADMapBin::ConstSharedPtr msg)
+void CrosswalkTrafficLightEstimatorNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
-  RCLCPP_INFO(get_logger(), "[TrafficLightEstimatorNode]: Start loading lanelet");
+  RCLCPP_INFO(get_logger(), "[CrosswalkTrafficLightEstimatorNode]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
@@ -114,10 +115,10 @@ void TrafficLightEstimatorNode::onMap(const HADMapBin::ConstSharedPtr msg)
   lanelet::routing::RoutingGraphContainer overall_graphs({vehicle_graph, pedestrian_graph});
   overall_graphs_ptr_ =
     std::make_shared<const lanelet::routing::RoutingGraphContainer>(overall_graphs);
-  RCLCPP_INFO(get_logger(), "[TrafficLightEstimatorNode]: Map is loaded");
+  RCLCPP_INFO(get_logger(), "[CrosswalkTrafficLightEstimatorNode]: Map is loaded");
 }
 
-void TrafficLightEstimatorNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
+void CrosswalkTrafficLightEstimatorNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
 {
   if (lanelet_map_ptr_ == nullptr) {
     RCLCPP_WARN(get_logger(), "cannot set traffic light in route because don't receive map");
@@ -148,7 +149,8 @@ void TrafficLightEstimatorNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
   }
 }
 
-void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::ConstSharedPtr msg)
+void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
+  const TrafficSignalArray::ConstSharedPtr msg)
 {
   StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("Total");
@@ -175,7 +177,7 @@ void TrafficLightEstimatorNode::onTrafficLightArray(const TrafficSignalArray::Co
   return;
 }
 
-void TrafficLightEstimatorNode::updateLastDetectedSignal(
+void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
   const lanelet::Id & id, const uint8_t color)
 {
   if (color == TrafficLight::UNKNOWN) {
@@ -189,7 +191,7 @@ void TrafficLightEstimatorNode::updateLastDetectedSignal(
   last_detect_color_.at(id) = color;
 }
 
-void TrafficLightEstimatorNode::setCrosswalkTrafficSignal(
+void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
   const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg) const
 {
   const auto tl_reg_elems = crosswalk.regulatoryElementsAs<const lanelet::TrafficLight>();
@@ -211,7 +213,7 @@ void TrafficLightEstimatorNode::setCrosswalkTrafficSignal(
   }
 }
 
-lanelet::ConstLanelets TrafficLightEstimatorNode::getGreenLanelets(
+lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getGreenLanelets(
   const lanelet::ConstLanelets & lanelets,
   const std::unordered_map<lanelet::Id, TrafficSignal> & traffic_light_id_map)
 {
@@ -247,7 +249,7 @@ lanelet::ConstLanelets TrafficLightEstimatorNode::getGreenLanelets(
   return green_lanelets;
 }
 
-uint8_t TrafficLightEstimatorNode::estimateCrosswalkTrafficSignal(
+uint8_t CrosswalkTrafficLightEstimatorNode::estimateCrosswalkTrafficSignal(
   const lanelet::ConstLanelet & crosswalk, const lanelet::ConstLanelets & green_lanelets) const
 {
   bool has_left_green_lane = false;
@@ -283,7 +285,7 @@ uint8_t TrafficLightEstimatorNode::estimateCrosswalkTrafficSignal(
                                                                         : TrafficLight::UNKNOWN;
 }
 
-uint8_t TrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(
+uint8_t CrosswalkTrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(
   const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
   const std::unordered_map<lanelet::Id, TrafficSignal> & traffic_light_id_map) const
 {
@@ -318,7 +320,8 @@ uint8_t TrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(
   return ret;
 }
 
-uint8_t TrafficLightEstimatorNode::getLastDetectedTrafficSignal(const lanelet::Id & id) const
+uint8_t CrosswalkTrafficLightEstimatorNode::getLastDetectedTrafficSignal(
+  const lanelet::Id & id) const
 {
   if (last_detect_color_.count(id) == 0) {
     return TrafficLight::UNKNOWN;
@@ -330,4 +333,4 @@ uint8_t TrafficLightEstimatorNode::getLastDetectedTrafficSignal(const lanelet::I
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightEstimatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::CrosswalkTrafficLightEstimatorNode)

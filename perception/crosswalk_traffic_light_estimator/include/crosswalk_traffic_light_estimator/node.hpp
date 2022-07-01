@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
-#define TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
+#ifndef CROSSWALK_TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
+#define CROSSWALK_TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
 
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -50,10 +50,10 @@ using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
 
-class TrafficLightEstimatorNode : public rclcpp::Node
+class CrosswalkTrafficLightEstimatorNode : public rclcpp::Node
 {
 public:
-  explicit TrafficLightEstimatorNode(const rclcpp::NodeOptions & options);
+  explicit CrosswalkTrafficLightEstimatorNode(const rclcpp::NodeOptions & options);
 
 private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
@@ -104,4 +104,4 @@ private:
 
 }  // namespace traffic_light
 
-#endif  // TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
+#endif  // CROSSWALK_TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
