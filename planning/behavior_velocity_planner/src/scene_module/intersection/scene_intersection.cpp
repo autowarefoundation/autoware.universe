@@ -294,7 +294,7 @@ bool IntersectionModule::checkCollision(
     const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
     const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);
     if (is_in_ego_lane) {
-      if (!planning_utils::isAheadOf(planner_data_->current_pose.pose, object_pose)) {
+      if (!planning_utils::isAheadOf(object_pose, planner_data_->current_pose.pose)) {
         continue;
       }
       if (
@@ -786,7 +786,6 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
     }
   }
   if (is_in_stuck_area && is_behind_point_in_detection_area) {
-    RCLCPP_INFO(logger_, "will return collision_detected");
     return true;
   }
   return false;
