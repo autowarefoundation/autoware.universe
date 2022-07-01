@@ -23,10 +23,10 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity)
+  const double min_velocity_for_map_based_prediction)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
-  min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
+  min_velocity_for_map_based_prediction_(min_velocity_for_map_based_prediction)
 {
 }
 
@@ -45,7 +45,8 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
 
   const Eigen::Vector2d pedestrian_to_entry_point(point.x() - obj_pos.x, point.y() - obj_pos.y);
-  const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
+  const auto velocity =
+    std::max(std::hypot(obj_vel.x, obj_vel.y), min_velocity_for_map_based_prediction_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   for (double dt = 0.0; dt < arrival_time + ep; dt += sampling_time_interval_) {
@@ -82,7 +83,8 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const Eigen::Vector2d entry_to_exit_point(
     reachable_crosswalk.second.x() - reachable_crosswalk.first.x(),
     reachable_crosswalk.second.y() - reachable_crosswalk.first.y());
-  const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
+  const auto velocity =
+    std::max(std::hypot(obj_vel.x, obj_vel.y), min_velocity_for_map_based_prediction_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   for (double dt = 0.0; dt < time_horizon_ + ep; dt += sampling_time_interval_) {

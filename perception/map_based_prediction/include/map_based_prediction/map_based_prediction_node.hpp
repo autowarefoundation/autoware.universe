@@ -136,7 +136,6 @@ private:
   double diff_dist_threshold_to_left_bound_;
   double diff_dist_threshold_to_right_bound_;
   double reference_path_resolution_;
-  double min_crosswalk_user_velocity_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;

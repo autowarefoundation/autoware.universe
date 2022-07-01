@@ -270,10 +270,10 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   diff_dist_threshold_to_right_bound_ =
     declare_parameter("diff_dist_threshold_to_right_bound", -0.29);
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
-  min_crosswalk_user_velocity_ = declare_parameter("min_crosswalk_user_velocity", 5.0 / 3.6);
 
   path_generator_ = std::make_shared<PathGenerator>(
-    prediction_time_horizon_, prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
+    prediction_time_horizon_, prediction_sampling_time_interval_,
+    min_velocity_for_map_based_prediction_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,
@@ -408,7 +408,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         const auto entry_point = getCrosswalkEntryPoint(crossing_crosswalk.get());
 
         if (hasPotentialToReach(
-              object, entry_point.first, prediction_time_horizon_, min_crosswalk_user_velocity_)) {
+              object, entry_point.first, prediction_time_horizon_,
+              min_velocity_for_map_based_prediction_)) {
           PredictedPath predicted_path =
             path_generator_->generatePathToTargetPoint(transformed_object, entry_point.first);
           predicted_path.confidence = 1.0;
@@ -416,7 +417,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
 
         if (hasPotentialToReach(
-              object, entry_point.second, prediction_time_horizon_, min_crosswalk_user_velocity_)) {
+              object, entry_point.second, prediction_time_horizon_,
+              min_velocity_for_map_based_prediction_)) {
           PredictedPath predicted_path =
             path_generator_->generatePathToTargetPoint(transformed_object, entry_point.second);
           predicted_path.confidence = 1.0;
@@ -429,7 +431,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
           if (hasPotentialToReach(
                 object, entry_point.first, prediction_time_horizon_,
-                min_crosswalk_user_velocity_)) {
+                min_velocity_for_map_based_prediction_)) {
             PredictedPath predicted_path =
               path_generator_->generatePathToTargetPoint(transformed_object, entry_point.first);
             predicted_path.confidence = 1.0;
@@ -438,7 +440,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
           if (hasPotentialToReach(
                 object, entry_point.second, prediction_time_horizon_,
-                min_crosswalk_user_velocity_)) {
+                min_velocity_for_map_based_prediction_)) {
             PredictedPath predicted_path =
               path_generator_->generatePathToTargetPoint(transformed_object, entry_point.second);
             predicted_path.confidence = 1.0;
@@ -451,9 +453,11 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           const auto entry_point = getCrosswalkEntryPoint(crosswalk);
 
           const auto reachable_first = hasPotentialToReach(
-            object, entry_point.first, prediction_time_horizon_, min_crosswalk_user_velocity_);
+            object, entry_point.first, prediction_time_horizon_,
+            min_velocity_for_map_based_prediction_);
           const auto reachable_second = hasPotentialToReach(
-            object, entry_point.second, prediction_time_horizon_, min_crosswalk_user_velocity_);
+            object, entry_point.second, prediction_time_horizon_,
+            min_velocity_for_map_based_prediction_);
 
           if (!reachable_first && !reachable_second) {
             continue;
@@ -461,7 +465,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
           const auto reachable_crosswalk = isReachableEntryPoint(
             object, entry_point, lanelet_map_ptr_, prediction_time_horizon_,
-            min_crosswalk_user_velocity_);
+            min_velocity_for_map_based_prediction_);
 
           if (!reachable_crosswalk) {
             continue;
