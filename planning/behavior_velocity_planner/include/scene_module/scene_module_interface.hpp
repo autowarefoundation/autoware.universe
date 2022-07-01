@@ -51,11 +51,7 @@ class SceneModuleInterface
 public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
-  : module_id_(module_id),
-    safe_(false),
-    distance_(-10000.0),
-    logger_(logger),
-    clock_(clock)
+  : module_id_(module_id), safe_(false), distance_(-10000.0), logger_(logger), clock_(clock)
   {
   }
   virtual ~SceneModuleInterface() = default;
