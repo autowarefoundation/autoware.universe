@@ -1158,7 +1158,9 @@ OccupancyGrid generateDrivableArea(
       }
       cv_polygons.push_back(cv_polygon);
       // fill in drivable area and copy to occupancy grid
-      cv::fillPoly(cv_image, cv_polygons, cv::Scalar(free_space));
+      for (const auto & p : cv_polygons) {
+        cv::fillConvexPoly(cv_image, p, cv::Scalar(free_space));
+      }
     }
 
     // Closing
