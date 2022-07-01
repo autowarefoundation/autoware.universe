@@ -125,10 +125,9 @@ bool isInParkingLot(
 double projectGoalToMap(
   const lanelet::Lanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
 {
-  const lanelet::ConstLineString3d center_line = 
+  const lanelet::ConstLineString3d center_line =
     lanelet::utils::generateFineCenterline(lanelet_component);
-  lanelet::BasicPoint3d project =
-    lanelet::geometry::project(center_line, goal_point.basicPoint());
+  lanelet::BasicPoint3d project = lanelet::geometry::project(center_line, goal_point.basicPoint());
   return project.z();
 }
 
