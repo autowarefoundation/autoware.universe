@@ -89,7 +89,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       else()
         message(STATUS "diff ${FILE_NAME}")
         message(STATUS "File hash changes. Downloading now ...")
-        file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/${FILE_NAME}
+        file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/v1/${FILE_NAME}
                       ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
         list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
         list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -97,7 +97,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     else()
       message(STATUS "not found ${FILE_NAME}")
       message(STATUS "File doesn't exists. Downloading now ...")
-      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/${FILE_NAME}
+      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/v1/${FILE_NAME}
                     ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
       list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
       list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -110,8 +110,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   endfunction()
 
   # default model
-  download(pts_voxel_encoder_pointpainting.onnx 19e51669233e943724e834021c382cae)
-  download(pts_backbone_neck_head_pointpainting.onnx 19e51669233e943724e834021c382cae)
+  download(pts_voxel_encoder_pointpainting.onnx 795a919537b71faae706b8c71312d31a)
+  download(pts_backbone_neck_head_pointpainting.onnx edb48a74659820904071ea8050413c23)
   find_package(OpenCV REQUIRED)
   find_package(Eigen3 REQUIRED)
 
