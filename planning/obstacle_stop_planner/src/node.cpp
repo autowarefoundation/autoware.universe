@@ -66,8 +66,6 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
     p.max_velocity = declare_parameter<double>("max_velocity");
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
-    p.lowpass_gain = declare_parameter<double>("lowpass_gain");
-    lpf_acc_ = std::make_shared<LowpassFilter1d>(p.lowpass_gain);
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   }
@@ -181,6 +179,11 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     std::bind(&ObstacleStopPlannerNode::onOdometry, this, std::placeholders::_1),
     createSubscriptionOptions(this));
 
+  sub_acceleration_ = this->create_subscription<AccelWithCovarianceStamped>(
+    "~/input/acceleration", 1,
+    std::bind(&ObstacleStopPlannerNode::onAcceleration, this, std::placeholders::_1),
+    createSubscriptionOptions(this));
+
   sub_dynamic_objects_ = this->create_subscription<PredictedObjects>(
     "~/input/objects", 1,
     std::bind(&ObstacleStopPlannerNode::onDynamicObjects, this, std::placeholders::_1),
@@ -224,30 +227,35 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   const auto stop_param = stop_param_;
   const auto obstacle_ros_pointcloud_ptr = obstacle_ros_pointcloud_ptr_;
   const auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
-  const auto current_acc = current_acc_;
+  const auto current_acc = current_acceleration_ptr_->accel.accel.linear.x;
   mutex_.unlock();
 
   {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!object_ptr_) {
+    const auto waiting = [this](const auto & str) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-        "waiting for dynamic objects...");
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "waiting for %s ...",
+        str);
+    };
+
+    if (!object_ptr_) {
+      waiting("perception object");
       return;
     }
 
     if (!obstacle_ros_pointcloud_ptr) {
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-        "waiting for obstacle pointcloud...");
+      waiting("obstacle pointcloud");
       return;
     }
 
     if (!current_velocity_ptr_ && node_param_.enable_slow_down) {
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-        "waiting for current velocity...");
+      waiting("current velocity");
+      return;
+    }
+
+    if (!current_acceleration_ptr_) {
+      waiting("current acceleration");
       return;
     }
 
@@ -816,26 +824,14 @@ void ObstacleStopPlannerNode::onOdometry(const Odometry::ConstSharedPtr input_ms
 {
   // mutex for current_acc_, lpf_acc_
   std::lock_guard<std::mutex> lock(mutex_);
-
   current_velocity_ptr_ = input_msg;
+}
 
-  if (!prev_velocity_ptr_) {
-    prev_velocity_ptr_ = current_velocity_ptr_;
-    return;
-  }
-
-  const double dv =
-    current_velocity_ptr_->twist.twist.linear.x - prev_velocity_ptr_->twist.twist.linear.x;
-  const double dt = std::max(
-    (rclcpp::Time(current_velocity_ptr_->header.stamp) -
-     rclcpp::Time(prev_velocity_ptr_->header.stamp))
-      .seconds(),
-    1e-03);
-
-  const double accel = dv / dt;
-
-  current_acc_ = lpf_acc_->filter(accel);
-  prev_velocity_ptr_ = current_velocity_ptr_;
+void ObstacleStopPlannerNode::onAcceleration(
+  const AccelWithCovarianceStamped::ConstSharedPtr input_msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  current_acceleration_ptr_ = input_msg;
 }
 
 TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
