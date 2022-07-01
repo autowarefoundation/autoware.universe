@@ -14,7 +14,7 @@
 
 #include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter_node.hpp"
 
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/collision.hpp"
 #include "apparent_safe_velocity_limiter/debug.hpp"
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 #include "apparent_safe_velocity_limiter/pointcloud_utils.hpp"
@@ -22,6 +22,9 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <pcl_ros/transforms.hpp>
+
+#include <nav_msgs/msg/detail/occupancy_grid__struct.hpp>
+#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 
@@ -52,7 +55,6 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-  pub_debug_occupancy_grid_ = create_publisher<OccupancyGrid>("~/output/debug_occupancy_grid", 1);
   pub_debug_pointcloud_ = create_publisher<PointCloud>("~/output/debug_pointcloud", 1);
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -131,120 +133,31 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 {
   const auto ego_idx =
     tier4_autoware_utils::findNearestIndex(msg->points, self_pose_listener_.getCurrentPose()->pose);
-  if (!occupancy_grid_ptr_ || !dynamic_obstacles_ptr_ || !ego_idx || !current_ego_velocity_) {
-    constexpr auto one_sec = rcutils_duration_value_t(1000);
-    if (!occupancy_grid_ptr_)
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
-    if (!dynamic_obstacles_ptr_)
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
-    if (!ego_idx)
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
-    if (!current_ego_velocity_)
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), one_sec, "Current ego velocity not yet received");
-    return;
-  }
+  if (!validInputs(ego_idx)) return;
+
   const auto extra_vehicle_length = vehicle_front_offset_ + distance_buffer_;
   const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
-
-  // Downsample trajectory
-  const size_t downsample_step = downsample_factor_;
-  Trajectory downsampled_traj;
-  downsampled_traj.header = msg->header;
-  downsampled_traj.points.reserve(msg->points.size() / downsample_step);
-  for (size_t i = start_idx; i < msg->points.size(); i += downsample_step)
-    downsampled_traj.points.push_back(msg->points[i]);
-
+  Trajectory downsampled_traj = downsampleTrajectory(*msg, start_idx);
   // TODO(Maxime CLEMENT): used for debugging, remove before merging
-  double obs_poly_duration{};
-  double obs_footprint_duration{};
+  double obs_mask_duration{};
   double obs_envelope_duration{};
   double obs_filter_duration{};
   double footprint_duration{};
   double dist_poly_duration{};
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
-
-  // Obstacle Polygon from Occupancy Grid
-  nav_msgs::msg::OccupancyGrid debug_occ_grid;
-  stopwatch.tic("obs_poly_duration");
-  auto polygon_masks = createObjectPolygons(
-    *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
-  linestring_t trajectory_linestring;
-  for (size_t i = start_idx; i < msg->points.size(); ++i) {
-    trajectory_linestring.push_back(
-      {msg->points[i].pose.position.x, msg->points[i].pose.position.y});
-  }
-  obs_poly_duration = stopwatch.toc("obs_poly_duration");
-  stopwatch.tic("obs_footprint_duration");
-  polygon_masks.push_back(generateFootprint(trajectory_linestring, vehicle_lateral_offset_));
-  obs_footprint_duration += stopwatch.toc("obs_footprint_duration");
-  // Calculate envelope polygon
+  stopwatch.tic("obs_mask_duration");
+  const auto polygon_masks = createPolygonMasks(*msg, start_idx);
+  obs_mask_duration += stopwatch.toc("obs_mask_duration");
   stopwatch.tic("obs_envelope_duration");
-  polygon_t envelope_polygon;
-  for (const auto & point : trajectory_linestring) envelope_polygon.outer().push_back(point);
-  for (auto it = msg->points.rbegin(); it != msg->points.rend(); ++it) {
-    const auto forward_simulated_vector =
-      forwardSimulatedSegment(*it, time_buffer_, extra_vehicle_length);
-    envelope_polygon.outer().push_back(forward_simulated_vector.second);
-  }
-  boost::geometry::correct(envelope_polygon);
+  const auto envelope_polygon = createEnvelopePolygon(*msg, extra_vehicle_length);
   obs_envelope_duration += stopwatch.toc("obs_envelope_duration");
   stopwatch.tic("obs_filter_duration");
-  // Filter obstacles outside the envelope polygon
-  const auto obstacles =
-    obstacle_type_ == OCCUPANCYGRID
-      ? extractStaticObstaclePolygons(
-          *occupancy_grid_ptr_, polygon_masks, envelope_polygon, occupancy_grid_obstacle_threshold_)
-      : [&]() {
-          const auto filtered_pcd = transformAndFilterPointCloud(
-            *pointcloud_ptr_, polygon_masks, envelope_polygon, transform_listener_,
-            downsampled_traj.header.frame_id);
-          PointCloud ros_pointcloud;
-          pcl::toROSMsg(*filtered_pcd, ros_pointcloud);
-          ros_pointcloud.header.stamp = now();
-          ros_pointcloud.header.frame_id = downsampled_traj.header.frame_id;
-          pub_debug_pointcloud_->publish(ros_pointcloud);
-          return extractObstacleLines(filtered_pcd, vehicle_lateral_offset_ * 2);
-        }();
+  const auto obstacles = createObstacleLines(
+    *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, msg->header.frame_id);
   obs_filter_duration += stopwatch.toc("obs_filter_duration");
-  pub_debug_occupancy_grid_->publish(debug_occ_grid);
+  limitVelocity(downsampled_traj, extra_vehicle_length, obstacles);
+  const auto safe_trajectory = copyDownsampledVelocity(downsampled_traj, *msg, start_idx);
 
-  Float time = 0.0;
-  for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
-    auto & trajectory_point = downsampled_traj.points[i];
-    if (i > 0) {
-      const auto & prev_point = downsampled_traj.points[i - 1];
-      time += static_cast<Float>(
-        tier4_autoware_utils::calcDistance2d(prev_point, trajectory_point) /
-        prev_point.longitudinal_velocity_mps);
-    }
-    const auto forward_simulated_vector =
-      forwardSimulatedSegment(trajectory_point, time_buffer_, extra_vehicle_length);
-    stopwatch.tic("footprint_duration");
-    const auto footprint = generateFootprint(forward_simulated_vector, vehicle_lateral_offset_);
-    footprint_duration += stopwatch.toc("footprint_duration");
-    stopwatch.tic("dist_poly_duration");
-    const auto dist_to_collision =
-      distanceToClosestCollision(forward_simulated_vector, footprint, obstacles);
-    dist_poly_duration += stopwatch.toc("dist_poly_duration");
-    if (dist_to_collision) {
-      const auto min_feasible_velocity = *current_ego_velocity_ - max_deceleration_ * time;
-      trajectory_point.longitudinal_velocity_mps = std::max(
-        min_feasible_velocity,
-        calculateSafeVelocity(
-          trajectory_point, static_cast<Float>(*dist_to_collision - extra_vehicle_length)));
-    }
-  }
-
-  Trajectory safe_trajectory = *msg;
-  for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
-    safe_trajectory.points[start_idx + i * downsample_step].longitudinal_velocity_mps =
-      downsampled_traj.points[i].longitudinal_velocity_mps;
-  }
-
-  safe_trajectory.header.stamp = now();
   pub_trajectory_->publish(safe_trajectory);
 
   ForwardProjectionFunction fn = [&](const TrajectoryPoint & p) {
@@ -254,8 +167,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     *msg, safe_trajectory, obstacles, fn, occupancy_grid_ptr_->info.origin.position.z));
   // TODO(Maxime CLEMENT): removes or change to RCLCPP_DEBUG before merging
   RCLCPP_WARN(get_logger(), "Runtimes");
-  RCLCPP_WARN(get_logger(), "  obstacles poly       = %2.2fms", obs_poly_duration);
-  RCLCPP_WARN(get_logger(), "  obstacles footprint  = %2.2fms", obs_footprint_duration);
+  RCLCPP_WARN(get_logger(), "  obstacles masks      = %2.2fms", obs_mask_duration);
   RCLCPP_WARN(get_logger(), "  obstacles envelope   = %2.2fms", obs_envelope_duration);
   RCLCPP_WARN(get_logger(), "  obstacles filter     = %2.2fms", obs_filter_duration);
   RCLCPP_WARN(get_logger(), "  footprint generation = %2.2fms", footprint_duration);
@@ -290,6 +202,119 @@ size_t ApparentSafeVelocityLimiterNode::calculateStartIndex(
     ++idx;
   }
   return idx;
+}
+
+Trajectory ApparentSafeVelocityLimiterNode::downsampleTrajectory(
+  const Trajectory & trajectory, const size_t start_idx) const
+{
+  Trajectory downsampled_traj;
+  downsampled_traj.header = trajectory.header;
+  downsampled_traj.points.reserve(trajectory.points.size() / downsample_factor_);
+  for (size_t i = start_idx; i < trajectory.points.size(); i += downsample_factor_)
+    downsampled_traj.points.push_back(trajectory.points[i]);
+  return downsampled_traj;
+}
+
+multipolygon_t ApparentSafeVelocityLimiterNode::createPolygonMasks(
+  const Trajectory & trajectory, const size_t start_idx) const
+{
+  auto polygon_masks = createObjectPolygons(
+    *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
+  linestring_t trajectory_linestring;
+  for (size_t i = start_idx; i < trajectory.points.size(); ++i)
+    trajectory_linestring.emplace_back(
+      trajectory.points[i].pose.position.x, trajectory.points[i].pose.position.y);
+  return polygon_masks;
+}
+
+polygon_t ApparentSafeVelocityLimiterNode::createEnvelopePolygon(
+  const Trajectory & trajectory, const double extra_vehicle_length) const
+{
+  polygon_t envelope_polygon;
+  for (const auto & point : trajectory.points)
+    envelope_polygon.outer().emplace_back(point.pose.position.x, point.pose.position.y);
+  for (auto it = trajectory.points.rbegin(); it != trajectory.points.rend(); ++it) {
+    const auto forward_simulated_vector =
+      forwardSimulatedSegment(*it, time_buffer_, extra_vehicle_length);
+    envelope_polygon.outer().push_back(forward_simulated_vector.second);
+  }
+  boost::geometry::correct(envelope_polygon);
+  return envelope_polygon;
+}
+
+bool ApparentSafeVelocityLimiterNode::validInputs(const boost::optional<size_t> & ego_idx)
+{
+  constexpr auto one_sec = rcutils_duration_value_t(1000);
+  if (!occupancy_grid_ptr_)
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
+  if (!dynamic_obstacles_ptr_)
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Dynamic obstable not yet received");
+  if (!ego_idx)
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
+  if (!current_ego_velocity_)
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), one_sec, "Current ego velocity not yet received");
+  return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && ego_idx && current_ego_velocity_;
+}
+
+multilinestring_t ApparentSafeVelocityLimiterNode::createObstacleLines(
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid,
+  const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
+  const polygon_t & envelope_polygon, const std::string & target_frame)
+{
+  if (obstacle_type_ == OCCUPANCYGRID) {
+    return extractObstacleLines(
+      occupancy_grid, polygon_masks, envelope_polygon, occupancy_grid_obstacle_threshold_);
+  } else {
+    const auto filtered_pcd = transformAndFilterPointCloud(
+      pointcloud, polygon_masks, envelope_polygon, transform_listener_, target_frame);
+    // TODO(Maxime CLEMENT): remove before merging
+    PointCloud ros_pointcloud;
+    pcl::toROSMsg(*filtered_pcd, ros_pointcloud);
+    ros_pointcloud.header.stamp = now();
+    ros_pointcloud.header.frame_id = target_frame;
+    pub_debug_pointcloud_->publish(ros_pointcloud);
+    return extractObstacleLines(filtered_pcd, vehicle_lateral_offset_ * 2);
+  }
+}
+
+void ApparentSafeVelocityLimiterNode::limitVelocity(
+  Trajectory & trajectory, const double extra_length, const multilinestring_t & obstacles) const
+{
+  Float time = 0.0;
+  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+    auto & trajectory_point = trajectory.points[i];
+    if (i > 0) {
+      const auto & prev_point = trajectory.points[i - 1];
+      time += static_cast<Float>(
+        tier4_autoware_utils::calcDistance2d(prev_point, trajectory_point) /
+        prev_point.longitudinal_velocity_mps);
+    }
+    const auto forward_simulated_vector =
+      forwardSimulatedSegment(trajectory_point, time_buffer_, extra_length);
+    const auto footprint = generateFootprint(forward_simulated_vector, vehicle_lateral_offset_);
+    const auto dist_to_collision =
+      distanceToClosestCollision(forward_simulated_vector, footprint, obstacles);
+    if (dist_to_collision) {
+      const auto min_feasible_velocity = *current_ego_velocity_ - max_deceleration_ * time;
+      trajectory_point.longitudinal_velocity_mps = std::max(
+        min_feasible_velocity,
+        calculateSafeVelocity(
+          trajectory_point, static_cast<Float>(*dist_to_collision - extra_length)));
+    }
+  }
+}
+
+Trajectory ApparentSafeVelocityLimiterNode::copyDownsampledVelocity(
+  const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx) const
+{
+  for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
+    trajectory.points[start_idx + i * downsample_factor_].longitudinal_velocity_mps =
+      downsampled_traj.points[i].longitudinal_velocity_mps;
+  }
+  trajectory.header.stamp = now();
+  return trajectory;
 }
 }  // namespace apparent_safe_velocity_limiter
 

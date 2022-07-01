@@ -38,6 +38,8 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/optional.hpp>
+
 #include <rcutils/time.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -66,8 +68,6 @@ private:
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     pub_debug_markers_;  //!< @brief publisher for debug markers
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr
-    pub_debug_occupancy_grid_;  //!< @brief publisher for filtered occupancy grid
   rclcpp::Publisher<PointCloud>::SharedPtr
     pub_debug_pointcloud_;  //!< @brief publisher for filtered pointcloud
   rclcpp::Subscription<Trajectory>::SharedPtr
@@ -141,6 +141,20 @@ private:
   /// @return trajectory index ahead of ego_idx by the start_distance
   static size_t calculateStartIndex(
     const Trajectory & trajectory, const size_t ego_idx, const Float start_distance);
+
+  Trajectory downsampleTrajectory(const Trajectory & trajectory, const size_t start_idx) const;
+  multipolygon_t createPolygonMasks(const Trajectory & trajectory, const size_t start_idx) const;
+  polygon_t createEnvelopePolygon(
+    const Trajectory & trajectory, const double extra_vehicle_length) const;
+  bool validInputs(const boost::optional<size_t> & ego_idx);
+  multilinestring_t createObstacleLines(
+    const nav_msgs::msg::OccupancyGrid & occupancy_grid,
+    const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
+    const polygon_t & envelope_polygon, const std::string & target_frame);
+  void limitVelocity(
+    Trajectory & trajectory, const double extra_lenght, const multilinestring_t & obstacles) const;
+  Trajectory copyDownsampledVelocity(
+    const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx) const;
 };
 }  // namespace apparent_safe_velocity_limiter
 

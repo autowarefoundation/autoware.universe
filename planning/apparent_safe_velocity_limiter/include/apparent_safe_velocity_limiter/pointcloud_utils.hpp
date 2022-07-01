@@ -15,7 +15,6 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__POINTCLOUD_UTILS_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__POINTCLOUD_UTILS_HPP_
 
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
 

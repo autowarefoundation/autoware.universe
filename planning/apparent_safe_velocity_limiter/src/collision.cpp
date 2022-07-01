@@ -12,12 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <apparent_safe_velocity_limiter/collision_distance.hpp>
+#include <apparent_safe_velocity_limiter/collision.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
+
+#include <tf2/utils.h>
+
+#include <algorithm>
+#include <limits>
+#include <vector>
 
 namespace apparent_safe_velocity_limiter
 {

@@ -59,15 +59,14 @@ void threshold(grid_map::GridMap & grid_map, const float threshold)
 {
   for (grid_map::GridMapIterator iter(grid_map); !iter.isPastEnd(); ++iter) {
     auto & val = grid_map.at("layer", *iter);
-    if (val < threshold) {
+    if (val < threshold)
       val = 0.0;
-    } else {
+    else
       val = 127;
-    }
   }
 }
 
-multilinestring_t extractStaticObstaclePolygons(
+multilinestring_t extractObstacleLines(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_in_masks,
   const polygon_t & polygon_out_mask, const int8_t occupied_threshold)
 {
@@ -81,17 +80,17 @@ multilinestring_t extractStaticObstaclePolygons(
   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-  multilinestring_t polygons;
+  multilinestring_t lines;
   const auto & info = occupancy_grid.info;
   for (const auto & contour : contours) {
-    linestring_t polygon;
+    linestring_t line;
     for (const auto & point : contour) {
-      polygon.emplace_back(
+      line.emplace_back(
         (info.width - 1.0 - point.y) * info.resolution + info.origin.position.x,
         (info.height - 1.0 - point.x) * info.resolution + info.origin.position.y);
     }
-    polygons.push_back(polygon);
+    lines.push_back(line);
   }
-  return polygons;
+  return lines;
 }
 }  // namespace apparent_safe_velocity_limiter

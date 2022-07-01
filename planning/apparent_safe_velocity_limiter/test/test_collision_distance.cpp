@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
+#include "apparent_safe_velocity_limiter/collision.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include <autoware_auto_perception_msgs/msg/detail/predicted_object__struct.hpp>
-#include <autoware_auto_perception_msgs/msg/detail/predicted_objects__struct.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>

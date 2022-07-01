@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "apparent_safe_velocity_limiter/collision_distance.hpp"
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <gtest/gtest.h>
 
-TEST(TestOccupancyGridUtils, extractStaticObstaclePolygons)
+TEST(TestOccupancyGridUtils, extractObstacleLines)
 {
-  using apparent_safe_velocity_limiter::extractStaticObstaclePolygons;
+  using apparent_safe_velocity_limiter::extractObstacleLines;
   using apparent_safe_velocity_limiter::polygon_t;
   constexpr int8_t occupied_thr = 10;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
@@ -35,18 +34,18 @@ TEST(TestOccupancyGridUtils, extractStaticObstaclePolygons)
   full_mask.outer() = {{0.0, 0.0}, {0.0, 5.0}, {5.0, 5.0}, {5.0, 0.0}};
   boost::geometry::correct(full_mask);
 
-  auto polygons = extractStaticObstaclePolygons(occupancy_grid, {}, full_mask, occupied_thr);
+  auto polygons = extractObstacleLines(occupancy_grid, {}, full_mask, occupied_thr);
   EXPECT_TRUE(polygons.empty());
 
   occupancy_grid.data.at(5) = 10;
-  polygons = extractStaticObstaclePolygons(occupancy_grid, {}, full_mask, occupied_thr);
+  polygons = extractObstacleLines(occupancy_grid, {}, full_mask, occupied_thr);
   EXPECT_EQ(polygons.size(), 1ul);
 
   for (auto i = 1; i < 4; ++i)
     for (auto j = 1; j < 4; ++j) occupancy_grid.data[j + i * occupancy_grid.info.width] = 10;
-  polygons = extractStaticObstaclePolygons(occupancy_grid, {}, full_mask, occupied_thr);
+  polygons = extractObstacleLines(occupancy_grid, {}, full_mask, occupied_thr);
   EXPECT_EQ(polygons.size(), 1ul);
 
-  polygons = extractStaticObstaclePolygons(occupancy_grid, {full_mask}, full_mask, occupied_thr);
+  polygons = extractObstacleLines(occupancy_grid, {full_mask}, full_mask, occupied_thr);
   EXPECT_EQ(polygons.size(), 0ul);
 }

@@ -41,7 +41,7 @@ void threshold(grid_map::GridMap & grid_map, const float threshold);
 /// @param[in] polygon_out_masks occupancy grid cells outisde the polygon are masked away
 /// @param[in] occupied_threshold threshold to use for identifying obstacles in the occupancy grid
 /// @return multiple linestrings each representing an obstacle
-multilinestring_t extractStaticObstaclePolygons(
+multilinestring_t extractObstacleLines(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_in_masks,
   const polygon_t & polygon_out_masks, const int8_t occupied_threshold);
 }  // namespace apparent_safe_velocity_limiter
