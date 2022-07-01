@@ -64,7 +64,7 @@ SideShiftModule::SideShiftModule(
     "~/input/lateral_offset", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
 
   // If lateral offset is subscribed, it approves side shift module automatically
-  approval_handler_.clearWaitApproval();
+  clearWaitingApproval();
 }
 
 void SideShiftModule::initVariables()
@@ -191,7 +191,8 @@ void SideShiftModule::updateData()
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(reference_pose.pose, &current_lane)) {
-    RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
   }
 
   // For current_lanes with desired length
@@ -273,7 +274,7 @@ BehaviorModuleOutput SideShiftModule::plan()
   return output;
 }
 
-PathWithLaneId SideShiftModule::planCandidate() const
+CandidateOutput SideShiftModule::planCandidate() const
 {
   auto path_shifter_local = path_shifter_;
 
@@ -286,7 +287,7 @@ PathWithLaneId SideShiftModule::planCandidate() const
   // Reset orientation
   setOrientation(&shifted_path.path);
 
-  return shifted_path.path;
+  return CandidateOutput(shifted_path.path);
 }
 
 BehaviorModuleOutput SideShiftModule::planWaitingApproval()
@@ -302,7 +303,7 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(shifted_path.path);
-  output.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  output.path_candidate = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
 
   prev_output_ = shifted_path;
 

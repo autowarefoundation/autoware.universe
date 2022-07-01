@@ -61,7 +61,6 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
     p.z = 0.0;
   }
 
-  // use boost::makeshared instead of std beacause filter.setInputCloud requires boost shared ptr
   pcl::VoxelGrid<pcl::PointXYZ> filter;
   filter.setInputCloud(pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(no_height_points));
   filter.setLeafSize(0.05f, 0.05f, 100000.0f);
@@ -78,7 +77,7 @@ DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(rclcpp::Node & 
 {
 }
 
-std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObstacles() const
+std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObstacles()
 {
   // create dynamic obstacles from predicted objects
   std::vector<DynamicObstacle> dynamic_obstacles;
@@ -115,7 +114,6 @@ DynamicObstacleCreatorForObjectWithoutPath::DynamicObstacleCreatorForObjectWitho
 }
 
 std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createDynamicObstacles()
-  const
 {
   std::vector<DynamicObstacle> dynamic_obstacles;
 
@@ -154,8 +152,9 @@ DynamicObstacleCreatorForPoints::DynamicObstacleCreatorForPoints(rclcpp::Node & 
     std::bind(&DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud, this, _1));
 }
 
-std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles() const
+std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObstacles()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   std::vector<DynamicObstacle> dynamic_obstacles;
   for (const auto & point : dynamic_obstacle_data_.compare_map_filtered_pointcloud) {
     DynamicObstacle dynamic_obstacle;
@@ -197,6 +196,12 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
 void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
+  if (msg->data.empty()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    dynamic_obstacle_data_.compare_map_filtered_pointcloud.clear();
+    return;
+  }
+
   geometry_msgs::msg::TransformStamped transform;
   try {
     transform = tf_buffer_.lookupTransform(
@@ -213,6 +218,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::transformPointCloud(pc, *pc_transformed, affine);
 
+  std::lock_guard<std::mutex> lock(mutex_);
   dynamic_obstacle_data_.compare_map_filtered_pointcloud = applyVoxelGridFilter(pc_transformed);
 }
 }  // namespace behavior_velocity_planner
