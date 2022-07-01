@@ -26,6 +26,7 @@ namespace marker_utils::avoidance_marker
 {
 using behavior_path_planner::AvoidPoint;
 using behavior_path_planner::util::shiftPose;
+using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
@@ -47,7 +48,7 @@ MarkerArray createAvoidPointMarkerArray(
   for (const auto & sp : shift_points_local) {
     // ROS_ERROR("sp: s = (%f, %f), g = (%f, %f)", sp.start.x, sp.start.y, sp.end.x, sp.end.y);
     Marker basic_marker = createDefaultMarker(
-      "map", current_time, std::move(ns), 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
+      "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
       createMarkerColor(r, g, b, 0.9));
     basic_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
     {
@@ -88,7 +89,7 @@ MarkerArray createAvoidanceObjectsMarkerArray(
   const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
 
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), 0L, Marker::CUBE,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
     createMarkerScale(3.0, 1.5, 1.5), normal_color);
   int32_t i{0};
   MarkerArray msg;
@@ -106,7 +107,7 @@ MarkerArray makeOverhangToRoadShoulderMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), 0L, Marker::TEXT_VIEW_FACING,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
     createMarkerScale(1.0, 1.0, 1.0), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
   int32_t i{0};

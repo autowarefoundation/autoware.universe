@@ -20,6 +20,7 @@ using behavior_path_planner::ShiftPoint;
 using behavior_path_planner::util::calcPathArcLengthArray;
 using behavior_path_planner::util::shiftPose;
 using std_msgs::msg::ColorRGBA;
+using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerOrientation;
 using tier4_autoware_utils::createMarkerScale;
@@ -33,7 +34,7 @@ MarkerArray createPoseMarkerArray(
   MarkerArray msg;
 
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), id, Marker::ARROW,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, id, Marker::ARROW,
     createMarkerScale(0.7, 0.3, 0.3), createMarkerColor(r, g, b, 0.999));
   marker.pose = pose;
   msg.markers.push_back(marker);
@@ -47,24 +48,31 @@ MarkerArray createPathMarkerArray(
 {
   const auto arclength = calcPathArcLengthArray(path);
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
-  MarkerArray msg;
   const int32_t uid = bitShift(lane_id);
   int32_t i{0};
   int32_t idx{0};
+
+  MarkerArray msg;
+  const auto reserve_size = path.points.size() + static_cast<size_t>(path.points.size() / 10);
+  msg.markers.reserve(reserve_size);
+
+  Marker marker = createDefaultMarker(
+    "map", current_time, ns, 0L, Marker::ARROW, createMarkerScale(0.2, 0.1, 0.3),
+    createMarkerColor(r, g, b, 0.999));
+
+  Marker marker_text = createDefaultMarker(
+    "map", current_time, ns, 0L, Marker::TEXT_VIEW_FACING, createMarkerScale(0.2, 0.1, 0.3),
+    createMarkerColor(1, 1, 1, 0.999));
+
   for (const auto & p : path.points) {
-    Marker marker = createDefaultMarker(
-      "map", current_time, ns, uid + i++, Marker::ARROW, createMarkerScale(0.2, 0.1, 0.3),
-      createMarkerColor(r, g, b, 0.999));
+    marker.id = uid + i++;
     marker.pose = p.point.pose;
     msg.markers.push_back(marker);
     if (idx % 10 == 0) {
-      auto marker_text = marker;
       marker_text.id = uid + i++;
-      marker_text.type = Marker::TEXT_VIEW_FACING;
       std::stringstream ss;
       ss << std::fixed << std::setprecision(1) << "i=" << idx << "\ns=" << arclength.at(idx);
       marker_text.text = ss.str();
-      marker_text.color = tier4_autoware_utils::createMarkerColor(1, 1, 1, 0.999);
       msg.markers.push_back(marker_text);
     }
     ++idx;
@@ -82,6 +90,7 @@ MarkerArray createShiftPointMarkerArray(
   }
 
   MarkerArray msg;
+  msg.markers.reserve(shift_points_local.size() * 3);
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   int id{0};
 
@@ -90,7 +99,7 @@ MarkerArray createShiftPointMarkerArray(
   for (const auto & sp : shift_points_local) {
     // ROS_ERROR("sp: s = (%f, %f), g = (%f, %f)", sp.start.x, sp.start.y, sp.end.x, sp.end.y);
     Marker basic_marker = createDefaultMarker(
-      "map", current_time, std::move(ns), 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
+      "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
       createMarkerColor(r, g, b, 0.5));
     basic_marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
     {
@@ -113,6 +122,7 @@ MarkerArray createShiftPointMarkerArray(
       marker_l.id = ++id;
       marker_l.type = Marker::LINE_STRIP;
       marker_l.scale = createMarkerScale(w, 0.0, 0.0);
+      marker_l.points.reserve(2);
       marker_l.points.push_back(marker_s.pose.position);
       marker_l.points.push_back(marker_e.pose.position);
       msg.markers.push_back(marker_l);
@@ -135,9 +145,10 @@ MarkerArray createShiftLengthMarkerArray(
   MarkerArray msg;
 
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), 0L, Marker::LINE_STRIP,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::LINE_STRIP,
     createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(r, g, b, 0.9));
   marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+  marker.points.reserve(shift_distance.size());
 
   for (size_t i = 0; i < shift_distance.size(); ++i) {
     auto p = reference.points.at(i).point.pose;
@@ -158,9 +169,15 @@ MarkerArray createLaneletsAreaMarkerArray(
 
   for (const auto & lanelet : lanelets) {
     Marker marker = createDefaultMarker(
-      "map", current_time, std::move(ns), static_cast<int32_t>(lanelet.id()), Marker::LINE_STRIP,
+
+      "map", current_time, ns, static_cast<int32_t>(lanelet.id()), Marker::LINE_STRIP,
       createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(r, g, b, 0.999));
     marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+
+    if (!lanelet.polygon3d().empty()) {
+      marker.points.reserve(lanelet.polygon3d().size() + 1);
+    }
+
     for (const auto & p : lanelet.polygon3d()) {
       marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
     }
@@ -191,9 +208,22 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
   lanelet::ConstLineStrings3d rights;
   lefts.reserve(reserve_size);
   rights.reserve(reserve_size);
+
+  size_t total_marker_reserve_size{0};
   for (size_t idx = 1; idx < linestrings.size(); idx += 2) {
     rights.emplace_back(linestrings.at(idx - 1));
     lefts.emplace_back(linestrings.at(idx));
+
+    for (const auto & ls : linestrings.at(idx - 1).basicLineString()) {
+      total_marker_reserve_size += ls.size();
+    }
+    for (const auto & ls : linestrings.at(idx).basicLineString()) {
+      total_marker_reserve_size += ls.size();
+    }
+  }
+
+  if (!total_marker_reserve_size) {
+    marker.points.reserve(total_marker_reserve_size);
   }
 
   const auto & first_ls = lefts.front().basicLineString();
@@ -251,10 +281,14 @@ MarkerArray createPolygonMarkerArray(
   const float & g, const float & b)
 {
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), static_cast<int32_t>(lane_id),
-    Marker::LINE_STRIP, createMarkerScale(0.3, 0.0, 0.0), createMarkerColor(r, g, b, 0.8));
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, static_cast<int32_t>(lane_id), Marker::LINE_STRIP,
+    createMarkerScale(0.3, 0.0, 0.0), createMarkerColor(r, g, b, 0.8));
 
   marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+
+  if (!polygon.points.empty()) {
+    marker.points.reserve(polygon.points.size() + 1);
+  }
 
   for (const auto & p : polygon.points) {
     marker.points.push_back(createPoint(p.x, p.y, p.z));
@@ -274,13 +308,15 @@ MarkerArray createObjectsMarkerArray(
   const float & g, const float & b)
 {
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), std::move(ns), 0L, Marker::CUBE,
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
     createMarkerScale(3.0, 1.0, 1.0), createMarkerColor(r, g, b, 0.8));
 
   int32_t uid = bitShift(lane_id);
   int32_t i{0};
 
   MarkerArray msg;
+  msg.markers.reserve(objects.objects.size());
+
   for (const auto & object : objects.objects) {
     marker.id = uid + i++;
     marker.pose = object.kinematics.initial_pose_with_covariance.pose;

@@ -47,46 +47,6 @@ using visualization_msgs::msg::MarkerArray;
 
 inline int64_t bitShift(int64_t original_id) { return original_id << (sizeof(int32_t) * 8 / 2); }
 
-inline Marker createDefaultMarker(
-  const std::string & frame_id, const rclcpp::Time & now, const std::string & ns, const int32_t id,
-  const int & type, const Vector3 & scale, const ColorRGBA & color)
-{
-  Marker marker{};
-
-  marker.header.frame_id = frame_id;
-  marker.header.stamp = now;
-  marker.ns = ns;
-  marker.id = id;
-  marker.type = type;
-  marker.action = Marker::ADD;
-  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
-
-  marker.scale = scale;
-  marker.color = color;
-
-  return marker;
-}
-
-inline Marker createDefaultMarker(
-  std::string && frame_id, const rclcpp::Time & now, std::string && ns, const int32_t id,
-  const int & type, const Vector3 & scale, const ColorRGBA & color)
-{
-  Marker marker{};
-
-  marker.header.frame_id = frame_id;
-  marker.header.stamp = now;
-  marker.ns = ns;
-  marker.id = id;
-  marker.type = type;
-  marker.action = Marker::ADD;
-  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
-
-  marker.scale = scale;
-  marker.color = color;
-
-  return marker;
-}
-
 MarkerArray createPoseMarkerArray(
   const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,
   const float & b);
