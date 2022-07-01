@@ -179,7 +179,7 @@ bool IntersectionModule::modifyPathVelocity(
   } else if (external_stop) {
     is_entry_prohibited = true;
   }
-  if(stuck_stop_idx > 0){
+  if(planner_param_.use_stuck_stopline && stuck_stop_idx > 0){
     stop_line_idx = stuck_stop_idx;
   }
   state_machine_.setStateWithMarginTime(
@@ -494,19 +494,13 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
     if (is_in_stuck_area) {
       const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-      // const auto & lane_first_point = assigned_lanelet.centerline2d().front();
-      const auto first_itr = std::find_if(
-        path.points.begin(), path.points.end(),
-        [this](const auto & p) { return p.lane_ids.front() == lane_id_; });
-
-      /* insert stop_point */
-      const auto inserted_stop_point = path.points.at(first_itr).point.pose;
-      // if path has too close (= duplicated) point to the stop point, do not insert it
-      // and consider the index of the duplicated point as stop_line_idx
-      if (!util::hasDuplicatedPoint(path, inserted_stop_point.position, stop_idx)) {
-        *stuck_stop_idx = util::insertPoint(inserted_stop_point, stop_idx);
+      const auto & lane_first_point = assigned_lanelet.centerline2d().front();
+      for (size_t i = 0; i < path.points.size(); i++) {
+        const auto & p = path.points.at(i).point.pose.position;
+        if (p.x == lane_first_point.x() && p.y == lane_first_point.y()) {
+          *stuck_stop_idx = static_cast<int>(i);
+        }
       }
-      // *stuck_stop_idx = first_itr;
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
       debug_data_.stuck_targets.objects.push_back(object);
       return true;
