@@ -91,7 +91,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_jerk = planner_data_->max_stop_jerk_threshold;
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
-    param_.v.a_ego = planner_data_->current_accel.get();
+    param_.v.a_ego = planner_data_->current_accel->accel.linear.x;
     param_.v.delay_time = planner_data_->system_delay;
     const double detection_area_offset = 5.0;  // for visualization and stability
     param_.detection_area_max_length =

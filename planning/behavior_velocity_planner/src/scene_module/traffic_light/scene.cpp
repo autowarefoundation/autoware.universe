@@ -337,8 +337,8 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
   // Calculate distance until ego vehicle decide not to stop,
   // taking into account the jerk and acceleration.
   const double pass_judge_line_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
-    planner_data_->current_velocity->twist.linear.x, planner_data_->current_accel.get(), max_acc,
-    max_jerk, delay_response_time);
+    planner_data_->current_velocity->twist.linear.x, planner_data_->current_accel->accel.linear.x,
+    max_acc, max_jerk, delay_response_time);
 
   const bool distance_stoppable = pass_judge_line_distance < signed_arc_length;
   const bool slow_velocity = planner_data_->current_velocity->twist.linear.x < 2.0;

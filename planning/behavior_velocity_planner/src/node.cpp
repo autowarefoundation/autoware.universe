@@ -113,6 +113,11 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     "~/input/vehicle_odometry", 1,
     std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1),
     createSubscriptionOptions(this));
+  sub_vehicle_acceleration_ =
+    this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
+      "~/input/acceleration", 1,
+      std::bind(&BehaviorVelocityPlannerNode::onVehicleAcceleration, this, _1),
+      createSubscriptionOptions(this));
   sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
@@ -160,7 +165,6 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   forward_path_length_ = this->declare_parameter("forward_path_length", 1000.0);
   backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
   // TODO(yukkysaito): This will become unnecessary when acc output from localization is available.
-  planner_data_.accel_lowpass_gain_ = this->declare_parameter("lowpass_gain", 0.5);
   planner_data_.stop_line_extend_length = this->declare_parameter("stop_line_extend_length", 5.0);
 
   // Initialize PlannerManager
@@ -288,8 +292,6 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
   current_velocity->twist = msg->twist.twist;
   planner_data_.current_velocity = current_velocity;
 
-  planner_data_.updateCurrentAcc();
-
   // Add velocity to buffer
   planner_data_.velocity_buffer.push_front(*current_velocity);
   const auto now = this->now();
@@ -305,6 +307,16 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
     // Remove old data
     planner_data_.velocity_buffer.pop_back();
   }
+}
+
+void BehaviorVelocityPlannerNode::onVehicleAcceleration(
+  const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  auto current_accel = std::make_shared<geometry_msgs::msg::AccelStamped>();
+  current_accel->header = msg->header;
+  current_accel->accel = msg->accel.accel;
+  planner_data_.current_accel = current_accel;
 }
 
 void BehaviorVelocityPlannerNode::onParam()
