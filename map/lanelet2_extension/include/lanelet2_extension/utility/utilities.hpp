@@ -82,9 +82,6 @@ double getLaneletAngle(
 bool isInLanelet(
   const geometry_msgs::msg::Pose & current_pose, const lanelet::ConstLanelet & lanelet,
   const double radius = 0.0);
-template <class T>
-double getAverageProjectionHeight(
-  const std::vector<T> & linestrings, const lanelet::ConstPoint3d & point);
 
 }  // namespace utils
 }  // namespace lanelet
