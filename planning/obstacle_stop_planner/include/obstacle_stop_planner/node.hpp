@@ -23,7 +23,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <signal_processing/lowpass_filter_1d.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
@@ -33,6 +32,8 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <geometry_msgs/msg/accel_stamped.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
@@ -100,7 +101,6 @@ public:
   {
     bool enable_slow_down;         // set True, slow down for obstacle beside the path
     double max_velocity;           // max velocity [m/s]
-    double lowpass_gain;           // smoothing calculated current acceleration [-]
     double hunting_threshold;      // keep slow down or stop state if obstacle vanished [s]
     double max_yaw_deviation_rad;  // maximum ego yaw deviation from trajectory [rad] (measures
                                    // against overlapping lanes)
@@ -174,6 +174,8 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr
+    current_acceleration_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
   rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
@@ -183,7 +185,6 @@ private:
 
   std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
-  std::shared_ptr<LowpassFilter1d> lpf_acc_{nullptr};
   boost::optional<SlowDownSection> latest_slow_down_section_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -192,7 +193,6 @@ private:
   rclcpp::Time last_detection_time_;
 
   nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
-  nav_msgs::msg::Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};
   double current_acc_{0.0};
 
   bool set_velocity_limit_{false};
@@ -214,6 +214,8 @@ private:
   void pathCallback(const Trajectory::ConstSharedPtr input_msg);
   void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
   void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
+  void currentAccelCallback(
+    const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr input_msg);
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
 private:
