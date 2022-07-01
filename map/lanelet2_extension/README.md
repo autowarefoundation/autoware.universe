@@ -61,6 +61,12 @@ e.g. crosswalks, trafficlights, stoplines
 This module contains other useful functions related to Lanelet.
 e.g. matching waypoint with lanelets
 
+#### Route Checker
+
+This module contains a function to check the loading route is valid or not.
+If it is invalid, puts warning without dying.
+The case valid is when the route is created on the same map as the current one.
+
 ### Visualization
 
 Visualization contains functions to convert lanelet objects into visualization marker messages.
