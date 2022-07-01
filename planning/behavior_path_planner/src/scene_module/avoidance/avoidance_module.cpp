@@ -2188,7 +2188,7 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
     registerRawShiftPoints(shift_points);
 
     TurnSignalInfo turn_signal_info;
-    turn_signal_info.signal_distance = std::numeric_limits<double>::lowest();
+    turn_signal_info.signal_distance = -10000.0;
     if (shift_points.back().getRelativeLength() > 0.0) {
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
     } else if (shift_points.back().getRelativeLength() < 0.0) {

@@ -53,7 +53,7 @@ public:
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
   : module_id_(module_id),
     safe_(false),
-    distance_(std::numeric_limits<double>::lowest()),
+    distance_(-10000.0),
     logger_(logger),
     clock_(clock)
   {

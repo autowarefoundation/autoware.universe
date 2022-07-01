@@ -94,7 +94,7 @@ bool BlindSpotModule::modifyPathVelocity(
       logger_, "[Blind Spot] stop line or pass judge line is at path[0], ignore planning.");
     *path = input_path;  // reset path
     setSafe(true);
-    setDistance(std::numeric_limits<double>::lowest());
+    setDistance(-10000.0);
     return true;
   }
 
@@ -125,7 +125,7 @@ bool BlindSpotModule::modifyPathVelocity(
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       *path = input_path;  // reset path
       setSafe(true);
-      setDistance(std::numeric_limits<double>::lowest());
+      setDistance(-10000.0);
       return true;  // no plan needed.
     }
   }

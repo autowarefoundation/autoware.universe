@@ -90,7 +90,7 @@ struct CandidateOutput
   explicit CandidateOutput(const PathWithLaneId & path) : path_candidate{path} {}
   PathWithLaneId path_candidate{};
   double lateral_shift{0.0};
-  double distance_to_path_change{std::numeric_limits<double>::lowest()};
+  double distance_to_path_change{-10000.0};
 };
 
 class SceneModuleInterface
