@@ -326,7 +326,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   {
     const double v_min = param.v.min_allowed_velocity;
     if(!param.insert_stop_point){
-      // this module calulates safe motion according to defined acc/jerk 
+      // this module calculates safe motion according to defined acc/jerk 
       sm = calculateSafeMotion(param.v, ttc);
       sm.safe_velocity = std::max(v_min, sm.safe_velocity);
     } else {
