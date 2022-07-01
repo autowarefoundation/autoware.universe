@@ -93,7 +93,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.a_ego = planner_data_->current_accel.get();
     param_.v.delay_time = planner_data_->system_delay;
   }
-  if(param_.consider_pass_judge){
+  if (param_.consider_pass_judge) {
     const double detection_area_offset = 10.0;  // for visualization and stability
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(

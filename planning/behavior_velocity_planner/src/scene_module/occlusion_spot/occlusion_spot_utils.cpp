@@ -325,8 +325,8 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   // TODO(tanaka): consider how to define better safe motion
   {
     const double v_min = param.v.min_allowed_velocity;
-    if(!param.insert_stop_point){
-      // this module calculates safe motion according to defined acc/jerk 
+    if (!param.insert_stop_point) {
+      // this module calculates safe motion according to defined acc/jerk
       sm = calculateSafeMotion(param.v, ttc);
       sm.safe_velocity = std::max(v_min, sm.safe_velocity);
     } else {
@@ -336,7 +336,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   }
   const double eps = 0.1;
   // avoid inserting path point behind original path
-  double distance_to_stop = std::max(arc_coord_occlusion_with_offset.length - sm.stop_dist , eps);
+  double distance_to_stop = std::max(arc_coord_occlusion_with_offset.length - sm.stop_dist, eps);
   pc.arc_lane_dist_at_collision = {distance_to_stop, arc_coord_occlusion_with_offset.distance};
   pc.obstacle_info.safe_motion = sm;
   pc.obstacle_info.ttc = ttc;
