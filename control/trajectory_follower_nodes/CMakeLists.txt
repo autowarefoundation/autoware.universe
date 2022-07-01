@@ -53,7 +53,8 @@ ament_auto_add_library(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} SHARED
   src/simple_trajectory_follower.cpp
 )
 
-autoware_set_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE})
+# TODO(simple_trajectory_follower) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
+# TODO(simple_trajectory_follower) : Temporary workaround until this is fixed.
 target_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} PRIVATE -Wno-error=old-style-cast)
 rclcpp_components_register_node(${SIMPLE_TRAJECTORY_FOLLOWER_NODE}
   PLUGIN "simple_trajectory_follower::SimpleTrajectoryFollower"
