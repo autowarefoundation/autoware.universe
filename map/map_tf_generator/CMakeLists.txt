@@ -16,6 +16,14 @@ rclcpp_components_register_node(map_tf_generator_node
   EXECUTABLE map_tf_generator
 )
 
+ament_auto_add_library(vector_map_tf_generator_node SHARED
+  src/vector_map_tf_generator_node.cpp
+)
+
+rclcpp_components_register_node(vector_map_tf_generator_node
+  PLUGIN "VectorMapTFGeneratorNode"
+  EXECUTABLE vector_map_tf_generator
+)
 
 if(BUILD_TESTING)
   function(add_testcase filepath)
