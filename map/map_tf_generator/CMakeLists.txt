@@ -6,6 +6,12 @@ autoware_package()
 
 find_package(PCL REQUIRED)
 
+include_directories(
+  include
+  SYSTEM
+  ${PCL_INCLUDE_DIRS}
+)
+
 ament_auto_add_library(pcd_map_tf_generator_node SHARED
   src/pcd_map_tf_generator_node.cpp
 )
