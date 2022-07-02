@@ -6,14 +6,14 @@ autoware_package()
 
 find_package(PCL REQUIRED)
 
-ament_auto_add_library(map_tf_generator_node SHARED
-  src/map_tf_generator_node.cpp
+ament_auto_add_library(pcd_map_tf_generator_node SHARED
+  src/pcd_map_tf_generator_node.cpp
 )
-target_link_libraries(map_tf_generator_node ${PCL_LIBRARIES})
+target_link_libraries(pcd_map_tf_generator_node ${PCL_LIBRARIES})
 
-rclcpp_components_register_node(map_tf_generator_node
-  PLUGIN "MapTFGeneratorNode"
-  EXECUTABLE map_tf_generator
+rclcpp_components_register_node(pcd_map_tf_generator_node
+  PLUGIN "PcdMapTFGeneratorNode"
+  EXECUTABLE pcd_map_tf_generator
 )
 
 ament_auto_add_library(vector_map_tf_generator_node SHARED
