@@ -188,8 +188,10 @@ void OccupancyGridMap::raytraceFreespace(const PointCloud2 & pointcloud, const P
   const double oy{robot_pose.position.y};
   if (!worldToMap(robot_pose.position.x, robot_pose.position.y, x0, y0)) {
     RCLCPP_DEBUG(
-      logger_, "The origin for the sensor at (%.2f, %.2f) is out of map bounds. So, the costmap cannot "
-      "raytrace for it.", ox, oy);
+      logger_,
+      "The origin for the sensor at (%.2f, %.2f) is out of map bounds. So, the costmap cannot "
+      "raytrace for it.",
+      ox, oy);
     return;
   }
 
