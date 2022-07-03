@@ -25,15 +25,13 @@ The `detected_object_filter` is a node that filters detected object based on x,y
 
 ### Core Parameters
 
-| Name                 | Type  | Default Value | Description                                                                                                 |
-| -------------------- | ----- | ------------- | ----------------------------------------------------------------------------------------------------------- |
-| `voxel_size_x`       | float | 0.04          | voxel size                                                                                                  |
-| `voxel_size_y`       | float | 0.04          | voxel size                                                                                                  |
-| `filter_by_xy_value` | bool  | false         | If true, objects are filtered based on x,y value; if set to false, vector map based filtering is performed. |
-| `upper_bound_x`      | float | 100.00        | Bound for filtering. Only used if filter_by_xy_value is true                                                |
-| `lower_bound_x`      | float | 0.00          | Bound for filtering. Only used if filter_by_xy_value is true                                                |
-| `upper_bound_y`      | float | 0.00          | Bound for filtering. Only used if filter_by_xy_value is true                                                |
-| `lower_bound_y`      | float | 0.00          | Bound for filtering. Only used if filter_by_xy_value is true                                                |
+| Name                    | Type  | Default Value | Description                                                                                                 |
+| ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------------------------------------- |
+| `filter_by_xy_position` | bool  | false         | If true, objects are filtered based on x,y value; if set to false, vector map based filtering is performed. |
+| `upper_bound_x`         | float | 100.00        | Bound for filtering. Only used if filter_by_xy_position is true                                             |
+| `lower_bound_x`         | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true                                             |
+| `upper_bound_y`         | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true                                             |
+| `lower_bound_y`         | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true                                             |
 
 ## Assumptions / Known limits
 

@@ -17,41 +17,43 @@
 #include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
-
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/utils.h>
 
 #include <memory>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
 
+boost::optional<geometry_msgs::msg::Transform> getTransform(
+  const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
+  const std::string & target_frame_id, const rclcpp::Time & time)
+{
+  try {
+    geometry_msgs::msg::TransformStamped self_transform_stamped;
+    self_transform_stamped = tf_buffer.lookupTransform(
+      /*target*/ target_frame_id, /*src*/ source_frame_id, time,
+      rclcpp::Duration::from_seconds(0.5));
+    return self_transform_stamped.transform;
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("detected_object_filter"), ex.what());
+    return boost::none;
+  }
+}
 namespace detected_object_filter
 {
 DetectedObjectFilterNode::DetectedObjectFilterNode(const rclcpp::NodeOptions & node_options)
-: Node("detected_object_lanelet_filter_node", node_options)
+: Node("detected_object_filter_node", node_options),
+  tf_buffer_(this->get_clock()),
+  tf_listener_(tf_buffer_)
 {
   using std::placeholders::_1;
 
   // Set parameters
-  voxel_size_x_ = declare_parameter<float>("voxel_size_x", 0.04);
-  voxel_size_y_ = declare_parameter<float>("voxel_size_y", 0.04);
   upper_bound_x_ = declare_parameter<float>("upper_bound_x", 100.0);
   upper_bound_y_ = declare_parameter<float>("upper_bound_y", 100.0);
   lower_bound_x_ = declare_parameter<float>("lower_bound_x", -100.0);
   lower_bound_y_ = declare_parameter<float>("lower_bound_y", -100.0);
-  filter_by_xy_value_ = declare_parameter<bool>("filter_by_xy_value", true);
+  filter_by_xy_position_ = declare_parameter<bool>("filter_by_xy_position", false);
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -61,10 +63,6 @@ DetectedObjectFilterNode::DetectedObjectFilterNode(const rclcpp::NodeOptions & n
     "input/object", rclcpp::QoS{1}, std::bind(&DetectedObjectFilterNode::objectCallback, this, _1));
   object_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "output/object", rclcpp::QoS{1});
-
-  // Set tf
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
-  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 }
 
 void DetectedObjectFilterNode::mapCallback(
@@ -85,51 +83,111 @@ void DetectedObjectFilterNode::objectCallback(
   autoware_auto_perception_msgs::msg::DetectedObjects output_object_msg;
   output_object_msg.header = input_msg->header;
 
-  if (filter_by_xy_value_) {
+  if (filter_by_xy_position_) {
     for (const auto & object : input_msg->objects) {
       const auto & position = object.kinematics.pose_with_covariance.pose.position;
-      const auto object_sq_dist = position.x * position.x + position.y * position.y;
       if (
         position.x > lower_bound_x_ && position.x < upper_bound_x_ && position.y > lower_bound_y_ &&
         position.y < upper_bound_y_) {
-        output_object_msg.objects.push_back(object);
+        output_object_msg.objects.emplace_back(object);
       }
     }
   } else {
     if (!lanelet_map_ptr_) {
+      RCLCPP_ERROR(get_logger(), "No vector map received.");
+      return;
+    }
+    autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+    if (!transformDetectedObjects(*input_msg, "map", tf_buffer_, transformed_objects)) {
+      RCLCPP_ERROR(get_logger(), "Failed transform to map.");
       return;
     }
 
-    // TODO(miursh): to be implemented
+    int index = 0;
+    // calculate convex hull
+    const auto convex_hull = getConvexHull(transformed_objects);
+    // get intersected lanelets
+    lanelet::ConstLanelets intersected_lanelets =
+      getIntersectedLanelets(convex_hull, road_lanelets_);
+    for (const auto & object : transformed_objects.objects) {
+      const auto position = object.kinematics.pose_with_covariance.pose.position;
+      if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
+        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+      }
+      ++index;
+    }
   }
-
-  // publish output msg
   object_pub_->publish(output_object_msg);
 }
 
-bool DetectedObjectFilterNode::transformPointCloud(
-  const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
-  PointCloud2 * out_cloud_ptr)
+bool DetectedObjectFilterNode::transformDetectedObjects(
+  const autoware_auto_perception_msgs::msg::DetectedObjects & input_msg,
+  const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+  autoware_auto_perception_msgs::msg::DetectedObjects & output_msg)
 {
-  if (in_target_frame == in_cloud_ptr->header.frame_id) {
-    *out_cloud_ptr = *in_cloud_ptr;
-    return true;
-  }
+  output_msg = input_msg;
 
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  try {
-    transform_stamped = tf_buffer_->lookupTransform(
-      in_target_frame, in_cloud_ptr->header.frame_id, in_cloud_ptr->header.stamp,
-      rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(this->get_logger(), ex.what());
-    return false;
+  /* transform to world coordinate */
+  if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
+    tf2::Transform tf_target2objects_world;
+    tf2::Transform tf_target2objects;
+    tf2::Transform tf_objects_world2objects;
+    {
+      const auto ros_target2objects_world =
+        getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      if (!ros_target2objects_world) {
+        return false;
+      }
+      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
+    }
+    for (auto & object : output_msg.objects) {
+      tf2::fromMsg(object.kinematics.pose_with_covariance.pose, tf_objects_world2objects);
+      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
+      tf2::toMsg(tf_target2objects, object.kinematics.pose_with_covariance.pose);
+    }
   }
-  Eigen::Matrix4f mat = tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-  pcl_ros::transformPointCloud(mat, *in_cloud_ptr, *out_cloud_ptr);
-  out_cloud_ptr->header.frame_id = in_target_frame;
   return true;
 }
+
+LinearRing2d DetectedObjectFilterNode::getConvexHull(
+  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects)
+{
+  MultiPoint2d candidate_points;
+  for (const auto & object : detected_objects.objects) {
+    const auto & p = object.kinematics.pose_with_covariance.pose.position;
+    candidate_points.emplace_back(p.x, p.y);
+  }
+
+  LinearRing2d convex_hull;
+  boost::geometry::convex_hull(candidate_points, convex_hull);
+
+  return convex_hull;
+}
+
+lanelet::ConstLanelets DetectedObjectFilterNode::getIntersectedLanelets(
+  const LinearRing2d & convex_hull, const lanelet::ConstLanelets & road_lanelets)
+{
+  lanelet::ConstLanelets intersected_lanelets;
+  for (const auto & road_lanelet : road_lanelets) {
+    if (boost::geometry::intersects(convex_hull, road_lanelet.polygon2d().basicPolygon())) {
+      intersected_lanelets.emplace_back(road_lanelet);
+    }
+  }
+  return intersected_lanelets;
+}
+
+bool DetectedObjectFilterNode::isPointWithinLanelets(
+  const Point2d & point, const lanelet::ConstLanelets & intersected_lanelets)
+{
+  for (const auto & lanelet : intersected_lanelets) {
+    if (boost::geometry::within(point, lanelet.polygon2d().basicPolygon())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace detected_object_filter
 
 #include <rclcpp_components/register_node_macro.hpp>

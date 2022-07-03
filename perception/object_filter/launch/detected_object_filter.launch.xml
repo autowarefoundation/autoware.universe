@@ -8,10 +8,10 @@
     <remap from="input/vector_map" to="$(var vector_map_topic)"/>
     <remap from="input/object" to="$(var input/object)"/>
     <remap from="output/object" to="$(var output/object)"/>
+    <param name="filter_by_xy_position" value="false"/>
     <param name="upper_bound_x" value="100.0"/>
     <param name="lower_bound_x" value="0.0"/>
     <param name="upper_bound_y" value="10.0"/>
     <param name="lower_bound_y" value="-10.0"/>
-    <param name="filter_by_xy_value" value="true"/>
   </node>
 </launch>

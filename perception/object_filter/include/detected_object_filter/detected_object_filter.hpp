@@ -18,39 +18,32 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/transform_listener.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
-#include <boost/geometry/geometry.hpp>
-
-#include <pcl/filters/voxel_grid.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/create_timer_ros.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <string>
 
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Point3d;
-using PointCloud2 = sensor_msgs::msg::PointCloud2;
-using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
-
-#include <memory>
-
 namespace detected_object_filter
 {
+using tier4_autoware_utils::LinearRing2d;
+using tier4_autoware_utils::MultiPoint2d;
+using tier4_autoware_utils::Point2d;
+
 class DetectedObjectFilterNode : public rclcpp::Node
 {
 public:
   explicit DetectedObjectFilterNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void objectCallback(
-    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg);
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void objectCallback(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr);
 
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_pub_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
@@ -58,20 +51,23 @@ private:
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::ConstLanelets road_lanelets_;
-  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
-  float voxel_size_x_;
-  float voxel_size_y_;
-  bool filter_by_xy_value_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  bool filter_by_xy_position_;
   float upper_bound_x_;
   float upper_bound_y_;
   float lower_bound_x_;
   float lower_bound_y_;
 
-  bool transformPointCloud(
-    const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
-    PointCloud2 * out_cloud_ptr);
+  bool transformDetectedObjects(
+    const autoware_auto_perception_msgs::msg::DetectedObjects &, const std::string &,
+    const tf2_ros::Buffer &, autoware_auto_perception_msgs::msg::DetectedObjects &);
+  LinearRing2d getConvexHull(const autoware_auto_perception_msgs::msg::DetectedObjects &);
+  lanelet::ConstLanelets getIntersectedLanelets(
+    const LinearRing2d &, const lanelet::ConstLanelets &);
+  bool isPointWithinLanelets(const Point2d &, const lanelet::ConstLanelets &);
 };
 
 }  // namespace detected_object_filter
