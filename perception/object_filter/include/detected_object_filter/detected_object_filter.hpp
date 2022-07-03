@@ -12,25 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBJECT_FILTER__DETECTED_OBJECT_LANELET_FILTER_
-#define OBJECT_FILTER__DETECTED_OBJECT_LANELET_FILTER_
+#ifndef DETECTED_OBJECT_FILTER__DETECTED_OBJECT_FILTER_HPP_
+#define DETECTED_OBJECT_FILTER__DETECTED_OBJECT_FILTER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+
+#include <boost/geometry/geometry.hpp>
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
-
-#include <boost/geometry/geometry.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/create_timer_ros.h>
 #include <tf2_ros/transform_listener.h>
+
+#include <string>
 
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Point3d;
@@ -41,10 +42,10 @@ using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
 
 namespace detected_object_filter
 {
-class DetectedObjectLaneletFilterNode : public rclcpp::Node
+class DetectedObjectFilterNode : public rclcpp::Node
 {
 public:
-  explicit DetectedObjectLaneletFilterNode(const rclcpp::NodeOptions & node_options);
+  explicit DetectedObjectFilterNode(const rclcpp::NodeOptions & node_options);
 
 private:
   void objectCallback(
@@ -62,6 +63,11 @@ private:
 
   float voxel_size_x_;
   float voxel_size_y_;
+  bool filter_by_xy_value_;
+  float upper_bound_x_;
+  float upper_bound_y_;
+  float lower_bound_x_;
+  float lower_bound_y_;
 
   bool transformPointCloud(
     const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
@@ -70,4 +76,4 @@ private:
 
 }  // namespace detected_object_filter
 
-#endif  // OBJECT_FILTER__DETECTED_OBJECT_LANELET_FILTER_
+#endif  // DETECTED_OBJECT_FILTER__DETECTED_OBJECT_FILTER_HPP_

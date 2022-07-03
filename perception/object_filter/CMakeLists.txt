@@ -6,6 +6,9 @@ autoware_package()
 
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
+
+### Find Eigen Dependencies
+find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
@@ -13,7 +16,6 @@ include_directories(
   SYSTEM
   ${Boost_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
 )
 
@@ -22,11 +24,10 @@ ament_auto_add_library(object_filter SHARED
 )
 
 rclcpp_components_register_node(object_filter
-  PLUGIN "detected_object_filter::DetectedObjectLaneletFilterNode"
+  PLUGIN "detected_object_filter::DetectedObjectFilterNode"
   EXECUTABLE detected_object_filter
 )
 
 ament_auto_package(INSTALL_TO_SHARE
     launch
 )
-
