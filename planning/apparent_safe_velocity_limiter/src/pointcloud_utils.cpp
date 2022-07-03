@@ -22,6 +22,7 @@
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/project_inliers.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/surface/concave_hull.h>
@@ -50,15 +51,22 @@ void filterPointCloud(
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const multipolygon_t & polygon_masks,
   const polygon_t & envelope)
 {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+  downsampled_pointcloud->points.reserve(pointcloud->points.size());
+  pcl::VoxelGrid<pcl::PointXYZ> filter;
+  filter.setInputCloud(pointcloud);
+  filter.setLeafSize(0.5, 0.5, 100.0);
+  filter.filter(*downsampled_pointcloud);
   pcl::PointIndices::Ptr idx_to_remove(new pcl::PointIndices());
-  for (size_t i = 0; i < pointcloud->size(); ++i) {
-    const auto & point = pointcloud->points[i];
+  idx_to_remove->indices.reserve(downsampled_pointcloud->size());
+  for (size_t i = 0; i < downsampled_pointcloud->size(); ++i) {
+    const auto & point = downsampled_pointcloud->points[i];
     const auto p = point_t{point.x, point.y};
     if (boost::geometry::within(p, polygon_masks) || !boost::geometry::within(p, envelope))
       idx_to_remove->indices.push_back(i);
   }
   pcl::ExtractIndices<pcl::PointXYZ> extract;
-  extract.setInputCloud(pointcloud);
+  extract.setInputCloud(downsampled_pointcloud);
   extract.setIndices(idx_to_remove);
   extract.setNegative(true);
   extract.filter(*pointcloud);
