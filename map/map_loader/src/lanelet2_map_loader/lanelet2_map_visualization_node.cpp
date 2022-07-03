@@ -95,10 +95,20 @@ void Lanelet2MapVisualizationNode::onMapBin(
   lanelet::ConstLanelets shoulder_lanelets = lanelet::utils::query::shoulderLanelets(all_lanelets);
   lanelet::ConstLanelets crosswalk_lanelets =
     lanelet::utils::query::crosswalkLanelets(all_lanelets);
+  lanelet::ConstLanelets walkway_lanelets = lanelet::utils::query::walkwayLanelets(all_lanelets);
+
+  if (road_lanelets.size() + shoulder_lanelets.size() + crosswalk_lanelets.size() +
+      walkway_lanelets.size() != all_lanelets.size()) {
+    RCLCPP_WARN_STREAM(
+      this->get_logger(),
+      "The correct subtype must be defined for each lanelet."
+      "Otherwise, the lanelet will not appear on Rviz.");
+  }
+
   lanelet::ConstLineStrings3d partitions = lanelet::utils::query::getAllPartitions(viz_lanelet_map);
   lanelet::ConstLineStrings3d pedestrian_markings =
     lanelet::utils::query::getAllPedestrianMarkings(viz_lanelet_map);
-  lanelet::ConstLanelets walkway_lanelets = lanelet::utils::query::walkwayLanelets(all_lanelets);
+
   std::vector<lanelet::ConstLineString3d> stop_lines =
     lanelet::utils::query::stopLinesLanelets(road_lanelets);
   std::vector<lanelet::TrafficLightConstPtr> tl_reg_elems =
