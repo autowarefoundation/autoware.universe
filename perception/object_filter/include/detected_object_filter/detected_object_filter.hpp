@@ -19,13 +19,11 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/transform_listener.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <tf2_ros/buffer.h>
-#include <tf2_ros/create_timer_ros.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <string>

@@ -14,15 +14,12 @@
 
 #include "detected_object_filter/detected_object_filter.hpp"
 
-#include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
-
-#include <memory>
 
 boost::optional<geometry_msgs::msg::Transform> getTransform(
   const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
