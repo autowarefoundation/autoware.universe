@@ -64,17 +64,17 @@ endmacro()
 
 ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${OpenCV_LIBS})
 ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd/regulatory_elements/include)
-ADD_LIB(TARGET util SRC lib/*.cpp INC 3rd/regulatory_elements/include include)
+ADD_LIB(TARGET ll2_util SRC lib/ll2_util.cpp INC 3rd/regulatory_elements/include include)
+ADD_LIB(TARGET util SRC lib/util.cpp INC include)
 ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp INC include)
-ADD_LIB(TARGET modified_seg SRC src/validation/graph_segmentation.cpp INC include)
-ADD_LIB(TARGET vanish SRC src/imgproc/ransac_vanish_point.cpp INC include)
+ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
+ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)
 
 # ===================================================
 # Executable
 macro(ADD_EXE)
   cmake_parse_arguments(_ARG "" "SRC;TARGET" "LIB;INC" ${ARGN})
 
-  # get_filename_component(TARGET_NAME ${_ARG_SRC} NAME_WE)
   file(GLOB SOURCE_TMP ${_ARG_SRC})
   set(TARGET_NAME ${_ARG_TARGET})
   ament_auto_add_executable(${TARGET_NAME} ${SOURCE_TMP})
@@ -82,26 +82,29 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
 
+# imgproc
+ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish)
+ADD_EXE(TARGET lsd_node SRC src/imgproc/lsd_*.cpp INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
+ADD_EXE(TARGET undistort_node SRC src/imgproc/undistort_node.cpp INC LIB util)
+
+# trajectory
 ADD_EXE(TARGET fix_to_pose_node SRC src/trajectory/fix_to_pose_node.cpp INC LIB util Geographic ${PCL_LIBRARIES})
 ADD_EXE(TARGET pose_to_path_node SRC src/trajectory/pose_to_path_node.cpp INC LIB)
-
-ADD_EXE(TARGET lsd_node SRC src/lsd_*.cpp INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
-ADD_EXE(TARGET ll2_to_image_node SRC src/ll2_to_image_*.cpp INC LIB util Geographic)
-ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC LIB util)
-
-ADD_EXE(TARGET camera_corrector_node SRC
-  src/particle_filter/camera_corrector*.cpp
-  INC include LIB util cost_map)
-
-ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
-ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp INC include LIB util)
-
 ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Geographic)
 ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
 
+# particle_filter
+ADD_EXE(TARGET camera_corrector_node
+  SRC src/particle_filter/camera_corrector*.cpp
+  INC include LIB util cost_map)
+ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
+ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp INC include LIB util)
+
+# validation
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 
-ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish)
+# map
+ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_util Geographic)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)
