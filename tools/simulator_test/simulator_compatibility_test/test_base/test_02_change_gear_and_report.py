@@ -2,6 +2,7 @@ import time
 
 from autoware_auto_vehicle_msgs.msg import GearCommand
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from simulator_compatibility_test.subscribers.gear_report import GearMode
 from simulator_compatibility_test.subscribers.gear_report import SubscriberGearReport
 
@@ -12,6 +13,7 @@ class Test02ChangeGearAndReportBase:
     sub = None
     pub = None
     sub_gear_report = None
+    executor = None
 
     @classmethod
     def setup_class(cls) -> None:
@@ -23,10 +25,14 @@ class Test02ChangeGearAndReportBase:
         )
         cls.pub = cls.node.create_publisher(GearCommand, "/control/command/gear_cmd", 10)
         cls.sub_gear_report = SubscriberGearReport()
+        cls.executor = MultiThreadedExecutor()
+        cls.executor.add_node(cls.sub_gear_report)
+        cls.executor.add_node(cls.node)
 
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
+        cls.executor.shutdown()
         rclpy.shutdown()
 
     def generate_gear_msg(self, gear_mode):
@@ -40,7 +46,7 @@ class Test02ChangeGearAndReportBase:
     def set_gear_mode(self, gear_mode):
         self.msgs_rx.clear()
         while rclpy.ok():
-            rclpy.spin_once(self.node)
+            self.executor.spin_once(timeout_sec=1)
             self.pub.publish(self.generate_gear_msg(gear_mode))
             if len(self.msgs_rx) > 2:
                 break
@@ -54,7 +60,7 @@ class Test02ChangeGearAndReportBase:
         received = GearMode.NONE
         try:
             while rclpy.ok():
-                rclpy.spin_once(self.sub_gear_report)
+                self.executor.spin_once(timeout_sec=1)
                 if len(self.sub_gear_report.received) > 2:
                     break
             received = self.sub_gear_report.received.pop()

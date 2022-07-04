@@ -5,6 +5,7 @@ from autoware_auto_control_msgs.msg import AckermannLateralCommand
 from autoware_auto_control_msgs.msg import LongitudinalCommand
 import pytest
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from simulator_compatibility_test.subscribers.steering_report import SubscriberSteeringReport
 
 
@@ -15,6 +16,7 @@ class Test04LateralCommandAndReportBase:
     sub = None
     pub = None
     sub_steering_report = None
+    executor = None
 
     @classmethod
     def setup_class(cls) -> None:
@@ -35,10 +37,14 @@ class Test04LateralCommandAndReportBase:
             AckermannControlCommand, "/control/command/control_cmd", 10
         )
         cls.sub_steering_report = SubscriberSteeringReport()
+        cls.executor = MultiThreadedExecutor()
+        cls.executor.add_node(cls.sub_steering_report)
+        cls.executor.add_node(cls.node)
 
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
+        cls.executor.shutdown()
         rclpy.shutdown()
 
     @pytest.fixture
@@ -79,7 +85,7 @@ class Test04LateralCommandAndReportBase:
         self.control_cmd["lateral"]["steering_tire_angle"] = angle_rad
         self.msgs_rx.clear()
         while rclpy.ok():
-            rclpy.spin_once(self.node)
+            self.executor.spin_once(timeout_sec=1)
             self.pub.publish(self.generate_control_msg(self.control_cmd))
             if len(self.msgs_rx) > 2:
                 break
@@ -92,7 +98,7 @@ class Test04LateralCommandAndReportBase:
         received = 0.0
         try:
             while rclpy.ok():
-                rclpy.spin_once(self.sub_steering_report)
+                self.executor.spin_once(timeout_sec=1)
                 if len(self.sub_steering_report.received) > 2:
                     break
             received = self.sub_steering_report.received.pop()

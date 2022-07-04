@@ -5,6 +5,7 @@ from autoware_auto_control_msgs.msg import AckermannLateralCommand
 from autoware_auto_control_msgs.msg import LongitudinalCommand
 import pytest
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from simulator_compatibility_test.subscribers.velocity_report import SubscriberVelocityReport
 
 
@@ -15,6 +16,7 @@ class Test03LongitudinalCommandAndReportBase:
     sub = None
     pub = None
     sub_velocity_report = None
+    executor = None
 
     @classmethod
     def setup_class(cls) -> None:
@@ -36,17 +38,21 @@ class Test03LongitudinalCommandAndReportBase:
             AckermannControlCommand, "/control/command/control_cmd", 10
         )
         cls.sub_velocity_report = SubscriberVelocityReport()
+        cls.executor = MultiThreadedExecutor()
+        cls.executor.add_node(cls.sub_velocity_report)
+        cls.executor.add_node(cls.node)
 
     @classmethod
     def teardown_class(cls) -> None:
         cls.node.destroy_node()
+        cls.executor.shutdown()
         rclpy.shutdown()
 
     @pytest.fixture
     def setup_and_teardown(self):
+        yield time.sleep(3)
         self.control_cmd["longitudinal"]["speed"] = 0.0
         self.control_cmd["longitudinal"]["acceleration"] = 0.0
-        yield time.sleep(3)
         self.init_vehicle()
         time.sleep(3)
 
@@ -80,7 +86,7 @@ class Test03LongitudinalCommandAndReportBase:
         self.control_cmd["longitudinal"]["speed"] = speed
         self.msgs_rx.clear()
         while rclpy.ok():
-            rclpy.spin_once(self.node)
+            self.executor.spin_once(timeout_sec=1)
             self.pub.publish(self.generate_control_msg(self.control_cmd))
             if len(self.msgs_rx) > 2:
                 break
@@ -92,7 +98,7 @@ class Test03LongitudinalCommandAndReportBase:
         self.control_cmd["longitudinal"]["acceleration"] = acceleration
         self.msgs_rx.clear()
         while rclpy.ok():
-            rclpy.spin_once(self.node)
+            self.executor.spin_once(timeout_sec=1)
             self.pub.publish(self.generate_control_msg(self.control_cmd))
             if len(self.msgs_rx) > 2:
                 break
@@ -105,7 +111,7 @@ class Test03LongitudinalCommandAndReportBase:
         received = 0.0
         try:
             while rclpy.ok():
-                rclpy.spin_once(self.sub_velocity_report)
+                self.executor.spin_once(timeout_sec=1)
                 if len(self.sub_velocity_report.received) > 2:
                     break
             received = self.sub_velocity_report.received.pop()
