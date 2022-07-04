@@ -50,9 +50,9 @@ DetectedObjectFilterNode::DetectedObjectFilterNode(const rclcpp::NodeOptions & n
 
   // Set parameters
   upper_bound_x_ = declare_parameter<float>("upper_bound_x", 100.0);
-  upper_bound_y_ = declare_parameter<float>("upper_bound_y", 100.0);
-  lower_bound_x_ = declare_parameter<float>("lower_bound_x", -100.0);
-  lower_bound_y_ = declare_parameter<float>("lower_bound_y", -100.0);
+  upper_bound_y_ = declare_parameter<float>("upper_bound_y", 50.0);
+  lower_bound_x_ = declare_parameter<float>("lower_bound_x", 0.0);
+  lower_bound_y_ = declare_parameter<float>("lower_bound_y", -50.0);
   filter_by_xy_position_ = declare_parameter<bool>("filter_by_xy_position", false);
 
   // Set publisher/subscriber
@@ -103,12 +103,13 @@ void DetectedObjectFilterNode::objectCallback(
       return;
     }
 
-    int index = 0;
     // calculate convex hull
     const auto convex_hull = getConvexHull(transformed_objects);
     // get intersected lanelets
     lanelet::ConstLanelets intersected_lanelets =
       getIntersectedLanelets(convex_hull, road_lanelets_);
+
+    int index = 0;
     for (const auto & object : transformed_objects.objects) {
       const auto position = object.kinematics.pose_with_covariance.pose.position;
       if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
