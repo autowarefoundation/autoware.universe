@@ -57,12 +57,12 @@ double EllipsoidHeight2OrthometricHeight(
   }
   return OrthometricHeight;
 }
-GNSSStat NavSatFix2LocalCartesian(
+GNSSStat NavSatFix2LocalCartesianWGS84(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin_, const rclcpp::Logger & logger)
 {
   GNSSStat local_cartesian;
-  local_cartesian.coordinate_system = CoordinateSystem::LOCAL_CARTESIAN;
+  local_cartesian.coordinate_system = CoordinateSystem::LOCAL_CARTESIAN_WGS84;
 
   try {
     GeographicLib::LocalCartesian localCartesian_origin(
@@ -102,7 +102,7 @@ GNSSStat NavSatFix2UTM(
 bool is_utm_origin_initialized = false;
 GNSSStat utm_origin;
 GNSSStat utm_local;
-GNSSStat NavSatFix2UTMLocal(
+GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin_, const rclcpp::Logger & logger)
 {
