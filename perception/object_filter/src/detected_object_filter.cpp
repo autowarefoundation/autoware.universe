@@ -51,6 +51,7 @@ DetectedObjectFilterNode::DetectedObjectFilterNode(const rclcpp::NodeOptions & n
   lower_bound_x_ = declare_parameter<float>("lower_bound_x", 0.0);
   lower_bound_y_ = declare_parameter<float>("lower_bound_y", -50.0);
   filter_by_xy_position_ = declare_parameter<bool>("filter_by_xy_position", false);
+  unknown_only_ = declare_parameter<bool>("unknown_only", false);
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -77,16 +78,20 @@ void DetectedObjectFilterNode::objectCallback(
   // Guard
   if (object_pub_->get_subscription_count() < 1) return;
 
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
   autoware_auto_perception_msgs::msg::DetectedObjects output_object_msg;
   output_object_msg.header = input_msg->header;
 
   if (filter_by_xy_position_) {
     for (const auto & object : input_msg->objects) {
       const auto & position = object.kinematics.pose_with_covariance.pose.position;
-      if (
-        position.x > lower_bound_x_ && position.x < upper_bound_x_ && position.y > lower_bound_y_ &&
-        position.y < upper_bound_y_) {
-        output_object_msg.objects.emplace_back(object);
+      const auto & label = object.classification.front().label;
+      if (!unknown_only_ || label == Label::UNKNOWN) {
+        if (
+          position.x > lower_bound_x_ && position.x < upper_bound_x_ &&
+          position.y > lower_bound_y_ && position.y < upper_bound_y_) {
+          output_object_msg.objects.emplace_back(object);
+        }
       }
     }
   } else {
@@ -109,8 +114,11 @@ void DetectedObjectFilterNode::objectCallback(
     int index = 0;
     for (const auto & object : transformed_objects.objects) {
       const auto position = object.kinematics.pose_with_covariance.pose.position;
-      if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
-        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+      const auto & label = object.classification.front().label;
+      if (!unknown_only_ || label == Label::UNKNOWN) {
+        if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
+          output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+        }
       }
       ++index;
     }

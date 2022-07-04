@@ -53,6 +53,7 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
+  bool unknown_only_;
   bool filter_by_xy_position_;
   float upper_bound_x_;
   float upper_bound_y_;
