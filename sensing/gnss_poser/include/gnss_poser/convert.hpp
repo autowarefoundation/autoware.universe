@@ -126,7 +126,7 @@ GNSSStat NavSatFix2UTMLocal(
             utm_local.altitude = nav_sat_fix_msg.altitude;
             utm_local.x = global_x - utm_origin.x;
             utm_local.y = global_y - utm_origin.y;
-            utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
+            utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
         }
     }
     catch (const GeographicLib::GeographicErr & err) {
