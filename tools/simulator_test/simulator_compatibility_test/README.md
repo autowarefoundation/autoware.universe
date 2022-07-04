@@ -14,19 +14,36 @@ cd src/universe/autoware.universe/tools/simulator_test/simulator_compatibility_t
 
 To run each test case manually
 
+### Test Case #1
+
+1. Run your simualtor
+2. Load a map and an ego vehicle for test
+3. Run the test using the following command
+
+   ```bash
+   python -m pytest test_01_control_mode_and_report.py
+   ```
+
+4. Check if expected behavior is created within the simulator
+   - Ego vehicle control mode is changed into Manual (If the simulator has a GUI for this one, it should display the ego is in Manual)
+   - Ego vehicle control mode is changed into Auto (If the simulator has a GUI for this one, it should display the ego is in Auto)
+5. Check if pytest output is passed or failure
+
+### Test Case #2
+
+1. Run your simualtor (If the simulator is already running, skip this part)
+2. Load a map and an ego vehicle for test (If a load and an ego are loaded already, skip this part)
+3. Run the test using the following command
+
 ```bash
-python -m pytest test_01_control_mode_and_report.py
 python -m pytest test_02_change_gear_and_report.py
+```
+
+```bash
 python -m pytest test_03_longitudinal_command_and_report.py
 python -m pytest test_04_lateral_command_and_report.py
 python -m pytest test_05_turn_indicators_cmd_and_report.py
 python -m pytest test_06_hazard_lights_cmd_and_report.py
-```
-
-To run all test cases automatically just invoke pytest.
-
-```bash
-pytest
 ```
 
 If you are interested in testing with MORAI SIM: Drive, move to the folder named test_moraisim.
