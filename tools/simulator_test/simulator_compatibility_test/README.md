@@ -16,8 +16,8 @@ To run each test case manually
 
 ### Test Case #1
 
-1. Run your simualtor
-2. Load a map and an ego vehicle for test
+1. Run your simulator
+2. Load a map and an ego vehicle for the test
 3. Run the test using the following command
 
    ```bash
@@ -31,23 +31,85 @@ To run each test case manually
 
 ### Test Case #2
 
-1. Run your simualtor (If the simulator is already running, skip this part)
-2. Load a map and an ego vehicle for test (If a load and an ego are loaded already, skip this part)
+1. Run your simulator (If the simulator is already running, skip this part)
+2. Load a map and an ego vehicle for the test (If a map and an ego are loaded already, skip this part)
 3. Run the test using the following command
 
-```bash
-python -m pytest test_02_change_gear_and_report.py
-```
+   ```bash
+   python -m pytest test_02_change_gear_and_report.py
+   ```
 
-```bash
-python -m pytest test_03_longitudinal_command_and_report.py
-python -m pytest test_04_lateral_command_and_report.py
-python -m pytest test_05_turn_indicators_cmd_and_report.py
-python -m pytest test_06_hazard_lights_cmd_and_report.py
-```
+4. Check if expected behavior is created within the simulator
+   - Ego vehicle gear mode is changed into "P" (If the simulator has a GUI for this one, it should display the gear mode is in "P")
+   - Ego vehicle gear mode is changed into "N" (If the simulator has a GUI for this one, it should display the gear mode is in "N")
+   - Ego vehicle gear mode is changed into "R" (If the simulator has a GUI for this one, it should display the gear mode is in "R")
+   - Ego vehicle gear mode is changed into "D" (If the simulator has a GUI for this one, it should display the gear mode is in "D")
+5. Check if pytest output is passed or failure
 
-If you are interested in testing with MORAI SIM: Drive, move to the folder named test_moraisim.
-And then, you can use the commands above as the same way.
+### Test Case #3
+
+1. Run your simulator (If the simulator is already running, skip this part)
+2. Load a map and an ego vehicle for the test (If a map and an ego are loaded already, skip this part)
+3. Run the test using the following command
+
+   ```bash
+   python -m pytest test_03_longitudinal_command_and_report.py
+   ```
+
+4. Check if expected behavior is created within the simulator
+   - Ego vehicle longitudinal velocity is greater than 10 kph (If the simulator has a GUI for this one, it should display the longitudinal velocity is greater than 10 kph)
+   - Ego vehicle longitudinal velocity is going below 10 kph. This is an ego vehicle initialize process to ensure the following acceleration is made by longitudinal.acceleration value (If the simulator has a GUI for this one, it should display the longitudinal velocity is less than 10 kph)
+   - Ego vehicle longitudinal velocity is greater than 10 kph (If the simulator has a GUI for this one, it should display the longitudinal velocity is greater than 10 kph)
+   - Ego vehicle longitudinal velocity is going below 10 kph. This is an ego vehicle reset process to tear down this test case.
+5. Check if pytest output is passed or failure
+
+### Test Case #4
+
+1. Run your simulator (If the simulator is already running, skip this part)
+2. Load a map and an ego vehicle for the test (If a map and an ego are loaded already, skip this part)
+3. Run the test using the following command
+
+   ```bash
+   python -m pytest test_04_lateral_command_and_report.py
+   ```
+
+4. Check if expected behavior is created within the simulator
+   - Ego vehicle steering and/or tire value is greater than 0 degree (If the simulator has a GUI for this one, it should display the steering and/or tire is greater than 0 degree)
+   - Ego vehicle steering and/or tire value is 0 degree. This is a reset process. (If the simulator has a GUI for this one, it should display the steering and/or tire is 0 degree)
+   - Ego vehicle steering and/or tire value is less than 0 degree (If the simulator has a GUI for this one, it should display the steering and/or tire is less than 0 degree)
+   - Ego vehicle steering and/or tire value is 0 degree. This is a reset process. (If the simulator has a GUI for this one, it should display the steering and/or tire is 0 degree)
+5. Check if pytest output is passed or failure
+
+### Test Case #5
+
+1. Run your simulator (If the simulator is already running, skip this part)
+2. Load a map and an ego vehicle for the test (If a map and an ego are loaded already, skip this part)
+3. Run the test using the following command
+
+   ```bash
+   python -m pytest test_05_turn_indicators_cmd_and_report.py
+   ```
+
+4. Check if expected behavior is created within the simulator
+   - Ego vehicle left turn indicator is turned on (If the simulator has a GUI for this one, it should display the left turn indicator is turned on)
+   - Ego vehicle right turn indicator is turned on (If the simulator has a GUI for this one, it should display the right turn indicator is turned on)
+   - Ego vehicle both turn indicators are turned off. This is a reset process. (If the simulator has a GUI for this one, it should display both left and right turn indicators are turned off)
+5. Check if pytest output is passed or failure
+
+### Test Case #6
+
+1. Run your simulator (If the simulator is already running, skip this part)
+2. Load a map and an ego vehicle for the test (If a map and an ego are loaded already, skip this part)
+3. Run the test using the following command
+
+   ```bash
+   python -m pytest test_06_hazard_lights_cmd_and_report.py
+   ```
+
+4. Check if expected behavior is created within the simulator
+   - Ego vehicle hazard lights are turned on (If the simulator has a GUI for this one, it should display the hazard lights are turned on or blinking)
+   - Ego vehicle hazard lights are turned off. This is a reset process. (If the simulator has a GUI for this one, it should display the hazard lights are turned off)
+5. Check if pytest output is passed or failure
 
 ## Inner-workings / Algorithms
 
