@@ -29,6 +29,7 @@
 
   <depend>modularized_particle_filter</depend>
   <depend>modularized_particle_filter_msgs</depend>
+  <depend>vmvl_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

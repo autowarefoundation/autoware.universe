@@ -1,32 +1,38 @@
 <launch>
-    <!-- ========================================= -->
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
     <arg name="image_size" default="800"/>
     <arg name="max_range" default="20.0"/>
 
-    <arg name="pf" default="false"/>
-
-    <include file="$(find-pkg-share modularized_particle_filter)/launch/run.launch.xml" if="$(var pf)">
-        <arg name="use_sim_time" value="$(var use_sim_time)" />
-        <arg name="log_level" value="$(var log_level)"/>
-    </include>
-
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/corrector.launch.xml" if="$(var pf)">
-        <arg name="use_sim_time" value="$(var use_sim_time)" />
-        <arg name="log_level" value="$(var log_level)"/>
-        <arg name="image_size" value="$(var image_size)" />
-        <arg name="max_range" value="$(var max_range)"/>
-    </include>
-
+    <arg name="pf" default="true"/>
 
     <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
+    <!-- ========================================= -->
+
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/pf.launch.xml" if="$(var pf)">
+        <arg name="use_sim_time" value="$(var use_sim_time)" />
+        <arg name="log_level" value="$(var log_level)"/>
+        <arg name="image_size" value="$(var image_size)" />
+        <arg name="max_range" value="$(var max_range)"/>
+    </include>
+
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/imgproc.launch.xml" if="$(var pf)">
+        <arg name="use_sim_time" value="$(var use_sim_time)" />
+        <arg name="log_level" value="$(var log_level)"/>
+        <arg name="src_image" value="$(var src_image)"/>
+        <arg name="src_info" value="$(var src_info)"/>
+        <arg name="resized_image" value="$(var resized_image)"/>
+        <arg name="resized_info" value="$(var resized_info)"/>
+    </include>
 
     <!-- ========================================= -->
+
+    <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
+
     <node name="raw_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
@@ -39,12 +45,6 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <!-- ========================================= -->
-
-    <node name="undistort" pkg="vector_map_visual_localizer" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="width" value="800"/>
-    </node>
 
     <node name="ll2_decompose" pkg="vector_map_visual_localizer" exec="ll2_decompose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <remap from="pose_topic" to="/particle_pose"/>
@@ -55,20 +55,6 @@
         <param name="line_thick" value="2"/>
     </node>
 
-    <node name="lsd" pkg="vector_map_visual_localizer" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="max_range" value="$(var max_range)"/>
-        <param name="image_size" value="$(var image_size)"/>
-        <param name="line_thick" value="2"/>
-        <param name="line_threshold" value="0.01"/>
-        <param name="dilate_size" value="1"/>
-
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="$(var src_info)" to="$(var resized_info)"/>
-    </node>
-
-    <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
-
     <node name="twist_estimator" pkg="vector_map_visual_localizer" exec="twist_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
@@ -78,20 +64,9 @@
         <remap from="pose" to="/init/pose"/>
     </node>
 
-    <node if="false" name="freespace" pkg="vector_map_visual_localizer" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="camera_info" to="$(var resized_info)"/>
-        <remap from="image" to="$(var resized_image)"/>
-    </node>
-
-    <node if="true" name="vanish" pkg="vector_map_visual_localizer" exec="vanish_node" output="screen" args="--ros-args --log-level info">
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="$(var src_info)" to="$(var resized_info)"/>
-    </node>
-
     <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
-        <!-- <remap from="particle_pose" to="/sensing/gnss/ublox/pose"/> -->
         <remap from="particle_pose" to="/particle_pose"/>
     </node>
 </launch>
