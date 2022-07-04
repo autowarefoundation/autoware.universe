@@ -17,9 +17,9 @@ The `detected_object_filter` is a node that filters detected object based on x,y
 
 ### Output
 
-| Name            | Type                            | Description              |
-| --------------- | ------------------------------- | ------------------------ |
-| `output/object` | `sensor_msgs::msg::PointCloud2` | filtered detected object |
+| Name            | Type                                                  | Description              |
+| --------------- | ----------------------------------------------------- | ------------------------ |
+| `output/object` | `autoware_auto_perception_msgs::msg::DetectedObjects` | filtered detected object |
 
 ## Parameters
 
@@ -34,6 +34,8 @@ The `detected_object_filter` is a node that filters detected object based on x,y
 | `lower_bound_y`         | float | -50.00        | Bound for filtering. Only used if filter_by_xy_position is true                                             |
 
 ## Assumptions / Known limits
+
+Filtering is performed based on the center position of the object.
 
 ## (Optional) Error detection and handling
 
