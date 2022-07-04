@@ -28,11 +28,12 @@ The `gnss_poser` is a node that subscribes gnss sensing messages and calculates 
 ### Core Parameters
 
 | Name                 | Type   | Default Value    | Description                                                                                     |
-| -------------------- | ------ | ---------------- | ----------------------------------------------------------------------------------------------- |
+|----------------------|--------|------------------|-------------------------------------------------------------------------------------------------|
 | `base_frame`         | string | "base_link"      | frame d                                                                                         |
 | `gnss_frame`         | string | "gnss"           | frame id                                                                                        |
 | `gnss_base_frame`    | string | "gnss_base_link" | frame id                                                                                        |
 | `map_frame`          | string | "map"            | frame id                                                                                        |
+| `coordinate_system`  | int    | "4"              | id number of wanted coordinate system, 4 is a local coordinate system in UTM                    |
 | `use_ublox_receiver` | bool   | false            | flag to use ublox receiver                                                                      |
 | `plane_zone`         | int    | 9                | identification number of the plane rectangular coordinate systems (See, reference document [2]) |
 
