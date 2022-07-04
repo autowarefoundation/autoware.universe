@@ -105,9 +105,7 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
 {
   if (ll2_cloud_.empty()) return;
 
-  auto tmp = pose;
-  tmp.position.z = 0;  // Because ll2_cloud doesnt have z-value
-  Eigen::Affine3f transform = util::pose2Affine(tmp);
+  Eigen::Affine3f transform = util::pose2Affine(pose);
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
   drawOverlaySignBoard(overlayed_image, pose, stamp);

@@ -24,20 +24,12 @@ public:
   Ll2Decomposer();
 
 private:
-  const int line_thick_;
-  const int image_size_;
-  const float max_range_;  // [m]
-
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_ = nullptr;
 
   rclcpp::Publisher<Cloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Cloud2>::SharedPtr pub_sign_board_;
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
 
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_stamped_;
-
-  void poseCallback(const PoseStamped & pose_stamped);
 
   void publishSignBoard(const lanelet::LineStringLayer & line_strings, const rclcpp::Time & stamp);
 
