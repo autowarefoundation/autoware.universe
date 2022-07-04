@@ -673,7 +673,9 @@ void RunOutModule::insertStopPoint(
   auto insert_idx = nearest_seg_idx + 1;
 
   // if stop point is ahead of the end of the path, don't insert
-  if (planning_utils::isAheadOf(*stop_point, path.points.at(insert_idx).point.pose)) {
+  if (
+    insert_idx == path.points.size() - 1 &&
+    planning_utils::isAheadOf(*stop_point, path.points.at(insert_idx).point.pose)) {
     return;
   }
 
