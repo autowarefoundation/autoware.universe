@@ -56,28 +56,6 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
   }
 }
 
-void LineSegmentDetector::listenExtrinsicTf(const std::string & frame_id)
-{
-  try {
-    geometry_msgs::msg::TransformStamped ts =
-      tf_buffer_->lookupTransform("base_link", frame_id, tf2::TimePointZero);
-    Eigen::Vector3f p;
-    p.x() = ts.transform.translation.x;
-    p.y() = ts.transform.translation.y;
-    p.z() = ts.transform.translation.z;
-
-    Eigen::Quaternionf q;
-    q.w() = ts.transform.rotation.w;
-    q.x() = ts.transform.rotation.x;
-    q.y() = ts.transform.rotation.y;
-    q.z() = ts.transform.rotation.z;
-    camera_extrinsic_ = Eigen::Affine3f::Identity();
-    camera_extrinsic_->translation() = p;
-    camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
-  } catch (tf2::TransformException & ex) {
-  }
-}
-
 std::set<ushort> getUniquePixelValue(cv::Mat & image)
 {
   auto begin = image.begin<ushort>();

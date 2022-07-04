@@ -1,4 +1,5 @@
 #pragma once
+#include "common/static_tf_subscriber.hpp"
 #include "validation/graph_segmentation.hpp"
 
 #include <Eigen/Geometry>
@@ -15,8 +16,6 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 namespace validation
 {
@@ -39,19 +38,16 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  common::StaticTfSubscriber tf_subscriber_;
 
   pcl::PointCloud<pcl::PointNormal>::Ptr linestrings_{nullptr};
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
   std::optional<CameraInfo> camera_info_{std::nullopt};
 
-  std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
   cv::Mat segmented_;
 
   cv::Ptr<cv::SimpleBlobDetector> detector_;
-
-  void listenExtrinsicTf(const std::string & frame_id);
 
   void extractNearLanelet(const PoseStamped & pose_stamped);
 

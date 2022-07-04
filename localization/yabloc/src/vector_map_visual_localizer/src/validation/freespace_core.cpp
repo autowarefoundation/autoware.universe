@@ -1,16 +1,13 @@
 #include "common/util.hpp"
-#include "sign_detector/ll2_util.hpp"
+#include "map/ll2_util.hpp"
 #include "validation/freespace.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
 
 namespace validation
 {
-FreeSpace::FreeSpace() : rclcpp::Node("freespace")
+FreeSpace::FreeSpace() : rclcpp::Node("freespace"), tf_subscriber_(get_clock())
 {
-  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-  transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-
   using std::placeholders::_1;
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
   auto cb_map = std::bind(&FreeSpace::mapCallback, this, _1);
@@ -192,29 +189,6 @@ void FreeSpace::imageCallback(const Image & msg)
   cv::cvtColor(edge_image, edge_image, cv::COLOR_GRAY2BGR);
   cv::drawContours(edge_image, contours, -1, cv::Scalar(0, 0, 255), 1);
   util::publishImage(*pub_image_, edge_image, msg.header.stamp);
-}
-
-void FreeSpace::listenExtrinsicTf(const std::string & frame_id)
-{
-  try {
-    geometry_msgs::msg::TransformStamped ts =
-      tf_buffer_->lookupTransform("base_link", frame_id, tf2::TimePointZero);
-    Eigen::Vector3f p;
-    p.x() = ts.transform.translation.x;
-    p.y() = ts.transform.translation.y;
-    p.z() = ts.transform.translation.z;
-
-    Eigen::Quaternionf q;
-    q.w() = ts.transform.rotation.w;
-    q.x() = ts.transform.rotation.x;
-    q.y() = ts.transform.rotation.y;
-    q.z() = ts.transform.rotation.z;
-
-    camera_extrinsic_ = Eigen::Affine3f::Identity();
-    camera_extrinsic_->translation() = p;
-    camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
-  } catch (tf2::TransformException & ex) {
-  }
 }
 
 void FreeSpace::incrementAlongLine(cv::Mat image, const cv::Point2i & from, const cv::Point2i & to)

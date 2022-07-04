@@ -15,7 +15,7 @@ namespace validation
 {
 void Overlay::ll2Callback(const PointCloud2 & msg) { pcl::fromROSMsg(msg, ll2_cloud_); }
 
-Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
+Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock())
 {
   using std::placeholders::_1;
   // Subscriber
@@ -36,9 +36,6 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
     sub_sign_board_ = create_subscription<PointCloud2>(
       "/sign_board", 10,
       [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, sign_board_); });
-
-    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-    transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
   // Publisher
   {
@@ -50,7 +47,7 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}
 void Overlay::infoCallback(const sensor_msgs::msg::CameraInfo & msg)
 {
   info_ = msg;
-  listenExtrinsicTf(info_->header.frame_id);
+  camera_extrinsic_ = tf_subscriber_(info_->header.frame_id, "base_link");
 }
 
 void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
@@ -131,29 +128,6 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
   cv::Mat show_image;
   cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
   util::publishImage(*pub_image_, show_image, stamp);
-}
-
-void Overlay::listenExtrinsicTf(const std::string & frame_id)
-{
-  try {
-    geometry_msgs::msg::TransformStamped ts =
-      tf_buffer_->lookupTransform("base_link", frame_id, tf2::TimePointZero);
-    Eigen::Vector3f p;
-    p.x() = ts.transform.translation.x;
-    p.y() = ts.transform.translation.y;
-    p.z() = ts.transform.translation.z;
-
-    Eigen::Quaternionf q;
-    q.w() = ts.transform.rotation.w;
-    q.x() = ts.transform.rotation.x;
-    q.y() = ts.transform.rotation.y;
-    q.z() = ts.transform.rotation.z;
-
-    camera_extrinsic_ = Eigen::Affine3f::Identity();
-    camera_extrinsic_->translation() = p;
-    camera_extrinsic_->matrix().topLeftCorner(3, 3) = q.toRotationMatrix();
-  } catch (tf2::TransformException & ex) {
-  }
 }
 
 void Overlay::poseCallback(const geometry_msgs::msg::PoseStamped & msg)

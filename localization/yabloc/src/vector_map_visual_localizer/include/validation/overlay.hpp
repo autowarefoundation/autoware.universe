@@ -1,4 +1,5 @@
 #pragma once
+#include "common/static_tf_subscriber.hpp"
 #include "common/timer.hpp"
 
 #include <eigen3/Eigen/Geometry>
@@ -15,8 +16,6 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 namespace validation
 {
@@ -34,6 +33,7 @@ public:
 private:
   std::shared_ptr<rclcpp::ParameterEventHandler> param_subscriber_;
   std::shared_ptr<rclcpp::ParameterCallbackHandle> cb_handle_;
+  common::StaticTfSubscriber tf_subscriber_;
 
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
@@ -44,8 +44,6 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_sign_board_;
 
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_vis_;
-  std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
   std::optional<sensor_msgs::msg::CameraInfo> info_{std::nullopt};
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
@@ -58,7 +56,6 @@ private:
   void ll2Callback(const PointCloud2 & msg);
   void lsdCallback(const PointCloud2 & msg);
 
-  void listenExtrinsicTf(const std::string & frame_id);
   LineSegments extractNaerLineSegments(const Pose & pose);
 
   void drawOverlaySignBoard(cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);

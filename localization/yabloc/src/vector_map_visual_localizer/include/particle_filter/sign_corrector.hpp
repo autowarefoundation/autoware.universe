@@ -1,4 +1,6 @@
 #pragma once
+#include "common/static_tf_subscriber.hpp"
+
 #include <Eigen/Geometry>
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
@@ -15,8 +17,6 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 namespace particle_filter
 {
@@ -49,16 +49,14 @@ private:
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
   std::optional<CameraInfo> camera_info_{std::nullopt};
 
-  std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
+  common::StaticTfSubscriber tf_subscriber_;
 
   std::optional<std::vector<cv::Point2i>> projectBoard(
     const Eigen::Matrix3f & K, const Eigen::Affine3f & T, const Eigen::Affine3f & transform,
     const Vec3Vec & contour);
 
   void execute(const rclcpp::Time & stamp, cv::Mat image);
-  void listenExtrinsicTf(const std::string & frame_id);
   void extractNearSign(const PoseStamped & pose_stamped);
   void publishSignMarker();
 
