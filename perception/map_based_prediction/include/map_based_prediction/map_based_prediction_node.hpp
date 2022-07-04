@@ -149,6 +149,8 @@ private:
 
   PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
 
+  PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
+
   void removeOldObjectsHistory(const double current_time);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
