@@ -51,7 +51,7 @@ DetectedObjectFilterNode::DetectedObjectFilterNode(const rclcpp::NodeOptions & n
   lower_bound_x_ = declare_parameter<float>("lower_bound_x", 0.0);
   lower_bound_y_ = declare_parameter<float>("lower_bound_y", -50.0);
   filter_by_xy_position_ = declare_parameter<bool>("filter_by_xy_position", false);
-  unknown_only_ = declare_parameter<bool>("unknown_only", false);
+  unknown_only_ = declare_parameter<bool>("unknown_only", true);
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -86,7 +86,9 @@ void DetectedObjectFilterNode::objectCallback(
     for (const auto & object : input_msg->objects) {
       const auto & position = object.kinematics.pose_with_covariance.pose.position;
       const auto & label = object.classification.front().label;
-      if (!unknown_only_ || label == Label::UNKNOWN) {
+      if (unknown_only_ && (label != Label::UNKNOWN)) {
+        output_object_msg.objects.emplace_back(object);
+      } else {
         if (
           position.x > lower_bound_x_ && position.x < upper_bound_x_ &&
           position.y > lower_bound_y_ && position.y < upper_bound_y_) {
@@ -115,7 +117,9 @@ void DetectedObjectFilterNode::objectCallback(
     for (const auto & object : transformed_objects.objects) {
       const auto position = object.kinematics.pose_with_covariance.pose.position;
       const auto & label = object.classification.front().label;
-      if (!unknown_only_ || label == Label::UNKNOWN) {
+      if (unknown_only_ && (label != Label::UNKNOWN)) {
+        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+      } else {
         if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
           output_object_msg.objects.emplace_back(input_msg->objects.at(index));
         }
