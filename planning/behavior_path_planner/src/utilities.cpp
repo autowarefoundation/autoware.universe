@@ -292,7 +292,7 @@ PoseArray convertToGeometryPoseArray(const PathWithLaneId & path)
 
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const double duration, const double resolution, const double acceleration)
+  const double duration, const double resolution, const double acceleration, double min_speed)
 {
   PredictedPath predicted_path{};
   predicted_path.time_step = rclcpp::Duration::from_seconds(resolution);
@@ -307,7 +307,6 @@ PredictedPath convertToPredictedPath(
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
   rclcpp::Time start_time = clock.now();
   double vehicle_speed = std::abs(vehicle_twist.linear.x);
-  constexpr double min_speed = 1.0;
   if (vehicle_speed < min_speed) {
     vehicle_speed = min_speed;
     RCLCPP_DEBUG_STREAM_THROTTLE(

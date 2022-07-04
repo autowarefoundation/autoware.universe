@@ -159,7 +159,8 @@ PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
 
 PredictedPath convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const double duration, const double resolution, const double acceleration);
+  const double duration, const double resolution, const double acceleration,
+  double min_speed = 1.0);
 
 FrenetCoordinate3d convertToFrenetCoordinate3d(
   const std::vector<Point> & linestring, const Point & search_point_geom);

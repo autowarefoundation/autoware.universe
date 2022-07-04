@@ -281,6 +281,11 @@ bool selectSafePath(
       return true;
     }
   }
+  // set first path for force lane change if no valid path found
+  if (!paths.empty()) {
+    *selected_path = paths.front();
+    return false;
+  }
 
   return false;
 }
@@ -344,7 +349,8 @@ bool isLaneChangePathSafe(
     (!ros_parameters.enable_collision_check_at_prepare_phase) ? lane_change_prepare_duration : 0.0;
   const double target_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
   const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, 0.0);
+    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, acceleration,
+    ros_parameters.minimum_lane_change_velocity);
 
   const auto getEgoExpectedPoseAndConvertToPolygon =
     [](
