@@ -113,6 +113,7 @@ private:
 
   std::string base_frame_;
   std::string sensor_frame_;
+  float non_ground_heigh_thresh_ = 2.5f;    // maximum height of non_ground object from ground
   double global_slope_max_angle_rad_;       // radians
   double local_slope_max_angle_rad_;        // radians
   double radial_divider_angle_rad_;         // distance in rads between dividers
