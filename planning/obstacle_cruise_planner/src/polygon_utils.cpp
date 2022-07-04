@@ -29,15 +29,6 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   bg::append(polygon.outer(), point);
 }
 
-void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point32 & geom_point)
-{
-  Point2d point;
-  point.x() = geom_point.x;
-  point.y() = geom_point.y;
-
-  bg::append(polygon.outer(), point);
-}
-
 void appendPointToPolygon(Polygon2d & polygon, const Point2d point)
 {
   bg::append(polygon.outer(), point);
