@@ -97,8 +97,10 @@ void Lanelet2MapVisualizationNode::onMapBin(
     lanelet::utils::query::crosswalkLanelets(all_lanelets);
   lanelet::ConstLanelets walkway_lanelets = lanelet::utils::query::walkwayLanelets(all_lanelets);
 
-  if (road_lanelets.size() + shoulder_lanelets.size() + crosswalk_lanelets.size() +
-      walkway_lanelets.size() != all_lanelets.size()) {
+  if (
+    road_lanelets.size() + shoulder_lanelets.size() + crosswalk_lanelets.size() +
+      walkway_lanelets.size() !=
+    all_lanelets.size()) {
     RCLCPP_WARN_STREAM(
       this->get_logger(),
       "The correct subtype must be defined for each lanelet."
