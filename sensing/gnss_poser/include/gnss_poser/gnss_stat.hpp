@@ -21,6 +21,7 @@ enum class CoordinateSystem {
   MGRS = 1,
   PLANE = 2,
   LOCAL_CARTESIAN = 3,
+  UTM_LOCAL = 4
 };
 
 struct GNSSStat

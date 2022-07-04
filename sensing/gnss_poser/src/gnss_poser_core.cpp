@@ -166,6 +166,8 @@ GNSSStat GNSSPoser::convert(
   GNSSStat gnss_stat;
   if (coordinate_system == CoordinateSystem::UTM) {
     gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger());
+  } else if (coordinate_system == CoordinateSystem::UTM_LOCAL) {
+    gnss_stat = NavSatFix2UTMLocal(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::MGRS) {
     gnss_stat = NavSatFix2MGRS(nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::PLANE) {
