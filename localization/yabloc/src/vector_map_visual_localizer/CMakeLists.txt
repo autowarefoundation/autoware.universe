@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(sign_detector)
+project(vector_map_visual_localizer)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -102,9 +102,6 @@ ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC includ
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 
 ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish)
-
-# ADD_EXE(TARGET free_space_node SRC src/validation/freespace_*.cpp INC include LIB util modified_seg)
-# ADD_EXE(TARGET snake SRC src/snake.cpp INC include LIB)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

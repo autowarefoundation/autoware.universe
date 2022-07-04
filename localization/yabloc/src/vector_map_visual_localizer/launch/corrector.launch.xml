@@ -11,7 +11,7 @@
     <!-- ========================================= -->
     <!-- ============ camera  correction ========= -->
     <!-- ========================================= -->
-    <node name="camera_corrector" pkg="sign_detector" exec="camera_corrector_node" output="screen" args="--ros-args --log-level info">
+    <node name="camera_corrector" pkg="vector_map_visual_localizer" exec="camera_corrector_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
@@ -32,7 +32,7 @@
     <!-- ========================================= -->
     <!-- ============= gnss correction =========== -->
     <!-- ========================================= -->
-    <node name="gnss_corrector" pkg="sign_detector" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level info">
+    <node name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="5.0"/>
@@ -48,7 +48,7 @@
     <!-- ========================================= -->
     <!-- ========== sign-board correction ======== -->
     <!-- ========================================= -->
-    <node if="true" name="sign_corrector" pkg="sign_detector" exec="sign_corrector_node" output="screen" args="--ros-args --log-level fatal">
+    <node if="true" name="sign_corrector" pkg="vector_map_visual_localizer" exec="sign_corrector_node" output="screen" args="--ros-args --log-level fatal">
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="image" to="$(var resized_image)"/>
         <param name="blur_size" value="5"/>

@@ -12,7 +12,7 @@
         <arg name="log_level" value="$(var log_level)"/>
     </include>
 
-    <include file="$(find-pkg-share sign_detector)/launch/corrector.launch.xml" if="$(var pf)">
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/corrector.launch.xml" if="$(var pf)">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
         <arg name="image_size" value="$(var image_size)" />
@@ -27,13 +27,13 @@
 
 
     <!-- ========================================= -->
-    <node name="raw_pose" pkg="sign_detector" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
+    <node name="raw_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
     </node>
 
-    <node name="pose_to_path" pkg="sign_detector" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
+    <node name="pose_to_path" pkg="vector_map_visual_localizer" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
         <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose]"/>
         <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path]"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -41,12 +41,12 @@
 
     <!-- ========================================= -->
 
-    <node name="undistort" pkg="sign_detector" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="undistort" pkg="vector_map_visual_localizer" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="width" value="800"/>
     </node>
 
-    <node name="ll2_to_image" pkg="sign_detector" exec="ll2_to_image_node" output="log" args="--ros-args --log-level $(var log_level)">
+    <node name="ll2_to_image" pkg="vector_map_visual_localizer" exec="ll2_to_image_node" output="log" args="--ros-args --log-level $(var log_level)">
         <remap from="pose_topic" to="/particle_pose"/>
         <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -55,7 +55,7 @@
         <param name="line_thick" value="2"/>
     </node>
 
-    <node name="lsd" pkg="sign_detector" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="lsd" pkg="vector_map_visual_localizer" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="max_range" value="$(var max_range)"/>
         <param name="image_size" value="$(var image_size)"/>
@@ -69,26 +69,26 @@
 
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
-    <node name="twist_estimator" pkg="sign_detector" exec="twist_node" output="screen" args="--ros-args --log-level warn">
+    <node name="twist_estimator" pkg="vector_map_visual_localizer" exec="twist_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <node name="pose_initializer" pkg="sign_detector" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
+    <node name="pose_initializer" pkg="vector_map_visual_localizer" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="pose" to="/init/pose"/>
     </node>
 
-    <node if="false" name="freespace" pkg="sign_detector" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
+    <node if="false" name="freespace" pkg="vector_map_visual_localizer" exec="free_space_node" output="screen" args="--ros-args --log-level warn">
         <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="image" to="$(var resized_image)"/>
     </node>
 
-    <node if="true" name="vanish" pkg="sign_detector" exec="vanish_node" output="screen" args="--ros-args --log-level info">
+    <node if="true" name="vanish" pkg="vector_map_visual_localizer" exec="vanish_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
-    <node name="overlay" pkg="sign_detector" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
         <!-- <remap from="particle_pose" to="/sensing/gnss/ublox/pose"/> -->
