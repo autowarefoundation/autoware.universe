@@ -79,7 +79,6 @@ void VanishPoint::callbackImage(const Image & msg)
   Eigen::Vector3f abc = Kinv.transpose() * normal;
   float v1 = -abc.z() / abc.y();
   float v2 = (-abc.x() * W - abc.z()) / abc.y();
-  std::cout << v1 << " " << v2 << std::endl;
   cv::line(image, cv::Point(v1, 0), cv::Point2i(v2, W), cv::Scalar(0, 255, 0), 1);
 
   // Pure measurement vanishing point

@@ -9,14 +9,29 @@ GroundServer::GroundServer() : Node("ground_server")
   using std::placeholders::_2;
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
-  auto cb_map = std::bind(&GroundServer::mapCallback, this, _1);
-  auto cb_service = std::bind(&GroundServer::computeGround, this, _1, _2);
+  auto cb_pose = std::bind(&GroundServer::callbackPoseStamped, this, _1);
+  auto cb_map = std::bind(&GroundServer::callbackMap, this, _1);
+  auto cb_service = std::bind(&GroundServer::callbackService, this, _1, _2);
 
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
+  sub_pose_stamped_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
+
+  pub_ground_height_ = create_publisher<Float32>("/height", 10);
+
   service_ = create_service<Ground>("ground", cb_service);
 }
 
-void GroundServer::mapCallback(const HADMapBin & msg)
+void GroundServer::callbackPoseStamped(const PoseStamped & msg)
+{
+  if (kdtree_ == nullptr) return;
+  Pose pose = computeGround(msg.pose.position);
+
+  Float32 data;
+  data.data = pose.position.z;
+  pub_ground_height_->publish(data);
+}
+
+void GroundServer::callbackMap(const HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
@@ -47,17 +62,14 @@ void GroundServer::mapCallback(const HADMapBin & msg)
   kdtree_->setInputCloud(cloud_);
 }
 
-void GroundServer::computeGround(
-  const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response)
+geometry_msgs::msg::Pose GroundServer::computeGround(const geometry_msgs::msg::Point & point)
 {
-  if (kdtree_ == nullptr) return;
-
   constexpr int K = 10;
   std::vector<int> indices;
   std::vector<float> distances;
   pcl::PointXYZ p;
-  p.x = request->point.x;
-  p.y = request->point.y;
+  p.x = point.x;
+  p.y = point.y;
   p.z = 0;
   kdtree_->nearestKSearch(p, K, indices, distances);
 
@@ -67,11 +79,24 @@ void GroundServer::computeGround(
     height = std::min(height, v.z());
   }
 
-  response->pose.position.x = request->point.x;
-  response->pose.position.y = request->point.y;
-  response->pose.position.z = height;
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = point.x;
+  pose.position.y = point.y;
+  pose.position.z = height;
 
   // TODO: compute orientation
+
+  return pose;
+}
+
+void GroundServer::callbackService(
+  const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response)
+{
+  if (kdtree_ == nullptr) return;
+  Pose pose = computeGround(request->point);
+  response->pose.position.x = pose.position.x;
+  response->pose.position.y = pose.position.y;
+  response->pose.position.z = pose.position.z;
 }
 
 }  // namespace map

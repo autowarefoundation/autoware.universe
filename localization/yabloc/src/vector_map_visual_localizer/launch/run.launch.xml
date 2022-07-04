@@ -33,7 +33,7 @@
 
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
-    <node name="raw_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level $(var log_level)">
+    <node name="fix_to_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
@@ -45,10 +45,12 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
+    <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
 
     <node name="ll2_decompose" pkg="vector_map_visual_localizer" exec="ll2_decompose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <remap from="pose_topic" to="/particle_pose"/>
-        <param name="map_topic" value="/map/vector_map"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="max_range" value="$(var max_range)"/>
         <param name="image_size" value="$(var image_size)"/>

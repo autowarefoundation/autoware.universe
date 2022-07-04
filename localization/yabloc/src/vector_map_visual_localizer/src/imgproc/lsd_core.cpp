@@ -185,19 +185,8 @@ void LineSegmentDetector::projectEdgeOnPlane(
   }
 
   // Publish
-  publishCloud(reliable_edges, stamp);
+  util::publishCloud(*pub_cloud_, reliable_edges, stamp);
   util::publishImage(*pub_image_, reliable_line_image, stamp);
-}
-
-void LineSegmentDetector::publishCloud(
-  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp) const
-{
-  // Convert to msg
-  sensor_msgs::msg::PointCloud2 msg;
-  pcl::toROSMsg(cloud, msg);
-  msg.header.stamp = stamp;
-  msg.header.frame_id = "map";
-  pub_cloud_->publish(msg);
 }
 
 cv::Mat LineSegmentDetector::segmentationGraph(const cv::Mat & image)

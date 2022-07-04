@@ -3,6 +3,7 @@
 #include <opencv4/opencv2/imgcodecs.hpp>
 
 #include <cv_bridge/cv_bridge.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <iostream>
 
@@ -146,6 +147,18 @@ rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
 
   rclcpp::Time stamp(t_of_day, nano, RCL_ROS_TIME);
   return stamp;
+}
+
+void publishCloud(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
+  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp)
+{
+  // Convert to msg
+  sensor_msgs::msg::PointCloud2 cloud_msg;
+  pcl::toROSMsg(cloud, cloud_msg);
+  cloud_msg.header.stamp = stamp;
+  cloud_msg.header.frame_id = "map";
+  publisher.publish(cloud_msg);
 }
 
 }  // namespace util

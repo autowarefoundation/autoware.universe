@@ -1,3 +1,4 @@
+#include "common/util.hpp"
 #include "map/ll2_decomposer.hpp"
 #include "map/ll2_util.hpp"
 
@@ -21,7 +22,6 @@ Ll2Decomposer::Ll2Decomposer()
 
   // Publisher
   pub_image_ = this->create_publisher<sensor_msgs::msg::Image>("/ll2_image", 10);
-  pub_height_ = this->create_publisher<std_msgs::msg::Float32>("/height", 10);
   pub_cloud_ = create_publisher<Cloud2>("/ll2_cloud", latch_qos);
   pub_sign_board_ = create_publisher<Cloud2>("/sign_board", latch_qos);
 
@@ -97,36 +97,12 @@ void Ll2Decomposer::poseCallback(const PoseStamped & pose_stamped)
   }
 
   // Publish
-  publishImage(image, pose_stamped.header.stamp);
+  util::publishImage(*pub_image_, image, pose_stamped.header.stamp);
   // TODO:
   static bool first_publish_cloud = true;
-  if (first_publish_cloud) publishCloud(*linestrings_, pose_stamped.header.stamp);
+  if (first_publish_cloud)
+    util::publishCloud(*pub_cloud_, *linestrings_, pose_stamped.header.stamp);
   first_publish_cloud = false;
-
-  std_msgs::msg::Float32 height;
-  height.data = computeHeight(pose);
-  pub_height_->publish(height);
-}
-
-void Ll2Decomposer::publishImage(const cv::Mat & image, const rclcpp::Time & stamp)
-{
-  cv_bridge::CvImage raw_image;
-  raw_image.header.stamp = stamp;
-  raw_image.header.frame_id = "map";
-  raw_image.encoding = "bgr8";
-  raw_image.image = image;
-  pub_image_->publish(*raw_image.toImageMsg());
-}
-
-void Ll2Decomposer::publishCloud(
-  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp)
-{
-  // Convert to msg
-  sensor_msgs::msg::PointCloud2 cloud_msg;
-  pcl::toROSMsg(cloud, cloud_msg);
-  cloud_msg.header.stamp = stamp;
-  cloud_msg.header.frame_id = "map";
-  pub_cloud_->publish(cloud_msg);
 }
 
 void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
@@ -137,15 +113,6 @@ void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin
   RCLCPP_INFO_STREAM(this->get_logger(), "point: " << lanelet_map->pointLayer.size());
 
   linestrings_ = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-
-  auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
-    pcl::PointXYZ q;
-    q.x = p.x();
-    q.y = p.y();
-    q.z = p.z();
-    return q;
-  };
 
   const std::set<std::string> visible_labels = {
     "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
@@ -157,7 +124,6 @@ void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin
 
     std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d p : line) {
-      cloud_->push_back(toPointXYZ(p));
       if (from.has_value()) {
         pcl::PointNormal pn;
         pn.x = from->x();
@@ -171,8 +137,6 @@ void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin
       from = p;
     }
   }
-  kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
-  kdtree_->setInputCloud(cloud_);
 
   publishSignBoard(lanelet_map->lineStringLayer, msg.header.stamp);
 }
@@ -222,22 +186,4 @@ void Ll2Decomposer::publishSignBoard(
   pub_sign_board_->publish(cloud_msg);
 }
 
-float Ll2Decomposer::computeHeight(const Eigen::Vector3f & pose)
-{
-  constexpr int K = 10;
-  std::vector<int> indices;
-  std::vector<float> distances;
-  pcl::PointXYZ p;
-  p.x = pose.x();
-  p.y = pose.y();
-  p.z = pose.z();
-  kdtree_->nearestKSearch(p, K, indices, distances);
-
-  float height = std::numeric_limits<float>::max();
-  for (int index : indices) {
-    Eigen::Vector3f v = cloud_->at(index).getVector3fMap();
-    height = std::min(height, v.z());
-  }
-  return height;
-}
 }  // namespace map

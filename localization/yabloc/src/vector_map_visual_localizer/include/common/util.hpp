@@ -6,8 +6,12 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 namespace util
 {
@@ -30,4 +34,9 @@ void publishImage(
 Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose);
 
 rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg);
+
+void publishCloud(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
+  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp);
+
 }  // namespace util
