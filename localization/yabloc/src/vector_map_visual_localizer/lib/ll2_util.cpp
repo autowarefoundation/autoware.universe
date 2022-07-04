@@ -1,9 +1,12 @@
-#include "sign_detector/ll2_util.hpp"
-#include <boost/archive/binary_iarchive.hpp>
+#include "map/ll2_util.hpp"
+
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
+
+#include <boost/archive/binary_iarchive.hpp>
+
 #include <lanelet2_io/io_handlers/Serialize.h>
 
-lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapBin& msg)
+lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
 {
   lanelet::LaneletMapPtr map = std::make_shared<lanelet::LaneletMap>();
 

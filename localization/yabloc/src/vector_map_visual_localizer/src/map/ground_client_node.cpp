@@ -17,8 +17,8 @@ int main(int argc, char ** argv)
     node->create_client<vmvl_msgs::srv::Ground>("ground");
 
   auto request = std::make_shared<vmvl_msgs::srv::Ground::Request>();
-  request->point.x = 3;
-  request->point.y = 4;
+  request->point.x = -88000;
+  request->point.y = 36500;
   request->point.z = 5;
 
   while (!client->wait_for_service(1s)) {
@@ -30,16 +30,18 @@ int main(int argc, char ** argv)
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service not available, waiting again...");
   }
 
-  auto result = client->async_send_request(request);
-  if (rclcpp::spin_until_future_complete(node, result) == rclcpp::FutureReturnCode::SUCCESS) {
-    RCLCPP_INFO_STREAM(
-      rclcpp::get_logger("rclcpp"), result.get()->pose.position.x
-                                      << " " << result.get()->pose.position.y << " "
-                                      << result.get()->pose.position.z);
-  } else {
-    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service ground");
-  }
+  auto timer_callback = [client, request, node]() {
+    auto callback = [](rclcpp::Client<vmvl_msgs::srv::Ground>::SharedFuture result) {
+      RCLCPP_INFO_STREAM(
+        rclcpp::get_logger("rclcpp"), result.get()->pose.position.x
+                                        << " " << result.get()->pose.position.y << " "
+                                        << result.get()->pose.position.z);
+    };
+    auto result = client->async_send_request(request, callback);
+  };
 
+  auto timer1 = node->create_wall_timer(1s, timer_callback);
+
+  rclcpp::spin(node);
   rclcpp::shutdown();
-  return 0;
 }

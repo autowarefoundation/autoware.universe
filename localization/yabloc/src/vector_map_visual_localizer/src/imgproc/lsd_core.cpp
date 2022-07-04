@@ -1,6 +1,6 @@
 #include "common/timer.hpp"
 #include "common/util.hpp"
-#include "sign_detector/lsd.hpp"
+#include "imgproc/lsd.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
 

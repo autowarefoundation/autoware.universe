@@ -105,8 +105,8 @@ ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB uti
 
 # map
 ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_util Geographic)
-ADD_EXE(TARGET ground_server_node SRC src/map/ground_server.cpp INC LIB)
-ADD_EXE(TARGET ground_client_node SRC src/map/ground_client.cpp INC LIB)
+ADD_EXE(TARGET ground_server_node SRC src/map/ground_server_*.cpp INC LIB)
+ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

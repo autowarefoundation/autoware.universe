@@ -14,7 +14,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-class Ll2ImageConverter : public rclcpp::Node
+namespace map
+{
+class Ll2Decomposer : public rclcpp::Node
 {
 public:
   using Cloud2 = sensor_msgs::msg::PointCloud2;
@@ -22,7 +24,7 @@ public:
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
 
-  Ll2ImageConverter();
+  Ll2Decomposer();
 
 private:
   const int line_thick_;
@@ -51,5 +53,6 @@ private:
   void mapCallback(const HADMapBin & msg);
   float computeHeight(const Eigen::Vector3f & pose);
 };
+}  // namespace map
 
 #endif  // SIGN_DETECTOR__LL2_TO_IMAGE_HPP_

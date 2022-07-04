@@ -1,4 +1,4 @@
-#include "sign_detector/lsd.hpp"
+#include "imgproc/lsd.hpp"
 
 int main(int argc, char * argv[])
 {

@@ -1,14 +1,15 @@
-#include "sign_detector/ll2_to_image.hpp"
-#include "sign_detector/ll2_util.hpp"
+#include "map/ll2_decomposer.hpp"
+#include "map/ll2_util.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
-
-#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-Ll2ImageConverter::Ll2ImageConverter()
+namespace map
+{
+
+Ll2Decomposer::Ll2Decomposer()
 : Node("ll2_to_image"),
   line_thick_(declare_parameter<int>("line_thick", 1)),
   image_size_(declare_parameter<int>("image_size", 800)),
@@ -25,13 +26,13 @@ Ll2ImageConverter::Ll2ImageConverter()
   pub_sign_board_ = create_publisher<Cloud2>("/sign_board", latch_qos);
 
   // Subscriber
-  auto cb_map = std::bind(&Ll2ImageConverter::mapCallback, this, _1);
-  auto cb_pose = std::bind(&Ll2ImageConverter::poseCallback, this, _1);
+  auto cb_map = std::bind(&Ll2Decomposer::mapCallback, this, _1);
+  auto cb_pose = std::bind(&Ll2Decomposer::poseCallback, this, _1);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
   sub_pose_stamped_ = create_subscription<PoseStamped>("/pose_topic", 10, cb_pose);
 }
 
-void Ll2ImageConverter::poseCallback(const PoseStamped & pose_stamped)
+void Ll2Decomposer::poseCallback(const PoseStamped & pose_stamped)
 {
   if (linestrings_ == nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -107,7 +108,7 @@ void Ll2ImageConverter::poseCallback(const PoseStamped & pose_stamped)
   pub_height_->publish(height);
 }
 
-void Ll2ImageConverter::publishImage(const cv::Mat & image, const rclcpp::Time & stamp)
+void Ll2Decomposer::publishImage(const cv::Mat & image, const rclcpp::Time & stamp)
 {
   cv_bridge::CvImage raw_image;
   raw_image.header.stamp = stamp;
@@ -117,7 +118,7 @@ void Ll2ImageConverter::publishImage(const cv::Mat & image, const rclcpp::Time &
   pub_image_->publish(*raw_image.toImageMsg());
 }
 
-void Ll2ImageConverter::publishCloud(
+void Ll2Decomposer::publishCloud(
   const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp)
 {
   // Convert to msg
@@ -128,7 +129,7 @@ void Ll2ImageConverter::publishCloud(
   pub_cloud_->publish(cloud_msg);
 }
 
-void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
+void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
   RCLCPP_INFO_STREAM(this->get_logger(), "lanelet: " << lanelet_map->laneletLayer.size());
@@ -176,7 +177,7 @@ void Ll2ImageConverter::mapCallback(const autoware_auto_mapping_msgs::msg::HADMa
   publishSignBoard(lanelet_map->lineStringLayer, msg.header.stamp);
 }
 
-void Ll2ImageConverter::publishSignBoard(
+void Ll2Decomposer::publishSignBoard(
   const lanelet::LineStringLayer & line_strings, const rclcpp::Time & stamp)
 {
   pcl::PointCloud<pcl::PointNormal>::Ptr sign_board =
@@ -221,7 +222,7 @@ void Ll2ImageConverter::publishSignBoard(
   pub_sign_board_->publish(cloud_msg);
 }
 
-float Ll2ImageConverter::computeHeight(const Eigen::Vector3f & pose)
+float Ll2Decomposer::computeHeight(const Eigen::Vector3f & pose)
 {
   constexpr int K = 10;
   std::vector<int> indices;
@@ -239,3 +240,4 @@ float Ll2ImageConverter::computeHeight(const Eigen::Vector3f & pose)
   }
   return height;
 }
+}  // namespace map
