@@ -594,7 +594,8 @@ TEST(trajectory, insertTargetPoint_PathWithLaneId)
     auto traj_out = traj;
 
     const auto p_target = createPoint(10.0, 0.0, 0.0);
-    const auto insert_idx = insertTargetPoint(9U, p_target, traj_out.points);
+    const size_t segment_idx = 9U;
+    const auto insert_idx = insertTargetPoint(segment_idx, p_target, traj_out.points);
 
     EXPECT_EQ(insert_idx, boost::none);
   }
@@ -602,8 +603,10 @@ TEST(trajectory, insertTargetPoint_PathWithLaneId)
   // Empty
   {
     auto empty_traj = generateTestTrajectory(0, 1.0);
+    const size_t segment_idx = 0;
     EXPECT_THROW(
-      insertTargetPoint({}, geometry_msgs::msg::Point{}, empty_traj.points), std::invalid_argument);
+      insertTargetPoint(segment_idx, geometry_msgs::msg::Point{}, empty_traj.points),
+      std::invalid_argument);
   }
 }
 
