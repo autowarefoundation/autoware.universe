@@ -158,6 +158,9 @@ private:
   // planner
   std::unique_ptr<PlannerInterface> planner_ptr_;
 
+  // previous closest obstacle
+  std::shared_ptr<TargetObstacle> prev_closest_obstacle_ptr_{nullptr};
+
   // obstacle filtering parameter
   struct ObstacleFilteringParam
   {

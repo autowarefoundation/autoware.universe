@@ -599,7 +599,6 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::getTargetObstacles(
 
   auto target_obstacles =
     filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
-  updateHasStopped(target_obstacles);
 
   // print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
@@ -764,6 +763,72 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
     const auto target_obstacle = TargetObstacle(
       time_stamp, predicted_object, trajectory_aligned_adaptive_cruise, nearest_collision_point);
     target_obstacles.push_back(target_obstacle);
+  }
+
+  // update stop status
+  updateHasStopped(target_obstacles);
+
+  const auto current_closest_obstacle =
+    obstacle_cruise_utils::getClosestStopObstacle(traj, target_obstacles);
+
+  // If previous closest obstacle ptr is not set
+  if (!prev_closest_obstacle_ptr_) {
+    if (current_closest_obstacle) {
+      prev_closest_obstacle_ptr_ = std::make_shared<TargetObstacle>(*current_closest_obstacle);
+    }
+
+    return target_obstacles;
+  }
+
+  // Put previous closest target obstacle if necessary
+  const auto predicted_object_itr = std::find_if(
+    predicted_objects.objects.begin(), predicted_objects.objects.end(),
+    [&](PredictedObject predicted_object) {
+      return obstacle_cruise_utils::toHexString(predicted_object.object_id) ==
+             prev_closest_obstacle_ptr_->uuid;
+    });
+
+  // If previous closest obstacle is not in the current perception lists
+  if (predicted_object_itr == predicted_objects.objects.end()) {
+    return target_obstacles;
+  }
+
+  const auto target_obstacle_itr = std::find_if(
+    target_obstacles.begin(), target_obstacles.end(), [&](const TargetObstacle target_obstacle) {
+      return target_obstacle.uuid == prev_closest_obstacle_ptr_->uuid;
+    });
+
+  if (target_obstacle_itr != target_obstacles.end()) {
+    if (current_closest_obstacle) {
+      // If prev_closest_obstacle is current_closest_obstacle just return the target obstacles(in
+      // target obstacles)
+      if ((current_closest_obstacle->uuid == prev_closest_obstacle_ptr_->uuid)) {
+        prev_closest_obstacle_ptr_ = std::make_shared<TargetObstacle>(*current_closest_obstacle);
+        return target_obstacles;
+      }
+
+      // New obstacle becomes new stop obstacle
+      prev_closest_obstacle_ptr_ = std::make_shared<TargetObstacle>(*current_closest_obstacle);
+      return target_obstacles;
+    }
+
+    prev_closest_obstacle_ptr_ = nullptr;
+  } else {
+    // prev obstacle is not in the target obstacles, but in the perception list
+    const double elapsed_time = (time_stamp - prev_closest_obstacle_ptr_->time_stamp).seconds();
+    if (
+      predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
+        obstacle_velocity_threshold_from_stop_to_cruise_ &&
+      elapsed_time < 1.0) {
+      target_obstacles.push_back(*prev_closest_obstacle_ptr_);
+      return target_obstacles;
+    }
+
+    if (current_closest_obstacle) {
+      prev_closest_obstacle_ptr_ = std::make_shared<TargetObstacle>(*current_closest_obstacle);
+    } else {
+      prev_closest_obstacle_ptr_ = nullptr;
+    }
   }
 
   return target_obstacles;
