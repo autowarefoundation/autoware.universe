@@ -13,26 +13,9 @@
 // limitations under the License.
 
 #include "localization_evaluator/localization_evaluator_core.hpp"
-
-#include "localization_evaluator/geodetic.hpp"
 #include "localization_evaluator/interpolation.hpp"
 
 #include <deque>
-
-// double rotationError(Eigen::Matrix4d &pose_error) {
-//   double a = pose_error(0, 0);
-//   double b = pose_error(1, 1);
-//   double c = pose_error(2, 2);
-//   double d = 0.5*(a+b+c-1.0);
-//   return acos(max(min(d,1.0),-1.0));
-// }
-
-// double translationError(Eigen::Matrix4d &pose_error) {
-//   double dx = pose_error(0, 3);
-//   double dy = pose_error(1, 3);
-//   double dz = pose_error(2, 3);
-//   return sqrt(dx*dx+dy*dy+dz*dz);
-// }
 
 void msgToMatrix(geometry_msgs::msg::PoseStamped::ConstSharedPtr & pose_ptr, Eigen::Affine3d & out)
 {
@@ -98,11 +81,6 @@ void LocalizationEvaluator::callbackVehicleOdometry(
     if (t > 1.0 || t < 0.0) {
       RCLCPP_WARN(get_logger(), "Interpolate Coefficient has to be in range of [0,1]");
       return;
-      // RCLCPP_INFO(get_logger(), "duration : %lf", static_cast<double>((post_time -
-      // prev_time).nanoseconds())); RCLCPP_INFO(get_logger(), "step : %lf",
-      // static_cast<double>((curr_time - prev_time).nanoseconds())); RCLCPP_INFO(get_logger(),
-      // "post > curr ? : %d", static_cast<int>(post_time > curr_time)); RCLCPP_INFO(get_logger(),
-      // "prev < curr ? : %d", static_cast<int>(prev_time < curr_time));
     }
 
     interpolation::interpolateTransform(t, prev_trans, post_trans, curr_trans);
@@ -121,74 +99,6 @@ void LocalizationEvaluator::callbackVehicleOdometry(
 
   prev_vehicle_pose_ = pose_msg_ptr;
 }
-
-// void KittiEvaluator::callbackGroundTruthOdometry(
-//   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_ground_truth_msg_ptr)
-// {
-//   if (!vehicle_pose_queue_.empty()) {
-//     RCLCPP_INFO(get_logger(), "We have ekf pose! Size : %ld", vehicle_pose_queue_.size());
-//   }
-
-//   Eigen::Affine3d ground_truth_trans;
-//   msgToMatrix(pose_ground_truth_msg_ptr, ground_truth_trans);
-
-//   rclcpp::Time curr_time(pose_ground_truth_msg_ptr->header.stamp);
-//   geometry_msgs::msg::PoseStamped::ConstSharedPtr prev_pose;
-//   while (!vehicle_pose_queue_.empty() && rclcpp::Time(vehicle_pose_queue_.front()->header.stamp)
-//   <
-//                                           curr_time - rclcpp::Duration::from_seconds(delta)) {
-//     prev_pose = vehicle_pose_queue_.front();
-//     vehicle_pose_queue_.pop_front();
-//   }
-//   if (!vehicle_pose_queue_.empty()) {
-//     auto post_pose = vehicle_pose_queue_.front();
-//     vehicle_pose_queue_.pop_front();
-
-//     Eigen::Affine3d prev_trans;
-//     rclcpp::Time prev_time = get_clock()->now();
-//     prev_trans.setIdentity();
-//     if (prev_pose) {
-//       prev_time = rclcpp::Time(prev_pose->header.stamp);
-//       msgToMatrix(prev_pose, prev_trans);
-//     }
-//     Eigen::Affine3d post_trans;
-//     rclcpp::Time post_time(post_pose->header.stamp);
-//     msgToMatrix(post_pose, post_trans);
-
-//     rclcpp::Time fake_time = curr_time - rclcpp::Duration::from_seconds(delta);
-//     double t = interpolation::getTimeCoeffients(fake_time, prev_time, post_time);
-//     if (t > 1 || t < 0) {
-//       RCLCPP_INFO(get_logger(), "????????????");
-//     }
-//     RCLCPP_INFO(get_logger(), "Interpolate Coefficient : %lf", t);
-//     Eigen::Affine3d vehicle_trans;
-//     interpolation::interpolateTransform(t, prev_trans, post_trans, vehicle_trans);
-
-//     // RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(0,0), vehicle_trans(0,1),
-//     // vehicle_trans(0,2), vehicle_trans(0,3)); RCLCPP_INFO(get_loggerrocker
-//     // "%lf %lf %lf %lf", vehicle_trans(1,0),
-//     // vehicle_trans(1,1), vehicle_trans(1,2), vehicle_trans(1,3)); RCLCPP_INFO(get_logger(),
-//     "%lf
-//     // %lf %lf %lf", vehicle_trans(2,0), vehicle_trans(2,1), vehicle_trans(2,2),
-//     // vehicle_trans(2,3)); RCLCPP_INFO(get_logger(), "%lf %lf %lf %lf", vehicle_trans(3,0),
-//     // vehicle_trans(3,1), vehicle_trans(3,2), vehicle_trans(3,3));
-
-//     Eigen::Affine3d error_trans;
-//     calculateError(vehicle_trans, ground_truth_trans, error_trans);
-//     last_vehicle_trans_ = vehicle_trans;
-//     publishError(error_trans);
-//   } else {
-//     RCLCPP_INFO(get_logger(), "Cannot Find Valid Pose!");
-//   }
-
-//   last_groud_truth_trans_ = ground_truth_trans;
-// }
-
-// void KittiEvaluator::callbackVehicleOdometry(
-//   geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg_ptr)
-// {
-//   vehicle_pose_queue_.push_back(pose_msg_ptr);
-// }
 
 void LocalizationEvaluator::calculateError(
   Eigen::Affine3d & vehicle_trans, Eigen::Affine3d & ground_truth_trans,
