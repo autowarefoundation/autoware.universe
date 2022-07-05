@@ -526,6 +526,14 @@ void SimplePlanningSimulator::publish_acceleration()
   msg.header.frame_id = "/base_link";
   msg.header.stamp = get_clock()->now();
   msg.accel.accel.linear.x = vehicle_model_ptr_->getAx();
+
+  constexpr auto COV = 0.001;
+  msg.accel.covariance.at(6 * 0 + 0) = COV;  // linear x
+  msg.accel.covariance.at(6 * 1 + 1) = COV;  // linear y
+  msg.accel.covariance.at(6 * 2 + 2) = COV;  // linear z
+  msg.accel.covariance.at(6 * 3 + 3) = COV;  // angular x
+  msg.accel.covariance.at(6 * 4 + 4) = COV;  // angular y
+  msg.accel.covariance.at(6 * 5 + 5) = COV;  // angular z
   pub_acc_->publish(msg);
 }
 
