@@ -113,6 +113,7 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
+  initial_ndt_align_timeout_sec_(3.0),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
   regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
 {
@@ -137,13 +138,12 @@ NDTScanMatcher::NDTScanMatcher()
     int search_method = static_cast<int>(omp_params_.search_method);
     search_method = this->declare_parameter("omp_neighborhood_search_method", search_method);
     omp_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
-    // TODO(Tier IV): check search_method is valid value.
+    // TODO(TIER IV): check search_method is valid value.
     ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
 
     omp_params_.num_threads = this->declare_parameter("omp_num_threads", omp_params_.num_threads);
     omp_params_.num_threads = std::max(omp_params_.num_threads, 1);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-    ndt_ptr_ = ndt_omp_ptr;
   }
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
@@ -214,11 +214,17 @@ NDTScanMatcher::NDTScanMatcher()
   rclcpp::CallbackGroup::SharedPtr main_callback_group;
   main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+  rclcpp::CallbackGroup::SharedPtr map_callback_group;
+  map_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
   auto initial_pose_sub_opt = rclcpp::SubscriptionOptions();
   initial_pose_sub_opt.callback_group = initial_pose_callback_group;
 
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
+
+  auto map_sub_opt = rclcpp::SubscriptionOptions();
+  map_sub_opt.callback_group = map_callback_group;
 
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_pose_with_covariance", 100,
@@ -226,7 +232,7 @@ NDTScanMatcher::NDTScanMatcher()
     initial_pose_sub_opt);
   map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1), main_sub_opt);
+    std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1), map_sub_opt);
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
     std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1), main_sub_opt);
@@ -339,11 +345,17 @@ void NDTScanMatcher::serviceNDTAlign(
   // transform pose_frame to map_frame
   const auto mapTF_initial_pose_msg = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
-  if (ndt_ptr_->getInputTarget() == nullptr) {
-    res->success = false;
-    res->seq = req->seq;
-    RCLCPP_WARN(get_logger(), "No InputTarget");
-    return;
+  double timeout_counter = 0;
+  int validation_period = 100;  // [ms]
+  while (!validateInitialPositionCompatibility(mapTF_initial_pose_msg.pose.pose.position)) {
+    rclcpp::sleep_for(std::chrono::milliseconds(validation_period));
+    timeout_counter += validation_period;
+    if (timeout_counter > initial_ndt_align_timeout_sec_ * 1e3) {
+      res->success = false;
+      res->seq = req->seq;
+      RCLCPP_WARN(get_logger(), "Failed to receive valid pcd map for given initial pose");
+      return;
+    }
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
@@ -404,6 +416,31 @@ void NDTScanMatcher::callbackRegularizationPose(
 void NDTScanMatcher::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
+  sensor_msgs::PointCloud2ConstIterator<float> iter_x(*map_points_msg_ptr, "x");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_y(*map_points_msg_ptr, "y");
+  double new_min_x = *iter_x;
+  double new_min_y = *iter_y;
+  double new_max_x = *iter_x;
+  double new_max_y = *iter_y;
+  while (iter_x != iter_x.end()) {
+    if (new_min_x > *iter_x) {
+      new_min_x = *iter_x;
+    }
+    if (new_min_y > *iter_y) {
+      new_min_y = *iter_y;
+    }
+    if (new_max_x < *iter_x) {
+      new_max_x = *iter_x;
+    }
+    if (new_max_y < *iter_y) {
+      new_max_y = *iter_y;
+    }
+    ++iter_x;
+    ++iter_y;
+  }
+
+  const auto KOJI_exe_start_time = std::chrono::system_clock::now();
+
   const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
   const auto step_size = ndt_ptr_->getStepSize();
   const auto resolution = ndt_ptr_->getResolution();
@@ -416,12 +453,10 @@ void NDTScanMatcher::callbackMapPoints(
     using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
 
     // FIXME(IshitaTakeshi) Not sure if this is safe
-    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
+    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(new_ndt_ptr);
     ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-    new_ndt_ptr = ndt_omp_ptr;
   }
-
   new_ndt_ptr->setTransformationEpsilon(trans_epsilon);
   new_ndt_ptr->setStepSize(step_size);
   new_ndt_ptr->setResolution(resolution);
@@ -431,14 +466,28 @@ void NDTScanMatcher::callbackMapPoints(
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
   new_ndt_ptr->setInputTarget(map_points_ptr);
-  // create Thread
-  // detach
+
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  new_ndt_ptr->align(*output_cloud, Eigen::Matrix4f::Identity());
+  new_ndt_ptr->align(
+    *output_cloud, Eigen::Matrix4f::Identity());  // No longer necessary for ndt_omp
+
+  const auto KOJI_exe_end_time = std::chrono::system_clock::now();
+  const double KOJI_exe_time =
+    std::chrono::duration_cast<std::chrono::microseconds>(KOJI_exe_end_time - KOJI_exe_start_time)
+      .count() /
+    1000.0;
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    "KOJI until align in callbackMapPoints @ndt_scan_matcher: " << KOJI_exe_time << " [ms]");
 
   // swap
   ndt_map_mtx_.lock();
   ndt_ptr_ = new_ndt_ptr;
+  min_x_ = new_min_x;
+  min_y_ = new_min_y;
+  max_x_ = new_max_x;
+  max_y_ = new_max_y;
+
   ndt_map_mtx_.unlock();
 }
 
@@ -446,7 +495,6 @@ void NDTScanMatcher::callbackSensorPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_sensorTF_msg_ptr)
 {
   const auto exe_start_time = std::chrono::system_clock::now();
-  // mutex Map
   std::lock_guard<std::mutex> lock(ndt_map_mtx_);
 
   const std::string & sensor_frame = sensor_points_sensorTF_msg_ptr->header.frame_id;
@@ -730,7 +778,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
 
     const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose);
     const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
-
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
 
     const Eigen::Matrix4f result_pose_matrix = ndt_ptr->getFinalTransformation();
@@ -832,6 +879,15 @@ bool NDTScanMatcher::validatePositionDifference(
     return false;
   }
   return true;
+}
+
+bool NDTScanMatcher::validateInitialPositionCompatibility(
+  const geometry_msgs::msg::Point & initial_point)
+{
+  bool is_x_axis_ok = (initial_point.x > min_x_) && (initial_point.x < max_x_);
+  bool is_y_axis_ok = (initial_point.y > min_y_) && (initial_point.y < max_y_);
+
+  return is_x_axis_ok || is_y_axis_ok;
 }
 
 std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(

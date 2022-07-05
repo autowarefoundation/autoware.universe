@@ -23,7 +23,7 @@
     topic_configs:
       names: [
         "/map/vector_map",
-        "/map/pointcloud_map",
+        "/map/pointcloud_map/partial",
         "/perception/obstacle_segmentation/pointcloud",
         "/initialpose3d",
         "/localization/pose_twist_fusion_filter/pose",
@@ -45,7 +45,7 @@
           type: "autoware_auto_mapping_msgs/msg/HADMapBin"
           transient_local: True
 
-        /map/pointcloud_map:
+        /map/pointcloud_map/partial:
           module: "map"
           timeout: 0.0
           warn_rate: 0.0

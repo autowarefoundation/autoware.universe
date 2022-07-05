@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
@@ -77,22 +82,14 @@ def launch_setup(context, *args, **kwargs):
         package="map_loader",
         plugin="PointCloudMapLoaderNode",
         name="pointcloud_map_loader",
-        remappings=[("output/pointcloud_map", "pointcloud_map")],
+        remappings=[
+            ("output/pointcloud_map/whole", "pointcloud_map/whole"),
+            ("output/pointcloud_map/partial", "pointcloud_map/partial"),
+            ("load_pcd_partially", "load_pcd_partially"),
+            ("load_pcd_partially/publish", "load_pcd_partially/publish"),
+        ],
         parameters=[
             {"pcd_paths_or_directory": ["[", LaunchConfiguration("pointcloud_map_path"), "]"]}
-        ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
-    )
-
-    map_tf_generator = ComposableNode(
-        package="map_tf_generator",
-        plugin="MapTFGeneratorNode",
-        name="map_tf_generator",
-        parameters=[
-            {
-                "map_frame": "map",
-                "viewer_frame": "viewer",
-            }
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -106,7 +103,6 @@ def launch_setup(context, *args, **kwargs):
             lanelet2_map_loader,
             lanelet2_map_visualization,
             pointcloud_map_loader,
-            map_tf_generator,
         ],
         output="screen",
     )
@@ -120,6 +116,16 @@ def launch_setup(context, *args, **kwargs):
     )
 
     return [group]
+
+
+def get_map_provider():
+    map_provider_launch_file = os.path.join(
+        get_package_share_directory("map_provider"), "launch", "map_provider.launch.xml"
+    )
+    map_provider_launcher = IncludeLaunchDescription(
+        AnyLaunchDescriptionSource(map_provider_launch_file)
+    )
+    return map_provider_launcher
 
 
 def generate_launch_description():
@@ -170,5 +176,6 @@ def generate_launch_description():
             set_container_executable,
             set_container_mt_executable,
         ]
+        + [get_map_provider()]
         + [OpaqueFunction(function=launch_setup)]
     )

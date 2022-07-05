@@ -46,7 +46,7 @@ def generate_launch_description():
             name="voxel_distance_based_compare_map_filter_node",
             remappings=[
                 ("input", "/perception/obstacle_segmentation/pointcloud"),
-                ("map", "/map/pointcloud_map"),
+                ("map", "/map/pointcloud_map/partial"),
                 ("output", "compare_map_filtered/pointcloud"),
             ],
             parameters=[

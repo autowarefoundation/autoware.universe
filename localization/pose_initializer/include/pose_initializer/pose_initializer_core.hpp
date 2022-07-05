@@ -15,6 +15,8 @@
 #ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
+#include "autoware_map_srvs/srv/load_pcd_partially_for_publish.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
@@ -29,9 +31,11 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
-
+#include <utility>
 class PoseInitializer : public rclcpp::Node
 {
 public:
@@ -52,6 +56,8 @@ private:
   void callbackPoseInitializationRequest(
     const tier4_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr
       request_msg_ptr);  // NOLINT
+  // void serviceResponseCallback(
+  //   rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture future);
 
   bool getHeight(
     const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
@@ -70,8 +76,11 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
 
   rclcpp::Client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
+  rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedPtr pcd_loader_client_;
 
   rclcpp::CallbackGroup::SharedPtr initialize_pose_service_group_;
+  rclcpp::CallbackGroup::SharedPtr pcd_loader_service_group_;
+
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr
     initialize_pose_service_;
   rclcpp::Service<tier4_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
@@ -83,6 +92,10 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_ptr_;
   std::string map_frame_;
 
+  std::mutex mutex_;
+  std::condition_variable condition_;
+  bool value_ready_ = false;
+
   // With the currently available facilities for calling a service, there is no
   // easy way of detecting whether an answer was received within a reasonable
   // amount of time. So, as a sanity check, we check whether a response for the
@@ -91,6 +104,7 @@ private:
   uint32_t response_id_ = 0;
 
   bool enable_gnss_callback_;
+  double radius_to_load_map_;
   std::array<double, 36> initialpose_particle_covariance_;
   std::array<double, 36> gnss_particle_covariance_;
   std::array<double, 36> service_particle_covariance_;

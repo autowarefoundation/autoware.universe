@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+    radius_to_load_map: 200.0
 
     # from initialpose (Rviz's 2DPoseEstimate)
     initialpose_particle_covariance:

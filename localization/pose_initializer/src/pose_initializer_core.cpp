@@ -51,6 +51,7 @@ PoseInitializer::PoseInitializer()
 : Node("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
 {
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
+  radius_to_load_map_ = this->declare_parameter("radius_to_load_map", 300.0);
 
   const std::vector<double> initialpose_particle_covariance =
     this->declare_parameter<std::vector<double>>("initialpose_particle_covariance");
@@ -92,6 +93,13 @@ PoseInitializer::PoseInitializer()
     "ndt_align_srv", rmw_qos_profile_services_default, initialize_pose_service_group_);
   while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
+  }
+
+  pcd_loader_service_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  pcd_loader_client_ = this->create_client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>(
+    "pcd_loader_service", rmw_qos_profile_services_default, pcd_loader_service_group_);
+  while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+    RCLCPP_INFO(get_logger(), "Waiting for pcd loader service...");
   }
 
   initialize_pose_service_ =
@@ -137,9 +145,33 @@ void PoseInitializer::callbackInitialPose(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
+  try {
+    const auto stamped = tf2_buffer_.lookupTransform(
+      map_frame_, add_height_pose_msg_ptr->header.frame_id, tf2::TimePointZero);
+    tf2::doTransform(*add_height_pose_msg_ptr, *add_height_pose_msg_ptr, stamped);
+  } catch (tf2::TransformException & exception) {
+    RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
+  }
+  auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
+  request->position = add_height_pose_msg_ptr->pose.pose.position;
+  request->radius = radius_to_load_map_;  // Should be removed somehow
+  auto result{pcd_loader_client_->async_send_request(
+    request,
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture
+             response) {
+      (void)response;
+      std::lock_guard<std::mutex> lock{mutex_};
+      value_ready_ = true;
+      condition_.notify_all();
+    })};
+  std::unique_lock<std::mutex> lock{mutex_};
+  condition_.wait(lock, [this]() { return value_ready_; });
+
   add_height_pose_msg_ptr->pose.covariance = initialpose_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
+
+  value_ready_ = false;
 }
 
 // NOTE Still not usable callback
@@ -155,9 +187,34 @@ void PoseInitializer::callbackGNSSPoseCov(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
+  try {
+    const auto stamped = tf2_buffer_.lookupTransform(
+      map_frame_, add_height_pose_msg_ptr->header.frame_id, tf2::TimePointZero);
+    tf2::doTransform(*add_height_pose_msg_ptr, *add_height_pose_msg_ptr, stamped);
+  } catch (tf2::TransformException & exception) {
+    RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
+  }
+
+  auto request = std::make_shared<autoware_map_srvs::srv::LoadPCDPartiallyForPublish::Request>();
+  request->position = add_height_pose_msg_ptr->pose.pose.position;
+  request->radius = radius_to_load_map_;  // Should be removed somehow
+  auto result{pcd_loader_client_->async_send_request(
+    request,
+    [this](const rclcpp::Client<autoware_map_srvs::srv::LoadPCDPartiallyForPublish>::SharedFuture
+             response) {
+      (void)response;
+      std::lock_guard<std::mutex> lock{mutex_};
+      value_ready_ = true;
+      condition_.notify_all();
+    })};
+  std::unique_lock<std::mutex> lock{mutex_};
+  condition_.wait(lock, [this]() { return value_ready_; });
+
   add_height_pose_msg_ptr->pose.covariance = gnss_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
+
+  value_ready_ = false;
 }
 
 void PoseInitializer::serviceInitializePoseAuto(
