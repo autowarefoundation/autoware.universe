@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`localization_evaluator` is the package to evaluate localization output. The Error is published as `PoseStamped` message and can be visualized using plotjuggler. 
+`localization_evaluator` is the package to evaluate localization output. The Error is published as `PoseStamped` message and can be visualized using plotjuggler.
 
 ## Inputs / Outputs
 
@@ -27,7 +27,7 @@
 
 ## Assumptions / Known limits
 
-This module uses RPE(Relative Pose Error) as an evaluation metric. To put simply, a subset of trajectory, a pair of states in this case , is used to compute a relative error. This corresponds to the drift of defined trajectory. One know issue is that we cannot perfectly align a ground truth pose with an output of localization due to unknown processing time and time synchronization of different nodes. Therefore, we interpolate poses from previous and post outputs from localization. 
+This module uses RPE(Relative Pose Error) as an evaluation metric. To put simply, a subset of trajectory, a pair of states in this case , is used to compute a relative error. This corresponds to the drift of defined trajectory. One know issue is that we cannot perfectly align a ground truth pose with an output of localization due to unknown processing time and time synchronization of different nodes. Therefore, we interpolate poses from previous and post outputs from localization.
 
 Reference:
 [A_benchmark_for_the_evaluation_of_RGB-D_SLAM_systems](https://www.researchgate.net/publication/261353760_A_benchmark_for_the_evaluation_of_RGB-D_SLAM_systems)

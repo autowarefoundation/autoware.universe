@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "localization_evaluator/localization_evaluator_core.hpp"
+
 #include "localization_evaluator/interpolation.hpp"
 
 #include <deque>
