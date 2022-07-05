@@ -7,10 +7,10 @@ The position of the `viewer` frame is the geometric center of input.
 
 Note that there is no module to need the `viewer` frame and this is used only for visualization.
 
-There are two nodes:
+The following are the supported methods to calculate the position of the `viewer` frame:
 
-- `pcd_map_tf_generator_node` to visualize pointcloud_map
-- `vector_map_tf_generator_node` to visualize vector_map
+- `pcd_map_tf_generator_node` outputs the geometric center of all points in the PCD.
+- `vector_map_tf_generator_node` outputs the geometric center of all points in the point layer.
 
 ## Inner-workings / Algorithms
 
