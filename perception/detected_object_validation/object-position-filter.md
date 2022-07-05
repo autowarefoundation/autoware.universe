@@ -25,13 +25,13 @@ The `object_lanelet_filter` is a node that filters detected object based on x,y 
 
 ### Core Parameters
 
-| Name                    | Type  | Default Value | Description                                                                                                 |
-| ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------------------------------------- |
-| `unknown_only`          | bool  | true          | If true, only unknown objects are filtered.                                                                 |
-| `upper_bound_x`         | float | 100.00        | Bound for filtering. Only used if filter_by_xy_position is true                                             |
-| `lower_bound_x`         | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true                                             |
-| `upper_bound_y`         | float | 50.00         | Bound for filtering. Only used if filter_by_xy_position is true                                             |
-| `lower_bound_y`         | float | -50.00        | Bound for filtering. Only used if filter_by_xy_position is true                                             |
+| Name            | Type  | Default Value | Description                                                     |
+| --------------- | ----- | ------------- | --------------------------------------------------------------- |
+| `unknown_only`  | bool  | true          | If true, only unknown objects are filtered.                     |
+| `upper_bound_x` | float | 100.00        | Bound for filtering. Only used if filter_by_xy_position is true |
+| `lower_bound_x` | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true |
+| `upper_bound_y` | float | 50.00         | Bound for filtering. Only used if filter_by_xy_position is true |
+| `lower_bound_y` | float | -50.00        | Bound for filtering. Only used if filter_by_xy_position is true |
 
 ## Assumptions / Known limits
 
