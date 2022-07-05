@@ -514,7 +514,6 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode == OperationMode::TRANSITION_TO_AUTO) {
     filter_on_transition_.filterAll(dt, current_steer_, out);
-    RCLCPP_INFO(get_logger(), "now transition filter is running");  // TODO: remove
   } else {
     filter_.filterAll(dt, current_steer_, out);
   }
