@@ -15,8 +15,9 @@
 #ifndef VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_
 #define VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
 struct VehicleCmdFilterParam
 {

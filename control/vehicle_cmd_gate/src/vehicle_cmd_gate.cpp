@@ -81,8 +81,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   steer_sub_ = this->create_subscription<SteeringReport>(
     "input/steering", 1, std::bind(&VehicleCmdGate::onSteering, this, _1));
   operation_mode_sub_ = this->create_subscription<tier4_system_msgs::msg::OperationMode>(
-    "input/engage_state", 1,
-    [this](const tier4_system_msgs::msg::OperationMode::SharedPtr msg) { current_operation_mode_ = *msg; });
+    "input/engage_state", 1, [this](const tier4_system_msgs::msg::OperationMode::SharedPtr msg) {
+      current_operation_mode_ = *msg;
+    });
 
   // Subscriber for auto
   auto_control_cmd_sub_ = this->create_subscription<AckermannControlCommand>(
