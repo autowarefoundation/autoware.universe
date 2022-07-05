@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ENGAGE_TRANSITION_MANAGER__ENGAGE_TRANSITION_MANAGER_HPP_
-#define ENGAGE_TRANSITION_MANAGER__ENGAGE_TRANSITION_MANAGER_HPP_
+#ifndef OPERATION_MODE_TRANSITION_MANAGER__OPERATION_MODE_TRANSITION_MANAGER_HPP_
+#define OPERATION_MODE_TRANSITION_MANAGER__OPERATION_MODE_TRANSITION_MANAGER_HPP_
 
-#include <engage_transition_manager/msg/engage_transition_manager_debug.hpp>
+#include <operation_mode_transition_manager/msg/operation_mode_transition_manager_debug.hpp>
 
-#include <engage_transition_manager/data.hpp>
-#include <engage_transition_manager/state.hpp>
+#include <operation_mode_transition_manager/data.hpp>
+#include <operation_mode_transition_manager/state.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
@@ -30,19 +30,19 @@
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 #include <tier4_system_msgs/msg/is_autonomous_available.hpp>
 
-namespace engage_transition_manager
+namespace operation_mode_transition_manager
 {
 
-class EngageTransitionManager : public rclcpp::Node
+class OperationModeTransitionManager : public rclcpp::Node
 {
 public:
-  explicit EngageTransitionManager(const rclcpp::NodeOptions & options);
-  ~EngageTransitionManager() = default;
+  explicit OperationModeTransitionManager(const rclcpp::NodeOptions & options);
+  ~OperationModeTransitionManager() = default;
 
 private:
   rclcpp::Publisher<OperationMode>::SharedPtr pub_operation_mode_;
   rclcpp::Publisher<IsAutonomousAvailable>::SharedPtr pub_auto_available_;
-  rclcpp::Publisher<EngageTransitionManagerDebug>::SharedPtr pub_debug_info_;
+  rclcpp::Publisher<OperationModeTransitionManagerDebug>::SharedPtr pub_debug_info_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_vehicle_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_control_cmd_;
@@ -52,12 +52,12 @@ private:
   rclcpp::Client<OperationModeRequest>::SharedPtr srv_mode_change_client_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::unique_ptr<EngageStateBase> engage_transition_manager_;
+  std::unique_ptr<EngageStateBase> operation_mode_transition_manager_;
 
   std::shared_ptr<Data> data_;
 
   State updateState(const std::shared_ptr<Data> data);
-  State getCurrentState() { return engage_transition_manager_->getCurrentState(); };
+  State getCurrentState() { return operation_mode_transition_manager_->getCurrentState(); };
 
   EngageAcceptableParam engage_acceptable_param_;
   StableCheckParam stable_check_param_;
@@ -75,9 +75,9 @@ private:
     const OperationModeRequest::Request::SharedPtr request,
     const OperationModeRequest::Response::SharedPtr response);
 
-  mutable EngageTransitionManagerDebug debug_info_;
+  mutable OperationModeTransitionManagerDebug debug_info_;
 };
 
-}  // namespace engage_transition_manager
+}  // namespace operation_mode_transition_manager
 
-#endif  // ENGAGE_TRANSITION_MANAGER__ENGAGE_TRANSITION_MANAGER_HPP_
+#endif  // OPERATION_MODE_TRANSITION_MANAGER__OPERATION_MODE_TRANSITION_MANAGER_HPP_

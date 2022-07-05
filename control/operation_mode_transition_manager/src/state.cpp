@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "engage_transition_manager/state.hpp"
+#include "operation_mode_transition_manager/state.hpp"
 
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-namespace engage_transition_manager
+namespace operation_mode_transition_manager
 {
 
 using tier4_autoware_utils::calcDistance2d;
@@ -234,4 +234,4 @@ State AutonomousState::update()
   }
 }
 
-}  // namespace engage_transition_manager
+}  // namespace operation_mode_transition_manager

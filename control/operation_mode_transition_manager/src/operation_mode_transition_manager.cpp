@@ -12,32 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "engage_transition_manager/engage_transition_manager.hpp"
+#include "operation_mode_transition_manager/operation_mode_transition_manager.hpp"
 
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-namespace engage_transition_manager
+namespace operation_mode_transition_manager
 {
 
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::findNearestIndex;
 
-EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & options)
-: Node("engage_transition_manager", options)
+OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::NodeOptions & options)
+: Node("operation_mode_transition_manager", options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
-  engage_transition_manager_ = std::make_unique<ManualDirectState>(this);
+  operation_mode_transition_manager_ = std::make_unique<ManualDirectState>(this);
   data_ = std::make_shared<Data>();
   data_->requested_state = State::MANUAL_DIRECT;
 
   pub_operation_mode_ = create_publisher<OperationMode>("engage_state", 1);
   pub_auto_available_ = create_publisher<IsAutonomousAvailable>("is_auto_available", 1);
-  pub_debug_info_ = create_publisher<EngageTransitionManagerDebug>("debug_info", 1);
+  pub_debug_info_ = create_publisher<OperationModeTransitionManagerDebug>("debug_info", 1);
 
   sub_vehicle_kinematics_ = create_subscription<Odometry>(
     "kinematics", 1, [this](const Odometry::SharedPtr msg) { data_->kinematics = *msg; });
@@ -59,7 +59,7 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
 
   srv_mode_change_server_ = create_service<OperationModeRequest>(
     "operation_mode_request",
-    std::bind(&EngageTransitionManager::onOperationModeRequest, this, _1, _2));
+    std::bind(&OperationModeTransitionManager::onOperationModeRequest, this, _1, _2));
 
   {
     auto & p = engage_acceptable_param_;
@@ -86,11 +86,11 @@ EngageTransitionManager::EngageTransitionManager(const rclcpp::NodeOptions & opt
     const auto period_ns =
       std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(1.0 / hz));
     timer_ = rclcpp::create_timer(
-      this, get_clock(), period_ns, std::bind(&EngageTransitionManager::onTimer, this));
+      this, get_clock(), period_ns, std::bind(&OperationModeTransitionManager::onTimer, this));
   }
 }
 
-void EngageTransitionManager::onOperationModeRequest(
+void OperationModeTransitionManager::onOperationModeRequest(
   const OperationModeRequest::Request::SharedPtr request,
   const OperationModeRequest::Response::SharedPtr response)
 {
@@ -120,12 +120,12 @@ void EngageTransitionManager::onOperationModeRequest(
 
   // not satisfy any success conditions.
   response->success = false;
-  data_->requested_state = engage_transition_manager_->getCurrentState();
+  data_->requested_state = operation_mode_transition_manager_->getCurrentState();
   RCLCPP_WARN(get_logger(), "mode change failed. Request was declined.");
   return;
 }
 
-void EngageTransitionManager::onTimer()
+void OperationModeTransitionManager::onTimer()
 {
   data_->is_auto_available = checkEngageAvailable();
 
@@ -134,13 +134,13 @@ void EngageTransitionManager::onTimer()
   publishData();
 }
 
-void EngageTransitionManager::publishData()
+void OperationModeTransitionManager::publishData()
 {
   const auto time = now();
 
   OperationMode mode;
   mode.stamp = time;
-  mode.mode = toMsg(engage_transition_manager_->getCurrentState());
+  mode.mode = toMsg(operation_mode_transition_manager_->getCurrentState());
   pub_operation_mode_->publish(mode);
 
   IsAutonomousAvailable msg;
@@ -150,11 +150,11 @@ void EngageTransitionManager::publishData()
 
   debug_info_.stamp = time;
   debug_info_.requested_state = toStr(data_->requested_state);
-  debug_info_.current_state = toStr(engage_transition_manager_->getCurrentState());
+  debug_info_.current_state = toStr(operation_mode_transition_manager_->getCurrentState());
   pub_debug_info_->publish(debug_info_);
 }
 
-bool EngageTransitionManager::hasDangerAcceleration()
+bool OperationModeTransitionManager::hasDangerAcceleration()
 {
   debug_info_.target_control_acceleration = data_->control_cmd.longitudinal.acceleration;
 
@@ -168,7 +168,7 @@ bool EngageTransitionManager::hasDangerAcceleration()
   return has_large_acc;
 }
 
-std::pair<bool, bool> EngageTransitionManager::hasDangerLateralAcceleration()
+std::pair<bool, bool> OperationModeTransitionManager::hasDangerLateralAcceleration()
 {
   const auto wheelbase = 4.0;
   const auto curr_vx = data_->kinematics.twist.twist.linear.x;
@@ -193,7 +193,7 @@ std::pair<bool, bool> EngageTransitionManager::hasDangerLateralAcceleration()
   return {has_large_lat_acc, has_large_lat_acc_diff};
 }
 
-bool EngageTransitionManager::checkEngageAvailable()
+bool OperationModeTransitionManager::checkEngageAvailable()
 {
   constexpr auto dist_max = 5.0;
   constexpr auto yaw_max = M_PI_4;
@@ -204,7 +204,7 @@ bool EngageTransitionManager::checkEngageAvailable()
 
   if (data_->trajectory.points.size() < 2) {
     RCLCPP_WARN(get_logger(), "Engage unavailable: trajectory size must be > 2");
-    debug_info_ = EngageTransitionManagerDebug{};  // all false
+    debug_info_ = OperationModeTransitionManagerDebug{};  // all false
     return false;
   }
 
@@ -212,7 +212,7 @@ bool EngageTransitionManager::checkEngageAvailable()
     findNearestIndex(data_->trajectory.points, data_->kinematics.pose.pose, dist_max, yaw_max);
   if (!closest_idx) {
     RCLCPP_INFO(get_logger(), "Engage unavailable: closest point not found");
-    debug_info_ = EngageTransitionManagerDebug{};  // all false
+    debug_info_ = OperationModeTransitionManagerDebug{};  // all false
     return false;                                  // closest trajectory point not found.
   }
   const auto closest_point = data_->trajectory.points.at(*closest_idx);
@@ -275,12 +275,12 @@ bool EngageTransitionManager::checkEngageAvailable()
   return is_all_ok;
 }
 
-State EngageTransitionManager::updateState(const std::shared_ptr<Data> data)
+State OperationModeTransitionManager::updateState(const std::shared_ptr<Data> data)
 {
-  const auto current_state = engage_transition_manager_->getCurrentState();
+  const auto current_state = operation_mode_transition_manager_->getCurrentState();
 
-  engage_transition_manager_->setData(data);
-  const auto next_state = engage_transition_manager_->update();
+  operation_mode_transition_manager_->setData(data);
+  const auto next_state = operation_mode_transition_manager_->update();
 
   // no state change
   if (next_state == current_state) {
@@ -290,34 +290,34 @@ State EngageTransitionManager::updateState(const std::shared_ptr<Data> data)
   // transit state
   switch (next_state) {
     case State::STOP:
-      engage_transition_manager_ = std::make_unique<StopState>(this);
+      operation_mode_transition_manager_ = std::make_unique<StopState>(this);
       break;
     case State::REMOTE_OPERATOR:
-      engage_transition_manager_ = std::make_unique<RemoteOperatorState>(this);
+      operation_mode_transition_manager_ = std::make_unique<RemoteOperatorState>(this);
       break;
     case State::MANUAL_DIRECT:
-      engage_transition_manager_ = std::make_unique<ManualDirectState>(this);
+      operation_mode_transition_manager_ = std::make_unique<ManualDirectState>(this);
       break;
     case State::LOCAL_OPERATOR:
-      engage_transition_manager_ = std::make_unique<LocalOperatorState>(this);
+      operation_mode_transition_manager_ = std::make_unique<LocalOperatorState>(this);
       break;
     case State::TRANSITION_TO_AUTO:
-      engage_transition_manager_ = std::make_unique<TransitionToAutoState>(this);
+      operation_mode_transition_manager_ = std::make_unique<TransitionToAutoState>(this);
       break;
     case State::AUTONOMOUS:
-      engage_transition_manager_ = std::make_unique<AutonomousState>(this);
+      operation_mode_transition_manager_ = std::make_unique<AutonomousState>(this);
       break;
   }
-  engage_transition_manager_->setParam(stable_check_param_);
+  operation_mode_transition_manager_->setParam(stable_check_param_);
 
-  if (next_state != engage_transition_manager_->getCurrentState()) {
-    throw std::runtime_error("engage_transition_manager: unexpected state change!");
+  if (next_state != operation_mode_transition_manager_->getCurrentState()) {
+    throw std::runtime_error("operation_mode_transition_manager: unexpected state change!");
   }
 
-  return engage_transition_manager_->getCurrentState();
+  return operation_mode_transition_manager_->getCurrentState();
 }
 
-}  // namespace engage_transition_manager
+}  // namespace operation_mode_transition_manager
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(engage_transition_manager::EngageTransitionManager)
+RCLCPP_COMPONENTS_REGISTER_NODE(operation_mode_transition_manager::OperationModeTransitionManager)

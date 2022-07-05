@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ENGAGE_TRANSITION_MANAGER__STATE_HPP_
-#define ENGAGE_TRANSITION_MANAGER__STATE_HPP_
+#ifndef OPERATION_MODE_TRANSITION_MANAGER__STATE_HPP_
+#define OPERATION_MODE_TRANSITION_MANAGER__STATE_HPP_
 
-#include <engage_transition_manager/data.hpp>
+#include <operation_mode_transition_manager/data.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -24,7 +24,7 @@
 #include <tier4_system_msgs/srv/operation_mode_request.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
-namespace engage_transition_manager
+namespace operation_mode_transition_manager
 {
 class EngageStateBase
 {
@@ -111,6 +111,6 @@ public:
   State update() override;
 };
 
-}  // namespace engage_transition_manager
+}  // namespace operation_mode_transition_manager
 
-#endif  // ENGAGE_TRANSITION_MANAGER__STATE_HPP_
+#endif  // OPERATION_MODE_TRANSITION_MANAGER__STATE_HPP_

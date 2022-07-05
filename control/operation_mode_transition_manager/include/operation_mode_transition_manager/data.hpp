@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ENGAGE_TRANSITION_MANAGER__DATA_HPP_
-#define ENGAGE_TRANSITION_MANAGER__DATA_HPP_
+#ifndef OPERATION_MODE_TRANSITION_MANAGER__DATA_HPP_
+#define OPERATION_MODE_TRANSITION_MANAGER__DATA_HPP_
 
-#include "engage_transition_manager/msg/engage_transition_manager_debug.hpp"
+#include "operation_mode_transition_manager/msg/operation_mode_transition_manager_debug.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -30,7 +30,7 @@
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 #include <tier4_system_msgs/msg/is_autonomous_available.hpp>
 
-namespace engage_transition_manager
+namespace operation_mode_transition_manager
 {
 
 using nav_msgs::msg::Odometry;
@@ -43,7 +43,7 @@ using tier4_system_msgs::srv::OperationModeRequest;
 using tier4_vehicle_msgs::msg::ControlMode;
 using tier4_vehicle_msgs::srv::ControlModeRequest;
 using tier4_system_msgs::msg::IsAutonomousAvailable;
-using engage_transition_manager::msg::EngageTransitionManagerDebug;
+using operation_mode_transition_manager::msg::OperationModeTransitionManagerDebug;
 
 enum class State {
   STOP = 0,
@@ -91,6 +91,6 @@ std::string toStr(const State s);
 bool isManual(const State s);
 bool isAuto(const State s);
 
-}  // namespace engage_transition_manager
+}  // namespace operation_mode_transition_manager
 
-#endif  // ENGAGE_TRANSITION_MANAGER__DATA_HPP_
+#endif  // OPERATION_MODE_TRANSITION_MANAGER__DATA_HPP_
