@@ -4,12 +4,26 @@
 
 Test procedures (e.g. test codes) to check whether a certain simulator is compatible with Autoware
 
-## Test
+## Overview of the test codes
+
+File structure
+
+- test_base
+- test_sim_common_manual_testing
+- test_morai_sim
+
+1. test_base provides shared methods for testing. Other test codes are created based on functions defined here.
+2. test_sim_common_manual_testing provides the most basic functions. Any simualtor can be tested using codes here. However, to make these codes usable with any simulators, the codes do not include any features for test automation.
+3. test_morai_sim is an automated version of test_sim_common_manual_testing for MORAI SIM: Drive. Thus it includes 'MORAI SIM: Drive'-specific codes. Users of the other simulators may create similar version for thier simulator of interest.
+
+## Test Procedures for test_sim_common_manual_testing
+
+### Build process before test
 
 ```bash
 source install/setup.bash
 colcon build --packages-select simulator_compatibility_test
-cd src/universe/autoware.universe/tools/simulator_test/simulator_compatibility_test/test_another_sim
+cd src/universe/autoware.universe/tools/simulator_test/simulator_compatibility_test/test_sim_common_manual_testing
 ```
 
 To run each test case manually
@@ -110,6 +124,20 @@ To run each test case manually
    - Ego vehicle hazard lights are turned on (If the simulator has a GUI for this one, it should display the hazard lights are turned on or blinking)
    - Ego vehicle hazard lights are turned off. This is a reset process. (If the simulator has a GUI for this one, it should display the hazard lights are turned off)
 5. Check if pytest output is passed or failure
+
+## Test Procedures for test_morai_sim
+
+### Build process before test
+
+```bash
+source install/setup.bash
+colcon build --packages-select simulator_compatibility_test
+cd src/universe/autoware.universe/tools/simulator_test/simulator_compatibility_test/test_morai_sim
+```
+
+Detailed process
+
+(WIP)
 
 ## Inner-workings / Algorithms
 
