@@ -585,10 +585,6 @@ double frontVehicleStopDistance(
   const double & front_vehicle_velocity, const double & front_vehicle_accel,
   const double & distance_to_collision)
 {
-  std::cerr << "calculating front stop thresh stopping distance = "
-            << stoppingDistance(front_vehicle_velocity, front_vehicle_accel) << " + "
-            << distance_to_collision << '\n';
-
   return stoppingDistance(front_vehicle_velocity, front_vehicle_accel) + distance_to_collision;
 }
 
@@ -619,15 +615,12 @@ bool hasEnoughDistance(
   }
 
   const auto is_obj_in_front = isObjectFront(front_vehicle_pose);
-  std::cerr << "is_obj_in_front = " << is_obj_in_front << '\n';
 
   const auto front_vehicle_velocity =
     (is_obj_in_front) ? object_current_twist.linear : ego_current_twist.linear;
-  std::cerr << "front_vehicle_velocity = " << util::l2Norm(front_vehicle_velocity) << '\n';
 
   const auto rear_vehicle_velocity =
     (is_obj_in_front) ? ego_current_twist.linear : object_current_twist.linear;
-  std::cerr << "rear_vehicle_velocity = " << util::l2Norm(rear_vehicle_velocity) << '\n';
 
   const auto front_vehicle_accel = param.expected_front_deceleration;
   const auto rear_vehicle_accel = param.expected_rear_deceleration;
@@ -639,9 +632,6 @@ bool hasEnoughDistance(
   const auto rear_vehicle_stop_threshold = rearVehicleStopDistance(
     util::l2Norm(rear_vehicle_velocity), rear_vehicle_accel, param.rear_vehicle_reaction_time,
     param.safety_time_margin_for_control);
-
-  std::cerr << "rear_vehicle_stop_threshold = " << rear_vehicle_stop_threshold << '\t';
-  std::cerr << "front_vehicle_stop_threshold = " << front_vehicle_stop_threshold << '\n';
 
   return isLongitudinalDistanceEnough(rear_vehicle_stop_threshold, front_vehicle_stop_threshold);
 }
