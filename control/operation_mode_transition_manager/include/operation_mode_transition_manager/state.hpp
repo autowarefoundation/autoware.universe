@@ -24,6 +24,8 @@
 #include <tier4_system_msgs/srv/operation_mode_request.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
+#include <memory>
+
 namespace operation_mode_transition_manager
 {
 class EngageStateBase
@@ -34,9 +36,9 @@ public:
 
   virtual State update() = 0;
 
-  State getCurrentState() { return state_; };
-  void setData(const std::shared_ptr<Data> data) { data_ = data; };
-  void setParam(const StableCheckParam & param) { stable_check_param_ = param; };
+  State getCurrentState() { return state_; }
+  void setData(const std::shared_ptr<Data> data) { data_ = data; }
+  void setParam(const StableCheckParam & param) { stable_check_param_ = param; }
 
 protected:
   rclcpp::Client<ControlModeRequest>::SharedPtr srv_mode_change_client_;
@@ -56,35 +58,38 @@ protected:
 class StopState : public EngageStateBase
 {
 public:
-  StopState(rclcpp::Node * node) : EngageStateBase(State::STOP, node){};
-  State update() override { return defaultUpdateOnManual(); };
+  explicit StopState(rclcpp::Node * node) : EngageStateBase(State::STOP, node) {}
+  State update() override { return defaultUpdateOnManual(); }
 };
 
 class RemoteOperatorState : public EngageStateBase
 {
 public:
-  RemoteOperatorState(rclcpp::Node * node) : EngageStateBase(State::REMOTE_OPERATOR, node){};
-  State update() override { return defaultUpdateOnManual(); };
+  explicit RemoteOperatorState(rclcpp::Node * node) : EngageStateBase(State::REMOTE_OPERATOR, node)
+  {
+  }
+  State update() override { return defaultUpdateOnManual(); }
 };
 
 class ManualDirectState : public EngageStateBase
 {
 public:
-  ManualDirectState(rclcpp::Node * node) : EngageStateBase(State::MANUAL_DIRECT, node){};
-  State update() override { return defaultUpdateOnManual(); };
+  explicit ManualDirectState(rclcpp::Node * node) : EngageStateBase(State::MANUAL_DIRECT, node) {}
+  State update() override { return defaultUpdateOnManual(); }
 };
 
 class LocalOperatorState : public EngageStateBase
 {
 public:
-  LocalOperatorState(rclcpp::Node * node) : EngageStateBase(State::LOCAL_OPERATOR, node){};
-  State update() override { return defaultUpdateOnManual(); };
+  explicit LocalOperatorState(rclcpp::Node * node) : EngageStateBase(State::LOCAL_OPERATOR, node) {}
+  State update() override { return defaultUpdateOnManual(); }
 };
 
 class TransitionToAutoState : public EngageStateBase
 {
 public:
-  TransitionToAutoState(rclcpp::Node * node) : EngageStateBase(State::TRANSITION_TO_AUTO, node)
+  explicit TransitionToAutoState(rclcpp::Node * node)
+  : EngageStateBase(State::TRANSITION_TO_AUTO, node)
   {
     transition_requested_time_ = clock_->now();
   };
@@ -107,7 +112,7 @@ private:
 class AutonomousState : public EngageStateBase
 {
 public:
-  AutonomousState(rclcpp::Node * node) : EngageStateBase(State::AUTONOMOUS, node){};
+  explicit AutonomousState(rclcpp::Node * node) : EngageStateBase(State::AUTONOMOUS, node) {}
   State update() override;
 };
 

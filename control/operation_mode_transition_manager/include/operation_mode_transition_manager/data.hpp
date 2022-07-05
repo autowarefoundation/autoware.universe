@@ -30,6 +30,8 @@
 #include <tier4_vehicle_msgs/msg/control_mode.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
+#include <string>
+
 namespace operation_mode_transition_manager
 {
 

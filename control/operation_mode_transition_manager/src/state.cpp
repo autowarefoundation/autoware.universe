@@ -29,7 +29,7 @@ using tier4_autoware_utils::findNearestIndex;
 EngageStateBase::EngageStateBase(const State state, rclcpp::Node * node)
 : logger_(node->get_logger()), clock_(node->get_clock()), state_(state)
 {
-  // TODO: move to manager.
+  // TODO(Horibe): move to manager.
   srv_mode_change_client_ = node->create_client<ControlModeRequest>("control_mode_request");
 }
 

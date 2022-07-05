@@ -29,6 +29,9 @@
 #include <tier4_vehicle_msgs/msg/control_mode.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
+#include <memory>
+#include <utility>
+
 namespace operation_mode_transition_manager
 {
 
@@ -56,7 +59,7 @@ private:
   std::shared_ptr<Data> data_;
 
   State updateState(const std::shared_ptr<Data> data);
-  State getCurrentState() { return operation_mode_transition_manager_->getCurrentState(); };
+  State getCurrentState() { return operation_mode_transition_manager_->getCurrentState(); }
 
   EngageAcceptableParam engage_acceptable_param_;
   StableCheckParam stable_check_param_;

@@ -248,7 +248,7 @@ bool OperationModeTransitionManager::checkEngageAvailable()
   const auto large_lateral_acceleration_diff_ok = !has_large_lat_acc_diff;
 
   // No engagement if a stop is expected within a certain period of time
-  // TODO: write me
+  // TODO(Horibe): write me
   // ...
 
   const bool is_all_ok = lateral_deviation_ok && yaw_deviation_ok && speed_upper_deviation_ok &&
