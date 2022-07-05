@@ -109,6 +109,21 @@ void publishImage(
   publisher.publish(*raw_image.toImageMsg());
 }
 
+geometry_msgs::msg::Pose affine2Pose(const Eigen::Affine3f & affine)
+{
+  geometry_msgs::msg::Pose pose;
+  Eigen::Vector3f pos = affine.translation();
+  Eigen::Quaternionf ori(affine.rotation());
+  pose.position.x = pos.x();
+  pose.position.y = pos.y();
+  pose.position.z = pos.z();
+  pose.orientation.w = ori.w();
+  pose.orientation.x = ori.x();
+  pose.orientation.y = ori.y();
+  pose.orientation.z = ori.z();
+  return pose;
+}
+
 Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
 {
   const auto pos = pose.position;

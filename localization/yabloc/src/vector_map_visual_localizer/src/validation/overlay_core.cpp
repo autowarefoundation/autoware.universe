@@ -13,35 +13,32 @@
 
 namespace validation
 {
-void Overlay::ll2Callback(const PointCloud2 & msg) { pcl::fromROSMsg(msg, ll2_cloud_); }
-
 Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock())
 {
   using std::placeholders::_1;
-  // Subscriber
-  {
-    auto cb_info = std::bind(&Overlay::infoCallback, this, _1);
-    auto cb_image = std::bind(&Overlay::imageCallback, this, _1);
-    auto cb_particle = std::bind(&Overlay::poseCallback, this, _1);
-    auto cb_ll2 = std::bind(&Overlay::ll2Callback, this, _1);
-    auto cb_lsd = std::bind(&Overlay::lsdCallback, this, _1);
 
-    sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
-      "/sensing/camera/traffic_light/camera_info", 10, cb_info);
-    sub_image_ = create_subscription<sensor_msgs::msg::Image>(
-      "/sensing/camera/traffic_light/image_raw/compressed", 10, cb_image);
-    sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_particle);
-    sub_ll2_ = create_subscription<PointCloud2>("/ll2_cloud", 10, cb_ll2);
-    sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, cb_lsd);
-    sub_sign_board_ = create_subscription<PointCloud2>(
-      "/sign_board", 10,
-      [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, sign_board_); });
-  }
+  // Subscriber
+  auto cb_info = std::bind(&Overlay::infoCallback, this, _1);
+  auto cb_image = std::bind(&Overlay::imageCallback, this, _1);
+  auto cb_lsd = std::bind(&Overlay::lsdCallback, this, _1);
+  auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
+  auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
+
+  sub_ground_plane_ = create_subscription<Float32Array>("/ground", 10, cb_ground);
+  sub_image_ = create_subscription<Image>("/src_image", 10, cb_image);
+  sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
+  sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, cb_lsd);
+  sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
+  sub_sign_board_ = create_subscription<PointCloud2>(
+    "/sign_board", 10,
+    [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, sign_board_); });
+  sub_ll2_ = create_subscription<PointCloud2>(
+    "/ll2_cloud", 10,
+    [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
+
   // Publisher
-  {
-    pub_vis_ = create_publisher<Marker>("/marker", 10);
-    pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
-  }
+  pub_vis_ = create_publisher<Marker>("/marker", 10);
+  pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
 }
 
 void Overlay::infoCallback(const sensor_msgs::msg::CameraInfo & msg)
@@ -102,14 +99,47 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
 {
   if (ll2_cloud_.empty()) return;
 
-  Eigen::Affine3f transform = util::pose2Affine(pose);
-
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
-  drawOverlaySignBoard(overlayed_image, pose, stamp);
+  drawOverlaySignBoard(overlayed_image, pose);
+  drawOverlayRoadMark(overlayed_image, pose);
 
+  cv::Mat show_image;
+  cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
+  util::publishImage(*pub_image_, show_image, stamp);
+}
+
+Eigen::Affine3f Overlay::poseConsideringSlope(const Eigen::Affine3f & pose) const
+{
+  Eigen::Matrix3f R = pose.rotation();
+  Eigen::Vector3f t = pose.translation();
+  {
+    // Eigen::Vector3f rz = ground_plane_.normal;
+    // Eigen::Vector3f azimuth = R.transpose() * Eigen::Vector3f::UnitX();
+    // Eigen::Vector3f ry = rz.cross(azimuth);
+    // Eigen::Vector3f rx = ry.cross(rz);
+    // R.row(0) = rx;
+    // R.row(1) = ry;
+    // R.row(2) = rz;
+  } {
+    Eigen::Vector3f rz = ground_plane_.normal;
+    Eigen::Vector3f azimuth = R * Eigen::Vector3f::UnitX();
+    Eigen::Vector3f ry = rz.cross(azimuth);
+    Eigen::Vector3f rx = ry.cross(rz);
+    R.col(0) = rx;
+    R.col(1) = ry;
+    R.col(2) = rz;
+  }
+  return Eigen::Translation3f(t) * R;
+}
+
+void Overlay::drawOverlayRoadMark(cv::Mat & image, const Pose & pose)
+{
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
+
+  Eigen::Affine3f transform = poseConsideringSlope(util::pose2Affine(pose));
+  // Eigen::Affine3f transform = (util::pose2Affine(pose));
 
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
     Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
@@ -122,17 +152,29 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
   for (const pcl::PointNormal & pn : near_segments) {
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(overlayed_image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
+    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
   }
-
-  cv::Mat show_image;
-  cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
-  util::publishImage(*pub_image_, show_image, stamp);
 }
 
-void Overlay::poseCallback(const geometry_msgs::msg::PoseStamped & msg)
+void Overlay::drawOverlaySignBoard(cv::Mat & image, const Pose & pose)
 {
-  pose_buffer_.push_back(msg);
+  Eigen::Matrix3f K =
+    Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
+  Eigen::Affine3f T = camera_extrinsic_.value();
+
+  Eigen::Affine3f transform = util::pose2Affine(pose);
+  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+    return cv::Point2i(uv1.x(), uv1.y());
+  };
+
+  for (const pcl::PointNormal & pn : sign_board_) {
+    auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
+    if (!p1.has_value() || !p2.has_value()) continue;
+    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
+  }
 }
 
 void Overlay::makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp)
@@ -191,27 +233,6 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(const Pose & pose)
     }
   }
   return near_linestring;
-}
-
-void Overlay::drawOverlaySignBoard(cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
-{
-  Eigen::Matrix3f K =
-    Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
-  Eigen::Affine3f T = camera_extrinsic_.value();
-
-  Eigen::Affine3f transform = util::pose2Affine(pose);
-  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
-    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
-    if (from_camera.z() < 1e-3f) return std::nullopt;
-    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
-    return cv::Point2i(uv1.x(), uv1.y());
-  };
-
-  for (const pcl::PointNormal & pn : sign_board_) {
-    auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
-    if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
-  }
 }
 
 }  // namespace validation
