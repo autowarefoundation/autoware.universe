@@ -139,7 +139,7 @@ protected:
   std::optional<Marker::SharedPtr> get_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-    const ClassificationContainerT & labels, const double line_width = 0.03) const
+    const ClassificationContainerT & labels, const double & line_width) const
   {
     const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
 
