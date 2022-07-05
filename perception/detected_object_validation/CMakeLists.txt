@@ -80,4 +80,5 @@ rclcpp_components_register_node(object_position_filter
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
+  config
 )
