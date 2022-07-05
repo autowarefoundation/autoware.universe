@@ -134,6 +134,7 @@ protected:
   /// \param centroid Centroid position of the shape in Object.header.frame_id frame
   /// \param orientation Orientation of the shape in Object.header.frame_id frame
   /// \param labels List of ObjectClassificationMsg objects
+  /// \param line_width Line thickness around the object
   /// \return Marker ptr. Id and header will have to be set by the caller
   template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_shape_marker_ptr(
