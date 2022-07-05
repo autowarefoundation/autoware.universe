@@ -7,7 +7,6 @@
   <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
   <arg name="container_name" default=""/>
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
-  
 
   <!-- Pointcloud map filter -->
   <group>
