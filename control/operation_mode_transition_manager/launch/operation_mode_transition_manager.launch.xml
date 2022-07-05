@@ -15,11 +15,12 @@
     <remap from="control_cmd" to="/control/command/control_cmd"/>
     <remap from="control_mode_report" to="/vehicle/status/control_mode"/>
     <remap from="gate_operation_mode" to="/control/vehicle_cmd_gate/operation_mode"/>
-    <remap from="operation_mode_request" to="operation_mode_request"/> <!-- from system -->
-
+    <remap from="operation_mode_request" to="operation_mode_request"/>
+    <!-- from system -->
 
     <!-- rename output topics -->
     <remap from="engage_state" to="engage_state"/>
-    <remap from="control_mode_request" to="/control/control_mode_request"/> <!-- to vehicle -->
+    <remap from="control_mode_request" to="/control/control_mode_request"/>
+    <!-- to vehicle -->
   </node>
 </launch>

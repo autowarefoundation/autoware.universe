@@ -193,7 +193,8 @@ bool TransitionToAutoState::checkSystemStable()
   }
 
   // check for speed deviation
-  const auto speed_deviation = data_->kinematics.twist.twist.linear.x - closest_point.longitudinal_velocity_mps;
+  const auto speed_deviation =
+    data_->kinematics.twist.twist.linear.x - closest_point.longitudinal_velocity_mps;
   if (speed_deviation > stable_check_param_.speed_upper_threshold) {
     RCLCPP_INFO(logger_, "Not stable yet: ego speed is too high: %f", speed_deviation);
     return unstable();

@@ -64,12 +64,16 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   {
     auto & p = engage_acceptable_param_;
     p.dist_threshold = declare_parameter<double>("engage_acceptable_limits.dist_threshold");
-    p.speed_upper_threshold = declare_parameter<double>("engage_acceptable_limits.speed_upper_threshold");
-    p.speed_lower_threshold = declare_parameter<double>("engage_acceptable_limits.speed_lower_threshold");
+    p.speed_upper_threshold =
+      declare_parameter<double>("engage_acceptable_limits.speed_upper_threshold");
+    p.speed_lower_threshold =
+      declare_parameter<double>("engage_acceptable_limits.speed_lower_threshold");
     p.yaw_threshold = declare_parameter<double>("engage_acceptable_limits.yaw_threshold");
     p.acc_threshold = declare_parameter<double>("engage_acceptable_limits.acc_threshold");
-    p.lateral_acc_threshold = declare_parameter<double>("engage_acceptable_limits.lateral_acc_threshold");
-    p.lateral_acc_diff_threshold = declare_parameter<double>("engage_acceptable_limits.lateral_acc_diff_threshold");
+    p.lateral_acc_threshold =
+      declare_parameter<double>("engage_acceptable_limits.lateral_acc_threshold");
+    p.lateral_acc_diff_threshold =
+      declare_parameter<double>("engage_acceptable_limits.lateral_acc_diff_threshold");
   }
 
   {
@@ -163,8 +167,8 @@ bool OperationModeTransitionManager::hasDangerAcceleration()
     return false;  // any acceleration is ok when stopped
   }
 
-  const bool has_large_acc = std::abs(data_->control_cmd.longitudinal.acceleration) >
-                             engage_acceptable_param_.acc_threshold;
+  const bool has_large_acc =
+    std::abs(data_->control_cmd.longitudinal.acceleration) > engage_acceptable_param_.acc_threshold;
   return has_large_acc;
 }
 
@@ -176,7 +180,8 @@ std::pair<bool, bool> OperationModeTransitionManager::hasDangerLateralAccelerati
 
   // Calculate angular velocity from kinematics model.
   // Use current_vx to focus on the steering behavior.
-  const auto target_wz = curr_vx * std::tan(data_->control_cmd.lateral.steering_tire_angle) / wheelbase;
+  const auto target_wz =
+    curr_vx * std::tan(data_->control_cmd.lateral.steering_tire_angle) / wheelbase;
 
   const auto curr_lat_acc = curr_vx * curr_wz;
   const auto target_lat_acc = curr_vx * target_wz;
@@ -188,7 +193,6 @@ std::pair<bool, bool> OperationModeTransitionManager::hasDangerLateralAccelerati
 
   debug_info_.lateral_acceleration = curr_lat_acc;
   debug_info_.lateral_acceleration_deviation = curr_lat_acc - target_lat_acc;
-
 
   return {has_large_lat_acc, has_large_lat_acc_diff};
 }
@@ -213,7 +217,7 @@ bool OperationModeTransitionManager::checkEngageAvailable()
   if (!closest_idx) {
     RCLCPP_INFO(get_logger(), "Engage unavailable: closest point not found");
     debug_info_ = OperationModeTransitionManagerDebug{};  // all false
-    return false;                                  // closest trajectory point not found.
+    return false;                                         // closest trajectory point not found.
   }
   const auto closest_point = data_->trajectory.points.at(*closest_idx);
   const auto target_planning_speed = closest_point.longitudinal_velocity_mps;
