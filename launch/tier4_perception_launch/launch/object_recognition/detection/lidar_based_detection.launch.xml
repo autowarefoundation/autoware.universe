@@ -93,7 +93,7 @@
     <let name="merger/input/objects" value="$(var lidar_detection_model)/validation/objects" if="$(var use_validator)"/>
     <let name="merger/input/objects" value="$(var lidar_detection_model)/objects" unless="$(var use_validator)"/>
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
-      <arg name="input/object0" value="$(var merger/input/objects"/>
+      <arg name="input/object0" value="$(var merger/input/objects)"/>
       <arg name="input/object1" value="clustering/objects"/>
       <arg name="output/object" value="temporary_merged_objects"/>
     </include>
