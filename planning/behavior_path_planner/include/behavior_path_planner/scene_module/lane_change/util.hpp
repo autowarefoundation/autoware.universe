@@ -82,6 +82,8 @@ Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target
 
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
 
+bool isObjectFront(const Pose & projected_ego_pose);
+
 double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel);
 
 double stoppingDistance(
@@ -96,7 +98,7 @@ double rearVehicleStopDistance(
   const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
   const double & rear_vehicle_reaction_time, const double & safety_time_margin_for_control);
 
-bool isUnderThresholdDistanceSafe(
+bool isLongitudinalDistanceEnough(
   const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold);
 
 bool hasEnoughDistance(
@@ -104,6 +106,8 @@ bool hasEnoughDistance(
   const Pose & expected_object_pose, const Twist & object_current_twist,
   const LaneChangeParameters & param);
 
+bool isLateralDistanceEnough(
+  const double & relative_lateral_distance, const double & lateral_distance_threshold);
 }  // namespace behavior_path_planner::lane_change_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_

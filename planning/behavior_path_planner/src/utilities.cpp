@@ -1887,30 +1887,45 @@ void getProjectedDistancePointFromPolygons(
   ProjectedDistancePoint nearest;
   std::unique_ptr<Point2d> current_point;
 
-  size_t idx{0};
+  bool points_in_ego{false};
 
-  for (const auto & [ego_to_polygon, polygon_to_ego] :
-       {std::tie(ego_polygon, object_polygon), std::tie(object_polygon, ego_polygon)}) {
-    const auto segments = boost::make_iterator_range(
-      bg::segments_begin(ego_to_polygon), bg::segments_end(ego_to_polygon));
+  {
+    const auto segments =
+      boost::make_iterator_range(bg::segments_begin(ego_polygon), bg::segments_end(ego_polygon));
     const auto points =
-      boost::make_iterator_range(bg::points_begin(polygon_to_ego), bg::points_end(polygon_to_ego));
+      boost::make_iterator_range(bg::points_begin(object_polygon), bg::points_end(object_polygon));
 
     for (auto && segment : segments) {
-      std::size_t count{0};
       for (auto && point : points) {
         const auto projected = pointToSegment(point, *segment.first, *segment.second);
         if (!current_point || projected.distance < nearest.distance) {
           current_point = std::make_unique<Point2d>(point);
           nearest = projected;
-          idx = count;
+          points_in_ego = false;
         }
-        ++count;
       }
     }
   }
 
-  if (idx < object_polygon.outer().size()) {
+  {
+    const auto segments = boost::make_iterator_range(
+      bg::segments_begin(object_polygon), bg::segments_end(object_polygon));
+    const auto points =
+      boost::make_iterator_range(bg::points_begin(ego_polygon), bg::points_end(ego_polygon));
+
+    for (auto && segment : segments) {
+      for (auto && point : points) {
+        const auto projected = pointToSegment(point, *segment.first, *segment.second);
+        if (!current_point || projected.distance < nearest.distance) {
+          current_point = std::make_unique<Point2d>(point);
+          nearest = projected;
+          points_in_ego = true;
+        }
+      }
+    }
+  }
+
+  if (!points_in_ego) {
     point_on_object.position.x = current_point->x();
     point_on_object.position.y = current_point->y();
     point_on_ego.position.x = nearest.projected_point.x();

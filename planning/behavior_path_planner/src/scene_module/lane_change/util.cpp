@@ -350,7 +350,8 @@ bool isLaneChangePathSafe(
   const double target_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
   const auto vehicle_predicted_path = util::convertToPredictedPath(
     path, current_twist, current_pose, target_lane_check_end_time, time_resolution, acceleration,
-    ros_parameters.minimum_lane_change_velocity);
+    std::min(
+      util::l2Norm(current_twist.linear) + 1.0, ros_parameters.minimum_lane_change_velocity));
 
   const auto getEgoExpectedPoseAndConvertToPolygon =
     [](
@@ -565,6 +566,8 @@ bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose)
   return obj_from_ego.position.x > 0;
 }
 
+bool isObjectFront(const Pose & projected_ego_pose) { return projected_ego_pose.position.x > 0; }
+
 double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel)
 {
   const auto deceleration = (vehicle_accel < -1e-3) ? vehicle_accel : -1.0;
@@ -582,6 +585,10 @@ double frontVehicleStopDistance(
   const double & front_vehicle_velocity, const double & front_vehicle_accel,
   const double & distance_to_collision)
 {
+  std::cerr << "calculating front stop thresh stopping distance = "
+            << stoppingDistance(front_vehicle_velocity, front_vehicle_accel) << " + "
+            << distance_to_collision << '\n';
+
   return stoppingDistance(front_vehicle_velocity, front_vehicle_accel) + distance_to_collision;
 }
 
@@ -593,7 +600,7 @@ double rearVehicleStopDistance(
          rear_vehicle_velocity * safety_time_margin_for_control;
 }
 
-bool isUnderThresholdDistanceSafe(
+bool isLongitudinalDistanceEnough(
   const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold)
 {
   return rear_vehicle_stop_threshold < front_vehicle_stop_threshold;
@@ -607,29 +614,41 @@ bool hasEnoughDistance(
   const auto front_vehicle_pose =
     projectCurrentPoseToTarget(expected_ego_pose, expected_object_pose);
 
-  if (param.lateral_distance_threshold < std::fabs(front_vehicle_pose.position.y)) {
+  if (isLateralDistanceEnough(front_vehicle_pose.position.y, param.lateral_distance_threshold)) {
     return true;
   }
 
-  const auto velocity_based_on_ego_position = [&](const bool & object_is_in_front) noexcept {
-    return object_is_in_front ? util::l2Norm(object_current_twist.linear)
-                              : util::l2Norm(ego_current_twist.linear);
-  };
+  const auto is_obj_in_front = isObjectFront(front_vehicle_pose);
+  std::cerr << "is_obj_in_front = " << is_obj_in_front << '\n';
 
-  const auto is_obj_in_front = isObjectFront(expected_ego_pose, expected_object_pose);
+  const auto front_vehicle_velocity =
+    (is_obj_in_front) ? object_current_twist.linear : ego_current_twist.linear;
+  std::cerr << "front_vehicle_velocity = " << util::l2Norm(front_vehicle_velocity) << '\n';
 
-  const auto front_vehicle_velocity = velocity_based_on_ego_position(is_obj_in_front);
-  const auto rear_vehicle_velocity = velocity_based_on_ego_position(!is_obj_in_front);
+  const auto rear_vehicle_velocity =
+    (is_obj_in_front) ? ego_current_twist.linear : object_current_twist.linear;
+  std::cerr << "rear_vehicle_velocity = " << util::l2Norm(rear_vehicle_velocity) << '\n';
+
   const auto front_vehicle_accel = param.expected_front_deceleration;
   const auto rear_vehicle_accel = param.expected_rear_deceleration;
 
   const auto front_vehicle_stop_threshold = frontVehicleStopDistance(
-    front_vehicle_velocity, front_vehicle_accel, std::fabs(front_vehicle_pose.position.x));
+    util::l2Norm(front_vehicle_velocity), front_vehicle_accel,
+    std::max(param.min_stop_distance, std::fabs(front_vehicle_pose.position.x)));
+
   const auto rear_vehicle_stop_threshold = rearVehicleStopDistance(
-    rear_vehicle_velocity, rear_vehicle_accel, param.rear_vehicle_reaction_time,
+    util::l2Norm(rear_vehicle_velocity), rear_vehicle_accel, param.rear_vehicle_reaction_time,
     param.safety_time_margin_for_control);
 
-  return isUnderThresholdDistanceSafe(rear_vehicle_stop_threshold, front_vehicle_stop_threshold);
+  std::cerr << "rear_vehicle_stop_threshold = " << rear_vehicle_stop_threshold << '\t';
+  std::cerr << "front_vehicle_stop_threshold = " << front_vehicle_stop_threshold << '\n';
+
+  return isLongitudinalDistanceEnough(rear_vehicle_stop_threshold, front_vehicle_stop_threshold);
 }
 
+bool isLateralDistanceEnough(
+  const double & relative_lateral_distance, const double & lateral_distance_threshold)
+{
+  return std::fabs(relative_lateral_distance) > lateral_distance_threshold;
+}
 }  // namespace behavior_path_planner::lane_change_utils
