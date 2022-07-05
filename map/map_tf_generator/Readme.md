@@ -2,7 +2,7 @@
 
 ## Purpose
 
-To broadcast the `viewer` frame for visualization of map in Rviz.
+The nodes in this package broadcast the `viewer` frame for visualization of the map in RViz.
 The position of the `viewer` frame is the geometric center of input.
 
 Note that there is no module to need the `viewer` frame and this is used only for visualization.
