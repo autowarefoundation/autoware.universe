@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="input/object" default="in_objects"/>
+  <arg name="output/object" default="out_objects"/>
+
+  <node pkg="detected_object_validation" exec="object_position_filter_node" name="object_position_filter" output="screen">
+    <remap from="input/object" to="$(var input/object)"/>
+    <remap from="output/object" to="$(var output/object)"/>
+    <param name="unknown_only" value="true"/>
+    <param name="upper_bound_x" value="100.0"/>
+    <param name="lower_bound_x" value="0.0"/>
+    <param name="upper_bound_y" value="10.0"/>
+    <param name="lower_bound_y" value="-10.0"/>
+  </node>
+</launch>

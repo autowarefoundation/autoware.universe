@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "detected_object_filter/detected_object_filter.hpp"
+#include "detected_object_filter/object_lanelet_filter.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -32,38 +32,33 @@ boost::optional<geometry_msgs::msg::Transform> getTransform(
       rclcpp::Duration::from_seconds(0.5));
     return self_transform_stamped.transform;
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("detected_object_filter"), ex.what());
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("object_lanelet_filter"), ex.what());
     return boost::none;
   }
 }
-namespace detected_object_filter
+namespace object_lanelet_filter
 {
-DetectedObjectFilterNode::DetectedObjectFilterNode(const rclcpp::NodeOptions & node_options)
-: Node("detected_object_filter_node", node_options),
+ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & node_options)
+: Node("object_lanelet_filter_node", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
   using std::placeholders::_1;
 
   // Set parameters
-  upper_bound_x_ = declare_parameter<float>("upper_bound_x", 100.0);
-  upper_bound_y_ = declare_parameter<float>("upper_bound_y", 50.0);
-  lower_bound_x_ = declare_parameter<float>("lower_bound_x", 0.0);
-  lower_bound_y_ = declare_parameter<float>("lower_bound_y", -50.0);
-  filter_by_xy_position_ = declare_parameter<bool>("filter_by_xy_position", false);
-  unknown_only_ = declare_parameter<bool>("unknown_only", true);
+  unknown_only_ = declare_parameter<bool>("unknown_only", false);
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&DetectedObjectFilterNode::mapCallback, this, _1));
+    std::bind(&ObjectLaneletFilterNode::mapCallback, this, _1));
   object_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "input/object", rclcpp::QoS{1}, std::bind(&DetectedObjectFilterNode::objectCallback, this, _1));
+    "input/object", rclcpp::QoS{1}, std::bind(&ObjectLaneletFilterNode::objectCallback, this, _1));
   object_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "output/object", rclcpp::QoS{1});
 }
 
-void DetectedObjectFilterNode::mapCallback(
+void ObjectLaneletFilterNode::mapCallback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -72,65 +67,50 @@ void DetectedObjectFilterNode::mapCallback(
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
 }
 
-void DetectedObjectFilterNode::objectCallback(
+void ObjectLaneletFilterNode::objectCallback(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg)
 {
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+
   // Guard
   if (object_pub_->get_subscription_count() < 1) return;
 
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
   autoware_auto_perception_msgs::msg::DetectedObjects output_object_msg;
   output_object_msg.header = input_msg->header;
 
-  if (filter_by_xy_position_) {
-    for (const auto & object : input_msg->objects) {
-      const auto & position = object.kinematics.pose_with_covariance.pose.position;
-      const auto & label = object.classification.front().label;
-      if (unknown_only_ && (label != Label::UNKNOWN)) {
-        output_object_msg.objects.emplace_back(object);
-      } else {
-        if (
-          position.x > lower_bound_x_ && position.x < upper_bound_x_ &&
-          position.y > lower_bound_y_ && position.y < upper_bound_y_) {
-          output_object_msg.objects.emplace_back(object);
-        }
-      }
-    }
-  } else {
-    if (!lanelet_map_ptr_) {
-      RCLCPP_ERROR(get_logger(), "No vector map received.");
-      return;
-    }
-    autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-    if (!transformDetectedObjects(*input_msg, "map", tf_buffer_, transformed_objects)) {
-      RCLCPP_ERROR(get_logger(), "Failed transform to map.");
-      return;
-    }
-
-    // calculate convex hull
-    const auto convex_hull = getConvexHull(transformed_objects);
-    // get intersected lanelets
-    lanelet::ConstLanelets intersected_lanelets =
-      getIntersectedLanelets(convex_hull, road_lanelets_);
-
-    int index = 0;
-    for (const auto & object : transformed_objects.objects) {
-      const auto position = object.kinematics.pose_with_covariance.pose.position;
-      const auto & label = object.classification.front().label;
-      if (unknown_only_ && (label != Label::UNKNOWN)) {
-        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-      } else {
-        if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
-          output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-        }
-      }
-      ++index;
-    }
+  if (!lanelet_map_ptr_) {
+    RCLCPP_ERROR(get_logger(), "No vector map received.");
+    return;
   }
+  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  if (!transformDetectedObjects(*input_msg, "map", tf_buffer_, transformed_objects)) {
+    RCLCPP_ERROR(get_logger(), "Failed transform to map.");
+    return;
+  }
+
+  // calculate convex hull
+  const auto convex_hull = getConvexHull(transformed_objects);
+  // get intersected lanelets
+  lanelet::ConstLanelets intersected_lanelets = getIntersectedLanelets(convex_hull, road_lanelets_);
+
+  int index = 0;
+  for (const auto & object : transformed_objects.objects) {
+    const auto position = object.kinematics.pose_with_covariance.pose.position;
+    const auto & label = object.classification.front().label;
+    if (unknown_only_ && (label != Label::UNKNOWN)) {
+      output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+    } else {
+      if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
+        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+      }
+    }
+    ++index;
+  }
+
   object_pub_->publish(output_object_msg);
 }
 
-bool DetectedObjectFilterNode::transformDetectedObjects(
+bool ObjectLaneletFilterNode::transformDetectedObjects(
   const autoware_auto_perception_msgs::msg::DetectedObjects & input_msg,
   const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
   autoware_auto_perception_msgs::msg::DetectedObjects & output_msg)
@@ -160,7 +140,7 @@ bool DetectedObjectFilterNode::transformDetectedObjects(
   return true;
 }
 
-LinearRing2d DetectedObjectFilterNode::getConvexHull(
+LinearRing2d ObjectLaneletFilterNode::getConvexHull(
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects)
 {
   MultiPoint2d candidate_points;
@@ -175,7 +155,7 @@ LinearRing2d DetectedObjectFilterNode::getConvexHull(
   return convex_hull;
 }
 
-lanelet::ConstLanelets DetectedObjectFilterNode::getIntersectedLanelets(
+lanelet::ConstLanelets ObjectLaneletFilterNode::getIntersectedLanelets(
   const LinearRing2d & convex_hull, const lanelet::ConstLanelets & road_lanelets)
 {
   lanelet::ConstLanelets intersected_lanelets;
@@ -187,7 +167,7 @@ lanelet::ConstLanelets DetectedObjectFilterNode::getIntersectedLanelets(
   return intersected_lanelets;
 }
 
-bool DetectedObjectFilterNode::isPointWithinLanelets(
+bool ObjectLaneletFilterNode::isPointWithinLanelets(
   const Point2d & point, const lanelet::ConstLanelets & intersected_lanelets)
 {
   for (const auto & lanelet : intersected_lanelets) {
@@ -198,7 +178,7 @@ bool DetectedObjectFilterNode::isPointWithinLanelets(
   return false;
 }
 
-}  // namespace detected_object_filter
+}  // namespace object_lanelet_filter
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(detected_object_filter::DetectedObjectFilterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(object_lanelet_filter::ObjectLaneletFilterNode)

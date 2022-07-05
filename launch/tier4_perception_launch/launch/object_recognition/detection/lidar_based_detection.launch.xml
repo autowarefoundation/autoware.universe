@@ -105,7 +105,7 @@
 
   <!-- Filter -->
   <group>
-    <include file="$(find-pkg-share object_filter)/launch/detected_object_filter.launch.xml">
+    <include file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml">
       <arg name="input/object" value="objects_before_filter"/>
       <arg name="output/object" value="objects"/>
     </include>

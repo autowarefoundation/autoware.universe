@@ -4,15 +4,10 @@
   <arg name="input/object" default="in_objects"/>
   <arg name="output/object" default="out_objects"/>
 
-  <node pkg="object_filter" exec="detected_object_filter" name="detected_object_filter" output="screen">
+  <node pkg="detected_object_validation" exec="object_lanelet_filter_node" name="object_lanelet_filter" output="screen">
     <remap from="input/vector_map" to="$(var vector_map_topic)"/>
     <remap from="input/object" to="$(var input/object)"/>
     <remap from="output/object" to="$(var output/object)"/>
-    <param name="filter_by_xy_position" value="false"/>
     <param name="unknown_only" value="true"/>
-    <param name="upper_bound_x" value="100.0"/>
-    <param name="lower_bound_x" value="0.0"/>
-    <param name="upper_bound_y" value="10.0"/>
-    <param name="lower_bound_y" value="-10.0"/>
   </node>
 </launch>

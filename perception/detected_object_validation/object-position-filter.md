@@ -1,8 +1,8 @@
-# detected_object_filter
+# object_lanelet_filter
 
 ## Purpose
 
-The `detected_object_filter` is a node that filters detected object based on x,y values, or by using vector map.
+The `object_lanelet_filter` is a node that filters detected object based on x,y values.
 
 ## Inner-workings / Algorithms
 
@@ -28,7 +28,6 @@ The `detected_object_filter` is a node that filters detected object based on x,y
 | Name                    | Type  | Default Value | Description                                                                                                 |
 | ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------------------------------------- |
 | `unknown_only`          | bool  | true          | If true, only unknown objects are filtered.                                                                 |
-| `filter_by_xy_position` | bool  | false         | If true, objects are filtered based on x,y value; if set to false, vector map based filtering is performed. |
 | `upper_bound_x`         | float | 100.00        | Bound for filtering. Only used if filter_by_xy_position is true                                             |
 | `lower_bound_x`         | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true                                             |
 | `upper_bound_y`         | float | 50.00         | Bound for filtering. Only used if filter_by_xy_position is true                                             |
