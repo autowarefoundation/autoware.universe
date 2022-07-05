@@ -6,5 +6,5 @@
     max_voxel_size: 40000
     point_cloud_range: [-76.8, -76.8, -3.0, 76.8, 76.8, 5.0]
     voxel_size: [0.32, 0.32, 8.0]
-    downsample_factor: 2
+    downsample_factor: 1
     encoder_in_feature_size: 11
