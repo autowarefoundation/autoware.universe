@@ -61,7 +61,12 @@ template <class T>
 boost::optional<size_t> searchZeroVelocityIndex(
   const T & points_with_twist, const size_t src_idx, const size_t dst_idx)
 {
-  validateNonEmpty(points_with_twist);
+  try {
+    validateNonEmpty(points_with_twist);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   constexpr double epsilon = 1e-3;
   for (size_t i = src_idx; i < dst_idx; ++i) {
@@ -103,7 +108,12 @@ boost::optional<size_t> findNearestIndex(
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const double max_squared_dist = max_dist * max_dist;
 
@@ -143,7 +153,8 @@ boost::optional<size_t> findNearestIndex(
  */
 template <class T>
 double calcLongitudinalOffsetToSegment(
-  const T & points, const size_t seg_idx, const geometry_msgs::msg::Point & p_target)
+  const T & points, const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  const bool throw_exception = false)
 {
   validateNonEmpty(points);
 
@@ -153,8 +164,26 @@ double calcLongitudinalOffsetToSegment(
   const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0};
   const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0};
 
+  // If the norm of segment_vec == 0.0,
+  // return inner product with the unit vector calculated from the yaw of the start point
   if (segment_vec.norm() == 0.0) {
-    throw std::runtime_error("Same points are given.");
+    const auto e = std::runtime_error("Same points are given.");
+    if (throw_exception) {
+      throw e;
+    }
+
+    std::cerr << e.what() << std::endl;
+
+    geometry_msgs::msg::Vector3 rpy;
+    try {
+      rpy = getRPY(getPose(points.at(seg_idx)));
+    } catch (const std::exception & exception) {
+      std::cerr << exception.what() << std::endl;
+      return std::nan("");
+    }
+
+    const Eigen::Vector3d unit_vec{std::cos(rpy.z), std::sin(rpy.z), 0.0};
+    return unit_vec.dot(target_vec);
   }
 
   return segment_vec.dot(target_vec) / segment_vec.norm();
@@ -235,7 +264,8 @@ boost::optional<size_t> findNearestSegmentIndex(
  * @return length (unsigned)
  */
 template <class T>
-double calcLateralOffset(const T & points, const geometry_msgs::msg::Point & p_target)
+double calcLateralOffset(
+  const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false)
 {
   validateNonEmpty(points);
 
@@ -247,8 +277,27 @@ double calcLateralOffset(const T & points, const geometry_msgs::msg::Point & p_t
   const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
   const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
 
+  // If the norm of segment_vec == 0.0,
+  // return outer product with the unit vector calculated from the yaw of the start point
   if (segment_vec.norm() == 0.0) {
-    throw std::runtime_error("Same points are given.");
+    const auto e = std::runtime_error("Same points are given.");
+    if (throw_exception) {
+      throw e;
+    }
+
+    std::cerr << e.what() << std::endl;
+
+    geometry_msgs::msg::Vector3 rpy;
+    try {
+      rpy = getRPY(getPose(points.at(seg_idx)));
+    } catch (const std::exception & exception) {
+      std::cerr << exception.what() << std::endl;
+      return std::nan("");
+    }
+
+    const Eigen::Vector3d unit_vec{std::cos(rpy.z), std::sin(rpy.z), 0.0};
+    const Eigen::Vector3d cross_vec = unit_vec.cross(target_vec);
+    return cross_vec(2);
   }
 
   const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
@@ -261,7 +310,12 @@ double calcLateralOffset(const T & points, const geometry_msgs::msg::Point & p_t
 template <class T>
 double calcSignedArcLength(const T & points, const size_t src_idx, const size_t dst_idx)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return 0.0;
+  }
 
   if (src_idx > dst_idx) {
     return -calcSignedArcLength(points, dst_idx, src_idx);
@@ -281,7 +335,12 @@ template <class T>
 double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point, const size_t dst_idx)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return 0.0;
+  }
 
   const size_t src_seg_idx = findNearestSegmentIndex(points, src_point);
 
@@ -301,7 +360,12 @@ boost::optional<double> calcSignedArcLength(
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const auto src_seg_idx = findNearestSegmentIndex(points, src_pose, max_dist, max_yaw);
   if (!src_seg_idx) {
@@ -322,7 +386,12 @@ template <class T>
 double calcSignedArcLength(
   const T & points, const size_t src_idx, const geometry_msgs::msg::Point & dst_point)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return 0.0;
+  }
 
   return -calcSignedArcLength(points, dst_point, src_idx);
 }
@@ -335,7 +404,12 @@ double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point,
   const geometry_msgs::msg::Point & dst_point)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return 0.0;
+  }
 
   const size_t src_seg_idx = findNearestSegmentIndex(points, src_point);
   const size_t dst_seg_idx = findNearestSegmentIndex(points, dst_point);
@@ -359,7 +433,12 @@ boost::optional<double> calcSignedArcLength(
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const auto src_seg_idx = findNearestSegmentIndex(points, src_pose, max_dist, max_yaw);
   if (!src_seg_idx) {
@@ -383,7 +462,12 @@ boost::optional<double> calcSignedArcLength(
 template <class T>
 double calcArcLength(const T & points)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return 0.0;
+  }
 
   return calcSignedArcLength(points, 0, points.size() - 1);
 }
@@ -395,7 +479,12 @@ template <class T>
 boost::optional<double> calcDistanceToForwardStopPoint(
   const T & points_with_twist, const size_t src_idx = 0)
 {
-  validateNonEmpty(points_with_twist);
+  try {
+    validateNonEmpty(points_with_twist);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const auto closest_stop_idx =
     searchZeroVelocityIndex(points_with_twist, src_idx, points_with_twist.size());
@@ -415,7 +504,12 @@ boost::optional<double> calcDistanceToForwardStopPoint(
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
-  validateNonEmpty(points_with_twist);
+  try {
+    validateNonEmpty(points_with_twist);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const auto nearest_segment_idx =
     tier4_autoware_utils::findNearestSegmentIndex(points_with_twist, pose, max_dist, max_yaw);
@@ -450,12 +544,22 @@ boost::optional<double> calcDistanceToForwardStopPoint(
  */
 template <class T>
 inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
-  const T & points, const size_t src_idx, const double offset)
+  const T & points, const size_t src_idx, const double offset, const bool throw_exception = false)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   if (points.size() - 1 < src_idx) {
-    throw std::out_of_range("Invalid source index");
+    const auto e = std::out_of_range("Invalid source index");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return {};
   }
 
   if (points.size() == 1) {
@@ -503,7 +607,12 @@ template <class T>
 inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   if (offset < 0.0) {
     auto reverse_points = points;
@@ -527,12 +636,22 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
  */
 template <class T>
 inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
-  const T & points, const size_t src_idx, const double offset)
+  const T & points, const size_t src_idx, const double offset, const bool throw_exception = false)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   if (points.size() - 1 < src_idx) {
-    throw std::out_of_range("Invalid source index");
+    const auto e = std::out_of_range("Invalid source index");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return {};
   }
 
   if (points.size() == 1) {
@@ -593,7 +712,12 @@ template <class T>
 inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const size_t src_seg_idx = findNearestSegmentIndex(points, src_point);
   const double signed_length_src_offset =
@@ -614,7 +738,12 @@ inline boost::optional<size_t> insertTargetPoint(
   const size_t seg_idx, const geometry_msgs::msg::Point & p_target, T & points,
   const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   // invalid segment index
   if (seg_idx + 1 >= points.size()) {
