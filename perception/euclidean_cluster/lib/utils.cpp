@@ -13,10 +13,10 @@
 // limitations under the License.
 #include "euclidean_cluster/utils.hpp"
 
+#include <common/types.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
-#include <common/types.hpp>
 #include <sensor_msgs/msg/point_field.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
@@ -31,9 +31,8 @@ geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & poin
   centroid.y = 0.0f;
   centroid.z = 0.0f;
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x"),
-    iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
-    iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-  {
+       iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
     centroid.x += *iter_x;
     centroid.y += *iter_y;
     centroid.z += *iter_z;
@@ -77,22 +76,21 @@ void convertObjectMsg2SensorMsg(
     pointcloud_size += feature_object.feature.cluster.width * feature_object.feature.cluster.height;
   }
 
-  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZI> modifier{output,
-    "euclidean_cluster_cloud"};
+  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZI> modifier{
+    output, "euclidean_cluster_cloud"};
 
-  constexpr uint8_t color_data[] = {200, 0, 0, 0, 200, 0, 0, 0, 200,
-    200, 200, 0, 200, 0, 200, 0, 200, 200};                                    // 6 pattern
+  constexpr uint8_t color_data[] = {200, 0,   0, 0,   200, 0,   0, 0,   200,
+                                    200, 200, 0, 200, 0,   200, 0, 200, 200};  // 6 pattern
   for (size_t i = 0; i < input.feature_objects.size(); ++i) {
     const auto & feature_object = input.feature_objects.at(i);
-    point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{feature_object.
-      feature
-      .cluster};
+    point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{
+      feature_object.feature.cluster};
     for (const auto & point : view) {
       modifier.push_back(
         {point.x, point.y, point.z,
-          static_cast<float>((color_data[3 * (i % 6) + 0] << 3) +
-          (color_data[3 * (i % 6) + 1] << 2) +
-          (color_data[3 * (i % 6) + 2] << 1))});
+         static_cast<float>(
+           (color_data[3 * (i % 6) + 0] << 3) + (color_data[3 * (i % 6) + 1] << 2) +
+           (color_data[3 * (i % 6) + 2] << 1))});
     }
   }
 }
