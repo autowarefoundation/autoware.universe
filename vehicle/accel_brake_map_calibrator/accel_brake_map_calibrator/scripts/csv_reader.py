@@ -49,6 +49,12 @@ class CSVReader(object):
         remove_by_pitch=True,
         remove_by_pedal_speed=True,
         remove_by_jerk=True,
+        # remove_by_invalid_pedal=False,
+        # remove_by_vel=True,
+        # remove_by_steer=False,
+        # remove_by_pitch=False,
+        # remove_by_pedal_speed=False,
+        # remove_by_jerk=False,
     ):
         # remove unused data
         raw_size = len(self.csv_data)
