@@ -171,8 +171,7 @@ private:
   std::vector<double> full_original_accel_sq_l1_que_;
   std::vector<double> new_accel_mse_que_;
   std::size_t full_mse_que_size_ = 100000;
-  //std::size_t part_mse_que_size_ = 3000;
-  std::size_t part_mse_que_size_ = 50;
+  std::size_t part_mse_que_size_ = 3000;
   double full_original_accel_rmse_ = 0.0;
   double full_original_accel_error_l1norm_ = 0.0;
   double part_original_accel_rmse_ = 0.0;
