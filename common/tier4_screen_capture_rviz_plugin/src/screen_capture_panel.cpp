@@ -31,8 +31,8 @@ void setFormatDate(QLabel * line, double time)
 AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
 : rviz_common::Panel(parent)
 {
+  std::filesystem::create_directory("capture");
   auto * v_layout = new QVBoxLayout;
-
   // screen capture
   auto * cap_layout = new QHBoxLayout;
   {
@@ -41,7 +41,7 @@ AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
     connect(screen_capture_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickScreenCapture()));
     cap_layout->addWidget(screen_capture_button_ptr_);
     cap_layout->addWidget(ros_time_label_);
-    cap_layout->addWidget(new QLabel(" [Key] "));
+    cap_layout->addWidget(new QLabel(" [.mp4] "));
   }
 
   // video capture
@@ -81,13 +81,37 @@ void AutowareScreenCapturePanel::onInitialize()
 
 void AutowareScreenCapturePanel::onClickScreenCapture()
 {
-  const std::string time_text = ros_time_label_->text().toStdString();
+  const std::string time_text = "capture/" + ros_time_label_->text().toStdString();
   getDisplayContext()->getViewManager()->getRenderPanel()->getRenderWindow()->captureScreenShot(
     time_text + ".png");
   return;
 }
 
-void convertToVideo() {}
+void AutowareScreenCapturePanel::convertPNGImagesToMP4() {
+  cv::VideoCapture capture(root_folder_+ "/%06d.png", cv::CAP_IMAGES);
+  if (!capture.isOpened()) {
+    return;
+  }
+  int fourcc = cv::VideoWriter::fourcc('m', 'p', '4', 'v');	// mp4
+  cv::VideoWriter writer;
+  cv::Size size = cv::Size(1280,720);
+	writer.open("capture/" + root_folder_ + ".mp4", fourcc, 1, size);
+  cv::Mat image, resized;
+  while (true) {
+    capture >> image;
+    if (image.empty()) {
+      break;
+    }
+    // need to resize for fixed frame video
+    cv::resize(image,resized,size);
+    writer << resized;
+    cv::waitKey(0);
+  }
+  capture.release();
+  writer.release();
+  // remove temporary created folder
+  std::filesystem::remove_all(root_folder_);
+}
 
 void AutowareScreenCapturePanel::onClickVideoCapture()
 {
@@ -105,12 +129,13 @@ void AutowareScreenCapturePanel::onClickVideoCapture()
       capture_timer_->start(clock);
       state_ = State::CAPTURING;
       break;
-    case State::CAPTURING: {
-      capture_timer_->stop();
-    }
+    case State::CAPTURING: 
+      {
+        capture_timer_->stop();
+      }
       capture_to_mp4_button_ptr_->setText("writing to video");
       capture_to_mp4_button_ptr_->setStyleSheet("background-color: #FFFF00;");
-      convertToVideo();
+      convertPNGImagesToMP4();
       state_ = State::FINALIZED;
       break;
     case State::FINALIZED:
@@ -127,7 +152,6 @@ void AutowareScreenCapturePanel::onTimer()
   std::stringstream count_text;
   count_text << std::setw(6) << std::setfill('0') << counter_;
   const std::string file = root_folder_ + "/" + count_text.str() + ".png";
-  std::cerr << "file" << file << std::endl;
   getDisplayContext()->getViewManager()->getRenderPanel()->getRenderWindow()->captureScreenShot(
     file);
   counter_++;

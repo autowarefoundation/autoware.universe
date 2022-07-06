@@ -31,6 +31,8 @@
 #include <rviz_common/view_manager.hpp>
 #include <rviz_rendering/render_window.hpp>
 
+#include <opencv2/opencv.hpp>
+
 #include <memory>
 #include <string>
 
@@ -46,12 +48,12 @@ public:
   void onInitialize() override;
   void createWallTimer();
   void onTimer();
+  void convertPNGImagesToMP4();
 
 public Q_SLOTS:
   void onClickScreenCapture();
   void onClickCaptureToVideo();
   void onClickVideoCapture();
-  // void onRateChanged(){};
 
 private:
   QLabel * ros_time_label_;

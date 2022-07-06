@@ -3,11 +3,15 @@ project(tier4_screen_capture_rviz_plugin)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
-
+find_package(OpenCV REQUIRED)
 find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
 set(QT_LIBRARIES Qt5::Widgets)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+include_directories(
+  ${OpenCV_INCLUDE_DIRS}
+)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/screen_capture_panel.hpp
@@ -15,6 +19,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 target_link_libraries(${PROJECT_NAME}
   ${QT_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )
 pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.xml)
 
