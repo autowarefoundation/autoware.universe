@@ -32,7 +32,6 @@
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::util::convertToGeometryPoseArray;
-using behavior_path_planner::util::removeOverlappingPoints;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::PoseStamped;

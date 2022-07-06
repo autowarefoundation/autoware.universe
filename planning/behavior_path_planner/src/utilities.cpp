@@ -792,8 +792,8 @@ PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
       min_dist) {
       filtered_path.points.back().lane_ids.push_back(pt.lane_ids.front());
       filtered_path.points.back().point.longitudinal_velocity_mps = std::min(
-        std::abs(pt.point.longitudinal_velocity_mps),
-        std::abs(filtered_path.points.back().point.longitudinal_velocity_mps));
+        pt.point.longitudinal_velocity_mps,
+        filtered_path.points.back().point.longitudinal_velocity_mps);
     } else {
       filtered_path.points.push_back(pt);
     }
