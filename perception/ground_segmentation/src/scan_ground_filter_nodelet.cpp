@@ -38,10 +38,8 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
   // set initial parameters
   {
     base_frame_ = declare_parameter("base_frame", "base_link");
-    non_ground_height_max_ =
-      static_cast<float>(declare_parameter("non_ground_height_max", 2.5));
-    non_ground_height_min_ =
-      static_cast<float>(declare_parameter("non_ground_height_min", 0.0));
+    non_ground_height_max_ = static_cast<float>(declare_parameter("non_ground_height_max", 2.5));
+    non_ground_height_min_ = static_cast<float>(declare_parameter("non_ground_height_min", 0.0));
     global_slope_max_angle_rad_ = deg2rad(declare_parameter("global_slope_max_angle_deg", 8.0));
     local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_deg", 6.0));
     radial_divider_angle_rad_ = deg2rad(declare_parameter("radial_divider_angle_deg", 1.0));
