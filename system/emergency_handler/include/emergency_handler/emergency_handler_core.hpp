@@ -23,6 +23,9 @@
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
+#include <autoware_auto_system_msgs/msg/mrm_command.hpp>
+#include <autoware_auto_system_msgs/msg/mrm_status.hpp>
+#include <autoware_auto_system_msgs/msg/mrm_behavior.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
@@ -78,6 +81,8 @@ private:
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
+  rclcpp::Publisher<autoware_auto_system_msgs::msg::MRMCommand>::SharedPtr pub_mrm_command_;
+  rclcpp::Publisher<autoware_auto_system_msgs::msg::MRMStatus>::SharedPtr pub_mrm_status_;
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     pub_control_command_;
 

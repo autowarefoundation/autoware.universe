@@ -51,6 +51,10 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     *this, "~/input/hazard_status", param_.timeout_hazard_status);
 
   // Publisher
+  pub_mrm_command_ = create_publisher<autoware_auto_system_msgs::msg::MRMCommand>(
+    "~/output/mrm_command", rclcpp::QoS{1});
+  pub_mrm_status_ = create_publisher<autoware_auto_system_msgs::msg::MRMStatus>(
+    "~/output/mrm_status", rclcpp::QoS{1});
   pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_command", rclcpp::QoS{1});
   pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
