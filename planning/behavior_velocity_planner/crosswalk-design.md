@@ -14,7 +14,7 @@ The manager launch crosswalk scene modules when the reference path conflicts cro
 
 ### Module Parameters
 
-#### Common paramters
+#### Common parameters
 
 | Parameter              | Type | Description                     |
 | ---------------------- | ---- | ------------------------------- |
@@ -28,14 +28,14 @@ The crosswalk module determines a stop position at least `stop_margin` away from
   <img src="docs/crosswalk/stop_margin.svg" width=90%>
 </div>
 
-The stop line is the reference point for the stopping position of the vehicle, but if there is no stop line in front of the crosswalk, the position `stop_line_distance` meters befor the crosswalk is the virtual stop line for the vehicle. Then, if the stop position determined from `stop_margin` exists in front of the stop line determined from the HDMap or `stop_line_distance`, the actual stop position is determined according to `stop_margin` in principle, and vice versa.
+The stop line is the reference point for the stopping position of the vehicle, but if there is no stop line in front of the crosswalk, the position `stop_line_distance` meters before the crosswalk is the virtual stop line for the vehicle. Then, if the stop position determined from `stop_margin` exists in front of the stop line determined from the HDMap or `stop_line_distance`, the actual stop position is determined according to `stop_margin` in principle, and vice versa.
 
 <div align="center">
   <img src="docs/crosswalk/stop_line.svg" width=45%>
   <img src="docs/crosswalk/stop_line_distance.svg" width=45%>
 </div>
 
-On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `stop_line_margin` meters away from the stop line, the accutual stop position is determined to be `stop_margin` and pedestrian position, not at the stop line.
+On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `stop_line_margin` meters away from the stop line, the actual stop position is determined to be `stop_margin` and pedestrian position, not at the stop line.
 
 <div align="center">
   <img src="docs/crosswalk/stop_line_margin.svg" width=90%>
@@ -61,7 +61,7 @@ See the workflow in algorithms section.
 
 #### Parameters for stuck vehicle
 
-If there are low speed or stoped vehicle ahead of the crosswalk, and there is not enough space between the crosswalk and the vehicle (see following figure), closing the distance to that vehicle could cause Ego to be stuck on the crosswalk. So, in this situation, this module plans to stop before the crosswalk and wait until the vehicles move away, even if there are no pedestrians or bicycles.
+If there are low speed or stop vehicle ahead of the crosswalk, and there is not enough space between the crosswalk and the vehicle (see following figure), closing the distance to that vehicle could cause Ego to be stuck on the crosswalk. So, in this situation, this module plans to stop before the crosswalk and wait until the vehicles move away, even if there are no pedestrians or bicycles.
 
 <div align="center">
   <img src="docs/crosswalk/stuck_vehicle_attention_range.svg" width=90%>
@@ -93,7 +93,7 @@ Also see algorithm section.
 
 #### Parameters for target area & object
 
-As a countermeasure against pedestrians attempting to cross outside the crosswalk area, this module watchs not only the crosswalk zebra area but also in front of and behind space of the crosswalk, and if there are pedestrians or bicycles attempting to pass through the watch area, this module judges whether ego should pass or stop.
+As a countermeasure against pedestrians attempting to cross outside the crosswalk area, this module watches not only the crosswalk zebra area but also in front of and behind space of the crosswalk, and if there are pedestrians or bicycles attempting to pass through the watch area, this module judges whether ego should pass or stop.
 
 <div align="center">
   <img src="docs/crosswalk/crosswalk_attention_range.svg" width=90%>
@@ -140,7 +140,7 @@ end
 
 At first, this module determines whether the pedestrians or bicycles are likely to cross the crosswalk based on the color of the pedestrian traffic light signal related to the crosswalk. Only when the pedestrian traffic signal is **RED**, this module judges that the objects will not cross the crosswalk and skip the pass judge logic.
 
-Secondly, this module makes a decision as to whether ego should stop in front of the crosswalk or pass through based on the relative relationship between TTC(Time-To-Collision) and TTV(Time-To-Vehicle). The TTC is the time it takes for ego to reach the virtual collision point, and the TTV is the time it takes for the object to reach the virtual colllision point.
+Secondly, this module makes a decision as to whether ego should stop in front of the crosswalk or pass through based on the relative relationship between TTC(Time-To-Collision) and TTV(Time-To-Vehicle). The TTC is the time it takes for ego to reach the virtual collision point, and the TTV is the time it takes for the object to reach the virtual collision point.
 
 <div align="center">
   <img src="docs/crosswalk/virtual_collision_point.svg" width=90%>
@@ -150,7 +150,7 @@ Depending on the relative relationship between TTC and TTV, the ego's behavior a
 
 1. **TTC >> TTV**: The objects have enough time to cross first before ego reaches the crosswalk. (Type-A)
 2. **TTC ≒ TTV**: There is a risk of a near miss and collision between ego and objects at the virtual collision point. (Type-B)
-3. **TTC << TTV**: Ego has enough time to path through the crosswalk befor the objects reach the virtual collision point. (Type-C)
+3. **TTC << TTV**: Ego has enough time to path through the crosswalk before the objects reach the virtual collision point. (Type-C)
 
 This module judges that ego is able to pass through the crosswalk without collision risk when the relative relationship between TTC and TTV is **Type-A** and **Type-C**. On the other hand, this module judges that ego needs to stop in front of the crosswalk prevent collision with objects in **Type-B** condition. The time margin can be set by parameters `ego_pass_first_margin` and `ego_pass_later_margin`.
 
