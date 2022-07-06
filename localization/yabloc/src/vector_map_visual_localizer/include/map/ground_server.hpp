@@ -10,6 +10,8 @@
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/circular_buffer.hpp>
+
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
@@ -41,6 +43,8 @@ private:
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_{nullptr};
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
+
+  boost::circular_buffer<Eigen::Vector3f> vector_buffer_;
 
   void callbackMap(const HADMapBin & msg);
   void callbackPoseStamped(const PoseStamped & msg);

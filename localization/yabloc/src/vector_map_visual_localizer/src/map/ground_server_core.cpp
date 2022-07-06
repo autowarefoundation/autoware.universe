@@ -6,7 +6,7 @@
 
 namespace map
 {
-GroundServer::GroundServer() : Node("ground_server")
+GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(40)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -30,6 +30,16 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
 {
   if (kdtree_ == nullptr) return;
   common::GroundPlane ground_plane = computeGround(msg.pose.position);
+
+  Eigen::Vector3f normal = ground_plane.normal;
+  vector_buffer_.push_back(normal);
+
+  Eigen::Vector3f mean = Eigen::Vector3f::Zero();
+  for (const Eigen::Vector3f & v : vector_buffer_) {
+    mean += v;
+  }
+  mean /= vector_buffer_.size();
+  ground_plane.normal = mean.normalized();
 
   Float32 data;
   data.data = ground_plane.height();
@@ -100,11 +110,25 @@ common::GroundPlane GroundServer::computeGround(const geometry_msgs::msg::Point 
   centroid << point.x, point.y, height, 0;
   pcl::computeCovarianceMatrix(*cloud_, indices, centroid, covariance);
 
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver(covariance);
-  if (solver.info() != Eigen::ComputationInfo::Success) return plane;
+  Eigen::Vector4f plane_parameter;
+  float curvature;
+  pcl::solvePlaneParameters(covariance, centroid, plane_parameter, curvature);
+  Eigen::Vector3f normal = plane_parameter.topRows(3);
+  if (normal.z() < 0) normal = -normal;
 
-  plane.normal = solver.eigenvectors().col(0);
-  if (plane.normal.z() < 0) plane.normal = -plane.normal;
+  Eigen::Vector3f nn = cloud_->at(indices.front()).getVector3fMap();
+  height = (normal.dot(nn) - nn.x() * normal.x() - nn.y() * normal.y()) / normal.z();
+  plane.xyz.z() = height;
+  plane.normal = normal;
+
+  // Compute maximize gradient angle
+  {
+    static float max_angle = 0;
+    float angle = std ::acos(normal.dot(Eigen::Vector3f::UnitZ()));
+    max_angle = std::max(max_angle, angle);
+    RCLCPP_INFO_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "max angle: " << max_angle);
+  }
+
   return plane;
 }
 
@@ -126,15 +150,15 @@ void GroundServer::publishMarker(const common::GroundPlane & plane)
   marker.type = Marker::TRIANGLE_LIST;
   marker.id = 0;
   marker.color = util::color(0.0, 0.5, 0.0, 0.1);
-  marker.scale.x = 0.2;
-  marker.scale.y = 0.2;
-  marker.scale.z = 0.2;
+  marker.scale.x = 1.0;
+  marker.scale.y = 1.0;
+  marker.scale.z = 1.0;
   marker.pose.position.x = plane.xyz.x();
   marker.pose.position.y = plane.xyz.y();
   marker.pose.position.z = plane.xyz.z();
 
   Eigen::Vector3f n = plane.normal;
-  const int L = 50;
+  const int L = 20;
   auto toPoint = [](float x, float y, float z) -> geometry_msgs::msg::Point {
     geometry_msgs::msg::Point p;
     p.x = x;

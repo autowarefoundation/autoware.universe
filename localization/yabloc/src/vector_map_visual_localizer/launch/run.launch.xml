@@ -43,7 +43,7 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
@@ -60,7 +60,7 @@
         <remap from="pose" to="/init/pose"/>
     </node>
 
-    <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level info">
+    <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="src_image" to="$(var resized_image)"/>
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="/particle_pose"/>

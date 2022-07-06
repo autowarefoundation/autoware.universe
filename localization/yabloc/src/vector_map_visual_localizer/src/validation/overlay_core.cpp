@@ -113,17 +113,9 @@ Eigen::Affine3f Overlay::poseConsideringSlope(const Eigen::Affine3f & pose) cons
   Eigen::Matrix3f R = pose.rotation();
   Eigen::Vector3f t = pose.translation();
   {
-    // Eigen::Vector3f rz = ground_plane_.normal;
-    // Eigen::Vector3f azimuth = R.transpose() * Eigen::Vector3f::UnitX();
-    // Eigen::Vector3f ry = rz.cross(azimuth);
-    // Eigen::Vector3f rx = ry.cross(rz);
-    // R.row(0) = rx;
-    // R.row(1) = ry;
-    // R.row(2) = rz;
-  } {
     Eigen::Vector3f rz = ground_plane_.normal;
     Eigen::Vector3f azimuth = R * Eigen::Vector3f::UnitX();
-    Eigen::Vector3f ry = rz.cross(azimuth);
+    Eigen::Vector3f ry = (rz.cross(azimuth)).normalized();
     Eigen::Vector3f rx = ry.cross(rz);
     R.col(0) = rx;
     R.col(1) = ry;
@@ -162,7 +154,9 @@ void Overlay::drawOverlaySignBoard(cv::Mat & image, const Pose & pose)
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
-  Eigen::Affine3f transform = util::pose2Affine(pose);
+  Eigen::Affine3f transform = poseConsideringSlope(util::pose2Affine(pose));
+  // Eigen::Affine3f transform = util::pose2Affine(pose);
+
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
     Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
     if (from_camera.z() < 1e-3f) return std::nullopt;
