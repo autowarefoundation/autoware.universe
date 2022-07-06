@@ -24,7 +24,7 @@ void setFormatDate(QLabel * line, double time)
 {
   char buffer[128];
   time_t seconds = static_cast<time_t>(time);
-  strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H-%m-%S", localtime(&seconds));
+  strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H-%M-%S", localtime(&seconds));
   line->setText(QString(buffer));
 }
 
