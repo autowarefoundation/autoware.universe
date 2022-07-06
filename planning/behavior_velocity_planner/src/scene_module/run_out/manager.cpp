@@ -35,6 +35,12 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
   const std::string ns(getModuleName());
 
   {
+    auto & p = planner_param_.smoother;
+    // smoother parameters are already declared in behavior velocity node, so use get parameter
+    p.start_jerk = node.get_parameter("backward.start_jerk").get_value<double>();
+  }
+
+  {
     auto & p = planner_param_.common;
     p.normal_min_jerk = node.declare_parameter(".normal.min_jerk", -0.3);
     p.normal_min_acc = node.declare_parameter(".normal.min_acc", -1.0);

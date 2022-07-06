@@ -129,7 +129,7 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   const float initial_vel = planner_data_->current_velocity->twist.linear.x;
   const float initial_acc = planner_data_->current_accel.get();
   const float target_vel = 0.0;
-  const float jerk_dec_max = -0.1;
+  const float jerk_dec_max = planner_param_.smoother.start_jerk;
   const float jerk_dec = planner_param_.run_out.specify_decel_jerk
                            ? planner_param_.run_out.deceleration_jerk
                            : jerk_dec_max;

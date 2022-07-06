@@ -88,6 +88,11 @@ struct SlowDownLimit
   float max_acc;
 };
 
+struct Smoother
+{
+  double start_jerk;
+};
+
 struct PlannerParam
 {
   CommonParam common;
@@ -97,6 +102,7 @@ struct PlannerParam
   ApproachingParam approaching;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
+  Smoother smoother;
 };
 
 enum class State {
