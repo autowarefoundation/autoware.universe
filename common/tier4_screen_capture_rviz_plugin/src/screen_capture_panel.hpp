@@ -32,6 +32,7 @@
 #include <rviz_rendering/render_window.hpp>
 
 #include <memory>
+#include <string>
 
 class QLineEdit;
 
@@ -50,17 +51,16 @@ public Q_SLOTS:
   void onClickScreenCapture();
   void onClickCaptureToVideo();
   void onClickVideoCapture();
-  void onRateChanged();
+  // void onRateChanged(){};
 
 private:
-  QLineEdit * ros_time_label_;
+  QLabel * ros_time_label_;
   QPushButton * screen_capture_button_ptr_;
   QPushButton * capture_to_mp4_button_ptr_;
   QSpinBox * capture_hz_;
   QTimer * capture_timer_;
-  enum class State { WAITING_FOR_CAPTURE, CAPTURING, WRITING };
+  enum class State { WAITING_FOR_CAPTURE, CAPTURING, FINALIZED };
   State state_;
-  bool skip_capture_ = {true};
   std::string root_folder_;
   size_t counter_;
 
