@@ -17,8 +17,8 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
-#include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 
