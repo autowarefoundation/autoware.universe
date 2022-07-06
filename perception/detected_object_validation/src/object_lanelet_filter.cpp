@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/disjoint.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 
@@ -103,6 +104,7 @@ void ObjectLaneletFilterNode::objectCallback(
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
     const auto & footprint = object.shape.footprint;
+    const auto & position = object.kinematics.pose_with_covariance.pose.position;
     const auto & label = object.classification.front().label;
     if (
       (label == Label::UNKNOWN && filter_target_.UNKNOWN) ||
@@ -115,10 +117,10 @@ void ObjectLaneletFilterNode::objectCallback(
       (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
       Polygon2d polygon;
       for (const auto & point : footprint.points) {
-        polygon.outer().emplace_back(point.x, point.y);
+        polygon.outer().emplace_back(point.x + position.x, point.y + position.y);
       }
       polygon.outer().push_back(polygon.outer().front());
-      if (isPolygonIntersectsLanelets(polygon, intersected_lanelets)) {
+      if (isPolygonOverlapLanelets(polygon, intersected_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
       }
     } else {
@@ -164,8 +166,9 @@ LinearRing2d ObjectLaneletFilterNode::getConvexHull(
 {
   MultiPoint2d candidate_points;
   for (const auto & object : detected_objects.objects) {
+    const auto & pos = object.kinematics.pose_with_covariance.pose.position;
     for (const auto & p : object.shape.footprint.points) {
-      candidate_points.emplace_back(p.x, p.y);
+      candidate_points.emplace_back(p.x + pos.x, p.y + pos.y);
     }
   }
 
@@ -186,11 +189,12 @@ lanelet::ConstLanelets ObjectLaneletFilterNode::getIntersectedLanelets(
   }
   return intersected_lanelets;
 }
-bool ObjectLaneletFilterNode::isPolygonIntersectsLanelets(
+
+bool ObjectLaneletFilterNode::isPolygonOverlapLanelets(
   const Polygon2d & polygon, const lanelet::ConstLanelets & intersected_lanelets)
 {
   for (const auto & lanelet : intersected_lanelets) {
-    if (boost::geometry::intersects(polygon, lanelet.polygon2d().basicPolygon())) {
+    if (!boost::geometry::disjoint(polygon, lanelet.polygon2d().basicPolygon())) {
       return true;
     }
   }

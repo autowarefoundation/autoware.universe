@@ -1,4 +1,4 @@
-// Copyright 2020 TierIV
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ private:
   LinearRing2d getConvexHull(const autoware_auto_perception_msgs::msg::DetectedObjects &);
   lanelet::ConstLanelets getIntersectedLanelets(
     const LinearRing2d &, const lanelet::ConstLanelets &);
-  bool isPolygonIntersectsLanelets(const Polygon2d &, const lanelet::ConstLanelets &);
+  bool isPolygonOverlapLanelets(const Polygon2d &, const lanelet::ConstLanelets &);
 };
 
 }  // namespace object_lanelet_filter
