@@ -33,6 +33,7 @@ namespace object_lanelet_filter
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
 
 struct Filter_target_label
 {
@@ -73,7 +74,7 @@ private:
   LinearRing2d getConvexHull(const autoware_auto_perception_msgs::msg::DetectedObjects &);
   lanelet::ConstLanelets getIntersectedLanelets(
     const LinearRing2d &, const lanelet::ConstLanelets &);
-  bool isPointWithinLanelets(const Point2d &, const lanelet::ConstLanelets &);
+  bool isPolygonIntersectsLanelets(const Polygon2d &, const lanelet::ConstLanelets &);
 };
 
 }  // namespace object_lanelet_filter

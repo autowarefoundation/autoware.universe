@@ -102,7 +102,7 @@ void ObjectLaneletFilterNode::objectCallback(
 
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
-    const auto position = object.kinematics.pose_with_covariance.pose.position;
+    const auto & footprint = object.shape.footprint;
     const auto & label = object.classification.front().label;
     if (
       (label == Label::UNKNOWN && filter_target_.UNKNOWN) ||
@@ -113,7 +113,12 @@ void ObjectLaneletFilterNode::objectCallback(
       (label == Label::MOTORCYCLE && filter_target_.MOTORCYCLE) ||
       (label == Label::BICYCLE && filter_target_.BICYCLE) ||
       (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
-      if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
+      Polygon2d polygon;
+      for (const auto & point : footprint.points) {
+        polygon.outer().emplace_back(point.x, point.y);
+      }
+      polygon.outer().push_back(polygon.outer().front());
+      if (isPolygonIntersectsLanelets(polygon, intersected_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
       }
     } else {
@@ -121,7 +126,6 @@ void ObjectLaneletFilterNode::objectCallback(
     }
     ++index;
   }
-
   object_pub_->publish(output_object_msg);
 }
 
@@ -160,8 +164,9 @@ LinearRing2d ObjectLaneletFilterNode::getConvexHull(
 {
   MultiPoint2d candidate_points;
   for (const auto & object : detected_objects.objects) {
-    const auto & p = object.kinematics.pose_with_covariance.pose.position;
-    candidate_points.emplace_back(p.x, p.y);
+    for (const auto & p : object.shape.footprint.points) {
+      candidate_points.emplace_back(p.x, p.y);
+    }
   }
 
   LinearRing2d convex_hull;
@@ -181,12 +186,11 @@ lanelet::ConstLanelets ObjectLaneletFilterNode::getIntersectedLanelets(
   }
   return intersected_lanelets;
 }
-
-bool ObjectLaneletFilterNode::isPointWithinLanelets(
-  const Point2d & point, const lanelet::ConstLanelets & intersected_lanelets)
+bool ObjectLaneletFilterNode::isPolygonIntersectsLanelets(
+  const Polygon2d & polygon, const lanelet::ConstLanelets & intersected_lanelets)
 {
   for (const auto & lanelet : intersected_lanelets) {
-    if (boost::geometry::within(point, lanelet.polygon2d().basicPolygon())) {
+    if (boost::geometry::intersects(polygon, lanelet.polygon2d().basicPolygon())) {
       return true;
     }
   }
