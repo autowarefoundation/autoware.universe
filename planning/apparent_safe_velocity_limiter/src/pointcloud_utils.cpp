@@ -20,6 +20,8 @@
 #include <boost/geometry/algorithms/within.hpp>
 
 #include <pcl/ModelCoefficients.h>
+#include <pcl/Vertices.h>
+#include <pcl/filters/crop_hull.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/project_inliers.h>
 #include <pcl/filters/voxel_grid.h>
@@ -51,25 +53,44 @@ void filterPointCloud(
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const multipolygon_t & polygon_masks,
   const polygon_t & envelope)
 {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
-  downsampled_pointcloud->points.reserve(pointcloud->points.size());
-  pcl::VoxelGrid<pcl::PointXYZ> filter;
-  filter.setInputCloud(pointcloud);
-  filter.setLeafSize(0.5, 0.5, 100.0);
-  filter.filter(*downsampled_pointcloud);
-  pcl::PointIndices::Ptr idx_to_remove(new pcl::PointIndices());
-  idx_to_remove->indices.reserve(downsampled_pointcloud->size());
-  for (size_t i = 0; i < downsampled_pointcloud->size(); ++i) {
-    const auto & point = downsampled_pointcloud->points[i];
-    const auto p = point_t{point.x, point.y};
-    if (boost::geometry::within(p, polygon_masks) || !boost::geometry::within(p, envelope))
-      idx_to_remove->indices.push_back(i);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr polygon_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  for (const auto & p : envelope.outer())
+    polygon_cloud_ptr->push_back(pcl::PointXYZ(p.x(), p.y(), 0));
+  std::vector<pcl::Vertices> polygons_idx(1);
+  polygons_idx.front().vertices.resize(envelope.outer().size());
+  std::iota(polygons_idx.front().vertices.begin(), polygons_idx.front().vertices.end(), 0);
+  pcl::CropHull<pcl::PointXYZ> crop_outside_of_envelope;
+  crop_outside_of_envelope.setInputCloud(pointcloud);
+  crop_outside_of_envelope.setDim(2);
+  crop_outside_of_envelope.setHullCloud(polygon_cloud_ptr);
+  crop_outside_of_envelope.setHullIndices(polygons_idx);
+  crop_outside_of_envelope.setCropOutside(true);
+  crop_outside_of_envelope.filter(*pointcloud);
+
+  std::cerr << "* envelope filter size = " << pointcloud->size() << "\n";
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr mask_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  std::vector<pcl::Vertices> masks_idx(polygon_masks.size());
+  size_t start_idx = 0;
+  for (size_t i = 0; i < polygon_masks.size(); ++i) {
+    const auto & polygon_mask = polygon_masks[i];
+    const auto mask_size = polygon_mask.outer().size();
+    std::cerr << "\tMask of size " << mask_size << "\n";
+    for (const auto & p : polygon_mask.outer())
+      mask_cloud_ptr->push_back(pcl::PointXYZ(p.x(), p.y(), 0));
+    auto & mask_idx = masks_idx[i];
+    mask_idx.vertices.resize(mask_size);
+    std::iota(mask_idx.vertices.begin(), mask_idx.vertices.end(), start_idx);
+    start_idx += mask_size;
   }
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  extract.setInputCloud(downsampled_pointcloud);
-  extract.setIndices(idx_to_remove);
-  extract.setNegative(true);
-  extract.filter(*pointcloud);
+  pcl::CropHull<pcl::PointXYZ> crop_masks;
+  crop_masks.setInputCloud(pointcloud);
+  crop_masks.setDim(2);
+  crop_masks.setHullCloud(mask_cloud_ptr);
+  crop_masks.setHullIndices(masks_idx);
+  crop_masks.setCropOutside(false);
+  crop_masks.filter(*pointcloud);
+  std::cerr << "* masks filter size = " << pointcloud->size() << "\n";
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr transformAndFilterPointCloud(

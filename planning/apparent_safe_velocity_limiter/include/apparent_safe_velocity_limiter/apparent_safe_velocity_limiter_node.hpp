@@ -143,9 +143,9 @@ private:
     const Trajectory & trajectory, const size_t ego_idx, const Float start_distance);
 
   Trajectory downsampleTrajectory(const Trajectory & trajectory, const size_t start_idx) const;
-  multipolygon_t createPolygonMasks(const Trajectory & trajectory, const size_t start_idx) const;
+  multipolygon_t createPolygonMasks() const;
   polygon_t createEnvelopePolygon(
-    const Trajectory & trajectory, const double extra_vehicle_length) const;
+    const Trajectory & trajectory, const size_t start_idx, const double extra_vehicle_length) const;
   bool validInputs(const boost::optional<size_t> & ego_idx);
   multilinestring_t createObstacleLines(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid,

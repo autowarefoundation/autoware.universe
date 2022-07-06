@@ -146,10 +146,10 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   double dist_poly_duration{};
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
   stopwatch.tic("obs_mask_duration");
-  const auto polygon_masks = createPolygonMasks(*msg, start_idx);
+  const auto polygon_masks = createPolygonMasks();
   obs_mask_duration += stopwatch.toc("obs_mask_duration");
   stopwatch.tic("obs_envelope_duration");
-  const auto envelope_polygon = createEnvelopePolygon(*msg, extra_vehicle_length);
+  const auto envelope_polygon = createEnvelopePolygon(*msg, start_idx, extra_vehicle_length);
   obs_envelope_duration += stopwatch.toc("obs_envelope_duration");
   stopwatch.tic("obs_filter_duration");
   const auto obstacles = createObstacleLines(
@@ -215,29 +215,31 @@ Trajectory ApparentSafeVelocityLimiterNode::downsampleTrajectory(
   return downsampled_traj;
 }
 
-multipolygon_t ApparentSafeVelocityLimiterNode::createPolygonMasks(
-  const Trajectory & trajectory, const size_t start_idx) const
+multipolygon_t ApparentSafeVelocityLimiterNode::createPolygonMasks() const
 {
-  auto polygon_masks = createObjectPolygons(
+  return createObjectPolygons(
     *dynamic_obstacles_ptr_, dynamic_obstacles_buffer_, dynamic_obstacles_min_vel_);
-  linestring_t trajectory_linestring;
-  for (size_t i = start_idx; i < trajectory.points.size(); ++i)
-    trajectory_linestring.emplace_back(
-      trajectory.points[i].pose.position.x, trajectory.points[i].pose.position.y);
-  return polygon_masks;
 }
 
 polygon_t ApparentSafeVelocityLimiterNode::createEnvelopePolygon(
-  const Trajectory & trajectory, const double extra_vehicle_length) const
+  const Trajectory & trajectory, const size_t start_idx, const double extra_vehicle_length) const
 {
   polygon_t envelope_polygon;
-  for (const auto & point : trajectory.points)
-    envelope_polygon.outer().emplace_back(point.pose.position.x, point.pose.position.y);
-  for (auto it = trajectory.points.rbegin(); it != trajectory.points.rend(); ++it) {
+  const auto trajectory_size = trajectory.points.size() - start_idx;
+  if (trajectory_size < 2) return envelope_polygon;
+
+  envelope_polygon.outer().resize(trajectory_size * 2 + 1);
+  for (size_t i = 0; i < trajectory_size; ++i) {
+    const auto & point = trajectory.points[i + start_idx];
     const auto forward_simulated_vector =
-      forwardSimulatedSegment(*it, time_buffer_, extra_vehicle_length);
-    envelope_polygon.outer().push_back(forward_simulated_vector.second);
+      forwardSimulatedSegment(point, time_buffer_, extra_vehicle_length);
+    envelope_polygon.outer()[i].x(forward_simulated_vector.second.x());
+    envelope_polygon.outer()[i].y(forward_simulated_vector.second.y());
+    const auto reverse_index = 2 * trajectory_size - i - 1;
+    envelope_polygon.outer()[reverse_index].x(forward_simulated_vector.first.x());
+    envelope_polygon.outer()[reverse_index].y(forward_simulated_vector.first.y());
   }
+  envelope_polygon.outer().push_back(envelope_polygon.outer().front());
   boost::geometry::correct(envelope_polygon);
   return envelope_polygon;
 }

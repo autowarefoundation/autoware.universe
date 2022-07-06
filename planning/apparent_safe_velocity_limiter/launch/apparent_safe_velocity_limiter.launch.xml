@@ -14,11 +14,18 @@
   <let name="callgrind-launch-prefix" value="valgrind --tool=callgrind --dump-instr=yes -v --instr-atstart=no"/>
   <let name="gdb-launch-prefix" value="konsole -e gdb -ex run --args"/>
   <let name="gdb-gnome-launch-prefix" value="gnome-terminal -- gdb -ex run --args"/>
+  <node pkg="pointcloud_preprocessor" exec="approximate_downsample_filter_node" name="approximate_downsample_filter">
+    <remap from="input" to="$(var input_obstacle_pointcloud)"/>
+    <remap from="output" to="$(var input_obstacle_pointcloud)/downsampled"/>
+
+    <param name="input_frame" value="base_link"/>
+    <param name="output_frame" value="map"/>
+  </node>
   <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="$(var gdb-launch-prefix)">
     <param from="$(var param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>
-    <remap from="~/input/obstacle_pointcloud" to="$(var input_obstacle_pointcloud)"/>
+    <remap from="~/input/obstacle_pointcloud" to="$(var input_obstacle_pointcloud)/downsampled"/>
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/input/dynamic_obstacles" to="$(var input_dynamic_obstacles)"/>
     <remap from="~/input/odometry" to="$(var input_odometry)"/>
