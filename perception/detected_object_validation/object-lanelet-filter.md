@@ -34,7 +34,7 @@ The objects only inside of the vector map will be published.
 | `filter_target_label.BUS`        | bool | false         | If true, bus objects are filtered.        |
 | `filter_target_label.TRAILER`    | bool | false         | If true, trailer objects are filtered.    |
 | `filter_target_label.MOTORCYCLE` | bool | false         | If true, motorcycle objects are filtered. |
-| `filter_target_label.BICYCLE`    | bool | false         | If true, bycycle objects are filtered.    |
+| `filter_target_label.BICYCLE`    | bool | false         | If true, bicycle objects are filtered.    |
 | `filter_target_label.PEDESTRIAN` | bool | false         | If true, pedestrian objects are filtered. |
 
 ## Assumptions / Known limits

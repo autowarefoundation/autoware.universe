@@ -33,7 +33,7 @@ The objects only inside of the x, y bound will be published.
 | `filter_target_label.BUS`        | bool  | false         | If true, bus objects are filtered.                              |
 | `filter_target_label.TRAILER`    | bool  | false         | If true, trailer objects are filtered.                          |
 | `filter_target_label.MOTORCYCLE` | bool  | false         | If true, motorcycle objects are filtered.                       |
-| `filter_target_label.BICYCLE`    | bool  | false         | If true, bycycle objects are filtered.                          |
+| `filter_target_label.BICYCLE`    | bool  | false         | If true, bicycle objects are filtered.                          |
 | `filter_target_label.PEDESTRIAN` | bool  | false         | If true, pedestrian objects are filtered.                       |
 | `upper_bound_x`                  | float | 100.00        | Bound for filtering. Only used if filter_by_xy_position is true |
 | `lower_bound_x`                  | float | 0.00          | Bound for filtering. Only used if filter_by_xy_position is true |

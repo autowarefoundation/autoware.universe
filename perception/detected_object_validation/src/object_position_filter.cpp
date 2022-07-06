@@ -68,7 +68,6 @@ void ObjectPositionFilterNode::objectCallback(
       (label == Label::MOTORCYCLE && filter_target_.MOTORCYCLE) ||
       (label == Label::BICYCLE && filter_target_.BICYCLE) ||
       (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
-      std::cout << "filtering target: true, label: " << (int)label << std::endl;
       if (
         position.x > lower_bound_x_ && position.x < upper_bound_x_ && position.y > lower_bound_y_ &&
         position.y < upper_bound_y_) {
