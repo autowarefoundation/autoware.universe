@@ -8,4 +8,4 @@
       TRAILER : false
       MOTORCYCLE : false
       BICYCLE : false
-      PEDESTRIAN : true
+      PEDESTRIAN : false
