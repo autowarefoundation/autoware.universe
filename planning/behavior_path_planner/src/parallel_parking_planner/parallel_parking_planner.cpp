@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,15 +39,10 @@ using geometry_msgs::msg::Transform;
 using geometry_msgs::msg::TransformStamped;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::calcSignedArcLength;
 using tier4_autoware_utils::deg2rad;
-using tier4_autoware_utils::fromMsg;
 using tier4_autoware_utils::inverseTransformPoint;
 using tier4_autoware_utils::inverseTransformPose;
 using tier4_autoware_utils::normalizeRadian;
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Point3d;
-using tier4_autoware_utils::pose2transform;
 using tier4_autoware_utils::toMsg;
 using tier4_autoware_utils::transformPose;
 
