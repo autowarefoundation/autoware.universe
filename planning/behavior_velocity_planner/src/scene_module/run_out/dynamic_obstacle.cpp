@@ -77,7 +77,11 @@ pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(
   namespace bg = boost::geometry;
 
   if (polys.empty()) {
-    return input_points;
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("run_out"), "detection area polygon is empty. return empty points.");
+
+    const pcl::PointCloud<pcl::PointXYZ> empty_points;
+    return empty_points;
   }
 
   pcl::PointCloud<pcl::PointXYZ> output_points;
