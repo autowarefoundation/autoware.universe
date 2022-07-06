@@ -30,12 +30,11 @@ geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & poin
   centroid.x = 0.0f;
   centroid.y = 0.0f;
   centroid.z = 0.0f;
-  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x"),
-       iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
-       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-    centroid.x += *iter_x;
-    centroid.y += *iter_y;
-    centroid.z += *iter_z;
+  point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{pointcloud};
+  for (const auto & point : view) {
+    centroid.x += point.x;
+    centroid.y += point.y;
+    centroid.z += point.z;
   }
   const size_t size = pointcloud.width * pointcloud.height;
   centroid.x = centroid.x / static_cast<float>(size);
