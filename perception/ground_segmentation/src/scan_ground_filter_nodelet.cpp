@@ -38,8 +38,10 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
   // set initial parameters
   {
     base_frame_ = declare_parameter("base_frame", "base_link");
-    non_ground_heigh_thresh_ =
-      static_cast<float>(declare_parameter("non_ground_heigh_thresh", 2.5));
+    non_ground_height_max_ =
+      static_cast<float>(declare_parameter("non_ground_height_max", 2.5));
+    non_ground_height_min_ =
+      static_cast<float>(declare_parameter("non_ground_height_min", 0.0));
     global_slope_max_angle_rad_ = deg2rad(declare_parameter("global_slope_max_angle_deg", 8.0));
     local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_deg", 6.0));
     radial_divider_angle_rad_ = deg2rad(declare_parameter("radial_divider_angle_deg", 1.0));
@@ -171,9 +173,9 @@ void ScanGroundFilterComponent::classifyPointCloud(
       float global_slope = std::atan2(p->orig_point->z, p->radius);
       // check points which is far enough from previous point
       if (
-        (height_from_gnd < -split_height_distance_) ||
-        ((p->orig_point->z - ground_cluster.getAverageHeight()) < -split_height_distance_) ||
-        (height_from_gnd > non_ground_heigh_thresh_)) {
+        (height_from_gnd < non_ground_height_min_) ||
+        ((p->orig_point->z - ground_cluster.getAverageHeight()) < non_ground_height_min_) ||
+        (height_from_gnd > non_ground_height_max_)) {
         // exclude pcl under ground or higher than limit
         calculate_slope = false;
       } else if (global_slope > global_slope_max_angle) {
