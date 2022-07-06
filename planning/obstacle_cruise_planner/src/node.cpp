@@ -597,7 +597,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::getTargetObstacles(
 {
   stop_watch_.tic(__func__);
 
-  auto target_obstacles =
+  const auto target_obstacles =
     filterObstacles(*in_objects_ptr_, trajectory, current_pose, current_vel, debug_data);
 
   // print calculation time
