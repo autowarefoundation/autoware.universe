@@ -164,9 +164,10 @@ rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
   return stamp;
 }
 
+template <typename PointT>
 void publishCloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
-  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp)
+  const pcl::PointCloud<PointT> & cloud, const rclcpp::Time & stamp)
 {
   // Convert to msg
   sensor_msgs::msg::PointCloud2 cloud_msg;
@@ -175,5 +176,13 @@ void publishCloud(
   cloud_msg.header.frame_id = "map";
   publisher.publish(cloud_msg);
 }
+
+template void publishCloud<pcl::PointXYZ>(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZ> &,
+  const rclcpp::Time &);
+
+template void publishCloud<pcl::PointNormal>(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointNormal> &,
+  const rclcpp::Time &);
 
 }  // namespace util

@@ -4,18 +4,44 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+namespace imgproc
+{
+LineSegmentDetector::LineSegmentDetector()
+: Node("line_detector"),
+  dilate_size_(declare_parameter<int>("dilate_size", 5)),
+  line_thick_(declare_parameter<int>("line_thick", 1)),
+  image_size_(declare_parameter<int>("image_size", 800)),
+  max_range_(declare_parameter<float>("max_range", 20.f)),
+  tf_subscriber_(get_clock())
+{
+  const rclcpp::QoS qos = rclcpp::QoS(10);
+  // const rclcpp::QoS qos = rclcpp::QoS(10).durability_volatile().best_effort();
+  using std::placeholders::_1;
+
+  // Subscriber
+  sub_image_ = create_subscription<Image>(
+    "/sensing/camera/traffic_light/image_raw/compressed", qos,
+    std::bind(&LineSegmentDetector::imageCallback, this, _1));
+
+  sub_info_ = create_subscription<CameraInfo>(
+    "/sensing/camera/traffic_light/camera_info", qos,
+    std::bind(&LineSegmentDetector::infoCallback, this, _1));
+
+  // Publisher
+  pub_image_ = this->create_publisher<Image>("/projected_image", 10);
+  pub_image_lsd_ = this->create_publisher<Image>("/lsd_image", 10);
+  pub_cloud_ = this->create_publisher<PointCloud2>("/lsd_cloud", 10);
+
+  lsd =
+    cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
+}
+
 cv::Point2i LineSegmentDetector::toCvPoint(const Eigen::Vector3f & v) const
 {
   cv::Point pt;
   pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2;
   pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_;
   return pt;
-}
-
-void LineSegmentDetector::compressedImageCallback(const sensor_msgs::msg::CompressedImage & msg)
-{
-  cv::Mat image = util::decompress2CvMat(msg);
-  execute(image, msg.header.stamp);
 }
 
 void LineSegmentDetector::imageCallback(const sensor_msgs::msg::Image & msg)
@@ -192,3 +218,4 @@ cv::Mat LineSegmentDetector::segmentationGraph(const cv::Mat & image)
   cv::resize(output_image, output_image, image.size(), 0, 0, cv::INTER_NEAREST);
   return output_image;
 }
+}  // namespace imgproc

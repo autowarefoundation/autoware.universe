@@ -86,6 +86,8 @@ endmacro()
 ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish)
 ADD_EXE(TARGET lsd_node SRC src/imgproc/lsd_*.cpp INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
 ADD_EXE(TARGET undistort_node SRC src/imgproc/undistort_node.cpp INC LIB util)
+ADD_EXE(TARGET segment_filter_node SRC src/imgproc/segment_filter_node.cpp INC LIB util)
+ADD_EXE(TARGET graph_segment_node SRC src/imgproc/graph_segment_node.cpp INC LIB util)
 
 # trajectory
 ADD_EXE(TARGET fix_to_pose_node SRC src/trajectory/fix_to_pose_node.cpp INC LIB util Geographic ${PCL_LIBRARIES})

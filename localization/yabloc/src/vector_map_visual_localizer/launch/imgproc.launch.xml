@@ -38,4 +38,16 @@
         <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
+    <!-- ========================================= -->
+
+    <node if="true" name="graph_segment" pkg="vector_map_visual_localizer" exec="graph_segment_node" output="screen" args="--ros-args --log-level info">
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="$(var src_info)" to="$(var resized_info)"/>
+    </node>
+
+    <node if="true" name="segment_filter" pkg="vector_map_visual_localizer" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="$(var src_info)" to="$(var resized_info)"/>
+    </node>
+
 </launch>

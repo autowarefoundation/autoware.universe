@@ -36,8 +36,9 @@ geometry_msgs::msg::Pose pose2Affine(const Eigen::Affine3f & affine);
 
 rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg);
 
+template <typename PointT>
 void publishCloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
-  const pcl::PointCloud<pcl::PointNormal> & cloud, const rclcpp::Time & stamp);
+  const pcl::PointCloud<PointT> & cloud, const rclcpp::Time & stamp);
 
 }  // namespace util
