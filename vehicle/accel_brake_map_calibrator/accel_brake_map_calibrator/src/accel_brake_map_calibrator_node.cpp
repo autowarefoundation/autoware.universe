@@ -70,6 +70,8 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     update_method_ = UPDATE_METHOD::UPDATE_OFFSET_EACH_CELL;
   } else if (update_method_str == std::string("update_offset_total")) {
     update_method_ = UPDATE_METHOD::UPDATE_OFFSET_TOTAL;
+  } else if (update_method_str == std::string("update_offset_four_cell_around")) {
+    update_method_ = UPDATE_METHOD::UPDATE_OFFSET_FOUR_CELL_AROUND;
   } else {
     RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("accel_brake_map_calibrator"),
@@ -77,8 +79,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
         << " is wrong. (available method: update_offset_each_cell, update_offset_total");
     return;
   }
-  update_method_ = UPDATE_METHOD::UPDATE_OFFSET_FOUR_CELL_AROUND; //For Debug. Force to change update method.
-  //update_method_ = UPDATE_METHOD::UPDATE_OFFSET_EACH_CELL; //For Debug. Force to change update method.
   // initializer
 
   // QoS setup
@@ -254,12 +254,6 @@ void AccelBrakeMapCalibrator::timerCallback()
 {
   update_count_++;
   auto & clk = *this->get_clock();
-
-/*
-  rclcpp::Clock ros_clk(RCL_ROS_TIME);
-  static uint32_t old_clk=0;
-  std::cerr << "dt : " << ((ros_clk.now()).nanoseconds()-old_clk)/1000000 << std::endl;
-  old_clk=(ros_clk.now()).nanoseconds();*/
 
   //RCLCPP_DEBUG_STREAM_THROTTLE(
   RCLCPP_WARN_STREAM_THROTTLE(
@@ -626,7 +620,6 @@ bool AccelBrakeMapCalibrator::indexValueSearch(
    if(value<0){std::cerr << "error : invalid value." << std::endl;;return false;}
     double old_diff_value=-999;//TODO
     for (std::size_t i = 0; i < value_index.size(); i++) {
-      //const double diff_value = std::fabs(value_index.at(i) - value) * value_sign;
       const double diff_value = value_index.at(i) - value;
       if(diff_value<=0&&old_diff_value<diff_value) {
         *searched_index = i;
@@ -878,177 +871,83 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
     ry=(twist_ptr_->twist.linear.x - yl)/(yh-yl);
   }
   
-  Eigen::Vector4d phi4(4);
-  phi4 << (1-rx)*(1-ry),rx*(1-ry),(1-rx)*ry,rx*ry;
+  Eigen::Vector4d phi(4);
+  phi << (1-rx)*(1-ry),rx*(1-ry),(1-rx)*ry,rx*ry;
   
-  std::cerr << "phi : " << phi4 << std::endl;
-  /*
-  phi4(0)=(1-rx)*(1-ry);
-  phi4(1)=rx*(1-ry);
-  phi4(2)=(1-rx)*ry;
-  phi4(3)=rx*ry;
-  */
-
   Eigen::Vector4d theta(4);
   theta << zll,zhl,zlh,zhh;
-  std::cerr << "theta_before : " << theta << std::endl;
 
   // pre-defined
-  static std::vector<std::vector<double>> map_offset_vec_(
-    accel_map_value_.size() + brake_map_value_.size() - 1,
+  static std::vector<std::vector<double>> accel_map_offset_vec_(
+    accel_map_value_.size(),
     std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
-  static std::vector<std::vector<std::vector<std::vector<double>>>> covariance_vec_(
-    accel_map_value_.size() + brake_map_value_.size() - 1,
-    std::vector<std::vector<std::vector<double>>>(accel_map_value_.at(0).size(), std::vector<std::vector<double>>(3,std::vector<double>(3,covariance_))));
+  static std::vector<std::vector<double>> brake_map_offset_vec_(
+    brake_map_value_.size(),
+    std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
+  static std::vector<std::vector<Eigen::MatrixXd>> accel_covariance_vec_(
+    accel_map_value_.size() - 1,
+    std::vector<Eigen::MatrixXd>(accel_map_value_.at(0).size()-1,Eigen::MatrixXd::Identity(4,4)*covariance_));
+  static std::vector<std::vector<Eigen::MatrixXd>> brake_covariance_vec_(
+    brake_map_value_.size() - 1,
+    std::vector<Eigen::MatrixXd>(accel_map_value_.at(0).size()-1,Eigen::MatrixXd::Identity(4,4)*covariance_));
 
   const int vel_idx_l = accel_mode ? accel_vel_index : brake_vel_index;
   const int vel_idx_h = accel_mode ? accel_vel_index+1 : brake_vel_index+1;
   int ped_idx_l = accel_mode ? accel_pedal_index : brake_pedal_index;
-  ped_idx_l = getUnifiedIndexFromAccelBrakeIndex(accel_mode, ped_idx_l);
+  //ped_idx_l = getUnifiedIndexFromAccelBrakeIndex(accel_mode, ped_idx_l);
   int ped_idx_h = accel_mode ? accel_pedal_index+1 : brake_pedal_index+1;
-  ped_idx_h = getUnifiedIndexFromAccelBrakeIndex(accel_mode, ped_idx_h);
+  //ped_idx_h = getUnifiedIndexFromAccelBrakeIndex(accel_mode, ped_idx_h);
 
   Eigen::VectorXd map_offset(4);
-  map_offset(0)=map_offset_vec_.at(ped_idx_l).at(vel_idx_l);
-  map_offset(1)=map_offset_vec_.at(ped_idx_h).at(vel_idx_l);
-  map_offset(2)=map_offset_vec_.at(ped_idx_l).at(vel_idx_h);
-  map_offset(3)=map_offset_vec_.at(ped_idx_h).at(vel_idx_h);
+  map_offset(0)=accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_l) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l) ;
+  map_offset(1)=accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_l) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l) ;
+  map_offset(2)=accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_h) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l) ;
+  map_offset(3)=accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_h) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l) ;
 
-  std::cerr << "map_offset : " << map_offset << std::endl;
-
-  Eigen::MatrixXd covariance(4,4);
-  int index_ll=0;
-  for(int i=1;i<=2;i++){
-    for(int j=1;j<=2;j++){
-      covariance(0,index_ll)=covariance_vec_.at(ped_idx_l).at(vel_idx_l).at(j).at(i);
-      index_ll++;
-    }
-  }
-  int index_hl=0;
-  for(int i=1;i<=2;i++){
-    for(int j=0;j<=1;j++){
-      covariance(1,index_hl)=covariance_vec_.at(ped_idx_h).at(vel_idx_l).at(j).at(i);
-      index_hl++;
-    }
-  }
-  int index_lh=0;
-  for(int i=0;i<=1;i++){
-    for(int j=1;j<=2;j++){
-      covariance(2,index_lh)=covariance_vec_.at(ped_idx_l).at(vel_idx_h).at(j).at(i);
-      index_lh++;
-    }
-  }
-    int index_hh=0;
-  for(int i=0;i<=1;i++){
-    for(int j=0;j<=1;j++){
-      covariance(3,index_hh)=covariance_vec_.at(ped_idx_h).at(vel_idx_h).at(j).at(i);
-      index_hh++;
-    }
-  }
-
+  Eigen::MatrixXd covariance=accel_mode ? accel_covariance_vec_.at(ped_idx_l).at(vel_idx_l) : brake_covariance_vec_.at(ped_idx_l).at(vel_idx_l);
 
   /* calculate adaptive map offset */
   Eigen::MatrixXd G(4,4);
-  Eigen::RowVector4d phi4T(4);
-  phi4T=phi4.transpose();
-  double rk=phi4T*covariance*phi4;
-  std::cerr << "cov : " << covariance << std::endl;
+  Eigen::RowVectorXd phiT(4);
+  phiT=phi.transpose();
+  double rk=phiT*covariance*phi;
 
-  G=covariance*phi4/(forgetting_factor_+rk);
+  G=covariance*phi/(forgetting_factor_+rk);
   double beta=rk>0?(forgetting_factor_-(1-forgetting_factor_)/rk):1;
-  //covariance=(covariance-covariance*phi4*phi4.transpose()*covariance/(forgetting_factor_+rk))/forgetting_factor_;
-  covariance=covariance-covariance*phi4*phi4.transpose()*covariance/(1/beta+rk);//anti-windup
-  double eta_hat = phi4T*theta;
+  covariance=covariance-covariance*phi*phiT*covariance/(1/beta+rk);//anti-windup
+  double eta_hat = phiT*theta;
   
   const double error_map_offset = measured_acc - eta_hat;
-  //map_offset = map_offset + G * error_map_offset;
-  theta=theta+ G * error_map_offset;
-  std::cerr << "G : " << G << std::endl;
-  std::cerr << "error_map_offset : " << error_map_offset << std::endl;
-
-  /*
-  RCLCPP_DEBUG_STREAM(
-    rclcpp::get_logger("accel_brake_map_calibrator"),
-    "index: " << ped_idx << ", " << vel_idx << ": map_offset_ = "
-              << map_offset_vec_.at(ped_idx).at(vel_idx) << " -> " << map_offset << "\t"
-              << " covariance = " << covariance);
-  */
+  map_offset=map_offset+ G * error_map_offset;
 
   /* input calculated result and update map */
-  map_offset_vec_.at(ped_idx_l).at(vel_idx_l)=map_offset(0);
-  map_offset_vec_.at(ped_idx_h).at(vel_idx_l)=map_offset(1);
-  map_offset_vec_.at(ped_idx_l).at(vel_idx_h)=map_offset(2);
-  map_offset_vec_.at(ped_idx_h).at(vel_idx_h)=map_offset(3);
+  (accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_l) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(0);
+  (accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_l) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(1);
+  (accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_h) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(2);
+  (accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_h) : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(3);
+  
+  (accel_mode ? accel_covariance_vec_.at(ped_idx_l).at(vel_idx_l) : brake_covariance_vec_.at(ped_idx_l).at(vel_idx_l)) = covariance;
 
-  index_ll=0;
-  for(int i=1;i<=2;i++){
-    for(int j=1;j<=2;j++){
-      covariance_vec_.at(ped_idx_l).at(vel_idx_l).at(j).at(i)=covariance(0,index_ll);
-      index_ll++;
-    }
-  }
-  index_hl=0;
-  for(int i=1;i<=2;i++){
-    for(int j=0;j<=1;j++){
-      covariance_vec_.at(ped_idx_h).at(vel_idx_l).at(j).at(i)=covariance(1,index_hl);
-      index_hl++;
-    }
-  }
-  index_lh=0;
-  for(int i=0;i<=1;i++){
-    for(int j=1;j<=2;j++){
-      covariance_vec_.at(ped_idx_l).at(vel_idx_h).at(j).at(i)=covariance(2,index_lh);
-      index_lh++;
-    }
-  }
-  index_hh=0;
-  for(int i=0;i<=1;i++){
-    for(int j=0;j<=1;j++){
-      covariance_vec_.at(ped_idx_h).at(vel_idx_h).at(j).at(i)=covariance(3,index_hh);
-      index_hh++;
-    }
-  }
-
-
-  // if (accel_mode) {
-  //   update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index) =
-  //     accel_map_value_.at(accel_pedal_index).at(accel_vel_index) + map_offset(0);
-  //   update_accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index) =
-  //     accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index) + map_offset(1);
-  //   update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index+1) =
-  //     accel_map_value_.at(accel_pedal_index).at(accel_vel_index+1) + map_offset(2);
-  //   update_accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index+1) =
-  //     accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index+1) + map_offset(3);
-  // } else {
-  //   update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index) =
-  //     brake_map_value_.at(brake_pedal_index).at(brake_vel_index) + map_offset(0);
-  //   update_brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index) =
-  //     brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index) + map_offset(1);
-  //   update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index+1) =
-  //     brake_map_value_.at(brake_pedal_index).at(brake_vel_index+1) + map_offset(2);
-  //   update_brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index+1) =
-  //     brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index+1) + map_offset(3);
-  // }
   if (accel_mode) {
-    update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index) =theta(0);
-    update_accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index) =theta(1);
-    update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index+1) =theta(2);
-    update_accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index+1) =theta(3);
+    update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index) =
+      accel_map_value_.at(accel_pedal_index).at(accel_vel_index) + map_offset(0);
+    update_accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index) =
+      accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index) + map_offset(1);
+    update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index+1) =
+      accel_map_value_.at(accel_pedal_index).at(accel_vel_index+1) + map_offset(2);
+    update_accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index+1) =
+      accel_map_value_.at(accel_pedal_index+1).at(accel_vel_index+1) + map_offset(3);
   } else {
-    update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index) =theta(0);
-    update_brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index) =theta(1);
-    update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index+1) =theta(2);
-    update_brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index+1) =theta(3);
+    update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index) =
+      brake_map_value_.at(brake_pedal_index).at(brake_vel_index) + map_offset(0);
+    update_brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index) =
+      brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index) + map_offset(1);
+    update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index+1) =
+      brake_map_value_.at(brake_pedal_index).at(brake_vel_index+1) + map_offset(2);
+    update_brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index+1) =
+      brake_map_value_.at(brake_pedal_index+1).at(brake_vel_index+1) + map_offset(3);
   }
 
-  std::cerr << "theta : " << theta << std::endl;
-  if(theta(0)<=-4||theta(1)<=-4||theta(2)<=-4||theta(3)<=-4){
-    std::cerr << "********************************************************************************"<< std::endl;
-    exit(0);
-    RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("accel_brake_map_calibrator"),
-        "************************************************************something wrong");
-  }
   return true;
 }
 
@@ -1187,7 +1086,7 @@ void AccelBrakeMapCalibrator::executeEvaluation()
   //pushDataToVec(full_orig_accel_error, full_mse_que_size_, &full_original_accel_esm_que_);
   full_original_accel_rmse_ = getAverage(full_original_accel_mse_que_);
   //const double full_original_accel_me = getAverage(full_original_accel_esm_que_);
-  //std::cerr << "rmse : " << sqrt(full_original_accel_rmse_) << std::endl;
+  std::cerr << "rmse : " << sqrt(full_original_accel_rmse_) << std::endl;
 
   const double full_orig_accel_l1_error = calculateAccelErrorL1Norm(
     delayed_accel_pedal_ptr_->data, delayed_brake_pedal_ptr_->data, twist_ptr_->twist.linear.x,
@@ -1196,9 +1095,9 @@ void AccelBrakeMapCalibrator::executeEvaluation()
   pushDataToVec(full_orig_accel_l1_error, full_mse_que_size_, &full_original_accel_l1_que_);
   pushDataToVec(full_orig_accel_sq_l1_error, full_mse_que_size_, &full_original_accel_sq_l1_que_);
   full_original_accel_error_l1norm_ = getAverage(full_original_accel_l1_que_);
-  //const double full_original_accel_error_sql1_ = getAverage(full_original_accel_sq_l1_que_);
-  //std::cerr << "error_l1norm : " << full_original_accel_error_l1norm_ << std::endl;
-  //std::cerr << "error_l1_conv : " << full_original_accel_error_sql1_-full_original_accel_error_l1norm_*full_original_accel_error_l1norm_ << std::endl;
+  const double full_original_accel_error_sql1_ = getAverage(full_original_accel_sq_l1_que_);
+  std::cerr << "error_l1norm : " << full_original_accel_error_l1norm_ << std::endl;
+  std::cerr << "error_l1_conv : " << full_original_accel_error_sql1_-full_original_accel_error_l1norm_*full_original_accel_error_l1norm_ << std::endl;
 
   const double part_orig_accel_sq_error = calculateAccelSquaredError(
     delayed_accel_pedal_ptr_->data, delayed_brake_pedal_ptr_->data, twist_ptr_->twist.linear.x,
