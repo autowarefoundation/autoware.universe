@@ -9,7 +9,6 @@
   <arg name="container_name" default=""/>
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
 
-
   <!-- Pointcloud map filter -->
   <group>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/pointcloud_map_filter.launch.py" if="$(var use_pointcloud_map)">
