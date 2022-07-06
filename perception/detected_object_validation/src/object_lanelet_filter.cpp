@@ -46,7 +46,14 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   using std::placeholders::_1;
 
   // Set parameters
-  unknown_only_ = declare_parameter<bool>("unknown_only", false);
+  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN", false);
+  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR", false);
+  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK", false);
+  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS", false);
+  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER", false);
+  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE", false);
+  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE", false);
+  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN", false);
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -97,12 +104,20 @@ void ObjectLaneletFilterNode::objectCallback(
   for (const auto & object : transformed_objects.objects) {
     const auto position = object.kinematics.pose_with_covariance.pose.position;
     const auto & label = object.classification.front().label;
-    if (unknown_only_ && (label != Label::UNKNOWN)) {
-      output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-    } else {
+    if (
+      (label == Label::UNKNOWN && filter_target_.UNKNOWN) ||
+      (label == Label::CAR && filter_target_.CAR) ||
+      (label == Label::TRUCK && filter_target_.TRUCK) ||
+      (label == Label::BUS && filter_target_.BUS) ||
+      (label == Label::TRAILER && filter_target_.TRAILER) ||
+      (label == Label::MOTORCYCLE && filter_target_.MOTORCYCLE) ||
+      (label == Label::BICYCLE && filter_target_.BICYCLE) ||
+      (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
       if (isPointWithinLanelets(Point2d(position.x, position.y), intersected_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
       }
+    } else {
+      output_object_msg.objects.emplace_back(input_msg->objects.at(index));
     }
     ++index;
   }

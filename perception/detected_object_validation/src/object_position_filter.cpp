@@ -30,7 +30,14 @@ ObjectPositionFilterNode::ObjectPositionFilterNode(const rclcpp::NodeOptions & n
   upper_bound_y_ = declare_parameter<float>("upper_bound_y", 50.0);
   lower_bound_x_ = declare_parameter<float>("lower_bound_x", 0.0);
   lower_bound_y_ = declare_parameter<float>("lower_bound_y", -50.0);
-  unknown_only_ = declare_parameter<bool>("unknown_only", false);
+  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN", false);
+  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR", false);
+  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK", false);
+  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS", false);
+  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER", false);
+  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE", false);
+  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE", false);
+  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN", false);
 
   // Set publisher/subscriber
   object_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
@@ -52,14 +59,23 @@ void ObjectPositionFilterNode::objectCallback(
   for (const auto & object : input_msg->objects) {
     const auto & position = object.kinematics.pose_with_covariance.pose.position;
     const auto & label = object.classification.front().label;
-    if (unknown_only_ && (label != Label::UNKNOWN)) {
-      output_object_msg.objects.emplace_back(object);
-    } else {
+    if (
+      (label == Label::UNKNOWN && filter_target_.UNKNOWN) ||
+      (label == Label::CAR && filter_target_.CAR) ||
+      (label == Label::TRUCK && filter_target_.TRUCK) ||
+      (label == Label::BUS && filter_target_.BUS) ||
+      (label == Label::TRAILER && filter_target_.TRAILER) ||
+      (label == Label::MOTORCYCLE && filter_target_.MOTORCYCLE) ||
+      (label == Label::BICYCLE && filter_target_.BICYCLE) ||
+      (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
+      std::cout << "filtering target: true, label: " << (int)label << std::endl;
       if (
         position.x > lower_bound_x_ && position.x < upper_bound_x_ && position.y > lower_bound_y_ &&
         position.y < upper_bound_y_) {
         output_object_msg.objects.emplace_back(object);
       }
+    } else {
+      output_object_msg.objects.emplace_back(object);
     }
   }
 

@@ -30,6 +30,17 @@
 
 namespace object_position_filter
 {
+struct Filter_target_label
+{
+  bool UNKNOWN;
+  bool CAR;
+  bool TRUCK;
+  bool BUS;
+  bool TRAILER;
+  bool MOTORCYCLE;
+  bool BICYCLE;
+  bool PEDESTRIAN;
+};
 
 class ObjectPositionFilterNode : public rclcpp::Node
 {
@@ -45,11 +56,11 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  bool unknown_only_;
   float upper_bound_x_;
   float upper_bound_y_;
   float lower_bound_x_;
   float lower_bound_y_;
+  Filter_target_label filter_target_;
 };
 
 }  // namespace object_position_filter

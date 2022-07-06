@@ -34,6 +34,18 @@ using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::Point2d;
 
+struct Filter_target_label
+{
+  bool UNKNOWN;
+  bool CAR;
+  bool TRUCK;
+  bool BUS;
+  bool TRAILER;
+  bool MOTORCYCLE;
+  bool BICYCLE;
+  bool PEDESTRIAN;
+};
+
 class ObjectLaneletFilterNode : public rclcpp::Node
 {
 public:
@@ -53,7 +65,7 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  bool unknown_only_;
+  Filter_target_label filter_target_;
 
   bool transformDetectedObjects(
     const autoware_auto_perception_msgs::msg::DetectedObjects &, const std::string &,
