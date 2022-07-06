@@ -15,9 +15,15 @@
 #ifndef SCREEN_CAPTURE_PANEL_HPP_
 #define SCREEN_CAPTURE_PANEL_HPP_
 
+// Qt
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QSpinBox>
+#include <QTimer>
+
+// rviz
 #include <rviz_common/display_context.hpp>
 #include <rviz_common/panel.hpp>
 #include <rviz_common/render_panel.hpp>
@@ -37,13 +43,26 @@ public:
   explicit AutowareScreenCapturePanel(QWidget * parent = nullptr);
   void update();
   void onInitialize() override;
+  void createWallTimer();
+  void onTimer();
 
 public Q_SLOTS:
   void onClickScreenCapture();
+  void onClickCaptureToVideo();
+  void onClickVideoCapture();
+  void onRateChanged();
 
 private:
   QLineEdit * ros_time_label_;
   QPushButton * screen_capture_button_ptr_;
+  QPushButton * capture_to_mp4_button_ptr_;
+  QSpinBox * capture_hz_;
+  QTimer * capture_timer_;
+  enum class State { WAITING_FOR_CAPTURE, CAPTURING, WRITING };
+  State state_;
+  bool skip_capture_ = {true};
+  std::string root_folder_;
+  size_t counter_;
 
 protected:
   rviz_common::ros_integration::RosNodeAbstractionIface::WeakPtr rviz_ros_node_;
