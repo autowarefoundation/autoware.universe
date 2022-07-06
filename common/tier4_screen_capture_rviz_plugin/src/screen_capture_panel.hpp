@@ -82,8 +82,8 @@ private:
   std::string root_folder_;
   size_t counter_;
   bool is_capture_;
-  float width_;
-  float height_;
+  float width_ = {1280};
+  float height_ = {720};
 
   std::string stateToString(const State & state)
   {

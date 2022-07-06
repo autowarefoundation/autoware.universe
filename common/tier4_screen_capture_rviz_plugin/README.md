@@ -6,7 +6,9 @@ This plugin captures the screen of rviz.
 
 ## Assumptions / Known limits
 
-TBD.
+This is only for debug or analyze.
+The `capture screen` button is still beta version which can slow frame rate.
+set lower frame rate according to PC spec.
 
 ## Usage
 

@@ -112,7 +112,7 @@ void AutowareScreenCapturePanel::convertPNGImagesToMP4()
   }
   int fourcc = cv::VideoWriter::fourcc('m', 'p', '4', 'v');  // mp4
   cv::VideoWriter writer;
-  cv::Size size = cv::Size(1280, 720);
+  cv::Size size = cv::Size(width_, height_);
   writer.open("capture/" + root_folder_ + ".mp4", fourcc, capture_hz_->value(), size);
   cv::Mat image;
   while (true) {
@@ -180,7 +180,8 @@ void AutowareScreenCapturePanel::onTimer()
   if (!main_window_) return;
   try {
     // this is deprecated but only way to capture nicely
-    QPixmap original_pixmap = QPixmap::grabWindow(main_window_->winId());
+    QScreen * screen = QGuiApplication::primaryScreen();
+    QPixmap original_pixmap = screen->grabWindow(main_window_->winId());
     QString format = "png";
     QString file_name = QString::fromStdString(file);
     if (!file_name.isEmpty())
@@ -199,8 +200,8 @@ void AutowareScreenCapturePanel::update()
 void AutowareScreenCapturePanel::save(rviz_common::Config config) const
 {
   Panel::save(config);
-  config.mapSetValue("width", &width_);
-  config.mapSetValue("height", &height_);
+  config.mapSetValue("width", width_);
+  config.mapSetValue("height", height_);
 }
 
 void AutowareScreenCapturePanel::load(const rviz_common::Config & config)
