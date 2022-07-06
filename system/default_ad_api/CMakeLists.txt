@@ -6,14 +6,11 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/interface.cpp
-)
-
-ament_auto_add_library(localization_score SHARED
   src/localization_score.cpp
 )
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceNode")
-rclcpp_components_register_nodes(localization_score "default_ad_api::LocalizationScoreNode")
+rclcpp_components_register_nodes(${PROJECT_NAME}  "default_ad_api::LocalizationScoreNode")
 
 if(BUILD_TESTING)
   add_launch_test(test/main.test.py)

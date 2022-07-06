@@ -50,6 +50,8 @@ private:
 
   autoware_ad_api_msgs::msg::LocalizationScore score_tp_;
   autoware_ad_api_msgs::msg::LocalizationScore score_nvtl_;
+  bool is_tp_received_;
+  bool is_nvtl_received_;
 };
 
 }  // namespace default_ad_api
