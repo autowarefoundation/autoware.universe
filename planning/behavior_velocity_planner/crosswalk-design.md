@@ -152,7 +152,7 @@ Depending on the relative relationship between TTC and TTV, the ego's behavior a
 2. **TTC ≒ TTV**: There is a risk of a near miss and collision between ego and objects at the virtual collision point. (Type-B)
 3. **TTC << TTV**: Ego has enough time to path through the crosswalk before the objects reach the virtual collision point. (Type-C)
 
-This module judges that ego is able to pass through the crosswalk without collision risk when the relative relationship between TTC and TTV is **Type-A** and **Type-C**. On the other hand, this module judges that ego needs to stop in front of the crosswalk prevent collision with objects in **Type-B** condition. The time margin can be set by parameters `ego_pass_first_margin` and `ego_pass_later_margin`.
+This module judges that ego is able to pass through the crosswalk without collision risk when the relative relationship between TTC and TTV is **Type-A** and **Type-C**. On the other hand, this module judges that ego needs to stop in front of the crosswalk prevent collision with objects in **Type-B** condition. The time margin can be set by parameters `ego_pass_first_margin` and `ego_pass_later_margin`. This logic is designed based on [1].
 
 <div align="center">
   <img src="docs/crosswalk/ttc-ttv.svg" width=90%>
@@ -193,3 +193,7 @@ When multiple crosswalks are nearby (such as intersection), this module may make
 </div>
 
 ### Known Issues
+
+### References/External links
+
+[1] 佐藤 みなみ, 早坂 祥一, 清水 政行, 村野 隆彦, 横断歩行者に対するドライバのリスク回避行動のモデル化, 自動車技術会論文集, 2013, 44 巻, 3 号, p. 931-936.
