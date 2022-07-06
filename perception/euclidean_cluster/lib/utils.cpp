@@ -80,23 +80,16 @@ void convertObjectMsg2SensorMsg(
   point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZI> modifier{output,
     "euclidean_cluster_cloud"};
 
-  sensor_msgs::PointCloud2Iterator<float> iter_out_x(output, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_out_y(output, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_out_z(output, "z");
-  sensor_msgs::PointCloud2Iterator<uint8_t> iter_out_r(output, "r");
-  sensor_msgs::PointCloud2Iterator<uint8_t> iter_out_g(output, "g");
-  sensor_msgs::PointCloud2Iterator<uint8_t> iter_out_b(output, "b");
-
   constexpr uint8_t color_data[] = {200, 0, 0, 0, 200, 0, 0, 0, 200,
     200, 200, 0, 200, 0, 200, 0, 200, 200};                                    // 6 pattern
   for (size_t i = 0; i < input.feature_objects.size(); ++i) {
     const auto & feature_object = input.feature_objects.at(i);
-    sensor_msgs::PointCloud2ConstIterator<float> iter_in_x(feature_object.feature.cluster, "x");
-    sensor_msgs::PointCloud2ConstIterator<float> iter_in_y(feature_object.feature.cluster, "y");
-    sensor_msgs::PointCloud2ConstIterator<float> iter_in_z(feature_object.feature.cluster, "z");
-    for (; iter_in_x != iter_in_x.end(); ++iter_in_x, ++iter_in_y, ++iter_in_z) {
+    point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{feature_object.
+      feature
+      .cluster};
+    for (const auto & point : view) {
       modifier.push_back(
-        {*iter_in_x, *iter_in_y, *iter_in_z,
+        {point.x, point.y, point.z,
           static_cast<float>((color_data[3 * (i % 6) + 0] << 3) +
           (color_data[3 * (i % 6) + 1] << 2) +
           (color_data[3 * (i % 6) + 2] << 1))});
