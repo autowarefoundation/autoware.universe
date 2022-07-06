@@ -32,7 +32,7 @@ public:
   bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
-  void setTolerance(float tolerance) { tolerance_ = tolerance; }
+  void setTolerance(float tolerance) {tolerance_ = tolerance;}
 
 private:
   float tolerance_;

@@ -34,9 +34,9 @@ public:
   {
   }
   virtual ~EuclideanClusterInterface() = default;
-  void setUseHeight(bool use_height) { use_height_ = use_height; }
-  void setMinClusterSize(int size) { min_cluster_size_ = size; }
-  void setMaxClusterSize(int size) { max_cluster_size_ = size; }
+  void setUseHeight(bool use_height) {use_height_ = use_height;}
+  void setMinClusterSize(int size) {min_cluster_size_ = size;}
+  void setMaxClusterSize(int size) {max_cluster_size_ = size;}
   virtual bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) = 0;

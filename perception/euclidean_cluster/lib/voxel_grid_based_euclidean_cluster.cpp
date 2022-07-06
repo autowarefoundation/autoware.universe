@@ -101,7 +101,8 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   {
     for (const auto & cluster : temporary_clusters) {
       if (!(min_cluster_size_ <= static_cast<int>(cluster.points.size()) &&
-            static_cast<int>(cluster.points.size()) <= max_cluster_size_)) {
+        static_cast<int>(cluster.points.size()) <= max_cluster_size_))
+      {
         continue;
       }
       clusters.push_back(cluster);
