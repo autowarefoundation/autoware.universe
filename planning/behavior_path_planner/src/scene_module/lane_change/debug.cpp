@@ -186,4 +186,31 @@ MarkerArray showEgoPolygon(
 
   return marker_array;
 }
+
+MarkerArray showPolygonPose(
+  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns)
+{
+  constexpr auto colors = colorsList();
+  const auto loop_size = std::min(colors.size(), obj_debug_vec.size());
+  MarkerArray marker_array;
+  int32_t id{0};
+  size_t idx{0};
+
+  for (const auto & [uuid, info] : obj_debug_vec) {
+    const auto & color = colors.at(idx);
+    Marker marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, ++id, Marker::POINTS,
+      createMarkerScale(0.2, 0.2, 0.2), createMarkerColor(color[0], color[1], color[2], 0.999));
+    marker.points.reserve(2);
+    marker.points.push_back(info.expected_ego_pose.position);
+    marker.points.push_back(info.expected_obj_pose.position);
+    marker_array.markers.push_back(marker);
+    ++idx;
+    if (idx >= loop_size) {
+      break;
+    }
+  }
+
+  return marker_array;
+}
 }  // namespace marker_utils::lane_change_markers

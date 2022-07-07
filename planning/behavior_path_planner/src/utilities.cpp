@@ -2131,6 +2131,7 @@ bool isSafeInLaneletCollisionCheck(
       continue;
     }
 
+    debug.ego_polygon = ego_polygon;
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
       debug.failed_reason = "overlap_polygon";
       return false;
@@ -2140,6 +2141,8 @@ bool isSafeInLaneletCollisionCheck(
 
     util::getProjectedDistancePointFromPolygons(
       ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
+    debug.expected_ego_pose = expected_ego_pose;
+    debug.expected_obj_pose = expected_obj_pose;
 
     const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
     if (!util::hasEnoughDistance(
@@ -2149,6 +2152,7 @@ bool isSafeInLaneletCollisionCheck(
       return false;
     }
   }
+  debug.failed_reason = "";
   return true;
 }
 
@@ -2173,6 +2177,7 @@ bool isSafeInFreeSpaceCollisionCheck(
       continue;
     }
 
+    debug.ego_polygon = ego_polygon;
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
       debug.failed_reason = "overlap_polygon";
       return false;
@@ -2182,14 +2187,20 @@ bool isSafeInFreeSpaceCollisionCheck(
     util::getProjectedDistancePointFromPolygons(
       ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
 
+    debug.expected_ego_pose = expected_ego_pose;
+    debug.expected_obj_pose = expected_obj_pose;
+
     const auto object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
     if (!util::hasEnoughDistance(
           expected_ego_pose, ego_current_twist,
           target_object.kinematics.initial_pose_with_covariance.pose, object_twist, check_param,
           debug)) {
+      debug.failed_reason = "not_enough_longitudinal";
       return false;
     }
   }
+
+  debug.failed_reason = "";
   return true;
 }
 }  // namespace util

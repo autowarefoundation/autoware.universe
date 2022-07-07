@@ -36,5 +36,7 @@ MarkerArray showEgoPredictedPaths(
   const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
 MarkerArray showEgoPolygon(
   const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
+MarkerArray showPolygonPose(
+  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
 }  // namespace marker_utils::lane_change_markers
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__DEBUG_HPP_

@@ -543,13 +543,10 @@ bool LaneChangeModule::hasFinishedLaneChange() const
 
 void LaneChangeModule::setObjectDebugVisualization() const
 {
-  using marker_utils::lane_change_markers::showAllLaneChangeLanes;
-  using marker_utils::lane_change_markers::showEgoExpectedPose;
   using marker_utils::lane_change_markers::showEgoPolygon;
-  using marker_utils::lane_change_markers::showEgoPredictedPaths;
   using marker_utils::lane_change_markers::showLerpedPose;
   using marker_utils::lane_change_markers::showObjectInfo;
-  using marker_utils::lane_change_markers::showObjExpectedPose;
+  using marker_utils::lane_change_markers::showPolygonPose;
 
   debug_marker_.markers.clear();
   const auto add = [this](const MarkerArray & added) {
@@ -557,12 +554,9 @@ void LaneChangeModule::setObjectDebugVisualization() const
   };
 
   add(showObjectInfo(object_debug_, "object_debug_info"));
-  // add(showAllLaneChangeLanes(candidate_path_, "candidate_path"));
   add(showLerpedPose(object_debug_, "lerp_pose_before_true"));
-  // add(showEgoPredictedPaths(object_debug_, "ego_predicted_paths"));
+  add(showPolygonPose(object_debug_, "expected_pose"));
   add(showEgoPolygon(object_debug_, "ego_lerped_polygon"));
-  add(showEgoExpectedPose(object_debug_, "ego_expected_pose"));
-  add(showObjExpectedPose(object_debug_, "obj_expected_pose"));
 }
 
 }  // namespace behavior_path_planner
