@@ -339,22 +339,6 @@ inline double calcAzimuthAngle(
   return std::atan2(dy, dx);
 }
 
-inline geometry_msgs::msg::Pose calcAveragePose(
-  const geometry_msgs::msg::Pose pose_a, geometry_msgs::msg::Pose pose_b)
-{
-  tf2::Quaternion quat_a;
-  tf2::Quaternion quat_b;
-  tf2::fromMsg(pose_a.orientation, quat_a);
-  tf2::fromMsg(pose_b.orientation, quat_b);
-
-  geometry_msgs::msg::Pose pose_ave;
-  pose_ave.orientation = tf2::toMsg(quat_a.slerp(quat_b, 0.5));
-  pose_ave.position.x = (pose_a.position.x + pose_b.position.x) / 2;
-  pose_ave.position.y = (pose_a.position.y + pose_b.position.y) / 2;
-  pose_ave.position.z = (pose_a.position.z + pose_b.position.z) / 2;
-  return pose_ave;
-}
-
 inline geometry_msgs::msg::Pose transform2pose(const geometry_msgs::msg::Transform & transform)
 {
   geometry_msgs::msg::Pose pose;
