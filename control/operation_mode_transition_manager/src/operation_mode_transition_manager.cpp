@@ -34,10 +34,11 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   operation_mode_transition_manager_ = std::make_unique<ManualDirectState>(this);
   data_ = std::make_shared<Data>();
   data_->requested_state = State::MANUAL_DIRECT;
+  data_->vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
 
-  pub_operation_mode_ = create_publisher<OperationMode>("engage_state", 1);
-  pub_auto_available_ = create_publisher<IsAutonomousAvailable>("is_auto_available", 1);
-  pub_debug_info_ = create_publisher<OperationModeTransitionManagerDebug>("debug_info", 1);
+  pub_operation_mode_ = create_publisher<OperationMode>("operation_mode", 1);
+  pub_auto_available_ = create_publisher<IsAutonomousAvailable>("is_autonomous_available", 1);
+  pub_debug_info_ = create_publisher<OperationModeTransitionManagerDebug>("~/debug_info", 1);
 
   sub_vehicle_kinematics_ = create_subscription<Odometry>(
     "kinematics", 1, [this](const Odometry::SharedPtr msg) { data_->kinematics = *msg; });
@@ -174,7 +175,7 @@ bool OperationModeTransitionManager::hasDangerAcceleration()
 
 std::pair<bool, bool> OperationModeTransitionManager::hasDangerLateralAcceleration()
 {
-  const auto wheelbase = 4.0;
+  const auto wheelbase = data_->vehicle_info.wheel_base_m;
   const auto curr_vx = data_->kinematics.twist.twist.linear.x;
   const auto curr_wz = data_->kinematics.twist.twist.angular.z;
 

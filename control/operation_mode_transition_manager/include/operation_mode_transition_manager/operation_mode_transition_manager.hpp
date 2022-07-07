@@ -28,6 +28,7 @@
 #include <tier4_system_msgs/srv/operation_mode_request.hpp>
 #include <tier4_vehicle_msgs/msg/control_mode.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <memory>
 #include <utility>
