@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 
+#include "behavior_path_planner/scene_module/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utilities.hpp"
@@ -31,12 +32,14 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using marker_utils::CollisionCheckDebug;
 
 struct LaneChangeParameters
 {
@@ -61,6 +64,12 @@ struct LaneChangeParameters
   bool use_all_predicted_path;
   bool enable_blocked_by_obstacle;
   double lane_change_search_distance;
+  double safety_time_margin_for_control;
+  double rear_vehicle_reaction_time;
+  double lateral_distance_threshold;
+  double expected_front_deceleration;
+  double expected_rear_deceleration;
+  bool publish_debug_marker;
 };
 
 struct LaneChangeStatus
@@ -79,7 +88,8 @@ class LaneChangeModule : public SceneModuleInterface
 {
 public:
   LaneChangeModule(
-    const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters);
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<LaneChangeParameters> parameters);
 
   BehaviorModuleOutput run() override;
 
@@ -109,10 +119,8 @@ public:
     return false;
   }
 
-  void setParameters(const LaneChangeParameters & parameters);
-
 private:
-  LaneChangeParameters parameters_;
+  std::shared_ptr<LaneChangeParameters> parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
 
@@ -174,11 +182,14 @@ private:
   void updateLaneChangeStatus();
 
   bool isSafe() const;
-  bool isLaneBlocked(const lanelet::ConstLanelets & lanes) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied() const;
   bool hasFinishedLaneChange() const;
+
+  void setObjectDebugVisualization() const;
+  mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
+  mutable std::vector<LaneChangePath> candidate_path_;
 };
 }  // namespace behavior_path_planner
 

@@ -117,6 +117,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
+  lane_change_param_ptr = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
+
+  m_set_param_res = this->add_on_set_parameters_callback(
+    std::bind(&BehaviorPathPlannerNode::paramCallback, this, std::placeholders::_1));
   // behavior tree manager
   {
     mutex_bt_.lock();
@@ -135,10 +139,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
     bt_manager_->registerSceneModule(lane_following_module);
 
-    const auto lane_change_param = getLaneChangeParam();
-
     auto lane_change_module =
-      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param);
+      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
     bt_manager_->registerSceneModule(lane_change_module);
 
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
@@ -335,6 +337,12 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
   p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
   p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
+  p.safety_time_margin_for_control = dp("safety_time_margin_for_control", 2.0);
+  p.rear_vehicle_reaction_time = dp("rear_vehicle_reaction_time", 1.0);
+  p.lateral_distance_threshold = dp("lateral_distance_threshold", 5.0);
+  p.expected_front_deceleration = dp("expected_front_deceleration", -1.0);
+  p.expected_rear_deceleration = dp("expected_rear_deceleration", -1.0);
+  p.publish_debug_marker = dp("publish_debug_marker", false);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -675,6 +683,51 @@ void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const
   const double backward = planner_data_->parameters.backward_path_length;
 
   util::clipPathLength(path, ego_pose, forward, backward);
+}
+
+SetParametersResult BehaviorPathPlannerNode::paramCallback(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+
+  if (!lane_change_param_ptr) {
+    result.successful = false;
+    result.reason = "param not initialized";
+    return result;
+  }
+
+  result.successful = true;
+  result.reason = "success";
+
+  try {
+    update_param(
+      parameters, "lane_change.prediction_duration", lane_change_param_ptr->prediction_duration);
+    update_param(
+      parameters, "lane_change.lane_change_sampling_num",
+      lane_change_param_ptr->lane_change_sampling_num);
+    update_param(
+      parameters, "lane_change.safety_time_margin_for_control",
+      lane_change_param_ptr->safety_time_margin_for_control);
+    update_param(
+      parameters, "lane_change.rear_vehicle_reaction_time",
+      lane_change_param_ptr->rear_vehicle_reaction_time);
+    update_param(
+      parameters, "lane_change.lateral_distance_threshold",
+      lane_change_param_ptr->lateral_distance_threshold);
+    update_param(
+      parameters, "lane_change.expected_front_deceleration",
+      lane_change_param_ptr->expected_front_deceleration);
+    update_param(
+      parameters, "lane_change.expected_rear_deceleration",
+      lane_change_param_ptr->expected_rear_deceleration);
+    update_param(
+      parameters, "lane_change.publish_debug_marker", lane_change_param_ptr->publish_debug_marker);
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  return result;
 }
 
 PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
