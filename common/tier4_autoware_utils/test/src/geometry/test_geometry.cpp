@@ -887,7 +887,7 @@ TEST(geometry, inverseTransformPoint)
   pose_transform.position.z = 3.0;
   pose_transform.orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
-  // calc expected valuea
+  // calc expected values
   geometry_msgs::msg::Pose pose;
   pose.position.x = 1.0;
   pose.position.y = 2.0;
