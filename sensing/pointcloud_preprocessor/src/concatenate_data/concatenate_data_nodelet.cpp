@@ -51,7 +51,9 @@
 
 #include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.hpp"
 
+#include <common/types.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -60,9 +62,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <common/types.hpp>
-#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -329,12 +328,11 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
   sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr)
 {
-  point_cloud_msg_wrapper::PointCloud2Modifer<autoware::common::types::PointXYZI> modifier{*
-    output_ptr, input_ptr->header.frame_id};
+  point_cloud_msg_wrapper::PointCloud2Modifer<autoware::common::types::PointXYZI> modifier{
+    *output_ptr, input_ptr->header.frame_id};
 
-  if (point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZI>::
-    can_be_created_from(*input_ptr))
-  {
+  if (point_cloud_msg_wrapper::PointCloud2View<
+        autoware::common::types::PointXYZI>::can_be_created_from(*input_ptr)) {
     point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZI> view{*input_ptr};
     for (const auto & point : view) {
       output_modifier.push_back({point.x, point.y, point.z, point.intensity});
