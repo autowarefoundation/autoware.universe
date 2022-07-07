@@ -328,7 +328,7 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
   sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr)
 {
-  point_cloud_msg_wrapper::PointCloud2Modifer<autoware::common::types::PointXYZI> modifier{
+  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZI> modifier{
     *output_ptr, input_ptr->header.frame_id};
 
   if (point_cloud_msg_wrapper::PointCloud2View<
