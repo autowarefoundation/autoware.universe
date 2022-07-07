@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
+#include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
@@ -541,7 +542,8 @@ void BehaviorPathPlannerNode::run()
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
   } else {
-    RCLCPP_ERROR(get_logger(), "behavior path output is empty! Stop publish.");
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
   }
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
 
