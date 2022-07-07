@@ -252,7 +252,6 @@ void ScenarioSelectorNode::onParkingState(const std_msgs::msg::Bool::ConstShared
   is_parking_completed_ = msg->data;
 }
 
-
 void ScenarioSelectorNode::onTimer()
 {
   current_pose_ = getCurrentPose(tf_buffer_, this->get_logger());

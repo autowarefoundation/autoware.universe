@@ -16,13 +16,13 @@
 #define SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/bool.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <lanelet2_core/LaneletMap.h>

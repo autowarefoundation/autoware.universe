@@ -40,8 +40,8 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <tier4_planning_msgs/msg/scenario.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
