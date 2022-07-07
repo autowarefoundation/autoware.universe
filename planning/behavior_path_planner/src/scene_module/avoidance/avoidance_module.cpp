@@ -50,8 +50,8 @@ AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
 : SceneModuleInterface{name, node},
   parameters_{parameters},
-  rtc_interface_left_(node, "avoidance_left"),
-  rtc_interface_right_(node, "avoidance_right"),
+  rtc_interface_left_(&node, "avoidance_left"),
+  rtc_interface_right_(&node, "avoidance_right"),
   uuid_left_{generateUUID()},
   uuid_right_{generateUUID()}
 {
@@ -290,6 +290,8 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE);
       continue;
     }
+
+    object_data.last_seen = clock_->now();
 
     // set data
     target_objects.push_back(object_data);
@@ -2475,12 +2477,15 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
 
     // registered object is not detected this time. lost count up.
     if (!updateIfDetectedNow(r)) {
-      ++r.lost_count;
+      r.lost_time = (clock_->now() - r.last_seen).seconds();
+    } else {
+      r.last_seen = clock_->now();
+      r.lost_time = 0.0;
+    }
 
-      // lost count exceeds threshold. remove object from register.
-      if (r.lost_count > parameters_.object_hold_max_count) {
-        registered_objects_.erase(registered_objects_.begin() + i);
-      }
+    // lost count exceeds threshold. remove object from register.
+    if (r.lost_time > parameters_.object_last_seen_threshold) {
+      registered_objects_.erase(registered_objects_.begin() + i);
     }
   }
 
@@ -2552,7 +2557,7 @@ void AvoidanceModule::initVariables()
 
   debug_avoidance_msg_array_ptr_.reset();
   debug_data_ = DebugData();
-
+  debug_marker_.markers.clear();
   registered_raw_shift_points_ = {};
   current_raw_shift_points_ = {};
   original_unique_id = 0;
@@ -2625,16 +2630,16 @@ double AvoidanceModule::getCurrentLinearShift() const
 
 void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData & debug)
 {
-  using marker_utils::createAvoidanceObjectsMarkerArray;
-  using marker_utils::createAvoidPointMarkerArray;
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
   using marker_utils::createShiftPointMarkerArray;
-  using marker_utils::makeOverhangToRoadShoulderMarkerArray;
+  using marker_utils::avoidance_marker::createAvoidanceObjectsMarkerArray;
+  using marker_utils::avoidance_marker::createAvoidPointMarkerArray;
+  using marker_utils::avoidance_marker::createOverhangFurthestLineStringMarkerArray;
+  using marker_utils::avoidance_marker::makeOverhangToRoadShoulderMarkerArray;
 
   debug_marker_.markers.clear();
 
@@ -2661,7 +2666,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
   add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
-  add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects));
+  add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects, "overhang"));
   add(createOverhangFurthestLineStringMarkerArray(
     *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
