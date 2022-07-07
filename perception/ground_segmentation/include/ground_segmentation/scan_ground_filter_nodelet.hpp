@@ -54,6 +54,7 @@ private:
     POINT_FOLLOW,
     UNKNOWN,
     VIRTUAL_GROUND,
+    OUT_OF_RANGE
   };
   struct PointRef
   {
