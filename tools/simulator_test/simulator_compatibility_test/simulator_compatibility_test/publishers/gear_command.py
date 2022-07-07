@@ -25,14 +25,14 @@ class PublisherGearCommand(Node):
         self.declare_parameter("qos_depth", 10)
         qos_depth = self.get_parameter("qos_depth").value
 
-        QOS_RKL10V = QoSProfile(
+        QOS_RKL10TL = QoSProfile(
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=qos_depth,
-            durability=QoSDurabilityPolicy.VOLATILE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
         )
         self.topic = "/control/command/gear_cmd"
-        self.publisher_ = self.create_publisher(GearCommand, self.topic, QOS_RKL10V)
+        self.publisher_ = self.create_publisher(GearCommand, self.topic, QOS_RKL10TL)
 
     def publish_msg(self, gear_mode):
         stamp = self.get_clock().now().to_msg()
