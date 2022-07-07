@@ -6,6 +6,7 @@ string current_state
 
 # flags for engage permission
 bool is_all_ok
+bool engage_allowed_for_stopped_vehicle
 bool trajectory_available_ok
 bool lateral_deviation_ok
 bool yaw_deviation_ok

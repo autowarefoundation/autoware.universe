@@ -64,6 +64,8 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
 
   {
     auto & p = engage_acceptable_param_;
+    p.allow_autonomous_in_stopped =
+      declare_parameter<bool>("engage_acceptable_limits.allow_autonomous_in_stopped");
     p.dist_threshold = declare_parameter<double>("engage_acceptable_limits.dist_threshold");
     p.speed_upper_threshold =
       declare_parameter<double>("engage_acceptable_limits.speed_upper_threshold");
@@ -200,7 +202,7 @@ std::pair<bool, bool> OperationModeTransitionManager::hasDangerLateralAccelerati
 
 bool OperationModeTransitionManager::checkEngageAvailable()
 {
-  constexpr auto dist_max = 5.0;
+  constexpr auto dist_max = 100.0;
   constexpr auto yaw_max = M_PI_4;
 
   const auto current_speed = data_->kinematics.twist.twist.linear.x;
@@ -275,6 +277,14 @@ bool OperationModeTransitionManager::checkEngageAvailable()
     debug_info_.lateral_deviation = lateral_deviation;
     debug_info_.yaw_deviation = yaw_deviation;
     debug_info_.speed_deviation = speed_deviation;
+  }
+
+  // Engagement is ready if the vehicle is stopped.
+  // (this is checked a the end to calculate some debug values.)
+  if (param.allow_autonomous_in_stopped && std::abs(current_speed) < 0.01) {
+    debug_info_.is_all_ok = true;
+    debug_info_.engage_allowed_for_stopped_vehicle = true;
+    return true;
   }
 
   return is_all_ok;

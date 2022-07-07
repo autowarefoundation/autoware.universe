@@ -18,6 +18,7 @@
 #include "operation_mode_transition_manager/msg/operation_mode_transition_manager_debug.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -29,7 +30,6 @@
 #include <tier4_system_msgs/srv/operation_mode_request.hpp>
 #include <tier4_vehicle_msgs/msg/control_mode.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <string>
 
@@ -71,6 +71,7 @@ struct Data
 
 struct EngageAcceptableParam
 {
+  bool allow_autonomous_in_stopped = true;
   double dist_threshold = 2.0;
   double speed_upper_threshold = 10.0;
   double speed_lower_threshold = -10.0;
