@@ -1,1 +1,0 @@
-ObjectStatus[] crashed_vehicles
