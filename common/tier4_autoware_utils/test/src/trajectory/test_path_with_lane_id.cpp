@@ -600,8 +600,7 @@ TEST(trajectory, insertTargetPoint_PathWithLaneId)
   {
     auto empty_traj = generateTestTrajectory(0, 1.0);
     const size_t segment_idx = 0;
-    EXPECT_FALSE(
-      insertTargetPoint(segment_idx, geometry_msgs::msg::Point{}, empty_traj.points));
+    EXPECT_FALSE(insertTargetPoint(segment_idx, geometry_msgs::msg::Point{}, empty_traj.points));
   }
 }
 
