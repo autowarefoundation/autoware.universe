@@ -103,7 +103,8 @@ class GroundSegmentationPipeline:
                     ("output", f"{lidar_name}/pointcloud"),
                 ],
                 parameters=[
-                    self.ground_segmentation_param[f"{lidar_name}_ground_filter"]["parameters"]
+                    {"maximum_detection_range": self.vehicle_info["max_height_offset"]},
+                    self.ground_segmentation_param[f"{lidar_name}_ground_filter"]["parameters"],
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -237,6 +238,7 @@ class GroundSegmentationPipeline:
                     ("output", output_topic),
                 ],
                 parameters=[
+                    {"maximum_detection_range": self.vehicle_info["max_height_offset"]},
                     self.ground_segmentation_param["common_ground_filter"]["parameters"],
                     self.vehicle_info,
                 ],
