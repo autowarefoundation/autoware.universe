@@ -114,8 +114,8 @@ private:
 
   std::string base_frame_;
   std::string sensor_frame_;
-  float maximum_detection_range_ = 2.5f;    // maximum height of non_ground object from ground
-  float minimum_detection_range_ = 0.0f;    // mimimum height of non_ground object from ground
+  float maximum_detection_range_ = 2.5f;    // maximum of detection range from ground
+  float minimum_detection_range_ = 0.0f;    // minimum of detection range from ground
   double global_slope_max_angle_rad_;       // radians
   double local_slope_max_angle_rad_;        // radians
   double radial_divider_angle_rad_;         // distance in rads between dividers
