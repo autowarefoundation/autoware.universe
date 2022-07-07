@@ -186,7 +186,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             operation_mode_transition_manager_param,
             vehicle_info_param,
-        ]
+        ],
     )
 
     # external cmd selector
