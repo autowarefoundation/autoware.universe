@@ -20,6 +20,9 @@
 #include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -1938,5 +1941,229 @@ void getProjectedDistancePointFromPolygons(
   }
 }
 
+bool getEgoExpectedPoseAndConvertToPolygon(
+  const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
+  tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
+  const double & length, const double & width)
+{
+  if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
+    return false;
+  }
+  expected_pose.orientation = current_pose.orientation;
+  ego_polygon = util::convertBoundingBoxObjectToGeometryPolygon(expected_pose, length, width);
+
+  return true;
+}
+
+bool getObjectExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
+  Polygon2d & obj_polygon, const double & check_current_time)
+{
+  if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
+    return false;
+  }
+  expected_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
+
+  if (!util::calcObjectPolygon(object, &obj_polygon)) {
+    return false;
+  }
+
+  return true;
+}
+
+std::vector<PredictedPath> getPredictedPathFromObj(
+  const PredictedObject & obj, const bool & is_use_all_predicted_path)
+{
+  std::vector<PredictedPath> predicted_path_vec;
+  if (is_use_all_predicted_path) {
+    std::copy(
+      obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+      predicted_path_vec.begin());
+  } else {
+    const auto max_confidence_path = std::max_element(
+      obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+      [](const auto & path1, const auto & path2) { return path1.confidence > path2.confidence; });
+    if (max_confidence_path != obj.kinematics.predicted_paths.end()) {
+      predicted_path_vec.push_back(*max_confidence_path);
+    }
+  }
+  return predicted_path_vec;
+}
+
+Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object)
+{
+  tf2::Transform tf_map_desired_to_global{};
+  tf2::Transform tf_map_target_to_global{};
+
+  tf2::fromMsg(desired_object, tf_map_desired_to_global);
+  tf2::fromMsg(target_object, tf_map_target_to_global);
+
+  Pose desired_obj_pose_projected_to_target{};
+  tf2::toMsg(
+    tf_map_desired_to_global.inverse() * tf_map_target_to_global,
+    desired_obj_pose_projected_to_target);
+
+  return desired_obj_pose_projected_to_target;
+}
+
+bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose)
+{
+  const auto obj_from_ego = projectCurrentPoseToTarget(ego_pose, obj_pose);
+  return obj_from_ego.position.x > 0;
+}
+
+bool isObjectFront(const Pose & projected_ego_pose) { return projected_ego_pose.position.x > 0; }
+
+double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel)
+{
+  const auto deceleration = (vehicle_accel < -1e-3) ? vehicle_accel : -1.0;
+  return -std::pow(vehicle_velocity, 2) / (2.0 * deceleration);
+}
+
+double stoppingDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time)
+{
+  return rear_vehicle_velocity * rear_vehicle_reaction_time +
+         stoppingDistance(rear_vehicle_velocity, rear_vehicle_accel);
+}
+double frontVehicleStopDistance(
+  const double & front_vehicle_velocity, const double & front_vehicle_accel,
+  const double & distance_to_collision)
+{
+  return stoppingDistance(front_vehicle_velocity, front_vehicle_accel) + distance_to_collision;
+}
+
+double rearVehicleStopDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time, const double & safety_time_margin_for_control)
+{
+  return stoppingDistance(rear_vehicle_velocity, rear_vehicle_accel, rear_vehicle_reaction_time) +
+         rear_vehicle_velocity * safety_time_margin_for_control;
+}
+
+bool isLongitudinalDistanceEnough(
+  const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold)
+{
+  return rear_vehicle_stop_threshold < front_vehicle_stop_threshold;
+}
+
+bool hasEnoughDistance(
+  const Pose & expected_ego_pose, const Twist & ego_current_twist,
+  const Pose & expected_object_pose, const Twist & object_current_twist,
+  const CollisionCheckParameters & param)
+{
+  const auto front_vehicle_pose =
+    projectCurrentPoseToTarget(expected_ego_pose, expected_object_pose);
+
+  if (isLateralDistanceEnough(
+        front_vehicle_pose.position.y, param.lateral_distance_max_threshold)) {
+    return true;
+  }
+
+  const auto is_obj_in_front = isObjectFront(front_vehicle_pose);
+
+  const auto front_vehicle_velocity =
+    (is_obj_in_front) ? object_current_twist.linear : ego_current_twist.linear;
+
+  const auto rear_vehicle_velocity =
+    (is_obj_in_front) ? ego_current_twist.linear : object_current_twist.linear;
+
+  const auto front_vehicle_accel = param.expected_front_deceleration;
+  const auto rear_vehicle_accel = param.expected_rear_deceleration;
+
+  const auto front_vehicle_stop_threshold = frontVehicleStopDistance(
+    util::l2Norm(front_vehicle_velocity), front_vehicle_accel,
+    std::fabs(front_vehicle_pose.position.x));
+
+  const auto rear_vehicle_stop_threshold = rearVehicleStopDistance(
+    util::l2Norm(rear_vehicle_velocity), rear_vehicle_accel, param.rear_vehicle_reaction_time,
+    param.safety_time_margin_for_control);
+
+  return isLongitudinalDistanceEnough(rear_vehicle_stop_threshold, front_vehicle_stop_threshold);
+}
+
+bool isLateralDistanceEnough(
+  const double & relative_lateral_distance, const double & lateral_distance_threshold)
+{
+  return std::fabs(relative_lateral_distance) > lateral_distance_threshold;
+}
+
+bool isSafeInLaneletCollisionCheck(
+  const Pose & ego_current_pose, const Twist & ego_current_twist,
+  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
+  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const double & check_time_resolution, const PredictedObject & target_object,
+  const PredictedPath & target_object_path, const CollisionCheckParameters & check_param)
+{
+  for (double t = check_start_time; t < check_end_time; t += check_time_resolution) {
+    Pose expected_obj_pose;
+    tier4_autoware_utils::Polygon2d obj_polygon;
+    if (!util::getObjectExpectedPoseAndConvertToPolygon(
+          target_object_path, target_object, expected_obj_pose, obj_polygon, t)) {
+      continue;
+    }
+
+    Pose expected_ego_pose;
+    tier4_autoware_utils::Polygon2d ego_polygon;
+    if (!util::getEgoExpectedPoseAndConvertToPolygon(
+          ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t,
+          ego_vehicle_length, ego_vehicle_width)) {
+      continue;
+    }
+
+    if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
+      return false;
+    }
+
+    util::getProjectedDistancePointFromPolygons(
+      ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
+
+    const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
+    if (!util::hasEnoughDistance(
+          expected_ego_pose, ego_current_twist, expected_obj_pose, object_twist, check_param)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool isSafeInFreeSpaceCollisionCheck(
+  const Pose & ego_current_pose, const Twist & ego_current_twist,
+  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
+  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const double & check_time_resolution, const PredictedObject & target_object,
+  const CollisionCheckParameters & check_param)
+{
+  tier4_autoware_utils::Polygon2d obj_polygon;
+  if (!util::calcObjectPolygon(target_object, &obj_polygon)) {
+    return false;
+  }
+  for (double t = check_start_time; t < check_end_time; t += check_time_resolution) {
+    Pose expected_ego_pose;
+    tier4_autoware_utils::Polygon2d ego_polygon;
+    if (!util::getEgoExpectedPoseAndConvertToPolygon(
+          ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t,
+          ego_vehicle_length, ego_vehicle_width)) {
+      continue;
+    }
+
+    if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
+      return false;
+    }
+
+    auto expected_obj_pose = target_object.kinematics.initial_pose_with_covariance.pose;
+    util::getProjectedDistancePointFromPolygons(
+      ego_polygon, obj_polygon, expected_ego_pose, expected_obj_pose);
+
+    const auto object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
+    if (!util::hasEnoughDistance(
+          expected_ego_pose, ego_current_twist,
+          target_object.kinematics.initial_pose_with_covariance.pose, object_twist, check_param)) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace util
 }  // namespace behavior_path_planner

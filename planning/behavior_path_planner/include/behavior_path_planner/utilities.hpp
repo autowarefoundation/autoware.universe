@@ -139,6 +139,15 @@ struct ProjectedDistancePoint
   double distance{0.0};
 };
 
+struct CollisionCheckParameters
+{
+  double lateral_distance_max_threshold{3.0};
+  double expected_front_deceleration{-1.0};
+  double expected_rear_deceleration{-1.0};
+  double rear_vehicle_reaction_time{1.0};
+  double safety_time_margin_for_control{1.0};
+};
+
 template <typename Pythagoras = bg::strategy::distance::pythagoras<> >
 ProjectedDistancePoint pointToSegment(
   const Point2d & reference_point, const Point2d & point_from_ego,
@@ -349,6 +358,63 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
   const Pose & current_pose, const Shape & obj_shape);
 
 Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
+
+std::vector<PredictedPath> getPredictedPathFromObj(
+  const PredictedObject & obj, const bool & is_use_all_predicted_path);
+
+Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
+
+bool getEgoExpectedPoseAndConvertToPolygon(
+  const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
+  tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
+  const double & length, const double & width);
+
+bool getObjectExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
+  Polygon2d & obj_polygon, const double & check_current_time);
+
+bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
+
+bool isObjectFront(const Pose & projected_ego_pose);
+
+double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel);
+
+double stoppingDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time);
+
+double frontVehicleStopDistance(
+  const double & front_vehicle_velocity, const double & front_vehicle_accel,
+  const double & distance_to_collision);
+
+double rearVehicleStopDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time, const double & safety_time_margin_for_control);
+
+bool isLongitudinalDistanceEnough(
+  const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold);
+
+bool hasEnoughDistance(
+  const Pose & expected_ego_pose, const Twist & ego_current_twist,
+  const Pose & expected_object_pose, const Twist & object_current_twist,
+  const CollisionCheckParameters & param);
+
+bool isLateralDistanceEnough(
+  const double & relative_lateral_distance, const double & lateral_distance_threshold);
+
+bool isSafeInLaneletCollisionCheck(
+  const Pose & ego_current_pose, const Twist & ego_current_twist,
+  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
+  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const double & check_time_resolution, const PredictedObject & target_object,
+  const PredictedPath & target_object_path, const CollisionCheckParameters & check_param);
+
+bool isSafeInFreeSpaceCollisionCheck(
+  const Pose & ego_current_pose, const Twist & ego_current_twist,
+  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
+  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const double & check_time_resolution, const PredictedObject & target_object,
+  const CollisionCheckParameters & check_param);
 }  // namespace util
 }  // namespace behavior_path_planner
 
