@@ -140,9 +140,7 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   auto stop_dist = run_out_utils::calcDecelDistWithJerkAndAccConstraints(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
-  if (!stop_dist) {
-    *stop_dist = 0;
-  }
+  const double stop_distance = !stop_dist ? 0 : *stop_dist;
 
   // create detection area polygon
   DetectionRange da_range;
@@ -152,7 +150,7 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   da_range.min_longitudinal_distance =
     p.vehicle_param.base_to_front - p.detection_area.margin_behind;
   da_range.max_longitudinal_distance =
-    *stop_dist + p.run_out.stop_margin + p.detection_area.margin_ahead;
+    stop_distance + p.run_out.stop_margin + p.detection_area.margin_ahead;
   da_range.min_lateral_distance = p.vehicle_param.width / 2.0;
   da_range.max_lateral_distance = obstacle_vel_mps * p.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
