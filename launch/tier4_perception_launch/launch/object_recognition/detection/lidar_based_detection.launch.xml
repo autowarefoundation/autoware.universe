@@ -6,6 +6,7 @@
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
   <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
   <arg name="container_name" default=""/>
+  <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
 
   <!-- Pointcloud map filter -->
   <group>
@@ -28,6 +29,15 @@
       <arg name="input_pointcloud" value="$(var clustering/input/pointcloud)"/>
       <arg name="output_clusters" value="clusters"/>
       <arg name="use_pointcloud_map" value="false"/>
+    </include>
+    <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+      <arg name="input/objects" value="clusters"/>
+      <arg name="output/objects" value="objects_with_feature"/>
+    </include>
+    <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
+    <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
+      <arg name="input" value="objects_with_feature"/>
+      <arg name="output" value="objects"/>
     </include>
   </group>
 
@@ -70,7 +80,7 @@
   <group>
     <let name="validator/input/obstacle_pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud" if="$(var use_pointcloud_map)"/>
     <let name="validator/input/obstacle_pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
-    <include file="$(find-pkg-share detected_object_validation)/launch/obstacle_pointcloud_based_validator.launch.xml">
+    <include file="$(find-pkg-share detected_object_validation)/launch/obstacle_pointcloud_based_validator.launch.xml" if="$(var use_validator)">
       <arg name="input/detected_objects" value="$(var lidar_detection_model)/objects"/>
       <arg name="input/obstacle_pointcloud" value="$(var validator/input/obstacle_pointcloud)"/>
       <arg name="output/objects" value="$(var lidar_detection_model)/validation/objects"/>
@@ -79,9 +89,24 @@
 
   <!-- Merger -->
   <group>
+    <let name="merger/input/objects" value="$(var lidar_detection_model)/validation/objects" if="$(var use_validator)"/>
+    <let name="merger/input/objects" value="$(var lidar_detection_model)/objects" unless="$(var use_validator)"/>
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
-      <arg name="input/object0" value="$(var lidar_detection_model)/validation/objects"/>
+      <arg name="input/object0" value="$(var merger/input/objects)"/>
+      <arg name="input/object1" value="clustering/objects"/>
+      <arg name="output/object" value="temporary_merged_objects"/>
+    </include>
+    <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
+      <arg name="input/object0" value="temporary_merged_objects"/>
       <arg name="input/object1" value="detection_by_tracker/objects"/>
+      <arg name="output/object" value="objects_before_filter"/>
+    </include>
+  </group>
+
+  <!-- Filter -->
+  <group>
+    <include file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml">
+      <arg name="input/object" value="objects_before_filter"/>
       <arg name="output/object" value="objects"/>
     </include>
   </group>

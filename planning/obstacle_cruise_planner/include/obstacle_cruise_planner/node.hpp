@@ -71,14 +71,24 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // member Functions
-  ObstacleCruisePlannerData createPlannerData(
+  ObstacleCruisePlannerData createCruiseData(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
-    DebugData & debug_data);
+    const std::vector<TargetObstacle> & obstacles);
+  ObstacleCruisePlannerData createStopData(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    const std::vector<TargetObstacle> & obstacles);
   double calcCurrentAccel() const;
+  std::vector<TargetObstacle> getTargetObstacles(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    const double current_vel, DebugData & debug_data);
   std::vector<TargetObstacle> filterObstacles(
     const PredictedObjects & predicted_objects, const Trajectory & traj,
     const geometry_msgs::msg::Pose & current_pose, const double current_vel,
     DebugData & debug_data);
+  void updateHasStopped(std::vector<TargetObstacle> & target_obstacles);
+  void checkConsistency(
+    const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
+    const Trajectory & traj, std::vector<TargetObstacle> & target_obstacles);
   geometry_msgs::msg::Point calcNearestCollisionPoint(
     const size_t & first_within_idx,
     const std::vector<geometry_msgs::msg::Point> & collision_points,
@@ -93,11 +103,18 @@ private:
   void publishDebugData(const DebugData & debug_data) const;
   void publishCalculationTime(const double calculation_time) const;
 
+  bool isCruiseObstacle(const uint8_t label);
+  bool isStopObstacle(const uint8_t label);
+
   bool is_showing_debug_info_;
   double min_behavior_stop_margin_;
   double nearest_dist_deviation_threshold_;
   double nearest_yaw_deviation_threshold_;
   double obstacle_velocity_threshold_from_cruise_to_stop_;
+  double obstacle_velocity_threshold_from_stop_to_cruise_;
+
+  std::vector<int> cruise_obstacle_types_;
+  std::vector<int> stop_obstacle_types_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -144,22 +161,32 @@ private:
   // planner
   std::unique_ptr<PlannerInterface> planner_ptr_;
 
+  // previous closest obstacle
+  std::shared_ptr<TargetObstacle> prev_closest_obstacle_ptr_{nullptr};
+
   // obstacle filtering parameter
   struct ObstacleFilteringParam
   {
     double rough_detection_area_expand_width;
     double detection_area_expand_width;
     double decimate_trajectory_step_length;
+    // inside
     double crossing_obstacle_velocity_threshold;
     double collision_time_margin;
+    // outside
+    double outside_rough_detection_area_expand_width;
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
     std::vector<int> ignored_outside_obstacle_types;
+    // obstacle hold
+    double stop_obstacle_hold_time_threshold;
   };
   ObstacleFilteringParam obstacle_filtering_param_;
 
   bool need_to_clear_vel_limit_{false};
+
+  std::vector<TargetObstacle> prev_target_obstacles_;
 };
 }  // namespace motion_planning
 
