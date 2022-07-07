@@ -175,8 +175,9 @@ void ScanGroundFilterComponent::classifyPointCloud(
       float global_slope = std::atan2(p->orig_point->z, p->radius);
       // check points which is far enough from previous point
       if (
-        (height_from_gnd < minimum_detection_range_) ||
-        ((p->orig_point->z - ground_cluster.getAverageHeight()) < minimum_detection_range_) ||
+        ((p->orig_point->z < 0.0) &&
+         ((height_from_gnd < minimum_detection_range_) ||
+          (p->orig_point->z - ground_cluster.getAverageHeight() < minimum_detection_range_))) ||
         (height_from_gnd > maximum_detection_range_)) {
         // exclude pcl under ground or higher than limit
         p->point_state = PointLabel::OUT_OF_RANGE;
