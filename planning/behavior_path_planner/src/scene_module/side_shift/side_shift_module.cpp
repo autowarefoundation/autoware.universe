@@ -217,8 +217,8 @@ bool SideShiftModule::addShiftPoint()
 
   // remove shift points on a far position.
   const auto remove_far_iter = std::remove_if(
-    shift_points.begin(), shift_points.end(), [this, calcLongitudinal_to_shift_start]
-    (const ShiftPoint & sp) {
+    shift_points.begin(), shift_points.end(),
+    [this, calcLongitudinal_to_shift_start](const ShiftPoint & sp) {
       const auto dist_to_start = calcLongitudinal_to_shift_start(sp);
       constexpr double max_remove_threshold_time = 1.0;  // [s]
       constexpr double max_remove_threshold_dist = 2.0;  // [m]
@@ -235,30 +235,30 @@ bool SideShiftModule::addShiftPoint()
   const auto new_sp_longitudinal_to_shift_start = calcLongitudinal_to_shift_start(new_sp);
   const auto new_sp_longitudinal_to_shift_end = calcLongitudinal_to_shift_end(new_sp);
 
-  const auto remove_overlap_iter = std::remove_if(shift_points.begin(), shift_points.end(),
-      [this, calcLongitudinal_to_shift_start, calcLongitudinal_to_shift_end,
-      new_sp_longitudinal_to_shift_start, new_sp_longitudinal_to_shift_end]
-      (const ShiftPoint & sp) {
+  const auto remove_overlap_iter = std::remove_if(
+    shift_points.begin(), shift_points.end(),
+    [this, calcLongitudinal_to_shift_start, calcLongitudinal_to_shift_end,
+     new_sp_longitudinal_to_shift_start, new_sp_longitudinal_to_shift_end](const ShiftPoint & sp) {
       const auto old_sp_longitudinal_to_shift_start = calcLongitudinal_to_shift_start(sp);
       const auto old_sp_longitudinal_to_shift_end = calcLongitudinal_to_shift_end(sp);
       bool sp_overlap_front =
-          ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_start)
-          && (old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_end));
+        ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_start) &&
+         (old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_end));
       bool sp_overlap_back =
-          ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_end)
-          && (old_sp_longitudinal_to_shift_end <= new_sp_longitudinal_to_shift_end));
+        ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_end) &&
+         (old_sp_longitudinal_to_shift_end <= new_sp_longitudinal_to_shift_end));
       bool sp_new_contain_old =
-          ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_start)
-          && (old_sp_longitudinal_to_shift_end <= new_sp_longitudinal_to_shift_end));
+        ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_start) &&
+         (old_sp_longitudinal_to_shift_end <= new_sp_longitudinal_to_shift_end));
       bool sp_old_contain_new =
-          ((old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_start)
-          && (new_sp_longitudinal_to_shift_end <= old_sp_longitudinal_to_shift_end));
+        ((old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_start) &&
+         (new_sp_longitudinal_to_shift_end <= old_sp_longitudinal_to_shift_end));
       return (sp_overlap_front || sp_overlap_back || sp_new_contain_old || sp_old_contain_new);
     });
 
   shift_points.erase(remove_overlap_iter, shift_points.end());
 
- // check if the new_shift_point has conflicts with existing shift points.
+  // check if the new_shift_point has conflicts with existing shift points.
   for (const auto & sp : shift_points) {
     if (calcLongitudinal_to_shift_start(sp) >= new_sp_longitudinal_to_shift_start) {
       RCLCPP_WARN(
