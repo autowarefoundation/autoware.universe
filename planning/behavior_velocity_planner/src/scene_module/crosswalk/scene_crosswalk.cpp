@@ -413,7 +413,6 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTC
   const PathWithLaneId & ego_path)
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  const auto & ego_pos = planner_data_->current_pose.pose.position;
 
   const auto p_stop_line = getStopLine(ego_path);
   if (!p_stop_line) {
@@ -426,9 +425,6 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTC
   const size_t base_idx = findNearestSegmentIndex(ego_path.points, p_stop);
   const auto residual_length = calcLongitudinalOffsetToSegment(ego_path.points, base_idx, p_stop);
   const auto update_margin = margin - residual_length + base_link2front;
-
-  setDistance(
-    std::abs(calcSignedArcLength(ego_path.points, ego_pos, p_stop) - margin - base_link2front));
 
   return getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
 }
@@ -541,8 +537,6 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
   const auto need_to_stop =
     found_pedestrians || found_stuck_vehicle || external_stop || external_slowdown;
   if (!need_to_stop) {
-    setDistance(
-      std::abs(p_stop_line.get().first - planner_param_.stop_line_distance - base_link2front));
     return {};
   }
 
@@ -568,9 +562,6 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
   const auto stop_point = getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
   stop_factor.stop_pose = stop_point.get().second.point.pose;
   planning_utils::appendStopReason(stop_factor, &stop_reason);
-
-  setDistance(
-    std::abs(calcSignedArcLength(ego_path.points, ego_pos, p_stop) - margin - base_link2front));
 
   return stop_point;
 }
@@ -636,6 +627,11 @@ void CrosswalkModule::insertDecelPoint(
     output.points.at(i).point.longitudinal_velocity_mps =
       std::min(original_velocity, target_velocity);
   }
+
+  const auto & ego_pos = planner_data_->current_pose.pose.position;
+  const auto & stop_point_distance =
+    calcSignedArcLength(output.points, ego_pos, getPoint(stop_point.second));
+  setDistance(std::abs(stop_point_distance));
 
   debug_data_.first_stop_pose = stop_point.second.point.pose;
   debug_data_.stop_poses.push_back(stop_point.second.point.pose);
