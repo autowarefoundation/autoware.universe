@@ -23,7 +23,14 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <limits>
 #include <string>
@@ -332,7 +339,7 @@ PathPointWithLaneId GeometricParallelParking::generateArcPathPoint(
   // Use z of lanelet closest point because z of goal is 0.
   // https://github.com/autowarefoundation/autoware.universe/issues/711
   double min_distance = std::numeric_limits<double>::max();
-  for (const auto pt : current_lane.centerline3d()) {
+  for (const auto & pt : current_lane.centerline3d()) {
     const double distance =
       calcDistance2d(p.point.pose, lanelet::utils::conversion::toGeomMsgPt(pt));
     if (distance < min_distance) {
