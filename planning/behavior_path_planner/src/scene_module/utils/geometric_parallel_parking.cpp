@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/parallel_parking_planner/parallel_parking_planner.hpp"
+#include "behavior_path_planner/scene_module/utils/geometric_parallel_parking.hpp"
 
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/utilities.hpp"
@@ -48,17 +48,17 @@ using tier4_autoware_utils::transformPose;
 
 namespace behavior_path_planner
 {
-void ParallelParkingPlanner::incrementPathIndex()
+void GeometricParallelParking::incrementPathIndex()
 {
   current_path_idx_ = std::min(current_path_idx_ + 1, paths_.size() - 1);
 }
 
-PathWithLaneId ParallelParkingPlanner::getCurrentPath() const
+PathWithLaneId GeometricParallelParking::getCurrentPath() const
 {
   return paths_.at(current_path_idx_);
 }
 
-PathWithLaneId ParallelParkingPlanner::getFullPath() const
+PathWithLaneId GeometricParallelParking::getFullPath() const
 {
   PathWithLaneId path{};
   for (const auto & p : paths_) {
@@ -67,7 +67,7 @@ PathWithLaneId ParallelParkingPlanner::getFullPath() const
   return path;
 }
 
-PathWithLaneId ParallelParkingPlanner::getArcPath() const
+PathWithLaneId GeometricParallelParking::getArcPath() const
 {
   PathWithLaneId path{};
   for (size_t i = 1; i < paths_.size(); i++) {
@@ -77,15 +77,15 @@ PathWithLaneId ParallelParkingPlanner::getArcPath() const
   return path;
 }
 
-void ParallelParkingPlanner::clear()
+void GeometricParallelParking::clear()
 {
   current_path_idx_ = 0;
   paths_.clear();
 }
 
-bool ParallelParkingPlanner::isParking() const { return current_path_idx_ > 0; }
+bool GeometricParallelParking::isParking() const { return current_path_idx_ > 0; }
 
-bool ParallelParkingPlanner::plan(
+bool GeometricParallelParking::plan(
   const Pose goal_pose, const lanelet::ConstLanelets lanes, const bool is_forward)
 {
   const auto common_params = planner_data_->parameters;
@@ -110,7 +110,7 @@ bool ParallelParkingPlanner::plan(
   return false;
 }
 
-Pose ParallelParkingPlanner::calcStartPose(
+Pose GeometricParallelParking::calcStartPose(
   const Pose goal_pose, const double start_pose_offset, const double R_E_r, const bool is_forward)
 {
   // Not use shoulder lanes.
@@ -127,7 +127,7 @@ Pose ParallelParkingPlanner::calcStartPose(
   return start_pose;
 }
 
-void ParallelParkingPlanner::generateStraightPath(const Pose start_pose)
+void GeometricParallelParking::generateStraightPath(const Pose start_pose)
 {
   // get stright path before parking.
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
@@ -150,7 +150,7 @@ void ParallelParkingPlanner::generateStraightPath(const Pose start_pose)
   paths_.push_back(path);
 }
 
-bool ParallelParkingPlanner::planOneTraial(
+bool GeometricParallelParking::planOneTraial(
   const Pose goal_pose, const double start_pose_offset, const double R_E_r,
   const lanelet::ConstLanelets lanes, const bool is_forward)
 {
@@ -270,7 +270,7 @@ bool ParallelParkingPlanner::planOneTraial(
   return true;
 }
 
-PathWithLaneId ParallelParkingPlanner::generateArcPath(
+PathWithLaneId GeometricParallelParking::generateArcPath(
   const Pose & center, const float radius, const float start_yaw, float end_yaw,
   const bool is_left_turn,  // is_left_turn means clockwise around center.
   const bool is_forward)
@@ -308,7 +308,7 @@ PathWithLaneId ParallelParkingPlanner::generateArcPath(
   return path;
 }
 
-PathPointWithLaneId ParallelParkingPlanner::generateArcPathPoint(
+PathPointWithLaneId GeometricParallelParking::generateArcPathPoint(
   const Pose & center, const float radius, const float yaw, const bool is_left_turn,
   const bool is_forward)
 {
@@ -346,7 +346,7 @@ PathPointWithLaneId ParallelParkingPlanner::generateArcPathPoint(
   return p;
 }
 
-void ParallelParkingPlanner::setParams(
+void GeometricParallelParking::setParams(
   const std::shared_ptr<const PlannerData> & planner_data, ParallelParkingParameters parameters)
 {
   planner_data_ = planner_data;
