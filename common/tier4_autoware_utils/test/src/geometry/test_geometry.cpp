@@ -794,13 +794,13 @@ TEST(geometry, transformPose)
 
     const geometry_msgs::msg::Pose pose_transformed = transformPose(pose, transform);
 
-    EXPECT_DOUBLE_EQ(pose_transformed.position.x, 5.3839745962155598);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.y, 5.0669872981077804);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.z, 8.2320508075688785);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.x, 0.24304508436548405);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.y, 0.4296803495383052);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.z, 0.40981009820187703);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.w, 0.76704600096616271);
+    EXPECT_NEAR(pose_transformed.position.x, 5.3839745962155598, epsilon);
+    EXPECT_NEAR(pose_transformed.position.y, 5.0669872981077804, epsilon);
+    EXPECT_NEAR(pose_transformed.position.z, 8.2320508075688785, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.x, 0.24304508436548405, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.y, 0.4296803495383052, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.z, 0.40981009820187703, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.w, 0.76704600096616271, epsilon);
   }
 
   // with pose_transform
@@ -813,13 +813,13 @@ TEST(geometry, transformPose)
 
     const geometry_msgs::msg::Pose pose_transformed = transformPose(pose, pose_transform);
 
-    EXPECT_DOUBLE_EQ(pose_transformed.position.x, 5.3839745962155598);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.y, 5.0669872981077804);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.z, 8.2320508075688785);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.x, 0.24304508436548405);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.y, 0.4296803495383052);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.z, 0.40981009820187703);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.w, 0.76704600096616271);
+    EXPECT_NEAR(pose_transformed.position.x, 5.3839745962155598, epsilon);
+    EXPECT_NEAR(pose_transformed.position.y, 5.0669872981077804, epsilon);
+    EXPECT_NEAR(pose_transformed.position.z, 8.2320508075688785, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.x, 0.24304508436548405, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.y, 0.4296803495383052, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.z, 0.40981009820187703, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.w, 0.76704600096616271, epsilon);
   }
 }
 
@@ -845,13 +845,13 @@ TEST(geometry, inverseTransformPose)
 
     const geometry_msgs::msg::Pose pose_transformed = inverseTransformPose(pose, transform);
 
-    EXPECT_DOUBLE_EQ(pose_transformed.position.x, 0.11602540378443926);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.y, 2.8325317547305482);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.z, 2.4419872981077804);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.x, -0.17298739392508941);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.y, -0.08189960831908924);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.z, 0.029809019626209146);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.w, 0.98106026219040698);
+    EXPECT_NEAR(pose_transformed.position.x, 0.11602540378443926, epsilon);
+    EXPECT_NEAR(pose_transformed.position.y, 2.8325317547305482, epsilon);
+    EXPECT_NEAR(pose_transformed.position.z, 2.4419872981077804, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.x, -0.17298739392508941, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.y, -0.08189960831908924, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.z, 0.029809019626209146, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.w, 0.98106026219040698, epsilon);
   }
 
   // with pose_transform
@@ -864,13 +864,13 @@ TEST(geometry, inverseTransformPose)
 
     const geometry_msgs::msg::Pose pose_transformed = inverseTransformPose(pose, pose_transform);
 
-    EXPECT_DOUBLE_EQ(pose_transformed.position.x, 0.11602540378443926);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.y, 2.8325317547305482);
-    EXPECT_DOUBLE_EQ(pose_transformed.position.z, 2.4419872981077804);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.x, -0.17298739392508941);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.y, -0.08189960831908924);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.z, 0.029809019626209146);
-    EXPECT_DOUBLE_EQ(pose_transformed.orientation.w, 0.98106026219040698);
+    EXPECT_NEAR(pose_transformed.position.x, 0.11602540378443926, epsilon);
+    EXPECT_NEAR(pose_transformed.position.y, 2.8325317547305482, epsilon);
+    EXPECT_NEAR(pose_transformed.position.z, 2.4419872981077804, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.x, -0.17298739392508941, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.y, -0.08189960831908924, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.z, 0.029809019626209146, epsilon);
+    EXPECT_NEAR(pose_transformed.orientation.w, 0.98106026219040698, epsilon);
   }
 }
 
@@ -889,21 +889,21 @@ TEST(geometry, inverseTransformPoint)
 
   // calc expected values
   geometry_msgs::msg::Pose pose;
-  pose.position.x = 1.0;
-  pose.position.y = 2.0;
-  pose.position.z = 3.0;
+  pose.position.x = 2.0;
+  pose.position.y = 4.0;
+  pose.position.z = 6.0;
   pose.orientation = createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(0));
   const geometry_msgs::msg::Pose pose_transformed = inverseTransformPose(pose, pose_transform);
   const geometry_msgs::msg::Point expected_p = pose_transformed.position;
 
   geometry_msgs::msg::Point p;
-  p.x = 1.0;
-  p.y = 2.0;
-  p.z = 3.0;
+  p.x = 2.0;
+  p.y = 4.0;
+  p.z = 6.0;
   const geometry_msgs::msg::Point p_transformed = inverseTransformPoint(p, pose_transform);
-  EXPECT_DOUBLE_EQ(p_transformed.x, expected_p.x);
-  EXPECT_DOUBLE_EQ(p_transformed.y, expected_p.y);
-  EXPECT_DOUBLE_EQ(p_transformed.z, expected_p.z);
+  EXPECT_NEAR(p_transformed.x, expected_p.x, epsilon);
+  EXPECT_NEAR(p_transformed.y, expected_p.y, epsilon);
+  EXPECT_NEAR(p_transformed.z, expected_p.z, epsilon);
 }
 
 TEST(geometry, transformVector)
