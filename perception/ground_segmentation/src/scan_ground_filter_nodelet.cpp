@@ -38,9 +38,11 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
   // set initial parameters
   {
     base_frame_ = declare_parameter("base_frame", "base_link");
-    non_ground_height_max_ = static_cast<float>(declare_parameter("non_ground_height_max", 2.5));
-    non_ground_height_min_ = static_cast<float>(declare_parameter("non_ground_height_min", -0.2));
-    // TODO(badai-nguyen) : adjust margin for non_ground_height_min_ based on the distance
+    maximum_detection_range_ =
+      static_cast<float>(declare_parameter("maximum_detection_range", 2.5));
+    minimum_detection_range_ =
+      static_cast<float>(declare_parameter("minimum_detection_range", -0.2));
+    // TODO(badai-nguyen) : adjust margin for minimum_detection_range_ based on the distance
     // from LiDAR to allow a down-slope
     global_slope_max_angle_rad_ = deg2rad(declare_parameter("global_slope_max_angle_deg", 8.0));
     local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_deg", 6.0));
@@ -173,9 +175,9 @@ void ScanGroundFilterComponent::classifyPointCloud(
       float global_slope = std::atan2(p->orig_point->z, p->radius);
       // check points which is far enough from previous point
       if (
-        (height_from_gnd < non_ground_height_min_) ||
-        ((p->orig_point->z - ground_cluster.getAverageHeight()) < non_ground_height_min_) ||
-        (height_from_gnd > non_ground_height_max_)) {
+        (height_from_gnd < minimum_detection_range_) ||
+        ((p->orig_point->z - ground_cluster.getAverageHeight()) < minimum_detection_range_) ||
+        (height_from_gnd > maximum_detection_range_)) {
         // exclude pcl under ground or higher than limit
         p->point_state = PointLabel::OUT_OF_RANGE;
         calculate_slope = false;
