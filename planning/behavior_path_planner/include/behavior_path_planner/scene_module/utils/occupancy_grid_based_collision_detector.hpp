@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_HPP_
-#define BEHAVIOR_PATH_PLANNER__OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__UTILS_OCCUPANCY_GRID_BASED_COLLISION_DETECTOR_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__UTILS_OCCUPANCY_GRID_BASED_COLLISION_DETECTOR_HPP_
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -85,10 +85,10 @@ struct PlannerWaypoints
   std::vector<PlannerWaypoint> waypoints;
 };
 
-class OccupancyGridMap
+class OccupancyGridBasedCollisionDetector
 {
 public:
-  OccupancyGridMap() {}
+  OccupancyGridBasedCollisionDetector() {}
   void setParam(const OccupancyGridMapParam & param) { param_ = param; };
   OccupancyGridMapParam getParam() const { return param_; };
   void setMap(const nav_msgs::msg::OccupancyGrid & costmap);
@@ -101,7 +101,7 @@ public:
     const bool check_out_of_range) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
   bool detectCollision(const IndexXYT & base_index, const bool check_out_of_range) const;
-  virtual ~OccupancyGridMap() {}
+  virtual ~OccupancyGridBasedCollisionDetector() {}
 
 protected:
   void computeCollisionIndexes(int theta_index, std::vector<IndexXY> & indexes);
@@ -144,4 +144,4 @@ protected:
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__UTILS_OCCUPANCY_GRID_BASED_COLLISION_DETECTOR_HPP_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/occupancy_grid_map/occupancy_grid_map.hpp"
+#include "behavior_path_planner/scene_module/utils/occupancy_grid_based_collision_detector.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -80,7 +80,7 @@ geometry_msgs::msg::Pose local2global(
   return transformPose(pose_local, transform);
 }
 
-void OccupancyGridMap::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
+void OccupancyGridBasedCollisionDetector::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   costmap_ = costmap;
   const auto height = costmap_.info.height;
@@ -110,7 +110,8 @@ void OccupancyGridMap::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
   }
 }
 
-void OccupancyGridMap::computeCollisionIndexes(int theta_index, std::vector<IndexXY> & indexes_2d)
+void OccupancyGridBasedCollisionDetector::computeCollisionIndexes(
+  int theta_index, std::vector<IndexXY> & indexes_2d)
 {
   IndexXYT base_index{0, 0, theta_index};
   const VehicleShape & vehicle_shape = param_.vehicle_shape;
@@ -151,7 +152,7 @@ void OccupancyGridMap::computeCollisionIndexes(int theta_index, std::vector<Inde
   addIndex2d(front, left);
 }
 
-bool OccupancyGridMap::detectCollision(
+bool OccupancyGridBasedCollisionDetector::detectCollision(
   const IndexXYT & base_index, const bool check_out_of_range) const
 {
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
@@ -171,7 +172,7 @@ bool OccupancyGridMap::detectCollision(
   return false;
 }
 
-bool OccupancyGridMap::hasObstacleOnPath(
+bool OccupancyGridBasedCollisionDetector::hasObstacleOnPath(
   const geometry_msgs::msg::PoseArray & path, const bool check_out_of_range) const
 {
   for (const auto & pose : path.poses) {
@@ -186,7 +187,7 @@ bool OccupancyGridMap::hasObstacleOnPath(
   return false;
 }
 
-bool OccupancyGridMap::hasObstacleOnPath(
+bool OccupancyGridBasedCollisionDetector::hasObstacleOnPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const bool check_out_of_range) const
 {
