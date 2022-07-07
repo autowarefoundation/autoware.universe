@@ -34,12 +34,8 @@ class PointcloudMapFilterPipeline:
             "config/object_recognition/detection/pointcloud_map_filter.param.yaml",
         )
         with open(pointcloud_map_filter_param_path, "r") as f:
-            self.pointcloud_map_filter_param = yaml.safe_load(f)["/**"][
-                "ros__parameters"
-            ]
-        self.use_down_sample_filter = self.pointcloud_map_filter_param[
-            "use_down_sample_filter"
-        ]
+            self.pointcloud_map_filter_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        self.use_down_sample_filter = self.pointcloud_map_filter_param["use_down_sample_filter"]
         self.voxel_size = self.pointcloud_map_filter_param["down_sample_voxel_size"]
         self.distance_threshold = self.pointcloud_map_filter_param["distance_threshold"]
 
@@ -75,7 +71,9 @@ class PointcloudMapFilterPipeline:
 
     def create_down_sample_pipeline(self):
         components = []
-        down_sample_topic = "/perception/obstacle_segmentation/pointcloud_map_filtered/downsampled/pointcloud"
+        down_sample_topic = (
+            "/perception/obstacle_segmentation/pointcloud_map_filtered/downsampled/pointcloud"
+        )
         components.append(
             ComposableNode(
                 package="pointcloud_preprocessor",
@@ -93,11 +91,7 @@ class PointcloudMapFilterPipeline:
                     }
                 ],
                 extra_arguments=[
-                    {
-                        "use_intra_process_comms": LaunchConfiguration(
-                            "use_intra_process"
-                        )
-                    }
+                    {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
                 ],
             ),
         )
@@ -149,9 +143,7 @@ def generate_launch_description():
     launch_arguments = []
 
     def add_launch_arg(name: str, default_value=None):
-        launch_arguments.append(
-            DeclareLaunchArgument(name, default_value=default_value)
-        )
+        launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
 
     add_launch_arg("input_topic", "")
     add_launch_arg("output_topic", "")
