@@ -99,7 +99,8 @@ GNSSStat NavSatFix2UTM(
   }
   return utm;
 }
-bool is_utm_origin_initialized = false;
+
+bool utm_origin_needs_init = true;
 GNSSStat utm_origin;
 GNSSStat utm_local;
 GNSSStat NavSatFix2LocalCartesianUTM(
@@ -111,23 +112,22 @@ GNSSStat NavSatFix2LocalCartesianUTM(
   double global_x;
   double global_y;
   try {
-    if (is_utm_origin_initialized == 0) {
-      GeographicLib::UTMUPS::Forward(
-        nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, utm_origin.zone,
-        utm_origin.northup, utm_origin.x, utm_origin.y);
-      utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-      is_utm_origin_initialized = true;
-    } else {
-      GeographicLib::UTMUPS::Forward(
-        nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm_origin.zone, utm_origin.northup,
-        global_x, global_y);
-      utm_local.latitude = nav_sat_fix_msg.latitude;
-      utm_local.longitude = nav_sat_fix_msg.longitude;
-      utm_local.altitude = nav_sat_fix_msg.altitude;
-      utm_local.x = global_x - utm_origin.x;
-      utm_local.y = global_y - utm_origin.y;
-      utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
+    if (utm_origin_needs_init) {
+        GeographicLib::UTMUPS::Forward(
+                nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, utm_origin.zone,
+                utm_origin.northup, utm_origin.x, utm_origin.y);
+        utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
+        utm_origin_needs_init = false;
     }
+    GeographicLib::UTMUPS::Forward(
+            nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm_origin.zone, utm_origin.northup,
+            global_x, global_y);
+    utm_local.latitude = nav_sat_fix_msg.latitude;
+    utm_local.longitude = nav_sat_fix_msg.longitude;
+    utm_local.altitude = nav_sat_fix_msg.altitude;
+    utm_local.x = global_x - utm_origin.x;
+    utm_local.y = global_y - utm_origin.y;
+    utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());

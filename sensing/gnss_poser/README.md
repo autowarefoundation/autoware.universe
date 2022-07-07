@@ -27,15 +27,15 @@ The `gnss_poser` is a node that subscribes gnss sensing messages and calculates 
 
 ### Core Parameters
 
-| Name                 | Type   | Default Value    | Description                                                                                     |
-| -------------------- | ------ | ---------------- | ----------------------------------------------------------------------------------------------- |
-| `base_frame`         | string | "base_link"      | frame d                                                                                         |
-| `gnss_frame`         | string | "gnss"           | frame id                                                                                        |
-| `gnss_base_frame`    | string | "gnss_base_link" | frame id                                                                                        |
-| `map_frame`          | string | "map"            | frame id                                                                                        |
-| `coordinate_system`  | int    | "4"              | id number of wanted coordinate system, 4 is a local coordinate system in UTM                    |
-| `use_ublox_receiver` | bool   | false            | flag to use ublox receiver                                                                      |
-| `plane_zone`         | int    | 9                | identification number of the plane rectangular coordinate systems (See, reference document [2]) |
+| Name                 | Type   | Default Value    | Description                                                                                                                                           |
+| -------------------- | ------ | ---------------- |-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `base_frame`         | string | "base_link"      | frame d                                                                                                                                               |
+| `gnss_frame`         | string | "gnss"           | frame id                                                                                                                                              |
+| `gnss_base_frame`    | string | "gnss_base_link" | frame id                                                                                                                                              |
+| `map_frame`          | string | "map"            | frame id                                                                                                                                              |
+| `coordinate_system`  | int    | "4"              | id number of wanted coordinate system;<br/> 1: UTM <br/> 2: MGRS<br/>3: Plane<br/>4: WGS84 Local Coordinate System<br/>5: UTM Local Coordinate System |
+| `use_ublox_receiver` | bool   | false            | flag to use ublox receiver                                                                                                                            |
+| `plane_zone`         | int    | 9                | identification number of the plane rectangular coordinate systems (See, reference document [2])                                                       |
 
 ## Assumptions / Known limits
 
