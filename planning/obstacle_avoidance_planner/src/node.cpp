@@ -867,15 +867,25 @@ void ObstacleAvoidancePlanner::pathCallback(
     is_showing_calculation_time_, mpt_visualize_sampling_num_, current_ego_pose_,
     mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets);
 
-  // generate optimized trajectory
-  const auto optimized_traj_points = generateOptimizedTrajectory(*path_ptr);
-
-  // generate post processed trajectory
-  const auto post_processed_traj_points =
-    generatePostProcessedTrajectory(path_ptr->points, optimized_traj_points);
-
-  // convert to output msg type
-  auto output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
+  autoware_auto_planning_msgs::msg::Trajectory output_traj_msg;
+  if (std::any_of(path_ptr->points.begin(), path_ptr->points.end(), [&](const auto & p) {
+        return p.longitudinal_velocity_mps < 0;
+      })) {
+    RCLCPP_WARN(
+      get_logger(),
+      "[ObstacleAvoidancePlanner] Negative velocity is detected, so just converting path to "
+      "trajectory");
+    // just convert to trajectory
+    const auto traj_points = points_utils::convertToTrajectoryPoints(path_ptr->points);
+    output_traj_msg = tier4_autoware_utils::convertToTrajectory(traj_points);
+  } else {
+    // generate optimized trajectory
+    const auto optimized_traj_points = generateOptimizedTrajectory(*path_ptr);
+    // generate post processed trajectory
+    const auto post_processed_traj_points =
+      generatePostProcessedTrajectory(path_ptr->points, optimized_traj_points);
+    output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
+  }
   output_traj_msg.header = path_ptr->header;
 
   // publish debug data

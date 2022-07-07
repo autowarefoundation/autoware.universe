@@ -401,18 +401,28 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
-  // Plan path velocity
-  const auto velocity_planned_path = planner_manager_.planPathVelocity(
-    std::make_shared<const PlannerData>(planner_data), *input_path_msg);
+  Path output_path_msg;
+  if (std::any_of(
+        input_path_msg->points.begin(), input_path_msg->points.end(),
+        [&](const auto & p) { return p.point.longitudinal_velocity_mps < 0; })) {
+    RCLCPP_WARN(
+      get_logger(), "Negative velocity is detected, so just converting path_with_lane_id to path");
+    // just convert to path
+    output_path_msg = to_path(*input_path_msg);
+  } else {
+    // Plan path velocity
+    const auto velocity_planned_path = planner_manager_.planPathVelocity(
+      std::make_shared<const PlannerData>(planner_data), *input_path_msg);
 
-  // screening
-  const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
+    // screening
+    const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
 
-  // interpolation
-  const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
+    // interpolation
+    const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
 
-  // check stop point
-  auto output_path_msg = filterStopPathPoint(interpolated_path_msg);
+    // check stop point
+    output_path_msg = filterStopPathPoint(interpolated_path_msg);
+  }
   output_path_msg.header.frame_id = "map";
   output_path_msg.header.stamp = this->now();
 
