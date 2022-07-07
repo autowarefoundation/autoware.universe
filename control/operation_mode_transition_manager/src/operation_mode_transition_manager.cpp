@@ -280,7 +280,7 @@ bool OperationModeTransitionManager::checkEngageAvailable()
   }
 
   // Engagement is ready if the vehicle is stopped.
-  // (this is checked a the end to calculate some debug values.)
+  // (this is checked in the end to calculate some debug values.)
   if (param.allow_autonomous_in_stopped && std::abs(current_speed) < 0.01) {
     debug_info_.is_all_ok = true;
     debug_info_.engage_allowed_for_stopped_vehicle = true;
