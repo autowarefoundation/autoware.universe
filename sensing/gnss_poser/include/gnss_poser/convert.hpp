@@ -113,15 +113,15 @@ GNSSStat NavSatFix2LocalCartesianUTM(
   double global_y;
   try {
     if (utm_origin_needs_init) {
-        GeographicLib::UTMUPS::Forward(
-                nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, utm_origin.zone,
-                utm_origin.northup, utm_origin.x, utm_origin.y);
-        utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-        utm_origin_needs_init = false;
+      GeographicLib::UTMUPS::Forward(
+        nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, utm_origin.zone,
+        utm_origin.northup, utm_origin.x, utm_origin.y);
+      utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
+      utm_origin_needs_init = false;
     }
     GeographicLib::UTMUPS::Forward(
-            nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm_origin.zone, utm_origin.northup,
-            global_x, global_y);
+      nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm_origin.zone, utm_origin.northup,
+      global_x, global_y);
     utm_local.latitude = nav_sat_fix_msg.latitude;
     utm_local.longitude = nav_sat_fix_msg.longitude;
     utm_local.altitude = nav_sat_fix_msg.altitude;
