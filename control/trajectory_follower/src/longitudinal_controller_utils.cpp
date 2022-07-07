@@ -77,7 +77,7 @@ float64_t calcStopDistance(
   const float64_t signed_length_src_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
     traj.points, *seg_idx, current_pose.position);
 
-  if(std::isnan(signed_length_src_offset)) {
+  if (std::isnan(signed_length_src_offset)) {
     return 0.0;
   }
 
