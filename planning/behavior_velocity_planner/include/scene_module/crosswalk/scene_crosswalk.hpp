@@ -106,6 +106,9 @@ public:
 private:
   int64_t module_id_;
 
+  boost::optional<std::pair<size_t, PathPointWithLaneId>> findRTCStopPoint(
+    const PathWithLaneId & ego_path);
+
   boost::optional<std::pair<size_t, PathPointWithLaneId>> findNearestStopPoint(
     const PathWithLaneId & ego_path, StopReason & stop_reason);
 
