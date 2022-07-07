@@ -26,6 +26,37 @@
 #include <stdexcept>
 #include <vector>
 
+namespace
+{
+template <class T>
+std::vector<geometry_msgs::msg::Point> removeOverlapPoints(const T & points, const size_t & idx)
+{
+  std::vector<geometry_msgs::msg::Point> dst;
+
+  for (const auto & pt : points) {
+    dst.push_back(tier4_autoware_utils::getPoint(pt));
+  }
+
+  if (points.empty()) {
+    return dst;
+  }
+
+  constexpr double eps = 1.0E-08;
+  size_t i = idx;
+  while (i != dst.size() - 1) {
+    const auto p = tier4_autoware_utils::getPoint(dst.at(i));
+    const auto p_next = tier4_autoware_utils::getPoint(dst.at(i + 1));
+    const Eigen::Vector3d v{p_next.x - p.x, p_next.y - p.y, 0.0};
+    if (v.norm() < eps) {
+      dst.erase(dst.begin() + i + 1);
+    } else {
+      ++i;
+    }
+  }
+  return dst;
+}
+}  // namespace
+
 namespace tier4_autoware_utils
 {
 template <class T>
@@ -156,35 +187,42 @@ double calcLongitudinalOffsetToSegment(
   const T & points, const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
   const bool throw_exception = false)
 {
-  validateNonEmpty(points);
-
-  const auto p_front = getPoint(points.at(seg_idx));
-  const auto p_back = getPoint(points.at(seg_idx + 1));
-
-  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0};
-  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0};
-
-  // If the norm of segment_vec == 0.0,
-  // return inner product with the unit vector calculated from the yaw of the start point
-  if (segment_vec.norm() == 0.0) {
-    const auto e = std::runtime_error("Same points are given.");
+  if (seg_idx >= points.size() - 1) {
+    const std::out_of_range e("Segment index is invalid.");
     if (throw_exception) {
       throw e;
     }
-
     std::cerr << e.what() << std::endl;
+    return std::nan("");
+  }
 
-    geometry_msgs::msg::Vector3 rpy;
+  const auto overlap_removed_points = removeOverlapPoints(points, seg_idx);
+
+  if (throw_exception) {
+    validateNonEmpty(overlap_removed_points);
+  } else {
     try {
-      rpy = getRPY(getPose(points.at(seg_idx)));
-    } catch (const std::exception & exception) {
-      std::cerr << exception.what() << std::endl;
+      validateNonEmpty(overlap_removed_points);
+    } catch (const std::exception & e) {
+      std::cerr << e.what() << std::endl;
       return std::nan("");
     }
-
-    const Eigen::Vector3d unit_vec{std::cos(rpy.z), std::sin(rpy.z), 0.0};
-    return unit_vec.dot(target_vec);
   }
+
+  if (seg_idx >= overlap_removed_points.size() - 1) {
+    const std::runtime_error e("Same points are given.");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return std::nan("");
+  }
+
+  const auto p_front = getPoint(overlap_removed_points.at(seg_idx));
+  const auto p_back = getPoint(overlap_removed_points.at(seg_idx + 1));
+
+  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0};
+  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0};
 
   return segment_vec.dot(target_vec) / segment_vec.norm();
 }
@@ -267,38 +305,35 @@ template <class T>
 double calcLateralOffset(
   const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false)
 {
-  validateNonEmpty(points);
+  const auto overlap_removed_points = removeOverlapPoints(points, 0);
 
-  const size_t seg_idx = findNearestSegmentIndex(points, p_target);
+  if (throw_exception) {
+    validateNonEmpty(overlap_removed_points);
+  } else {
+    try {
+      validateNonEmpty(overlap_removed_points);
+    } catch (const std::exception & e) {
+      std::cerr << e.what() << std::endl;
+      return std::nan("");
+    }
+  }
 
-  const auto p_front = getPoint(points.at(seg_idx));
-  const auto p_back = getPoint(points.at(seg_idx + 1));
-
-  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
-  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
-
-  // If the norm of segment_vec == 0.0,
-  // return outer product with the unit vector calculated from the yaw of the start point
-  if (segment_vec.norm() == 0.0) {
-    const auto e = std::runtime_error("Same points are given.");
+  if (overlap_removed_points.size() == 1) {
+    const std::runtime_error e("Same points are given.");
     if (throw_exception) {
       throw e;
     }
-
     std::cerr << e.what() << std::endl;
-
-    geometry_msgs::msg::Vector3 rpy;
-    try {
-      rpy = getRPY(getPose(points.at(seg_idx)));
-    } catch (const std::exception & exception) {
-      std::cerr << exception.what() << std::endl;
-      return std::nan("");
-    }
-
-    const Eigen::Vector3d unit_vec{std::cos(rpy.z), std::sin(rpy.z), 0.0};
-    const Eigen::Vector3d cross_vec = unit_vec.cross(target_vec);
-    return cross_vec(2);
+    return std::nan("");
   }
+
+  const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, p_target);
+
+  const auto p_front = getPoint(overlap_removed_points.at(seg_idx));
+  const auto p_back = getPoint(overlap_removed_points.at(seg_idx + 1));
+
+  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
+  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
 
   const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
   return cross_vec(2) / segment_vec.norm();
