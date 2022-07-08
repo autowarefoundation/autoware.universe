@@ -6,11 +6,12 @@ from autoware_auto_control_msgs.msg import LongitudinalCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from simulator_compatibility_test.subscribers.velocity_report import SubscriberVelocityReport
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+from simulator_compatibility_test.subscribers.velocity_report import SubscriberVelocityReport
+
 
 class Test03LongitudinalCommandAndReportBase:
     msgs_rx = []

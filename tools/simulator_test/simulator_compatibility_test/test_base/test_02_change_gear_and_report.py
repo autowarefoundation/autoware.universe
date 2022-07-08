@@ -3,12 +3,13 @@ import time
 from autoware_auto_vehicle_msgs.msg import GearCommand
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from simulator_compatibility_test.subscribers.gear_report import GearMode
-from simulator_compatibility_test.subscribers.gear_report import SubscriberGearReport
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+from simulator_compatibility_test.subscribers.gear_report import GearMode
+from simulator_compatibility_test.subscribers.gear_report import SubscriberGearReport
+
 
 class Test02ChangeGearAndReportBase:
     msgs_rx = []

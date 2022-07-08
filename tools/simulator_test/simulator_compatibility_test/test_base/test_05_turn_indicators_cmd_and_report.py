@@ -5,16 +5,17 @@ from autoware_auto_vehicle_msgs.msg import TurnIndicatorsCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 from simulator_compatibility_test.subscribers.turn_indicators_report import (
     SubscriberTurnIndicatorsReport,
 )
 from simulator_compatibility_test.subscribers.turn_indicators_report import (
     TurnIndicatorsReport_Constants,
 )
-from rclpy.qos import QoSDurabilityPolicy
-from rclpy.qos import QoSHistoryPolicy
-from rclpy.qos import QoSProfile
-from rclpy.qos import QoSReliabilityPolicy
+
 
 class TurnIndicatorsCommand_Constants(Enum):
     NO_COMMAND = 0

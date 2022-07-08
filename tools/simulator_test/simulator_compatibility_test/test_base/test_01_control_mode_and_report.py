@@ -5,12 +5,13 @@ from autoware_auto_vehicle_msgs.msg import ControlModeCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from simulator_compatibility_test.subscribers.control_mode_report import ControlModeReport_Constants
-from simulator_compatibility_test.subscribers.control_mode_report import SubscriberControlModeReport
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
+from simulator_compatibility_test.subscribers.control_mode_report import ControlModeReport_Constants
+from simulator_compatibility_test.subscribers.control_mode_report import SubscriberControlModeReport
+
 
 class ControlModeCommand_Constants(Enum):
     NO_COMMAND = 0

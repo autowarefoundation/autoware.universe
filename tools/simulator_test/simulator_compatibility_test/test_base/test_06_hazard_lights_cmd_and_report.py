@@ -5,16 +5,17 @@ from autoware_auto_vehicle_msgs.msg import HazardLightsCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 from simulator_compatibility_test.subscribers.hazard_lights_report import (
     HazardLightsReport_Constants,
 )
 from simulator_compatibility_test.subscribers.hazard_lights_report import (
     SubscriberHazardLightsReport,
 )
-from rclpy.qos import QoSDurabilityPolicy
-from rclpy.qos import QoSHistoryPolicy
-from rclpy.qos import QoSProfile
-from rclpy.qos import QoSReliabilityPolicy
+
 
 class HazardLightsCommand_Constants(Enum):
     NO_COMMAND = 0
