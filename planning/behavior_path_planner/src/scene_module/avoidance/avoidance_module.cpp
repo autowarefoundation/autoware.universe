@@ -1936,7 +1936,7 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
   const auto v0 = *ego_velocity_starting_avoidance_ptr_;
   auto vmax = 0.0;
   size_t insert_idx = ego_idx;
-  for (size_t i = ego_idx; i < target_idx; ++i) {
+  for (size_t i = ego_idx; i <= target_idx; ++i) {
     const auto s =
       avoidance_data_.arclength_from_ego.at(target_idx) - avoidance_data_.arclength_from_ego.at(i);
     const auto t = s / std::max(v0, 1.0);
