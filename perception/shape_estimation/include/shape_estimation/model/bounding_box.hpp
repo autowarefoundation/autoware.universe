@@ -28,8 +28,8 @@ protected:
     autoware_auto_perception_msgs::msg::Shape & shape_output,
     geometry_msgs::msg::Pose & pose_output);
   float calcClosenessCriterion(const std::vector<float> & C_1, const std::vector<float> & C_2);
-  virtual float optimize(const pcl::PointCloud<pcl::PointXYZ> & cluster,
-    const float min_angle, const float max_angle);
+  virtual float optimize(
+    const pcl::PointCloud<pcl::PointXYZ> & cluster, const float min_angle, const float max_angle);
 
 public:
   BoundingBoxShapeModel();

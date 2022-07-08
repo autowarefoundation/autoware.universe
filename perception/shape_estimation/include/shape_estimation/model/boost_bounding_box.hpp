@@ -20,15 +20,14 @@
 class BoostBoundingBoxShapeModel : public BoundingBoxShapeModel
 {
 private:
-  float optimize(const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  const float min_angle, const float max_angle);
+  float optimize(
+    const pcl::PointCloud<pcl::PointXYZ> & cluster, const float min_angle, const float max_angle);
 
 public:
   BoostBoundingBoxShapeModel();
   explicit BoostBoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info);
 
   ~BoostBoundingBoxShapeModel() {}
-
 };
 
 #endif  // SHAPE_ESTIMATION__MODEL__BOOST_BOUNDING_BOX_HPP_

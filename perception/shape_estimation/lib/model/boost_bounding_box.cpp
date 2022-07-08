@@ -20,13 +20,14 @@ constexpr float epsilon = 0.001;
 
 BoostBoundingBoxShapeModel::BoostBoundingBoxShapeModel() : BoundingBoxShapeModel() {}
 
-BoostBoundingBoxShapeModel::BoostBoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info)
+BoostBoundingBoxShapeModel::BoostBoundingBoxShapeModel(
+  const boost::optional<ReferenceYawInfo> & ref_yaw_info)
 : BoundingBoxShapeModel(ref_yaw_info)
 {
 }
 
-float BoostBoundingBoxShapeModel::optimize(const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  const float min_angle, const float max_angle)
+float BoostBoundingBoxShapeModel::optimize(
+  const pcl::PointCloud<pcl::PointXYZ> & cluster, const float min_angle, const float max_angle)
 {
   // std::cerr << "Boost ! " << std::endl;
   auto closeness_func = [&](float theta) {
@@ -46,7 +47,8 @@ float BoostBoundingBoxShapeModel::optimize(const pcl::PointCloud<pcl::PointXYZ> 
 
   int bits = 4;
   boost::uintmax_t max_iter = 20;
-  std::pair<float, float> min = boost::math::tools::brent_find_minima(closeness_func, min_angle, max_angle+epsilon, bits, max_iter);
+  std::pair<float, float> min = boost::math::tools::brent_find_minima(
+    closeness_func, min_angle, max_angle + epsilon, bits, max_iter);
   float theta_star = min.first;
   return theta_star;
 }

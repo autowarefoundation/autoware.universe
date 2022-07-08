@@ -24,12 +24,14 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter)
-: use_corrector_(use_corrector), use_filter_(use_filter), bbox_optimizer_(BoundingBoxOptimizer::Original)
+: use_corrector_(use_corrector),
+  use_filter_(use_filter),
+  bbox_optimizer_(BoundingBoxOptimizer::Original)
 {
 }
 
-ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter,
-  const BoundingBoxOptimizer & bbox_optimizer)
+ShapeEstimator::ShapeEstimator(
+  bool use_corrector, bool use_filter, const BoundingBoxOptimizer & bbox_optimizer)
 : use_corrector_(use_corrector), use_filter_(use_filter), bbox_optimizer_(bbox_optimizer)
 {
 }

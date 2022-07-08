@@ -193,8 +193,7 @@ float BoundingBoxShapeModel::calcClosenessCriterion(
 }
 
 float BoundingBoxShapeModel::optimize(
-  const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  const float min_angle, const float max_angle)
+  const pcl::PointCloud<pcl::PointXYZ> & cluster, const float min_angle, const float max_angle)
 {
   // std::cerr << "original" << std::endl;
   std::vector<std::pair<float /*theta*/, float /*q*/>> Q;
