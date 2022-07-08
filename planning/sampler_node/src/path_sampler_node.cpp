@@ -221,7 +221,6 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
     return;
   }
 
-  // TODO(Maxime CLEMENT): use common StopWatch
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg);
@@ -273,11 +272,11 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   }
   w_.plotter_->plotReferencePath(x, y);
   w_.plotter_->plotPaths(paths);
-  if (selected_path) w_.plotter_->plotSelectedPath(*selected_path);
-  // TODO(Maxime CLEMENT): temporary
-  if (selected_path)
+  if (selected_path) {
+    w_.plotter_->plotSelectedPath(*selected_path);
     w_.plotter_->plotPolygons(
       {sampler_common::constraints::buildFootprintPolygon(*selected_path, params_.constraints)});
+  }
 
   w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
   w_.replot();

@@ -45,7 +45,7 @@ public:
   // @brief set values displayed in the status bar
   void setStatus(const size_t nb_trajs, const double compute_time_ms, const double plot_time_ms);
 
-  // TODO make this private and have a better interface (separate class for interactive plot case ?)
+  // TODO(Maxime CLEMENT) make a better plotter interface
   // Plotter to manage QCustomPlot of the Gui
   std::shared_ptr<sampler_node::plot::Plotter> plotter_;
 
