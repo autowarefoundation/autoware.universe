@@ -1,10 +1,10 @@
 /**:
   ros__parameters:
-    fallback_trajectory_timeout: 0.1  # [s] age below which a fallback trajectory can be used
+    fallback_trajectory_timeout: 0.5  # [s] age below which a fallback trajectory can be used
     constraints:
       hard:
-        max_curvature: 0.3
-        min_curvature: -0.3
+        max_curvature: 0.1
+        min_curvature: -0.1
       soft:
         lateral_deviation_weight: 0.1
         longitudinal_deviation_weight: 1.0
@@ -12,7 +12,7 @@
         length_weight: -1.0  # negative weight to turn the length cost into a reward
         curvature_weight: 1.0
     sampling:
-      enable_frenet: False
+      enable_frenet: True
       enable_bezier: True
       resolution: 0.1
       minimum_committed_length: 5.0
@@ -21,9 +21,9 @@
       reuse_max_deviation: 1.0
       target_lengths: [40.0, 60.0]
       frenet:
-        target_lateral_positions: [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
+        target_lateral_positions: [-1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5]
         target_lateral_velocities: [-0.1, 0.0, 0.1]
-        target_lateral_accelerations: [-0.1, 0.0, 0.1]
+        target_lateral_accelerations: [0.0]
       bezier:
         nb_k: 3
         mk_min: 0.0
