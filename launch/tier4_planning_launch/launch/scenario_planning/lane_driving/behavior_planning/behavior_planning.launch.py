@@ -366,6 +366,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/path_with_lane_id", "path_with_lane_id"),
             ("~/input/vector_map", "/map/vector_map"),
             ("~/input/vehicle_odometry", "/localization/kinematic_state"),
+            ("~/input/acceleration", "/localization/acceleration"),
             ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
             (
                 "~/input/no_ground_pointcloud",
