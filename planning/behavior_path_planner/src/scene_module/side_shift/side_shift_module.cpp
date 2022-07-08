@@ -241,16 +241,16 @@ bool SideShiftModule::addShiftPoint()
      new_sp_longitudinal_to_shift_start, new_sp_longitudinal_to_shift_end](const ShiftPoint & sp) {
       const auto old_sp_longitudinal_to_shift_start = calcLongitudinal_to_shift_start(sp);
       const auto old_sp_longitudinal_to_shift_end = calcLongitudinal_to_shift_end(sp);
-      bool sp_overlap_front =
+      const bool sp_overlap_front =
         ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_start) &&
          (old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_end));
-      bool sp_overlap_back =
+      const bool sp_overlap_back =
         ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_end) &&
          (old_sp_longitudinal_to_shift_end <= new_sp_longitudinal_to_shift_end));
-      bool sp_new_contain_old =
+      const bool sp_new_contain_old =
         ((new_sp_longitudinal_to_shift_start <= old_sp_longitudinal_to_shift_start) &&
          (old_sp_longitudinal_to_shift_end <= new_sp_longitudinal_to_shift_end));
-      bool sp_old_contain_new =
+      const bool sp_old_contain_new =
         ((old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_start) &&
          (new_sp_longitudinal_to_shift_end <= old_sp_longitudinal_to_shift_end));
       return (sp_overlap_front || sp_overlap_back || sp_new_contain_old || sp_old_contain_new);
