@@ -24,7 +24,12 @@
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <limits>
