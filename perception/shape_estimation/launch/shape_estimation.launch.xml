@@ -1,5 +1,5 @@
 <launch>
-  <arg name="input/objects" default="perception/object_recognition/detection/apollo/labeled_clusters"/>
+  <arg name="input/objects" default="labeled_clusters"/>
   <arg name="output/objects" default="shape_estimated_objects"/>
   <arg name="use_filter" default="true"/>
   <arg name="use_corrector" default="true"/>
