@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -59,7 +59,7 @@ public:
     rtc_interface_right_.publishCooperateStatus(clock_->now());
   }
 
-  bool isActivated() const override
+  bool isActivated() override
   {
     if (rtc_interface_left_.isRegistered(uuid_left_)) {
       return rtc_interface_left_.isActivated(uuid_left_);
