@@ -135,6 +135,7 @@ void PullOverModule::onEntry()
     goal_candidates_.clear();
     GoalCandidate goal_candidate;
     goal_candidate.goal_pose = getRefinedGoal();
+    goal_candidate.distance_from_original_goal = 0.0;
     goal_candidates_.push_back(goal_candidate);
   }
 
