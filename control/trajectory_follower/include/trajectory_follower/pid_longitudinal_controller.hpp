@@ -101,9 +101,9 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // pointers for ros topic
-  std::shared_ptr<nav_msgs::msg::Odometry> m_current_velocity_ptr{nullptr};
-  std::shared_ptr<nav_msgs::msg::Odometry> m_prev_velocity_ptr{nullptr};
-  std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> m_trajectory_ptr{nullptr};
+  nav_msgs::msg::Odometry::ConstSharedPtr m_current_velocity_ptr{nullptr};
+  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr m_current_accel_ptr{nullptr};
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr m_trajectory_ptr{nullptr};
 
   // vehicle info
   float64_t m_wheel_base;
@@ -186,9 +186,6 @@ private:
   float64_t m_max_pitch_rad;
   float64_t m_min_pitch_rad;
 
-  // 1st order lowpass filter for acceleration
-  std::shared_ptr<trajectory_follower::LowpassFilter1d> m_lpf_acc{nullptr};
-
   // buffer of send command
   std::vector<autoware_auto_control_msgs::msg::LongitudinalCommand> m_ctrl_cmd_vec;
 
@@ -213,6 +210,13 @@ private:
    * @param [in] msg current state message
    */
   void setCurrentVelocity(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+
+  /**
+   * @brief set current acceleration with received message
+   * @param [in] msg trajectory message
+   */
+  void setCurrentAcceleration(
+    const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
 
   /**
    * @brief set reference trajectory with received message
