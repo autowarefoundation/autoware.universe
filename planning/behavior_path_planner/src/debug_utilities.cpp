@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/debug_utilities.hpp"
 
+#include "behavior_path_planner/utilities.hpp"
+
 namespace marker_utils
 {
 using behavior_path_planner::ShiftPoint;
