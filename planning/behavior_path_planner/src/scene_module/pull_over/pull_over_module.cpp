@@ -274,7 +274,7 @@ void PullOverModule::researchGoal()
   for (double dx = -parameters_.backward_goal_search_length;
        dx <= parameters_.forward_goal_search_length; dx += parameters_.goal_search_interval) {
     Pose search_pose = calcOffsetPose(goal_pose, dx, 0, 0);
-    for (const auto area : pull_over_areas_) {
+    for (const auto & area : pull_over_areas_) {
       const Pose start_to_search = inverseTransformPose(search_pose, area.start_pose);
       const Pose end_to_search = inverseTransformPose(search_pose, area.end_pose);
       if (
@@ -860,7 +860,7 @@ bool PullOverModule::isStopped()
     odometry_buffer_.pop_front();
   }
   bool is_stopped = true;
-  for (const auto odometry : odometry_buffer_) {
+  for (const auto & odometry : odometry_buffer_) {
     const double ego_vel = util::l2Norm(odometry->twist.twist.linear);
     if (ego_vel > parameters_.th_stopped_velocity_mps) {
       is_stopped = false;
