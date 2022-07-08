@@ -12,13 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__MODEL__MODEL_HPP_
-#define SHAPE_ESTIMATION__MODEL__MODEL_HPP_
+#ifndef SHAPE_ESTIMATION__MODEL__BOOST_BOUNDING_BOX_HPP_
+#define SHAPE_ESTIMATION__MODEL__BOOST_BOUNDING_BOX_HPP_
 
 #include "shape_estimation/model/bounding_box.hpp"
-#include "shape_estimation/model/boost_bounding_box.hpp"
-#include "shape_estimation/model/convex_hull.hpp"
-#include "shape_estimation/model/cylinder.hpp"
-#include "shape_estimation/model/model_interface.hpp"
 
-#endif  // SHAPE_ESTIMATION__MODEL__MODEL_HPP_
+class BoostBoundingBoxShapeModel : public BoundingBoxShapeModel
+{
+private:
+  float optimize(const pcl::PointCloud<pcl::PointXYZ> & cluster,
+  const float min_angle, const float max_angle);
+
+public:
+  BoostBoundingBoxShapeModel();
+  explicit BoostBoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info);
+
+  ~BoostBoundingBoxShapeModel() {}
+
+};
+
+#endif  // SHAPE_ESTIMATION__MODEL__BOOST_BOUNDING_BOX_HPP_

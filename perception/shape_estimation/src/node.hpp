@@ -36,6 +36,7 @@ private:
   void callback(const DetectedObjectsWithFeature::ConstSharedPtr input_msg);
 
   std::unique_ptr<ShapeEstimator> estimator_;
+  BoundingBoxOptimizer bbox_optimizer_;
   bool use_vehicle_reference_yaw_;
 
 public:

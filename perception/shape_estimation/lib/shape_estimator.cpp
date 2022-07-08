@@ -24,7 +24,13 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter)
-: use_corrector_(use_corrector), use_filter_(use_filter)
+: use_corrector_(use_corrector), use_filter_(use_filter), bbox_optimizer_(BoundingBoxOptimizer::Original)
+{
+}
+
+ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter,
+  const BoundingBoxOptimizer & bbox_optimizer)
+: use_corrector_(use_corrector), use_filter_(use_filter), bbox_optimizer_(bbox_optimizer)
 {
 }
 
@@ -69,14 +75,14 @@ bool ShapeEstimator::estimateOriginalShapeAndPose(
   std::unique_ptr<ShapeEstimationModelInterface> model_ptr;
   if (
     label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
-    label == Label::TRAILER) {
-    model_ptr.reset(new BoundingBoxShapeModel(ref_yaw_info));
+    label == Label::TRAILER || label == Label::MOTORCYCLE || label == Label::BICYCLE) {
+    if (bbox_optimizer_ == BoundingBoxOptimizer::Boost) {
+      model_ptr.reset(new BoostBoundingBoxShapeModel(ref_yaw_info));
+    } else {
+      model_ptr.reset(new BoundingBoxShapeModel(ref_yaw_info));
+    }
   } else if (label == Label::PEDESTRIAN) {
     model_ptr.reset(new CylinderShapeModel());
-  } else if (label == Label::MOTORCYCLE) {
-    model_ptr.reset(new BoundingBoxShapeModel(ref_yaw_info));
-  } else if (label == Label::BICYCLE) {
-    model_ptr.reset(new BoundingBoxShapeModel(ref_yaw_info));
   } else {
     model_ptr.reset(new ConvexHullShapeModel());
   }

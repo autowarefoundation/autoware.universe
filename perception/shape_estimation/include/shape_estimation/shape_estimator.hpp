@@ -33,6 +33,12 @@ struct ReferenceYawInfo
   float search_angle_range;
 };
 
+enum class BoundingBoxOptimizer
+{
+  Original,
+  Boost
+};
+
 class ShapeEstimator
 {
 private:
@@ -50,9 +56,12 @@ private:
 
   bool use_corrector_;
   bool use_filter_;
+  BoundingBoxOptimizer bbox_optimizer_;
 
 public:
   ShapeEstimator(bool use_corrector, bool use_filter);
+  ShapeEstimator(bool use_corrector, bool use_filter,
+    const BoundingBoxOptimizer & bbox_optimizer);
 
   virtual ~ShapeEstimator() = default;
 
