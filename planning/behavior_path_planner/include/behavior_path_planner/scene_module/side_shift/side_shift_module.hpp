@@ -60,7 +60,7 @@ struct SideShiftParameters
 struct SideShiftDebugData
 {
   std::shared_ptr<PathShifter> path_shifter;
-  ShiftPointArray shift_points;
+  ShiftLineArray shift_points;
   double current_request;
 };
 

@@ -255,7 +255,6 @@ private:
   rclcpp::Logger logger_;
 
 protected:
-  mutable MarkerArray debug_marker_;
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
   mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};

@@ -214,7 +214,7 @@ void SideShiftModule::replaceShiftLine()
   }
 
   // set to path_shifter
-  path_shifter_.setShiftPoints(shift_points);
+  path_shifter_.setShiftLines(shift_lines);
 
   lateral_offset_change_request_ = false;
   inserted_lateral_offset_ = requested_lateral_offset_;
@@ -234,8 +234,6 @@ BehaviorModuleOutput SideShiftModule::plan()
     RCLCPP_DEBUG(getLogger(), "change is not requested");
   }
 
-  // *debug_data_.path_shifter = path_shifter_;
-
   // Refine path
   ShiftedPath shifted_path;
   path_shifter_.generate(&shifted_path);
@@ -249,8 +247,7 @@ BehaviorModuleOutput SideShiftModule::plan()
   output.path = std::make_shared<PathWithLaneId>(shifted_path.path);
 
   prev_output_ = shifted_path;
-
-  *debug_data_.path_shifter = path_shifter_;
+  debug_data_.path_shifter = std::make_shared<PathShifter>(path_shifter_);
   setDebugMarkersVisualization();
 
   return output;
@@ -440,7 +437,7 @@ PathWithLaneId SideShiftModule::calcCenterLinePath(
 
 void SideShiftModule::setDebugMarkersVisualization() const
 {
-  using marker_utils::createShiftPointMarkerArray;
+  using marker_utils::createShiftLineMarkerArray;
 
   debug_marker_.markers.clear();
 
@@ -449,8 +446,8 @@ void SideShiftModule::setDebugMarkersVisualization() const
   };
 
   const auto addShiftPoint = [this, add](const auto & ns, auto r, auto g, auto b, double w = 0.1) {
-    add(createShiftPointMarkerArray(
-      debug_data_.path_shifter->getShiftPoints(), debug_data_.path_shifter->getBaseOffset(), ns, r,
+    add(createShiftLineMarkerArray(
+      debug_data_.path_shifter->getShiftLines(), debug_data_.path_shifter->getBaseOffset(), ns, r,
       g, b, w));
   };
 
