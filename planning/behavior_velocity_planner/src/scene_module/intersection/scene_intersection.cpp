@@ -498,7 +498,11 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
       for (size_t i = 0; i < path.points.size(); i++) {
         const auto & p = path.points.at(i).point.pose.position;
         if (p.x == lane_first_point.x() && p.y == lane_first_point.y()) {
-          *stuck_stop_idx = static_cast<int>(i);
+          /* set parameters */
+          constexpr double interval = 0.2;
+          const int base2front_idx_dist =
+            std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
+          *stuck_stop_idx = std::max(static_cast<int>(i) - base2front_idx_dist, 0);
         }
       }
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
