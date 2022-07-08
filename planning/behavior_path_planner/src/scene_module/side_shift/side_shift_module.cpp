@@ -260,8 +260,6 @@ BehaviorModuleOutput SideShiftModule::plan()
     RCLCPP_DEBUG(getLogger(), "change is not requested");
   }
 
-  // *debug_data_.path_shifter = path_shifter_;
-
   // Refine path
   ShiftedPath shifted_path;
   path_shifter_.generate(&shifted_path);
@@ -276,7 +274,7 @@ BehaviorModuleOutput SideShiftModule::plan()
 
   prev_output_ = shifted_path;
 
-  *debug_data_.path_shifter = path_shifter_;
+  *debug_data_.path_shifter = std::make_shared<PathShifter>(path_shifter_);
   setDebugMarkersVisualization();
 
   return output;
