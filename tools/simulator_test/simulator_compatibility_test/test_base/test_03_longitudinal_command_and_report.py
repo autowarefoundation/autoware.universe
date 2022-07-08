@@ -7,7 +7,10 @@ import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from simulator_compatibility_test.subscribers.velocity_report import SubscriberVelocityReport
-
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 
 class Test03LongitudinalCommandAndReportBase:
     msgs_rx = []
@@ -20,6 +23,12 @@ class Test03LongitudinalCommandAndReportBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_RKL10TL = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
         rclpy.init()
         cls.msgs_rx = []
         cls.control_cmd = {
@@ -35,7 +44,7 @@ class Test03LongitudinalCommandAndReportBase:
             10,
         )
         cls.pub = cls.node.create_publisher(
-            AckermannControlCommand, "/control/command/control_cmd", 10
+            AckermannControlCommand, "/control/command/control_cmd", QOS_RKL10TL
         )
         cls.sub_velocity_report = SubscriberVelocityReport()
         cls.executor = MultiThreadedExecutor()

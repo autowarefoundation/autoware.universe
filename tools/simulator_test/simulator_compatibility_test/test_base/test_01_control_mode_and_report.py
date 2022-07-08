@@ -7,7 +7,10 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from simulator_compatibility_test.subscribers.control_mode_report import ControlModeReport_Constants
 from simulator_compatibility_test.subscribers.control_mode_report import SubscriberControlModeReport
-
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 
 class ControlModeCommand_Constants(Enum):
     NO_COMMAND = 0
@@ -25,6 +28,12 @@ class Test01ControlModeAndReportBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_RKL10TL = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
         rclpy.init()
         cls.msgs_rx = []
         cls.node = rclpy.create_node("test_01_control_mode_and_report_base")
@@ -35,7 +44,7 @@ class Test01ControlModeAndReportBase:
             10,
         )
         cls.pub = cls.node.create_publisher(
-            ControlModeCommand, "/control/command/control_mode_cmd", 10
+            ControlModeCommand, "/control/command/control_mode_cmd", QOS_RKL10TL
         )
         cls.sub_control_mode_report = SubscriberControlModeReport()
         cls.executor = MultiThreadedExecutor()

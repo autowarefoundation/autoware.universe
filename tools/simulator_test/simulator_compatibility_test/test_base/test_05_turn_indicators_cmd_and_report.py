@@ -11,7 +11,10 @@ from simulator_compatibility_test.subscribers.turn_indicators_report import (
 from simulator_compatibility_test.subscribers.turn_indicators_report import (
     TurnIndicatorsReport_Constants,
 )
-
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 
 class TurnIndicatorsCommand_Constants(Enum):
     NO_COMMAND = 0
@@ -30,6 +33,12 @@ class Test05TurnIndicatorsCmdAndReportBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_RKL10TL = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
         rclpy.init()
         cls.msgs_rx = []
         cls.node = rclpy.create_node("test_turn_indicator_cmd_and_report_base")
@@ -40,7 +49,7 @@ class Test05TurnIndicatorsCmdAndReportBase:
             10,
         )
         cls.pub = cls.node.create_publisher(
-            TurnIndicatorsCommand, "/control/command/turn_indicators_cmd", 10
+            TurnIndicatorsCommand, "/control/command/turn_indicators_cmd", QOS_RKL10TL
         )
         cls.sub_turn_indicators_status = SubscriberTurnIndicatorsReport()
         cls.executor = MultiThreadedExecutor()

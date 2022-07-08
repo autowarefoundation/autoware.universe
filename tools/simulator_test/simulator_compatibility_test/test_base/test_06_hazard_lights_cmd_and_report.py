@@ -11,7 +11,10 @@ from simulator_compatibility_test.subscribers.hazard_lights_report import (
 from simulator_compatibility_test.subscribers.hazard_lights_report import (
     SubscriberHazardLightsReport,
 )
-
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 
 class HazardLightsCommand_Constants(Enum):
     NO_COMMAND = 0
@@ -29,6 +32,12 @@ class Test06HazardLightsCmdAndReportBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_RKL10TL = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
         rclpy.init()
         cls.msgs_rx = []
         cls.node = rclpy.create_node("test_hazard_lights_cmd_and_report_base")
@@ -39,7 +48,7 @@ class Test06HazardLightsCmdAndReportBase:
             10,
         )
         cls.pub = cls.node.create_publisher(
-            HazardLightsCommand, "/control/command/hazard_lights_cmd", 10
+            HazardLightsCommand, "/control/command/hazard_lights_cmd", QOS_RKL10TL
         )
         cls.sub_hazard_lights_status = SubscriberHazardLightsReport()
         cls.executor = MultiThreadedExecutor()

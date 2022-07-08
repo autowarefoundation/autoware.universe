@@ -5,7 +5,10 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from simulator_compatibility_test.subscribers.gear_report import GearMode
 from simulator_compatibility_test.subscribers.gear_report import SubscriberGearReport
-
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 
 class Test02ChangeGearAndReportBase:
     msgs_rx = []
@@ -17,13 +20,19 @@ class Test02ChangeGearAndReportBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_RKL10TL = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
         rclpy.init()
         cls.msgs_rx = []
         cls.node = rclpy.create_node("test_02_change_gear_and_report_base")
         cls.sub = cls.node.create_subscription(
             GearCommand, "/control/command/gear_cmd", lambda msg: cls.msgs_rx.append(msg), 10
         )
-        cls.pub = cls.node.create_publisher(GearCommand, "/control/command/gear_cmd", 10)
+        cls.pub = cls.node.create_publisher(GearCommand, "/control/command/gear_cmd", QOS_RKL10TL)
         cls.sub_gear_report = SubscriberGearReport()
         cls.executor = MultiThreadedExecutor()
         cls.executor.add_node(cls.sub_gear_report)
