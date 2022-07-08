@@ -40,7 +40,7 @@ void GraphSegment::callbackImage(const Image & msg)
   }
   cv::resize(output_image, output_image, image.size(), 0, 0, cv::INTER_NEAREST);
 
-  // convert segmented area to polygon
+  // Convert segmented area to polygon
 
   std::vector<std::vector<cv::Point2i>> contours;
   cv::findContours(output_image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
