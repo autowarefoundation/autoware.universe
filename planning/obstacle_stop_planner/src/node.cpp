@@ -611,7 +611,6 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     return;
   }
 
-  Trajectory trajectory;
   PlannerData planner_data{};
 
   getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
@@ -646,7 +645,7 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     resetExternalVelocityLimit(current_acc);
   }
 
-  trajectory = tier4_autoware_utils::convertToTrajectory(output_trajectory_points);
+  auto trajectory = tier4_autoware_utils::convertToTrajectory(output_trajectory_points);
   publishDebugData(planner_data, current_acc);
 
   trajectory.header = input_msg->header;

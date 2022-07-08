@@ -912,6 +912,8 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateT
   // generate post processed trajectory
   const auto post_processed_traj_points =
     generatePostProcessedTrajectory(path.points, optimized_traj_points);
+
+  // convert to output msg type
   output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
 
   output_traj_msg.header = path.header;
