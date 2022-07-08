@@ -603,55 +603,64 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     }
   }
 
-  Trajectory trajectory;
-  if (std::any_of(input_msg->points.begin(), input_msg->points.end(), [&](const auto & p) {
-        return p.longitudinal_velocity_mps < 0;
-      })) {
-    RCLCPP_WARN(
-      get_logger(), "Negative velocity is detected, so let the input trajectory pass through");
-    trajectory = *input_msg;
-  } else {
-    PlannerData planner_data{};
-
-    getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
-
-    Trajectory output_trajectory = *input_msg;
-    TrajectoryPoints output_trajectory_points =
-      tier4_autoware_utils::convertToTrajectoryPointArray(*input_msg);
-
-    // trim trajectory from self pose
-    const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
-      tier4_autoware_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
-      planner_data.trajectory_trim_index);
-    // extend trajectory to consider obstacles after the goal
-    const auto extend_trajectory = extendTrajectory(base_trajectory, stop_param.extend_distance);
-    // decimate trajectory for calculation cost
-    const auto decimate_trajectory = decimateTrajectory(
-      extend_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
-
-    // search obstacles within slow-down/collision area
-    searchObstacle(
-      decimate_trajectory, output_trajectory_points, planner_data, input_msg->header, vehicle_info,
-      stop_param, obstacle_ros_pointcloud_ptr);
-    // insert slow-down-section/stop-point
-    insertVelocity(
-      output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
-      stop_param);
-
-    const auto no_slow_down_section = !planner_data.slow_down_require && !latest_slow_down_section_;
-    const auto no_hunting =
-      (rclcpp::Time(input_msg->header.stamp) - last_detection_time_).seconds() >
-      node_param_.hunting_threshold;
-    if (node_param_.enable_slow_down && no_slow_down_section && set_velocity_limit_ && no_hunting) {
-      resetExternalVelocityLimit(current_acc);
-    }
-
-    trajectory = tier4_autoware_utils::convertToTrajectory(output_trajectory_points);
-    publishDebugData(planner_data, current_acc);
+  // TODO(someone): support negative velocity
+  if (isBackwardPath(*input_msg)) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000, "Negative velocity NOT supported. publish input as it is.");
+    path_pub_->publish(*input_msg);
+    return;
   }
+
+  Trajectory trajectory;
+  PlannerData planner_data{};
+
+  getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
+
+  Trajectory output_trajectory = *input_msg;
+  TrajectoryPoints output_trajectory_points =
+    tier4_autoware_utils::convertToTrajectoryPointArray(*input_msg);
+
+  // trim trajectory from self pose
+  const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
+    tier4_autoware_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
+    planner_data.trajectory_trim_index);
+  // extend trajectory to consider obstacles after the goal
+  const auto extend_trajectory = extendTrajectory(base_trajectory, stop_param.extend_distance);
+  // decimate trajectory for calculation cost
+  const auto decimate_trajectory = decimateTrajectory(
+    extend_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
+
+  // search obstacles within slow-down/collision area
+  searchObstacle(
+    decimate_trajectory, output_trajectory_points, planner_data, input_msg->header, vehicle_info,
+    stop_param, obstacle_ros_pointcloud_ptr);
+  // insert slow-down-section/stop-point
+  insertVelocity(
+    output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
+    stop_param);
+
+  const auto no_slow_down_section = !planner_data.slow_down_require && !latest_slow_down_section_;
+  const auto no_hunting = (rclcpp::Time(input_msg->header.stamp) - last_detection_time_).seconds() >
+                          node_param_.hunting_threshold;
+  if (node_param_.enable_slow_down && no_slow_down_section && set_velocity_limit_ && no_hunting) {
+    resetExternalVelocityLimit(current_acc);
+  }
+
+  trajectory = tier4_autoware_utils::convertToTrajectory(output_trajectory_points);
+  publishDebugData(planner_data, current_acc);
 
   trajectory.header = input_msg->header;
   path_pub_->publish(trajectory);
+}
+
+bool ObstacleStopPlannerNode::isBackwardPath(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory) const
+{
+  const bool has_negative_velocity = std::any_of(
+    trajectory.points.begin(), trajectory.points.end(),
+    [&](const auto & p) { return p.longitudinal_velocity_mps < 0; });
+
+  return has_negative_velocity;
 }
 
 void ObstacleStopPlannerNode::searchObstacle(
