@@ -363,14 +363,20 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   setSafe(!nearest_stop_point);
 
+  const auto target_velocity =
+    nearest_stop_point ? calcTargetVelocity(nearest_stop_point.get().second, ego_path) : 0.0;
+
   if (isActivated()) {
+    if (1e-3 < target_velocity) {
+      insertDecelPoint(nearest_stop_point.get(), target_velocity, *path);
+    }
     return true;
   }
 
   if (nearest_stop_point) {
-    insertDecelPoint(nearest_stop_point.get(), *path);
+    insertDecelPoint(nearest_stop_point.get(), target_velocity, *path);
   } else if (rtc_stop_point) {
-    insertDecelPoint(rtc_stop_point.get(), *path);
+    insertDecelPoint(rtc_stop_point.get(), target_velocity, *path);
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -594,7 +600,8 @@ std::pair<double, double> CrosswalkModule::getAttentionRange(const PathWithLaneI
 }
 
 void CrosswalkModule::insertDecelPoint(
-  const std::pair<size_t, PathPointWithLaneId> & stop_point, PathWithLaneId & output)
+  const std::pair<size_t, PathPointWithLaneId> & stop_point, const float target_velocity,
+  PathWithLaneId & output)
 {
   const auto traj_end_idx = output.points.size() - 1;
   const auto & stop_idx = stop_point.first;
@@ -621,7 +628,6 @@ void CrosswalkModule::insertDecelPoint(
     update_stop_idx = std::min(update_stop_idx + 1, traj_end_idx);
   }
 
-  const auto target_velocity = calcTargetVelocity(p_insert, output);
   for (size_t i = update_stop_idx; i < output.points.size(); ++i) {
     const auto & original_velocity = output.points.at(i).point.longitudinal_velocity_mps;
     output.points.at(i).point.longitudinal_velocity_mps =

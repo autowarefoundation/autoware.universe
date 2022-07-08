@@ -122,7 +122,8 @@ private:
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
   void insertDecelPoint(
-    const std::pair<size_t, PathPointWithLaneId> & stop_point, PathWithLaneId & output);
+    const std::pair<size_t, PathPointWithLaneId> & stop_point, const float target_velocity,
+    PathWithLaneId & output);
 
   void clampAttentionRangeByNeighborCrosswalks(
     const PathWithLaneId & ego_path, double & near_attention_range, double & far_attention_range);
