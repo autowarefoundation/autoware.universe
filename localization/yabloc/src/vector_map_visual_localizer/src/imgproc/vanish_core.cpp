@@ -18,6 +18,8 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
   sub_info_ = create_subscription<CameraInfo>(
     "/sensing/camera/traffic_light/camera_info", 10,
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
+
+  rotation_ = Sophus::SO3f();
 }
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
@@ -43,7 +45,7 @@ void VanishPoint::integral(const rclcpp::Time & image_stamp)
 
     Eigen::Vector3f w;
     w << msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z;
-    rotation_ *= Sophus::SO3f::exp(ex_rot * w * dt);
+    rotation_ *= Sophus::SO3f::exp(ex_rot.inverse() * w * dt);
 
     // until here
     imu_buffer_.pop_front();
@@ -51,11 +53,49 @@ void VanishPoint::integral(const rclcpp::Time & image_stamp)
   }
 }
 
+void VanishPoint::drawHorizontalLine(const cv::Mat & image, const Eigen::Vector3f & normal)
+{
+  const int W = info_->width;
+  const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
+  const Eigen::Matrix3f K = Kd.cast<float>();
+  const Eigen::Matrix3f Kinv = K.inverse();
+  const float cx = K(0, 2);
+  const float fx = K(0, 0);
+
+  // The argument `normal` is in coordinate of normalized camera, where intrinsic parameter is not
+  // considered. If normal is [0,-1,0], then it points upper side of image and it means horizontal
+  // plane is literally horizontal.
+  // n\cdot [x,y,z]=0
+
+  // The following `abc` means coefficient vector of plane equation (ax+by+cz+d=0) in image
+  // cooridnate.
+  // Eigen::Vector3f abc = Kinv.transpose() * normal;
+  // float v1 = -abc.z() / abc.y();
+  // float v2 = (-abc.x() * W - abc.z()) / abc.y();
+
+  // This function assumes that horizontal line must accross image almost horizontally.
+  // So, all we need to compute is the left point and right point of line.
+  // The left point is [0, v1] and the right point is [width, v2].
+  // [0, v1] is projected intersection of horizontal plane and left side line in  normalized camera
+  // coordinate. [0, v1, 1]=Kp, p is the intersection.
+
+  auto intersection = [&normal](
+                        const Eigen::Vector3f & s, const Eigen::Vector3f & t) -> Eigen::Vector3f {
+    float lambda = normal.dot(s) / (normal.dot(t) + 1e-6f);
+    return s + lambda * t;
+  };
+  Eigen::Vector3f pl = intersection({(-cx) / fx, 0, 1}, Eigen::Vector3f::UnitY());
+  Eigen::Vector3f pr = intersection({(W - cx) / fx, 0, 1}, Eigen::Vector3f::UnitY());
+  float v1 = (K * pl)(1);
+  float v2 = (K * pr)(1);
+  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), cv::Scalar(0, 255, 0), 1);
+}
+
 void VanishPoint::callbackImage(const Image & msg)
 {
   auto opt_imu_ex =
     tf_subscriber_("traffic_light_left_camera/camera_optical_link", "tamagawa/imu_link");
-  auto opt_camera_ex = tf_subscriber_("traffic_light_left_camera/camera_optical_link", "base_link");
+  auto opt_camera_ex = tf_subscriber_("base_link", "traffic_light_left_camera/camera_optical_link");
 
   if (!opt_imu_ex.has_value()) return;
   if (!opt_camera_ex.has_value()) return;
@@ -66,20 +106,10 @@ void VanishPoint::callbackImage(const Image & msg)
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Point2f vanish = ransac_vanish_point_(image);
 
-  // Measurement update of Kalman Filter
-
   // Visualize estimated vanishing point
-  Sophus::SO3f rot = Sophus::SO3f(opt_camera_ex->rotation()) * rotation_;
+  Sophus::SO3f rot = rotation_ * Sophus::SO3f(opt_camera_ex->rotation());
   Eigen::Vector3f normal = rot * Eigen::Vector3f::UnitZ();
-
-  const int W = info_->width;
-  Eigen::Matrix3f K =
-    Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
-  Eigen::Matrix3f Kinv = K.inverse();
-  Eigen::Vector3f abc = Kinv.transpose() * normal;
-  float v1 = -abc.z() / abc.y();
-  float v2 = (-abc.x() * W - abc.z()) / abc.y();
-  // cv::line(image, cv::Point(v1, 0), cv::Point2i(v2, W), cv::Scalar(0, 255, 0), 1);
+  drawHorizontalLine(image, normal);
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);

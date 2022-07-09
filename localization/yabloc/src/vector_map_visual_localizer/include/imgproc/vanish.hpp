@@ -36,6 +36,7 @@ private:
   std::list<Imu> imu_buffer_;
   std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};
 
+  void drawHorizontalLine(const cv::Mat & image, const Eigen::Vector3f & normal);
   void integral(const rclcpp::Time & stamp);
   void callbackImu(const Imu & msg);
   void callbackImage(const Image & msg);
