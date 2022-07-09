@@ -54,8 +54,10 @@ void VanishPoint::integral(const rclcpp::Time & image_stamp)
   }
 }
 
-void VanishPoint::drawHorizontalLine(const cv::Mat & image, const Eigen::Vector3f & normal)
+void VanishPoint::drawHorizontalLine(
+  const cv::Mat & image, const Sophus::SO3f & rot, const cv::Scalar & color)
 {
+  const Eigen::Vector3f normal = rot * Eigen::Vector3f::UnitZ();
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
   const int W = info_->width;
@@ -82,7 +84,7 @@ void VanishPoint::drawHorizontalLine(const cv::Mat & image, const Eigen::Vector3
   Eigen::Vector3f pr = intersection({(W - cx) / fx, 0, 1}, Eigen::Vector3f::UnitY());
   float v1 = (K * pl)(1);
   float v2 = (K * pr)(1);
-  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), cv::Scalar(0, 255, 0), 1);
+  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, 1);
 }
 
 void VanishPoint::callbackImage(const Image & msg)
@@ -100,12 +102,19 @@ void VanishPoint::callbackImage(const Image & msg)
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Point2f vanish = ransac_vanish_point_(image);
 
-  opt::sample();
-
   // Visualize estimated vanishing point
   Sophus::SO3f rot = rotation_ * Sophus::SO3f(opt_camera_ex->rotation());
-  Eigen::Vector3f normal = rot * Eigen::Vector3f::UnitZ();
-  drawHorizontalLine(image, normal);
+  drawHorizontalLine(image, rot);
+
+  const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
+  const Eigen::Matrix3f K = Kd.cast<float>();
+  Eigen::Vector3f vp_i(vanish.x, vanish.y, 1);
+  Eigen::Vector3f vp = K.inverse() * vp_i;
+  Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp);
+
+  drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 255));
+  std::cout << "raw: " << rot.unit_quaternion().coeffs().transpose() << std::endl;
+  std::cout << "opt: " << opt_rot.unit_quaternion().coeffs().transpose() << std::endl;
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);
