@@ -8,10 +8,10 @@ namespace imgproc::opt
 class VanishPointFactor
 {
 public:
-  VanishPointFactor(const Eigen::Vector3d & vp) : vp_(vp) { vp_(2) = 0; }
+  VanishPointFactor(const Eigen::Vector3d & vp) : vp_(vp) {}
 
   template <typename T>
-  bool operator()(const T * const q_ptr, T * residuals) const
+  bool operator()(const T * const q_ptr, T * residual) const
   {
     using Vector3T = Eigen::Matrix<T, 3, 1>;
 
@@ -19,8 +19,13 @@ public:
     Vector3T normal = q * Vector3T::UnitZ();
     T nx = normal.x();
     T ny = normal.y();
+    T nz = normal.z();
     T n2 = nx * nx + ny * ny;
-    residuals[0] = (normal.z() + normal.dot(vp_)) / n2;
+
+    Vector3T s;
+    s << -nz / nx, T(0), T(1);
+    T tmp = normal.dot(s - vp_);
+    residual[0] = tmp * tmp / n2;
     return true;
   }
 

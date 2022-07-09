@@ -77,7 +77,7 @@ void VanishPoint::drawHorizontalLine(
 
   auto intersection = [&normal](
                         const Eigen::Vector3f & s, const Eigen::Vector3f & t) -> Eigen::Vector3f {
-    float lambda = normal.dot(s) / (normal.dot(t) + 1e-6f);
+    float lambda = -normal.dot(s) / (normal.dot(t) + 1e-6f);
     return s + lambda * t;
   };
   Eigen::Vector3f pl = intersection({(-cx) / fx, 0, 1}, Eigen::Vector3f::UnitY());
@@ -108,13 +108,12 @@ void VanishPoint::callbackImage(const Image & msg)
 
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
-  Eigen::Vector3f vp_i(vanish.x, vanish.y, 1);
-  Eigen::Vector3f vp = K.inverse() * vp_i;
+  Eigen::Vector3f vp = K.inverse() * Eigen::Vector3f(vanish.x, vanish.y, 1);
   Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp);
 
   drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 255));
-  std::cout << "raw: " << rot.unit_quaternion().coeffs().transpose() << std::endl;
-  std::cout << "opt: " << opt_rot.unit_quaternion().coeffs().transpose() << std::endl;
+  // std::cout << "raw: " << rot.unit_quaternion().coeffs().transpose() << std::endl;
+  // std::cout << "opt: " << opt_rot.unit_quaternion().coeffs().transpose() << std::endl;
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);

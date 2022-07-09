@@ -35,12 +35,29 @@ Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp)
   Solve(options, &problem, &summary);
 
   std::cout << summary.BriefReport() << std::endl;
+  // std::cout << summary.FullReport() << std::endl;
 
   Eigen::Quaternionf qf;
   qf.coeffs() = q.cast<float>();
 
-  double cost = VanishPointFactor(vp.cast<double>())(q.data());
-  std::cout << "final cost " << cost << " " << vp.transpose() << std::endl;
+  // auto eval = [&vp](const Eigen::Quaternionf & q) -> float {
+  //   const Eigen::Vector3f normal = q * Eigen::Vector3f::UnitZ();
+  //   auto intersection = [&normal](
+  //                         const Eigen::Vector3f & s, const Eigen::Vector3f & t) ->
+  //                         Eigen::Vector3f {
+  //     float lambda = -normal.dot(s) / (normal.dot(t) + 1e-6f);
+  //     return s + lambda * t;
+  //   };
+  //   Eigen::Vector3f pl = intersection({-1, 0, 1}, Eigen::Vector3f::UnitY());
+  //   Eigen::Vector3f pr = intersection({1, 0, 1}, Eigen::Vector3f::UnitY());
+  //   Eigen::Vector3f s(-normal.z() / normal.x(), 0, 1);
+  //   Eigen::Vector3f t = pl - pr;
+  //   Eigen::Vector3f n(t.y(), -t.x(), 0);
+  //   float distance = n.normalized().dot(pl - vp);
+  //   return std::abs(distance);
+  // };
+  // std::cout << "before: " << eval(R.unit_quaternion()) << std::endl;
+  // std::cout << "after: " << eval(qf) << std::endl;
 
   return Sophus::SO3f(qf);
 }
