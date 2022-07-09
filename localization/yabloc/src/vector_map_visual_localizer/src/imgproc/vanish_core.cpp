@@ -1,4 +1,5 @@
 #include "common/util.hpp"
+#include "imgproc/orientation_optimizer.hpp"
 #include "imgproc/vanish.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
@@ -55,10 +56,9 @@ void VanishPoint::integral(const rclcpp::Time & image_stamp)
 
 void VanishPoint::drawHorizontalLine(const cv::Mat & image, const Eigen::Vector3f & normal)
 {
-  const int W = info_->width;
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
-  const Eigen::Matrix3f Kinv = K.inverse();
+  const int W = info_->width;
   const float cx = K(0, 2);
   const float fx = K(0, 0);
 
@@ -67,13 +67,7 @@ void VanishPoint::drawHorizontalLine(const cv::Mat & image, const Eigen::Vector3
   // plane is literally horizontal.
   // n\cdot [x,y,z]=0
 
-  // The following `abc` means coefficient vector of plane equation (ax+by+cz+d=0) in image
-  // cooridnate.
-  // Eigen::Vector3f abc = Kinv.transpose() * normal;
-  // float v1 = -abc.z() / abc.y();
-  // float v2 = (-abc.x() * W - abc.z()) / abc.y();
-
-  // This function assumes that horizontal line must accross image almost horizontally.
+  // This function assumes that horizontal line accross image almost horizontally.
   // So, all we need to compute is the left point and right point of line.
   // The left point is [0, v1] and the right point is [width, v2].
   // [0, v1] is projected intersection of horizontal plane and left side line in  normalized camera
@@ -105,6 +99,8 @@ void VanishPoint::callbackImage(const Image & msg)
 
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Point2f vanish = ransac_vanish_point_(image);
+
+  opt::sample();
 
   // Visualize estimated vanishing point
   Sophus::SO3f rot = rotation_ * Sophus::SO3f(opt_camera_ex->rotation());

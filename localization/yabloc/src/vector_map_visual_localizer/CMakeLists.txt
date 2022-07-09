@@ -33,8 +33,13 @@ find_package(PCL REQUIRED)
 # Eigen3
 find_package(Eigen3 REQUIRED)
 
+# ceres
+find_package(Ceres REQUIRED)
+
+# ===================================================
 include_directories(
   SYSTEM
+  ${CERES_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
@@ -69,6 +74,7 @@ ADD_LIB(TARGET util SRC lib/util.cpp INC include)
 ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
 ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)
+ADD_LIB(TARGET orientation SRC lib/orientation_optimizer.cpp INC include LIB ${CERES_LIBRARIES})
 
 # ===================================================
 # Executable
@@ -83,7 +89,7 @@ macro(ADD_EXE)
 endmacro()
 
 # imgproc
-ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish)
+ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish orientation)
 ADD_EXE(TARGET lsd_node SRC src/imgproc/lsd_*.cpp INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
 ADD_EXE(TARGET undistort_node SRC src/imgproc/undistort_node.cpp INC LIB util)
 ADD_EXE(TARGET segment_filter_node SRC src/imgproc/segment_filter_node.cpp INC LIB util)
