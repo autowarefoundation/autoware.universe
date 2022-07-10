@@ -14,39 +14,33 @@ RansacVanishPoint::RansacVanishPoint()
   lsd_ = createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
 }
 
+void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
+{
+  for (int index : last_inlier_horizontal_indices_) {
+    const auto & segment = last_horizontals_.at(index);
+    cv::Point2i from(segment.from_.x(), segment.from_.y());
+    cv::Point2i to(segment.to_.x(), segment.to_.y());
+    cv::line(image, from, to, cv::Scalar(0, 0, 255), 2);
+  }
+}
+
 cv::Point2f RansacVanishPoint::estimate(const cv::Mat & line_segments)
 {
-  Vec3Vec horizontal, vertical;
-  Vec3Vec mid_and_theta;
+  SegmentVec horizontals, verticals;
 
   auto toCvPoint = [](const Eigen::Vector2f & v) { return cv::Point(v.x(), v.y()); };
 
   for (int i = 0; i < line_segments.rows; i++) {
-    cv::Mat xy_xy = line_segments.row(i);
-    Eigen::Vector2f xy1, xy2;
-    xy1 << xy_xy.at<float>(0), xy_xy.at<float>(1);
-    xy2 << xy_xy.at<float>(2), xy_xy.at<float>(3);
-
-    Eigen::Vector2f tangent = xy1 - xy2;
-    Eigen::Vector2f normal(tangent(1), -tangent(0));
-    Eigen::Vector3f abc;
-    abc << normal(0), normal(1), -normal.dot(xy1);
-
-    float dot_horizontal = abc.dot(Eigen::Vector3f::UnitY());
-    float dot_vertical = abc.dot(Eigen::Vector3f::UnitX());
-    bool is_horizontal = std::abs(dot_vertical) < std::abs(dot_horizontal);
-
-    if (is_horizontal) {
-      horizontal.push_back(abc);
-      Eigen::Vector2f mid = (xy1 + xy2) / 2;
-      float theta = std::atan2(tangent.y(), tangent.x());
-      mid_and_theta.push_back({mid.x(), mid.y(), theta});
+    LineSegment segment(line_segments.row(i));
+    if (segment.is_horizontal_) {
+      horizontals.push_back(segment);
     } else {
-      vertical.push_back(abc);
+      verticals.push_back(segment);
     }
   }
 
-  Eigen::Vector2f vanish = estimateVanishPoint(horizontal, mid_and_theta);
+  Eigen::Vector2f vanish = estimateVanishPoint(horizontals);
+  last_horizontals_ = horizontals;
 
   return cv::Point2f(vanish.x(), vanish.y());
 }
@@ -60,11 +54,8 @@ cv::Point2f RansacVanishPoint::operator()(const cv::Mat & image)
   return estimate(line_segments);
 }
 
-Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(
-  const Vec3Vec & horizontals, const Vec3Vec & mid_and_theta) const
+Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizontals)
 {
-  assert(mid_and_theta.size() != horizontals.size());
-
   constexpr int max_iteration = 500;
   constexpr int sample_count = 4;  // must be equal or larther than 2
   constexpr float inlier_ratio = 0.2;
@@ -73,67 +64,62 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(
   std::mt19937 engine{seed_gen_()};
 
   Eigen::Vector2f best_candidate;
-  float best_residual;
+  float best_residual = std::numeric_limits<float>::max();
 
   const int N = horizontals.size();
 
-  int enough_inlier_samples = 0;
-
   for (int itr = 0; itr < max_iteration; itr++) {
-    Vec3Vec samples;
+    SegmentVec samples;
     std::sample(
       horizontals.begin(), horizontals.end(), std::back_inserter(samples), sample_count, engine);
 
-    Eigen::Matrix<float, sample_count, 2> A;
-    Eigen::Matrix<float, sample_count, 1> b;
+    Eigen::MatrixXf A_sample(sample_count, 2);
+    Eigen::MatrixXf b_sample(sample_count, 1);
     for (int i = 0; i < sample_count; i++) {
-      A(i, 0) = samples.at(i).x();
-      A(i, 1) = samples.at(i).y();
-      b(i) = -samples.at(i).z();
-
-      // if (itr == 0) drawLine(samples.at(i));
+      A_sample(i, 0) = samples.at(i).abc_.x();
+      A_sample(i, 1) = samples.at(i).abc_.y();
+      b_sample(i) = -samples.at(i).abc_.z();
     }
-    Eigen::VectorXf candidate = A.householderQr().solve(b);
+    Eigen::VectorXf candidate = A_sample.householderQr().solve(b_sample);
     Eigen::Vector2f candidate2(candidate.x(), candidate.y());
-    Eigen::Vector3f candidate3(candidate.x(), candidate.y(), 1);
 
     int inliers_count = 0;
-    Vec3Vec inliers;
+    SegmentVec inliers;
+    std::vector<int> inlier_indices;
     for (int i = 0; i < N; i++) {
-      const Eigen::Vector2f mid = mid_and_theta.at(i).topRows(2);
-      const float theta = mid_and_theta.at(i).z();
+      const LineSegment & segment = horizontals.at(i);
+      const Eigen::Vector2f mid = segment.mid_;
+      const float theta = segment.theta_;
 
       Eigen::Vector2f tangent(std::cos(theta), std::sin(theta));
       Eigen::Vector2f target = (candidate2 - mid);
       tangent.normalize();
       target.normalize();
       if (std::abs(target.dot(tangent)) > error_threshold) {
-        inliers.push_back(horizontals.at(i));
+        inliers.push_back(segment);
+        inlier_indices.push_back(i);
       }
     }
 
     if (inliers.size() < inlier_ratio * N) continue;
-    enough_inlier_samples++;
 
-    {
-      Eigen::MatrixXf A(inliers.size(), 2);
-      Eigen::MatrixXf b(inliers.size(), 1);
-      for (int i = 0; i < inliers.size(); i++) {
-        A(i, 0) = inliers.at(i).x();
-        A(i, 1) = inliers.at(i).y();
-        b(i) = -inliers.at(i).z();
-      }
-      Eigen::VectorXf new_candidate = A.householderQr().solve(b);
-      float residual = (A * new_candidate - b).squaredNorm() / inliers.size();
-
-      if (residual < best_residual) {
-        best_residual = residual;
-        best_candidate = new_candidate;
-      }
+    Eigen::MatrixXf A_inlier(inliers.size(), 2);
+    Eigen::MatrixXf b_inlier(inliers.size(), 1);
+    for (int i = 0; i < inliers.size(); i++) {
+      A_inlier(i, 0) = inliers.at(i).abc_.x();
+      A_inlier(i, 1) = inliers.at(i).abc_.y();
+      b_inlier(i) = -inliers.at(i).abc_.z();
     }
+    Eigen::VectorXf new_candidate = A_inlier.householderQr().solve(b_inlier);
+    float residual = (A_inlier * new_candidate - b_inlier).squaredNorm() / inliers.size();
 
-    best_candidate = candidate;
+    if (residual < best_residual) {
+      best_residual = residual;
+      best_candidate = new_candidate;
+      last_inlier_horizontal_indices_ = inlier_indices;
+    }
   }
+
   return best_candidate;
 }
 

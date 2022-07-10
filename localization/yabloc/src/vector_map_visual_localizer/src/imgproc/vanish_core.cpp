@@ -117,6 +117,7 @@ void VanishPoint::callbackImage(const Image & msg)
 
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Point2f vanish = ransac_vanish_point_(image);
+  ransac_vanish_point_.drawActiveLines(image);
   drawHorizontalLine(image, vanish, Eigen::Vector2f::UnitY());
 
   // Visualize estimated vanishing point
