@@ -126,7 +126,8 @@ void VanishPoint::callbackImage(const Image & msg)
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
   Eigen::Vector3f vp = K.inverse() * Eigen::Vector3f(vanish.x, vanish.y, 1);
-  Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp);
+  // Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp);
+  Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp, Eigen::Vector2f::UnitY());
 
   drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 255));
   // std::cout << "raw: " << rot.unit_quaternion().coeffs().transpose() << std::endl;

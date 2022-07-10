@@ -61,4 +61,30 @@ Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp)
 
   return Sophus::SO3f(qf);
 }
+
+Sophus::SO3f optimizeOnce(
+  const Sophus::SO3f & R, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical)
+{
+  Problem problem;
+  LossFunction * loss = nullptr;
+
+  Eigen::Vector4d q = R.unit_quaternion().coeffs().cast<double>();
+  problem.AddParameterBlock(q.data(), 4, new ceres::EigenQuaternionParameterization());
+  problem.AddResidualBlock(VanishPointFactor::create(vp), loss, q.data());
+  problem.AddResidualBlock(HorizonFactor::create(vertical), loss, q.data());
+
+  Solver::Options options;
+  options.max_num_iterations = 50;
+  options.linear_solver_type = ceres::DENSE_QR;
+  Solver::Summary summary;
+  Solve(options, &problem, &summary);
+
+  std::cout << summary.BriefReport() << std::endl;
+  // std::cout << summary.FullReport() << std::endl;
+
+  Eigen::Quaternionf qf;
+  qf.coeffs() = q.cast<float>();
+
+  return Sophus::SO3f(qf);
+}
 }  // namespace imgproc::opt
