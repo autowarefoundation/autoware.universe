@@ -87,6 +87,22 @@ void VanishPoint::drawHorizontalLine(
   cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, 1);
 }
 
+void VanishPoint::drawHorizontalLine(
+  const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
+  const cv::Scalar & color)
+{
+  const int H = image.rows;
+
+  Eigen::Vector2f t = tangent;
+  if (t.y() < 0) t = -t;
+
+  float lambda1 = -vp.y / (t.y() + 1e-6f);
+  float lambda2 = (H - vp.y) / (t.y() + 1e-6f);
+  float u1 = lambda1 * tangent.x() + vp.x;
+  float u2 = lambda2 * tangent.x() + vp.x;
+  cv::line(image, cv::Point(u1, 0), cv::Point2i(u2, H), color, 1);
+}
+
 void VanishPoint::callbackImage(const Image & msg)
 {
   auto opt_imu_ex =
@@ -101,6 +117,7 @@ void VanishPoint::callbackImage(const Image & msg)
 
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Point2f vanish = ransac_vanish_point_(image);
+  drawHorizontalLine(image, vanish, Eigen::Vector2f::UnitY());
 
   // Visualize estimated vanishing point
   Sophus::SO3f rot = rotation_ * Sophus::SO3f(opt_camera_ex->rotation());

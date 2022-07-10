@@ -5,7 +5,6 @@
 #include <opencv4/opencv2/imgproc.hpp>
 
 #include <iostream>
-#include <random>
 
 namespace imgproc
 {
@@ -15,15 +14,8 @@ RansacVanishPoint::RansacVanishPoint()
   lsd_ = createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
 }
 
-cv::Point2f RansacVanishPoint::operator()(const cv::Mat & image)
+cv::Point2f RansacVanishPoint::estimate(const cv::Mat & line_segments)
 {
-  cv::Mat gray_image;
-  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-  cv::Mat line_segments;
-  lsd_->detect(gray_image, line_segments);
-  // lsd_->drawSegments(gray_image, line_segments);
-
-  Vec3Vec lines;
   Vec3Vec horizontal, vertical;
   Vec3Vec mid_and_theta;
 
@@ -39,58 +31,51 @@ cv::Point2f RansacVanishPoint::operator()(const cv::Mat & image)
     Eigen::Vector2f normal(tangent(1), -tangent(0));
     Eigen::Vector3f abc;
     abc << normal(0), normal(1), -normal.dot(xy1);
-    lines.push_back(abc);
 
     float dot_horizontal = abc.dot(Eigen::Vector3f::UnitY());
     float dot_vertical = abc.dot(Eigen::Vector3f::UnitX());
     bool is_horizontal = std::abs(dot_vertical) < std::abs(dot_horizontal);
 
-    cv::Scalar color;
     if (is_horizontal) {
       horizontal.push_back(abc);
       Eigen::Vector2f mid = (xy1 + xy2) / 2;
       float theta = std::atan2(tangent.y(), tangent.x());
       mid_and_theta.push_back({mid.x(), mid.y(), theta});
-      color = cv::Scalar(0, 0, 255);
     } else {
       vertical.push_back(abc);
-      color = cv::Scalar(255, 0, 0);
     }
-    cv::line(image, toCvPoint(xy1), toCvPoint(xy2), color, 1, cv::LINE_8);
   }
 
-  Eigen::Vector2f vanish = estimateVanishPoint(horizontal, mid_and_theta, image);
+  Eigen::Vector2f vanish = estimateVanishPoint(horizontal, mid_and_theta);
 
   return cv::Point2f(vanish.x(), vanish.y());
 }
 
+cv::Point2f RansacVanishPoint::operator()(const cv::Mat & image)
+{
+  cv::Mat gray_image;
+  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+  cv::Mat line_segments;
+  lsd_->detect(gray_image, line_segments);
+  return estimate(line_segments);
+}
+
 Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(
-  const Vec3Vec & horizontals, const Vec3Vec & mid_and_theta, const cv::Mat & image) const
+  const Vec3Vec & horizontals, const Vec3Vec & mid_and_theta) const
 {
   assert(mid_and_theta.size() != horizontals.size());
 
   constexpr int max_iteration = 500;
   constexpr int sample_count = 4;  // must be equal or larther than 2
   constexpr float inlier_ratio = 0.2;
-  const float error_threshold = std::cos(2 * 3.14 / 180);  // 5[deg]
+  const float error_threshold = std::cos(2 * 3.14 / 180);  // [deg]
 
-  using CoeffMatrix = Eigen::Matrix<float, sample_count, 2>;
-  using CoeffVector = Eigen::Matrix<float, sample_count, 1>;
-
-  std::random_device seed_gen;
-  std::mt19937 engine{seed_gen()};
+  std::mt19937 engine{seed_gen_()};
 
   Eigen::Vector2f best_candidate;
   float best_residual;
 
   const int N = horizontals.size();
-
-  auto drawLine = [image](const Eigen::Vector3f & abc) -> void {
-    const int W = image.cols;
-    cv::Point2i p1(0, -abc.z() / (abc.y() + 1e-4f));
-    cv::Point2i p2(W, (-abc.x() * W - abc.z()) / (abc.y() + 1e-4f));
-    cv::line(image, p1, p2, cv::Scalar(0, 255, 0), 1);
-  };
 
   int enough_inlier_samples = 0;
 
@@ -99,8 +84,8 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(
     std::sample(
       horizontals.begin(), horizontals.end(), std::back_inserter(samples), sample_count, engine);
 
-    CoeffMatrix A;
-    CoeffVector b;
+    Eigen::Matrix<float, sample_count, 2> A;
+    Eigen::Matrix<float, sample_count, 1> b;
     for (int i = 0; i < sample_count; i++) {
       A(i, 0) = samples.at(i).x();
       A(i, 1) = samples.at(i).y();

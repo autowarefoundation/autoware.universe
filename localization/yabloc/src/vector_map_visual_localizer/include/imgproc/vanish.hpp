@@ -37,6 +37,10 @@ private:
   std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};
 
   void drawHorizontalLine(
+    const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
+    const cv::Scalar & color = cv::Scalar(0, 255, 0));
+
+  void drawHorizontalLine(
     const cv::Mat & image, const Sophus::SO3f & rot,
     const cv::Scalar & color = cv::Scalar(0, 255, 0));
 
