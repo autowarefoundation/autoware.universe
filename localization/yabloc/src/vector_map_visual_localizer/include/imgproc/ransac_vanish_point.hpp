@@ -17,12 +17,20 @@ struct LineSegment
     Eigen::Vector2f normal(tangent(1), -tangent(0));
     abc_ << normal(0), normal(1), -normal.dot(from_);
 
-    float dot_horizontal = abc_.dot(Eigen::Vector3f::UnitY());
-    float dot_vertical = abc_.dot(Eigen::Vector3f::UnitX());
+    const float cos45deg = std::sqrt(2.f) / 2.f;
+    const Eigen::Vector3f unit_d1 = Eigen::Vector3f(cos45deg, cos45deg, 0);
+    const Eigen::Vector3f unit_d2 = Eigen::Vector3f(-cos45deg, cos45deg, 0);
 
-    is_horizontal_ = std::abs(dot_vertical) * 0.7 < std::abs(dot_horizontal);
+    float dot_diagonal1 = std::abs(abc_.dot(unit_d1));
+    float dot_diagonal2 = std::abs(abc_.dot(unit_d2));
+    float dot_diagonal = std::max(dot_diagonal1, dot_diagonal2);
 
-    mid_ = (from_ + to_) / 2;
+    float dot_horizontal = std::abs(abc_.dot(Eigen::Vector3f::UnitY()));
+    float dot_vertical = std::abs(abc_.dot(Eigen::Vector3f::UnitX()));
+
+    is_diagonal_ = (dot_diagonal > 0.9f * dot_horizontal) & (dot_diagonal > 0.9f * dot_vertical);
+
+    mid_ = (from_ + to_) / 2.f;
     theta_ = std::atan2(tangent.y(), tangent.x());
   }
 
@@ -31,7 +39,7 @@ struct LineSegment
   Eigen::Vector2f mid_;
   Eigen::Vector2f from_, to_;
   Eigen::Vector3f abc_;
-  bool is_horizontal_;
+  bool is_diagonal_;
 };
 
 class RansacVanishPoint
@@ -49,6 +57,11 @@ public:
   void drawActiveLines(const cv::Mat & image) const;
 
 private:
+  const int max_iteration_ = 500;
+  const int sample_count_ = 4;  // must be equal or larther than 2
+  const float inlier_ratio_ = 0.2;
+  const float error_threshold_ = std::cos(2 * 3.14 / 180);  // [deg]
+
   mutable std::random_device seed_gen_;
   SegmentVec last_horizontals_;
   std::vector<int> last_inlier_horizontal_indices_;
