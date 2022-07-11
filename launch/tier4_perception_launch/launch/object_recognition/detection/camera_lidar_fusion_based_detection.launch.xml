@@ -111,7 +111,7 @@
     <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
       <arg name="input" value="camera_lidar_fusion/objects_with_feature"/>
       <arg name="output" value="camera_lidar_fusion/objects"/>
-    <arg name="node_name" value="detected_object_feature_camera_lidar_fusion" />
+      <arg name="node_name" value="detected_object_feature_camera_lidar_fusion" />
     </include>
     <include file="$(find-pkg-share object_range_splitter)/launch/object_range_splitter.launch.xml">
       <arg name="input/object" value="camera_lidar_fusion/objects"/>
