@@ -140,7 +140,9 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   auto stop_dist = run_out_utils::calcDecelDistWithJerkAndAccConstraints(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
-  const double stop_distance = !stop_dist ? 0 : *stop_dist;
+  if (!stop_dist) {
+    stop_dist = boost::make_optional<double>(0.0);
+  }
 
   // create detection area polygon
   DetectionRange da_range;
