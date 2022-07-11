@@ -94,10 +94,13 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
+# Create folder to store trained models.
+# NOTE: This must be created regardless of CUDA_AVAIL to be specified in ament_auto_package()
+set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
+execute_process(COMMAND mkdir -p ${DATA_PATH})
+
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   # Download trained models
-  set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
-  execute_process(COMMAND mkdir -p ${DATA_PATH})
 
   message(STATUS "start to download")
   function(download FILE_NAME FILE_HASH)
