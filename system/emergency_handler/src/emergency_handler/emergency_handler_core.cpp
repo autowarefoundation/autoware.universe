@@ -44,6 +44,12 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // subscribe control mode
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
+  sub_mrm_comfortable_stop_status_ = create_subscription<autoware_ad_api_msgs::msg::MRMStatus>(
+    "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onMRMComfortableStopStatus, this, _1));
+  sub_mrm_sudden_stop_status_ = create_subscription<autoware_ad_api_msgs::msg::MRMStatus>(
+    "~/input/mrm/sudden_stop/status", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onMRMSuddenStopStatus, this, _1));
 
   // Heartbeat
   heartbeat_hazard_status_ = std::make_shared<
@@ -51,10 +57,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     *this, "~/input/hazard_status", param_.timeout_hazard_status);
 
   // Publisher
-  pub_mrm_command_ = create_publisher<autoware_auto_system_msgs::msg::MRMCommand>(
-    "~/output/mrm_command", rclcpp::QoS{1});
-  pub_mrm_status_ = create_publisher<autoware_auto_system_msgs::msg::MRMStatus>(
-    "~/output/mrm_status", rclcpp::QoS{1});
   pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_command", rclcpp::QoS{1});
   pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
@@ -63,12 +65,18 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_emergency_state_ = create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
     "~/output/emergency_state", rclcpp::QoS{1});
+  client_mrm_comfortable_stop_ =
+    create_client<autoware_ad_api_msgs::srv::MRMOperation>("~/output/mrm/comfortable_stop/operate");
+  client_mrm_sudden_stop_ =
+    create_client<autoware_ad_api_msgs::srv::MRMOperation>("~/output/mrm/sudden_stop/operate");
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
+  mrm_comfortable_stop_status_ = std::make_shared<const autoware_ad_api_msgs::msg::MRMStatus>();
+  mrm_sudden_stop_status_ = std::make_shared<const autoware_ad_api_msgs::msg::MRMStatus>();
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -100,6 +108,18 @@ void EmergencyHandler::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
+}
+
+void EmergencyHandler::onMRMComfortableStopStatus(
+  const autoware_ad_api_msgs::msg::MRMStatus::ConstSharedPtr msg)
+{
+  mrm_comfortable_stop_status_ = msg;
+}
+
+void EmergencyHandler::onMRMSuddenStopStatus(
+  const autoware_ad_api_msgs::msg::MRMStatus::ConstSharedPtr msg)
+{
+  mrm_sudden_stop_status_ = msg;
 }
 
 autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
