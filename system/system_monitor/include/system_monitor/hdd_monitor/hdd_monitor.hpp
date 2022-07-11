@@ -33,7 +33,8 @@
  */
 struct HDDParam
 {
-  std::string device_;                      //!< @brief device
+  std::string part_device_;                 //!< @brief partition device
+  std::string disk_device_;                 //!< @brief disk device
   float temp_warn_;                         //!< @brief HDD temperature(DegC) to generate warning
   float temp_error_;                        //!< @brief HDD temperature(DegC) to generate error
   int power_on_hours_warn_;                 //!< @brief HDD power on hours to generate warning
@@ -46,6 +47,11 @@ struct HDDParam
   float write_data_rate_warn_;  //!< @brief HDD data rate(MB/s) of write to generate warning
   float read_iops_warn_;        //!< @brief HDD IOPS of read to generate warning
   float write_iops_warn_;       //!< @brief HDD IOPS of write to generate warning
+  uint8_t temp_attribute_id_;   //!< @brief S.M.A.R.T attribute ID of temperature
+  uint8_t power_on_hours_attribute_id_;  //!< @brief S.M.A.R.T attribute ID of power on hours
+  uint8_t
+    total_data_written_attribute_id_;     //!< @brief S.M.A.R.T attribute ID of total data written
+  uint8_t recovered_error_attribute_id_;  //!< @brief S.M.A.R.T attribute ID of recovered error
 
   HDDParam()
   : temp_warn_(55.0),
@@ -59,7 +65,11 @@ struct HDDParam
     read_data_rate_warn_(360.0),
     write_data_rate_warn_(103.5),
     read_iops_warn_(63360.0),
-    write_iops_warn_(24120.0)
+    write_iops_warn_(24120.0),
+    temp_attribute_id_(0xC2),
+    power_on_hours_attribute_id_(0x09),
+    total_data_written_attribute_id_(0xF1),
+    recovered_error_attribute_id_(0xC3)
   {
   }
 };
@@ -310,7 +320,6 @@ protected:
 
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HDDParam> hdd_params_;  //!< @brief list of error and warning levels
-  std::vector<HDDDevice> hdd_devices_;          //!< @brief list of devices
   std::map<std::string, bool>
     hdd_connected_flags_;  //!< @brief list of flag whether HDD is connected
   std::map<std::string, uint32_t>

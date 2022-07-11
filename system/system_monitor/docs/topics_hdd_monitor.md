@@ -198,7 +198,8 @@
 
 <b>[values]</b>
 
-| key               | value (example)    |
-| ----------------- | ------------------ |
-| HDD [0-9]: status | OK / not connected |
-| HDD [0-9]: name   | /dev/nvme0         |
+| key                    | value (example)    |
+| ---------------------- | ------------------ |
+| HDD [0-9]: status      | OK / not connected |
+| HDD [0-9]: name        | /dev/nvme0         |
+| HDD [0-9]: mount point | /                  |

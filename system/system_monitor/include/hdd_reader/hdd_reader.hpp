@@ -93,6 +93,7 @@ struct HDDInfo
     ar & temp_;
     ar & power_on_hours_;
     ar & total_data_written_;
+    ar & recovered_error_;
     ar & is_valid_temp_;
     ar & is_valid_power_on_hours_;
     ar & is_valid_total_data_written_;
