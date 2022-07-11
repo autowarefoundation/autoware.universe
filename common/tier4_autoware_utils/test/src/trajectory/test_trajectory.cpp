@@ -2206,9 +2206,6 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   // Empty
   {
     auto empty_traj = generateTestTrajectory<Trajectory>(0, 1.0);
-    EXPECT_THROW(
-      insertTargetPoint(0.0, empty_traj.points),
-      std::invalid_argument);
+    EXPECT_THROW(insertTargetPoint(0.0, empty_traj.points), std::invalid_argument);
   }
 }
-

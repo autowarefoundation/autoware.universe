@@ -875,8 +875,7 @@ inline boost::optional<size_t> insertTargetPoint(
  */
 template <class T>
 inline boost::optional<size_t> insertTargetPoint(
-  const double insert_point_length, T & points,
-  const double overlap_threshold = 1e-3)
+  const double insert_point_length, T & points, const double overlap_threshold = 1e-3)
 {
   validateNonEmpty(points);
 
@@ -899,10 +898,12 @@ inline boost::optional<size_t> insertTargetPoint(
   }
 
   // Get Target Point
-  const double segment_length = calcSignedArcLength(points, *segment_idx, *segment_idx+1);
-  const double target_length = std::max(0.0, insert_point_length - calcSignedArcLength(points, 0, *segment_idx));
+  const double segment_length = calcSignedArcLength(points, *segment_idx, *segment_idx + 1);
+  const double target_length =
+    std::max(0.0, insert_point_length - calcSignedArcLength(points, 0, *segment_idx));
   const double ratio = std::clamp(target_length / segment_length, 0.0, 1.0);
-  const auto p_target = calcInterpolatedPoint(getPoint(points.at(*segment_idx)), getPoint(points.at(*segment_idx+1)), ratio);
+  const auto p_target = calcInterpolatedPoint(
+    getPoint(points.at(*segment_idx)), getPoint(points.at(*segment_idx + 1)), ratio);
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
