@@ -73,8 +73,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             obstacle_avoidance_planner_param,
             vehicle_info_param,
-            {"is_showing_debug_info": False},
-            {"is_stopping_if_outside_drivable_area": True},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -168,7 +166,6 @@ def launch_setup(context, *args, **kwargs):
             obstacle_stop_planner_param,
             obstacle_stop_planner_acc_param,
             vehicle_info_param,
-            {"enable_slow_down": False},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -291,9 +288,9 @@ def generate_launch_description():
     )
 
     # surround obstacle checker
-    add_launch_arg("use_surround_obstacle_check", "true", "launch surround_obstacle_checker or not")
+    add_launch_arg("use_surround_obstacle_check", None, "launch surround_obstacle_checker or not")
     add_launch_arg(
-        "cruise_planner", "obstacle_stop_planner", "cruise planner type"
+        "cruise_planner", None, "cruise planner type"
     )  # select from "obstacle_stop_planner", "obstacle_cruise_planner", "none"
 
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
