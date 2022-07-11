@@ -28,6 +28,9 @@
 // ROS2 core
 #include <rclcpp/rclcpp.hpp>
 
+namespace mrm_comfortable_stop_operator
+{
+
 struct Parameters
 {
   int update_rate;  // [Hz]
@@ -39,7 +42,7 @@ struct Parameters
 class MRMComfortableStopOperator : public rclcpp::Node
 {
 public:
-  MRMComfortableStopOperator();
+  explicit MRMComfortableStopOperator(const rclcpp::NodeOptions & node_options);
 
 private:
   // Parameters
@@ -71,5 +74,7 @@ private:
   bool is_operating_;
 
 };
+
+}  // namespace mrm_comfortable_stop_operator
 
 #endif  // MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_

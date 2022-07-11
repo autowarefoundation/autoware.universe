@@ -14,8 +14,11 @@
 
 #include "mrm_comfortable_stop_operator/mrm_comfortable_stop_operator_core.hpp"
 
+namespace mrm_comfortable_stop_operator
+{
 
-MRMComfortableStopOperator::MRMComfortableStopOperator() : Node("mrm_comfortable_stop_operator")
+MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions & node_options)
+: Node("mrm_comfortable_stop_operator", node_options)
 {
   // Parameter
   params_.update_rate = static_cast<int>(declare_parameter<int>("update_rate", 1));
@@ -99,3 +102,8 @@ void MRMComfortableStopOperator::onTimer() const
 {
   publishStatus();
 }
+
+}  // namespace mrm_comfortable_stop_operator
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(mrm_comfortable_stop_operator::MRMComfortableStopOperator)
