@@ -7,6 +7,31 @@ find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 autoware_package()
 
+# Build non-CUDA dependent nodes
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/fusion_node.cpp
+  src/debugger.cpp
+  src/utils/geometry.cpp
+  src/utils/utils.cpp
+  src/roi_cluster_fusion/node.cpp
+  src/roi_detected_object_fusion/node.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+  ${OpenCV_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "image_projection_based_fusion::RoiDetectedObjectFusionNode"
+  EXECUTABLE roi_detected_object_fusion_node
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
+  EXECUTABLE roi_cluster_fusion_node
+)
+
 set(CUDA_VERBOSE OFF)
 
 # set flags for CUDA availability
@@ -69,12 +94,12 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
-message(STATUS "start to download")
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
-# Download trained models
+  # Download trained models
   set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
   execute_process(COMMAND mkdir -p ${DATA_PATH})
 
+  message(STATUS "start to download")
   function(download FILE_NAME FILE_HASH)
     message(STATUS "Checking and downloading ${FILE_NAME}")
     set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
@@ -122,13 +147,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${PCL_INCLUDE_DIRS}
   )
 
-  ament_auto_add_library(${PROJECT_NAME} SHARED
-    src/fusion_node.cpp
-    src/debugger.cpp
-    src/utils/geometry.cpp
-    src/utils/utils.cpp
-    src/roi_cluster_fusion/node.cpp
-    src/roi_detected_object_fusion/node.cpp
+  ament_auto_add_library(pointpainting_lib SHARED
     src/pointpainting_fusion/node.cpp
     src/pointpainting_fusion/pointpainting_trt.cpp
     src/pointpainting_fusion/voxel_generator.cpp
@@ -138,7 +157,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     src/pointpainting_fusion/preprocess_kernel.cu
   )
 
-  target_link_libraries(${PROJECT_NAME}
+  target_link_libraries(pointpainting_lib
     ${OpenCV_LIBRARIES}
     ${EIGEN3_LIBRARIES}
     ${PCL_LIBRARIES}
@@ -150,29 +169,14 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     pointpainting_cuda_lib
   )
 
-  rclcpp_components_register_node(${PROJECT_NAME}
-    PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
-    EXECUTABLE roi_cluster_fusion_node
+  rclcpp_components_register_node(pointpainting_lib
+    PLUGIN "image_projection_based_fusion::PointpaintingFusionNode"
+    EXECUTABLE pointpainting_fusion_node
   )
+
 else()
-  find_package(ament_cmake_auto REQUIRED)
-  ament_auto_find_build_dependencies()
-
-  ament_auto_package(
-    INSTALL_TO_SHARE
-      launch
-  )
+  message("Skipping build of some nodes due to missing dependencies")
 endif()
-
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "image_projection_based_fusion::RoiDetectedObjectFusionNode"
-  EXECUTABLE roi_detected_object_fusion_node
-)
-
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "image_projection_based_fusion::PointpaintingFusionNode"
-  EXECUTABLE pointpainting_fusion_node
-)
 
 ament_auto_package(INSTALL_TO_SHARE
     launch
