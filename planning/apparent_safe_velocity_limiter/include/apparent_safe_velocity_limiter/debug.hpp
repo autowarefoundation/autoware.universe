@@ -40,20 +40,20 @@ visualization_msgs::msg::MarkerArray makeLinestringMarkers(
 
 /// @brief make the Marker showing the apparent safety envelope of the given trajectory
 /// @param[in] trajectory trajectory for which to make the apparent safety envelope
-/// @param[in] fn function used to project the trajectory points used to create the envelope
+/// @param[in] projection_params parameters for forward projection
 /// @return marker representing the apparent safety envelope of the trajectory
 visualization_msgs::msg::Marker makeEnvelopeMarker(
-  const Trajectory & trajectory, const ForwardProjectionFunction & fn);
+  const Trajectory & trajectory, ProjectionParameters & projection_params);
 
 /// @brief make debug marker array of obstacle lines and original & adjusted envelopes
 /// @param[in] original_trajectory trajectory with original velocities
 /// @param[in] adjusted_trajectory trajectory with adjusted velocities
 /// @param[in] polygons obstacle polygons
-/// @param[in] fwd_sim_fn function to do forward projection at each trajectory point
+/// @param[in] projection_params parameters for forward projection
 /// @param[in] z z-value to use for markers
 /// @return marker array with the original and adjusted envelope and the obstacle lines
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & lines, const ForwardProjectionFunction & fwd_sim_fn, const Float z);
+  const multilinestring_t & lines, ProjectionParameters & projection_params, const Float z);
 }  // namespace apparent_safe_velocity_limiter
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__DEBUG_HPP_

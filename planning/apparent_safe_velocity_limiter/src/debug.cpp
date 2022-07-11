@@ -14,6 +14,7 @@
 
 #include "apparent_safe_velocity_limiter/debug.hpp"
 
+#include "apparent_safe_velocity_limiter/forward_projection.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
@@ -53,7 +54,7 @@ visualization_msgs::msg::MarkerArray makeLinestringMarkers(
 }
 
 visualization_msgs::msg::Marker makeEnvelopeMarker(
-  const Trajectory & trajectory, const ForwardProjectionFunction & fn)
+  const Trajectory & trajectory, ProjectionParameters & projection_params)
 {
   visualization_msgs::msg::Marker envelope;
   envelope.header = trajectory.header;
@@ -61,7 +62,8 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
   envelope.scale.x = 0.1;
   envelope.color.a = 1.0;
   for (const auto & point : trajectory.points) {
-    const auto vector = fn(point);
+    projection_params.update(point);
+    const auto vector = forwardSimulatedSegment(point.pose.position, projection_params);
     geometry_msgs::msg::Point p;
     p.x = vector.second.x();
     p.y = vector.second.y();
@@ -73,15 +75,14 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & lines, const ForwardProjectionFunction & fwd_sim_fn,
-  const Float marker_z)
+  const multilinestring_t & lines, ProjectionParameters & projection_params, const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
-  auto original_envelope = makeEnvelopeMarker(original_trajectory, fwd_sim_fn);
+  auto original_envelope = makeEnvelopeMarker(original_trajectory, projection_params);
   original_envelope.color.r = 1.0;
   original_envelope.ns = "original";
   debug_markers.markers.push_back(original_envelope);
-  auto adjusted_envelope = makeEnvelopeMarker(adjusted_trajectory, fwd_sim_fn);
+  auto adjusted_envelope = makeEnvelopeMarker(adjusted_trajectory, projection_params);
   adjusted_envelope.color.g = 1.0;
   adjusted_envelope.ns = "adjusted";
   debug_markers.markers.push_back(adjusted_envelope);

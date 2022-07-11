@@ -29,6 +29,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(test_${PROJECT_NAME}
+    test/test_forward_projection.cpp
     test/test_collision_distance.cpp
     test/test_occupancy_grid_utils.cpp
   )

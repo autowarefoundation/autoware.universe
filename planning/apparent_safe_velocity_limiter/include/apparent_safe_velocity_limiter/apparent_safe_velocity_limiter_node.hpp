@@ -90,6 +90,7 @@ private:
   std::multiset<double> runtimes;
 
   // parameters
+  ProjectionParameters projection_params_;
   Float time_buffer_ = static_cast<Float>(declare_parameter<Float>("time_buffer"));
   Float distance_buffer_ = static_cast<Float>(declare_parameter<Float>("distance_buffer"));
   Float start_distance_ = static_cast<Float>(declare_parameter<Float>("start_distance"));
@@ -145,14 +146,16 @@ private:
   Trajectory downsampleTrajectory(const Trajectory & trajectory, const size_t start_idx) const;
   multipolygon_t createPolygonMasks() const;
   polygon_t createEnvelopePolygon(
-    const Trajectory & trajectory, const size_t start_idx, const double extra_vehicle_length) const;
+    const Trajectory & trajectory, const size_t start_idx,
+    ProjectionParameters & projections_params) const;
   bool validInputs(const boost::optional<size_t> & ego_idx);
   multilinestring_t createObstacleLines(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid,
     const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
     const polygon_t & envelope_polygon, const std::string & target_frame);
   void limitVelocity(
-    Trajectory & trajectory, const double extra_lenght, const multilinestring_t & obstacles) const;
+    Trajectory & trajectory, ProjectionParameters & projection_params,
+    const multilinestring_t & obstacles) const;
   Trajectory copyDownsampledVelocity(
     const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx) const;
 };

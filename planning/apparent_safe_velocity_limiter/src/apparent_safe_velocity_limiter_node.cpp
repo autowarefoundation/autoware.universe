@@ -16,6 +16,7 @@
 
 #include "apparent_safe_velocity_limiter/collision.hpp"
 #include "apparent_safe_velocity_limiter/debug.hpp"
+#include "apparent_safe_velocity_limiter/forward_projection.hpp"
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 #include "apparent_safe_velocity_limiter/pointcloud_utils.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
@@ -29,12 +30,13 @@
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+#include <tf2/utils.h>
 
 namespace apparent_safe_velocity_limiter
 {
 ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("apparent_safe_velocity_limiter", node_options)
+: rclcpp::Node("apparent_safe_velocity_limiter", node_options), projection_params_(*this)
 {
   sub_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
@@ -61,7 +63,10 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
   vehicle_front_offset_ = static_cast<Float>(vehicle_info.max_longitudinal_offset_m);
 
-  auto obstacle_type = declare_parameter<std::string>("obstacle_type");
+  projection_params_.wheel_base = vehicle_info.wheel_base_m;
+  projection_params_.extra_length = vehicle_front_offset_ + distance_buffer_;
+
+  const auto obstacle_type = declare_parameter<std::string>("obstacle_type");
   if (obstacle_type == "pointcloud")
     obstacle_type_ = POINTCLOUD;
   else if (obstacle_type == "occupancy_grid")
@@ -70,6 +75,7 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
     RCLCPP_WARN(
       get_logger(), "Unknown obstacle_type value: '%s'. Using default POINTCLOUD type.",
       obstacle_type.c_str());
+  projection_params_.duration = time_buffer_;
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
@@ -83,15 +89,17 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
   result.successful = true;
   for (const auto & parameter : parameters) {
     if (parameter.get_name() == "time_buffer") {
-      const auto new_time_buffer = static_cast<Float>(parameter.as_double());
-      if (new_time_buffer > 0.0) {
-        time_buffer_ = new_time_buffer;
+      const auto new_duration = static_cast<Float>(parameter.as_double());
+      if (new_duration > 0.0) {
+        time_buffer_ = new_duration;
+        projection_params_.duration = time_buffer_;
       } else {
         result.successful = false;
-        result.reason = "time_buffer must be positive";
+        result.reason = "duration of forward projection must be positive";
       }
     } else if (parameter.get_name() == "distance_buffer") {
       distance_buffer_ = static_cast<Float>(parameter.as_double());
+      projection_params_.extra_length = vehicle_front_offset_ + distance_buffer_;
     } else if (parameter.get_name() == "start_distance") {
       start_distance_ = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == "downsample_factor") {
@@ -121,6 +129,16 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
         result.successful = false;
         result.reason = "obstacle_type value must be 'pointcloud' or 'occupancy_grid'";
       }
+    } else if (parameter.get_name() == ProjectionParameters::MODEL_PARAM_NAME) {
+      if (!projection_params_.updateModel(*this, parameter.as_string())) {
+        result.successful = false;
+        result.reason = "Unknown forward projection model";
+      }
+    } else if (parameter.get_name() == ProjectionParameters::NBPOINTS_PARAM_NAME) {
+      if (!projection_params_.updateNbPoints(*this, parameter.as_int())) {
+        result.successful = false;
+        result.reason = "number of points for projections must be at least 2";
+      }
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -135,7 +153,6 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     tier4_autoware_utils::findNearestIndex(msg->points, self_pose_listener_.getCurrentPose()->pose);
   if (!validInputs(ego_idx)) return;
 
-  const auto extra_vehicle_length = vehicle_front_offset_ + distance_buffer_;
   const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
   Trajectory downsampled_traj = downsampleTrajectory(*msg, start_idx);
   // TODO(Maxime CLEMENT): used for debugging, remove before merging
@@ -149,22 +166,20 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   const auto polygon_masks = createPolygonMasks();
   obs_mask_duration += stopwatch.toc("obs_mask_duration");
   stopwatch.tic("obs_envelope_duration");
-  const auto envelope_polygon = createEnvelopePolygon(*msg, start_idx, extra_vehicle_length);
+  const auto envelope_polygon = createEnvelopePolygon(*msg, start_idx, projection_params_);
   obs_envelope_duration += stopwatch.toc("obs_envelope_duration");
   stopwatch.tic("obs_filter_duration");
   const auto obstacles = createObstacleLines(
     *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, msg->header.frame_id);
   obs_filter_duration += stopwatch.toc("obs_filter_duration");
-  limitVelocity(downsampled_traj, extra_vehicle_length, obstacles);
+  limitVelocity(downsampled_traj, projection_params_, obstacles);
   const auto safe_trajectory = copyDownsampledVelocity(downsampled_traj, *msg, start_idx);
 
   pub_trajectory_->publish(safe_trajectory);
 
-  ForwardProjectionFunction fn = [&](const TrajectoryPoint & p) {
-    return forwardSimulatedSegment(p, time_buffer_, distance_buffer_ + vehicle_front_offset_);
-  };
   pub_debug_markers_->publish(makeDebugMarkers(
-    *msg, safe_trajectory, obstacles, fn, occupancy_grid_ptr_->info.origin.position.z));
+    *msg, safe_trajectory, obstacles, projection_params_,
+    occupancy_grid_ptr_->info.origin.position.z));
   // TODO(Maxime CLEMENT): removes or change to RCLCPP_DEBUG before merging
   RCLCPP_WARN(get_logger(), "Runtimes");
   RCLCPP_WARN(get_logger(), "  obstacles masks      = %2.2fms", obs_mask_duration);
@@ -222,7 +237,8 @@ multipolygon_t ApparentSafeVelocityLimiterNode::createPolygonMasks() const
 }
 
 polygon_t ApparentSafeVelocityLimiterNode::createEnvelopePolygon(
-  const Trajectory & trajectory, const size_t start_idx, const double extra_vehicle_length) const
+  const Trajectory & trajectory, const size_t start_idx,
+  ProjectionParameters & projection_params) const
 {
   polygon_t envelope_polygon;
   const auto trajectory_size = trajectory.points.size() - start_idx;
@@ -231,8 +247,10 @@ polygon_t ApparentSafeVelocityLimiterNode::createEnvelopePolygon(
   envelope_polygon.outer().resize(trajectory_size * 2 + 1);
   for (size_t i = 0; i < trajectory_size; ++i) {
     const auto & point = trajectory.points[i + start_idx];
+    projection_params.velocity = point.longitudinal_velocity_mps;
+    projection_params.heading = tf2::getYaw(point.pose.orientation);
     const auto forward_simulated_vector =
-      forwardSimulatedSegment(point, time_buffer_, extra_vehicle_length);
+      forwardSimulatedSegment(point.pose.position, projection_params);
     envelope_polygon.outer()[i].x(forward_simulated_vector.second.x());
     envelope_polygon.outer()[i].y(forward_simulated_vector.second.y());
     const auto reverse_index = 2 * trajectory_size - i - 1;
@@ -265,8 +283,9 @@ multilinestring_t ApparentSafeVelocityLimiterNode::createObstacleLines(
   const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
   const polygon_t & envelope_polygon, const std::string & target_frame)
 {
+  multilinestring_t obstacle_lines;
   if (obstacle_type_ == OCCUPANCYGRID) {
-    return extractObstacleLines(
+    obstacle_lines = extractObstacleLines(
       occupancy_grid, polygon_masks, envelope_polygon, occupancy_grid_obstacle_threshold_);
   } else {
     const auto filtered_pcd = transformAndFilterPointCloud(
@@ -277,12 +296,14 @@ multilinestring_t ApparentSafeVelocityLimiterNode::createObstacleLines(
     ros_pointcloud.header.stamp = now();
     ros_pointcloud.header.frame_id = target_frame;
     pub_debug_pointcloud_->publish(ros_pointcloud);
-    return extractObstacleLines(filtered_pcd, vehicle_lateral_offset_ * 2);
+    obstacle_lines = extractObstacleLines(filtered_pcd, vehicle_lateral_offset_ * 2);
   }
+  return obstacle_lines;
 }
 
 void ApparentSafeVelocityLimiterNode::limitVelocity(
-  Trajectory & trajectory, const double extra_length, const multilinestring_t & obstacles) const
+  Trajectory & trajectory, ProjectionParameters & projection_params,
+  const multilinestring_t & obstacles) const
 {
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
@@ -293,8 +314,10 @@ void ApparentSafeVelocityLimiterNode::limitVelocity(
         tier4_autoware_utils::calcDistance2d(prev_point, trajectory_point) /
         prev_point.longitudinal_velocity_mps);
     }
+    projection_params.velocity = trajectory_point.longitudinal_velocity_mps;
+    projection_params.heading = tf2::getYaw(trajectory_point.pose.orientation);
     const auto forward_simulated_vector =
-      forwardSimulatedSegment(trajectory_point, time_buffer_, extra_length);
+      forwardSimulatedSegment(trajectory_point.pose.position, projection_params);
     const auto footprint = generateFootprint(forward_simulated_vector, vehicle_lateral_offset_);
     const auto dist_to_collision =
       distanceToClosestCollision(forward_simulated_vector, footprint, obstacles);
@@ -303,7 +326,8 @@ void ApparentSafeVelocityLimiterNode::limitVelocity(
       trajectory_point.longitudinal_velocity_mps = std::max(
         min_feasible_velocity,
         calculateSafeVelocity(
-          trajectory_point, static_cast<Float>(*dist_to_collision - extra_length)));
+          trajectory_point,
+          static_cast<Float>(*dist_to_collision - projection_params.extra_length)));
     }
   }
 }

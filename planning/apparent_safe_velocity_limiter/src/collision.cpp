@@ -23,40 +23,10 @@
 
 #include <algorithm>
 #include <limits>
-#include <vector>
 
 namespace apparent_safe_velocity_limiter
 {
 namespace bg = boost::geometry;
-
-segment_t forwardSimulatedSegment(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point, const double duration,
-  const double extra_distance)
-{
-  const auto heading = tf2::getYaw(trajectory_point.pose.orientation);
-  const auto velocity = trajectory_point.longitudinal_velocity_mps;
-  const auto length = velocity * duration + extra_distance;
-  const auto from = point_t{trajectory_point.pose.position.x, trajectory_point.pose.position.y};
-  const auto to =
-    point_t{from.x() + std::cos(heading) * length, from.y() + std::sin(heading) * length};
-  return segment_t{from, to};
-}
-
-polygon_t generateFootprint(const segment_t & segment, const double lateral_offset)
-{
-  return generateFootprint(linestring_t{segment.first, segment.second}, lateral_offset);
-}
-
-polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset)
-{
-  multipolygon_t footprint;
-  namespace strategy = bg::strategy::buffer;
-  bg::buffer(
-    linestring, footprint, strategy::distance_symmetric<double>(lateral_offset),
-    strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
-    strategy::point_square());
-  return footprint[0];
-}
 
 std::optional<double> distanceToClosestCollision(
   const segment_t & segment, const polygon_t & footprint, const multilinestring_t & obstacles)

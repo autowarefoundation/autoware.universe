@@ -14,136 +14,21 @@
 
 #include "apparent_safe_velocity_limiter/collision.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <gtest/gtest.h>
-#include <pcl/common/generate.h>
-#include <pcl/common/random.h>
-#include <pcl/point_cloud.h>
 
 #include <algorithm>
-
-TEST(TestCollisionDistance, forwardSimulatedSegment)
-{
-  using apparent_safe_velocity_limiter::forwardSimulatedSegment;
-  using apparent_safe_velocity_limiter::segment_t;
-  autoware_auto_planning_msgs::msg::TrajectoryPoint trajectory_point;
-
-  trajectory_point.pose.position.x = 0.0;
-  trajectory_point.pose.position.y = 0.0;
-
-  auto duration = 0.0;
-  auto extra_dist = 0.0;
-
-  const auto check_vector = [&](const auto vector_length) {
-    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(0.0);
-    auto vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
-    EXPECT_DOUBLE_EQ(vector.second.x(), vector_length);
-    EXPECT_DOUBLE_EQ(vector.second.y(), 0.0);
-    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_2);
-    vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
-    EXPECT_NEAR(vector.second.x(), 0.0, 1e-9);
-    EXPECT_DOUBLE_EQ(vector.second.y(), vector_length);
-    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(M_PI_4);
-    vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
-    EXPECT_DOUBLE_EQ(vector.second.x(), std::sqrt(0.5) * vector_length);
-    EXPECT_DOUBLE_EQ(vector.second.y(), std::sqrt(0.5) * vector_length);
-    trajectory_point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(-M_PI_2);
-    vector = forwardSimulatedSegment(trajectory_point, duration, extra_dist);
-    EXPECT_DOUBLE_EQ(vector.first.x(), trajectory_point.pose.position.x);
-    EXPECT_DOUBLE_EQ(vector.first.y(), trajectory_point.pose.position.y);
-    EXPECT_NEAR(vector.second.x(), 0.0, 1e-9);
-    EXPECT_DOUBLE_EQ(vector.second.y(), -vector_length);
-  };
-
-  // 0 velocity: whatever the duration the vector length is always = to extra_dist
-  trajectory_point.longitudinal_velocity_mps = 0.0;
-
-  duration = 0.0;
-  extra_dist = 0.0;
-  check_vector(extra_dist);
-
-  duration = 5.0;
-  extra_dist = 2.0;
-  check_vector(extra_dist);
-
-  duration = -5.0;
-  extra_dist = 3.5;
-  check_vector(extra_dist);
-
-  // set non-zero velocities
-  trajectory_point.longitudinal_velocity_mps = 1.0;
-
-  duration = 1.0;
-  extra_dist = 0.0;
-  check_vector(1.0 + extra_dist);
-
-  duration = 5.0;
-  extra_dist = 2.0;
-  check_vector(5.0 + extra_dist);
-
-  duration = -5.0;
-  extra_dist = 3.5;
-  check_vector(-5.0 + extra_dist);
-}
 
 const auto point_in_polygon = [](const auto x, const auto y, const auto & polygon) {
   return std::find_if(polygon.outer().begin(), polygon.outer().end(), [=](const auto & pt) {
            return pt.x() == x && pt.y() == y;
          }) != polygon.outer().end();
 };
-
-TEST(TestCollisionDistance, forwardSimulatedFootprint)
-{
-  using apparent_safe_velocity_limiter::generateFootprint;
-  using apparent_safe_velocity_limiter::linestring_t;
-  using apparent_safe_velocity_limiter::segment_t;
-
-  auto footprint = generateFootprint(linestring_t{{0.0, 0.0}, {1.0, 0.0}}, 1.0);
-  EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(0.0, -1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(1.0, 1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(1.0, -1.0, footprint));
-  footprint = generateFootprint(segment_t{{0.0, 0.0}, {1.0, 0.0}}, 1.0);
-  EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(0.0, -1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(1.0, 1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(1.0, -1.0, footprint));
-
-  footprint = generateFootprint(linestring_t{{0.0, 0.0}, {0.0, -1.0}}, 0.5);
-  EXPECT_TRUE(point_in_polygon(0.5, 0.0, footprint));
-  EXPECT_TRUE(point_in_polygon(0.5, -1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-0.5, 0.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-0.5, -1.0, footprint));
-  footprint = generateFootprint(segment_t{{0.0, 0.0}, {0.0, -1.0}}, 0.5);
-  EXPECT_TRUE(point_in_polygon(0.5, 0.0, footprint));
-  EXPECT_TRUE(point_in_polygon(0.5, -1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-0.5, 0.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-0.5, -1.0, footprint));
-
-  footprint = generateFootprint(linestring_t{{-2.5, 5.0}, {2.5, 0.0}}, std::sqrt(2));
-  EXPECT_TRUE(point_in_polygon(3.5, 1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(1.5, -1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-3.5, 4.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-1.5, 6.0, footprint));
-  footprint = generateFootprint(segment_t{{-2.5, 5.0}, {2.5, 0.0}}, std::sqrt(2));
-  EXPECT_TRUE(point_in_polygon(3.5, 1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(1.5, -1.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-3.5, 4.0, footprint));
-  EXPECT_TRUE(point_in_polygon(-1.5, 6.0, footprint));
-}
 
 TEST(TestCollisionDistance, distanceToClosestCollision)
 {

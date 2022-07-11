@@ -10,3 +10,9 @@
     occupancy_grid_obstacle_threshold: 60 # occupancy grid values higher than this are considered to be obstacles
     dynamic_obstacles_buffer: 1.0 # [m] extra distance around dynamic obstacles used to mask the occupancy grid and avoid false obstacle detection
     dynamic_obstacles_min_vel: 0.5 # [m/s] velocity above which a dynamic obstacle is ignored by the module
+
+    forward_projection:
+      model: particle  # model to use for forward projection at each trajectory point. Either "particle" or "bicycle"
+      # parameters used only with the bicycle model
+      steering_offset: 0.1  # [rad] steering angle offset used to model uncertainty in the forward projection
+      nb_points: 5          # number of points representing the curved projections

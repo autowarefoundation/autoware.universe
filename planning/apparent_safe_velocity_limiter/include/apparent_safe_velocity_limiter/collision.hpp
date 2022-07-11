@@ -26,29 +26,8 @@
 
 namespace apparent_safe_velocity_limiter
 {
-/// @brief generate a segment to where ego would reach with constant velocity and heading
-/// @param [in] trajectory_point origin of the segment
-/// @param [in] duration duration of the forward projection
-/// @param [in] extra_distance distance to add ahead of the projected point
-/// @return segment from the trajectory_point to its position after duration + the extra_distance
-segment_t forwardSimulatedSegment(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & trajectory_point, const double duration,
-  const double extra_distance);
-
-/// @brief generate a footprint from a segment and a lateral offset
-/// @param [in] segment segment from which to create the footprint
-/// @param [in] lateral_offset offset around the segment used to create the footprint
-/// @return footprint polygon
-polygon_t generateFootprint(const segment_t & segment, const double lateral_offset);
-
-/// @brief generate a footprint from a linestring and a lateral offset
-/// @param [in] linestring linestring from which to create the footprint
-/// @param [in] lateral_offset offset around the segment used to create the footprint
-/// @return footprint polygon
-polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset);
-
 /// @brief calculate the closest distance to a collision
-/// @param [in] segment forard projection of a trajectory point
+/// @param [in] segment forward projection of a trajectory point
 /// @param [in] footprint footprint of the segment
 /// @param [in] obstacles set of obstacles as linestrings
 /// @return distance to the closest collision if any
