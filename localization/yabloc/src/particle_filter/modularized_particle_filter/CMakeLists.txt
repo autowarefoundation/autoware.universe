@@ -19,9 +19,10 @@ add_definitions(${PCL_DEFINITIONS})
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(
-  abst_corrector 
-  SHARED 
+  abst_corrector
+  SHARED
   src/correction/abst_corrector.cpp
+  src/correction/correction_util.cpp
 )
 
 ament_auto_add_executable(predictor
@@ -40,7 +41,6 @@ ament_auto_add_executable(gnss_pose_corrector
   src/correction/gnss_pose_corrector.cpp
 )
 
-
 ament_auto_add_executable(particle_visualize
   src/visualize/particle_visualize_node.cpp
 )
@@ -51,4 +51,4 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_auto_package(INSTALL_TO_SHARE  launch)
+ament_auto_package(INSTALL_TO_SHARE launch)

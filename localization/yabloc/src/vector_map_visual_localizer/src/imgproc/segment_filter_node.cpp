@@ -27,8 +27,6 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
 {
   if (!info_.has_value()) return;
 
-  RCLCPP_INFO_STREAM(get_logger(), "synchro subscriber works well");
-
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud{new pcl::PointCloud<pcl::PointXYZ>()};
   pcl::fromROSMsg(segment_msg, *cloud);
 
@@ -39,7 +37,6 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   std::vector<std::vector<cv::Point2i>> contours = {contour};
 
   cv::Size size(info_->width, info_->height);
-  RCLCPP_INFO_STREAM(get_logger(), size << " " << contours.size());
 
   cv::Mat filt_image = cv::Mat::zeros(size, CV_8UC3);
   cv::drawContours(filt_image, contours, 0, cv::Scalar(0, 155, 155), -1);
