@@ -59,11 +59,11 @@ private:
   void imageCallback(const Image & msg);
   void lsdCallback(const PointCloud2 & msg);
 
-  LineSegments extractNaerLineSegments(const Pose & pose);
+  LineSegments extractNaerLineSegments(const Pose & pose, const LineSegments & linesegments);
 
   void drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
-  void drawOverlaySignBoard(cv::Mat & image, const Pose & pose);
-  void drawOverlayRoadMark(cv::Mat & image, const Pose & pose);
+  void drawOverlayLineSegments(
+    cv::Mat & image, const Pose & pose, const LineSegments & linesegments);
 
   void makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 

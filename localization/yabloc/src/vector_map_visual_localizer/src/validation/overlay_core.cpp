@@ -100,8 +100,8 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
   if (ll2_cloud_.empty()) return;
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
-  drawOverlaySignBoard(overlayed_image, pose);
-  drawOverlayRoadMark(overlayed_image, pose);
+  drawOverlayLineSegments(overlayed_image, pose, extractNaerLineSegments(pose, ll2_cloud_));
+  drawOverlayLineSegments(overlayed_image, pose, extractNaerLineSegments(pose, sign_board_));
 
   cv::Mat show_image;
   cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
@@ -124,7 +124,8 @@ Eigen::Affine3f Overlay::poseConsideringSlope(const Eigen::Affine3f & pose) cons
   return Eigen::Translation3f(t) * R;
 }
 
-void Overlay::drawOverlayRoadMark(cv::Mat & image, const Pose & pose)
+void Overlay::drawOverlayLineSegments(
+  cv::Mat & image, const Pose & pose, const LineSegments & near_segments)
 {
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
@@ -140,31 +141,7 @@ void Overlay::drawOverlayRoadMark(cv::Mat & image, const Pose & pose)
     return cv::Point2i(uv1.x(), uv1.y());
   };
 
-  LineSegments near_segments = extractNaerLineSegments(pose);
   for (const pcl::PointNormal & pn : near_segments) {
-    auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
-    if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
-  }
-}
-
-void Overlay::drawOverlaySignBoard(cv::Mat & image, const Pose & pose)
-{
-  Eigen::Matrix3f K =
-    Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
-  Eigen::Affine3f T = camera_extrinsic_.value();
-
-  Eigen::Affine3f transform = poseConsideringSlope(util::pose2Affine(pose));
-  // Eigen::Affine3f transform = util::pose2Affine(pose);
-
-  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
-    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
-    if (from_camera.z() < 1e-3f) return std::nullopt;
-    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
-    return cv::Point2i(uv1.x(), uv1.y());
-  };
-
-  for (const pcl::PointNormal & pn : sign_board_) {
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
     cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
@@ -198,7 +175,8 @@ void Overlay::makeVisMarker(const LineSegments & ls, const Pose & pose, const rc
   pub_vis_->publish(marker);
 }
 
-Overlay::LineSegments Overlay::extractNaerLineSegments(const Pose & pose)
+Overlay::LineSegments Overlay::extractNaerLineSegments(
+  const Pose & pose, const LineSegments & linesegments)
 {
   Eigen::Vector3f pose_vector;
   pose_vector << pose.position.x, pose.position.y, pose.position.z;
@@ -220,13 +198,13 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(const Pose & pose)
     return nearest.norm() < 2 * 1.42 * max_range;
   };
 
-  LineSegments near_linestring;
-  for (const pcl::PointNormal & pn : ll2_cloud_) {
+  LineSegments near_linestrings;
+  for (const pcl::PointNormal & pn : linesegments) {
     if (checkIntersection(pn)) {
-      near_linestring.push_back(pn);
+      near_linestrings.push_back(pn);
     }
   }
-  return near_linestring;
+  return near_linestrings;
 }
 
 }  // namespace validation
