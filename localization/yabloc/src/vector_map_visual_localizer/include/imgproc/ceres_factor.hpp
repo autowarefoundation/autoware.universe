@@ -92,7 +92,8 @@ class ImuFactor
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ImuFactor(const Eigen::Quaterniond & dq) : dq_(dq) {}
+  ImuFactor(const Eigen::Quaterniond & dq, double gain) : dq_(dq), gain_(gain) {}
+
   template <typename T>
   bool operator()(const T * const q1_ptr, const T * const q2_ptr, T * residual) const
   {
@@ -103,18 +104,19 @@ public:
     Eigen::Quaternion<T> delta_q = q1.conjugate() * q2 * dqT.conjugate();
 
     Eigen::Map<Eigen::Matrix<T, 3, 1>> residuals(residual);
-    residuals = delta_q.vec();
+    residuals = gain_ * delta_q.vec();
     return true;
   }
 
-  static ceres::CostFunction * create(const Sophus::SO3f & dR)
+  static ceres::CostFunction * create(const Sophus::SO3f & dR, double gain)
   {
     // residual(1), q1(4) ,q2(4)
     return new ceres::AutoDiffCostFunction<ImuFactor, 1, 4, 4>(
-      new ImuFactor(dR.unit_quaternion().cast<double>()));
+      new ImuFactor(dR.unit_quaternion().cast<double>(), gain));
   }
 
 private:
   Eigen::Quaterniond dq_;
+  double gain_;
 };
 }  // namespace imgproc::opt

@@ -1,5 +1,6 @@
 #pragma once
 #include "common/static_tf_subscriber.hpp"
+#include "imgproc/orientation_optimizer.hpp"
 #include "imgproc/ransac_vanish_point.hpp"
 
 #include <eigen3/Eigen/StdVector>
@@ -32,11 +33,10 @@ private:
   std::optional<CameraInfo> info_{std::nullopt};
   RansacVanishPoint ransac_vanish_point_;
 
-  Sophus::SO3f rotation_;
   std::list<Imu> imu_buffer_;
   std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};
 
-  void drawHorizontalLine(
+  void drawVerticalLine(
     const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
     const cv::Scalar & color = cv::Scalar(0, 255, 0));
 
@@ -44,7 +44,9 @@ private:
     const cv::Mat & image, const Sophus::SO3f & rot,
     const cv::Scalar & color = cv::Scalar(0, 255, 0));
 
-  void integral(const rclcpp::Time & stamp);
+  opt::Optimizer optimizer_;
+
+  Sophus::SO3f integral(const rclcpp::Time & image_stamp);
   void callbackImu(const Imu & msg);
   void callbackImage(const Image & msg);
 };

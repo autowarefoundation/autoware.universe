@@ -19,17 +19,17 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
   sub_info_ = create_subscription<CameraInfo>(
     "/sensing/camera/traffic_light/camera_info", 10,
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
-
-  rotation_ = Sophus::SO3f();
 }
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
 
-void VanishPoint::integral(const rclcpp::Time & image_stamp)
+Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 {
+  Sophus::SO3f integrated_rot;
+
   auto opt_ex =
     tf_subscriber_("traffic_light_left_camera/camera_optical_link", "tamagawa/imu_link");
-  if (!opt_ex.has_value()) return;
+  if (!opt_ex.has_value()) return integrated_rot;
   Sophus::SO3f ex_rot(opt_ex->rotation());
 
   while (!imu_buffer_.empty()) {
@@ -41,17 +41,16 @@ void VanishPoint::integral(const rclcpp::Time & image_stamp)
       last_imu_stamp_ = stamp;
       continue;
     }
-    // from here
     const float dt = (stamp - last_imu_stamp_.value()).seconds();
 
     Eigen::Vector3f w;
     w << msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z;
-    rotation_ *= Sophus::SO3f::exp(ex_rot.inverse() * w * dt);
+    integrated_rot *= Sophus::SO3f::exp(ex_rot.inverse() * w * dt);
 
-    // until here
     imu_buffer_.pop_front();
     last_imu_stamp_ = stamp;
   }
+  return integrated_rot;
 }
 
 void VanishPoint::drawHorizontalLine(
@@ -84,10 +83,10 @@ void VanishPoint::drawHorizontalLine(
   Eigen::Vector3f pr = intersection({(W - cx) / fx, 0, 1}, Eigen::Vector3f::UnitY());
   float v1 = (K * pl)(1);
   float v2 = (K * pr)(1);
-  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, 1);
+  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, 2);
 }
 
-void VanishPoint::drawHorizontalLine(
+void VanishPoint::drawVerticalLine(
   const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
   const cv::Scalar & color)
 {
@@ -113,24 +112,27 @@ void VanishPoint::callbackImage(const Image & msg)
   if (!opt_camera_ex.has_value()) return;
   if (!info_.has_value()) return;
 
-  integral(msg.header.stamp);
+  Sophus::SO3f dR = integral(msg.header.stamp);
 
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Point2f vanish = ransac_vanish_point_(image);
   ransac_vanish_point_.drawActiveLines(image);
-  drawHorizontalLine(image, vanish, Eigen::Vector2f::UnitY());
+  drawVerticalLine(image, vanish, Eigen::Vector2f::UnitY());
 
   // Visualize estimated vanishing point
-  Sophus::SO3f rot = rotation_ * Sophus::SO3f(opt_camera_ex->rotation());
-  drawHorizontalLine(image, rot);
+  Sophus::SO3f init_rot = Sophus::SO3f(opt_camera_ex->rotation());
+  drawHorizontalLine(image, init_rot, cv::Scalar(0, 255, 255));
 
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
   Eigen::Vector3f vp = K.inverse() * Eigen::Vector3f(vanish.x, vanish.y, 1);
   // Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp);
-  Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp, Eigen::Vector2f::UnitY());
+  Sophus::SO3f opt_rot = opt::optimizeOnce(init_rot, vp, Eigen::Vector2f::UnitY());
 
-  drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 255));
+  drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 0));
+
+  Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
+  drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);

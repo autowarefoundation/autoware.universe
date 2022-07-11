@@ -21,10 +21,11 @@ namespace imgproc::opt
 int Vertex::index_max = 0;
 
 Sophus::SO3f Optimizer::optimize(
-  const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical)
+  const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical,
+  const Sophus::SO3f & initial_R)
 {
   if (vertices_.empty()) {
-    Vertex::Ptr v = std::make_shared<Vertex>(dR.unit_quaternion(), vp, dR);
+    Vertex::Ptr v = std::make_shared<Vertex>(initial_R.unit_quaternion(), vp, dR);
     vertices_.push_back(v);
     return dR;
   }
@@ -33,21 +34,26 @@ Sophus::SO3f Optimizer::optimize(
   Vertex::Ptr v = std::make_shared<Vertex>((last_R * dR).unit_quaternion(), vp, dR);
   vertices_.push_back(v);
 
+  ceres::LossFunction * loss = new ceres::CauchyLoss(0.1f);
+
   // Build opmization problem
   Problem problem;
   for (int i = 0; i < vertices_.size(); i++) {
     Vertex::Ptr & v = vertices_.at(i);
     problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
-    problem.AddResidualBlock(VanishPointFactor::create(vp), nullptr, v->q_.data());
-    problem.AddResidualBlock(HorizonFactor::create(vertical), nullptr, v->q_.data());
+    if (i != (vertices_.size() - 1)) {
+      problem.AddResidualBlock(VanishPointFactor::create(vp), loss, v->q_.data());
+      problem.AddResidualBlock(HorizonFactor::create(vertical), nullptr, v->q_.data());
+    }
 
     if (i == 0) continue;
 
     Vertex::Ptr & v_prev = vertices_.at(i - 1);
-    problem.AddResidualBlock(ImuFactor::create(v->dR_), nullptr, v->q_.data(), v_prev->q_.data());
+    problem.AddResidualBlock(
+      ImuFactor::create(v->dR_, 100), nullptr, v_prev->q_.data(), v->q_.data());
   }
   // Fix first vertix
-  problem.SetParameterBlockConstant(vertices_.front()->q_.data());
+  // problem.SetParameterBlockConstant(vertices_.front()->q_.data());
 
   // Solve opmization problem
   Solver::Options options;
@@ -55,6 +61,16 @@ Sophus::SO3f Optimizer::optimize(
   options.linear_solver_type = ceres::DENSE_QR;
   Solver::Summary summary;
   Solve(options, &problem, &summary);
+  // std::cout << summary.BriefReport() << std::endl;
+
+  // DEBUG
+  {
+    auto vn = *std::prev(vertices_.end(), 1);
+    auto vm = *std::prev(vertices_.end(), 2);
+    std::cout << "Rn: " << vn->so3f().unit_quaternion().coeffs().transpose() << std::endl;
+    std::cout << "Rm: " << vm->so3f().unit_quaternion().coeffs().transpose() << std::endl;
+    std::cout << "dR: " << dR.unit_quaternion().coeffs().transpose() << std::endl;
+  }
 
   return vertices_.back()->so3f();
 }
