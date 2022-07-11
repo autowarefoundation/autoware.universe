@@ -35,7 +35,7 @@
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
-        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
+        sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
         "       container-suffix:
@@ -47,7 +47,7 @@
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
-        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
+        sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
         "       container-suffix:
@@ -62,7 +62,7 @@
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
-        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
+        sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
         "       container-suffix:
@@ -74,7 +74,7 @@
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
-        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
+        sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
         "       container-suffix:
