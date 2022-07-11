@@ -131,8 +131,6 @@ void VanishPoint::callbackImage(const Image & msg)
   Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp, Eigen::Vector2f::UnitY());
 
   drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 255));
-  // std::cout << "raw: " << rot.unit_quaternion().coeffs().transpose() << std::endl;
-  // std::cout << "opt: " << opt_rot.unit_quaternion().coeffs().transpose() << std::endl;
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);

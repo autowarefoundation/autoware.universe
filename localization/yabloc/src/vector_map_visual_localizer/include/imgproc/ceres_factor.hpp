@@ -8,6 +8,7 @@ namespace imgproc::opt
 class VanishPointFactor
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VanishPointFactor(const Eigen::Vector3d & vp) : vp_(vp) {}
 
   template <typename T>
@@ -50,6 +51,7 @@ private:
 class HorizonFactor
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   HorizonFactor(const Eigen::Vector2d & vertical) : vertical_(vertical) {}
 
   template <typename T>
@@ -89,6 +91,7 @@ private:
 class ImuFactor
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ImuFactor(const Eigen::Quaterniond & dq) : dq_(dq) {}
   template <typename T>
   bool operator()(const T * const q1_ptr, const T * const q2_ptr, T * residual) const
@@ -113,34 +116,5 @@ public:
 
 private:
   Eigen::Quaterniond dq_;
-};
-
-class DistanceFromCircleCost
-{
-public:
-  DistanceFromCircleCost(double xx, double yy) : xx_(xx), yy_(yy) {}
-  template <typename T>
-  bool operator()(
-    const T * const x, const T * const y,
-    const T * const m,  // r = m^2
-    T * residual) const
-  {
-    T r = *m * *m;
-
-    T xp = xx_ - *x;
-    T yp = yy_ - *y;
-    residual[0] = r * r - xp * xp - yp * yp;
-    return true;
-  }
-
-  static ceres::CostFunction * create(double xx, double yy)
-  {
-    // residual(1), q1(4) ,q2(4)
-    return new ceres::AutoDiffCostFunction<DistanceFromCircleCost, 1, 1, 1, 1>(
-      new DistanceFromCircleCost(xx, yy));
-  }
-
-private:
-  double xx_, yy_;
 };
 }  // namespace imgproc::opt

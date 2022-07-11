@@ -18,15 +18,54 @@ using ceres::Solver;
 
 namespace imgproc::opt
 {
+int Vertex::index_max = 0;
+
+Sophus::SO3f Optimizer::optimize(
+  const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical)
+{
+  if (vertices_.empty()) {
+    Vertex::Ptr v = std::make_shared<Vertex>(dR.unit_quaternion(), vp, dR);
+    vertices_.push_back(v);
+    return dR;
+  }
+
+  Sophus::SO3f last_R = vertices_.back()->so3f();
+  Vertex::Ptr v = std::make_shared<Vertex>((last_R * dR).unit_quaternion(), vp, dR);
+  vertices_.push_back(v);
+
+  // Build opmization problem
+  Problem problem;
+  for (int i = 0; i < vertices_.size(); i++) {
+    Vertex::Ptr & v = vertices_.at(i);
+    problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
+    problem.AddResidualBlock(VanishPointFactor::create(vp), nullptr, v->q_.data());
+    problem.AddResidualBlock(HorizonFactor::create(vertical), nullptr, v->q_.data());
+
+    if (i == 0) continue;
+
+    Vertex::Ptr & v_prev = vertices_.at(i - 1);
+    problem.AddResidualBlock(ImuFactor::create(v->dR_), nullptr, v->q_.data(), v_prev->q_.data());
+  }
+  // Fix first vertix
+  problem.SetParameterBlockConstant(vertices_.front()->q_.data());
+
+  // Solve opmization problem
+  Solver::Options options;
+  options.max_num_iterations = 50;
+  options.linear_solver_type = ceres::DENSE_QR;
+  Solver::Summary summary;
+  Solve(options, &problem, &summary);
+
+  return vertices_.back()->so3f();
+}
 
 Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp)
 {
   Problem problem;
-  LossFunction * loss = nullptr;
 
   Eigen::Vector4d q = R.unit_quaternion().coeffs().cast<double>();
   problem.AddParameterBlock(q.data(), 4, new ceres::EigenQuaternionParameterization());
-  problem.AddResidualBlock(VanishPointFactor::create(vp), loss, q.data());
+  problem.AddResidualBlock(VanishPointFactor::create(vp), nullptr, q.data());
 
   Solver::Options options;
   options.max_num_iterations = 50;
@@ -34,12 +73,10 @@ Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp)
   Solver::Summary summary;
   Solve(options, &problem, &summary);
 
-  std::cout << summary.BriefReport() << std::endl;
-  // std::cout << summary.FullReport() << std::endl;
-
   Eigen::Quaternionf qf;
   qf.coeffs() = q.cast<float>();
 
+  // DEBUG:
   // auto eval = [&vp](const Eigen::Quaternionf & q) -> float {
   //   const Eigen::Vector3f normal = q * Eigen::Vector3f::UnitZ();
   //   auto intersection = [&normal](
@@ -66,12 +103,11 @@ Sophus::SO3f optimizeOnce(
   const Sophus::SO3f & R, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical)
 {
   Problem problem;
-  LossFunction * loss = nullptr;
 
   Eigen::Vector4d q = R.unit_quaternion().coeffs().cast<double>();
   problem.AddParameterBlock(q.data(), 4, new ceres::EigenQuaternionParameterization());
-  problem.AddResidualBlock(VanishPointFactor::create(vp), loss, q.data());
-  problem.AddResidualBlock(HorizonFactor::create(vertical), loss, q.data());
+  problem.AddResidualBlock(VanishPointFactor::create(vp), nullptr, q.data());
+  problem.AddResidualBlock(HorizonFactor::create(vertical), nullptr, q.data());
 
   Solver::Options options;
   options.max_num_iterations = 50;
@@ -79,12 +115,8 @@ Sophus::SO3f optimizeOnce(
   Solver::Summary summary;
   Solve(options, &problem, &summary);
 
-  std::cout << summary.BriefReport() << std::endl;
-  // std::cout << summary.FullReport() << std::endl;
-
   Eigen::Quaternionf qf;
   qf.coeffs() = q.cast<float>();
-
   return Sophus::SO3f(qf);
 }
 }  // namespace imgproc::opt
