@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,13 +54,17 @@ def launch_setup(context, *args, **kwargs):
         ],
         remappings=[
             ("input/ackermann_control_command", "/control/command/control_cmd"),
+            ("input/manual_ackermann_control_command", "/vehicle/command/manual_control_cmd"),
             ("input/gear_command", "/control/command/gear_cmd"),
+            ("input/manual_gear_command", "/vehicle/command/manual_gear_command"),
             ("input/turn_indicators_command", "/control/command/turn_indicators_cmd"),
             ("input/hazard_lights_command", "/control/command/hazard_lights_cmd"),
             ("input/trajectory", "/planning/scenario_planning/trajectory"),
             ("input/engage", "/vehicle/engage"),
+            ("input/control_mode_request", "/control/control_mode_request"),
             ("output/twist", "/vehicle/status/velocity_status"),
             ("output/odometry", "/localization/kinematic_state"),
+            ("output/acceleration", "/localization/acceleration"),
             ("output/steering", "/vehicle/status/steering_status"),
             ("output/gear_report", "/vehicle/status/gear_status"),
             ("output/turn_indicators_report", "/vehicle/status/turn_indicators_status"),

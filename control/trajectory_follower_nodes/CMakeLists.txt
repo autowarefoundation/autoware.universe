@@ -1,97 +1,54 @@
-# Copyright 2021 The Autoware Foundation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(trajectory_follower_nodes)
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-set(LATERAL_CONTROLLER_NODE lateral_controller_node)
-ament_auto_add_library(${LATERAL_CONTROLLER_NODE} SHARED
-  include/trajectory_follower_nodes/lateral_controller_node.hpp
-  src/lateral_controller_node.cpp
+set(CONTROLLER_NODE controller_node)
+ament_auto_add_library(${CONTROLLER_NODE} SHARED
+  include/trajectory_follower_nodes/controller_node.hpp
+  src/controller_node.cpp
 )
 
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(${LATERAL_CONTROLLER_NODE} PUBLIC
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-autoware_set_compile_options(${LATERAL_CONTROLLER_NODE})
-# TODO(lateral_controller) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-# TODO(lateral_controller) : Temporary workaround until this is fixed.
-target_compile_options(${LATERAL_CONTROLLER_NODE} PRIVATE -Wno-error=old-style-cast)
-rclcpp_components_register_node(${LATERAL_CONTROLLER_NODE}
-  PLUGIN "autoware::motion::control::trajectory_follower_nodes::LateralController"
-  EXECUTABLE ${LATERAL_CONTROLLER_NODE}_exe
+target_compile_options(${CONTROLLER_NODE} PRIVATE -Wno-error=old-style-cast)
+rclcpp_components_register_node(${CONTROLLER_NODE}
+  PLUGIN "autoware::motion::control::trajectory_follower_nodes::Controller"
+  EXECUTABLE ${CONTROLLER_NODE}_exe
 )
 
-set(LONGITUDINAL_CONTROLLER_NODE longitudinal_controller_node)
-ament_auto_add_library(${LONGITUDINAL_CONTROLLER_NODE} SHARED
-  include/trajectory_follower_nodes/longitudinal_controller_node.hpp
-  src/longitudinal_controller_node.cpp
+# simple trajectory follower
+set(SIMPLE_TRAJECTORY_FOLLOWER_NODE simple_trajectory_follower)
+ament_auto_add_library(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} SHARED
+  include/trajectory_follower_nodes/simple_trajectory_follower.hpp
+  src/simple_trajectory_follower.cpp
 )
 
-autoware_set_compile_options(${LONGITUDINAL_CONTROLLER_NODE})
-# TODO(longitudinal_controller) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-# TODO(longitudinal_controller) : Temporary workaround until this is fixed.
-target_compile_options(${LONGITUDINAL_CONTROLLER_NODE} PRIVATE -Wno-error=old-style-cast)
-rclcpp_components_register_node(${LONGITUDINAL_CONTROLLER_NODE}
-  PLUGIN "autoware::motion::control::trajectory_follower_nodes::LongitudinalController"
-  EXECUTABLE ${LONGITUDINAL_CONTROLLER_NODE}_exe
-)
-
-set(LATLON_MUXER_NODE latlon_muxer_node)
-ament_auto_add_library(${LATLON_MUXER_NODE} SHARED
-  include/trajectory_follower_nodes/latlon_muxer_node.hpp
-  src/latlon_muxer_node.cpp
-)
-
-autoware_set_compile_options(${LATLON_MUXER_NODE})
-# TODO(latlon_muxer) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-# TODO(latlon_muxer) : Temporary workaround until this is fixed.
-target_compile_options(${LATLON_MUXER_NODE} PRIVATE -Wno-error=old-style-cast)
-rclcpp_components_register_node(${LATLON_MUXER_NODE}
-  PLUGIN "autoware::motion::control::trajectory_follower_nodes::LatLonMuxer"
-  EXECUTABLE ${LATLON_MUXER_NODE}_exe
+# TODO(simple_trajectory_follower) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
+# TODO(simple_trajectory_follower) : Temporary workaround until this is fixed.
+target_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} PRIVATE -Wno-error=old-style-cast)
+rclcpp_components_register_node(${SIMPLE_TRAJECTORY_FOLLOWER_NODE}
+  PLUGIN "simple_trajectory_follower::SimpleTrajectoryFollower"
+  EXECUTABLE ${SIMPLE_TRAJECTORY_FOLLOWER_NODE}_exe
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  # Unit tests
   set(TRAJECTORY_FOLLOWER_NODES_TEST test_trajectory_follower_nodes)
   ament_add_ros_isolated_gtest(${TRAJECTORY_FOLLOWER_NODES_TEST}
     test/trajectory_follower_test_utils.hpp
-    test/test_latlon_muxer_node.cpp
-    test/test_lateral_controller_node.cpp
-    test/test_longitudinal_controller_node.cpp
+    test/test_controller_node.cpp
   )
   ament_target_dependencies(${TRAJECTORY_FOLLOWER_NODES_TEST} fake_test_node)
-  autoware_set_compile_options(${TRAJECTORY_FOLLOWER_NODES_TEST})
-  target_link_libraries(${TRAJECTORY_FOLLOWER_NODES_TEST} ${LATLON_MUXER_NODE} ${LATERAL_CONTROLLER_NODE} ${LONGITUDINAL_CONTROLLER_NODE})
+  target_link_libraries(
+    ${TRAJECTORY_FOLLOWER_NODES_TEST} ${CONTROLLER_NODE})
 
-  #find_package(autoware_testing REQUIRED)
-  #add_smoke_test(${PROJECT_NAME} ${LATLON_MUXER_NODE}_exe PARAM_FILENAME latlon_muxer_defaults.param.yaml)
-  #add_smoke_test(${PROJECT_NAME} ${LATERAL_CONTROLLER_NODE}_exe PARAM_FILENAME lateral_controller_defaults.param.yaml)
-  #add_smoke_test(${PROJECT_NAME} ${LONGITUDINAL_CONTROLLER_NODE}_exe PARAM_FILENAME longitudinal_controller_defaults.param.yaml)
+  find_package(autoware_testing REQUIRED)
+  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "lateral_controller_defaults.param.yaml longitudinal_controller_defaults.param.yaml test_vehicle_info.param.yaml"
+  )
 endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
   param
+  launch
 )

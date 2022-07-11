@@ -37,7 +37,7 @@ std::vector<std::string> split(const std::string & str, const char delim)
 
 namespace fault_injection
 {
-#ifdef USE_DEPRECATED_TO_YAML
+#ifdef ROS_DISTRO_GALACTIC
 using rosidl_generator_traits::to_yaml;
 #endif
 
@@ -62,7 +62,7 @@ FaultInjectionNode::FaultInjectionNode(rclcpp::NodeOptions node_options)
   for (const auto & diag : readEventDiagList()) {
     diagnostic_storage_.registerEvent(diag);
     updater_.add(
-      diag.sim_name, std::bind(&FaultInjectionNode::updateEventDiag, this, _1, diag.sim_name));
+      diag.diag_name, std::bind(&FaultInjectionNode::updateEventDiag, this, _1, diag.sim_name));
   }
 }
 

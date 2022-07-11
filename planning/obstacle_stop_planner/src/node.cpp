@@ -31,10 +31,13 @@
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
 namespace motion_planning
@@ -449,7 +452,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.max_velocity = declare_parameter("max_velocity", 20.0);
     p.hunting_threshold = declare_parameter("hunting_threshold", 0.5);
     p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
-    lpf_acc_ = std::make_shared<LowpassFilter1d>(0.0, p.lowpass_gain);
+    lpf_acc_ = std::make_shared<LowpassFilter1d>(p.lowpass_gain);
     const double max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 90.0);
     p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(max_yaw_deviation_deg);
   }
@@ -513,9 +516,10 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
-  pub_clear_velocity_limit_ =
-    this->create_publisher<VelocityLimitClearCommand>("~/output/velocity_limit_clear_command", 1);
-  pub_velocity_limit_ = this->create_publisher<VelocityLimit>("~/output/max_velocity", 1);
+  pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
+    "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
+  pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
+    "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
   // Subscribers
   obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -599,6 +603,14 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     }
   }
 
+  // TODO(someone): support negative velocity
+  if (isBackwardPath(*input_msg)) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000, "Negative velocity NOT supported. publish input as it is.");
+    path_pub_->publish(*input_msg);
+    return;
+  }
+
   PlannerData planner_data{};
 
   getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
@@ -634,9 +646,20 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
   }
 
   auto trajectory = tier4_autoware_utils::convertToTrajectory(output_trajectory_points);
+  publishDebugData(planner_data, current_acc);
+
   trajectory.header = input_msg->header;
   path_pub_->publish(trajectory);
-  publishDebugData(planner_data, current_acc);
+}
+
+bool ObstacleStopPlannerNode::isBackwardPath(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory) const
+{
+  const bool has_negative_velocity = std::any_of(
+    trajectory.points.begin(), trajectory.points.end(),
+    [&](const auto & p) { return p.longitudinal_velocity_mps < 0; });
+
+  return has_negative_velocity;
 }
 
 void ObstacleStopPlannerNode::searchObstacle(
@@ -828,12 +851,14 @@ void ObstacleStopPlannerNode::insertVelocity(
     }
   }
 
-  for (size_t i = 0; i < output.size() - 2; ++i) {
-    const auto & p_base = output.at(i).pose;
-    const auto & p_target = output.at(i + 1).pose;
-    const auto & p_next = output.at(i + 2).pose;
-    if (!checkValidIndex(p_base, p_next, p_target)) {
-      RCLCPP_ERROR(get_logger(), "detect bad index");
+  if (output.size() >= 2) {
+    for (size_t i = 0; i < output.size() - 2; ++i) {
+      const auto & p_base = output.at(i).pose;
+      const auto & p_target = output.at(i + 1).pose;
+      const auto & p_next = output.at(i + 2).pose;
+      if (!checkValidIndex(p_base, p_next, p_target)) {
+        RCLCPP_ERROR(get_logger(), "detect bad index");
+      }
     }
   }
 

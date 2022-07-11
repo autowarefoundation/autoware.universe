@@ -1,36 +1,16 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.14)
 project(default_ad_api)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/interface_version.cpp
+  src/interface.cpp
 )
 
-# workaround to allow deprecated function to build on both galactic and rolling
-if(${rosidl_generator_cpp_VERSION} VERSION_LESS 2.5.0)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE
-    USE_DEPRECATED_TO_YAML
-  )
-endif()
-
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
+rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceNode")
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  find_package(launch_testing_ament_cmake)
   add_launch_test(test/main.test.py)
 endif()
 

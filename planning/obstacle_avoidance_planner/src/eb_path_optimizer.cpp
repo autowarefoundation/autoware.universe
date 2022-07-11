@@ -171,13 +171,17 @@ EBPathOptimizer::getOptimizedTrajectory(
 
   const auto traj_points =
     calculateTrajectory(padded_interpolated_points, rectangles.get(), farthest_idx, debug_data_ptr);
+  if (!traj_points) {
+    return boost::none;
+  }
 
   debug_data_ptr->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
                              << " [ms]\n";
-  return traj_points;
+  return *traj_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> EBPathOptimizer::calculateTrajectory(
+boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
+EBPathOptimizer::calculateTrajectory(
   const std::vector<geometry_msgs::msg::Point> & padded_interpolated_points,
   const std::vector<ConstrainRectangle> & constrain_rectangles, const int farthest_idx,
   std::shared_ptr<DebugData> debug_data_ptr)
@@ -188,7 +192,13 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> EBPathOptimizer::
   updateConstrain(padded_interpolated_points, constrain_rectangles);
 
   // solve QP and get optimized trajectory
-  std::vector<double> optimized_points = solveQP();
+  const auto result = solveQP();
+  const auto optimized_points = result.first;
+  const auto status = result.second;
+  if (status != 1) {
+    utils::logOSQPSolutionStatus(status, "EB: ");
+    return boost::none;
+  }
 
   const auto traj_points =
     convertOptimizedPointsToTrajectory(optimized_points, constrain_rectangles, farthest_idx);
@@ -200,17 +210,18 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> EBPathOptimizer::
   return traj_points;
 }
 
-std::vector<double> EBPathOptimizer::solveQP()
+std::pair<std::vector<double>, int64_t> EBPathOptimizer::solveQP()
 {
   osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
   osqp_solver_ptr_->updateEpsAbs(qp_param_.eps_abs);
 
   const auto result = osqp_solver_ptr_->optimize();
   const auto optimized_points = std::get<0>(result);
+  const auto status = std::get<3>(result);
 
-  utils::logOSQPSolutionStatus(std::get<3>(result));
+  utils::logOSQPSolutionStatus(std::get<3>(result), "EB: ");
 
-  return optimized_points;
+  return std::make_pair(optimized_points, status);
 }
 
 std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
@@ -354,15 +365,14 @@ int EBPathOptimizer::getNumFixedPoints(
 
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
 EBPathOptimizer::convertOptimizedPointsToTrajectory(
-  const std::vector<double> optimized_points, const std::vector<ConstrainRectangle> & constraints,
-  const int farthest_idx)
+  const std::vector<double> optimized_points,
+  [[maybe_unused]] const std::vector<ConstrainRectangle> & constraints, const int farthest_idx)
 {
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> traj_points;
   for (int i = 0; i <= farthest_idx; i++) {
     autoware_auto_planning_msgs::msg::TrajectoryPoint tmp_point;
     tmp_point.pose.position.x = optimized_points[i];
     tmp_point.pose.position.y = optimized_points[i + eb_param_.num_sampling_points_for_eb];
-    tmp_point.longitudinal_velocity_mps = constraints[i].velocity;
     traj_points.push_back(tmp_point);
   }
   for (size_t i = 0; i < traj_points.size(); i++) {
@@ -462,7 +472,6 @@ EBPathOptimizer::Anchor EBPathOptimizer::getAnchor(
   Anchor anchor;
   anchor.pose.position = interpolated_points[interpolated_idx];
   anchor.pose.orientation = nearest_q;
-  anchor.velocity = path_points[nearest_idx].longitudinal_velocity_mps;
   return anchor;
 }
 
@@ -595,7 +604,6 @@ ConstrainRectangle EBPathOptimizer::getConstrainRectangle(
   bottom_right.y = -1 * clearance;
   constrain_range.bottom_right =
     geometry_utils::transformToAbsoluteCoordinate2D(bottom_right, anchor.pose);
-  constrain_range.velocity = anchor.velocity;
   return constrain_range;
 }
 
@@ -608,6 +616,5 @@ ConstrainRectangle EBPathOptimizer::getConstrainRectangle(
   rect.top_right = tier4_autoware_utils::calcOffsetPose(anchor.pose, max_x, min_y, 0.0).position;
   rect.bottom_left = tier4_autoware_utils::calcOffsetPose(anchor.pose, min_x, max_y, 0.0).position;
   rect.bottom_right = tier4_autoware_utils::calcOffsetPose(anchor.pose, min_x, min_y, 0.0).position;
-  rect.velocity = anchor.velocity;
   return rect;
 }

@@ -35,7 +35,7 @@
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -46,16 +46,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace tier4_autoware_utils
-{
-template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose;
-}
-}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -121,7 +111,6 @@ struct PlannerParam
   bool is_show_occlusion;           // [-]
   bool is_show_cv_window;           // [-]
   bool is_show_processing_time;     // [-]
-  bool filter_occupancy_grid;       // [-]
   bool use_object_info;             // [-]
   bool use_moving_object_ray_cast;  // [-]
   bool use_partition_lanelet;       // [-]

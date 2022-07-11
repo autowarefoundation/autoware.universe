@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,3 +38,4 @@ void SimModelInterface::getInput(Eigen::VectorXd & input) { input = input_; }
 void SimModelInterface::setState(const Eigen::VectorXd & state) { state_ = state; }
 void SimModelInterface::setInput(const Eigen::VectorXd & input) { input_ = input; }
 void SimModelInterface::setGear(const uint8_t gear) { gear_ = gear; }
+uint8_t SimModelInterface::getGear() const { return gear_; }

@@ -15,8 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -27,6 +27,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace behavior_path_planner
 {
@@ -65,7 +66,7 @@ public:
   void updateData() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
-  PathWithLaneId planCandidate() const override;
+  CandidateOutput planCandidate() const override;
   void onEntry() override;
   void onExit() override;
 

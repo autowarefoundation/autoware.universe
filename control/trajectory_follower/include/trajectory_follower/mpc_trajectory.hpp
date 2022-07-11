@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,8 @@
 
 #include "common/types.hpp"
 #include "trajectory_follower/visibility_control.hpp"
+
+#include "geometry_msgs/msg/point.hpp"
 
 #include <iostream>
 #include <vector>
@@ -66,6 +68,19 @@ public:
    * @return true if the compensents sizes are all 0 or are inconsistent
    */
   inline bool empty() const { return size() == 0; }
+
+  std::vector<geometry_msgs::msg::Point> toPoints() const
+  {
+    std::vector<geometry_msgs::msg::Point> points;
+    for (size_t i = 0; i < x.size(); ++i) {
+      geometry_msgs::msg::Point point;
+      point.x = x.at(i);
+      point.y = y.at(i);
+      point.z = z.at(i);
+      points.push_back(point);
+    }
+    return points;
+  }
 };
 }  // namespace trajectory_follower
 }  // namespace control

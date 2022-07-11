@@ -6,10 +6,23 @@ on:
 jobs:
   build-and-test-differential:
     runs-on: ubuntu-latest
-    container: ghcr.io/autowarefoundation/autoware-universe:latest
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rosdistro:
+          - galactic
+          - humble
+        include:
+          - rosdistro: galactic
+            container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
+            build-depends-repos: build_depends.repos
+          - rosdistro: humble
+            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
+            build-depends-repos: build_depends.humble.repos
     steps:
       - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.10.0
 
       - name: Check out repository
         uses: actions/checkout@v3
@@ -27,18 +40,18 @@ jobs:
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/colcon-build@v1
         with:
-          rosdistro: galactic
+          rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          build-depends-repos: build_depends.repos
+          build-depends-repos: ${{ matrix.build-depends-repos }}
 
       - name: Test
         id: test
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/colcon-test@v1
         with:
-          rosdistro: galactic
+          rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          build-depends-repos: build_depends.repos
+          build-depends-repos: ${{ matrix.build-depends-repos }}
 
       - name: Upload coverage to CodeCov
         if: ${{ steps.test.outputs.coverage-report-files != '' }}
@@ -51,7 +64,7 @@ jobs:
 
   clang-tidy-differential:
     runs-on: ubuntu-latest
-    container: ros:galactic
+    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
     needs: build-and-test-differential
     steps:
       - name: Check out repository

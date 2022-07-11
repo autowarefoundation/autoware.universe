@@ -48,13 +48,13 @@ public:
   BehaviorTreeManager(rclcpp::Node & node, const BehaviorTreeManagerParam & param);
   void createBehaviorTree();
   void registerSceneModule(const std::shared_ptr<SceneModuleInterface> & p);
-  void registerForceApproval(const std::string & name);
 
   void resetBehaviorTree();
 
   BehaviorModuleOutput run(const std::shared_ptr<PlannerData> & data);
   std::vector<std::shared_ptr<SceneModuleStatus>> getModulesStatus();
   std::vector<MarkerArray> getDebugMarkers();
+  AvoidanceDebugMsgArray getAvoidanceDebugMsgArray();
 
 private:
   BehaviorTreeManagerParam bt_manager_param_;

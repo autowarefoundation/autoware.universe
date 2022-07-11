@@ -1,34 +1,15 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(pointcloud_preprocessor)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-# Ignore PCL errors in Clang
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wno-gnu-anonymous-struct -Wno-nested-anon-types)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
-find_package(pcl_conversions REQUIRED)
 find_package(OpenMP)
-ament_auto_find_build_dependencies()
-
-
-###########
-## Build ##
-###########
+find_package(CGAL REQUIRED COMPONENTS Core)
 
 include_directories(
   include
@@ -58,6 +39,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
   src/distortion_corrector/distortion_corrector.cpp
   src/blockage_diag/blockage_diag_nodelet.cpp
+  src/polygon_remover/polygon_remover.cpp
 )
 
 target_link_libraries(pointcloud_preprocessor_filter
@@ -70,13 +52,6 @@ if(OPENMP_FOUND)
   set_target_properties(pointcloud_preprocessor_filter PROPERTIES
     COMPILE_FLAGS ${OpenMP_CXX_FLAGS}
     LINK_FLAGS ${OpenMP_CXX_FLAGS}
-  )
-endif()
-
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(pointcloud_preprocessor_filter PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
   )
 endif()
 
@@ -162,14 +137,13 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::BlockageDiagComponent"
   EXECUTABLE blockage_diag_node)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# ========== PolygonRemover ==========
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::PolygonRemoverComponent"
+  EXECUTABLE polygon_remover_node)
 
-#############
-## Install ##
-#############
+set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
+target_link_libraries(polygon_remover_node gmp CGAL CGAL::CGAL CGAL::CGAL_Core)
 
 ament_auto_package(INSTALL_TO_SHARE
   launch

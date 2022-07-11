@@ -109,6 +109,18 @@ boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCol
 {
   const size_t min_search_index = std::max(static_cast<size_t>(0), search_index.min_idx);
   const size_t max_search_index = std::min(search_index.max_idx, path.points.size() - 1);
+
+  // for creating debug marker
+  if (planner_param_.show_stopline_collision_check) {
+    debug_data_.search_stopline = stop_line;
+    for (size_t i = min_search_index; i < max_search_index; ++i) {
+      const auto & p_front = path.points.at(i).point.pose.position;
+      const auto & p_back = path.points.at(i + 1).point.pose.position;
+      const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
+      debug_data_.search_segments.push_back(path_segment);
+    }
+  }
+
   for (size_t i = min_search_index; i < max_search_index; ++i) {
     const auto & p_front = path.points.at(i).point.pose.position;
     const auto & p_back = path.points.at(i + 1).point.pose.position;
@@ -203,20 +215,26 @@ bool StopLineModule::modifyPathVelocity(
 
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
-  const geometry_msgs::msg::Point stop_line_position = getCenterOfStopLine(stop_line_);
   const auto & current_position = planner_data_->current_pose.pose.position;
   const PointWithSearchRangeIndex src_point_with_search_range_index =
     planning_utils::findFirstNearSearchRangeIndex(path->points, current_position);
-  const SearchRangeIndex dst_search_range =
+  SearchRangeIndex dst_search_range =
     planning_utils::getPathIndexRangeIncludeLaneId(*path, lane_id_);
+
+  // extend following and previous search range to avoid no collision
+  if (dst_search_range.max_idx < path->points.size() - 1) dst_search_range.max_idx++;
+  if (dst_search_range.min_idx > 0) dst_search_range.min_idx--;
 
   // Find collision
   const auto collision = findCollision(*path, stop_line, dst_search_range);
 
   // If no collision found, do nothing
   if (!collision) {
+    RCLCPP_DEBUG_THROTTLE(logger_, *clock_, 5000 /* ms */, "is no collision");
     return true;
   }
+  const double center_line_z = (stop_line_[0].z() + stop_line_[1].z()) / 2.0;
+  const auto stop_line_position = planning_utils::toRosPoint(collision->point, center_line_z);
 
   // Find offset segment
   const auto offset_segment = findOffsetSegment(*path, *collision);
@@ -260,8 +278,7 @@ bool StopLineModule::modifyPathVelocity(
     }
   } else if (state_ == State::START) {
     // Initialize if vehicle is far from stop_line
-    constexpr bool use_initialization_after_start = false;
-    if (use_initialization_after_start) {
+    if (planner_param_.use_initialization_stop_line_state) {
       if (signed_arc_dist_to_stop_point > planner_param_.stop_check_dist) {
         RCLCPP_INFO(logger_, "START -> APPROACH");
         state_ = State::APPROACH;

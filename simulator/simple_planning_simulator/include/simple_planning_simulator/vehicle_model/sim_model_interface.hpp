@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -128,7 +128,7 @@ public:
   virtual float64_t getVy() = 0;
 
   /**
-   * @brief get vehicle longiudinal acceleration
+   * @brief get vehicle longitudinal acceleration
    */
   virtual float64_t getAx() = 0;
 
@@ -143,12 +143,17 @@ public:
   virtual float64_t getSteer() = 0;
 
   /**
+   * @brief get vehicle gear
+   */
+  uint8_t getGear() const;
+
+  /**
    * @brief get state vector dimension
    */
   inline int getDimX() { return dim_x_; }
 
   /**
-   * @brief get input vector demension
+   * @brief get input vector dimension
    */
   inline int getDimU() { return dim_u_; }
 

@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,6 +23,9 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <memory>
 #include <string>
@@ -33,6 +36,11 @@ namespace behavior_path_planner
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+
+using tier4_planning_msgs::msg::AvoidanceDebugFactor;
+using tier4_planning_msgs::msg::AvoidanceDebugMsg;
+using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
@@ -126,7 +134,7 @@ struct AvoidanceParameters
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
-  int object_hold_max_count;
+  double object_last_seen_threshold;
 
   // For velocity planning to avoid acceleration during avoidance.
   // Speeds smaller than this are not inserted.
@@ -166,8 +174,8 @@ struct AvoidanceParameters
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
-  ObjectData(const PredictedObject & obj, double lat, double lon, double overhang)
-  : object(obj), lateral(lat), longitudinal(lon), overhang_dist(overhang)
+  ObjectData(const PredictedObject & obj, double lat, double lon, double len, double overhang)
+  : object(obj), lateral(lat), longitudinal(lon), length(len), overhang_dist(overhang)
   {
   }
 
@@ -179,11 +187,15 @@ struct ObjectData  // avoidance target
   // longitudinal position of the CoM, in Frenet coordinate from ego-pose
   double longitudinal;
 
+  // longitudinal length of vehicle, in Frenet coordinate
+  double length;
+
   // lateral distance to the closest footprint, in Frenet coordinate
   double overhang_dist;
 
   // count up when object disappeared. Removed when it exceeds threshold.
-  int lost_count = 0;
+  rclcpp::Time last_seen;
+  double lost_time{0.0};
 
   // store the information of the lanelet which the object's overhang is currently occupying
   lanelet::ConstLanelet overhang_lanelet;
@@ -306,6 +318,7 @@ struct DebugData
 
   // tmp for plot
   PathWithLaneId center_line;
+  AvoidanceDebugMsgArray avoidance_debug_msg_array;
 };
 
 }  // namespace behavior_path_planner

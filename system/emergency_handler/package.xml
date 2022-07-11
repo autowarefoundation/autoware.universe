@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>emergency_handler</name>
@@ -7,6 +8,8 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>

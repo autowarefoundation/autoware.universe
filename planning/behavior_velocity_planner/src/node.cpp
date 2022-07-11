@@ -24,7 +24,7 @@
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -40,6 +40,7 @@
 #include <scene_module/intersection/manager.hpp>
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/run_out/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -130,7 +131,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/external_intersection_states", 10,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
-    "~/input/external_velocity_limit_mps", 1,
+    "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
@@ -165,6 +166,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Initialize PlannerManager
   if (this->declare_parameter("launch_crosswalk", true)) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
+    planner_manager_.launchSceneModule(std::make_shared<WalkwayModuleManager>(*this));
   }
   if (this->declare_parameter("launch_traffic_light", true)) {
     planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
@@ -194,6 +196,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // to calculate ttc it's better to be after stop line
   if (this->declare_parameter("launch_occlusion_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
+  }
+  if (this->declare_parameter("launch_run_out", false)) {
+    planner_manager_.launchSceneModule(std::make_shared<RunOutModuleManager>(*this));
   }
 }
 
@@ -263,7 +268,9 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
 
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(pc, *pc_transformed, affine);
+  if (!pc.empty()) {
+    pcl::transformPointCloud(pc, *pc_transformed, affine);
+  }
 
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -390,6 +397,49 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const auto planner_data = planner_data_;
   mutex_.unlock();
 
+  if (input_path_msg->points.empty()) {
+    return;
+  }
+
+  const autoware_auto_planning_msgs::msg::Path output_path_msg =
+    generatePath(input_path_msg, planner_data);
+
+  path_pub_->publish(output_path_msg);
+  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
+
+  if (debug_viz_pub_->get_subscription_count() > 0) {
+    publishDebugMarker(output_path_msg);
+  }
+}
+
+bool BehaviorVelocityPlannerNode::isBackwardPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path) const
+{
+  const bool has_negative_velocity = std::any_of(
+    path.points.begin(), path.points.end(),
+    [&](const auto & p) { return p.point.longitudinal_velocity_mps < 0; });
+
+  return has_negative_velocity;
+}
+
+autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+  const PlannerData & planner_data)
+{
+  autoware_auto_planning_msgs::msg::Path output_path_msg;
+
+  // TODO(someone): support negative velocity
+  if (isBackwardPath(*input_path_msg)) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000,
+      "Negative velocity is NOT supported. just converting path_with_lane_id to path");
+    output_path_msg = to_path(*input_path_msg);
+    output_path_msg.header.frame_id = "map";
+    output_path_msg.header.stamp = this->now();
+    output_path_msg.drivable_area = input_path_msg->drivable_area;
+    return output_path_msg;
+  }
+
   // Plan path velocity
   const auto velocity_planned_path = planner_manager_.planPathVelocity(
     std::make_shared<const PlannerData>(planner_data), *input_path_msg);
@@ -401,19 +451,15 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
 
   // check stop point
-  auto output_path_msg = filterStopPathPoint(interpolated_path_msg);
+  output_path_msg = filterStopPathPoint(interpolated_path_msg);
+
   output_path_msg.header.frame_id = "map";
   output_path_msg.header.stamp = this->now();
 
   // TODO(someone): This must be updated in each scene module, but copy from input message for now.
   output_path_msg.drivable_area = input_path_msg->drivable_area;
 
-  path_pub_->publish(output_path_msg);
-  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
-
-  if (debug_viz_pub_->get_subscription_count() > 0) {
-    publishDebugMarker(output_path_msg);
-  }
+  return output_path_msg;
 }
 
 void BehaviorVelocityPlannerNode::publishDebugMarker(

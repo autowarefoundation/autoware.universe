@@ -23,14 +23,22 @@
 
 #include <boost/optional.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
+#include <typeinfo>
 namespace image_projection_based_fusion
 {
 
-template <class Msg>
-FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOptions & options)
+template <class Msg, class ObjType>
+FusionNode<Msg, ObjType>::FusionNode(
+  const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   rois_number_ = static_cast<std::size_t>(declare_parameter("rois_number", 1));
@@ -121,26 +129,35 @@ FusionNode<Msg>::FusionNode(const std::string & node_name, const rclcpp::NodeOpt
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
-    debugger_ = std::make_shared<Debugger>(this, rois_number_);
+    std::size_t image_buffer_size =
+      static_cast<std::size_t>(declare_parameter("image_buffer_size", 15));
+    debugger_ = std::make_shared<Debugger>(this, rois_number_, image_buffer_size);
   }
+
+  filter_scope_minx_ = declare_parameter("filter_scope_minx", -100);
+  filter_scope_maxx_ = declare_parameter("filter_scope_maxx", 100);
+  filter_scope_miny_ = declare_parameter("filter_scope_miny", -100);
+  filter_scope_maxy_ = declare_parameter("filter_scope_maxy", 100);
+  filter_scope_minz_ = declare_parameter("filter_scope_minz", -100);
+  filter_scope_maxz_ = declare_parameter("filter_scope_maxz", 100);
 }
 
-template <class Msg>
-void FusionNode<Msg>::cameraInfoCallback(
+template <class Msg, class Obj>
+void FusionNode<Msg, Obj>::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
   const std::size_t camera_id)
 {
   camera_info_map_[camera_id] = *input_camera_info_msg;
 }
 
-template <class Msg>
-void FusionNode<Msg>::preprocess(Msg & ouput_msg __attribute__((unused)))
+template <class Msg, class Obj>
+void FusionNode<Msg, Obj>::preprocess(Msg & ouput_msg __attribute__((unused)))
 {
   // do nothing by default
 }
 
-template <class Msg>
-void FusionNode<Msg>::fusionCallback(
+template <class Msg, class Obj>
+void FusionNode<Msg, Obj>::fusionCallback(
   typename Msg::ConstSharedPtr input_msg, DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
@@ -150,10 +167,6 @@ void FusionNode<Msg>::fusionCallback(
   DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
   DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg)
 {
-  if (pub_ptr_->get_subscription_count() < 1) {
-    return;
-  }
-
   Msg output_msg = *input_msg;
 
   preprocess(output_msg);
@@ -202,23 +215,27 @@ void FusionNode<Msg>::fusionCallback(
       *input_msg, image_id, *input_roi_msg, camera_info_map_.at(image_id), output_msg);
   }
 
-  postprocess();
+  postprocess(output_msg);
 
   publish(output_msg);
 }
 
-template <class Msg>
-void FusionNode<Msg>::postprocess()
+template <class Msg, class Obj>
+void FusionNode<Msg, Obj>::postprocess(Msg & output_msg __attribute__((unused)))
 {
   // do nothing by default
 }
 
-template <class Msg>
-void FusionNode<Msg>::publish(const Msg & output_msg)
+template <class Msg, class Obj>
+void FusionNode<Msg, Obj>::publish(const Msg & output_msg)
 {
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
   pub_ptr_->publish(output_msg);
 }
 
-template class FusionNode<DetectedObjects>;
-template class FusionNode<DetectedObjectsWithFeature>;
+template class FusionNode<DetectedObjects, DetectedObject>;
+template class FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>;
+template class FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>;
 }  // namespace image_projection_based_fusion

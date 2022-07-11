@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -25,6 +25,9 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <memory>
 #include <string>
@@ -44,11 +47,28 @@ public:
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
-  PathWithLaneId planCandidate() const override;
+  CandidateOutput planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;
   void onEntry() override;
   void onExit() override;
   void updateData() override;
+
+  void publishRTCStatus() override
+  {
+    rtc_interface_left_.publishCooperateStatus(clock_->now());
+    rtc_interface_right_.publishCooperateStatus(clock_->now());
+  }
+
+  bool isActivated() override
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      return rtc_interface_left_.isActivated(uuid_left_);
+    }
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      return rtc_interface_right_.isActivated(uuid_right_);
+    }
+    return false;
+  }
 
   void setParameters(const AvoidanceParameters & parameters);
 
@@ -58,6 +78,48 @@ private:
   AvoidancePlanningData avoidance_data_;
 
   PathShifter path_shifter_;
+
+  RTCInterface rtc_interface_left_;
+  RTCInterface rtc_interface_right_;
+  UUID uuid_left_;
+  UUID uuid_right_;
+
+  void updateRTCStatus(const CandidateOutput & candidate)
+  {
+    if (candidate.lateral_shift > 0.0) {
+      rtc_interface_left_.updateCooperateStatus(
+        uuid_left_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+      return;
+    }
+    if (candidate.lateral_shift < 0.0) {
+      rtc_interface_right_.updateCooperateStatus(
+        uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+      return;
+    }
+
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Direction is UNKNOWN, distance = " << candidate.distance_to_path_change);
+  }
+
+  void removeRTCStatus() override
+  {
+    rtc_interface_left_.clearCooperateStatus();
+    rtc_interface_right_.clearCooperateStatus();
+  }
+
+  void removePreviousRTCStatusLeft()
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    }
+  }
+
+  void removePreviousRTCStatusRight()
+  {
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    }
+  }
 
   // data used in previous planning
   ShiftedPath prev_output_;
@@ -89,6 +151,8 @@ private:
     AvoidPointArray & current_raw_shift_points, DebugData & debug) const;
 
   // shift point generation: generator
+  double getShiftLength(
+    const ObjectData & object, const bool & is_object_on_right, const double & avoid_margin) const;
   AvoidPointArray calcRawShiftPointsFromObjects(const ObjectDataArray & objects) const;
   double getRightShiftBound() const;
   double getLeftShiftBound() const;
@@ -154,7 +218,9 @@ private:
   // debug
   mutable DebugData debug_data_;
   void setDebugData(const PathShifter & shifter, const DebugData & debug);
-
+  void updateAvoidanceDebugData(std::vector<AvoidanceDebugMsg> & avoidance_debug_msg_array) const;
+  mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_point_;
+  mutable rclcpp::Time debug_avoidance_initializer_for_shift_point_time_;
   // =====================================
   // ========= helper functions ==========
   // =====================================

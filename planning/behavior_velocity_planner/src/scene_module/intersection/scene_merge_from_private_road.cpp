@@ -67,10 +67,13 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   /* get detection area */
   std::vector<lanelet::ConstLanelets> detection_area_lanelets;
   std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
+  std::vector<lanelet::ConstLanelets> detection_area_lanelets_with_margin;
 
   util::getObjectiveLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    &conflicting_area_lanelets, &detection_area_lanelets, logger_);
+    planner_param_.detection_area_right_margin, planner_param_.detection_area_left_margin,
+    &conflicting_area_lanelets, &detection_area_lanelets, &detection_area_lanelets_with_margin,
+    logger_);
   std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
     conflicting_area_lanelets, planner_param_.detection_area_length);
   if (conflicting_areas.empty()) {
@@ -107,18 +110,14 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
 
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {
-    constexpr double stop_vel = 0.0;
-    const double decel_vel = planner_param_.decel_velocity;
-    double v = (has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
+    constexpr double v = 0.0;
     util::setVelocityFrom(stop_line_idx, v, path);
 
     /* get stop point and stop factor */
-    if (v == stop_vel) {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = debug_data_.stop_point_pose;
-      stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
-      planning_utils::appendStopReason(stop_factor, stop_reason);
-    }
+    tier4_planning_msgs::msg::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.stop_point_pose;
+    stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
 
     const double signed_arc_dist_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
       path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position);
