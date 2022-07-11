@@ -38,9 +38,9 @@
         sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
         "       include:" \
-        "       container-suffix:" \
-                  - ""
-                  - "-cuda"
+        "       container-suffix:
+                  - \"\"
+                  - -cuda
                 include:" {source}
     - source: .github/workflows/build-and-test-differential.yaml
       pre-commands: |
@@ -50,9 +50,9 @@
         sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
         "       include:" \
-        "       container-suffix:" \
-                  - ""
-                  - "-cuda"
+        "       container-suffix:
+                  - \"\"
+                  - -cuda
                 include:" {source}
 
         sd "^    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" \
@@ -65,9 +65,9 @@
         sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
         "       include:" \
-        "       container-suffix:" \
-                  - ""
-                  - "-cuda"
+        "       container-suffix:
+                  - \"\"
+                  - -cuda
                 include:" {source}
     - source: .github/workflows/build-and-test-self-hosted.yaml
       pre-commands: |
@@ -77,9 +77,9 @@
         sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
         "       include:" \
-        "       container-suffix:" \
-                  - ""
-                  - "-cuda"
+        "       container-suffix:
+                  - \"\"
+                  - -cuda
                 include:" {source}
     - source: .github/workflows/check-build-depends.yaml
       pre-commands: |
