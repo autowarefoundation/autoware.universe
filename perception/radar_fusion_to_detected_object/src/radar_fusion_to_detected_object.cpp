@@ -102,12 +102,12 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
       if (!radars_within_split_object || !(*radars_within_split_object).empty()) {
         TwistWithCovariance twist_with_covariance =
           estimateTwist(split_object, radars_within_split_object);
-        double twist_yaw = tier4_autoware_utils::normalizeRadian(
+        const double twist_yaw = tier4_autoware_utils::normalizeRadian(
           std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x));
-        double object_yaw = tier4_autoware_utils::normalizeRadian(
+        const double object_yaw = tier4_autoware_utils::normalizeRadian(
           tf2::getYaw(split_object.kinematics.pose_with_covariance.pose.orientation));
         ;
-        double diff_yaw = tier4_autoware_utils::normalizeRadian(twist_yaw - object_yaw);
+        const double diff_yaw = tier4_autoware_utils::normalizeRadian(twist_yaw - object_yaw);
         if (isYawCorrect(diff_yaw, param_.threshold_yaw_diff)) {
           split_object.kinematics.twist_with_covariance = twist_with_covariance;
           split_object.kinematics.has_twist = true;
