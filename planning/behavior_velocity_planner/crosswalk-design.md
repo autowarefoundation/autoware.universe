@@ -4,9 +4,10 @@
 
 This module judges whether the ego should stop in front of the crosswalk in order to provide safe passage of pedestrians and bicycles based on object's behavior and surround traffic.
 
-<div align="center">
-  <img src="docs/crosswalk/example.png" width=90%>
-</div>
+<figure markdown>
+  ![example](docs/crosswalk/example.png){width=90%}
+  <figcaption>Crosswalk Module</figcaption>
+</figure>
 
 ### Activation Timing
 
