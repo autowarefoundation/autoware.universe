@@ -32,79 +32,55 @@
   files:
     - source: .github/workflows/build-and-test.yaml
       pre-commands: |
-        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest-cuda" {source}
+        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
+        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
-                    build-depends-repos: build_depends.repos
-                  - rosdistro: galactic
-                    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
-
-        sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
-                    build-depends-repos: build_depends.humble.repos
-                  - rosdistro: humble
-                    container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
+        "       include:" \
+        "       container-suffix:" \
+                  - ""
+                  - "-cuda"
+                include:" {source}
     - source: .github/workflows/build-and-test-differential.yaml
       pre-commands: |
-        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest-cuda" {source}
+        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
+        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
-                    build-depends-repos: build_depends.repos
-                  - rosdistro: galactic
-                    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
-
-        sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
-                    build-depends-repos: build_depends.humble.repos
-                  - rosdistro: humble
-                    container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
+        "       include:" \
+        "       container-suffix:" \
+                  - ""
+                  - "-cuda"
+                include:" {source}
     - source: .github/workflows/build-and-test-differential-self-hosted.yaml
       pre-commands: |
-        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest-cuda" {source}
+        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
+        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
-                    build-depends-repos: build_depends.repos
-                  - rosdistro: galactic
-                    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
-
-        sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
-                    build-depends-repos: build_depends.humble.repos
-                  - rosdistro: humble
-                    container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
+        "       include:" \
+        "       container-suffix:" \
+                  - ""
+                  - "-cuda"
+                include:" {source}
     - source: .github/workflows/build-and-test-self-hosted.yaml
       pre-commands: |
-        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest-cuda" {source}
+        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
+        sd "container: ${{ matrix.container }}" "container: ${{ matrix.container }}${{ matrix.container-suffix }}"
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
-                    build-depends-repos: build_depends.repos
-                  - rosdistro: galactic
-                    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
-
-        sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
-                    build-depends-repos: build_depends.humble.repos
-                  - rosdistro: humble
-                    container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
+        "       include:" \
+        "       container-suffix:" \
+                  - ""
+                  - "-cuda"
+                include:" {source}
     - source: .github/workflows/check-build-depends.yaml
       pre-commands: |
-        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest-cuda" {source}
+        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
     - source: codecov.yaml
 
