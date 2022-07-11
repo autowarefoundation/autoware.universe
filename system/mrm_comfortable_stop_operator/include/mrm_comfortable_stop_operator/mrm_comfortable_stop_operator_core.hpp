@@ -21,10 +21,20 @@
 // Autoware
 #include <autoware_ad_api_msgs/srv/mrm_operation.hpp>
 #include <autoware_ad_api_msgs/msg/mrm_status.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 
 // ROS2 core
 #include <rclcpp/rclcpp.hpp>
 
+struct Parameters
+{
+  int update_rate;  // [Hz]
+  double min_acceleration;  // [m/s^2]
+  double max_jerk;  // [m/s^3]
+  double min_jerk;  // [m/s^3]
+};
 
 class MRMComfortableStopOperator : public rclcpp::Node
 {
@@ -32,6 +42,33 @@ public:
   MRMComfortableStopOperator();
 
 private:
+  // Parameters
+  Parameters params_;
+
+  // Server
+  rclcpp::Service<autoware_ad_api_msgs::srv::MRMOperation>::SharedPtr service_operation_;
+
+  void operateComfortableStop(
+    const autoware_ad_api_msgs::srv::MRMOperation::Request::SharedPtr request,
+    const autoware_ad_api_msgs::srv::MRMOperation::Response::SharedPtr response);
+
+  // Publisher
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::MRMStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr pub_velocity_limit_clear_command_;
+
+  void publishStatus() const;
+  void publishVelocityLimit() const;
+  void publishVelocityLimitClearCommand() const;
+
+  // Timer
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  void onTimer() const;
+
+  // States
+  bool is_available_;
+  bool is_operating_;
 
 };
 
