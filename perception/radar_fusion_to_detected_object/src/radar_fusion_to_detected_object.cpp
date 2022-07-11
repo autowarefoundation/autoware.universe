@@ -106,7 +106,6 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
           std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x));
         const double object_yaw = tier4_autoware_utils::normalizeRadian(
           tf2::getYaw(split_object.kinematics.pose_with_covariance.pose.orientation));
-        ;
         const double diff_yaw = tier4_autoware_utils::normalizeRadian(twist_yaw - object_yaw);
         if (isYawCorrect(diff_yaw, param_.threshold_yaw_diff)) {
           split_object.kinematics.twist_with_covariance = twist_with_covariance;
