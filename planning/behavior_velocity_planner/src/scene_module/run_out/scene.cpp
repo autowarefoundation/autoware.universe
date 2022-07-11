@@ -152,7 +152,7 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   da_range.min_longitudinal_distance =
     p.vehicle_param.base_to_front - p.detection_area.margin_behind;
   da_range.max_longitudinal_distance =
-    stop_distance + p.run_out.stop_margin + p.detection_area.margin_ahead;
+    *stop_dist + p.run_out.stop_margin + p.detection_area.margin_ahead;
   da_range.min_lateral_distance = p.vehicle_param.width / 2.0;
   da_range.max_lateral_distance = obstacle_vel_mps * p.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
