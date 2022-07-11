@@ -302,7 +302,7 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
       break;
     }
 
-    if (!planner_data_.velocity_buffer.empty()) {
+    if (planner_data_.velocity_buffer.empty()) {
       break;
     }
     // Remove old data
