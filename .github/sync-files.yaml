@@ -36,15 +36,15 @@
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
                     build-depends-repos: build_depends.repos
                   - rosdistro: galactic
                     container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
                     build-depends-repos: build_depends.humble.repos
                   - rosdistro: humble
                     container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
@@ -54,15 +54,15 @@
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
                     build-depends-repos: build_depends.repos
                   - rosdistro: galactic
                     container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
                     build-depends-repos: build_depends.humble.repos
                   - rosdistro: humble
                     container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
@@ -72,15 +72,15 @@
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
                     build-depends-repos: build_depends.repos
                   - rosdistro: galactic
                     container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
                     build-depends-repos: build_depends.humble.repos
                   - rosdistro: humble
                     container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
@@ -90,15 +90,15 @@
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
                     build-depends-repos: build_depends.repos
                   - rosdistro: galactic
                     container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" {source}
 
         sd -- \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" \
-        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda" \
+        "           container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
                     build-depends-repos: build_depends.humble.repos
                   - rosdistro: humble
                     container: ghcr.io/autowarefoundation/autoware-universe:humble-latest" {source}
