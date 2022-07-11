@@ -20,6 +20,16 @@ namespace imgproc::opt
 {
 int Vertex::index_max = 0;
 
+std::vector<Sophus::SO3f> Optimizer::allRotations() const
+{
+  std::vector<Sophus::SO3f> rotations;
+  for (int i = 0; i < vertices_.size(); i++) {
+    const Vertex::Ptr & v = vertices_.at(i);
+    rotations.push_back(v->so3f());
+  }
+  return rotations;
+}
+
 Sophus::SO3f Optimizer::optimize(
   const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical,
   const Sophus::SO3f & initial_R)
@@ -41,36 +51,41 @@ Sophus::SO3f Optimizer::optimize(
   for (int i = 0; i < vertices_.size(); i++) {
     Vertex::Ptr & v = vertices_.at(i);
     problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
-    if (i != (vertices_.size() - 1)) {
+    if (i < (vertices_.size() - 2)) {
       problem.AddResidualBlock(VanishPointFactor::create(vp), loss, v->q_.data());
-      problem.AddResidualBlock(HorizonFactor::create(vertical), nullptr, v->q_.data());
+      problem.AddResidualBlock(HorizonFactor::create(vertical), loss, v->q_.data());
     }
 
     if (i == 0) continue;
 
     Vertex::Ptr & v_prev = vertices_.at(i - 1);
     problem.AddResidualBlock(
-      ImuFactor::create(v->dR_, 100), nullptr, v_prev->q_.data(), v->q_.data());
+      ImuFactor::create(v->dR_, 10), nullptr, v_prev->q_.data(), v->q_.data());
   }
+
   // Fix first vertix
-  // problem.SetParameterBlockConstant(vertices_.front()->q_.data());
+  problem.SetParameterBlockConstant(vertices_.front()->q_.data());
 
   // Solve opmization problem
   Solver::Options options;
-  options.max_num_iterations = 50;
+  options.max_num_iterations = 100;
   options.linear_solver_type = ceres::DENSE_QR;
   Solver::Summary summary;
   Solve(options, &problem, &summary);
-  // std::cout << summary.BriefReport() << std::endl;
+  std::cout << summary.BriefReport() << std::endl;
 
   // DEBUG
-  {
-    auto vn = *std::prev(vertices_.end(), 1);
-    auto vm = *std::prev(vertices_.end(), 2);
-    std::cout << "Rn: " << vn->so3f().unit_quaternion().coeffs().transpose() << std::endl;
-    std::cout << "Rm: " << vm->so3f().unit_quaternion().coeffs().transpose() << std::endl;
-    std::cout << "dR: " << dR.unit_quaternion().coeffs().transpose() << std::endl;
-  }
+  // {
+  //   auto vn = *std::prev(vertices_.end(), 1);
+  //   auto vm = *std::prev(vertices_.end(), 2);
+  //   // std::cout << "Rn: " << vn->so3f().unit_quaternion().coeffs().transpose() << std::endl;
+  //   // std::cout << "Rm: " << vm->so3f().unit_quaternion().coeffs().transpose() << std::endl;
+  //   Eigen::Quaternionf dq = (vm->so3f().inverse() * vn->so3f()).unit_quaternion();
+  //   std::cout << "ddR: " << dq.coeffs().transpose() << std::endl;
+  //   std::cout << " dR: " << dR.unit_quaternion().coeffs().transpose() << std::endl;
+  //   std::cout << "|dq| " << (dq.inverse() * dR.unit_quaternion()).vec().norm() << std::endl;
+  //   std::cout << " Rn: " << vn->so3f().unit_quaternion().coeffs().transpose() << std::endl;
+  // }
 
   return vertices_.back()->so3f();
 }

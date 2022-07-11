@@ -42,7 +42,7 @@ private:
 
   void drawHorizontalLine(
     const cv::Mat & image, const Sophus::SO3f & rot,
-    const cv::Scalar & color = cv::Scalar(0, 255, 0));
+    const cv::Scalar & color = cv::Scalar(0, 255, 0), int thick = 2);
 
   opt::Optimizer optimizer_;
 

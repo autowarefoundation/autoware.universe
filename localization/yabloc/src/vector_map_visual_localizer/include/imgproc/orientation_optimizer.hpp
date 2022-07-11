@@ -22,6 +22,8 @@ public:
     const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical,
     const Sophus::SO3f & initial_R);
 
+  std::vector<Sophus::SO3f> allRotations() const;
+
 private:
   boost::circular_buffer<Vertex::Ptr> vertices_;
 };

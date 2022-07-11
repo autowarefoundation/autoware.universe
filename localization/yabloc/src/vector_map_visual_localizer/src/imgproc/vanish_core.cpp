@@ -54,7 +54,7 @@ Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 }
 
 void VanishPoint::drawHorizontalLine(
-  const cv::Mat & image, const Sophus::SO3f & rot, const cv::Scalar & color)
+  const cv::Mat & image, const Sophus::SO3f & rot, const cv::Scalar & color, int thick)
 {
   const Eigen::Vector3f normal = rot * Eigen::Vector3f::UnitZ();
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
@@ -83,7 +83,7 @@ void VanishPoint::drawHorizontalLine(
   Eigen::Vector3f pr = intersection({(W - cx) / fx, 0, 1}, Eigen::Vector3f::UnitY());
   float v1 = (K * pl)(1);
   float v2 = (K * pr)(1);
-  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, 2);
+  cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, thick);
 }
 
 void VanishPoint::drawVerticalLine(
@@ -126,13 +126,12 @@ void VanishPoint::callbackImage(const Image & msg)
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
   Eigen::Vector3f vp = K.inverse() * Eigen::Vector3f(vanish.x, vanish.y, 1);
-  // Sophus::SO3f opt_rot = opt::optimizeOnce(rot, vp);
   Sophus::SO3f opt_rot = opt::optimizeOnce(init_rot, vp, Eigen::Vector2f::UnitY());
 
   drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 0));
 
-  Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
-  drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
+  // Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
+  // drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);

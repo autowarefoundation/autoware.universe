@@ -60,7 +60,7 @@ private:
   const int max_iteration_ = 500;
   const int sample_count_ = 4;  // must be equal or larther than 2
   const float inlier_ratio_ = 0.2;
-  const float error_threshold_ = std::cos(2 * 3.14 / 180);  // [deg]
+  const float error_threshold_ = std::cos(5 * 3.14 / 180);  // 5 [deg]
 
   mutable std::random_device seed_gen_;
   SegmentVec last_horizontals_;

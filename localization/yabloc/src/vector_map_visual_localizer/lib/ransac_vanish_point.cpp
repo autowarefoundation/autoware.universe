@@ -11,7 +11,7 @@ namespace imgproc
 RansacVanishPoint::RansacVanishPoint()
 {
   using cv::lsd::createLineSegmentDetector;
-  lsd_ = createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
+  lsd_ = createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 2 * 0.6, 2.0, 22.5, 0, 0.7, 1024);
 }
 
 void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
@@ -59,7 +59,7 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizo
 {
   std::mt19937 engine{seed_gen_()};
 
-  Eigen::Vector2f best_candidate;
+  Eigen::Vector2f best_candidate = Eigen::Vector2f::Zero();
   float best_residual = std::numeric_limits<float>::max();
 
   const int N = horizontals.size();
