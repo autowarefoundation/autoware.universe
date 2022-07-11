@@ -70,7 +70,7 @@
     <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
       <arg name="input" value="objects_with_feature"/>
       <arg name="output" value="objects"/>
-    <arg name="node_name" value="detected_object_feature_remover_clustering" />
+      <arg name="node_name" value="detected_object_feature_remover_clustering" />
     </include>
     <!-- Fusion camera-lidar to classify -->
     <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_cluster_fusion.launch.xml">
