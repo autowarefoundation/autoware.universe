@@ -22,7 +22,7 @@ ament_auto_add_library(
   abst_corrector
   SHARED
   src/correction/abst_corrector.cpp
-  src/correction/correction_util.cpp
+  src/common/visualize.cpp
 )
 
 ament_auto_add_executable(predictor
@@ -34,15 +34,17 @@ ament_auto_add_executable(predictor
 ament_auto_add_executable(lidar_pose_corrector
   src/correction/lidar_pose_corrector_node.cpp
   src/correction/lidar_pose_corrector.cpp
+  src/correction/correction_util.cpp
 )
 
 ament_auto_add_executable(gnss_pose_corrector
   src/correction/gnss_pose_corrector_node.cpp
   src/correction/gnss_pose_corrector.cpp
+  src/correction/correction_util.cpp
 )
 
 ament_auto_add_executable(particle_visualize
-  src/visualize/particle_visualize_node.cpp
+  src/common/particle_visualize_node.cpp
 )
 
 install(PROGRAMS
