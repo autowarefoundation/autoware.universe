@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+
+    max_iteration: 500
+
+    sample_count: 4
+
+    inlier_ratio: 0.2
+
+    error_threshold: 0.996 # = cos(5[deg])
+
+    lsd_sigma: 1.5

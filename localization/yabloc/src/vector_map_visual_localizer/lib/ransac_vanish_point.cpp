@@ -8,19 +8,16 @@
 
 namespace imgproc
 {
-RansacVanishPoint::RansacVanishPoint()
+RansacVanishPoint::RansacVanishPoint(const RansacVanishParam & param) : param_(param)
 {
   using cv::lsd::createLineSegmentDetector;
-  lsd_ = createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 2 * 0.6, 2.0, 22.5, 0, 0.7, 1024);
+  lsd_ = createLineSegmentDetector(
+    cv::lsd::LSD_REFINE_STD, 0.8, param_.lsd_sigma_, 2.0, 22.5, 0, 0.7, 1024);
 }
 
 void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
 {
   for (int index : last_inlier_horizontal_indices_) {
-    if (index >= last_horizontals_.size()) {
-      std::cerr << "OUT OF RANGE " << index << " " << last_horizontals_.size() << std::endl;
-    }
-
     const auto & segment = last_horizontals_.at(index);
     cv::Point2i from(segment.from_.x(), segment.from_.y());
     cv::Point2i to(segment.to_.x(), segment.to_.y());
@@ -67,14 +64,15 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizo
   last_inlier_horizontal_indices_.clear();
   last_horizontals_ = horizontals;
 
-  for (int itr = 0; itr < max_iteration_; itr++) {
+  for (int itr = 0; itr < param_.max_iteration_; itr++) {
     SegmentVec samples;
     std::sample(
-      horizontals.begin(), horizontals.end(), std::back_inserter(samples), sample_count_, engine);
+      horizontals.begin(), horizontals.end(), std::back_inserter(samples), param_.sample_count_,
+      engine);
 
-    Eigen::MatrixXf A_sample(sample_count_, 2);
-    Eigen::MatrixXf b_sample(sample_count_, 1);
-    for (int cnt = 0; cnt < sample_count_; cnt++) {
+    Eigen::MatrixXf A_sample(param_.sample_count_, 2);
+    Eigen::MatrixXf b_sample(param_.sample_count_, 1);
+    for (int cnt = 0; cnt < param_.sample_count_; cnt++) {
       A_sample(cnt, 0) = samples.at(cnt).abc_.x();
       A_sample(cnt, 1) = samples.at(cnt).abc_.y();
       b_sample(cnt) = -samples.at(cnt).abc_.z();
@@ -93,13 +91,13 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizo
       Eigen::Vector2f target = (candidate2 - mid);
       tangent.normalize();
       target.normalize();
-      if (std::abs(target.dot(tangent)) > error_threshold_) {
+      if (std::abs(target.dot(tangent)) > param_.error_threshold_) {
         inliers.push_back(segment);
         inlier_indices.push_back(i);
       }
     }
 
-    if (inliers.size() < inlier_ratio_ * N) continue;
+    if (inliers.size() < param_.inlier_ratio_ * N) continue;
 
     Eigen::MatrixXf A_inlier(inliers.size(), 2);
     Eigen::MatrixXf b_inlier(inliers.size(), 1);

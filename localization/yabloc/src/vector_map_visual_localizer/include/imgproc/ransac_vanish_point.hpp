@@ -1,6 +1,7 @@
 #pragma once
 #include <eigen3/Eigen/StdVector>
 #include <lsd/lsd.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <random>
 
@@ -42,6 +43,15 @@ struct LineSegment
   bool is_diagonal_;
 };
 
+struct RansacVanishParam
+{
+  int max_iteration_ = 500;
+  int sample_count_ = 4;
+  float inlier_ratio_ = 0.2;
+  float error_threshold_ = 0.995;
+  float lsd_sigma_ = 1.5;
+};
+
 class RansacVanishPoint
 {
 public:
@@ -49,7 +59,7 @@ public:
   using SegmentVec = std::vector<LineSegment>;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RansacVanishPoint();
+  RansacVanishPoint(const RansacVanishParam & param = RansacVanishParam());
 
   cv::Point2f operator()(const cv::Mat & image);
   cv::Point2f estimate(const cv::Mat & line_segments);
@@ -57,11 +67,7 @@ public:
   void drawActiveLines(const cv::Mat & image) const;
 
 private:
-  const int max_iteration_ = 500;
-  const int sample_count_ = 4;  // must be equal or larther than 2
-  const float inlier_ratio_ = 0.2;
-  const float error_threshold_ = std::cos(5 * 3.14 / 180);  // 5 [deg]
-
+  const RansacVanishParam param_;
   mutable std::random_device seed_gen_;
   SegmentVec last_horizontals_;
   std::vector<int> last_inlier_horizontal_indices_;

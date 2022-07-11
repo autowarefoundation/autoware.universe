@@ -31,7 +31,7 @@ private:
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
 
   std::optional<CameraInfo> info_{std::nullopt};
-  RansacVanishPoint ransac_vanish_point_;
+  std::shared_ptr<RansacVanishPoint> ransac_vanish_point_;
 
   std::list<Imu> imu_buffer_;
   std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};

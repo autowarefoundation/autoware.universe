@@ -19,6 +19,17 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
   sub_info_ = create_subscription<CameraInfo>(
     "/sensing/camera/traffic_light/camera_info", 10,
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
+
+  {
+    RansacVanishParam param;
+    param.max_iteration_ = declare_parameter<int>("max_iteration", 500);
+    param.sample_count_ = declare_parameter<int>("sample_count", 4);
+    param.inlier_ratio_ = declare_parameter<float>("inlier_ratio", 0.2);
+    param.error_threshold_ = declare_parameter<float>("error_threshold", 0.996);
+    param.lsd_sigma_ = declare_parameter<float>("lsd_sigma", 1.5);
+
+    ransac_vanish_point_ = std::make_shared<RansacVanishPoint>(param);
+  }
 }
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
@@ -115,8 +126,8 @@ void VanishPoint::callbackImage(const Image & msg)
   Sophus::SO3f dR = integral(msg.header.stamp);
 
   cv::Mat image = util::decompress2CvMat(msg);
-  cv::Point2f vanish = ransac_vanish_point_(image);
-  ransac_vanish_point_.drawActiveLines(image);
+  cv::Point2f vanish = (*ransac_vanish_point_)(image);
+  ransac_vanish_point_->drawActiveLines(image);
   drawVerticalLine(image, vanish, Eigen::Vector2f::UnitY());
 
   // Visualize estimated vanishing point
