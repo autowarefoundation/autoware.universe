@@ -27,8 +27,8 @@ SegmentFilter::SegmentFilter()
   sub_info_ =
     create_subscription<CameraInfo>("/sensing/camera/traffic_light/camera_info", 10, cb_info);
 
-  pub_cloud_ = create_publisher<PointCloud2>("/lsd_cloud3", 10);
-  pub_image_ = create_publisher<Image>("/projected_image2", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("/projected_lsd_cloud", 10);
+  pub_image_ = create_publisher<Image>("/projected_image", 10);
 }
 
 cv::Point2i SegmentFilter::toCvPoint(const Eigen::Vector3f & v) const
@@ -42,14 +42,11 @@ cv::Point2i SegmentFilter::toCvPoint(const Eigen::Vector3f & v) const
 void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & segment_msg)
 {
   if (!info_.has_value()) return;
-
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   pcl::PointCloud<pcl::PointXYZ>::Ptr mask{new pcl::PointCloud<pcl::PointXYZ>()};
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(segment_msg, *mask);
   pcl::fromROSMsg(lsd_msg, *lsd);
-
-  cv::Size size(info_->width, info_->height);
 
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
@@ -64,6 +61,7 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   const Eigen::Vector3f t = camera_extrinsic->translation();
   const Eigen::Quaternionf q(camera_extrinsic->rotation());
 
+  // TODO: This will take into account ground tilt and camera vibration someday.
   ProjectFunc project_func = [Kinv, q,
                               t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
@@ -82,6 +80,9 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   *projected_mask = projectMask(*mask, project_func);
   *projected_lines = projectLines(*lsd, project_func);
 
+  // Here, "reliable" means having overlap in the mask area.
+
+  // Extract reliable point's indices
   pcl::PointIndices indices = filtByMask(*projected_mask, *projected_lines);
 
   // Publish point cloud
@@ -93,25 +94,38 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   extract.filter(reliable_edges);
   util::publishCloud(*pub_cloud_, reliable_edges, stamp);
 
-  // Make image
-  std::unordered_set<int> reliable_set;
-  for (int index : indices.indices) reliable_set.insert(index);
+  // Draw image
   cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
-  for (size_t i = 0; i < projected_lines->size(); i++) {
-    auto & pn = projected_lines->at(i);
-    cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
-    cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
-    if (reliable_set.count(i) == 0)
-      cv::line(reliable_line_image, p1, p2, cv::Scalar(255, 255, 255), 2, cv::LineTypes::LINE_8);
-    else
-      cv::line(reliable_line_image, p1, p2, cv::Scalar(100, 100, 255), 4, cv::LineTypes::LINE_8);
+  {
+    // Draw mask areas
+    std::vector<cv::Point2i> contour;
+    std::vector<std::vector<cv::Point2i>> contours(1);
+    for (const auto p : projected_mask->points)
+      contours.front().push_back(toCvPoint(p.getVector3fMap()));
+    cv::drawContours(reliable_line_image, contours, 0, cv::Scalar(0, 155, 155), -1);
+
+    // Draw lines
+    std::unordered_set<int> reliable_set;
+    for (int index : indices.indices) reliable_set.insert(index);
+    for (size_t i = 0; i < projected_lines->size(); i++) {
+      auto & pn = projected_lines->at(i);
+      cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
+      cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
+      if (reliable_set.count(i) == 0)
+        cv::line(reliable_line_image, p1, p2, cv::Scalar(255, 255, 255), 2, cv::LineTypes::LINE_8);
+      else
+        cv::line(reliable_line_image, p1, p2, cv::Scalar(100, 100, 255), 5, cv::LineTypes::LINE_8);
+    }
   }
+
   util::publishImage(*pub_image_, reliable_line_image, stamp);
 }
 
 std::set<ushort> getUniquePixelValue(cv::Mat & image)
 {
-  // NOTE: What is this?
+  // `image` is a set of ushort.
+  // The purpose is to find the unduplicated set of values contained in `image`.
+  // For example, if `image` is {0,1,2,0,1,2,3}, this function returns {0,1,2,3}.
   auto begin = image.begin<ushort>();
   auto last = std::unique(begin, image.end<ushort>());
   std::sort(begin, last);
@@ -169,10 +183,12 @@ pcl::PointIndices SegmentFilter::filtByMask(
   // Create mask image
   cv::Mat mask_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
   std::vector<std::vector<cv::Point2i>> projected_hull(1);
-  for (const auto p : mask)
-    projected_hull.front().push_back(toCvPoint(Eigen::Vector3f(p.x, p.y, p.z)));
+  for (const auto p : mask) projected_hull.front().push_back(toCvPoint(p.getVector3fMap()));
   auto max_color = cv::Scalar::all(std::numeric_limits<u_short>::max());
   cv::drawContours(mask_image, projected_hull, 0, max_color, -1);
+
+  // TODO: Using boost::geometry is more intuitive.
+  // https://boostjp.github.io/tips/geometry.html#disjoint
 
   // And operator
   cv::Mat masked_line;
@@ -182,9 +198,7 @@ pcl::PointIndices SegmentFilter::filtByMask(
   // Extract edges within masks
   pcl::PointIndices reliable_indices;
   for (size_t i = 0; i < edges.size(); i++) {
-    if (pixel_values.count(i + 1) != 0) {
-      reliable_indices.indices.push_back(i);
-    }
+    if (pixel_values.count(i + 1) != 0) reliable_indices.indices.push_back(i);
   }
 
   return reliable_indices;

@@ -39,7 +39,7 @@
         <param name="far_weight_gain" value="0.001"/>
 
         <remap from="/weighted_particles" to="/weighted_particles"/>
-        <remap from="/lsd_cloud" to="/lsd_cloud3"/>
+        <remap from="/lsd_cloud" to="/projected_lsd_cloud"/>
     </node>
 
     <!-- ========================================= -->

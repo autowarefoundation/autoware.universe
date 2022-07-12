@@ -1,8 +1,6 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
-    <arg name="image_size" default="800"/>
-    <arg name="max_range" default="20.0"/>
 
     <arg name="pf" default="true"/>
 

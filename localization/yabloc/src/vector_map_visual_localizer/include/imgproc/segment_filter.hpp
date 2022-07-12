@@ -2,6 +2,7 @@
 #include "common/static_tf_subscriber.hpp"
 #include "common/synchro_subscriber.hpp"
 
+#include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -9,6 +10,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/pcl_base.h>
+#include <pcl/point_types.h>
 
 namespace imgproc
 {

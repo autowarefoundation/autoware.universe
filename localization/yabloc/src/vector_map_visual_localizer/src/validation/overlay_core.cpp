@@ -27,7 +27,7 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock
   sub_ground_plane_ = create_subscription<Float32Array>("/ground", 10, cb_ground);
   sub_image_ = create_subscription<Image>("/src_image", 10, cb_image);
   sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
-  sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, cb_lsd);
+  sub_lsd_ = create_subscription<PointCloud2>("/projected_lsd_cloud", 10, cb_lsd);
   sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
   sub_sign_board_ = create_subscription<PointCloud2>(
     "/sign_board", 10,
