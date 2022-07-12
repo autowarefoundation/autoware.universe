@@ -33,8 +33,13 @@ The crosswalk module determines a stop position at least `stop_margin` away from
 The stop line is the reference point for the stopping position of the vehicle, but if there is no stop line in front of the crosswalk, the position `stop_line_distance` meters before the crosswalk is the virtual stop line for the vehicle. Then, if the stop position determined from `stop_margin` exists in front of the stop line determined from the HDMap or `stop_line_distance`, the actual stop position is determined according to `stop_margin` in principle, and vice versa.
 
 <figure markdown>
-  ![stop_line](docs/crosswalk/stop_line.svg){width=500} ![stop_line_distance](docs/crosswalk/stop_line_distance.svg){width=500}
-  <figcaption>stop point</figcaption>
+  ![stop_line](docs/crosswalk/stop_line.svg){width=700}
+  <figcaption>explicit stop line</figcaption>
+</figure>
+
+<figure markdown>
+  ![stop_line_distance](docs/crosswalk/stop_line_distance.svg){width=700}
+  <figcaption>virtual stop point</figcaption>
 </figure>
 
 On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `stop_line_margin` meters away from the stop line, the actual stop position is determined to be `stop_margin` and pedestrian position, not at the stop line.
