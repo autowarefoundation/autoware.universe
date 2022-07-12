@@ -91,10 +91,7 @@ public:
     test_current_odom_ptr_ = std::make_shared<nav_msgs::msg::Odometry>(*pose);
   }
 
-  void resetCurrentPoseAndTwist()
-  {
-    test_current_odom_ptr_ = nullptr;
-  }
+  void resetCurrentPoseAndTwist() { test_current_odom_ptr_ = nullptr; }
 };
 
 TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
@@ -102,8 +99,10 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
   rclcpp::NodeOptions node_options;
   auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
 
-  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/in_pose_with_covariance", 1);
-  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/in_twist_with_covariance", 1);
+  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "/in_pose_with_covariance", 1);
+  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+    "/in_twist_with_covariance", 1);
 
   /* test for valid value in pose */
   geometry_msgs::msg::PoseWithCovarianceStamped in_pose;
