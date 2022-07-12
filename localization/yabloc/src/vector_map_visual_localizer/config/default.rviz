@@ -6,7 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
-      Splitter Ratio: 0.38787877559661865
+        - /Status2
+      Splitter Ratio: 0.5977653861045837
     Tree Height: 741
   - Class: rviz_common/Selection
     Name: Selection
@@ -383,9 +384,9 @@ Visualization Manager:
           Foregrund Alpha: 0.800000011920929
           Height: 256
           Left: 1200
-          Name: KalmanStatus
+          Name: GroundStatus
           Top: 0
-          Topic: /kalman/status
+          Topic: /ground_status
           Value: true
           Width: 400
       Enabled: true
@@ -394,13 +395,13 @@ Visualization Manager:
       Enabled: true
       Name: SignMarker
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /sign_marker
+        Value: /sign_board_marker
       Value: true
   Enabled: true
   Global Options:
@@ -447,21 +448,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.8049995303153992
-      Class: rviz_default_plugins/TopDownOrtho
+      Class: rviz_default_plugins/Orbit
+      Distance: 54.40153503417969
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
+      Focal Point:
+        X: -22.07474708557129
+        Y: 7.733518123626709
+        Z: 2.8097071647644043
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 10.4917631149292
+      Pitch: 0.18979638814926147
       Target Frame: base_link
-      Value: TopDownOrtho (rviz_default_plugins)
-      X: -23.963329315185547
-      Y: -4.557367324829102
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 5.847387790679932
     Saved: ~
 Window Geometry:
   Displays:

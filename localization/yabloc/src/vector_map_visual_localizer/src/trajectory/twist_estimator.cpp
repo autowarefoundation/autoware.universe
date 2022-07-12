@@ -39,7 +39,7 @@ void TwistEstimator::callbackTimer()
     cov_ = rectifyPositiveSemiDefinite(cov_);
     cov_(1, 3) = 0;
     cov_(3, 1) = 0;
-    RCLCPP_WARN_STREAM(get_logger(), "reset covariance");
+    RCLCPP_INFO_STREAM(get_logger(), "reset covariance because unreached GNSS");
   }
   scale_covariance_reset_flag = true;
 }

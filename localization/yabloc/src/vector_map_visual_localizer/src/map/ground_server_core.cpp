@@ -22,6 +22,8 @@ GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(40)
   pub_ground_height_ = create_publisher<Float32>("/height", 10);
   pub_ground_plane_ = create_publisher<Float32Array>("/ground", 10);
   pub_marker_ = create_publisher<Marker>("/ground_marker", 10);
+  pub_string_ = create_publisher<String>("/ground_status", 10);
+  pub_near_cloud_ = create_publisher<PointCloud2>("/near_cloud", 10);
 
   service_ = create_service<Ground>("ground", cb_service);
 }
@@ -29,7 +31,7 @@ GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(40)
 void GroundServer::callbackPoseStamped(const PoseStamped & msg)
 {
   if (kdtree_ == nullptr) return;
-  common::GroundPlane ground_plane = computeGround(msg.pose.position);
+  common::GroundPlane ground_plane = computeGround(msg.pose.position, true);
 
   Eigen::Vector3f normal = ground_plane.normal;
   vector_buffer_.push_back(normal);
@@ -46,6 +48,27 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
 
   pub_ground_height_->publish(data);
   pub_ground_plane_->publish(ground_plane.msg());
+
+  {
+    std::stringstream ss;
+    ss << "--- Ground Estimator Status ----" << std::endl;
+    ss << std::fixed << std::setprecision(2);
+    ss << "height: " << ground_plane.height() << std::endl;
+    float cos = ground_plane.normal.dot(Eigen::Vector3f::UnitZ());
+    ss << "tilt: " << std::acos(cos) * 180 / 3.14 << " deg" << std::endl;
+    float raw_cos = normal.dot(Eigen::Vector3f::UnitZ());
+    ss << "raw tilt: " << std::acos(raw_cos) * 180 / 3.14 << " deg" << std::endl;
+
+    String string_msg;
+    string_msg.data = ss.str();
+    pub_string_->publish(string_msg);
+  }
+
+  {
+    pcl::PointCloud<pcl::PointXYZ> near_cloud;
+    for (int index : last_near_point_indices_) near_cloud.push_back(cloud_->at(index));
+    if (!near_cloud.empty()) util::publishCloud(*pub_near_cloud_, near_cloud, msg.header.stamp);
+  }
 
   // TODO: current visual marker is so useless
   // publishMarker(ground_plane);
@@ -82,7 +105,8 @@ void GroundServer::callbackMap(const HADMapBin & msg)
   kdtree_->setInputCloud(cloud_);
 }
 
-common::GroundPlane GroundServer::computeGround(const geometry_msgs::msg::Point & point)
+common::GroundPlane GroundServer::computeGround(
+  const geometry_msgs::msg::Point & point, bool logging)
 {
   constexpr int K = 30;
   std::vector<int> indices;
@@ -92,6 +116,8 @@ common::GroundPlane GroundServer::computeGround(const geometry_msgs::msg::Point 
   p.y = point.y;
   p.z = 0;
   kdtree_->nearestKSearch(p, K, indices, distances);
+
+  if (logging) last_near_point_indices_ = indices;
 
   float height = std::numeric_limits<float>::max();
   for (int index : indices) {
@@ -120,15 +146,6 @@ common::GroundPlane GroundServer::computeGround(const geometry_msgs::msg::Point 
   height = (normal.dot(nn) - nn.x() * normal.x() - nn.y() * normal.y()) / normal.z();
   plane.xyz.z() = height;
   plane.normal = normal;
-
-  // Compute maximize gradient angle
-  {
-    static float max_angle = 0;
-    float angle = std ::acos(normal.dot(Eigen::Vector3f::UnitZ()));
-    max_angle = std::max(max_angle, angle);
-    RCLCPP_INFO_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "max angle: " << max_angle);
-  }
-
   return plane;
 }
 
