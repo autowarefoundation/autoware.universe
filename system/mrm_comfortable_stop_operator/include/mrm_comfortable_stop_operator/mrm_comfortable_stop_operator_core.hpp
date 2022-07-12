@@ -20,7 +20,7 @@
 
 // Autoware
 #include <autoware_ad_api_msgs/srv/mrm_operation.hpp>
-#include <autoware_ad_api_msgs/msg/mrm_status.hpp>
+#include <autoware_ad_api_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
@@ -56,7 +56,7 @@ private:
     const autoware_ad_api_msgs::srv::MRMOperation::Response::SharedPtr response);
 
   // Publisher
-  rclcpp::Publisher<autoware_ad_api_msgs::msg::MRMStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::MRMBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr pub_velocity_limit_clear_command_;
 
