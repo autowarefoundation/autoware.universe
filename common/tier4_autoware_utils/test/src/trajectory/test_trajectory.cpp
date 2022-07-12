@@ -2043,7 +2043,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
 
     const auto p_target = createPoint(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
-    const auto insert_idx = insertTargetPoint(x_start, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, x_start, traj_out.points);
 
     EXPECT_NE(insert_idx, boost::none);
     EXPECT_EQ(insert_idx.get(), base_idx + 1);
@@ -2081,7 +2081,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
 
     const auto p_target = createPoint(x_start + 1.1e-3, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
-    const auto insert_idx = insertTargetPoint(x_start + 1.1e-3, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, x_start + 1.1e-3, traj_out.points);
 
     EXPECT_NE(insert_idx, boost::none);
     EXPECT_EQ(insert_idx.get(), base_idx + 1);
@@ -2119,7 +2119,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
 
     const auto p_target = createPoint(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
-    const auto insert_idx = insertTargetPoint(9.0, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, 9.0, traj_out.points);
 
     EXPECT_NE(insert_idx, boost::none);
     EXPECT_EQ(insert_idx.get(), base_idx + 1);
@@ -2157,7 +2157,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
 
     const auto p_target = createPoint(x_start + 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
-    const auto insert_idx = insertTargetPoint(x_start + 1e-4, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, x_start + 1e-4, traj_out.points);
 
     EXPECT_NE(insert_idx, boost::none);
     EXPECT_EQ(insert_idx.get(), base_idx);
@@ -2174,7 +2174,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
 
     const auto p_target = createPoint(x_start - 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
-    const auto insert_idx = insertTargetPoint(x_start - 1e-4, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, x_start - 1e-4, traj_out.points);
 
     EXPECT_NE(insert_idx, boost::none);
     EXPECT_EQ(insert_idx.get(), base_idx + 1);
@@ -2189,7 +2189,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   {
     auto traj_out = traj;
 
-    const auto insert_idx = insertTargetPoint(-1.0, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, -1.0, traj_out.points);
 
     EXPECT_EQ(insert_idx, boost::none);
   }
@@ -2198,7 +2198,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   {
     auto traj_out = traj;
 
-    const auto insert_idx = insertTargetPoint(10.0, traj_out.points);
+    const auto insert_idx = insertTargetPoint(0, 10.0, traj_out.points);
 
     EXPECT_EQ(insert_idx, boost::none);
   }
@@ -2206,6 +2206,6 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   // Empty
   {
     auto empty_traj = generateTestTrajectory<Trajectory>(0, 1.0);
-    EXPECT_THROW(insertTargetPoint(0.0, empty_traj.points), std::invalid_argument);
+    EXPECT_THROW(insertTargetPoint(0, 0.0, empty_traj.points), std::invalid_argument);
   }
 }
