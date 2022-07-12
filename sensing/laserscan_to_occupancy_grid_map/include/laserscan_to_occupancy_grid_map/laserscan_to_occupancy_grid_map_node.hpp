@@ -35,6 +35,9 @@
 
 #include <memory>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace occupancy_grid_map
 {
@@ -48,7 +51,7 @@ using sensor_msgs::msg::PointCloud2;
 using tf2_ros::Buffer;
 using tf2_ros::TransformListener;
 
-class OccupancyGridMapNode : public rclcpp::Node
+class OccupancyGridMapNode : public tilde::SteeNode
 {
 public:
   explicit OccupancyGridMapNode(const rclcpp::NodeOptions & node_options);

@@ -22,20 +22,20 @@ namespace pointcloud_preprocessor
 {
 /** @brief Constructor. */
 DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOptions & options)
-: Node("distortion_corrector_node", options)
+: SteeNode("distortion_corrector_node", options)
 {
   // Parameter
   time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
 
   // Publisher
   undistorted_points_pub_ =
-    this->create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
+    this->create_stee_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   // Subscriber
   velocity_report_sub_ = this->create_subscription<VelocityReport>(
     "~/input/velocity_report", 10,
     std::bind(&DistortionCorrectorComponent::onVelocityReport, this, std::placeholders::_1));
-  input_points_sub_ = this->create_subscription<PointCloud2>(
+  input_points_sub_ = this->create_stee_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
 }

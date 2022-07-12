@@ -32,6 +32,12 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
@@ -39,7 +45,7 @@ using tier4_autoware_utils::Point2d;
 
 namespace pointcloud_preprocessor
 {
-class Lanelet2MapFilterComponent : public rclcpp::Node
+class Lanelet2MapFilterComponent : public tilde::SteeNode
 {
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using PointCloud2Ptr = sensor_msgs::msg::PointCloud2::SharedPtr;
@@ -53,8 +59,8 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr pointcloud_sub_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr filtered_pointcloud_pub_;
+  tilde::SteeSubscription<PointCloud2>::SharedPtr pointcloud_sub_;
+  tilde::SteePublisher<PointCloud2>::SharedPtr filtered_pointcloud_pub_;
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::ConstLanelets road_lanelets_;

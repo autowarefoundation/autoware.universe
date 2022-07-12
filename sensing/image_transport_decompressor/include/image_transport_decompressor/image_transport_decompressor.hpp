@@ -23,10 +23,13 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace image_preprocessor
 {
-class ImageTransportDecompressor : public rclcpp::Node
+class ImageTransportDecompressor : public tilde::SteeNode
 {
 public:
   explicit ImageTransportDecompressor(const rclcpp::NodeOptions & node_options);

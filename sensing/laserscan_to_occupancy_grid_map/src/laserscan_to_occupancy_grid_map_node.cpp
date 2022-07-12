@@ -109,7 +109,7 @@ using costmap_2d::OccupancyGridMapBBFUpdater;
 using geometry_msgs::msg::Pose;
 
 OccupancyGridMapNode::OccupancyGridMapNode(const rclcpp::NodeOptions & node_options)
-: Node("occupancy_grid_map_node", node_options)
+: SteeNode("occupancy_grid_map_node", node_options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

@@ -17,7 +17,7 @@
 namespace imu_corrector
 {
 ImuCorrector::ImuCorrector(const rclcpp::NodeOptions & node_options)
-: Node("imu_corrector", node_options)
+: SteeNode("imu_corrector", node_options)
 {
   angular_velocity_offset_z_ = declare_parameter<double>("angular_velocity_offset_z", 0.0);
 

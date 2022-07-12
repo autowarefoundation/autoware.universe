@@ -29,6 +29,12 @@
 
 #include <deque>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -36,7 +42,7 @@ using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using rcl_interfaces::msg::SetParametersResult;
 using sensor_msgs::msg::PointCloud2;
 
-class DistortionCorrectorComponent : public rclcpp::Node
+class DistortionCorrectorComponent : public tilde::SteeNode
 {
 public:
   explicit DistortionCorrectorComponent(const rclcpp::NodeOptions & options);
@@ -52,9 +58,9 @@ private:
     const std::deque<VelocityReport> & velocity_report_queue,
     const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
 
-  rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
+  tilde::SteeSubscription<PointCloud2>::SharedPtr input_points_sub_;
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_report_sub_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
+  tilde::SteePublisher<PointCloud2>::SharedPtr undistorted_points_pub_;
 
   tf2_ros::Buffer tf2_buffer_{get_clock()};
   tf2_ros::TransformListener tf2_listener_{tf2_buffer_};

@@ -17,10 +17,13 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/imu.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace imu_corrector
 {
-class ImuCorrector : public rclcpp::Node
+class ImuCorrector : public tilde::SteeNode
 {
 public:
   explicit ImuCorrector(const rclcpp::NodeOptions & node_options);

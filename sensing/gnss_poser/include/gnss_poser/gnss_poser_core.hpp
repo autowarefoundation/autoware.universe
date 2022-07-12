@@ -33,10 +33,13 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace gnss_poser
 {
-class GNSSPoser : public rclcpp::Node
+class GNSSPoser : public tilde::SteeNode
 {
 public:
   explicit GNSSPoser(const rclcpp::NodeOptions & node_options);

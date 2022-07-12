@@ -21,6 +21,12 @@
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace pointcloud_preprocessor
 {

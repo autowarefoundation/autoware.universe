@@ -37,7 +37,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
 namespace livox_tag_filter
 {
 LivoxTagFilterNode::LivoxTagFilterNode(const rclcpp::NodeOptions & node_options)
-: Node("livox_tag_filter", node_options)
+: SteeNode("livox_tag_filter", node_options)
 {
   // Parameter
   ignore_tags_ = this->declare_parameter("ignore_tags", std::vector<std::int64_t>{});

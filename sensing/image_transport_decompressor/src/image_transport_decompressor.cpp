@@ -64,7 +64,7 @@
 namespace image_preprocessor
 {
 ImageTransportDecompressor::ImageTransportDecompressor(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("image_transport_decompressor", node_options),
+: tilde::SteeNode("image_transport_decompressor", node_options),
   encoding_(declare_parameter("encoding", "default"))
 {
   compressed_image_sub_ = create_subscription<sensor_msgs::msg::CompressedImage>(
