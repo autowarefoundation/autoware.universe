@@ -652,7 +652,7 @@ bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
   const auto target_module = "PullOver";
 
   for (auto & status : statuses) {
-    if (status->is_waiting_approval || status->status == BT::NodeStatus::RUNNING) {
+    if (status->status == BT::NodeStatus::RUNNING) {
       if (target_module == status->module_name) {
         return true;
       }
