@@ -597,7 +597,7 @@ std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose)
 {
-  std::set<int64_t> unique_lane_ids;
+  std::vector<int64_t> unique_lane_ids;
   auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
     path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
@@ -608,19 +608,33 @@ std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
       lanelet::utils::query::laneletLayer(lanelet_map), current_pose, &current_lanes) &&
     nearest_segment_idx) {
     for (const auto & ll : current_lanes) {
-      if (
-        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
-        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
-        unique_lane_ids.insert(ll.id());
+      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
+        unique_lane_ids.emplace_back(ll.id());
+        break;
+      }
+    }
+
+    // if the lane_id of nearest_segment_idx does not involved in current_lanes,
+    // search the lane_id of nearest_segment_idx + 1
+    if (unique_lane_ids.empty()) {
+      *nearest_segment_idx += 1;
+      for (const auto & ll : current_lanes) {
+        if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
+          unique_lane_ids.emplace_back(ll.id());
+          break;
+        }
       }
     }
   }
 
   // Add forward path lane_id
-  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  const size_t start_idx = nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
   for (size_t i = start_idx; i < path.points.size(); i++) {
-    unique_lane_ids.insert(
-      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+    const int64_t lane_id = path.points.at(i).lane_ids.at(0);
+    if (
+      std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) == unique_lane_ids.end()) {
+      unique_lane_ids.emplace_back(lane_id);
+    }
   }
 
   std::vector<lanelet::ConstLanelet> lanelets;
