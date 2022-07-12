@@ -266,7 +266,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   std::stringstream log_ss;
   for (const auto & checkpoint : checkpoints_) {
     log_ss << "x: " << checkpoint.pose.position.x << " "
-       << "y: " << checkpoint.pose.position.y << std::endl;
+           << "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
     get_logger(), "start planning route with checkpoints: " << std::endl
