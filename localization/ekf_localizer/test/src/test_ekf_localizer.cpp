@@ -33,8 +33,8 @@ using std::placeholders::_1;
 class EKFLocalizerTestSuite : public ::testing::Test
 {
 protected:
-  void SetUp() { rclcpp::init(0, nullptr); }
-  void TearDown() { (void)rclcpp::shutdown(); }
+  static void SetUpTestCase() { rclcpp::init(0, nullptr); }
+  static void TearDownTestCase() { (void)rclcpp::shutdown(); }
 };  // sanity_check
 
 class TestEKFLocalizerNode : public EKFLocalizer
@@ -91,7 +91,10 @@ public:
     test_current_odom_ptr_ = std::make_shared<nav_msgs::msg::Odometry>(*pose);
   }
 
-  void resetCurrentPoseAndTwist() { test_current_odom_ptr_ = nullptr; }
+  void resetCurrentPoseAndTwist()
+  {
+    test_current_odom_ptr_ = nullptr;
+  }
 };
 
 TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
@@ -99,10 +102,7 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
   rclcpp::NodeOptions node_options;
   auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
 
-  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "/in_pose_with_covariance", 1);
-  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "/in_twist_with_covariance", 1);
+  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/in_pose_with_covariance", 1);
 
   /* test for valid value in pose */
   geometry_msgs::msg::PoseWithCovarianceStamped in_pose;
@@ -147,8 +147,16 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
   }
   is_succeeded = !(std::isnan(ekf_x) || std::isinf(ekf_x));
   ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
-
   ekf->resetCurrentPoseAndTwist();
+
+}
+
+TEST_F(EKFLocalizerTestSuite, measurementUpdateTwist)
+{
+  rclcpp::NodeOptions node_options;
+  auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
+
+  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/in_twist_with_covariance", 1);
 
   /* test for valid value in twist */
   geometry_msgs::msg::TwistWithCovarianceStamped in_twist;
@@ -168,7 +176,7 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
   ASSERT_FALSE(ekf->test_current_odom_ptr_ == nullptr);
 
   double ekf_vx = ekf->test_current_odom_ptr_->twist.twist.linear.x;
-  is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
+  bool is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
   ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
   ASSERT_TRUE(std::fabs(ekf_vx - vx) < 0.1)
     << "ekf vel x: " << ekf_vx << ", should be close to " << vx;
