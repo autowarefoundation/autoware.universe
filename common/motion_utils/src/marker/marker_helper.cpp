@@ -14,6 +14,8 @@
 
 #include "motion_utils/marker/marker_helper.hpp"
 
+#include <string>
+
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
