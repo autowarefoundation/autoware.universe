@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
-        - /Overlay1
         - /Overlay1/FreeSpace1
-        - /Particles1/Topic1
       Splitter Ratio: 0.38787877559661865
     Tree Height: 741
   - Class: rviz_common/Selection
@@ -333,7 +331,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /camera/weighted_particles/marker_array
+        Value: /weighted_particles/marker_array
       Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
@@ -408,7 +406,7 @@ Visualization Manager:
       Enabled: true
       Name: SignMarker
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -461,7 +459,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 1.4299992322921753
+      Angle: 0.604999303817749
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -471,11 +469,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 13.171239852905273
+      Scale: 14.454222679138184
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -17.59923553466797
-      Y: -5.881777763366699
+      X: -11.656311988830566
+      Y: 8.835807800292969
     Saved: ~
 Window Geometry:
   Displays:

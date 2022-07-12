@@ -22,7 +22,7 @@
         <param name="static_angular_covariance" value="0.01" />
 
         <param name="visualize" value="true"/>
-        <remap from="/marker_array_particles" to="/camera/weighted_particles/marker_array"/>
+        <remap from="/marker_array_particles" to="/weighted_particles/marker_array"/>
     </node>
 
     <!-- ========================================= -->
@@ -38,12 +38,7 @@
         <param name="min_prob" value="0.1"/>
         <param name="far_weight_gain" value="0.001"/>
 
-        <remap from="/weighted_particles" to="/camera/weighted_particles"/>
-    </node>
-    <node if="true" pkg="topic_tools" exec="relay" name="camera_corrector_relay" args="--ros-args --log-level warn">
-        <param name="input_topic" value="/camera/weighted_particles" />
-        <param name="output_topic" value="/weighted_particles" />
-        <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />
+        <remap from="/weighted_particles" to="/weighted_particles"/>
     </node>
 
     <!-- ========================================= -->
@@ -54,12 +49,7 @@
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="5.0"/>
         <param name="sigma" value="4.0"/>
-        <remap from="/weighted_particles" to="/gnss/weighted_particles"/>
 
-    </node>
-    <node if="true" pkg="topic_tools" exec="relay" name="gnss_corrector_relay">
-        <param name="input_topic" value="/gnss/weighted_particles" />
-        <param name="output_topic" value="/weighted_particles" />
-        <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />
+        <remap from="/weighted_particles" to="/weighted_particles"/>
     </node>
 </launch>
