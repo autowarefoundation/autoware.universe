@@ -43,10 +43,8 @@ public:
   TestEKFLocalizerNode(const std::string & node_name, const rclcpp::NodeOptions & node_options)
   : EKFLocalizer(node_name, node_options)
   {
-    sub_twist = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-      "/ekf_twist", 1, std::bind(&TestEKFLocalizerNode::testCallbackTwist, this, _1));
-    sub_pose = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-      "/ekf_pose", 1, std::bind(&TestEKFLocalizerNode::testCallbackPose, this, _1));
+    sub_odom = this->create_subscription<nav_msgs::msg::Odometry>(
+      "/ekf_odom", 1, std::bind(&TestEKFLocalizerNode::testCallbackOdom, this, _1));
 
     using std::chrono_literals::operator""ms;
     test_timer_ = rclcpp::create_timer(
@@ -54,16 +52,14 @@ public:
   }
   ~TestEKFLocalizerNode() {}
 
-  std::string frame_id_a_ = "world";
+  std::string frame_id_a_ = "map";
   std::string frame_id_b_ = "base_link";
 
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom;
 
   rclcpp::TimerBase::SharedPtr test_timer_;
 
-  geometry_msgs::msg::PoseStamped::SharedPtr test_current_pose_ptr_;
-  geometry_msgs::msg::TwistStamped::SharedPtr test_current_twist_ptr_;
+  nav_msgs::msg::Odometry::SharedPtr test_current_odom_ptr_;
 
   void testTimerCallback()
   {
@@ -90,130 +86,28 @@ public:
     br->sendTransform(sent);
   }
 
-  void testCallbackPose(geometry_msgs::msg::PoseStamped::SharedPtr pose)
+  void testCallbackOdom(nav_msgs::msg::Odometry::SharedPtr pose)
   {
-    test_current_pose_ptr_ = std::make_shared<geometry_msgs::msg::PoseStamped>(*pose);
-  }
-
-  void testCallbackTwist(geometry_msgs::msg::TwistStamped::SharedPtr twist)
-  {
-    test_current_twist_ptr_ = std::make_shared<geometry_msgs::msg::TwistStamped>(*twist);
+    test_current_odom_ptr_ = std::make_shared<nav_msgs::msg::Odometry>(*pose);
   }
 
   void resetCurrentPoseAndTwist()
   {
-    test_current_pose_ptr_ = nullptr;
-    test_current_twist_ptr_ = nullptr;
+    test_current_odom_ptr_ = nullptr;
   }
 };
 
-TEST_F(EKFLocalizerTestSuite, measurementUpdatePose)
+TEST_F(EKFLocalizerTestSuite, measurementUpdateTest)
 {
   rclcpp::NodeOptions node_options;
   auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
 
-  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseStamped>("/in_pose", 1);
+  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/in_pose_with_covariance", 1);
+  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/in_twist_with_covariance", 1);
 
-  geometry_msgs::msg::PoseStamped in_pose;
-  in_pose.header.frame_id = "world";
-  in_pose.pose.position.x = 1.0;
-  in_pose.pose.position.y = 2.0;
-  in_pose.pose.position.z = 3.0;
-  in_pose.pose.orientation.x = 0.0;
-  in_pose.pose.orientation.y = 0.0;
-  in_pose.pose.orientation.z = 0.0;
-  in_pose.pose.orientation.w = 1.0;
-
-  /* test for valid value */
-  const double pos_x = 12.3;
-  in_pose.pose.position.x = pos_x;  // for valid value
-
-  for (int i = 0; i < 20; ++i) {
-    in_pose.header.stamp = ekf->now();
-    pub_pose->publish(in_pose);
-    rclcpp::spin_some(ekf);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  ASSERT_NE(ekf->test_current_pose_ptr_, nullptr);
-  ASSERT_NE(ekf->test_current_twist_ptr_, nullptr);
-
-  double ekf_x = ekf->test_current_pose_ptr_->pose.position.x;
-  bool is_succeeded = !(std::isnan(ekf_x) || std::isinf(ekf_x));
-  ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
-
-  ASSERT_TRUE(std::fabs(ekf_x - pos_x) < 0.1)
-    << "ekf pos x: " << ekf_x << " should be close to " << pos_x;
-
-  /* test for invalid value */
-  in_pose.pose.position.x = NAN;  // check for invalid values
-  for (int i = 0; i < 10; ++i) {
-    in_pose.header.stamp = ekf->now();
-    pub_pose->publish(in_pose);
-    rclcpp::spin_some(ekf);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-  }
-  is_succeeded = !(std::isnan(ekf_x) || std::isinf(ekf_x));
-  ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
-
-  ekf->resetCurrentPoseAndTwist();
-}
-
-TEST_F(EKFLocalizerTestSuite, measurementUpdateTwist)
-{
-  rclcpp::NodeOptions node_options;
-  auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
-
-  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistStamped>("/in_twist", 1);
-  geometry_msgs::msg::TwistStamped in_twist;
-  in_twist.header.frame_id = "base_link";
-
-  /* test for valid value */
-  const double vx = 12.3;
-  in_twist.twist.linear.x = vx;  // for valid value
-  for (int i = 0; i < 20; ++i) {
-    in_twist.header.stamp = ekf->now();
-    pub_twist->publish(in_twist);
-    rclcpp::spin_some(ekf);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  ASSERT_FALSE(ekf->test_current_pose_ptr_ == nullptr);
-  ASSERT_FALSE(ekf->test_current_twist_ptr_ == nullptr);
-
-  double ekf_vx = ekf->test_current_twist_ptr_->twist.linear.x;
-  bool is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
-  ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
-  ASSERT_TRUE(std::fabs(ekf_vx - vx) < 0.1)
-    << "ekf vel x: " << ekf_vx << ", should be close to " << vx;
-
-  /* test for invalid value */
-  in_twist.twist.linear.x = NAN;  // check for invalid values
-  for (int i = 0; i < 10; ++i) {
-    in_twist.header.stamp = ekf->now();
-    pub_twist->publish(in_twist);
-    rclcpp::spin_some(ekf);
-    rclcpp::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  ekf_vx = ekf->test_current_twist_ptr_->twist.linear.x;
-  is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
-  ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
-
-  ekf->resetCurrentPoseAndTwist();
-}
-
-TEST_F(EKFLocalizerTestSuite, measurementUpdatePoseWithCovariance)
-{
-  rclcpp::NodeOptions node_options;
-  node_options.append_parameter_override("use_pose_with_covariance", true);
-  rclcpp::sleep_for(std::chrono::milliseconds(200));
-  auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
-
-  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "/in_pose_with_covariance", 1);
+  /* test for valid value in pose */
   geometry_msgs::msg::PoseWithCovarianceStamped in_pose;
-  in_pose.header.frame_id = "world";
+  in_pose.header.frame_id = "map";
   in_pose.pose.pose.position.x = 1.0;
   in_pose.pose.pose.position.y = 2.0;
   in_pose.pose.pose.position.z = 3.0;
@@ -225,8 +119,7 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdatePoseWithCovariance)
     in_pose.pose.covariance[i] = 0.1;
   }
 
-  /* test for valid value */
-  const double pos_x = 99.3;
+  const double pos_x = 12.3;
   in_pose.pose.pose.position.x = pos_x;  // for valid value
 
   for (int i = 0; i < 20; ++i) {
@@ -236,16 +129,16 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdatePoseWithCovariance)
     rclcpp::sleep_for(std::chrono::milliseconds(100));
   }
 
-  ASSERT_FALSE(ekf->test_current_pose_ptr_ == nullptr);
-  ASSERT_FALSE(ekf->test_current_twist_ptr_ == nullptr);
+  ASSERT_NE(ekf->test_current_odom_ptr_, nullptr);
 
-  double ekf_x = ekf->test_current_pose_ptr_->pose.position.x;
+  double ekf_x = ekf->test_current_odom_ptr_->pose.pose.position.x;
   bool is_succeeded = !(std::isnan(ekf_x) || std::isinf(ekf_x));
   ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
+
   ASSERT_TRUE(std::fabs(ekf_x - pos_x) < 0.1)
     << "ekf pos x: " << ekf_x << " should be close to " << pos_x;
 
-  /* test for invalid value */
+  /* test for invalid value in pose */
   in_pose.pose.pose.position.x = NAN;  // check for invalid values
   for (int i = 0; i < 10; ++i) {
     in_pose.header.stamp = ekf->now();
@@ -257,40 +150,31 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdatePoseWithCovariance)
   ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
 
   ekf->resetCurrentPoseAndTwist();
-}
 
-TEST_F(EKFLocalizerTestSuite, measurementUpdateTwistWithCovariance)
-{
-  rclcpp::NodeOptions node_options;
-  auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
-
-  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
-    "/in_twist_with_covariance", 1);
+  /* test for valid value in twist */
   geometry_msgs::msg::TwistWithCovarianceStamped in_twist;
   in_twist.header.frame_id = "base_link";
-
-  /* test for valid value */
   const double vx = 12.3;
   in_twist.twist.twist.linear.x = vx;  // for valid value
   for (int i = 0; i < 36; ++i) {
     in_twist.twist.covariance[i] = 0.1;
   }
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 20; ++i) {
     in_twist.header.stamp = ekf->now();
     pub_twist->publish(in_twist);
     rclcpp::spin_some(ekf);
     rclcpp::sleep_for(std::chrono::milliseconds(100));
   }
 
-  ASSERT_FALSE(ekf->test_current_pose_ptr_ == nullptr);
-  ASSERT_FALSE(ekf->test_current_twist_ptr_ == nullptr);
+  ASSERT_FALSE(ekf->test_current_odom_ptr_ == nullptr);
 
-  double ekf_vx = ekf->test_current_twist_ptr_->twist.linear.x;
-  bool is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
+  double ekf_vx = ekf->test_current_odom_ptr_->twist.twist.linear.x;
+  is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
   ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
-  ASSERT_TRUE((ekf_vx - vx) < 0.1) << "vel x should be close to " << vx;
+  ASSERT_TRUE(std::fabs(ekf_vx - vx) < 0.1)
+    << "ekf vel x: " << ekf_vx << ", should be close to " << vx;
 
-  /* test for invalid value */
+  /* test for invalid value in twist */
   in_twist.twist.twist.linear.x = NAN;  // check for invalid values
   for (int i = 0; i < 10; ++i) {
     in_twist.header.stamp = ekf->now();
@@ -299,7 +183,9 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTwistWithCovariance)
     rclcpp::sleep_for(std::chrono::milliseconds(100));
   }
 
-  ekf_vx = ekf->test_current_twist_ptr_->twist.linear.x;
+  ekf_vx = ekf->test_current_odom_ptr_->twist.twist.linear.x;
   is_succeeded = !(std::isnan(ekf_vx) || std::isinf(ekf_vx));
   ASSERT_EQ(true, is_succeeded) << "ekf result includes invalid value.";
+
+  ekf->resetCurrentPoseAndTwist();
 }
