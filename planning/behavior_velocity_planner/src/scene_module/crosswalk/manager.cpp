@@ -43,7 +43,7 @@ std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
   }
 
   // Add forward path lane_id
-  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  const size_t start_idx = nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
   for (size_t i = start_idx; i < path.points.size(); i++) {
     const int64_t lane_id = path.points.at(i).lane_ids.at(0);
     if (
