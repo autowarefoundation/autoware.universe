@@ -650,7 +650,6 @@ bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
   const auto target_module = "PullOver";
-
   for (auto & status : statuses) {
     if (status->status == BT::NodeStatus::RUNNING) {
       if (target_module == status->module_name) {
