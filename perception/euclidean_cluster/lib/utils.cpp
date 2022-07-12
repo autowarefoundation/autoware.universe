@@ -75,7 +75,7 @@ void convertObjectMsg2SensorMsg(
     pointcloud_size += feature_object.feature.cluster.width * feature_object.feature.cluster.height;
   }
 
-  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZI> modifier{
+  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZRGBA> modifier{
     output, "euclidean_cluster_cloud"};
 
   constexpr uint8_t color_data[] = {200, 0,   0, 0,   200, 0,   0, 0,   200,
@@ -86,10 +86,8 @@ void convertObjectMsg2SensorMsg(
       feature_object.feature.cluster};
     for (const auto & point : view) {
       modifier.push_back(
-        {point.x, point.y, point.z,
-         static_cast<float>(
-           (color_data[3 * (i % 6) + 0] << 3) + (color_data[3 * (i % 6) + 1] << 2) +
-           (color_data[3 * (i % 6) + 2] << 1))});
+        {point.x, point.y, point.z, (color_data[3 * (i % 6) + 0]), (color_data[3 * (i % 6) + 1]),
+         (color_data[3 * (i % 6) + 2]), 0});
     }
   }
 }

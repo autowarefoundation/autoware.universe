@@ -127,6 +127,36 @@ struct COMMON_PUBLIC PointXYZ
   }
 };
 
+struct COMMON_PUBLIC PointXYZRGBA
+{
+  float32_t x{0.0F};
+  float32_t y{0.0F};
+  float32_t z{0.0F};
+  uint8_t r{0};
+  uint8_t g{0};
+  uint8_t b{0};
+  uint8_t a{0};
+  friend bool operator==(const PointXYZRGBA & p1, const PointXYZRGBA & p2) noexcept
+  {
+    return helper_functions::comparisons::rel_eq(
+             p1.x, p2.x, std::numeric_limits<float32_t>::epsilon()) &&
+
+           helper_functions::comparisons::rel_eq(
+             p1.y, p2.y, std::numeric_limits<float32_t>::epsilon()) &&
+
+           helper_functions::comparisons::rel_eq(
+             p1.z, p2.z, std::numeric_limits<float32_t>::epsilon()) &&
+
+           (p1.r == p2.r) &&
+
+           (p1.g == p2.g) &&
+
+           (p1.b == p2.b) &&
+
+           (p1.a == p2.a);
+  }
+};
+
 using PointBlock = std::vector<PointXYZIF>;
 using PointPtrBlock = std::vector<const PointXYZIF *>;
 /// \brief Stores basic configuration information, does some simple validity checking
