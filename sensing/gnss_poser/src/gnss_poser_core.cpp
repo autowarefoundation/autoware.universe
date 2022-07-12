@@ -44,8 +44,8 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   nav_pvt_sub_ = create_subscription<ublox_msgs::msg::NavPVT>(
     "navpvt", rclcpp::QoS{1}, std::bind(&GNSSPoser::callbackNavPVT, this, std::placeholders::_1));
 
-  pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", rclcpp::QoS{1});
-  pose_cov_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  pose_pub_ = create_stee_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", rclcpp::QoS{1});
+  pose_cov_pub_ = create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "gnss_pose_cov", rclcpp::QoS{1});
   fixed_pub_ = create_publisher<tier4_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
 }
