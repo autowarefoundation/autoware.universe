@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_PATH_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_PATH_HPP_
-
-#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
-
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-
-#include <vector>
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PLANNER_TYPE_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PLANNER_TYPE_HPP_
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-struct PullOutPath
-{
-  std::vector<PathWithLaneId> partial_paths;
-  Pose start_pose;
-  Pose end_pose;
+enum class PlannerType {
+  NONE = 0,
+  SHIFT = 1,
+  GEOMETRIC = 2,
 };
 }  // namespace behavior_path_planner
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_PATH_HPP_
+
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PLANNER_TYPE_HPP_
