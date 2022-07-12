@@ -43,12 +43,13 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
   mean /= vector_buffer_.size();
   ground_plane.normal = mean.normalized();
 
+  // Publish value msg
   Float32 data;
   data.data = ground_plane.height();
-
   pub_ground_height_->publish(data);
   pub_ground_plane_->publish(ground_plane.msg());
 
+  // Publish string msg
   {
     std::stringstream ss;
     ss << "--- Ground Estimator Status ----" << std::endl;
@@ -105,25 +106,37 @@ void GroundServer::callbackMap(const HADMapBin & msg)
   kdtree_->setInputCloud(cloud_);
 }
 
+std::vector<int> mergeIndices(const std::vector<int> & indices1, const std::vector<int> & indices2)
+{
+  std::unordered_set<int> set;
+  for (int i : indices1) set.insert(i);
+  for (int i : indices2) set.insert(i);
+
+  std::vector<int> indices;
+  indices.assign(set.begin(), set.end());
+  return indices;
+}
+
 common::GroundPlane GroundServer::computeGround(
   const geometry_msgs::msg::Point & point, bool logging)
 {
+  constexpr int R = 10;
   constexpr int K = 30;
-  std::vector<int> indices;
+  std::vector<int> k_indices, r_indices;
   std::vector<float> distances;
   pcl::PointXYZ p;
   p.x = point.x;
   p.y = point.y;
   p.z = 0;
-  kdtree_->nearestKSearch(p, K, indices, distances);
+  kdtree_->nearestKSearch(p, K, k_indices, distances);
+  kdtree_->radiusSearch(p, R, r_indices, distances);
+
+  std::vector<int> indices = mergeIndices(k_indices, r_indices);
 
   if (logging) last_near_point_indices_ = indices;
 
-  float height = std::numeric_limits<float>::max();
-  for (int index : indices) {
-    Eigen::Vector3f v = cloud_->at(index).getVector3fMap();
-    height = std::min(height, v.z());
-  }
+  Eigen::Vector3f v = cloud_->at(k_indices.front()).getVector3fMap();
+  const float height = v.z();
 
   common::GroundPlane plane;
   plane.xyz.x() = point.x;
@@ -140,11 +153,9 @@ common::GroundPlane GroundServer::computeGround(
   float curvature;
   pcl::solvePlaneParameters(covariance, centroid, plane_parameter, curvature);
   Eigen::Vector3f normal = plane_parameter.topRows(3);
+
   if (normal.z() < 0) normal = -normal;
 
-  Eigen::Vector3f nn = cloud_->at(indices.front()).getVector3fMap();
-  height = (normal.dot(nn) - nn.x() * normal.x() - nn.y() * normal.y()) / normal.z();
-  plane.xyz.z() = height;
   plane.normal = normal;
   return plane;
 }
