@@ -24,6 +24,7 @@
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_ad_api_msgs/srv/mrm_operation.hpp>
+#include <autoware_ad_api_msgs/msg/mrm_status.hpp>
 #include <autoware_ad_api_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
@@ -102,6 +103,12 @@ private:
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
   autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
   void publishControlCommands();
+  void operateMRM();
+  void callMRMBehavior(const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const;
+  void cancelMRMBehavior(const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const;
+  void logMRMCallingResult(
+    const autoware_ad_api_msgs::srv::MRMOperation::Response & result, const std::string & behavior,
+    bool is_call) const;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -120,9 +127,12 @@ private:
   autoware_auto_system_msgs::msg::EmergencyState::_state_type emergency_state_{
     autoware_auto_system_msgs::msg::EmergencyState::NORMAL};
   rclcpp::Time takeover_requested_time_;
+  autoware_ad_api_msgs::msg::MRMStatus::_behavior_type mrm_behavior_{
+    autoware_ad_api_msgs::msg::MRMStatus::NONE};
 
   void transitionTo(const int new_state);
   void updateEmergencyState();
+  autoware_ad_api_msgs::msg::MRMStatus::_behavior_type updateMRMBehavior();
   bool isStopped();
   bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
   autoware_auto_control_msgs::msg::AckermannControlCommand selectAlternativeControlCommand();

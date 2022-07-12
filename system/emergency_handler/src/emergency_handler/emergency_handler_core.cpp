@@ -185,6 +185,103 @@ void EmergencyHandler::publishControlCommands()
   }
 }
 
+void EmergencyHandler::operateMRM()
+{
+  using autoware_auto_system_msgs::msg::EmergencyState;
+  using autoware_ad_api_msgs::msg::MRMStatus;
+
+  if (emergency_state_ == EmergencyState::NORMAL) {
+    // Cancel MRM behavior when returning to NORMAL state
+    const auto current_mrm_behavior = MRMStatus::NONE;
+    if (current_mrm_behavior != mrm_behavior_) {
+      cancelMRMBehavior(mrm_behavior_);
+      mrm_behavior_ = current_mrm_behavior;
+    }
+    return;
+  }
+  if (emergency_state_ == EmergencyState::OVERRIDE_REQUESTING) {
+    // Do nothing
+    return;
+  }
+  if (emergency_state_ == EmergencyState::MRM_OPERATING) {
+    const auto current_mrm_behavior = updateMRMBehavior();
+    if (current_mrm_behavior != mrm_behavior_) {
+      cancelMRMBehavior(mrm_behavior_);
+      callMRMBehavior(current_mrm_behavior);
+      mrm_behavior_ = current_mrm_behavior;
+    }
+    return;
+  }
+  if (emergency_state_ == EmergencyState::MRM_SUCCEEDED) {
+    // TODO(mkuri): operate MRC behavior
+    // Do nothing
+    return;
+  }
+  if (emergency_state_ == EmergencyState::MRM_FAILED) {
+    // Do nothing
+    return;
+  }
+  RCLCPP_WARN(this->get_logger(), "invalid MRM state: %d", emergency_state_);
+}
+
+void EmergencyHandler::callMRMBehavior(
+    const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const
+{
+  using autoware_ad_api_msgs::msg::MRMStatus;
+
+  const auto request = std::shared_ptr<autoware_ad_api_msgs::srv::MRMOperation::Request>();
+  request->operate = true;
+
+  if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
+    const auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Comfortable stop is failed to operate");
+    }
+    return;
+  }
+  if (mrm_behavior == MRMStatus::SUDDEN_STOP) {
+    const auto result = client_mrm_sudden_stop_->async_send_request(request).get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(this->get_logger(), "Sudden stop is operated");
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Sudden stop is failed to operate");
+    }
+    return;
+  }
+  RCLCPP_WARN(this->get_logger(), "invalid MRM behavior: %d", mrm_behavior);
+}
+
+void EmergencyHandler::cancelMRMBehavior(
+  const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const
+{
+  using autoware_ad_api_msgs::msg::MRMStatus;
+
+  const auto request = std::shared_ptr<autoware_ad_api_msgs::srv::MRMOperation::Request>();
+  request->operate = false;
+
+  if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
+    const auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Comfortable stop is failed to cancel");
+    }
+    return;
+  }
+  if (mrm_behavior == MRMStatus::SUDDEN_STOP) {
+    const auto result = client_mrm_sudden_stop_->async_send_request(request).get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(this->get_logger(), "Sudden stop is canceled");
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Sudden stop is failed to cancel");
+    }
+    return;
+  }
+  RCLCPP_WARN(this->get_logger(), "invalid MRM behavior: %d", mrm_behavior);
+}
+
 bool EmergencyHandler::isDataReady()
 {
   if (!hazard_status_stamped_) {
@@ -216,6 +313,7 @@ void EmergencyHandler::onTimer()
 
   // Publish control commands
   publishControlCommands();
+  operateMRM();
 }
 
 void EmergencyHandler::transitionTo(const int new_state)
@@ -309,6 +407,16 @@ void EmergencyHandler::updateEmergencyState()
       throw std::runtime_error(msg);
     }
   }
+}
+
+autoware_ad_api_msgs::msg::MRMStatus::_behavior_type EmergencyHandler::updateMRMBehavior()
+{
+  using autoware_auto_system_msgs::msg::HazardStatus;
+
+  // Get hazard level
+  // const auto level = hazard_status_stamped_->status.level;
+
+  return 0;
 }
 
 bool EmergencyHandler::isEmergency(
