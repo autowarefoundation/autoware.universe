@@ -1,8 +1,8 @@
 #include "modularized_particle_filter/common/visualize.hpp"
 
-ParticleVisualizer::ParticleVisualizer(rclcpp::Node * node)
+ParticleVisualizer::ParticleVisualizer(rclcpp::Node & node)
 {
-  pub_marker_array_ = node->create_publisher<MarkerArray>("/marker_array_particles", 10);
+  pub_marker_array_ = node.create_publisher<MarkerArray>("/marker_array_particles", 10);
 }
 
 void ParticleVisualizer::publish(const ParticleArray & msg)

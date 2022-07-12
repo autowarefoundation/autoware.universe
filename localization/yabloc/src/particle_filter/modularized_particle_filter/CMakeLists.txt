@@ -29,6 +29,7 @@ ament_auto_add_executable(predictor
   src/prediction/predictor_node.cpp
   src/prediction/predictor.cpp
   src/prediction/resampler.cpp
+  src/common/visualize.cpp
 )
 
 ament_auto_add_executable(lidar_pose_corrector

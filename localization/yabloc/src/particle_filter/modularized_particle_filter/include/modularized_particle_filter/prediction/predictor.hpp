@@ -1,6 +1,7 @@
 #ifndef MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
 #define MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
 
+#include "modularized_particle_filter/common/visualize.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -45,12 +46,14 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
 
+  const bool visualize_;
   const int number_of_particles_;
   const float resampling_interval_seconds_;
   const float static_linear_covariance;
   const float static_angular_covariance;
   float ground_height_;
 
+  std::shared_ptr<ParticleVisualizer> visualizer_{nullptr};
   std::shared_ptr<RetroactiveResampler> resampler_ptr_{nullptr};
   std::optional<ParticleArray> particle_array_opt_{std::nullopt};
   std::optional<TwistWithCovarianceStamped> twist_opt_{std::nullopt};

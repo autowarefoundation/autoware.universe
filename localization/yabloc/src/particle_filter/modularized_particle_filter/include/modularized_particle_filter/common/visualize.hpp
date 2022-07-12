@@ -14,7 +14,7 @@ public:
   using Particle = modularized_particle_filter_msgs::msg::Particle;
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
 
-  ParticleVisualizer(rclcpp::Node * node);
+  ParticleVisualizer(rclcpp::Node & node);
   void publish(const ParticleArray & msg);
 
 private:

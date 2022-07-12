@@ -8,8 +8,7 @@ AbstCorrector::AbstCorrector(const std::string & node_name)
   particle_sub_ = create_subscription<ParticleArray>(
     "/predicted_particles", 10, std::bind(&AbstCorrector::particleArrayCallback, this, _1));
 
-  if (visualize_)
-    visualizer_ = std::make_shared<ParticleVisualizer>(dynamic_cast<rclcpp::Node *>(this));
+  if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 }
 
 void AbstCorrector::particleArrayCallback(const ParticleArray & particle_array)

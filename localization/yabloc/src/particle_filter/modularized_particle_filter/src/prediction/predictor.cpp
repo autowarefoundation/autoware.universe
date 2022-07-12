@@ -13,6 +13,7 @@
 
 Predictor::Predictor()
 : Node("predictor"),
+  visualize_(declare_parameter<bool>("visualize", false)),
   number_of_particles_(declare_parameter("num_of_particles", 500)),
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
   static_linear_covariance(declare_parameter("static_linear_covariance", 0.01)),
@@ -39,6 +40,8 @@ Predictor::Predictor()
   twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
   particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, particle_cb);
   height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, height_cb);
+
+  if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -155,6 +158,8 @@ void Predictor::timerCallback()
 
   geometry_msgs::msg::Pose mean_pose{calculateMeanPose(particle_array)};
   publishMeanPose(mean_pose, current_time);
+
+  if (visualize_) visualizer_->publish(particle_array);
 
   particle_array_opt_ = particle_array;
 }

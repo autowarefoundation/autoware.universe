@@ -20,6 +20,9 @@
 
         <param name="static_linear_covariance" value="0.09" />
         <param name="static_angular_covariance" value="0.01" />
+
+        <param name="visualize" value="true"/>
+        <remap from="/marker_array_particles" to="/camera/weighted_particles/marker_array"/>
     </node>
 
     <!-- ========================================= -->
@@ -53,23 +56,10 @@
         <param name="sigma" value="4.0"/>
         <remap from="/weighted_particles" to="/gnss/weighted_particles"/>
 
-        <param name="visualize" value="true"/>
-        <remap from="/marker_array_particles" to="/camera/weighted_particles/marker_array"/>
     </node>
     <node if="true" pkg="topic_tools" exec="relay" name="gnss_corrector_relay">
         <param name="input_topic" value="/gnss/weighted_particles" />
         <param name="output_topic" value="/weighted_particles" />
         <param name="type" value="modularized_particle_filter_msgs/msg/ParticleArray" />
-    </node>
-    
-    <!-- ========================================= -->
-    <!-- ========== visualization ================ -->
-    <!-- ========================================= -->
-    <node if="false" pkg="modularized_particle_filter" exec="particle_visualize" name="particle_array_to_marker_array" output="screen" args="--ros-args --log-level $(var log_level)">
-        <remap from="/particle_array" to="/predicted_particles" />
-        <!-- <remap from="/particle_array" to="/gnss/weighted_particles" /> -->
-        <!-- <remap from="/particle_array" to="/camera/weighted_particles" /> -->
-        <!-- <remap from="/particle_array" to="/sign/weighted_particles" /> -->
-        <remap from="/marker_array" to="/camera/weighted_particles/marker_array" />
     </node>
 </launch>
