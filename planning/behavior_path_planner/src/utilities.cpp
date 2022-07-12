@@ -1428,6 +1428,24 @@ double getDistanceToShoulderBoundary(
   return arc_coordinates.distance;
 }
 
+double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+{
+  lanelet::ConstLanelet closest_shoulder_lanelet;
+  lanelet::ArcCoordinates arc_coordinates;
+  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_shoulder_lanelet)) {
+    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
+    const auto & right_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.rightBound3d());
+    arc_coordinates = lanelet::geometry::toArcCoordinates(
+      right_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
+  } else {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      "closest shoulder lanelet not found.");
+  }
+
+  return arc_coordinates.distance;
+}
+
 double getArcLengthToTargetLanelet(
   const lanelet::ConstLanelets & lanelet_sequence, const lanelet::ConstLanelet & target_lane,
   const Pose & pose)
@@ -1804,6 +1822,59 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
+PathWithLaneId setDecelerationVelocity(
+  const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
+  const double buffer, const double deceleration_interval)
+{
+  auto reference_path = input;
+
+  for (auto & point : reference_path.points) {
+    const auto arclength_to_target = std::max(
+      0.0, tier4_autoware_utils::calcSignedArcLength(
+             reference_path.points, point.point.pose.position, target_pose.position) +
+             buffer);
+    if (arclength_to_target > deceleration_interval) continue;
+    point.point.longitudinal_velocity_mps = std::min(
+      point.point.longitudinal_velocity_mps,
+      static_cast<float>(
+        (arclength_to_target / deceleration_interval) *
+          (point.point.longitudinal_velocity_mps - target_velocity) +
+        target_velocity));
+  }
+
+  const auto stop_point_length =
+    tier4_autoware_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
+    buffer;
+  if (target_velocity == 0.0 && stop_point_length > 0) {
+    const auto stop_point = util::insertStopPoint(stop_point_length, &reference_path);
+  }
+
+  return reference_path;
+}
+
+PathWithLaneId setDecelerationVelocityForTurnSignal(
+  const PathWithLaneId & input, const Pose target_pose, const double turn_light_on_threshold_time)
+{
+  auto reference_path = input;
+
+  for (auto & point : reference_path.points) {
+    const auto arclength_to_target = std::max(
+      0.0, tier4_autoware_utils::calcSignedArcLength(
+             reference_path.points, point.point.pose.position, target_pose.position));
+    point.point.longitudinal_velocity_mps = std::min(
+      point.point.longitudinal_velocity_mps,
+      static_cast<float>(arclength_to_target / turn_light_on_threshold_time));
+  }
+
+  const auto stop_point_length =
+    tier4_autoware_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position);
+  if (stop_point_length > 0) {
+    const auto stop_point = util::insertStopPoint(stop_point_length, &reference_path);
+  }
+
+  return reference_path;
+}
+
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification)
 {
   std::uint8_t label = ObjectClassification::UNKNOWN;
@@ -1815,6 +1886,62 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
     }
   }
   return label;
+}
+
+lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto current_pose = planner_data->self_pose->pose;
+  const auto common_parameters = planner_data->parameters;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
+    // RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
+    std::cerr << "failed to find closest lanelet within route!!!" << std::endl;
+    return {};  // TODO(Horibe) what should be returned?
+  }
+
+  // For current_lanes with desired length
+  return route_handler->getLaneletSequence(
+    current_lane, current_pose, common_parameters.backward_path_length,
+    common_parameters.forward_path_length);
+}
+
+lanelet::ConstLanelets getExtendedCurrentLanes(
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const auto current_pose = planner_data->self_pose->pose;
+  const auto common_parameters = planner_data->parameters;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      "failed to find closest lanelet within route!!!");
+    return {};  // TODO(Horibe) what should be returned?
+  }
+
+  // For current_lanes with desired length
+  auto current_lanes = route_handler->getLaneletSequence(
+    current_lane, current_pose, common_parameters.backward_path_length,
+    common_parameters.forward_path_length);
+
+  // Add next_lanes
+  const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
+  if (!next_lanes.empty()) {
+    // TODO(kosuke55) which lane should be added?
+    current_lanes.push_back(next_lanes.front());
+  }
+
+  // Add prev_lane
+  lanelet::ConstLanelets prev_lanes;
+  if (route_handler->getPreviousLaneletsWithinRoute(current_lanes.front(), &prev_lanes)) {
+    // TODO(kosuke55) which lane should be added?
+    current_lanes.insert(current_lanes.begin(), 0, prev_lanes.front());
+  }
+
+  return current_lanes;
 }
 
 }  // namespace util
