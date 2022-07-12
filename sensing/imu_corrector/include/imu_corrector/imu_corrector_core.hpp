@@ -31,9 +31,9 @@ public:
 private:
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
 
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  tilde::SteeSubscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
-  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
+  tilde::SteePublisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
 
   double angular_velocity_offset_z_;
 

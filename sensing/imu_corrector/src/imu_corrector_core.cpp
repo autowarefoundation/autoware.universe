@@ -23,10 +23,10 @@ ImuCorrector::ImuCorrector(const rclcpp::NodeOptions & node_options)
 
   angular_velocity_stddev_zz_ = declare_parameter<double>("angular_velocity_stddev_zz", 0.03);
 
-  imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
+  imu_sub_ = create_stee_subscription<sensor_msgs::msg::Imu>(
     "input", rclcpp::QoS{1}, std::bind(&ImuCorrector::callbackImu, this, std::placeholders::_1));
 
-  imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("output", rclcpp::QoS{10});
+  imu_pub_ = create_stee_publisher<sensor_msgs::msg::Imu>("output", rclcpp::QoS{10});
 }
 
 void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr)
