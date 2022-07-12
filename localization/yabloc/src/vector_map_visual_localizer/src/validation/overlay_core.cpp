@@ -30,10 +30,10 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock
   sub_lsd_ = create_subscription<PointCloud2>("/projected_lsd_cloud", 10, cb_lsd);
   sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
   sub_sign_board_ = create_subscription<PointCloud2>(
-    "/sign_board", 10,
+    "/ll2_sign_board", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, sign_board_); });
   sub_ll2_ = create_subscription<PointCloud2>(
-    "/ll2_cloud", 10,
+    "/ll2_road_marking", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
 
   // Publisher

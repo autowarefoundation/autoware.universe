@@ -26,14 +26,9 @@ SignCorrector::SignCorrector()
 
   const rclcpp::QoS latch_qos = rclcpp::QoS{1}.transient_local();
   pub_image_ = create_publisher<Image>("/sign_image", 10);
-  pub_marker_ = create_publisher<MarkerArray>("/sign_marker", latch_qos);
 }
 
-void SignCorrector::mapCallback(const HADMapBin & msg)
-{
-  lanelet_map_ = fromBinMsg(msg);
-  publishSignMarker();
-}
+void SignCorrector::mapCallback(const HADMapBin & msg) { lanelet_map_ = fromBinMsg(msg); }
 
 void SignCorrector::poseCallback(const PoseStamped & msg) { extractNearSign(msg); }
 
@@ -192,39 +187,4 @@ void SignCorrector::imageCallback(const Image & msg)
   execute(stamp, rgb_edge_image);
 }
 
-void SignCorrector::publishSignMarker()
-{
-  const std::unordered_set<std::string> visible_labels = {"sign-board"};
-
-  lanelet::LineStrings3d sign_boards;
-  for (const lanelet::LineString3d & line : lanelet_map_->lineStringLayer) {
-    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
-    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
-    if (visible_labels.count(attr.value()) == 0) continue;
-    sign_boards.push_back(line);
-  }
-
-  MarkerArray marker_array;
-  int id = 0;
-  for (const lanelet::LineString3d & sign_boards : sign_boards) {
-    Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = get_clock()->now();
-    marker.type = Marker::LINE_STRIP;
-    marker.color = util::color(1.0f, 1.0f, 1.0f, 1.0f);
-    marker.scale.x = 0.1;
-    marker.id = id++;
-
-    for (const lanelet::ConstPoint3d & p : sign_boards) {
-      geometry_msgs::msg::Point gp;
-      gp.x = p.x();
-      gp.y = p.y();
-      gp.z = p.z();
-      marker.points.push_back(gp);
-    }
-    marker_array.markers.push_back(marker);
-  }
-
-  pub_marker_->publish(marker_array);
-}
 }  // namespace particle_filter

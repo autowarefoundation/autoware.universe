@@ -29,8 +29,6 @@ public:
   using CameraInfo = sensor_msgs::msg::CameraInfo;
   using Particle = modularized_particle_filter_msgs::msg::Particle;
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
-  using Marker = visualization_msgs::msg::Marker;
-  using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Vec3Vec = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
   SignCorrector();
 
@@ -43,7 +41,6 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   std::vector<Vec3Vec> sign_boards_;
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
@@ -58,7 +55,6 @@ private:
 
   void execute(const rclcpp::Time & stamp, cv::Mat image);
   void extractNearSign(const PoseStamped & pose_stamped);
-  void publishSignMarker();
 
   void mapCallback(const HADMapBin & msg);
   void poseCallback(const PoseStamped & msg);
