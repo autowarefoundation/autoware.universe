@@ -94,13 +94,17 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   util::publishCloud(*pub_cloud_, reliable_edges, stamp);
 
   // Make image
+  std::unordered_set<int> reliable_set;
+  for (int index : indices.indices) reliable_set.insert(index);
   cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   for (size_t i = 0; i < projected_lines->size(); i++) {
     auto & pn = projected_lines->at(i);
     cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
     cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
-    cv::Scalar color = cv::Scalar(255, 255, 255);
-    cv::line(reliable_line_image, p1, p2, color, 2, cv::LineTypes::LINE_8);
+    if (reliable_set.count(i) == 0)
+      cv::line(reliable_line_image, p1, p2, cv::Scalar(255, 255, 255), 2, cv::LineTypes::LINE_8);
+    else
+      cv::line(reliable_line_image, p1, p2, cv::Scalar(100, 100, 255), 4, cv::LineTypes::LINE_8);
   }
   util::publishImage(*pub_image_, reliable_line_image, stamp);
 }
@@ -178,10 +182,6 @@ pcl::PointIndices SegmentFilter::filtByMask(
   // Extract edges within masks
   pcl::PointIndices reliable_indices;
   for (size_t i = 0; i < edges.size(); i++) {
-    auto & pn = edges.at(i);
-    cv::Point2i p1 = toCvPoint(pn.getVector3fMap());
-    cv::Point2i p2 = toCvPoint(pn.getNormalVector3fMap());
-    int line_thick = 2;
     if (pixel_values.count(i + 1) != 0) {
       reliable_indices.indices.push_back(i);
     }

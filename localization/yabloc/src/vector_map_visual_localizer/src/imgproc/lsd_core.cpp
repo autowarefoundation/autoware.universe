@@ -74,12 +74,26 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
     cv::addWeighted(gray_image, 0.8, rgb_segmented, 0.5, 1, gray_image);
     util::publishImage(*pub_image_lsd_, gray_image, stamp);
   }
-  {
-    Timer project_timer;
-    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
-    projectEdgeOnPlane(lines, K, stamp, segmented);
-    RCLCPP_INFO_STREAM(this->get_logger(), "projection: " << project_timer.microSeconds());
+  // OBSL:
+  // {
+  //   Timer project_timer;
+  //   cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
+  //   projectEdgeOnPlane(lines, K, stamp, segmented);
+  //   RCLCPP_INFO_STREAM(this->get_logger(), "projection: " << project_timer.microSeconds());
+  // }
+
+  pcl::PointCloud<pcl::PointNormal> line_cloud;
+  for (int i = 0; i < lines.rows; i++) {
+    cv::Mat xy_xy = lines.row(i);
+    Eigen::Vector3f xy1, xy2;
+    xy1 << xy_xy.at<float>(0), xy_xy.at<float>(1), 0;
+    xy2 << xy_xy.at<float>(2), xy_xy.at<float>(3), 0;
+    pcl::PointNormal pn;
+    pn.getVector3fMap() = xy1;
+    pn.getNormalVector3fMap() = xy2;
+    line_cloud.push_back(pn);
   }
+  util::publishCloud(*pub_cloud_, line_cloud, stamp);
 }
 
 std::set<ushort> getUniquePixelValue(cv::Mat & image)
