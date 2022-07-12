@@ -16,8 +16,6 @@
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>rclpy</depend>
-  <depend>unittest</depend>
-  <!--depend>morai_msgs</depend-->
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
