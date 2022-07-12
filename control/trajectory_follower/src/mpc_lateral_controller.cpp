@@ -225,7 +225,7 @@ bool MpcLateralController::isSteerConverged(
 {
   // wait for a while to propagate the trajectory shape to the output command when the trajectory
   // shape is changed.
-  if (isTrajectoryShapeChanged()) {
+  if (!m_has_received_first_trajectory || isTrajectoryShapeChanged()) {
     return false;
   }
 
@@ -300,7 +300,12 @@ void MpcLateralController::setTrajectory(
   while (rclcpp::ok()) {
     const auto time_diff = rclcpp::Time(m_trajectory_buffer.back().header.stamp) -
                            rclcpp::Time(m_trajectory_buffer.front().header.stamp);
-    if (time_diff.seconds() < m_new_traj_duration_time) {
+
+    const float64_t first_trajectory_duration_time = 5.0;
+    const float64_t duration_time =
+      m_has_received_first_trajectory ? m_new_traj_duration_time : first_trajectory_duration_time;
+    if (time_diff.seconds() < duration_time) {
+      m_has_received_first_trajectory = true;
       break;
     }
     m_trajectory_buffer.pop_front();
@@ -448,6 +453,8 @@ void MpcLateralController::declareMPCparameters()
   m_mpc.m_param.acceleration_limit = node_->declare_parameter<float64_t>("mpc_acceleration_limit");
   m_mpc.m_param.velocity_time_constant =
     node_->declare_parameter<float64_t>("mpc_velocity_time_constant");
+  m_mpc.m_param.min_prediction_length =
+    node_->declare_parameter<float64_t>("mpc_min_prediction_length");
 }
 
 rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
@@ -500,6 +507,7 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
     update_param(parameters, "mpc_zero_ff_steer_deg", param.zero_ff_steer_deg);
     update_param(parameters, "mpc_acceleration_limit", param.acceleration_limit);
     update_param(parameters, "mpc_velocity_time_constant", param.velocity_time_constant);
+    update_param(parameters, "mpc_min_prediction_length", param.min_prediction_length);
 
     // initialize input buffer
     update_param(parameters, "input_delay", param.input_delay);
