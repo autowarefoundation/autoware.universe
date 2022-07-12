@@ -17,7 +17,7 @@
 #include "apparent_safe_velocity_limiter/forward_projection.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
-#include <visualization_msgs/msg/detail/marker_array__struct.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -73,9 +73,34 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
   return envelope;
 }
 
+visualization_msgs::msg::Marker makeFootprintPointsMarker(
+  const multipolygon_t & polygons, const Float z)
+{
+  visualization_msgs::msg::Marker marker;
+  marker.type = visualization_msgs::msg::Marker::POINTS;
+  marker.header.frame_id = "map";
+  marker.scale.x = 0.5;
+  marker.scale.y = 0.5;
+  marker.color.a = 1.0;
+  marker.color.r = 0.9;
+  marker.color.g = 0.2;
+  marker.color.b = 0.2;
+  geometry_msgs::msg::Point point;
+  point.z = z;
+  for (const auto & polygon : polygons) {
+    for (const auto & p : polygon.outer()) {
+      point.x = p.x();
+      point.y = p.y();
+      marker.points.push_back(point);
+    }
+  }
+  return marker;
+}
+
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & lines, ProjectionParameters & projection_params, const Float marker_z)
+  const multilinestring_t & lines, ProjectionParameters & projection_params,
+  const multipolygon_t & footprint_polygons, const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   auto original_envelope = makeEnvelopeMarker(original_trajectory, projection_params);
@@ -86,6 +111,9 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   adjusted_envelope.color.g = 1.0;
   adjusted_envelope.ns = "adjusted";
   debug_markers.markers.push_back(adjusted_envelope);
+  auto original_footprints = makeFootprintPointsMarker(footprint_polygons, marker_z);
+  original_footprints.ns = "original_footprints";
+  debug_markers.markers.push_back(original_footprints);
 
   static auto max_id = 0lu;
   const auto line_markers = makeLinestringMarkers(lines, marker_z, "obstacles");

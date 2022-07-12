@@ -39,6 +39,7 @@ std::optional<double> distanceToClosestCollision(
     if (bg::intersection(footprint, obstacle, intersection_lines)) {
       for (const auto & intersection_line : intersection_lines) {
         for (const auto & obs_point : intersection_line) {
+          // TODO(Maxime CLEMENT): add a simplified mode where euclidian distance is used
           // Calculate longitudinal distance to the collision point along the segment
           const auto collision_heading =
             std::atan2(obs_point.y() - segment.first.y(), obs_point.x() - segment.first.x());

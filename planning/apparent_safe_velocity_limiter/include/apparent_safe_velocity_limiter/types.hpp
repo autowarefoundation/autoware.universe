@@ -59,6 +59,7 @@ struct ProjectionParameters
 {
   inline static const auto MODEL_PARAM_NAME = "forward_projection.model";
   inline static const auto NBPOINTS_PARAM_NAME = "forward_projection.nb_points";
+  inline static const auto STEER_OFFSETS_PARAM_NAME = "forward_projection.steering_offsets";
 
   enum { PARTICLE, BICYCLE } model = PARTICLE;
   double duration{};
@@ -69,13 +70,15 @@ struct ProjectionParameters
   int points_per_projection = 5;
   double wheel_base{};
   double steering_angle{};
-  double steering_angle_offset{};
+  std::vector<double> steering_angle_offsets{};
 
   ProjectionParameters() = default;
   explicit ProjectionParameters(rclcpp::Node & node)
   {
     updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM_NAME));
     updateNbPoints(node, node.declare_parameter<int>(NBPOINTS_PARAM_NAME));
+    updateSteeringOffsets(
+      node, node.declare_parameter<std::vector<double>>(STEER_OFFSETS_PARAM_NAME));
   }
 
   bool updateModel(rclcpp::Node & node, const std::string & model_str)
@@ -102,6 +105,20 @@ struct ProjectionParameters
       return false;
     }
     points_per_projection = nb_points;
+    return true;
+  }
+
+  bool updateSteeringOffsets(
+    [[maybe_unused]] rclcpp::Node & node, const std::vector<double> & offsets)
+  {
+    steering_angle_offsets.clear();
+    // always make 0.0 the first offset
+    const auto zero_iter = std::find(offsets.begin(), offsets.end(), 0.0);
+    if (zero_iter != offsets.end()) steering_angle_offsets.push_back(0.0);
+    for (auto it = offsets.begin(); it != offsets.end(); ++it) {
+      if (it == zero_iter) continue;
+      steering_angle_offsets.push_back(*it);
+    }
     return true;
   }
 

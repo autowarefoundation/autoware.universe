@@ -86,7 +86,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
 
-  // Benchmarking
+  // Benchmarking & Debugging
   std::multiset<double> runtimes;
 
   // parameters
@@ -153,7 +153,7 @@ private:
     const nav_msgs::msg::OccupancyGrid & occupancy_grid,
     const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
     const polygon_t & envelope_polygon, const std::string & target_frame);
-  void limitVelocity(
+  multipolygon_t limitVelocity(
     Trajectory & trajectory, ProjectionParameters & projection_params,
     const multilinestring_t & obstacles) const;
   Trajectory copyDownsampledVelocity(

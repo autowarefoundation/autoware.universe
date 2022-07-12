@@ -54,6 +54,7 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
 /// @return marker array with the original and adjusted envelope and the obstacle lines
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & lines, ProjectionParameters & projection_params, const Float z);
+  const multilinestring_t & lines, ProjectionParameters & projection_params,
+  const multipolygon_t & footprint_polygons, const Float z);
 }  // namespace apparent_safe_velocity_limiter
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__DEBUG_HPP_

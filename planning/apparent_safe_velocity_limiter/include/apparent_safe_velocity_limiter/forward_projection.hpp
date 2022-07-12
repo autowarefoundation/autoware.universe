@@ -33,8 +33,12 @@ segment_t forwardSimulatedSegment(
 std::vector<segment_t> forwardSimulatedSegments(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
 
-polygon_t forwardSimulatedPolygon(
+std::vector<linestring_t> bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
+
+polygon_t forwardSimulatedPolygon(
+  const geometry_msgs::msg::Point & origin, const ProjectionParameters & params,
+  const double lateral_offset, segment_t & projected_straight_segment);
 
 /// @brief generate a footprint from a segment and a lateral offset
 /// @param [in] segment segment from which to create the footprint

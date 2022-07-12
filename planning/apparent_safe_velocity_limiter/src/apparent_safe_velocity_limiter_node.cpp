@@ -139,6 +139,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
         result.successful = false;
         result.reason = "number of points for projections must be at least 2";
       }
+    } else if (parameter.get_name() == ProjectionParameters::STEER_OFFSETS_PARAM_NAME) {
+      projection_params_.updateSteeringOffsets(*this, parameter.as_double_array());
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -172,13 +174,13 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   const auto obstacles = createObstacleLines(
     *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, msg->header.frame_id);
   obs_filter_duration += stopwatch.toc("obs_filter_duration");
-  limitVelocity(downsampled_traj, projection_params_, obstacles);
+  const auto debug_polygons = limitVelocity(downsampled_traj, projection_params_, obstacles);
   const auto safe_trajectory = copyDownsampledVelocity(downsampled_traj, *msg, start_idx);
 
   pub_trajectory_->publish(safe_trajectory);
 
   pub_debug_markers_->publish(makeDebugMarkers(
-    *msg, safe_trajectory, obstacles, projection_params_,
+    *msg, safe_trajectory, obstacles, projection_params_, debug_polygons,
     occupancy_grid_ptr_->info.origin.position.z));
   // TODO(Maxime CLEMENT): removes or change to RCLCPP_DEBUG before merging
   RCLCPP_WARN(get_logger(), "Runtimes");
@@ -247,8 +249,7 @@ polygon_t ApparentSafeVelocityLimiterNode::createEnvelopePolygon(
   envelope_polygon.outer().resize(trajectory_size * 2 + 1);
   for (size_t i = 0; i < trajectory_size; ++i) {
     const auto & point = trajectory.points[i + start_idx];
-    projection_params.velocity = point.longitudinal_velocity_mps;
-    projection_params.heading = tf2::getYaw(point.pose.orientation);
+    projection_params.update(point);
     const auto forward_simulated_vector =
       forwardSimulatedSegment(point.pose.position, projection_params);
     envelope_polygon.outer()[i].x(forward_simulated_vector.second.x());
@@ -301,10 +302,12 @@ multilinestring_t ApparentSafeVelocityLimiterNode::createObstacleLines(
   return obstacle_lines;
 }
 
-void ApparentSafeVelocityLimiterNode::limitVelocity(
+multipolygon_t ApparentSafeVelocityLimiterNode::limitVelocity(
   Trajectory & trajectory, ProjectionParameters & projection_params,
   const multilinestring_t & obstacles) const
 {
+  multipolygon_t debug_footprints;
+  debug_footprints.reserve(trajectory.points.size());
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
     auto & trajectory_point = trajectory.points[i];
@@ -316,11 +319,18 @@ void ApparentSafeVelocityLimiterNode::limitVelocity(
     }
     projection_params.velocity = trajectory_point.longitudinal_velocity_mps;
     projection_params.heading = tf2::getYaw(trajectory_point.pose.orientation);
+    /*
     const auto forward_simulated_vector =
       forwardSimulatedSegment(trajectory_point.pose.position, projection_params);
     const auto footprint = generateFootprint(forward_simulated_vector, vehicle_lateral_offset_);
+    */
+    segment_t forward_simulated_segment;
+    const auto footprint = forwardSimulatedPolygon(
+      trajectory_point.pose.position, projection_params, vehicle_lateral_offset_,
+      forward_simulated_segment);
+    debug_footprints.push_back(footprint);
     const auto dist_to_collision =
-      distanceToClosestCollision(forward_simulated_vector, footprint, obstacles);
+      distanceToClosestCollision(forward_simulated_segment, footprint, obstacles);
     if (dist_to_collision) {
       const auto min_feasible_velocity = *current_ego_velocity_ - max_deceleration_ * time;
       trajectory_point.longitudinal_velocity_mps = std::max(
@@ -330,6 +340,7 @@ void ApparentSafeVelocityLimiterNode::limitVelocity(
           static_cast<Float>(*dist_to_collision - projection_params.extra_length)));
     }
   }
+  return debug_footprints;
 }
 
 Trajectory ApparentSafeVelocityLimiterNode::copyDownsampledVelocity(

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "apparent_safe_velocity_limiter/types.hpp"
+
 #include <apparent_safe_velocity_limiter/forward_projection.hpp>
 
 #include <boost/geometry.hpp>
@@ -32,27 +34,65 @@ segment_t forwardSimulatedSegment(
   return segment_t{from, to};
 }
 
-std::vector<segment_t> forwardSimulatedSegments(
+std::vector<linestring_t> bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params)
 {
-  const auto length = params.velocity * params.duration + params.extra_length;
-  const auto from = point_t{origin.x, origin.y};
-  const auto heading = params.heading;
-  const auto to =
-    point_t{from.x() + std::cos(heading) * length, from.y() + std::sin(heading) * length};
-  return {segment_t{from, to}};
+  std::vector<linestring_t> lines;
+  const auto dt = params.duration / (params.points_per_projection - 1);
+  point_t point;
+  linestring_t line;
+  // TODO(Maxime CLEMENT): use Eigen for faster calculation
+  // std::printf("Bicycle Projection: vel = %2.2f\n", params.velocity);
+  for (const auto steering_offset : params.steering_angle_offsets) {
+    point.x(origin.x);
+    point.y(origin.y);
+    line = {point};
+    const auto steering_angle = params.steering_angle + steering_offset;
+    const auto rotation_rate = params.velocity * std::tan(steering_angle) / params.wheel_base;
+    // if(params.velocity > 0.0)
+    //   std::printf("Steer angle = %2.2f, Rot rate = %2.2f\n", steering_angle, rotation_rate);
+    for (auto i = 1; i < params.points_per_projection; ++i) {
+      const auto t = i * dt;
+      const auto heading = params.heading + rotation_rate * t;
+      const auto length = params.velocity * t + params.extra_length;
+      point.x(origin.x + length * std::cos(heading));
+      point.y(origin.y + length * std::sin(heading));
+      line.push_back(point);
+      // if(params.velocity > 0.0)
+      //   std::printf("\t%2.2f | heading = %2.2f, x,y = (%2.2f, %2.2f)\n", t, heading, point.x(),
+      //   point.y());
+    }
+    // add extra length to the last point
+    lines.push_back(line);
+  }
+  return lines;
 }
 
 polygon_t forwardSimulatedPolygon(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params,
-  const double lateral_offset)
+  const double lateral_offset, segment_t & projected_straight_segment)
 {
-  const auto length = params.velocity * params.duration + params.extra_length;
-  const auto from = point_t{origin.x, origin.y};
-  const auto heading = params.heading;
-  const auto to =
-    point_t{from.x() + std::cos(heading) * length, from.y() + std::sin(heading) * length};
-  return generateFootprint(linestring_t{from, to}, lateral_offset);
+  namespace bg = boost::geometry;
+  polygon_t footprint;
+  if (params.model == ProjectionParameters::PARTICLE) {
+    projected_straight_segment = forwardSimulatedSegment(origin, params);
+    footprint = generateFootprint(projected_straight_segment, lateral_offset);
+  } else {  // ProjectionParameters::BICYCLE
+    const auto lines = bicycleProjectionLines(origin, params);
+    multipolygon_t union_polygons;
+    multipolygon_t result_polygons;
+    for (const auto & line : lines) {
+      const auto line_footprint = generateFootprint(line, lateral_offset);
+      bg::union_(line_footprint, union_polygons, result_polygons);
+      union_polygons = result_polygons;
+      bg::clear(result_polygons);
+    }
+    footprint = union_polygons.front();
+    const auto straight_line = lines.size() == 1 ? lines[0] : lines[1];
+    projected_straight_segment.first = straight_line.front();
+    projected_straight_segment.second = straight_line.back();
+  }
+  return footprint;
 }
 
 polygon_t generateFootprint(const segment_t & segment, const double lateral_offset)
