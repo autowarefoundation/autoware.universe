@@ -537,6 +537,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_spline
 
   } else
   {
+    ns_utils::print("calling feedback initialization ...");
     is_initialized_traj =
         lpv_initializer_.simulateWithFeedback(model_ptr_, piecewise_interpolator, params_lpv_, params_opt_, data_nmpc_);
 
