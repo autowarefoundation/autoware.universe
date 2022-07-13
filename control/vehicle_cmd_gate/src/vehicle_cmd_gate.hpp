@@ -22,6 +22,8 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_ad_api_msgs/srv/mrm_operation.hpp>
+#include <autoware_ad_api_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
@@ -44,6 +46,8 @@
 namespace vehicle_cmd_gate
 {
 
+using autoware_ad_api_msgs::srv::MRMOperation;
+using autoware_ad_api_msgs::msg::MRMBehaviorStatus;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_system_msgs::msg::EmergencyState;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
@@ -90,6 +94,7 @@ private:
   rclcpp::Publisher<GateMode>::SharedPtr gate_mode_pub_;
   rclcpp::Publisher<EngageMsg>::SharedPtr engage_pub_;
   rclcpp::Publisher<OperationMode>::SharedPtr operation_mode_pub_;
+  rclcpp::Publisher<MRMBehaviorStatus>::SharedPtr mrm_sudden_stop_status_pub_;
 
   // Subscription
   rclcpp::Subscription<EmergencyState>::SharedPtr emergency_state_sub_;
@@ -97,6 +102,7 @@ private:
   rclcpp::Subscription<GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
   rclcpp::Subscription<OperationMode>::SharedPtr operation_mode_sub_;
+
 
   void onGateMode(GateMode::ConstSharedPtr msg);
   void onEmergencyState(EmergencyState::ConstSharedPtr msg);
@@ -172,6 +178,14 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Request> request,
     const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Response> response);
+
+  // Service for MRM
+  rclcpp::Service<MRMOperation>::SharedPtr mrm_sudden_stop_operation_service_;
+  void onOperateSuddenStopService(
+    const MRMOperation::Request::SharedPtr request,
+    const MRMOperation::Response::SharedPtr response);
+
+  MRMBehaviorStatus mrm_sudden_stop_status_;
 
   // TODO(Takagi, Isamu): deprecated
   rclcpp::Subscription<EngageMsg>::SharedPtr engage_sub_;
