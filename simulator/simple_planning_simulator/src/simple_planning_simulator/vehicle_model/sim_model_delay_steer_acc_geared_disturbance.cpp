@@ -127,17 +127,17 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
 
   // Debug
   // ns_utils::print("In GEARED vehicle Model");
-  ns_utils::print("Steering delayed vs steering deadzone ", steer_delayed, steer_deadzoned);
-
-  // Returns pair of pairs [m, b]_right_left
-  auto current_deadzone_params =
-    disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
-  ns_utils::print(
-    "Left deadzone params slope, threshold:  ", current_deadzone_params[0],
-    current_deadzone_params[1]);
-  ns_utils::print(
-    "Right deadzone params slope, threshold:  ", current_deadzone_params[2],
-    current_deadzone_params[3], "\n");
+	//  ns_utils::print("Steering delayed vs steering deadzone ", steer_delayed, steer_deadzoned);
+	//
+	//  // Returns pair of pairs [m, b]_right_left
+	//  auto current_deadzone_params =
+	//    disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
+	//  ns_utils::print(
+	//    "Left deadzone params slope, threshold:  ", current_deadzone_params[0],
+	//    current_deadzone_params[1]);
+	//  ns_utils::print(
+	//    "Right deadzone params slope, threshold:  ", current_deadzone_params[2],
+	//    current_deadzone_params[3], "\n");
 }
 
 void SimModelDelaySteerAccGeared_Disturbance::initializeInputQueue(const float64_t & dt)
