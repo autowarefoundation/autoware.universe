@@ -41,6 +41,8 @@ def launch_setup(context, *args, **kwargs):
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # behavior path planner
+    bt_tree_config_path = LaunchConfiguration("bt_tree_config_file").perform(context)
+
     side_shift_param_path = os.path.join(
         get_package_share_directory("tier4_planning_launch"),
         "config",
@@ -180,13 +182,7 @@ def launch_setup(context, *args, **kwargs):
             pull_out_param,
             behavior_path_planner_param,
             vehicle_info_param,
-            {
-                "bt_tree_config_path": [
-                    FindPackageShare("behavior_path_planner"),
-                    "/config/behavior_path_planner_tree.xml",
-                ],
-                "planning_hz": 10.0,
-            },
+            {"bt_tree_config_path": bt_tree_config_path},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
