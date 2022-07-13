@@ -424,10 +424,9 @@ void NonlinearMPCNode::onTimer()
     {
       // vehicle_motion_fsm_.setEmergencyFlag(true);
 
-      RCLCPP_WARN_SKIPFIRST_THROTTLE(
-          get_logger(), *get_clock(), (1000ms).count(),
-          "[mpc_nonlinear] Couldn't initialize the LPV controller ... %s \n",
-          vehicle_motion_fsm_.fsmMessage().c_str());
+      RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
+                                     "[mpc_nonlinear] Couldn't initialize the LPV controller ... %s \n",
+                                     vehicle_motion_fsm_.fsmMessage().c_str());
 
       // Publish previous control command.
       publishControlsAndUpdateVars(ctrl_cmd_prev_);
@@ -537,7 +536,7 @@ void NonlinearMPCNode::onTimer()
       current_velocity_ptr_->twist.twist.linear.x + u_solution_(0) * params_node_.control_period;
 
   // Compute the steering rate by numerical differentiation.
-  if (params_node_.use_dob)
+  if (params_node_.use_dob && current_comm_delay_ptr_)
   {
     auto dob_steering_ff = current_comm_delay_ptr_->steering_dob;
     u_solution_(1) += dob_steering_ff;
