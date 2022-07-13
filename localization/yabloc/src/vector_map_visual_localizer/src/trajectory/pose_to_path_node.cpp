@@ -3,9 +3,14 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/path.hpp>
 
+#include <boost/circular_buffer.hpp>
+
 class Pose2Path : public rclcpp::Node
 {
 public:
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using Path = nav_msgs::msg::Path;
+
   Pose2Path() : Node("pose_to_path")
   {
     declare_parameter("sub_topics", std::vector<std::string>());
@@ -24,12 +29,11 @@ public:
     for (int i = 0; i < N; i++) {
       RCLCPP_INFO_STREAM(
         this->get_logger(), "subscribe: " << sub_topics.at(i) << " publish: " << pub_topics.at(i));
-      std::function<void(const geometry_msgs::msg::PoseStamped &)> func =
+      std::function<void(const PoseStamped &)> func =
         std::bind(&Pose2Path::poseCallback, this, std::placeholders::_1, i);
-      auto sub =
-        this->create_subscription<geometry_msgs::msg::PoseStamped>(sub_topics.at(i), 10, func);
-      auto pub = this->create_publisher<nav_msgs::msg::Path>(pub_topics.at(i), 10);
-      pub_sub_msg_.emplace_back(pub, sub, nav_msgs::msg::Path{});
+      auto sub = this->create_subscription<PoseStamped>(sub_topics.at(i), 10, func);
+      auto pub = this->create_publisher<Path>(pub_topics.at(i), 10);
+      pub_sub_msg_.emplace_back(pub, sub);
     }
   }
 
@@ -37,26 +41,28 @@ private:
   struct PubSubMsg
   {
     PubSubMsg(
-      rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_,
-      rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_,
-      nav_msgs::msg::Path msg_)
-    : pub_(pub_), sub_(sub_), msg_(msg_)
+      rclcpp::Publisher<Path>::SharedPtr pub_, rclcpp::Subscription<PoseStamped>::SharedPtr sub_)
+    : pub_(pub_), sub_(sub_), buffer_(1000)
     {
     }
-
-    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_;
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_;
-    nav_msgs::msg::Path msg_;
-    void publish() { pub_->publish(msg_); }
+    rclcpp::Publisher<Path>::SharedPtr pub_;
+    rclcpp::Subscription<PoseStamped>::SharedPtr sub_;
+    boost::circular_buffer<PoseStamped> buffer_;
+    void publish(const std_msgs::msg::Header & header)
+    {
+      nav_msgs::msg::Path msg;
+      msg.header = header;
+      for (const auto p : buffer_) msg.poses.push_back(p);
+      pub_->publish(msg);
+    }
   };
   std::vector<PubSubMsg> pub_sub_msg_;
 
   void poseCallback(const geometry_msgs::msg::PoseStamped & msg, int index)
   {
     auto & psm = pub_sub_msg_.at(index);
-    psm.msg_.header = msg.header;
-    psm.msg_.poses.push_back(msg);
-    psm.publish();
+    psm.buffer_.push_back(msg);
+    psm.publish(msg.header);
   }
 };
 
