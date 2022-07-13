@@ -603,6 +603,10 @@ boost::optional<int64_t> getNearestLaneId(
   nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
     path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
+  if (!nearest_segment_idx) {
+    return boost::none;
+  }
+
   lanelet::ConstLanelets current_lanes;
   if (
     lanelet::utils::query::getCurrentLanelets(
