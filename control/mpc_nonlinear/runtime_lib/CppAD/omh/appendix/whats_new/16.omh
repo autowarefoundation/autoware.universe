@@ -1,0 +1,484 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_16$$
+$spell
+    chkpoint
+    autotools
+    alloc
+    hpp
+    valgrind
+    uninitialized
+    adouble
+    CppAD
+    Eigen
+    std
+    namespace
+    cppad
+    Hes
+    Jac
+    mul
+    ifndef
+    xam
+    makefile
+    vy
+    inv
+    atanh
+    colpack
+    Wmisleading
+    gcc
+    sacado
+    chrono
+    const_iterator
+    op
+    mingw
+$$
+
+$section Changes and Additions to CppAD During 2016$$
+
+$head Introduction$$
+The sections listed below contain a list of the changes to CppAD
+in reverse order by date.
+The purpose of these sections is to
+assist you in learning about changes between various versions of CppAD.
+
+$head 12-23$$
+Added a way for the user to determine what tests options are available; see
+$cref/make check/cmake/make check/$$.
+
+$head 12-20$$
+Change the optimize $cref/examples/optimize/Examples/$$ to use
+$cref NearEqual$$ for floating point tests (instead of exactly equal).
+There were some other exactly equal floating point tests that were
+failing on a $code mingw$$ system. Theses have also been fixed.
+
+$head 12-18$$
+Add the $cref/no_print_for_op/optimize/options/no_print_for_op/$$ to the
+optimize routine.
+
+$head 12-13$$
+$list number$$
+Fix a bug in $cref ForSparseHes$$. To be more specific,
+there was a bug in handling the cumulative summations operator in this
+routine. This could only come up when used
+an $cref/optimized/optimize/$$ $cref/f/ForSparseHes/f/$$,
+$lnext
+Add the
+$cref/nest_conditional.cpp/optimize_nest_conditional.cpp/$$ example.
+$lend
+
+
+$head 12-11$$
+Improve the $cref optimize$$ documentation.
+This includes making examples that demonstrate
+specific aspects of the optimization; see
+$cref/forward_active.cpp/optimize_forward_active.cpp/$$,
+$cref/reverse_active.cpp/optimize_reverse_active.cpp/$$,
+$cref/compare_op.cpp/optimize_compare_op.cpp/$$,
+$cref/conditional_skip.cpp/optimize_conditional_skip.cpp/$$,
+$cref/cumulative_sum.cpp/optimize_cumulative_sum.cpp/$$.
+
+
+$head 12-09$$
+The $cref/options/optimize/options/$$ argument was added to the
+optimize routine.
+
+$head 11-18$$
+Move classes and functions that are part of the user API from the
+$code cppad/local$$ directory to the $code cppad/core$$ directory.
+The remaining symbols, in the $code cppad/local$$ directory, are now
+in the $code CppAD::local$$ namespace.
+Note that a class in the $code CppAD$$ name space, may have a member
+function that is not part of the user API.
+
+$head 11-14$$
+Increase the speed of the $code sparse_pack$$ class.
+This improves the speed for
+$cref/vector of boolean/glossary/Sparsity Pattern/Boolean Vector/$$
+sparsity pattern calculations.
+
+$head 11-13$$
+Merged in the $code sparse$$ branch which has $code const_iterator$$,
+instead of $code next_element$$ for the
+$code sparse_list$$ and $code sparse_pack$$ classes.
+These classes are not part of the CppAD API and hence their specifications
+can change (as in this case).
+They can be used to get more efficient representations of
+$cref/sparsity patterns/glossary/Sparsity Pattern/$$.
+
+$head 10-27$$
+The optional $cref/optimize/chkpoint_one/optimize/$$ option
+was added to the checkpoint functions.
+
+$head 10-12$$
+$list number$$
+Change $cref elapsed_seconds$$ to use
+$code std::chrono::steady_clock$$ instead of
+$code std::chrono::high_resolution_clock$$.
+$lnext
+The test for C++11 features was failing on a Mac system
+because the elapsed time was returning as zero (between two events).
+This test has been made more robust by add a one millisecond sleep
+between the two clock accesses.
+$lend
+
+
+$head 09-29$$
+The multiple directions version of
+$cref/forward/forward_dir/$$ was missing $cref erf$$ function
+in the case where C++ 2011 was supported; see
+$href%https://github.com/coin-or/CppAD/issues/16%issue 16%$$.
+This has been fixed.
+
+$head 09-27$$
+Change the implementation of $cref atomic_two_eigen_cholesky.hpp$$ so that
+the computation of $latex M_k$$ exactly agrees with the corresponding
+$cref/theory/cholesky_theory/$$.
+
+$head 09-26$$
+$list number$$
+A possible bug in the $cref optimize$$ command was fixed.
+To be specific, a warning of the form
+indentations;
+$codei%
+    warning: this 'if' clause does not guard... [-Wmisleading-indentation]
+%$$
+using the gcc-6.2.1 compiler, was fixed and it may have fixed a bug.
+$lnext
+There was a problem with the
+$cref/sacado/speed_sacado/$$ where the symbol
+$code HAS_C99_TR1_CMATH$$ was being defined twice.
+This has been fixed by leaving it up to the sacado install to determine
+if this symbol should be defined.
+$lend
+
+$head 09-16$$
+Fix a problem using the
+$cref/colpack/speed_main/Sparsity Options/colpack/$$ option to the
+$code speed_cppad$$ program.
+(There was a problem whereby the $code speed_cppad$$
+program did not properly detect when $code colpack$$ was available.)
+
+$head 09-13$$
+Test third order and fix
+bug in $cref atomic_two_eigen_cholesky.hpp$$ for orders greater
+than or equal to three.
+
+$head 08-30$$
+Add the $cref atomic_two_eigen_cholesky.cpp$$ example.
+
+$head 08-25$$
+$list number$$
+Fix some missing include files in
+$code optimize.hpp$$ and $code set_union.hpp$$
+(when compiling with MS Visual Studio 2015).
+$lnext
+Fix a warning in $code atanh.hpp$$
+(when compiling with MS Visual Studio 14).
+$lnext
+Fix a typo in the
+$cref/Reverse/atomic_two_eigen_mat_inv.hpp/Theory/Reverse/$$ section of the
+$code eigen_mat_inv.hpp$$ example.
+$lend
+
+$head 07-17$$
+Add documentation for only needing to compute a
+$cref/column subset/sparse_hessian/p/Column Subset/$$ of the sparsity
+pattern when computing a subset of a sparse Hessians.
+In addition, improve the corresponding example
+$cref sparse_sub_hes.cpp$$.
+
+$head 07-14$$
+Correct title in $cref ForSparseHes$$ (change Reverse to Forward).
+
+$head 06-30$$
+Change the $code atomic_two_mat_mul.cpp$$ example so that on atomic object
+works for matrices of any size.
+(This has since been changed to the $cref atomic_three_mat_mul.cpp$$ example.)
+
+$head 06-29$$
+Change the $cref atomic_two$$ examples so they do no longer use the
+deprecated interfaces to
+$code for_sparse_jac$$, $code rev_sparse_jac$$,
+$code for_sparse_hes$$, and $code rev_sparse_hes$$.
+
+$head 06-27$$
+$list number$$
+Improve the $cref atomic_two_eigen_mat_mul.hpp$$ and
+$cref atomic_two_eigen_mat_inv.hpp$$ examples.
+Most importantly, one atomic object now works for matrices of any size.
+$lnext
+Add the vector $icode x$$,
+that contains the parameters in an atomic function call
+to the user following atomic functions:
+$cref/for_sparse_jac/atomic_two_rev_sparse_jac/Implementation/x/$$,
+$cref/rev_sparse_jac/atomic_two_rev_sparse_jac/Implementation/x/$$,
+$cref/for_sparse_hes/atomic_two_rev_sparse_jac/Implementation/x/$$,
+$cref/rev_sparse_hes/atomic_two_rev_sparse_jac/Implementation/x/$$.
+This enables one to pass parameter information to these functions; e.g.,
+the dimensions of matrices that the function operates on.
+$lend
+
+
+$head 06-25$$
+Add more entries to the optimization
+$cref/wish_list/wish_list/Optimization/$$.
+
+$head 06-10$$
+Add a $cref/check_finite/wish_list/check_finite/$$ wish list item.
+
+$head 05-05$$
+$list number$$
+Add documentation for redirecting output using$cref/s/PrintFor/s/$$
+in the $code PrintFor$$ function.
+$lnext
+Change distributed version to build examples as debug instead
+of release version.
+(Was changed to release version while checking for compiler warnings;
+see $code 04-17$$ below).
+$lend
+
+$head 04-17$$
+Fix all some compiler warnings that occurred when compiling the
+$cref/examples/Example/$$ with
+$cref/NDEBUG/faq/Speed/NDEBUG/$$ defined.
+
+$head 03-27$$
+$list number$$
+Fix a bug in the calculation of the $cref atomic_two_eigen_mat_inv.hpp$$
+$cref/reverse/atomic_two_eigen_mat_inv.hpp/Private/reverse/$$ example.
+$lnext
+Use a very simple method (that over estimates variables) for calculating
+$cref/vy/atomic_two_forward/vy/$$ in the $cref atomic_two_eigen_mat_inv.hpp$$
+$cref/forward/atomic_two_eigen_mat_inv.hpp/Private/forward/$$ example.
+$lend
+
+$head 03-26$$
+$list number$$
+Implement and test the $cref atomic_two_eigen_mat_inv.cpp$$
+$cref/reverse/atomic_two_eigen_mat_inv.hpp/Private/reverse/$$ is implemented.
+$lnext
+Fix a bug in the calculation of
+$cref/vy/atomic_two_forward/vy/$$ in the $cref atomic_two_eigen_mat_inv.hpp$$
+$cref/forward/atomic_two_eigen_mat_inv.hpp/Private/forward/$$ example.
+$lend
+
+
+$head 03-25$$
+$list number$$
+Start construction of the $cref atomic_two_eigen_mat_inv.cpp$$ example,
+currently only
+$cref/forward/atomic_two_eigen_mat_inv.hpp/Private/forward/$$ is implemented
+and tested.
+$lnext
+More improvements to $cref atomic_two_eigen_mat_mul.cpp$$ example.
+$lend
+
+$head 03-24$$
+$list number$$
+Fix build of $code example/atomic.cpp$$ when
+$cref eigen$$ is not available
+(bug introduced when $cref atomic_two_eigen_mat_mul.cpp$$ was added).
+$lnext
+Extend $cref atomic_two_eigen_mat_mul.cpp$$ example to include
+$cref/for_sparse_jac/atomic_two_eigen_mat_mul.hpp/Private/for_sparse_jac/$$,
+$cref/rev_sparse_jac/atomic_two_eigen_mat_mul.hpp/Private/rev_sparse_jac/$$,
+$cref/for_sparse_hes/atomic_two_eigen_mat_mul.hpp/Private/for_sparse_hes/$$,
+$cref/rev_sparse_hes/atomic_two_eigen_mat_mul.hpp/Private/rev_sparse_hes/$$.
+$lnext
+Fix a bug in the $cref ForSparseHes$$ routine.
+$lnext
+Edit $cref atomic_two_rev_sparse_hes$$ documentation.
+$lend
+
+$head 03-23$$
+$list number$$
+Fix bug in autotools file $code example/atomic/makefile.am$$
+(introduced on 03-22).
+$lnext
+Improve the $cref atomic_two_eigen_mat_mul.cpp$$ example
+and extend it to include reverse mode.
+$lend
+
+$head 03-22$$
+$list number$$
+Start construction of the $cref atomic_two_eigen_mat_mul.cpp$$ example.
+$lnext
+change $code atomic_ode.cpp$$ to $code chkpoint_one_ode.cpp$$ and
+$code atomic_extended_ode.cpp$$ to $code chkpoint_one_extended_ode.cpp$$.
+$lend
+
+$head 03-21$$
+Change the $cref atomic_three_mat_mul.hpp$$ class name from $code mat_mul$$
+to $code atomic_mat_mul$$. This example use of the name $code mat_mul$$
+in the $code atomic_two_mat_mul.cpp$$ example / test.
+(This has since been changed to the $cref atomic_three_mat_mul.cpp$$ example.)
+
+$head 03-20$$
+$list number$$
+Include the sub-directory name to the include guards
+in $icode%*%.hpp%$$ files. For example,
+$codep
+    # ifndef CPPAD_UTILITY_VECTOR_HPP
+    # define CPPAD_UTILITY_VECTOR_HPP
+$$
+appears in the file $code cppad/utility/vector.hpp$$. This makes it
+easier to avoid conflicts when choosing $cref addon$$ names.
+$lnext
+Add the $cref set_union$$ utility and use it to simplify the
+$cref atomic$$ examples that use
+$cref/vector of sets/glossary/Sparsity Pattern/Vector of Sets/$$
+sparsity patterns.
+$lend
+
+
+$head 03-19$$
+$list number$$
+Move $code atomic_two_mat_mul.cpp$$ to $code atomic_mat_mul_xam.cpp$$
+(moved back on $cref/03-21/whats_new_16/03-21/$$.
+$lnext
+Move $code atomic_matrix_mul.hpp$$ to $cref atomic_three_mat_mul.hpp$$.
+$lend
+
+$head 03-17$$
+Add the
+$code atomic_ode.cpp$$ and $code atomic_extended_ode.cpp$$ examples.
+
+$head 03-12$$
+$list number$$
+Move the example $code reverse_any.cpp$$ to $cref rev_checkpoint.cpp$$.
+$lnext
+Add the $code chkpoint_one_mul_level.cpp$$ example.
+$lend
+
+$head 03-05$$
+The following atomic function examples were added
+These examples are for a specific atomic operation.
+In addition, the domain and range dimensions for these examples
+are not one and not equal to each other:
+$code atomic_two_forward.cpp$$,
+$code atomic_two_reverse.cpp$$,
+$code atomic_two_for_sparse_jac.cpp$$,
+$code atomic_two_rev_sparse_jac.cpp$$,
+$code atomic_two_for_sparse_hes.cpp$$,
+$code atomic_two_rev_sparse_hes.cpp$$.
+
+
+$head 03-01$$
+$list number$$
+Improve documentation of implementation requirements for the atomic
+$cref/rev_sparse_jac/atomic_two_rev_sparse_jac/Implementation/$$.
+$lnext
+Make some corrections to the $cref atomic_two_for_sparse_hes$$ documentation.
+and fix a bug in how CppAD used these functions.
+$lend
+
+$head 02-29$$
+$list number$$
+Merged sparse into master branch. This makes the
+$cref ForSparseHes$$ routine available for use.
+$lnext
+Changed the
+$cref/global options/speed_main/Global Options/$$
+in the speed test main program to use one global variable with prototype
+$srccode%cpp%
+    extern std::map<std::string, bool> global_option;
+%$$
+$lend
+
+
+$head 02-28$$
+Fix a mistake in the old atomic
+$code example/sparsity/sparsity.cpp$$ example.
+This example has since been changed to
+$code atomic_two_set_sparsity.cpp$$.
+
+
+$head 02-27$$
+The $code --with-sparse_set$$ and $code --with-sparse_set$$ options
+were removed from the $cref autotools$$ install procedure.
+
+$head 02-26$$
+The condition that the operation sequence in $icode f$$ is
+$cref/independent/glossary/Operation/Independent/$$ of
+the independent variables was added to the statement about
+the validity of the sparsity patterns; see $icode x$$ in
+$cref/ForSparseJac/ForSparseJac/x/$$,
+$cref/RevSparseJac/RevSparseJac/x/$$, and
+$cref/RevSparseHes/RevSparseHes/x/$$.
+
+$head 02-25$$
+The $cref cmake$$ command line argument $code cppad_sparse_list$$
+has been removed (because it is so much better than the other option).
+
+$head 02-23$$
+A new version of the
+$code cppad_sparse_list$$ class (not part of user API) uses
+reference counters to reduce the number of copies of sets that are equal.
+This improved the speed of sparsity pattern computations that use
+the $cref/vector of sets/glossary/Sparsity Pattern/Vector of Sets/$$
+representation.
+For example, the results for the
+$cref cppad_sparse_hessian.cpp$$ test compare as follows:
+$codep
+    sparse_hessian_size     = [  100,    400,   900,  1600, 2500 ]
+    sparse_hessian_rate_old = [ 1480, 265.21, 93.33, 41.93, 0.86 ]
+    sparse_hessian_rate_new = [ 1328, 241.61, 92.99, 40.51, 3.80 ]
+$$
+Note that the improvement is only for large problems. In fact,
+for large problems, preliminary testing indicates that
+the new vector of sets representation preforms better than
+the $cref/vector of boolean/glossary/Sparsity Pattern/Boolean Vector/$$
+representation.
+
+
+$head 01-21$$
+Fix a $code valgrind$$ warning about use of uninitialized memory
+in the test $code test_more/chkpoint_one.cpp$$ (the problem was in the test).
+
+$head 01-20$$
+$list number$$
+Fix a $code valgrind$$ warning about use of uninitialized memory
+when using the $cref/adouble/base_adolc.hpp/$$ base type.
+This required an optional $cref base_hash$$ function and the special
+$cref/adouble hash_code/base_adolc.hpp/hash_code/$$ implementation.
+$lnext
+The $code adouble$$ $cref to_string$$ functions
+required a special implementation; see
+$cref/adouble to_string/base_adolc.hpp/to_string/$$.
+$lnext
+Add the $cref/to_string/base_alloc.hpp/to_string/$$ and
+$cref/hash_code/base_alloc.hpp/hash_code/$$ examples
+to the $code base_alloc.hpp$$ example.
+$lend
+
+$head 01-18$$
+$list number$$
+Fix ambiguity between $code CppAD::sin$$ and $code std::sin$$,
+and other standard math functions,
+when using
+$codep
+    using namespace std;
+    using namespace CppAD;
+$$
+This is OK for simple programs, but not generally recommended.
+See $code double$$ version of base class definitions for
+$cref/Unary Standard Math/base_double.hpp/Unary Standard Math/$$
+for more details.
+$lnext
+Change Eigen array example
+$cref eigen_array.cpp$$
+to use member function version of $code sin$$ function
+(as per Eigen's array class documentation).
+$lend
+
+$end

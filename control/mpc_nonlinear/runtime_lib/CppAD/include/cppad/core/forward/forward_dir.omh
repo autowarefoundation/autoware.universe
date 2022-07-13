@@ -1,0 +1,206 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin forward_dir$$
+$spell
+    Taylor
+    const
+    dir
+    cpp
+    yq
+    xq
+    xk
+    std::cout
+    ostream
+$$
+
+$section Multiple Directions Forward Mode$$
+
+
+$head Syntax$$
+$icode%yq% = %f%.Forward(%q%, %r%, %xq%)
+%$$
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$.
+Given a function $latex X : \B{R} \rightarrow \B{R}^n$$,
+defined by its
+$cref/Taylor coefficients/glossary/Taylor Coefficient/$$,
+forward mode computes the Taylor coefficients for the function
+$latex \[
+    Y (t) = F [ X(t) ]
+\]$$
+This version of forward mode computes multiple directions as the same
+time (reducing the number of passes through the tape). This requires more
+memory, but might be faster in some cases.
+
+$head Reverse Mode$$
+Reverse mode for multiple directions has not yet been implemented.
+If you have speed tests that indicate that multiple direction forward
+mode is faster, and you want to try multiple direction reverse mode,
+contact the CppAD project manager.
+
+$head Notation$$
+
+$subhead n$$
+We use $icode n$$ to denote the dimension of the
+$cref/domain/fun_property/Domain/$$ space for $icode f$$.
+
+$subhead m$$
+We use $icode m$$ to denote the dimension of the
+$cref/range/fun_property/Range/$$ space for $icode f$$.
+
+$head f$$
+The $cref ADFun$$ object $icode f$$ has prototype
+$codei%
+    ADFun<%Base%> %f%
+%$$
+Note that the $cref ADFun$$ object $icode f$$ is not $code const$$.
+After this call we will have
+$codei%
+    %f%.size_order()     == %q% + 1
+    %f%.size_direction() == %r%
+%$$
+
+$head q$$
+This argument has prototype
+$codei%
+    size_t %q%
+%$$
+It specifies the order of Taylor Coefficient that we are calculating
+and must be greater than zero.
+The zero order coefficients can only have one direction computed
+and stored in $icode f$$ so use $cref forward_zero$$
+to compute the zero order coefficients.
+
+$head r$$
+This argument has prototype
+$codei%
+    size_t %r%
+%$$
+It specifies the number of directions that are computed together.
+If ($icode%r% == 1%$$), you are only using one direction and
+$cref forward_order$$ is simpler, and should be faster,
+than this more general case.
+
+$head xq$$
+The argument $icode xq$$ has prototype
+$codei%
+    const %Vector%& %xq%
+%$$
+and its size must be $icode%n%*%r%$$
+(see $cref/Vector/forward_dir/Vector/$$ below).
+For $latex \ell = 0 , \ldots , r-1$$,
+$latex j = 0 , \ldots , n-1$$,
+the $th j$$ component of the $th q$$ order Taylor coefficient
+for $latex X_\ell (t)$$ is defined by
+$pre
+    $$ $latex x_j^{(q),\ell} = $$ $icode%xq%[ %r% * %j% + %ell% ]%$$
+
+$head Zero Order$$
+For $latex j = 0 , \ldots , n-1$$,
+the $th j$$ component of the zero order Taylor coefficient
+for $latex X_\ell (t)$$ is defined by
+$pre
+    $$ $latex x_j^{(0)} = $$ $icode%xk%[ %j% ]%$$
+where $icode xk$$ corresponds to the previous call
+$codei%
+    %f%.Forward(%k%, %xk%)
+%$$
+with $icode%k% = 0%$$.
+
+$head Non-Zero Lower Orders$$
+For $latex \ell = 0 , \ldots , r-1$$,
+$latex j = 0 , \ldots , n-1$$,
+$latex k = 1, \ldots , q-1$$,
+the $th j$$ component of the $th k$$ order Taylor coefficient
+for $latex X_\ell (t)$$ is defined by
+$pre
+    $$ $latex x_j^{(k),\ell} = $$ $icode%xk%[ %r% * %j% + %ell% ]%$$
+where $icode xk$$ corresponds to the previous call
+$codei%
+    %f%.Forward(%k%, %r%, %xk%)
+%$$
+Note that $icode r$$ must have the same value in this previous call.
+
+$head X(t)$$
+For $latex \ell = 0 , \ldots , r-1$$, the function
+$latex X_\ell : \B{R} \rightarrow \B{R}^n$$ is defined using
+the Taylor coefficients $latex x^{(k),\ell} \in \B{R}^n$$:
+$latex \[
+X_\ell (t) = x^{(0)}  + x^{(1),\ell} * t^1 + \cdots +  x^{(q),\ell} t^q
+\] $$
+Note that the $th k$$ derivative of $latex X_\ell (t)$$ is related to
+its Taylor coefficients by
+$latex \[
+\begin{array}{rcl}
+    x^{(0)}       & = & X_\ell (0)
+    \\
+    x^{(k), \ell} & = & \frac{1}{k !} X_\ell^{(k)} (0)
+\end{array}
+\] $$
+for $latex k = 1 , \ldots , q$$.
+
+$head Y(t)$$
+For $latex \ell = 0 , \ldots , r-1$$, the function
+$latex Y_\ell : \B{R} \rightarrow \B{R}^m$$  is defined by
+$latex Y_\ell (t) = F[ X_\ell (t) ] $$.
+We use $latex y^{(0)}$$ for the zero order coefficient
+and $latex y^{(k),\ell} \in \B{R}^m$$ to denote the
+hight order coefficients; i.e.,
+$latex \[
+Y_\ell (t) = y^{(0)} + y^{(1),\ell} * t^1 + \cdots + y^{(q),\ell} * t^q
++ o( t^q )
+\] $$
+where $latex o( t^q ) * t^{-q} \rightarrow 0$$ as $latex t \rightarrow 0$$.
+Note that the $th k$$ derivative of $latex Y_\ell (t)$$ is related to
+its Taylor coefficients by
+$latex \[
+\begin{array}{rcl}
+    y^{(0)}       & = & Y_\ell (0)
+    \\
+    y^{(k), \ell} & = & \frac{1}{k !} Y_\ell^{(k)} (0)
+\end{array}
+\] $$
+for $latex k = 1 , \ldots , q$$.
+
+$head yq$$
+The argument $icode yq$$ has prototype
+$codei%
+    %Vector% %yq%
+%$$
+and its size is $icode%m%*%r%$$
+(see $cref/Vector/forward_dir/Vector/$$ below).
+For $latex \ell = 0 , \ldots , r-1$$,
+$latex i = 0 , \ldots , m-1$$,
+the $th i$$ component of the $th q$$ order Taylor coefficient
+for $latex Y_\ell (t)$$ is given by
+$pre
+    $$ $latex y_i^{(q),\ell} = $$ $icode%yq%[ %r% * %i% + %ell% ]%$$
+
+$head Vector$$
+The type $icode Vector$$ must be a $cref SimpleVector$$ class with
+$cref/elements of type/SimpleVector/Elements of Specified Type/$$
+$icode Base$$.
+The routine $cref CheckSimpleVector$$ will generate an error message
+if this is not the case.
+
+$children%
+    example/general/forward_dir.cpp
+%$$
+$head Example$$
+The file
+$cref forward_dir.cpp$$
+contains an example and test using one order (multiple orders).
+They return true if they succeed and false otherwise.
+
+$end

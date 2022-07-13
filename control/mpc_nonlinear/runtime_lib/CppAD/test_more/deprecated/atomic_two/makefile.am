@@ -1,0 +1,51 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+if CppAD_EIGEN
+else
+EIGEN_SRC_FILES    =
+endif
+#
+#
+check_PROGRAMS    = atomic
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+#
+atomic_SOURCES   = \
+	$(EIGEN_SRC_FILES) \
+	atomic_two.cpp \
+	atomic_sparsity.cpp \
+	mat_mul.cpp \
+	base2ad.cpp \
+	for_sparse_hes.cpp \
+	for_sparse_jac.cpp \
+	forward.cpp \
+	get_started.cpp \
+	norm_sq.cpp \
+	reciprocal.cpp \
+	rev_sparse_hes.cpp \
+	rev_sparse_jac.cpp \
+	reverse.cpp \
+	set_sparsity.cpp \
+	tangent.cpp
+
+test: check
+	./atomic

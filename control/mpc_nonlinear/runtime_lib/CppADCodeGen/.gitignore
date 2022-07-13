@@ -1,0 +1,77 @@
+#
+# directories for compilation
+/build
+/cmake-build-debug
+/obj-x86_64-linux-gnu
+
+# log files
+*.log
+
+# directory used by autoconf to cache information for future runs
+autom4te.cache
+
+# doxygen output
+doxydoc
+
+# doxygen errors
+doxygen.err
+
+# omhelp output log
+omhelp.htm.log
+omhelp.xml.log
+
+# ./build.sh test output log
+build_test.log
+
+# files created by configure and not in distribution
+cppad/configure.hpp
+doc.omh
+doxyfile
+example/test_one.sh
+omh/install_unix.omh
+omh/install_windows.omh
+test_more/test_one.sh
+.deps
+config.status
+pkgconfig/*.pc
+makefile
+
+# temporary files
+junk
+junk.sh
+*~
+
+# binary/compiled files
+*.[oa]
+*.so
+
+# IDE files
+/nbproject/
+/.idea/
+/.kdev4/
+*.kdev4
+
+# file browser
+.directory
+
+# debian temporary files
+/debian/*/
+/debian/files
+/debian/*.stamp
+
+# temporary test directory
+/test/zoot/
+
+# automatically generated directories
+/test/cppadcg_sources
+/test/cppadcg_sources_2
+/test/temp
+/test/tmp
+
+# compiled examples
+/example/dynamic_linux
+/example/source_generation
+/example/cppadcg_sources
+
+# python
+*.pyc

@@ -1,0 +1,31 @@
+-------------------------------------------------------------------------------
+  CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------------
+$begin multi_chkpoint_one.cpp$$
+$spell
+    chkpoint
+    cpp
+$$
+
+$section Multi-Threading chkpoint_one Example / Test$$
+
+$head Deprecated 2019-08-06$$
+The example has been deprecated, use $cref multi_chkpoint_two.cpp$$ instead.
+
+$head Source File$$
+All of the routines below are located in the file
+$codep
+    example/multi_thread/multi_chkpoint_one.cpp
+$$
+
+$childtable%example/multi_thread/multi_chkpoint_one.cpp%$$
+
+$end

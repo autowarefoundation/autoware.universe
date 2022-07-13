@@ -1,0 +1,40 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+# See ./CMakeLists.txt for specifications.
+#
+BUILT_SOURCES = det_by_minor_c.c det_by_minor_cpp.cpp
+det_by_minor_c.c: det_by_minor.c
+	cp $(srcdir)/det_by_minor.c det_by_minor_c.c
+det_by_minor_cpp.cpp: det_by_minor.c
+	cp $(srcdir)/det_by_minor.c det_by_minor_cpp.cpp
+#
+#
+# erase configures choice of flags
+DEFS =
+#
+# AM_CXXFLAGS =
+# AM_CFLAGS   =
+#
+AM_CXXFLAGS =
+AM_CFLAGS   =
+#
+check_PROGRAMS    = det_by_minor_c det_by_minor_cpp
+#
+det_by_minor_c_SOURCES   = det_by_minor_c.c
+det_by_minor_cpp_SOURCES = det_by_minor_cpp.cpp
+#
+test: det_by_minor_c det_by_minor_cpp
+	echo "Running version compiled using C compiler"
+	./det_by_minor_c
+	echo "Running version compiled using C++ compiler"
+	./det_by_minor_cpp

@@ -1,0 +1,114 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin tan_reverse$$
+$spell
+    Taylor
+$$
+
+
+$section Tangent and Hyperbolic Tangent Reverse Mode Theory$$
+
+$head Notation$$
+We use the reverse theory
+$cref/standard math function/ReverseTheory/Standard Math Functions/$$
+definition for the functions $latex H$$ and $latex G$$.
+In addition, we use the forward mode notation in $cref tan_forward$$ for
+$latex X(t)$$, $latex Y(t)$$ and $latex Z(t)$$.
+
+$head Eliminating Y(t)$$
+For $latex j > 0$$, the forward mode coefficients are given by
+$latex \[
+y^{(j-1)} = \sum_{k=0}^{j-1} z^{(k)} z^{(j-k-1)}
+\] $$
+Fix $latex j > 0$$ and suppose that $latex H$$ is the same as $latex G$$
+except that $latex y^{(j-1)}$$ is replaced as a function of the Taylor
+coefficients for $latex Z(t)$$.
+To be specific, for $latex k = 0 , \ldots , j-1$$,
+$latex \[
+\begin{array}{rcl}
+\D{H}{ z^{(k)} }
+& = &
+\D{G}{ z^{(k)} } + \D{G}{ y^{(j-1)} } \D{ y^{(j-1)} }{ z^{(k)} }
+\\
+& = &
+\D{G}{ z^{(k)} } + \D{G}{ y^{(j-1)} } 2 z^{(j-k-1)}
+\end{array}
+\] $$
+
+
+$head Positive Orders Z(t)$$
+For order $latex j > 0$$,
+suppose that $latex H$$ is the same as $latex G$$ except that
+$latex z^{(j)}$$ is expressed as a function of
+the coefficients for $latex X(t)$$, and the
+lower order Taylor coefficients for $latex Y(t)$$, $latex Z(t)$$.
+$latex \[
+z^{(j)}
+=
+x^{(j)} \pm \frac{1}{j}  \sum_{k=1}^j k x^{(k)} y^{(j-k)}
+\] $$
+For $latex k = 1 , \ldots , j$$,
+the partial of $latex H$$ with respect to $latex x^{(k)}$$ is given by
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(k)} } & = &
+\D{G}{ x^{(k)} } + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(k)} }
+\\
+& = &
+\D{G}{ x^{(k)} } +
+\D{G}{ z^{(j)} }
+\left[ \delta ( j - k ) \pm \frac{k}{j} y^{(j-k)} \right]
+\end{array}
+\] $$
+where $latex \delta ( j - k )$$ is one if $latex j = k$$ and zero
+otherwise.
+For $latex k = 1 , \ldots ,  j$$
+The partial of $latex H$$ with respect to $latex y^{j-k}$$,
+is given by
+$latex \[
+\begin{array}{rcl}
+\D{H}{ y^{(j-k)} } & = &
+\D{G}{ y^{(j-k)} } + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ y^{(j-k)} }
+\\
+& = &
+\D{G}{ y^{(j-k)} } \pm \D{G}{ z^{(j)} }\frac{k}{j} x^{k}
+\end{array}
+\] $$
+
+
+$head Order Zero Z(t)$$
+The order zero coefficients for the tangent and hyperbolic tangent are
+$latex \[
+\begin{array}{rcl}
+z^{(0)} & = & \left\{
+    \begin{array}{c} \tan ( x^{(0)} ) \\ \tanh (  x^{(0)} ) \end{array}
+\right.
+\end{array}
+\] $$
+Suppose that $latex H$$ is the same as $latex G$$ except that
+$latex z^{(0)}$$ is expressed as a function of the Taylor coefficients
+for $latex X(t)$$.
+In this case,
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(0)} }
+& = &
+\D{G}{ x^{(0)} }
++ \D{G}{ z^{(0)} } \D{ z^{(0)} }{ x^{(0)} }
+\\
+& = &
+\D{G}{ x^{(0)} } + \D{G}{ z^{(0)} } ( 1 \pm y^{(0)} )
+\end{array}
+\] $$
+
+$end

@@ -1,0 +1,64 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin Example$$
+$spell
+    CppAD
+    Cygwin
+    Microsoft
+    chdir
+    nmake
+    mak
+    Workspace
+    dsw
+    exe
+    Example example
+$$
+
+$section Examples$$
+
+
+$head Introduction$$
+This section organizes the information related to the CppAD examples.
+Each CppAD operation has its own specific example,
+for example $cref add.cpp$$ is an example for
+$cref/addition/ad_binary/$$.
+Some of the examples are of a more general nature
+(not connected of a specific feature of CppAD).
+In addition, there are some utility functions that are used
+by the examples.
+
+$head get_started$$
+The $cref get_started.cpp$$ example is a good place to start using CppAD.
+
+$head Running Examples$$
+The
+$cref/installation instructions/Install/$$
+show how the examples can be run on your system.
+
+
+$head The CppAD Test Vector Template Class$$
+Many of the examples use the
+$small $cref/CPPAD_TESTVECTOR/testvector/$$ $$ preprocessor symbol
+to determine which $cref SimpleVector$$ template class is used with
+the examples.
+
+
+$childtable%
+    example/get_started/get_started.cpp%
+    omh/example_list.omh%
+    include/cppad/core/testvector.hpp%
+    include/cppad/wno_conversion.hpp
+%$$
+
+
+$end

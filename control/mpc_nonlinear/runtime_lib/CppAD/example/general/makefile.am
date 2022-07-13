@@ -1,0 +1,165 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD puts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+# -------------------------------------------------------------------------
+if CppAD_ADOLC
+ADOLC_SRC_FILES    =  mul_level_adolc.cpp mul_level_adolc_ode.cpp
+ADOLC_LIB          = -ladolc -lColPack -L$(ADOLC_DIR)/lib -L$(ADOLC_DIR)/lib64
+ADOLC_FLAGS        = -I$(ADOLC_DIR)/include
+else
+ADOLC_SRC_FILES   =
+ADOLC_LIB         =
+ADOLC_FLAGS       =
+endif
+# -------------------------------------------------------------------------
+if CppAD_EIGEN
+EIGEN_SRC_FILES     =  eigen_det.cpp eigen_array.cpp
+EIGEN_FLAGS         =
+else
+EIGEN_SRC_FILES     =
+EIGEN_FLAGS         =
+endif
+# -------------------------------------------------------------------------
+# autotools does not support use of colpack
+#
+check_PROGRAMS    = general
+#
+AM_CXXFLAGS =  \
+	$(ADOLC_FLAGS) \
+	$(EIGEN_FLAGS) \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE) \
+	$(ADOLC_FLAGS) \
+	$(EIGEN_FLAGS)
+#
+LDADD        =  $(ADOLC_LIB)
+#
+# BEGIN_SORT_THIS_LINE_PLUS_5
+general_SOURCES   = \
+	$(ADOLC_SRC_FILES) \
+	$(EIGEN_SRC_FILES) \
+	\
+	abort_recording.cpp \
+	acos.cpp \
+	acosh.cpp \
+	ad_assign.cpp \
+	ad_ctor.cpp \
+	ad_fun.cpp \
+	ad_in_c.cpp \
+	ad_input.cpp \
+	ad_output.cpp \
+	add.cpp \
+	add_eq.cpp \
+	asin.cpp \
+	asinh.cpp \
+	atan.cpp \
+	atan2.cpp \
+	atanh.cpp \
+	azmul.cpp \
+	base2ad.cpp \
+	base_alloc.hpp \
+	base_require.cpp \
+	bender_quad.cpp \
+	bool_fun.cpp \
+	capacity_order.cpp \
+	change_param.cpp \
+	check_for_nan.cpp \
+	compare.cpp \
+	compare_change.cpp \
+	complex_poly.cpp \
+	con_dyn_var.cpp \
+	cond_exp.cpp \
+	cos.cpp \
+	cosh.cpp \
+	div.cpp \
+	div_eq.cpp \
+	equal_op_seq.cpp \
+	erf.cpp \
+	erfc.cpp \
+	exp.cpp \
+	expm1.cpp \
+	fabs.cpp \
+	for_one.cpp \
+	for_two.cpp \
+	forward.cpp \
+	forward_dir.cpp \
+	forward_order.cpp \
+	fun_assign.cpp \
+	fun_check.cpp \
+	fun_property.cpp \
+	function_name.cpp \
+	general.cpp \
+	hes_lagrangian.cpp \
+	hes_lu_det.cpp \
+	hes_minor_det.cpp \
+	hes_times_dir.cpp \
+	hessian.cpp \
+	independent.cpp \
+	integer.cpp \
+	interface2c.cpp\
+	interp_onetape.cpp\
+	interp_retape.cpp\
+	jac_lu_det.cpp \
+	jac_minor_det.cpp \
+	jacobian.cpp \
+	log.cpp \
+	log10.cpp \
+	log1p.cpp \
+	lu_ratio.cpp \
+	lu_vec_ad.cpp \
+	lu_vec_ad.hpp \
+	lu_vec_ad_ok.cpp \
+	mul.cpp \
+	mul_eq.cpp \
+	mul_level.cpp \
+	mul_level_ode.cpp \
+	near_equal_ext.cpp \
+	new_dynamic.cpp \
+	num_limits.cpp \
+	number_skip.cpp \
+	numeric_type.cpp \
+	ode_stiff.cpp \
+	opt_val_hes.cpp \
+	pow.cpp \
+	pow_nan.cpp \
+	print_for.cpp \
+	rev_checkpoint.cpp \
+	rev_one.cpp \
+	rev_two.cpp \
+	reverse_one.cpp \
+	reverse_three.cpp \
+	reverse_two.cpp \
+	sign.cpp \
+	sin.cpp \
+	sinh.cpp \
+	sqrt.cpp \
+	stack_machine.cpp \
+	sub.cpp \
+	sub_eq.cpp \
+	tan.cpp \
+	tanh.cpp \
+	tape_index.cpp \
+	taylor_ode.cpp \
+	unary_minus.cpp \
+	unary_plus.cpp \
+	value.cpp \
+	var2par.cpp \
+	vec_ad.cpp
+# END_SORT_THIS_LINE_MINUS_2
+
+test: check
+	./general

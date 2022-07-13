@@ -1,0 +1,265 @@
+cppadcodegen (2.4.3-1) unstable; urgency=low
+
+   * fix getCustomLibraryExtension()
+
+ -- Joao Leal <joaoruileal@gmail.com>  Mon, 16 Mar 2020 18:00:00 +0000
+
+cppadcodegen (2.4.2-1) unstable; urgency=low
+
+   * fix missing inline
+
+ -- Joao Leal <joaoruileal@gmail.com>  Thu, 12 Mar 2020 18:00:00 +0000
+
+cppadcodegen (2.4.1-1) unstable; urgency=low
+
+   * fix cppad version in pkgconfig
+
+ -- Joao Leal <joaoruileal@gmail.com>  Mon, 9 Mar 2020 18:00:00 +0000
+
+cppadcodegen (2.4.0-1) unstable; urgency=low
+
+   * add support for CppAD 2020
+   * add support for Clang/LLVM 7.0 and 8.0
+
+ -- Joao Leal <joaoruileal@gmail.com>  Sun, 26 Jan 2020 18:00:00 +0000
+
+cppadcodegen (2.3.0-1) unstable; urgency=low
+
+   * add support for Clang/LLVM 5.0 and 6.0
+   * add support for Apple
+   * source-code modernization
+   * pretty printers for GDB
+
+ -- Joao Leal <joaoruileal@gmail.com>  Sat, 27 Oct 2018 18:00:00 +0000
+
+cppadcodegen (2.2.0-1) unstable; urgency=low
+
+   * initial work for multithreaded evaluation of Jacobians and Hessians
+   * added support for Clang/LLVM 3.8 and 4.0
+
+ -- Joao Leal <development@ciengis.com>  Thu, 02 Mar 2017 13:00:00 +0000
+
+cppadcodegen (2.1.0-1) unstable; urgency=low
+
+   * added the dot language (graphviz)
+   * added the Soares-Secchi method for DAE index reduction
+   * moved language related headers to a new folder
+   * improved MathML and Latex outputs
+   * improved Evaluator
+   * improved symbolic solution of the model relative to a single variable
+
+ -- Joao Leal <development@ciengis.com>  Mon, 09 May 2016 13:00:00 +0000
+
+cppadcodegen (2.0.0-1) unstable; urgency=low
+
+   * upgraded sources to C++11
+   * added support for Clang/LLVM 3.3 and 3.4
+   * compiler related files moved
+
+ -- Joao Leal <development@ciengis.com>  Fri, 31 Jan 2013 13:00:00 +0000
+
+cppadcodegen (1.5.0-1) unstable; urgency=low
+
+   * changed handling of external/atomic functions
+   * sparse arrays are used by external functions
+   * some bugfixes in array space reutilization
+   * improved array initialization in the generated source code
+
+ -- Joao Leal <development@ciengis.com>  Wed, 22 Jan 2013 13:00:00 +0000
+
+cppadcodegen (1.4.0-1) unstable; urgency=low
+
+  * equation pattern detection allows equations to not be defined for some iterations
+  * other minor improvements
+
+ -- Joao Leal <development@ciengis.com>  Tue, 17 Dec 2013 13:00:00 +0000
+
+cppadcodegen (1.3.2-1) unstable; urgency=low
+
+  * performance improvements in equation pattern detection
+  * bugfix in adding operations pointed by alias operations to the operation queue
+  * bugfix in printing floats/doubles in the source code when they can also be represented as integers
+  * bugfix in the generated forward_one and reverse_one functions when there are loops involved
+  * other minor improvements
+
+ -- Joao Leal <development@ciengis.com>  Fri, 25 Oct 2013 13:00:00 +0000
+
+cppadcodegen (1.3.1-1) unstable; urgency=low
+
+  * implemented random index patterns
+  * improved performance of the generated code for models with loops and atomics
+  * improved source code generation performance for models without loops and atomics
+  * minor improvements in printouts
+  * bugfix in hessian generation for models with loops when there is no second order information
+  * bugfix in loop tape creation (avoids potential NaNs)
+  * bugfix in equation pattern detection when there are several equations that do not match any pattern
+
+ -- Development <development@ciengis.com>  Tue, 15 Oct 2013 13:00:00 +0000
+
+cppadcodegen (1.3.0-1) unstable; urgency=low
+
+  * added support for repeated equation patterns
+
+ -- Development <development@ciengis.com>  Tue, 01 Oct 2013 13:00:00 +0000
+
+cppadcodegen (1.2.0-1) unstable; urgency=low
+
+  * added atomic function support
+
+ -- Development <development@ciengis.com>  Tue, 02 Jul 2013 13:00:00 +0000
+
+cppadcodegen (1.1.0-1) unstable; urgency=low
+
+  * new methods for the generation and compilation of C source code from forward one, reverse one and reverse two modes
+
+ -- Development <development@ciengis.com>  Fri, 26 Apr 2013 13:00:00 +0000
+
+cppadcodegen (1.0.0-1) unstable; urgency=low
+
+  * CHANGED VERSIONING STYLE!!! It no longer follows CppAD version names.
+  * improved DAE index reduction code
+  * minor improvements to conditional expression operation
+  * Evaluator class performs less operations
+  * other minor improvements
+
+ -- Development <development@ciengis.com>  Thu, 28 Mar 2013 13:00:00 +0000
+
+cppadcodegen (20121219.6-1) unstable; urgency=low
+
+  * improved DAE index reduction code (Dummy derivatives can generate semi-explicit DAEs)
+  * fixed bug related with calling the same CodeHandler several times
+  * added valgrind tests
+  * other minor improvements
+
+ -- Development <development@ciengis.com>  Fri, 8 Feb 2013 13:00:00 +0000
+
+cppadcodegen (20121219.5-1) unstable; urgency=low
+
+  * uses googletest; API improvements to the DAE index reduction algorithms
+
+ -- Development <development@ciengis.com>  Mon, 21 Jan 2013 13:00:00 +0000
+
+cppadcodegen (20121219.4-1) unstable; urgency=low
+
+  * static libraries can also be built with position independent code
+
+ -- Development <development@ciengis.com>  Wed, 16 Jan 2013 13:00:00 +0000
+
+cppadcodegen (20121219.3-1) unstable; urgency=low
+
+  * static libraries can also be created for the models
+
+ -- Development <development@ciengis.com>  Wed, 02 Jan 2013 19:00:00 +0000
+
+cppadcodegen (20121219.2-1) unstable; urgency=low
+
+  * bug fix in the hessian symmetry
+
+ -- Development <development@ciengis.com>  Wed, 02 Jan 2013 11:00:00 +0000
+
+cppadcodegen (20121219.1-2) unstable; urgency=low
+
+  * updated license in headers
+
+ -- Development <development@ciengis.com>  Tue, 20 Dec 2012 11:00:00 +0000
+
+cppadcodegen (20121219.1-1) unstable; urgency=low
+
+  * removed CppAD code from CppADCodegen
+  * renamed folder cppad_cgoo to cppadcg
+
+ -- Development <development@ciengis.com>  Tue, 19 Dec 2012 17:30:00 +0000
+
+cppadcodegen (20120709.5-1) unstable; urgency=low
+
+  * changed some template arguments.
+
+ -- Development <development@ciengis.com>  Tue, 4 Dec 2012 17:30:00 +0000
+
+cppadcodegen (20120709.4-1) unstable; urgency=low
+
+  * initial support for automatic DAE differential index reduction.
+
+ -- Development <development@ciengis.com>  Tue, 6 Nov 2012 17:30:00 +0000
+
+cppadcodegen (20120709.2-1) unstable; urgency=low
+
+  * added support for large models and dynamic libraries with several models.
+
+ -- Development <development@ciengis.com>  Wed, 11 Jul 2012 17:30:00 +0000
+
+cppadcodegen (20120709.1-1) unstable; urgency=low
+
+  * updated to CppAD cppad-20120709.
+
+ -- Development <development@ciengis.com>  Fri, 6 Jul 2012 17:30:00 +0000
+
+cppadcodegen (20120523.3-1) unstable; urgency=low
+
+  * c source code can reuse temporary variables
+
+ -- Development <development@ciengis.com>  Fri, 6 Jul 2012 17:30:00 +0000
+
+cppadcodegen (20120523.2-1) unstable; urgency=low
+
+  * added some useful classes to create a dynamic library from the generated source code
+
+ -- Development <development@ciengis.com>  Wed, 4 Jul 2012 10:30:00 +0000
+
+cppadcodegen (20120523.1-1) unstable; urgency=low
+
+  * performance improvements
+
+ -- Development <development@ciengis.com>  Fri, 25 May 2012 10:30:00 +0000
+
+cppadcodegen (20120523.0-1) unstable; urgency=low
+
+  * significant improvements in the source code generation strategy
+  * updated to the CppAD version 20120523
+
+ -- Development <development@ciengis.com>  Tue, 23 May 2012 10:30:00 +0000
+
+cppadcodegen (20120424.0-1) unstable; urgency=low
+
+  * updated to the CppAD version 20120424
+
+ -- Development <development@ciengis.com>  Tue, 24 Apr 2012 10:30:00 +0000
+
+cppadcodegen (20120404.0-1) unstable; urgency=low
+
+  * zero divided by any variable or number is considered to always return zero.
+  * updated to CppAD version 20120404
+
+ -- Development <development@ciengis.com>  Mon, 4 Apr 2012 10:30:00 +0000
+
+cppadcodegen (20120322.1-1) unstable; urgency=low
+
+  * removed cppad_codegen folder.
+
+ -- Development <development@ciengis.com>  Mon, 23 Mar 2012 10:30:00 +0000
+
+cppadcodegen (20120322.0-1) unstable; urgency=low
+
+  * added a new method and updated to the CppAD version 20120322
+
+ -- Development <development@ciengis.com>  Mon, 16 Mar 2012 10:30:00 +0000
+
+cppadcodegen (20120129.1-1) unstable; urgency=low
+
+  * It is now possible to get compressed jacobians in cppad_codegen
+
+ -- Development <development@ciengis.com>  Mon, 05 Mar 2012 10:30:00 +0000
+
+cppadcodegen (20120129.0-1) unstable; urgency=low
+
+  * New strategy to generate source code
+
+ -- Development <development@ciengis.com>  Wed, 08 Feb 2012 10:30:00 +0000
+
+
+cppadcodegen (20111230.0-1) unstable; urgency=low
+
+  * Initial packaging
+
+ -- Development <development@ciengis.com>  Mon, 30 Dec 2011 10:30:00 +0000
+

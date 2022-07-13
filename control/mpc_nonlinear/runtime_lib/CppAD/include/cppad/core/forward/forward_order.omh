@@ -1,0 +1,243 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin forward_order$$
+$spell
+    std::cout
+    ostream
+    xk
+    xp
+    yp
+    Ind
+    vp
+    uj
+    Taylor
+    const
+    xq
+    yq
+$$
+
+$section Multiple Order Forward Mode$$
+
+
+$head Syntax$$
+$icode%yq% = %f%.Forward(%q%, %xq% )
+%$$
+$icode%yq% = %f%.Forward(%q%, %xq%, %s%)
+%$$
+
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$.
+Given a function $latex X : \B{R} \rightarrow \B{R}^n$$,
+defined by its
+$cref/Taylor coefficients/glossary/Taylor Coefficient/$$,
+forward mode computes the Taylor coefficients for the function
+$latex \[
+    Y (t) = F [ X(t) ]
+\]$$
+
+$subhead Function Values$$
+If you are using forward mode to compute values for $latex F(x)$$,
+$cref forward_zero$$ is simpler to understand
+than this explanation of the general case.
+
+$subhead Derivative Values$$
+If you are using forward mode to compute values for $latex F^{(1)} (x) * dx$$,
+$cref forward_one$$ is simpler to understand
+than this explanation of the general case.
+
+$head Notation$$
+
+$subhead n$$
+We use $icode n$$ to denote the dimension of the
+$cref/domain/fun_property/Domain/$$ space for $icode f$$.
+
+$subhead m$$
+We use $icode m$$ to denote the dimension of the
+$cref/range/fun_property/Range/$$ space for $icode f$$.
+
+$head f$$
+The $cref ADFun$$ object $icode f$$ has prototype
+$codei%
+    ADFun<%Base%> %f%
+%$$
+Note that the $cref ADFun$$ object $icode f$$ is not $code const$$.
+After this call we will have
+$codei%
+    %f%.size_order()     == %q% + 1
+    %f%.size_direction() == 1
+%$$
+
+$head One Order$$
+If $icode%xq%.size() == %n%$$,
+then we are only computing one order.
+In this case, before this call we must have
+$codei%
+    %f%.size_order()     >= %q%
+    %f%.size_direction() == 1
+%$$
+
+
+$head q$$
+The argument $icode q$$ has prototype
+$codei%
+    size_t %q%
+%$$
+and specifies the highest order of the Taylor coefficients to be calculated.
+
+$head xq$$
+The argument $icode xq$$ has prototype
+$codei%
+    const %BaseVector%& %xq%
+%$$
+(see $cref/BaseVector/forward_order/BaseVector/$$ below).
+As above, we use $icode n$$ to denote the dimension of the
+$cref/domain/fun_property/Domain/$$ space for $icode f$$.
+The size of $icode xq$$ must be either $icode n$$ or
+$icode%n%*(%q%+1)%$$.
+After this call we will have
+$codei%
+    %f%.size_order()     == %q% + 1
+%$$
+
+$subhead One Order$$
+If $icode%xq%.size() == %n%$$,
+the $th q$$ order Taylor coefficient for $latex X(t)$$
+is defined by
+$pre
+    $$ $latex x^{(q)} = $$ $icode xq$$.
+For $latex k = 0 , \ldots , q-1$$,
+the Taylor coefficient $latex x^{(k)}$$
+is defined by $icode xk$$ in the previous call to
+$codei%
+    %f%.Forward(%k%, %xk%)
+%$$
+
+$subhead Multiple Orders$$
+If $icode%xq%.size() == %n%*(%q%+1)%$$,
+For $latex k = 0 , \ldots , q$$,
+$latex j = 0 , \ldots , n-1$$,
+the $th j$$ component of the $th k$$ order Taylor coefficient
+for $latex X(t)$$ is defined by
+$pre
+    $$ $latex x_j^{(k)} = $$ $icode%xq%[ (%q%+1) * %j% + %k% ]%$$
+
+$subhead Restrictions$$
+Note if $icode f$$ uses $cref atomic_one$$ functions,
+the size of $icode xq$$ must be $icode n$$.
+
+$head s$$
+If the argument $icode s$$ is not present, $code std::cout$$
+is used in its place.
+Otherwise, this argument has prototype
+$codei%
+    std::ostream& %s%
+%$$
+If order zero is begin calculated,
+$icode s$$ specifies where the output corresponding to $cref PrintFor$$
+will be written.
+If order zero is not being calculated,
+$icode s$$ is not used
+
+$head X(t)$$
+The function
+$latex X : \B{R} \rightarrow \B{R}^n$$ is defined using
+the Taylor coefficients $latex x^{(k)} \in \B{R}^n$$:
+$latex \[
+    X(t) = x^{(0)} * t^0 + x^{(1)} * t^1 + \cdots + x^{(q)} * t^q
+\] $$
+Note that for $latex k = 0 , \ldots , q$$,
+the $th k$$ derivative of $latex X(t)$$ is related to the
+Taylor coefficients by the equation
+$latex \[
+    x^{(k)} = \frac{1}{k !} X^{(k)} (0)
+\] $$
+
+$head Y(t)$$
+The function
+$latex Y : \B{R} \rightarrow \B{R}^m$$ is defined by
+$latex Y(t) = F[ X(t) ] $$.
+We use $latex y^{(k)} \in \B{R}^m$$
+to denote the $th k$$ order Taylor coefficient of $latex Y(t)$$; i.e.,
+$latex \[
+    Y(t) = y^{(0)} * t^0 + y^{(1)} * t^1 + \cdots + y^{(q)} * t^q + o( t^q )
+\] $$
+where $latex o( t^q ) * t^{-q} \rightarrow 0$$ as $latex t \rightarrow 0$$.
+Note that $latex y^{(k)}$$ is related to
+the $th k$$ derivative of $latex Y(t)$$ by the equation
+$latex \[
+    y^{(k)} = \frac{1}{k !} Y^{(k)} (0)
+\] $$
+
+$head yq$$
+The return value $icode yq$$ has prototype
+$codei%
+    %BaseVector% %yq%
+%$$
+(see $cref/BaseVector/forward_order/BaseVector/$$ below).
+
+$subhead One Order$$
+If $icode%xq%.size() == %n%$$,
+the vector $icode yq$$ has size $icode m$$.
+The $th q$$ order Taylor coefficient for $latex Y(t)$$
+is returned as
+$codei%
+    %yq%$$ $latex = y^{(q)}$$.
+
+$subhead Multiple Orders$$
+If $icode%xq%.size() == %n%*(%q%+1)%$$,
+the vector $icode yq$$ has size $icode%m%*(%q%+1)%$$.
+For $latex k = 0 , \ldots , q$$,
+for $latex i = 0 , \ldots , m-1$$,
+the $th i$$ component of the $th k$$ order Taylor coefficient
+for $latex Y(t)$$ is returned as
+$codei%
+    %yq%[ (%q%+1) * %i% + %k% ]%$$ $latex = y_i^{(k)}$$
+
+$head BaseVector$$
+The type $icode BaseVector$$ must be a $cref SimpleVector$$ class with
+$cref/elements of type/SimpleVector/Elements of Specified Type/$$
+$icode Base$$.
+The routine $cref CheckSimpleVector$$ will generate an error message
+if this is not the case.
+
+$head Zero Order$$
+The case where
+$latex q = 0$$ and $icode%xq%.size() == %n%$$,
+corresponds to the zero order
+$cref/special case/forward_zero/Special Case/$$.
+
+$head First Order$$
+The case where
+$latex q = 1$$ and $icode%xq%.size() == %n%$$,
+corresponds to the first order
+$cref/special case/forward_one/Special Case/$$.
+
+$head Second Order$$
+The case where
+$latex q = 2$$ and $icode%xq%.size() == %n%$$,
+corresponds to the second order
+$cref/special case/forward_two/Special Case/$$.
+
+$children%
+    example/general/forward.cpp%
+    example/general/forward_order.cpp
+%$$
+$head Example$$
+The files
+$cref forward.cpp$$ and $cref forward_order.cpp$$
+contain examples and tests of using forward mode with
+one order and multiple orders respectively.
+They return true if they succeed and false otherwise.
+
+$end

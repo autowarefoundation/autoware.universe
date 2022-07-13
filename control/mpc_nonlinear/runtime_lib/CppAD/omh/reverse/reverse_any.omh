@@ -1,0 +1,235 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin reverse_any$$
+$spell
+    checkpointing
+    typename
+    xk
+    xp
+    dw
+    Ind
+    uj
+    std
+    arg
+    const
+    Taylor
+$$
+
+$section Any Order Reverse Mode$$
+
+$head Syntax$$
+$icode%dw% = %f%.Reverse(%q%, %w%)%$$
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$.
+Reverse mode computes the derivative of the $cref Forward$$ mode
+$cref/Taylor coefficients/glossary/Taylor Coefficient/$$
+with respect to the domain variable $latex x$$.
+To be specific, it computes the derivative
+$latex W^{(1)} (u)$$ at $latex u = x$$
+which is specified by the following notation:
+
+$head Notation$$
+
+$subhead u^(k)$$
+For $latex k = 0, \ldots , q-1$$,
+the vector $latex u^{(k)} \in \B{R}^n$$ is defined as the value of
+$icode x_k$$ in the previous calls of the form
+$codei%
+    %f%.Forward(%k%, %x_k%)
+%$$
+If there is no previous call with $latex k = 0$$,
+$latex u^{(0)}$$ is the value of the independent variables when the
+corresponding
+AD of $icode Base$$
+$cref/operation sequence/glossary/Operation/Sequence/$$ was recorded.
+
+$subhead X(t, u)$$
+The function
+$latex X : \B{R} \times \B{R}^{n \times q} \rightarrow \B{R}^n$$ is defined by
+$latex \[
+    X ( t , u ) = u^{(0)} + u^{(1)} * t + \cdots + u^{(q-1)} * t^{q-1}
+\] $$
+Note that for $latex k = 0 , \ldots , q-1$$,
+$latex u^{(k)}$$ is related to the $th k$$ partial of $latex X(t, u)$$
+with respect to $latex t$$ by
+$latex \[
+    u^{(k)} = \frac{1}{k !} \Dpow{k}{t} X(0, u)
+\] $$
+
+$subhead Y(t, u)$$
+The function
+$latex Y : \B{R} \times \B{R}^{n \times q} \rightarrow \B{R}^m$$ is defined by
+$latex \[
+    Y(t, u) = F [ X(t,u) ]
+\]$$
+
+$subhead w^(k)$$
+If the argument $icode w$$ has size $icode%m% * %q%$$,
+for $latex k = 0 , \ldots , q-1$$ and $latex i = 0, \ldots , m-1$$,
+$latex \[
+    w_i^{(k)} = w [ i * q + k ]
+\] $$
+If the argument $icode w$$ has size $icode m$$,
+for $latex k = 0 , \ldots , q-1$$ and $latex i = 0, \ldots , m-1$$,
+$latex \[
+w_i^{(k)} = \left\{ \begin{array}{ll}
+    w [ i ] & {\rm if} \; k = q-1
+    \\
+    0       & {\rm otherwise}
+\end{array} \right.
+\] $$
+
+
+$subhead W(u)$$
+The function $latex W : \B{R}^{n \times q} \rightarrow \B{R}$$ is defined by
+$latex \[
+W(u) = \sum_{k=0}^{q-1} ( w^{(k)} )^\R{T} \frac{1}{k !} \Dpow{k}{t} Y(0, u)
+\] $$
+
+$head f$$
+The object $icode f$$ has prototype
+$codei%
+    const ADFun<%Base%> %f%
+%$$
+Before this call to $code Reverse$$, the value returned by
+$codei%
+    %f%.size_order()
+%$$
+must be greater than or equal $icode q$$
+(see $cref size_order$$).
+
+$head q$$
+The argument $icode q$$ has prototype
+$codei%
+    size_t %q%
+%$$
+and specifies the number of Taylor coefficient orders to be differentiated
+(for each variable).
+
+
+$head w$$
+The argument $icode w$$ has prototype
+$codei%
+    const %Vector% &%w%
+%$$
+(see $cref/Vector/reverse_any/Vector/$$ below)
+and its size
+must be equal to $icode m$$ or $icode%m% * %q%$$,
+It specifies the weighting vector $icode w$$
+in the definition of
+$cref/W(u)/reverse_any/Notation/W(u)/$$.
+
+
+$head dw$$
+The return value $icode dw$$ has prototype
+$codei%
+    %Vector% %dw%
+%$$
+(see $cref/Vector/reverse_any/Vector/$$ below).
+It is a vector with size $latex n \times q$$.
+For $latex j = 0, \ldots, n-1$$ and $latex k = 0 , \ldots , q-1$$
+If the argument $icode w$$ has size $icode%m% * %q%$$,
+$latex \[
+    dw[ j * q + k ] = W^{(1)} ( x )_{j,k}
+\] $$
+where $latex u = x$$ is value of the Taylor coefficients where the
+derivative is evaluated.
+$pre
+
+$$
+If the argument $icode w$$ has size $icode m$$,
+$latex \[
+    dw[ j * q + q - k - 1 ] = W^{(1)} ( x )_{j,k}
+\] $$
+where $latex u = x$$ is value of the Taylor coefficients where the
+derivative is evaluated.
+Note the reverse order in which the order indices are stored.
+This is an unfortunate consequence of keeping $code Reverse$$ backward
+compatible.
+
+$head First Order$$
+We consider the case where
+$icode%q% = 1%$$ and $icode%w%.size() == %m%$$.
+In this case
+$latex \[
+\begin{array}{rcl}
+W(u) & = & w_0 Y_0 (0, u) + \cdots + w_m Y_m (0, u)
+\\
+W(u) & = & w_0 F_0 [ X(0, u) ] + \cdots + w_m F_m [ X(0, u) ]
+\\
+W^{(1)} (x) & = &
+    w_0 F_0^{(1)} ( x^{(0)} ) + \cdots + w_m F_m^{(1)} ( x^{(0)} )
+\end{array}
+\] $$
+This is the same as the result documented in $cref reverse_one$$.
+
+
+$head Second Order$$
+We consider the case where
+$icode%q% = 2%$$ and $icode%w%.size() == %m%$$.
+In this case
+$latex \[
+\begin{array}{rcl}
+W(u) & = & w_0 \partial_t Y_0 (0, u) + \cdots + w_m \partial_t Y_m (0, u)
+\\
+W(u) & = &
+    w_0 \partial_t \{ F_0 [ X(t, u) ] \}_{t = 0}
+     + \cdots +
+    w_m \partial_t \{ F_m [ X(t, u) ] \}_{t = 0}
+\\
+W(u) & = &
+    w_0 F_0^{(1)} ( u^{(0)} ) u^{(1)}
+     + \cdots +
+    w_0 F_m^{(1)} ( u^{(0)} ) u^{(1)}
+\\
+\partial_{u(0)} W(x) & = &
+    w_0 (  x^{(1)} )^\R{T} F_0^{(2)} ( x^{(0)} )
+    + \cdots +
+    w_m (  x^{(1)} )^\R{T} F_m^{(2)} ( x^{(0)} )
+\\
+\partial_{u(1)} W(x) & = &
+    w_0 F_0^{(1)} ( x^{(0)} )
+    + \cdots +
+    w_m F_m^{(1)} ( x^{(0)} )
+\end{array}
+\] $$
+where $latex \partial{u(0)} $$
+denotes partial with respect to $latex u^{(0)}$$.
+These are the same as the result documented in $cref reverse_two$$.
+
+
+$head Vector$$
+The type $icode Vector$$ must be a $cref SimpleVector$$ class with
+$cref/elements of type/SimpleVector/Elements of Specified Type/$$
+$icode Base$$.
+The routine $cref CheckSimpleVector$$ will generate an error message
+if this is not the case.
+
+
+$head Example$$
+$children%
+    example/general/reverse_three.cpp%
+    example/general/rev_checkpoint.cpp
+%$$
+
+$list number$$
+The file $cref reverse_three.cpp$$
+contains an example and test of using reverse mode
+to compute third order derivatives.
+$lnext
+The file $cref rev_checkpoint.cpp$$
+contains an example and test of the general reverse mode case.
+$lend
+
+$end

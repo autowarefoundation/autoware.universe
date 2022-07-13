@@ -1,0 +1,32 @@
+-----------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
+
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+------------------------------------------------------------------------------
+$begin pack_setvec$$
+$spell
+    Namespace
+    CppAD
+    setvec
+$$
+
+$section Implement SetVector Using Packed Boolean Values$$
+
+$head Namespace$$
+This class is in the $code CppAD::local::sparse$$ namespace.
+
+$head Public$$
+The public member function for the $code list_setvec$$ class implement the
+$cref SetVector$$ concept.
+
+$childtable%
+    include/cppad/local/sparse/pack_setvec.hpp
+%$$
+
+$end

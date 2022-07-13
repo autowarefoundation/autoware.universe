@@ -1,0 +1,100 @@
+-----------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-----------------------------------------------------------------------------
+$begin link_routines$$
+$spell
+    bool
+    std
+    const
+    namespace
+    CppAD
+    onetape
+$$
+
+$section Package Specific Speed Test Linking Routines$$
+
+
+$head Syntax$$
+$icode%available% = %link_name%(%job%, %size%, %repeat%, %other_arguments% )
+%$$
+
+$head Purpose$$
+Each $cref/package/speed_main/package/$$
+defines a version of each $icode link_name$$ listed below.
+This is used by the $cref speed_main$$ program
+to run the corresponding speed and correctness tests.
+
+$head Thread Save$$
+The $icode link_name$$ routines may use static memory for setup and teardown
+and hence may not be thread safe.
+
+$head link_name$$
+The routine $icode link_name$$ in the syntax is one of the following:
+$childtable%
+    speed/src/link_det_lu.cpp%
+    speed/src/link_det_minor.cpp%
+    speed/src/link_mat_mul.cpp%
+    speed/src/link_ode.cpp%
+    speed/src/link_poly.cpp%
+    speed/src/link_sparse_hessian.hpp%
+    speed/src/link_sparse_jacobian.hpp
+%$$
+
+$head Namespace$$
+These routines are in the global namespace, not the CppAD namespace.
+
+$head available$$
+The $code bool$$ return value $icode available$$ is true (false)
+if the speed test $icode name$$ is (is not) available for this package.
+
+$head job$$
+This argument can be used to cache information that does not
+depend on the function argument value without having the corresponding time
+included in the test results.
+This is expected to be important when the global option
+$cref/onetape/speed_main/Global Options/onetape/$$ is true.
+The $code const std::string&$$ argument $icode job$$
+has one of the following values:
+
+$subhead setup$$
+This is the first call with a new value for $icode size$$
+and will not be used for timing.
+It can be used to setup information that should not be included in timing
+how long this routine takes.
+
+$subhead run$$
+This call will be used for timing how long this routine takes.
+The previous call $icode job$$ was either $code setup$$ or $code run$$
+and had the same value of $icode size$$.
+
+$subhead teardown$$
+This is the last call with this value of $icode size$$
+and will not be used for timing.
+It should be used to take down the setup; e.g., fee any memory that
+was allocated.
+
+$head size$$
+The $code size_t$$ argument $icode size$$ this is the size parameter for this
+test.  Larger sizes correspond to more computation per call.
+
+$head repeat$$
+If $icode job$$ is $code run$$,
+the $icode size_t$$ argument $icode repeat$$ is the number of
+randomly chosen argument values that the test derivatives should be
+evaluated for.
+The value of $icode repeat$$ is always greater than or equal one
+and all the $codei%link_%name%$$ output values are always calculated.
+
+$head other_arguments$$
+Each link function routine has specific specifications
+for $icode size$$ and their other arguments.
+
+$end

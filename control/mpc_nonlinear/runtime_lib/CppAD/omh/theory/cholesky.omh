@@ -1,0 +1,384 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin cholesky_theory$$
+$spell
+    Taylor
+    Cholesky
+    Sebastian
+    Ph
+    Humboldt
+    Universitat
+    zu
+$$
+
+$section AD Theory for Cholesky Factorization$$
+
+$head Reference$$
+See section 3.6 of
+Sebastian F. Walter's Ph.D. thesis,
+$italic
+Structured Higher-Order Algorithmic Differentiation
+in the Forward and Reverse Mode
+with Application in Optimum Experimental Design
+$$,
+Humboldt-Universitat zu Berlin,
+2011.
+
+
+$head Notation$$
+
+$subhead Cholesky Factor$$
+We are given a positive definite symmetric matrix
+$latex A \in \B{R}^{n \times n}$$
+and a Cholesky factorization
+$latex \[
+    A = L L^\R{T}
+\] $$
+where $latex L \in \B{R}^{n \times n}$$ is lower triangular.
+
+$subhead Taylor Coefficient$$
+The matrix $latex A$$ is a function of a scalar argument
+$latex t$$.
+For $latex k = 0 , \ldots , K$$, we use $latex A_k$$ for the
+corresponding Taylor coefficients; i.e.,
+$latex \[
+    A(t) = o( t^K ) + \sum_{k = 0}^K A_k t^k
+\] $$
+where $latex o( t^K ) / t^K \rightarrow 0 $$ as $latex t \rightarrow 0$$.
+We use a similar notation for $latex L(t)$$.
+
+$subhead Lower Triangular Part$$
+For a square matrix $latex C$$,
+$latex \R{lower} (C)$$ is the lower triangular part of $latex C$$,
+$latex \R{diag} (C)$$ is the diagonal matrix with the same diagonal as
+$latex C$$ and
+$latex \[
+    \R{low} ( C ) = \R{lower} (C) - \frac{1}{2} \R{diag} (C)
+\] $$
+
+
+
+$head Forward Mode$$
+For Taylor coefficient order $latex k = 0 , \ldots , K$$
+the coefficients
+$latex A_k \in \B{R}^{n \times n}$$, and
+satisfy the equation
+$latex \[
+    A_k = \sum_{\ell=0}^k L_\ell L_{k-\ell}^\R{T}
+\]  $$
+In the case where $latex k=0$$, the
+$latex \[
+    A_0 = L_0 L_0^\R{T}
+\] $$
+The value of $latex L_0$$ can be computed using the Cholesky factorization.
+In the case where $latex k > 0$$,
+$latex \[
+    A_k = L_k L_0^\R{T}  + L_0 L_k^\R{T}  + B_k
+\] $$
+where
+$latex \[
+    B_k = \sum_{\ell=1}^{k-1} L_\ell L_{k-\ell}^\R{T}
+\]  $$
+Note that $latex B_k$$ is defined in terms of Taylor coefficients
+of $latex L(t)$$ that have order less than $latex k$$.
+We also note that
+$latex \[
+    L_0^{-1} ( A_k - B_k ) L_0^\R{-T}
+    =
+    L_0^{-1} L_k + L_k^\R{T} L_0^\R{-T}
+\] $$
+The first matrix on the right hand side is lower triangular,
+the second is upper triangular,
+and the diagonals are equal.
+It follows that
+$latex \[
+    L_0^{-1} L_k
+    =
+    \R{low} [ L_0^{-1} ( A_k - B_k ) L_0^\R{-T} ]
+\] $$
+$latex \[
+    L_k
+    =
+    L_0 \R{low} [ L_0^{-1} ( A_k - B_k ) L_0^\R{-T} ]
+\] $$
+This expresses $latex L_k$$ in term of the
+Taylor coefficients of $latex A(t)$$ and the lower order coefficients
+of $latex L(t)$$.
+
+$head Lemma 1$$
+We use the notation $latex \dot{C}$$ for the derivative of a matrix
+valued function $latex C(s)$$ with respect to a scalar argument $latex s$$.
+We use the notation $latex \bar{S}$$ and $latex \bar{L}$$ for the
+partial derivative of a scalar value function $latex \bar{F}( S, L)$$
+with respect to a symmetric matrix $latex S$$ and
+an lower triangular matrix $latex L$$.
+Define the scalar valued function
+$latex \[
+    \hat{F}( C ) = \bar{F} [ S , \hat{L} (S) ]
+\] $$
+We use $latex \hat{S}$$ for the total derivative of $latex \hat{F}$$ with
+respect to $latex S$$.
+Suppose that $latex \hat{L} ( S )$$ is such that
+$latex \[
+    \dot{L} = L_0 \R{low} ( L_0^{-1} \dot{S} L_0^\R{-T} )
+\] $$
+for any $latex S(s)$$. It follows that
+$latex \[
+    \hat{S} = \bar{S} + \frac{1}{2} ( M + M^\R{T} )
+\] $$
+where
+$latex \[
+    M = L_0^\R{-T} \R{low}( L_0^\R{T} \bar{L} )^\R{T} L_0^{-1}
+\] $$
+
+$subhead Proof$$
+$latex \[
+    \partial_s \hat{F} [ S(s) , L(s) ]
+    =
+    \R{tr} ( \bar{S}^\R{T} \dot{S} )
+    +
+    \R{tr} ( \bar{L}^\R{T} \dot{L} )
+\] $$
+$latex \[
+    \R{tr} ( \bar{L}^\R{T} \dot{L} )
+    =
+    \R{tr} [
+        \bar{L}^\R{T} L_0
+        \R{low} ( L_0^{-1} \dot{S} L_0^\R{-T} )
+    ]
+\] $$
+$latex \[
+    =
+    \R{tr} [
+        \R{low} ( L_0^{-1} \dot{S} L_0^\R{-T} )^\R{T}
+        L_0^\R{T} \bar{L}
+    ]
+\] $$
+$latex \[
+    =
+    \R{tr} [
+        L_0^{-1} \dot{S} L_0^\R{-T}
+        \R{low}( L_0^\R{T} \bar{L} )
+    ]
+\] $$
+$latex \[
+    =
+    \R{tr} [
+        L_0^\R{-T} \R{low}( L_0^\R{T} \bar{L} ) L_0^{-1} \dot{S}
+    ]
+\] $$
+$latex \[
+    \partial_s \hat{F} [ S(s) , L(s) ]
+    =
+    \R{tr} ( \bar{S}^\R{T} \dot{S} )
+    +
+    \R{tr} [
+        L_0^\R{-T} \R{low}( L_0^\R{T} \bar{L} ) L_0^{-1} \dot{S}
+    ]
+\] $$
+We now consider the $latex (i, j)$$ component function,
+for a symmetric matrix $latex S(s)$$,
+defined by
+$latex \[
+    S_{k, \ell} (s) = \left\{ \begin{array}{ll}
+        1 & \R{if} \; k = i \; \R{and} \; \ell = j \\
+        1 & \R{if} \; k = j \; \R{and} \; \ell = i \\
+        0 & \R{otherwise}
+    \end{array} \right\}
+\] $$
+This shows that the formula in the lemma is correct for
+$latex \hat{S}_{i,j}$$ and $latex \hat{S}_{j,i}$$.
+This completes the proof because the component $latex (i, j)$$ was arbitrary.
+
+$head Lemma 2$$
+We use the same assumptions as in Lemma 1 except that the
+matrix $latex S$$ is lower triangular (instead of symmetric).
+It follows that
+$latex \[
+    \hat{S} = \bar{S} + \R{lower}(M)
+\] $$
+where
+$latex \[
+    M = L_0^\R{-T} \R{low}( L_0^\R{T} \bar{L} )^\R{T} L_0^{-1}
+\] $$
+The proof of this lemma is identical to Lemma 2 except that component function
+is defined by
+$latex \[
+    S_{k, \ell} (s) = \left\{ \begin{array}{ll}
+        1 & \R{if} \; k = i \; \R{and} \; \ell = j \\
+        0 & \R{otherwise}
+    \end{array} \right\}
+\] $$
+
+$head Reverse Mode$$
+
+$subhead Case k = 0$$
+For the case $latex k = 0$$,
+$latex \[
+    \dot{A}_0
+    =
+    \dot{L}_0 L_0^\R{T}
+    +
+    L_0  \dot{L}_0^\R{T}
+\] $$
+$latex \[
+    L_0^{-1} \dot{A}_0 L_0^\R{-T}
+    =
+    L_0^{-1} \dot{L}_0
+    +
+    \dot{L}_0^\R{T} L_0^\R{-T}
+\] $$
+$latex \[
+    \R{low} ( L_0^{-1} \dot{A}_0 L_0^\R{-T} )
+    =
+    L_0^{-1} \dot{L}_0
+\] $$
+$latex \[
+    \dot{L}_0
+    =
+    L_0 \R{low} ( L_0^{-1} \dot{A}_0 L_0^\R{-T} )
+\] $$
+It follows from Lemma 1 that
+$latex \[
+    \bar{A}_0 \stackrel{+}{=} \frac{1}{2} ( M + M^\R{T} )
+\] $$
+where
+$latex \[
+    M = L_0^\R{-T} \R{low} ( L_0^\R{T} \bar{L}_0 )^\R{T} L_0^{-1}
+\] $$
+and $latex \bar{A}_0$$ is the partial before and after
+is before and after $latex L_0$$ is removed from the scalar function
+dependency.
+
+$subhead Case k > 0$$
+In the case where $latex k > 0$$,
+$latex \[
+    A_k = L_k L_0^\R{T}  + L_0 L_k^\R{T}  + B_k
+\] $$
+where $latex B_k$$ is defined in terms of Taylor coefficients
+of $latex L(t)$$ that have order less than $latex k$$.
+It follows that
+$latex \[
+    \dot{L}_k L_0^\R{T}
+    +
+    L_0 \dot{L}_k^\R{T}
+    =
+    \dot{A}_k - \dot{B}_k  - \dot{L}_0 L_k^\R{T} -  L_k \dot{L}_0^\R{T}
+\] $$
+$latex \[
+    L_0^{-1} \dot{L}_k
+    +
+    \dot{L}_k^\R{T} L_0^\R{-T}
+    =
+    L_0^{-1} (
+    \dot{A}_k - \dot{B}_k  - \dot{L}_0 L_k^\R{T} -  L_k \dot{L}_0^\R{T}
+    ) L_0^\R{-T}
+\] $$
+$latex \[
+    L_0^{-1} \dot{L}_k
+    =
+    \R{low} [ L_0^{-1} (
+    \dot{A}_k - \dot{B}_k  - \dot{L}_0 L_k^\R{T} -  L_k \dot{L}_0^\R{T}
+    ) L_0^\R{-T} ]
+\] $$
+$latex \[
+    \dot{L}_k
+    =
+    L_0 \R{low} [ L_0^{-1} (
+    \dot{A}_k - \dot{B}_k  - \dot{L}_0 L_k^\R{T} -  L_k \dot{L}_0^\R{T}
+    ) L_0^\R{-T} ]
+\] $$
+The matrix $latex A_k$$ is symmetric, it follows that
+$latex \[
+    \bar{A}_k \stackrel{+}{=} \frac{1}{2} ( M_k + M_k^\R{T} )
+\] $$
+where
+$latex \[
+    M_k = L_0^\R{-T} \R{low} ( L_0^\R{T} \bar{L}_k )^\R{T} L_0^{-1}
+\] $$
+The matrix $latex B_k$$ is also symmetric, hence
+$latex \[
+    \bar{B}_k = - \; \frac{1}{2} ( M_k + M_k^\R{T} )
+\] $$
+We define the symmetric matrix $latex C_k (s)$$ by
+$latex \[
+    \dot{C}_k = \dot{L}_0 L_k^\R{T} +  L_k \dot{L}_0^\R{T}
+\] $$
+and remove the dependency on $latex C_k$$ with
+$latex \[
+    \R{tr}( \bar{C}_k^\R{T} \dot{C}_k )
+    =
+    \R{tr}( \bar{B}_k^\R{T} \dot{C}_k )
+    =
+    \R{tr}( \bar{B}_k^\R{T} \dot{L}_0 L_k^\R{T}  )
+    +
+    \R{tr}( \bar{B}_k^\R{T}  L_k \dot{L}_0^\R{T} )
+\] $$
+$latex \[
+    =
+    \R{tr}( L_k^\R{T} \bar{B}_k^\R{T} \dot{L}_0 )
+    +
+    \R{tr}( L_k^\R{T} \bar{B}_k \dot{L}_0 )
+\] $$
+$latex \[
+    =
+    \R{tr}[ L_k^\R{T} ( \bar{B}_k + \bar{B}_k^\R{T} ) \dot{L}_0 ]
+\] $$
+Thus, removing $latex C_k$$ from the dependency results in the
+following update to $latex \bar{L}_0$$:
+$latex \[
+    \bar{L}_0 \stackrel{+}{=} \R{lower} [ ( \bar{B}_k + \bar{B}_k^\R{T} ) L_k ]
+\] $$
+which is the same as
+$latex \[
+    \bar{L}_0 \stackrel{+}{=} 2 \; \R{lower} [ \bar{B}_k L_k ]
+\] $$
+
+We still need to remove $latex B_k$$ from the dependency.
+It follows from its definition that
+$latex \[
+    \dot{B}_k = \sum_{\ell=1}^{k-1}
+        \dot{L}_\ell L_{k-\ell}^\R{T} + L_\ell \dot{L}_{k-\ell}^\R{T}
+\]$$
+$latex \[
+    \R{tr}( \bar{B}_k^\R{T} \dot{B}_k )
+    =
+    \sum_{\ell=1}^{k-1}
+    \R{tr}( \bar{B}_k^\R{T} \dot{L}_\ell L_{k-\ell}^\R{T} )
+    +
+    \R{tr}( \bar{B}_k^\R{T} L_\ell \dot{L}_{k-\ell}^\R{T} )
+\]$$
+$latex \[
+    =
+    \sum_{\ell=1}^{k-1}
+    \R{tr}( L_{k-\ell}^\R{T} \bar{B}_k^\R{T} \dot{L}_\ell )
+    +
+    \sum_{\ell=1}^{k-1}
+    \R{tr}( L_\ell^\R{T} \bar{B}_k \dot{L}_{k-\ell} )
+\]$$
+We now use the fact that $latex \bar{B}_k$$ is symmetric to conclude
+$latex \[
+    \R{tr}( \bar{B}_k^\R{T} \dot{B}_k )
+    =
+    2 \sum_{\ell=1}^{k-1}
+    \R{tr}( L_{k-\ell}^\R{T} \bar{B}_k^\R{T} \dot{L}_\ell )
+\] $$
+Each of the $latex \dot{L}_\ell$$ matrices is lower triangular.
+Thus, removing $latex B_k$$ from the dependency results in the following
+update for $latex \ell = 1 , \ldots , k-1$$:
+$latex \[
+    \bar{L}_\ell
+    \stackrel{+}{=} 2 \; \R{lower}( \bar{B}_k L_{k-\ell} )
+\] $$
+
+
+$end

@@ -1,0 +1,133 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+/*
+$begin NumericType$$
+$spell
+    const
+    std
+    valarray
+$$
+
+
+$section Definition of a Numeric Type$$
+
+$head Type Requirements$$
+A $icode NumericType$$ is any type
+that satisfies the requirements below.
+The following is a list of some numeric types:
+$code int$$, $code float$$, $code double$$,
+$code AD<double>$$, $code AD< AD<double> >$$.
+The routine $cref CheckNumericType$$ can be used to check
+that a type satisfies these conditions.
+
+$head Default Constructor$$
+The syntax
+$codei%
+    %NumericType% %x%;
+%$$
+creates a $icode NumericType$$ object
+with an unspecified value.
+
+$head Constructor From Integer$$
+If $icode i$$ is an $code int$$,
+the syntax
+$codei%
+    %NumericType% %x%(%i%);
+%$$
+creates a $icode NumericType$$ object with a value
+equal to $icode i$$ where $icode i$$ can be $code const$$.
+
+$head Copy Constructor$$
+If $icode x$$ is a $icode NumericType$$ object
+the syntax
+$codei%
+    %NumericType% %y%(%x%);
+%$$
+creates a $icode NumericType$$ object $icode y$$
+with the same value as $icode x$$
+where $icode x$$ can be $code const$$.
+
+$head Assignment$$
+If $icode x$$ and $icode y$$ are $icode NumericType$$ objects,
+the syntax
+$codei%
+    %x% = %y%
+%$$
+sets the value of $icode x$$ equal to the value of $icode y$$
+where $icode y$$ can be $code const$$.
+The expression corresponding to this operation is unspecified; i.e.,
+it could be $code void$$ and hence
+$codei%
+    %x% = %y% = %z%
+%$$
+may not be legal.
+
+$head Operators$$
+Suppose $icode x$$, $icode y$$ and $icode z$$
+$icode NumericType$$ objects where
+$icode x$$ and $icode y$$ may be $code const$$.
+In the result type column,
+$icode NumericType$$ can be replaced by any type that can
+be used just like a $icode NumericType$$ object.
+$table
+$bold Operation$$     $cnext $bold Description$$               $cnext
+    $bold Result Type$$  $rnext
+$codei%+%x%$$        $cnext unary plus                        $cnext
+    $icode NumericType$$    $rnext
+$codei%-%x%$$        $cnext unary minus                       $cnext
+    $icode NumericType$$    $rnext
+$icode%x% +  %y%$$  $cnext binary addition                   $cnext
+    $icode NumericType$$    $rnext
+$icode%x% -  %y%$$  $cnext binary subtraction                $cnext
+    $icode NumericType$$    $rnext
+$icode%x% *  %y%$$  $cnext binary multiplication             $cnext
+    $icode NumericType$$    $rnext
+$icode%x% /  %y%$$  $cnext binary division                   $cnext
+    $icode NumericType$$    $rnext
+$icode%z% += %y%$$  $cnext compound assignment addition       $cnext
+    unspecified          $rnext
+$icode%z% -= %y%$$  $cnext compound assignment subtraction    $cnext
+    unspecified          $rnext
+$icode%z% *= %y%$$  $cnext compound assignment multiplication $cnext
+    unspecified          $rnext
+$icode%z% /= %y%$$  $cnext compound assignment division       $cnext
+    unspecified
+$tend
+
+$head Example$$
+$children%
+    example/general/numeric_type.cpp
+%$$
+The file
+$cref numeric_type.cpp$$
+contains an example and test of using numeric types.
+(It is easy to modify to test additional numeric types.)
+
+$head Exercise$$
+
+$list number$$
+List three operators that are not supported by every
+numeric type but that are supported by the numeric types
+$code int$$,
+$code float$$,
+$code double$$.
+
+$lnext
+Which of the following are numeric types:
+$code std::complex<double>$$,
+$code std::valarray<double>$$,
+$code std::vector<double>$$ ?
+
+$lend
+
+$end

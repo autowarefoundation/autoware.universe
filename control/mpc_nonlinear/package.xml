@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+	<name>mpc_nonlinear</name>
+	<version>0.1.0</version>
+	<description>The Nonlinear MPC Package</description>
+	<maintainer email="ali.boyali@tier4.jp">Ali Boyali</maintainer>
+	<author email="boyali@gmail.com">Ali Boyali</author>
+	<license>Apache License 2.0</license>
+
+	<buildtool_depend>ament_cmake_auto</buildtool_depend>
+	<buildtool_depend>autoware_cmake</buildtool_depend>
+	<buildtool_depend>eigen</buildtool_depend>
+
+	<depend>rclcpp</depend>
+	<depend>rclcpp_components</depend>
+
+	<depend>geometry_msgs</depend>
+	<depend>std_msgs</depend>
+	<depend>tf2</depend>
+	<depend>tf2_eigen</depend>
+	<depend>tf2_ros</depend>
+
+
+	<depend>autoware_auto_common</depend>
+	<depend>autoware_auto_control_msgs</depend>
+	<depend>autoware_auto_geometry</depend>
+	<depend>autoware_auto_planning_msgs</depend>
+	<depend>autoware_auto_system_msgs</depend>
+	<depend>autoware_auto_vehicle_msgs</depend>
+
+
+	<depend>autoware_control_toolbox</depend>
+	<depend>motion_common</depend>
+	<depend>tier4_autoware_utils</depend>
+	<depend>visualization_msgs</depend>
+
+	<depend>vehicle_info_util</depend>
+	<depend>osqp_interface</depend>
+
+	<test_depend>ament_cmake_ros</test_depend>
+	<test_depend>ament_lint_auto</test_depend>
+	<test_depend>autoware_lint_common</test_depend>
+	<test_depend>eigen</test_depend>
+
+	<export>
+		<build_type>ament_cmake</build_type>
+	</export>
+</package>

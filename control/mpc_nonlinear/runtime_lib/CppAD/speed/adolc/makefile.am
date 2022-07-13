@@ -1,0 +1,51 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+#
+# Copy source file so that main.o does not end up in parent directory
+BUILT_SOURCES = main.cpp
+main.cpp:
+	cp $(srcdir)/../main.cpp main.cpp
+#
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+check_PROGRAMS   = speed_adolc
+#
+#
+AM_CXXFLAGS =  \
+	-DCPPAD_ADOLC_SPEED \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	-I$(ADOLC_DIR)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+#
+LDADD            = -lspeed -ladolc -lColPack
+AM_LDFLAGS       = -L../src -L$(ADOLC_DIR)/lib -L$(ADOLC_DIR)/lib64
+#
+speed_adolc_SOURCES = \
+	adolc_alloc_mat.hpp \
+	alloc_mat.cpp \
+	main.cpp \
+	det_lu.cpp \
+	det_minor.cpp \
+	mat_mul.cpp \
+	ode.cpp \
+	poly.cpp \
+	sparse_hessian.cpp \
+	sparse_jacobian.cpp
+
+test: check
+	./speed_adolc correct 123 colpack
+	./speed_adolc correct 123 onetape colpack

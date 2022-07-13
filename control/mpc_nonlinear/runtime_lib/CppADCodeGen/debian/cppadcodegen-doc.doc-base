@@ -1,0 +1,9 @@
+Document: cppadcodegen-doc
+Title: CppADCodeGen
+Author: Joao Leal
+Abstract: A Package for Differentiation of C++ Algorithms that performs source code generation.
+Section: Science/Data Analysis
+
+Format: HTML
+Index: /usr/share/doc/cppadcodegen-doc/html/index.html
+Files: /usr/share/doc/cppadcodegen-doc/html/*.html

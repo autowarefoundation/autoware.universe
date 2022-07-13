@@ -1,0 +1,111 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin forward_one$$
+$spell
+    Jacobian
+    Taylor
+    const
+$$
+
+$section First Order Forward Mode: Derivative Values$$
+
+
+$head Syntax$$
+$icode%y1% = %f%.Forward(1, %x1%)%$$
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$.
+The result of the syntax above is
+$latex \[
+    y1 = F^{(1)} (x0) * x1
+\] $$
+where $latex F^{(1)} (x0)$$ is the Jacobian of $latex F$$
+evaluated at $icode x0$$.
+
+$head f$$
+The object $icode f$$ has prototype
+$codei%
+    ADFun<%Base%> %f%
+%$$
+Note that the $cref ADFun$$ object $icode f$$ is not $code const$$.
+Before this call to $code Forward$$, the value returned by
+$codei%
+    %f%.size_order()
+%$$
+must be greater than or equal one.
+After this call it will be will be two (see $cref size_order$$).
+
+$head x0$$
+The vector $icode x0$$ in the formula
+$latex \[
+    y1 = F^{(1)} (x0) * x1
+\] $$
+corresponds to the previous call to $cref forward_zero$$
+using this ADFun object $icode f$$; i.e.,
+$codei%
+    %f%.Forward(0, %x0%)
+%$$
+If there is no previous call with the first argument zero,
+the value of the $cref/independent/Independent/$$ variables
+during the recording of the AD sequence of operations is used
+for $icode x0$$.
+
+$head x1$$
+The argument $icode x1$$ has prototype
+$codei%
+    const %Vector%& %x1%
+%$$
+(see $cref/Vector/forward_one/Vector/$$ below)
+and its size must be equal to $icode n$$, the dimension of the
+$cref/domain/fun_property/Domain/$$ space for $icode f$$.
+
+$head Vector$$
+The type $icode Vector$$ must be a $cref SimpleVector$$ class with
+$cref/elements of type/SimpleVector/Elements of Specified Type/$$
+$icode Base$$.
+The routine $cref CheckSimpleVector$$ will generate an error message
+if this is not the case.
+
+$head Example$$
+The file
+$cref forward.cpp$$
+contains an example and test of this operation.
+
+$head Special Case$$
+This is special case of $cref forward_order$$ where
+$latex \[
+\begin{array}{rcl}
+Y(t) & = & F[ X(t) ]
+\\
+X(t) & = & x^{(0)} t^0 + x^{(1)} * t^1 + \cdots, + x^{(q)} * t^q + o( t^q )
+\\
+Y(t) & = & y^{(0)} t^0 + y^{(1)} * t^1 + \cdots, + y^{(q)} * t^q + o( t^q )
+\end{array}
+\] $$
+and $latex o( t^q ) * t^{-q} \rightarrow 0$$ as $latex t \rightarrow 0$$.
+For this special case, $latex q = 1$$,
+$latex x^{(0)}$$ $codei%= %x0%$$,
+$latex x^{(1)}$$ $codei%= %x1%$$,
+$latex X(t) = x^{(0)} + x^{(1)} t$$, and
+$latex \[
+    y^{(0)} + y^{(1)} t  = F [ x^{(0)} + x^{(1)} t ] + o(t)
+\] $$
+Taking the derivative with respect to $latex t$$, at $latex t = 0$$,
+we obtain
+$latex \[
+    y^{(1)} = F^{(1)} [ x^{(0)} ] x^{(1)}
+\] $$
+which agrees with the specifications for
+$icode y1$$ in the $cref/purpose/forward_one/Purpose/$$ above.
+
+$end

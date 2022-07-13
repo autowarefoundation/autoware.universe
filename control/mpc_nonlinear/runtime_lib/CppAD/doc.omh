@@ -1,0 +1,31 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin CppAD$$
+$comment Top level User documentaion$$
+
+$include omh/cppad.omh$$
+
+$children%
+    omh/install/install.omh%
+    omh/theory/theory.omh%
+    include/cppad/core/user_ad.hpp%
+    include/cppad/core/ad_fun.hpp%
+    omh/preprocessor.omh%
+    omh/multi_thread.omh%
+    include/cppad/utility/omh/utility.omh%
+    include/cppad/ipopt/solve.hpp%
+    omh/example.omh%
+    speed/speed.omh%
+    omh/appendix/appendix.omh
+%$$
+
+$end

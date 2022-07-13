@@ -1,0 +1,58 @@
+-------------------------------------------------------------------------------
+  CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------------
+$begin function_name$$
+$spell
+    const
+    std
+$$
+
+$section Setting and Getting a Function's Name$$
+
+$head Syntax$$
+$icode%f%.function_name_set(%function_name%)
+%$$
+$icode%function_name% = %f%.function_name_get()
+%$$
+
+$head See Also$$
+$cref fun_property$$
+
+$head f$$
+In the set operation, $icode f$$ has prototype
+$codei%
+    ADFun<%Base%> %f%
+%$$
+In the get operation, $icode f$$ has prototype
+$codei%
+    const ADFun<%Base%> %f%
+%$$
+(see $codei%ADFun<%Base%>%$$ $cref/constructor/FunConstruct/$$).
+
+$head function_name$$
+is the name of the function.
+In the set operation, $icode function_name$$ has prototype
+$codei%
+    const std::string& %function_name%
+%$$
+In the get operation, $icode function_name$$ has prototype
+$codei%
+    std::string %function_name%
+%$$
+
+$children%
+    example/general/function_name.cpp
+%$$
+$head Example$$
+The file $cref function_name.cpp$$ contains an example and test
+of these operations.
+
+$end

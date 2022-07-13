@@ -1,0 +1,431 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin json_graph_op$$
+$spell
+    notpos
+    azmul
+    cexp_rel
+    eq
+    lt
+    le
+    Cond
+    Gt
+    log1p
+    expm1
+    erfc
+    erf
+    atanh
+    asinh
+    acosh
+    acos
+    asin
+    atan
+    cos
+    exp
+    sqrt
+    tanh
+    Json
+    arg
+    op
+    mul
+    div
+    chkpoint
+    CppAD
+    neg
+$$
+
+$section Json AD Graph Operator Definitions$$
+
+$head Notation$$
+
+$subhead op_code$$
+Each operator definition has a $icode op_code$$ value that
+is used to identify it for a particular $icode json_ad_graph$$.
+
+$subhead Arguments$$
+The values $icode first_arg$$, ... ,
+$cref/last_arg/json_ad_graph/op_usage/first_arg, ..., last_arg/$$
+are the node indices for arguments to an operator.
+
+$head Unary Operators$$
+All these operations create one result node and
+have the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":         %name%,
+    "n_arg":        1
+}
+%$$
+where $icode name$$ is a $cref/string/json_ad_graph/Token/String/$$.
+A corresponding $icode op_usage$$ has the form
+$codei%
+    [ %op_code%, %arg% ]
+%$$
+The possible values for the string $icode name$$ are listed
+in the table below.
+The corresponding result is the node value as a function of the argument value.
+
+$comment BEGIN_SORT_THIS_LINE_PLUS_3$$
+$table
+$icode name$$   $cnext result                           $rnext
+$code abs$$     $cnext absolute value                   $rnext
+$code acos$$    $cnext inverse cosine                   $rnext
+$code acosh$$   $cnext inverse hyperbolic cosine        $rnext
+$code asin$$    $cnext inverse sine                     $rnext
+$code asinh$$   $cnext inverse hyperbolic sine          $rnext
+$code atan$$    $cnext inverse tangent                  $rnext
+$code atanh$$   $cnext inverse hyperbolic sine          $rnext
+$code cos$$     $cnext cosine                           $rnext
+$code cosh$$    $cnext hyperbolic cosine                $rnext
+$code erf$$     $cnext error functions                  $rnext
+$code erfc$$    $cnext complementary error function     $rnext
+$code exp$$     $cnext exponential                      $rnext
+$code expm1$$   $cnext minus one plus the exponential   $rnext
+$code log$$     $cnext logarithm                        $rnext
+$code log1p$$   $cnext log  plus one                    $rnext
+$code neg$$     $cnext negative                         $rnext
+$code sign$$    $cnext sign function                    $rnext
+$code sin$$     $cnext sine                             $rnext
+$code sinh$$    $cnext hyperbolic sine                  $rnext
+$code sqrt$$    $cnext square root                      $rnext
+$code tan$$     $cnext tangent                          $rnext
+$code tanh$$    $cnext hyperbolic tangent
+$tend
+$comment END_SORT_THIS_LINE_MINUS_2$$
+
+$subhead Example$$
+The file $cref json_unary_op.cpp$$ is an example and test
+for one of these operators.
+
+$head Binary Operators$$
+All these operations create one result node and
+have the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":         %name%,
+    "n_arg":        2
+}
+%$$
+where $icode name$$ is a $cref/string/json_ad_graph/Token/String/$$.
+A corresponding $icode op_usage$$ has the form
+$codei%
+    [ %op_code%, %first_arg%, %second_arg% ]
+%$$
+The possible values for the string $icode name$$ are listed below:
+
+$subhead add$$
+The result is
+the first argument value plus the second argument value; see
+the example and test $cref json_add_op.cpp$$.
+
+$subhead azmul$$
+If the first argument value is zero, the result is zero
+(even if the second argument value is nan).
+Otherwise the result is
+the first argument value times the second argument value; see
+the example and test $cref json_azmul_op.cpp$$.
+
+$subhead div$$
+The result is
+the first argument value divided by the second argument value; see
+the example and test $cref json_div_op.cpp$$.
+
+$subhead mul$$
+The result is
+the first argument value times the second argument value; see
+the example and test $cref json_mul_op.cpp$$.
+
+$subhead pow$$
+The result is
+the first argument value raised to the second argument value; see
+the example and test $cref json_pow_op.cpp$$.
+
+$subhead sub$$
+The result is
+the first argument value minus the second argument value; see
+the example and test $cref json_sub_op.cpp$$.
+
+$head sum$$
+This operator has the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":         "sum"
+}
+%$$
+A corresponding $icode op_usage$$ has the form
+$codei%
+    [ %op_code%, %n_result%, %n_arg%, [ %first_arg%, %...%, %last_arg% ] ]
+%$$
+where $icode n_result$$ is always $code 1$$.
+This operation creates one node with value equal to
+the sum of values corresponding to all of its argument nodes.
+
+$subhead Example$$
+The file $cref json_sum_op.cpp$$ is an example and test
+of this operation.
+
+$head Conditional Expressions$$
+These operators are $cref/conditional expressions/CondExp/$$
+and have the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":         "cexp_%rel%,
+    "n_arg":        4
+}
+%$$
+where $icode rel$$ is $code eq$$ (equal),
+$code le$$ (less than or equal), or
+$code lt$$ (less than).
+The first argument is $cref/left/CondExp/left/$$,
+the second is $cref/right/CondExp/right/$$,
+the third is $cref/if_true/CondExp/if_true/$$,
+the fourth is $cref/if_false/CondExp/if_false/$$,
+the result is given by
+$codei%
+    if( %left% %cop% %right%)
+        %result% = %if_true%;
+    else
+        %result% = %if_false%;
+%$$
+where the comparison $icode cop$$ is define by the cases below:
+
+$subhead cexp_eq$$
+For this operator $icode cop$$ is $code ==$$
+
+$subhead cexp_le$$
+For this operator $icode cop$$ is $code <=$$
+
+$subhead cexp_lt$$
+For this operator $icode cop$$ is $code <$$
+
+$subhead Other Comparisons$$
+Note that
+$codei%
+    CondExpGt(%left%, %right%, %if_true%, %if_false%)
+%$$
+is equivalent to
+$codei%
+    CondExpLe(%left%, %right%, %if_false%, %if_true%)
+%$$
+Similar conversions can be used for all the possible
+$cref/conditional expressions/CondExp/$$.
+
+$subhead Example$$
+The file $cref json_cexp_op.cpp$$ is an example and test
+for one of these operators.
+
+$head Compare Operators$$
+These are $cref/comparison/Compare/$$ operators
+and have the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":         "comp_%rel%"
+}
+%$$
+where $icode rel$$ is $code eq$$ (equal),
+$code ne$$ (not equal),
+$code le$$ (less than or equal), or
+$code lt$$ (less than).
+A corresponding $icode op_usage$$ has the form
+$codei%
+    [ %op_code%, %n_result%, %n_arg%, [ %left%, %right% ] ]
+%$$
+
+$subhead n_result$$
+This is always zero because a comparison operator does not create
+any new nodes.
+
+$subhead n_arg$$
+This is always two because a comparison operator has two argument nodes
+corresponding to the left and right operands.
+
+$subhead left, right$$
+The logical comparison is defined as the logical expression
+$codei%
+    %left% %cop% %right%
+%$$
+The comparison $icode cop$$ is define by the cases below.
+The Json graph corresponds to the comparison being true.
+If, for a value of the independent parameters and variables,
+the comparison is false,
+the Json graph may no longer be valid.
+For example, the Json graph may only contain the code for the true case below:
+$codei%
+    if( %left% %cop% %right% )
+    {   %source code when result is true% }
+    else
+    {   %source code when result is false% }
+%$$
+Including this operator enables CppAD to detect when the graph
+may no longer be a valid representation of the intended function.
+
+$subhead comp_eq$$
+For this operator $icode cop$$ is $code ==$$
+
+$subhead comp_le$$
+For this operator $icode cop$$ is $code <=$$
+
+$subhead comp_lt$$
+For this operator $icode cop$$ is $code <$$
+
+$subhead comp_ne$$
+For this operator $icode cop$$ is $code !=$$
+
+$subhead Other Comparisons$$
+The comparison result true for $icode%left% > %right%$$
+is equivalent to the comparison result true for $icode%right% < %left%$$.
+The comparison result false for $icode%left% > %right%$$
+is equivalent to the comparison result true for $icode%left% <= %right%$$.
+In a similar fashion, all the possible comparisons results
+can be converted to a true result for one of the comparisons above.
+
+$subhead Example$$
+The file $cref json_comp_op.cpp$$ is an example and test
+for one of these operators.
+
+$head Discrete Functions$$
+This operator has the following Json definition:
+$codei%
+{
+    "op_code":     %op_code%,
+    "name":        "discrete"
+}
+%$$
+A corresponding op_usage has the form
+$codei%
+    [ %op_code%, %name%, %n_result%, %n_arg%, [ %arg% ]  ]
+%$$
+
+$subhead name$$
+The value $icode name$$ is a
+$cref/string/json_ad_graph/Token/String/$$ specifying the
+$cref/name/discrete/name/$$ of the discrete function that is called.
+
+$subhead n_result$$
+This is always $code 1$$ because a discrete function
+creates one new node.
+The result node value is the specified discrete function of the argument value.
+
+$subhead n_arg$$
+This is always $code 1$$ because a discrete function has
+one argument node.
+
+$subhead arg$$
+is the node index for the argument to the discrete function.
+
+$subhead Example$$
+the example and test $cref json_discrete_op.cpp$$.
+
+
+$head Atomic Functions$$
+This operator has the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":          "atom"
+}
+%$$
+A corresponding $icode op_usage$$ has the form
+$codei%
+    [ %op_code%, %name%, %n_result%, %n_arg%,
+        [ %first_arg%, %...%, %last_arg% ]
+    ]
+%$$
+This operator creates $icode n_result$$ nodes with values equal to
+an evaluation of the $code atomic_three$$ function.
+
+$subhead name$$
+The value $icode name$$ is a
+$cref/string/json_ad_graph/Token/String/$$ specifying the
+$cref/name/atomic_three_ctor/atomic_three/name/$$
+of the $code atomic_three$$ function that is called.
+
+$subhead n_result$$
+is the number of results for this function; i.e.,
+its range space dimension.
+
+$subhead n_arg$$
+is the number of arguments to this function; i.e.,
+its domain space dimension.
+
+$subhead first_arg, ..., last_arg$$
+The values corresponding to the node indices
+$icode first_arg$$, ..., $icode last_arg$$ are the
+arguments (independent variables) for the atomic function evaluation.
+In the case where the atomic function is a $code chkpoint_two$$ function,
+the independent dynamic parameters are specified by calling its
+$cref/new_dynamic/chkpoint_two/Syntax/new_dynamic/$$ routine.
+
+$subhead Example$$
+the example and test $cref json_atom_op.cpp$$.
+
+$head Print$$
+This operator has the following Json definition:
+$codei%
+{
+    "op_code":      %op_code%,
+    "name":          "print"
+}
+%$$
+A corresponding $icode op_usage$$ has the form
+$codei%
+    [ %op_code%, %before%, %after%, %n_result%, %n_arg%, [ %notpos%, %value% ] ]
+%$$
+
+$subhead before$$
+is a $cref/string/json_ad_graph/Token/String/$$ that is printed
+$cref/before/PrintFor/before/$$ the value for this operator.
+
+$subhead after$$
+is a $cref/string/json_ad_graph/Token/String/$$ that is printed
+$cref/after/PrintFor/after/$$ the value for this operator.
+
+$subhead n_result$$
+This is always zero because a print operator does not create
+any new nodes.
+
+$subhead n_arg$$
+This is always two because a print operator has two argument nodes.
+
+$subhead notpos$$
+This is $cref/notpos/PrintFor/notpos/$$
+which determines if the value is printed.
+
+$subhead value$$
+This is the $cref/value/PrintFor/value/$$ that is printed.
+
+$subhead Example$$
+The file $cref json_print_op.cpp$$ is an example and test
+of this operator.
+
+$childtable%
+    example/json/unary_op.cpp%
+    example/json/add_op.cpp%
+    example/json/azmul_op.cpp%
+    example/json/discrete_op.cpp%
+    example/json/div_op.cpp%
+    example/json/mul_op.cpp%
+    example/json/pow_op.cpp%
+    example/json/print_op.cpp%
+    example/json/sub_op.cpp%
+    example/json/sum_op.cpp%
+    example/json/comp_op.cpp%
+    example/json/cexp_op.cpp%
+    example/json/atom_op.cpp
+%$$
+
+$end

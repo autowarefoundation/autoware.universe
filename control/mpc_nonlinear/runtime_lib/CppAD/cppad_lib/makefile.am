@@ -1,0 +1,31 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include
+#
+lib_LIBRARIES = libcppad_lib.a
+libcppad_lib_a_SOURCES = \
+	cppad_colpack.cpp \
+	json_lexer.cpp \
+	cpp_graph_op.cpp \
+	json_parser.cpp \
+	json_writer.cpp
+
+# autotools version of install does not support CppADCodeGen but need source
+# here so that bin/check_makefile.sh knows not using it is OK.
+#	code_gen_fun.cpp

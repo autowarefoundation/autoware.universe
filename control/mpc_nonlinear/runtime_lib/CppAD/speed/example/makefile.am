@@ -1,0 +1,49 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+#
+check_PROGRAMS    = speed_example speed_program
+#
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+LDADD = ../src/libspeed.a
+#
+../src/libspeed.a:
+	(cd ../src; make libspeed.a)
+#
+speed_example_SOURCES   = \
+	example.cpp \
+	det_by_lu.cpp \
+	det_by_minor.cpp \
+	det_of_minor.cpp \
+	elapsed_seconds.cpp \
+	mat_sum_sq.cpp \
+	ode_evaluate.cpp \
+	sparse_hes_fun.cpp \
+	sparse_jac_fun.cpp \
+	speed_test.cpp \
+	time_test.cpp
+#
+speed_program_SOURCES = speed_program.cpp
+
+test: check
+	./speed_example
+	./speed_program

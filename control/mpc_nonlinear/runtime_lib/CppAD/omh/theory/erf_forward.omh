@@ -1,0 +1,69 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin erf_forward$$
+$spell
+    erf
+    Taylor
+$$
+
+
+$section Error Function Forward Taylor Polynomial Theory$$
+
+$head Derivatives$$
+Given $latex X(t)$$, we define the function
+$latex \[
+    Z(t) = \R{erf}[ X(t) ]
+\]$$
+It follows that
+$latex \[
+\begin{array}{rcl}
+\R{erf}^{(1)} ( u ) & = & ( 2 / \sqrt{\pi} ) \exp \left( - u^2 \right)
+\\
+Z^{(1)} (t) & = & \R{erf}^{(1)} [ X(t) ] X^{(1)} (t) = Y(t) X^{(1)} (t)
+\end{array}
+\] $$
+where we define the function
+$latex \[
+    Y(t) = \frac{2}{ \sqrt{\pi} } \exp \left[ - X(t)^2 \right]
+\] $$
+
+$head Taylor Coefficients Recursion$$
+Suppose that we are given the Taylor coefficients
+up to order $latex j$$ for the function $latex X(t)$$ and $latex Y(t)$$.
+We need a formula that computes the coefficient of order $latex j$$
+for $latex Z(t)$$.
+Using the equation above for $latex Z^{(1)} (t)$$, we have
+$latex \[
+\begin{array}{rcl}
+\sum_{k=1}^j k z^{(k)} t^{k-1}
+& = &
+\left[ \sum_{k=0}^j y^{(k)} t^k        \right]
+\left[ \sum_{k=1}^j k x^{(k)} t^{k-1}  \right]
++
+o( t^{j-1} )
+\end{array}
+\] $$
+Setting the coefficients of $latex t^{j-1}$$ equal, we have
+$latex \[
+\begin{array}{rcl}
+j z^{(j)}
+=
+\sum_{k=1}^j k x^{(k)} y^{(j-k)}
+\\
+z^{(j)}
+=
+\frac{1}{j} \sum_{k=1}^j k x^{(k)} y^{(j-k)}
+\end{array}
+\] $$
+
+$end

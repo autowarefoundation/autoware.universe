@@ -1,0 +1,605 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_18$$
+$spell
+    chkpoint
+    eps
+    autotools
+    Microsoft
+    CppAD
+    jac
+    hes
+    Jacobian
+    rcv
+    subgraph
+    op_arg
+    enum
+    std
+    addr
+    cppad
+    enums
+    dyn
+    ind
+    uninstalled
+    Vec
+    valgrind
+    Eigen
+    namespace
+    Taylor
+    af
+    Wconversion
+    gcc
+    Wfloat
+    addons
+    Kasper Kristensen
+    Subgraph
+    msys
+    cmake
+    bool
+    erf
+    tmb
+    inline
+    mingw
+$$
+
+$section Changes and Additions to CppAD During 2018$$
+
+$head 12-30$$
+On $cref/12-12/whats_new_18/12-12/$$ the directory
+$code cppad$$ was moved to $code include/cppad$$.
+The $code make install$$ step of the
+$cref install$$ instructions did not work after that.
+This has been fixed.
+
+$head 12-23$$
+The documentation for how to run
+$code multi_atomic_two$$ was missing.
+This has been fixed.
+
+$head 12-17$$
+Keep the documentation for $cref deprecated$$ features,
+but remove their examples.
+The documentation is intended to help conversion
+to using features that have not been deprecated.
+
+$head 12-16$$
+Add $code bin/check_tab.sh$$ and remove some remaining tab characters
+that it found in the CppAD source code.
+
+$head 12-15$$
+Fix name for special version of $code cmake$$ required by
+$cref/msys2/cmake/CMake Command/msys2/$$,
+$code mingw-w64-x86_64-cmake$$.
+
+$head 12-12$$
+$list number$$
+Change tabs to spaces in both the source code and the examples.
+$lnext
+The $code inline$$ specifiers was removed from template functions
+and class member functions in both the source code and examples; see
+the $code inline$$ entry in the
+$cref/wish_list/wish_list/cppad_lib/inline/$$.
+$lnext
+In the documentation and examples change the $codei%Vector%Type%$$
+to $icode%Type%Vector%$$ for $icode Type$$ denoting various types; e.g.,
+$code Bool$$, $code Size$$, $code Double$$, ...
+$lnext
+Change the $cref license$$ to be $code EPL-2.0$$
+with a $code GPL-2.0$$ or later alternative
+(so one version of the source code can be used for both EPL
+and GPL licenses).
+$lnext
+Change $latex B^n$$ to $latex \B{R}^n$$ when referring to the vector
+space that $cref ADFun$$ object refer to.
+(Note that this may not be real vectors; e.g., $cref base_complex.hpp$$.)
+$lnext
+Move the $code cppad$$ sub-directory to $code include/cppad$$.
+$lnext
+Add a checkpoint constructor item to the wish list.
+This has been completed; see the
+$cref/fun/chkpoint_two_ctor/fun/$$ argument to the
+second generation checkpoint constructor.
+$lend
+
+$head 11-13$$
+$list number$$
+There was a problem using
+$cref elapsed_seconds$$ with the Microsoft Visual Studio compiler.
+To be specific, $code microsoft_timer$$ could be an undefined external.
+This has been fixed.
+$lnext
+The $code # define NOMINMAX$$ command was placed before
+$code # include <windows.h>$$
+so that $code std::min$$ and $code std::max$$ work properly.
+(This only matters when using the Visual Studio compiler.)
+$lnext
+For some unknown reason, the Microsoft Visual Studio compiler
+was giving a senseless error at the variable name $code small$$.
+This has been changed to $code eps$$ in $cref interface2c.cpp$$.
+$lnext
+The deprecated $cref/autotools/cmake/CMake Command/autotools/$$
+was fixed to work with the current version of CppAD.
+$lnext
+Fix a warning in $code test_more/cppad_for_tmb/multi_atomic_two.cpp$$
+when using boost vectors for testing.
+$lend
+
+
+$head 11-11$$
+Fix a warning in $code test_more/cppad_for_tmb/multi_chkpoint_one.cpp$$
+when using boost vectors for testing.
+
+$head 11-06$$
+The initial
+$cref size_order$$ is now zero for an $cref/af/base2ad/af/$$ created using
+the $code base2ad$$ feature.
+
+
+$head 11-04$$
+$list number$$
+The $cref/simple/cmake/CMake Command/Simple/$$ version of the cmake command
+is now suggested as a starting point installing CppAD.
+$lnext
+The windows install procedure has been fixed; see
+$cref/msys2/cmake/CMake Command/msys2/$$ and
+$cref/visual studio/cmake/CMake Command/Visual Studio/$$.
+$lnext
+The Visual Studio compiler gave a warning because the
+$code get_record_compare$$ (not in use API)
+was returning $code size_t$$ when
+it should have returned a $code bool$$.
+It also gave a warning in $code test_more/general/erf.cpp$$
+about conversion from $code double$$ to $code size_t$$.
+These have been fixed.
+$lnext
+The Visual Studio compiler also gave an error because it requires
+the $cref ADFun$$ copy constructor for assignment to
+a $cref base2ad$$ result.
+This copy constructor has been allowed (but only for this case).
+$lnext
+The Visual Studio compiler does not seem to be able to mix
+debug and release code. One of the tests had to be modified
+enable the user to avoid this; see
+$cref/visual studio/cmake/CMake Command/Visual Studio/$$.
+$lend
+
+
+$head 11-01$$
+There was a bug in the
+$cref/checkpoint/chkpoint_one/$$ functions with multiple threads
+(see $cref/10-29/whats_new_18/10-29/$$ below).
+This has been fixed.
+
+$head 10-31$$
+$list number$$
+The items in the $cref wish_list$$ were re-organized
+so that the New Atomic API entries
+were all under one heading.
+$lnext
+A credit to Kasper Kristensen was added to the
+$cref/subgraph/research/Sparsity/Subgraphs/$$ research item.
+$lend
+
+$head 10-29$$
+The following is a list of changes to the documentation:
+$list number$$
+The $cref theory$$ section was moved
+to a higher level in the documentation and the
+$cref introduction$$ we put in that section.
+$lnext
+The $cref wish_list$$ section was brought up to date
+and the $cref research$$ section was added.
+$lnext
+Some of the links to the CppAD $cref/addons/addon/$$ section were broken.
+This has been fixed.
+$lnext
+The wish list entries for the following items were removed
+because they were completed:
+$cref base2ad$$,
+$cref/checkpoint/chkpoint_one/$$ functions now work with
+$cref/multiple threads/multi_thread/$$,
+the $cref optimize$$ memory usage has been reduced.
+$lnext
+The operations sequence wish list entry was changed to
+the Constant entry which has since been completed; see
+$cref/Constant/con_dyn_var/Constant/$$.
+The software guidelines entry was changed to just
+Convert Tabs to Spaces.
+$lend
+
+$head 10-25$$
+$list number$$
+There was bug in $cref/f.optimize/optimize/$$
+when $icode f$$ has $cref/dynamic parameters/new_dynamic/$$.
+This has been fixed.
+$lnext
+Fix warning, from old $code gcc$$ compilers, that
+$code -Wfloat-conversion$$ and $code -Wfloat-conversion$$
+are not valid options.
+$lnext
+Instructions for obtaining GPL distribution were added near the
+top of the $cref/home page/CppAD/$$.
+$lend
+
+
+$head 10-24$$
+The new $cref CppAD$$ home pages has been edited to be a better
+introduction to CppAD.
+In addition, more discussion was added to the $cref get_started.cpp$$
+example.
+
+$head 10-19$$
+The speed tests for the deprecated
+$cref cppad_ipopt_nlp$$ now use the
+$cref/cppad_debug_which/cmake/cppad_debug_which/$$ flag
+in the same was as other test
+(not always true).
+
+$head 10-18$$
+CppAD is now including the $code -Wconversion$$ in its compilation.
+This results in warnings in more of the optional packages and so
+their include files are compiled like system files (without warnings);
+see $cref/package_prefix/cmake/package_prefix/$$.
+
+$head 09-25$$
+Functions $icode af$$,
+created by $cref/af = f.base2ad/base2ad/$$,
+could not use $cref/af.Jacobian/Jacobian/$$.
+This has been fixed.
+
+$head 09-23$$
+The $cref/checkpoint/chkpoint_one/$$ functions did not work with functions that
+were created using $cref base2ad$$.
+This has been fixed.
+
+$head 09-22$$
+There was a bug in the $cref/checkpoint/chkpoint_one/$$ function when they
+were used in $cref/in parallel mode/ta_parallel_setup/$$.
+The $cref multi_chkpoint_one.cpp$$ example was added
+to test this and demonstrate use of checkpoints in parallel mode.
+
+$head 09-19$$
+Add the $cref base2ad$$ capability.
+This creates a function that computes using $codei%AD<%Base%>%$$
+objects from one that computes using $icode Base$$ objects.
+This enables one to record any derivatives computations as part of another
+function and thereby removes the need for
+$cref/multiple levels of AD/mul_level/$$.
+For example, compare $cref base2ad.cpp$$
+with $cref mul_level_ode.cpp$$.
+
+$head 09-17$$
+Create a section with just the
+$cref atomic_two$$ specifications
+and another with the $cref/atomic examples/atomic_two_example/$$.
+
+$head 09-16$$
+The $code taylor_ode.cpp$$ example was moved to $cref taylor_ode.cpp$$
+and changed to use the same notation as $cref taylor_ode$$.
+
+$head 09-15$$
+$list number$$
+Add a $cref/move semantics/FunConstruct/Assignment Operator/Move Semantics/$$
+version of the function assignment operator.
+$lnext
+Move AD theory for using Taylor's method to solve an ode to the separate
+section $cref taylor_ode$$.
+$lend
+
+$head 08-27$$
+$list number$$
+Add a discussion about
+$cref/efficiency/Independent/dynamic/Efficiency/$$ for dynamic parameters.
+$lnext
+In a comment in the $cref new_dynamic.cpp$$ example,
+change 'independent dynamic parameters' to 'dynamic parameter'.
+$lnext
+The $cref/eigen_vector/cppad_eigen.hpp/eigen_vector/$$ class was moved
+out of the global namespace to the CppAD namespace.
+This class was recently introduced ($cref/08-12/whats_new_18/08-12/$$)
+and so this change to the API should be easy to fix in user code.
+$lend
+
+$head 08-19$$
+$list number$$
+Fix dynamic parameter arguments to
+$cref discrete$$ functions.
+$lnext
+Fix some detection of identically zero and one
+for dynamic parameters.
+$lnext
+Fix an access of invalid memory during $cref new_dynamic$$.
+$lnext
+Add optimization of dynamic parameters during $cref/f.optimize/optimize/$$.
+$lend
+
+
+$head 08-18$$
+$list number$$
+Fix some remaining clang warnings.
+$lnext
+Fix $cref Integer$$ and $cref/unary minus/UnaryMinus/$$ for
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameters.
+$lend
+
+
+$head 08-17$$
+Fix $cref/compound assignment/compound_assign/$$ operators
+where left operand is a
+$cref/constant/glossary/Parameter/Constant/$$ parameter
+and right operand is a
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameter.
+
+$head 08-16$$
+Fix $cref/compound assignment/compound_assign/$$ operators
+where left operand is a
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameter.
+and right operand is a
+$cref/variable/glossary/Variable/$$.
+
+$head 08-14$$
+Fix $cref/compound assignment/compound_assign/$$ operators
+where both operands are parameters and one is a
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameter.
+
+$head 08-13$$
+Fix conversion warnings generated by the
+version 6.0 of the $code clang++$$ compiler.
+
+$head 08-12$$
+Add the $cref/eigen_vector/cppad_eigen.hpp/eigen_vector/$$
+wrapper class so that an $code eigen_vector$$ is a true
+$cref SimpleVector$$; i.e., it using $code size_t$$
+instead of $code Eigen::Index$$ for its sizes and indices.
+
+$head 08-10$$
+Extend the CppAD vector class to enable
+$cref/element access/CppAD_vector/Element Access/$$
+using any index type that has a conversion to the type $code size_t$$.
+
+$head 08-08$$
+$list number$$
+Fix a bug in the $code CppAD::local::pod_vector$$ template class
+(not part of the user API) that wasted memory.
+This bug was part of the $cref/06-04/whats_new_18/06-04/$$ change this year.
+$lnext
+Fix very recent bug in the optimization of dynamic parameters
+in $cref PrintFor$$ statements.
+$lnext
+Fix some $code valgrind$$ warnings about use of values that have
+not be initialized or set.
+$lnext
+Suppress printing of $cref PrintFor$$ operations
+during the $cref optimize$$ process.
+$lend
+
+$head 08-05$$
+The amount of memory in an operation sequence has changed; see
+$cref/f.size_op_seq/fun_property/size_op_seq/$$.
+
+$head 08-04$$
+Remove the restrictions on dynamic parameters.
+They can now be used anywhere except as indices and values in
+VecAD vectors.
+(This was fixed on $cref/2019-01-06/whats_new_20/01-06/$$.)
+
+$head 07-30$$
+$list number$$
+The $cref/Constant/con_dyn_var/Constant/$$ function was added.
+$lnext
+$cref/API Warning/base_require/API Warning/$$
+for uses who define there own $icode Base$$ type.
+The function $code IdenticalPar$$ was changed to
+$cref/IdenticalCon/base_identical/Identical/IdenticalCon/$$
+and $code IdenticalEqualPar$$ was change to
+$code IdenticalEqualCon$$.
+This was done because the value of
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameters can change.
+$lnext
+The some errors in the $cref pkgconfig$$ files
+$code cppad.pc$$ and $code cppad-uninstalled.pc$$ were
+corrected.
+$lend
+
+$head 07-27$$
+We are adding the dependent dynamic parameters; i.e.,
+parameters that depend on the independent
+$cref/dynamic/Independent/dynamic/$$ parameters
+in a call to Independent.
+For this reason the function
+$icode%f%.size_dynamic()%$$ has been replaced by
+$cref/size_dyn_ind/fun_property/size_dyn_ind/$$,
+$cref/size_dyn_par/fun_property/size_dyn_par/$$, and
+$cref/size_dyn_arg/fun_property/size_dyn_arg/$$.
+
+
+$head 07-23$$
+Change the required version of $cref cmake$$ from greater than
+or equal 3.1 to greater than or equal 2.8.4.
+
+$head 07-18$$
+Fix a bug (introduced on $cref/07-02/whats_new_18/07-02/$$)
+in $cref optimize$$ routine when dynamic parameters are present.
+
+$head 07-02$$
+Add a special type of parameter that can change value,
+see $cref/purpose/new_dynamic/Purpose/$$ for dynamic parameters.
+
+$head 06-27$$
+Simplify the process in the $cref optimize$$ procedure
+where it recognizes identical expressions
+(and do more error checking of this process).
+This may speed up the optimization for large cases where
+multiple expressions have the same hash code.
+
+$head 06-22$$
+Add an $cref/abs-normal/wish_list/Abs-normal/$$ wish list item.
+
+$head 06-20$$
+Worked more on reducing memory and increasing the speed of the
+$cref/optimization/optimize/$$ of $codei%ADFun<%Base%>%$$ objects.
+
+$head 06-19$$
+Another (smaller) reduction in the amount of extra memory used during the
+$cref optimize$$ process.
+This time a vector of length
+$cref/size_op/fun_property/size_op/$$ was converted from the type
+used for C++ enums to a type that only used one byte.
+
+$head 06-13$$
+Reduce the amount of extra memory used during the $cref optimize$$ process.
+To be more specific, two vectors that were separate now share the same memory.
+These vectors have size equal to
+$cref/size_op/fun_property/size_op/$$
+for the old operation sequence, and element type
+$cref/cppad_tape_addr_type/cmake/cppad_tape_addr_type/$$.
+
+$head 06-12$$
+There was false sharing in the
+hash table used to detect identical parameter values during
+the recording of $codei%AD<%Base%>%$$ operations.
+This has been fixed and should result in a speed up when multiple
+threads are recording at the same time.
+
+$head 06-04$$
+The memory used during
+$cref subgraph_reverse$$, $cref subgraph_sparsity$$, and
+$cref optimize$$ was changed to use the smallest addressing type possible
+for the tape in question.
+To be specific the smallest type from the set
+$code unsigned short$$,
+$code unsigned int$$,
+$code size_t$$, in that order.
+
+$head 05-29$$
+The $cref autotools$$ install procedure was not working since 05-26.
+This has been fixed.
+
+$head 05-28$$
+$list number$$
+The Coin download page is not longer supporting monthly version.
+These versions are now supported by the
+$cref/git/download/Git/$$
+download procedure.
+$lnext
+The windows install procedures have not been kept up to date
+and so have been removed.
+It has since been fixed; see
+$cref/msys2/cmake/CMake Command/msys2/$$ and
+$cref/Visual Studio/cmake/CMake Command/Visual Studio/$$.
+$lend
+
+$head 05-26$$
+Fix some warnings when testing with $code g++ -std=c++98$$.
+
+$head 05-20$$
+$list number$$
+The amount of memory used to store each operator was changed from
+the size of an enum type to the size of an $code unsigned char$$; i.e.,
+one byte.
+This changed $code CppAD::local::OpCode$$ to
+$code CPPAD_VEC_ENUM_TYPE$$ in the expression used to compute
+$cref/size_op_arg/fun_property/size_op_seq/$$.
+Note $code CPPAD_VEC_ENUM_TYPE$$ is not in CppAD API and may change.
+$lnext
+There was a bug in the call to $code optimize$$ for the CppAD
+$cref speed_cppad$$ tests.
+To be specific $code no_print_for$$ was corrected to
+$cref/no_prior_for_op/optimize/options/no_print_for_op/$$.
+$lend
+
+$head 05-17$$
+The memory report for the CppAD matrix multiply speed test was changed
+to report the memory before clearing the atomic functions; see the end of
+$cref cppad_mat_mul.cpp$$.
+
+$head 05-04$$
+The comparison operations were changed on
+$cref/2015-01-20/whats_new_15/01-20/$$ when the
+$cref/abort_op_index/Independent/abort_op_index/$$ option was added.
+This change caused a slow down CppAD
+because the $cref compare$$ operators used to not be recorded when
+$code NDEBUG$$ was defined.
+The $cref/record_compare/Independent/record_compare/$$ option has been
+added so that one can obtain this better performance
+(when one does not need  the $cref compare_change$$ function
+or the $cref/abort_op_index/Independent/abort_op_index/$$ feature).
+
+$head 05-03$$
+The following was merged in from the $code reduce_tape$$ branch:
+A change was made in the way CppAD iterated over the operation sequence
+when subgraph operations were first added; see the heading
+$cref/11-20/whats_new_17/11-20/$$ in whats new for 2017.
+This caused CppAD to always use more memory for storing tapes.
+This has been fixed so this extra memory is only allocated when it is needed.
+In addition it can be freed; see
+$cref/size_random/fun_property/size_random/$$ and
+$cref/clear_subgraph/subgraph_reverse/clear_subgraph/$$.
+In addition, this changed the amount of memory returned by
+$cref/size_op_seq/fun_property/size_op_seq/$$ so that it
+no longer includes the part returned by $code size_random$$.
+
+$head 04-29$$
+Change the $cref cppad_sparse_hessian.cpp$$ speed test to support the
+$cref/symmetric/speed_main/Sparsity Options/symmetric/$$ option
+for sparsity calculations.
+This was added because, even though the symmetric sparsity patterns
+are more efficient, they seem to take longer to calculation
+and hence general sparsity patterns may be faster; see the sparse hessian
+$cref/color_method/sparse_hessian/work/color_method/$$.
+
+$head 04-13$$
+The $cref speed_cppad$$ tests were modified to report the
+amount of memory allocated at the end of each tests.
+This will aid in the reduction of CppAD memory usage.
+
+$head 03-20$$
+Fix bug in $cref optimize$$ and $cref subgraph_sparsity$$
+when using C++11 $cref erf$$ function.
+
+$head 03-19$$
+Add more detail to the dynamic parameter whish list item.
+This item has been implemented and removed from the wish list; see
+$cref new_dynamic$$.
+
+$head 03-04$$
+The $code example/abs_normal$$ directory was missing from the
+$cref/example/directory/Example Directory/$$ sub-directory list.
+This has been fixed.
+
+$head 03-02$$
+Add the $cref/pat/sparse_rcv/pat/$$ member function to
+the $code sparse_rcv$$ template class.
+
+$head 02-27$$
+Documentation was added to state that the $icode work$$ structure for
+$cref/sparse_jac/sparse_jac/work/$$ ( $cref/sparse_hes/sparse_hes/work/$$ )
+can be used a different $icode f$$ and a different $icode subset$$
+provided that Jacobian (Hessian) sparsity pattern for $icode f$$
+and the sparsity pattern in $icode subset$$ are the same.
+
+$head 02-26$$
+The routine $cref sparse2eigen$$, added on 02-20, only worked
+when the values in the matrix were integers.
+This bug has been fixed.
+
+$head 02-23$$
+The syntax for some of the $cref utility$$ files were missing the
+$code # include$$ command (or just the $code #$$ in the include command);
+e.g., see the
+$cref/syntax/set_union/Syntax/$$ for the $code set_union$$ utility.
+
+$head 02-20$$
+Add the utility function $cref sparse2eigen$$.
+
+$end

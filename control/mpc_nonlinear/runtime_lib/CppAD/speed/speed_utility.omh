@@ -1,0 +1,75 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed_utility$$
+
+$section Speed Testing Utilities$$
+
+
+$children%
+    include/cppad/speed/det_by_lu.hpp%
+    include/cppad/speed/det_of_minor.hpp%
+    include/cppad/speed/det_by_minor.hpp%
+    include/cppad/speed/det_33.hpp%
+    include/cppad/speed/det_grad_33.hpp%
+    include/cppad/speed/mat_sum_sq.hpp%
+    include/cppad/speed/ode_evaluate.hpp%
+    include/cppad/speed/sparse_jac_fun.hpp%
+    include/cppad/speed/sparse_hes_fun.hpp%
+    include/cppad/speed/uniform_01.hpp
+%$$
+
+$head Speed Main Program$$
+$table
+$rref speed_main$$
+$tend
+
+$head Speed Utility Routines$$
+$table
+$rref det_by_lu$$
+$rref det_by_minor$$
+$rref det_of_minor$$
+$rref det_33$$
+$rref det_grad_33$$
+$rref mat_sum_sq$$
+$rref ode_evaluate$$
+$rref sparse_jac_fun$$
+$rref sparse_hes_fun$$
+$rref uniform_01$$
+$tend
+
+$head Library Routines$$
+$table
+$rref LuFactor$$
+$rref LuInvert$$
+$rref LuSolve$$
+$rref Poly$$
+$tend
+
+$head Source Code$$
+$table
+$rref det_by_lu.hpp$$
+$rref det_by_minor.hpp$$
+$rref det_grad_33.hpp$$
+$rref det_of_minor.hpp$$
+$rref lu_factor.hpp$$
+$rref lu_invert.hpp$$
+$rref lu_solve.hpp$$
+$rref mat_sum_sq.hpp$$
+$rref poly.hpp$$
+$rref sparse_jac_fun.hpp$$
+$rref sparse_hes_fun.hpp$$
+$rref uniform_01.hpp$$
+$tend
+
+
+$end

@@ -1,0 +1,25 @@
+#! /bin/bash -e
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-11 Bradley M. Bell
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# remove template information
+s/<[^<>]*>//g
+s/<[^<>]*>//g
+s/<[^<>]*>//g
+s/<[^<>]*>//g
+s/<[^<>]*>//g
+# remove argument information
+s/([^()]*)//g
+s/([^()]*)//g
+# remove names space information
+s/[a-zA-Z0-9_]*:://g
+s/[a-zA-Z0-9_]*:://g
+s/[a-zA-Z0-9_]*:://g
+s/[a-zA-Z0-9_]*:://g

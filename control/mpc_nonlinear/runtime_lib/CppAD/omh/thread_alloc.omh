@@ -1,0 +1,48 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin thread_alloc$$
+$spell
+    openmp
+    include/cppad/utility/thread_alloc.hpp
+    CppAD
+$$
+
+$section A Fast Multi-Threading Memory Allocator$$
+
+
+
+$head Syntax$$
+$code # include <cppad/thread_alloc.hpp>$$
+
+$head Purpose$$
+The C++ $code new$$ and $code delete$$ operators are thread safe,
+but this means that a thread may have to wait for a lock on these operations.
+Once memory is obtained for a thread, the $code thread_alloc$$ memory
+allocator keeps that memory $cref/available/ta_available/$$ for the thread so that
+it can be re-used without waiting for a lock.
+All the CppAD memory allocations use this utility.
+The $cref/free_available/ta_free_available/$$ function should be used to return memory
+to the system (once it is no longer required by a thread).
+
+$head Include$$
+The routines in sections below are defined by $code cppad/thread_alloc.hpp$$.
+This file is included by
+$code cppad/cppad.hpp$$, but it can also be included separately with out
+the rest of the $code CppAD$$.
+
+$childtable%
+    example/utility/thread_alloc.cpp%
+    include/cppad/utility/thread_alloc.hpp
+%$$
+
+$end
+*/

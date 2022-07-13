@@ -1,0 +1,34 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+#
+# The following variable settings seem to by requried by the vcpkg packager,
+# see https://www.gnu.org/prep/standards/html_node/Directory-Variables.html
+# for the meaning of these variables.
+#
+prefix=@cppad_prefix@
+exec_prefix=${prefix}
+includedir=${prefix}/@cppad_includedir@
+libdir=${exec_prefix}/@cppad_libdir@
+#
+# See https://people.freedesktop.org/~dbn/pkg-config-guide.html
+# for the meaning of the settings below:
+#
+Name:                  cppad
+Description:           @cppad_description@
+Version:               @cppad_version@
+URL:                   @cppad_url@
+#
+Cflags:                -I${includedir}
+Libs:                  @cppad_libdir_list@ @cppad_lib_list@
+Requires:              @cppad_requires@
+Libs.private           @cppad_libs_private@
+Requires.private:      @cppad_requires_private@

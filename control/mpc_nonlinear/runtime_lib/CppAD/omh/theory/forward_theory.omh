@@ -1,0 +1,229 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin ForwardTheory$$
+$spell
+    Taylor
+$$
+
+$section The Theory of Forward Mode$$
+
+$head Taylor Notation$$
+In Taylor notation, each variable corresponds to
+a function of a single argument which we denote by $icode t$$
+(see Section 10.2 of
+$cref/Evaluating Derivatives/Bib/Evaluating Derivatives/$$).
+Here and below
+$latex X(t)$$, $latex Y(t)$$, and $icode Z(t)$$ are scalar valued functions
+and the corresponding $th p$$ order Taylor coefficients row vectors are
+$latex x$$, $latex y$$ and $latex z$$; i.e.,
+$latex \[
+\begin{array}{lcr}
+X(t) & = & x^{(0)} + x^{(1)} * t + \cdots + x^{(p)} * t^p + o( t^p ) \\
+Y(t) & = & y^{(0)} + y^{(1)} * t + \cdots + y^{(p)} * t^p + o( t^p ) \\
+Z(t) & = & z^{(0)} + z^{(1)} * t + \cdots + z^{(p)} * t^p + o( t^p )
+\end{array}
+\] $$
+For the purposes of this section, we are given $latex x$$ and $latex y$$
+and need to determine $latex z$$.
+
+$head Binary Operators$$
+
+$subhead Addition$$
+$latex \[
+\begin{array}{rcl}
+Z(t)
+& = & X(t)   + Y(t)
+\\
+\sum_{j=0}^p z^{(j)} * t^j
+& = & \sum_{j=0}^p x^{(j)} * t^j + \sum_{j=0}^p y^{(j)} * t^j  + o( t^p )
+\\
+z^{(j)} & = & x^{(j)} + y^{(j)}
+\end{array}
+\] $$
+
+$subhead Subtraction$$
+$latex \[
+\begin{array}{rcl}
+Z(t)
+& = & X(t) - Y(t)
+\\
+\sum_{j=0}^p z^{(j)} * t^j
+& = & \sum_{j=0}^p x^{(j)} * t^j - \sum_{j=0}^p y^{(j)} * t^j  + o( t^p )
+\\
+z^{(j)} & = & x^{(j)} - y^{(j)}
+\end{array}
+\] $$
+
+$subhead Multiplication$$
+$latex \[
+\begin{array}{rcl}
+Z(t)
+& = & X(t) * Y(t)
+\\
+\sum_{j=0}^p z^{(j)} * t^j
+& = & \left( \sum_{j=0}^p x^{(j)} * t^j \right)
+*
+\left( \sum_{j=0}^p y^{(j)} * t^j \right) + o( t^p )
+\\
+z^{(j)} & = & \sum_{k=0}^j x^{(j-k)} * y^{(k)}
+\end{array}
+\] $$
+
+$subhead Division$$
+$latex \[
+\begin{array}{rcl}
+Z(t)
+& = & X(t) / Y(t)
+\\
+x
+& = & z * y
+\\
+\sum_{j=0}^p x^{(j)} * t^j
+& = &
+\left( \sum_{j=0}^p z^{(j)} * t^j \right)
+*
+\left( \sum_{j=0}^p y^{(j)} * t^j \right)
++
+o( t^p )
+\\
+x^{(j)} & = & \sum_{k=0}^j z^{(j-k)} y^{(k)}
+\\
+z^{(j)} & = & \frac{1}{y^{(0)}} \left( x^{(j)} - \sum_{k=1}^j z^{(j-k)} y^{(k)} \right)
+\end{array}
+
+\] $$
+
+$head Standard Math Functions$$
+Suppose that $latex F $$ is a standard math function and
+$latex \[
+    Z(t) = F[ X(t) ]
+\]$$
+
+$subhead Differential Equation$$
+All of the standard math functions
+satisfy a differential equation of the form
+$latex \[
+    B(u) * F^{(1)} (u) - A(u) * F (u)  = D(u)
+\] $$
+We use $latex a$$, $latex b$$ and $latex d$$ to denote the
+$th p$$ order Taylor coefficient row vectors for
+$latex A [ X (t) ] $$, $latex B [ X (t) ]$$ and $latex D [ X (t) ] $$
+respectively.
+We assume that these coefficients are known functions of $latex x$$,
+the $th p$$ order Taylor coefficients for $latex X(t)$$.
+
+$subhead Taylor Coefficients Recursion Formula$$
+Our problem here is to express $latex z$$,
+the $th p$$ order Taylor coefficient row vector for $latex Z(t)$$,
+in terms of these other known coefficients.
+It follows from the formulas above that
+$latex \[
+\begin{array}{rcl}
+Z^{(1)} (t)
+& = & F^{(1)} [ X(t) ] * X^{(1)} (t)
+\\
+B[ X(t) ] * Z^{(1)} (t)
+& = & \{ D[ X(t) ] + A[ X(t) ] * Z(t) \} * X^{(1)} (t)
+\\
+B[ X(t) ] * Z^{(1)} (t) & = & E(t) * X^{(1)} (t)
+\end{array}
+\] $$
+where we define
+$latex \[
+E(t) =  D[X(t)] + A[X(t)] * Z(t)
+\] $$
+
+We can compute the value of $latex z^{(0)}$$ using the formula
+$latex \[
+    z^{(0)} = F ( x^{(0)} )
+\]$$
+Suppose by induction (on $latex j$$) that we are given the
+Taylor coefficients of $latex E(t)$$ up to order $latex j-1$$; i.e.,
+$latex e^{(k)}$$ for $latex k = 0 , \ldots , j-1$$
+and the coefficients
+$latex z^{(k)}$$ for $latex k = 0 , \ldots , j$$.
+We can compute $latex e^{(j)}$$ using the formula
+$latex \[
+    e^{(j)} = d^{(j)} + \sum_{k=0}^j a^{(j-k)} * z^{(k)}
+\] $$
+We need to complete the induction by finding formulas for $latex z^{(j+1)}$$.
+It follows from the definition of $latex E(t)$$ that
+$latex  \[
+\left( \sum_{k=0}^j b^{(k)} * t^k \right)
+*
+\left( \sum_{k=1}^{j+1} k z^{(k)} * t^{k-1} \right)
+=
+\left( \sum_{k=0}^j e^{(k)} * t^k \right)
+*
+\left( \sum_{k=1}^{j+1} k x^{(k)} * t^{k-1} \right)
++
+o( t^p )
+\] $$
+Setting the left and right side coefficients of $latex t^j$$ equal,
+and using the formula for
+$cref/multiplication/ForwardTheory/Binary Operators/Multiplication/$$,
+we obtain
+$latex  \[
+\begin{array}{rcl}
+\sum_{k=0}^j b^{(k)} (j+1-k) z^{(j+1-k)}
+& = &
+\sum_{k=0}^j e^{(k)} (j+1-k) x^{(j+1-k)}
+\\
+z^{(j+1)} & = & \frac{1}{j+1} \frac{1}{ b^{(0)} }
+\left(
+    \sum_{k=0}^j e^{(k)} (j+1-k) x^{(j+1-k)}
+    - \sum_{k=1}^j b^{(k)} (j+1-k) z^{(j+1-k)}
+\right)
+\\
+z^{(j+1)} & = & \frac{1}{j+1} \frac{1}{ b^{(0)} }
+\left(
+    \sum_{k=1}^{j+1} k x^{(k)} e^{(j+1-k)}
+    - \sum_{k=1}^j k z^{(k)}  b^{(j+1-k)}
+\right)
+\end{array}
+\] $$
+This completes the induction that computes $latex e^{(j)}$$
+and $latex z^{(j+1)}$$.
+
+
+$children%
+    omh/theory/exp_forward.omh%
+    omh/theory/log_forward.omh%
+    omh/theory/sqrt_forward.omh%
+    omh/theory/sin_cos_forward.omh%
+    omh/theory/atan_forward.omh%
+    omh/theory/asin_forward.omh%
+    omh/theory/acos_forward.omh%
+    omh/theory/tan_forward.omh%
+    omh/theory/erf_forward.omh%
+    omh/theory/pow_forward.omh
+%$$
+
+$subhead Cases that Apply Recursion Above$$
+$table
+$rref exp_forward$$
+$rref log_forward$$
+$rref sqrt_forward$$
+$rref sin_cos_forward$$
+$rref atan_forward$$
+$rref asin_forward$$
+$rref acos_forward$$
+$rref pow_forward$$
+$tend
+
+$subhead Special Cases$$
+$table
+$rref tan_forward$$
+$tend
+
+$end

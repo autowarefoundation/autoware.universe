@@ -1,0 +1,124 @@
+language: cpp
+
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - kubuntu-backports
+          packages:
+            - cmake
+            - libclang-8-dev
+            - llvm-8-dev
+            - clang-8
+            - gcc-7
+            - g++-7
+            - texlive-extra-utils
+            - texlive-fonts-extra
+            - texlive-latex-recommended
+      env:
+        - LLVM_VERSION=8
+    - os: linux
+      dist: bionic
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - kubuntu-backports
+          packages:
+            - cmake
+            - libclang-8-dev
+            - llvm-8-dev
+            - clang-8
+            - texlive-extra-utils
+            - texlive-fonts-extra
+            - texlive-latex-recommended
+      env:
+        - LLVM_VERSION=8
+    - os: linux
+      dist: trusty
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
+            - kubuntu-backports
+          packages:
+            - cmake
+            - libclang-3.6-dev
+            - llvm-3.6-dev
+            - clang-3.6
+            - gcc-6
+            - g++-6
+            - texlive-extra-utils
+            - texlive-fonts-extra
+            - texlive-latex-recommended
+            - latex-xcolor
+      env:
+        - LLVM_VERSION=3.6
+    - os: osx
+      osx_image: xcode10.1
+      compiler: clang
+      env:
+        - LLVM_VERSION=3.6
+      addons:
+        apt:
+          sources:
+            - kubuntu-backports
+          packages:
+            - cmake
+            - texlive-extra-utils
+            - texlive-fonts-extra
+            - texlive-latex-recommended
+            - latex-xcolor
+
+# use travis-ci docker based infrastructure
+sudo: false
+
+before_install:
+  - if [ "$CXX" == "g++" ];     then export CC="$(which gcc-6)"   CXX="$(which g++-6)"; fi
+  - if [ "$CXX" == "clang++" ]; then export CC="$(which clang-8)" CXX="$(which clang++-8)"; fi
+
+install:
+  - mkdir cppadcg_deps
+  - cd cppadcg_deps
+  # get CppAD:
+  # - git clone https://github.com/coin-or/CppAD.git cppad
+  # - cd cppad
+  - CPPAD_VERSION_NAME=20200000.2
+  - wget https://github.com/coin-or/CppAD/archive/${CPPAD_VERSION_NAME}.tar.gz
+  - tar -xzf ${CPPAD_VERSION_NAME}.tar.gz
+  - cd CppAD-${CPPAD_VERSION_NAME}
+  - mkdir build
+  - mkdir install
+  - CPPAD_HOME=`pwd`/install/include
+  - echo $CPPAD_HOME
+  - cd build
+  - cmake -Dcppad_prefix:PATH=../install -Dcppad_cxx_flags="-Wall -std=c++11 -Wshadow" ..
+  - make install
+  - cd ../..
+  # get Eigen:
+  - wget http://bitbucket.org/eigen/eigen/get/3.3.7.tar.bz2
+  - tar -jxf 3.3.7.tar.bz2
+  - cd eigen-eigen-323c052e1731
+  - mkdir -p install_eigen/include/eigen3
+  - cp -r Eigen ./install_eigen/include/eigen3/
+  - EIGEN_HOME=`pwd`/install_eigen/include/eigen3
+  - echo $EIGEN_HOME
+  #
+  - cd ../..
+
+script:
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=DEBUG -DGOOGLETEST_GIT=ON -DUSE_VALGRIND=OFF -DENABLE_THREAD_POOL_TESTS=OFF -DLLVM_VERSION=${LLVM_VERSION} -DCPPAD_HOME=$CPPAD_HOME -DEIGEN3_INCLUDE_DIR=$EIGEN_HOME ..
+  - cd test
+  - make -j2 build_tests
+  - CTEST_OUTPUT_ON_FAILURE=TRUE make test
+  - cd ..
+  - make DESTDIR=cppadcg-install-dir install
+  - make DESTDIR=cppadcg-install-dir uninstall

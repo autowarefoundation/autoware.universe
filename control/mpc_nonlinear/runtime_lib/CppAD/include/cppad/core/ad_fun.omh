@@ -1,0 +1,188 @@
+-------------------------------------------------------------------------------
+  CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------------
+$begin record_adfun$$
+$spell
+$$
+
+$section Create an ADFun Object by Recording an Operation Sequence$$
+
+$childtable%
+    include/cppad/core/independent/user.omh%
+    include/cppad/core/fun_construct.hpp%
+    include/cppad/core/dependent.hpp%
+    include/cppad/core/abort_recording.hpp%
+    include/cppad/core/fun_property.omh%
+    include/cppad/core/function_name.omh
+%$$
+
+$end
+-------------------------------------------------------------------------------
+$begin other_adfun$$
+$spell
+$$
+
+$section Other Ways to Create an ADFun Object$$
+
+
+$childtable%
+    include/cppad/core/base2ad.hpp%
+    include/cppad/core/graph/json_ad_graph.omh%
+    include/cppad/core/graph/cpp_ad_graph.omh%
+    include/cppad/core/abs_normal_fun.hpp
+%$$
+
+$head See Also$$
+$table
+$rref switch_var_dyn.cpp$$
+$tend
+
+$end
+-------------------------------------------------------------------------------
+$begin drivers$$
+$spell
+$$
+
+
+$section First and Second Order Derivatives: Easy Drivers$$
+
+
+$childtable%
+    include/cppad/core/jacobian.hpp%
+    include/cppad/core/hessian.hpp%
+    include/cppad/core/for_one.hpp%
+    include/cppad/core/rev_one.hpp%
+    include/cppad/core/for_two.hpp%
+    include/cppad/core/rev_two.hpp
+%$$
+
+$end
+-------------------------------------------------------------------------------
+$begin Forward$$
+
+$section Forward Mode$$
+
+$childtable%
+    include/cppad/core/new_dynamic.hpp%
+    include/cppad/core/forward/forward_zero.omh%
+    include/cppad/core/forward/forward_one.omh%
+    include/cppad/core/forward/forward_two.omh%
+    include/cppad/core/forward/forward_order.omh%
+    include/cppad/core/forward/forward_dir.omh%
+    include/cppad/core/forward/size_order.omh%
+    include/cppad/core/forward/compare_change.omh%
+    include/cppad/core/capacity_order.hpp%
+    include/cppad/core/num_skip.hpp
+%$$
+
+$end
+-------------------------------------------------------------------------------
+$begin Reverse$$
+$spell
+    xq
+$$
+
+$section Reverse Mode$$
+
+$head Multiple Directions$$
+Reverse mode after $cref/Forward(q, r, xq)/forward_dir/$$
+with number of directions $icode%r% != 1%$$ is not yet supported.
+There is one exception, $cref reverse_one$$ is allowed
+because there is only one zero order forward direction.
+After such an operation, only the zero order forward
+results are retained (the higher order forward results are lost).
+
+$childtable%
+    omh/reverse/reverse_one.omh%
+    omh/reverse/reverse_two.omh%
+    omh/reverse/reverse_any.omh%
+    include/cppad/core/subgraph_reverse.hpp
+%$$
+
+$end
+-------------------------------------------------------------------------------
+$begin sparsity_pattern$$
+$spell
+$$
+
+
+$section Calculating Sparsity Patterns$$
+
+$children%
+    include/cppad/core/for_jac_sparsity.hpp%
+    include/cppad/core/rev_jac_sparsity.hpp%
+    include/cppad/core/for_hes_sparsity.hpp%
+    include/cppad/core/rev_hes_sparsity.hpp%
+    include/cppad/core/subgraph_sparsity.hpp%
+
+    example/sparse/dependency.cpp%
+    example/sparse/rc_sparsity.cpp%
+
+    include/cppad/core/for_sparse_jac.hpp%
+    include/cppad/core/rev_sparse_jac.hpp%
+    include/cppad/core/rev_sparse_hes.hpp%
+    include/cppad/core/for_sparse_hes.hpp
+
+%$$
+
+$head Preferred Sparsity Pattern Calculations$$
+$table
+$rref for_jac_sparsity$$
+$rref rev_jac_sparsity$$
+$rref for_hes_sparsity$$
+$rref rev_hes_sparsity$$
+$rref subgraph_sparsity$$
+$tend
+
+$head Old Sparsity Pattern Calculations$$
+$table
+$rref ForSparseJac$$
+$rref RevSparseJac$$
+$rref ForSparseHes$$
+$rref RevSparseHes$$
+$tend
+
+
+$end
+-------------------------------------------------------------------------------
+$begin sparse_derivative$$
+$spell
+$$
+
+
+$section Calculating Sparse Derivatives$$
+
+$children%
+    include/cppad/core/sparse_jac.hpp%
+    include/cppad/core/sparse_jacobian.hpp%
+
+    include/cppad/core/sparse_hes.hpp%
+    include/cppad/core/sparse_hessian.hpp%
+
+    include/cppad/core/subgraph_jac_rev.hpp
+%$$
+
+$head Preferred Sparsity Patterns$$
+$table
+$rref sparse_jac$$
+$rref sparse_hes$$
+$rref subgraph_jac_rev$$
+$tend
+
+$head Old Sparsity Patterns$$
+$table
+$rref sparse_jacobian$$
+$rref sparse_hessian$$
+$tend
+
+
+$end
+-------------------------------------------------------------------------------

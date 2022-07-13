@@ -1,0 +1,354 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
+
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
+/*
+$begin forward_unary_op$$
+$spell
+    NumRes
+    Taylor
+    op
+$$
+
+$section Variable Forward Unary Operators$$
+
+$head Syntax$$
+$codei%forward_%name%_op(%p%, %q%, %i_z%, %i_x%, %cap_order%, %taylor%)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has one argument and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the argument of this unary operation.
+
+$subhead z$$
+We use $icode z$$ to denote the primary result of this unary operation.
+If this operator has two results, $codei%NumRes(%op%) == 2%$$,
+we call the other the auxillary result.
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head p$$
+This argument has type $code size_t$$ and
+is lowest order of the Taylor coefficient that we are computing.
+
+$head q$$
+The argument $icode q >= p$$ has type $code size_t$$ and
+is highest order of the Taylor coefficient that we are computing.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the primary result for this operation;
+i.e. the row index in taylor corresponding to $icode z$$.
+If this operator has an auxillary result, its variable index is
+$icode%i_z% - 1%$$.
+
+$head i_x$$
+This argument has type $code size_t$$ and
+is variable index corresponding to the argument for this operator;
+i.e. the row index in taylor corresponding to $code x$$.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+
+$head taylor$$
+This argument has type $icode%Base%*%$$.
+The Taylor coefficient corresponding to
+variable $icode i$$ and order $icode k$$ is
+$codei%
+    %taylor%[ %i% * %cap_order% + %k% ]
+%$$.
+
+$subhead Input$$
+$list number$$
+The Taylor coefficients for variable $icode i_x$$ up to order $icode q$$.
+$lnext
+The Taylor coefficients for variable $icode i_z$$ up to order $icode%p%-1%$$.
+$lnext
+If this operator has an auxillary result,
+the Taylor coefficients for variable $icode%i_z%-1%$$
+up to order $icode%p%-1%$$.
+$lend
+
+$subhead Output$$
+The Taylor coefficients for variable $icode i_z$$ up to order $icode q$$.
+
+$end
+------------------------------------------------------------------------------
+$begin forward_unary_op_dir$$
+$spell
+    NumRes
+    op
+    tpv
+    Taylor
+$$
+
+$section Multiple Direction Forward Unary Operators$$
+
+$head Syntax$$
+$codei%forward_%name%_op(%q%, %r%, %i_z%, %i_x%, %cap_order%, %taylor%)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has one argument and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the argument of this unary operation.
+
+$subhead z$$
+We use $icode z$$ to denote the primary result of this unary operation.
+If this operator has two results, $codei%NumRes(%op%) == 2%$$,
+we call the other the auxillary result.
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head q$$
+This argument has type $code size_t$$ and
+is the order of the Taylor coefficients that we are computing.
+Furthermore $icode%q% > 0%$$ and $icode%q% < %cap_order%$$.
+
+$head r$$
+This argument has type $code size_t$$ and
+is number of directions for Taylor coefficients that we are computing.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the primary result for this operation;
+i.e. the row index in taylor corresponding to $icode z$$.
+If this operator has an auxillary result, its variable index is
+$icode%i_z% - 1%$$.
+
+$head i_x$$
+This argument has type $code size_t$$ and
+is variable index corresponding to the argument for this operator;
+i.e. the row index in taylor corresponding to $code x$$.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+The zero order Taylor coefficient for a variable
+is the same for all directions.  We use the notation
+$codei%
+    %tpv% = (%cap_order% - 1) * r + 1
+%$$
+which is the number of Taylor coefficients per variable.
+
+$head taylor$$
+This argument has type $icode%Base%*%$$.
+The zero order Taylor coefficient for variable $icode i$$ is
+$codei%
+    %taylor%[ %i% * %tpv% + 0 ]
+%$$.
+For $icode k > 0$$,
+and $icode%ell% = 0 , %..% , %r-1%$$,
+The Taylor coefficient for variable $icode i$$,
+order $icode k$$, and direction $icode ell$$ is
+$codei%
+    %taylor%[ %i% * %tpv% + (%k% - 1) * %r% + %ell% + 1 ]
+%$$.
+
+$head Input$$
+$list number$$
+The Taylor coefficients for variable $icode i_x$$ up to order $icode q$$
+and all $icode r$$ directions.
+$lnext
+The Taylor coefficients for variable $icode i_z$$ up to order $icode q-1$$
+and all $icode r$$ directions.
+$lnext
+If this operator has an auxillary result,
+the Taylor coefficients for variable $icode%i_z%-1%$$
+up to order $icode%q%-1%$$.
+$lend
+
+$head Output$$
+The Taylor coefficients for variable $icode i_z$$ up to order $icode q$$
+and all $icode r$$ directions.
+
+$end
+-------------------------------------------------------------------------------
+/*
+$begin forward_unary_op_0$$
+$spell
+    NumRes
+    op
+    Taylor
+$$
+
+$section Zero Order Forward Unary Operators$$
+
+$head Syntax$$
+$codei%forward_%name%_op_0(%i_z%, %i_x%, %cap_order%, %taylor%)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has one argument and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the argument of this unary operation.
+
+$subhead z$$
+We use $icode z$$ to denote the primary result of this unary operation.
+If this operator has two results, $codei%NumRes(%op%) == 2%$$,
+we call the other the auxillary result.
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the primary result for this operation;
+i.e. the row index in taylor corresponding to $icode z$$.
+If this operator has an auxillary result, its variable index is
+$icode%i_z% - 1%$$.
+
+$head i_x$$
+This argument has type $code size_t$$ and
+is variable index corresponding to the argument for this operator;
+i.e. the row index in taylor corresponding to $code x$$.
+
+$head cap_order$$
+The argument $icode%cap_order% > 0%$$ has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+
+$head taylor$$
+This argument has type $icode%Base%*%$$.
+The Taylor coefficient corresponding to
+variable $icode i$$ and order $icode k$$ is
+$codei%
+    %taylor%[ %i% * %cap_order% + %k% ]
+%$$.
+
+$subhead Input$$
+The zero order Taylor coefficients for variable $icode i_x$$.
+
+$subhead Output$$
+The zero order Taylor coefficients for variable $icode i_z$$.
+If this operator has an auxillary result,
+the Taylor coefficient for variable $icode%i_z%-1%$$.
+
+$end
+------------------------------------------------------------------------------
+/*
+$begin reverse_unary_op$$
+$spell
+    NumRes
+    op
+    Taylor
+    nc
+    const
+$$
+
+$section Reverse Unary Operators$$
+
+$head Syntax$$
+$codei%reverse_%name%_op(
+    %d%, %i_z%, %i_x%, %cap_order%, %taylor%, %nc_partial%, %partial%
+)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has one argument and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the argument of this unary operation.
+
+$subhead z$$
+We use $icode z$$ to denote the primary result of this unary operation.
+If this operator has two results, $codei%NumRes(%op%) == 2%$$,
+we call the other the auxillary result.
+
+$subhead G$$
+We use $latex G(z, x, w, \ldots )$$ to denote a scalar valued function of the
+variables up to variable index $icode i_z$$.
+
+$subhead H$$
+We use $latex H(x, w, \ldots )$$ to denote the scalar valued function of the
+variables up to variable index $icode%i_z%-1%$$ defined by
+$latex \[
+    H(x, w, \ldots ) = G [ z(x), x, w, \ldots ) ]
+\]$$
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head d$$
+This argument has type $code size_t$$ and
+is this highest order Taylor coefficient that we are computing
+partial derivatives with respect to.
+Furthermore $icode%d% < %cap_order%$$ and $icode%d% < %nc_partial%$$.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the primary result for this operation;
+i.e. the row index in taylor corresponding to $icode z$$.
+If this operator has an auxillary result, its variable index is
+$icode%i_z% - 1%$$.
+
+$head i_x$$
+This argument has type $code size_t$$ and
+is variable index corresponding to the argument for this operator;
+i.e. the row index in taylor corresponding to $code x$$.
+Furthermore $icode%i_x% < %i_z%$$.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+
+$head taylor$$
+This argument has type $codei%const %Base%*%$$.
+The Taylor coefficient corresponding to
+variable $icode i$$ and order $icode k$$ is
+$codei%
+    %taylor%[ %i% * %cap_order% + %k% ]
+%$$.
+
+$head nc_partial$$
+This argument has type $code size_t$$ and
+is the number of columns in the partial array.
+
+$head partial$$
+This argument has type $icode%Base%*%$$.
+The partial derivative w.r.t. variable $icode i$$ and
+Taylor coefficient order $icode k$$ is
+$code%
+    %partial% [ %i% * %nc_partial% + k ]
+%$$
+for $icode%k% = 0 , %...%, %d%$$.
+
+$subhead Input$$
+For variable $icode%i% = 0 ,%...%, %i_z%$$,
+$icode partial$$ contains the
+partial derivatives of $latex G(z, x, w, \ldots)$$.
+
+$subhead Output$$
+The array $icode partial$$ contains the
+partial derivatives of $latex H(x, w, \ldots)$$.
+The partial derivative for variable $icode i_z$$ is unspecified.
+If this operator has an auxillary result,
+The partial derivative for variable $icode%i_z% - 1%$$ is unspecified.
+
+$end
+------------------------------------------------------------------------------

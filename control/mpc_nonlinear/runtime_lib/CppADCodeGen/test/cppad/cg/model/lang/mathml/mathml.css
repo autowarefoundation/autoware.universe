@@ -1,0 +1,13 @@
+.selectedProp {
+    background-color: #ccc;
+}
+
+.faded {
+    opacity: 0.2;
+    filter: alpha(opacity=20); /* For IE8 and earlier */
+}
+
+.faded2 {
+    opacity: 0.5;
+    filter: alpha(opacity=50); /* For IE8 and earlier */
+}

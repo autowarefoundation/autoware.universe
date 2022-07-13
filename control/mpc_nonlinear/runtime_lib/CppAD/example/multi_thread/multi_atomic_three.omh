@@ -1,0 +1,27 @@
+-------------------------------------------------------------------------------
+  CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------------
+$begin multi_atomic_three.cpp$$
+$spell
+    cpp
+$$
+
+$section Multi-Threading atomic_three Example / Test$$
+
+$head Source File$$
+All of the routines below are located in the file
+$codep
+    example/multi_thread/multi_atomic_three.cpp
+$$
+
+$childtable%example/multi_thread/multi_atomic_three.cpp%$$
+
+$end

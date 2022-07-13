@@ -1,0 +1,258 @@
+$comment
+-----------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-22 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-----------------------------------------------------------------------------
+$$
+$comment Top level documentaion included by ../doc.omh and ../dev.omh$$
+
+$escape $$
+$comment default navigate command for all of CppAD documentation$$
+$navigate%
+    Prev%Prev%
+    Next%Next%
+    Across%Index%
+    Up%Up%
+    Down_up_3%_up_3%
+    Down_up_2%_up_2%
+    Down_up_1%_up_1%
+    Down_up_0%_up_0%
+    Current%Headings
+%$$
+$comment -------------------------------------------------------------
+default automatic indexing command for all CppAD documentaiton
+$$
+$aindex section head subhead$$
+$comment -------------------------------------------------------------
+Latex used throughout the CppAD documentation
+$$
+$latex
+\newcommand{\W}[1]{ \; #1 \; }
+\newcommand{\R}[1]{ {\rm #1} }
+\newcommand{\B}[1]{ {\bf #1} }
+\newcommand{\D}[2]{ \frac{\partial #1}{\partial #2} }
+\newcommand{\DD}[3]{ \frac{\partial^2 #1}{\partial #2 \partial #3} }
+\newcommand{\Dpow}[2]{ \frac{\partial^{#1}}{\partial  {#2}^{#1}} }
+\newcommand{\dpow}[2]{ \frac{ {\rm d}^{#1}}{{\rm d}\, {#2}^{#1}} }
+$$
+$comment
+==============================================================================
+$$
+$spell
+    cppad
+    templated
+    Microsoft
+    Cpp
+    http
+    www
+    seanet
+    bradbell
+    https
+    github
+    Jacobian
+    Jacobians
+    subgraph
+    Posix
+    Openmp
+$$
+
+$comment bin/version assumes that : follows cppad version number here$$
+$section
+cppad-20220000.4: A C++ Algorithmic Differentiation Package$$
+
+$comment =================================================================== $$
+$align middle$$
+$table
+$icon coin.png$$
+$cnext
+$comment ------------------------------------------------------------------- $$
+
+$table
+$href%https://github.com/coin-or/CppAD/releases%
+    releases%$$, $cnext
+$href%https://github.com/coin-or/CppAD/archive/20220000.0.tar.gz%
+    20220000.0%$$, $cnext
+$href%https://github.com/coin-or/CppAD%
+    github%$$, $cnext
+$href%https://travis-ci.org/coin-or/CppAD%
+    travis%$$, $cnext
+$href%https://ci.appveyor.com/project/bradbell/cppad%
+    appveyor%$$, $cnext
+$href%https://src.fedoraproject.org/rpms/cppad/blob/master/f/cppad.spec%
+    cppad.spec%$$ $cnext
+$tend
+$pre
+
+$$
+$comment ------------------------------------------------------------------- $$
+$table
+$cref install$$,                                      $cnext
+$cref/get_started/get_started.cpp/$$,                 $cnext
+$cref whats_new$$,                                    $cnext
+$cref addon$$,                                        $cnext
+$cref research$$,                                     $cnext
+$href%http://www.seanet.com/~bradbell%project manager%$$
+$tend
+$pre
+
+$$
+$comment ------------------------------------------------------------------- $$
+CppAD is distributed by
+$href%http://www.coin-or.org%COIN-OR%$$
+with the Eclipse Public License
+$href%http://www.opensource.org/licenses/EPL-2.0%EPL-2.0%$$
+or the GNU General Public License
+$href%http://www.opensource.org/licenses/GPL-2.0%GPL-2.0%$$ or later.
+
+$tend
+$align top$$
+$comment =================================================================== $$
+
+$head Algorithmic Differentiation$$
+We refer to the automatic creation of an algorithm that
+computes derivative values from an algorithm that computes function values
+as $italic Algorithmic Differentiation$$,
+also referred to as $italic Automatic Differentiation$$ or just AD.
+A brief introduction to AD can be found in
+$href%http://en.wikipedia.org/wiki/Automatic_differentiation%wikipedia%$$.
+The web site
+$href%http://www.autodiff.org%autodiff.org%$$
+is dedicated to research about, and promoting the use of, AD.
+
+$head Features$$
+
+$subhead Operator Overloading$$
+CppAD uses operator overloading of the C++ template class $cref AD$$
+to compute derivatives of algorithms defined using AD objects; see
+the $cref introduction$$ for a description of how this is accomplished.
+
+$subhead Base Type$$
+The operator overloading uses a templated base type that
+can be user defined; see $cref base_require$$.
+The required definitions for $code AD<float>$$ and
+$code AD<double>$$ are included as part of CppAD.
+
+$subhead Recording Operations$$
+A sequence of $codei%AD<%Base%>%$$
+$cref/operations/glossary/Operation/Sequence/$$
+can be recorded and stored in an
+$cref/AD function object/ADFun/$$ object.
+This object can then be used to evaluate
+function values and arbitrary order derivatives,
+and sparsity patterns of derivative values using the $icode Base$$ type.
+
+$subhead Multi-Threading$$
+CppAD supports an arbitrary $cref/multi threading/multi_thread/$$ environment.
+Examples are provided using Boost threads, Posix threads, and Openmp threads.
+
+$subhead Optimizing Operations Sequences$$
+During the recording of a function,
+the $cref Independent$$ variables are know and a forward dependency
+analysis is used to determine which operations should be recorded.
+Once the $cref Dependent$$ variables are determined,
+a reverse dependency analysis can be preformed.
+This $cref optimize$$ routine uses a reverse dependency analysis,
+and other techniques,
+to remove unnecessary operations.
+
+$subhead Dynamic Parameters$$
+CppAD enables one to specify a vector of
+$cref/dynamic/glossary/Parameter/Dynamic/$$ parameters.
+The value of the function and derivatives can depend on these parameters,
+but no derivatives are taken with respect to these parameters.
+This enables CppAD to reduce the derivative calculations; e.g.,
+the derivative of variable times a variable has two terms
+while a variable times a parameter only has one.
+
+$subhead Derivative Calculations$$
+Arbitrary order
+$cref/forward/Forward/$$ and $cref/reverse/Reverse/$$
+mode derivative calculations
+can be preformed using an $code ADFun$$ object.
+Easy to user drivers that compute the
+entire $cref Jacobian$$ and a specific $cref Hessian$$ are included.
+
+$subhead Sparsity$$
+Both forward and reverse mode can be used to calculation the sparsity
+pattern for Jacobians and Hessians; see $cref sparsity_pattern$$.
+Where a Jacobian or Hessian is sparse,
+both forward and reverse mode can be combined with the sparsity pattern
+to speed up the calculation of
+$cref/sparse derivatives/sparse_derivative/$$.
+In addition, a $cref/subgraph/subgraph_jac_rev/$$ method,
+that does not require a sparsity pattern, can be used
+to speed up these derivative calculations.
+
+$subhead Recording Derivative Operations$$
+A $code ADFun$$ object can be converted into an object that
+evaluates derivatives using the type $codei%AD<%Base%>%$$; see $cref base2ad$$.
+This enables one to record new functions that
+are expressed using derivatives of other functions.
+
+$subhead Atomic Functions$$
+User defined derivative calculations for arbitrary functions
+can also be included in
+a recording using $cref/atomic functions/atomic_two/$$ functions.
+A special $cref/checkpoint/chkpoint_one/$$ class is included
+which allows one to record a function and reuse it as
+an atomic operation in other functions.
+There also is a special interface for user defined unary
+$cref/discrete functions/Discrete/$$ functions; i.e.,
+functions that depend on the
+$cref/independent variables/glossary/Tape/Independent Variable/$$
+but which have identically zero derivatives (e.g., a step function).
+
+$subhead Logical Comparisons$$
+Logical comparisons can be included in an operation sequence
+using AD $cref/conditional expressions/CondExp/$$.
+
+$subhead Vectors$$
+The CppAD API allows one to use any
+$cref SimpleVector$$ class.
+The preprocessor symbol $cref/CPPAD_TESTVECTOR/testvector/$$
+is template vector class which is used for correctness testing.
+Many of the correctness tests use this template vector class
+which you can choose during the $cref cmake$$ configuration command.
+
+$head Software Engineering$$
+CppAD is developed using the software engineering procedures described
+on the project manager's
+$href%https://www.seanet.com/~bradbell/software.htm%software%$$
+web page.
+
+$head Testing$$
+
+$subhead Correctness$$
+There is an extensive set of correctness tests; see $cref cmake_check$$.
+
+$subhead Speed$$
+A set of programs for doing $cref speed$$ comparisons between
+$href%https://projects.coin-or.org/ADOL-C%Adolc%$$,
+CppAD,
+$href%http://www.fadbad.com/%Fadbad%$$,
+and
+$href%http://trilinos.sandia.gov/packages/sacado/%Sacado%$$
+are included.
+
+$head Utilities$$
+CppAD includes a set of C++ $cref/utilities/utility/$$ that are useful
+for general operator overloaded numerical methods.
+
+$head Release Notes$$
+This $cref whats_new$$ for a list of recent extensions and bug fixes.
+
+$head Example$$
+The file $cref get_started.cpp$$
+contains an example and test of using CppAD to compute
+the derivative of a polynomial.
+There are many other
+$cref/examples/Example/$$.
+All of the examples are also correctness tests,
+which ensures that they work properly.

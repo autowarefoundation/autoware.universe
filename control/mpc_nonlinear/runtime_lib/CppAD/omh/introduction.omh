@@ -1,0 +1,128 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin Introduction$$
+$spell
+    exp_eps
+    Griewank
+    Andreas
+    CppAD
+$$
+
+
+
+$section An Introduction by Example to Algorithmic Differentiation$$
+
+$head Purpose$$
+This is an introduction by example
+to Algorithmic Differentiation.
+Its purpose is to aid in understand what AD calculates,
+how the calculations are preformed,
+and the amount of computation and memory required
+for a forward or reverse sweep.
+
+
+$head Preface$$
+
+$subhead Algorithmic Differentiation$$
+Algorithmic Differentiation
+(often referred to as Automatic Differentiation or just AD)
+uses the software representation
+of a function to obtain an efficient method for calculating its derivatives.
+These derivatives can be of arbitrary order and are analytic in nature
+(do not have any truncation error).
+
+$subhead Forward Mode$$
+A forward mode sweep computes
+the partial derivative of all the dependent variables with respect
+to one independent variable (or independent variable direction).
+
+$subhead Reverse Mode$$
+A reverse mode sweep computes
+the derivative of one dependent variable
+(or one dependent variable direction)
+with respect to all the independent variables.
+
+$subhead Operation Count$$
+The number of floating point operations for either a
+forward or reverse mode sweep
+is a small multiple of the number required to evaluate the original function.
+Thus, using reverse mode,
+you can evaluate the derivative of a scalar valued function
+with respect to thousands of variables in a small multiple of the
+work to evaluate the original function.
+
+$subhead Efficiency$$
+AD automatically takes advantage of the
+speed of your algorithmic representation of a function.
+For example,
+if you calculate a determinant using LU factorization,
+AD will use the LU representation for
+the derivative of the determinant
+(which is faster than using the definition of the determinant).
+
+$head Outline$$
+$list Alpha$$
+Demonstrate the use of CppAD to calculate derivatives of a
+polynomial: $cref get_started.cpp$$.
+
+$lnext
+Present two algorithms that approximate the exponential function.
+The first algorithm $cref exp_2.hpp$$ is simpler and does not
+include any logical variables or loops.
+The second algorithm $cref exp_eps.hpp$$ includes
+logical operations and a $code while$$ loop.
+For each of these algorithms, do the following:
+
+$list number$$
+Define the mathematical function corresponding to the algorithm
+($cref exp_2$$ and $cref exp_eps$$).
+$lnext
+Write out the floating point operation sequence,
+and corresponding values,
+that correspond to executing the algorithm for a specific input
+($cref exp_2_for0$$ and $cref exp_eps_for0$$).
+$lnext
+Compute a forward sweep derivative of the operation sequence
+($cref exp_2_for1$$ and $cref exp_eps_for1$$).
+$lnext
+Compute a reverse sweep derivative of the operation sequence
+($cref exp_2_rev1$$ and $cref exp_eps_rev1$$).
+$lnext
+Use CppAD to compute both a forward and reverse sweep
+of the operation sequence
+($cref exp_2_cppad$$ and $cref exp_eps_cppad$$).
+$lend
+
+$lnext
+The program $cref exp_apx.cpp$$ runs all of the test
+routines that validate the calculations in the $cref exp_2$$
+and $cref exp_eps$$ presentation.
+$lend
+
+$head Reference$$
+An in-depth review of AD theory and methods can be found in
+the book
+$icode
+Evaluating Derivatives:
+Principles and Techniques of Algorithmic Differentiation
+$$,
+Andreas Griewank,
+SIAM Frontiers in Applied Mathematics,
+2000.
+
+$childtable%
+    introduction/exp_2.hpp%
+    introduction/exp_eps.hpp%
+    introduction/introduction.cpp
+%$$
+
+$end

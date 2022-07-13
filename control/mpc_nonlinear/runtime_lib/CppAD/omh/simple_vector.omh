@@ -1,0 +1,223 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+/*
+$begin SimpleVector$$
+$spell
+    std
+    valarray
+    Cpp
+    const
+    resize
+$$
+
+
+$section C++ Concept: A Simple Vector$$
+
+$head Template Class Requirements$$
+A simple vector template class $icode SimpleVector$$,
+is any template class
+that satisfies the requirements below.
+The following is a list of some simple vector template classes:
+$table
+$bold Name$$ $cnext $bold Documentation$$   $rnext
+$code std::vector$$      $cnext Section 16.3 of
+$cref/The C++ Programming Language/Bib/The C++ Programming Language/$$
+$rnext
+$code std::valarray$$    $cnext Section 22.4 of
+$cref/The C++ Programming Language/Bib/The C++ Programming Language/$$
+$rnext
+$code CppAD::vector$$    $cnext $tref CppAD_vector$$
+$tend
+
+$head Elements of Specified Type$$
+A simple vector class with elements of type $icode Scalar$$,
+is any class that satisfies the requirements for a class of the form
+$codei%
+    %SimpleVector%<%Scalar%>
+%$$
+The routine $cref CheckSimpleVector$$ can be used to check
+that a class is a simple vector class with a specified element type.
+
+$head Default Constructor$$
+The syntax
+$codei%
+    %SimpleVector%<%Scalar%> %x%;
+%$$
+creates an empty vector $icode x$$ ($icode%x%.size()%$$ is zero)
+that can later contain elements of the specified type
+(see $cref/resize/SimpleVector/resize/$$ below).
+
+$head Sizing Constructor$$
+If $icode n$$ has type $code size_t$$,
+$codei%
+    %SimpleVector%<%Scalar%> %x%(%n%)
+%$$
+creates a vector $icode x$$ with $icode n$$ elements
+each of the specified type.
+
+$head Copy Constructor$$
+If $icode x$$ is a $icode%SimpleVector%<%Scalar%>%$$ object,
+$codei%
+    %SimpleVector%<%Scalar%> %y%(%x%)
+%$$
+creates a vector with the same type and number of elements
+as $icode x$$.
+The $icode Scalar$$ assignment operator ( $code =$$ )
+is used to set each element of $icode y$$
+equal to the corresponding element of $icode x$$.
+This is a `deep copy' in that the values of the elements
+of $icode x$$ and $icode y$$ can be set independently after the copy.
+The argument $icode x$$ is passed by reference
+and may be $code const$$.
+
+$head Element Constructor and Destructor$$
+The default constructor for type $icode Scalar$$ is called
+for every element in a vector when the vector element is created.
+The $icode Scalar$$ destructor is called when it is removed
+from the vector (this includes when the vector is destroyed).
+
+$head Assignment$$
+If $icode x$$ and $icode y$$ are
+$icode%SimpleVector%<%Scalar%>%$$ objects,
+$codei%
+    %y% = %x%
+%$$
+uses the $icode Scalar$$ assignment operator ( $code =$$ )
+to set each element of $icode y$$ equal to
+the corresponding element of $icode x$$.
+This is a `deep assignment' in that the values of the elements
+of $icode x$$ and $icode y$$ can be set independently after the assignment.
+The vectors $icode x$$ and $icode y$$ must have
+the same number of elements.
+The argument $icode x$$ is passed by reference
+and may be $code const$$.
+$pre
+
+$$
+The type returned by this assignment is unspecified; for example,
+it might be void in which case the syntax
+$codei%
+    %z% = %y% = %x%
+%$$
+would not be valid.
+
+$head size$$
+If $icode x$$ is a $icode%SimpleVector%<%Scalar%>%$$ object
+and $code n$$ has type $code size_t$$,
+$codei%
+    %n% = size_t( %x%.size() )
+%$$
+sets $icode n$$ to the number of elements in the vector $icode x$$.
+The object $icode x$$ may be $code const$$.
+
+$head resize$$
+If $icode x$$ is a $icode%SimpleVector%<%Scalar%>%$$ object
+and $code n$$ has type $code size_t$$,
+$codei%
+    %x%.resize(%n%)
+%$$
+changes the number of elements contained in the vector $icode x$$
+to be $icode n$$.
+The value of the elements of $icode x$$
+are not specified after this operation; i.e.,
+any values previously stored in $icode x$$ are lost.
+(The object $icode x$$ can not be $code const$$.)
+
+$head value_type$$
+If $icode Vector$$ is any simple vector class,
+the syntax
+$codei%
+    %Vector%::value_type
+%$$
+is the type of the elements corresponding to the vector class; i.e.,
+$codei%
+    %SimpleVector%<%Scalar%>::value_type
+%$$
+is equal to $icode Scalar$$.
+
+$head Element Access$$
+If $icode x$$ is a $icode%SimpleVector%<%Scalar%>%$$ object
+and $icode i$$ has type $code size_t$$,
+$codei%
+    %x%[%i%]
+%$$
+returns an object of an unspecified type,
+referred to here as $icode elementType$$.
+
+$subhead Using Value$$
+If $icode elementType$$ is not the same as $icode Scalar$$,
+the conversion operator
+$codei%
+    static_cast<%Scalar%>(%x%[%i%])
+%$$
+is used implicitly when $icode%x%[%i%]%$$ is used in an expression
+with values of type $icode Scalar$$.
+For this type of usage, the object $icode x$$ may be $code const$$.
+
+$subhead Assignment$$
+If $icode y$$ is an object of type $icode Scalar$$,
+$codei%
+    %x%[%i%] = %y%
+%$$
+assigns the $th i$$ element of $icode x$$ to have value $icode y$$.
+For this type of usage, the object $icode x$$ can not be $code const$$.
+The type returned by this assignment is unspecified; for example,
+it might be void in which case the syntax
+$codei%
+    %z% = %x%[%i%] = %y%
+%$$
+would not be valid.
+
+$head Example$$
+$children%
+    example/utility/simple_vector.cpp
+%$$
+The file
+$cref simple_vector.cpp$$
+contains an example and test of a Simple template class.
+(It is easy to modify to test additional simple vector template classes.)
+
+$head Exercise$$
+$list number$$
+If $icode Vector$$ is a simple vector template class,
+the following code may not be valid:
+$codei%
+    %Vector%<double> x(2);
+    x[2] = 1.;
+%$$
+Create and run a program that executes the code segment
+above where $icode Vector$$ is each of the following cases:
+$code std::vector$$,
+$code CppAD::vector$$.
+Do this both where the compiler option
+$code -DNDEBUG$$ is and is not present on the compilation command line.
+$lnext
+If $icode Vector$$ is a simple vector template class,
+the following code may not be valid:
+$codei%
+    %Vector%<int> x(2);
+    %Vector%<int> y(1);
+    x[0] = 0;
+    x[1] = 1;
+    y    = x;
+%$$
+Create and run a program that executes the code segment
+above where $icode Vector$$ is each of the following cases:
+$code std::valarray$$,
+$code CppAD::vector$$.
+Do this both where the compiler option
+$code -DNDEBUG$$ is and is not present on the compilation command line.
+$lend
+
+
+$end

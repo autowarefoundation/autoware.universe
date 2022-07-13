@@ -1,0 +1,33 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin Reverse$$
+$spell
+    xq
+$$
+
+$section Reverse Mode$$
+
+$head Multiple Directions$$
+Reverse mode after $cref/Forward(q, r, xq)/forward_dir/$$
+with number of directions $icode%r% != 1%$$ is not yet supported.
+There is one exception, $cref reverse_one$$ is allowed
+because there is only one zero order forward direction.
+After such an operation, only the zero order forward
+results are retained (the higher order forward results are lost).
+
+$childtable%
+    omh/reverse/reverse_one.omh%
+    omh/reverse/reverse_two.omh%
+    omh/reverse/reverse_any.omh
+%$$
+
+$end

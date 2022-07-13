@@ -1,0 +1,96 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin base_member$$
+$spell
+    bool
+    const
+    op
+    Bool
+    definition
+    alloc
+$$
+
+$section Required Base Class Member Functions$$
+
+$head Notation$$
+$table
+$bold Symbol$$ $cnext $bold Meaning$$ $rnext
+$icode Base$$  $cnext
+    The base type corresponding to $codei%AD<%Base%>%$$
+$rnext
+$icode b$$     $cnext
+    An object of type $code bool$$
+$rnext
+$icode d$$     $cnext
+    An object of type $code double$$
+$rnext
+$icode x$$     $cnext
+    An object of type $codei%const %Base%&%$$
+$rnext
+$icode y$$     $cnext
+    An object of type $codei%const %Base%&%$$
+$rnext
+$icode z$$     $cnext
+    An object of type $icode Base$$
+$rnext
+$tend
+
+$head Default Constructor$$
+$icode%Base z%$$
+
+$head Double Constructor$$
+$icode%Base z%(%d%)%$$
+
+$head Copy Constructor$$
+$icode%Base z%(%x%)%$$
+
+$head Unary Operators$$
+For $code op$$ equal to
+$code +$$,
+$code -$$
+the following operation must be supported:
+$codei%
+    %z% = %op% %x%$$
+
+$head Assignment Operators$$
+For $icode op$$ equal to
+$icode =$$,
+$code +=$$,
+$code -=$$,
+$code *=$$, and
+$code /=$$ the following operation must be supported:
+$codei%
+    %z% %op% %x%$$
+
+$head Binary Operators$$
+For $icode op$$ equal to
+$code +$$,
+$code -$$,
+$code *$$, and
+$code /$$ the following operation must be supported:
+$codei%
+    %z% = %x% %op% %y%$$
+
+$head Bool Operators$$
+For $icode op$$ equal to
+$code ==$$,
+$code !=$$,
+$code <=$$,
+the following operation must be supported:
+$codei%
+    %b% = %x% %op% %y%$$
+
+$head Example$$
+See the heading Class Definition in
+$cref/base_alloc/base_alloc.hpp/Class Definition/$$.
+
+$end
