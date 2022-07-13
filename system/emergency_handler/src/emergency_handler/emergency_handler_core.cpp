@@ -229,7 +229,7 @@ void EmergencyHandler::callMRMBehavior(
 {
   using autoware_ad_api_msgs::msg::MRMStatus;
 
-  const auto request = std::shared_ptr<autoware_ad_api_msgs::srv::MRMOperation::Request>();
+  auto request = std::make_shared<autoware_ad_api_msgs::srv::MRMOperation::Request>();
   request->operate = true;
 
   if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
@@ -258,7 +258,7 @@ void EmergencyHandler::cancelMRMBehavior(
 {
   using autoware_ad_api_msgs::msg::MRMStatus;
 
-  const auto request = std::shared_ptr<autoware_ad_api_msgs::srv::MRMOperation::Request>();
+  auto request = std::make_shared<autoware_ad_api_msgs::srv::MRMOperation::Request>();
   request->operate = false;
 
   if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
