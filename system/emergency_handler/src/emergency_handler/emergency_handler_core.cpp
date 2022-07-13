@@ -412,11 +412,27 @@ void EmergencyHandler::updateEmergencyState()
 autoware_ad_api_msgs::msg::MRMStatus::_behavior_type EmergencyHandler::updateMRMBehavior()
 {
   using autoware_auto_system_msgs::msg::HazardStatus;
+  using autoware_ad_api_msgs::msg::MRMStatus;
 
   // Get hazard level
-  // const auto level = hazard_status_stamped_->status.level;
+  const auto level = hazard_status_stamped_->status.level;
 
-  return 0;
+  // State machine
+  if (mrm_behavior_ == MRMStatus::NONE) {
+    if (level == HazardStatus::LATENT_FAULT) {
+      return MRMStatus::COMFORTABLE_STOP;
+    }
+    if (level == HazardStatus::SINGLE_POINT_FAULT) {
+      return MRMStatus::SUDDEN_STOP;
+    }
+  }
+  if (mrm_behavior_ == MRMStatus::COMFORTABLE_STOP) {
+    if (level == HazardStatus::SINGLE_POINT_FAULT) {
+      return MRMStatus::SUDDEN_STOP;
+    }
+  }
+
+  return mrm_behavior_;
 }
 
 bool EmergencyHandler::isEmergency(
