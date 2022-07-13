@@ -925,15 +925,6 @@ CollisionPointState CrosswalkModule::getCollisionPointState(
 bool CrosswalkModule::isStuckVehicle(
   const PathWithLaneId & ego_path, const PredictedObject & object) const
 {
-  const auto & label = object.classification.at(0).label;
-  const auto is_target =
-    label == ObjectClassification::CAR || label == ObjectClassification::TRUCK ||
-    label == ObjectClassification::BUS || label == ObjectClassification::TRAILER ||
-    label == ObjectClassification::MOTORCYCLE;
-  if (!is_target) {
-    return false;
-  }
-
   const auto & obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear;
   if (planner_param_.stuck_vehicle_velocity < std::hypot(obj_vel.x, obj_vel.y)) {
     return false;
