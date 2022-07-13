@@ -33,10 +33,13 @@ public:
   using Marker = visualization_msgs::msg::Marker;
   using String = std_msgs::msg::String;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-
+  using Point = geometry_msgs::msg::Point;
   GroundServer();
 
 private:
+  const float R = 10;
+  const int K = 30;
+
   rclcpp::Service<Ground>::SharedPtr service_;
 
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
@@ -57,8 +60,9 @@ private:
   void callbackMap(const HADMapBin & msg);
   void callbackPoseStamped(const PoseStamped & msg);
 
-  common::GroundPlane computeGround(const geometry_msgs::msg::Point & point, bool logging = false);
-  void publishMarker(const common::GroundPlane & plane);
+  GroundPlane estimateGround(const Point & point);
+  float estimateHeight(const Point & point);
+  void publishMarker(const GroundPlane & plane);
 
   void callbackService(
     const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);

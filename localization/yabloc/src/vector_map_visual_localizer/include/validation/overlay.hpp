@@ -37,7 +37,7 @@ public:
 
 private:
   common::StaticTfSubscriber tf_subscriber_;
-  common::GroundPlane ground_plane_;
+  GroundPlane ground_plane_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;

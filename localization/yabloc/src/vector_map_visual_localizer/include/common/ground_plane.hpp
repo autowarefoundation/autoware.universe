@@ -3,8 +3,6 @@
 
 #include <std_msgs/msg/float32_multi_array.hpp>
 
-namespace common
-{
 struct GroundPlane
 {
   using Float32Array = std_msgs::msg::Float32MultiArray;
@@ -37,5 +35,3 @@ struct GroundPlane
     return array;
   }
 };
-
-}  // namespace common

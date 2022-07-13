@@ -6,7 +6,7 @@
 
 namespace map
 {
-GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(40)
+GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(50)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -31,17 +31,7 @@ GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(40)
 void GroundServer::callbackPoseStamped(const PoseStamped & msg)
 {
   if (kdtree_ == nullptr) return;
-  common::GroundPlane ground_plane = computeGround(msg.pose.position, true);
-
-  Eigen::Vector3f normal = ground_plane.normal;
-  vector_buffer_.push_back(normal);
-
-  Eigen::Vector3f mean = Eigen::Vector3f::Zero();
-  for (const Eigen::Vector3f & v : vector_buffer_) {
-    mean += v;
-  }
-  mean /= vector_buffer_.size();
-  ground_plane.normal = mean.normalized();
+  GroundPlane ground_plane = estimateGround(msg.pose.position);
 
   // Publish value msg
   Float32 data;
@@ -57,8 +47,6 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
     ss << "height: " << ground_plane.height() << std::endl;
     float cos = ground_plane.normal.dot(Eigen::Vector3f::UnitZ());
     ss << "tilt: " << std::acos(cos) * 180 / 3.14 << " deg" << std::endl;
-    float raw_cos = normal.dot(Eigen::Vector3f::UnitZ());
-    ss << "raw tilt: " << std::acos(raw_cos) * 180 / 3.14 << " deg" << std::endl;
 
     String string_msg;
     string_msg.data = ss.str();
@@ -70,9 +58,6 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
     for (int index : last_near_point_indices_) near_cloud.push_back(cloud_->at(index));
     if (!near_cloud.empty()) util::publishCloud(*pub_near_cloud_, near_cloud, msg.header.stamp);
   }
-
-  // TODO: current visual marker is so useless
-  // publishMarker(ground_plane);
 }
 
 void GroundServer::callbackMap(const HADMapBin & msg)
@@ -117,28 +102,36 @@ std::vector<int> mergeIndices(const std::vector<int> & indices1, const std::vect
   return indices;
 }
 
-common::GroundPlane GroundServer::computeGround(
-  const geometry_msgs::msg::Point & point, bool logging)
+float GroundServer::estimateHeight(const geometry_msgs::msg::Point & point)
 {
-  constexpr int R = 10;
-  constexpr int K = 30;
-  std::vector<int> k_indices, r_indices;
+  std::vector<int> k_indices;
   std::vector<float> distances;
   pcl::PointXYZ p;
   p.x = point.x;
   p.y = point.y;
   p.z = 0;
+  kdtree_->nearestKSearch(p, 1, k_indices, distances);
+  return cloud_->at(k_indices.front()).z;
+}
+
+GroundPlane GroundServer::estimateGround(const geometry_msgs::msg::Point & point)
+{
+  std::vector<int> k_indices, r_indices;
+  std::vector<float> distances;
+  pcl::PointXYZ p;
+  p.x = point.x;
+  p.y = point.y;
+  p.z = estimateHeight(point);
   kdtree_->nearestKSearch(p, K, k_indices, distances);
   kdtree_->radiusSearch(p, R, r_indices, distances);
 
   std::vector<int> indices = mergeIndices(k_indices, r_indices);
-
-  if (logging) last_near_point_indices_ = indices;
+  last_near_point_indices_ = indices;
 
   Eigen::Vector3f v = cloud_->at(k_indices.front()).getVector3fMap();
   const float height = v.z();
 
-  common::GroundPlane plane;
+  GroundPlane plane;
   plane.xyz.x() = point.x;
   plane.xyz.y() = point.y;
   plane.xyz.z() = height;
@@ -153,10 +146,15 @@ common::GroundPlane GroundServer::computeGround(
   float curvature;
   pcl::solvePlaneParameters(covariance, centroid, plane_parameter, curvature);
   Eigen::Vector3f normal = plane_parameter.topRows(3);
-
   if (normal.z() < 0) normal = -normal;
 
-  plane.normal = normal;
+  // Smoothing
+  vector_buffer_.push_back(normal);
+  Eigen::Vector3f mean = Eigen::Vector3f::Zero();
+  for (const Eigen::Vector3f & v : vector_buffer_) mean += v;
+  mean /= vector_buffer_.size();
+  plane.normal = mean.normalized();
+
   return plane;
 }
 
@@ -164,14 +162,15 @@ void GroundServer::callbackService(
   const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response)
 {
   if (kdtree_ == nullptr) return;
-  common::GroundPlane plane = computeGround(request->point);
-  response->pose.position.x = plane.xyz.x();
-  response->pose.position.y = plane.xyz.y();
-  response->pose.position.z = plane.xyz.z();
+  float z = estimateHeight(request->point);
+  response->pose.position.x = request->point.x;
+  response->pose.position.y = request->point.y;
+  response->pose.position.z = z;
 }
 
-void GroundServer::publishMarker(const common::GroundPlane & plane)
+void GroundServer::publishMarker(const GroundPlane & plane)
 {
+  // TODO: current visual marker is so useless
   Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = get_clock()->now();
