@@ -162,7 +162,6 @@ bool MissionPlannerLanelet2::isRoutingGraphReady() const { return is_graph_ready
 void MissionPlannerLanelet2::visualizeRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
-  if (!route_handler_.isHandlerReady()) return;
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets end_lanelets;
   lanelet::ConstLanelets normal_lanelets;
@@ -264,14 +263,14 @@ bool MissionPlannerLanelet2::isGoalValid() const
 
 autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute()
 {
-  std::stringstream ss;
+  std::stringstream log_ss;
   for (const auto & checkpoint : checkpoints_) {
-    ss << "x: " << checkpoint.pose.position.x << " "
-       << "y: " << checkpoint.pose.position.y << std::endl;
+    log_ss << "x: " << checkpoint.pose.position.x << " "
+           << "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
     get_logger(), "start planning route with checkpoints: " << std::endl
-                                                            << ss.str());
+                                                            << log_ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
