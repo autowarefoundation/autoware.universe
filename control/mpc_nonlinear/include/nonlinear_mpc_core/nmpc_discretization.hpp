@@ -133,13 +133,13 @@ class ODEzoh
  * */
 bool multipleShootingTrajectory(Model::model_ptr_t const &model_ptr, trajectory_data_t const &trajectory_data,
 																trajectory_data_t const &target_states,
-																ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
+																ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
 																discretization_data_t &dd);
 
 bool bilinearTransformation(Model::model_ptr_t const &model_ptr,
 														trajectory_data_t const &trajectory_data,
 														trajectory_data_t const &target_state,
-														ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+														ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 														double const &ts,
 														discretization_data_t &dd);
 
