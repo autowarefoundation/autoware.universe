@@ -1,0 +1,7 @@
+*/.idea/
+.idea 
+.vscode
+*.json
+
+
+!*/*
