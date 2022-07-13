@@ -1,0 +1,62 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+#
+check_PROGRAMS    = speed
+#
+# BEGIN OPTIMIZE
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE) \
+	-I$(IPOPT_DIR)/include
+# END OPTIMIZE
+#
+# BEGIN DEBUG
+# \
+	AM_CXXFLAGS =  \
+	 \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE) \
+	-I$(IPOPT_DIR)/include
+# END DEBUG
+#
+#
+LDADD             = \
+                    -lcppad_ipopt \
+                    $(CPPAD_IPOPT_LIBS) \
+                    $(FCLIBS) \
+                    $(PTHREAD_LIB) \
+                    $(DL_LIB)
+AM_LDFLAGS        = -L../src
+#
+# Cannot use ../src/libcppad_ipopt.a because it is compiled for debugging
+# so build an optimized version here to use here.
+speed_SOURCES   = \
+	speed.cpp \
+	../src/cppad_ipopt_nlp.cpp \
+	../src/fun_record.hpp \
+	../src/hes_fg_map.cpp \
+	../src/jac_g_map.cpp \
+	../src/sparse_map2vec.cpp \
+	../src/vec_fun_pattern.cpp \
+	ode_speed.cpp
+
+test: check
+	./test.sh

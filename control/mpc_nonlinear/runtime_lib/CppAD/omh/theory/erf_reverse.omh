@@ -1,0 +1,69 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin erf_reverse$$
+$spell
+    erf
+    Taylor
+$$
+
+
+$section Error Function Reverse Mode Theory$$
+
+$head Notation$$
+We use the reverse theory
+$cref/standard math function/ReverseTheory/Standard Math Functions/$$
+definition for the functions $latex H$$ and $latex G$$.
+
+$head Positive Orders Z(t)$$
+For order $latex j > 0$$,
+suppose that $latex H$$ is the same as $latex G$$.
+$latex \[
+z^{(j)}
+=
+\frac{1}{j}  \sum_{k=1}^j k x^{(k)} y^{(j-k)}
+\] $$
+For $latex k = 1 , \ldots , j$$,
+the partial of $latex H$$ with respect to $latex x^{(k)}$$ is given by
+$latex \[
+\D{H}{ x^{(k)} }
+=
+\D{G}{ x^{(k)} } + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(k)} }
+=
+\D{G}{ x^{(k)} } + \D{G}{ z^{(j)} } \frac{k}{j} y^{(j-k)}
+\] $$
+For $latex k = 1 , \ldots ,  j$$
+The partial of $latex H$$ with respect to $latex y^{j-k}$$,
+is given by
+$latex \[
+\D{H}{ y^{(j-k)} }
+=
+\D{G}{ y^{(j-k)} } + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ y^{(j-k)} }
+=
+\D{G}{ y^{(j-k)} } + \D{G}{ z^{(j)} } \frac{k}{j} x^{k}
+\] $$
+
+
+$head Order Zero Z(t)$$
+The $latex z^{(0)}$$ coefficient
+is expressed as a function of the Taylor coefficients
+for $latex X(t)$$ and $latex Y(t)$$ as follows:
+In this case,
+$latex \[
+\D{H}{ x^{(0)} }
+=
+\D{G}{ x^{(0)} } + \D{G}{ z^{(0)} } \D{ z^{(0)} }{ x^{(0)} }
+=
+\D{G}{ x^{(0)} } + \D{G}{ z^{(0)} } y^{(0)}
+\] $$
+
+$end

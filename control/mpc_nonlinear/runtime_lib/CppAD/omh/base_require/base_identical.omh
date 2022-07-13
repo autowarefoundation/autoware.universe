@@ -1,0 +1,127 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+/*
+$begin base_identical$$
+$spell
+    alloc
+    adolc
+    Op
+    const
+    CppAD
+    adolc
+    namespace
+    bool
+    inline
+$$
+
+$section Base Type Requirements for Identically Equal Comparisons$$
+
+$head EqualOpSeq$$
+If function $cref EqualOpSeq$$ is used with
+arguments of type $codei%AD<%Base%>%$$,
+the type $icode Base$$ must support the syntax
+$codei%
+    %b% = CppAD::EqualOpSeq(%u%, %v%)
+%$$
+This should return true if and only if
+$icode u$$ is identically equal to $icode v$$
+and it makes no different which one is used.
+The arguments $icode u$$ and $icode v$$ have prototype
+$codei%
+    const %Base%& %u%
+    const %Base%& %v%
+%$$
+The return value $icode b$$ has prototype
+$codei%
+    bool %b%
+%$$
+
+$subhead The Simple Case$$
+If $icode Base$$ is a relatively simple type,
+the $code EqualOpSeq$$ function can be defined by
+$codei%
+namespace CppAD {
+    inline %Base% EqualOpSeq(const %Base%& u, const %Base%& v)
+    {   return u == v; }
+}
+%$$
+For example, see
+$cref/base_alloc/base_alloc.hpp/EqualOpSeq/$$.
+
+$subhead More Complicated Case$$
+The variables
+$icode u$$ and $icode v$$ are not identically equal in the following case:
+$list number$$
+The type $icode Base$$ is $codei%AD<double>%$$.
+$lnext
+The following assignment made using type $icode Base$$: $icode x[0] = x[1] = 1.$$,
+$lnext
+The $cref independent$$ operations is used to make $icode x$$
+the independent variable vector,
+$lnext
+During the corresponding recording, $icode u = x[0]$$, $icode v = x[1]$$.
+$lend
+Note that during a future $cref Forward$$ calculation,
+$icode u$$ and $icode v$$ could correspond to different values.
+For example, see
+$cref/adolc EqualOpSeq/base_adolc.hpp/EqualOpSeq/$$.
+
+$head Identical$$
+
+$subhead IdenticalCon$$
+A $icode Base$$ object is a
+$cref/constant/glossary/Parameter/Constant/$$ parameter
+when used in an $codei%AD<%Base%>%$$ operation sequence.
+It is however still possible for a parameter to change its value; e.g.,
+see the more complicated case above.
+
+$subhead Prototypes$$
+The argument $icode u$$ has prototype
+$codei%
+    const %Base% %u%
+%$$
+If it is present, the argument $icode v$$ has prototype
+$codei%
+    const %Base% %v%
+%$$
+The result $icode b$$ has prototype
+$codei%
+    bool %b%
+%$$
+
+$subhead Identical Functions$$
+The type $icode Base$$ must support the following functions
+(in the CppAD namespace):
+$table
+$bold Syntax$$ $cnext $bold Result$$
+$rnext
+$icode%b% = IdenticalCon(%u%)%$$ $pre  $$
+    $cnext the $icode Base$$ value will always be the same
+$rnext
+$icode%b% = IdenticalZero(%u%)%$$ $pre  $$
+    $cnext $icode u$$ equals zero and $codei%IdenticalCon(%u%)%$$
+$rnext
+$icode%b% = IdenticalOne(%u%)%$$ $pre  $$
+    $cnext $icode u$$ equals one and $codei%IdenticalCon(%u%)%$$
+$rnext
+$icode%b% = IdenticalEqualCon(%u%, %v%)%$$ $pre  $$
+    $cnext $icode u$$ equals $icode v$$,
+    $codei%IdenticalCon(%u%)%$$ and
+    $codei%IdenticalCon(%v%)%$$
+$tend
+
+$subhead Examples$$
+See
+$cref/base_alloc/base_alloc.hpp/Identical/$$.
+
+$end
+*/

@@ -1,0 +1,968 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_07$$
+$spell
+    autotools
+    mul
+    cxx
+    omh
+    tgz
+    yyyymmdd
+    isnan
+    gcc
+    executables
+    makefiles
+    tarballs
+    autoconf
+    Fadbad
+    Sacado::Tay
+    Dir
+    Ginac
+    xi
+    Bool
+    CppADvector
+    inv
+    namespace
+    det_lu
+    adouble
+    Adolc
+    op
+    sqrt
+    eps
+    mega
+    Kipp
+    vcproj
+    exp_apx
+    Microsoft
+    threadprivate
+    gettimeofday
+    ifndef
+    Vec
+    openmp
+    dy
+    automake
+    makefile
+    CppAD
+    cygwin
+    cppad.hpp
+    config.h
+    dd
+    Adolc
+    Taylor
+$$
+
+$section Changes and Additions to CppAD During 2007$$
+
+
+$head Introduction$$
+This section contains a list of the changes to CppAD during 2007
+(in reverse order by date).
+The purpose of this section is to
+assist you in learning about changes between various versions of CppAD.
+
+$head 12-29$$
+License conversions missed the copyright message at the top
+in the following special cases:
+$code makefile.am$$, $code makefile.in$$, and
+$code omh/appendix/license.omh$$.
+
+
+$head 12-25$$
+The $cref install$$ instructions have been improved.
+
+$head 12-21$$
+The $cref/--with-Documentation/autotools/--with-Documentation/$$
+option on the $code configure$$ command line caused an error on some
+systems because it attempted to copy to many files.
+This has been fixed by copying the directory instead of the individual files.
+
+$head 12-08$$
+By mistake, the documentation $cref License$$ statement
+for the GPL distribution was the same as for the CPL distribution.
+This has been fixed.
+
+$head 12-05$$
+Change the name of the spec file from
+$codei%cppad-%yyyymmdd%.spec%$$ to $code cppad.spec$$.
+
+$head 12-04$$
+Add the capability for the RPM spec file to use a different
+prefix directory.
+
+$head 12-03$$
+This is the first version with the rpm spec file
+$code cppad.spec$$.
+
+$head 12-02$$
+Add the $codei%DESTDIR=%directory%$$ option on the
+$cref/make install/autotools/make install/$$ command line.
+
+$head 11-29$$
+The $cref unary_standard_math$$ function $code sqrt$$ did not link properly
+when $icode Base$$ was $code AD<double>$$.
+This has been fixed.
+
+$head 11-23$$
+The routines $code nan$$ and $code isnan$$ were failing
+for some systems because they use $code nan$$ and or $code isnan$$
+as preprocessor symbols.
+This has been fixed; see $cref/macros/nan/Include/Macros/$$.
+In addition, the example and test $cref nan.cpp$$ has been added.
+
+$head 11-18$$
+Speed tests for $code tape_values$$ branch were not better than trunk,
+so the good parts of that branch (but not all) were merged into the trunk.
+$pre
+
+$$
+The interface specifications for
+$cref/base type requirements/base_require/$$ have been changed so that
+CppAD would compile with $code gcc 4.1.1$$
+(which requires more definitions before use in template functions).
+This changed of requirements is demonstrated by the
+$cref base_complex.hpp$$ and $cref base_adolc.hpp$$ examples.
+$pre
+
+$$
+The problem with newer C++ compilers requiring more definitions before use
+also required the user to know about $code float$$ and $code double$$
+definitions for the standard math
+functions in the CppAD namespace;
+see $cref base_std_math$$.
+$pre
+
+$$
+The $code example/test_one.sh$$ and $code test_more/test_one.sh$$
+scripts were modified so that one only need specify the test file name
+(does not also need the test routine name). Some of the test routine
+declarations were changed from $icode/name/()/$$ to
+$icode/name/(void)/$$ to make this possible.
+$pre
+
+$$
+The program $code test_more/test_more$$ was changed to always
+report the memory leak test results (same as $code example/example$$).
+$pre
+
+$$
+The $cref PrintFor$$ function was putting an unused variable in the tape.
+This has been fixed.
+
+
+
+$head 11-06$$
+Added the $code -DRAD_EQ_ALIAS$$ compiler flag to the
+$cref/Sacado speed tests/speed_sacado/$$.
+In addition, compiler flag documentation was included for
+Sacado and all the other speed tests.
+
+$head 11-05$$
+MS project files have been added for running the
+$cref/cppad/speed_cppad/$$ and
+$cref/double/speed_double/$$
+speed tests.
+
+$head 11-04$$
+The $code cppad/config.h$$ file was not compatible with the
+Windows install procedure and
+the Windows project's could not find a certain include file.
+This has been fixed.
+$pre
+
+$$
+The $cref/unix install/autotools/$$ procedure has been modified
+so that the one configure flag
+$code --with-Speed$$
+builds all the possible executables related to the speed testing.
+
+$head 11-03$$
+Improve the $cref speed_main$$ documentation and output
+(as well as the title for other sections under $cref speed$$).
+$pre
+
+$$
+The subversion copy of the $cref/configure/autotools/Configure/$$ script
+was not executable.
+This has been fixed.
+
+$head 11-02$$
+The instructions for downloading the current version using
+$code subversion$$ have changed.
+The user should now directly edit the file
+$codep
+    trunk/configure
+$$
+in order to set the correct date for the installation
+and to build the corresponding documentation.
+$pre
+
+$$
+The $cref speed$$ section has been slightly reorganized
+(the main program and utilities have been separated).
+$pre
+
+$$
+Add $cref speed_double$$ for testing the speed of evaluating
+functions in $code double$$ as apposed to gradients using AD types.
+
+$head 11-01$$
+The instructions for downloading the current version using subversion
+have changed.
+The user must now execute the command
+$codep
+    ./build.sh version
+$$
+in order to set the correct version number for her (or his) installation.
+$pre
+
+$$
+Add the return status for all the correctness tests
+to the documentation; see $code make test$$.
+
+$head 10-30$$
+The download instructions did not update current version number
+and this broke the links to the current tarballs.
+This has been fixed.
+$pre
+
+$$
+The documentation for $cref det_by_minor$$ and $cref det_by_lu$$
+has been improved.
+The order of the elements in $cref det_of_minor$$ has been
+corrected (they were transposed but this did not really matter
+because determinants of transposes are equal).
+$pre
+
+$$
+The makefiles in the distribution have been changed so that
+one can run configure from a directory other than the distribution directory.
+
+$head 10-27$$
+A $code subversion$$ method
+for downloading CppAD has been added.
+$pre
+
+$$
+The installation was broken on some systems because the
+$cref/configure/autotools/Configure/$$ command tried to run
+the $code autoconf$$ and $code automake$$ programs.
+This has been fixed by adding
+$code AM_MAINTAINER_MODE$$ to the $code autoconf$$ input file.
+$pre
+
+$$
+Extend the
+$code subversion$$
+methods to include a full installation and old versions.
+
+$head 10-23$$
+The $cref/cxx_flags/autotools/cxx_flags/$$ environment variable
+has been changed from $code CPP_ERROR_WARN$$ to $code CXX_FLAGS$$.
+$pre
+
+$$
+The command $code configure --help$$ now prints a description
+of the environment variables
+$code ADOLC_DIR$$,
+$code FADBAD_DIR$$,
+$code SACADO_DIR$$,
+$code BOOST_DIR$$,
+and
+$code CXX_FLAGS$$.
+In addition, if the environment variables
+$code POSTFIX_DIR$$ or $code CPP_ERROR_WARN$$ are used,
+an message is printed saying that are not longer valid.
+
+
+$head 10-22$$
+The correctness checks and speed test wrappers were moved
+from the individual package directories to $cref speed_main$$.
+This way they do not have to be reproduced for each package.
+This makes it easier to add a new package,
+but it requires the prototype for
+$codei%compute_%test_name%$$ to be the same for all packages.
+$pre
+
+$$
+The $href%http://trilinos.sandia.gov/packages/sacado/%Sacado%$$
+package was added to the list of $cref speed$$ tests.
+In addition, the discussion about how to run each of the
+speed tests was corrected to include the $icode seed$$ argument.
+$pre
+
+$$
+The $icode postfix_dir$$ option
+was removed on $cref/2006-12-05/whats_new_06/12-05/$$ but
+it was not removed from the
+$cref/configure/autotools/Configure/$$
+documentation.
+This has been fixed.
+$pre
+
+$$
+The routine $cref CheckSimpleVector$$ was changed.
+It used to require conversion of the form
+$codei%
+    %Scalar%(%i%)
+%$$
+where $icode i$$ was $code 0$$ or $code 1$$.
+This does not work with when $icode Scalar$$ is
+$code Sacado::Tay::Taylor<double>$$.
+This requirement has been changed
+(see $cref/restrictions/CheckSimpleVector/Restrictions/$$)
+to support of
+$codei%
+    %x% = %i%
+%$$
+where $icode x$$ has type $icode Scalar$$
+and $icode i$$ has type $code int$$.
+$pre
+
+$$
+Fix include directives in $cref speed_fadbad$$ programs
+$code det_lu$$, $code det_minor$$, and $code poly$$,
+to use $code FADBAD++$$ instead of $code Fadbad++$$ directory.
+$pre
+
+$$
+Add $code ADOLC_DIR$$, $code FADBAD_DIR$$, $code SACADO_DIR$$,
+and $code BOOST_DIR$$
+to the $cref/configure/autotools/Configure/$$ help string.
+
+
+$head 10-16$$
+Add $icode seed$$ argument and
+improve $cref speed_main$$ documentation.
+
+$head 10-13$$
+Fix the title in $cref adolc_det_lu.cpp$$.
+Add the package name to each test case result printed by
+$cref speed_main$$.
+
+$head 10-05$$
+Added and example using complex calculations for a
+function that is not complex differentiable $code not_complex_ad.cpp$$.
+(This example has been removed; see $cref/complex FAQ/Faq/Complex Types/$$.)
+
+$head 10-02$$
+Extend the $cref pow$$ function to work for any case where one argument
+is $codei%AD<%Base%>%$$ and the other is $code double$$
+(as do the binary operators).
+
+$head 09-06$$
+If the $cref/method.step/OdeErrControl/Method/step/$$ function returned
+$code nan$$ (not a number),
+it was possible for $cref OdeErrControl$$ to drop into an infinite loop.
+This has been fixed.
+
+$head 08-09$$
+Let user detect and handel the case where an ODE initial vector $icode xi$$
+contains  not a number $code nan$$
+(see $cref Runge45$$, $cref Rosen34$$, and $cref OdeErrControl$$).
+$pre
+
+$$
+Use the $code ||$$ operation instead of $code |$$
+operator in the $code nan$$ function
+(The Ginac library seems to use an alias for the type $code bool$$ and
+does not have $code |$$ defined for this alias).
+$pre
+
+$$
+The file $code test_more/ode_err_control.cpp$$ was using the
+wrong include file name since the change on 08/07.
+This has been fixed.
+
+$head 08-07$$
+Sometimes an ODE solver takes to large a step and this results
+in invalid values for the variables being integrated.
+The ODE solvers $cref Runge45$$ and $cref Rosen34$$ have been
+modified to abort
+and return $cref nan$$ when it is returned by the differential
+equation evaluation.
+The solver $cref OdeErrControl$$ have been modified to try smaller steps
+when this happens.
+$pre
+
+$$
+Fix an $cref/Sequence Constructor/FunConstruct/Sequence Constructor/$$
+referenced to $code Dependent$$ in documentation
+(was using the $cref FunDeprecated$$ one argument syntax).
+$pre
+
+$$
+Add comment about mixing debug and non-debug versions of
+CppAD in $cref/TrackDelVec/TrackNewDel/TrackDelVec/$$ error message.
+
+
+$head 07-30$$
+$code CppADCreateBinaryBool$$ and $code CppADCreateUnaryBool$$
+have been replaced by $code CPPAD_BOOL_BINARY$$ and
+$code CPPAD_BOOL_UNARY$$ respectively.
+In addition, the $cref wish_list$$ item for conversion
+of all preprocessor macros to upper case been completed and removed.
+
+$head 07-29$$
+The preprocessor macros
+$code CppADUsageError$$ and $code CppADUnknownError$$
+have been replaced by $code CPPAD_ASSERT_KNOWN$$ and
+$code CPPAD_ASSERT_UNKNOWN$$ respectively.
+The meaning for these macros
+has been included in the $cref cppad_assert$$ section.
+In addition, the $icode known$$ argument to $cref ErrorHandler$$
+was wrong for the unknown case.
+$pre
+
+$$
+The $cref wish_list$$ item
+for conversion of all preprocessor macros to upper case
+has been changes (to an item that was previous missing).
+
+$head 07-28$$
+The preprocessor macro $code CPPAD_DISCRETE_FUNCTIOIN$$ was defined
+as a replacement for $code CppADCreateDiscrete$$
+which has been deprecated.
+
+$head 07-26$$
+Merge in changes made in $code branches/test_vector$$.
+
+$subhead 07-26$$
+Change all occurrences of $code CppADvector$$,
+in the files $codei%test_more/%*%.cpp%$$ and $codei%speed/%*%/%*%.cpp%$$,
+where changed to $code CPPAD_TEST_VECTOR$$.
+All occurrences of the $code CppADvector$$ in the documentation
+were edited to reflect that fact that it has been deprecated.
+The documentation index and search for
+deprecated items has been improved.
+
+$subhead 07-25$$
+Deprecate the preprocessor symbol $code CppADvector$$
+and start changing it to
+$small $cref/CPPAD_TEST_VECTOR/test_vector/$$ $$.
+$pre
+
+$$
+Change all occurrences of $code CppADvector$$,
+in the $codei%example/%*%.cpp%$$ files,
+to $code CPPAD_TEST_VECTOR$$.
+
+$head 07-23$$
+The $cref TrackNewDel$$ macros
+$code CppADTrackNewVec$$,
+$code CppADTrackDelVec$$, and
+$code CppADTrackExtend$$ have been deprecated.
+The new macros names to use are
+$code CPPAD_TRACK_NEW_VEC$$,
+$code CPPAD_TRACK_DEL_VEC$$, and
+$code CPPAD_TRACK_EXTEND$$ respectively.
+This item has been removed from the
+software guidelines section of the wish list.
+$pre
+
+$$
+The member variable entry in the software guideline
+wish list item has be brought up to date.
+
+$head 07-22$$
+Minor improvements to the $cref mul_level_adolc_ode.cpp$$ example.
+
+$head 07-21$$
+$list number$$
+The $code openmp/run.sh$$ example programs
+$code example_a11c.cpp$$,
+$code openmp_newton_example.cpp$$, and
+$code sum_i_inv.cpp$$
+have been changed so that they run on more systems
+(are C++ standard compliant).
+$lnext
+$cref base_require$$:
+The $code IdenticalEqual$$ function,
+in the $cref base_require$$ specification,
+was changed to $code IdenticalEqualCon$$
+(note the $cref/API warning/base_require/API Warning/$$ in the
+$icode Base$$ requirement specifications).
+$lnext
+Implementation of the $cref/base requirements/base_require/$$ for complex types
+were moved into the $cref base_complex.hpp$$ example.
+$lend
+
+
+
+$head 07-20$$
+The download for CppAD was still broken.
+It turned out that the copyright message was missing from the file
+$cref base_adolc.hpp$$ and this stopped the creation of the download files.
+This has been fixed.
+In addition, the automated testing procedure has been modified so
+that missing copyright messages and test program failures will
+be more obvious in the test log.
+
+$head 07-19$$
+The download for CppAD has been broken since the example
+$code mul_level_adolc_ode.cpp$$ was added because the
+$code example/example$$ program was failing.
+This has been fixed.
+
+$head 07-18$$
+A realistic example using Adolc with CppAD
+$cref mul_level_adolc_ode.cpp$$ was added.
+The documentation for $cref TrackNewDel$$ was improved.
+
+$head 07-14$$
+Add a discussion at the beginning of
+$cref mul_level_ode.cpp$$ example
+(and improve the notation used in the example).
+
+$head 07-13$$
+Separate the include file
+$cref base_adolc.hpp$$
+from the $cref mul_level_adolc.cpp$$ example
+so that it can be used by other examples.
+
+$head 06-22$$
+Add $cref mul_level_adolc.cpp$$, an example that demonstrates using
+$code adouble$$ and for the $cref/Base/base_require/$$ type.
+$pre
+
+$$
+The $cref get_started.cpp$$
+example did not build when
+the $code --with-Introduction$$ and
+$code BOOST_DIR$$ options were included on the
+$cref/configure/autotools/Configure/$$ command line.
+In fact, some of the $cref speed$$ tests also had compilation errors
+when $code BOOST_DIR$$ was include in the configure command.
+This has been fixed.
+$pre
+
+$$
+There was a namespace reference missing in the files
+that could have caused compilation errors in the files
+$code speed/cppad/det_minor.cpp$$ and
+$code speed/cppad/det_lu.cpp$$.
+This has been fixed.
+
+$head 06-20$$
+The MS project
+$code test_more/test_more.vcproj$$ would not build because
+the file $code test_more/fun_check.cpp$$ was missing;
+this has been fixed.
+In addition,
+fix warnings generated by the MS compiler when compiling the
+$code test_more/test_more.cpp$$ file.
+$pre
+
+$$
+Add a section defining the $cref/Base type requirements/base_require/$$.
+Remove the $icode Base$$ type restrictions from the $cref Faq$$.
+Make all the prototype for the default Base types agree with
+the specifications in the Base type requirements.
+$pre
+
+$$
+Fix the description of the $code tan$$ function in
+$cref unary_standard_math$$.
+
+
+$head 06-14$$
+The routine $cref Rosen34$$ ( $cref Runge45$$ ) had a division
+of a $code size_t$$ ( $code int$$ ) by a $icode Scalar$$,
+where $icode Scalar$$ was any $cref NumericType$$.
+Such an operation may not be valid for a particular numeric type.
+This has been fixed by explicitly converting the
+$code size_t$$ to an $code int$$,
+then converting the $code int$$ to a $icode Scalar$$,
+and then preforming the division.
+(The conversion of an $code int$$ to any numeric type must be valid.)
+
+$head 05-26$$
+If the $icode Base$$ type is not $code double$$,
+the $cref/compound assignment/compound_assign/$$ operators did not
+always allow for $code double$$ operands. For example,
+if $icode x$$ had type $code AD< AD<double> >$$
+$codei%
+    %x% += .5;
+%$$
+would slice the value $code .5$$ to an $code int$$
+and then convert it to an $code AD< AD<double> >$$.
+This has been fixed.
+$pre
+
+$$
+This slicing has also been fixed in the
+$cref/assignment/ad_assign/$$ operation.
+In addition, the assignment and copy operations
+have been grouped together in the documentation; see $cref ad_ctor$$ and $cref ad_assign$$.
+
+
+$head 05-25$$
+Document usage of $code double$$ with
+binary arithmetic operators,
+and combine all those operators into one section ($cref ad_binary$$).
+$pre
+
+$$
+The documentation for all the $cref/compound assignment/compound_assign/$$
+operators has been grouped together.
+In addition, a
+compound assignment wish list item has been added
+(it was completed and removed with the
+$cref/05-26/whats_new_07/05-26/$$ update.)
+
+
+$head 05-24$$
+Suppose that $icode op$$ is a binary operation and we have
+$codei%
+    %left% %op% %right%
+%$$
+where one of the operands was $code AD< AD<double> >$$ and
+the other operand was $code double$$.
+There was a bug in this case that caused the $code double$$
+operand to be converted to $code int$$ before
+being converted to $code AD< AD<double> >$$.
+This has been fixed.
+
+$head 05-22$$
+The Microsoft
+examples and testing
+project file $code example/example.vcproj$$
+was missing a reference to the
+source code file $code example/reverse_two.cpp$$.
+This has been fixed.
+
+$head 05-08$$
+Reverse mode does not work with the
+$cref pow$$ function when the base is less than or equal zero
+and the exponent is an integer.
+For this reason, the $cref pow_int$$ function
+is no longer deprecated (and is used by CppAD when the exponent
+has type $code int$$).
+
+
+$head 05-05$$
+Third and fourth order derivatives were included in the
+routine $code test_more/sqrt.cpp$$ that tests square roots.
+$pre
+
+$$
+The return value descriptions were improved for the introduction
+examples:
+$cref/exp_2_for1/exp_2_for1/Return Value/$$,
+$cref/exp_2_for2/exp_2_for2/Return Value/$$,
+$cref/exp_eps_for1/exp_eps_for1/Return Value/$$, and
+$cref/exp_eps_for2/exp_eps_for2/Return Value/$$.
+$pre
+
+$$
+The summation index in $cref sqrt_reverse$$ was changed from
+$latex k$$ to $latex \ell$$ to make partial differentiation
+with respect to $latex z^{(k)}$$ easier to understand.
+In addition, a sign error was corrected near the end of
+$cref sqrt_reverse$$.
+$pre
+
+$$
+The dimension for the notation $latex X$$ in
+$cref reverse_identity$$ was corrected.
+$pre
+
+$$
+The word mega was added to the spelling exception list for
+$code openmp/run.sh$$.
+
+$head 04-19$$
+Improve connection from $cref reverse_identity$$ theorem
+to $cref reverse_any$$ calculations.
+$pre
+
+$$
+Improve the $code openmp/run.sh$$ script.
+It now runs all the test cases at once in addition
+to including multiple number of thread cases for each test.
+$pre
+
+$$
+Add the $code sum_i_inv_time.cpp$$ OpenMP example case.
+$pre
+
+$$
+There was a typo in the
+$cref/second order/forward_order/Second Order/$$ discussion
+(found by Kipp Martin).
+It has been fixed.
+
+
+$head 04-17$$
+Add a paragraph to $cref reverse_identity$$ explaining
+how it relates to $cref reverse_any$$ calculations.
+Add description of
+$cref/first/reverse_any/First Order/$$ and
+$cref/second order/reverse_any/Second Order/$$
+results in $cref reverse_any$$.
+
+$head 04-14$$
+Simplify the $cref Reverse$$ mode documentation by creating
+a separate $cref reverse_two$$ section for second order reverse,
+making major changes to the description in $cref reverse_any$$,
+and creating a third order example $cref rev_checkpoint.cpp$$ for
+reverse mode calculations.
+$pre
+
+$$
+Improve the $cref reverse_identity$$ proof.
+
+$head 04-11$$
+Merge in changes made in $code branches/intro$$.
+
+$subhead 04-11$$
+Add $cref exp_eps_rev2$$ and its verification routine
+$cref exp_eps_rev2.cpp$$.
+
+$subhead 04-10$$
+Finished off $cref exp_2_rev2$$ and
+added $cref exp_2_rev2.cpp$$ which verifies its calculations.
+Added second order calculations to $cref exp_2_cppad$$.
+Added $cref exp_eps_for2$$ and its verification routine.
+
+
+$subhead 04-07$$
+Added a preliminary version of $cref exp_2_rev2$$
+(does not yet have verification or exercises).
+
+$subhead 04-06$$
+Fixed a problem with the Microsoft Visual Studio project file
+$code introduction/exp_apx/exp_apx.vcproj$$
+(it did not track the file name changes of the form
+$code exp_apx/exp_2_for$$ to $code exp_apx/exp_2_for1$$
+on 04-05).
+$pre
+
+$$
+Added $cref exp_2_for2$$ to introduction.
+
+$subhead 04-05$$
+Use order expansions in introduction; e.g., the
+$cref/second order expansion/exp_2_for2/Second Order Expansion/$$
+for the $cref exp_2$$ example.
+
+$head 03-31$$
+Merge in changes made in $code branches/intro$$
+and remove the corresponding Introduction item from the wish list:
+
+$subhead 03-31$$
+Create the a simpler exponential approximation in the $cref introduction$$
+called $cref exp_2$$ which has a different program
+variable for each variable in the operation sequence.
+$pre
+
+$$
+Simplify the $cref exp_eps$$ approximation using the
+$latex v_1 , \ldots , v_7$$ notation so that variables directly
+correspond to index in operation sequence (as with the $cref exp_2$$
+example).
+
+$subhead 03-30$$
+The Microsoft project file $code introduction/exp_apx/exp_apx.vcproj$$
+was referencing $code exp_apx_ad.cpp$$ which no longer exists.
+It has been changed to reference $code exp_apx_cppad.cpp$$
+which is the new name for that file.
+
+
+$head 03-29$$
+Fixed entries in this file where the year was mistakenly used for the month.
+To be more specific, $codei%07-%dd%$$ was changed to $codei%03-%dd%$$
+for some of the entries directly below.
+$pre
+
+$$
+Corrected some places where $code CppAD$$ was used in stead of $code Adolc$$
+in the $cref adolc_poly.cpp$$ documentation.
+$pre
+
+$$
+Added an Introduction and
+$cref/Tracing/wish_list/Tracing/$$ entry to the wish list.
+(The Introduction item was completed on $cref/03-31/whats_new_07/03-31/$$.)
+
+$head 03-20$$
+Example A.1.1c, $code example_a11c.cpp$$,
+from the OpenMP 2.5 standards document,
+was added to the tests that can be run using $code openmp/run.sh$$.
+
+$head 03-15$$
+Included the changes from openmp branch
+so that so CppAD does not use the OpenMP $code threadprivate$$ command
+(some systems do not support this command).
+
+$subhead 03-15$$
+Add command line arguments to $code openmp_newton_example.cpp$$, and
+modified $code openmp/run.sh$$ to allow for more flexible testing.
+
+$subhead 03-14$$
+Fixed some Microsoft compiler warnings by explicitly converting from
+$code size_t$$ to $code int$$.
+$pre
+
+$$
+In the Microsoft compiler case, the $code cppad/config.h$$ file had
+the wrong setting of $code GETTIMEOFDAY$$.
+The setting is now overridden (and always false) when the
+$code _MSC_VER$$ preprocessor symbol is defined.
+$pre
+
+$$
+Some minor changes were made in an effort to speed up the multi-threading case.
+
+$subhead 03-13$$
+Started a new openmp branch and created a version of CppAD
+that does not use the OpenMP $code threadprivate$$ command
+(not supported on some systems).
+
+$head 03-09$$
+Included the changes from openmp branch
+so that OpenMP can be used with CppAD,
+see $cref omp_max_thread$$.
+The changes
+dated between $cref/02-15/whats_new_07/03-09/02-15/$$ and 03-28 below
+were made in the openmp branch and transferred to the trunk on 03-09.
+
+
+$subhead 03-28$$
+The conditional include commands were missing on some include files;
+for example
+$codep
+    # ifndef CPPAD_BENDER_QUAD_HPP
+    # define CPPAD_BENDER_QUAD_HPP
+$$
+was missing at the beginning of the $cref BenderQuad$$ include file.
+This has been fixed.
+$pre
+
+$$
+The $code speed_test$$ routines $cref/timing/speed_test/Timing/$$ was
+changed to use $code gettimeofday$$ if it is available.
+($code gettimeofday$$ measures wall clock time
+which is better in a multi-threading environment).
+$pre
+
+$$
+Added the user multi-threading interface
+$cref omp_max_thread$$ along with its examples
+which are distributed in the directory $code openmp$$.
+$pre
+
+$$
+The $codei%speed/%*%.hpp%$$ files have been moved to
+$codei%include/cppad/speed/%*%.hpp%$$ and the corresponding wish list
+item has been removed.
+$pre
+
+$$
+The multiple tapes with the same base type wish list item
+have been removed (it's purpose was multi-threading which
+has been implemented).
+
+
+$subhead 02-27$$
+The $cref speed$$ include files are currently being distributed
+above the $code cppad$$ include directory.
+A fix this wish list item has been added.
+$pre
+
+$$
+Multiple active tapes required a lot of multi-threading access
+management for the tapes. This was made simpler (and faster)
+by having at most one tape per thread.
+
+
+$subhead 02-22$$
+The include command in the $cref speed_test$$ documentation was
+$codep
+    # include <speed/speed_test.hpp>
+$$
+but it should have been
+$codep
+    # include <cppad/speed_test.hpp>
+$$
+This has been fixed.
+
+$subhead 02-17$$
+An entry about optimizing the operation
+sequence in an $cref/ADFun/FunConstruct/$$ object was added to the
+$cref wish_list$$.
+$pre
+
+$$
+Change the argument syntax for $cref Dependent$$ and deprecate the
+$cref/old Dependent syntax/FunDeprecated/Dependent/$$.
+
+
+$subhead 02-16$$
+Added $codei%VecAD<%Base%>%$$ as a valid argument type for the
+$cref/Parameter/con_dyn_var/Parameter/$$
+and $cref/Variable/con_dyn_var/Variable/$$ functions.
+In addition, $cref/base indexing/VecAD/Base Indexing/$$
+is was extended to be allowed during taping so long as the
+VecAD object is a parameter.
+
+
+$subhead 02-15$$
+Fixed the $code example/test_one.sh$$ script
+(it was using its old name $code one_test$$).
+
+$head 02-06$$
+The $cref BenderQuad$$ documentation was improved by adding the fact
+that the $icode x$$ and $icode y$$ arguments to the $codei%f%.dy%$$
+member function are equal to the $icode x$$ and $icode y$$ arguments
+to $code BenderQuad$$. Hence values depending on them can be stored
+as private objects in $icode f$$ and need not be recalculated.
+
+$head 02-04$$
+The method for distributing the documentation needed to be
+changed in the top level $code makefile.am$$ in order to
+be compatible with automake version 1.10.
+
+$head 02-03$$
+The change on $cref/02-01/whats_new_07/02-01/$$ had a new, saved as a static
+pointer, with no corresponding delete.
+This was not a bug, but it has been changed to avoid
+an error message when using CppAD with
+$href%http://valgrind.org/%valgrind%$$.
+$pre
+
+$$
+The change to the $code pow$$ function on
+$cref/06-12-10/whats_new_06/12-10/$$ did not include the
+necessary changes to the sparsity calculations.
+This has been fixed.
+
+$head 02-02$$
+Fix minor errors and improve
+$cref/profiling/autotools/Profiling CppAD/$$ documentation.
+Also change the problem sizes used for the $cref speed$$ tests.
+
+$head 02-01$$
+There seems to be a bug in the cygwin version of g++ version 3.4.4
+with the -O2 flag whereby some static variables in static member functions
+sometimes do not get constructed before being used. This has been
+avoided by using a static pointer and the new operator in cppad/local/ad.hpp.
+
+$head 01-29$$
+The copyright message was missing from some of the distribution files
+for some new files added on $cref%06-12-15%whats_new_06%12-15%$$.
+This resulted in the
+tarballs $icode%*%.tgz%$$ and $icode%*%.zip%$$
+not existing for a period of time.
+The automated tests have been extended so that this should not happen again.
+
+$end

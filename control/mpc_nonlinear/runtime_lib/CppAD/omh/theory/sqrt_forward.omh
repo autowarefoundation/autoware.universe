@@ -1,0 +1,75 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin sqrt_forward$$
+$spell
+    sqrt
+    Arctangent
+    Taylor
+$$
+
+$section Square Root Function Forward Mode Theory$$
+
+If $latex F(x) = \sqrt{x} $$
+$latex \[
+    F(x) * F^{(1)} (x) - 0 * F (x)  = 1/2
+\] $$
+and in the
+$cref/standard math function differential equation
+    /ForwardTheory
+    /Standard Math Functions
+    /Differential Equation
+/$$,
+$latex A(x) = 0$$,
+$latex B(x) = F(x)$$,
+and $latex D(x) = 1/2$$.
+We use $latex a$$, $latex b$$, $latex d$$,
+and $latex z$$ to denote the
+Taylor coefficients for
+$latex A [ X (t) ] $$,
+$latex B [ X (t) ]$$,
+$latex D [ X (t) ] $$,
+and $latex F [ X(t) ] $$ respectively.
+It now follows from the general
+$cref/Taylor coefficients recursion formula
+    /ForwardTheory
+    /Standard Math Functions
+    /Taylor Coefficients Recursion Formula
+/$$
+that for $latex j = 0 , 1, \ldots$$,
+$latex \[
+\begin{array}{rcl}
+z^{(0)} & = & \sqrt { x^{(0)} }
+\\
+e^{(j)}
+& = & d^{(j)} + \sum_{k=0}^{j} a^{(j-k)} * z^{(k)}
+\\
+& = & \left\{ \begin{array}{ll}
+    1/2 & {\rm if} \; j = 0 \\
+    0   & {\rm otherwise}
+\end{array} \right.
+\\
+z^{(j+1)} & = & \frac{1}{j+1} \frac{1}{ b^{(0)} }
+\left(
+    \sum_{k=1}^{j+1} k x^{(k)} e^{(j+1-k)}
+    - \sum_{k=1}^j k z^{(k)}  b^{(j+1-k)}
+\right)
+\\
+& = & \frac{1}{j+1} \frac{1}{ z^{(0)} }
+\left(
+    \frac{j+1}{2} x^{(j+1) }
+    - \sum_{k=1}^j k z^{(k)} z^{(j+1-k)}
+\right)
+\end{array}
+\] $$
+
+$end

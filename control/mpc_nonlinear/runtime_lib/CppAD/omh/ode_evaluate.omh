@@ -1,0 +1,33 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-16 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin ode_evaluate.hpp$$
+$spell
+    ifndef
+    endif
+$$
+
+$section Source: ode_evaluate$$
+
+
+$code
+# ifndef CPPAD_ODE_EVALUATE_HPP
+$pre
+$$
+# define CPPAD_ODE_EVALUATE_HPP
+
+$srcfile%include/cppad/speed/ode_evaluate.hpp%0%// BEGIN C++%// END C++%$$
+
+# endif
+$$
+
+$end

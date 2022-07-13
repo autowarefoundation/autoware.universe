@@ -1,0 +1,29 @@
+\documentclass{article}
+
+\usepackage{amsmath,amssymb,amsfonts,dsfont}
+\usepackage{breqn}
+\usepackage{xcolor}
+
+%*******************************************************************************
+% Define new environments
+%\newenvironment{name}[num]{before}{after}
+%*******************************************************************************
+\newenvironment{CGAlgFile}{}{}
+\newenvironment{CGEqBlock}{}{}
+\newenvironment{CGLine}{}{}
+\newenvironment{CGEq}{\begin{dmath*}[nocenter]}
+                     {\hspace{\linewidth minus\linewidth}\end{dmath*}}
+\newenvironment{CGVar}{\color{blue!60!black}\boldsymbol}
+                      {\ignorespacesafterend}
+\newenvironment{CGDepVar}{\color{red!40!black}\boldsymbol}
+                         {\ignorespacesafterend}
+\newenvironment{CGIndVar}{\color{green!40!black}\boldsymbol}
+                         {\ignorespacesafterend}
+
+%*******************************************************************************
+% Document
+%*******************************************************************************
+\begin{document}
+    \pagestyle{empty}
+    \input{algorithm.tex}
+\end{document} 

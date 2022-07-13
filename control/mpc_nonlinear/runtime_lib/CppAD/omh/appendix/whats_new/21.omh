@@ -1,0 +1,374 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_21$$
+$spell
+    CppAD
+    cppad
+    cxx
+    cmake
+    json_lexer
+    std::isdigit
+    Microsoft
+    const
+    ifndef
+    iterator
+    azmul
+    nans
+    optimizer
+    eigen
+    cppadcg
+    ipopt
+    op_enum
+    fabs
+    hpp
+    var
+    vec
+    msys
+    cygwin
+    rcv
+    det
+    ltmain
+    lcppad
+    pkgconfig
+    cplusplus
+    txt
+    atan
+$$
+
+$section Changes and Additions to CppAD During 2021$$
+
+$head 12-17$$
+Add forward mode calculations using $code AD<double>$$ to the
+$cref atomic_three_vector_op.cpp$$ example.
+
+$head 12-16$$
+Change $code virtual$$ to $code override$$ in all the
+$cref atomic_three_example$$ files and
+$cref  multi_atomic_three_user$$.
+
+$head 12-10$$
+$list number$$
+Added the example $cref atomic_three_vector_op.cpp$$.
+$lnext
+Fix some compiler warnings when building with $code NDEBUG$$ defined.
+$lend
+
+$head 12-08$$
+Update to a newer version of the $cref autotools$$.
+
+$head 09-04$$
+There was a bug in the $cref atan2$$ function.
+For example, the derivative of $code atan2(0,1)$$ was incorrect; see
+$href%https://github.com/coin-or/CppAD/issues/120%issue 120%$$.
+This has been fixed and the $cref atan2.cpp$$ example has been
+extended to do more testing.
+
+$head 08-31$$
+There was a bug in the CMake configuration files such that
+$code make check_example_multi_thread$$ was not being constructed.
+Hence $code make check$$ did not include the multi_thread tests.
+This has been fixed.
+
+$head 08-27$$
+The following error occurred
+$codei%
+    compile_source_test: cplusplus_201100_ok is defined before expected
+%$$
+if the $cref cmake$$ command was run twice,
+without first removing the $code CMakeCache.txt$$ file.
+This has been fixed.
+
+
+$head 08-26$$
+The cmake command was extended to allow for one to specify
+$cref/CMAKE_BUILD_TYPE/cmake/cmake_build_type/$$.
+This forced changing the default for
+$cref/cppad_debug_which/cmake/cppad_debug_which/$$ from
+$code debug_all$$ to the empty string.
+
+$head 07-31$$
+Do more work on pkgconfig files:
+Remove duplicates and put $code -L$$ entries
+before $code -l$$ entries in $code Libs$$ section.
+Furthermore, move all information from private to normal section.
+
+$head 07-30$$
+Fix a bug in the $cref pkgconfig$$ files.
+To be specific, there was an extra $code -l$$ at the front of the list
+of library flags; e.g.,
+$code -l-lcppad_lib$$ was changed to $code -lcppad_lib$$.
+
+$head 07-12$$
+$list number$$
+Change all the scripts called by $cref get_optional.sh$$ to use
+all the processing units available on the system when compiling
+and linking the optional packages.
+$lnext
+Fix $cref get_colpack.sh$$ so that it does not leave behind
+$code ltmain.sh$$ and $code test-driver$$ in the top source directory.
+$lnext
+Change the $cref cmake$$ script use of $code CHECK_CXX_SOURCE_RUNS$$
+to $code CHECK_CXX_SOURCE_COMPILES$$.
+This makes it easier to use CppAD in a cross compiling context.
+$lend
+
+$head 06-22$$
+Improve $cref Var2Par$$ documentation and $cref var2par.cpp$$ example
+by separating dynamic and constant parameters.
+
+$head 06-06$$
+The $code CppAD::vector$$ assignment statement no longer requires the
+size of the vectors to be the same; see
+$cref/check size/CppAD_vector/Assignment/Check Size/$$.
+
+$head 06-02$$
+$list number$$
+Remove $code microsoft_timer$$ which is no longer needed by
+$cref elapsed_seconds$$ because c++11 required (starting this year).
+$lnext
+Remove any use of $code CMAKE_SOURCE_DIR$$.
+This allows CppAD's top source directory
+to be used as a subdirectory of a larger CMake package.
+$lend
+
+$head 05-12$$
+$list number$$
+The cmake
+$cref/include_cppadcg/cmake/include_cppadcg/$$ option was not working
+when cppadcg was the only optional package.
+This has been fixed.
+$lnext
+The smallest size
+for the $cref/det_minor/link_det_minor/$$ speed test
+was changed from one to two (a 2 by 2 matrix).
+$lend
+
+
+$head 04-30$$
+$list number$$
+The conditional expression example $cref cond_exp.cpp$$ was improved.
+$lnext
+Restore the
+$cref/
+    sparse_rcv copy constructor
+    /sparse_rcv
+    /other
+    /Assignment and Constructor
+/$$
+which was removed by mistake when the $code sparse_rcv$$
+move semantics constructor was added.
+$lend
+
+$head 04-28$$
+$list number$$
+The change to the $cref/pow(x,y)/pow/$$ function on
+$cref/02-06/whats_new_21/02-06/$$ handled the case where $icode x$$ is zero.
+The $cref pow_nan.cpp$$ example was modified to show when the new
+version of this function generates nans.
+$lnext
+Remove some uses of the deprecated
+$cref/nan(zero)/nan/nan(zero)/ Deprecated 2015-10-04/$$ function.
+$lend
+
+$head 04-27$$
+Fix the msys2 and cygwin system builds so that they use static
+(instead of dynamic) libraries.
+This is necessary so that static variables (in include files) can not have
+multiple instances in Windows.
+
+$head 04-26$$
+There was a problem with the $cref cmake$$ command when
+$cref ipopt$$ was the only optional package installed.
+This was related to the ipopt
+$cref/include directories/ipopt/Include Directories/$$ problem.
+
+$head 04-16$$
+Improve the instruction for adding a new speed test package; see
+$cref speed_xpackage$$.
+
+$head 04-09$$
+The $cref cpp_graph_print$$ operation was failing when there were
+atomic or discrete functions. This has been fixed.
+
+$head 04-07$$
+Documentation was added for the
+$cref/print_graph_op/cpp_ad_graph/operator_arg/print_graph_op/$$ operator.
+This is different from the function
+$cref cpp_graph_print$$ which prints an entire graph.
+
+
+$head 04-05$$
+The $cref cpp_graph_print$$ operation was modified so that it printed the
+text corresponding to atomic function names, discrete function names,
+and print operators.
+
+$head 04-02$$
+The enum value $code dis_graph_op$$ was corrected to $code discrete_graph_op$$
+in the documentation for
+$cref/discrete_graph_op/cpp_ad_graph/operator_arg/discrete_graph_op/$$.
+
+
+$head 03-29$$
+Include the $cref/dependent_vec/cpp_ad_graph/dependent_vec/$$
+in the output of $cref cpp_graph_print$$; see $code y nodes$$ in
+$cref print_graph.cpp$$ example output.
+
+$head 03-24$$
+The C++ AD graph constructor, $cref cpp_graph_ctor$$,
+cannot be called the first tile in parallel mode.
+This condition has been added to the documentation
+and assets were added to make sure it is true.
+
+$head 03-11$$
+Improve the discussion of identically equal; see
+$cref/more complicated case/base_identical/EqualOpSeq/More Complicated Case/$$.
+
+$head 03-09$$
+Simplify the $cref fabs.cpp$$ example.
+
+$head 03-08$$
+For years the following comment in reverse.hpp was forgotten:
+$codei%
+    // ? should use += here, first make test to demonstrate bug
+%$$
+A test case was created to demonstrate this bug and it was fixed
+(see $code duplicate_dependent_var$$ in $code test_more/general/reverse.cpp$$).
+This only affects reverse mode when
+$cref/w/reverse_any/w/$$ has size $icode%q% * %m%$$ and
+two of the dependent variables in the range of $icode f$$
+are identically equal (actually the same variable).
+
+$head 03-07$$
+$list number$$
+Fix bug in $cref/f.to_graph/to_graph/$$ that ocurred
+when $icode f$$ had $code fabs$$ dynamic parameter operators.
+To be more specific, if $code NDEBUG$$ was not defined,
+an error from an unknown source would be detected in the file $code to_graph.hpp$$.
+$lnext
+Make $cref UnaryMinus$$ an atomic operation,
+instead of using binary subtraction of zero minus the value being negated.
+In addition, add it to the $cref/json_graph unary operators/json_graph_op/Unary Operators/$$ and
+the $cref/graph_op_enum values/graph_op_enum/Enum Values/$$ values.
+$lend
+
+$head 02-21$$
+Add specifications for what is conditionally installed by the
+$cref/include_eigen/cmake/include_eigen/$$ and
+$cref/include_ipopt/cmake/include_ipopt/$$ options.
+In addition, make it clearer that
+$cref/include_cppadcg/cmake/include_cppadcg/$$ should only be used for testing.
+
+$head 02-16$$
+There was a problem with atomic functions, $cref optimize$$, and reverse mode
+that would lead to unexpected nans.
+This has been fixed by changing values,
+that the optimizer determines are not used, from nan to zero.
+A discussion of this was added below
+$cref/azmul/atomic_three_reverse/partial_x/azmul/$$
+in the atomic reverse documentation.
+
+$head 02-14$$
+$list number$$
+Add the $cref/print/cpp_graph_print/$$ command to the
+$code cpp_graph$$ class.
+$lnext
+Change the name of a documentation section form $code seq_property$$
+to $cref fun_property$$.
+$lnext
+Add setting and getting a $code ADFun$$ function's
+$cref/name/function_name/$$.
+$lend
+
+$head 02-12$$
+$list number$$
+In the case where
+$cref/cppad_debug_which/cmake/cppad_debug_which/$$ is
+$code debug_all$$ ($code debug_none$$) the corresponding
+$icode CMAKE_BUILD_TYPE$$ is now specified as
+$code Debug$$ ($code Release$$).
+$lnext
+Fix the $code Policy CMP0054$$ warning during the
+$cref/cmake command/cmake/CMake Command/$$.
+$lnext
+Fix the $cref/Visual Studio/cmake/CMake Command/Visual Studio/$$ build.
+This included commenting out part of the CppAD vector test
+because the MSC compiler is confused between the vector's const_iterator and
+iterator; see $code # ifndef _MSC_VER$$ in $cref cppad_vector.cpp$$.
+$lend
+
+$head 02-11$$
+Fix some problems with the linking of the $code cppad_lib$$ library
+when using the Microsoft compiler.
+
+$head 02-08$$
+Fix some problems in the
+$cref/cppad.pc/pkgconfig/cppad.pc/$$ file; see pull request
+$href%https://github.com/coin-or/CppAD/pull/95/files%95%$$.
+
+$head 02-06$$
+A special version of the $cref/pow(x, y)/pow/$$ function was added
+for the special case where $icode y$$ is a parameter.
+This properly handles the special case where $icode x$$ is zero
+and $icode y$$ is greater than the order of the derivative.
+In addition, it only requires one tape variable (instead of three)
+for each $code pow$$ operation.
+
+$head 01-27$$
+There was a bug in the converting to abs_normal form when
+the function $cref/f/abs_normal_fun/f/$$ made use of the
+$cref pow$$ operator.
+To be specific, when compiling without $code NDEBUG$$ defined,
+an assert was generated even though the code was correct.
+This has been fixed.
+
+$head 01-26$$
+Change the prototype for the cmake command
+$cref/options/cmake/CMake Command/Options/$$ to use $icode true_or_false$$,
+instead of $code true$$ to highlight the fact that one can choose either
+true or false.
+
+$head 01-08$$
+On some systems, the file $code cppad_lib/json_lexer.cpp$$ would not compile
+because the $code std::isdigit$$ function was not defined.
+This has been fixed.
+
+$head 01-07$$
+The example $cref pow_nan.cpp$$ was added.
+
+$head 01-05$$
+$list number$$
+Improve discussion of $cref/cppad_cxx/cmake/cppad_cxx_flags/$$
+and make sure all uses are exactly as described.
+In addition, change mention of optional features from C++11 to C++17.
+$lnext
+The required version of $cref cmake$$ was advanced from 2.8.4 to 3.0.
+This fixes a policy CMP0042 warning on Mac systems.
+$lnext
+If the compiler, plus the flags in
+$cref/cppad_cxx_flags/cmake/cppad_cxx_flags/$$,
+does not by default support C++11, cmake is used
+to find and add the flags necessary for this support.
+$lend
+
+$head 01-03$$
+$list number$$
+Fix a bug in $cref reverse$$ mode for an
+$codei%ADFun< AD<%Base%> >%$$ function that has
+$cref/dynamic/Independent/dynamic/$$ parameters and
+value of one of these parameters was zero or one when the function
+was recorded.
+$lnext
+Fix a bug in the $cref autotools$$ building of $code cppad_lib$$.
+$lend
+
+$end

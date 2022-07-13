@@ -1,0 +1,566 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_09$$
+$spell
+    nlp
+    autotools
+    openmp
+    arg
+    std
+    bool
+    Microsoft
+    retape
+    isnan
+    atan
+    asin
+    acos
+    sqrt
+    OMhelp
+    doxygen
+    exp_eps_apx
+    cos
+    tarball
+    IpIpoptApplication
+    IpoptDir
+    autoconf
+    automake
+    config
+    jacobian
+    valgrind
+    svn
+    Prev
+    CppAD
+    Adolc
+    cppad
+    hpp
+    op
+    pycppad
+    cond_exp
+    VecAD
+    Jacobians
+    Jac
+    Taylor
+$$
+
+$section Changes and Additions to CppAD During 2009$$
+
+
+$head Introduction$$
+This section contains a list of the changes to CppAD during 2009
+(in reverse order by date).
+The purpose of this section is to
+assist you in learning about changes between various versions of CppAD.
+(Comments about developer documentation are only important if you are
+trying to read and understand the CppAD source code.)
+
+$head 12-23$$
+The
+$code ADFun$$ $cref/assignment operator/FunConstruct/Assignment Operator/$$
+was changed so that it now copies forward mode
+Taylor coefficients and sparsity pattern information.
+(This assignment operator was added on $cref/10-24/whats_new_09/10-24/$$.)
+You can use $cref capacity_order$$ to delete the Taylor coefficients
+before copying them.
+Two new functions were added so that you can query and delete the
+forward mode sparsity information;
+see
+$cref/size_forward_bool/ForSparseJac/f/size_forward_bool/$$ and
+$cref/size_forward_set/ForSparseJac/f/size_forward_set/$$.
+
+$head 12-22$$
+Convert the optimization of a sequence of additions from multiple operators
+to one operator with a varying number of arguments. This improved the speed
+for forward and reverse mode computations of an optimized tape.
+
+$head 12-18$$
+It turns out that detection of a sequence of additions makes the optimization
+longer. This was simplified and makes slightly faster by converting two
+jointly recursive routines to one non-recursive routine that uses a
+stack for the necessary information.
+More work is planned to make this optimization faster.
+
+$head 12-12$$
+Detection of a sequence of additions that can be converted to one variable
+during the $cref optimize$$ process.
+This leads to a significant improvement in the tape size and speed.
+
+$head 12-04$$
+Change hash coding of parameter values as part of operators
+during the $cref optimize$$ process.
+This should leads to more detection and removal of duplicate operations.
+
+$head 12-02$$
+Fix minor grammatical error in the Purpose heading
+for $cref/conditional expressions/CondExp/Purpose/$$.
+$pre
+
+$$
+Add the following functions:
+$cref/size_op/fun_property/size_op/$$,
+$cref/size_op_arg/fun_property/size_op_arg/$$,
+and
+$cref/size_op_seq/fun_property/size_op_seq/$$.
+In addition, improve and extend the
+$cref fun_property.cpp$$ example.
+
+$head 11-28$$
+Fix bug in tape optimization with $cref VecAD$$ objects.
+
+$head 11-27$$
+Remove duplicate expressions for the commutative binary operators; i.e.,
+addition and multiplication.
+
+$head 11-26$$
+Improve $cref optimize$$ command so that it removes some duplicate
+expressions from the tape (more of this is planned).
+
+$head 10-30$$
+Make program that check Ipopt ODE example correctness
+a separate file $code ipopt_nlp_ode_check.cpp$$
+Split out Ipopt driver for ODE example $code ipopt_nlp_ode_run.hpp$$.
+Add the speed testing problem $code ipopt_cppad/ipopt_ode_speed.cpp$$.
+
+$head 10-29$$
+Split out the
+ode inverse problem,
+its simple representation,
+and
+its fast representation,
+as a separate files; to be specific,
+$code ipopt_nlp_ode_problem.hpp$$,
+$code ipopt_nlp_ode_simple.hpp$$,
+$code ipopt_nlp_ode_fast.hpp$$,
+and
+$code ipopt_nlp_ode_check.cpp$$.
+
+$head 10-28$$
+Improve the documentation for $code ipopt_nlp_ode_simple$$ and
+$code ipopt_nlp_ode_fast$$.
+
+$head 10-27$$
+Moved old $code ipopt_cppad_simple.cpp$$ to $code ipopt_nlp_get_started.cpp$$,
+created the example $code ipopt_nlp_ode_simple.hpp$$,
+and split and $code ipopt_cppad_ode.cpp$$
+into $code ipopt_nlp_ode_fast.hpp$$ and $code ipopt_nlp_ode_check.cpp$$.
+
+$head 10-24$$
+Added the $cref/assignment operator/FunConstruct/Assignment Operator/$$
+to the $code ADFun$$ object class.
+This makes a copy of the entire operation sequence in another
+function object.
+The intention is that the two functions objects can do calculations in
+parallel.
+In addition,
+CppAD now check for the $code ADFun$$
+$cref/copy constructor/FunConstruct/Copy Constructor/$$
+and generates an error message if it is used.
+
+$head 10-23$$
+The $cref sparse_hessian$$ routine was extended so the user can now choose
+between vectors of sets and boolean vectors for representing
+$cref/sparsity patterns/glossary/Sparsity Pattern/$$.
+
+$head 10-21$$
+The $cref CheckSimpleVector$$ function was extended so that
+it can check simple vectors where the elements of the vector
+can not be assigned to integer values.
+This was done by adding the $cref/x, y/CheckSimpleVector/x, y/$$
+arguments to $code CheckSimpleVector$$.
+
+$head 10-16$$
+The $cref sparse_jacobian$$ routine was extended so the user can now choose
+between vectors of sets and boolean vectors for representing
+$cref/sparsity patterns/glossary/Sparsity Pattern/$$.
+
+$head 10-14$$
+The $icode packed$$ parameter for the sparsity routines
+$cref ForSparseJac$$, $cref RevSparseJac$$, and $cref RevSparseHes$$
+(introduced on $cref/09-26/whats_new_09/09-26/$$) has been removed.
+It has been replaced by changing the argument and return values
+to be more versatile.
+To be specific, they can now represent sparsity
+using vectors of $code std::set<size_t>$$
+instead of just as vectors of $code bool$$
+(see $cref/sparsity patterns/glossary/Sparsity Pattern/$$).
+
+$head 10-03$$
+The Microsoft Visual Studio project files for
+examples and testing
+and for
+more correctness testing
+were not including some new tests in their builds.
+This has been fixed.
+
+$head 09-30$$
+Added the $cref cppad_sparse_jacobian.cpp$$ speed test
+and increased the sizes used by $cref link_sparse_hessian$$.
+Some mistakes were fixed in the documentation for speed tests
+$cref link_sparse_hessian$$ and $cref sparse_hes_fun$$.
+
+$head 09-29$$
+The documentation definition of the function $latex H(x)$$ in
+$cref RevSparseHes$$ was missing a factor of $latex R$$.
+This has been fixed.
+
+$head 09-28$$
+Changed $cref RevSparseHes$$ so that it uses a sparse
+representation when the corresponding call to
+$cref ForSparseJac$$ used a sparse representation.
+This should have been included with the change on 09-26
+because Hessian sparsity patters after $code ForSparseJac$$
+with $icode packed$$ did not work.
+Thus, this could be considered a bug fix.
+
+$head 09-26$$
+Added the $code packed$$ parameter to
+$cref ForSparseJac$$ and $cref RevSparseJac$$.
+If $icode packed$$ is false,
+a sparse instead of packed representation is used
+during the calculations of sparsity patterns.
+The sparse representation
+should be faster, and use less memory, for very large sparse Jacobians.
+The functions $code ForSparseJac$$ and $code RevSparseJac$$
+return packed representations.
+The plan is to eventually provide new member functions that return
+sparse representations.
+
+$head 09-20$$
+Fixed a bug in the $cref/Hessian Sparsity/RevSparseHes/$$ calculations
+that included use of $cref VecAD$$ objects.
+
+$head 09-19$$
+Some more memory allocation improvements (related to those
+on 09-18) were made.
+
+$head 09-18$$
+A bug was found in all the $cref sparsity_pattern$$ calculations.
+The result was that eight times the necessary memory was being used
+during these calculations.  This has been fixed.
+
+
+$head 08-25$$
+Add $cref ad_fun.cpp$$
+an example of how to create your own interface to an $cref ADFun$$ object.
+
+$head 08-14$$
+Add $cref ad_in_c.cpp$$
+an example of how to link CppAD to other languages.
+
+$head 08_13$$
+Add an option to $cref optimize$$ an operation sequence.
+$pre
+
+$$
+$bold Begin Merge$$
+$pre
+$$
+of changes from the directory $code branches/optimize$$
+in the CppAD subversion repository.
+The subheading dates below represent when the correspond change was made in
+$code branches/optimize$$.
+
+$subhead 08-13$$
+An automatic check of the $cref forward_zero$$ results was added
+after each call to $cref/f.optimize()/optimize/$$
+(this $cref/check/optimize/Checking Optimization/$$
+is skipped when $code NDEBUG$$ is defined).
+In addition, all of the $codei%speed/cppad/%*%.cpp%$$ tests
+now check and use the speed test
+$cref/optimize/speed_main/Global Options/optimize/$$ flag.
+
+$subhead 08-11$$
+Change the speed test $cref/main program/speed_main/$$ so
+that it uses a list of options instead of a boolean flag for each option.
+This will make it possible to add options in the future with out
+having to change all the existing tests because the options are now
+global variables instead of arguments to the speed test routines; for example,
+see $code retape$$ speed test option.
+
+$subhead 08-10$$
+The routine for $cref/optimizing/optimize/$$ the operation sequence
+has been added has been further tested using $code test_more/optimize.cpp$$.
+Some bugs have been fix and the routine can
+now be trusted to work correctly.
+$pre
+
+$$
+The function
+$cref/size_VecAD/fun_property/size_VecAD/$$ function was added
+so that the user could see the $code VecAD$$ vectors
+and elements corresponding to an operation sequence.
+
+$subhead 08-09$$
+A routine for $cref/optimizing/optimize/$$ the operation sequence
+has been added.
+This is a preliminary version and needs more testing before it can
+be trusted to work correctly.
+$pre
+$$
+$bold End Merge$$
+
+
+$head 08-06$$
+Add hash table coding to reduce the number of copies of the same
+parameter value necessary in a tape recording.
+In addition, add the function
+$cref/size_par/fun_property/size_par/$$ was added
+so that the user could see the number of parameters
+corresponding to an operation sequence.
+
+$head 08-02$$
+Fix bug in new version of how $cref ForSparseJac$$ handles
+$cref VecAD$$ objects.
+$pre
+
+$$
+Fix bug in overnight build where HTML version and entire documentation
+as one page versions of documentation were not being built.
+$pre
+
+$$
+Fix missing new line under
+$cref/Using Value/SimpleVector/Element Access/Using Value/$$
+heading for simple vector documentation.
+
+$head 08-01$$
+Fix bug in reverse mode Jacobian $cref/sparsity/RevSparseJac/$$
+for $cref VecAD$$ objects.
+
+$head 07-31$$
+The $cref/forward/ForSparseJac/$$ and $cref/reverse/RevSparseJac/$$
+sparse Jacobian routines have been improved so the resulting sparsity
+patterns are valid for all values of the independent variables
+(even if you use $cref CondExp$$ or $cref VecAD$$).
+
+$head 07-26$$
+Convert developer documentation from
+forward and reverse mode sweep routines from OMhelp to doxygen.
+
+$head 07-25$$
+Add developer documentation for $cref PrintFor$$ operations.
+
+$head 07-24$$
+Add developer documentation for $cref Discrete$$ operations.
+
+$head 07-23$$
+Add developer documentation for tape evaluation of $cref VecAD$$ store
+operations. (a store operation changes the value of a VecAD element).
+$pre
+
+$$
+Improve the $cref vec_ad.cpp$$ user example.
+
+$subhead 07-06$$
+Fixed a bug in second or higher order reverse mode calculations
+that used $cref VecAD$$.
+This bug was demonstrated by the test case $code SecondOrderReverse$$
+in the file $code test_more/vec_ad.cpp$$.
+$pre
+
+$$
+Add developer documentation for tape evaluation of the
+VecAD load operations
+(a load operation accesses an element of the vector but
+does not change it.)
+$pre
+
+$$
+Fix $code isnan$$ undefined in $code example/cond_exp.cpp$$ error
+introduced on 07-04 change.
+
+$head 07-04$$
+Add developer documentation for the
+$cref CompareChange$$ operations during tape evaluation.
+$pre
+
+$$
+$bold Begin Merge$$
+$pre
+$$
+of changes from the directory $code branches/sweep$$
+in the CppAD subversion repository.
+The subheading dates below represent when the correspond change was made in
+$code branches/sweep$$.
+
+$subhead 07-04$$
+Fixed a bug in second or higher order reverse mode calculations
+that included $cref/conditional expressions/CondExp/$$.
+This bug was demonstrated by the test case $code SecondOrderReverse$$
+in the file $code test_more/cond_exp.cpp$$.
+$pre
+
+$$
+A simpler and useful example was provided for
+$cref/conditional expressions/CondExp/$$;
+see $cref cond_exp.cpp$$.
+
+
+$subhead 07-03$$
+Some minor improvements were made to the documentation for
+$cref CondExp$$.
+To be specific, a newer OMhelp option was used to change the formatting
+of the syntax, some of the argument names were changed to be more descriptive.
+
+$subhead 07-02$$
+Add developer doxygen documentation of
+tape evaluation for power (exponentiation) operators.
+
+$subhead 07-01$$
+Fix an example indexing error in
+$code introduction/exp_apx/exp_eps_for2.cpp$$ (found by valgrind).
+$pre
+
+$$
+Add developer doxygen documentation of
+tape evaluation for multiplication and division operators.
+
+$subhead 06-30$$
+Add developer doxygen documentation of
+tape evaluation for addition and subtraction operators.
+
+$subhead 06-29$$
+Add developer doxygen documentation of
+tape evaluation for sin, sinh, cos, and cosh.
+
+$subhead 06-28$$
+Add developer doxygen documentation of
+tape evaluation for atan, asin, acos, sqrt, log.
+$pre
+$$
+$bold End Merge$$
+
+$head 06-25$$
+The tarball for most recent release (of the subversion trunk for CppAD)
+was not being placed in the
+$href%http://www.coin-or.org/download/source/CppAD/%download%$$
+directory.
+This has been fixed.
+
+$head 06-22$$
+Fix compiler warnings during the $code openmp/run.sh$$ test.
+$pre
+
+$$
+Changed $cref speed_example.cpp$$ to omit the $code speed_test$$ from
+the correctness result.
+In stead, a message is printed explaining that timing tests need
+to be run without a lot of other demands on the system.
+
+$head 06-21$$
+The configure instructions for $cref/ipopt_dir/autotools/ipopt_dir/$$
+had the wrong path for $code IpIpoptApplication.hpp$$.
+This has been fixed.
+
+$head 06-20$$
+Upgrade to from autoconf 2.61 to 2.63,
+and from automake 1.10.1 to 1.11.
+$pre
+
+$$
+Fix conflict between CppAD's use of config.h preprocessor symbols
+and other packages use of the same symbol names.
+
+$head 06-06$$
+$list number$$
+Using complex of an AD type (instead of AD of complex) was not working
+correctly in $code not_complex_ad.cpp$$ because the
+$cref/default constructor/ad_ctor/$$ for an AD object has an unspecified value.
+This has been fixed for the complex type by changing the default constructor
+to use value zero.
+(The $code not_complex_ad.cpp$$ example has been removed;
+see $cref/complex FAQ/Faq/Complex Types/$$.)
+$lnext
+Fixing the $code not_complex_ad.cpp$$ problem above also fixed a warning
+generated by $href%http://valgrind.org/%valgrind%$$.
+Now $code valgrind$$ runs the CppAD $code example/example$$ program
+with out any warning or error messages.
+In addition, a minor initialization error was fixed in the
+$code test_more/jacobian.cpp$$ routine so now
+$code valgrind$$ also runs the CppAD $code test_more/test_more$$ program
+with out any warnings or error messages.
+$lend
+
+$head 05-20$$
+A change was make to the trunk on 05-19 (svn revision 1361) that broke the
+$cref/Unix install/autotools/$$ procedure.
+This was has been fixed (revision 1362).
+
+$head 03-24$$
+Added cross references in
+the $cref/examples/ListAllExamples/$$ to occurrence of the following tokens:
+$cref AD$$,
+$cref/ADFun/FunConstruct/$$,
+$cref/CPPAD_TEST_VECTOR/test_vector/$$,
+$cref Forward$$,
+$cref Independent$$,
+$cref Jacobian$$
+$cref NearEqual$$,
+$cref Reverse$$.
+
+$head 02-20$$
+Demonstrate using AD to compute the derivative
+of the solution of an ODE with respect to a parameter
+(in the $cref runge_45.cpp$$ example).
+
+$head 02-15$$
+Change the distribution
+compressed tar file
+to only contain one copy of the documentation.
+Link to the current Internet documentation for the other three copies.
+
+
+$head 02-01$$
+Move the $code Prev$$ and $code Next$$ buttons at the top of the documentation
+to the beginning so that their position does not change between sections.
+This makes it easier to repeatedly select this links.
+
+
+$head 01-31$$
+Modify $code cppad/local/op_code.hpp$$ to avoid incorrect warning by
+g++ version 4.3.2 when building $code pycppad$$ (a python interface to CppAD).
+
+$head 01-18$$
+Sometimes an error occurs while taping AD operations.
+The $cref abort_recording$$ function has been added
+to make it easier to recover in such cases.
+$pre
+
+$$
+Previously, CppAD speed and comparison tests used Adolc-1.10.2.
+The version used in the tests has been upgraded to
+$href%
+    https://projects.coin-or.org/ADOL-C%
+    Adolc-2.0.0.
+%$$
+$pre
+
+$$
+A discussion has been added to the documentation for $cref Jacobian$$
+about its use of
+$cref/forward or reverse/Jacobian/Forward or Reverse/$$
+mode depending on which it estimates is more efficient.
+$pre
+
+$$
+A minor typo has been fixed in the description of
+$code W(t, u)$$ in $cref reverse_any$$.
+To be specific,
+$latex o ( t^{p-1} ) * t^{1-p} \rightarrow 0$$
+has been replaced by
+$latex o ( t^{p-1} ) / t^{1-p} \rightarrow 0$$.
+
+$head 01-06$$
+Made some minor improvements to the documentation in
+$cref FunConstruct$$.
+
+$end

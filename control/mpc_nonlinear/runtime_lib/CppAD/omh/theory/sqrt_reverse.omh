@@ -1,0 +1,83 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin sqrt_reverse$$
+$spell
+    sqrt
+    Taylor
+$$
+
+$section Square Root Function Reverse Mode Theory$$
+
+
+We use the reverse theory
+$cref%standard math function
+    %ReverseTheory
+    %Standard Math Functions
+%$$
+definition for the functions $latex H$$ and $latex G$$.
+
+The forward mode formulas for the
+$cref/square root/sqrt_forward/$$
+function are
+$latex \[
+    z^{(j)}  =  \sqrt { x^{(0)} }
+\] $$
+
+for the case $latex j = 0$$, and for $latex j > 0$$,
+
+$latex \[
+z^{(j)}  =  \frac{1}{j} \frac{1}{ z^{(0)} }
+\left(
+    \frac{j}{2} x^{(j) }
+    - \sum_{\ell=1}^{j-1} \ell z^{(\ell)} z^{(j-\ell)}
+\right)
+\] $$
+
+If $latex j = 0$$, we have the relation
+
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(j)} } & = &
+\D{G}{ x^{(j)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(0)} }
+\\
+& = &
+\D{G}{ x^{(j)} }  + \D{G}{ z^{(j)} } \frac{1}{2 z^{(0)} }
+\end{array}
+\] $$
+
+If $latex j > 0$$, then for $latex k = 1, \ldots , j-1$$
+
+$latex \[
+\begin{array}{rcl}
+\D{H}{ z^{(0)} } & = &
+\D{G}{ z^{(0)} }  + \D{G} { z^{(j)} } \D{ z^{(j)} }{ z^{(0)} }
+\\
+& = &
+\D{G}{ z^{(0)} }  -
+\D{G}{ z^{(j)} }  \frac{ z^{(j)} }{ z^{(0)} }
+\\
+\D{H}{ x^{(j)} } & = &
+\D{G}{ x^{(j)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(j)} }
+\\
+& = &
+\D{G}{ x^{(j)} }  + \D{G}{ z^{(j)} } \frac{1}{ 2 z^{(0)} }
+\\
+\D{H}{ z^{(k)} } & = &
+\D{G}{ z^{(k)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ z^{(k)} }
+\\
+& = &
+\D{G}{ z^{(k)} }  - \D{G}{ z^{(j)} } \frac{ z^{(j-k)} }{ z^{(0)} }
+\end{array}
+\] $$
+
+$end

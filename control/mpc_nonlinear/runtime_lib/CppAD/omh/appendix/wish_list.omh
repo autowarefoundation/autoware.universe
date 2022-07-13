@@ -1,0 +1,275 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin wish_list$$
+$spell
+    Subgraphs
+    subgraph
+    Jacobians
+    Recomputation
+    optimizer
+    checkpointing
+    grep
+    recomputed
+    iterator
+    Adolc
+    hpp
+    CppAD
+    Atan
+    cppad
+    tapeless
+    jac
+    boolofvoid
+    inline
+    colpack
+    azmul
+    op
+    Vec
+$$
+
+$section The CppAD Wish List$$
+
+$head See Also$$
+$cref research$$
+
+$head Purpose$$
+The items on this list are improvements and extensions to CppAD
+that are currently being considered.
+
+$head Dynamic Parameters$$
+
+$subhead Comparison Operators$$
+The comparisons for dynamic parameters are not being included
+in the $cref/record_compare/Independent/record_compare/$$ is true.
+This should be fixed and included in the
+$cref/number/compare_change/number/$$ returned by
+$icode%f%.compare_change%$$.
+In addition, we will need a way to know if
+$cref/op_index/compare_change/op_index/$$ corresponds to a
+variable or dynamic parameter operator.
+
+$subhead VecAD Vectors$$
+Currently, when a $cref VecAD$$ vector only depends on dynamic parameters
+it becomes a variable; see $cref/efficiency/VecAD/Efficiency/$$.
+This is a simple solution to the problem of having to pass the state of
+a vector, when it becomes a variable,
+from a dynamic sweep to a zero order forward mode sweep.
+
+$head Graph Operators$$
+The $cref/missing operators/graph_op_enum/Missing Operators/$$ should be
+implemented so that they can be include in conversion between $cref ADFun$$
+objects and the AD graphs; see $cref cpp_ad_graph$$, $cref json_ad_graph$$.
+
+$head Reverse Mode$$
+Reverse mode calculation of the function
+$latex f : \B{R} \rightarrow \B{R}$$  defined by $latex y = f(x)$$ where
+$codei%
+    %ay%[0] = pow(%ax%[0], 0.5) * pow(%ax%[0], 0.5)
+%$$
+yields the result zero when $latex x_0 = 0$$;
+see the file $code bug/pow.sh$$.
+This is a feature of using $cref azmul$$ to select which components of
+a function are differentiated.
+This enables one component to yield $cref nan$$ for a partial derivative
+while another might not.
+If a separate flag was used for which variables are selected,
+reverse mode multiplications would not need to be converted to $code azmul$$
+and the function above would return $code nan$$ for the derivative value.
+This may also be faster that using $code azmul$$.
+
+$head Atomic Examples$$
+Convert the remaining $cref/atomic_two_examples/atomic_two_example/$$
+to use the $cref atomic_three$$ interface.
+
+$comment ------------------------------------------------------------------- $$
+$head Abs-normal$$
+
+$subhead Atomic Functions$$
+The $cref abs_normal_fun$$ conversion does not handle
+atomic functions. This should be fixed.
+
+$subhead Return Functions$$
+Change the $cref abs_normal_fun$$ to return the functions
+$cref/z(x, u)/abs_normal_fun/g/z(x, u)/$$ and
+$cref/y(x, u)/abs_normal_fun/g/y(x, u)/$$ instead of
+$latex g(x, u)$$ and $latex a(x)$$.
+We can add a utility that computes $latex a(x)$$ using
+$latex z(x, u)$$, $latex a_i (x) = | z_i (x, a(x) ) |$$
+and $latex z_i$$ does not depends on $latex u_j$$ for $latex j \geq i$$.
+
+$subhead Cancellation$$
+Avoid cancellation when computing the difference in the absolute value
+function at the current point $latex \hat{x}$$ the displaced point
+$latex x = \hat{x} + \Delta x$$; i.e.,
+$latex \[
+    |z_i (x, \tilde{a}(x) ) | - |z_i (\hat{x}, a(\hat{x}) ) |
+\] $$
+
+$comment ------------------------------------------------------------------- $$
+$head cppad_lib$$
+
+$subhead Requirement$$
+Currently $code cppad_lib$$ library is only needed if one uses
+$cref/colpack/colpack_prefix/$$,
+$cref json_ad_graph$$, or
+$cref cpp_ad_graph$$.
+
+$subhead inline$$
+The C++ $code inline$$ specifier is used to avoid multiple copies
+of functions (that are not templates) during the link process.
+Perhaps some of these functions should be regular functions and part
+in the $cref/cppad_lib/colpack_prefix/cppad_lib/$$ library.
+
+$subhead Compilation Speed$$
+Perhaps complication speed when using $code AD<double>$$
+could significantly be increased by including some of it's member functions
+in the cppad_lib library.
+
+
+$comment ------------------------------------------------------------------ $$
+$head checkpoint$$
+
+$subhead Tapeless AD$$
+Perhaps there should be a version of the
+$cref chkpoint_two$$
+class that uses a tapeless AD package to compute
+the derivative values.
+This would allow for algorithms where the operations sequence
+depends on the independent variable values.
+There is a question as to how sparsity patterns would be determined
+in this case.
+Perhaps they would be passed into the constructor.
+If it was known to be constant,
+the user could compute the pattern using CppAD.
+Otherwise, the user could input
+a conservative estimate of the pattern that would be correct.
+
+$subhead Re-taping$$
+Perhaps the $code checkpoint$$ class should allow for re-taping
+derivative values.
+This would also allow for algorithms where the operations sequence
+depends on the independent variable values.
+Perhaps (as for tapeless entry above)
+the sparsity pattern should be passed into the constructor.
+
+$subhead Testing$$
+There should be some examples and tests for both speed and memory use
+that demonstrate that checkpointing is useful.
+
+$comment ------------------------------------------------------------------- $$
+$head Subgraph$$
+
+$subhead Forward Mode$$
+The $cref subgraph_jac_rev$$ routine computes sparsity patterns
+of Jacobians using reverse mode.
+It is possible that a forward mode version of this method would be
+better for some cases.
+
+$subhead Sparsity$$
+The $cref subgraph_sparsity$$ calculation treats
+each atomic function call as if
+all of its outputs depend on all of its inputs;
+see $cref/atomic function/subgraph_sparsity/Atomic Function/$$.
+These sparsity patterns could be made more efficient
+(could have fewer possibly non-zeros entries)
+by using the sparsity patterns for the atomic functions.
+
+$comment ------------------------------------------------------------------- $$
+$head Element-wise Atomic Operations$$
+Add atomic functions for element-wise addition, subtraction,
+multiplication, and division.
+Where the operands are $cref/simple vectors/SimpleVector/$$
+with elements of type $codei%AD<%Base%>%$$.
+
+$head check_finite$$
+$list number$$
+Sometimes one only gets infinite value during zero order forward
+and nan when computing corresponding derivatives.
+Change $cref check_for_nan$$ to $code check_finite$$
+(not infinite or nan) so that error detection happens during zero
+order forward instead of later.
+$lnext
+In addition, the current $cref check_for_nan$$ writes the corresponding
+zero order values to a temporary file.
+It would be nice if the $code check_finite$$ routine made writing
+the zero order values optional.
+$lend
+
+$head test_boolofvoid$$
+For general purpose use, the $cref test_boolofvoid$$ should be usable
+without including a memory check at the end.
+
+$head Example$$
+Split the $cref/example list/ListAllExamples/$$
+into separate groups by the corresponding example subdirectory.
+
+$comment ----------------------------------------------------------------- $$
+$head Optimization$$
+
+$subhead Taping$$
+Perhaps some of the optimization done while taping forward mode
+should be delayed to the $code optimization$$ step.
+
+$subhead Special Operators$$
+Add special operators that can be implemented more efficiently, e.g.,
+$codei%
+    square(%x%) = %x% * %x%
+%$$
+and have the optimizer recognize when they should be used.
+(They could also be in the user API, but it would not be expected
+that the user would use them.)
+
+$comment -------------------------------------------------------------------$$
+
+$head Base Requirements$$
+Change the $cref/Base requirements/base_require/$$ to use template
+specialization instead of functions so that there is a default value
+for each function. The default would result in a
+$cref/known/cppad_assert/Known/$$ assert when the operation is used and not
+defined by the base class.
+An example of this type of template specialization can be found in
+the implementation of $cref to_string$$.
+
+$head Adolc$$
+Create a documentation page that shows how to convert Adolc commands to
+CppAD commands.
+
+$head Forward Mode Recomputation$$
+If the results of $cref forward_order$$ have already been computed and are still
+stored in the $cref ADFun$$ object (see $cref size_order$$),
+then they do not need to be recomputed and the results can just be returned.
+
+$head Iterator Interface$$
+All of the CppAD simple vector interfaces should also have an
+iterator version for the following reasons:
+$list number$$
+It would not be necessary to copy information to simple vectors
+when it was originally stored in a different type of container.
+$lnext
+It would not be necessary to reallocate memory for a result that is
+repeatedly calculated
+(because an iterator for the result container would be passed in).
+$lend
+
+$head Tracing$$
+Add tracing the operation sequence to the user API and documentation.
+Tracing the operation sequence is currently done by changing the CppAD
+source code. Use the command
+$codep
+    grep '^# *define *CPPAD_.*_TRACE' cppad/local/sweep*.hpp
+$$
+to find all the possible tracing flags.
+
+$head atan2$$
+The $cref/atan2/Atan2/$$ function could be made faster by adding
+a special operator for it.
+
+$end

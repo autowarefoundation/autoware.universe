@@ -1,0 +1,70 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed_cppadcg$$
+$spell
+    cmake
+    CppadcgDir
+    CppAD
+    Cygwin
+    onetape
+$$
+
+
+$section Speed Test Derivatives Using Cppadcg$$
+
+$head Purpose$$
+CppAD has a set of speed tests that are used to compare
+Cppadcg with other AD packages.
+This section links to the source code the Cppadcg speed tests
+(any suggestions to make the Cppadcg results faster are welcome).
+
+$head Building Tests$$
+Starting in the
+$cref/build directory/cmake/Build Directory/$$,
+execute the following commands
+$codei%
+    cd build/speed/cppadcg
+    ./speed_cppadcg %test% %seed% %option_list%
+%$$
+A message saying that the sizes are incorrect will be printed.
+In addition, it will say that source code with the correct sizes
+has been created.
+If you then execute
+$codei%
+    make check_speed_cppadcg VERBOSE=1
+%%$$
+It will build $code speed_cppadcg$$ with the proper sizes and
+run its correctness tests.
+
+
+$head Running Tests$$
+You can then run the corresponding speed tests
+with the either of the following commands:
+$codei%
+    ./speed_cppadcg speed %seed% onetape
+    ./speed_cppadcg speed %seed% onetape optimize
+%$$
+where $icode seed$$ is a positive integer.
+See $cref speed_main$$ for more options.
+
+$contents%
+    speed/cppadcg/det_minor.cpp%
+    speed/cppadcg/det_lu.cpp%
+    speed/cppadcg/mat_mul.cpp%
+    speed/cppadcg/ode.cpp%
+    speed/cppadcg/poly.cpp%
+    speed/cppadcg/sparse_hessian.cpp%
+    speed/cppadcg/sparse_jacobian.cpp
+%$$
+
+$end

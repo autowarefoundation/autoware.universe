@@ -1,0 +1,86 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD puts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+if CppAD_OPENMP
+OPENMP_TEST = openmp_test
+else
+OPENMP_TEST =
+endif
+#
+if CppAD_BTHREAD
+# BTHREAD_LIB set to proper value in this case
+BTHREAD_TEST = bthread_test
+if CppAD_BOOST_DIR
+BOOST_LIB     = -L$(BOOST_DIR)/lib
+endif
+else
+# BTHREAD_LIB empty in this case
+BTHREAD_TEST =
+BOOST_LIB     =
+endif
+#
+if CppAD_PTHREAD
+PTHREAD_TEST = pthread_test
+else
+PTHREAD_TEST =
+endif
+#
+check_PROGRAMS    = $(OPENMP_TEST) $(BTHREAD_TEST) $(PTHREAD_TEST)
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE) \
+	$(OPENMP_FLAGS)
+#
+#
+AM_LDFLAGS        = $(OPENMP_FLAGS)
+LDADD             = $(BOOST_LIB) $(BTHREAD_LIB) $(PTHREAD_LIB)
+#
+SHARED_SRC = \
+	thread_test.cpp \
+	team_thread.hpp  \
+	team_example.cpp          team_example.hpp \
+	harmonic.cpp              harmonic.hpp \
+	multi_atomic_two.cpp      multi_atomic_two.hpp \
+	multi_atomic_three.cpp    multi_atomic_three.hpp \
+	multi_newton.cpp          multi_newton.hpp \
+	multi_chkpoint_one.cpp    multi_chkpoint_one.hpp \
+	multi_chkpoint_two.cpp    multi_chkpoint_two.hpp
+#
+bthread_test_SOURCES = \
+	$(SHARED_SRC) \
+	bthread/team_bthread.cpp \
+	bthread/a11c_bthread.cpp  \
+	bthread/simple_ad_bthread.cpp
+#
+openmp_test_SOURCES = \
+	$(SHARED_SRC) \
+	openmp/team_openmp.cpp \
+	openmp/a11c_openmp.cpp  \
+	openmp/simple_ad_openmp.cpp
+#
+pthread_test_SOURCES = \
+	$(SHARED_SRC) \
+	pthread/team_pthread.cpp \
+	pthread/a11c_pthread.cpp  \
+	pthread/simple_ad_pthread.cpp
+#
+dist_noinst_SCRIPTS = test.sh
+#
+test: check
+	$(srcdir)/test.sh

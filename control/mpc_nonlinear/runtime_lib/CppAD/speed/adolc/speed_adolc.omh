@@ -1,0 +1,63 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed_adolc$$
+$spell
+    cmake
+    AdolcDir
+    CppAD
+    Cygwin
+$$
+
+
+$section Speed Test of Derivatives Using Adolc$$
+
+$head Purpose$$
+CppAD has a set of speed tests that are used to compare
+Adolc with other AD packages.
+This section links to the source code the Adolc speed tests
+(any suggestions to make the Adolc results faster are welcome).
+
+$head include_adolc$$
+To run these tests
+you must specify $cref/include_adolc/cmake/include_adolc/$$
+on your cmake command line.
+
+
+$head Running Tests$$
+To build these speed tests, and run their correctness tests,
+execute the following commands starting in the
+$cref/build directory/cmake/Build Directory/$$:
+$codei%
+    cd speed/adolc
+    make check_speed_adolc VERBOSE=1
+%$$
+You can then run the corresponding speed tests
+with the following command
+$codei%
+    ./speed_adolc speed %seed%
+%$$
+where $icode seed$$ is a positive integer.
+See $cref speed_main$$ for more options.
+
+$contents%
+    speed/adolc/det_minor.cpp%
+    speed/adolc/det_lu.cpp%
+    speed/adolc/mat_mul.cpp%
+    speed/adolc/ode.cpp%
+    speed/adolc/poly.cpp%
+    speed/adolc/sparse_hessian.cpp%
+    speed/adolc/sparse_jacobian.cpp%
+    speed/adolc/alloc_mat.cpp
+%$$
+
+$end

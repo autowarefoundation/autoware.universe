@@ -1,0 +1,104 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin sin_cos_reverse$$
+$spell
+    Taylor
+    cos
+$$
+
+$section Trigonometric and Hyperbolic Sine and Cosine Reverse Theory$$
+
+
+We use the reverse theory
+$cref%standard math function
+    %ReverseTheory
+    %Standard Math Functions
+%$$
+definition for the functions $latex H$$ and $latex G$$.
+In addition,
+we use the following definitions for $latex s$$ and $latex c$$
+and the integer $latex \ell$$
+
+$table
+Coefficients
+    $cnext $cnext $latex s$$
+    $cnext $cnext $latex c$$
+    $cnext $cnext $latex \ell$$
+$rnext
+Trigonometric Case
+    $cnext $cnext $latex \sin [ X(t) ]$$
+    $cnext $cnext $latex \cos [ X(t) ]$$
+    $cnext $cnext 1
+$rnext
+Hyperbolic Case
+    $cnext $cnext $latex \sinh [ X(t) ]$$
+    $cnext $cnext $latex \cosh [ X(t) ]$$
+    $cnext $cnext -1
+$tend
+We use the value
+$latex \[
+    z^{(j)} = ( s^{(j)} , c^{(j)} )
+\] $$
+in the definition for $latex G$$ and $latex H$$.
+The forward mode formulas for the
+$cref/sine and cosine/sin_cos_forward/$$ functions are
+$latex \[
+\begin{array}{rcl}
+s^{(j)}  & = & \frac{1 + \ell}{2} \sin ( x^{(0)} )
+           +   \frac{1 - \ell}{2} \sinh ( x^{(0)} )
+\\
+c^{(j)}  & = & \frac{1 + \ell}{2} \cos ( x^{(0)} )
+           +   \frac{1 - \ell}{2} \cosh ( x^{(0)} )
+\end{array}
+\] $$
+
+for the case $latex j = 0$$, and for $latex j > 0$$,
+
+$latex \[
+\begin{array}{rcl}
+s^{(j)} & = & \frac{1}{j}
+    \sum_{k=1}^{j} k x^{(k)} c^{(j-k)}  \\
+c^{(j)} & = & \ell \frac{1}{j}
+    \sum_{k=1}^{j} k x^{(k)} s^{(j-k)}
+\end{array}
+\] $$
+
+If $latex j = 0$$, we have the relation
+
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(j)} } & = &
+\D{G}{ x^{(j)} }
++ \D{G}{ s^{(j)} } c^{(0)}
++ \ell \D{G}{ c^{(j)} } s^{(0)}
+\end{array}
+\] $$
+
+If $latex j > 0$$, then for $latex k = 1, \ldots , j-1$$
+
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(k)} } & = &
+\D{G}{ x^{(k)} }
++ \D{G}{ s^{(j)} } \frac{1}{j} k c^{(j-k)}
++ \ell \D{G}{ c^{(j)} } \frac{1}{j} k s^{(j-k)}
+\\
+\D{H}{ s^{(j-k)} } & = &
+\D{G}{ s^{(j-k)} } + \ell \D{G}{ c^{(j)} } k x^{(k)}
+\\
+\D{H}{ c^{(j-k)} } & = &
+\D{G}{ c^{(j-k)} } + \D{G}{ s^{(j)} } k x^{(k)}
+\end{array}
+\] $$
+
+$end

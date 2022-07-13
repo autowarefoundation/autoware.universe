@@ -1,0 +1,656 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_17$$
+$spell
+    const
+    Perl
+    CppAD
+    doxygen
+    cppad
+    hpp
+    bool
+    Jacobian
+    Jacobians
+    jac
+    hes
+    eigen
+    mul
+    rc
+    rcv
+    omhelp
+    valgrind
+    uninitialised
+    deallocations
+    sacado
+    typedef
+    plugin
+    gcc
+    readme
+    autotools
+    ipopt
+    colpack
+    Wconversion
+    xq
+    boolofvoid
+    namespace
+    cxx
+    uninitialized
+    cmake
+    op
+    sizeof
+    addr
+    subsparsity
+    subgraph
+    optimizer
+    subgraphs
+$$
+
+$section Changes and Additions to CppAD During 2017$$
+
+$head API Changes$$
+Speed tests no longer automatically compile in release mode; see
+$cref/debug_which/speed/debug_which/$$
+
+$head 12-14$$
+Add the $cref subgraph_hes2jac.cpp$$ example
+which computes sparse Hessians using subgraphs and Jacobians.
+
+$head 12-08$$
+A multi-threading
+wish list item was added.
+
+$head 12-06$$
+A $cref wish_list$$ item to enable one to iterate through a
+$code const$$ $cref ADFun$$ operation sequence was completed.
+In addition, the $cref/f/abs_normal_fun/f/$$ argument to the
+$code abs_normal$$ operation was converted to be $code const$$.
+
+
+$head 12-05$$
+The internal data object used to represent sparsity patterns as
+vectors of integers was improved;
+see $cref/internal_bool/for_jac_sparsity/internal_bool/$$
+in $code for_jac_sparsity$$ and other
+$cref/preferred sparsity pattern calculations
+    /sparsity_pattern
+    /Preferred Sparsity Pattern Calculations
+/$$.
+
+$head 12-04$$
+Back out the $code hold_reverse_memory$$ option.
+
+$head 12-01$$
+The $code hold_reverse_memory$$ option was added.
+
+$head 11-30$$
+Edit the $cref download$$ instructions.
+
+$head 11-23$$
+The $code ADFun$$ function $cref/optimizer/optimize/$$
+was not handling hash code collisions properly.
+To be specific, only the arguments
+that were variables where checked for a complete match.
+The arguments that are constants need to also be checked.
+This has been fixed.
+
+$head 11-20$$
+$list number$$
+Add the $cref subgraph_jac_rev$$ method for computing
+sparse Jacobians.
+$lnext
+Add the $cref/subgraph/speed_main/Global Options/subgraph/$$ option
+to the CppAD speed tests.
+$lend
+
+$head 11-19$$
+Add the $cref subgraph_reverse$$ method for computing
+sparse derivatives.
+This was inspired by the
+$href%https://cran.r-project.org/web/packages/TMB/index.html%TMB%$$ package.
+
+
+$head 11-15$$
+$list number$$
+Add wish list item for $cref/subgraph sparsity/wish_list/Subgraph/Sparsity/$$.
+$lnext
+Fix $cref cmake_check$$ when $cref/include_ipopt/cmake/include_ipopt/$$
+is not present on the cmake command line
+(make was trying to build some of the ipopt tests).
+$lend
+
+$head 11-13$$
+$list number$$
+Add the $cref/hes2jac/speed_main/Global Options/hes2jac/$$ option
+to the CppAD speed tests.
+$lnext
+Implement the
+$cref/subsparsity/speed_main/Sparsity Options/subsparsity/$$ option
+for the CppAD $cref/sparse_hessian/link_sparse_hessian/$$ test.
+$lnext
+Fix detection of invalid options in the speed test programs; see the
+$cref/global/speed_main/Global Options/$$ and
+$cref/sparsity/speed_main/Sparsity Options/$$ options.
+$lend
+
+$head 11-12$$
+Add the $cref/subsparsity/speed_main/Sparsity Options/subsparsity/$$ option
+to the CppAD speed tests.
+
+$head 11-08$$
+Add the $cref subgraph_sparsity$$ method for computing
+dependency and sparsity.
+This was inspired by the
+$href%https://cran.r-project.org/web/packages/TMB/index.html%TMB%$$ package.
+
+
+$head 11-06$$
+More information has been added to the operation sequence.
+To be specific, the extra amount of
+$codei%
+    %f%.size_op() * sizeof(%tape_addr_type)
+%$$
+was added to the value returned by
+$cref/size_op_seq/fun_property/size_op_seq/$$.
+
+$head 11-04$$
+The method for iterating through the tape has been changed.
+It now includes an extra data structure that makes it faster,
+but also requires slightly more memory. To be specific, the term
+$codei%
+    %f%.size_op() * sizeof(%tape_addr_type) * 2
+%$$
+was added to the value returned by
+$cref/size_op_seq/fun_property/size_op_seq/$$.
+In addition, some minor corrections were made to the
+$cref/tape_addr_type/cmake/cppad_tape_addr_type/$$
+requirements.
+
+$head 10-23$$
+$list number$$
+Require $code cmake.3.1$$ or greater and fix
+a cmake warning by always using the new $code CMP0054$$ policy.
+$lnext
+Fix a $code g++ 7.2.1$$ warning about a possibly uninitialized value
+in the file $code cppad/local/optimize/hash_code.hpp$$.
+$lend
+
+$head 09-16$$
+An optimization memory entry
+was added to the wish list
+and the $cref/check_finite/wish_list/check_finite/$$ entry was modified.
+
+$head 08-30$$
+$list number$$
+If $cref colpack_prefix$$ was not specified, one would get the following
+waring during the $cref cmake$$ command:
+$codei%
+    Policy CMP0046 is not set: Error on non-existent dependency in
+%$$
+This has been fixed by not adding the dependency when it is not needed.
+$lnext
+There was a problem running $cref/make check/cmake_check/$$
+when $cref/cppad_cxx_flags/cmake/cppad_cxx_flags/$$ was not specified.
+This has been fixed.
+This was probably introduced on $cref/05-29/whats_new_17/05-29/$$.
+$lend
+
+
+$head 08-29$$
+There was a problem on some systems that created an error when
+specializing the $code is_pod$$ template function in the
+$code CppAD::local$$ namespace.
+This has been fixed by testing for compatibility at during the
+$cref cmake$$ command and creating the file $code cppad/local/is_pod.hpp$$.
+
+
+$head 08-09$$
+Add the $cref/test_boolofvoid/wish_list/test_boolofvoid/$$
+wish list item.
+
+$head 08-08$$
+$list number$$
+The $cref eigen_plugin.hpp$$ was put back in the
+$cref cppad_eigen.hpp$$ definitions.
+This makes CppAD incompatible with older versions of eigen; e.g., eigen-3.2.9.
+The plugin was removed on $cref/05-12/whats_new_17/05-12/$$.
+$lnext
+Fix some minor typos in the documentation.
+To be specific:
+The font, in the $cref sparse_rc$$ and $cref sparse_rcv$$ syntax,
+for the text
+$codei%
+    %target% = %pattern%
+%$$
+The font, in $cref capacity_order$$, for the text
+$codei%
+    %xq%.size() == %f%.Domain()
+%$$
+Remove a percent sign $code %$$, in $cref CppAD_vector$$, in the text
+$codei%
+    # include <cppad/utility/vector.hpp>
+%$$
+$lend
+
+$head 07-25$$
+$list number$$
+Fix warnings related to type conversions that
+occurred when one used $code -Wconversion$$ with
+$code g++$$ version 6.3.1.
+$lnext
+The warning were not fixed for complex AD types; e.g.,
+$cref complex_poly.cpp$$.
+The $cref wno_conversion$$ include file was added to deal with
+cases like this.
+$lend
+
+$head 07-03$$
+$list number$$
+The $cref min_nso_linear$$ abs-normal example was added.
+$lnext
+Fix bug in $cref abs_normal_fun$$, to be specific, the multiplication
+of a variable on the left by a parameter was not handled.
+$lend
+
+$head 07-01$$
+the $cref/abs_normal/example_abs_normal/$$ examples were converted from using
+quadratic programming problems to using linear programming problems.
+
+$head 06-28$$
+The $cref/abs-normal/abs_normal_fun/$$
+representation of non-smooth functions has been added.
+Examples and utilities that use this representation have also been included,
+see $cref/abs_normal/example_abs_normal/$$.
+
+$head 06-11$$
+The atomic functions base class $cref atomic_two$$
+makes more of an effort to avoid false sharing cache misses.
+This may the speed of multi-threaded applications with atomic functions;
+e.g., see $cref multi_atomic_two.cpp$$.
+
+$head 06-10$$
+$list number$$
+Add the multi-threading atomic function example
+$cref multi_atomic_two.cpp$$.
+$lnext
+The $code example/multi_thread/test_multi$$ directory used
+to have an example using the deprecated
+$cref atomic_one$$ functions in a multi-threading setting
+(that only built with the deprecated $cref autotools$$).
+This have been removed.
+$lend
+
+$head 06-07$$
+The multi-threading examples
+$cref harmonic.cpp$$ and $cref multi_newton.cpp$$ were re-organized.
+To be specific, the source code for each example was moved to one file.
+In addition, for each example,
+the documentation for each of the routines has been separated
+and placed next to its source code.
+
+$head 06-04$$
+Most all the $cref deprecated$$ features have been removed
+from the examples with the exception of those in the
+$code example/deprecated$$ directory.
+
+$head 06-03$$
+Add the fact that the pair
+($icode row$$, $cref/col/link_sparse_hessian/col/$$)
+is lower triangular to the speed test
+$code link_sparse_hessian$$ routine.
+
+
+$head 06-01$$
+$list number$$
+There was a bug in the
+$cref sparse_hes$$ routine and it was using the general coloring algorithm when
+$cref/cppad.symmetric/sparse_hes/coloring/cppad.symmetric/$$ was specified.
+This has been fixed and improves the efficiency in this case.
+$lnext
+Some bugs were fixed in the use of
+$cref/colpack/colpack_prefix/$$ as the coloring algorithm for
+sparse Jacobian and Hessian calculations.
+This has improved the efficiency of Colpack colorings for computing Hessians
+(when $code colpack.symmetric$$ is used).
+$lnext
+The $code colpack.star$$ coloring method for sparse Hessians has
+been deprecated; see
+$cref/sparse_hes/sparse_hes/coloring/colpack.star Deprecated 2017-06-01/$$
+and
+$cref/sparse_hessian
+    /sparse_hessian
+    /work
+    /colpack.star Deprecated 2017-06-01
+/$$.
+Use the $code colpack.symmetric$$ method instead; see
+$cref/sparse_hes/sparse_hes/coloring/colpack.symmetric/$$ and
+$cref/sparse_hes/sparse_hes/coloring/colpack.general/$$.
+$lend
+
+$head 05-29$$
+$list number$$
+Add the capability to compile so that CppAD debug and release mode
+can be mixed; see
+$cref/CPPAD_DEBUG_AND_RELEASE
+    /preprocessor
+    /Documented Here
+    /CPPAD_DEBUG_AND_RELEASE
+/$$.
+$lnext
+Add the $cref/cppad_debug_which/cmake/cppad_debug_which/$$ flags
+that determines which files are compiled for debugging versus release
+during the CppAD testing; see $cref cmake_check$$.
+$lnext
+There was a problem linking the proper libraries for using newer versions of
+$cref/sacado/sacado_prefix/$$.
+This has been fixed.
+$lend
+
+$head 05-19$$
+Most all the examples have been moved to $code example$$ directory
+and grouped as sub-directories; e.g., the $cref ipopt_solve$$ examples
+are in the $code example/ipopt_solve$$ directory.
+
+$head 05-14$$
+$list number$$
+The file $code build.sh$$ was moved to $code bin/autotools.sh$$,
+and `auto tools' has been changed to $cref autotools$$.
+$lnext
+The README file was replace by readme.md
+and AUTHORS was moved to authors.
+$lnext
+The NEWS, INSALL, and ChangeLog files
+are no longer necessary for autotools build and have been removed.
+$lnext
+The file test_more/sparse_jacobian.cpp generated a warning
+under some gcc compiler options.
+This has been fixed.
+$lnext
+Specifications were added so that $cref to_string$$ yields exact results
+for integer types and machine precision for floating point types.
+$lnext
+Some editing was done to the $cref autotools$$ instructions.
+$lend
+
+$head 05-12$$
+$list number$$
+The $cref Faq$$ has been updated.
+$lnext
+Remove includes of $code cppad/cppad.hpp$$ from the
+$codei%include/cppad/speed/%*%.hpp%$$ files.
+This avoids an incompatibility between sacado and newer versions of eigen,
+when eigen is used for the $cref testvector$$.
+$lnext
+The $cref eigen$$ package changed its requirements for
+defining Scalar types
+(some where between eigen-3.2.9 and eigen-3.3.3).
+The member variable
+$cref/digit10/numeric_limits/digits10/$$ was added to the
+$code numeric_limits$$ to accommodate this change.
+$lnext
+Note that this fix required adding $code digits10$$ to the
+user defined $icode Base$$ type
+$cref/requirements/base_require/$$; see
+$cref base_limits$$.
+$lnext
+In addition, it is no longer necessary to add the typedef
+$codei%
+    typedef Scalar value_type;
+%$$
+so the file $code cppad/example/eigen_plugin.hpp$$ has been removed.
+(This type definition was previously necessary for eigen vectors
+to be $cref/simple vectors/SimpleVector/$$.)
+$lend
+
+$head 04-08$$
+The $cref/optimization/optimize/$$, with a large number of
+$cref/conditional expressions/CondExp/$$, was performing many
+memory allocations and deallocations. This has been reduced.
+
+
+$head 04-02$$
+Fix a bug in the optimization of conditional expressions; see,
+$cref/no_conditional_skip/optimize/options/no_conditional_skip/$$.
+
+$head 03-31$$
+Fix some $code valgrind$$ errors that occurred while running the CppAD
+test set.
+
+$head 03-29$$
+The following valgrind error might occur when the optimize skipped
+setting values that did not affect the dependent variables:
+$codei%
+    Conditional jump or move depends on uninitialised value(s)
+%$$
+This was not a bug, the code has been changed to avoid this error
+in order to make it easier to use valgrind with CppAD.
+
+$head 03-25$$
+$list number$$
+The $cref sparse_hes$$ function was more efficient if
+there were more entries in each row of the requested
+$cref/subset/sparse_hes/subset/$$. This has been changed
+to more entries in each column, and documentation to this effect
+was included.
+$lnext
+The $cref optimize$$ routine was using to much memory when
+it was optimizing conditional skip operations; see
+$cref/no_conditional_skip/optimize/options/no_conditional_skip/$$.
+This has been fixed.
+$lend
+
+$head 03-20$$
+There was a mistake in $cref sparse_jac$$ that caused the
+following assert to mistakenly occur:
+$codep
+sparse_jac_rev: work is non-empty and conditions have changed
+Error detected by false result for
+    color.size() == 0 || color.size() == n
+$$
+A test that using a previously stores work vector
+has been added to $cref sparse_jac_rev.cpp$$
+and this bug has been fixed.
+
+$head 03-13$$
+The documentation for the Hessian in $cref rev_hes_sparsity$$ was
+transposed; i.e., the sense of
+$cref/transpose/rev_hes_sparsity/transpose/$$ was reversed.
+
+$head 03-11$$
+Add sparse assignment statements; see $icode other$$ for
+$cref/sparse_rc/
+    sparse_rc/
+    other/
+    Assignment and Constructor
+/$$ and
+$cref/sparse_rcv/
+    sparse_rcv/
+    other/
+    Assignment and Constructor
+/$$.
+$head 03-10$$
+Add the a sizing constructor to the
+$cref/sparse_rc syntax/sparse_rc/Syntax/$$; i.e.,
+a constructor that sets the number of row, number of columns,
+and number of possibly non-zero values in the sparsity pattern.
+
+$head 03-06$$
+Fix a bug in the sparsity computation using the
+internal representation for
+$cref/vectors of sets/glossary/Sparsity Pattern/Vector of Sets/$$;
+i.e., when $icode internal_bool$$ was false in
+any of the $cref sparsity_pattern$$ calculations; e.g.,
+$cref/for_jac_sparsity/for_jac_sparsity/internal_bool/$$.
+
+$head 03-04$$
+Fix a bug in the optimization of conditional expressions;
+see $cref/no_conditional_skip/optimize/options/no_conditional_skip/$$.
+
+$head 02-26$$
+$list number$$
+Fix warning during $cref cmake$$ command,
+on $href%https://www.cygwin.com/%cygwin%$$ systems,
+about $code WIN32$$ not being defined.
+$lnext
+Add $cref/element-wise atomic operations
+    /wish_list
+    /Element-wise Atomic Operations
+/$$
+to the wish list.
+$lend
+
+$head 02-21$$
+$list number$$
+Minor improvements to syntax and documentation for
+$cref sparse_rc$$ and $cref sparse_rcv$$.
+$lnext
+Separate preferred sparsity versions in
+$cref sparsity_pattern$$ and $cref sparse_derivative$$.
+$lend
+
+$head 02-19$$
+$list number$$
+Remove the $code bool_sparsity.cpp$$ example and
+add the $cref rc_sparsity.cpp$$ example.
+$lnext
+Check for duplicate entries during
+$cref/row_major/sparse_rc/row_major/$$ and $code col_major$$ in
+$code sparse_rc$$.
+$lend
+
+$head 02-15$$
+Fix bug when using $cref ForSparseHes$$ with atomic functions; i.e.,
+$cref atomic_two_for_sparse_hes$$.
+
+$head 02-13$$
+Improve $cref/for_sparse_jac/atomic_two_eigen_mat_mul.hpp/Private/for_sparse_jac/$$
+calculation in $code eigen_mat_mul.hpp$$ example.
+It now checks for the parameter zero and does not propagate any sparsity
+in this case (because the result is always zero).
+
+$head 02-11$$
+$list number$$
+Remove the 'Under Construction' heading from the
+$cref sparse_rc$$ and $cref sparse_rcv$$ documentation; i.e.,
+they are ready for public use (part of the CppAD API).
+$lnext
+Fix some warning that occur when using
+$cref/eigen/cppad_testvector/eigen/$$ for the CppAD test vector.
+(The Eigen vector $code size()$$ function
+returns an $code int$$ instead of $code size_t$$.)
+$lnext
+Fix a bug in $cref/sparse_jac_rev/sparse_jac/$$.
+$lend
+
+$head 02-10$$
+$list number$$
+The subset of deprecated features corresponding to
+the cmake command option $code cppad_deprecated=YES$$
+have been completely removed.
+$lnext
+Fix problems with $cref autotools$$ build
+(started near 02-01 while working on sparsity branch).
+$lnext
+Reorder (better organize) the $cref ADFun$$ documentation section.
+$lend
+
+$head 02-09$$
+$list number$$
+Remove the sparsity pattern wish list item.
+For sparsity patterns, this was completed by
+$cref sparse_rc$$ and the sparsity pattern routines that used it;
+e.g., $cref for_jac_sparsity$$.
+For sparse matrices, it was completed by
+$cref sparse_rcv$$ and the sparse matrix routines that use it; e.g.,
+$cref sparse_jac$$.
+$lnext
+Add the Deprecated and
+$cref/example/wish_list/Example/$$ items to the wish list.
+(The Deprecated item was partially completed and partially removed.)
+$lend
+
+$head 02-08$$
+$list number$$
+Make coloring a separate argument to
+$cref/sparse_jac/sparse_jac/coloring/$$ and
+$cref/sparse_hes/sparse_hes/coloring/$$.
+$lnext
+Add the
+$cref/group_max/sparse_jac/group_max/$$
+argument to the $code sparse_jac_for$$ function.
+$lend
+
+$head 02-05$$
+$list number$$
+Add the $cref/sparse_jac_for/sparse_jac/$$ routine
+which uses $cref sparse_rc$$ sparsity patterns
+and $cref sparse_rcv$$ matrix subsets.
+$lnext
+Order for $cref sparse_rc$$ row-major and column-major was switched.
+This has been fixed.
+$lend
+
+$head 02-03$$
+Add the
+$cref rev_jac_sparsity$$
+$cref rev_hes_sparsity$$, and
+$cref for_hes_sparsity$$ interfaces to sparsity calculations.
+These use $cref sparse_rc$$ sparsity patterns.
+
+$head 02-02$$
+Change $cref/size_forward_bool/for_jac_sparsity/f/size_forward_bool/$$ and
+Change $cref/size_forward_set/for_jac_sparsity/f/size_forward_set/$$
+so that they are a better approximation of the number of bytes
+(unsigned characters) being used.
+The exact same sparsity pattern might use different memory
+in two different function objects (because memory is allocated in chunks).
+The $cref fun_assign.cpp$$ example has been changed to reflect this fact.
+
+$head 02-01$$
+Add the $cref for_jac_sparsity$$ interface for the sparse Jacobian calculations.
+This is the first use of $cref sparse_rc$$,
+a sparsity pattern class that uses row and column
+$cref/index vectors/glossary/Sparsity Pattern/Row and Column Index Vectors/$$.
+
+$head 01-30$$
+Move the $cref sparsity_pattern$$ examples from $code example$$
+to $code example/sparse$$ subdirectory.
+This included the sparse $cref/driver/drivers/$$ examples.
+
+$head 01-29$$
+Move the $cref utility$$ examples from $code example$$
+to $code example/utility$$ subdirectory.
+
+$head 01-27$$
+Add a $cref addon$$ link to
+$href%http://www.seanet.com/~bradbell/cppad_swig%cppad_swig%$$,
+a C++ AD object library and swig interface to Perl, Octave, and Python.
+
+$head 01-19$$
+Convert more examples / tests to use a multiple of machine epsilon
+instead of $code 1e-10$$.
+
+$head 01-18$$
+$list number$$
+Fix developer
+$href%https://www.coin-or.org/CppAD/Doc/doxydoc/html/%doxydoc%$$
+documentation so that it works with newer version of doxygen.
+$lnext
+Fix a Visual C++ 2015 compilation problem in friend declarations
+in the file $code cppad/local/ad_tape.hpp$$.
+$lend
+
+$head 01-17$$
+Change computed assignment to
+$cref/compound assignment/compound_assign/$$.
+
+$end

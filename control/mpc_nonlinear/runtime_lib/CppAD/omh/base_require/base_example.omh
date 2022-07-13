@@ -1,0 +1,25 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin base_example$$
+
+$section Example AD Base Types That are not AD<OtherBase>$$
+
+$contents%
+    example/general/base_alloc.hpp%
+    example/general/base_require.cpp%
+    include/cppad/example/base_adolc.hpp%
+    include/cppad/core/base_float.hpp%
+    include/cppad/core/base_double.hpp%
+    include/cppad/core/base_complex.hpp
+%$$
+
+$end

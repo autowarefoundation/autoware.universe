@@ -1,0 +1,143 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+#
+if CppAD_POSTFIX
+postfix_dir  = $(POSTFIX_DIR)
+else
+postfix_dir  = .
+endif
+#
+# Did user specify a value for ADOLC_DIR in configure command line
+if CppAD_ADOLC
+SPEED_ADOLC_TESTS   = speed/adolc
+else
+SPEED_ADOLC_TESTS   =
+endif
+#
+# Did user specify a value for FADBAD_DIR in configure command line
+if CppAD_FADBAD
+SPEED_FADBAD_TESTS  = speed/fadbad
+else
+SPEED_FADBAD_TESTS  =
+endif
+#
+# Did user specify a value for SACADO_DIR in configure command line
+if CppAD_SACADO
+SPEED_SACADO_TESTS  = speed/sacado
+else
+SPEED_SACADO_TESTS  =
+endif
+#
+# Did user specify a value for IPOPT_DIR in configure command line
+if CppAD_IPOPT
+IPOPT_TESTS = \
+	example/ipopt_solve \
+	cppad_ipopt/example \
+	cppad_ipopt/speed \
+	cppad_ipopt/test
+#
+IPOPT_DIRS = \
+	cppad_ipopt/src \
+	$(IPOPT_TESTS)
+#
+IPOPT_HEADER = \
+	cppad_ipopt/src/cppad_ipopt_nlp.hpp
+else
+IPOPT_TESTS  =
+IPOPT_DIRS   =
+IPOPT_HEADER =
+endif
+#
+# Is the library archiving program present
+SPEED_TESTS = \
+	$(SPEED_ADOLC_TESTS)  \
+	speed/cppad \
+	speed/double \
+	speed/example \
+	speed/xpackage \
+	$(SPEED_FADBAD_TESTS) \
+	$(SPEED_SACADO_TESTS)
+#
+SPEED_DIRS = \
+	speed/src \
+	$(SPEED_TESTS)
+# ---------------------------------------------------------------------------
+myincludedir = $(includedir)/$(postfix_dir)
+#
+myinclude_HEADERS = \
+	$(IPOPT_HEADER)
+#
+# No objects or executables are required to install CppAD.
+# See 'make test' below for building the tests.
+SUBDIRS =  \
+	$(IPOPT_DIRS) \
+	$(SPEED_DIRS) \
+	cppad_lib \
+	example/abs_normal \
+	example/atomic_two \
+	example/atomic_three \
+	test_more/deprecated \
+	test_more/deprecated/atomic_two \
+	example/general \
+	example/get_started \
+	example/optimize \
+	example/print_for \
+	example/sparse \
+	example/utility \
+	include \
+	introduction \
+	example/multi_thread \
+	test_more/compare_c \
+	test_more/general
+#
+test_directory_list = \
+	$(IPOPT_TESTS) \
+	$(SPEED_TESTS) \
+	example/abs_normal \
+	example/atomic_two \
+	example/atomic_three \
+	test_more/deprecated/chkpoint_one \
+	example/chkpoint_two \
+	example/general \
+	example/get_started \
+	example/multi_thread \
+	example/optimize \
+	example/print_for \
+	example/sparse \
+	example/utility \
+	introduction \
+	test_more/compare_c \
+	test_more/general \
+	test_more/deprecated \
+	test_more/deprecated/atomic_two
+
+test: all
+	rm -f test.log
+	touch test.log
+	echo "#! /bin/sh -e"                               >  test.sh
+	for dir in $(test_directory_list) ; do (                        \
+		echo "#"                                      >> test.sh ; \
+		echo "echo \"Running make test in $$dir\""    >> test.sh ; \
+		echo "cd $$dir "                              >> test.sh ; \
+		echo "make test"                              >> test.sh ; \
+		echo "cd $(ABS_TOP_BUILDDIR)"                 >> test.sh ; \
+	) done
+	echo "exit 0"                                      >> test.sh
+	chmod +x test.sh
+	./test.sh
+#
+#
+doc_postfix = $(DESTDIR)$(datadir)/doc/$(postfix_dir)
+doc_package = $(DESTDIR)$(datadir)/doc/$(postfix_dir)/$(PACKAGE)-$(VERSION)
+inc_postfix = $(DESTDIR)/$(myincludedir)
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = pkgconfig/cppad.pc

@@ -1,0 +1,187 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+# -------------------------------------------------------------------------
+if CppAD_OPENMP
+OPENMP_SRC_FILES   = alloc_openmp.cpp
+else
+OPENMP_SRC_FILES   =
+endif
+# -------------------------------------------------------------------------
+if CppAD_ADOLC
+ADOLC_SRC_FILES   = base_adolc.cpp
+ADOLC_LIB         = -ladolc -lColPack -L$(ADOLC_DIR)/lib -L$(ADOLC_DIR)/lib64
+ADOLC_FLAGS       = -I$(ADOLC_DIR)/include
+else
+ADOLC_SRC_FILES   =
+ADOLC_LIB         =
+ADOLC_FLAGS       =
+endif
+# -------------------------------------------------------------------------
+if CppAD_IPOPT
+IPOPT_SRC_FILES   = ipopt_solve.cpp
+IPOPT_LIB         = -lipopt \
+	$(CPPAD_IPOPT_LIBS) $(FCLIBS) $(PTHREAD_LIB) $(DL_LIB)
+IPOPT_FLAGS       = -I$(IPOPT_DIR)/include
+else
+IPOPT_SRC_FILES   =
+IPOPT_LIB         =
+IPOPT_FLAGS       =
+endif
+# -------------------------------------------------------------------------
+if CppAD_EIGEN
+EIGEN_SRC_FILES     =  cppad_eigen.cpp eigen_mat_inv.cpp
+else
+EIGEN_SRC_FILES     =
+endif
+# -------------------------------------------------------------------------
+# Microsoft project files and script to run a single test
+#
+check_PROGRAMS    = general
+#
+#
+AM_CXXFLAGS =  \
+	$(ADOLC_FLAGS) \
+	$(IPOPT_FLAGS) \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE) \
+	$(ADOLC_FLAGS) \
+	$(IPOPT_FLAGS) \
+	$(OPENMP_FLAGS)
+#
+AM_LDFLAGS        = -L ../../cppad_lib  $(OPENMP_FLAGS)
+LDADD             = -lcppad_lib $(ADOLC_LIB) $(IPOPT_LIB) $(OPENMP_FLAGS)
+#
+# BEGIN_SORT_THIS_LINE_PLUS_6
+general_SOURCES  = \
+	$(ADOLC_SRC_FILES) \
+	$(EIGEN_SRC_FILES) \
+	$(IPOPT_SRC_FILES) \
+	$(OPENMP_SRC_FILES) \
+	abs_normal.cpp \
+	acos.cpp \
+	acosh.cpp \
+	add.cpp \
+	add_eq.cpp \
+	add_zero.cpp \
+	adfun.cpp \
+	asin.cpp \
+	asinh.cpp \
+	assign.cpp \
+	atan2.cpp \
+	atan.cpp \
+	atanh.cpp \
+	atomic_three.cpp \
+	azmul.cpp \
+	base_alloc.cpp \
+	bool_sparsity.cpp \
+	check_simple_vector.cpp \
+	chkpoint_one.cpp \
+	chkpoint_two.cpp \
+	compare_change.cpp \
+	compare.cpp \
+	cond_exp_ad.cpp \
+	cond_exp.cpp \
+	cond_exp_rev.cpp \
+	copy.cpp \
+	cos.cpp \
+	cosh.cpp \
+	cppad_vector.cpp \
+	dbl_epsilon.cpp \
+	dependency.cpp \
+	div.cpp \
+	div_eq.cpp \
+	div_zero_one.cpp \
+	erf.cpp \
+	exp.cpp \
+	expm1.cpp \
+	extern_value.cpp \
+	extern_value.hpp \
+	fabs.cpp \
+	for_hess.cpp \
+	for_sparse_hes.cpp \
+	for_sparse_jac.cpp \
+	forward.cpp \
+	forward_dir.cpp \
+	forward_order.cpp \
+	from_base.cpp \
+	fun_check.cpp \
+	general.cpp \
+	cpp_graph.cpp \
+	hes_sparsity.cpp \
+	jacobian.cpp \
+	json_graph.cpp \
+	local/is_pod.cpp \
+	local/json_lexer.cpp \
+	local/json_parser.cpp \
+	local/vector_set.cpp \
+	log10.cpp \
+	log1p.cpp \
+	log.cpp \
+	mul_cond_rev.cpp \
+	mul.cpp \
+	mul_cskip.cpp \
+	mul_eq.cpp \
+	mul_level.cpp \
+	mul_zdouble.cpp \
+	mul_zero_one.cpp \
+	near_equal_ext.cpp \
+	neg.cpp \
+	new_dynamic.cpp \
+	num_limits.cpp \
+	ode_err_control.cpp \
+	optimize.cpp \
+	parameter.cpp \
+	poly.cpp \
+	pow.cpp \
+	pow_int.cpp \
+	print_for.cpp \
+	reverse.cpp \
+	rev_sparse_jac.cpp \
+	rev_two.cpp \
+	romberg_one.cpp \
+	rosen_34.cpp \
+	runge_45.cpp \
+	simple_vector.cpp \
+	sin_cos.cpp \
+	sin.cpp \
+	sinh.cpp \
+	sparse_hessian.cpp \
+	sparse_jacobian.cpp \
+	sparse_jac_work.cpp \
+	sparse_sub_hes.cpp \
+	sparse_vec_ad.cpp \
+	sqrt.cpp \
+	std_math.cpp \
+	sub.cpp \
+	sub_eq.cpp \
+	subgraph_1.cpp \
+	subgraph_2.cpp \
+	subgraph_hes2jac.cpp \
+	sub_zero.cpp \
+	tan.cpp \
+	test_vector.cpp \
+	to_string.cpp \
+	value.cpp \
+	vec_ad.cpp \
+	vec_ad_par.cpp \
+	vec_unary.cpp
+# END_SORT_THIS_LINE_MINUS_1
+
+test: check
+	./general

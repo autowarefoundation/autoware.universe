@@ -1,0 +1,257 @@
+#! /bin/bash -e
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+set_libdir() {
+    my_prefix="$1"
+    my_lib="$2"
+    libdir=''
+    if [ -e $my_prefix/lib ]
+    then
+        if ls $my_prefix/lib | grep "lib$my_lib" > /dev/null
+        then
+            libdir='lib'
+        fi
+    fi
+    if [ -e $my_prefix/lib64 ]
+    then
+        if ls $my_prefix/lib64 | grep "lib$my_lib" > /dev/null
+        then
+            libdir='lib64'
+        fi
+    fi
+    if [ "$libdir" == '' ]
+    then
+        echo "bin/test_one.sh: cannot find lib$my_lib"
+        echo " in $my_prefix/lib or $my_prefix/lib64"
+        exit 1
+    fi
+    my_path="$my_prefix/$libdir"
+    library_flags="$library_flags -L$my_path -l$my_lib"
+    if ! echo "$LD_LIBRARY_PATH:" | grep "$my_path:" > /dev/null
+    then
+        if [ "$LD_LIBRARY_PATH" == '' ]
+        then
+            export LD_LIBRARY_PATH="$my_path"
+        else
+            export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$my_path"
+        fi
+    fi
+}
+# -----------------------------------------------------------------------------
+# Command line arguments
+if [ "$0" != 'bin/test_one.sh' ]
+then
+cat << EOF
+usage: bin/test_one.sh dir/file [extra]
+
+dir:   directory in front of file name
+file:  name of *.cpp file, with extension, that contains the test
+extra: extra source files and/or options for the compile command
+EOF
+    exit 1
+fi
+if ! echo "$1" | grep '/' > /dev/null
+then
+    echo 'test_one.sh: dir missing in'
+    echo '    bin/test_one.sh dir/file'
+    exit 1
+fi
+dir=`echo $1 | sed -e 's|/[^/]*$||'`
+file=`echo $1 | sed -e 's|.*/||'`
+extra="$2"
+if [ "$dir" == 'test_more/general/local' ]
+then
+    dir='test_more/general'
+    file="local/$file"
+fi
+# ---------------------------------------------------------------------------
+# Check command line arguments
+if [ "$dir" == '' ]
+then
+    echo "test_one.sh: cannot find dir/file in \$1='$1'"
+    exit 1
+fi
+if [ ! -e "$dir/$file" ]
+then
+    echo "test_one.sh: Cannot find the file $dir/$file"
+    exit 1
+fi
+if [ ! -e 'build/CMakeFiles' ]
+then
+    echo 'test_one.sh: Must first execute bin/run_cmake.sh'
+    exit 1
+fi
+# ---------------------------------------------------------------------------
+# Clean out old output files
+if [ -e test_one.exe ]
+then
+    rm test_one.exe
+fi
+if [ -e test_one.cpp ]
+then
+    rm test_one.cpp
+fi
+original_dir=`pwd`
+# ---------------------------------------------------------------------------
+cwd=$(pwd)
+PKG_CONFIG_PATH="$cwd/build/prefix/lib64/pkgconfig"
+PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$cwd/build/prefix/share/pkgconfig"
+PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$cwd/build/prefix/lib/pkgconfig"
+# ---------------------------------------------------------------------------
+# initialize
+export LD_LIBRARY_PATH=''
+include_flags=''
+library_flags=''
+#
+# adolc
+if [ @cppad_has_adolc@ == 1 ]
+then
+    include_flags="$include_flags $(pkg-config adolc --cflags)"
+    library_flags="$library_flags $(pkg-config adolc --libs)"
+    library_path=$(pkg-config adolc --libs | sed -e 's|.*-L\([^ ]*\).*|\1|')
+    LD_LIBRARY_PATH="$library_path:$LD_LIBRARY_PATH"
+fi
+if [ @cppad_has_eigen@ == 1 ]
+then
+    include_flags="$include_flags $(pkg-config eigen3 --cflags)"
+    library_flags="$library_flags $(pkg-config eigen3 --libs)"
+fi
+#
+# ipopt
+if [ @cppad_has_ipopt@ == 1 ]
+then
+    include_flags="$include_flags $(pkg-config ipopt --cflags)"
+    library_flags="$library_flags $(pkg-config ipopt --libs)"
+    library_path=$(pkg-config ipopt --libs | sed -e 's|.*-L\([^ ]*\).*|\1|')
+    LD_LIBRARY_PATH="$library_path:$LD_LIBRARY_PATH"
+fi
+#
+if [ @cppad_has_boost@ == 1 ]
+then
+    library_flags="$library_flags -lboost_thread"
+fi
+#
+# colpack
+if [ @cppad_has_colpack@ == 1 ]
+then
+    include_flags="$include_flags -I @colpack_prefix@/include"
+    #
+    set_libdir @colpack_prefix@ ColPack
+fi
+#
+# cppad
+include_flags=$(echo $include_flags | \
+    sed -e 's| -I| -isystem|g' -e 's|^-I|-isystem|'
+)
+include_flags="-I $original_dir/include $include_flags"
+cppad_lib_path="@PROJECT_BINARY_DIR@/cppad_lib/libcppad_lib.so"
+library_flags="$library_flags $cppad_lib_path -lpthread"
+#
+cd build
+if ! make cppad_lib
+then
+    echo 'test_one.sh: Error during make cppad_lib in build directory'
+    exit
+fi
+cd ..
+# --------------------------------------------------------------------------
+# Create test_one.exe
+#
+# determine the function name
+fun=`grep "^bool *[a-zA-Z0-9_]* *( *void *)" $dir/$file | tail -1 | \
+    sed -e "s/^bool *\([a-zA-Z0-9_]*\) *( *void *)/\1/"`
+#
+# determine the main program main
+main=`echo *$dir | sed -e 's|.*/||' -e 's|$|.cpp|'`
+#
+sed < $dir/$main > test_one.cpp \
+-e '/^    Run( /d' \
+-e "s/.*This line is used by test_one.sh.*/    Run( $fun, \"$fun\");/"
+# --------------------------------------------------------------------------
+# Create test_one.exe
+#
+# compiler flags
+cxx_flags='@cppad_cxx_flags@'
+if [ "$dir" == 'test_more/cppad_for_tmb' ]
+then
+    cxx_flags="$cxx_flags @OpenMP_CXX_FLAGS@ -DCPPAD_FOR_TMB"
+fi
+#
+# compile command
+compile_command="@CMAKE_CXX_COMPILER@ test_one.cpp -o test_one.exe
+    $dir/$file $extra
+    -g
+    $cxx_flags
+    $include_flags
+    $library_flags
+"
+echo "$compile_command 2> test_one.err"
+if ! $compile_command 2> test_one.err
+then
+    tail test_one.err
+    echo 'test_one.sh: see test_one.err'
+    exit 1
+fi
+# --------------------------------------------------------------------------
+# LD_LIBRARY_PATH
+my_path='@PROJECT_BINARY_DIR@/cppad_lib'
+if ! echo $LD_LIBRARY_PATH | grep "$my_path" > /dev/null
+then
+    if [ "$LD_LIBRARY_PATH" == '' ]
+    then
+        export LD_LIBRARY_PATH="$my_path"
+    else
+        export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$my_path"
+    fi
+fi
+# --------------------------------------------------------------------------
+# Execute the test
+echo "./test_one.exe"
+if ! ./test_one.exe
+then
+    cat test_one.err
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+    exit 1
+fi
+# --------------------------------------------------------------------------
+# Check for compiler warnings
+cat << EOF > test_one.sed
+# Lines that describe where error is
+/^In file included from/d
+/: note:/d
+#
+# Ipopt has sign conversion warnings
+/\/coin\/.*-Wsign-conversion/d
+#
+# Adolc has multiple types of conversion warnings
+/\/adolc\/.*-W[a-z-]*conversion/d
+/\/adolc\/.*-Wshorten-64-to-32/d
+#
+# Lines describing the error begin with space
+/^ /d
+#
+# Lines summarizing results
+/^[0-9]* warnings generated/d
+EOF
+sed -f test_one.sed < test_one.err > test_one.warn
+rm test_one.sed
+if [ -s test_one.warn ]
+then
+    cat test_one.warn
+    echo 'test_one.sh: unexpected warnings: see  test_one.warn, test_one.err'
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+    exit 1
+fi
+# --------------------------------------------------------------------------
+echo 'test_one.sh: OK'
+echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+exit 0

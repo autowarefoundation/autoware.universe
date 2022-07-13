@@ -1,0 +1,88 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin multi_thread$$
+$spell
+    cppad_max_num_threads
+    alloc
+    CppAD
+    Rosen
+    Runge
+    ctor
+$$
+
+$section Using CppAD in a Multi-Threading Environment$$
+
+$head Purpose$$
+Extra steps and care must be taken to use CppAD
+in $cref/parallel/ta_in_parallel/$$ execution mode.
+This section collects this information in one place.
+
+$head CPPAD_MAX_NUM_THREADS$$
+The value $code CPPAD_MAX_NUM_THREADS$$ is an absolute maximum for
+the number of threads that CppAD should support.
+If this preprocessor symbol is defined
+before including any CppAD header files,
+it must be an integer greater than or equal to one.
+Otherwise, $cref/cppad_max_num_threads/cmake/cppad_max_num_threads/$$
+is used to define this preprocessor symbol.
+Note that the minimum allowable value for
+$icode cppad_max_num_threads$$ is 4; i.e., you can only
+get smaller values for $code CPPAD_MAX_NUM_THREADS$$ by
+defining it before including the CppAD header files.
+
+$head parallel_setup$$
+Using any of the following routines in a multi-threading environment
+requires that $cref/thread_alloc::parallel_setup/ta_parallel_setup/$$
+has been completed:
+$cref/CppAD::vector/CppAD_vector/Memory and Parallel Mode/$$,
+$cref/CheckSimpleVector/CheckSimpleVector/Parallel Mode/$$,
+$cref/CheckNumericType/CheckNumericType/Parallel Mode/$$,
+$cref parallel_ad$$.
+
+$head hold_memory$$
+Memory allocation should be much faster after calling
+$code hold_memory$$ with
+$cref/value/ta_hold_memory/value/$$ equal to true.
+This may even be true if there is only one thread.
+
+$head Parallel AD$$
+One must first call
+$cref/thread_alloc::parallel_setup/ta_parallel_setup/$$
+and then call $cref parallel_ad$$ before using $code AD$$ types
+in $cref/parallel/ta_in_parallel/$$ execution mode.
+
+$head Initialization$$
+The following routines must be called at least once before being used
+in parallel mode:
+$cref/CheckSimpleVector/CheckSimpleVector/Parallel Mode/$$,
+$cref/CheckNumericType/CheckNumericType/Parallel Mode/$$,
+$cref/discrete functions/Discrete/Parallel Mode/$$,
+$cref/Rosen34/Rosen34/Parallel Mode/$$,
+$cref/Runge45/Runge45/Parallel Mode/$$,
+$cref/cpp_graph_ctor/cpp_graph_ctor/Parallel Mode/$$.
+
+$head Same Thread$$
+Some operations must be preformed by the same thread:
+$cref/ADFun/FunConstruct/Parallel Mode/$$,
+$cref Independent$$, $cref Dependent$$.
+
+
+$head Parallel Prohibited$$
+The following routine cannot be called in parallel mode:
+$cref/ErrorHandler constructor/ErrorHandler/Constructor/Parallel Mode/$$.
+
+$childtable%
+    include/cppad/core/parallel_ad.hpp%
+    example/multi_thread/thread_test.cpp
+%$$
+
+$end

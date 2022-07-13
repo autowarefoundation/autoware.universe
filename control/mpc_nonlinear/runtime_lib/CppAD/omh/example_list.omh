@@ -1,0 +1,369 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin ListAllExamples$$
+$spell
+    CppAD
+$$
+
+$section List All (Except Deprecated) CppAD Examples$$
+
+$comment
+    omit:   TestOne.cpp OneCase.cpp lu_vec_ad.cpp
+$$
+
+$comment BEGIN_SORT_THIS_LINE_PLUS_2$$
+$table
+$rref AddEq.cpp$$
+$rref Rombergmul.cpp$$
+$rref a11c_bthread.cpp$$
+$rref a11c_openmp.cpp$$
+$rref a11c_pthread.cpp$$
+$rref abort_recording.cpp$$
+$rref abs_eval.cpp$$
+$rref abs_eval.hpp$$
+$rref abs_get_started.cpp$$
+$rref abs_min_linear.cpp$$
+$rref abs_min_linear.hpp$$
+$rref abs_min_quad.cpp$$
+$rref abs_min_quad.hpp$$
+$rref acos.cpp$$
+$rref acosh.cpp$$
+$rref ad_assign.cpp$$
+$rref ad_ctor.cpp$$
+$rref ad_fun.cpp$$
+$rref ad_in_c.cpp$$
+$rref ad_input.cpp$$
+$rref ad_output.cpp$$
+$rref add.cpp$$
+$rref asin.cpp$$
+$rref asinh.cpp$$
+$rref atan.cpp$$
+$rref atan2.cpp$$
+$rref atanh.cpp$$
+$rref atomic_three_base2ad.cpp$$
+$rref atomic_three_dynamic.cpp$$
+$rref atomic_three_forward.cpp$$
+$rref atomic_three_get_started.cpp$$
+$rref atomic_three_hes_sparsity.cpp$$
+$rref atomic_three_jac_sparsity.cpp$$
+$rref atomic_three_mat_mul.cpp$$
+$rref atomic_three_mat_mul.hpp$$
+$rref atomic_three_norm_sq.cpp$$
+$rref atomic_three_reciprocal.cpp$$
+$rref atomic_three_rev_depend.cpp$$
+$rref atomic_three_reverse.cpp$$
+$rref atomic_three_tangent.cpp$$
+$rref atomic_three_vector_op.cpp$$
+$rref atomic_two_eigen_cholesky.cpp$$
+$rref atomic_two_eigen_cholesky.hpp$$
+$rref atomic_two_eigen_mat_inv.cpp$$
+$rref atomic_two_eigen_mat_inv.hpp$$
+$rref atomic_two_eigen_mat_mul.cpp$$
+$rref atomic_two_eigen_mat_mul.hpp$$
+$rref azmul.cpp$$
+$rref base2ad.cpp$$
+$rref base_adolc.hpp$$
+$rref base_alloc.hpp$$
+$rref base_complex.hpp$$
+$rref base_require.cpp$$
+$rref bender_quad.cpp$$
+$rref bool_fun.cpp$$
+$rref capacity_order.cpp$$
+$rref change_param.cpp$$
+$rref check_for_nan.cpp$$
+$rref check_numeric_type.cpp$$
+$rref check_simple_vector.cpp$$
+$rref chkpoint_two_base2ad.cpp$$
+$rref chkpoint_two_compare.cpp$$
+$rref chkpoint_two_dynamic.cpp$$
+$rref chkpoint_two_get_started.cpp$$
+$rref chkpoint_two_ode.cpp$$
+$rref code_gen_fun_file.cpp$$
+$rref code_gen_fun_function.cpp$$
+$rref code_gen_fun_jac_as_fun.cpp$$
+$rref code_gen_fun_jacobian.cpp$$
+$rref code_gen_fun_sparse_jac_as_fun.cpp$$
+$rref code_gen_fun_sparse_jacobian.cpp$$
+$rref colpack_hes.cpp$$
+$rref colpack_hessian.cpp$$
+$rref colpack_jac.cpp$$
+$rref colpack_jacobian.cpp$$
+$rref compare.cpp$$
+$rref compare_change.cpp$$
+$rref complex_poly.cpp$$
+$rref con_dyn_var.cpp$$
+$rref cond_exp.cpp$$
+$rref conj_grad.cpp$$
+$rref cos.cpp$$
+$rref cosh.cpp$$
+$rref cppad_eigen.hpp$$
+$rref cppad_vector.cpp$$
+$rref dependency.cpp$$
+$rref det_by_lu.cpp$$
+$rref det_by_minor.cpp$$
+$rref det_of_minor.cpp$$
+$rref div.cpp$$
+$rref div_eq.cpp$$
+$rref eigen_array.cpp$$
+$rref eigen_det.cpp$$
+$rref elapsed_seconds.cpp$$
+$rref equal_op_seq.cpp$$
+$rref erf.cpp$$
+$rref erfc.cpp$$
+$rref error_handler.cpp$$
+$rref exp.cpp$$
+$rref expm1.cpp$$
+$rref expm1.cpp$$
+$rref fabs.cpp$$
+$rref for_hes_sparsity.cpp$$
+$rref for_jac_sparsity.cpp$$
+$rref for_one.cpp$$
+$rref for_sparse_hes.cpp$$
+$rref for_sparse_jac.cpp$$
+$rref for_two.cpp$$
+$rref forward.cpp$$
+$rref forward_dir.cpp$$
+$rref forward_order.cpp$$
+$rref from_json.cpp$$
+$rref fun_assign.cpp$$
+$rref fun_check.cpp$$
+$rref fun_property.cpp$$
+$rref function_name.cpp$$
+$rref general.cpp$$
+$rref get_started.cpp$$
+$rref graph_add_op.cpp$$
+$rref graph_atom_op.cpp$$
+$rref graph_azmul_op.cpp$$
+$rref graph_cexp_op.cpp$$
+$rref graph_comp_op.cpp$$
+$rref graph_discrete_op.cpp$$
+$rref graph_div_op.cpp$$
+$rref graph_mul_op.cpp$$
+$rref graph_pow_op.cpp$$
+$rref graph_print_op.cpp$$
+$rref graph_sub_op.cpp$$
+$rref graph_sum_op.cpp$$
+$rref graph_unary_op.cpp$$
+$rref harmonic.cpp$$
+$rref hes_lagrangian.cpp$$
+$rref hes_lu_det.cpp$$
+$rref hes_minor_det.cpp$$
+$rref hes_times_dir.cpp$$
+$rref hessian.cpp$$
+$rref independent.cpp$$
+$rref index_sort.cpp$$
+$rref integer.cpp$$
+$rref interface2c.cpp$$
+$rref interp_onetape.cpp$$
+$rref interp_retape.cpp$$
+$rref ipopt_solve_get_started.cpp$$
+$rref ipopt_solve_ode_inverse.cpp$$
+$rref ipopt_solve_retape.cpp$$
+$rref jac_lu_det.cpp$$
+$rref jac_minor_det.cpp$$
+$rref jacobian.cpp$$
+$rref json_add_op.cpp$$
+$rref json_atom_op.cpp$$
+$rref json_azmul_op.cpp$$
+$rref json_cexp_op.cpp$$
+$rref json_comp_op.cpp$$
+$rref json_discrete_op.cpp$$
+$rref json_div_op.cpp$$
+$rref json_get_started.cpp$$
+$rref json_mul_op.cpp$$
+$rref json_pow_op.cpp$$
+$rref json_print_op.cpp$$
+$rref json_sparse.cpp$$
+$rref json_sub_op.cpp$$
+$rref json_sum_op.cpp$$
+$rref json_unary_op.cpp$$
+$rref log.cpp$$
+$rref log10.cpp$$
+$rref log1p.cpp$$
+$rref lp_box.cpp$$
+$rref lp_box.hpp$$
+$rref lu_factor.cpp$$
+$rref lu_invert.cpp$$
+$rref lu_ratio.cpp$$
+$rref lu_solve.cpp$$
+$rref lu_vec_ad_ok.cpp$$
+$rref mat_sum_sq.cpp$$
+$rref min_nso_linear.cpp$$
+$rref min_nso_linear.hpp$$
+$rref min_nso_quad.cpp$$
+$rref min_nso_quad.hpp$$
+$rref mul.cpp$$
+$rref mul_eq.cpp$$
+$rref mul_level.cpp$$
+$rref mul_level_adolc.cpp$$
+$rref mul_level_adolc_ode.cpp$$
+$rref mul_level_ode.cpp$$
+$rref multi_atomic_three.cpp$$
+$rref multi_atomic_two.cpp$$
+$rref multi_chkpoint_one.cpp$$
+$rref multi_chkpoint_two.cpp$$
+$rref multi_newton.cpp$$
+$rref nan.cpp$$
+$rref near_equal.cpp$$
+$rref near_equal_ext.cpp$$
+$rref new_dynamic.cpp$$
+$rref num_limits.cpp$$
+$rref number_skip.cpp$$
+$rref numeric_type.cpp$$
+$rref ode_err_control.cpp$$
+$rref ode_err_maxabs.cpp$$
+$rref ode_evaluate.cpp$$
+$rref ode_gear.cpp$$
+$rref ode_gear_control.cpp$$
+$rref ode_stiff.cpp$$
+$rref opt_val_hes.cpp$$
+$rref optimize_compare_op.cpp$$
+$rref optimize_conditional_skip.cpp$$
+$rref optimize_cumulative_sum.cpp$$
+$rref optimize_forward_active.cpp$$
+$rref optimize_nest_conditional.cpp$$
+$rref optimize_print_for.cpp$$
+$rref optimize_reverse_active.cpp$$
+$rref optimize_twice.cpp$$
+$rref poly.cpp$$
+$rref pow.cpp$$
+$rref pow_int.cpp$$
+$rref pow_nan.cpp$$
+$rref print_for_cout.cpp$$
+$rref print_for_string.cpp$$
+$rref print_graph.cpp$$
+$rref qp_box.cpp$$
+$rref qp_box.hpp$$
+$rref qp_interior.cpp$$
+$rref qp_interior.hpp$$
+$rref rc_sparsity.cpp$$
+$rref rev_checkpoint.cpp$$
+$rref rev_hes_sparsity.cpp$$
+$rref rev_jac_sparsity.cpp$$
+$rref rev_one.cpp$$
+$rref rev_sparse_hes.cpp$$
+$rref rev_sparse_jac.cpp$$
+$rref rev_two.cpp$$
+$rref reverse_one.cpp$$
+$rref reverse_three.cpp$$
+$rref reverse_two.cpp$$
+$rref romberg_one.cpp$$
+$rref rosen_34.cpp$$
+$rref runge45_1.cpp$$
+$rref runge_45.cpp$$
+$rref set_union.cpp$$
+$rref simple_ad_bthread.cpp$$
+$rref simple_ad_openmp.cpp$$
+$rref simple_ad_pthread.cpp$$
+$rref simple_vector.cpp$$
+$rref simplex_method.cpp$$
+$rref simplex_method.hpp$$
+$rref sin.cpp$$
+$rref sinh.cpp$$
+$rref sparse2eigen.cpp$$
+$rref sparse_hes.cpp$$
+$rref sparse_hes_fun.cpp$$
+$rref sparse_hessian.cpp$$
+$rref sparse_jac_for.cpp$$
+$rref sparse_jac_fun.cpp$$
+$rref sparse_jac_rev.cpp$$
+$rref sparse_jacobian.cpp$$
+$rref sparse_rc.cpp$$
+$rref sparse_rcv.cpp$$
+$rref sparse_sub_hes.cpp$$
+$rref sparsity_sub.cpp$$
+$rref speed_example.cpp$$
+$rref speed_program.cpp$$
+$rref speed_test.cpp$$
+$rref sqrt.cpp$$
+$rref stack_machine.cpp$$
+$rref sub.cpp$$
+$rref sub_eq.cpp$$
+$rref sub_sparse_hes.cpp$$
+$rref subgraph_hes2jac.cpp$$
+$rref subgraph_jac_rev.cpp$$
+$rref subgraph_reverse.cpp$$
+$rref subgraph_sparsity.cpp$$
+$rref switch_var_dyn.cpp$$
+$rref tan.cpp$$
+$rref tanh.cpp$$
+$rref tape_index.cpp$$
+$rref taylor_ode.cpp$$
+$rref team_bthread.cpp$$
+$rref team_example.cpp$$
+$rref team_openmp.cpp$$
+$rref team_pthread.cpp$$
+$rref team_thread.hpp$$
+$rref thread_alloc.cpp$$
+$rref thread_test.cpp$$
+$rref time_test.cpp$$
+$rref to_json.cpp$$
+$rref to_string.cpp$$
+$rref unary_minus.cpp$$
+$rref unary_plus.cpp$$
+$rref value.cpp$$
+$rref var2par.cpp$$
+$rref vec_ad.cpp$$
+$rref vector_bool.cpp$$
+$tend
+$comment END_SORT_THIS_LINE_MINUS_2$$
+
+$end
+-----------------------------------------------------------------------------
+$begin General$$
+$spell
+    Cpp
+$$
+
+$section General Examples$$
+
+$head Description$$
+Most of the examples in CppAD are part of the documentation
+for a specific feature; for example, $cref add.cpp$$ is an
+example using the $cref/addition operator/ad_binary/$$.
+The examples list in this section are of a more general nature.
+
+$childtable%
+    example/general/ad_fun.cpp%
+    example/general/ad_in_c.cpp%
+    example/sparse/conj_grad.cpp%
+    include/cppad/example/cppad_eigen.hpp %
+    example/general/hes_minor_det.cpp%
+    example/general/hes_lu_det.cpp%
+    example/general/interface2c.cpp%
+    example/general/jac_minor_det.cpp%
+    example/general/jac_lu_det.cpp%
+    omh/mul_level.omh%
+    example/general/ode_stiff.cpp%
+    example/general/mul_level_ode.cpp%
+    example/general/mul_level_adolc_ode.cpp%
+    example/general/stack_machine.cpp%
+    cppad_lib/code_gen_fun.cpp
+%$$
+
+$end
+-----------------------------------------------------------------------------
+$begin ExampleUtility$$
+$spell
+    CppAD
+$$
+
+$section Utility Routines used by CppAD Examples$$
+
+$childtable%
+    example/general/general.cpp%
+    speed/example/example.cpp%
+    example/general/lu_vec_ad.cpp
+%$$
+
+$end
+-----------------------------------------------------------------------------

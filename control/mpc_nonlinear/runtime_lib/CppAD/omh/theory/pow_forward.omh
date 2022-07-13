@@ -1,0 +1,116 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin pow_forward$$
+$spell
+    Taylor
+$$
+
+$section Power Function Forward Mode Theory$$
+We consider the operation $latex F(x) = x^y$$ where $latex x$$
+is a variable and $latex y$$ is a parameter.
+
+$head Derivatives$$
+The corresponding derivative satisfies the equation
+$latex \[
+x * F^{(1)} (x) -  y F(x) = 0
+\] $$
+This is the
+$cref/standard math function differential equation
+    /ForwardTheory
+    /Standard Math Functions
+    /Differential Equation
+/$$,
+where
+$latex A(x) = y$$,
+$latex B(x) = x$$,
+and $latex D(x) = 0$$.
+We use $latex a$$, $latex b$$, $latex d$$,
+and $latex z$$ to denote the
+Taylor coefficients for
+$latex A [ X (t) ] $$,
+$latex B [ X (t) ]$$,
+$latex D [ X (t) ] $$,
+and $latex F [ X(t) ] $$ respectively.
+It follows that
+$latex b^j = x^j$$, $latex d^j = 0$$,
+$latex \[
+a^{(j)} = \left\{ \begin{array}{ll}
+    y & \R{if} \; j = 0
+    \\
+    0 & \R{otherwise}
+\end{array} \right.
+\] $$
+
+$head Taylor Coefficients Recursion$$
+
+$subhead z^(0)$$
+$latex \[
+    z^{(0)} = F ( x^{(0)} )
+\]$$
+
+$subhead e^(j)$$
+$latex \[
+\begin{array}{rcl}
+    e^{(j)} & = & d^{(j)} + \sum_{k=0}^j a^{(j-k)} * z^{(k)}
+    \\
+    e^{(j)} & = & y * z^{(j)}
+\end{array}
+\] $$
+
+$subhead z^j$$
+For $latex j = 0, \ldots , p-1$$
+$latex  \[
+\begin{array}{rcl}
+z^{(j+1)} & = & \frac{1}{j+1} \frac{1}{ b^{(0)} }
+\left(
+    \sum_{k=1}^{j+1} k x^{(k)} e^{(j+1-k)}
+    - \sum_{k=1}^j k z^{(k)}  b^{(j+1-k)}
+\right)
+\\
+& = & \frac{1}{j+1} \frac{1}{ x^{(0)} }
+\left(
+    y \sum_{k=1}^{j+1} k x^{(k)} z^{(j+1-k)}
+    - \sum_{k=1}^j k z^{(k)}  x^{(j+1-k)}
+\right)
+\\
+& = &
+\frac{1}{j+1} \frac{1}{ x^{(0)} }
+\left(
+    y (j+1) x^{(j+1)} z^{(0)}
+    +
+    \sum_{k=1}^j k ( y x^{(k)} z^{(j+1-k)} - z^{(k)}  x^{(j+1-k)} )
+\right)
+\\
+& = &
+y z^{(0)} x^{(j+1)} / x^{(0)}
++
+\frac{1}{j+1} \frac{1}{ x^{(0)} }
+\sum_{k=1}^j k ( y x^{(k)} z^{(j+1-k)} - z^{(k)}  x^{(j+1-k)} )
+\end{array}
+\] $$
+For $latex j = 1, \ldots , p$$
+$latex  \[
+\begin{array}{rcl}
+z^{(j)}
+& = &
+\left. \left(
+    y z^{(0)} x^{(j)}
+    +
+    \frac{1}{j} \sum_{k=1}^{j-1} k ( y x^{(k)} z^{(j-k)} - z^{(k)}  x^{(j-k)} )
+\right) \right/ x^{(0)}
+\end{array}
+\] $$
+
+
+
+$end

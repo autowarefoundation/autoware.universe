@@ -1,0 +1,78 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin exp_forward$$
+$spell
+    exp
+    expm1
+    Taylor
+$$
+
+$section Exponential Function Forward Mode Theory$$
+
+$head Derivatives$$
+If $latex F(x)$$ is $latex \R{exp} (x)$$ or $latex \R{expm1} (x)$$
+the corresponding derivative satisfies the equation
+$latex \[
+1 * F^{(1)} (x) - 1 * F (x)
+=
+d^{(0)}
+=
+\left\{ \begin{array}{ll}
+    0 & \R{if} \; F(x) = \R{exp}(x)
+    \\
+    1 & \R{if} \; F(x) = \R{expm1}(x)
+\end{array} \right.
+\] $$
+where the equation above defines $latex d^{(0)}$$.
+In the
+$cref/standard math function differential equation
+    /ForwardTheory
+    /Standard Math Functions
+    /Differential Equation
+/$$,
+$latex A(x) = 1$$,
+$latex B(x) = 1$$,
+and $latex D(x) = d^{(0)}$$.
+We use $latex a$$, $latex b$$, $latex d$$,
+and $latex z$$ to denote the
+Taylor coefficients for
+$latex A [ X (t) ] $$,
+$latex B [ X (t) ]$$,
+$latex D [ X (t) ] $$,
+and $latex F [ X(t) ] $$ respectively.
+
+$head Taylor Coefficients Recursion$$
+For orders $latex j = 0 , 1, \ldots$$,
+$latex \[
+\begin{array}{rcl}
+z^{(0)} & = & F ( x^{(0)} )
+\\
+e^{(0)} & = & d^{(0)} + z^{(0)}
+\\
+e^{(j+1)}
+& = & d^{(j+1)} + \sum_{k=0}^{j+1} a^{(j+1-k)} * z^{(k)}
+\\
+& = & z^{(j+1)}
+\\
+z^{(j+1)} & = & \frac{1}{j+1} \frac{1}{ b^{(0)} }
+\left(
+    \sum_{k=1}^{j+1} k x^{(k)} e^{(j+1-k)}
+    - \sum_{k=1}^j k z^{(k)}  b^{(j+1-k)}
+\right)
+\\
+& = & x^{(j+1)} d^{(0)}
+    + \frac{1}{j+1} \sum_{k=1}^{j+1} k x^{(k)} z^{(j+1-k)}
+\end{array}
+\] $$
+
+$end

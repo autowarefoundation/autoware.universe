@@ -1,0 +1,45 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+#
+check_PROGRAMS    = test_more
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/cppad_ipopt/src \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE) \
+	-I$(IPOPT_DIR)/include
+#
+#
+LDADD             = \
+                    -lcppad_ipopt \
+                    $(CPPAD_IPOPT_LIBS) \
+                    $(FCLIBS) \
+                    $(PTHREAD_LIB) \
+                    $(DL_LIB)
+AM_LDFLAGS        = -L../src
+#
+test_more_SOURCES   = \
+	test_more.cpp \
+	k_gt_one.cpp \
+	multiple_solution.cpp \
+	retape_k1_l1.cpp \
+	retape_k1_l2.cpp
+
+test: check
+	./test.sh

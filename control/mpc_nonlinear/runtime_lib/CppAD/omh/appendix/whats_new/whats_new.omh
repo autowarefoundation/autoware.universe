@@ -1,0 +1,74 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new$$
+$spell
+    CppAD
+    Eigen
+    std
+    namespace
+$$
+
+$section Changes and Additions to CppAD$$
+
+$head Introduction$$
+The sections listed below contain a list of the changes to CppAD
+in reverse order by date.
+The purpose of these sections is to
+assist you in learning about changes between various versions of CppAD.
+
+$children%
+    omh/appendix/whats_new/21.omh%
+    omh/appendix/whats_new/20.omh%
+    omh/appendix/whats_new/19.omh%
+    omh/appendix/whats_new/18.omh%
+    omh/appendix/whats_new/17.omh%
+    omh/appendix/whats_new/16.omh%
+    omh/appendix/whats_new/15.omh%
+    omh/appendix/whats_new/14.omh%
+    omh/appendix/whats_new/13.omh%
+    omh/appendix/whats_new/12.omh%
+    omh/appendix/whats_new/11.omh%
+    omh/appendix/whats_new/10.omh%
+    omh/appendix/whats_new/09.omh%
+    omh/appendix/whats_new/08.omh%
+    omh/appendix/whats_new/07.omh%
+    omh/appendix/whats_new/06.omh%
+    omh/appendix/whats_new/05.omh%
+    omh/appendix/whats_new/04.omh%
+    omh/appendix/whats_new/03.omh
+%$$
+
+$head This Year$$
+$cref/2021/whats_new_21/$$
+
+$head Previous Years$$
+$cref/2020/whats_new_20/$$,
+$cref/2019/whats_new_19/$$,
+$cref/2018/whats_new_18/$$,
+$cref/2017/whats_new_17/$$,
+$cref/2016/whats_new_16/$$,
+$cref/2015/whats_new_15/$$,
+$cref/2014/whats_new_14/$$,
+$cref/2013/whats_new_13/$$,
+$cref/2012/whats_new_12/$$,
+$cref/2011/whats_new_11/$$,
+$cref/2010/whats_new_10/$$,
+$cref/2009/whats_new_09/$$,
+$cref/2008/whats_new_08/$$,
+$cref/2007/whats_new_07/$$,
+$cref/2006/whats_new_06/$$,
+$cref/2005/whats_new_05/$$,
+$cref/2004/whats_new_04/$$,
+$cref/2003/whats_new_03/$$.
+
+$end

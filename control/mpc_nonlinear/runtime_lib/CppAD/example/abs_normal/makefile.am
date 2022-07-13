@@ -1,0 +1,63 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+# Make sure that ../cppad-uninstalled.pc works for determining cflags
+CPPAD_INCLUDE = -I$(top_srcdir)/include
+#
+#
+check_PROGRAMS    = abs_normal
+#
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	$(CPPAD_INCLUDE) \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+abs_normal_SOURCES = \
+	abs_eval.cpp \
+	abs_eval.hpp \
+	abs_eval.omh \
+	abs_min_linear.cpp \
+	abs_min_linear.hpp \
+	abs_min_linear.omh \
+	abs_min_quad.cpp \
+	abs_min_quad.hpp \
+	abs_min_quad.omh \
+	abs_normal.cpp \
+	abs_print_mat.hpp \
+	get_started.cpp \
+	lp_box.cpp \
+	lp_box.hpp \
+	lp_box.omh \
+	min_nso_linear.cpp \
+	min_nso_linear.hpp \
+	min_nso_linear.omh \
+	min_nso_quad.cpp \
+	min_nso_quad.hpp \
+	min_nso_quad.omh \
+	qp_box.cpp \
+	qp_box.hpp \
+	qp_box.omh \
+	qp_interior.cpp \
+	qp_interior.hpp \
+	qp_interior.omh \
+	simplex_method.cpp \
+	simplex_method.hpp \
+	simplex_method.omh
+
+test: check
+	./abs_normal

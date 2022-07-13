@@ -1,0 +1,39 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+check_PROGRAMS    = deprecated
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+#
+deprecated_SOURCES   = \
+	deprecated.cpp \
+	old_reciprocal.cpp \
+	old_usead_1.cpp \
+	old_usead_2.cpp \
+	old_tan.cpp \
+	old_mat_mul.cpp \
+	old_mat_mul.hpp \
+	omp_alloc.cpp \
+	track_new_del.cpp \
+	zdouble.cpp
+#
+test: check
+	./deprecated

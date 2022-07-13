@@ -1,0 +1,116 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin preprocessor$$
+$spell
+    Microsoft
+    const
+    nullptr
+    CppADvector
+    Vec
+$$
+
+$section CppAD API Preprocessor Symbols$$
+
+$head Rule$$
+The CppAD include files defines preprocessor symbols all of which begin
+with $code CPPAD_$$.
+Note that there are some old, deprecated preprocessor symbols that
+begin with $code CppAD$$.
+In this section we list all of the CppAD preprocessor symbols that
+are part of the CppAD Application Interface (API).
+
+$head NOMINMAX$$
+There is one exception to the rule above,
+when using the Microsoft Visual Studio compiler
+and including $code windows.h$$,
+it is done as follows:
+$codep
+    # define NOMINMAX
+    # include <windows.h>
+$$
+
+$head Documented Here$$
+
+$subhead CPPAD_DEBUG_AND_RELEASE$$
+This flag is an exception because it is defined (or not) by the user
+during the inclusion of the CppAD header files; e.g., when using $code g++$$
+one could put $code -D CPPAD_DEBUG_AND_RELEASE$$ on the complier command line.
+If it is defined, less error checking is done and the
+debug and release versions of CppAD can be mixed in the same program.
+Of particular note is that $cref thread_alloc$$ does less error checking.
+For programs that do a lot of memory allocation,
+this can be a significant time savings when $code NDEBUG$$ is defined.
+
+$head CPPAD_NULL$$
+Deprecated 2020-12-03:
+This preprocessor symbol was used for a null pointer before c++11.
+Replace it by $code nullptr$$.
+
+$subhead CPPAD_PACKAGE_STRING$$
+Is a $code const char*$$ representation of this version of CppAD.
+
+$head CPPAD_USE_CPLUSPLUS_2011$$
+Deprecated 2020-12-03:
+Should CppAD use C++11 features. This is always 1 (for true).
+
+$head Documented Elsewhere$$
+$table
+$cref/CPPAD_BOOL_BINARY/BoolFun/Create Binary/$$
+$rnext
+$cref/CPPAD_BOOL_UNARY/BoolFun/Create Unary/$$
+$rnext
+$cref/CPPAD_DISCRETE_FUNCTION/Discrete/$$
+$rnext
+$cref/CPPAD_MAX_NUM_THREADS/multi_thread/CPPAD_MAX_NUM_THREADS/$$
+$rnext
+$cref/CPPAD_NUMERIC_LIMITS/base_limits/CPPAD_NUMERIC_LIMITS/$$
+$rnext
+$cref/CPPAD_STANDARD_MATH_UNARY/base_std_math/CPPAD_STANDARD_MATH_UNARY/$$
+$rnext
+$cref/CPPAD_TAPE_ADDR_TYPE/cmake/cppad_tape_addr_type/$$
+$rnext
+$cref/CPPAD_TAPE_ID_TYPE/cmake/cppad_tape_id_type/$$
+$rnext
+$cref/CPPAD_TESTVECTOR/testvector/$$
+$rnext
+$cref/CPPAD_TO_STRING/base_to_string/CPPAD_TO_STRING/$$
+$tend
+
+$head Deprecated$$
+$table
+$cref/CppADCreateDiscrete/Discrete/CppADCreateDiscrete Deprecated 2007-07-28/$$
+$rnext
+$cref/CppADvector/test_vector/Deprecated 2012-07-03/$$
+$rnext
+$cref/CPPAD_TEST_VECTOR/test_vector/$$
+$rnext
+$cref/CPPAD_TRACK_NEW_VEC/TrackNewDel/TrackNewVec/Macro/$$
+$rnext
+$cref/CPPAD_TRACK_DEL_VEC/TrackNewDel/TrackDelVec/Macro/$$
+$rnext
+$cref/CPPAD_TRACK_EXTEND/TrackNewDel/TrackExtend/Macro/$$
+$rnext
+$cref/CPPAD_TRACK_COUNT/TrackNewDel/TrackCount/Macro/$$
+$rnext
+$cref/CPPAD_USER_ATOMIC/atomic_one/$$
+$rnext
+$cref/CppADTrackNewVec/TrackNewDel/TrackNewVec/Previously Deprecated/$$
+$rnext
+$cref/CppADTrackDelVec/TrackNewDel/TrackDelVec/Previously Deprecated/$$
+$rnext
+$cref/CppADTrackExtend/TrackNewDel/TrackExtend/Previously Deprecated/$$
+$rnext
+$cref/CppADTrackCount/TrackNewDel/TrackCount/Previously Deprecated/$$
+$tend
+
+
+$end

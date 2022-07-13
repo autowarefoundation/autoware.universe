@@ -1,0 +1,61 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin taylor_ode$$
+$spell
+    Taylor
+$$
+
+$section AD Theory for Solving ODE's Using Taylor's Method$$
+
+$head Problem$$
+We are given an initial value problem for
+$latex y : \B{R} \rightarrow \B{R}^n$$; i.e., we know
+$latex y(0) \in \B{R}^n$$
+and we know a function $latex g : \B{R}^n \rightarrow \B{R}^n$$
+such that $latex y^1 (t) = g[ y(t) ]$$
+where $latex y^k (t)$$ is the $th k$$ derivative of $latex y(t)$$.
+
+$head z(t)$$
+We define the function
+$latex z : \B{R} \rightarrow \B{R}^n$$ by
+$latex z(t) = g[ y(t) ]$$.
+Given the Taylor coefficients
+$latex y^{(k)} (t)$$ for $latex k = 0 , \ldots , p$$, we can
+compute $latex z^{(p)} (t)$$ using forward mode AD on the function
+$latex g(y)$$; see $cref forward_order$$.
+It follows from $latex y^1 (t) = z(t)$$ that
+$latex y^{p+1} (t) = z^p (t) $$
+$latex \[
+    y^{(p+1)} (t) = z^{(p)} (t) / (k + 1)
+\] $$
+where $latex y^{(k)} (t)$$ is the $th k$$ order Taylor coefficient
+for $latex y(t)$$; i.e., $latex y^k (t) / k !$$.
+Starting with the known value $latex y^{(0)} (t)$$,
+this gives a prescription for computing $latex y^{(k)} (t)$$ for
+any $latex k$$.
+
+$head Taylor's Method$$
+The $th p$$ order Taylor method for approximates
+$latex \[
+y( t + \Delta t )
+\approx
+y^{(0)} (t) + y^{(1)} (t) \Delta t + \cdots + y^{(p)} (t)  \Delta t^p
+\] $$
+
+$children%example/general/taylor_ode.cpp
+%$$
+$head Example$$
+The file $cref taylor_ode.cpp$$ contains an example and test
+of this method.
+
+$end

@@ -1,0 +1,61 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed_double$$
+$spell
+    cmake
+    cppad
+    CppAD
+    Cygwin
+    Microsoft
+    chdir
+    Workspace
+    dsw
+    exe
+    sln
+$$
+
+
+$section Speed Test of Functions in Double$$
+
+$head Purpose$$
+CppAD has a set of speed tests for just calculating functions
+(in double precision instead of an AD type).
+This section links to the source code the function value speed tests.
+
+$head Running Tests$$
+To build these speed tests, and run their correctness tests,
+execute the following commands starting in the
+$cref/build directory/cmake/Build Directory/$$:
+$codei%
+    cd speed/double
+    make check_speed_double VERBOSE=1
+%$$
+You can then run the corresponding speed tests
+with the following command
+$codei%
+    ./speed_double speed %seed%
+%$$
+where $icode seed$$ is a positive integer.
+See $cref speed_main$$ for more options.
+
+$contents%
+    speed/double/det_minor.cpp%
+    speed/double/det_lu.cpp%
+    speed/double/mat_mul.cpp%
+    speed/double/ode.cpp%
+    speed/double/poly.cpp%
+    speed/double/sparse_hessian.cpp%
+    speed/double/sparse_jacobian.cpp
+%$$
+
+$end

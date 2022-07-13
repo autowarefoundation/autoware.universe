@@ -1,0 +1,49 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+#
+# Copy source file so that main.o does not end up in parent directory
+BUILT_SOURCES = main.cpp
+main.cpp:
+	cp $(srcdir)/../main.cpp main.cpp
+#
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+check_PROGRAMS   = speed_xpackage
+#
+AM_CXXFLAGS =  \
+	-DCPPAD_XPACKAGE_SPEED \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	-I$(XPACKAGE_DIR)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+#
+LDADD = ../src/libspeed.a
+#
+../src/libspeed.a:
+	(cd ../src; make libspeed.a)
+#
+speed_xpackage_SOURCES = \
+	main.cpp \
+	det_lu.cpp  \
+	det_minor.cpp  \
+	mat_mul.cpp  \
+	ode.cpp \
+	poly.cpp \
+	sparse_hessian.cpp \
+	sparse_jacobian.cpp
+
+test: check
+	./speed_xpackage correct 123

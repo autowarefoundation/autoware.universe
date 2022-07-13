@@ -1,0 +1,101 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin reverse_one$$
+
+$section First Order Reverse Mode$$
+$spell
+    taylor
+    const
+    dw
+$$
+
+
+$head Syntax$$
+$icode%dw% = %f%.Reverse(1, %w%)%$$
+
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$.
+The function $latex W : \B{R}^n \rightarrow \B{R}$$ is defined by
+$latex \[
+    W(x) = w_0 * F_0 ( x ) + \cdots + w_{m-1} * F_{m-1} (x)
+\] $$
+The result of this operation is the derivative
+$latex dw = W^{(1)} (x)$$; i.e.,
+$latex \[
+    dw = w_0 * F_0^{(1)} ( x ) + \cdots + w_{m-1} * F_{m-1}^{(1)} (x)
+\] $$
+Note that if $latex w$$ is the $th i$$
+$cref/elementary vector/glossary/Elementary Vector/$$,
+$latex dw = F_i^{(1)} (x)$$.
+
+$head f$$
+The object $icode f$$ has prototype
+$codei%
+    const ADFun<%Base%> %f%
+%$$
+Before this call to $code Reverse$$, the value returned by
+$codei%
+    %f%.size_order()
+%$$
+must be greater than or equal one (see $cref size_order$$).
+
+$head x$$
+The vector $icode x$$ in expression for $icode dw$$ above
+corresponds to the previous call to $cref forward_zero$$
+using this ADFun object $icode f$$; i.e.,
+$codei%
+    %f%.Forward(0, %x%)
+%$$
+If there is no previous call with the first argument zero,
+the value of the $cref/independent/Independent/$$ variables
+during the recording of the AD sequence of operations is used
+for $icode x$$.
+
+$head w$$
+The argument $icode w$$ has prototype
+$codei%
+    const %Vector% &%w%
+%$$
+(see $cref/Vector/reverse_one/Vector/$$ below)
+and its size
+must be equal to $icode m$$, the dimension of the
+$cref/range/fun_property/Range/$$ space for $icode f$$.
+
+$head dw$$
+The result $icode dw$$ has prototype
+$codei%
+    %Vector% %dw%
+%$$
+(see $cref/Vector/reverse_one/Vector/$$ below)
+and its value is the derivative $latex W^{(1)} (x)$$.
+The size of $icode dw$$
+is equal to $icode n$$, the dimension of the
+$cref/domain/fun_property/Domain/$$ space for $icode f$$.
+
+$head Vector$$
+The type $icode Vector$$ must be a $cref SimpleVector$$ class with
+$cref/elements of type/SimpleVector/Elements of Specified Type/$$
+$icode Base$$.
+The routine $cref CheckSimpleVector$$ will generate an error message
+if this is not the case.
+
+$head Example$$
+$children%
+    example/general/reverse_one.cpp
+%$$
+The file
+$cref reverse_one.cpp$$
+contains an example and test of this operation.
+
+$end

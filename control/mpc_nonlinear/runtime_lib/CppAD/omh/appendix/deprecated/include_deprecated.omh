@@ -1,0 +1,144 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin include_deprecated$$
+$spell
+    autotools
+    sudo
+    mv
+    Rosen
+    cppad.hpp
+    CppAD
+    Runge
+    cp
+    dir
+    ln
+    lu
+    Romberg
+    Mul
+$$
+
+$section Deprecated Include Files$$
+
+$head Deprecated 2015-11-30$$
+The $cref utility$$ individual include files have been deprecated; e.g.,
+$codep
+    # include <cppad/runge_45.hpp>
+$$
+You must instead use
+$codep
+    # include <cppad/utility.hpp>
+$$
+or you can include individual utility files; e.g.,
+$codep
+    # include <cppad/utility/runge_45.hpp>
+$$
+
+$head Deprecated 2006-12-17$$
+The following is a list of deprecated include file names
+and the corresponding names that should be used.
+For example, if your program uses the deprecated preprocessor command
+$codep
+    # include <CppAD/CppAD.h>
+$$
+you must change it to the command
+$codep
+    # include <cppad/cppad.hpp>
+$$
+The before 2015-11-30 column contains name used for the include file
+between 2006-12-17 and 2015-11-30 (see discussion above).
+
+$table
+$bold Deprecated$$         $pre  $$ $cnext $bold Before 2015-11-30$$
+    $pre  $$ $cnext $bold Documentation$$
+$rnext
+
+CppAD/CheckNumericType.h   $pre  $$ $cnext cppad/check_numeric_type.hpp
+    $pre  $$ $cnext $cref CheckNumericType$$
+$rnext
+
+CppAD/CheckSimpleVector.h  $pre  $$ $cnext cppad/check_simple_vector.hpp
+    $pre  $$ $cnext $cref CheckSimpleVector$$
+$rnext
+
+CppAD/CppAD.h              $pre  $$ $cnext cppad/cppad.hpp
+    $pre  $$ $cnext $cref CppAD$$
+$rnext
+
+CppAD/CppAD_vector.h       $pre  $$ $cnext cppad/vector.hpp
+    $pre  $$ $cnext $cref CppAD_vector$$
+$rnext
+
+CppAD/ErrorHandler.h       $pre  $$ $cnext cppad/error_handler.hpp
+    $pre  $$ $cnext $cref ErrorHandler$$
+$rnext
+
+CppAD/LuFactor.h           $pre  $$ $cnext cppad/lu_factor.hpp
+    $pre  $$ $cnext $cref LuFactor$$
+$rnext
+
+CppAD/LuInvert.h           $pre  $$ $cnext cppad/lu_invert.hpp
+    $pre  $$ $cnext $cref LuInvert$$
+$rnext
+
+CppAD/LuSolve.h            $pre  $$ $cnext cppad/lu_solve.hpp
+    $pre  $$ $cnext $cref LuSolve$$
+$rnext
+
+CppAD/NearEqual.h          $pre  $$ $cnext cppad/near_equal.hpp
+    $pre  $$ $cnext $cref NearEqual$$
+$rnext
+
+CppAD/OdeErrControl.h      $pre  $$ $cnext cppad/ode_err_control.hpp
+    $pre  $$ $cnext $cref OdeErrControl$$
+$rnext
+
+CppAD/OdeGear.h            $pre  $$ $cnext cppad/ode_gear.hpp
+    $pre  $$ $cnext $cref OdeGear$$
+$rnext
+
+CppAD/OdeGearControl.h     $pre  $$ $cnext cppad/ode_gear_control.hpp
+    $pre  $$ $cnext $cref OdeGearControl$$
+$rnext
+
+CppAD/Poly.h               $pre  $$ $cnext cppad/poly.hpp
+    $pre  $$ $cnext $cref Poly$$
+$rnext
+
+CppAD/PowInt.h             $pre  $$ $cnext cppad/pow_int.hpp
+    $pre  $$ $cnext $cref pow_int$$
+$rnext
+
+CppAD/RombergMul.h         $pre  $$ $cnext cppad/romberg_mul.hpp
+    $pre  $$ $cnext $cref RombergMul$$
+$rnext
+
+CppAD/RombergOne.h         $pre  $$ $cnext cppad/romberg_one.hpp
+    $pre  $$ $cnext $cref RombergOne$$
+$rnext
+
+CppAD/Rosen34.h            $pre  $$ $cnext cppad/rosen_34.hpp
+    $pre  $$ $cnext $cref Rosen34$$
+$rnext
+
+CppAD/Runge45.h            $pre  $$ $cnext cppad/runge_45.hpp
+    $pre  $$ $cnext $cref Runge45$$
+$rnext
+
+CppAD/SpeedTest.h          $pre  $$ $cnext cppad/speed_test.hpp
+    $pre  $$ $cnext $cref SpeedTest$$
+$rnext
+
+CppAD/TrackNewDel.h        $pre  $$ $cnext cppad/track_new_del.hpp
+    $pre  $$ $cnext $cref TrackNewDel$$
+$tend
+
+$end

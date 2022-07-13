@@ -1,0 +1,71 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin Bib$$
+$spell
+    ed
+    Bjarne Stroustrup
+    Saul
+    Griewank
+    Andreas
+    Vetterling
+    Flannery
+    Teukolsky
+    Abramowitz
+    Stegun
+    Shampine
+    Rosenbrock
+$$
+
+$section Bibliography$$
+
+$head Abramowitz and Stegun$$
+Handbook of Mathematical Functions,
+Dover, New York.
+
+$head The C++ Programming Language$$
+Bjarne Stroustrup,
+The C++ Programming Language,
+Special ed.,
+AT&T, 2000
+
+$head Evaluating Derivatives$$
+Evaluating Derivatives: Principles and Techniques of
+Algorithmic Differentiation,
+Andreas Griewank,
+SIAM,
+Philadelphia,
+2000
+
+
+
+$head Numerical Recipes$$
+Numerical Recipes in Fortran:
+The Art of Scientific Computing,
+Second Edition,
+William H. Press,
+William T. Vetterling,
+Saul, A. Teukolsky,
+Brian R. Flannery,
+Cambridge University Press,
+1992
+
+$head Shampine, L.F.$$
+Implementation of Rosenbrock Methods,
+ACM Transactions on Mathematical Software,
+Vol. 8,
+No. 2,
+June 1982.
+
+
+$end
+

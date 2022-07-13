@@ -1,0 +1,107 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin log_reverse$$
+$spell
+    Taylor
+$$
+
+$section Logarithm Function Reverse Mode Theory$$
+
+We use the reverse theory
+$cref%standard math function
+    %ReverseTheory
+    %Standard Math Functions
+%$$
+definition for the functions $latex H$$ and $latex G$$.
+
+The zero order forward mode formula for the
+$cref/logarithm/log_forward/$$ is
+$latex \[
+    z^{(0)}  =  F( x^{(0)} )
+\] $$
+and for $latex j > 0$$,
+$latex \[
+z^{(j)}
+=  \frac{1}{ \bar{b} + x^{(0)} } \frac{1}{j}
+\left(
+    j x^{(j)}
+    - \sum_{k=1}^{j-1} k z^{(k)} x^{(j-k)}
+\right)
+\] $$
+where
+$latex \[
+\bar{b}
+=
+\left\{ \begin{array}{ll}
+    0 & \R{if} \; F(x) = \R{log}(x)
+    \\
+    1 & \R{if} \; F(x) = \R{log1p}(x)
+\end{array} \right.
+\] $$
+We note that for $latex j > 0$$
+$latex \[
+\begin{array}{rcl}
+\D{ z^{(j)} } { x^{(0)} }
+& = &
+-
+\frac{1}{ \bar{b} + x^{(0)} }
+\frac{1}{ \bar{b} + x^{(0)} }
+\frac{1}{j}
+\left(
+    j x^{(j)}
+    - \sum_{k=1}^{j-1} k z^{(k)} x^{(j-k)}
+\right)
+\\
+& = &
+-
+\frac{z^{(j)}}{ \bar{b} + x^{(0)} }
+\end{array}
+\] $$
+Removing the zero order partials are given by
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(0)} } & = &
+\D{G}{ x^{(0)} }  + \D{G}{ z^{(0)} } \D{ z^{(0)} }{ x^{(0)} }
+\\
+& = &
+\D{G}{ x^{(0)} }  + \D{G}{ z^{(0)} } \frac{1}{ \bar{b} + x^{(0)} }
+\end{array}
+\] $$
+For orders $latex j > 0$$ and for $latex k = 1 , \ldots , j-1$$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(0)} }
+& = &
+\D{G}{ x^{(0)} } + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(0)} }
+\\
+& = &
+\D{G}{ x^{(0)} } - \D{G}{ z^{(j)} } \frac{ z^{(j)} }{ \bar{b} + x^{(0)} }
+\\
+\D{H}{ x^{(j)} }
+& = &
+\D{G}{ x^{(j)} } + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(j)} }
+\\
+& = &
+\D{G}{ x^{(j)} } + \D{G}{ z^{(j)} } \frac{1}{ \bar{b} + x^{(0)} }
+\\
+\D{H}{ x^{(j-k)} } & = &
+\D{G}{ x^{(j-k)} }  -
+    \D{G}{ z^{(j)} } \frac{1}{ \bar{b} + x^{(0)} } \frac{k}{j}  z^{(k)}
+\\
+\D{H}{ z^{(k)} } & = &
+\D{G}{ z^{(k)} }  -
+    \D{G}{ z^{(j)} } \frac{1}{ \bar{b} + x^{(0)} } \frac{k}{j}  x^{(j-k)}
+\end{array}
+\] $$
+
+$end

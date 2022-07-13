@@ -1,0 +1,34 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+# Make sure that ../cppad-uninstalled.pc works for determining cflags
+CPPAD_INCLUDE = -I$(top_srcdir)/include
+#
+# Microsoft project files
+#
+check_PROGRAMS    = print_for
+#
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	$(CPPAD_INCLUDE) \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+print_for_SOURCES = print_for.cpp
+
+test: check
+	$(srcdir)/test.sh

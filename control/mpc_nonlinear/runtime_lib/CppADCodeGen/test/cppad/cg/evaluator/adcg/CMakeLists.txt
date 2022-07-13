@@ -1,0 +1,2 @@
+add_cppadcg_test(evaluator_adcg_name.cpp)
+add_cppadcg_test(evaluator_adcg_print.cpp)

@@ -1,0 +1,33 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+#
+#
+noinst_LIBRARIES   = libspeed.a
+libspeed_a_SOURCES = \
+	link_det_lu.cpp \
+	link_det_minor.cpp \
+	link_mat_mul.cpp \
+	link_ode.cpp \
+	link_poly.cpp \
+	link_sparse_hessian.cpp \
+	link_sparse_jacobian.cpp

@@ -1,0 +1,5 @@
+.idea
+cmake-build-debug-coverage
+cmake-build-debug
+*.json
+/.cache/

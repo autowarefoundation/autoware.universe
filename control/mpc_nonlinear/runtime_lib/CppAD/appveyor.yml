@@ -1,0 +1,48 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+#
+# build platform, i.e. x86, x64, Any CPU. This setting is optional.
+platform:
+  - x64
+
+# branches to build on push
+branches:
+  only:
+    - master
+
+# msys2 environment
+environment:
+  matrix:
+    - HOST_ARCH_ARG: --host=x86_64-w64-mingw32
+      ADD_PATH: /mingw64/bin
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+
+# scripts that run after cloning repository
+install:
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-x86_64-cmake"
+
+#
+# run custom scripts instead of automatic MSBuild
+build_script:
+  - C:\msys64\usr\bin\bash -lc "
+      cd $APPVEYOR_BUILD_FOLDER;
+      export PATH=$PATH:$ADD_PATH;
+      bin/appveyor.sh make check install uninstall
+    "
+#
+notifications:
+  - provider: Email
+    to:
+     - bradbell@seanet.com
+    on_build_status_changed: true
+    on_build_failure: true
+    on_build_success: false

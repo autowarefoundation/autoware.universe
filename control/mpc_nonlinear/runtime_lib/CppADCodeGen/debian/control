@@ -1,0 +1,33 @@
+Source: cppadcodegen
+Section: Development/Libraries
+Priority: extra
+Maintainer: Joao Leal <development@ciengis.com>
+Build-Depends: debhelper (>= 5),
+               cdbs,
+               binutils (>= 2.18.1 ),
+               libacl1 (>= 2.2.45-1 ),
+               libattr1 (>= 1 ),
+               cmake (>= 2.8),
+               doxygen,
+               cppad-dev (>= 20200000.1)|cppad (>= 2020.00.00.1),
+               libadolc-dev,
+               libclang-dev (>= 3.2) | libclang-3.6-dev | libclang-3.8-dev | libclang-4.0-dev,
+               libeigen3-dev,
+               libgtest-dev
+Standards-Version: 3.7.2
+
+Package: cppadcodegen-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends},
+         cppad-dev (>= 20200000.1)|cppad (>= 2020.00.00.1)
+Suggests: libclang-dev (>= 3.2),
+          llvm-8.0-dev | llvm-4.0-dev,
+          libeigen3-dev
+Description: A Package for Differentiation of C++ Algorithms that performs source code generation
+
+Package: cppadcodegen-doc
+Section: doc
+Architecture: all
+Description: Documentation for CppADCodeGen
+ HTML Documentation for CppADCodeGen package.

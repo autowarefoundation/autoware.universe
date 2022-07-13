@@ -1,0 +1,106 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin pow_reverse$$
+$spell
+    Taylor
+$$
+
+$section Power Function Reverse Mode Theory$$
+
+We use the reverse theory
+$cref%standard math function
+    %ReverseTheory
+    %Standard Math Functions
+%$$
+definition for the functions $latex H$$ and $latex G$$.
+The zero order forward mode formula for the
+$cref/power/pow_forward/$$ function is
+$latex \[
+    z^{(0)}  =  F ( x^{(0)} )
+\] $$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(0)} }
+& = & \D{G}{ x^{(0)} }  + \D{G}{ z^{(0)} } \D{ z^{(0)} }{ x^{(0)} }
+\\
+\D{ z^{(0)} }{ x^{(0)} } & = & y [ x^{(0)} ]^{y - 1}  = y z^{(0)} / x{(0)}
+\end{array}
+\] $$
+All the equations below apply to the case where $latex j > 0$$.
+For this case, the equation for $latex z^{(j)}$$ is
+$latex \[
+z^{(j)}
+=
+\left. \left(
+    y z^{(0)} x^{(j)}
+    +
+    \frac{1}{j} \sum_{k=1}^{j-1} k ( y x^{(k)} z^{(j-k)} - z^{(k)}  x^{(j-k)} )
+\right) \right/ x^{(0)}
+\] $$
+
+$head x^j$$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(j)} }
+& = & \D{G}{ x^{(j)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(j)} }
+\\
+\D{ z^{(j)} }{ x^{(j)} } & = & y z^{(0)} / x^{(0)}
+\end{array}
+\] $$
+
+$head x^k$$
+For $latex k = 1 , \ldots , j-1$$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(k)} }
+& = & \D{G}{ x^{(k)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(k)} }
+\\
+\D{ z^{(j)} }{ x^{(k)} } & = &
+\frac{1}{j} ( k y - (j-k) ) z^{(j-k)} / x^{(0)}
+\end{array}
+\] $$
+
+$head z^k$$
+For $latex k = 1 , \ldots , j-1$$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ z^{(k)} }
+& = & \D{G}{ z^{(k)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ z^{(k)} }
+\\
+\D{ z^{(j)} }{ z^{(k)} } & = &
+\frac{1}{j} ( (j-k) y - k ) x^{(j-k)} / x^{(0)}
+\end{array}
+\] $$
+
+$head x^0$$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(0)} }
+& = & \D{G}{ x^{(0)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(0)} }
+\\
+\D{ z^{(j)} }{ x^{(0)} } & = & - z^{(j)} / x^{(0)}
+\end{array}
+\] $$
+
+$head z^0$$
+$latex \[
+\begin{array}{rcl}
+\D{H}{ z^{(0)} }
+& = & \D{G}{ z^{(0)} }  + \D{G}{ z^{(j)} } \D{ z^{(j)} }{ z^{(0)} }
+\\
+\D{ z^{(j)} }{ z^{(0)} } & = &  y x^{(j)} / x^{(0)}
+\end{array}
+\] $$
+
+
+$end

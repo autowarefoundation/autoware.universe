@@ -1,0 +1,51 @@
+name: Linux Github Actions
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  learn-actions:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: set debug_which
+        run: |
+          mkdir build
+          cd build
+          set +e
+          random_03=$(expr $RANDOM % 4)
+          set -e
+          case $random_03 in
+            0) debug_which='debug_all'
+            ;;
+            1) debug_which='debug_even'
+            ;;
+            2) debug_which='debug_odd'
+            ;;
+            3) debug_which='debug_none'
+            ;;
+          esac
+          echo "$debug_which" > debug_which
+      - name: run cmake
+        run: |
+          cd build
+          debug_which=$(cat debug_which)
+          echo "cmake -D cppad_debug_which=$debug_which" ..
+          cmake -D cppad_debug_which=$debug_which ..
+      - name: run make check
+        run: |
+          cd build
+          if which nproc >& /dev/null
+          then
+              n_job=$(nproc)
+          else
+              n_job=$(sysctl -n hw.ncpu)
+          fi
+          echo "make -j $n_job check"
+          make -j $(nproc) check
+      - run: echo "job.status = ${{ job.status }}"

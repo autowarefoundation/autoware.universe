@@ -1,0 +1,229 @@
+% -----------------------------------------------------------------------------
+% CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+%
+% CppAD is distributed under the terms of the
+%              Eclipse Public License Version 2.0.
+%
+% This Source Code may also be made available under the following
+% Secondary License when the conditions for such availability set forth
+% in the Eclipse Public License, Version 2.0 are satisfied:
+%       GNU General Public License, Version 2.0 or later.
+% -----------------------------------------------------------------------------
+\documentclass{beamer}
+
+% needed for fonts; see %https://tex.stackexchange.com/questions/58087/
+% how-to-remove-the-warnings-font-shape-ot1-cmss-m-n-in-size-4-not-available
+\usepackage{lmodern}% http://ctan.org/pkg/lm
+
+% macros
+\newcommand{\B}[1]{{\bf #1}}
+
+
+\title[CppAD]{CppAD's Abs-normal Representation}
+\institute{
+    \begin{tabular}{c}
+        {\Large Bradley M. Bell} \\
+        \\
+        Applied Physics Laboratory and \\
+        Institute for Health Metrics and Evaluation, \\
+        University of Washington, \\
+        \texttt{bradbell@uw.edu} \\
+    \end{tabular}
+}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Non-Smooth Functions}
+
+\begin{block}{$f(x)$}
+$ f : \B{R}^n \rightarrow \B{R}^m $ where the only non-smooth
+nodes in its computational graph are $| \cdot |$.
+\end{block}
+\pause
+
+\begin{block}{$a(x)$}
+Let $s$ be number of $| \cdot |$ in $f$.
+We define
+$a : \B{R}^n \rightarrow \B{R}^s$ where
+$a_i (x)$ is the result for the $i$-th absolute value.
+\end{block}
+
+\end{frame}
+% ----------------------------------------------------------------------------
+\begin{frame}{Smooth Functions}
+
+\begin{block}{$z(x,u)$}
+There is a smooth
+$z : \B{R}^{n + s} \rightarrow \B{R}^s$ where
+$z_i (x, u)$ is argument to $i$-th absolute value
+when $u_j = a_j (x)$ for $j < i$.
+\end{block}
+\pause
+
+\begin{block}{$y(x,u)$}
+There is a smooth
+$y : \B{R}^{n + s} \rightarrow \B{R}^m$ where
+$y(x , u) = f(x)$ when $u = a (x)$ for all $i$.
+\end{block}
+\pause
+
+\begin{block}{$g(x,u)$}
+The function
+$g : \B{R}^{n + s} \rightarrow \B{R}^{m + s}$ is defined by
+\[
+g(x, u) = \left[ \begin{array}{c} y(x, u) \\ z(x, y) \end{array} \right]
+\]
+\end{block}
+
+\end{frame}
+% ----------------------------------------------------------------------------
+\begin{frame}{Approximating $a(x)$}
+
+\[
+z[ \hat{x} ]( x , u )
+=
+z ( \hat{x}, a( \hat{x} ) )
+    + \partial_x z ( \hat{x}, a( \hat{x} ) ) ( x - \hat{x} )
+    + \partial_u z ( \hat{x}, a( \hat{x} ) ) ( u - a( \hat{x} ) )
+\]
+\pause
+
+Note that $z_0 ( x , u )$ does not depend on $u$:
+\[
+a_0 [ \hat{x} ]( x )
+=
+\left|
+    z_0 ( \hat{x}, a( \hat{x} ) )
+    + \partial_x z_0 ( \hat{x}, a( \hat{x} ) ) ( x - \hat{x} )
+\right|
+\]
+\pause
+
+\begin{eqnarray*}
+a_i [ \hat{x} ]( x )
+& = &
+\left | \vphantom{ \sum_{j < i} } z_i ( \hat{x}, a( \hat{x} ) )
+    + \partial_x z_i ( \hat{x}, a( \hat{x} ) ) ( x - \hat{x} )
+\right.
+\\
+& + &
+\left. \sum_{j < i} \partial_{u(j)} z_i ( \hat{x}, a( \hat{x} ) )
+            ( a_j [ \hat{x} ] ( x )  - a_j ( \hat{x} ) )
+\right|
+\end{eqnarray*}
+\pause
+
+\[
+a(x) = a[ \hat{x} ]( x ) + o( x - \hat{x} )
+\phantom{\rule{1in}{1pt}}
+\]
+
+
+\end{frame}
+% ----------------------------------------------------------------------------
+\begin{frame}{Representation}
+
+\begin{block}{ \texttt{f.abs\_normal\_fun(g, a)} }
+Given the \texttt{ADFun<Base>} object \texttt{f} for $f(x)$,
+this creates the two \texttt{ADFun<Base>} objects \texttt{g}, \texttt{a}
+for $g(x, u)$ and $a(x)$ respectively.
+\end{block}
+\pause
+
+\begin{block}{Advantages}
+Any AD operation can be computed for the smooth function \texttt{g}; e.g.,
+any order forward and reverse mode, sparsity patterns, and sparse derivatives.
+\end{block}
+
+\end{frame}
+% ----------------------------------------------------------------------------
+\begin{frame}{Approximating $f(x)$}
+
+\[
+y[ \hat{x} ]( x , u )
+=
+y ( \hat{x}, a( \hat{x} ) )
+    + \partial_x y ( \hat{x}, a( \hat{x} ) ) ( x - \hat{x} )
+    + \partial_u y ( \hat{x}, a( \hat{x} ) ) ( u - a( \hat{x} ) )
+\]
+\pause
+
+
+\[
+f(x) = y[ \hat{x} ] ( x , a[ \hat{x} ] (x) ) + o ( x - \hat{x} )
+\phantom{\rule{1.3in}{1pt}}
+\]
+
+\begin{block}{ \texttt{abs\_eval(n, m, s, g\_hat , g\_jac , delta\_x)} }
+Evaluates $y[ \hat{x} ] ( x , a[ \hat{x} ] (x) )$
+\end{block}
+\pause
+
+\begin{itemize}
+
+\item
+\texttt{g\_hat} is $g[ \hat{x} , a( \hat{x} ) ]$
+\pause
+
+\item
+\texttt{g\_jac} is $g^{(1)} [ \hat{x} , a( \hat{x} ) ]$
+\pause
+
+\item
+\texttt{delta\_x} is $x - \hat{x}$
+
+\end{itemize}
+
+
+\end{frame}
+% ----------------------------------------------------------------------------
+
+\begin{frame}{ \texttt{abs\_min\_linear} }
+
+\begin{block}{Problem}
+minimize $\tilde{f} ( x ) = y[ \hat{x} ] ( x , a( \hat{x} ) )$ w.r.t
+$x$ subject to $-b \leq x \leq b$ using the assumption
+that $\tilde{f} (x)$ is convex.
+\end{block}
+\pause
+
+
+\begin{block}{Algorithm}
+\begin{enumerate}
+
+\item
+Start at with point  $x = \hat{x}$ and $C$ an empty set of
+cutting planes.
+\pause
+
+\item
+\label{NextIterationItem}
+Add affine apprimation for $\tilde{f} ( x )$ at $x$ to $C$.
+\pause
+
+
+\item
+Minimize w.r.t $x$ the maximum of the affine functions in $C$
+subject to $-b \leq x \leq b$ (this is an LP).
+\pause
+
+
+\item
+If change in $x$ for this this iteration is small, return $x$ as solution.
+Otherwise, goto step \ref{NextIterationItem}.
+
+\end{enumerate}
+\end{block}
+
+
+\end{frame}
+
+
+\end{document}

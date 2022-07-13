@@ -1,0 +1,81 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin CompareChange$$
+$spell
+    const
+$$
+
+$section Comparison Changes During Zero Order Forward Mode$$
+
+
+$head Syntax$$
+$icode%c% = %f%.CompareChange()%$$
+$pre
+$$
+$bold See Also$$
+$cref FunCheck$$
+
+$head Deprecated 2015-01-20$$
+This routine has been deprecated, use $cref compare_change$$
+instead.
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$.
+This function may be not agree with the algorithm that was used
+to create the corresponding
+AD of $icode Base$$
+$cref/operation sequence/glossary/Operation/Sequence/$$
+because of changes in AD
+$cref/comparison/Compare/$$ results.
+The $code CompareChange$$ function can be used to detect these changes.
+
+$head f$$
+The object $icode f$$ has prototype
+$codei%
+    const ADFun<%Base%> %f%
+%$$
+
+$head c$$
+The result $icode c$$ has prototype
+$codei%
+    size_t %c%
+%$$
+It is the number of
+$codei%AD<%Base%>%$$ $cref/comparison/Compare/$$
+operations,
+corresponding to the previous call to $cref Forward$$
+$codei%
+    %f%.Forward(0, %x%)
+%$$
+that have a different result from
+when $icode F$$ was created by taping an algorithm.
+
+$head Discussion$$
+If $icode c$$ is not zero,
+the boolean values resulting from some of the
+$cref/comparison operations/Compare/$$ corresponding to $icode x$$
+are different from when the
+AD of $icode Base$$
+$cref/operation sequence/glossary/Operation/Sequence/$$ was created.
+In this case, you may want to re-tape the algorithm with the
+$cref/independent variables/glossary/Tape/Independent Variable/$$
+equal to the values in $icode x$$
+(so AD operation sequence properly represents the algorithm
+for this value of independent variables).
+On the other hand, re-taping the AD operation sequence usually takes
+significantly more time than evaluation using $cref forward_zero$$.
+If the functions values have not changed (see $cref FunCheck$$)
+it may not be worth re-taping a new AD operation sequence.
+
+
+$end

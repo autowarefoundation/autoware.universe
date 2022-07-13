@@ -1,0 +1,120 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed_xpackage$$
+$dollar @$$
+$spell
+    xpackage
+    CppAD
+    grep
+    cp
+    ls
+    sed
+    txt
+    cmake
+    det
+    lu
+    mul
+    jacobian
+    ifdef
+    endif
+$$
+
+
+$section Speed Test Example and Template for a New Package$$
+
+$head Purpose$$
+CppAD has a set of speed tests that are used to compare
+AD packages.
+This section can be used as a starting point for linking a new package
+to he CppAD speed tests.
+
+$head Files$$
+Use the following command, in the
+$cref/distribution directory/download/Distribution Directory/$$,
+to see which files link the example package $code xpackage$$
+to the speed tests:
+$codei%
+    git grep -l xpackage
+%$$
+
+$head Template$$
+Suppose $icode your_package$$ is the name of a package you
+want to add to the speed tests.
+If you are using a Unix system,
+executing the following commands in the distribution directory
+will use $code xpackage$$ as a template for your package:
+$codei%
+    cp -r speed/xpackage speed/%your_package%
+    for file in `ls speed/%your_package%`
+    do
+        sed -i speed/%your_package%/@file \
+            -e 's|xpackage|%your_package%|' \
+            -e 's|Xpackage|%Your_package%|' \
+            -e 's|CPPAD_XPACKAGE_SPEED|%YOUR_PACKGE%|'
+    done
+    git checkout speed/CMakeLists.txt
+    sed -i speed/CMakeLists.txt \
+        -e 's|^.*(xpackage)|ADD_SUBDIRECTORY(%your_package%)\n&|'
+    git checkout speed/main.cpp
+    line1='# ifdef CPPAD_%YOUR_PACKAGE%_SPEED'
+    line2='# define AD_PACKAGE "%your_package%"'
+    line3='# endif'
+    sed -i speed/main.cpp \
+        -e "/CPPAD_XPACKAGE_SPEED/s|^|@line1\n@line2\n@line3\n|"
+%$$
+where $icode your_package$$ has been replaced by the name of the new package
+$icode Your_package$$ is a capitalized version of the name, and
+$icode YOUR_PACKAGE$$ is an all caps version of the name.
+
+
+$head Running Tests$$
+Starting in the distribution directory,
+the following commands will build the new package version of the tests:
+$codei%
+    bin/run_cmake.sh --no_optional
+    cd build/speed/%your_package%
+    make check_speed_%your_package% VERBOSE=1
+%$$
+This should result in the following output:
+$codei|
+    |...|
+    |your_package|_det_lu_available = false
+    |your_package|_det_minor_available = false
+    |your_package|_mat_mul_available = false
+    |your_package|_ode_available = false
+    |your_package|_poly_available = false
+    |your_package|_sparse_hessian_available = false
+    |your_package|_sparse_jacobian_available = false
+    All 0 correctness tests passed.
+    No memory leak detected
+    speed main: OK
+    [100%] Built target check_speed_|your_package|
+|$$
+You can not edit one or more of the $icode%*%.cpp%$$ files in the
+$icode your_package$$ directory so that the corresponding speed test
+is available and then run the corresponding test using the
+$cref speed_main$$ instructions.
+See $cref speed_cppad$$ for examples of how to do this for each
+of the speed tests.
+
+$contents%
+    speed/xpackage/det_minor.cpp%
+    speed/xpackage/det_lu.cpp%
+    speed/xpackage/mat_mul.cpp%
+    speed/xpackage/ode.cpp%
+    speed/xpackage/poly.cpp%
+    speed/xpackage/sparse_hessian.cpp%
+    speed/xpackage/sparse_jacobian.cpp
+%$$
+
+$end

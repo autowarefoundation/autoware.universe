@@ -1,0 +1,156 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin compare_change$$
+$spell
+    op
+    const
+$$
+
+$section Comparison Changes Between Taping and Zero Order Forward$$
+
+
+$head Syntax$$
+$icode%f%.compare_change_count(%count%)
+%$$
+$icode%number% = %f%.compare_change_number()
+%$$
+$icode%op_index% = %f%.compare_change_op_index()
+
+%$$
+$bold See Also$$
+$cref FunCheck$$
+
+
+$head Purpose$$
+We use $latex F : \B{R}^n \rightarrow \B{R}^m$$ to denote the
+$cref/AD function/glossary/AD Function/$$ corresponding to $icode f$$; i.e,
+given $latex x \in \B{R}^n$$, $latex F(x)$$ is defined by
+$codei%
+    %F%(%x%) = %f%.Forward(0, %x%)
+%$$
+see $cref forward_zero$$.
+If $latex x$$ is such that
+all the algorithm $cref/comparison/Compare/$$ operations
+have the same result as when the algorithm was taped,
+The function $latex F(x)$$ and the algorithm will have the same values.
+(This is a sufficient, but not necessary condition).
+
+
+
+
+
+$head f$$
+In the $code compare_change_number$$ and $code compare_change_op_index$$
+syntax, the object $icode f$$ has prototype
+$codei%
+    const ADFun<%Base%> %f%
+%$$
+In the $code compare_change_count$$
+syntax, the object $icode f$$ has prototype
+$codei%
+    ADFun<%Base%> %f%
+%$$
+
+$head count$$
+The argument $icode count$$ has prototype
+$icode%
+    size_t %count%
+%$$
+It specifies which comparison change should correspond to the
+information stored in $icode f$$ during subsequent calls to
+$cref forward_zero$$; i.e.,
+$codei%
+    %f%.Forward(0, %x%)
+%$$
+For example, if $icode%count% == 1%$$,
+the operator index corresponding to the first comparison change
+will be stored.
+This is the default value used if $icode count$$ is not specified.
+
+$subhead Speed$$
+The special case where $icode count == 0$$, should be faster because
+the comparisons are not checked during
+$codei%
+    %f%.Forward(0, %x%)
+%$$
+
+$head number$$
+The return value $icode number$$ has prototype
+$codei%
+    size_t %number%
+%$$
+If $icode count$$ is non-zero,
+$icode number$$ is the number of
+$codei%AD<%Base%>%$$ $cref/comparison/Compare/$$ operations,
+corresponding to the previous call to
+$codei%
+    %f%.Forward(0, %x%)
+%$$
+that have a different result for this value of $icode x$$
+than the value used when $icode f$$ was created by taping an algorithm.
+If $icode count$$ is zero,
+or if no calls to $icode%f%.Forward(0, %x%)%$$ follow the previous
+setting of $icode count$$,
+$icode number$$ is zero.
+
+$subhead Discussion$$
+If $icode count$$ and $icode number$$ are non-zero,
+you may want to re-tape the algorithm with the
+$cref/independent variables/glossary/Tape/Independent Variable/$$
+equal to the values in $icode x$$,
+so the AD operation sequence properly represents the algorithm
+for this value of independent variables.
+On the other hand, re-taping the AD operation sequence usually takes
+significantly more time than evaluation using $cref forward_zero$$.
+If the functions values have not changed (see $cref FunCheck$$)
+it may not be worth re-taping a new AD operation sequence.
+
+$head op_index$$
+The return value $icode op_index$$ has prototype
+$codei%
+    size_t %op_index%
+%$$
+If $icode count$$ is non-zero,
+$icode op_index$$ is the operator index corresponding the
+$icode count$$-th comparison change during the previous call to
+$codei%
+    %f%.Forward(0, %x%)
+%$$
+If $icode count$$ is greater than the corresponding
+$icode number$$, there is no such comparison change and $icode op_index$$
+will also be zero.
+If $icode count$$ is zero,
+if the function $icode f$$ has been $cref/optimized/optimize/$$,
+or if no calls to $icode%f%.Forward(0, %x%)%$$ follow the previous
+setting of $icode count$$,
+$icode op_index$$ is zero.
+
+$subhead Purpose$$
+The operator index can be used to generate an error during the taping
+process so that the corresponding algorithm can be inspected.
+In some cases, it is possible to re-design this part of the
+algorithm to avoid the particular comparison operation.
+For example, using an $cref/conditional expression/CondExp/$$
+may be appropriate in some cases.
+See $cref/abort_op_index/Independent/abort_op_index/$$ in the syntax
+$codei%
+    Independent(%x%, %abort_op_index%)
+%$$
+
+$children%
+    example/general/compare_change.cpp
+%$$
+$head Example$$
+$cref compare_change.cpp$$
+contains an example and test of this operation.
+
+$end

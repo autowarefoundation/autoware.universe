@@ -1,0 +1,449 @@
+/* -------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
+
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
+/*
+$begin forward_binary_op$$
+$spell
+    const addr_t arg
+    subvp
+    Taylor
+    op
+$$
+
+$section Variable Forward Binary Operators$$
+
+$head Syntax$$
+$codei%forward_%name%_op(
+    %p%, %q%, %i_z%, %arg%, %parameter% %cap_order%, %taylor%
+)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has
+two arguments and one result.
+
+$head Notation$$
+
+$head name$$
+The last two characters in the $icode name$$ for a binary operator are
+$code p$$ (for parameter) or $code v$$ (for variable).
+For example the name $code subvp$$ corresponding to subtraction
+with a variable on the left (first) and a parameter on the right (second).
+
+$subhead x$$
+We use $icode x$$ to denote the first argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead y$$
+We use $icode y$$ to denote the second argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead z$$
+We use $icode z$$ to denote the result of this binary operation.
+The result is always a variable.
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head p$$
+This argument has type $code size_t$$ and
+is lowest order of the Taylor coefficient that we are computing.
+
+$head q$$
+The argument $icode q >= p$$ has type $code size_t$$ and
+is highest order of the Taylor coefficient that we are computing.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the result for this operation;
+i.e. the row index in $icode taylor$$ corresponding to $icode z$$.
+
+$head arg$$
+This argument has type $code const addr_t*$$.
+
+$subhead i_x$$
+We use $icode%i_x% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode x$$ is a parameter,
+$icode%parameter%[%i_x%]%$$ is the corresponding value.
+If $icode x$$ is a variable,
+$icode i_x$$ is the row index in $icode taylor$$ corresponding to $code x$$.
+
+$subhead i_y$$
+We use $icode%i_y% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode y$$ is a parameter,
+$icode%parameter%[%i_y%]%$$ is the corresponding value.
+If $icode y$$ is a variable,
+$icode i_y$$ is the row index in $icode taylor$$ corresponding to $code y$$.
+
+$head parameter$$
+This argument has type $codei%const %Base%*%$$
+and maps parameter indices to parameter values.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+
+$head taylor$$
+This argument has type $icode%Base%*%$$.
+The Taylor coefficient corresponding to
+variable $icode i$$ and order $icode k$$ is
+$codei%
+    %taylor%[ %i% * %cap_order% + %k% ]
+%$$.
+
+$subhead Input$$
+$list number$$
+If $icode x$$ is a variable,
+the Taylor coefficients for variable $icode i_x$$ up to order $icode q$$.
+$lnext
+If $icode y$$ is a variable,
+the Taylor coefficients for variable $icode i_y$$ up to order $icode q$$.
+$lnext
+The Taylor coefficients for variable $icode i_z$$ up to order $icode%p%-1%$$.
+$lend
+
+$subhead Output$$
+The Taylor coefficients for variable $icode i_z$$ up to order $icode q$$.
+
+$end
+------------------------------------------------------------------------------
+$begin forward_binary_op_dir$$
+$spell
+    const addr_t arg
+    op
+    tpv
+    Taylor
+$$
+
+$section Multiple Direction Forward Binary Operators$$
+
+$head Syntax$$
+$codei%forward_%name%_op(
+    %q%, %r%, %i_z%, %arg%, %parameter%, %cap_order%, %taylor%
+)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has
+two arguments and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the first argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead y$$
+We use $icode y$$ to denote the second argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead z$$
+We use $icode z$$ to denote the result of this binary operation.
+The result is always a variable.
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head q$$
+This argument has type $code size_t$$ and
+is the order of the Taylor coefficients that we are computing.
+Furthermore $icode%q% > 0%$$ and $icode%q% < %cap_order%$$.
+
+$head r$$
+This argument has type $code size_t$$ and
+is number of directions for Taylor coefficients that we are computing.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the result for this operation;
+i.e. the row index in $icode taylor$$ corresponding to $icode z$$.
+
+$head arg$$
+This argument has type $codei%const addr_t* %arg%$$.
+
+$subhead i_x$$
+We use $icode%i_x% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode x$$ is a parameter,
+$icode%parameter%[%i_x%]%$$ is the corresponding value.
+If $icode x$$ is a variable,
+$icode i_x$$ is the row index in $icode taylor$$ corresponding to $code x$$.
+
+$subhead i_y$$
+We use $icode%i_y% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode y$$ is a parameter,
+$icode%parameter%[%i_y%]%$$ is the corresponding value.
+If $icode y$$ is a variable,
+$icode i_y$$ is the row index in $icode taylor$$ corresponding to $code y$$.
+
+$head parameter$$
+This argument has type $codei%const %Base%*%$$
+and maps parameter indices to parameter values.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+The zero order Taylor coefficient for a variable
+is the same for all directions.  We use the notation
+$codei%
+    %tpv% = (%cap_order% - 1) * r + 1
+%$$
+which is the number of Taylor coefficients per variable.
+
+$head taylor$$
+This argument has type $icode%Base%*%$$.
+The zero order Taylor coefficient for variable $icode i$$ is
+$codei%
+    %taylor%[ %i% * %tpv% + 0 ]
+%$$.
+For $icode k > 0$$,
+and $icode%ell% = 0 , %..% , %r-1%$$,
+The Taylor coefficient for variable $icode i$$,
+order $icode k$$, and direction $icode ell$$ is
+$codei%
+    %taylor%[ %i% * %tpv% + (%k% - 1) * %r% + %ell% + 1 ]
+%$$.
+
+$head Input$$
+$list number$$
+If $icode x$$ is a variable,
+the Taylor coefficients for variable $icode i_x$$ up to order $icode q$$
+and all $icode r$$ directions.
+$lnext
+If $icode y$$ is a variable,
+the Taylor coefficients for variable $icode i_x$$ up to order $icode q$$
+and all $icode r$$ directions.
+$lnext
+The Taylor coefficients for variable $icode i_z$$ up to order $icode q-1$$
+and all $icode r$$ directions.
+$lend
+
+$head Output$$
+The Taylor coefficients for variable $icode i_z$$ up to order $icode q$$
+and all $icode r$$ directions.
+
+$end
+-------------------------------------------------------------------------------
+/*
+$begin forward_binary_op_0$$
+$spell
+    const addr_t arg
+    op
+    Taylor
+$$
+
+$section Zero Order Forward Binary Operators$$
+
+$head Syntax$$
+$codei%forward_%name%_op_0(
+    %i_z%, %arg%, %parameter%, %cap_order%, %taylor%
+)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has
+two arguments and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the first argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead y$$
+We use $icode y$$ to denote the second argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead z$$
+We use $icode z$$ to denote the result of this binary operation.
+The result is always a variable.
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the result for this operation;
+i.e. the row index in $icode taylor$$ corresponding to $icode z$$.
+
+$head arg$$
+This argument has type $code const addr_t*$$.
+
+$subhead i_x$$
+We use $icode%i_x% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode x$$ is a parameter,
+$icode%parameter%[%i_x%]%$$ is the corresponding value.
+If $icode x$$ is a variable,
+$icode i_x$$ is the row index in $icode taylor$$ corresponding to $code x$$.
+
+$subhead i_y$$
+We use $icode%i_y% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode y$$ is a parameter,
+$icode%parameter%[%i_y%]%$$ is the corresponding value.
+If $icode y$$ is a variable,
+$icode i_y$$ is the row index in $icode taylor$$ corresponding to $code y$$.
+
+$head parameter$$
+This argument has type $codei%const %Base%*%$$
+and maps parameter indices to parameter values.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+
+$head taylor$$
+This argument has type $icode%Base%*%$$.
+The Taylor coefficient corresponding to
+variable $icode i$$ and order $icode k$$ is
+$codei%
+    %taylor%[ %i% * %cap_order% + %k% ]
+%$$.
+
+$subhead Input$$
+If $icode x$$ is a variable,
+the zero order Taylor coefficients for variable $icode i_x$$.
+If $icode y$$ is a variable,
+the zero order Taylor coefficients for variable $icode i_y$$.
+
+$subhead Output$$
+The zero order Taylor coefficients for variable $icode i_z$$.
+
+$end
+------------------------------------------------------------------------------
+/*
+$begin reverse_binary_op$$
+$spell
+    const addr_ arg
+    op
+    Taylor
+    nc
+    const
+$$
+
+$section Reverse Binary Operators$$
+
+$head Syntax$$
+$codei%reverse_%name%_op(
+%d%, %i_z%, %arg%, %parameter%, %cap_order%, %taylor%, %nc_partial%, %partial%
+)%$$
+
+$head Assumption$$
+The operator corresponding to $icode name$$ has one argument and one result.
+
+$head Notation$$
+
+$subhead x$$
+We use $icode x$$ to denote the first argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead y$$
+We use $icode y$$ to denote the second argument of this binary operation.
+This argument is a variable or a parameter depending on the operator.
+
+$subhead z$$
+We use $icode z$$ to denote the result of this binary operation.
+The result is always a variable.
+
+$subhead G$$
+We use $latex G(z, y, x, w, \ldots )$$ to denote a scalar valued function
+of the variables up to variable index $icode i_z$$.
+
+$subhead H$$
+We use $latex H(y, x, w, \ldots )$$ to denote the scalar valued function
+of the variables up to variable index $icode%i_z%-1%$$ defined by
+$latex \[
+    H(y, x, w, \ldots ) = G [ z(x, y), y, x, w, \ldots ) ]
+\]$$
+
+$head Base$$
+is the base type for the operator; i.e., this operation was recorded
+using $codei%AD<%Base%>%$$ and computations by this routine are done using
+type $icode Base$$.
+
+$head d$$
+This argument has type $code size_t$$ and
+is this highest order Taylor coefficient that we are computing
+partial derivatives with respect to.
+Furthermore $icode%d% < %cap_order%$$ and $icode%d% < %nc_partial%$$.
+
+$head i_z$$
+This argument has type $code size_t$$ and
+is the variable index corresponding to the result for this operation;
+i.e. the row index in $icode taylor$$ corresponding to $icode z$$.
+
+$head arg$$
+This argument has type $code const addr_t*$$.
+
+$subhead i_x$$
+We use $icode%i_x% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode x$$ is a parameter,
+$icode%parameter%[%i_x%]%$$ is the corresponding value.
+If $icode x$$ is a variable,
+$icode i_x$$ is the row index in $icode taylor$$ corresponding to $code x$$.
+
+$subhead i_y$$
+We use $icode%i_y% = %arg%[0]%$$ for the
+index corresponding to the first operand for this operator.
+If $icode y$$ is a parameter,
+$icode%parameter%[%i_y%]%$$ is the corresponding value.
+If $icode y$$ is a variable,
+$icode i_y$$ is the row index in $icode taylor$$ corresponding to $code y$$.
+
+$head parameter$$
+This argument has type $codei%const %Base%*%$$
+and maps parameter indices to parameter values.
+
+$head cap_order$$
+This argument has type $code size_t$$ and
+is the maximum number of orders that will fit in $icode taylor$$.
+
+$head taylor$$
+This argument has type $codei%const %Base%*%$$.
+The Taylor coefficient corresponding to
+variable $icode i$$ and order $icode k$$ is
+$codei%
+    %taylor%[ %i% * %cap_order% + %k% ]
+%$$.
+
+$head nc_partial$$
+This argument has type $code size_t$$ and
+is the number of columns in the partial array.
+
+$head partial$$
+This argument has type $icode%Base%*%$$.
+The partial derivative w.r.t. variable $icode i$$ and
+Taylor coefficient of order $icode k$$ is
+$code%
+    %partial% [ %i% * %nc_partial% + k ]
+%$$
+for $icode%k% = 0 , %...%, %d%$$.
+
+$subhead Input$$
+For variable $icode%i% = 0 ,%...%, %i_z%$$,
+$icode partial$$ contains the
+partial derivatives of $latex G(z, y, x, w, \ldots)$$.
+
+$subhead Output$$
+The array $icode partial$$ contains the
+partial derivatives of $latex H(x, w, \ldots)$$.
+The partial derivative for variable $icode i_z$$ is unspecified.
+
+$end
+------------------------------------------------------------------------------

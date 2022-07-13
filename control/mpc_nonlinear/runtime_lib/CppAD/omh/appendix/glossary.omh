@@ -1,0 +1,278 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin glossary$$
+$aindex head subhead$$
+$spell
+    std
+    Vec
+    cos
+    bool
+    Op
+    Diff
+    Var
+    Cpp
+    enum
+    Taylor
+$$
+
+$section Glossary$$
+
+$head AD Function$$
+Given an $cref ADFun$$ object $icode f$$
+there is a corresponding
+AD of $icode Base$$ $cref/operation sequence/glossary/Operation/Sequence/$$.
+This operation sequence
+defines a function
+$latex F : \B{R}^n \rightarrow \B{R}^m $$
+where $latex \B{R}$$ is the space corresponding to objects of type
+$icode Base$$ (usually the real numbers),
+$icode n$$ is the size of the $cref/domain/fun_property/Domain/$$ space, and
+$icode m$$ is the size of the $cref/range/fun_property/Range/$$ space.
+We refer to $latex F$$ as the AD function corresponding to
+the operation sequence stored in the object $icode f$$.
+(See the $cref/FunCheck discussion/FunCheck/Discussion/$$ for
+possible differences between $latex F(x)$$ and the algorithm that defined
+the operation sequence.)
+
+$head AD of Base$$
+An object is called an AD of $icode Base$$ object its type is
+either $codei%AD<%Base%>%$$
+(see the default and copy $cref/constructors/ad_ctor/$$
+or $codei%VecAD<%Base%>::reference%$$ (see $cref VecAD$$)
+for some $icode Base$$ type.
+
+$head AD Type Above Base$$
+If $icode Base$$ is a type,
+an AD type above $icode Base$$
+is the following sequence of types:
+$codei%
+    AD<%Base%> %,% AD< AD<%Base%> > %,% AD< AD< AD<%Base%> > > %,% %...%
+%$$
+
+$head Base Function$$
+A function $latex f : \B{R} \rightarrow \B{R}$$
+is referred to as a $icode Base$$ function,
+if $icode Base$$ is a C++ type that represent elements of
+the domain and range space of $icode f$$.
+
+$head Base Type$$
+If $icode x$$ is an $codei%AD<%Base%>%$$ object,
+$icode Base$$ is referred to as the base type for $icode x$$.
+
+$head Elementary Vector$$
+The $th j$$ elementary vector $latex e^j \in \B{R}^m$$ is defined by
+$latex \[
+e_i^j = \left\{ \begin{array}{ll}
+    1 & {\rm if} \; i = j \\
+    0 & {\rm otherwise}
+\end{array} \right.
+\] $$
+
+
+$head Operation$$
+
+$subhead Atomic$$
+An atomic $icode Type$$ operation is an operation that
+has a $icode Type$$ result and is not made up of other
+more basic operations.
+
+$subhead Sequence$$
+A sequence of atomic $icode Type$$ operations
+is called a $icode Type$$ operation sequence.
+A sequence of atomic $cref/AD of Base/glossary/AD of Base/$$ operations
+is referred to as an AD of $icode Base$$ operation sequence.
+The abbreviated notation operation sequence is often used
+when it is not necessary to specify the type.
+
+$subhead Dependent$$
+Suppose that $icode x$$ and $icode y$$ are $icode Type$$ objects and
+the result of
+$codei%
+    %x% < %y%
+%$$
+has type $code bool$$ (where $icode Type$$ is not the same as $code bool$$).
+If one executes the following code
+$codei%
+    if( %x% < %y% )
+        %y% = cos(%x%);
+    else
+        %y% = sin(%x%);
+%$$
+the choice above depends on the value of $icode x$$ and $icode y$$
+and the two choices result in a different $icode Type$$ operation sequence.
+In this case, we say that the $icode Type$$ operation sequence depends
+on $icode x$$ and $icode y$$.
+
+$subhead Independent$$
+Suppose that $icode i$$ and $icode n$$ are $code size_t$$ objects,
+and $icode%x%[%i%]%$$, $icode y$$ are $icode Type$$ objects,
+where $icode Type$$ is different from $code size_t$$.
+The $icode Type$$ sequence of operations corresponding to
+$codei%
+    %y% = %Type%(0);
+    for(%i% = 0; %i% < %n%; %i%++)
+        %y% += %x%[%i%];
+%$$
+does not depend on the value of $icode x$$ or $icode y$$.
+In this case, we say that the $icode Type$$ operation sequence
+is independent of $icode y$$ and the elements of $icode x$$.
+
+$head Parameter$$
+
+$subhead Constant$$
+An $codei%AD<%Base%>%$$ object $icode u$$ is a constant parameter if
+its value does not depend on the value of
+the $cref Independent$$ variable vector
+or the $cref/dynamic/Independent/dynamic/$$ parameter vector
+for an $cref/active tape/glossary/Tape/Active/$$.
+If $icode u$$ is a constant parameter,
+$cref/Constant(u)/con_dyn_var/Constant/$$ returns true,
+$cref/Parameter(u)/con_dyn_var/Parameter/$$ returns true,
+$cref/Dynamic(u)/con_dyn_var/Dynamic/$$ returns false, and
+$cref/Variable(u)/con_dyn_var/Variable/$$ returns false.
+
+$subhead Dynamic$$
+An $codei%AD<%Base%>%$$ object $icode u$$ is a dynamic parameter if
+its value does not depend on the value of
+the $cref Independent$$ variable vector, but its value does depend
+on the $cref/dynamic/Independent/dynamic/$$ parameter vector,
+for an $cref/active tape/glossary/Tape/Active/$$.
+If $icode u$$ is a dynamic parameter, the function
+$cref/Dynamic(u)/con_dyn_var/Dynamic/$$ returns true
+$cref/Parameter(u)/con_dyn_var/Parameter/$$ returns true,
+$cref/Constant(u)/con_dyn_var/Constant/$$ returns false, and
+$cref/Variable(u)/con_dyn_var/Variable/$$ returns false.
+
+$head Row-major Representation$$
+A $cref SimpleVector$$ $icode v$$ is a row-major representation of a matrix
+$latex M \in \B{R}^{m \times n}$$ if $icode%v%.size() == %m% * %n%$$ and
+for $latex i = 0 , \ldots , m-1$$, $latex j = 0 , \ldots , n-1$$
+$latex \[
+    M_{i,j} = v[ i \times n + j ]
+\] $$
+
+$head Sparsity Pattern$$
+Suppose that $latex A \in \B{R}^{m \times n}$$ is a sparse matrix.
+CppAD has several ways to specify the elements of $latex A$$
+that are possible non-zero.
+
+$subhead Row and Column Index Vectors$$
+A pair of non-negative integer vectors $latex r$$, $latex c$$
+are a sparsity pattern for $latex A$$
+if for every non-zero element $latex A_{i,j}$$,
+there is a $latex k$$ such that $latex i = r_k$$ and $latex j = c_k$$.
+Furthermore, for every $latex \ell \neq k$$,
+either $latex r_\ell \neq r_k$$ or $latex c_\ell \neq c_k$$.
+
+$subhead Boolean Vector$$
+A boolean vector $latex b$$, of length $latex m \times n$$,
+is a sparsity pattern for $latex A$$
+if for every non-zero element $latex A_{i,j}$$,
+$latex b_{i \times n + j}$$ is true.
+
+$subhead Vector of Sets$$
+A vector of sets $latex s$$ of positive integers, of length $latex m$$,
+is a sparsity pattern for $latex A$$
+if for every non-zero element $latex A_{i,j}$$, $latex j \in s_i $$.
+
+
+$head Tape$$
+
+$subhead Active$$
+A new tape is created and becomes active
+after each call of the form (see $cref Independent$$)
+$codei%
+    Independent(%x%)
+%$$
+All operations that depend on the elements of $icode x$$ are
+recorded on this active tape.
+
+$subhead Inactive$$
+The $cref/operation sequence/glossary/Operation/Sequence/$$
+stored in a tape can be transferred to a function object using the syntax
+$codei%
+    ADFun<%Base%> %f%( %x%, %y%)
+    %f%.Dependent( %x%, %y%)
+%$$
+see $cref FunConstruct$$.
+After such a transfer, the tape becomes inactive.
+The tape becomes inactive, without storing the operation sequence,
+after a call to $cref abort_recording$$.
+
+$subhead Independent Variable$$
+While the tape is active, we refer to the elements of $icode x$$
+as the independent variables for the tape.
+When the tape becomes inactive,
+the corresponding objects become
+$cref/constants/glossary/Parameter/Constant/$$.
+
+$subhead Variables$$
+While the tape is active, we use the term variables for any scalar
+whose value depends on the independent variables for the tape.
+When the tape becomes inactive,
+the corresponding objects become
+$cref/constants/glossary/Parameter/Constant/$$.
+
+
+$head Taylor Coefficient$$
+Suppose $latex X : \B{R} \rightarrow \B{R}^n$$ is a
+is $latex p$$ times continuously differentiable function
+in some neighborhood of zero.
+For $latex k = 0 , \ldots , p$$,
+we use the column vector $latex x^{(k)} \in \B{R}^n$$ for the $th k$$ order
+Taylor coefficient corresponding to $latex X$$
+which is defined by
+$latex \[
+    x^{(k)} = \frac{1}{k !} \Dpow{k}{t} X(0)
+\] $$
+It follows that
+$latex \[
+    X(t) = x^{(0)} + x^{(1)} t + \cdots + x^{(p)} t^p  + R(t)
+\]$$
+where the remainder $latex R(t)$$ divided by $latex t^p$$
+converges to zero and $latex t$$ goes to zero.
+
+
+$head Variable$$
+An $codei%AD<%Base%>%$$ object $icode u$$ is a variable if
+its value depends on an independent variable vector for
+a currently $cref/active tape/glossary/Tape/Active/$$.
+If $icode u$$ is a variable,
+$cref/Variable(u)/con_dyn_var/Variable/$$ returns true,
+$cref/Constant(u)/con_dyn_var/Constant/$$ returns false,
+$cref/Dynamic(u)/con_dyn_var/Dynamic/$$ returns false, and
+$cref/Parameter(u)/con_dyn_var/Parameter/$$ returns false.
+For example,
+directly after the code sequence
+$codei%
+    Independent(%x%);
+    AD<double> %u% = %x%[0];
+%$$
+the $codei%AD<double>%$$ object $icode u$$ is currently a variable.
+Directly after the code sequence
+$codei%
+    Independent(%x%);
+    AD<double> %u% = %x%[0];
+    %u% = 5;
+%$$
+$icode u$$  is currently a
+$cref/constant/glossary/Parameter/Constant/$$ parameter,
+not a dynamic parameter or a variable.
+$pre
+
+$$
+Note that we often drop the word currently and
+just refer to an $codei%AD<%Base%>%$$ object as a variable
+or parameter.
+
+$end

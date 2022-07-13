@@ -1,0 +1,26 @@
+<launch>
+
+	<arg name="mpc_nonlinear_param_path" default="$(find-pkg-share mpc_nonlinear)/config/mpc_nonlinear.param.yaml"/>
+
+	<!-- Nonlinear MPC combined control -->
+	<!--launch-prefix="valgrind \-leak-check=full or xterm -e" -->
+
+	<node pkg="mpc_nonlinear"
+				exec="mpc_nonlinear_node_exe"
+				name="mpc_nonlinear_node_exe"
+				output="screen">
+
+		<param from="$(var mpc_nonlinear_param_path)"/>
+		<remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+		<remap from="~/input/current_velocity" to="/localization/kinematic_state"/>
+		<remap from="~/input/current_steering" to="/vehicle/status/steering_status"/>
+		<remap from="~/input/current_com_delay" to="observers/time_delay_compensator/delay_refs"/>
+
+		<!--  Items to test longitudinal control-->
+		<remap from="~/output/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+		<remap from="~/output/predicted_trajectory" to="predicted_trajectory"/>
+		<remap from="~/debug/nmpc_predicted_performance_vars" to="nmpc_performance_vars"/>
+
+
+	</node>
+</launch>

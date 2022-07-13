@@ -1,0 +1,135 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin subversion$$
+$spell
+    mkdir
+    omh
+    noframe
+    http
+    www
+    xml
+    htm
+    config
+    yyyymmdd
+    yyyy
+    mm
+    dd
+    omhelp
+    cppad
+    OMhelp
+    CppAD
+    svn
+    https
+    org
+    dir
+    hpp
+$$
+
+$section Using Subversion To Download Source Code$$
+
+$head File Format$$
+The files corresponding to this download
+procedure are in Unix format; i.e.,
+each line ends with just a line feed.
+
+$head Subversion$$
+You must have
+$href%http://subversion.tigris.org/%subversion%$$
+installed to use this download procedure.
+In Unix, you can check if subversion
+is already installed in your path by entering the command
+$codep
+    which svn
+$$
+
+
+$head OMhelp$$
+The documentation for CppAD is built from the source code files using
+$href%http://www.seanet.com/~bradbell/omhelp/%OMhelp%$$.
+In Unix, you can check if OMhelp
+is already installed in your path by entering the command
+$codep
+    which omhelp
+$$
+
+$head Current Version$$
+The following command will download the
+current version of the CppAD source code:
+$codei%
+    svn co https://projects.coin-or.org/svn/CppAD/%dir% %dir%
+%$$
+where $icode dir$$ is replaced by $code trunk$$.
+To see if this has been done correctly, check for the following file:
+$codei%
+    %dir%/include/cppad/cppad.hpp
+%$$
+
+$head Stable Versions$$
+Subversion downloads are available for a set of stable versions
+(after the specified date, only bug fixes get applied).
+The following link will list the available $icode dir$$ values
+corresponding to
+$href%
+    https://projects.coin-or.org/CppAD/browser/stable%
+    stable versions
+%$$.
+The following command will download a
+stable version of the CppAD source code:
+$codei%
+    svn co https://projects.coin-or.org/svn/CppAD/stable/%dir% %dir%
+%$$
+To see if this has been done correctly, check for the following file:
+$codei%
+    %dir%/include/cppad/cppad.hpp
+%$$
+Note that it will correspond to the most recent release for this stable
+version.
+
+$head Release Versions$$
+Subversion downloads are available for a set of release versions
+(no changes are applied).
+The following link will list the available $icode dir$$ values
+corresponding to
+$href%
+    https://projects.coin-or.org/CppAD/browser/releases%
+    release versions
+%$$.
+The following command will download a
+release version of the CppAD source code:
+$codei%
+    svn co https://projects.coin-or.org/svn/CppAD/releases/%dir% %dir%
+%$$
+To see if this has been done correctly, check for the following file:
+$codei%
+    %dir%/include/cppad/cppad.hpp
+%$$
+
+$head Build the Documentation$$
+Now build the documentation for this version using the commands
+$codei%
+    cd %dir%
+    bin/autotools.sh configure omhelp
+%$$
+
+$head Continue with Installation$$
+Once the steps above are completed,
+you can proceed with the install instructions in
+the documentation you just built.
+Start by opening the file
+$codei%
+    %dir%/doc/index.xml
+%$$
+in a web browser and proceeding to the
+install instructions in that documentation,
+skipping the Download section and starting with the Configure command.
+
+$end

@@ -1,0 +1,156 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin reverse_identity$$
+$spell
+    Taylor
+    Griewank
+    Andreas
+$$
+
+
+
+$section An Important Reverse Mode Identity$$
+The theorem and the proof below is a restatement
+of the results on page 236 of
+$cref/Evaluating Derivatives/Bib/Evaluating Derivatives/$$.
+
+$head Notation$$
+Given a function $latex f(u, v)$$ where $latex u \in \B{R}^n$$
+we use the notation
+$latex \[
+\D{f}{u} (u, v) = \left[ \D{f}{u_1} (u, v) , \cdots , \D{f}{u_n} (u, v) \right]
+\] $$
+
+$head Reverse Sweep$$
+When using $cref/reverse mode/reverse_any/$$
+we are given a function $latex F : \B{R}^n \rightarrow \B{R}^m$$,
+a matrix of Taylor coefficients $latex x \in \B{R}^{n \times p}$$,
+and a weight vector $latex w \in \B{R}^m$$.
+We define the functions $latex X : \B{R} \times \B{R}^{n \times p} \rightarrow \B{R}^n$$,
+$latex W : \B{R} \times \B{R}^{n \times p} \rightarrow \B{R}$$, and
+$latex W_j : \B{R}^{n \times p} \rightarrow \B{R}$$ by
+$latex \[
+\begin{array}{rcl}
+    X(t , x) & = & x^{(0)} + x^{(1)} t + \cdots + x^{(p-1)} t^{p-1}
+    \\
+    W(t, x)   & = &  w_0 F_0 [X(t, x)] + \cdots + w_{m-1} F_{m-1} [X(t, x)]
+    \\
+    W_j (x)   & = & \frac{1}{j!} \Dpow{j}{t} W(0, x)
+\end{array}
+\]$$
+where $latex x^{(j)}$$ is the $th j$$ column of $latex x \in \B{R}^{n \times p}$$.
+The theorem below implies that
+$latex \[
+    \D{ W_j }{ x^{(i)} } (x) = \D{ W_{j-i} }{ x^{(0)} } (x)
+\] $$
+A $cref/general reverse sweep/reverse_any/$$ calculates the values
+$latex \[
+    \D{ W_{p-1} }{ x^{(i)} } (x)  \hspace{1cm} (i = 0 , \ldots , p-1)
+\] $$
+But the return values for a reverse sweep are specified
+in terms of the more useful values
+$latex \[
+    \D{ W_j }{ x^{(0)} } (x)  \hspace{1cm} (j = 0 , \ldots , p-1)
+\] $$
+
+$head Theorem$$
+Suppose that $latex F : \B{R}^n \rightarrow \B{R}^m$$ is a $latex p$$ times
+continuously differentiable function.
+Define the functions
+$latex Z : \B{R} \times \B{R}^{n \times p} \rightarrow \B{R}^n$$,
+$latex Y : \B{R} \times \B{R}^{n \times p }\rightarrow \B{R}^m$$,
+and
+$latex y^{(j)} : \B{R}^{n \times p }\rightarrow \B{R}^m$$ by
+$latex \[
+\begin{array}{rcl}
+    Z(t, x)  & = & x^{(0)} + x^{(1)} t + \cdots + x^{(p-1)} t^{p-1}
+    \\
+    Y(t, x)  & = & F [ Z(t, x) ]
+    \\
+    y^{(j)} (x) & = & \frac{1}{j !} \Dpow{j}{t} Y(0, x)
+\end{array}
+\] $$
+where $latex x^{(j)}$$ denotes the $th j$$ column of
+$latex x \in \B{R}^{n \times p}$$.
+It follows that
+for all $latex i, j$$ such that $latex i \leq j < p$$,
+$latex \[
+\begin{array}{rcl}
+\D{ y^{(j)} }{ x^{(i)} } (x) & = & \D{ y^{(j-i)} }{ x^{(0)} } (x)
+\end{array}
+\] $$
+
+
+$head Proof$$
+If follows from the definitions that
+$latex \[
+\begin{array}{rclr}
+\D{ y^{(j)} }{ x^{(i)} } (x)
+& = &
+\frac{1}{j ! } \D{ }{ x^{(i)} }
+    \left[ \Dpow{j}{t} (F \circ  Z) (t, x)  \right]_{t=0}
+\\
+& = &
+\frac{1}{j ! } \left[ \Dpow{j}{t}
+    \D{ }{ x^{(i)} } (F \circ  Z) (t, x)
+\right]_{t=0}
+\\
+& = &
+\frac{1}{j ! } \left\{
+    \Dpow{j}{t} \left[ t^i ( F^{(1)} \circ Z ) (t, x) \right]
+\right\}_{t=0}
+\end{array}
+\] $$
+For $latex k > i$$, the $th k$$
+partial of $latex t^i$$ with respect to $latex t$$ is zero.
+Thus, the partial with respect to $latex t$$ is given by
+$latex \[
+\begin{array}{rcl}
+\Dpow{j}{t} \left[ t^i ( F^{(1)} \circ Z ) (t, x) \right]
+& = &
+\sum_{k=0}^i
+\left( \begin{array}{c} j \\ k \end{array} \right)
+\frac{ i ! }{ (i - k) ! } t^{i-k} \;
+\Dpow{j-k}{t} ( F^{(1)} \circ Z ) (t, x)
+\\
+\left\{
+    \Dpow{j}{t} \left[ t^i ( F^{(1)} \circ Z ) (t, x) \right]
+\right\}_{t=0}
+& = &
+\left( \begin{array}{c} j \\ i \end{array} \right)
+i ! \Dpow{j-i}{t} ( F^{(1)} \circ Z ) (t, x)
+\\
+& = &
+\frac{ j ! }{ (j - i) ! }
+\Dpow{j-i}{t} ( F^{(1)} \circ Z ) (t, x)
+\\
+\D{ y^{(j)} }{ x^{(i)} } (x)
+& = &
+\frac{ 1 }{ (j - i) ! }
+\Dpow{j-i}{t} ( F^{(1)} \circ Z ) (t, x)
+\end{array}
+\] $$
+Applying this formula to the case where $latex j$$
+is replaced by $latex j - i$$ and $latex i$$ is replaced by zero,
+we obtain
+$latex \[
+\D{ y^{(j-i)} }{ x^{(0)} } (x)
+=
+\frac{ 1 }{ (j - i) ! }
+\Dpow{j-i}{t} ( F^{(1)} \circ Z ) (t, x)
+=
+\D{ y^{(j)} }{ x^{(i)} } (x)
+\] $$
+which completes the proof
+
+$end

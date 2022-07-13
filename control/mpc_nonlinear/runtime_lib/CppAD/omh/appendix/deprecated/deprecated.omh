@@ -1,0 +1,66 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin deprecated$$
+$spell
+    autotools
+    CppAD
+    Bool
+    jac
+    hes
+    colpack
+$$
+
+$section CppAD Deprecated API Features$$
+
+$childtable%
+    omh/appendix/deprecated/include_deprecated.omh%
+    omh/appendix/deprecated/fun_deprecated.omh%
+    omh/appendix/deprecated/compare_change.omh%
+    include/cppad/core/omp_max_thread.hpp%
+    include/cppad/utility/track_new_del.hpp%
+    omh/appendix/deprecated/omp_alloc.omh%
+    include/cppad/utility/memory_leak.hpp%
+    include/cppad/core/epsilon.hpp%
+    include/cppad/core/test_vector.hpp%
+    cppad_ipopt/src/cppad_ipopt_nlp.hpp%
+    include/cppad/core/atomic/atomic_one.hpp%
+    include/cppad/core/atomic/atomic_two.hpp%
+    example/multi_thread/multi_atomic_two.omh%
+    include/cppad/core/chkpoint_one/chkpoint_one.hpp%
+    example/multi_thread/multi_chkpoint_one.omh%
+    include/cppad/core/zdouble.hpp%
+    omh/install/autotools.omh
+%$$
+
+
+$head Name Changes$$
+$table
+$cref/CppADCreateUnaryBool/BoolFun/Deprecated 2007-07-31/$$  $cnext
+    $title BoolFun$$
+$rnext
+$cref/CppADCreateDiscrete/Discrete/CppADCreateDiscrete Deprecated 2007-07-28/$$  $cnext
+    $title Discrete$$
+$rnext
+$cref/nan(zero)/nan/nan(zero)/$$ $cnext $codei%nan(%zero%)%$$
+$rnext
+$code colpack.star$$ coloring $cnext see
+$cref/sparse_hes/sparse_hes/coloring/colpack.star Deprecated 2017-06-01/$$
+and
+$cref/sparse_hessian
+    /sparse_hessian
+    /work
+    /colpack.star Deprecated 2017-06-01
+/$$
+
+$tend
+
+$end

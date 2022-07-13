@@ -1,0 +1,5 @@
+<launch>
+
+    <test test-name="mpc_nonlinear-test" pkg="mpc_nonlinear" type="mpc_nonlinear-test" name="test"/>
+
+</launch>

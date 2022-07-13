@@ -1,0 +1,251 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin cpp_ad_graph$$
+$spell
+    std
+    arg
+    asinh
+    acosh
+    atanh
+    erf
+    erfc
+    expm
+    ind
+    vec
+    np
+    nx
+    nc
+    op
+    struct
+    enum
+    cpp
+    Heaviside
+    notpos
+$$
+
+$section C++ Representation of an AD Graph$$
+
+$head See Also$$
+$tref json_ad_graph$$
+
+$head function$$
+This section defines a computational graph representation of a function
+$latex y = f(x, p)$$.
+The vector $icode x$$ is called the independent variable vector,
+$icode p$$ is called the independent dynamic parameter vector,
+and $icode y$$ is called the dependent variable vector.
+
+$head Node Indices$$
+The nodes in an AD graph have the following order:
+$pre
+    p_0 , ... ,  p_{np-1} ,
+    x_0 , ... ,  x_{nx-1} ,
+    c_0 , ... ,  c_{nc-1} ,
+    r_0 , ... ,  r_{no-1}
+$$
+
+$subhead p$$
+The sub-vector
+$pre p_0, ... , p_{np-1}$$ is the independent dynamic parameter vector;
+see $cref/n_dynamic_ind/cpp_ad_graph/n_dynamic_ind/$$.
+The node index corresponding to $icode p_0$$ is $code 1$$.
+
+$subhead x$$
+The sub-vector
+$pre x_1, ... , x_nx$$ is the independent variable vector;
+see $cref/n_variable_ind/cpp_ad_graph/n_variable_ind/$$.
+The node index corresponding to $icode x_0$$ is
+the index corresponding to $icode p_0$$ plus $icode np$$.
+
+$subhead c$$
+The sub-vector
+$pre c_1, ... , c_nc$$ is the constant parameter vector;
+see $cref/constant_vec/cpp_ad_graph/constant_vec/$$.
+The node index corresponding to $icode c_0$$ is
+the index corresponding to $icode x_0$$ plus $icode nx$$.
+
+$subhead r$$
+The sub-vector
+$pre r_i$$ for $icode%i%=0,%...%,%no%-1%$$ is the result vector
+for the $th i$$ operator;
+see $cref/operator_vec/cpp_ad_graph/operator_vec/$$.
+All of the node arguments for an the $th i$$ operator are nodes
+that come before the first element of $icode r_i$$.
+The node index corresponding to the first element of $icode r_0$$ is
+the index corresponding to $icode c_0$$ plus $icode nc$$.
+For $icode%i% > 0%$$,
+The node index corresponding to the first element of $icode r_i$$ is
+the index corresponding to the first element of $icode r_{i-1}$$ plus
+the number of results for the $th i-1$$ operator.
+
+$head function_name$$
+is a $code std::string$$ containing the name for the function
+corresponding to this graph.
+
+$head discrete_name_vec$$
+is a vector with elements of type $code std::string$$.
+A discrete function has one argument, one result, and it derivative
+is always zero; e.g., the Heaviside function.
+Calls by this function to discrete functions use the index in this
+vector to identify the discrete functions; see
+$cref/discrete_graph_op/cpp_ad_graph/operator_arg/discrete_graph_op/$$ below.
+If there are no calls to discrete functions, this vector can be empty.
+
+$head atomic_name_vec$$
+is a vector with elements of type $code std::string$$.
+An atomic function can have any number of arguments and results
+and non-zero derivatives.
+Calls by this function to other functions use the index in this
+vector to identify the other functions; see
+$cref/atom_graph_op/cpp_ad_graph/operator_arg/atom_graph_op/$$ below.
+If there are no calls to other functions, this vector can be empty.
+Discrete functions are faster, and simpler to create and use
+than atomic functions.
+
+$head print_text_vec$$
+is a vector with elements of type $code std::string$$.
+The $cref/print/graph_op_enum/Print/$$ operators uses indices
+in this vector for the corresponding
+$cref/before/PrintFor/before/$$ and $cref/after/PrintFor/after/$$ values.
+If there are no print operators, this vector can be empty.
+
+$head n_dynamic_ind$$
+is the number of independent dynamic parameters in the function
+(called $icode np$$ above); see
+$cref/dynamic/Independent/dynamic/$$.
+
+$head n_variable_ind$$
+is the number of independent variables in the function
+(called $icode nx$$ above); see
+$cref/x/Independent/x/$$.
+
+$head constant_vec$$
+is a vector of with elements of type
+$code double$$ and size $icode nc$$ that can be used to define this function.
+
+$head operator_vec$$
+is a vector with elements of type $code graph_op_enum$$
+and size $icode no$$ (the number of operators in the graph).
+For $icode%i%= 0, %...%, %no%-1%$$
+$icode%operator_vec%[%i%]%$$ contains the instructions
+for computing the result vector $icode r_i$$.
+
+$head operator_arg$$
+is a vector with size equal to the sum of the size of each
+of its sub-vectors (which are described below).
+For $icode%i%= 0, %...%, %no%-1%$$, we use
+$icode%first_node%[%i%]%$$ to denote the index in $icode operator_arg$$
+of the first node argument to the $th i$$ operator.
+We use $icode%n_node_arg%[%i%]%$$ to denote the number of node arguments
+for the $th i$$ operator.
+For $icode%j% = 0 , %...%, %n_node_arg%[%i%]-1%$$,
+the $th j$$ node argument for the $th i$$ operator has node index
+$codei%
+    %operator_arg%[ %first_node%[%i%] + %j% ]
+%$$
+The $icode operator_arg$$ sub-vector for the $th i$$ operator starts are
+$icode%first_node%[%i%]%$$ and has $icode%n_node_arg%[%i%]%$$ elements
+except for the following operators:
+$code sum_graph_op$$,
+$code discrete_graph_op$$,
+$code atom_graph_op$$,
+$code print_graph_op$$.
+
+$subhead print_graph_op$$
+In the case where $icode%operator_vec%[%i%].op_enum%$$ is
+$code print_graph_op$$:
+$codei%
+    %before%[%i%] = %operator_arg%[ %first_node%[%i%] - 2 ]
+%$$
+is the index in $cref/print_text_vec/cpp_ad_graph/print_text_vec/$$
+of the text that is printed before the value and
+$codei%
+    %after%[%i%] = %operator_arg%[ %first_node%[%i%] - 2 ]
+%$$
+is the index in $cref/print_text_vec/cpp_ad_graph/print_text_vec/$$
+of the text that is printed after the value.
+The $icode operator_arg$$ sub-vector for the $th i$$ operator
+starts at index $icode%first_node%[%i%]-2%$$
+and has $codei%4 = %n_node_arg%[%i%]+2%$$ elements.
+The node with index
+$codei%
+    %notpos%[%i%] = %operator_arg%[ %first_node%[%i%] ]
+%$$
+is checked and if it is positive, nothing is printed by this operator.
+Otherwise, the value corresponding to the following node is printed:
+$codei%
+    %value%[%i%] = %operator_arg%[ %first_node%[%i%] + 1 ]
+%$$
+
+$subhead discrete_graph_op$$
+In the case where $icode%operator_vec%[%i%].op_enum%$$ is
+$code discrete_graph_op$$:
+$codei%
+    %name_index%[%i%] = %operator_arg%[ %first_node%[%i%] - 1 ]
+%$$
+is the index in $cref/discrete_name_vec/cpp_ad_graph/discrete_name_vec/$$
+of the function being called by this operator.
+For this operator,
+the $icode operator_arg$$ sub-vector for the $th i$$ operator
+starts at index $icode%first_node%[%i%]-1%$$
+and has $codei%2 = %n_node_arg%[%i%]+1%$$ elements.
+
+$subhead atom_graph_op$$
+In the case where $icode%operator_vec%[%i%].op_enum%$$ is
+$code atom_graph_op$$:
+$codei%
+    %name_index%[%i%] = %operator_arg%[ %first_node%[%i%] - 3 ]
+%$$
+is the index in $cref/atomic_name_vec/cpp_ad_graph/atomic_name_vec/$$
+of the function being called by this operator.
+$codei%
+    %n_result%[%i%] = %operator_arg%[ %first_node%[%i%] - 2 ]
+%$$
+is the number of result nodes for this operator.
+$codei%
+    %n_node_arg%[%i%] = %operator_arg%[ %first_node%[%i%] - 1 ]
+%$$
+is the number of node arguments for this operator.
+For this operator,
+the $icode operator_arg$$ sub-vector for the $th i$$ operator
+starts at index $icode%first_node%[%i%]-3%$$
+and has $icode%n_node_arg%[%i%]+3%$$ elements.
+
+$subhead sum_graph_op$$
+In the case where $icode%operator_vec%[%i%].op_enum%$$ is
+$code sum_graph_op$$:
+$codei%
+    %n_node_arg%[%i%] = %operator_arg%[ %first_node%[%i%] - 1 ]
+%$$
+is the number of node arguments for this operator.
+For this operator,
+the $icode operator_arg$$ sub-vector for the $th i$$ operator
+starts at index $icode%first_node%[%i%]-1%$$
+and has $icode%n_node_arg%[%i%]+1%$$ elements.
+
+$head dependent_vec$$
+is a vector with size equal to the number element in $icode y$$.
+The $th i$$ element of $icode y$$ corresponds to the node index
+$icode%dependent_vec%[%i%]%$$.
+
+$head cpp_graph$$
+The $code cpp_graph$$ class implements the data structure above.
+It is defined by the documentation sections under Contents below:
+
+$childtable%
+    include/cppad/core/graph/graph_op_enum.hpp%
+    include/cppad/core/graph/cpp_graph.omh%
+    include/cppad/core/graph/from_graph.hpp%
+    include/cppad/core/graph/to_graph.hpp
+%$$
+
+$end
