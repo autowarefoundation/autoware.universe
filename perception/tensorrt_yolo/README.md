@@ -68,7 +68,7 @@ This package includes multiple licenses.
 
 ## Onnx model
 
-All YOLO onnx models are converted from original model. Please refer to original repositories if you need information about training datasets and conditions.
+All YOLO ONNX models are converted from the officially trained model. If you need information about training datasets and conditions, please refer to the official repositories .
 
 ### YOLOv3
 
