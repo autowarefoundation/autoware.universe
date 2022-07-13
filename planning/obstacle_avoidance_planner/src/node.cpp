@@ -1135,7 +1135,7 @@ void ObstacleAvoidancePlanner::calcVelocity(
         path_points, traj_points.at(i).pose.position);
     }();
 
-    // add this line not to exceeds max index size
+    // add this line not to exceed max index size
     const size_t max_idx = std::min(nearest_seg_idx + 1, path_points.size() - 1);
     // NOTE: std::max, not std::min, is used here since traj_points' sampling width may be longer
     // than path_points' sampling width. A zero velocity point is guaranteed to be inserted in an
