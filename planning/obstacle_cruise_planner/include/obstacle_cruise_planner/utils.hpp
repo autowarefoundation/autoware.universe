@@ -108,17 +108,19 @@ size_t getIndexWithLongitudinalOffset(
     return points.size() - 1;
   }
 
-  for (size_t i = start_idx.get(); i > 0; --i) {
+  RCLCPP_ERROR_STREAM(rclcpp::get_logger("tmp"), *start_idx << ", " << points.size() - 1);
+
+  for (size_t i = start_idx.get(); i > 1; --i) {
     const double segment_length =
-      tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
+      tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
     sum_length += segment_length;
     if (sum_length >= -longitudinal_offset) {
       const double front_length = segment_length;
       const double back_length = sum_length + longitudinal_offset;
       if (front_length < back_length) {
-        return i;
+        return i - 1;
       } else {
-        return i + 1;
+        return i;
       }
     }
   }
