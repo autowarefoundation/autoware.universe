@@ -38,6 +38,8 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
 #include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 
 // ROS headers
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
@@ -93,7 +95,7 @@ using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 struct DebugData
 {
 	geometry_msgs::msg::Pose current_closest_pose{};
-	// autoware_control_msgs::msg::NonlinearMPCPerformanceStamped nmpc_performance_vars;
+
 };
 
 class NonlinearMPCNode : public rclcpp::Node
@@ -116,14 +118,14 @@ class NonlinearMPCNode : public rclcpp::Node
 	 * @brief Takes a fixed size (in rows) raw trajectory matrix --> smoothes out to fixed size reference trajectory.
 	 *
 	 * */
-	using bspline_type_t = ns_nmpc_splines::BSplineInterpolatorTemplated<ns_nmpc_splines::MPC_MAP_SMOOTHER_IN,
-																																			 ns_nmpc_splines::MPC_MAP_SMOOTHER_OUT>;
+	using bspline_type_t = ns_splines::BSplineInterpolatorTemplated<ns_splines::MPC_MAP_SMOOTHER_IN,
+																																	ns_splines::MPC_MAP_SMOOTHER_OUT>;
 
 	/**
 	 *  @brief Public curvature interpolator, updated by the node, used all over the modules.
 	 *
 	 * */
-	ns_nmpc_splines::InterpolatingSplinePCG interpolator_curvature_pws;  // pws stands for point-wise
+	ns_splines::InterpolatingSplinePCG interpolator_curvature_pws;  // pws stands for point-wise
 
  private:
 	// Publishers and subscribers.
@@ -177,7 +179,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	 *  rddot(x,y). We compute a curvature vector using these derivatives.
 	 * */
 	std::unique_ptr<bspline_type_t> bspline_interpolator_ptr_;  // smoothing interpolator.
-	// std::unique_ptr<ns_nmpc_splines::BSplineSmoother> bspline_interpolator_ptr_{nullptr};
+	// std::unique_ptr<ns_splines::BSplineSmoother> bspline_interpolator_ptr_{nullptr};
 
 	/**
 	 * @brief Kalman filter to predict initial states.
@@ -268,6 +270,7 @@ class NonlinearMPCNode : public rclcpp::Node
 	*         float64 avg_nmpc_computation_time
 	*         float64 yaw_angle_measured
 	*         float64 yaw_angle_target
+	*         float64 yaw_angle_traj
 	*         float64 lateral_acceleration
 	*         int8 fsm_state
 	*         float64 distance_to_stop_point

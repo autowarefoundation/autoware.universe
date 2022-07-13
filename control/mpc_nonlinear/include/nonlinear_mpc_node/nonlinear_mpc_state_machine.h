@@ -20,16 +20,17 @@
 #include <memory>
 #include <map>
 #include "utils/nmpc_utils.hpp"
+#include "utils_act/act_utils.hpp"
 
 namespace ns_states
 {
 enum class motionStateEnums : int
 {
-	isAtCompleteStop = 0, // there is no trajectory to follow
-	isStoppedWillMove = 1, // vehicle is in stopped state will start moving
-	willStop = -1, // vehicle will be moving
-	isMoving = 2, // vehicle is moving.
-	isInEmergency = -2, // vehicle is in emergency state.
+  isAtCompleteStop = 0, // there is no trajectory to follow
+  isStoppedWillMove = 1, // vehicle is in stopped state will start moving
+  willStop = -1, // vehicle will be moving
+  isMoving = 2, // vehicle is moving.
+  isInEmergency = -2, // vehicle is in emergency state.
 };
 
 // Forward declaration
@@ -39,15 +40,15 @@ class VehicleMotionFSM;
 class VehicleMotionState
 {
  public:
-	virtual void onEntry(VehicleMotionFSM *vecMotionFSM) = 0;
+  virtual void onEntry(VehicleMotionFSM *vecMotionFSM) = 0;
 
-	virtual void toggle(VehicleMotionFSM *vecMotionFSM) = 0;
+  virtual void toggle(VehicleMotionFSM *vecMotionFSM) = 0;
 
-	virtual void onExit(VehicleMotionFSM *vecMotionFSM) = 0;
+  virtual void onExit(VehicleMotionFSM *vecMotionFSM) = 0;
 
-	virtual motionStateEnums getStateType() = 0;
+  virtual motionStateEnums getStateType() = 0;
 
-	virtual ~VehicleMotionState() = default;
+  virtual ~VehicleMotionState() = default;
 
  private:
 
@@ -57,28 +58,28 @@ class VehicleMotionState
 class VehicleIsAtCompleteStop : public VehicleMotionState
 {
  public:
-	VehicleIsAtCompleteStop(VehicleIsAtCompleteStop &&) = delete;
+  VehicleIsAtCompleteStop(VehicleIsAtCompleteStop &&) = delete;
 
-	VehicleIsAtCompleteStop &&operator=(VehicleIsAtCompleteStop &&) = delete;
+  VehicleIsAtCompleteStop &&operator=(VehicleIsAtCompleteStop &&) = delete;
 
-	void onEntry(VehicleMotionFSM *vecMotionFSM) override;
+  void onEntry(VehicleMotionFSM *vecMotionFSM) override;
 
-	void toggle(VehicleMotionFSM *vecMotionFSM) override;
+  void toggle(VehicleMotionFSM *vecMotionFSM) override;
 
-	void onExit(VehicleMotionFSM *vecMotionFSM) override;
+  void onExit(VehicleMotionFSM *vecMotionFSM) override;
 
-	static VehicleMotionState &getInstance();
+  static VehicleMotionState &getInstance();
 
-	motionStateEnums getStateType() override;
+  motionStateEnums getStateType() override;
 
  private:
-	VehicleIsAtCompleteStop() = default;
+  VehicleIsAtCompleteStop() = default;
 
-	VehicleIsAtCompleteStop(const VehicleIsAtCompleteStop &other);
+  VehicleIsAtCompleteStop(const VehicleIsAtCompleteStop &other);
 
-	VehicleIsAtCompleteStop &operator=(const VehicleIsAtCompleteStop &other);
+  VehicleIsAtCompleteStop &operator=(const VehicleIsAtCompleteStop &other);
 
-	~VehicleIsAtCompleteStop() override = default;
+  ~VehicleIsAtCompleteStop() override = default;
 
 };
 
@@ -87,28 +88,28 @@ class VehicleIsStoppedWillMove : public VehicleMotionState
 {
  public:
 
-	VehicleIsStoppedWillMove(VehicleIsStoppedWillMove &&) = delete;
+  VehicleIsStoppedWillMove(VehicleIsStoppedWillMove &&) = delete;
 
-	VehicleIsStoppedWillMove &&operator=(VehicleIsStoppedWillMove &&) = delete;
+  VehicleIsStoppedWillMove &&operator=(VehicleIsStoppedWillMove &&) = delete;
 
-	void onEntry(VehicleMotionFSM *vecMotionFSM) override;
+  void onEntry(VehicleMotionFSM *vecMotionFSM) override;
 
-	void toggle(VehicleMotionFSM *vecMotionFSM) override;
+  void toggle(VehicleMotionFSM *vecMotionFSM) override;
 
-	void onExit(VehicleMotionFSM *vecMotionFSM) override;
+  void onExit(VehicleMotionFSM *vecMotionFSM) override;
 
-	static VehicleIsStoppedWillMove &getInstance();
+  static VehicleIsStoppedWillMove &getInstance();
 
-	motionStateEnums getStateType() override;
+  motionStateEnums getStateType() override;
 
  private:
-	VehicleIsStoppedWillMove() = default;
+  VehicleIsStoppedWillMove() = default;
 
-	VehicleIsStoppedWillMove(const VehicleIsStoppedWillMove &other);
+  VehicleIsStoppedWillMove(const VehicleIsStoppedWillMove &other);
 
-	VehicleIsStoppedWillMove &operator=(const VehicleIsStoppedWillMove &other);
+  VehicleIsStoppedWillMove &operator=(const VehicleIsStoppedWillMove &other);
 
-	~VehicleIsStoppedWillMove() override = default;
+  ~VehicleIsStoppedWillMove() override = default;
 
 };
 
@@ -117,28 +118,28 @@ class VehicleWillStop : public VehicleMotionState
 {
  public:
 
-	VehicleWillStop(VehicleWillStop &&) = delete;
+  VehicleWillStop(VehicleWillStop &&) = delete;
 
-	VehicleWillStop &&operator=(VehicleWillStop &&) = delete;
+  VehicleWillStop &&operator=(VehicleWillStop &&) = delete;
 
-	void onEntry(VehicleMotionFSM *vecMotionFSM) override;
+  void onEntry(VehicleMotionFSM *vecMotionFSM) override;
 
-	void toggle(VehicleMotionFSM *vecMotionFSM) override;
+  void toggle(VehicleMotionFSM *vecMotionFSM) override;
 
-	void onExit(VehicleMotionFSM *vecMotionFSM) override;
+  void onExit(VehicleMotionFSM *vecMotionFSM) override;
 
-	static VehicleMotionState &getInstance();
+  static VehicleMotionState &getInstance();
 
-	motionStateEnums getStateType() override;
+  motionStateEnums getStateType() override;
 
  private:
-	VehicleWillStop() = default;
+  VehicleWillStop() = default;
 
-	VehicleWillStop(const VehicleWillStop &other);
+  VehicleWillStop(const VehicleWillStop &other);
 
-	VehicleWillStop &operator=(const VehicleWillStop &other);
+  VehicleWillStop &operator=(const VehicleWillStop &other);
 
-	~VehicleWillStop() override = default;
+  ~VehicleWillStop() override = default;
 
 };
 
@@ -146,28 +147,28 @@ class VehicleWillStop : public VehicleMotionState
 class VehicleIsMoving : public VehicleMotionState
 {
  public:
-	VehicleIsMoving(VehicleIsMoving &&) = delete;
+  VehicleIsMoving(VehicleIsMoving &&) = delete;
 
-	VehicleIsMoving &&operator=(VehicleIsMoving &&) = delete;
+  VehicleIsMoving &&operator=(VehicleIsMoving &&) = delete;
 
-	void onEntry(VehicleMotionFSM *vecMotionFSM) override;
+  void onEntry(VehicleMotionFSM *vecMotionFSM) override;
 
-	void toggle(VehicleMotionFSM *vecMotionFSM) override;
+  void toggle(VehicleMotionFSM *vecMotionFSM) override;
 
-	void onExit(VehicleMotionFSM *vecMotionFSM) override;
+  void onExit(VehicleMotionFSM *vecMotionFSM) override;
 
-	static VehicleMotionState &getInstance();
+  static VehicleMotionState &getInstance();
 
-	motionStateEnums getStateType() override;
+  motionStateEnums getStateType() override;
 
  private:
-	VehicleIsMoving() = default;
+  VehicleIsMoving() = default;
 
-	VehicleIsMoving(const VehicleIsMoving &other);
+  VehicleIsMoving(const VehicleIsMoving &other);
 
-	VehicleIsMoving &operator=(const VehicleIsMoving &other);
+  VehicleIsMoving &operator=(const VehicleIsMoving &other);
 
-	~VehicleIsMoving() override = default;
+  ~VehicleIsMoving() override = default;
 
 };
 
@@ -175,28 +176,28 @@ class VehicleIsMoving : public VehicleMotionState
 class VehicleIsInEmergency : public VehicleMotionState
 {
  public:
-	VehicleIsInEmergency(VehicleIsInEmergency &&) = delete;
+  VehicleIsInEmergency(VehicleIsInEmergency &&) = delete;
 
-	VehicleIsInEmergency &&operator=(VehicleIsInEmergency &&) = delete;
+  VehicleIsInEmergency &&operator=(VehicleIsInEmergency &&) = delete;
 
-	void onEntry(VehicleMotionFSM *vecMotionFSM) override;
+  void onEntry(VehicleMotionFSM *vecMotionFSM) override;
 
-	void toggle(VehicleMotionFSM *vecMotionFSM) override;
+  void toggle(VehicleMotionFSM *vecMotionFSM) override;
 
-	void onExit(VehicleMotionFSM *vecMotionFSM) override;
+  void onExit(VehicleMotionFSM *vecMotionFSM) override;
 
-	static VehicleMotionState &getInstance();
+  static VehicleMotionState &getInstance();
 
-	motionStateEnums getStateType() override;
+  motionStateEnums getStateType() override;
 
  private:
-	VehicleIsInEmergency() = default;
+  VehicleIsInEmergency() = default;
 
-	VehicleIsInEmergency(const VehicleIsInEmergency &other);
+  VehicleIsInEmergency(const VehicleIsInEmergency &other);
 
-	VehicleIsInEmergency &operator=(const VehicleIsInEmergency &other);
+  VehicleIsInEmergency &operator=(const VehicleIsInEmergency &other);
 
-	~VehicleIsInEmergency() override = default;
+  ~VehicleIsInEmergency() override = default;
 
 };
 
@@ -205,69 +206,69 @@ class VehicleMotionFSM
 {
  public:
 
-	// Constructors and destructors.
-	VehicleMotionFSM() = default;
+  // Constructors and destructors.
+  VehicleMotionFSM() = default;
 
-	VehicleMotionFSM(double const &stop_entry_ego_speed,
-									 double const &stop_entry_target_speed,
-									 double const &keep_stopping_distance,
-									 double const &will_stop_distance);
+  VehicleMotionFSM(double const &stop_entry_ego_speed,
+				   double const &stop_entry_target_speed,
+				   double const &keep_stopping_distance,
+				   double const &will_stop_distance);
 
-	VehicleMotionFSM(VehicleMotionFSM const &other);
+  VehicleMotionFSM(VehicleMotionFSM const &other);
 
-	VehicleMotionFSM &operator=(VehicleMotionFSM const &other);
+  VehicleMotionFSM &operator=(VehicleMotionFSM const &other);
 
 //        VehicleMotionFSM &operator=(VehicleMotionFSM &&other) noexcept;//
 //        explicit VehicleMotionFSM(VehicleMotionState &&other);
 
-	// Public methods.
-	motionStateEnums getCurrentState();
+  // Public methods.
+  motionStateEnums getCurrentState();
 
-	// Switch states given an array of [distance_to_stop, vcurrent, vnext]
-	void toggle(std::array<double, 3> const &dist_v0_vnext);
+  // Switch states given an array of [distance_to_stop, vcurrent, vnext]
+  void toggle(std::array<double, 3> const &dist_v0_vnext);
 
-	void setState(VehicleMotionState &newState);
+  void setState(VehicleMotionState &newState);
 
-	void printCurrentStateMsg();
+  void printCurrentStateMsg();
 
-	std::string fsmMessage();
+  std::string fsmMessage();
 
-	// Set flags.
-	void setReinitializationFlag(bool const &is_reinitialization_required);
+  // Set flags.
+  void setReinitializationFlag(bool const &is_reinitialization_required);
 
-	[[nodiscard]] bool isReinitializationRequired() const;
+  [[nodiscard]] bool isReinitializationRequired() const;
 
-	void setEmergencyFlag(bool const &is_vehicle_in_emergency);
+  void setEmergencyFlag(bool const &is_vehicle_in_emergency);
 
-	[[nodiscard]] bool isVehicleInEmergencyStopping() const;
+  [[nodiscard]] bool isVehicleInEmergencyStopping() const;
 
-	// Public members.
-	// State transition variables ; an array of [distance_to_stop, vcurrent, vnext]
-	// Transition condition variables.
-	double stop_state_entry_ego_speed_{0.2}; // [m/s]
-	double stop_state_entry_target_speed_{0.5}; // [m]
-	double stop_state_keep_stopping_dist_{0.5}; // [m]
-	double will_stop_dist_{2.0}; // [m]
-	std::array<double, 3> state_transition_vars_{};
+  // Public members.
+  // State transition variables ; an array of [distance_to_stop, vcurrent, vnext]
+  // Transition condition variables.
+  double stop_state_entry_ego_speed_{0.2}; // [m/s]
+  double stop_state_entry_target_speed_{0.5}; // [m]
+  double stop_state_keep_stopping_dist_{0.5}; // [m]
+  double will_stop_dist_{2.0}; // [m]
+  std::array<double, 3> state_transition_vars_{};
 
-	std::map<motionStateEnums, std::string> enum_texts{
-		{motionStateEnums::isAtCompleteStop, "Vehicle is at complete stop."},
-		{motionStateEnums::isStoppedWillMove, "Vehicle is stopping and will be moving."},
-		{motionStateEnums::willStop, "Vehicle will stop."},
-		{motionStateEnums::isMoving, "Vehicle is moving."},
-		{motionStateEnums::isInEmergency, "Vehicle is in EMERGENCY state."}};
+  std::map<motionStateEnums, std::string> enum_texts{
+	  {motionStateEnums::isAtCompleteStop, "Vehicle is at complete stop."},
+	  {motionStateEnums::isStoppedWillMove, "Vehicle is stopping and will be moving."},
+	  {motionStateEnums::willStop, "Vehicle will stop."},
+	  {motionStateEnums::isMoving, "Vehicle is moving."},
+	  {motionStateEnums::isInEmergency, "Vehicle is in EMERGENCY state."}};
 
  private:
-	VehicleMotionState *current_state_{&VehicleIsStoppedWillMove::getInstance()};
-	bool is_reInitialization_required_{false};
-	bool is_vehicle_in_emergency_{false};
+  VehicleMotionState *current_state_{&VehicleIsStoppedWillMove::getInstance()};
+  bool is_reInitialization_required_{false};
+  bool is_vehicle_in_emergency_{false};
 
 };
 
 template<typename Enumeration>
 auto as_integer(Enumeration const value) -> typename std::underlying_type<Enumeration>::type
 {
-	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+  return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 }
 #endif //MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H

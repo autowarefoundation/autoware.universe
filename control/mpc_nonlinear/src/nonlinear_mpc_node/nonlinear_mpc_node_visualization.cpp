@@ -53,7 +53,7 @@ bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std
 		p.pose.position.y = td.X.at(i)(1) + xy0[1];
 		p.pose.position.z = 0.0;
 
-		p.pose.orientation = ns_nmpc_utils::getQuaternionFromYaw(ns_nmpc_utils::wrapToPi(td.X.at(i)(2)));
+		p.pose.orientation = ns_utils::getQuaternionFromYaw(ns_utils::wrapToPi(td.X.at(i)(2)));
 		p.longitudinal_velocity_mps = td.X.at(i)(6);
 		autoware_traj->points.push_back(p);
 	}

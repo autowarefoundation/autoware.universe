@@ -98,12 +98,12 @@ void KalmanUnscented::updateParameters(ns_data::ParamsFilters const &params_filt
 
 	computeWeightsAndCoeffs();
 
-	/*   ns_nmpc_utils::print("Unscented Kalman filter parameters V, W, P in Kalman filter : ");
-			ns_nmpc_eigen_utils::printEigenMat(V_);
-			ns_nmpc_eigen_utils::printEigenMat(W_);
-			ns_nmpc_eigen_utils::printEigenMat(P_);
+	/*   ns_utils::print("Unscented Kalman filter parameters V, W, P in Kalman filter : ");
+			ns_eigen_utils::printEigenMat(V_);
+			ns_eigen_utils::printEigenMat(W_);
+			ns_eigen_utils::printEigenMat(P_);
 
-			ns_nmpc_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
+			ns_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
 }
 
 void KalmanUnscented::computeSQRTofCovarianceMatrix()
@@ -111,7 +111,7 @@ void KalmanUnscented::computeSQRTofCovarianceMatrix()
 	Psqrt_ = Model::state_matrix_t(P_.llt().matrixL());
 
 	// DEBUG
-	// ns_nmpc_utils::print("UKF Psqrt ");
+	// ns_utils::print("UKF Psqrt ");
 	// end of debug
 }
 
@@ -129,8 +129,8 @@ void KalmanUnscented::propagateSigmaPoints_fx(
 	}
 
 	// DEBUG
-	//    ns_nmpc_utils::print("Integrated Sigma Points : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(sigmaPoints_fxfy_);
+	//    ns_utils::print("Integrated Sigma Points : ");
+	//    ns_eigen_utils::printEigenMat(sigmaPoints_fxfy_);
 	// end of debug
 }
 
@@ -148,8 +148,8 @@ void KalmanUnscented::generateSigmaPoints(sigma_point_mat_t &sigma_points)
 	}
 
 	// DEBUG
-	//    ns_nmpc_utils::print("\nComputed Sigma Points : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(sigma_points);
+	//    ns_utils::print("\nComputed Sigma Points : ");
+	//    ns_eigen_utils::printEigenMat(sigma_points);
 	// end of debug
 }
 
@@ -198,22 +198,22 @@ void KalmanUnscented::KalmanUnscentedPredictionUpdateStep(const Model::input_vec
 	P_ = Px0 + V_;
 
 	// DEBUG
-	// ns_nmpc_utils::print("First column operation : ");
-	//   ns_nmpc_eigen_utils::printEigenMat(first_column);
+	// ns_utils::print("First column operation : ");
+	//   ns_eigen_utils::printEigenMat(first_column);
 
-	//   ns_nmpc_utils::print("Right columns operation : ");
-	//   ns_nmpc_eigen_utils::printEigenMat(right_columns);
+	//   ns_utils::print("Right columns operation : ");
+	//   ns_eigen_utils::printEigenMat(right_columns);
 
-	//   ns_nmpc_utils::print("Rowise sum of x mean : ");
-	//   ns_nmpc_eigen_utils::printEigenMat(x_est_mean_full_);
+	//   ns_utils::print("Rowise sum of x mean : ");
+	//   ns_eigen_utils::printEigenMat(x_est_mean_full_);
 
-	//   ns_nmpc_utils::print("Covariance update Px0 : ");
-	//   ns_nmpc_eigen_utils::printEigenMat(Px0);
+	//   ns_utils::print("Covariance update Px0 : ");
+	//   ns_eigen_utils::printEigenMat(Px0);
 
-	//   ns_nmpc_utils::print("Updated covariance in prediction update P_: ");
-	//   ns_nmpc_eigen_utils::printEigenMat(P_);
+	//   ns_utils::print("Updated covariance in prediction update P_: ");
+	//   ns_eigen_utils::printEigenMat(P_);
 
-	//   ns_nmpc_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_);
+	//   ns_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_);
 	// end of debug
 }
 
@@ -288,22 +288,22 @@ void KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(
 		autoware::common::helper_functions::wrap_angle(x_est_mean_full_(5));  // normalize integrated e_yaw
 
 	// DEBUG
-	/*   ns_nmpc_utils::print("First column operation : ");
-			ns_nmpc_eigen_utils::printEigenMat(first_column);
+	/*   ns_utils::print("First column operation : ");
+			ns_eigen_utils::printEigenMat(first_column);
 
-			ns_nmpc_utils::print("Right columns operation : ");
-			ns_nmpc_eigen_utils::printEigenMat(right_columns);
+			ns_utils::print("Right columns operation : ");
+			ns_eigen_utils::printEigenMat(right_columns);
 
-			ns_nmpc_utils::print("Rowise sum of y mean : ");
-			ns_nmpc_eigen_utils::printEigenMat(y_est_mean_full_);
+			ns_utils::print("Rowise sum of y mean : ");
+			ns_eigen_utils::printEigenMat(y_est_mean_full_);
 
-			ns_nmpc_utils::print("Covariance update Sk : ");
-			ns_nmpc_eigen_utils::printEigenMat(Sk_);
+			ns_utils::print("Covariance update Sk : ");
+			ns_eigen_utils::printEigenMat(Sk_);
 
-			ns_nmpc_utils::print("Updated covariance in prediction update P_: ");
-			ns_nmpc_eigen_utils::printEigenMat(P_);
+			ns_utils::print("Updated covariance in prediction update P_: ");
+			ns_eigen_utils::printEigenMat(P_);
 
-			ns_nmpc_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_); */
+			ns_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_); */
 	// end of debug
 }
 
@@ -425,12 +425,12 @@ void KalmanUnscentedSQRT::updateParameters(ns_data::ParamsFilters const &params_
 
 	computeWeightsAndCoeffs();
 
-	/*  ns_nmpc_utils::print("Unscented Kalman filter parameters V, W, P in Kalman filter : ");
-			ns_nmpc_eigen_utils::printEigenMat(V_);
-			ns_nmpc_eigen_utils::printEigenMat(W_);
-			ns_nmpc_eigen_utils::printEigenMat(P_);
+	/*  ns_utils::print("Unscented Kalman filter parameters V, W, P in Kalman filter : ");
+			ns_eigen_utils::printEigenMat(V_);
+			ns_eigen_utils::printEigenMat(W_);
+			ns_eigen_utils::printEigenMat(P_);
 
-			ns_nmpc_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
+			ns_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
 }
 
 void KalmanUnscentedSQRT::propagateSigmaPoints_fx(
@@ -447,8 +447,8 @@ void KalmanUnscentedSQRT::propagateSigmaPoints_fx(
 	}
 
 	// DEBUG
-	//    ns_nmpc_utils::print("Integrated Sigma Points : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(sigmaPoints_fxfy_);
+	//    ns_utils::print("Integrated Sigma Points : ");
+	//    ns_eigen_utils::printEigenMat(sigmaPoints_fxfy_);
 	// end of debug
 }
 
@@ -464,8 +464,8 @@ void KalmanUnscentedSQRT::generateSigmaPoints(sigma_point_mat_t &sigma_points)
 	}
 
 	// DEBUG
-	//    ns_nmpc_utils::print("\nComputed Sigma Points : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(sigma_points);
+	//    ns_utils::print("\nComputed Sigma Points : ");
+	//    ns_eigen_utils::printEigenMat(sigma_points);
 	// end of debug
 }
 
@@ -489,10 +489,10 @@ void KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
 	//    Model::state_matrix_t R(Rsqrt);
 
 	//    std::cout << "Printing input R ... in cholesky update ";
-	//    ns_nmpc_eigen_utils::printEigenMat(R);
+	//    ns_eigen_utils::printEigenMat(R);
 	//
 	//    std::cout << "Printing input U ... in cholesky update ";
-	//    ns_nmpc_eigen_utils::printEigenMat(U);
+	//    ns_eigen_utils::printEigenMat(U);
 
 	//    // Check if R is upper triangular.
 	//    for (auto i = 0; i < R.rows(); ++i)
@@ -506,7 +506,7 @@ void KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
 	//        return Model::state_matrix_t();
 	//    }
 
-	auto const &&sign = ns_nmpc_eigen_utils::sgn(weight);
+	auto const &&sign = ns_utils::sgn(weight);
 	auto const &&weight_sqrt = std::sqrt(std::fabs(weight));
 	auto const &&nrows = U.rows();
 
@@ -519,7 +519,7 @@ void KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
 			auto const &&r_squared = R(k, k) * R(k, k) + sign * x(k, 0) * x(k, 0);
 
 			auto const &&r = r_squared < 0 ? std::numeric_limits<double>::max() : std::sqrt(r_squared);
-			// ns_nmpc_utils::print("  rsquared ", r_squared);
+			// ns_utils::print("  rsquared ", r_squared);
 
 			auto const &&c = r / R(k, k);
 			auto const &&s = x(k, 0) / R(k, k);
@@ -535,10 +535,10 @@ void KalmanUnscentedSQRT::choleskyOneRankUpdate(Model::state_matrix_t &R,
 	}
 
 	//    std::cout << "Printing output R ... in cholesky update ";
-	//    ns_nmpc_eigen_utils::printEigenMat(R.eval());
+	//    ns_eigen_utils::printEigenMat(R.eval());
 	//
 	//    std::cout << "Printing output Rsqrt ... in cholesky update ";
-	//    ns_nmpc_eigen_utils::printEigenMat(Rsqrt.eval());
+	//    ns_eigen_utils::printEigenMat(Rsqrt.eval());
 }
 
 void KalmanUnscentedSQRT::choleskyUpdateFromSigmaPoints(Model::state_matrix_t &matrix_sqrt_tobe_updated,
@@ -551,27 +551,27 @@ void KalmanUnscentedSQRT::choleskyUpdateFromSigmaPoints(Model::state_matrix_t &m
 	auto const &&d_sigma_points_first_col_excluded = sigma_points.rightCols(num_of_sigma_points_ - 1);
 	sigma_concatenated.leftCols(num_of_sigma_points_ - 1) = std::sqrt(Weight_common_) * d_sigma_points_first_col_excluded;
 
-	//    ns_nmpc_utils::print("Concatenated Sigma Points : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(sigma_concatenated);
+	//    ns_utils::print("Concatenated Sigma Points : ");
+	//    ns_eigen_utils::printEigenMat(sigma_concatenated);
 
 	auto qr = sigma_concatenated.transpose().householderQr();
 
 	matrix_sqrt_tobe_updated =
 		Model::state_matrix_t(Eigen::MatrixXd(qr.matrixQR().triangularView<Eigen::Upper>()).topRows(Model::state_dim));
 
-	//    ns_nmpc_utils::print("R of QR decomposition ");
-	//    ns_nmpc_eigen_utils::printEigenMat(R);
-	//    // ns_nmpc_utils::print("size of R ", R.rows(), R.cols());
+	//    ns_utils::print("R of QR decomposition ");
+	//    ns_eigen_utils::printEigenMat(R);
+	//    // ns_utils::print("size of R ", R.rows(), R.cols());
 
-	// ns_nmpc_utils::print("Calling Cholesky update: ");
+	// ns_utils::print("Calling Cholesky update: ");
 	choleskyOneRankUpdate(matrix_sqrt_tobe_updated, first_column, weight);
 
-	//    ns_nmpc_utils::print("Cholesky update returned : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(R);
+	//    ns_utils::print("Cholesky update returned : ");
+	//    ns_eigen_utils::printEigenMat(R);
 
 	// DEBUG
-	//    ns_nmpc_utils::print(" Updated Square root  : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(matrix_sqrt_tobe_updated);
+	//    ns_utils::print(" Updated Square root  : ");
+	//    ns_eigen_utils::printEigenMat(matrix_sqrt_tobe_updated);
 	// End of DEBUG
 }
 
@@ -600,33 +600,33 @@ void KalmanUnscentedSQRT::KalmanUnscentedPredictionUpdateStep(const Model::input
 	sigma_point_mat_t &&d_sigma_points_x = sigmaPoints_fxfy_.colwise() - x_est_mean_full_;
 
 	// SQUQRE ROOT IMPLEMENTATION
-	//    ns_nmpc_utils::print("In prediction update : ");
-	//    ns_nmpc_utils::print("Sx_sqrt before update: ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sx_sqrt_);
+	//    ns_utils::print("In prediction update : ");
+	//    ns_utils::print("Sx_sqrt before update: ");
+	//    ns_eigen_utils::printEigenMat(Sx_sqrt_);
 
 	// Update the sqrt of state covariance
 	choleskyUpdateFromSigmaPoints(Sx_sqrt_, d_sigma_points_x, sigma_and_Vsqrt, Weight0_c_);
 
-	//    ns_nmpc_utils::print("Sx_sqrt after update: ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sx_sqrt_);
+	//    ns_utils::print("Sx_sqrt after update: ");
+	//    ns_eigen_utils::printEigenMat(Sx_sqrt_);
 
 	// DEBUG
-	/*   ns_nmpc_utils::print("First column operation : ");
-			ns_nmpc_eigen_utils::printEigenMat(first_column);
+	/*   ns_utils::print("First column operation : ");
+			ns_eigen_utils::printEigenMat(first_column);
 
-			ns_nmpc_utils::print("Right columns operation : ");
-			ns_nmpc_eigen_utils::printEigenMat(right_columns);
+			ns_utils::print("Right columns operation : ");
+			ns_eigen_utils::printEigenMat(right_columns);
 
-			ns_nmpc_utils::print("Rowise sum of x mean : ");
-			ns_nmpc_eigen_utils::printEigenMat(x_est_mean_full_);
+			ns_utils::print("Rowise sum of x mean : ");
+			ns_eigen_utils::printEigenMat(x_est_mean_full_);
 
-			ns_nmpc_utils::print("Covariance update Px0 : ");
-			ns_nmpc_eigen_utils::printEigenMat(Px0);
+			ns_utils::print("Covariance update Px0 : ");
+			ns_eigen_utils::printEigenMat(Px0);
 
-			ns_nmpc_utils::print("Updated covariance in prediction update P_: ");
-			ns_nmpc_eigen_utils::printEigenMat(P_);
+			ns_utils::print("Updated covariance in prediction update P_: ");
+			ns_eigen_utils::printEigenMat(P_);
 
-			ns_nmpc_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_); */
+			ns_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_); */
 	// end of debug
 }
 
@@ -661,14 +661,14 @@ void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::stat
 	sigma_point_mat_t &&d_sigma_points_y = sigmaPointsMat_y_.colwise() - y_est_mean_full_;
 
 	// SQUQRE ROOT IMPLEMENTATION
-	//    ns_nmpc_utils::print("In measurement update : ");
-	//    ns_nmpc_utils::print("Sy_sqrt before update: ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sy_sqrt_);
+	//    ns_utils::print("In measurement update : ");
+	//    ns_utils::print("Sy_sqrt before update: ");
+	//    ns_eigen_utils::printEigenMat(Sy_sqrt_);
 
 	choleskyUpdateFromSigmaPoints(Sy_sqrt_, d_sigma_points_y, sigma_and_Wsqrt, Weight0_c_);
 
-	//    ns_nmpc_utils::print("Sy_sqrt_ after update: ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sy_sqrt_);
+	//    ns_utils::print("Sy_sqrt_ after update: ");
+	//    ns_eigen_utils::printEigenMat(Sy_sqrt_);
 	Ck_.setZero();
 	auto &&d_sigma_points_x = sigmaPointsMat_x_.colwise() - x_est_mean_full_;
 
@@ -685,74 +685,74 @@ void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::stat
 	Eigen::MatrixXd KkS(Sy_sqrt_.rows(), Sy_sqrt_.cols());
 	// Eigen::MatrixXd Kk(Sx_sqrt_.rows(), Sx_sqrt_.cols());
 
-	//    ns_nmpc_utils::print("Ck : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Ck_);
+	//    ns_utils::print("Ck : ");
+	//    ns_eigen_utils::printEigenMat(Ck_);
 
 	/**
 	 *  Solves RX=B by back-substitution.
 	 * */
-	ns_nmpc_eigen_utils::backSubstitution(Eigen::MatrixXd(Sy_sqrt_.transpose()), Ck_, KkS, 'l');
+	ns_eigen_utils::backSubstitution(Eigen::MatrixXd(Sy_sqrt_.transpose()), Ck_, KkS, 'l');
 
 	Kk_.setZero();
-	ns_nmpc_eigen_utils::backSubstitution(Eigen::MatrixXd(Sy_sqrt_), KkS, Kk_, 'u');
+	ns_eigen_utils::backSubstitution(Eigen::MatrixXd(Sy_sqrt_), KkS, Kk_, 'u');
 
-	//    ns_nmpc_utils::print("KkS : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(KkS);
+	//    ns_utils::print("KkS : ");
+	//    ns_eigen_utils::printEigenMat(KkS);
 	//
-	//    ns_nmpc_utils::print("Kk_ : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Kk_);
+	//    ns_utils::print("Kk_ : ");
+	//    ns_eigen_utils::printEigenMat(Kk_);
 
 	// Update Sqrt_ once more
 	Eigen::MatrixXd U(Kk_ * Sy_sqrt_);
 
-	//    ns_nmpc_utils::print("U : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(U);
+	//    ns_utils::print("U : ");
+	//    ns_eigen_utils::printEigenMat(U);
 
-	//    ns_nmpc_utils::print(" In measurement update before updating  Sx_sqrt_ : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sx_sqrt_);
+	//    ns_utils::print(" In measurement update before updating  Sx_sqrt_ : ");
+	//    ns_eigen_utils::printEigenMat(Sx_sqrt_);
 
 	double const weight = -1.;
 	//    Model::state_matrix_t Sxtemp(Sx_sqrt_);
 	//
-	//    ns_nmpc_utils::print(" In measurement update before updating  Sxtemp : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sxtemp);
+	//    ns_utils::print(" In measurement update before updating  Sxtemp : ");
+	//    ns_eigen_utils::printEigenMat(Sxtemp);
 
 	choleskyOneRankUpdate(Sx_sqrt_, U, weight);
 
-	//    ns_nmpc_utils::print(" In measurement update AFTER updating  Sxtemp : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sxtemp.eval());
+	//    ns_utils::print(" In measurement update AFTER updating  Sxtemp : ");
+	//    ns_eigen_utils::printEigenMat(Sxtemp.eval());
 
-	//    ns_nmpc_utils::print(" In measurement update AFTER updating  Sx_sqrt_ : ");
-	//    ns_nmpc_eigen_utils::printEigenMat(Sx_sqrt_);
+	//    ns_utils::print(" In measurement update AFTER updating  Sx_sqrt_ : ");
+	//    ns_eigen_utils::printEigenMat(Sx_sqrt_);
 
 	// Normalize the angle variables
 	Model::state_vector_t innovation_error = (x_measured - y_est_mean_full_);
-	innovation_error(2) = ns_nmpc_utils::wrapToPi(innovation_error(2));  // yaw angle
-	innovation_error(5) = ns_nmpc_utils::wrapToPi(innovation_error(5));  // yaw_error
+	innovation_error(2) = ns_utils::wrapToPi(innovation_error(2));  // yaw angle
+	innovation_error(5) = ns_utils::wrapToPi(innovation_error(5));  // yaw_error
 
 	x_est_mean_full_ = x_est_mean_full_ + Kk_ * innovation_error;
 
 	// Normalize after the update.
-	x_est_mean_full_(2) = ns_nmpc_utils::wrapToPi(x_est_mean_full_(2));  // normalize integrated e_yaw
-	x_est_mean_full_(5) = ns_nmpc_utils::wrapToPi(x_est_mean_full_(5));  // normalize integrated e_yaw
+	x_est_mean_full_(2) = ns_utils::wrapToPi(x_est_mean_full_(2));  // normalize integrated e_yaw
+	x_est_mean_full_(5) = ns_utils::wrapToPi(x_est_mean_full_(5));  // normalize integrated e_yaw
 
 	// DEBUG
-	/*   ns_nmpc_utils::print("First column operation : ");
-			ns_nmpc_eigen_utils::printEigenMat(first_column);
+	/*   ns_utils::print("First column operation : ");
+			ns_eigen_utils::printEigenMat(first_column);
 
-			ns_nmpc_utils::print("Right columns operation : ");
-			ns_nmpc_eigen_utils::printEigenMat(right_columns);
+			ns_utils::print("Right columns operation : ");
+			ns_eigen_utils::printEigenMat(right_columns);
 
-			ns_nmpc_utils::print("Rowise sum of y mean : ");
-			ns_nmpc_eigen_utils::printEigenMat(y_est_mean_full_);
+			ns_utils::print("Rowise sum of y mean : ");
+			ns_eigen_utils::printEigenMat(y_est_mean_full_);
 
-			ns_nmpc_utils::print("Covariance update Sk : ");
-			ns_nmpc_eigen_utils::printEigenMat(Sk_);
+			ns_utils::print("Covariance update Sk : ");
+			ns_eigen_utils::printEigenMat(Sk_);
 
-			ns_nmpc_utils::print("Updated covariance in prediction update P_: ");
-			ns_nmpc_eigen_utils::printEigenMat(P_);
+			ns_utils::print("Updated covariance in prediction update P_: ");
+			ns_eigen_utils::printEigenMat(P_);
 
-			ns_nmpc_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_); */
+			ns_utils::print("W0m, W0c, W : ", Weight0_m_, Weight0_c_, Weight_common_); */
 	// end of debug
 }
 
