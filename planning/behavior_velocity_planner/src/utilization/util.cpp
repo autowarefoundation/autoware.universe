@@ -614,7 +614,7 @@ boost::optional<int64_t> getNearestLaneId(
     nearest_segment_idx) {
     for (const auto & ll : current_lanes) {
       if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
-        *nearest_lane_id = ll.id();
+        nearest_lane_id = ll.id();
         return nearest_lane_id;
       }
     }
