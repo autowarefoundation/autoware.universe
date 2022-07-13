@@ -27,7 +27,8 @@
 #include "active_model.hpp"
 #include "data_and_parameter_container.hpp"
 #include "osqp_google/osqp++.hpp"
-
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 /**
  * @brief The decision variables of OSQP is the concatenated vectors [x;u].
  *
@@ -242,13 +243,13 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	// if item abs is greater than eps, the item  is assumed to be nonzero.
 	double const &eps_triplet_zero = std::numeric_limits<double>::epsilon() / 2.;
 
-	auto const &triplets_Q = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Q), eps_triplet_zero);
+	auto const &triplets_Q = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Q), eps_triplet_zero);
 
-	auto const &triplets_QN = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.QN), eps_triplet_zero);
+	auto const &triplets_QN = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.QN), eps_triplet_zero);
 
-	auto const &triplets_R = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.R), eps_triplet_zero);
+	auto const &triplets_R = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.R), eps_triplet_zero);
 
-	auto const &triplets_Rj = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Rj), eps_triplet_zero);
+	auto const &triplets_Rj = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Rj), eps_triplet_zero);
 
 	// Q, QN, R, Rj starts at the different cols.
 	auto col_startR = K * STATE_DIM;  // !<@brief R columns start from in the cost matrix.
@@ -257,7 +258,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	// Prepare an Identity matrix to be used in Jerk matrices.
 	Eigen::MatrixXd uId(INPUT_DIM, INPUT_DIM);
 	uId.setIdentity();
-	auto triplets_uId = ns_nmpc_eigen_utils::ToTriplets(uId, eps_triplet_zero);
+	auto triplets_uId = ns_eigen_utils::ToTriplets(uId, eps_triplet_zero);
 
 	for (size_t k = 0; k < K - 1; ++k)
 	{
@@ -310,7 +311,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 		auto rowSx = k * STATE_DIM;
 		auto colSx = k * STATE_DIM;
 
-		auto triplet_list_S = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
+		auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
 		std::transform(triplet_list_S.cbegin(), triplet_list_S.cend(), std::back_inserter(triplets_A),
 									 [&rowSx, &colSx, this](auto const &titem)
@@ -332,7 +333,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 		auto colA = k * STATE_DIM;
 
 		auto &&ASx = Eigen::MatrixXd(discretization_data.A[k] * params_optimization.Sx);
-		auto triplet_list_A = ns_nmpc_eigen_utils::ToTriplets(ASx, eps_triplet_zero);
+		auto triplet_list_A = ns_eigen_utils::ToTriplets(ASx, eps_triplet_zero);
 
 		std::transform(triplet_list_A.cbegin(), triplet_list_A.cend(), std::back_inserter(triplets_A),
 									 [&rowA, &colA](auto const &titem)
@@ -349,7 +350,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 		auto colB = K * STATE_DIM + k * INPUT_DIM;
 
 		auto &&BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
-		auto triplet_list_B = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), eps_triplet_zero);
+		auto triplet_list_B = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), eps_triplet_zero);
 
 		std::transform(triplet_list_B.cbegin(), triplet_list_B.cend(), std::back_inserter(triplets_A),
 									 [&rowB, &colB](auto const &titem)
@@ -459,7 +460,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	auto rowSx = (K - 1) * STATE_DIM;
 	auto colSx = (K - 1) * STATE_DIM;
 
-	auto triplet_list_S = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
+	auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
 	std::transform(triplet_list_S.cbegin(), triplet_list_S.cend(), std::back_inserter(triplets_A),
 								 [&rowSx, &colSx, this](auto const &titem)
@@ -483,7 +484,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	Eigen::MatrixXd Aineq(osqp_dims_.Pdim, osqp_dims_.Pdim);
 	Aineq.setIdentity();
 
-	auto triplet_Aineq = ns_nmpc_eigen_utils::ToTriplets(Aineq, eps_triplet_zero, row_aineq, col_aineq);
+	auto triplet_Aineq = ns_eigen_utils::ToTriplets(Aineq, eps_triplet_zero, row_aineq, col_aineq);
 
 	std::transform(triplet_Aineq.cbegin(), triplet_Aineq.cend(), std::back_inserter(triplets_A),
 								 [this](auto const &titem)
@@ -563,19 +564,19 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.ulower_scaled;
 
 	// DEBUG
-	//  ns_nmpc_utils::print("State Inequality Bounds in SetupOSQP:");
+	//  ns_utils::print("State Inequality Bounds in SetupOSQP:");
 	//
-	//  auto xbounds = ns_nmpc_eigen_utils::hstack<double>(
+	//  auto xbounds = ns_eigen_utils::hstack<double>(
 	//    osqp_instance_.lower_bounds.middleRows(row_aineq, K * STATE_DIM),
 	//    osqp_instance_.upper_bounds.middleRows(row_aineq, K * STATE_DIM));
 	//
-	//  ns_nmpc_utils::print("Control Inequality Bounds in SetupOSQP:");
-	//  ns_nmpc_utils::print("Row start of input inequalities u : ", row_inq_u);
-	//  auto ubounds = ns_nmpc_eigen_utils::hstack<double>(
+	//  ns_utils::print("Control Inequality Bounds in SetupOSQP:");
+	//  ns_utils::print("Row start of input inequalities u : ", row_inq_u);
+	//  auto ubounds = ns_eigen_utils::hstack<double>(
 	//    osqp_instance_.lower_bounds.middleRows(row_inq_u, K * INPUT_DIM),
 	//    osqp_instance_.upper_bounds.middleRows(row_inq_u, K * INPUT_DIM));
-	//  ns_nmpc_utils::print("\nBounds of controls in OSQP update:");
-	//  ns_nmpc_eigen_utils::printEigenMat(ubounds);
+	//  ns_utils::print("\nBounds of controls in OSQP update:");
+	//  ns_eigen_utils::printEigenMat(ubounds);
 
 	// end of DEBUG
 
@@ -615,18 +616,18 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 	osqp_instance_.constraint_matrix = Aconst_;
 
 	auto status = osqp_solver_.Init(osqp_instance_, osqp_settings_);
-	ns_nmpc_utils::print("Is the solver initialized : ", status());
+	ns_utils::print("Is the solver initialized : ", status());
 
 	is_initialized_ = osqp_solver_.IsInitialized();
 
 	// DEBUG
-	ns_nmpc_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
-	ns_nmpc_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
+	ns_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
+	ns_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
 
-	//  ns_nmpc_utils::print("\nP - cost matrix : ");
-	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Pcost_.toDense()));
-	//  ns_nmpc_utils::print("\nA - constraint matrix : ");
-	//  ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Aconst_.toDense()));
+	//  ns_utils::print("\nP - cost matrix : ");
+	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Pcost_.toDense()));
+	//  ns_utils::print("\nA - constraint matrix : ");
+	//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Aconst_.toDense()));
 
 	// end of debug.
 
@@ -650,15 +651,15 @@ osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::testSolver(
 {
 	osqp::OsqpExitCode exit_code = osqp_solver_.Solve();
 
-	ns_nmpc_utils::print("\nEXIT CODE example \n");
-	ns_nmpc_utils::print(ToString(exit_code));
+	ns_utils::print("\nEXIT CODE example \n");
+	ns_utils::print(ToString(exit_code));
 
-	ns_nmpc_utils::print("\nOptimization Results : \n");
+	ns_utils::print("\nOptimization Results : \n");
 	Eigen::VectorXd optimal_solution = osqp_solver_.primal_solution();
-	ns_nmpc_eigen_utils::printEigenMat(optimal_solution.topRows(10));
+	ns_eigen_utils::printEigenMat(optimal_solution.topRows(10));
 
-	ns_nmpc_utils::print(" ... ");
-	ns_nmpc_eigen_utils::printEigenMat(optimal_solution.bottomRows(10));
+	ns_utils::print(" ... ");
+	ns_eigen_utils::printEigenMat(optimal_solution.bottomRows(10));
 
 	return exit_code;
 }
@@ -710,13 +711,13 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 		auto colA = k * STATE_DIM;
 
 		auto &&ASx = Eigen::MatrixXd(discretization_data.A[k] * params_optimization.Sx);
-		auto triplet_list_A = ns_nmpc_eigen_utils::ToTriplets(ASx, EPS);
+		auto triplet_list_A = ns_eigen_utils::ToTriplets(ASx, EPS);
 
-		// ns_nmpc_utils::print("\nASx\n");
-		// ns_nmpc_eigen_utils::printEigenMat(ASx);
+		// ns_utils::print("\nASx\n");
+		// ns_eigen_utils::printEigenMat(ASx);
 		//
-		// ns_nmpc_utils::print("\nA\n");
-		// ns_nmpc_eigen_utils::printEigenMat(discretization_data.A[k]);
+		// ns_utils::print("\nA\n");
+		// ns_eigen_utils::printEigenMat(discretization_data.A[k]);
 
 		std::transform(triplet_list_A.cbegin(), triplet_list_A.cend(), std::back_inserter(triplets_A),
 									 [&rowA, &colA](auto const &titem)
@@ -734,7 +735,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 		auto colB = K * STATE_DIM + k * INPUT_DIM;
 
 		auto &&BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
-		auto triplet_list_B = ns_nmpc_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), EPS);
+		auto triplet_list_B = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), EPS);
 
 		std::transform(triplet_list_B.cbegin(), triplet_list_B.cend(), std::back_inserter(triplets_A),
 									 [&rowB, &colB](auto const &titem)
@@ -747,7 +748,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 									 });
 
 		// Set the optimization vector.
-		// ns_nmpc_eigen_utils::printEigenMat(-1 * Q * target_references.X[k]);
+		// ns_eigen_utils::printEigenMat(-1 * Q * target_references.X[k]);
 		// If we scale outside, we can use this line.
 		//  new_objective_vector.template segment<STATE_DIM>(k * STATE_DIM) =
 		//  -1 * Q *  target_references.X[k];
@@ -759,11 +760,11 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 
 		new_objective_vector.template segment<STATE_DIM>(k * STATE_DIM) = -1 * Q * xref_hat;
 
-		// ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
-		// ns_nmpc_utils::print("Target speed set in optimization ---------- : ", xref_hat(6));
+		// ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
+		// ns_utils::print("Target speed set in optimization ---------- : ", xref_hat(6));
 
-		// ns_nmpc_utils::print("\nTarget State in OSQP Class : \n");
-		// ns_nmpc_eigen_utils::printEigenMat(-1 * Q * target_references.X[k]);
+		// ns_utils::print("\nTarget State in OSQP Class : \n");
+		// ns_eigen_utils::printEigenMat(-1 * Q * target_references.X[k]);
 	}
 
 	// Set the final reference value in the objective vector.
@@ -777,8 +778,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 
 	new_objective_vector.template segment<STATE_DIM>((K - 1) * STATE_DIM) = -1 * QN * xref_hat;
 
-	// ns_nmpc_utils::print("\nOptimization Vector q : \n");
-	// ns_nmpc_eigen_utils::printEigenMat(new_objective_vector);
+	// ns_utils::print("\nOptimization Vector q : \n");
+	// ns_eigen_utils::printEigenMat(new_objective_vector);
 
 	// Update triplet_A constant items by copying the constant triplets into the
 	// new constraint matrix.
@@ -808,18 +809,18 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 		osqp_instance_.upper_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
 	}
 
-	//  ns_nmpc_utils::print("\nLower Bounds of controls in OSQP update:");
-	//  ns_nmpc_eigen_utils::printEigenMat(osqp_instance_.lower_bounds.middleRows(K * STATE_DIM,
+	//  ns_utils::print("\nLower Bounds of controls in OSQP update:");
+	//  ns_eigen_utils::printEigenMat(osqp_instance_.lower_bounds.middleRows(K * STATE_DIM,
 	//  (K - 1) * INPUT_DIM));
 	//
-	//  ns_nmpc_utils::print("\nUpper Bounds of controls in OSQP update:");
-	//  ns_nmpc_eigen_utils::printEigenMat(osqp_instance_.upper_bounds.middleRows(K * STATE_DIM,
+	//  ns_utils::print("\nUpper Bounds of controls in OSQP update:");
+	//  ns_eigen_utils::printEigenMat(osqp_instance_.upper_bounds.middleRows(K * STATE_DIM,
 	//                   (K - 1) * INPUT_DIM));
 
-	//  ns_nmpc_utils::print("\nLower Bounds of state in OSQP update:");
-	//  ns_nmpc_eigen_utils::printEigenMat(osqp_instance_.lower_bounds.topRows(K * STATE_DIM));
-	//  ns_nmpc_utils::print("\nUpper Bounds of state in OSQP update:");
-	//  ns_nmpc_eigen_utils::printEigenMat(osqp_instance_.upper_bounds.topRows(K * STATE_DIM));
+	//  ns_utils::print("\nLower Bounds of state in OSQP update:");
+	//  ns_eigen_utils::printEigenMat(osqp_instance_.lower_bounds.topRows(K * STATE_DIM));
+	//  ns_utils::print("\nUpper Bounds of state in OSQP update:");
+	//  ns_eigen_utils::printEigenMat(osqp_instance_.upper_bounds.topRows(K * STATE_DIM));
 
 	// Set the equality constraint vector.-------------------------------------------
 
@@ -833,12 +834,12 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 	auto status = osqp_solver_.Init(osqp_instance_, osqp_settings_);
 	is_updated_ = osqp_solver_.IsInitialized();
 
-	//  ns_nmpc_utils::print("\nSolver Status in updateOSQP", status());
-	//  ns_nmpc_utils::print("\nIs Solver Initialized in updateOSQP?",
+	//  ns_utils::print("\nSolver Status in updateOSQP", status());
+	//  ns_utils::print("\nIs Solver Initialized in updateOSQP?",
 	//  osqp_solver_.IsInitialized() ? "Ok" : "Not OK");
 
 	// DEBUG
-	// ns_nmpc_utils::print("In the updateOSQP method : ");
+	// ns_utils::print("In the updateOSQP method : ");
 	// end of Debug
 
 	return is_updated_;
@@ -902,18 +903,18 @@ void OptimizationProblemOSQP<STATE_DIM,
 	// trajectory_data.U[K - 1] = Su * usolk + Cu;
 
 	// DEBUG
-	// ns_nmpc_utils::print("In get solution: OSQP computed errors : ");
+	// ns_utils::print("In get solution: OSQP computed errors : ");
 	// Get trajectories as a matrix and print for debugging purpose.
-	// auto &&Xtemp = ns_nmpc_eigen_utils::getTrajectory(trajectory_data.X);
-	// auto &&Utemp = ns_nmpc_eigen_utils::getTrajectory(trajectory_data.U);
+	// auto &&Xtemp = ns_eigen_utils::getTrajectory(trajectory_data.X);
+	// auto &&Utemp = ns_eigen_utils::getTrajectory(trajectory_data.U);
 	//
-	// ns_nmpc_utils::print("\nSolved OSQP trajectories ey epsi : ");
-	// //ns_nmpc_eigen_utils::printEigenMat(Xtemp.transpose().middleCols(4, 2));
+	// ns_utils::print("\nSolved OSQP trajectories ey epsi : ");
+	// //ns_eigen_utils::printEigenMat(Xtemp.transpose().middleCols(4, 2));
 	// [x, y, psi, s, ey, epsi, v, delta]
-	// ns_nmpc_eigen_utils::printEigenMat(Xtemp.transpose());
+	// ns_eigen_utils::printEigenMat(Xtemp.transpose());
 	//
-	// ns_nmpc_utils::print("\nSolved OSQP trajectories U : ");
-	// ns_nmpc_eigen_utils::printEigenMat(Utemp.transpose());
+	// ns_utils::print("\nSolved OSQP trajectories U : ");
+	// ns_eigen_utils::printEigenMat(Utemp.transpose());
 
 	// end of debug
 }

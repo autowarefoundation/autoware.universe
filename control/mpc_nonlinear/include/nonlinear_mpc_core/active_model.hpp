@@ -37,11 +37,11 @@ constexpr size_t MPC_NUM_OF_PRED_STEPS = 50;
 constexpr size_t NUM_LPV_NONLINEARITIES = 7;
 }  // namespace ns_nmpc_interface
 
-namespace ns_nmpc_splines
+namespace ns_splines
 {
 constexpr size_t MPC_MAP_SMOOTHER_IN = 100;   // !<-@brief Autoware points are re-sampled into.
 constexpr size_t MPC_MAP_SMOOTHER_OUT = 80;  // !<-@brief Re-sampled points are smoothed out.
-}  // namespace ns_nmpc_splines
+}  // namespace ns_splines
 
 /**
  * @brief Number of sigma points in the UKF implementation.
@@ -56,11 +56,11 @@ constexpr size_t UKF_NUM_OF_SIGMAS = 2 * Model::state_dim + 1;
  * points which enter the to algorithms. Then these points are sent to the smoothers [out].
  *   - The raw reference map consists of the columns [s, x, y, z]
 */
-using map_matrix_in_t = Eigen::Matrix<double, ns_nmpc_splines::MPC_MAP_SMOOTHER_IN, 4>;
+using map_matrix_in_t = Eigen::Matrix<double, ns_splines::MPC_MAP_SMOOTHER_IN, 4>;
 // using map_matrix_out_t = Eigen::Matrix<double, ns_nmpc_interface::MPC_MAP_SMOOTHER_OUT, 6>;
 
 // Using Map vector types
-using map_vector_in_t = Eigen::Matrix<double, ns_nmpc_splines::MPC_MAP_SMOOTHER_IN, 1>;
-using map_vector_out_t = Eigen::Matrix<double, ns_nmpc_splines::MPC_MAP_SMOOTHER_OUT, 1>;
+using map_vector_in_t = Eigen::Matrix<double, ns_splines::MPC_MAP_SMOOTHER_IN, 1>;
+using map_vector_out_t = Eigen::Matrix<double, ns_splines::MPC_MAP_SMOOTHER_OUT, 1>;
 
 #endif  // NONLINEAR_MPC_CORE__ACTIVE_MODEL_HPP_

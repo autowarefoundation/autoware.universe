@@ -74,7 +74,7 @@ void ns_discretization::ODEfoh::operator()(
 	// Phi in Fundamental matrix.
 	const Model::state_matrix_t Phi_A_xi = V.template block<Model::state_dim, Model::state_dim>(0, 1);
 	const Model::state_matrix_t Phi_A_xi_inverse = Phi_A_xi.inverse();
-	// ns_nmpc_eigen_utils::printEigenMat(Phi_A_xi_inverse);
+	// ns_eigen_utils::printEigenMat(Phi_A_xi_inverse);
 
 	// x[k+1]
 	dVdt.template block<Model::state_dim, 1>(0, cols) = f;
@@ -153,7 +153,7 @@ void ns_discretization::ODEzoh::operator()(
 bool ns_discretization::multipleShootingTrajectory(
 	Model::model_ptr_t const &model_ptr, trajectory_data_t const &trajectory_data,
 	trajectory_data_t const &target_states,
-	ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
+	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
 	discretization_data_t &dd)
 {
 
@@ -262,7 +262,7 @@ bool ns_discretization::multipleShootingTrajectory(
 [[maybe_unused]] bool ns_discretization::bilinearTransformation(
 	Model::model_ptr_t const &model_ptr, trajectory_data_t const &trajectory_data,
 	trajectory_data_t const &target_state,
-	ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &ts,
+	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &ts,
 	discretization_data_t &dd)
 {
 	size_t const &K = dd.nX();  // number of matrices in the state matrix container.

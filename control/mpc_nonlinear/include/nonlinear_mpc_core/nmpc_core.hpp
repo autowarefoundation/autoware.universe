@@ -104,10 +104,10 @@ class NonlinearMPCController
 	 * @brief simulate a given control sequence successively and store the states in the data containers.
 	 * */
 	void simulateControlSequenceByPredictedInputs(Model::state_vector_t const &x0_predicted,
-																								ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+																								ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
 	void simulateControlSequenceUseVaryingSpeed(Model::state_vector_t const &x0_predicted,
-																							ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+																							ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
 	/**
 	 * @brief Sets the reference states to be tracked. In this application, since lateral and heading error is
@@ -118,12 +118,12 @@ class NonlinearMPCController
 	// Interpolates the velocity based on the estimated trajectory path length.
 	void updateScaledPredictedTargetStatesByArcLength(double const &current_predicted_s0);
 
-	bool reInitializeTrajectories(ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	bool reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
-	bool initializeTrajectories(ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+	bool initializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 															bool use_linear_initialization = false);
 
-	bool linearTrajectoryInitialization(ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	bool linearTrajectoryInitialization(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
 	void setCurrent_s0(double const &s0);
 
@@ -140,12 +140,12 @@ class NonlinearMPCController
 	 * @brief LPV control methods.
 	 * @param u_model_solution_:  [vx, steering] inputs
 	 * */
-	[[maybe_unused]] void computeSteeringFeedbackControls(ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+	[[maybe_unused]] void computeSteeringFeedbackControls(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 																												double const &dt,
 																												Model::input_vector_t &u_solution);
 
 	// NMPC solution medhods.
-	bool solveNMPC_problem(ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+	bool solveNMPC_problem(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
 	// Get the solution from OSQP and shift the trajectories.
 	void readSolutionsFromOSQP();

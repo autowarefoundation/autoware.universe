@@ -21,7 +21,7 @@
 #include "nonlinear_mpc_core/data_and_parameter_container.hpp"
 #include "nonlinear_mpc_core/nmpc_discretization.hpp"
 #include "nonlinear_mpc_core/nmpc_simulation.hpp"
-
+#include "utils_act/act_utils.hpp"
 #include "common/types.hpp"
 #include "helper_functions/angle_utils.hpp"
 

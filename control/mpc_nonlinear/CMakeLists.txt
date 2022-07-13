@@ -4,8 +4,8 @@ project(mpc_nonlinear)
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies(REQUIRED
-  ${${PROJECT_NAME}_BUILD_DEPENDS}
-  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+	${${PROJECT_NAME}_BUILD_DEPENDS}
+	${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
 
 find_package(Eigen3 CONFIG)
 
@@ -113,17 +113,6 @@ endif()
 message(STATUS "osqp-cpp: Adding osqp-cpp library...")
 ament_auto_add_library(osqp-cpp src/osqp_google/osqp++.cpp)
 
-set(SPLINES_LIB_SOURCE
-	src/splines/interpolating_spline_pcg.cpp src/splines/bsplines_smoother.cpp
-	src/splines/bsplines_interpolator.cpp
-	src/splines/bspline_interpolator_templated.cpp)
-
-set(SPLINES_LIB_INCLUDE_DIR
-	include/splines)
-
-# ADD Libraries. Spline library.
-ament_auto_add_library(bspline_lib SHARED ${SPLINES_LIB_SOURCE})
-
 ## ----------------- Nonlinear MPC Library headers and sources ---------------
 # ---------------------- Vehicle Models --------------------------------------
 
@@ -162,11 +151,9 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
 ament_auto_add_library(${NMPC_CORE}
 	${NONLINEAR_MPC_CORE_SOURCE}
 	${VEHICLE_MODEL_SOURCE}
-	${SPLINES_LIB_SOURCE}
 	include/external)
 
 target_link_libraries(mpc_nonlinear_lib_core
-	bspline_lib
 	osqp-cpp
 	#	Eigen3::Eigen
 	)

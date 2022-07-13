@@ -55,12 +55,12 @@ class LPVinitializer
 	 * @param piecewise_interpolator piecewise interpolator for the curvature.
 		* */
 	bool simulateWithFeedback(Model::model_ptr_t const &model_ptr,
-														ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+														ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 														ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &param_opt,
 														ns_data::data_nmpc_core_type_t &nmpc_data);
 
 	bool computeSingleFeedbackControls(Model::model_ptr_t const &model_ptr,
-																		 ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+																		 ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 																		 ns_data::param_lpv_type_t const &params_lpv,
 																		 ns_data::ParamsOptimization const &params_opt,
 																		 ns_data::data_nmpc_core_type_t &nmpc_data,

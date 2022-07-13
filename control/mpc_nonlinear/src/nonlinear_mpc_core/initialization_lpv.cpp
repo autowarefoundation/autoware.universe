@@ -58,7 +58,7 @@ LPVinitializer &LPVinitializer::operator=(const LPVinitializer &other)
 
 bool LPVinitializer::simulateWithFeedback(
 	Model::model_ptr_t const &model_ptr,
-	ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+	ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 	ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &params_opt,
 	ns_data::data_nmpc_core_type_t &nmpc_data)
 {
@@ -127,7 +127,7 @@ bool LPVinitializer::simulateWithFeedback(
 		auto const &s0 = xk(3);
 		double kappa0{};
 
-		// ns_nmpc_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
+		// ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
 
 		if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
 		{
@@ -144,15 +144,15 @@ bool LPVinitializer::simulateWithFeedback(
 		model_ptr->computeJacobians(xk, uk, params, Ac, Bc);
 
 		// if (k == 0) {
-		//   ns_nmpc_utils::print("Ac   k =0 ");
+		//   ns_utils::print("Ac   k =0 ");
 
-		//   ns_nmpc_eigen_utils::printEigenMat(Ac);
+		//   ns_eigen_utils::printEigenMat(Ac);
 
-		//   ns_nmpc_utils::print("Bc  k =0 ");
-		//   ns_nmpc_eigen_utils::printEigenMat(Bc);
+		//   ns_utils::print("Bc  k =0 ");
+		//   ns_eigen_utils::printEigenMat(Bc);
 
-		//   ns_nmpc_utils::print("params k =0 ");
-		//   ns_nmpc_eigen_utils::printEigenMat(params);
+		//   ns_utils::print("params k =0 ");
+		//   ns_eigen_utils::printEigenMat(params);
 		// }
 
 		// Compute the thetas - values of the nonlinearities in the state transition matrix Ac.
@@ -178,9 +178,9 @@ bool LPVinitializer::simulateWithFeedback(
 		Yr = params_lpv.lpvYcontainer.back();
 
 		// if (k == 0) {
-		//   ns_nmpc_utils::print("Xr at k =0 ");
-		//   ns_nmpc_eigen_utils::printEigenMat(Xr);
-		//   ns_nmpc_utils::print_container(thetas_);
+		//   ns_utils::print("Xr at k =0 ");
+		//   ns_eigen_utils::printEigenMat(Xr);
+		//   ns_utils::print_container(thetas_);
 		// }
 
 		for (size_t j = 0; j < ntheta_; j++)
@@ -190,8 +190,8 @@ bool LPVinitializer::simulateWithFeedback(
 		}
 
 		// if (k == 0) {
-		//   ns_nmpc_utils::print("Xr at k =0 after summing up before the inverse");
-		//   ns_nmpc_eigen_utils::printEigenMat(Xr);
+		//   ns_utils::print("Xr at k =0 after summing up before the inverse");
+		//   ns_eigen_utils::printEigenMat(Xr);
 		// }
 
 		// Compute Feedback coefficients.
@@ -200,14 +200,14 @@ bool LPVinitializer::simulateWithFeedback(
 		uk = Kfb * x_error;              // Feedback control signal.
 
 		uk(0) =
-			ns_nmpc_utils::clamp(uk(0), params_opt.ulower(0) * narrow_boundries, params_opt.uupper(0) * narrow_boundries);
+			ns_utils::clamp(uk(0), params_opt.ulower(0) * narrow_boundries, params_opt.uupper(0) * narrow_boundries);
 
 		uk(1) =
-			ns_nmpc_utils::clamp(uk(1), params_opt.ulower(1) * narrow_boundries, params_opt.uupper(1) * narrow_boundries);
+			ns_utils::clamp(uk(1), params_opt.ulower(1) * narrow_boundries, params_opt.uupper(1) * narrow_boundries);
 
 		// Saturate xk(7) delta
 		xk(7) =
-			ns_nmpc_utils::clamp(xk(7), params_opt.xlower(7) * narrow_boundries, params_opt.xupper(7) * narrow_boundries);
+			ns_utils::clamp(xk(7), params_opt.xlower(7) * narrow_boundries, params_opt.xupper(7) * narrow_boundries);
 
 		ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
@@ -220,10 +220,10 @@ bool LPVinitializer::simulateWithFeedback(
 		{
 			initial_error_cost = x_error.transpose() * Pr * x_error;
 
-			// ns_nmpc_utils::print("k == 0, initial error xerror");
-			// ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
-			// ns_nmpc_utils::print("k == 0,  Pr");
-			// ns_nmpc_eigen_utils::printEigenMat(Eigen::MatrixXd(Pr));
+			// ns_utils::print("k == 0, initial error xerror");
+			// ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
+			// ns_utils::print("k == 0,  Pr");
+			// ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Pr));
 		}
 
 		if (k == K - 1)
@@ -233,41 +233,41 @@ bool LPVinitializer::simulateWithFeedback(
 
 		if (final_error_cost > initial_error_cost)
 		{
-			ns_nmpc_utils::print("[nonlinear_mpc - LPVinit] LPV Feedback control increases the cost ...");
+			ns_utils::print("[nonlinear_mpc - LPVinit] LPV Feedback control increases the cost ...");
 		}
 
 		// DEBUG
-		//    ns_nmpc_utils::print("\nIn LPV initialization :");
-		//    ns_nmpc_utils::print("\nTarget Vx : ", vtarget);
+		//    ns_utils::print("\nIn LPV initialization :");
+		//    ns_utils::print("\nTarget Vx : ", vtarget);
 		//
-		//    ns_nmpc_utils::print("\nSystem Matrices in the LPVinit :");
-		//    ns_nmpc_eigen_utils::printEigenMat(Ac);
-		//    ns_nmpc_eigen_utils::printEigenMat(Bc);
+		//    ns_utils::print("\nSystem Matrices in the LPVinit :");
+		//    ns_eigen_utils::printEigenMat(Ac);
+		//    ns_eigen_utils::printEigenMat(Bc);
 		//
-		//    ns_nmpc_utils::print("Interpolated Lyapunov Matrices", ':', " X[k] and Y[k]");
-		//    ns_nmpc_eigen_utils::printEigenMat(Xr);
-		//    ns_nmpc_eigen_utils::printEigenMat(Yr);
+		//    ns_utils::print("Interpolated Lyapunov Matrices", ':', " X[k] and Y[k]");
+		//    ns_eigen_utils::printEigenMat(Xr);
+		//    ns_eigen_utils::printEigenMat(Yr);
 		//
-		//    ns_nmpc_utils::print("\nFeedback matrix : ");
-		//    ns_nmpc_eigen_utils::printEigenMat(Kfb);
-		//    ns_nmpc_utils::print("Feedback controls : ", uk(0), ", ", uk(1));
+		//    ns_utils::print("\nFeedback matrix : ");
+		//    ns_eigen_utils::printEigenMat(Kfb);
+		//    ns_utils::print("Feedback controls : ", uk(0), ", ", uk(1));
 		// end of debug
 	}
 
 	// DEBUG
 	// Get trajectories as a matrix and print for debugging purpose.
-	// auto && Xtemp = ns_nmpc_eigen_utils::getTrajectory(nmpc_data.trajectory_data.X);
-	// auto && Utemp = ns_nmpc_eigen_utils::getTrajectory(nmpc_data.trajectory_data.U);
+	// auto && Xtemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.X);
+	// auto && Utemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.U);
 
-	// ns_nmpc_utils::print("\nComputed LPV trajectories : ");
-	// ns_nmpc_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, v, delta]
+	// ns_utils::print("\nComputed LPV trajectories : ");
+	// ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, v, delta]
 
-	// ns_nmpc_utils::print("\nComputed LPV trajectories U : ");
-	// ns_nmpc_eigen_utils::printEigenMat(Utemp.transpose());
+	// ns_utils::print("\nComputed LPV trajectories U : ");
+	// ns_eigen_utils::printEigenMat(Utemp.transpose());
 
 	// // Check the initial and final error cost.
-	// ns_nmpc_utils::print("Initial and final error costs ; ", initial_error_cost, "  ", final_error_cost);
-	// ns_nmpc_utils::print(
+	// ns_utils::print("Initial and final error costs ; ", initial_error_cost, "  ", final_error_cost);
+	// ns_utils::print(
 	//   "Is final error cost smaller than the initial error cost ? :",
 	//   initial_error_cost > final_error_cost);
 	// end of DEBUG
@@ -276,7 +276,7 @@ bool LPVinitializer::simulateWithFeedback(
 }
 
 bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &model_ptr,
-																									 ns_nmpc_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+																									 ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
 																									 ns_data::param_lpv_type_t const &params_lpv,
 																									 ns_data::ParamsOptimization const &params_opt,
 																									 ns_data::data_nmpc_core_type_t &nmpc_data,
@@ -394,15 +394,15 @@ bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &mod
 	// uk(0) = std::max(std::min(params_opt.uupper(0), uk(0)), params_opt.ulower(0));
 	// uk(1) = std::max(std::min(params_opt.uupper(1), uk(1)), params_opt.ulower(1));
 
-	uk(0) = ns_nmpc_utils::clamp(uk(0), params_opt.ulower(0), params_opt.uupper(0));
-	uk(1) = ns_nmpc_utils::clamp(uk(1), params_opt.ulower(1), params_opt.uupper(1));
+	uk(0) = ns_utils::clamp(uk(0), params_opt.ulower(0), params_opt.uupper(0));
+	uk(1) = ns_utils::clamp(uk(1), params_opt.ulower(1), params_opt.uupper(1));
 
 	ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
 	// Saturate xk(7) delta
 	// xk(7) = std::max(std::min(params_opt.xupper(7), xk(7)), params_opt.xlower(7));
-	xk(7) = ns_nmpc_utils::clamp(xk(7), params_opt.xlower(7), params_opt.xupper(7));
-	xk(8) = ns_nmpc_utils::clamp(xk(8), params_opt.xlower(8), params_opt.xupper(8));
+	xk(7) = ns_utils::clamp(xk(7), params_opt.xlower(7), params_opt.xupper(7));
+	xk(8) = ns_utils::clamp(xk(8), params_opt.xlower(8), params_opt.xupper(8));
 
 	// Store the [vx, steering]  in the trajectory data
 	nmpc_data.trajectory_data.setFeedbackControls(uk);  // [vx, steering]_inputs

@@ -24,6 +24,8 @@
 #include <vector>
 #include "rclcpp/rclcpp.hpp"
 #include "utils/nmpc_utils.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 
 namespace ns_data
 {
@@ -175,11 +177,11 @@ void TrajectoryData<Model>::getControlMPCSolutionsAtTime(const double &t,
 {
 	if (t > mpc_dt)
 	{
-		ns_nmpc_utils::print(
+		ns_utils::print(
 			"[nonlinear_mpc] The control at time t greater than the MPC time is not implemented  "
 			"...");
 
-		ns_nmpc_utils::print(
+		ns_utils::print(
 			"[nonlinear_mpc] The requested time for the control interpolation must be less than "
 			"the MPC  time step ");
 		return;
