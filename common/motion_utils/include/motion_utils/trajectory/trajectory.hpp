@@ -917,6 +917,7 @@ inline boost::optional<size_t> insertTargetPoint(
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
+
 /**
  * @brief calculate the point offset from source pose along the trajectory (or path)
  * @param base_pose base pose on the trajectory
