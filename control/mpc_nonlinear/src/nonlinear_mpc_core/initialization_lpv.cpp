@@ -23,6 +23,8 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
                                           ns_data::ParamsOptimization const &params_opt,
                                           ns_data::data_nmpc_core_type_t &nmpc_data)
 {
+  ns_utils::print("in feedback initialization ...");
+
   // Get the size of the trajectory.
   size_t K = nmpc_data.trajectory_data.nX();  // number of state vectors stored in the std::vector.
 
@@ -31,15 +33,18 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
    * Full states are [x, y, psi, s, e_y, e_yaw, v, delta, ay],
    * and the error states [e_y, e_yaw, v, delta].
    * */
-  Model::error_state_vector_t x_error;
-  x_error.setZero();
+  Model::error_state_vector_t x_error{Model::error_state_vector_t::Zero()};
+
 
   // Set instrumental x and u to keep the results of the simulation (inplace integration).
   auto xk = nmpc_data.trajectory_data.X[0];  // current value is x0.
   auto uk = nmpc_data.trajectory_data.U[0];
 
+  ns_utils::print("x0 and u0");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
+
   //  x  =[xw, yw, psi, s, e_y, e_yaw, v, delta]
-  double dt = nmpc_data.mpc_prediction_dt;
 
   // Define placeholders for the system matrices.
   Model::state_matrix_t Ac{Model::state_matrix_t::Zero()};
@@ -59,11 +64,8 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
    * We further narrow down the control values by the following percentage.
    */
 
-  double narrow_boundries = 0.9;  // More saturation on the control prediction.
-
   // Prepare param vector placeholder.
-  Model::param_vector_t params;
-  params.setZero();
+  Model::param_vector_t params{Model::param_vector_t::Zero()};
 
   for (size_t k = 0; k < K; ++k)
   {
@@ -83,13 +85,19 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     double kappa0{};
 
     // ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
-
-    if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
+    auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
+    if (!could_interpolate)
     {
       // std::cerr <<"[nonlinear_mpc]: LPV spline interpolator failed to compute the
       // coefficients..." << std::endl;
-      return false;
+      ns_utils::print("Could interpolate in feedback ?", could_interpolate);
+      // return false;
     }
+
+    ns_utils::print("Could interpolate in feedback ?", could_interpolate);
+
+    ns_utils::print("x_error in feedback");
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
 
     // Compute the state transition matrices to get the values of the nonlinear terms
     // in the state transition mat Ac.
@@ -98,17 +106,18 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     params(ns_utils::toUType(VehicleParamIds::target_vx)) = vtarget;
     model_ptr->computeJacobians(xk, uk, params, Ac, Bc);
 
-    // if (k == 0) {
-    //   ns_utils::print("Ac   k =0 ");
+    if (k == 0)
+    {
+      ns_utils::print("Ac   k =0 ");
 
-    //   ns_eigen_utils::printEigenMat(Ac);
+      ns_eigen_utils::printEigenMat(Ac);
 
-    //   ns_utils::print("Bc  k =0 ");
-    //   ns_eigen_utils::printEigenMat(Bc);
+      ns_utils::print("Bc  k =0 ");
+      ns_eigen_utils::printEigenMat(Bc);
 
-    //   ns_utils::print("params k =0 ");
-    //   ns_eigen_utils::printEigenMat(params);
-    // }
+      ns_utils::print("params k =0 ");
+      ns_eigen_utils::printEigenMat(params);
+    }
 
     // Compute the thetas - values of the nonlinearities in the state transition matrix Ac.
     // We use the only one-block Ac where the error states reside.
@@ -118,21 +127,28 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     auto &&th3 = Ac_error_block(1, 1);
     auto &&th4 = Ac_error_block(1, 2);
 
+    ns_utils::print("Ac block :");
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ac_error_block));
+
+
+
     // Compute parametric Lyapunov matrices.
     /**
      * X = sum(theta_i * X_i).
      * */
+
     thetas_ = std::vector<double>{th1, th2, th3, th4};
 
     // Extract the first X0, Y0, we save the first X0 and Y0 at the end.
     Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the containers.
     Yr = params_lpv.lpvYcontainer.back();
 
-    // if (k == 0) {
-    //   ns_utils::print("Xr at k =0 ");
-    //   ns_eigen_utils::printEigenMat(Xr);
-    //   ns_utils::print_container(thetas_);
-    // }
+    if (k == 0)
+    {
+      ns_utils::print("Xr at k =0 ");
+      ns_eigen_utils::printEigenMat(Xr);
+      ns_utils::print_container(thetas_);
+    }
 
     for (size_t j = 0; j < ntheta_; j++)
     {
@@ -140,32 +156,33 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
       Yr += thetas_[j] * params_lpv.lpvYcontainer[j];
     }
 
-    // if (k == 0) {
-    //   ns_utils::print("Xr at k =0 after summing up before the inverse");
-    //   ns_eigen_utils::printEigenMat(Xr);
-    // }
-
-    // Compute Feedback coefficients.
-    auto const &Pr = Xr.inverse();   // Cost matrix P.
-    auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
-    uk = Kfb * x_error;                              // Feedback control signal.
-
-
-    uk(0) = ns_utils::clamp(uk(0), params_opt.ulower(0) * narrow_boundries, params_opt.uupper(0) * narrow_boundries);
-
-    uk(1) = ns_utils::clamp(uk(1), params_opt.ulower(1) * narrow_boundries, params_opt.uupper(1) * narrow_boundries);
-
-    // Saturate xk(7) delta
-    auto const &clamped_state = ns_utils::toUType(VehicleStateIds::steering);
-    xk(clamped_state) = ns_utils::clamp(xk(7),
-                                        params_opt.xlower(clamped_state) * narrow_boundries,
-                                        params_opt.xupper(clamped_state) * narrow_boundries);
-
-    ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
-
-    // Update xk, uk
-    nmpc_data.trajectory_data.X[k] = xk.eval();
-    nmpc_data.trajectory_data.U[k] = uk.eval();
+    if (k == 0)
+    {
+      ns_utils::print("Xr at k =0 after summing up before the inverse");
+      ns_eigen_utils::printEigenMat(Xr);
+    }
+//
+//    // Compute Feedback coefficients.
+//    auto const &Pr = Xr.inverse();   // Cost matrix P.
+//    auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
+//    uk = Kfb * x_error;                              // Feedback control signal.
+//
+//
+//    uk(0) = ns_utils::clamp(uk(0), params_opt.ulower(0) * narrow_boundries, params_opt.uupper(0) * narrow_boundries);
+//
+//    uk(1) = ns_utils::clamp(uk(1), params_opt.ulower(1) * narrow_boundries, params_opt.uupper(1) * narrow_boundries);
+//
+//    // Saturate xk(7) delta
+//    auto const &clamped_state = ns_utils::toUType(VehicleStateIds::steering);
+//    xk(clamped_state) = ns_utils::clamp(xk(7),
+//                                        params_opt.xlower(clamped_state) * narrow_boundries,
+//                                        params_opt.xupper(clamped_state) * narrow_boundries);
+//
+//    ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
+//
+//    // Update xk, uk
+//    nmpc_data.trajectory_data.X[k] = xk.eval();
+//    nmpc_data.trajectory_data.U[k] = uk.eval();
 
     // Assign initial and final costs.
     //		if (k == 0)
@@ -220,7 +237,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   //	ns_utils::print("Is final error cost smaller than the initial error cost ? :", initial_error_cost > final_error_cost);
   // end of DEBUG
 
-  return false;
+  return true;
 }
 
 bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &model_ptr,

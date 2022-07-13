@@ -39,7 +39,7 @@
     scaling_range: [ -1., 1. ]
 
     xmin_for_scaling: [ -25., -25., -3.14, 0.0,  -3.0, -1.0, 0.0, -0.65, -5.0 ]
-    xmax_for_scaling: [ 25.,  25.,  3.14, 25.0,   3.0,  1.0, 10.0,   0.65, 5.0 ]
+    xmax_for_scaling: [ 25.,  25.,  3.14, 25.0,   3.0,  1.0, 25.0,   0.65, 5.0 ]
 
     umin_for_scaling: [ -7., -1.0 ]  # ax speed input [m/s], steering input [rad]
     umax_for_scaling: [ 7.,  1.0 ]
