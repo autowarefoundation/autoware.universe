@@ -752,10 +752,16 @@ void ObstacleStopPlannerNode::searchObstacle(
           one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
 
         planner_data.stop_require = planner_data.found_collision_points;
+
+        mutex_.lock();
+        const auto object_ptr = object_ptr_;
+        const auto current_velocity_ptr = current_velocity_ptr_;
+        mutex_.unlock();
+
         acc_controller_->insertAdaptiveCruiseVelocity(
           decimate_trajectory, planner_data.decimate_trajectory_collision_index,
           planner_data.current_pose, planner_data.nearest_collision_point,
-          planner_data.nearest_collision_point_time, object_ptr_, current_velocity_ptr_,
+          planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
           &planner_data.stop_require, &output, trajectory_header);
 
         break;
@@ -990,13 +996,17 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
   const double dist_remain, const double dist_baselink_to_obstacle,
   const VehicleInfo & vehicle_info, const double current_acc)
 {
+  mutex_.lock();
   if (!current_velocity_ptr_) {
     // TODO(Satoshi Ota)
+    mutex_.unlock();
     return SlowDownSection{};
   }
 
+  const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
+  mutex_.unlock();
+
   if (slow_down_param_.consider_constraints) {
-    const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
     const auto margin_with_vel = calcFeasibleMarginAndVelocity(
       slow_down_param_, dist_baselink_to_obstacle + dist_remain, current_vel, current_acc);
 
@@ -1137,6 +1147,8 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
 void ObstacleStopPlannerNode::dynamicObjectCallback(
   const PredictedObjects::ConstSharedPtr input_msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   object_ptr_ = input_msg;
 }
 
@@ -1492,7 +1504,10 @@ void ObstacleStopPlannerNode::setExternalVelocityLimit()
 
 void ObstacleStopPlannerNode::resetExternalVelocityLimit(const double current_acc)
 {
+  mutex_.lock();
   const auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
+  mutex_.unlock();
+
   const auto reach_target_vel =
     current_vel <
     slow_down_param_.slow_down_vel + slow_down_param_.vel_threshold_reset_velocity_limit_;
@@ -1518,7 +1533,10 @@ void ObstacleStopPlannerNode::resetExternalVelocityLimit(const double current_ac
 void ObstacleStopPlannerNode::publishDebugData(
   const PlannerData & planner_data, const double current_acc)
 {
+  mutex_.lock();
   const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
+  mutex_.unlock();
+
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_VEL, current_vel);
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_ACC, current_acc);
   debug_ptr_->setDebugValues(
