@@ -68,24 +68,23 @@ bool createDetectionAreaPolygons(
   const size_t max_index = static_cast<size_t>(path.points.size() - 1);
   //! avoid bug with same point polygon
   const double eps = 1e-3;
-  auto nearest_idx = tier4_autoware_utils::findNearestIndex(path.points, pose.position);
+  auto nearest_idx = motion_utils::findNearestIndex(path.points, pose.position);
   if (max_index == nearest_idx) return false;  // case of path point is not enough size
   auto p0 = path.points.at(nearest_idx).point;
   auto first_idx = nearest_idx + 1;
 
   // use ego point as start point if same point as ego is not in the path
   const auto dist_to_nearest =
-    std::fabs(tier4_autoware_utils::calcSignedArcLength(path.points, pose.position, nearest_idx));
+    std::fabs(motion_utils::calcSignedArcLength(path.points, pose.position, nearest_idx));
   if (dist_to_nearest > eps) {
-    const auto nearest_seg_idx =
-      tier4_autoware_utils::findNearestSegmentIndex(path.points, pose.position);
+    const auto nearest_seg_idx = motion_utils::findNearestSegmentIndex(path.points, pose.position);
 
     // interpolate ego point
     const auto & pp = path.points;
     const double ds =
       tier4_autoware_utils::calcDistance2d(pp.at(nearest_seg_idx), pp.at(nearest_seg_idx + 1));
     const double dist_to_nearest_seg =
-      tier4_autoware_utils::calcSignedArcLength(path.points, nearest_seg_idx, pose.position);
+      motion_utils::calcSignedArcLength(path.points, nearest_seg_idx, pose.position);
     const double ratio = dist_to_nearest_seg / ds;
     p0 = getLerpPathPointWithLaneId(
       pp.at(nearest_seg_idx).point, pp.at(nearest_seg_idx + 1).point, ratio);
@@ -598,7 +597,7 @@ std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
   const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose)
 {
   std::set<int64_t> unique_lane_ids;
-  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+  auto nearest_segment_idx = motion_utils::findNearestSegmentIndex(
     path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
   // Add current lane id

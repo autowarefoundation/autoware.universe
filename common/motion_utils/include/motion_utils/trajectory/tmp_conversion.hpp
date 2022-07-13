@@ -39,7 +39,7 @@ namespace motion_utils
  * @todo Decide how to handle the situation that we need to use the trajectory with the size of
  * points larger than the capacity. (Tier IV)
  */
-autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
+inline autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory)
 {
   autoware_auto_planning_msgs::msg::Trajectory output{};
@@ -56,7 +56,7 @@ autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
  * @brief Convert autoware_auto_planning_msgs::msg::Trajectory to
  * std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>.
  */
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
+inline std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory)
 {
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> output(trajectory.points.size());
