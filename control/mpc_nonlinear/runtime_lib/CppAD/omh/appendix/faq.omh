@@ -1,0 +1,212 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin Faq$$
+$spell
+    github
+    instantiating
+    faq
+    std
+    whatsnew
+    Namespace
+    CppAD
+    Lu
+$$
+
+$section Frequently Asked Questions and Answers$$
+
+$head Assignment and Independent$$
+Why does the code sequence
+$codei%
+    Independent(%u%);
+    %v% = %u%[0];
+%$$
+behave differently from the code sequence
+$codei%
+    %v% = %u%[0];
+    Independent(%u%);
+%$$
+Before the call to $cref Independent$$,
+$icode%u%[0]%$$ is a $cref/parameter/glossary/Parameter/$$
+and after the call it is a variable.
+Thus in the first case, $icode v$$ is a variable
+and in the second case it is a parameter.
+
+$head Bugs$$
+What should I do if I suspect that there is a bug in CppAD ?
+$pre
+
+$$
+$list number$$
+The first step is to check currently open
+$href%https://github.com/coin-or/CppAD/issues%issues%$$ on github.
+If it is an open issue, and you want to hurry it along, you can add
+a comment to the effect that it is holding you up.
+$lnext
+The next step is to search the
+$cref whats_new$$ sections for mention of a related bug fix
+between the date of the version you are using and the current date.
+It the bug has been fixed, obtain a more recent release that has the fix
+and see if that works for you.
+$lnext
+The next step is to
+create a simple demonstration of the bug;
+see the file $code bug/template.sh$$ for a template that you can
+edit for that purpose.
+The smaller the program, the better the bug report.
+$lnext
+The next step is open a new issue on github and provide your simple
+example so that the problem can be reproduced.
+$lend
+
+$head CompareChange$$
+If you attempt to use the
+$cref CompareChange$$
+function when $code NDEBUG$$ is true,
+you will get an error message stating that
+$code CompareChange$$ is not a member of the
+$cref ADFun$$ template class.
+
+$head Complex Types$$
+Which of the following complex types is better:
+$codei%
+    AD< std::complex<%Base%> >
+    std::complex< AD<%Base%> >
+%$$
+The $cref/complex abs function/abs/Complex Types/$$ is differentiable
+with respect to its real and imaginary parts,
+but it is not complex differentiable.
+Thus one would prefer to use
+$codei%
+    std::complex< AD<%Base%> >
+%$$
+On the other hand, the C++ standard only specifies
+$codei%std::complex<%Type%>%$$ where $icode Type$$ is
+$code float$$, $code double$$, or $code lone double$$.
+The effect of instantiating the template complex for any other type
+is unspecified.
+
+$head Exceptions$$
+Why, in all the examples, do you pass back a boolean variable instead
+of throwing an exception ?
+$pre
+
+$$
+The examples are also used to test the correctness of CppAD
+and to check your installation.
+For these two uses, it is helpful to run all the tests
+and to know which ones failed.
+The actual code in CppAD uses the $cref ErrorHandler$$ utility
+to signal exceptions.
+Specifications for redefining this action are provided.
+
+$head Independent Variables$$
+Is it possible to evaluate the same tape recording with different values
+for the independent variables ?
+$pre
+
+$$
+Yes (see $cref forward_zero$$).
+
+$head Matrix Inverse$$
+Is it possible to differentiate (with respect to the matrix elements)
+the computation of the inverse of a matrix
+where the computation of the inverse uses pivoting ?
+
+$subhead LuSolve$$
+The example routine $cref LuSolve$$ can be used to do this
+because the inverse is a special case of the solution of linear equations.
+The examples
+$cref jac_lu_det.cpp$$ and $cref hes_lu_det.cpp$$
+use LuSolve to compute derivatives of the
+determinant with respect to the components of the matrix.
+
+$subhead Atomic Operation$$
+One can also do this by making the inversion of the matrix an atomic operation;
+e.g., see $cref atomic_two_eigen_mat_inv.cpp$$.
+
+$head Mode: Forward or Reverse$$
+When evaluating derivatives,
+one always has a choice between
+forward and reverse mode.
+How does one decide which mode to use ?
+$pre
+
+$$
+In general, the best mode depends on the number of domain and range
+components in the function that your are differentiating.
+Each call to $cref Forward$$ computes the derivative of all
+the range directions with respect to one domain direction.
+Each call to $cref Reverse$$ computes the derivative of one
+range direction with respect to all the domain directions.
+The times required for (speed of)
+calls $code Forward$$ and $code Reverse$$ are about equal.
+The $cref/Parameter/fun_property/Parameter/$$
+function can be used to quickly determine that
+some range directions have derivative zero.
+
+
+
+$head Namespace$$
+
+
+$subhead Test Vector Preprocessor Symbol$$
+Why do you use $code CPPAD_TESTVECTOR$$ instead of a namespace for
+the CppAD $cref testvector$$ class ?
+$pre
+
+$$
+The preprocessor symbol
+$small $cref/CPPAD_TESTVECTOR/testvector/$$ $$
+determines which
+$cref SimpleVector$$ template class is used for extensive testing.
+The default definition for $code CPPAD_TESTVECTOR$$ is the
+$cref/CppAD::vector/CppAD_vector/$$ template class, but it can be changed.
+Note that all the preprocessor symbols that are defined or used
+by CppAD begin with either $code CPPAD$$
+(some old deprecated symbols begin with $code CppAD$$).
+
+$head Speed$$
+How do I get the best speed performance out of CppAD ?
+
+$subhead NDEBUG$$
+You should compile your code with optimization, without debugging,
+and with the preprocessor symbol $code NDEBUG$$ defined.
+(The $cref speed_cppad$$ tests do this.)
+Note that defining $code NDEBUG$$
+will turn off all of the error checking and reporting that
+is done using $cref ErrorHandler$$.
+
+$subhead Optimize$$
+It is also possible that preforming a tape
+$cref/optimization/optimize/$$ will improve the speed of evaluation
+more than the time required for the optimization.
+
+$subhead Memory Allocation$$
+You may also increase execution speed
+by calling $code hold_memory$$ with
+$cref/value/ta_hold_memory/value/$$ equal to true.
+
+$head Tape Storage: Disk or Memory$$
+Does CppAD store the tape on disk or in memory ?
+$pre
+
+$$
+CppAD uses memory to store a different tape for recording operations
+for each $codei%AD<%Base%>%$$ type that is used.
+If you have a very large number calculations that are recorded
+on a tape, the tape will keep growing to hold the necessary information.
+Eventually, virtual memory may be used to store the tape
+and the calculations may slow down because of necessary disk access.
+
+
+$end

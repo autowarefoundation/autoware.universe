@@ -1,0 +1,61 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed$$
+$spell
+    Cppadcg
+    xpackage
+    cppad
+    cmake
+    Adolc
+    Fadbad
+    Sacado
+    cppadcg
+$$
+
+
+$section Speed Test an Operator Overloading AD Package$$
+
+$head Purpose$$
+Cppad has a set of speed tests that are used to determine if
+changes improve its execution speed.
+These tests can also be used to compare the AD packages
+$cref/Adolc/adolc/Adolc Home Page/$$,
+Cppad,
+$cref/Fadbad/fadbad_prefix/Fadbad Home Page/$$,
+$cref/Cppadcg/cppadcg/CppADCodeGen Home Page/$$,
+$cref/Sacado/sacado_prefix/Sacado Home Page/$$.
+
+$head debug_which$$
+Usually, one wants to compile the speed tests in release mode.
+This can be done by setting
+$cref/cppad_debug_which/cmake/cppad_debug_which/$$ to $code debug_none$$
+in the cmake command.
+Correctness tests are included for all the speed tests,
+so it is possible you will want to compile these tests for debugging; i.e.,
+set $icode cppad_debug_which$$ to $code debug_all$$.
+
+The sections below explain how you can run these tests on your computer.
+
+$childtable%
+    speed/main.cpp%
+    speed/speed_utility.omh%
+    speed/double/speed_double.omh%
+    speed/adolc/speed_adolc.omh%
+    speed/cppad/speed_cppad.omh%
+    speed/fadbad/speed_fadbad.omh%
+    speed/cppadcg/speed_cppadcg.omh%
+    speed/sacado/speed_sacado.omh%
+    speed/xpackage/speed_xpackage.omh
+%$$
+
+$end

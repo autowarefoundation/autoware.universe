@@ -1,0 +1,84 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin tan_forward$$
+$spell
+    Taylor
+$$
+
+
+$section Tangent and Hyperbolic Tangent Forward Taylor Polynomial Theory$$
+
+$head Derivatives$$
+$latex \[
+\begin{array}{rcl}
+\tan^{(1)} ( u ) & = & [ \cos (u)^2 + \sin (u)^2  ] / \cos (u)^2
+\\
+& = & 1 + \tan (u)^2
+\\
+\tanh^{(1)} ( u ) & = & [ \cosh (u)^2 - \sinh (u)^2 ] / \cosh (u)^2
+\\
+& = & 1 - \tanh (u)^2
+\end{array}
+\] $$
+If $latex F(u)$$ is $latex \tan (u)$$ or $latex \tanh (u)$$
+the corresponding derivative is given by
+$latex \[
+    F^{(1)} (u) = 1 \pm F(u)^2
+\]$$
+Given $latex X(t)$$, we define the function $latex Z(t) = F[ X(t) ]$$.
+It follows that
+$latex \[
+Z^{(1)} (t) = F^{(1)} [ X(t) ] X^{(1)} (t) = [ 1 \pm Y(t) ] X^{(1)} (t)
+\] $$
+where we define the function $latex Y(t) = Z(t)^2$$.
+
+$head Taylor Coefficients Recursion$$
+Suppose that we are given the Taylor coefficients
+up to order $latex j$$ for the function $latex X(t)$$ and
+up to order $latex j-1$$ for the functions $latex Y(t)$$ and $latex Z(t)$$.
+We need a formula that computes the coefficient of order $latex j$$
+for $latex Y(t)$$ and $latex Z(t)$$.
+Using the equation above for $latex Z^{(1)} (t)$$, we have
+$latex \[
+\begin{array}{rcl}
+\sum_{k=1}^j k z^{(k)} t^{k-1}
+& = &
+\sum_{k=1}^j k x^{(k)} t^{k-1}
+\pm
+\left[ \sum_{k=0}^{j-1} y^{(k)} t^k        \right]
+\left[ \sum_{k=1}^j k x^{(k)} t^{k-1}  \right]
++
+o( t^{j-1} )
+\end{array}
+\] $$
+Setting the coefficients of $latex t^{j-1}$$ equal, we have
+$latex \[
+\begin{array}{rcl}
+j z^{(j)}
+=
+j x^{(j)}
+\pm
+\sum_{k=1}^j k x^{(k)} y^{(j-k)}
+\\
+z^{(j)}
+=
+x^{(j)} \pm \frac{1}{j}  \sum_{k=1}^j k x^{(k)} y^{(j-k)}
+\end{array}
+\] $$
+Once we have computed $latex z^{(j)}$$,
+we can compute $latex y^{(j)}$$ as follows:
+$latex \[
+y^{(j)} = \sum_{k=0}^j z^{(k)} z^{(j-k)}
+\] $$
+
+$end

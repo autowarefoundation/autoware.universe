@@ -1,0 +1,189 @@
+-----------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-----------------------------------------------------------------------------
+$begin speed_available$$
+$spell
+    det
+    lu
+    mul
+    jacobian
+    namespace
+    CppAD
+    bool
+    src
+$$
+
+$section Is A Speed Test Available$$
+
+$head Syntax$$
+$icode%available% = available_%name%()
+%$$
+
+$head name$$
+The text $icode name$$ in the syntax is
+$code det_lu$$,
+$code det_minor$$,
+$code mat_mul$$,
+$code ode$$,
+$code sparse_hessian$$, or
+$code sparse_jacobian$$.
+
+$head Namespace$$
+This function is in the global namespace, not the CppAD namespace.
+
+$head available$$
+The $code bool$$ return value $icode available$$ is true (false)
+if the speed test $icode name$$ is (is not) available for this package.
+
+$head Implementation$$
+This function is implemented in the file
+$codei%speed/src/link_%name%.cpp%$$.
+
+$end
+------------------------------------------------------------------------------
+$begin speed_correct$$
+$spell
+    det
+    lu
+    mul
+    jacobian
+    namespace
+    CppAD
+    bool
+    src
+$$
+
+$section Does a A Speed Test Return Correct Results$$
+
+$head Syntax$$
+$icode%ok% = correct_%name%(%is_package_double%)
+%$$
+
+$head name$$
+The text $icode name$$ in the syntax is
+$code det_lu$$,
+$code det_minor$$,
+$code mat_mul$$,
+$code ode$$,
+$code sparse_hessian$$, or
+$code sparse_jacobian$$.
+
+$head Namespace$$
+This function is in the global namespace, not the CppAD namespace.
+
+$head is_package_double$$
+The $code bool$$ argument $icode is_package_double$$ is true (false)
+if we are checking functions values (derivative values).
+
+$head ok$$
+The $code bool$$ return value $icode ok$$ is true (false)
+if the speed test for $icode name$$ returns correct (incorrect) values.
+
+$head Implementation$$
+This function is implemented in the file
+$codei%speed/src/link_%name%.cpp%$$.
+
+$end
+------------------------------------------------------------------------------
+$begin speed_time$$
+$spell
+    det
+    lu
+    mul
+    jacobian
+    namespace
+    CppAD
+    bool
+    src
+$$
+
+$section Measure Time It Takes for a A Speed Test to Run$$
+
+$head Syntax$$
+$icode%time% = time_%name%(%time_min%, %size%)
+%$$
+
+$head name$$
+The text $icode name$$ in the syntax is
+$code det_lu$$,
+$code det_minor$$,
+$code mat_mul$$,
+$code ode$$,
+$code sparse_hessian$$, or
+$code sparse_jacobian$$.
+
+$head Namespace$$
+This function is in the global namespace, not the CppAD namespace.
+
+$head time_min$$
+Is the minimum time, in seconds, for the test.
+Calls to $codei%link_%name%$$ will be repeated enough times so that
+the total time is at least $icode time_min$$.
+
+$head size$$
+This $code size_t$$ argument the size for this speed test;
+see $icode size$$ in the corresponding $codei%link_%name%$$ documentation.
+
+$head time$$
+This is the average amount of time for each call; i.e., the total time,
+which is greater than or equal $icode time_min$$,
+divided by the number of repeats.
+
+$head Implementation$$
+This function is implemented in the file
+$codei%speed/src/link_%name%.cpp%$$.
+
+$end
+------------------------------------------------------------------------------
+$begin speed_time_callback$$
+$spell
+    det
+    lu
+    mul
+    jacobian
+    namespace
+    CppAD
+    bool
+    src
+$$
+
+$section Timing Callback Functions$$
+
+$head Syntax$$
+$icode%time% = time_%name%_callback(%size_t%, %repeat%)
+%$$
+
+$head name$$
+The text $icode name$$ in the syntax is
+$code det_lu$$,
+$code det_minor$$,
+$code mat_mul$$,
+$code ode$$,
+$code sparse_hessian$$, or
+$code sparse_jacobian$$.
+
+$head Namespace$$
+These functions are in the empty namespace; i.e., it is only accessed
+by functions in the file where it is defined.
+
+$head size$$
+This $code size_t$$ argument the size for this speed test;
+see $icode size$$ in the corresponding $codei%link_%name%$$ documentation.
+
+$head repeat$$
+This $code size_t$$ value
+is the number of times to repeat a call to the corresponding link routine.
+
+$head job$$
+The $cref/job/link_routines/job/$$
+argument to the corresponding link routine will be $code run$$.
+
+$end

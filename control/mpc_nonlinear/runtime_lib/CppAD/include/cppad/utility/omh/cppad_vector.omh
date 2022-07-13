@@ -1,0 +1,397 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
+
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
+
+$begin CppAD_vector$$
+$spell
+    rvalues
+    thread_alloc
+    cppad.hpp
+    Bool
+    resize
+    cout
+    endl
+    std
+    Cpp
+    const
+    vec
+    ostream
+    elem
+    Iterators
+    typename
+    iterator
+    resized
+    dereference
+$$
+
+
+$section The CppAD::vector Template Class$$
+
+$head Syntax$$
+$codei%# include <cppad/utility/vector.hpp>
+%$$
+$codei%# include <cppad/utility/vector_bool.hpp>
+%$$
+$codei%CppAD::vector<%Scalar%> %vec%, %other%
+%$$
+
+$head Description$$
+The include file $code cppad/vector.hpp$$ defines the
+vector template class $code CppAD::vector$$.
+This is a $cref SimpleVector$$ template class and in addition
+it has the features listed below.
+The purposes for this template vector class are as follows:
+$list number$$
+If $code NDEBUG$$ is not defined, it checks for all
+memory accesses to make sure the corresponding index is valid.
+This includes when using its
+$cref/iterators/CppAD_vector/Iterators/$$
+$lnext
+It has a simple set of private member variables that make it
+easy to understand when viewing its values in a C++ debugger.
+$lnext
+It uses the $cref thread_alloc$$ memory allocator which makes it fast
+in a multi-threading environment; see
+$cref/memory and parallel mode/CppAD_vector/Memory and Parallel Mode/$$.
+$lnext
+The operations it has are like the corresponding $code std::vector$$
+operation so it is easy to use.
+$lend
+
+$head Include$$
+The files
+$code cppad/utility/vector.hpp$$ and $code cppad/utility/vector_bool.hpp$$ are
+included by $code cppad/cppad.hpp$$.
+They can also be included separately with out the rest of the
+CppAD include files.
+
+$subhead Deprecated 2019-08-19$$
+The file $code cppad/utility/vector.hpp$$
+includes the $code cppad/utility/vector_bool.hpp$$
+because they used to be one file.
+If you want $cref/vectorBool/CppAD_vector/vectorBool/$$,
+and not the rest of CppAD, you should include
+$code cppad/utility/vector_bool.hpp$$.
+
+$head Integer Size$$
+The size $icode n$$ in the constructor syntax below can be an
+$code int$$ (all simple vectors support $code size_t$$):
+$codei%
+    CppAD::vector<%Scalar%> %vec%(%n%)
+%$$
+
+$head capacity$$
+If $icode cap$$ is a $code size_t$$ object,
+$codei%
+    %cap% = %vec%.capacity()
+%$$
+set $icode cap$$ to the number of $icode Scalar$$ objects that
+could fit in the memory currently allocated for $icode vec$$.
+Note that
+$codei%
+    %vec%.size() <= %vec%.capacity()
+%$$
+
+$head swap$$
+$icode%vec%.swap(%other%)
+%$$
+exchanges the contents of $icode vec$$ and $icode other$$.
+For example $cref/vec.data()/CppAD_vector/data/$$ after the $code swap$$
+is equal to $icode%other%.data()%$$ before $code swap$$.
+
+
+$head Assignment$$
+$icode%vec% = %other%
+%$$
+has all the properties listed for a
+$cref/simple vector assignment/SimpleVector/Assignment/$$
+plus the following:
+
+$subhead Check Size$$
+It is no longer necessary for $icode vec$$ to have the
+same size as $icode other$$.
+This makes $code CppAD::vector$$ more like $code std::vector$$.
+
+$subhead Return Reference$$
+A reference to the vector $icode vec$$ is returned.
+An example use of this reference is in multiple assignments of the form
+$codei%
+    %vec% = %other% = %another%
+%$$
+where $icode another$$ is a $codei%CppAD::vector<%Scalar%>%$$ object.
+
+$subhead Move Semantics$$
+If the C++ compiler supports move semantic rvalues using the $code &&$$
+syntax, then it will be used during the vector assignment statement.
+This means that return values and other temporaries are not be copied,
+but rather pointers are transferred.
+
+$head Element Access$$
+If $icode i$$ has type $code size_t$$,
+$codei%
+    %vec%[%i%]
+%$$
+has all the properties listed for a
+$cref/simple vector element access/SimpleVector/Element Access/$$
+plus the following:
+
+$subhead i$$
+This operation is defined for any $icode i$$
+that has a conversion to $code size_t$$.
+The object $icode%vec%[%i%]%$$ has type $icode Scalar$$
+(is not possibly a different type that can be converted to $icode Scalar$$).
+
+$subhead Error Checking$$
+If $icode i$$ is not less than the size of the $icode vec$$,
+and $code NDEBUUG$$ is not defined,
+$code CppAD::vector$$ will use
+$cref ErrorHandler$$
+to generate an appropriate error report.
+
+$head push_back$$
+If $icode vec$$ has size $icode n$$ and
+$icode scalar$$ has type $icode Scalar$$,
+$codei%
+    %vec%.push_back(%scalar%)
+%$$
+extends the vector so that its new size is $icode%n%+1%$$
+and $icode%vec%[%n%]%$$ is equal to $icode s$$
+(equal in the sense of the $icode Scalar$$ assignment operator).
+
+$head push_vector$$
+If $icode vec$$ has size $icode n$$ and
+$icode simple_vec$$ is a $cref/simple vector/SimpleVector/$$
+with elements of type $icode Scalar$$ and size $icode m$$,
+$codei%
+    %vec%.push_vector(%simple_vec%)
+%$$
+extends the vector $icode vec$$ so that its new size is $icode%n%+%m%$$
+and $icode%vec%[%n% + %i%]%$$ is equal to $icode%simple_vec%[%i%]%$$
+for $icode%i = 1 , ... , m-1%$$
+(equal in the sense of the $icode Scalar$$ assignment operator).
+
+$head Output$$
+If $icode os$$ is an $code std::ostream$$, the operation
+$codei%
+    %os% << %vec%
+%$$
+will output $icode vec$$ to the standard output stream $icode os$$.
+The elements of $icode vec$$ are enclosed at the beginning by a
+$code {$$ character,
+they are separated by $code ,$$ characters,
+and they are enclosed at the end by $code }$$ character.
+It is assumed by this operation that if $icode scalar$$
+is an object with type $icode Scalar$$,
+$codei%
+    %os% << %scalar%
+%$$
+will output the value $icode scalar$$ to $icode os$$.
+
+$head resize$$
+If $icode n$$ is a $code size_t$$,
+$codei%
+    %vec%.resize(%n%)
+%$$
+sets the size of $icode vec$$ equal to $icode n$$.
+
+$subhead data$$
+The elements in $icode vec$$ before the resize operation are preserved.
+
+$subhead memory$$
+If before the resize, $icode%n% <= %vec%.capacity()%$$,
+no memory is freed or allocated and
+the capacity of $icode vec$$ does not change.
+Otherwise, new memory is allocated and the elements before the resize
+are copied to the new memory.
+If you do not need to the elements previously in the vector,
+you can resize to zero and then to the new size to avoid the copy.
+
+$head clear$$
+$icode%vec%.clear()
+%$$
+frees all memory allocated for $icode vec$$
+and both its size and capacity are set to zero.
+This can be useful when using very large vectors
+and when checking for memory leaks (and there are global vectors)
+see the $cref/memory/CppAD_vector/Memory and Parallel Mode/$$ discussion.
+
+$head data$$
+$icode%vec%.data()
+%$$
+returns a pointer to a $icode Scalar$$ object such that for
+$codei%0 <= %i% < %vec%.size()%$$,
+$icode%vec%[%i%]%$$ and $icode%vec%.data()[%i%]%$$
+are the same $icode Scalar$$ object.
+If $icode vec$$ is $code const$$, the pointer is $code const$$.
+If $icode%vec%.capacity()%$$ is zero, the value of the pointer is not defined.
+The pointer may no longer be valid after the following operations on
+$icode vec$$:
+its destructor,
+$code clear$$,
+$code resize$$,
+$code push_back$$,
+$code push_vector$$,
+assignment to another vector when original size of $icode vec$$ is zero.
+
+$head Iterators$$
+
+$subhead Syntax$$
+$codei%typename CppAD::vector<%Scalar%>::iterator
+%$$
+$codei%typename CppAD::vector<%Scalar%>::const_iterator
+%$$
+$icode%vec%.begin()
+%$$
+$icode%vec%.end()
+%$$
+
+$subhead iterator$$
+is a random access iterator type for non $code const$$ objects.
+
+$subhead const_iterator$$
+is a random access iterator type for a $code const$$ objects.
+An $code iterator$$ can be converted to a $code const_iterator$$,
+but not the other way around.
+
+$subhead begin$$
+is an iterator corresponding to the first element of the vector.
+It is a $code const_iterator$$ ($code iterator$$)
+depending on if $icode vec$$ is $code const$$ (not $code const$$)
+
+$subhead end$$
+is an iterator corresponding to just beyond the last element of the vector.
+It is a $code const_iterator$$ ($code iterator$$)
+depending on if $icode vec$$ is $code const$$ (not $code const$$)
+
+$subhead Error Checking$$
+Each element access (dereference of the iterator)
+does an error check similar to the element access
+$cref/error checking/CppAD_vector/Element Access/Error Checking/$$ above.
+The error handler will also be called,
+if $code NDEBUG$$ is not defined and
+a comparison operator (e.g. $code >$$) is used between
+two iterators that correspond to different vectors.
+
+$head vectorBool$$
+The file $code <cppad/utility/vector_bool.hpp>$$ defines the class
+$code CppAD::vectorBool$$.
+This has the same specifications as $code CppAD::vector<bool>$$
+with the following exceptions:
+
+$subhead Memory$$
+The class $code vectorBool$$ conserves on memory,
+on the other hand, $code CppAD::vector<bool>$$ is expected to be faster
+than $code vectorBool$$.
+
+$subhead bit_per_unit$$
+The static function call
+$codei%
+    %size% = vectorBool::bit_per_unit()
+%$$
+returns the $code size_t$$ value $icode s$$
+which is equal to the number of boolean values (bits) that are
+packed into one operation unit.
+Bits are accessed using a mask with the size of an operation unit.
+
+$subhead data$$
+The $cref/data/CppAD_vector/data/$$ function is not supported by
+$code vectorBool$$.
+
+$subhead Iterators$$
+The $cref/Iterators/CppAD_vector/Iterators/$$ are not supported by
+$code vectorBool$$.
+
+$subhead Output$$
+The $code CppAD::vectorBool$$ output operator
+prints each boolean value as
+a $code 0$$ for false,
+a $code 1$$ for true,
+and does not print any other output; i.e.,
+the vector is written a long sequence of zeros and ones with no
+surrounding $code {$$, $code }$$ and with no separating commas or spaces.
+
+$subhead Element Type$$
+If $icode vec_bool$$ has type $code vectorBool$$
+and $icode i$$ has type $code size_t$$,
+the element access value $icode%vec_bool%[%i%]%$$ has an unspecified type,
+referred to here as $icode element_t$$, that supports the following
+operations:
+
+$list number$$
+$icode element_t$$ can be converted to $code bool$$; e.g.
+the following syntax is supported:
+$codei%
+    static_cast<bool>( %vec_bool%[%i%] )
+%$$
+
+$lnext
+$icode element_t$$ supports the assignment operator $code =$$ where the
+right hand side is a $code bool$$ or an $icode element_t$$ object; e.g.,
+if $icode flag$$ has type $code bool$$, the following syntax is supported:
+$codei%
+    %vec_bool%[%i%] = %flag%
+%$$
+
+$lnext
+The result of an assignment to an $icode element_t$$
+also has type $icode element_t$$.
+For example, if $icode other_flag$$ has type $code bool$$,
+the following syntax is supported:
+$codei%
+    %other_flag% = %vec_bool%[%i%] = %flag%
+%$$
+$lend
+
+$head Memory and Parallel Mode$$
+These vectors use the multi-threaded fast memory allocator
+$cref thread_alloc$$:
+
+$list number$$
+The $cref/hold_memory/ta_hold_memory/$$ routine can be used
+to make memory allocation faster.
+$lnext
+The routine $cref/parallel_setup/ta_parallel_setup/$$ must
+be called before these vectors can be used
+$cref/in parallel/ta_in_parallel/$$.
+$lnext
+Using these vectors affects the amount of memory
+$cref/in_use/ta_inuse/$$ and $cref/available/ta_available/$$.
+$lnext
+Calling $cref/clear/CppAD_vector/clear/$$,
+makes the corresponding memory available (though $code thread_alloc$$)
+to the current thread.
+$lnext
+Available memory
+can then be completely freed using $cref/free_available/ta_free_available/$$.
+$lend
+
+$head Example$$
+$children%
+    example/utility/cppad_vector.cpp%
+    example/utility/vector_bool.cpp
+%$$
+The files
+$cref cppad_vector.cpp$$ and
+$cref vector_bool.cpp$$ each
+contain an example and test of this template class.
+They return true if they succeed and false otherwise.
+
+$head Exercise$$
+Create and run a program that contains the following code:
+$codep
+    CppAD::vector<double> x(3);
+    size_t i;
+    for(i = 0; i < 3; i++)
+        x[i] = 4. - i;
+    std::cout << "x = " << x << std::endl;
+$$
+
+$end

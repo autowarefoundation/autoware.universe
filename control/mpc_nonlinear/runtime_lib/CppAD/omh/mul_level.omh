@@ -1,0 +1,157 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin mul_level$$
+$spell
+    Taylor
+    fout
+    const
+    var
+    Cpp
+    Arg
+$$
+
+
+$section Using Multiple Levels of AD$$
+
+$head Alternative$$
+Often it is easier to use
+$cref base2ad$$ and $cref/dynamic/new_dynamic/$$ parameters
+to accomplish the objective below.
+
+
+$head Background$$
+If $icode f$$ is an $codei%ADFun<%Base%>%$$ object,
+the vectors returned by
+$cref/f.Forward/Forward/$$,
+and
+$cref/f.Reverse/Reverse/$$,
+have values of type $icode Base$$ and not
+$codei%AD<%Base%>%$$.
+This reflects the fact that operations used to calculate
+these function values are not recorded by the tape corresponding to
+$codei%AD<%Base%>%$$ operations.
+
+$head Motivation$$
+Suppose that you use derivatives of one or more inner functions
+as part of the operations
+needed to compute an outer function.
+For example,
+the derivatives returned by $icode%f%.Forward%$$
+might be used as part of
+Taylor's method for solving ordinary
+differential equations.
+In addition, we might want to differentiate the
+solution of a differential equation with respect to parameters
+in the equation.
+This can be accomplished in the following way:
+
+$list number$$
+The function defining the
+differential equation could be calculated using the class
+$codei AD< AD<double> >$$.
+
+$lnext
+The operations during the calculation of Taylor's method
+could be done using the $codei AD<double>$$ class.
+
+$lnext
+Derivatives of the solution of the differential equation
+could then be calculated using the $code double$$ class.
+
+$lend
+
+$head Procedure$$
+
+$subhead First Start AD<double>$$
+If some of the $cref/parameters/glossary/Parameter/$$
+in the $codei AD< AD<double> >$$ recording depend on the
+$cref/variables/glossary/Variable/$$
+in the $codei AD<double>$$ recording,
+we must first declaring these variables; i.e.,
+$codei%
+    Independent(%a1x%)
+%$$
+where $icode a1x$$ is
+a $cref SimpleVector$$ with elements of type $codei AD<double>$$.
+This will start recording a new tape of
+operations performed using $codei AD<double>$$ class objects.
+
+$subhead Start AD< AD<double> > Recording$$
+The next step is to declare the independent variables using
+$codei%
+    Independent(%a2x%)
+%$$
+where $icode a2x$$ is
+a $cref SimpleVector$$ with elements of type
+$codei AD< AD<double> >$$.
+This will start recording a new tape of
+operations performed using $codei AD< AD<double> >$$ class objects.
+
+$subhead Inner Function$$
+The next step is to calculate the inner function
+using $codei AD< AD<double> >$$ class objects.
+We then stop the recording using
+$codei%
+    %a1f%.Dependent(%a2x%, %a2y%)
+%$$
+where $icode a2y$$ is
+a $cref SimpleVector$$ with elements of type
+$codei AD< AD<double> >$$
+and $icode a1f$$ is an $codei%ADFun< AD<double> >%$$ object.
+
+$subhead Second Start AD< AD<double> >$$
+If none of the $cref/parameters/glossary/Parameter/$$
+in the $codei AD< AD<double> >$$ recording depend on the
+$cref/variables/glossary/Variable/$$
+in the $codei AD<double>$$ recording,
+it is preferred to delay declaring these variables to this point; i.e.,
+$codei%
+    Independent(%a1x%)
+%$$
+where $icode a1x$$ is
+a $cref SimpleVector$$ with elements of type $codei AD<double>$$.
+This will start recording a new tape of
+operations performed using $codei AD<double>$$ class objects.
+
+$subhead Outer Function$$
+The next step is to calculate the outer function
+using $codei AD<double>$$ class objects.
+Note that derivatives of the inner function can be included
+in the calculation of the outer function using $icode a1f$$.
+We then stop the recording of $codei AD<double>$$ operations using
+$codei%
+    %g%.Dependent(%a1x%, %a1y%)
+%$$
+where $icode a1y$$ is
+a $cref SimpleVector$$ with elements of type
+$codei AD<double>$$
+and $icode g$$ is an $codei%ADFun<double>%$$ object.
+
+$subhead Derivatives of Outer Function$$
+The AD function object $icode g$$ can then be used to calculate
+the derivatives of the outer function.
+
+$children%
+    example/general/mul_level.cpp%
+    example/general/change_param.cpp
+%$$
+
+$head Example$$
+The files
+$cref mul_level.cpp$$ and $cref change_param.cpp$$
+contain an examples and tests of this procedure.
+They return true if they succeed and false otherwise.
+The file $cref mul_level_ode.cpp$$ is a more complex example
+use of multiple tapes.
+
+$end

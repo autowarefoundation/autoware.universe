@@ -1,0 +1,925 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_15$$
+$dollar @$$
+$spell
+    erfc
+    chkpoint
+    sq
+    autotools
+    addon
+    runge
+    lcppad
+    ind
+    const
+    enum
+    ctor
+    dimensioned
+    cskip_op
+    adolc
+    zdouble
+    expm1
+    eigen
+    expm1
+    atanh
+    acosh
+    asinh
+    src
+    op
+    onetape
+    CppAD
+    colpack
+    hes
+    cppad
+    Jacobian
+    gettimeofday
+    cmake
+    hpp
+    dir
+    includedirs
+    libdirs
+    datadir
+    docdir
+    std
+    cxx
+    erf
+    var
+    NumRes
+    chrono
+    aeps
+    CondExpGt
+    hasnan
+    Adolc
+    resize
+    bool
+    alloc
+    adouble
+    gmtime
+    asctime
+    ipopt
+    fadbad
+    sacado
+    unreferenced
+    azmul
+    retape
+$$
+
+$section CppAD Changes and Additions During 2015$$
+
+$head Introduction$$
+This section contains a list of the changes to CppAD during 2015
+(in reverse order by date).
+The purpose of this section is to
+assist you in learning about changes between various versions of CppAD.
+
+$head 12-31$$
+The $cref download$$ instructions were modified to have more mention of
+git and less mention of
+subversion.
+
+$head 12-29$$
+Separate $cref to_string$$ from $cref ad_to_string$$ so that it
+can be used without the rest of CppAD; i.e.,
+by including
+$codei%
+    # include <cppad/utility/to_string.hpp>
+%$$
+
+
+$head 12-28$$
+$list number$$
+Add the $cref to_string$$ utility.
+$lnext
+Add $cref base_to_string$$ to the Base type requirements.
+$lnext
+A $cref/Base requirements/wish_list/Base Requirements/$$ item
+was added to the wish list.
+$lnext
+The $cref wish_list$$ item to
+reorganize the include directory has been removed.
+It was completed when the utilities was moved to $code cppad/utility$$; see
+$cref/11-30/whats_new_15/11-30/$$.
+$lend
+
+$head 12-08$$
+$list number$$
+A convention was included for addon
+$cref/library files/addon/Library Files/$$.
+$lnext
+Change new $cref utility$$ specifications to allow for individual file
+includes; e.g., $code <cppad/utility/vector.hpp>$$.
+$lend
+
+$head 12-01$$
+Fix problem with $cref autotools$$ install handling of the
+deprecated files.
+This included changing the autotools
+$code --with-implicit_ctor$$ option to $cref autotools$$.
+This was removed on
+$cref/2017-02-10/whats_new_17/02-10/$$.
+
+$head 11-30$$
+$list number$$
+The $code library$$ section has been moved to the
+$cref/utilities/utility/$$ section.
+In addition, the corresponding source code files in $code cppad$$
+have been moved to $code cppad/utility$$.
+$lnext
+The individual $cref utility$$ include files have been deprecated; see
+$cref include_deprecated$$.
+For example,
+$codep
+    # include <cppad/runge_45.hpp>
+$$
+You should us the utility include instead; i.e.,
+$codep
+    # include <cppad/utility.hpp>
+$$
+$lnext
+The $cref numeric_ad$$ routines where moved from the $code library$$
+the a separate documentation section.
+$lnext
+Change $code cmake_install_prefix$$ to
+$cref/cppad_prefix/cmake/cppad_prefix/$$ and
+Change $code cmake_install_postfix$$ to
+$cref/cppad_postfix/cmake/cppad_postfix/$$.
+$lnext
+Change $code cppad_implicit_ctor_from_any_type$$ to
+the cmake $code cppad_deprecated$$ option and
+change its specifications to refer to all deprecated features.
+$lend
+
+$head 11-25$$
+$list number$$
+CppAD now installs the object library
+$codep
+    -lcppad_lib
+$$
+to be included when linking.
+Currently, it is only required when
+$cref colpack_prefix$$ is specified on the
+$cref/cmake command/cmake/CMake Command/$$.
+$lnext
+It is no longer necessary to compile and link the file
+$codep
+    cppad_colpack.cpp
+$$
+when $cref colpack_prefix$$
+is specified during the install process; see
+$cref/cmake command/cmake/CMake Command/$$.
+(It is included in $code cppad_lib$$).
+$lend
+
+$head 11-24$$
+$list number$$
+The $code check_for_nan$$ output now includes the first dependent
+variable
+$cref/index/check_for_nan/Error Message/index/$$
+that is $code nan$$ in its error message.
+$lnext
+Change the
+$cref/deprecated include/include_deprecated/$$ reference $code pow_int.h$$
+to $code pow_int.hpp$$ in $cref pow_int$$.
+$lend
+
+$head 11-14$$
+There was a bug in the new
+$cref/get_check_for_nan/check_for_nan/get_check_for_nan/$$
+feature that writes independent variable values to a temporary file;
+see $cref/11-06/whats_new_15/11-06/$$ below.
+This has been fixed.
+
+
+$head 11-08$$
+$list number$$
+Fixed a bug in the $cref RevSparseJac$$ routine.
+To be specific, the argument $cref/r/RevSparseJac/r/$$
+was transposed from what the documentation said.
+(This has no effect in the usual case where $icode r$$ is the identity.)
+$lnext
+Added the $code bool_sparsity.cpp$$ examples which show how
+to conserve memory when computing sparsity patterns.
+(This has since been replaced by $cref rc_sparsity.cpp$$.)
+$lnext
+Modified the $cref ipopt_solve$$ procedure to take
+advantage of the memory conserving sparsity pattern calculations
+when $cref/retape/ipopt_solve/options/Retape/$$ is false.
+$lnext
+Added the $cref/bit_per_unit/CppAD_vector/vectorBool/bit_per_unit/$$
+function to the $code vectorBool$$ class.
+(This aids the memory conservation mentioned above.)
+$lend
+
+
+$head 11-06$$
+It is often difficult to determine what cause a $code nan$$ result
+during an operation with an $cref ADFun$$ object.
+The new feature
+$cref/get_check_for_nan/check_for_nan/get_check_for_nan/$$ was
+added to make this easier.
+
+$head 10-21$$
+There was a mistake in the documentation for $cref index_sort$$,
+the argument $cref/ind/index_sort/ind/$$ is not $code const$$.
+
+$head 10-16$$
+Add a $cref PrintFor$$ optimization wish list item.
+This has been done,
+see $cref/no_print_for_op/optimize/options/no_print_for_op/$$.
+
+$head 10-06$$
+$list number$$
+Add the $code CPPAD_USE_CPLUSPLUS_2011$$,
+$code CPPAD_NUMERIC_LIMITS$$, and
+$code CPPAD_STANDARD_MATH_UNARY$$, to
+the $cref preprocessor$$ section.
+In addition, remove checking that all user API preprocessor symbols
+are in this section form the $cref wish_list$$.
+$lnext
+Alphabetize and make some corrections to
+$cref/list of examples/ListAllExamples/$$.
+$lnext
+The documentation for some of the $cref deprecated$$ features
+was missing the date when they were deprecated.
+This has been fixed; e.g., see
+$cref/Deprecated 2012-12-26/autotools/Deprecated 2012-12-26/$$.
+$lend
+
+
+$head 10-04$$
+$list number$$
+$cref base_require$$:
+Add the macro
+$cref/CPPAD_NUMERIC_LIMITS/base_limits/CPPAD_NUMERIC_LIMITS/$$
+to aid in setting the numeric limits for a user defined $icode Base$$ class.
+$lnext
+$cref base_require$$:
+The $cref/quiet_NaN/numeric_limits/quiet_NaN/$$ function has been added
+to the CppAD $code numeric_limits$$.
+Note the reason for not using
+$cref/std::numeric_limits/numeric_limits/std::numeric_limits/$$.
+$lnext
+The $cref/nan(zero)/nan/nan(zero)/$$ function computes a $code nan$$ by
+dividing zero by zero which results in a warning when using some compilers.
+This function has been deprecated and the corresponding
+$cref wish_list$$ item has been removed.
+$lnext
+Move documentation for $cref zdouble$$ to $cref deprecated$$ section
+and documentation for $cref numeric_limits$$ to $cref ADValued$$.
+$lnext
+Remove all uses of, and references to,
+$cref zdouble$$ from the $cref/examples/Example/$$.
+$lend
+
+$head 10-03$$
+$cref base_require$$:
+It is no longer necessary to define the specialization for
+$codei%CppAD::epsilon<%Base>()%$$ for each $icode Base$$ type.
+
+$head 10-02$$
+There was a bug in $code test_more/azmul.cpp$$ whereby the vector
+$code z$$ had the wrong dimension (in two places). This has been fixed.
+
+$head 09-28$$
+$list number$$
+Use the current $cref atomic_two_option$$ setting to determine
+which type of sparsity patterns to use for
+$cref/dependency/dependency.cpp/$$ calculations during
+$cref optimize$$ procedure.
+It used to be that the
+$cref/bool_sparsity_enum/atomic_two_option/atomic_sparsity/bool_sparsity_enum/$$
+was used when
+$cref/pack_sparsity_enum/atomic_two_option/atomic_sparsity/pack_sparsity_enum/$$
+was specified.
+$lnext
+It is not longer an error to take the derivative of the square root function,
+because the result may be the part of a
+$cref/conditional expression/CondExp/$$ that is not used.
+$lnext
+Update the $cref wish_list$$ section.
+$lend
+
+
+$head 09-27$$
+$list number$$
+It is no longer necessary to use the $cref zdouble$$ class when
+computing with $cref/multiple levels of AD/mul_level/$$
+$cref/conditional expressions/CondExp/$$ and
+$cref/reverse mode/reverse/$$.
+$lnext
+The $code zdouble$$ class has been deprecated.
+Use the $cref azmul$$ function for absolute zero (when it is needed).
+$lend
+
+$head 09-25$$
+$cref base_require$$:
+$cref/absolute zero multiplication/base_require/Absolute Zero, azmul/$$
+is now required for user defined base types.
+This makes it possible to combine
+$cref/conditional expression/CondExp/$$,
+$cref/multiple levels/mul_level/$$,
+$cref/reverse/Reverse/$$, and
+a base type that has standard ieee multiplication; e.g., $code double$$.
+In other words, not all multiplications will need to have an
+absolute zero (as is the case with the $cref zdouble$$ base class.
+
+$head 09-24$$
+Fix some Visual Studio 2013 C++ level four $code /W4$$ warnings
+(previous warnings were are level 3).
+In addition, disable warning
+$code 4100$$ unreferenced formal parameter,
+and warning
+$code 4127$$ conditional expression is constant.
+
+$head 09-23$$
+CppAD can optionally test its use with the external packages
+$cref/eigen/get_eigen.sh/$$,
+$cref/ipopt/get_ipopt.sh/$$, and
+$cref/colpack/get_colpack.sh/$$.
+In addition, it can compare its $cref speed$$ with the external AD packages
+$cref/adolc/get_adolc.sh/$$,
+$cref/fadbad/get_fadbad.sh/$$, and
+$cref/sacado/get_sacado.sh/$$.
+The scripts that download and install a local copy of these external packages
+have been modified to automatically skip installation
+when it has already been done.
+
+$head 09-21$$
+Improve discussion of windows download and testing.
+This discussion has since been removed; see
++$cref/05-20/whats_new_18/05-20/$$ in whats new for 2018.
+
+
+$head 09-20$$
+$list number$$
+Add the $cref/cppad_profile_flag/cmake/cppad_profile_flag/$$
+to the list of possible $code cmake$$ command arguments.
+$lnext
+More of the warnings generated by Visual Studio 2013 have been fixed.
+One remaining warning is about $code asctime$$ and $code gmtime$$ not being
+thread safe.
+$lend
+
+$head 09-19$$
+$list number$$
+There was a bug in the $cref/numeric_limits/base_alloc.hpp/numeric_limits/$$
+section of the example user defined base type.
+This has been fixed.
+$lnext
+There were some compile and link errors when
+running the tests using Visual Studio 2013.
+These have been fixed.
+$lnext
+Many of the warnings generated by Visual Studio 2013 have been fixed.
+$lend
+
+$head 09-16$$
+The conditional expressions, $cref CondExp$$, were not working
+for the type $code< CppAD::AD<adouble> >$$ where $code adouble$$
+is the ADOL-C AD type.
+This has been fixed by adding a call to
+$cref/CPPAD_COND_EXP_REL/base_adolc.hpp/CondExpRel/$$ in
+$code base_adolc.hpp$$.
+
+$head 09-03$$
+$list number$$
+There was a bug in the $cref/vectorBool/CppAD_vector/vectorBool/$$
+$cref/assignment/CppAD_vector/Assignment/$$.
+To be specific,
+it not allow a size zero vector to be assigned using a vector any other size.
+This has been fixed.
+$lnext
+The addition of the
+$cref/pack/atomic_two_option/atomic_sparsity/pack_sparsity_enum/$$ option
+on 08-31 introduced a bug in the calculation of $cref RevSparseHes$$.
+The $code chkpoint_one_get_started.cpp$$ example was changed to demonstrate this
+problem and the bug was fixed.
+$lend
+
+$head 09-02$$
+The $cref/dependency pattern/dependency.cpp/Dependency Pattern/$$
+was not being computed correctly for the
+$cref sign$$, $cref Discrete$$, and $cref VecAD$$ operations.
+This has been fixed.
+This could have caused problems using
+$cref/checkpoint/chkpoint_one/$$ functions that used any of these operations.
+
+$head 08-31$$
+$list number$$
+Mention the fact that using checkpoint functions can make
+$cref/recordings faster/chkpoint_one/Purpose/Faster Recording/$$.
+$lnext
+Add the
+$cref/pack/atomic_two_option/atomic_sparsity/pack_sparsity_enum/$$
+sparsity option for $cref atomic_two$$ operations.
+$lnext
+Add the pack sparsity option to
+$cref/chkpoint_one/chkpoint_one/sparsity/$$ functions.
+$lnext
+Added the $code example/atomic/sparsity.cpp$$ example.
+$lnext
+Remove mention of OpenMP from $cref/thread_alloc::thread_num/ta_thread_num/$$
+($cref thread_alloc$$ never was OpenMP specific).
+$lend
+
+$head 08-30$$
+$list number$$
+The $cref/sparsity/atomic_two_ctor/atomic_base/sparsity/$$
+argument was added to the $code atomic_base$$ constructor and the
+$cref/chkpoint_one/chkpoint_one/sparsity/$$ constructor.
+$lnext
+Make $code atomic_two_norm_sq.cpp$$ an example with no set sparsity
+and $code atomic_two_reciprocal.cpp$$ an example with no bool sparsity.
+$lnext
+Improve discussion of $code Independent$$ and
+$cref/parallel mode/Independent/Parallel Mode/$$.
+$lend
+
+$head 08-29$$
+Some asserts in the $cref/checkpoint/chkpoint_one/$$ implementation were not using
+the CppAD $cref ErrorHandler$$. This has been fixed.
+
+$head 08-28$$
+Free $cref/checkpoint/chkpoint_one/$$ function sparsity patters during
+$cref forward$$ operations that use its atomic operation.
+(They kept between sparsity calculations because they do not change.)
+
+$head 08-26$$
+Fix a bug in $cref RevSparseJac$$ when used to compute sparsity pattern
+for a subset of the rows in a $cref/checkpoint/chkpoint_one/$$ function.
+
+$head 08-25$$
+Reduce the amount of memory required for $cref/checkpoint/chkpoint_one/$$ functions
+(since sparsity patterns are now being held so they do not need to be
+recalculated).
+
+$head 08-20$$
+Added an example that computes the sparsity pattern for a subset
+of the $cref/Jacobian/sparsity_sub.cpp/ForSparseJac/$$ and a subset
+of the $cref/Hessian/sparsity_sub.cpp/RevSparseHes/$$.
+
+$head 08-17$$
+$list number$$
+Do some optimization of the
+$cref/checkpoint/chkpoint_one/$$ feature so that sparsity patterns are
+stored and not recalculated.
+$lnext
+Fix a warning (introduced on 08-11) where the $code CppAD::vector$$
+$cref/data/CppAD_vector/data/$$ function was being shadowed by
+a local variable.
+$lnext
+The source code control for CppAD has a link to $code compile$$,
+instead of real file.
+This sometimes caused problems with the
+deprecated $cref autotools$$ install procedure and has been fixed.
+$lend
+
+$head 08-16$$
+$list number$$
+Improve the documentation for checkpoint functions.
+To be specific, change the $cref/syntax/chkpoint_one/Syntax/$$ to use
+the name $icode atom_fun$$.
+In addition, include the fact that $icode atom_fun$$ must not
+be destructed for as along as the corresponding atomic operations are used.
+$lnext
+Add the $cref/size_var/chkpoint_one/size_var/$$ function
+to the checkpoint objects.
+$lend
+
+
+$head 08-09$$
+Add the preservation of data to the specifications of a $code CppAD::vector$$
+during a $cref/resize/CppAD_vector/resize/$$ when the
+capacity of the vector does not change.
+In addition, added and example of this to $cref cppad_vector.cpp$$.
+
+$head 08-06$$
+The $cref zdouble$$
+$cref/numeric_limits/base_limits/$$
+were not being computed properly.
+This has been fixed.
+
+$head 07-31$$
+Added the $cref sparse_sub_hes.cpp$$ example,
+a way to compute the sparsity for a subset of variables without
+using $cref/multiple levels of AD/mul_level/$$.
+
+$head 06-16$$
+$list number$$
+There were some
+$cref/unknown/cppad_assert/Unknown/$$ asserts
+when the sparsity pattern $icode p$$ in
+$cref/sparse_jacobian/sparse_jacobian/p/$$ and
+$cref/sparse_hessian/sparse_hessian/p/$$ was not properly dimensioned.
+These have been changed to
+$cref/known/cppad_assert/Known/$$ asserts to give better
+error reporting.
+$lnext
+In the special case where sparse Hessian $cref/work/sparse_hessian/work/$$ or
+sparse Jacobian $cref/work/sparse_hessian/work/$$ was specified and the
+set of elements to be computed was empty, the work vector is empty after
+the call (and it appears to need to be calculated on subsequent calls).
+This resulted in a bug when the sparsity pattern was not provided
+on subsequent calls (and has been fixed).
+$lend
+
+$head 06-11$$
+$list number$$
+Some C++11 features were not being taken advantage of after the change on
+$cref/05-10/whats_new_15/05-10/$$. To be specific, move semantics,
+the high resolution clock, and null pointers.
+This has been fixed.
+$lnext
+In the example zdouble.cpp, the vector $code a1z$$ was not
+properly dimensioned.
+This has been fixed and the dimensions of all the variables have been
+clarified.
+$lend
+
+
+$head 06-09$$
+Add an $cref/abort_op_index/Independent/abort_op_index/$$
+item to the wish list. It has since been removed
+(domain errors may not affect the results due to
+$cref/conditional expressions/CondExp/$$).
+
+
+$head 06-07$$
+Add a $cref/absolute zero/base_require/Absolute Zero, azmul/$$ item
+and a $cref numeric_limits$$ item to the wish list.
+The absolute zero item has been completed and the
+numeric limit item was modified on implementation.
+Remove the multiple directions with list item.
+
+$head 05-26$$
+
+$subhead cond_exp_1$$
+There was a problem using
+$cref/conditional expressions/CondExp/$$
+with $cref/multiple levels of AD/mul_level/$$ where
+the result of the conditional expression might not be determined
+during forward mode.
+This would generate an assert of the form:
+$codei%
+    Error detected by false result for
+        IdenticalCon(%side%)
+    at line %number% in the file
+        %...%/include/cppad/local/cskip_op.hpp
+%$$
+where $icode side$$ was $code left$$ or $code right$$
+and $icode number$$ was the line number of an assert in $code cskip_op.hpp$$.
+This has been fixed.
+
+$subhead cond_exp_2$$
+There was a problem with using
+$cref/conditional expressions/CondExp/$$ and $cref/reverse mode/reverse/$$
+with $cref/multiple levels of AD/mul_level/$$.
+This was problem was represented by the file $code bug/cond_exp_2.sh$$.
+
+$list number$$
+The problem above has been fixed by adding the base type $code zdouble$$, see
+$cref/CppAD motivation/zdouble/Motivation/CppAD/$$ for this new type.
+(It is no longer necessary to use $code zdouble$$ to get an absolute zero
+because CppAD now uses $cref azmul$$ where an absolute zero is required.)
+$lnext
+The sections
+$cref mul_level$$,
+$cref change_param.cpp$$,
+$cref mul_level.cpp$$,
+and $cref mul_level_ode.cpp$$ were changed to use $cref zdouble$$.
+$lnext
+The $cref adolc$$ multi-level examples
+$cref mul_level_adolc.cpp$$ and $cref mul_level_adolc_ode.cpp$$
+were changed to mention the limitations because Adolc does not have an
+$cref/absolute zero/zdouble/Absolute Zero/$$.
+$lnext
+The example above were also changed so that AD variable names that
+indicated the level of AD for the variable.
+$lnext
+$cref base_require$$:
+The base type requirements were modified to include mention of
+$cref/absolute zero/base_require/Absolute Zero, azmul/$$.
+In addition, the base type requirements
+$cref/API warning/base_require/API Warning/$$ is now more informative.
+$lend
+
+$head 05-11$$
+Reorganize the $cref unary_standard_math$$ documentation.
+
+$head 05-10$$
+$list number$$
+Add the exponential minus one function $cref log1p$$.
+$lnext
+$cref base_require$$:
+If you are defining your own base type,
+note that $code log1p$$ function
+was added to the base type requirements.
+$lnext
+Use the single preprocessor flag
+$code CPPAD_USE_CPLUSPLUS_2011$$ to signal that the functions
+asinh, acosh, atanh, erf, erfc, expm1, log1p
+are part of the base type requirements.
+$lend
+
+$head 05-09$$
+$list number$$
+Add the exponential minus one function $cref expm1$$.
+If you are defining your own base type,
+note that expm1
+was added to the base type requirements.
+$lnext
+Fix some warnings about comparing signed and unsigned integers
+when using $cref/eigen/cppad_testvector/eigen/$$ for the CppAD test vector.
+(The eigen vector $code size()$$ function returns an $code int$$ instead of a
+$code size_t$$.)
+$lend
+
+$head 05-08$$
+$list number$$
+Add the inverse hyperbolic sine function $cref atanh$$.
+If you are defining your own base type,
+note that atanh
+was added to the base type requirements.
+$lnext
+Fix a bug in the implementation of the $code acosh$$
+multiple direction forward mode $cref forward_dir$$.
+$lend
+
+$head 05-07$$
+Add the inverse hyperbolic sine function $cref acosh$$.
+If you are defining your own base type,
+note that acosh
+was added to the base type requirements.
+
+$head 05-05$$
+Add the inverse hyperbolic sine function $cref asinh$$.
+If you are defining your own base type,
+note that asinh
+was added to the base type requirements.
+
+$head 04-18$$
+In the sparse jacobian and sparse hessian calculations,
+If $icode work$$ is present, and has already been computed,
+the sparsity pattern $icode p$$ is not used.
+This has been added to the documentation; see
+$cref/sparse jacobian/sparse_jacobian/work/p/$$ and
+$cref/sparse hessian/sparse_hessian/work/p/$$ documentation
+for $icode work$$ and $icode p$$.
+
+$head 03-13$$
+Remove the syntax
+$codei%
+    AD<%Base%> %y% = %x%
+%$$
+for the $cref/AD constructor/ad_ctor/$$ documentation because it does not
+work when the constructor is $cref/explicit/ad_ctor/x/explicit/$$.
+Also document the restriction that the constructor in the
+$cref/assignment/ad_assign/$$ must be implicit.
+
+$head 03-06$$
+The developers of the
+$href%https://github.com/kaskr/adcomp%TMB%$$ package reported that
+for large $cref ADFun$$ tapes, the $cref optimize$$ routine uses
+a large amount of memory because it allocates a standard set for
+each variable on the tape. These sets are only necessary for variables in
+$cref/conditional expressions/condexp/$$ that can be skipped once
+the independent variables have a set value.
+The problem has been reduced by using a NULL pointer for the empty set
+and similar changes. It still needs more work.
+
+$head 02-28$$
+It used to be the case that the
+$cref/Reverse mode/reverse/$$ would propagate $cref nan$$
+through the $cref/conditional expression/condexp/$$
+case that is not used.
+For example, if
+$codep
+    Independent(ax);
+    AD<double> aeps = 1e-10;
+    ay[0] = CondExpGt( ax[0], aeps, 1.0/ax[0], 1.0/aeps );
+    ADFun<double> f(ax, ay);
+$$
+The corresponding reverse mode calculation,
+at $code x[0] = 0.0$$, would result in
+$codep
+    Error detected by false result for
+    ! ( hasnan(value) && check_for_nan_ )
+$$
+This has been fixed so that only the conditional expression case that is used
+affects the reverse mode results.
+The example $cref cond_exp.cpp$$ was changed to reflect this
+(a check for $code nan$$ was changed to a check for zero).
+Note that this fix only works when
+$cref/IdenticalCon/base_identical/Identical/IdenticalCon/$$ is true for the
+base type of the result in the conditional expression; e.g.,
+one can still get a $code nan$$ effect from the case that is not selected
+when using $code AD< AD<double> >$$ conditional expressions.
+
+$head 02-18$$
+If the compiler supports the c++11 feature
+$code std::chrono:high_resolution_clock$$ then use it for
+the $cref elapsed_seconds$$ function.
+
+$head 02-16$$
+The new example $cref sub_sparse_hes.cpp$$ shows one way to
+compute a Hessian for a subset of variables without having to compute
+the sparsity pattern for the entire functions.
+
+$head 02-14$$
+Fix another bug in the derivative calculations for the
+c++11 version of the error function.
+
+$head 02-11$$
+Fix a bug in the optimization of conditional expressions. To be specific,
+if $cref/NDEBUG/faq/Speed/NDEBUG/$$ is not defined, one could get
+an assert with the message:
+$codep
+    Error detected by false result for
+        var_index_ >= NumRes(op_)
+$$
+
+$head 02-10$$
+The change on $cref/2014-12-23/whats_new_14/12-23/$$ introduced a
+bug when the c++11 version of the error function was used with
+an $cref/optimized/optimize/$$ function.
+There was also a bug in the sparsity calculations for when
+this erf function was included.
+These bugs have been fixed.
+
+$head 02-09$$
+The test $code test_more/optimize.cpp$$ was failing on some systems
+because an exactly equality check should have been a near equal check.
+This has been fixed.
+
+$head 02-07$$
+On some systems, the library
+corresponding to $code speed/src$$ could not be found.
+This library is only used for testing and so has been changed to always be
+static (hence does not need to be found at run time).
+
+$head 02-06$$
+There was a bug in the coloring method change on
+$cref/2015-01-07/whats_new_15/01-07/$$.
+To be specific, $icode%work%.color_method%$$ was not being set
+to $code "cppad.symmetric"$$ after $icode%work%.color_method.clear()%$$.
+This has been fixed.
+
+$head 02-04$$
+$list number$$
+Enable the same install of CppAD to be used both with and without C++11
+features; e.g., with both $code g++ --std=c++11$$ and with
+$code g++ --std=c++98$$. Previously if the
+$cref/cppad_cxx_flags/cmake/cppad_cxx_flags/$$ specified C++11,
+then it could only be used in that way.
+$lnext
+The $cref/cmake command/cmake/CMake Command/$$ now requires the version
+of $code cmake$$ to be greater than or equal 2.8
+(due a bug in $code cmake$$ version 2.6).
+$lend
+
+$head 02-03$$
+Improved the searching for the boost multi-threading library
+which is used for by the $cref team_bthread.cpp$$ case of the
+$cref thread_test.cpp$$ example and test.
+
+$head 02-02$$
+Improve the documentation for the
+$cref/cmake command/cmake/CMake Command/$$ line options
+$codei%
+    cmake_install_%dir%
+%$$
+for $icode dir$$ equal to
+$code prefix$$, $code postfix$$, $code includedirs$$, $code libdirs$$,
+$code datadir$$, and $code docdir$$.
+
+$head 01-30$$
+Fix bug in $cref link_sparse_hessian$$ speed test introduced on
+$cref/01-09/whats_new_15/01-09/$$ below.
+
+$head 01-29$$
+Fix some warnings generated by $code g++ 4.9.2$$.
+
+$head 01-26$$
+The change of global variables to local in
+$code cppad/local/op_code.hpp$$ on $cref/2014-50-14/whats_new_14/05-14/$$
+created a bug in $cref parallel_ad$$ (some local statics needed to
+be initialized). This has been fixed.
+
+$head 01-23$$
+There was a bug in the $cref cmake$$ install detection of compiler features.
+One symptom of this bug was that on systems that had the $code gettimeofday$$
+function, the cmake install would sometimes report
+$codei%
+    cppad_has_gettimeofday = 0
+%$$
+This has been fixed.
+
+$head 01-21$$
+The deprecated $cref autotools$$ procedure had a bug in the
+detection of when the size of an $code unsigned int$$
+was the same as the size of a $code size_t$$. This has been fixed.
+
+$head 01-20$$
+$list number$$
+The new $cref compare_change$$ interface has been created
+and the old $cref CompareChange$$ function has been deprecated;
+see the $cref compare_change.cpp$$ example.
+This enables one to determine the source code during taping
+that corresponds to changes in the comparisons during
+$cref/zero order forward/forward_zero/$$ operations; see
+$cref/abort_op_index/Independent/abort_op_index/$$.
+
+$lnext
+This new $cref compare_change$$ interface can detect comparison changes
+even if $cref/NDEBUG/Faq/Speed/NDEBUG/$$ is defined and
+even if $cref/f.optimize()/optimize/$$ has been called.
+The deprecated function $code CompareChange$$ used to always return zero after
+$codei%
+    %f%.optimize()
+%$$
+and was not even defined when $code NDEBUG$$ was defined.
+There was a resulting speed effect for this; see
+$cref/no_compare_op/optimize/options/no_compare_op/$$.
+
+$lnext
+The date when some features where deprecated has been added to the
+documentation. For example, see
+$cref/Deprecated 2006-12-17/include_deprecated/Deprecated 2006-12-17/$$.
+$lend
+
+$head 01-09$$
+$list number$$
+The change 01-07 below included (but did not mention) using
+a sparse, instead of full, structure for the Hessian in the test.
+This has also been done for the
+$cref/sparse Jacobian/link_sparse_jacobian/$$ test.
+$lnext
+For both the
+$cref/sparse_jacobian/link_sparse_jacobian/$$ and
+$cref/sparse_hessian/link_sparse_hessian/$$ tests,
+the sparse function is only chosen once
+(it used to be different for every repeat).
+This reduced the amount of computation not connected what is being tested.
+It also make the $cref/onetape/speed_main/Global Options/onetape/$$ a valid
+option for these tests.
+$lnext
+There was a bug in the
+$cref/multiple direction forward/forward_dir/$$ routine.
+Results for function values that are
+$cref/parameter/con_dyn_var/Parameter/$$ were not being computed properly
+(all the derivatives are zero in this case).
+This has been fixed.
+$lend
+
+
+$head 01-07$$
+The following changes were merged in from the $code color_hes$$ branch:
+$list number$$
+Specify the type of
+$cref/coloring/sparse_hessian/work/color_method/$$
+for the sparse hessian calculations.
+To be specific, instead of $code "cppad"$$ and $code "colpack"$$,
+the choices are $code "cppad.symmetric"$$, $code "cppad.general"$$,
+and $code "colpack.star"$$.
+This is not compatible with the change on
+$cref/01-02/whats_new_15/01-02/$$, which was so recent
+that this should not be a problem.
+$lnext
+The $cref/n_color/link_sparse_hessian/n_color/$$ values were
+not being returned properly by
+$cref cppad_sparse_hessian.cpp$$ and
+$cref adolc_sparse_hessian.cpp$$.
+The CppAD version has been fixed and the ADOL-C version
+has been set to zero.
+$lnext
+The $cref link_sparse_hessian$$ example case was to sparse for good
+testing (by mistake).
+This has been fixed.
+$lnext
+Add $icode n_sweep$$ (now $icode n_color$$) to
+$cref/link_sparse_hessian/link_sparse_hessian/n_color/$$ and
+$cref/speed_main/speed_main/Speed Results/n_color/$$.
+$lnext
+Change the $code cppad$$ sparse Hessian
+$cref/color_method/sparse_hessian/work/color_method/$$
+to take advantage of the symmetry of the Hessian
+(in a similar fashion to the $code colpack$$ coloring method).
+$lend
+
+$head 01-02$$
+Added to option to uses
+$cref/colpack/colpack_prefix/$$ for the sparse Hessian
+$cref/coloring method/sparse_hessian/work/color_method/$$;
+see the example $cref colpack_hes.cpp$$.
+
+$end

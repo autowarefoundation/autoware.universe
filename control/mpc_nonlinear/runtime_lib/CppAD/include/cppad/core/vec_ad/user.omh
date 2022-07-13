@@ -1,0 +1,306 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
+
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
+/*
+$begin VecAD$$
+$spell
+    cppad.hpp
+    CondExpGt
+    grep
+    Ld
+    vp
+    Lu
+    wc
+    op
+    Ldp
+    Ldv
+    Taylor
+    VecAD
+    const
+    Cpp
+    ind
+$$
+
+
+$section AD Vectors that Record Index Operations$$
+
+
+$head Syntax$$
+$codei%VecAD<%Base%> %vec%(%n%)%$$
+$pre
+$$
+$icode%vec%.size()%$$
+$pre
+$$
+$icode%base%       = %vec%[%i%]%$$
+$pre
+$$
+$icode%abase%      = %vec%[%ind%]
+%$$
+$icode%vec%[%ind%]   = %right%
+%$$
+$icode%left%       = %vec%[%ind%]
+%$$
+
+$head Purpose$$
+If either $icode vec$$ or $icode ind$$ is a
+$cref/variable/glossary/Variable/$$ or
+$cref/dynamic parameter/glossary/Parameter/Dynamic/$$,
+the indexing operation
+$codei%
+    %vec%[%ind%]
+%$$
+is recorded in the corresponding $codei%AD<%Base%>%$$
+$cref/operation sequence/glossary/Operation/Sequence/$$ and
+included in the corresponding $cref ADFun$$ object $icode f$$.
+Such an index can change each time
+zero order $cref/f.Forward/Forward/$$ is used; i.e.,
+each time $icode f$$ is evaluated with new value for the
+$cref/independent variables/glossary/Tape/Independent Variable/$$.
+Note that the value of $icode%vec%[%ind%]%$$
+depends on the value of $icode ind$$
+in a discrete fashion and CppAD computes its partial derivative with
+respect to $icode ind$$ as zero.
+
+$head Alternatives$$
+If only the values in $icode vec$$,
+and not the indices $icode ind$$,
+depend on the independent variables,
+a $cref SimpleVector$$ with elements of type $codei%AD<%Base%>%$$
+would be more efficient than using $codei%VecAD<%Base%>%$$.
+If only the indices, and not the values in the vector,
+depend on the independent variables,
+a $cref Discrete$$ functions would be a much more efficient.
+
+$head Efficiency$$
+If one uses $code VecAD$$ vector where one could use a simple vector,
+the $cref sparsity_pattern$$ will be less efficient
+because the dependence on different elements cannot be separated.
+In addition, $code VecAD$$ objects that only depend on dynamic parameters
+are treated as if they were variables making sparsity patterns
+even less efficient (have more possibly non-zero values than necessary);
+see $cref/VecAD vectors/wish_list/Dynamic Parameters/VecAD Vectors/$$
+under dynamic parameters in the wish list.
+
+$head VecAD<Base>::reference$$
+The expression $icode%vec%[%ind%]%$$ has prototype
+$codei%
+    VecAD<%Base%>::reference %vec%[%ind%]
+%$$
+which is like the $codei%AD<%Base%>%$$ type
+with some notable exceptions:
+
+$subhead Exceptions$$
+
+$list number$$
+This object cannot be used with the
+$cref Value$$ function to compute the corresponding $icode Base$$ value.
+In some cases, the syntax
+$codei%
+    %vec%[%i%]
+%$$
+can be used to obtain the corresponding $icode Base$$ value; see below.
+
+$lnext
+This object cannot be used as the left hand side in a
+with a $cref/compound assignment/compound_assign/$$; i.e.,
+$code +=$$,
+$code -=$$,
+$code *=$$, or
+$code /=$$.
+For example, the following syntax is not valid:
+$codei%
+    %vec%[%ind%] += %z%;
+%$$
+no matter what the types of $icode z$$.
+
+$lnext
+Assignment to $codei%vec%[%ind%]%$$ returns a $code void$$.
+For example, the following syntax is not valid:
+$codei%
+    %z% = %vec%[%ind%] = %u%;
+%$$
+no matter what the types of $icode z$$, and $icode u$$.
+
+$lnext
+A $icode%vec%[%ind%]%$$ object cannot appear in a $cref CondExp$$;
+For example, the following syntax is not valid:
+$codei%
+    CondExpGt(%vec%[%ind%], %u%, %v%, %w%)
+%$$
+no matter what the types of $icode u$$, $icode v$$, and $icode w$$.
+
+$lnext
+A $icode%vec%[%ind%]%$$ object should not be used with the
+$code Constant$$, $code Dynamic$$, $code Parameter$$, and $code Variable$$
+functions (see $cref con_dyn_var$$).
+The entire vector $icode vec$$ should be used instead.
+
+$lnext
+A $code VecAD$$ vector
+cannot be passed to $code Independent$$ function.
+
+$lend
+
+$head Constructor$$
+
+$subhead vec$$
+The syntax
+$codei%
+    VecAD<%Base%> %vec%(%n%)
+%$$
+creates an $code VecAD$$ object $icode vec$$ with
+$icode n$$ elements.
+The initial value of the elements of $icode vec$$ is unspecified.
+
+$subhead n$$
+The argument $icode n$$ has prototype
+$codei%
+    size_t %n%
+%$$
+
+$head size$$
+The syntax
+$codei%
+    %vec%.size()
+%$$
+returns the number of elements in the vector $icode vec$$;
+i.e., the value of $icode n$$ when it was constructed.
+
+$head Base Indexing$$
+We refer to the syntax
+$codei%
+    %base% = %vec%[%i%]
+%$$
+as base indexing of a $code VecAD$$ object.
+This indexing is only valid if the vector $icode vec$$ is a
+$cref/constant/con_dyn_var/Constant/$$; i.e.,
+it does not depend on the independent variables.
+
+$subhead i$$
+The operand $icode i$$ has prototype
+$codei%
+    size_t %i%
+%$$
+and must be less than $icode n$$; i.e., less than
+the number of elements in $icode vec$$.
+
+$subhead base$$
+The result $icode base$$ has prototype
+$codei%
+    %Base%& %base%
+%$$
+i.e., it is a reference to the $th i$$ element in the vector $icode vec$$.
+It can be used to change the element value;
+for example,
+$codei%
+    %vec%[%i%] = %b%
+%$$
+is valid where $icode b$$ is a $icode Base$$ object.
+The reference $icode base$$ is no longer valid once the
+$icode vec$$ changes in any way; i.e., has another assignment.
+
+$head AD Indexing$$
+We refer to the syntax
+$codei%
+    %vec%[%ind%]
+%$$
+as AD indexing of a $code VecAD$$ object.
+
+$subhead ind$$
+The argument $icode ind$$ has prototype
+$codei%
+    const AD<%Base%>& %ind%
+%$$
+The value of $icode ind$$ must be greater than or equal zero
+and less than $icode n$$; i.e., less than
+the number of elements in $icode vec$$.
+
+$subhead result$$
+The resulting expression has prototype
+$codei%
+    VecAD<%Base%>::reference %vec%[%ind%]
+%$$
+This objects operations are recorded as part of the $codei%AD<%Base%>%$$
+$cref/operation sequence/glossary/Operation/Sequence/$$.
+It acts like a reference to the
+element with index $codei%floor(%ind%)%$$ in the vector $icode vec$$;
+($codei%floor(%ind%)%$$ is
+the greatest integer less than or equal $icode ind$$).
+
+$subhead right$$
+Is the right hand side of the assignment statement
+and specifies the new value for the corresponding element of $icode vec$$.
+It has one of the following prototypes:
+$codei%
+    int   %%                       %right%
+    const %Base%&                  %right%
+    const AD<%Base%>&              %right%
+    const VecAD_reverence<%Base%>& %right%
+%$$
+
+$subhead left$$
+Is the left hand side of the assignment statement
+is the current value for the corresponding element of $icode vec$$.
+It has the following prototype:
+$codei%
+    const AD<%Base%>& %left%
+%$$
+
+$head Example$$
+$children%
+    example/general/vec_ad.cpp
+%$$
+The file
+$cref vec_ad.cpp$$
+contains an example and test using $code VecAD$$ vectors.
+
+
+$head Speed and Memory$$
+The $cref VecAD$$ vector type is inefficient because every
+time an element of a vector is accessed, a new CppAD
+$cref/variable/glossary/Variable/$$ is created on the tape
+using either the $code Ldp$$ or $code Ldv$$ operation
+(unless all of the elements of the vector are
+$cref/parameters/glossary/Parameter/$$).
+The effect of this can be seen by executing the following steps:
+
+$list number$$
+In the file $code cppad/local/forward1sweep.h$$,
+change the definition of $code CPPAD_FORWARD1SWEEP_TRACE$$ to
+$codep
+    # define CPPAD_FORWARD1SWEEP_TRACE 1
+$$
+$lnext
+In the $code Example$$ directory, execute the command
+$codep
+    ./test_one.sh lu_vec_ad_ok.cpp lu_vec_ad.cpp -DNDEBUG > lu_vec_ad_ok.log
+$$
+This will write a trace of all the forward tape operations,
+for the test case $cref lu_vec_ad_ok.cpp$$,
+to the file $code lu_vec_ad_ok.log$$.
+$lnext
+In the $code Example$$ directory execute the commands
+$codep
+    grep "op="           lu_vec_ad_ok.log | wc -l
+    grep "op=Ld[vp]"     lu_vec_ad_ok.log | wc -l
+    grep "op=St[vp][vp]" lu_vec_ad_ok.log | wc -l
+$$
+The first command counts the number of operators in the tracing,
+the second counts the number of VecAD load operations,
+and the third counts the number of VecAD store operations.
+(For CppAD version 05-11-20 these counts were 956, 348, and 118
+respectively.)
+$lend
+
+$end
+------------------------------------------------------------------------
+*/

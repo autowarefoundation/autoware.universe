@@ -1,0 +1,113 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin efficient$$
+$spell
+    omp_alloc
+    ptr
+    num
+    bool
+    const
+$$
+
+$section Check If A Memory Allocation is Efficient for Another Use$$
+
+$head Deprecated 2011-07-29$$
+This function has been deprecated because speed tests seem to indicate
+it is just as fast, or faster, to free and then reallocate the memory.
+
+$head Syntax$$
+$codei%flag% = omp_alloc::efficient(%v_ptr%, %num_bytes%)%$$
+
+$head Purpose$$
+Check if memory that is currently in use is an efficient
+allocation for a specified number of bytes.
+
+$head v_ptr$$
+This argument has prototype
+$codei%
+    const void* %v_ptr%
+%$$.
+It must be a pointer to memory that is currently in use; i.e.
+obtained by a previous call to $cref get_memory$$ and not yet returned.
+
+$head num_bytes$$
+This argument has prototype
+$codei%
+    size_t %num_bytes%
+%$$
+It specifies the number of bytes of the memory allocated by $icode v_ptr$$
+that we want to use.
+
+$head flag$$
+The return value has prototype
+$codei%
+    bool %flag%
+%$$
+It is true,
+a call to $code get_memory$$ with
+$cref/min_bytes/get_memory/min_bytes/$$
+equal to $icode num_bytes$$ would result in a value for
+$cref/cap_bytes/get_memory/cap_bytes/$$ that is the same as when $code v_ptr$$
+was returned by $code get_memory$$; i.e.,
+$icode v_ptr$$ is an efficient memory block for $icode num_bytes$$
+bytes of information.
+
+$head Thread$$
+Either the $cref/current thread/get_thread_num/$$ must be the same as during
+the corresponding call to $cref get_memory$$,
+or the current execution mode must be sequential
+(not $cref/parallel/in_parallel/$$).
+
+$head NDEBUG$$
+If $code NDEBUG$$ is defined, $icode v_ptr$$ is not checked (this is faster).
+Otherwise, a list of in use pointers is searched to make sure
+that $icode v_ptr$$ is in the list.
+
+$end
+-------------------------------------------------------------------------------
+$begin old_max_num_threads$$
+$spell
+    inv
+    CppAD
+    num
+    omp_alloc
+$$
+$section Set Maximum Number of Threads for omp_alloc Allocator$$
+
+
+
+$head Removed$$
+This function has been removed from the CppAD API.
+Use the function $cref/set_max_num_threads/max_num_threads/$$
+in its place.
+
+$head Syntax$$
+$codei%omp_alloc::max_num_threads(%number%)%$$
+
+$head Purpose$$
+By default there is only one thread and all execution is in sequential mode
+(not $cref/parallel/in_parallel/$$).
+
+$head number$$
+The argument $icode number$$ has prototype
+$codei%
+    size_t %number%
+%$$
+It must be greater than zero and specifies the maximum number of
+OpenMP threads that will be active at one time.
+
+$head Restrictions$$
+This function must be called before the program enters
+$cref/parallel/in_parallel/$$ execution mode.
+
+$end
+-------------------------------------------------------------------------------

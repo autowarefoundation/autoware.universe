@@ -1,0 +1,65 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin chkpoint_two_chk_fun$$
+
+$spell
+    const
+    chk
+    chkpoint
+$$
+
+$section Using Checkpoint Functions$$
+
+$head Syntax$$
+$icode%chk_fun%(%ax%, %ay%)%$$
+
+$head Purpose$$
+Given $icode ax$$,
+this call computes the corresponding value of $icode ay$$.
+If $codei%AD<%Base%>%$$ operations are being recorded,
+it enters the computation as an $cref atomic_three$$
+operation in the recording;
+see $cref/start recording/Independent/Start Recording/$$.
+
+$head chk_fun$$
+This object must have been created using the
+$cref/chkpoint_two/chkpoint_two_ctor/chk_fun/$$ constructor.
+
+$head ADVector$$
+The type $icode ADVector$$ must be a
+$cref/simple vector class/SimpleVector/$$ with elements of type
+$codei%AD<%Base%>%$$.
+
+$head ax$$
+This argument has prototype
+$codei%
+    const %ADVector%& ax
+%$$
+and its size equal to $icode%n% = %fun%.Domain()%$$
+where $cref/fun/chkpoint_two_ctor/fun/$$ is the $codei%ADFun<%Base%>%$$
+function in used the constructor for $icode chk_fun$$.
+It specifies vector $latex x \in \B{R}^n$$
+at which we are computing an $codei%AD<%Base%>%$$ version of
+$latex y = g(x)$$.
+
+$head ay$$
+This argument has prototype
+$codei%
+    %ADVector%& ay
+%$$
+and its size must be equal to $icode%m% = %fun%.Range()%$$.
+The input values of its elements do not matter.
+Upon return, it is an $codei%AD<%Base%>%$$ version of
+$latex y = g(x)$$.
+
+
+$end

@@ -1,0 +1,156 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin utility$$
+$spell
+    CppAD
+    namespace
+    alloc
+    cppad.hpp
+$$
+
+
+$section Some General Purpose Utilities$$
+These routines can be include individually; for example,
+$codep
+    # include <cppad/utility/vector.hpp>
+$$
+only includes the definitions necessary for the $code CppAD::vector$$ class.
+They can also be included as a group, separate from the rest of CppAD, using
+$codep
+    # include <cppad/utility.hpp>
+$$
+They will also be included, along with the rest of CppAD, using
+$codep
+    # include <cppad/cppad.hpp>
+$$
+
+$children%
+    include/cppad/utility/error_handler.hpp%
+
+    include/cppad/utility/near_equal.hpp%
+    include/cppad/utility/speed_test.hpp%
+    include/cppad/utility/time_test.hpp%
+    include/cppad/utility/test_boolofvoid.hpp%
+
+    omh/numeric_type.omh%
+    include/cppad/utility/check_numeric_type.hpp%
+    omh/simple_vector.omh%
+    include/cppad/utility/check_simple_vector.hpp%
+
+    include/cppad/utility/nan.hpp%
+    include/cppad/utility/pow_int.hpp%
+    include/cppad/utility/poly.hpp%
+    omh/lu_det_and_solve.omh%
+    include/cppad/utility/romberg_one.hpp%
+    include/cppad/utility/romberg_mul.hpp%
+    include/cppad/utility/runge_45.hpp%
+    include/cppad/utility/rosen_34.hpp%
+    include/cppad/utility/ode_err_control.hpp%
+    include/cppad/utility/ode_gear.hpp%
+    include/cppad/utility/ode_gear_control.hpp%
+
+    include/cppad/utility/omh/cppad_vector.omh%
+    omh/thread_alloc.omh%
+    include/cppad/utility/index_sort.hpp%
+    include/cppad/utility/to_string.hpp%
+    include/cppad/utility/set_union.hpp%
+    include/cppad/utility/sparse_rc.hpp%
+    include/cppad/utility/sparse_rcv.hpp%
+    include/cppad/utility/sparse2eigen.hpp
+%$$
+
+$head Testing$$
+The routines listed below support numerical correctness and speed testing:
+$table
+$rref NearEqual$$
+$rref time_test$$
+$rref speed_test$$
+$rref SpeedTest$$
+$rref test_boolofvoid$$
+$tend
+
+$head C++ Concepts$$
+We refer to a the set of classes that satisfy certain conditions
+as a C++ concept.
+The following concepts are used by the CppAD Template library:
+$table
+$rref NumericType$$
+$rref CheckNumericType$$
+$rref SimpleVector$$
+$rref CheckSimpleVector$$
+$tend
+
+
+$head General Numerical Routines$$
+The routines listed below are general purpose numerical routines
+written with the floating point type a C++ template parameter.
+This enables them to be used with algorithmic differentiation types,
+as well as for other purposes.
+$table
+$rref nan$$
+$rref pow_int$$
+$rref Poly$$
+$rref LuDetAndSolve$$
+$rref RombergOne$$
+$rref RombergMul$$
+$rref Runge45$$
+$rref Rosen34$$
+$rref OdeErrControl$$
+$rref OdeGear$$
+$rref OdeGearControl$$
+$tend
+
+$head Miscellaneous$$
+
+$subhead Error Handler$$
+All of the routines in the CppAD namespace use the following
+general purpose error handler:
+$table
+$rref ErrorHandler$$
+$tend
+
+$subhead The CppAD Vector Template Class$$
+This is a simple implementation of a template vector class
+(that is easy to view in a C++ debugger):
+$table
+$rref CppAD_vector$$
+$tend
+
+$subhead Multi-Threading Memory Allocation$$
+$table
+$rref thread_alloc$$
+$tend
+
+$subhead Sorting Indices$$
+$table
+$rref index_sort$$
+$tend
+
+$subhead to_string$$
+$table
+$rref to_string$$
+$tend
+
+$subhead set_union$$
+$table
+$rref set_union$$
+$tend
+
+$subhead Sparse Matrices$$
+$table
+$rref sparse_rc$$
+$rref sparse_rcv$$
+$rref sparse2eigen$$
+$tend
+
+$end
