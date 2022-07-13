@@ -4,9 +4,12 @@ project(autoware_control_toolbox)
 # FMT
 find_package(fmt)
 
-find_package(autoware_cmake REQUIRED)
-autoware_package()
-
+# require that dependencies from package.xml be available
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies(REQUIRED
+  ${${PROJECT_NAME}_BUILD_DEPENDS}
+  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS}
+)
 set(CMAKE_CXX_STANDARD 17)
 
 ## ----------------- Library headers and sources -------------------------------

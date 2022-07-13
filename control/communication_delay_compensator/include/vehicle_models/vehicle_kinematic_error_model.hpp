@@ -21,7 +21,7 @@
 #include "vehicle_definitions.hpp"
 
 #include <eigen3/Eigen/Core>
-#include <Eigen/StdVector>
+#include <eigen3/Eigen/StdVector>
 #include <eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixExponential.h>
 
 #include <iostream>
