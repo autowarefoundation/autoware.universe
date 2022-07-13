@@ -80,7 +80,7 @@
 
     <group>
       <let name="input/clustering" value="/perception/object_recognition/detection/clustering/clusters"/>
-      <push-ros-namespace namespace="camera_lidar_fusion"/>  
+      <push-ros-namespace namespace="camera_lidar_fusion"/>
       <!-- Fusion camera-lidar to classify -->
       <group>
         <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_cluster_fusion.launch.xml">
@@ -113,7 +113,7 @@
           <arg name="output/clusters" value="clusters"/>
         </include>
       </group>
-  
+
       <group>
         <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
           <arg name="input/objects" value="clusters"/>
@@ -127,7 +127,7 @@
           <arg name="output" value="objects"/>
         </include>
       </group>
-  
+
       <group>
         <include file="$(find-pkg-share object_range_splitter)/launch/object_range_splitter.launch.xml">
           <arg name="input/object" value="camera_lidar_fusion/objects"/>
