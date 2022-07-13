@@ -35,7 +35,8 @@ private:
 
 public:
   BoundingBoxShapeModel();
-  explicit BoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info, bool use_boost_bbox_optimizer = false);
+  explicit BoundingBoxShapeModel(
+    const boost::optional<ReferenceYawInfo> & ref_yaw_info, bool use_boost_bbox_optimizer = false);
   boost::optional<ReferenceYawInfo> ref_yaw_info_;
   bool use_boost_bbox_optimizer_;
 

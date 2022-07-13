@@ -14,13 +14,13 @@
 
 #include "shape_estimation/model/bounding_box.hpp"
 
-#include <boost/math/tools/minima.hpp>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
+
+#include <boost/math/tools/minima.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -44,9 +44,13 @@
 
 constexpr float epsilon = 0.001;
 
-BoundingBoxShapeModel::BoundingBoxShapeModel() : ref_yaw_info_(boost::none), use_boost_bbox_optimizer_(false) {}
+BoundingBoxShapeModel::BoundingBoxShapeModel()
+: ref_yaw_info_(boost::none), use_boost_bbox_optimizer_(false)
+{
+}
 
-BoundingBoxShapeModel::BoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info, bool use_boost_bbox_optimizer)
+BoundingBoxShapeModel::BoundingBoxShapeModel(
+  const boost::optional<ReferenceYawInfo> & ref_yaw_info, bool use_boost_bbox_optimizer)
 : ref_yaw_info_(ref_yaw_info), use_boost_bbox_optimizer_(use_boost_bbox_optimizer)
 {
 }
@@ -87,8 +91,7 @@ bool BoundingBoxShapeModel::fitLShape(
   double theta_star;
   if (use_boost_bbox_optimizer_) {
     theta_star = boostOptimize(cluster, min_angle, max_angle);
-  }
-  else {
+  } else {
     theta_star = optimize(cluster, min_angle, max_angle);
   }
 
