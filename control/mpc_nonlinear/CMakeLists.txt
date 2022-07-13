@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.14)
 project(mpc_nonlinear)
 
-find_package(autoware_cmake REQUIRED)
+# require that dependencies from package.xml be available
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies(REQUIRED
+  ${${PROJECT_NAME}_BUILD_DEPENDS}
+  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+
 find_package(Eigen3 CONFIG)
-autoware_package()
+
 
 # set(CMAKE_CXX_STANDARD 17)
 # Release, Debug, RelWithDebInfo, MinSizeRel
@@ -26,7 +31,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		#            -Wdouble-promotion
 		# -Wfloat-equal
 		-Waddress
-		-fvisibility=default) # visibility hidden or default is set here.
+		-fvisibility=default
+		-fPIC) # visibility hidden or default is set here.
 endif()
 
 # Clang tidy
