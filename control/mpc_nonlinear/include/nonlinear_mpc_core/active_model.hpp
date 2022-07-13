@@ -34,7 +34,7 @@ using discretization_data_t = Model::discretization_data_t;
 namespace ns_nmpc_interface
 {
 constexpr size_t MPC_NUM_OF_PRED_STEPS = 50;
-constexpr size_t NUM_LPV_NONLINEARITIES = 7;
+constexpr size_t NUM_LPV_NONLINEARITIES = 5;
 }  // namespace ns_nmpc_interface
 
 namespace ns_splines
