@@ -138,8 +138,6 @@ void PullOverModule::onEntry()
     goal_candidate.distance_from_original_goal = 0.0;
     goal_candidates_.push_back(goal_candidate);
   }
-
-  waitApproval();
 }
 
 void PullOverModule::onExit()
@@ -608,6 +606,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 
   const double distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change);
+  waitApproval();
 
   return out;
 }
