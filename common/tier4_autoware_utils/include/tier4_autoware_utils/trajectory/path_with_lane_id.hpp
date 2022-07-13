@@ -38,12 +38,22 @@ namespace tier4_autoware_utils
 template <>
 inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
-  const size_t src_idx, const double offset)
+  const size_t src_idx, const double offset, const bool throw_exception)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   if (points.size() - 1 < src_idx) {
-    throw std::out_of_range("Invalid source index");
+    const auto e = std::out_of_range("Invalid source index");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return {};
   }
 
   if (points.size() == 1) {
@@ -92,7 +102,12 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & src_point, const double offset)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   if (offset < 0.0) {
     auto reverse_points = points;
@@ -117,12 +132,22 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
 template <>
 inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
-  const size_t src_idx, const double offset)
+  const size_t src_idx, const double offset, const bool throw_exception)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   if (points.size() - 1 < src_idx) {
-    throw std::out_of_range("Invalid source index");
+    const auto e = std::out_of_range("Invalid source index");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return {};
   }
 
   if (points.size() == 1) {
@@ -184,7 +209,12 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & src_point, const double offset)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   const size_t src_seg_idx = findNearestSegmentIndex(points, src_point);
   const double signed_length_src_offset =
@@ -206,7 +236,12 @@ inline boost::optional<size_t> insertTargetPoint(
   std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const double overlap_threshold)
 {
-  validateNonEmpty(points);
+  try {
+    validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
 
   // invalid segment index
   if (seg_idx + 1 >= points.size()) {
@@ -258,6 +293,42 @@ inline boost::optional<size_t> insertTargetPoint(
   }
 
   return seg_idx;
+}
+
+/**
+ * @brief calculate the point offset from source point along the trajectory (or path)
+ * @param insert_point_length length to insert point from the beginning of the points
+ * @param p_target point to be inserted
+ * @param points output points of trajectory, path, ...
+ * @return index of insert point
+ */
+template <>
+inline boost::optional<size_t> insertTargetPoint(
+  const double insert_point_length, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const double overlap_threshold)
+{
+  validateNonEmpty(points);
+
+  if (insert_point_length < 0.0) {
+    return boost::none;
+  }
+
+  // Get Nearest segment index
+  boost::optional<size_t> segment_idx = boost::none;
+  for (size_t i = 1; i < points.size(); ++i) {
+    const double length = calcSignedArcLength(points, 0, i);
+    if (insert_point_length <= length) {
+      segment_idx = i - 1;
+      break;
+    }
+  }
+
+  if (!segment_idx) {
+    return boost::none;
+  }
+
+  return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
 }  // namespace tier4_autoware_utils
 
