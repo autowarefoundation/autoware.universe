@@ -1,0 +1,4 @@
+**/.idea
+.vscode
+*.json
+cmake-build-debug
