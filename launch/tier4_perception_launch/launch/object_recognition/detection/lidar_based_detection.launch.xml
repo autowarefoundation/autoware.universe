@@ -34,11 +34,13 @@
     <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
       <arg name="input/objects" value="clusters"/>
       <arg name="output/objects" value="objects_with_feature"/>
+      <arg name="node_name" value="shape_estimation_clustering"/>
     </include>
     <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
     <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
       <arg name="input" value="objects_with_feature"/>
       <arg name="output" value="objects"/>
+      <arg name="node_name" value="detected_object_feature_remover_clustering"/>
     </include>
   </group>
 
@@ -64,15 +66,19 @@
     <group>
       <include file="$(find-pkg-share lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+        <arg name="output/objects" value="labeled_clusters"/>
       </include>
       <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+        <arg name="input/objects" value="labeled_clusters"/>
         <arg name="output/objects" value="objects_with_feature"/>
         <arg name="use_vehicle_reference_yaw" value="true"/>
+        <arg name="node_name" value="shape_estimation_apollo"/>
       </include>
       <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
       <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
         <arg name="input" value="objects_with_feature"/>
         <arg name="output" value="objects"/>
+        <arg name="node_name" value="detected_object_feature_remover_apollo"/>
       </include>
     </group>
   </group>
