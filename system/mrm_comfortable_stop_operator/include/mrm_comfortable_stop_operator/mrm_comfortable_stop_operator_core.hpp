@@ -70,8 +70,7 @@ private:
   void onTimer() const;
 
   // States
-  bool is_available_;
-  bool is_operating_;
+  autoware_ad_api_msgs::msg::MRMBehaviorStatus status_;
 
 };
 

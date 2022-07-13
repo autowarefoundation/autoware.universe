@@ -46,32 +46,28 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
     this, get_clock(), update_period_ns, std::bind(&MRMComfortableStopOperator::onTimer, this));
 
   // Initialize
-  is_available_ = true;
-  is_operating_ = false;
+  status_.is_available = true;
+  status_.is_operating = false;
 }
 
 void MRMComfortableStopOperator::operateComfortableStop(
     const autoware_ad_api_msgs::srv::MRMOperation::Request::SharedPtr request,
     const autoware_ad_api_msgs::srv::MRMOperation::Response::SharedPtr response)
 {
-  if(request->operate == true) {
+  if (request->operate == true) {
     publishVelocityLimit();
-    is_operating_ = true;
+    status_.is_operating = true;
     response->response.success = true;
   } else {
     publishVelocityLimitClearCommand();
-    is_operating_ = false;
+    status_.is_operating = false;
     response->response.success = true;
   }
 }
 
 void MRMComfortableStopOperator::publishStatus() const
 {
-  auto status = autoware_ad_api_msgs::msg::MRMBehaviorStatus();
-  status.is_available = is_available_;
-  status.is_operating = is_operating_;
-
-  pub_status_->publish(status);
+  pub_status_->publish(status_);
 }
 
 void MRMComfortableStopOperator::publishVelocityLimit() const
