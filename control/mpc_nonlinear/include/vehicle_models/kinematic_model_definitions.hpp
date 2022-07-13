@@ -17,18 +17,38 @@
 #ifndef VEHICLE_MODELS__KINEMATIC_MODEL_DEFINITIONS_HPP_
 #define VEHICLE_MODELS__KINEMATIC_MODEL_DEFINITIONS_HPP_
 
-// enum class Dimensions : int
-// {
-//    dSTATE_DIM = 8,  // number of states [Xw, Yw, psi, s, e_y, e_yaw, vx, delta]
-//    where "e" stands for error.
-//    dINPUT_DIM = 2,  // number of inputs [speed input, steering input]
-//    dPARAM_DIM = 1,  // number of varying parameters  : if we use it is kappa.
-//    deSTATE_DIM = 4  // Error states, [e_y, e_yaw, vx, delta] //
-// };
-
 constexpr int STATE_DIM = 8 + 1;  // additional state for the virtual car svirtual.
 constexpr int INPUT_DIM = 2;
 constexpr int PARAM_DIM = 2;  // [kappa, vx_target]
 constexpr int eSTATE_DIM = 4;
+
+/**
+ * states = ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
+ * controls = [vx input, steering input]
+ * */
+enum class VehicleStateIds
+{
+  X = 0,
+  Y = 1,
+  yaw = 2,
+  s = 3,
+  ey = 4,
+  eyaw = 5,
+  vx = 6,
+  steering = 7,
+  vy = 8
+};
+
+enum class VehicleControlIds
+{
+  u_vx = 0,
+  u_steering = 1
+};
+
+enum class VehicleParamIds
+{
+  curvature = 0,
+  target_vx = 1
+};
 
 #endif  // VEHICLE_MODELS__KINEMATIC_MODEL_DEFINITIONS_HPP_
