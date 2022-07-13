@@ -930,13 +930,16 @@ geometry_msgs::msg::Point ObstacleCruisePlannerNode::calcNearestCollisionPoint(
   std::array<geometry_msgs::msg::Point, 2> segment_points;
   if (first_within_idx == 0) {
     const auto & traj_front_pose = decimated_traj.points.at(0).pose;
-    segment_points.at(0) = traj_front_pose.position;
-
-    const double signed_ego_offset = is_driving_forward ? vehicle_info_.max_longitudinal_offset_m
-                                                        : vehicle_info_.min_longitudinal_offset_m;
-    const auto ego_offset_pos =
-      tier4_autoware_utils::calcOffsetPose(traj_front_pose, signed_ego_offset, 0.0, 0.0).position;
-    segment_points.at(1) = ego_offset_pos;
+    const auto front_pos = tier4_autoware_utils::calcOffsetPose(
+                             traj_front_pose, vehicle_info_.max_longitudinal_offset_m, 0.0, 0.0)
+                             .position;
+    if (is_driving_forward) {
+      segment_points.at(0) = traj_front_pose.position;
+      segment_points.at(1) = front_pos;
+    } else {
+      segment_points.at(0) = front_pos;
+      segment_points.at(1) = traj_front_pose.position;
+    }
   } else {
     const size_t seg_idx = first_within_idx - 1;
     segment_points.at(0) = decimated_traj.points.at(seg_idx).pose.position;
