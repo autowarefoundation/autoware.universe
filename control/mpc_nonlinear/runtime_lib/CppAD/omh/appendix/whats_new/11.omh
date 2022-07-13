@@ -1,0 +1,992 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin whats_new_11$$
+$spell
+    mul
+    autotools
+    eps
+    cxx
+    namespace
+    boostvector
+    mega
+    inv
+    bthread
+    pthread
+    pthreads
+    Std
+    retape
+    cygwin
+    vcproj
+    pthread
+    https
+    abs_geq
+    CondExpRel
+    num
+    Taylor
+    Tanh
+    Rosen
+    Runge
+    executables
+    matlab
+    Addr
+    sizeof
+    undefine
+    config
+    adolc
+    initializer
+    vec
+    Bool
+    op
+    omp_alloc
+    isnan
+    gcc
+    hasnan
+    instantiation
+    Microsoft
+    svn
+    hes
+    openmp
+    prefixdir
+    pkgconfig
+    Fadbad
+    Wshadow
+    omh
+    dir
+    libspeed
+    cppad_ipopt_nlp.hpp
+    automake
+    makefile
+    builddir
+    gpl
+    http://www.coin-or.org/download/source/CppAD/cppad-20110101.0.cpl.tgz
+$$
+
+$section Changes and Additions to CppAD During 2011$$
+
+$head Introduction$$
+This section contains a list of the changes to CppAD during 2011
+(in reverse order by date).
+The purpose of this section is to
+assist you in learning about changes between various versions of CppAD.
+
+$head 12-30$$
+$list number$$
+There was a bug when using $cref abs$$ with an $code AD< AD<double> >$$
+argument, whereby the corresponding $code AD<double>$$ operation sequence
+depended on the value of the argument to the $code abs$$ function.
+$lnext
+Change the specifications for the derivative of the $cref abs$$
+function to be the $cref sign$$ function instead of a directional derivative.
+$lnext
+Add the $cref sign$$ function to the $codei%AD<%Base%>%$$ list of
+available functions.
+In addition, add the
+$cref%sign%base_std_math%sign%$$ function to the list of
+$cref%base type requirements%base_require%$$.
+$lend
+
+$head 12-28$$
+The file $cref/time_test.hpp/time_test/Include/$$
+was not being included by $code cppad/cppad.hpp$$.
+This has been fixed.
+
+$head 12-21$$
+The types
+$code SizeVector$$,
+$code NumberVector$$,
+$code ADNumber$$, and
+$code ADVector$$,
+were in the global namespace and this was causing warnings
+about the shadowing of these declarations.
+The
+$cref/cppad_ipopt namespace/cppad_ipopt_nlp/cppad_ipopt namespace/$$
+was created to avoid these problems.
+The simplest way to make old $cref cppad_ipopt_nlp$$ code work with this
+change is to use the command
+$codep
+    using namespace cppad_ipopt;
+$$
+
+$head 12-20$$
+$list number$$
+Change $code team_start$$ to $cref/team_create/team_thread.hpp/team_create/$$
+and $code team_stop$$ to $cref/team_destroy/team_thread.hpp/team_destroy/$$.
+$lnext
+Change $code NDEBUG$$ mentions to include link to
+$cref/NDEBUG/Faq/Speed/NDEBUG/$$.
+$lnext
+Improve $cref memory_leak$$ documentation.
+$lend
+
+$head 11-29$$
+THe $cref time_test$$ routine was still executing the
+test at least twice, even if that was not necessary for the specified
+minimum time. This has been fixed.
+
+$head 11-27$$
+Move $code multi_thread.cpp$$ to $cref thread_test.cpp$$
+and fix its $cref/running/thread_test.cpp/Running Tests/$$ instructions.
+
+$head 11-24$$
+Create $cref preprocessor$$ section with pointers to all the
+preprocessor symbols that are in the CppAD API.
+
+$head 11-21$$
+Separate $cref/--with-boostvector/autotools/--with-testvector/$$
+for $cref/boost_dir/autotools/boost_dir/$$.
+This enables one to specify $icode boost_dir$$ for
+$cref team_bthread.cpp$$ with out using boost vectors.
+
+$head 11-20$$
+$list number$$
+Move $code sum_i_inv.cpp$$ to $cref harmonic.cpp$$.
+$lnext
+Include the date, time, CppAD version, and
+$cref/team_name/team_thread.hpp/team_name/$$ in the
+$cref thread_test.cpp$$ output.
+$lend
+
+$head 11-18$$
+$list number$$
+The $cref thread_test.cpp$$ program was truncating $icode test_time$$
+to the nearest integer.
+This has been fixed.
+$lnext
+The $cref time_test$$ routine has been made more efficient and now
+check for the case where only one execution of the test is necessary
+to achieve the desired $icode test_time$$
+(it used to always run at least two).
+$lnext
+The $code sum_i_inv_time.cpp$$ and $cref multi_newton.cpp$$
+routines were calling the test an extra time at the end to check for
+correctness.
+The results of the last test are now cached and used for the correctness
+test so that an extra call is not necessary (to make the tests run faster
+when only a few repetitions are necessary).
+$lend
+
+
+$head 11-17$$
+$list number$$
+Create another speed testing routine $cref time_test$$ which is
+like $cref speed_test$$ but it returns the time instead of rate
+and as a $code double$$ instead of a $code size_t$$.
+The use it for the timing tests in
+$code sum_i_inv_time.cpp$$ and $cref multi_newton_time$$.
+$lnext
+Add $icode test_time$$ as a command line argument
+to the multi-threading $code sum_i_inv$$
+and $cref/multi_newton/thread_test.cpp/multi_newton/$$
+timing tests.
+$lend
+
+
+$head 11-09$$
+Change $code thread_team.hpp$$ to $cref team_thread.hpp$$ and do
+the same for all other names that ended in $code _team$$; e.g.,
+$cref team_openmp.cpp$$.
+
+$head 11-07$$
+The users choice for $cref test_vector$$ was not actually changing
+the tests that the user ran. This have been fixed.
+
+$head 11-06$$
+Make all the output generated by $cref multi_newton.cpp$$ valid
+matlab and octave input so it is easy to plot the results.
+
+$head 11-04$$
+Use thread specific data to simplify $cref team_openmp.cpp$$.
+
+$head 11-01$$
+Make $cref team_bthread.cpp$$ more similar to $cref team_pthread.cpp$$.
+
+$head 10-30$$
+$list number$$
+Reorganize and improve the $cref multi_thread$$ section and its subsections.
+$lnext
+There was a bug in $cref multi_newton.cpp$$ that only showed up when
+the number of threads was greater than or equal 4.
+This has been fixed.
+In addition,
+$cref/CPPAD_MAX_NUM_THREADS/multi_thread/CPPAD_MAX_NUM_THREADS/$$
+was increased from 2 to 4 (to enable testing for this bug).
+$lnext
+The accuracy expected in the $code  sum_i_inv.cpp$$ results were failing
+when $code mega_sum$$ was large.
+This check has been modified to include a correction for $icode mega_sum$$.
+$lend
+
+$head 10-29$$
+The following changes were merged in from $code branches/thread$$:
+
+$list number$$
+Move $code openmp$$ to $code example/multi_thread/openmp$$.
+and create $code example/multi_thread/bthread$$, $code multi_thread/pthread$$
+with similar tests.
+$lnext
+Put multi-threading common code in $code multi_thread$$ directory
+and threading system specific code in $codei%example/multi_thread/%threading%$$
+for $icode threading$$ equal to $code openmp$$, $code bthread$$,
+and $code pthread$$.
+$lnext
+Update the README file.
+$lnext
+Remove the $code bug/optimize.sh$$ file (no longer a bug).
+$lnext
+Make $code arc_tan.cpp$$
+utility that can be used by multiple multi-threading tests.
+$lnext
+Create $cref team_thread.hpp$$ specifications,
+move OpenMP management to $cref team_openmp.cpp$$,
+Boost thread management to $cref team_bthread.cpp$$,
+and pthread management to $cref team_pthread.cpp$$.
+$lnext
+All of the make files were modified so that the command
+$codep
+    make test
+$$
+would run the tests for the current directory.
+$lnext
+Extend the multi-threading speed tests
+$code sum_i_inv.cpp$$ and $cref multi_newton.cpp$$ so they run
+using Boost threads and pthreads (as well as OpenMP threads).
+$lend
+
+$head 10-14$$
+Fix some compiler warnings about shadowed variables that were
+detected by $code g++$$ version $code 4.6.1 20110908$$.
+
+$head 10-12$$
+$list number$$
+The MAC version of the $code pthread$$ library does not include the
+$code pthread_barrier_wait$$ function; i.e., is not compliant with
+the IEEE Std 1003.1, 2004 Edition for $code pthread$$.
+This caused the $code pthread_simple_ad.cpp$$ to fail to compile on the MAC.
+This has been fixed by not compiling the $code pthread$$ examples
+unless $code pthread_barrier_wait$$ is present.
+$lnext
+The $cref cppad_ipopt_nlp$$ routine has been changed to
+$cref optimize$$ the functions $latex r_k (u)$$ such that
+$codei%retape(%k%)%$$ is false.
+$lend
+
+$head 09-06$$
+$list number$$
+Add the
+$href%
+    http://www.boost.org/doc/libs/1_47_0/doc/html/thread.html%
+    boost multi-threading
+%$$
+examples $cref a11c_bthread.cpp$$ and $code bthread_simple_ad.cpp$$.
+$lnext
+Improve documentation for
+$cref/thread_num/ta_parallel_setup/thread_num/$$ argument
+to $code parallel_setup$$.
+$lnext
+More simplification of $code bthread_simple_ad.cpp$$ example.
+$lend
+
+$head 09-05$$
+Simply and fix some problems with $code pthread_simple_ad.cpp$$,
+including avoiding a $cref/Bug in Cygwin/team_pthread.cpp/Bug in Cygwin/$$.
+
+$head 09-02$$
+$list number$$
+The OpenMP speed test program $code openmp/run.cpp$$ was not setting
+the number of threads for the one thread case (so dynamic thread adjustment was
+used). This has been fixed.
+$lnext
+The $cref thread_alloc.cpp$$ example was missing from the
+Microsoft $code example/example.vcproj$$ file and a attempt was made
+to link to missing OpenMP routines (this has been fixed).
+In addition,
+some Microsoft compiler warning have been fixed; see the examples and tests
+in the Windows install instructions.
+$lnext
+There was an oversight,
+and $code CPPAD_MAX_NUM_THREAD$$
+was being set to 2 when $code _OPENMP$$ was not defined.
+This has been fixed and
+$cref/CPPAD_MAX_NUM_THREADS/multi_thread/CPPAD_MAX_NUM_THREADS/$$
+has been documented and is now part of the CppAD API.
+$lnext
+The $code pthread_simple_ad.cpp$$ test failed under cygwin.
+This was because the previous test $code openmp_ad.cpp$$ was
+set up calls to OpenMP routines that were still in effect
+when $code pthread/simple_ad$$ ran.
+This has been fixed by making
+$icode%num_threads% == 1%$$ a special case in
+$cref/parallel_setup/ta_parallel_setup/$$.
+$lend
+
+$head 09-01$$
+$list number$$
+Modify the CppAD trunk using the
+changes from svn revision 2060 to revision 2081 in the branch
+$codep
+    https://projects.coin-or.org/svn/CppAD/branches/pthread
+$$
+These changes are described below under the headings
+$cref/08-21/whats_new_11/09-01/08-21/$$ through
+$cref/08-31/whats_new_11/09-01/08-31/$$.
+$lnext
+There was a bug in the $cref atomic_one$$ functions
+in the case where none of the elements of the argument to the function
+was a $cref/variable/glossary/Variable/$$.
+This has been fixed.
+In addition, old_tan.cpp generated an assert for this
+case and this has also been fixed (in addition to including an example
+for this case).
+$lend
+
+$subhead 08-31$$
+$list number$$
+Move the $code sum_i_inv_time.cpp$$ test from
+$code openmp/run.sh$$ to $code openmp/run.cpp$$.
+$lnext
+Change $code --with-openmp$$ to
+$cref/OPENMP_FLAGS=openmp_flags/autotools/openmp_flags/$$ configure
+command line argument.
+$lend
+
+$subhead 08-30$$
+$list number$$
+Create the $code openmp/run.cpp$$ program
+and move the $code openmp_multi_newton.cpp$$ test from
+$code openmp/run.sh$$ to $code openmp/run.cpp$$.
+This uses $cref/configure/autotools/Configure/$$
+information for building the tests.
+$lnext
+Document the $code --with-openmp$$ configure
+command line argument.
+$lnext
+Move $code openmp/multi_newton.hpp$$ to
+$code openmp/newton_method.hpp$$ and
+$code openmp/multi_newton.cpp$$ to
+$code openmp/newton_example.cpp$$.
+$lend
+
+$subhead 08-25$$
+$list number$$
+Replace $cref omp_alloc$$ by $cref thread_alloc$$ in
+$cref multi_thread$$, the section on how to use CppAD in parallel.
+$lnext
+Implement $cref omp_alloc$$ as links to corresponding $cref thread_alloc$$
+sections.
+$lnext
+Create the $code pthread_simple_ad.cpp$$ example that does AD using the
+pthread library.
+In addition, fix some problems in $code openmp_simple_ad.cpp$$
+$lnext
+Move $code openmp/example_a11c.cpp$$ to
+$cref|example/a11c_openmp.cpp|a11c_openmp.cpp|$$.
+$lnext
+Move $code openmp/parallel_ad.cpp$$ to
+$code openmp_simple_ad.cpp$$.
+$lend
+
+$subhead 08-23$$
+Beginning steps in replacing $cref omp_alloc$$ by $cref thread_alloc$$:
+$list number$$
+Replace $cref omp_alloc$$ by $cref thread_alloc$$
+in the $cref/utilities/utility/$$.
+$lnext
+move $cref omp_alloc$$ to the deprecated section of the
+documentation.
+$lnext
+Change all $cref omp_alloc$$ section names to begin with $code omp_$$,
+and change all $cref thread_alloc$$ section names to begin with $code new_$$.
+$lnext
+Convert $cref CppAD_vector$$ from using $cref omp_alloc$$ to using
+$cref thread_alloc$$ for memory allocation.
+$lnext
+Extend the $cref memory_leak$$ routine to also check the
+$cref thread_alloc$$ allocator.
+$lend
+
+$subhead 08-21$$
+Create the OpenMP and pthread examples
+$cref a11c_openmp.cpp$$,
+$cref a11c_pthread.cpp$$, and
+$code openmp_simple_ad.cpp$$.
+These OpenMP examples were originally in the $code openmp$$ directory,
+and have been moved, and modified to conform, to the normal example directory.
+
+$head 08-11$$
+Modify the CppAD trunk using the
+changes from svn revision 2044 to revision 2056 in the branch
+$codep
+    https://projects.coin-or.org/svn/CppAD/branches/base_require
+$$
+These changes are described below under the headings
+$cref/08-04/whats_new_11/08-11/08-04/$$ through
+$cref/08-10/whats_new_11/08-11/08-10/$$.
+
+$subhead 08-10$$
+$list number$$
+Add the output stream optional argument $icode s$$ in
+$codei%
+    %f%.Forward(0, %x%, %s%)
+%$$
+See $cref/zero order forward mode/forward_zero/$$ and $cref PrintFor$$.
+$lnext
+Improve omp_alloc.cpp example.
+$lend
+
+
+$subhead 08-09$$
+$list number$$
+$cref base_require$$:
+Add $cref/epsilon/numeric_limits/epsilon/$$ to the
+$icode Base$$ type requirements.
+$lnext
+Extend $code epsilon$$ to AD types.
+$lend
+
+$subhead 08-08$$
+$list number$$
+Improve the $cref base_require$$ documentation for
+$cref/standard math functions/base_std_math/$$.
+$lnext
+$cref base_require$$:
+Add $code abs_geq$$ to the $cref/requirements/base_require/$$
+for a user defined $icode Base$$ type.
+$lnext
+Check that zero order forward mode results are approximately equal,
+instead of exactly equal,
+after an $cref optimize$$ operation.
+This fixes a bug in the optimize correctness check
+(The  order of operations can be changed by $code optimize$$
+and hence the zero order forward mode results may not be exactly the same.)
+$lend
+
+$subhead 08-07$$
+Improve the $cref base_require$$ documentation for
+$cref/EqualOpSeq/base_identical/EqualOpSeq/$$,
+$cref/Identical/base_identical/Identical/$$
+$cref/Integer/base_require/Integer/$$, and
+$cref/Ordered/base_ordered/$$
+operations.
+
+$subhead 08-06$$
+Add the $cref/CondExpRel/base_cond_exp/CondExpRel/$$ paragraph to the
+base requirements documentation.
+This was missing and are required for
+$cref CondExp$$ to work with $codei%AD<%Base%>%$$ arguments
+and a non-standard $icode Base$$ type.
+
+$subhead 08-04$$
+$list number$$
+$cref base_require$$:
+Change the $cref/include/base_require/Include Order/$$ file name to
+$cref/base_require.hpp/base_require/$$.
+$lnext
+Use $cref base_float.hpp$$ and $cref base_double.hpp$$ as additional examples
+for the $cref/CondExp Base requirements/base_cond_exp/$$
+requirements.
+$lend
+
+$head 08-03$$
+Change $cref PrintFor$$ condition from less than or equal zero
+to not greater than zero;i.e., not positive.
+This makes $code nan$$ print because it results in false for all comparisons.
+
+$head 08-02$$
+$list number$$
+Change $cref PrintFor$$ so it no longer aborts execution when
+there is no operation sequence being recording; see
+$cref/start recording/Independent/Start Recording/$$.
+$lnext
+Improve the $cref print_for_cout.cpp$$ example.
+$lend
+
+$head 07-31$$
+Add a conditional version of the $cref PrintFor$$ command
+$codei%
+    PrintFor(%text%, %y%, %z%)
+%$$
+which only prints when $icode%z% <= 0%$$.
+This is useful for error reporting during forward mode; i.e.,
+reporting when the argument to the $code log$$ function is not valid.
+
+$head 07-29$$
+$list number$$
+The routines $cref/set_max_num_threads/omp_max_num_threads/$$ and
+$code get_max_num_threads$$ were created.
+User's will need to replace calls to
+$cref/max_num_threads/old_max_num_threads/$$
+by calls to $code set_max_num_threads$$.
+$lnext
+The functions $cref omp_efficient$$ was deprecated because it
+has not been shown to be useful.
+$lend
+
+$head 07-28$$
+$list number$$
+Change $cref omp_return_memory$$ so that if $cref omp_max_num_threads$$ is one
+(the default), $cref omp_alloc$$ does not hold onto memory
+(keep it available for the corresponding thread).
+$lnext
+Add files that were missing from the Microsoft Visual Studio
+$code example$$ and $code test_more$$ subdirectory
+project files.
+$lnext
+Fix some warnings generated by Microsoft Visual Studio 2010 build.
+$lend
+
+$head 07-27$$
+Make $code tan$$ and $code tanh$$ $cref/atomic_base/glossary/Operation/Atomic/$$
+operations; see $cref tan_forward$$ and $cref tan_reverse$$.
+
+$head 07-25$$
+Finish the $cref atomic_one$$ example old_tan.cpp.
+This is also a design and implementation of the routines necessary
+to make $code tan$$ and $code tanh$$ CppAD atomic operations.
+
+$head 07-18$$
+The reverse mode formulas for $latex Z(t)$$ need to involve
+the lower order Taylor coefficients for $latex Y(t)$$.
+This has been fixed in $cref tan_reverse$$.
+
+$head 07-17$$
+$list number$$
+Fix bug in $cref atomic_one$$ functions.
+To be specific, the Taylor coefficients for $latex y$$,
+of order less than $icode k$$,
+were not passed into the $code atomic_one$$
+$cref/forward/atomic_one/forward/$$ callback function.
+$lnext
+Derive the theory for including the tangent and hyperbolic tangent
+as CppAD atomic operations $cref tan_forward$$ and $cref tan_reverse$$;
+see the wish list item $code Tan and Tanh$$.
+$lnext
+Implement and test forward mode calculation of derivative for
+the tangent and hyperbolic tangent functions;
+see the new $cref atomic_one$$ example old_tan.cpp.
+$lend
+
+$head 07-14$$
+$list number$$
+The $cref autotools$$ instructions for running the individual
+correctness and speed tests were out of date.
+This has been fixed; see
+$cref/example and tests/autotools/make/Examples and Tests/$$.
+$lnext
+Move $code parallel_ad.cpp$$ from $code example$$ directory
+to $code openmp$$ directory (and convert it from a function to a program).
+$lnext
+Simplify $code example_a11c.cpp$$ by making it just a correctness test.
+$lnext
+Change $code openmp/run.sh$$ so that it runs correctness tests with
+the compiler debugging flags.
+$lend
+
+$head 07-13$$
+$list number$$
+static hash code data that was begin used by multiple threads
+when recording $codei%AD<%Base%>%$$ operations
+$cref omp_in_parallel$$ execution mode. This has been fixed.
+$lnext
+Make the sparse calculations safe
+for use during $cref omp_in_parallel$$ execution mode.
+$lnext
+Add the $code parallel_ad.cpp$$ example.
+$lnext
+Change $code example_a11c.cpp$$ example so that is just a correctness
+(not speed) test.
+$lend
+
+$head 07-11$$
+$list number$$
+Change the upper limit for
+$cref omp_max_num_threads$$ from 32 to 48.
+$lnext
+Add $cref/parallel/ta_in_parallel/$$ documentation for,
+$code nan$$,
+$cref/Rosen34/Rosen34/Parallel Mode/$$, and
+$cref/Runge45/Runge45/Parallel Mode/$$.
+$lnext
+Fix $cref CheckNumericType$$ and $cref CheckSimpleVector$$
+so they work properly when used in parallel mode.
+$lend
+
+
+$subhead openmp/run.sh$$
+The following changes were made to $code openmp/run.sh$$:
+$list number$$
+$lnext
+Change to $code openmp/run.sh$$
+maximum number of threads
+instead of specifying the entire set of values to be tested.
+$lnext
+Change settings for
+$code newton_example$$
+so that $code n_gird$$ is a multiple of the maximum number of threads.
+$lnext
+Report dynamic number of thread
+results as a separate result in the summary output line.
+$lnext
+Fix automatic removal of executables from $code openmp$$ directory
+(was commented out).
+$lnext
+The documentation for $code openmp/run.sh$$ was moved to the
+$code multi_thread$$ section.
+$lend
+
+
+$head 07-10$$
+$list number$$
+Add link to $tref Discrete$$ in $cref multi_thread$$.
+$lnext
+Make use of the $cref TrackNewDel$$ routines
+$cref omp_in_parallel$$ execution mode an error (it never worked properly);
+see $cref/TrackNewDel multi-threading/TrackNewDel/Multi-Threading/$$.
+$lnext
+Change $cref memory_leak$$ so that it checks for a leak in all threads.
+This is what $code openmp_newton_example.cpp$$ and
+$code sum_i_inv_time.cpp$$
+assumed was being done.
+$lend
+
+$head 07-09$$
+All the OpenMP parallel execution requirements
+have been grouped in the section $cref multi_thread$$.
+
+$head 07-07$$
+Add the routine $cref parallel_ad$$ to fix bug when using
+$codei%AD<%Base%>%$$ in $cref/parallel/omp_in_parallel/$$ execution mode.
+
+$head 06-23$$
+$list number$$
+Fix a bug whereby the assert
+$codei%
+    Error detected by false result for
+        ! omp_in_parallel()
+    at line %n% in the file
+    %prefix%/include/cppad/omp_alloc.hpp
+%$$
+sometimes occurred.
+$lnext
+The routine $cref omp_max_thread$$ was deprecated,
+use the routine $cref omp_max_num_threads$$ instead.
+$lnext
+The deprecated routines have been grouped together in the
+$cref deprecated$$ section of the CppAD manual.
+$lend
+
+$head 06-21$$
+$list number$$
+The $code openmp/run.sh$$ routine was changed to use zero,
+instead of $code automatic$$, for automatic choice of
+$code openmp/run.sh$$
+number of repeats
+and
+maximum number of threads.
+
+$lnext
+The output of each of the OpenMP examples / speed tests
+(run by $code openmp/run.sh$$)
+was changed to be valid matlab / octave assignment statements.
+
+$lnext
+In the case where OpenMP is enabled during compilation,
+a summary for the different number of threads as added at the end of
+the $code openmp/run.sh$$ output.
+
+$lend
+
+$head 06-18$$
+$list number$$
+The $cref/tape_addr_type/autotools/tape_addr_type/$$ option was added
+to the $cref/configure/autotools/Configure/$$ command line.
+$lnext
+The function $cref/size_op_seq/fun_property/size_op_seq/$$ results uses
+$code sizeof(CppAD_TAPE_ADDR_TYPE)$$
+where it used to use $code sizeof(size_t)$$.
+$lnext
+Remove $code cppad/config.h$$ from CppAD distribution,
+(put the information in $code cppad/configure.hpp$$.)
+This removes the need to undefine symbols that were
+defined by $code cppad/config.h$$ and that did not begin with $code CPPAD_$$.
+$lnext
+Change $cref/adolc/autotools/adolc_dir/$$ library linkage so it
+works with version $code ADOL-C-2.2.0$$.
+$lend
+
+$head 05-29$$
+Fix bug (introduced on $cref/05-22/whats_new_11/05-22/$$)
+whereby constructor might not be called (but required) when the
+$cref/base type/base_require/$$ is not plain old data.
+
+$head 05-28$$
+$list number$$
+Add the $cref omp_efficient$$ routine to the $cref omp_alloc$$ system.
+$lnext
+Improve the $code omp_alloc$$ tracing so it prints the same pointer
+as returned to the user (not an offset version of that pointer).
+$lend
+
+$head 05-26$$
+Fix Visual Studio project files that were broken during the change on 05-22.
+In addition, in the file $code cppad/omp_alloc.hpp$$,
+suppress the following Microsoft Visual Studio warning
+$codep
+    warning C4345: behavior change: an object of POD type constructed with
+    an initializer of the form () will be default-initialized
+$$
+
+
+$head 05-22$$
+$list number$$
+The old memory tracking routines $cref TrackNewDel$$ have been deprecated.
+Their use should be replaced using the $cref omp_alloc$$
+a memory allocator which is designed to work well in a multi-threading OpenMP
+environment; see $cref/purpose/omp_alloc/Purpose/$$.
+$lnext
+The replacement of $code TrackNewDel$$ by $code omp_alloc$$
+has been throughout the CppAD source code, including the examples
+that used $code TrackNewDel$$; namely,
+$cref mul_level_adolc.cpp$$, $cref mul_level_adolc_ode.cpp$$.
+$lnext
+The CppAD vector template class
+and the $cref/vectorBool/CppAD_vector/vectorBool/$$ class
+were modified to use the $code omp_alloc$$
+$cref/memory/CppAD_vector/Memory and Parallel Mode/$$ manager.
+This should improves its speed of memory allocation
+$cref omp_in_parallel$$ sections of a program.
+$lnext
+The $cref speed_test$$ argument
+$cref/size_vec/speed_test/size_vec/$$ call was by value,
+instead of by reference (as documented).
+This has been fixed and the call is now by reference.
+$lnext
+The $cref/capacity/CppAD_vector/capacity/$$ function has been added
+to the CppAD vector class.
+$lnext
+The simple vector
+$cref/
+    element constructor and destructor/
+    SimpleVector/
+    Element Constructor and Destructor
+/$$
+description has been changed to explicitly specify that the
+default constructor is used to initialize elements of the array.
+$lnext
+The $cref/size_op_seq/fun_property/size_op_seq/$$ documentation
+has been improved to mention that the allocated memory may be larger.
+$lend
+
+$head 05-11$$
+$list number$$
+Avoid ambiguity in the definition of the
+$cref/complex isnan/base_complex.hpp/isnan/$$ function.
+$lnext
+Errors during $code make test$$ were not
+being detected.
+This has been fixed.
+$lend
+
+$head 05-03$$
+$list number$$
+If $code NDEBUG$$ is not defined,
+the $cref/hasnan/nan/$$ function is used to make sure that the
+results of any $cref Forward$$ operation does not contain a
+nan (not a number).
+If so, an error message is generated and the program terminates.
+This error message and termination can be caught; see $cref ErrorHandler$$.
+
+$lnext
+In the event that the
+$cref cppad_ipopt_nlp$$ objective function, the constraints,
+or their derivatives are infinite,
+an error message is generated and the program terminates
+(proved that $code NDEBUG$$ is not defined and the default error
+handler has not been replaced).
+$lend
+
+$head 04-29$$
+$list number$$
+The Microsoft Visual Studio 2003 project files
+for the Windows examples and tests no longer worked because
+the current version of CppAD uses local types in template instantiation; see
+$href%
+    http://msdn.microsoft.com/en-us/library/bh44f2cb(v=vs.71).aspx%
+    Compiler Error C2918
+%$$.
+These project files were converted to Visual Studio 2008 where they do work
+(if you use a later version, Visual Studio should automatically
+convert them for you).
+
+$lnext
+The old speed test directory was moved to $code speed_cppad$$
+before the new $cref speed$$ test organization was created on 2006-12-11
+(revision 715 of the repository).
+The old speed tests have not been used for years and so have been deleted.
+$lend
+
+$head 04-20$$
+The $code openmp/run.sh$$ script what changed
+to take an argument that specifies which tests is run
+(it no longer runs all the tests).
+Also improve the openmp test program output formatting.
+
+$head 04-19$$
+The $icode use_ad$$ option was added to the
+$code openmp_newton_example.cpp$$ test case.
+
+$head 03-19$$
+The subversion write protected directory
+$code bin/.svn$$ was mistakenly part of the
+compressed tar file It has been removed.
+
+$head 03-11$$
+The vector of sets argument
+$cref/r/atomic_one/rev_hes_sparse/r/$$
+to the $code atomic_one$$ function $icode rev_hes_sparse$$
+must have size greater than or equal to $icode n$$.
+There was a check that its size was greater than or equal $icode q$$.
+This was incorrect and has been fixed.
+
+$head 03-05$$
+Add the $cref/conjugate gradient/conj_grad.cpp/$$ example.
+
+$head 02-22$$
+Add the $cref/atomic/speed_main/Global Options/atomic/$$ option to the
+speed test program and use
+old_mat_mul.hpp during the
+$cref cppad_mat_mul.cpp$$ speed test when the atomic option is specified.
+
+
+$head 02-19$$
+There was a bug when $cref omp_max_thread$$ was set to one,
+and $code NDEBUG$$ was not defined,
+the thread corresponding to parameters was one, but the only valid thread
+number was zero (only one thread)
+and an CPPAD stopped with an assertion error.
+This has been fixed.
+
+$head 02-17$$
+There was a mistake in $code openmp/run.sh$$ where it attempted
+to remove a non-existent file in the case where
+$code openmp/run.sh$$
+openmp_flag was not $code ""$$.
+This has been fixed.
+
+$head 02-15$$
+A matrix multiply speed test has been added.
+So far, this has only implemented for the
+$cref/cppad/cppad_mat_mul.cpp/$$ and $cref/double/double_mat_mul.cpp/$$ cases.
+(For the time being this test is not available for the other
+speed comparison cases.)
+
+$head 02-09$$
+A variable in $code atomic_one.hpp$$ was declare of type $icode Base$$
+when it should have been declared of type $code size_t$$.
+It caused the $cref atomic_one$$ feature to fail with some base types.
+This has been fixed.
+$pre
+
+$$
+The old_mat_mul.hpp example has been improved by
+caching the $latex x$$ variable information and using it during
+$cref/reverse Hessian sparsity/atomic_one/rev_hes_sparse/$$ calculations.
+$pre
+
+$$
+Some of the $cref atomic_one$$ documentation was extended to
+include more explanation.
+
+$head 02-06$$
+The use can now define complex $cref/atomic_base/atomic_one/$$ operations
+and store them in a CppAD $cref ADFun$$ object.
+This item has been remove from the
+$cref/wish list/wish_list/$$.
+$pre
+
+$$
+The documentation for $cref RevSparseHes$$ had a dimension error.
+This has been fixed.
+$pre
+
+$$
+A faster set operations item was added to the wish list.
+This has since been satisfied by
+$code cppad_sparse_list$$ choice during
+the install process (since removed).
+
+$head 02-02$$
+The documentation for $cref ForSparseJac$$ had some formatting errors.
+The errors have been fix and the documentation has been improved.
+
+$head 02-01$$
+The subversion
+install instructions were brought up to date.
+They have since been replaced by just separate
+$code subversion$$ instructions.
+
+$head 01-19$$
+The directory where the $cref pkgconfig$$ file $code cppad.pc$$
+is stored has been moved from
+$icode%prefixdir%/lib/pkgconfig/cppad.pc%$$
+to
+$icode%prefixdir%/share/pkgconfig/cppad.pc%$$;
+see
+$href%http://lists.fedoraproject.org/pipermail/devel/2011-January/147915.html%
+devel@lists.fedoraproject.org%$$.
+
+$head 01-16$$
+The following have been fixed:
+$list number$$
+The install of the documentation failed
+when it was done from a directory other than the top source directory.
+$lnext
+The GPL distribution had the output of the
+$cref/configure/autotools/Configure/$$ command in it.
+$lnext
+Since the change on 01-09, the file
+$code omh/appendix/11.omh$$ has been required to build the
+documentation (and it has been missing from the distribution).
+$lnext
+Fadbad was generating warnings due to the $code -Wshadow$$ flag
+with the $code g++$$ compiler.
+The Fadbad $cref/speed/speed_fadbad/$$ tests have a special
+flag with this warning removed from the
+$cref/cxx_flags/autotools/cxx_flags/$$.
+$lend
+
+$head 01-09$$
+There were some problems running $code make test$$ in the releases
+$codei%
+http://www.coin-or.org/download/source/CppAD/cppad-20110101.0.%license%.tgz
+%$$
+where $icode license$$ is $code gpl$$ or $code cpl$$.
+$list number$$
+The version of automake used to build the corresponding
+$code makefile.in$$ files did not define $code abs_top_builddir$$.
+$lnext
+The include file $code cppad_ipopt_nlp.hpp$$ was always installed, even if
+$cref/ipopt_dir/autotools/ipopt_dir/$$ was not defined on the
+$code configure$$ command line.
+$lnext
+The speed test library $code libspeed.a$$ was being installed
+(it is only intended for testing).
+$lend
+These problems are fixed in the trunk
+and these fixes will be copied to the corresponding stable and
+release versions; i.e.,
+$codei%
+http://www.coin-or.org/download/source/CppAD/cppad-20110101.1.%license%.tgz
+%$$
+will not have this problem.
+
+$end

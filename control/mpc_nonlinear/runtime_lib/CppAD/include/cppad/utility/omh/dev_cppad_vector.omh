@@ -1,0 +1,29 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-19 Bradley M. Bell
+
+CppAD is distributed under the terms of the
+             Eclipse Public License Version 2.0.
+
+This Source Code may also be made available under the following
+Secondary License when the conditions for such availability set forth
+in the Eclipse Public License, Version 2.0 are satisfied:
+      GNU General Public License, Version 2.0 or later.
+---------------------------------------------------------------------------- */
+
+$begin dev_cppad_vector$$
+$spell
+    CppAD
+$$
+
+
+$section The CppAD Vector Template Class Developer Documentation$$
+
+$head User API$$
+$cref cppad_vector$$
+
+$childtable%
+    include/cppad/local/utility/cppad_vector_itr.hpp%
+    include/cppad/utility/vector.hpp
+%$$
+
+$end

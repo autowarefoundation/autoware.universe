@@ -1,0 +1,62 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin speed_fadbad$$
+$spell
+    cmake
+    FadbadDir
+    CppAD
+    Cygwin
+$$
+
+
+$section Speed Test Derivatives Using Fadbad$$
+
+$head Purpose$$
+CppAD has a set of speed tests that are used to compare
+Fadbad with other AD packages.
+This section links to the source code the Fadbad speed tests
+(any suggestions to make the Fadbad results faster are welcome).
+
+$head fadbad_prefix$$
+To run these tests,
+you must include the $cref fadbad_prefix$$
+in you $cref/cmake command/cmake/CMake Command/$$.
+
+
+$head Running Tests$$
+To build these speed tests, and run their correctness tests,
+execute the following commands starting in the
+$cref/build directory/cmake/Build Directory/$$:
+$codei%
+    cd speed/fadbad
+    make check_speed_fadbad VERBOSE=1
+%$$
+You can then run the corresponding speed tests
+with the following command
+$codei%
+    ./speed_fadbad speed %seed%
+%$$
+where $icode seed$$ is a positive integer.
+See $cref speed_main$$ for more options.
+
+$contents%
+    speed/fadbad/det_minor.cpp%
+    speed/fadbad/det_lu.cpp%
+    speed/fadbad/mat_mul.cpp%
+    speed/fadbad/ode.cpp%
+    speed/fadbad/poly.cpp%
+    speed/fadbad/sparse_hessian.cpp%
+    speed/fadbad/sparse_jacobian.cpp
+%$$
+
+$end

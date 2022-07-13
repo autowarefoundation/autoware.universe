@@ -1,0 +1,58 @@
+# -----------------------------------------------------------------------------
+# CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-20 Bradley M. Bell
+#
+# CppAD is distributed under the terms of the
+#              Eclipse Public License Version 2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary License when the conditions for such availability set forth
+# in the Eclipse Public License, Version 2.0 are satisfied:
+#       GNU General Public License, Version 2.0 or later.
+# -----------------------------------------------------------------------------
+# automake input file
+#
+# CppAD pusts all it's preprocessor definitions in the cppad/configure.hpp
+DEFS          =
+#
+check_PROGRAMS    = utility
+#
+AM_CXXFLAGS =  \
+	$(CXX_FLAGS) \
+	-I$(top_srcdir)/include \
+	$(BOOST_INCLUDE) \
+	$(EIGEN_INCLUDE)
+#
+#
+utility_SOURCES   = \
+	check_numeric_type.cpp \
+	check_simple_vector.cpp \
+	cppad_vector.cpp \
+	error_handler.cpp \
+	index_sort.cpp \
+	lu_factor.cpp \
+	lu_invert.cpp \
+	lu_solve.cpp \
+	nan.cpp \
+	near_equal.cpp \
+	ode_err_control.cpp \
+	ode_err_maxabs.cpp \
+	ode_gear_control.cpp \
+	ode_gear.cpp \
+	poly.cpp \
+	pow_int.cpp \
+	romberg_mul.cpp \
+	romberg_one.cpp \
+	runge45_1.cpp \
+	runge_45.cpp \
+	rosen_34.cpp \
+	set_union.cpp \
+	simple_vector.cpp \
+	sparse_rc.cpp \
+	sparse_rcv.cpp \
+	thread_alloc.cpp \
+	to_string.cpp \
+	utility.cpp \
+	vector_bool.cpp
+#
+test: check
+	./utility

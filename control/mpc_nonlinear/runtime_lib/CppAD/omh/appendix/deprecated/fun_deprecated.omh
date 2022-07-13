@@ -1,0 +1,180 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-21 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin FunDeprecated$$
+$spell
+    bool
+    VecAD
+    CppAD
+    const
+    Taylor
+    sizeof
+    var
+$$
+
+$section ADFun Object Deprecated Member Functions$$
+
+$head Syntax$$
+$icode%f%.Dependent(%y%)
+%$$
+$icode%o% = %f%.Order()
+%$$
+$icode%m% = %f%.Memory()
+%$$
+$icode%s% = %f%.Size()
+%$$
+$icode%t% = %f%.taylor_size()
+%$$
+$icode%u% = %f%.use_VecAD()
+%$$
+$icode%v% = %f%.size_taylor()
+%$$
+$icode%w% = %f%.capacity_taylor()
+%$$
+
+
+$head Purpose$$
+The $codei%ADFun<%Base%>%$$ functions documented here have been deprecated;
+i.e., they are no longer approved of and may be removed from some future
+version of CppAD.
+
+$head Dependent$$
+A recording of and AD of $icode Base$$
+$cref/operation sequence/glossary/Operation/Sequence/$$
+is started by a call of the form
+$codei%
+    Independent(%x%)
+%$$
+If there is only one such recording at the current time,
+you can use $icode%f%.Dependent(%y%)%$$ in place of
+$codei%
+    %f%.Dependent(%x%, %y%)
+%$$
+See $cref Dependent$$ for a description of this operation.
+
+$subhead Deprecated 2007-08-07$$
+This syntax was deprecated when CppAD was extended to allow
+for more than one $codei%AD<%Base%>%$$ recording to be
+active at one time.
+This was necessary to allow for multiple threading applications.
+
+$head Order$$
+The result $icode o$$ has prototype
+$codei%
+    size_t %o%
+%$$
+and is the order of the previous forward operation
+using the function $icode f$$.
+This is the highest order of the
+$cref/Taylor coefficients/glossary/Taylor Coefficient/$$
+that are currently stored in $icode f$$.
+
+$subhead Deprecated 2006-03-31$$
+Zero order corresponds to function values being stored in $icode f$$.
+In the future, we would like to be able to erase the function
+values so that $icode f$$ uses less memory.
+In this case, the return value of $code Order$$ would not make sense.
+Use $cref size_order$$ to obtain
+the number of Taylor coefficients currently stored
+in the ADFun object $icode f$$
+(which is equal to the order plus one).
+
+
+$head Memory$$
+The result
+$codei%
+    size_t %m%
+%$$
+and is the number of memory units ($code sizeof$$) required for the
+information currently stored in $icode f$$.
+This memory is returned to the system when the destructor for
+$icode f$$ is called.
+
+$subhead Deprecated 2006-03-31$$
+It used to be the case that an ADFun object just kept increasing its
+buffers to the maximum size necessary during its lifetime.
+It would then return the buffers to the system when its destructor
+was called.
+This is no longer the case, an ADFun object now returns memory
+when it no longer needs the values stored in that memory.
+Thus the $code Memory$$ function is no longer well defined.
+
+$head Size$$
+The result $icode s$$ has prototype
+$codei%
+    size_t %s%
+%$$
+and is the number of variables in the operation sequence plus the following:
+one for a phantom variable with tape address zero,
+one for each component of the domain that is a parameter.
+The amount of work and memory necessary for computing function values
+and derivatives using $icode f$$ is roughly proportional to $icode s$$.
+
+$subhead Deprecated 2006-04-03$$
+There are other sizes attached to an ADFun object, for example,
+the number of operations in the sequence.
+In order to avoid confusion with these other sizes,
+use $cref/size_var/fun_property/size_var/$$ to obtain
+the number of variables in the operation sequence.
+
+$head taylor_size$$
+The result $icode t$$ has prototype
+$codei%
+    size_t %t%
+%$$
+and is the number of Taylor coefficient orders
+currently calculated and stored in the ADFun object $icode f$$.
+
+$subhead Deprecated 2006-06-17$$
+This function has been replaced by $cref size_order$$.
+
+$head use_VecAD$$
+The result $icode u$$ has prototype
+$codei%
+    bool %u%
+%$$
+If it is true, the
+AD of $icode Base$$
+$cref/operation sequence/glossary/Operation/Sequence/$$
+stored in $icode f$$ contains
+$cref/VecAD/VecAD/VecAD<Base>::reference/$$ operands.
+Otherwise $icode u$$ is false.
+
+$subhead Deprecated 2006-04-08$$
+You can instead use
+$codei%
+    %u% = %f%.size_VecAD() > 0
+%$$
+
+$head size_taylor$$
+The result $icode v$$ has prototype
+$codei%
+    size_t %v%
+%$$
+and is the number of Taylor coefficient orders
+currently calculated and stored in the ADFun object $icode f$$.
+
+$subhead Deprecated 2014-03-18$$
+This function has been replaced by $cref size_order$$.
+
+$head capacity_taylor$$
+The result $icode w$$ has prototype
+$codei%
+    size_t %w%
+%$$
+and is the number of Taylor coefficient orders currently allocated
+in the ADFun object $icode f$$.
+
+$subhead Deprecated 2014-03-18$$
+This function has been replaced by $cref capacity_order$$.
+
+
+$end

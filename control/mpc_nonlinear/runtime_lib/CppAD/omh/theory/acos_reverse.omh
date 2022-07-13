@@ -1,0 +1,158 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-17 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin acos_reverse$$
+$spell
+    acosh
+    acos
+    Taylor
+$$
+
+$section Inverse Cosine and Hyperbolic Cosine Reverse Mode Theory$$
+
+
+We use the reverse theory
+$cref%standard math function
+    %ReverseTheory
+    %Standard Math Functions
+%$$
+definition for the functions $latex H$$ and $latex G$$.
+In addition, we use the forward mode notation in
+$cref acos_forward$$ for
+$latex \[
+\begin{array}{rcl}
+    Q(t) & = & \mp ( X(t) * X(t) - 1 ) \\
+    B(t) & = & \sqrt{ Q(t) }
+\end{array}
+\] $$
+We use $latex q$$ and $latex b$$
+for the $th p$$ order Taylor coefficient
+row vectors corresponding to these functions
+and replace $latex z^{(j)}$$ by
+$latex \[
+    ( z^{(j)} , b^{(j)} )
+\] $$
+in the definition for $latex G$$ and $latex H$$.
+The zero order forward mode formulas for the
+$cref/acos/acos_forward/$$
+function are
+$latex \[
+\begin{array}{rcl}
+    q^{(0)}  & = & \mp ( x^{(0)} x^{(0)} - 1) \\
+    b^{(0)}  & = & \sqrt{ q^{(0)} }    \\
+    z^{(0)}  & = & F ( x^{(0)} )
+\end{array}
+\] $$
+where $latex F(x) = \R{acos} (x)$$ for $latex -$$
+and $latex F(x) = \R{acosh} (x) $$ for $latex +$$.
+For orders $latex j$$ greater than zero we have
+$latex \[
+\begin{array}{rcl}
+q^{(j)} & = &
+    \mp \sum_{k=0}^j x^{(k)} x^{(j-k)}
+\\
+b^{(j)} & = &
+    \frac{1}{j} \frac{1}{ b^{(0)} }
+    \left(
+        \frac{j}{2} q^{(j)}
+        - \sum_{k=1}^{j-1} k b^{(k)} b^{(j-k)}
+    \right)
+\\
+z^{(j)} & = & \frac{1}{j} \frac{1}{ b^{(0)} }
+\left(
+    \mp j x^{(j)}
+    - \sum_{k=1}^{j-1} k z^{(k)}  b^{(j-k)}
+\right)
+\end{array}
+\] $$
+
+If $latex j = 0$$, we note that
+$latex F^{(1)} ( x^{(0)} ) =  \mp 1 / b^{(0)}$$ and hence
+
+$latex \[
+\begin{array}{rcl}
+\D{H}{ x^{(j)} } & = &
+\D{G}{ x^{(j)} }
++ \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(0)} }
++ \D{G}{ b^{(j)} } \D{ b^{(j)} }{ q^{(0)} } \D{ q^{(0)} }{ x^{(0)} }
+\\
+& = &
+\D{G}{ x^{(j)} }
+\mp \D{G}{ z^{(j)} } \frac{1}{ b^{(0)} }
+\mp \D{G}{ b^{(j)} } \frac{ x^{(0)} }{ b^{(0)} }
+\end{array}
+\] $$
+
+If $latex j > 0$$, then for $latex k = 1, \ldots , j-1$$
+
+$latex \[
+\begin{array}{rcl}
+\D{H}{ b^{(0)} } & = &
+\D{G}{ b^{(0)} }
++ \D{G}{ z^{(j)} } \D{ z^{(j)} }{ b^{(0)} }
++ \D{G}{ b^{(j)} } \D{ b^{(j)} }{ b^{(0)} }
+\\
+& = &
+\D{G}{ b^{(0)} }
+- \D{G}{ z^{(j)} } \frac{ z^{(j)} }{ b^{(0)} }
+- \D{G}{ b^{(j)} } \frac{ b^{(j)} }{ b^{(0)} }
+\\
+\D{H}{ x^{(0)} } & = &
+\D{G}{ x^{(0)} }
++
+\D{G}{ b^{(j)} } \D{ b^{(j)} }{ q^{(j)} } \D{ q^{(j)} }{ x^{(0)} }
+\\
+& = &
+\D{G}{ x^{(0)} }
+\mp \D{G}{ b^{(j)} } \frac{ x^{(j)} }{ b^{(0)} }
+\\
+\D{H}{ x^{(j)} } & = &
+\D{G}{ x^{(j)} }
++ \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(j)} }
++ \D{G}{ b^{(j)} } \D{ b^{(j)} }{ q^{(j)} } \D{ q^{(j)} }{ x^{(j)} }
+\\
+& = &
+\D{G}{ x^{(j)} }
+\mp \D{G}{ z^{(j)} } \frac{1}{ b^{(0)} }
+\mp \D{G}{ b^{(j)} } \frac{ x^{(0)} }{ b^{(0)} }
+\\
+\D{H}{ b^{(j - k)} } & = &
+\D{G}{ b^{(j - k)} }
++ \D{G}{ z^{(j)} } \D{ z^{(j)} }{ b^{(j - k)} }
++ \D{G}{ b^{(j)} } \D{ b^{(j)} }{ b^{(j - k)} }
+\\
+& = &
+\D{G}{ b^{(j - k)} }
+- \D{G}{ z^{(j)} } \frac{k z^{(k)} }{j b^{(0)} }
+- \D{G}{ b^{(j)} } \frac{ b^{(k)} }{ b^{(0)} }
+\\
+\D{H}{ x^{(k)} } & = &
+\D{G}{ x^{(k)} }
++ \D{G}{ z^{(j)} } \D{ z^{(j)} }{ x^{(k)} }
++ \D{G}{ b^{(j)} } \D{ b^{(j)} }{ q^{(j)} } \D{ q^{(j)} }{ x^{(k)} }
+\\
+& = &
+\D{G}{ x^{(k)} }
+\mp \D{G}{ b^{(j)} } \frac{ x^{(j-k)} }{ b^{(0)} }
+\\
+\D{H}{ z^{(k)} } & = &
+\D{G}{ z^{(k)} }
++ \D{G}{ z^{(j)} } \D{ z^{(j)} }{ z^{(k)} }
++ \D{G}{ b^{(j)} } \D{ b^{(j)} }{ z^{(k)} }
+\\
+& = &
+\D{G}{ z^{(k)} }
+- \D{G}{ z^{(j)} } \frac{k b^{(j-k)} }{ j b^{(0)} }
+\end{array}
+\] $$
+
+$end

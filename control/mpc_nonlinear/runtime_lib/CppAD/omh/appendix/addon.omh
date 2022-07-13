@@ -1,0 +1,105 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-18 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+$begin addon$$
+$spell
+    Perl
+    Addons
+    addon
+    libdir
+    includedir
+    libcppad
+    adcomp
+    CppAD
+    cppad.hpp
+    ons
+    namespace
+    cg
+    pycppad
+    py
+$$
+
+
+$section CppAD Addons$$
+
+$head Name$$
+Each CppAD addon has a short name which we denote by $icode name$$ below,
+a longer name $icode longer$$ and a $icode description$$:
+
+$table
+$icode name$$  $pre  $$ $cnext
+$icode longer$$ $pre  $$ $cnext
+$icode description$$
+$rnext
+$href%https://github.com/kaskr/adcomp%tmb%$$ $cnext
+    $code adcomp$$ $cnext
+    An R Interface to CppAD with Random Effects Modeling Utilities
+$rnext
+$href%https://github.com/joaoleal/CppADCodeGen/%cg%$$ $cnext
+    $code CppADCodeGen$$ $cnext
+    C++ Source Code Generation of CppAD Derivative Calculations
+$rnext
+$href%https://bradbell.github.io/cppad_mixed%mixed%$$
+    $cnext $code cppad_mixed$$ $cnext
+    A C++ Interface to Random Effects Laplace Approximation
+$rnext
+$href%https://bradbell.github.io/cppad_swig%swig%$$
+    $cnext $code cppad_swig$$ $cnext
+    A C++ AD Library with a Swig Interface to Perl, Octave, and Python
+$rnext
+$href%https://bradbell.github.io/cppad_py%py%$$
+    $cnext $code cppad_py$$ $cnext
+    A Python Interface to CppAD
+$rnext
+$href%http://www.seanet.com/~bradbell/pycppad/pycppad.htm%py%$$ $cnext
+    $code pycppad$$ $cnext
+    A Python Interface to CppAD (no longer being developed)
+$tend
+
+$head Include Files$$
+If $icode includedir$$ is the directory where the include files are installed,
+the file
+$codei%
+    %includedir%/include/cppad/%name%.hpp
+%$$
+and the directory
+$codei%
+    %includedir%/include/cppad/%name%
+%$$
+are reserved for use by the $icode name$$ addon.
+
+$head Library Files$$
+If $icode libdir$$ is the directory where CppAD library files are installed,
+files with the name
+$codei%
+    %libdir%/libcppad_%name%.%ext%
+    %libdir%/libcppad_%name%_%anything%.%ext%
+%$$
+where $icode anything$$ and $icode ext$$ are arbitrary,
+are reserved for use by the $icode name$$ addon.
+
+$head Preprocessor Symbols$$
+C++ preprocessor symbols that begin with
+$codei%
+    CPPAD_%NAME%_
+%$$
+where $icode NAME$$ is a upper-case version of $icode name$$,
+are reserved for use by the $icode name$$ addon.
+
+$head Namespace$$
+The C++ namespace
+$codei%
+    CppAD::%name%
+%$$
+is reserved for use by the $icode name$$ addon.
+
+
+$end

@@ -1,0 +1,69 @@
+/* --------------------------------------------------------------------------
+CppAD: C++ Algorithmic Differentiation: Copyright (C) 2003-15 Bradley M. Bell
+
+  CppAD is distributed under the terms of the
+               Eclipse Public License Version 2.0.
+
+  This Source Code may also be made available under the following
+  Secondary License when the conditions for such availability set forth
+  in the Eclipse Public License, Version 2.0 are satisfied:
+        GNU General Public License, Version 2.0 or later.
+-------------------------------------------------------------------------- */
+
+$begin NewFeature$$
+$spell
+    cppad.hpp
+    CppAD
+    Makefile
+    Microsoft
+    OMhelp
+    cvs
+    dsp
+    nobase
+$$
+
+$section Adding a New Feature to the CppAD Distribution$$
+
+$head Overview$$
+Suppose that you add a new feature to CppAD and the
+corresponding include file is $icode%Name%.h%$$.
+You should check each of the following steps:
+
+$list number$$
+Add the new file $icode%Name%.h%$$ to the cvs repository.
+
+$lnext
+Add a test file called $codei%example/%Name%.cpp%$$ that check
+for correct results (and run the test to make sure it works).
+
+$lnext
+Add the new file $codei%example/%Name%.cpp%$$ to the cvs repository.
+
+$lnext
+Add a call to the new test in the file $code example/example.cpp$$.
+
+$lnext
+Add the file $icode%Name%.cpp%$$ to the list of
+$code Example_SOURCES$$ in the file $code example/Makefile.am$$.
+
+$lnext
+Add the file $icode%Name%.cpp%$$ to the list of source files
+corresponding to the Microsoft C++ project file $code example/Example.dsp$$.
+
+$lnext
+Add the file $icode%Name%.h%$$ to the list of
+$code nobase_include_HEADERS$$ in the file $code Makefile.am$$.
+
+$lnext
+Add the new feature to the OMhelp documentation tree.
+
+$lnext
+Add the new feature the cppad/cppad.hpp include tree.
+
+$lnext
+Mention the new feature in the WhatsNew file for the current year.
+
+$lend
+
+
+$end
