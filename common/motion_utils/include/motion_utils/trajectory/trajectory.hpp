@@ -876,6 +876,7 @@ inline boost::optional<size_t> insertTargetPoint(
 
 /**
  * @brief calculate the point offset from source point along the trajectory (or path)
+ * @param start_segment_idx start index on the trajectory
  * @param insert_point_length length to insert point from the beginning of the points
  * @param points output points of trajectory, path, ...
  * @return index of insert point
@@ -915,6 +916,36 @@ inline boost::optional<size_t> insertTargetPoint(
     tier4_autoware_utils::getPoint(points.at(*segment_idx + 1)), ratio);
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
+}
+/**
+ * @brief calculate the point offset from source pose along the trajectory (or path)
+ * @param base_pose base pose on the trajectory
+ * @param insert_point_length length to insert point from the beginning of the points
+ * @param points output points of trajectory, path, ...
+ * @return index of insert point
+ */
+template <class T>
+inline boost::optional<size_t> insertTargetPoint(
+  const geometry_msgs::msg::Pose & src_pose, const double insert_point_length, T & points,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3)
+{
+  validateNonEmpty(points);
+
+  if (insert_point_length < 0.0) {
+    return boost::none;
+  }
+
+  const auto nearest_segment_idx = findNearestSegmentIndex(points, src_pose, max_dist, max_yaw);
+  if (!nearest_segment_idx) {
+    return boost::none;
+  }
+
+  const double offset_length =
+    std::fabs(calcLongitudinalOffsetToSegment(points, *nearest_segment_idx, src_pose.position));
+
+  return insertTargetPoint(
+    *nearest_segment_idx, offset_length + insert_point_length, points, overlap_threshold);
 }
 }  // namespace motion_utils
 
