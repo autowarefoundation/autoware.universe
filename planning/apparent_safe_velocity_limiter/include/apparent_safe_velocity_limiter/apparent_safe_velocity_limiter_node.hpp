@@ -143,21 +143,63 @@ private:
   static size_t calculateStartIndex(
     const Trajectory & trajectory, const size_t ego_idx, const Float start_distance);
 
-  Trajectory downsampleTrajectory(const Trajectory & trajectory, const size_t start_idx) const;
+  /// @brief downsample a trajectory, reducing its number of points by the given factor
+  /// @param[in] trajectory input trajectory
+  /// @param[in] start_idx starting index of the input trajectory
+  /// @param[in] factor factor used for downsampling
+  /// @return downsampled trajectory
+  Trajectory downsampleTrajectory(
+    const Trajectory & trajectory, const size_t start_idx, const int factor) const;
+
+  /// @brief create negative polygon masks from the dynamic objects
+  /// @return polygons inside which obstacles should be ignored
   multipolygon_t createPolygonMasks() const;
+
+  /// @brief create a polygon of the safety envelope
+  /// @details the safety envelope is the area covered by forward projections at each trajectory
+  /// point
+  /// @param[in] trajectory input trajectory
+  /// @param[in] start_idx starting index in the input trajectory
+  /// @param[in] projection_params parameters of the forward projection
+  /// @return the envelope polygon
   polygon_t createEnvelopePolygon(
     const Trajectory & trajectory, const size_t start_idx,
     ProjectionParameters & projections_params) const;
+
+  /// @brief validate the inputs of the node
+  /// @param[in] ego_idx trajectory index closest to the current ego pose
+  /// @return true if the inputs are valid
   bool validInputs(const boost::optional<size_t> & ego_idx);
+
+  /// @brief create linestrings around obstacles
+  /// @param[in] occupancy_grid occupancy grid
+  /// @param[in] pointcloud pointcloud
+  /// @param[in] polygon_masks negative masks where obstacles will be ignored
+  /// @param[in] envelope_polygon positive masks where obstacles must reside
+  /// @param[in] target_frame frame of the returned obstacles
+  /// @return linestrings representing obstacles to avoid
   multilinestring_t createObstacleLines(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid,
     const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
     const polygon_t & envelope_polygon, const std::string & target_frame);
+
+  /// @brief limit the velocity of the given trajectory
+  /// @param[in] trajectory input trajectory
+  /// @param[in] projection_params parameters used for forward projection
+  /// @param[in] obstacles obstacles that must be avoided by the forward projection
   multipolygon_t limitVelocity(
     Trajectory & trajectory, ProjectionParameters & projection_params,
     const multilinestring_t & obstacles) const;
+
+  /// @brief copy the velocity profile of a downsampled trajectory to the original trajectory
+  /// @param[in] downsampled_trajectory downsampled trajectory
+  /// @param[in] trajectory input trajectory
+  /// @param[in] start_idx starting index of the downsampled trajectory relative to the input
+  /// @param[in] factor downsampling factor
+  /// @return input trajectory with the velocity profile of the downsampled trajectory
   Trajectory copyDownsampledVelocity(
-    const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx) const;
+    const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
+    const int factor) const;
 };
 }  // namespace apparent_safe_velocity_limiter
 

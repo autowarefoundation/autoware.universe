@@ -42,15 +42,12 @@ std::vector<linestring_t> bicycleProjectionLines(
   point_t point;
   linestring_t line;
   // TODO(Maxime CLEMENT): use Eigen for faster calculation
-  // std::printf("Bicycle Projection: vel = %2.2f\n", params.velocity);
   for (const auto steering_offset : params.steering_angle_offsets) {
     point.x(origin.x);
     point.y(origin.y);
     line = {point};
     const auto steering_angle = params.steering_angle + steering_offset;
     const auto rotation_rate = params.velocity * std::tan(steering_angle) / params.wheel_base;
-    // if(params.velocity > 0.0)
-    //   std::printf("Steer angle = %2.2f, Rot rate = %2.2f\n", steering_angle, rotation_rate);
     for (auto i = 1; i < params.points_per_projection; ++i) {
       const auto t = i * dt;
       const auto heading = params.heading + rotation_rate * t;
@@ -58,11 +55,7 @@ std::vector<linestring_t> bicycleProjectionLines(
       point.x(origin.x + length * std::cos(heading));
       point.y(origin.y + length * std::sin(heading));
       line.push_back(point);
-      // if(params.velocity > 0.0)
-      //   std::printf("\t%2.2f | heading = %2.2f, x,y = (%2.2f, %2.2f)\n", t, heading, point.x(),
-      //   point.y());
     }
-    // add extra length to the last point
     lines.push_back(line);
   }
   return lines;

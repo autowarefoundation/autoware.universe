@@ -26,16 +26,24 @@ namespace apparent_safe_velocity_limiter
 /// @brief generate a segment to where ego would reach with constant velocity and heading
 /// @param [in] origin origin of the segment
 /// @param [in] params parameters of the forward projection
-/// @return segment from the trajectory_point to its position after duration + the extra_distance
+/// @return segment from the origin to its position after duration + the extra_distance
 segment_t forwardSimulatedSegment(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
 
-std::vector<segment_t> forwardSimulatedSegments(
-  const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
-
+/// @brief generate lines for the forward projection using the bicycle model
+/// @param [in] origin origin of the segment
+/// @param [in] params parameters of the forward projection
+/// @return lines from the origin to its positions after forward projection
 std::vector<linestring_t> bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
 
+/// @brief generate the footprint polygon of the forward projection
+/// @param [in] origin origin of the segment
+/// @param [in] params parameters of the forward projection
+/// @param [in] lateral_offset lateral offset around the projection to make the footprint
+/// @param [out] projected_straight_segment the segment of the forward projection
+/// @return lines from the origin to its positions after forward projection
+// TODO(Maxime CLEMENT): should return a linestring instead of a segment OR calc distance
 polygon_t forwardSimulatedPolygon(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params,
   const double lateral_offset, segment_t & projected_straight_segment);

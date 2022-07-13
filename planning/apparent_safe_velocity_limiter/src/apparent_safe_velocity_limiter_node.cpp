@@ -156,7 +156,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   if (!validInputs(ego_idx)) return;
 
   const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
-  Trajectory downsampled_traj = downsampleTrajectory(*msg, start_idx);
+  Trajectory downsampled_traj = downsampleTrajectory(*msg, start_idx, downsample_factor_);
   // TODO(Maxime CLEMENT): used for debugging, remove before merging
   double obs_mask_duration{};
   double obs_envelope_duration{};
@@ -175,7 +175,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, msg->header.frame_id);
   obs_filter_duration += stopwatch.toc("obs_filter_duration");
   const auto debug_polygons = limitVelocity(downsampled_traj, projection_params_, obstacles);
-  const auto safe_trajectory = copyDownsampledVelocity(downsampled_traj, *msg, start_idx);
+  auto safe_trajectory =
+    copyDownsampledVelocity(downsampled_traj, *msg, start_idx, downsample_factor_);
+  safe_trajectory.header.stamp = now();
 
   pub_trajectory_->publish(safe_trajectory);
 
@@ -222,12 +224,13 @@ size_t ApparentSafeVelocityLimiterNode::calculateStartIndex(
 }
 
 Trajectory ApparentSafeVelocityLimiterNode::downsampleTrajectory(
-  const Trajectory & trajectory, const size_t start_idx) const
+  const Trajectory & trajectory, const size_t start_idx, const int factor) const
 {
+  if (factor <= 1) return trajectory;
   Trajectory downsampled_traj;
   downsampled_traj.header = trajectory.header;
-  downsampled_traj.points.reserve(trajectory.points.size() / downsample_factor_);
-  for (size_t i = start_idx; i < trajectory.points.size(); i += downsample_factor_)
+  downsampled_traj.points.reserve(trajectory.points.size() / factor);
+  for (size_t i = start_idx; i < trajectory.points.size(); i += factor)
     downsampled_traj.points.push_back(trajectory.points[i]);
   return downsampled_traj;
 }
@@ -344,13 +347,14 @@ multipolygon_t ApparentSafeVelocityLimiterNode::limitVelocity(
 }
 
 Trajectory ApparentSafeVelocityLimiterNode::copyDownsampledVelocity(
-  const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx) const
+  const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
+  const int factor) const
 {
-  for (size_t i = 0; i < downsampled_traj.points.size(); ++i) {
-    trajectory.points[start_idx + i * downsample_factor_].longitudinal_velocity_mps =
+  const auto size = std::min(downsampled_traj.points.size(), trajectory.points.size());
+  for (size_t i = 0; i < size; ++i) {
+    trajectory.points[start_idx + i * factor].longitudinal_velocity_mps =
       downsampled_traj.points[i].longitudinal_velocity_mps;
   }
-  trajectory.header.stamp = now();
   return trajectory;
 }
 }  // namespace apparent_safe_velocity_limiter
