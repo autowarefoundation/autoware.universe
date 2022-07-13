@@ -117,6 +117,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
+  pub_dist_generator_ =
+    create_publisher<DisturbanceGeneratorReport>("output/disturbance_generator", QoS{1});
 
   /* set param callback */
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -185,6 +187,16 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   const float64_t wheelbase = vehicle_info.wheel_base_m;
 
+  // --- Start of Disturbance Generator initialization -----
+  /**
+   * @brief Create a time varying time-delay input disturbance instance from the parameters.
+   * If the time delay for the given control is zero an identity mapping is created.
+   * */
+  float64_t dt = static_cast<float64_t>(this->timer_sampling_time_ms_) / 1000.;
+  IDisturbanceCollection disturbance_collection;
+
+  Read_and_SetDisturbanceParams(dt, acc_time_delay, steer_time_delay, disturbance_collection);
+
   if (vehicle_model_type_str == "IDEAL_STEER_VEL") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_VEL;
     vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerVel>(wheelbase);
@@ -199,6 +211,11 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
+  } else if (vehicle_model_type_str == "DELAY_STEER_ACC_DIST") {
+    vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_DIST;
+    vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc_Disturbance>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, vel_time_delay,
+      vel_time_constant, steer_time_delay, steer_time_constant, disturbance_collection);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
@@ -209,6 +226,11 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+  } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED_DIST") {
+    vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED_DIST;
+    vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared_Disturbance>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, acc_time_delay,
+      acc_time_constant, steer_time_delay, steer_time_constant, disturbance_collection);
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
@@ -276,6 +298,41 @@ void SimplePlanningSimulator::on_timer()
   publish_turn_indicators_report();
   publish_hazard_lights_report();
   publish_tf(current_odometry_);
+
+  // to visualize disturbance data
+  current_disturbance_gen_.steer_time_delay_value =
+    static_cast<float32_t>(vehicle_model_ptr_->getCurrentSteerTimeDelay());
+  auto steering_input_pair = vehicle_model_ptr_->getSteerTimeDelayDisturbanceInputs();
+  current_disturbance_gen_.steer_original_input = static_cast<float32_t>(steering_input_pair.first);
+  current_disturbance_gen_.steer_delayed_input = static_cast<float32_t>(steering_input_pair.second);
+
+  current_disturbance_gen_.acc_time_delay_value =
+    static_cast<float32_t>(vehicle_model_ptr_->getCurrentAccTimeDelay());
+  auto acc_input_pair = vehicle_model_ptr_->getAccTimeDelayDisturbanceInputs();
+  current_disturbance_gen_.acc_original_input = static_cast<float32_t>(acc_input_pair.first);
+  current_disturbance_gen_.acc_delayed_input = static_cast<float32_t>(acc_input_pair.second);
+
+  // Set road slope
+  current_disturbance_gen_.road_slope_acc =
+    static_cast<float32_t>(vehicle_model_ptr_->getCurrentRoadSlopeAccDisturbance());
+
+  // Set deadzone msg params
+  auto deadzone_params_array = vehicle_model_ptr_->getCurrentDeadzoneParams();
+  auto deadzone_input_output = vehicle_model_ptr_->getCurrentDeadzoneDisturbanceInputs();
+
+  current_disturbance_gen_.left_deadzone_slope = static_cast<float32_t>(deadzone_params_array[0]);
+  current_disturbance_gen_.left_deadzone_threshold =
+    static_cast<float32_t>(deadzone_params_array[1]);
+
+  current_disturbance_gen_.right_deadzone_slope = static_cast<float32_t>(deadzone_params_array[2]);
+  current_disturbance_gen_.right_deadzone_threshold =
+    static_cast<float32_t>(deadzone_params_array[3]);
+
+  current_disturbance_gen_.deadzone_input = static_cast<float32_t>(deadzone_input_output.first);
+  current_disturbance_gen_.deadzone_output = static_cast<float32_t>(deadzone_input_output.second);
+
+  // Publish
+  pub_dist_generator_->publish(current_disturbance_gen_);
 }
 
 void SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
@@ -331,12 +388,14 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC)
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST)
   {
     input << acc, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
   {
     input << acc, steer;
   }
@@ -349,7 +408,8 @@ void SimplePlanningSimulator::on_gear_cmd(const GearCommand::ConstSharedPtr msg)
 
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
   {
     vehicle_model_ptr_->setGear(current_gear_cmd_ptr_->command);
   }
@@ -429,7 +489,9 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_DIST ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_DIST)
   {
     state << x, y, yaw, vx, steer, accx;
   }
@@ -568,6 +630,118 @@ void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
   tf_msg.transforms.emplace_back(std::move(tf));
   pub_tf_->publish(tf_msg);
 }
+
+void SimplePlanningSimulator::Read_and_SetDisturbanceParams(
+  float64_t const & dt, float64_t const & acc_time_delay, float64_t const & steer_time_delay,
+  IDisturbanceCollection & disturbance_collection)
+{
+  bool use_steering_input_delay = declare_parameter("use_steering_input_delay", false);
+
+  if (use_steering_input_delay) {
+    // Read steering time-varying time delay disturbance parameters.
+    const bool steer_use_time_varying_td = declare_parameter("steer_use_time_varying_td", false);
+    const float64_t steer_td_changes_every_xsecs =
+      declare_parameter("steer_td_changes_every_xsecs", 1.0);  // do not set to 0.
+
+    // exponential distribution rate.
+    const float64_t steer_exp_lambda = 1. / steer_td_changes_every_xsecs;
+
+    // Percentage
+    const float64_t steer_td_delta_sin_mag_percent =
+      declare_parameter("steer_td_delta_sin_mag_percent", 5.0) / 100.;
+
+    const float64_t steer_td_angular_speed = declare_parameter("steer_td_angular_speed", 0.1);
+    const size_t steer_td_pade_order =
+      static_cast<size_t>(declare_parameter("steer_td_pade_order", 2));
+
+    // STEERING Time DELAY
+    if (std::fabs(steer_time_delay) >= EPS) {
+      DelayModelSISO steer_delay_siso_model(steer_time_delay, steer_td_pade_order, dt);
+      InputDisturbance_TimeDelayPade steer_td_time_varying_dist_gen(
+        steer_delay_siso_model, steer_exp_lambda, steer_td_delta_sin_mag_percent,
+        steer_td_angular_speed, steer_use_time_varying_td);
+
+      disturbance_collection.steering_inputDisturbance_time_delay_ptr_ =
+        std::make_shared<InputDisturbance_TimeDelayPade>(steer_td_time_varying_dist_gen);
+    }
+  }
+
+  // Read acc time-varying time delay disturbance parameters.
+  bool use_acceleration_input_delay = declare_parameter("use_acceleration_input_delay", false);
+
+  if (use_acceleration_input_delay) {
+    const bool acc_use_time_varying_td = declare_parameter("acc_use_time_varying_td", false);
+    const float64_t acc_td_changes_every_xsecs = declare_parameter(
+      "acc_td_changes_every_xsecs",
+      5.0);  // do not set to 0.
+
+    // exponential distribution rate.
+
+    const float64_t acc_exp_lambda = 1. / acc_td_changes_every_xsecs;
+    // Percentage
+    const float64_t acc_td_delta_sin_mag_percent =
+      declare_parameter("acc_td_delta_sin_mag_percent", 5.0) / 100.;
+
+    const float64_t acc_td_angular_speed = declare_parameter("acc_td_angular_speed", 0.1);
+    const size_t acc_td_pade_order = static_cast<size_t>(declare_parameter("acc_td_pade_order", 2));
+
+    // ACCELERATION Time DELAY
+    if (std::fabs(acc_time_delay) >= EPS) {
+      DelayModelSISO acc_delay_siso_model(acc_time_delay, acc_td_pade_order, dt);
+      InputDisturbance_TimeDelayPade acc_td_time_varying_dist_gen(
+        acc_delay_siso_model, acc_exp_lambda, acc_td_delta_sin_mag_percent, acc_td_angular_speed,
+        acc_use_time_varying_td);
+
+      disturbance_collection.acc_inputDisturbance_time_delay_ptr_ =
+        std::make_shared<InputDisturbance_TimeDelayPade>(acc_td_time_varying_dist_gen);
+    }
+  }
+
+  // Road Slope Output Disturbance
+  bool use_road_slope_disturbance = declare_parameter("use_road_slope_disturbance", false);
+
+  if (use_road_slope_disturbance) {
+    const bool rs_use_time_varying_slope = declare_parameter("rs_use_time_varying_slope", true);
+    const float64_t rs_mean_slope = declare_parameter("rs_mean_road_slope", 0.0);
+    float64_t rs_delta_sin_mag = declare_parameter("rs_delta_sin_mag", 1.0);  // in degrees
+
+    ns_utils::deg2rad(rs_delta_sin_mag);  // convert it to radians.
+
+    auto rs_road_slope_variation_angular_speed =
+      declare_parameter("rs_road_slope_variation_angular_speed", 0.1);
+
+    // Create an output disturbance for the road slope.
+    OutputDisturbance_SlopeVariation road_slope_dist(
+      rs_mean_slope, rs_delta_sin_mag, rs_road_slope_variation_angular_speed,
+      rs_use_time_varying_slope);
+
+    disturbance_collection.road_slope_outputDisturbance_ptr_ =
+      std::make_shared<OutputDisturbance_SlopeVariation>(road_slope_dist);
+  }
+
+  // Steering Deadzone
+  bool use_deadzone_disturbance = declare_parameter("use_deadzone_disturbance", false);
+
+  if (use_deadzone_disturbance) {
+    const bool use_time_varying_dz = declare_parameter("dz_steer_use_time_varying_deadzone", false);
+    const float64_t dz_steer_mean_slope_variance =
+      declare_parameter("dz_steer_mean_slope_variance", 0.1);
+    const float64_t dz_steer_mean_threshold = declare_parameter("dz_steer_mean_threshold", 0.1);
+
+    // Percent
+    const float64_t dz_steer_threshold_variance =
+      declare_parameter("dz_steer_threshold_variance", 20.0);
+    const float64_t dz_steer_sin_mag = declare_parameter("dz_steer_sin_mag", 0.1);
+
+    InputDisturbance_DeadZone steer_deadzone_dist_gen(
+      dz_steer_mean_slope_variance, dz_steer_mean_threshold, dz_steer_threshold_variance,
+      dz_steer_sin_mag, use_time_varying_dz);
+
+    disturbance_collection.steering_dedzone_ptr_ =
+      std::make_shared<InputDisturbance_DeadZone>(steer_deadzone_dist_gen);
+  }
+}
+
 }  // namespace simple_planning_simulator
 }  // namespace simulation
 

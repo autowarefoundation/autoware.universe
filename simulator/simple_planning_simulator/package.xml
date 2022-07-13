@@ -21,6 +21,7 @@
   <depend>nav_msgs</depend>
   <depend>vehicle_info_util</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>autoware_control_toolbox</depend>
 
   <depend>motion_common</depend>
 

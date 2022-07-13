@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.6)
 project(simple_planning_simulator)
 
 ### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 
 # Component
@@ -19,6 +19,11 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_vel.cpp
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
+
+  # DISTURBANCE MODIFICATIONS
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared_disturbance.cpp
+  src/disturbance_generators/disturbance_generators.cpp
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
 autoware_set_compile_options(${PROJECT_NAME})

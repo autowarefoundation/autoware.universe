@@ -36,6 +36,7 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_vehicle_msgs/msg/disturbance_generator_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/engage.hpp"
@@ -68,6 +69,7 @@ using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_geometry_msgs::msg::Complex32;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+using autoware_auto_vehicle_msgs::msg::DisturbanceGeneratorReport;
 using autoware_auto_vehicle_msgs::msg::Engage;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::GearReport;
@@ -134,6 +136,7 @@ private:
   rclcpp::Publisher<HazardLightsReport>::SharedPtr pub_hazard_lights_report_;
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_tf_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_current_pose_;
+  rclcpp::Publisher<DisturbanceGeneratorReport>::SharedPtr pub_dist_generator_;
 
   rclcpp::Subscription<GearCommand>::SharedPtr sub_gear_cmd_;
   rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr sub_turn_indicators_cmd_;
@@ -169,6 +172,7 @@ private:
   HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_;
   Trajectory::ConstSharedPtr current_trajectory_ptr_;
   bool current_engage_;
+  DisturbanceGeneratorReport current_disturbance_gen_;
 
   /* frame_id */
   std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
@@ -193,7 +197,9 @@ private:
     DELAY_STEER_ACC = 2,
     DELAY_STEER_ACC_GEARED = 3,
     IDEAL_STEER_VEL = 4,
-    DELAY_STEER_VEL = 5
+    DELAY_STEER_VEL = 5,
+    DELAY_STEER_ACC_DIST = 6,
+    DELAY_STEER_ACC_GEARED_DIST = 7
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
 
@@ -340,6 +346,13 @@ private:
    * @param [in] state The kinematic state to publish as a TF
    */
   void publish_tf(const Odometry & odometry);
+
+  /**
+   * @brief reads and sets disturbance parameters.
+   * */
+  void Read_and_SetDisturbanceParams(
+    float64_t const & dt, float64_t const & acc_time_delay, float64_t const & steer_time_delay,
+    IDisturbanceCollection & disturbance_collection);
 };
 }  // namespace simple_planning_simulator
 }  // namespace simulation
