@@ -27,6 +27,7 @@ from nav_msgs.msg import Odometry
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, QoSDurabilityPolicy
 from tf2_ros import LookupException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -69,6 +70,8 @@ class VelocityChecker(Node):
 
         # planning path and trajectories
         profile = rclpy.qos.QoSProfile(depth=1)
+        transien_local = QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL
+        transient_local_profile = rclpy.qos.QoSProfile(depth=1,durability=transien_local)
         lane_drv = "/planning/scenario_planning/lane_driving"
         scenario = "/planning/scenario_planning"
         self.sub0 = self.create_subscription(
@@ -123,7 +126,7 @@ class VelocityChecker(Node):
             VelocityLimit,
             "/planning/scenario_planning/current_max_velocity",
             self.CallBackExternalVelLim,
-            profile,
+            transient_local_profile,
         )
 
         # self twist
