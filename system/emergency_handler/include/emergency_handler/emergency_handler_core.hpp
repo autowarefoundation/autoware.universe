@@ -89,9 +89,6 @@ private:
   // Publisher
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     pub_control_command_;
-  // Clients
-  rclcpp::Client<autoware_ad_api_msgs::srv::MRMOperation>::SharedPtr client_mrm_comfortable_stop_;
-  rclcpp::Client<autoware_ad_api_msgs::srv::MRMOperation>::SharedPtr client_mrm_sudden_stop_;
 
   // rclcpp::Publisher<tier4_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   // rclcpp::Publisher<tier4_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
@@ -103,7 +100,13 @@ private:
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
   autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
   void publishControlCommands();
-  void operateMRM();
+
+  // Clients
+  rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
+  rclcpp::Client<autoware_ad_api_msgs::srv::MRMOperation>::SharedPtr client_mrm_comfortable_stop_;
+  rclcpp::CallbackGroup::SharedPtr client_mrm_sudden_stop_group_;
+  rclcpp::Client<autoware_ad_api_msgs::srv::MRMOperation>::SharedPtr client_mrm_sudden_stop_;
+
   void callMRMBehavior(const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const;
   void cancelMRMBehavior(const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const;
   void logMRMCallingResult(
@@ -132,6 +135,7 @@ private:
 
   void transitionTo(const int new_state);
   void updateEmergencyState();
+  void operateMRM();
   autoware_ad_api_msgs::msg::MRMStatus::_behavior_type updateMRMBehavior();
   bool isStopped();
   bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);

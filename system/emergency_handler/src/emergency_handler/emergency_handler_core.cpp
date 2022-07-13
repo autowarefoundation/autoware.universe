@@ -65,10 +65,18 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_emergency_state_ = create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
     "~/output/emergency_state", rclcpp::QoS{1});
+
+  // Clients
+  client_mrm_comfortable_stop_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_comfortable_stop_ =
-    create_client<autoware_ad_api_msgs::srv::MRMOperation>("~/output/mrm/comfortable_stop/operate");
+    create_client<autoware_ad_api_msgs::srv::MRMOperation>(
+      "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default, client_mrm_comfortable_stop_group_);
+  client_mrm_sudden_stop_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_sudden_stop_ =
-    create_client<autoware_ad_api_msgs::srv::MRMOperation>("~/output/mrm/sudden_stop/operate");
+    create_client<autoware_ad_api_msgs::srv::MRMOperation>(
+      "~/output/mrm/sudden_stop/operate", rmw_qos_profile_services_default, client_mrm_sudden_stop_group_);
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
@@ -233,7 +241,7 @@ void EmergencyHandler::callMRMBehavior(
   request->operate = true;
 
   if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
-    const auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
+    auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
     } else {
@@ -242,7 +250,7 @@ void EmergencyHandler::callMRMBehavior(
     return;
   }
   if (mrm_behavior == MRMStatus::SUDDEN_STOP) {
-    const auto result = client_mrm_sudden_stop_->async_send_request(request).get();
+    auto result = client_mrm_sudden_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Sudden stop is operated");
     } else {
@@ -262,7 +270,7 @@ void EmergencyHandler::cancelMRMBehavior(
   request->operate = false;
 
   if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
-    const auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
+    auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
     } else {
@@ -271,7 +279,7 @@ void EmergencyHandler::cancelMRMBehavior(
     return;
   }
   if (mrm_behavior == MRMStatus::SUDDEN_STOP) {
-    const auto result = client_mrm_sudden_stop_->async_send_request(request).get();
+    auto result = client_mrm_sudden_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Sudden stop is canceled");
     } else {
