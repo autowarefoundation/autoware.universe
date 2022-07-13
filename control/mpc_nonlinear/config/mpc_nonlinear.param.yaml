@@ -5,7 +5,7 @@
     mpc_prediction_dt: 0.1           # prediction time step length [s]
 
     # -- Vehicle Model Parameters --
-    steering_time_constant: 0.27  # [s]
+    steering_time_constant: 0.24  # [s]
     speed_time_constant: 0.1    # [s]
 
     # -- Simulation model for planning simulator --
@@ -14,26 +14,26 @@
     input_delay_time: 0.0 # 0.3    # input dead-time [s]
 
     # -- Use time or arc-length as the interpolation coordinates for predictions --
-    use_acceleration_inputs: true                  # if false, traj speeds are used in the simulations
+    use_acceleration_inputs: true                 # if false, traj speeds are used in the simulations
     use_linear_trajectory_initialization: true    # if false LPV feedback initialization is used.
 
     # -- State and Control Weights.
     # -- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
-    # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]     
+    # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
-    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.5, 0.1, 0.1, 0.0, 0.02 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.5, 0.1, 0.2, 0.0, 0.02 ]
+    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.1, 0.0, 0.02 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.2, 0.0, 0.02 ]
     control_weights: [ 0.1, 0.1 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
-    #  -- Constraints - Upper-lower bounds. 
+    #  -- Constraints - Upper-lower bounds.
     #  -- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
     # xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -2.0, -0.5, -0.65, -.inf ]
     xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -1.0, 0.0, -0.65, -4.0 ]
     xupper: [ .inf,  .inf,   .inf, .inf,  3.0,  1.0, 25.0, 0.65, 4.0 ]
-    ulower: [ -7., -5.0 ]  # vx speed input [m/s], steering input [rad]
-    uupper: [ 7.,  5.0 ]
+    ulower: [ -7., -1.0 ]  # vx speed input [m/s], steering input [rad]
+    uupper: [ 7.,  1.0 ]
 
     # -- Scaling Mats ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
     scaling_range: [ -1., 1. ]
@@ -121,5 +121,5 @@
     feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
 
     # CDOB - DOB parameters.
-    use_cdob: true
-    use_dob: true # activating use_dob only enables use_cdob. They are both used. 
+    use_cdob: false
+    use_dob: false # activating use_dob only enables use_cdob. They are both used.

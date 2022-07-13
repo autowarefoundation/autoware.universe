@@ -26,7 +26,7 @@ namespace ns_sim
 //  */
 //
 //  std::cout << " The values of the states in the integration interval:" << std::endl;
-//  ns_nmpc_eigen_utils::printEigenMat(x);
+//  ns_eigen_utils::printEigenMat(x);
 //
 //  for (int i = 0; i < x.size(); i++) {
 //    std::cout << t << "    " << x(i);
@@ -126,17 +126,17 @@ void simulateNonlinearModel_zoh(Model::model_ptr_t model,
 	 *
 	 * */
 
-	//  ns_nmpc_utils::print("x before integration \n");
-	//  ns_nmpc_eigen_utils::printEigenMat(x);
+	//  ns_utils::print("x before integration \n");
+	//  ns_eigen_utils::printEigenMat(x);
 	//
-	//  ns_nmpc_utils::print("u0 before integration \n");
-	//  ns_nmpc_eigen_utils::printEigenMat(u0);
+	//  ns_utils::print("u0 before integration \n");
+	//  ns_eigen_utils::printEigenMat(u0);
 
 	double num_of_tsteps = 10;  // Number of time steps for the RK integration. 1 for a single step.
 	boost::numeric::odeint::integrate_adaptive(stepper, ode, x, 0., dt, dt / num_of_tsteps);
 
 	//  ns_print::print("x after integration \n");
-	//  ns_nmpc_eigen_utils::printEigenMat(x);
+	//  ns_eigen_utils::printEigenMat(x);
 }
 
 void SimulateNonlinearModel_foh(Model::model_ptr_t model,

@@ -71,7 +71,7 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
 
 		double dv = point1.longitudinal_velocity_mps - point0.longitudinal_velocity_mps;  // dv = v[k]-v[k-1],
 
-		double &&dt = ds / ns_nmpc_utils::clamp(mean_v, EPS, mean_v);  // !<@brief to prevent zero division.
+		double &&dt = ds / ns_utils::clamp(mean_v, EPS, mean_v);  // !<@brief to prevent zero division.
 
 		// !<@brief this acceleration is implied by x,y,z and vx in the planner.
 		// double &&acc_computed = dv / (EPS + dt);
@@ -90,7 +90,7 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
 	}
 
 	// Convert heading angle to a monotonic series
-	// ns_nmpc_utils::convertEulerAngleToMonotonic(&yaw);
+	// ns_utils::convertEulerAngleToMonotonic(&yaw);
 
 	// Set curvature to zero for the raw trajectory that we do not use.
 	curvature = std::vector<double>(s.size(), 0.0);
@@ -113,7 +113,7 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
 	/**
 	 *  tan_vector = [cos(yaw), heading(yaw)]
 	 * */
-	auto const &tangent_vector = ns_nmpc_utils::getTangentVector(yaw_temp);
+	auto const &tangent_vector = ns_utils::getTangentVector(yaw_temp);
 	xtemp += ds * tangent_vector[0];
 	ytemp += ds * tangent_vector[1];
 
@@ -153,15 +153,15 @@ size_t ns_data::MPCdataTrajectoryVectors::size() const
 		return x.size();
 	}
 
-	ns_nmpc_utils::print("s size : ", s.size());
-	ns_nmpc_utils::print("t size : ", t.size());
-	ns_nmpc_utils::print("curv size : ", curvature.size());
-	ns_nmpc_utils::print("x size : ", x.size());
-	ns_nmpc_utils::print("y size : ", y.size());
-	ns_nmpc_utils::print("z size : ", z.size());
-	ns_nmpc_utils::print("yaw size : ", yaw.size());
-	ns_nmpc_utils::print("vx size : ", vx.size());
-	ns_nmpc_utils::print("ax size : ", ax.size());
+	ns_utils::print("s size : ", s.size());
+	ns_utils::print("t size : ", t.size());
+	ns_utils::print("curv size : ", curvature.size());
+	ns_utils::print("x size : ", x.size());
+	ns_utils::print("y size : ", y.size());
+	ns_utils::print("z size : ", z.size());
+	ns_utils::print("yaw size : ", yaw.size());
+	ns_utils::print("vx size : ", vx.size());
+	ns_utils::print("ax size : ", ax.size());
 
 	// std::cerr << "[MPC trajectory] trajectory size is inappropriate" << std::endl;
 	return 0;
@@ -219,7 +219,7 @@ void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const &avg_mpc_
 	auto yaw_temp = yaw.back();
 	// auto dyaw = yaw.rbegin()[0] - yaw.rbegin()[1];
 
-	auto &&tangent_vector = ns_nmpc_utils::getTangentVector(yaw_temp);
+	auto &&tangent_vector = ns_utils::getTangentVector(yaw_temp);
 	xtemp += ds * tangent_vector[0];
 	ytemp += ds * tangent_vector[1];
 

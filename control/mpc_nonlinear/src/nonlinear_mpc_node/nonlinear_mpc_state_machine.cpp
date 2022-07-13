@@ -67,13 +67,13 @@ void ns_states::VehicleMotionFSM::toggle(std::array<double, 3> const &dist_v0_vn
 	current_state_->toggle(this);
 
 	// DEBUG
-	// ns_nmpc_utils::print(" State name", enum_texts[current_state_->getStateType()]);
+	// ns_utils::print(" State name", enum_texts[current_state_->getStateType()]);
 	// end of DEBUG
 }
 
 void ns_states::VehicleMotionFSM::printCurrentStateMsg()
 {
-	ns_nmpc_utils::print(" State name", enum_texts[current_state_->getStateType()]);
+	ns_utils::print(" State name", enum_texts[current_state_->getStateType()]);
 
 }
 

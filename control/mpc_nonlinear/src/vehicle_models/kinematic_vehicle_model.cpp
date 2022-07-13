@@ -85,7 +85,7 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
 
 void ns_models::KinematicModelSingleTrackModel::testModel()
 {
-	ns_nmpc_utils::print("\nTESTING the AUTO-DIFF FUNCTIONS .....");
+	ns_utils::print("\nTESTING the AUTO-DIFF FUNCTIONS .....");
 
 	// Compute f(x, u) by codegen from the model.
 	state_vector_t f_of_dx;
@@ -105,8 +105,8 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
 
 	computeFx(x, u, params, f_of_dx);
 
-	ns_nmpc_utils::print("Forward differentiation test ... ");
-	ns_nmpc_eigen_utils::printEigenMat(f_of_dx);
+	ns_utils::print("Forward differentiation test ... ");
+	ns_eigen_utils::printEigenMat(f_of_dx);
 
 	// Compute Jacobian --
 	state_matrix_t A;
@@ -117,9 +117,9 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
 
 	computeJacobians(x, u, params, A, B);
 
-	ns_nmpc_utils::print("Jacobian test: state matrix A and control matrix B \n");
-	ns_nmpc_eigen_utils::printEigenMat(A);
-	ns_nmpc_eigen_utils::printEigenMat(B);
+	ns_utils::print("Jacobian test: state matrix A and control matrix B \n");
+	ns_eigen_utils::printEigenMat(A);
+	ns_eigen_utils::printEigenMat(B);
 }
 
 double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(const double &current_long_speed,
