@@ -72,9 +72,13 @@ This package includes multiple licenses.
 
 [YOLOv3](https://drive.google.com/uc?id=1ZYoBqVynmO5kKntyN56GEbELRpuXG8Ym "YOLOv3"): Converted from darknet [weight file](https://pjreddie.com/media/files/yolov3.weights "weight file") and [conf file](https://github.com/pjreddie/darknet/blob/master/cfg/yolov3.cfg "conf file").
 
+- [This code](https://github.com/wep21/yolo_onnx_converter) is used for converting darknet weight file and conf file to onnx.
+
 ### YOLOv4
 
 [YOLOv4](https://drive.google.com/uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX "YOLOv4"): Converted from darknet [weight file](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights "weight file") and [conf file](https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov4.cfg "conf file").
+
+- [This code](https://github.com/wep21/yolo_onnx_converter) is used for converting darknet weight file and conf file to onnx.
 
 ### YOLOv5
 
