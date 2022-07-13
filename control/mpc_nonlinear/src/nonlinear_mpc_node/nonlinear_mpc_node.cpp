@@ -163,76 +163,76 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   initTimer(params_node_.control_period);
 
   // DEBUG
-  //  ns_utils::print("\n\nVehicle parameters is loaded");
-  //  ns_utils::print("Wheelbase : ", params_vehicle.wheel_base);
-  //  ns_utils::print("lr to cog : ", params_vehicle.lr);
+  // DEBUG
+  ns_utils::print("\n\nVehicle parameters is loaded");
+  ns_utils::print("Wheelbase : ", params_vehicle.wheel_base);
+  ns_utils::print("lr to cog : ", params_vehicle.lr);
 
-  //  ns_utils::print("Steering tau : ", params_vehicle.steering_tau);
-  //  ns_utils::print("Speed tau : ", params_vehicle.speed_tau);
-  //  ns_utils::print("Node input delay : ", params_node_.input_delay_time);
-  //  ns_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
+  ns_utils::print("Steering tau : ", params_vehicle.steering_tau);
+  ns_utils::print("Speed tau : ", params_vehicle.speed_tau);
+  ns_utils::print("Node input delay : ", params_node_.input_delay_time);
+  ns_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
 
-  //  // Check if optimization parameters are read properly.
-  //  ns_utils::print("\nOptimization parameters: ");
-  //    ns_utils::print("'\nState weights Q ");
-  //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
-  //
-  //    ns_utils::print("\nState weights QN ");
-  //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
+  // Check if optimization parameters are read properly.
+  ns_utils::print("\nOptimization parameters: ");
+  ns_utils::print("'\nState weights Q ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
 
-  //  ns_utils::print("\nControl weights R ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
+  ns_utils::print("\nState weights QN ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
 
-  //  ns_utils::print("\nJerk weights Rj ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
+  ns_utils::print("\nControl weights R ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
 
-  //  ns_utils::print("\nxupper and lower ");
-  //  ns_eigen_utils::printEigenMat(params_optimization.xlower);
-  //  ns_eigen_utils::printEigenMat(params_optimization.xupper);
+  ns_utils::print("\nJerk weights Rj ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
 
-  //  ns_utils::print("\nu_upper and lower ");
-  //  ns_eigen_utils::printEigenMat(params_optimization.ulower);
-  //  ns_eigen_utils::printEigenMat(params_optimization.uupper);
+  ns_utils::print("\nxupper and lower ");
+  ns_eigen_utils::printEigenMat(params_optimization.xlower);
+  ns_eigen_utils::printEigenMat(params_optimization.xupper);
 
-  //    ns_utils::print("\nScaling and scaling range, x, u ");
-  //    ns_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
-  //    ns_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
+  ns_utils::print("\nu_upper and lower ");
+  ns_eigen_utils::printEigenMat(params_optimization.ulower);
+  ns_eigen_utils::printEigenMat(params_optimization.uupper);
 
-  //  ns_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
-  //  ns_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
+  ns_utils::print("\nScaling and scaling range, x, u ");
+  ns_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
+  ns_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
 
-  //  ns_utils::print_container(params_optimization.scaling_range);
+  ns_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
+  ns_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
 
-  //  ns_utils::print("Lyapunov Matrices Xs");
-  //  for (size_t k = 0; k < params_lpv.num_of_nonlinearities + 1; k++)
-  //  {
-  //  ns_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
-  //  }
+  ns_utils::print_container(params_optimization.scaling_range);
+  ns_utils::print("Number of nonlinear items : ", params_lpv.num_of_nonlinearities);
 
-  //  ns_utils::print("Lyapunov Matrices Ys");
-  //  for (size_t k = 0; k < params_lpv.num_of_nonlinearities + 1; k++)
-  //  {
-  //  ns_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
-  //  }
+  ns_utils::print("Lyapunov Matrices Xs");
+  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; k++)
+  {
+    ns_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
+  }
 
-  //  // Check the if the scaling parameters are computed.
-  //  ns_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
+  ns_utils::print("Lyapunov Matrices Ys");
+  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; k++)
+  {
+    ns_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
+  }
 
-  //  ns_utils::print("Kalman filter parameters V, W, P : ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
+  // Check the if the scaling parameters are computed.
+  ns_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
 
-  /*  ns_utils::print(
-                                                  "\nUnscented Kalman filter parameters alpha, beta,
-     kappa : ", params_filters.ukf_alpha, params_filters.ukf_beta, params_filters.ukf_kappa,
-     "\n\n"); */
+  ns_utils::print("Kalman filter parameters V, W, P : ");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
+
+  ns_utils::print("\nUnscented Kalman filter parameters alpha, beta, kappa : ", params_filters.ukf_alpha,
+                  params_filters.ukf_beta, params_filters.ukf_kappa, "\n\n");
 
   // end of debug.
 }
@@ -261,9 +261,8 @@ void NonlinearMPCNode::initTimer(double period_s)
 // Callbacks.
 void NonlinearMPCNode::onTimer()
 {
-  RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(), "Control frequency %g",
-      params_node_.control_frequency);
+  RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "Control frequency %g",
+                                 params_node_.control_frequency);
 
   // ns_utils::print("Control Frequency : ", params_node_.control_frequency);
   // ns_utils::print("Logger string : ", get_logger().get_name());
@@ -419,8 +418,8 @@ void NonlinearMPCNode::onTimer()
     auto const &use_linear_initialization = params_node_.use_linear_trajectory_initialization;
 
     // Compute the initial reference trajectories and discretisize the system.
-    if (auto const &&is_initialized = nonlinear_mpc_controller_ptr_->initializeTrajectories(
-          interpolator_curvature_pws, use_linear_initialization);
+    if (auto const &&is_initialized =
+          nonlinear_mpc_controller_ptr_->initializeTrajectories(interpolator_curvature_pws, use_linear_initialization);
         !is_initialized)
     {
       // vehicle_motion_fsm_.setEmergencyFlag(true);
@@ -468,6 +467,16 @@ void NonlinearMPCNode::onTimer()
    * replace the
    * - measured initial state with the predicted initial state.
    */
+
+  auto const &td = nonlinear_mpc_controller_ptr_->getCurrentTrajectoryData();
+  auto &&Xtemp = ns_eigen_utils::getTrajectory(td.X);
+  auto &&Utemp = ns_eigen_utils::getTrajectory(td.U);
+
+  ns_utils::print("\n[in timer] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, vy]");
+  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
+
+  ns_utils::print("\n [in timer] Initialized LPV trajectories U : ");
+  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   /**
    * All inputs of the NMPC [vx, steering] are applied and the system is simulated.
@@ -534,8 +543,8 @@ void NonlinearMPCNode::onTimer()
     u_solution_(1) += dob_steering_ff;
   }
 
-  auto const steering_rate =
-      (u_solution_(1) - ctrl_cmd_prev_.lateral.steering_tire_angle) / params_node_.control_period;
+  auto const
+      steering_rate = (u_solution_(1) - ctrl_cmd_prev_.lateral.steering_tire_angle) / params_node_.control_period;
 
   // createControlCommand(ax, vx, steer_rate, steer_val)
   ControlCmdMsg control_cmd;
@@ -612,18 +621,17 @@ void NonlinearMPCNode::onTimer()
 
   if (current_comm_delay_ptr_)
   {
-    ns_utils::print(
-        "Current delay compensation steering ref : ",
-        current_comm_delay_ptr_->steering_compensation_ref);
+    ns_utils::print("Current delay compensation steering ref : ",
+                    current_comm_delay_ptr_->steering_compensation_ref);
 
-    ns_utils::print(
-        "Current delay compensation ey ref : ",
-        current_comm_delay_ptr_->lateral_deviation_error_compensation_ref);
+    ns_utils::print("Current delay compensation ey ref : ",
+                    current_comm_delay_ptr_->lateral_deviation_error_compensation_ref);
 
-    ns_utils::print(
-        "Current delay compensation eyaw ref : ",
-        current_comm_delay_ptr_->heading_angle_error_compensation_ref);
+    ns_utils::print("Current delay compensation eyaw ref : ",
+                    current_comm_delay_ptr_->heading_angle_error_compensation_ref);
   }
+
+  ns_utils::print("Wheelbase : ", wheel_base_);
   //  ns_utils::print("\nCurrent Pose : ");
   //  ns_utils::print(
   //    "x, y, z : ", current_pose_ptr_->pose.position.x, current_pose_ptr_->pose.position.y,
@@ -838,12 +846,10 @@ void NonlinearMPCNode::loadNodeParameters()
   params_node_.use_kalman = declare_parameter<bool>("use_kalman", true);
 
   // Stop state parameters.
-  params_node_.stop_state_entry_ego_speed =
-      declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
-  params_node_.stop_state_entry_target_speed =
-      declare_parameter<double>("stop_state_entry_target_speed", 0.5);
-  params_node_.stop_state_keep_stopping_dist =
-      declare_parameter<double>("stop_state_keep_stopping_dist", 0.5);
+  params_node_.stop_state_entry_ego_speed = declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
+
+  params_node_.stop_state_entry_target_speed = declare_parameter<double>("stop_state_entry_target_speed", 0.5);
+  params_node_.stop_state_keep_stopping_dist = declare_parameter<double>("stop_state_keep_stopping_dist", 0.5);
   params_node_.will_stop_state_dist = declare_parameter<double>("will_stop_state_dist", 2.0);
 
   // Compute the discrete input_delay steps.
@@ -919,9 +925,9 @@ void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_ve
   params_vehicle.use_delay_model = params_node_.use_delay_sim_model;
 }
 
-void NonlinearMPCNode::loadNMPCoreParameters(
-    ns_data::data_nmpc_core_type_t &data_nmpc_core, ns_data::param_lpv_type_t &params_lpv,
-    ns_data::ParamsOptimization &params_optimization)
+void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,
+                                             ns_data::param_lpv_type_t &params_lpv,
+                                             ns_data::ParamsOptimization &params_optimization)
 {
   data_nmpc_core.wheel_base = wheel_base_;
 
@@ -932,75 +938,74 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   data_nmpc_core.feedforward_speed_set_point_scale =
       declare_parameter<double>("feedforward_speed_set_point_scale", 1.0);
 
+
   // Load optimization parameters.
   // State and control weights. Q. Reads only the diagonal terms .
   std::vector<double> temp(Model::state_dim);
   std::vector<double> default_vec{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0., 0.0};
-  temp = declare_parameter<std::vector<double>>("state_weights", default_vec);
+  temp = declare_parameter<std::vector<double> >("state_weights", default_vec);
   params_optimization.Q.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // QN
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0};
-  temp = declare_parameter<std::vector<double>>("state_weights_terminal", default_vec);
+  temp = declare_parameter<std::vector<double> >("state_weights_terminal", default_vec);
   params_optimization.QN.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // R - Control weights.
   temp.clear();
   temp.reserve(Model::input_dim);
   default_vec = std::vector<double>{0.001, 0.0001};
-  temp = declare_parameter<std::vector<double>>("control_weights", default_vec);
+  temp = declare_parameter<std::vector<double> >("control_weights", default_vec);
   params_optimization.R.diagonal() = Model::input_vector_t::Map(temp.data());
 
   // Rj - Jerk weights.
   temp.clear();
   temp.reserve(Model::input_dim);
   default_vec = std::vector<double>{1., 1.};
-  temp = declare_parameter<std::vector<double>>("jerk_weights", default_vec);
+  temp = declare_parameter<std::vector<double> >("jerk_weights", default_vec);
   params_optimization.Rj.diagonal() = Model::input_vector_t::Map(temp.data());
 
   // State and input bounds. xlower bound.
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0,
-                                    -1.0, 0.0, -0.69, -kInfinity};
-  temp = declare_parameter<std::vector<double>>("xlower", default_vec);
+  default_vec =
+      std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
+  temp = declare_parameter<std::vector<double> >("xlower", default_vec);
   params_optimization.xlower = Model::state_vector_t::Map(temp.data());
 
   // State and input bounds. xupper bound.
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0,
-                                    1.0, 25.0, 0.69, kInfinity};
-  temp = declare_parameter<std::vector<double>>("xupper", default_vec);
+  default_vec = std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0, 1.0, 25.0, 0.69, kInfinity};
+  temp = declare_parameter<std::vector<double> >("xupper", default_vec);
   params_optimization.xupper = Model::state_vector_t::Map(temp.data());
 
   // State and input bounds. ulower bound.
   temp.clear();
   temp.reserve(Model::input_dim);
   default_vec = std::vector<double>{-30., -1.};
-  temp = declare_parameter<std::vector<double>>("ulower", default_vec);
+  temp = declare_parameter<std::vector<double> >("ulower", default_vec);
   params_optimization.ulower = Model::input_vector_t::Map(temp.data());
 
   temp.clear();
   temp.reserve(Model::input_dim);
   default_vec = std::vector<double>{30., 1.};
-  temp = declare_parameter<std::vector<double>>("uupper", default_vec);
+  temp = declare_parameter<std::vector<double> >("uupper", default_vec);
   params_optimization.uupper = Model::input_vector_t::Map(temp.data());
 
-  // xmax bound: xmax is used for scaling, whereas xlower is related to whether there is an upper
-  // bound.
+  // xmax bound: xmax is used for scaling, whereas xlower is related to whether there is an upper bound.
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{-50., -50., -3.14, 0.0, -3.0, -1.0, 0.0, -0.69, -5.0};
-  temp = declare_parameter<std::vector<double>>("xmin_for_scaling", default_vec);
+  temp = declare_parameter<std::vector<double> >("xmin_for_scaling", default_vec);
   params_optimization.xmin_for_scaling = Model::state_vector_t::Map(temp.data());
 
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{50., 50., 3.14, 40.0, 3.0, 1.0, 10.0, 0.69, 5.0};
-  temp = declare_parameter<std::vector<double>>("xmax_for_scaling", default_vec);
+  temp = declare_parameter<std::vector<double> >("xmax_for_scaling", default_vec);
   params_optimization.xmax_for_scaling = Model::state_vector_t::Map(temp.data());
 
   temp.clear();
@@ -1012,12 +1017,12 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   temp.clear();
   temp.reserve(Model::input_dim);
   default_vec = std::vector<double>{50., 1.0};
-  temp = declare_parameter<std::vector<double>>("umax_for_scaling", default_vec);
+  temp = declare_parameter<std::vector<double> >("umax_for_scaling", default_vec);
   params_optimization.umax_for_scaling = Model::input_vector_t::Map(temp.data());
 
   // Load the normalization scaling range.
   params_optimization.scaling_range =
-      declare_parameter<std::vector<double>>("scaling_range", std::vector<double>{-1., 1.});
+      declare_parameter<std::vector<double >>("scaling_range", std::vector<double>{-1., 1.});
 
   // OSQP parameters
   params_optimization.osqp_warm_start = declare_parameter<bool>("osqp_warm_start", true);
@@ -1033,7 +1038,8 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   params_optimization.osqp_scaled_termination = declare_parameter("osqp_scaled_termination", false);
 
   // LOAD LPV parameters
-  params_lpv.num_of_nonlinearities = declare_parameter("num_of_nonlinearities", 7);
+  params_lpv.num_of_nonlinearities = ns_nmpc_interface::NUM_LPV_NONLINEARITIES;
+  // declare_parameter<int8_t>("num_of_nonlinearities", 5);
 
   // There is one more Lyapunov matrices X and Y than the number of parameters.
   size_t const &&nx = Model::estate_dim;
@@ -1043,99 +1049,14 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   auto labelX_tag = "Xn";  // No delay nodel for steering and longitudinal speed
   auto labelY_tag = "Yn";
 
-  // If we use the first order steering and vx models, LPV Lyap matrices are different.
-  if (params_node_.use_delay_sim_model)
-  {
-    labelX_tag = "Xd";  // delay Lyapunov matrices.
-    labelY_tag = "Yd";
-  }
+  //	// If we use the first order steering and vx models, LPV Lyap matrices are different.
+  //	if (params_node_.use_delay_sim_model)
+  //	{
+  //		labelX_tag = "Xd";  // delay Lyapunov matrices.
+  //		labelY_tag = "Yd";
+  //	}
 
-  std::vector<std::vector<double>> lyapX_default_vects;
-  std::vector<std::vector<double>> lyapY_default_vects;
-
-  // Insert Lyap 1D matrices Xd1 .. to Xd8
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      -65.15507751254682, -36.77626859505827, -47.396597586050916, 157.71749405735076,
-      -36.77626859505827, 1.3462058571298208, 41.56344244301195, 1.3523022918235805,
-      -47.396597586050916, 41.56344244301195, -275.1233877176854, -104.22798423475713,
-      157.71749405735076, 1.3523022918235805, -104.22798423475713, -100.37310765156614});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      64.10145429314974, -2.180721171474225, -271.98655150001787, -0.22665990238350273,
-      -2.180721171474225, -2.336930382598269, 38.241120784641566, 2.968960799623693,
-      -271.98655150001787, 38.241120784641566, 36.07794254193002, 15.68802326783617,
-      -0.22665990238350273, 2.968960799623693, 15.68802326783617, -5.261944971040233});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      100.07544105711509, 66.650732984822, 83.70497647471979, -296.6736623995904, 66.650732984822,
-      -0.9959555114714462, -81.14709270650266, -8.666359996283582, 83.70497647471979,
-      -81.14709270650266, 511.42945238668204, 191.86781038984105, -296.6736623995904,
-      -8.666359996283582, 191.86781038984105, 180.3374692744003});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      -8.827822545738721, -35.483619176862476, 20.9355279662206, 27.847854078184255,
-      -35.483619176862476, 3.3988582402213825, 2.529431137376689, -135.8062748291455,
-      20.9355279662206, 2.529431137376689, -1288.430343517453, 45.844520173561605, 27.847854078184255,
-      -135.8062748291455, 45.844520173561605, 391.2611685165978});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      -7.2716437878738, 1.6397010731289985, -4.686420161213995, -17.178007227897066,
-      1.6397010731289985, 1.9463501734933277, -4.169937292073157, -19.810191655412,
-      -4.686420161213995, -4.169937292073157, -217.466878321031, -10.27284979681935,
-      -17.178007227897066, -19.810191655412, -10.27284979681935, 46.23140933312023});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      -100.41433733722431, 3.2305430696908086, 115.94298337462855, -21.74052813025834,
-      3.2305430696908086, 3.065202734803516, -176.4873290429417, 1.0095360057477334,
-      115.94298337462855, -176.4873290429417, 13.667066205452524, -521.3227657617408,
-      -21.74052813025834, 1.0095360057477334, -521.3227657617408, -1.4324254868167314});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      27.207280922954098, -1.0313290389465992, 3.474673550109833, 29.67187543658177,
-      -1.0313290389465992, -1.8348702397623158, 8.369699399534905, -1.9508947200381759,
-      3.474673550109833, 8.369699399534905, -10.481394494964587, -1.590819937317799,
-      29.67187543658177, -1.9508947200381759, -1.590819937317799, -77.6394311516931});
-
-  lyapX_default_vects.emplace_back(std::vector<double>{
-      7557.248805840959, -676.6056994581357, -2.3052192561490745, -479.16264131173165,
-      -676.6056994581357, 368.08027822772044, -1.1719667581507367, -348.48174995180716,
-      -2.3052192561490745, -1.1719667581507367, 1382.3532842343293, -10.763685561179733,
-      -479.16264131173165, -348.48174995180716, -10.763685561179733, 3547.133931340104});
-
-  // Insert Lyap 1D matrices Yd1 .. to Yd8
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      -27.14876261983346, -488.3831058217359, -27.001721918762865, 21.75251250833555,
-      -946.4833676287031, -7.594394460770382, 31.929202449234577, 140.96940732607248});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      11.662736189247278, 10.478691571798988, 9.017409381936384, -1.0590360184691858,
-      -41.79977317502188, -30.44504323401985, -796.7031337730207, 59.84710220655771});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      -62.00097457392179, -1074.6520288526442, -59.449628160441094, 57.40293032225527,
-      -2085.98018969308, -16.757828727035395, 70.44834333698886, 308.51308903143064});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      3041.2153300222644, 611.899276984242, 320.1375093711639, -2129.0668798679103, 6131.204371201294,
-      520.7277039803178, -1256.36729729468, 3808.9328483553995});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      172.26695789674625, 1122.6556000049043, -101.3022415554688, 647.110289255875,
-      -1912.4346956504303, 106.90286874442312, -668.8612366198226, -2878.7658430034844});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      68.44525541270693, 8.77562216332413, 51.02961741743889, 20.060206291545988, 61.30571559691704,
-      317.38309472890757, -4405.237005859442, -1104.34094558638});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      -49.78890095719916, 2260.099356359471, 206.69274408302255, -419.3465284448969, 5776.42096335318,
-      31.021601990580887, -187.41578435373398, 29.588001940489736});
-
-  lyapY_default_vects.emplace_back(std::vector<double>{
-      8.030695096416812, -7.752585404524556, -3.5696860946514297, -18.340658318254288,
-      -9008.127357796282, -33.4759841583891, 174.39862572662446, -27787.968271810852});
-
-  for (size_t k = 0; k < params_lpv.num_of_nonlinearities + 1; k++)
+  for (auto k = 0; k < params_lpv.num_of_nonlinearities; k++)
   {
     std::vector<double> tempX;
     tempX.reserve(nx * nx);
@@ -1146,14 +1067,14 @@ void NonlinearMPCNode::loadNMPCoreParameters(
     auto labelX = labelX_tag + std::to_string(k + 1);
     auto labelY = labelY_tag + std::to_string(k + 1);
 
-    tempX = declare_parameter(labelX, lyapX_default_vects[k]);
-    tempY = declare_parameter(labelY, lyapY_default_vects[k]);
+    tempX = declare_parameter<std::vector<double >>(labelX);
+    tempY = declare_parameter<std::vector<double >>(labelY);
 
     auto tempXmat = Model::state_matrix_X_t::Map(tempX.data());
     auto tempYmat = Model::input_matrix_Y_t::Map(tempY.data());
 
-    params_lpv.lpvXcontainer.emplace_back(tempXmat);
-    params_lpv.lpvYcontainer.emplace_back(tempYmat);
+    params_lpv.lpvXcontainer[k] = tempXmat;
+    params_lpv.lpvYcontainer[k] = tempYmat;
   }
 }
 
@@ -1168,8 +1089,7 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization &param
 
   params.Cx = params.xmax_for_scaling - params.Sx.diagonal() * xuhatmax;
 
-  params.Su.diagonal() =
-      (params.umax_for_scaling - params.umin_for_scaling) / (xuhatmax - xuhatmin);
+  params.Su.diagonal() = (params.umax_for_scaling - params.umin_for_scaling) / (xuhatmax - xuhatmin);
 
   params.Cu = params.umax_for_scaling - params.Su.diagonal() * xuhatmax;
 
@@ -1188,13 +1108,11 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization &param
   {
     double const &&val_low =
         (params.xlower(k) >= kInfinity - EPS || params.xlower(k) <= -kInfinity + EPS)
-        ? params.xlower(k)
-        : (params.xlower(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
+        ? params.xlower(k) : (params.xlower(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
 
     double const &&val_up =
         (params.xupper(k) >= kInfinity - EPS || params.xupper(k) <= -kInfinity + EPS)
-        ? params.xupper(k)
-        : (params.xupper(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
+        ? params.xupper(k) : (params.xupper(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
 
     params.xlower_scaled(k) = val_low;
 
@@ -1205,13 +1123,11 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization &param
   {
     double const &&val_low =
         (params.ulower(k) >= kInfinity - EPS || params.ulower(k) <= -kInfinity + EPS)
-        ? params.ulower(k)
-        : (params.ulower(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
+        ? params.ulower(k) : (params.ulower(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
 
     double const &&val_up =
         (params.uupper(k) >= kInfinity - EPS || params.uupper(k) <= -kInfinity + EPS)
-        ? params.uupper(k)
-        : (params.uupper(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
+        ? params.uupper(k) : (params.uupper(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
 
     params.ulower_scaled(k) = val_low;
     params.uupper_scaled(k) = val_up;
@@ -1241,9 +1157,8 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
   current_trajectory_size_ = msg->points.size();
 
   // Resample the planning trajectory and store in the MPCdataTrajectoryVectors.
-  bool const &&is_resampled = resampleRawTrajectoriesToaFixedSize();
 
-  if (!is_resampled)
+  if (bool const &&is_resampled = resampleRawTrajectoriesToaFixedSize(); !is_resampled)
   {
     RCLCPP_ERROR(get_logger(), "[nonlinear_mpc] Could not resample the trajectory ...");
     return;
@@ -1315,10 +1230,9 @@ bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj) const
         const auto &wxf = point.front_wheel_angle_rad;
         const auto &wxr = point.rear_wheel_angle_rad;
 
-        return static_cast<bool>(
-            isfinite(p.x) && isfinite(p.y) && isfinite(p.z) && isfinite(o.x) && isfinite(o.y) &&
-                isfinite(o.z) && isfinite(o.w) && isfinite(vx) && isfinite(vy) && isfinite(wxf) &&
-                isfinite(wxr));
+        return static_cast<bool>(  isfinite(p.x) && isfinite(p.y) && isfinite(p.z) && isfinite(o.x)
+            && isfinite(o.y) && isfinite(o.z) && isfinite(o.w) && isfinite(vx) && isfinite(vy) && isfinite(wxf) &&
+            isfinite(wxr));
       });
 
   return check_condition;
@@ -1411,14 +1325,14 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
   std::vector<double> zinterp;
 
   // Resample the varying size raw trajectory into a fixed size trajectory points.
-  auto const &&is_interpolated_x = interpolator_spline_pws.Interpolate(
-      mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
+  auto const &&is_interpolated_x =
+      interpolator_spline_pws.Interpolate(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
 
-  auto const &&is_interpolated_y = interpolator_spline_pws.Interpolate(
-      mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate, yinterp);
+  auto const &&is_interpolated_y =
+      interpolator_spline_pws.Interpolate(mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate, yinterp);
 
-  auto const &&is_interpolated_z = interpolator_linear.Interpolate(
-      mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
+  auto const &&is_interpolated_z =
+      interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
 
   /**
    * @brief save into the reference map which accepts the resampled fixed size coordinates.
@@ -1468,9 +1382,8 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
   return is_interpolated_x && is_interpolated_y && is_interpolated_z;
 }
 
-bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
-    ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
-    map_matrix_in_t const &fixed_map_ref_sxyz)
+bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
+                                                             map_matrix_in_t const &fixed_map_ref_sxyz)
 {
   auto const &&EPS = std::numeric_limits<double>::epsilon();
 
