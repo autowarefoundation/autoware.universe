@@ -942,10 +942,10 @@ inline boost::optional<size_t> insertTargetPoint(
   }
 
   const double offset_length =
-    std::fabs(calcLongitudinalOffsetToSegment(points, *nearest_segment_idx, src_pose.position));
+    calcLongitudinalOffsetToSegment(points, *nearest_segment_idx, src_pose.position);
 
   return insertTargetPoint(
-    *nearest_segment_idx, offset_length + insert_point_length, points, overlap_threshold);
+    *nearest_segment_idx, insert_point_length + offset_length, points, overlap_threshold);
 }
 }  // namespace motion_utils
 
