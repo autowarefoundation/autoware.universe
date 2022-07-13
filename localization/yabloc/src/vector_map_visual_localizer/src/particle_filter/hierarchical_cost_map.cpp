@@ -19,7 +19,7 @@ cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vecto
 
 HierarchicalCostMap::HierarchicalCostMap(
   const rclcpp::Logger & logger, float max_range, float image_size, float gamma)
-: logger_(logger), max_range_(max_range), image_size_(image_size), max_map_count_(20)
+: logger_(logger), max_range_(max_range), image_size_(image_size), max_map_count_(10)
 {
   Area::unit_length_ = max_range;
   gamma_converter.reset(gamma);
@@ -31,6 +31,8 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
   if (cost_maps_.count(key) == 0) {
     buildMap(key);
   }
+  map_accessed_[key] = true;
+
   cv::Point2i tmp = toCvPoint(key, position);
   return cost_maps_.at(key).at<uchar>(tmp);
 }
@@ -64,12 +66,6 @@ void HierarchicalCostMap::buildMap(const Area & area)
   cost_maps_[area] = gamma_converter(distance);
   generated_map_history_.push_back(area);
 
-  // It can have MAX_MAP_COUNT local maps at most.
-  if (generated_map_history_.size() > max_map_count_) {
-    auto key = generated_map_history_.front();
-    generated_map_history_.pop_front();
-    cost_maps_.erase(key);
-  }
   RCLCPP_INFO_STREAM(
     logger_, "successed to build map " << area(area) << " " << area.realScale().transpose());
 }
@@ -133,6 +129,22 @@ cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
   cv::Mat rgb_image;
   cv::applyColorMap(image, rgb_image, cv::COLORMAP_JET);
   return rgb_image;
+}
+
+void HierarchicalCostMap::eraseObsolete()
+{
+  if (cost_maps_.size() < max_map_count_) return;
+
+  for (auto itr = generated_map_history_.begin(); itr != generated_map_history_.end();) {
+    if (map_accessed_[*itr]) {
+      ++itr;
+      continue;
+    }
+    cost_maps_.erase(*itr);
+    itr = generated_map_history_.erase(itr);
+  }
+
+  map_accessed_.clear();
 }
 
 }  // namespace particle_filter

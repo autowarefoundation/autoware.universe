@@ -63,6 +63,8 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
     particle.weight = score_convert(raw_score);
   }
 
+  cost_map_.eraseObsolete();
+
   this->setWeightedParticleArray(weighted_particles);
   marker_pub_->publish(cost_map_.showMapRange());
 }

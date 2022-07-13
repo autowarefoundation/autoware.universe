@@ -67,6 +67,8 @@ public:
 
   cv::Mat getMapImage(const Pose & pose);
 
+  void eraseObsolete();
+
 private:
   const float max_range_;
   const float image_size_;
@@ -76,6 +78,8 @@ private:
   cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);
   GammaConverter gamma_converter{4.0f};
+
+  std::unordered_map<Area, bool, Area> map_accessed_;
 
   std::list<Area> generated_map_history_;
   std::optional<pcl::PointCloud<pcl::PointNormal>> cloud_;
