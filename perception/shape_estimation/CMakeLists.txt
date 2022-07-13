@@ -20,7 +20,6 @@ set(SHAPE_ESTIMATION_DEPENDENCIES
 ament_auto_add_library(shape_estimation_lib SHARED
   lib/shape_estimator.cpp
   lib/model/bounding_box.cpp
-  lib/model/boost_bounding_box.cpp
   lib/model/convex_hull.cpp
   lib/model/cylinder.cpp
   lib/filter/car_filter.cpp

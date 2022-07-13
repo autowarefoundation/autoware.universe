@@ -14,6 +14,8 @@
 
 #include "shape_estimation/model/bounding_box.hpp"
 
+#include <boost/math/tools/minima.hpp>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -35,8 +37,6 @@
 #include <cmath>
 #include <utility>
 #include <vector>
-// #include <chrono>
-// #include <iostream>
 
 #define EIGEN_MPL2_ONLY
 
@@ -44,10 +44,10 @@
 
 constexpr float epsilon = 0.001;
 
-BoundingBoxShapeModel::BoundingBoxShapeModel() : ref_yaw_info_(boost::none) {}
+BoundingBoxShapeModel::BoundingBoxShapeModel() : ref_yaw_info_(boost::none), use_boost_bbox_optimizer_(false) {}
 
-BoundingBoxShapeModel::BoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info)
-: ref_yaw_info_(ref_yaw_info)
+BoundingBoxShapeModel::BoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info, bool use_boost_bbox_optimizer)
+: ref_yaw_info_(ref_yaw_info), use_boost_bbox_optimizer_(use_boost_bbox_optimizer)
 {
 }
 
@@ -78,19 +78,19 @@ bool BoundingBoxShapeModel::fitLShape(
     max_z = std::max(point.z, max_z);
   }
 
-  // auto start = std::chrono::system_clock::now();
-
   /*
    * Paper : IV2017, Efficient L-Shape Fitting for Vehicle Detection Using Laser Scanners
    * Authors : Xio Zhang, Wenda Xu, Chiyu Dong and John M. Dolan
    */
 
   // Paper : Algo.2 Search-Based Rectangle Fitting
-  double theta_star = optimize(cluster, min_angle, max_angle);
-
-  // auto end = std::chrono::system_clock::now();
-  // auto elapsed = end - start;
-  // std::cerr << elapsed.count() << '\n';
+  double theta_star;
+  if (use_boost_bbox_optimizer_) {
+    theta_star = boostOptimize(cluster, min_angle, max_angle);
+  }
+  else {
+    theta_star = optimize(cluster, min_angle, max_angle);
+  }
 
   const float sin_theta_star = std::sin(theta_star);
   const float cos_theta_star = std::cos(theta_star);
@@ -195,7 +195,6 @@ float BoundingBoxShapeModel::calcClosenessCriterion(
 float BoundingBoxShapeModel::optimize(
   const pcl::PointCloud<pcl::PointXYZ> & cluster, const float min_angle, const float max_angle)
 {
-  // std::cerr << "original" << std::endl;
   std::vector<std::pair<float /*theta*/, float /*q*/>> Q;
   constexpr float angle_resolution = M_PI / 180.0;
   for (float theta = min_angle; theta <= max_angle + epsilon; theta += angle_resolution) {
@@ -222,5 +221,31 @@ float BoundingBoxShapeModel::optimize(
     }
   }
 
+  return theta_star;
+}
+
+float BoundingBoxShapeModel::boostOptimize(
+  const pcl::PointCloud<pcl::PointXYZ> & cluster, const float min_angle, const float max_angle)
+{
+  auto closeness_func = [&](float theta) {
+    Eigen::Vector2f e_1;
+    e_1 << std::cos(theta), std::sin(theta);  // col.3, Algo.2
+    Eigen::Vector2f e_2;
+    e_2 << -std::sin(theta), std::cos(theta);  // col.4, Algo.2
+    std::vector<float> C_1;                    // col.5, Algo.2
+    std::vector<float> C_2;                    // col.6, Algo.2
+    for (const auto & point : cluster) {
+      C_1.push_back(point.x * e_1.x() + point.y * e_1.y());
+      C_2.push_back(point.x * e_2.x() + point.y * e_2.y());
+    }
+    float q = calcClosenessCriterion(C_1, C_2);
+    return -q;
+  };
+
+  int bits = 6;
+  boost::uintmax_t max_iter = 20;
+  std::pair<float, float> min = boost::math::tools::brent_find_minima(
+    closeness_func, min_angle, max_angle + epsilon, bits, max_iter);
+  float theta_star = min.first;
   return theta_star;
 }

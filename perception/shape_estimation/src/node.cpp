@@ -45,10 +45,9 @@ ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_option
   bool use_corrector = declare_parameter("use_corrector", true);
   bool use_filter = declare_parameter("use_filter", true);
   use_vehicle_reference_yaw_ = declare_parameter("use_vehicle_reference_yaw", true);
-  std::string bbox_optimizer_str = declare_parameter("bbox_optimizer", "original");
-  bbox_optimizer_ =
-    (bbox_optimizer_str == "boost" ? BoundingBoxOptimizer::Boost : BoundingBoxOptimizer::Original);
-  estimator_ = std::make_unique<ShapeEstimator>(use_corrector, use_filter, bbox_optimizer_);
+  bool use_boost_bbox_optimizer = declare_parameter("use_boost_bbox_optimizer", false);
+  RCLCPP_INFO(this->get_logger(), "using boost shape estimation : %d", use_boost_bbox_optimizer);
+  estimator_ = std::make_unique<ShapeEstimator>(use_corrector, use_filter, use_boost_bbox_optimizer);
 }
 
 void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstSharedPtr input_msg)

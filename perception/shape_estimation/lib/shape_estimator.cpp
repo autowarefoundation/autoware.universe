@@ -23,16 +23,10 @@
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
-ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter)
+ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter, bool use_boost_bbox_optimizer)
 : use_corrector_(use_corrector),
   use_filter_(use_filter),
-  bbox_optimizer_(BoundingBoxOptimizer::Original)
-{
-}
-
-ShapeEstimator::ShapeEstimator(
-  bool use_corrector, bool use_filter, const BoundingBoxOptimizer & bbox_optimizer)
-: use_corrector_(use_corrector), use_filter_(use_filter), bbox_optimizer_(bbox_optimizer)
+  use_boost_bbox_optimizer_(use_boost_bbox_optimizer)
 {
 }
 
@@ -78,11 +72,7 @@ bool ShapeEstimator::estimateOriginalShapeAndPose(
   if (
     label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
     label == Label::TRAILER || label == Label::MOTORCYCLE || label == Label::BICYCLE) {
-    if (bbox_optimizer_ == BoundingBoxOptimizer::Boost) {
-      model_ptr.reset(new BoostBoundingBoxShapeModel(ref_yaw_info));
-    } else {
-      model_ptr.reset(new BoundingBoxShapeModel(ref_yaw_info));
-    }
+    model_ptr.reset(new BoundingBoxShapeModel(ref_yaw_info, use_boost_bbox_optimizer_));
   } else if (label == Label::PEDESTRIAN) {
     model_ptr.reset(new CylinderShapeModel());
   } else {
