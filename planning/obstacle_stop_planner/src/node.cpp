@@ -1003,7 +1003,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
     return SlowDownSection{};
   }
 
-  const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
+  const auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
   mutex_.unlock();
 
   if (slow_down_param_.consider_constraints) {
@@ -1534,7 +1534,7 @@ void ObstacleStopPlannerNode::publishDebugData(
   const PlannerData & planner_data, const double current_acc)
 {
   mutex_.lock();
-  const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
+  const auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
   mutex_.unlock();
 
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_VEL, current_vel);
