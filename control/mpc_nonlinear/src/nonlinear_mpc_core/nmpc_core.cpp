@@ -563,7 +563,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
 
   } else
   {
-    ns_utils::print("calling feedback initialization ...");
+    // ns_utils::print("calling feedback initialization ...");
     is_initialized_traj = lpv_initializer_.simulateWithFeedback(model_ptr_,
                                                                 piecewise_interpolator,
                                                                 params_lpv_,
@@ -576,10 +576,11 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   auto &&Xtemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.X);
   auto &&Utemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.U);
 
-  ns_utils::print("\n[in initialization] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, vy]");
+  ns_utils::print("\n[nmpc_core in initialization] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, "
+                  "vy]");
   ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
 
-  ns_utils::print("\n [in initialization] Initialized LPV trajectories U : ");
+  ns_utils::print("\n [nmpc_core in initialization] Initialized LPV trajectories U : ");
   ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   if (!is_initialized_traj)
@@ -607,40 +608,55 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   //                                                                    dt,
   //                                                                    data_nmpc_.discretization_data);
 
+
+  // DEBUG
+  //  ns_utils::print("In the initialize trajectories");
+  //  ns_utils::print("Initialized Discrete Matrices : ");
+  //
+  //  for (size_t k = 0; k < K_mpc_steps - 1; k++)
+  //  {
+  //    ns_utils::print("A[k]");
+  //    ns_eigen_utils::printEigenMat(data_nmpc_.discretization_data.A.at(k));
+  //
+  //    ns_utils::print("B[k]");
+  //    ns_eigen_utils::printEigenMat(data_nmpc_.discretization_data.B.at(k));
+  //
+  //    ns_utils::print("z[k]");
+  //    ns_eigen_utils::printEigenMat(data_nmpc_.discretization_data.z.at(k));
+  //  }
+  //
+  //  ns_utils::print("Are the trajectories and OSQP  initialized ? : ",
+  //                  is_discretisized ? " initialized ..." : "not initialized ...");
+
+
   if (!is_discretisized)
   {
     return false;
   }
 
+  bool is_initialized_osqp{false};
+  if (!osqp_interface_.isInitialized() && is_initialized_traj && is_discretisized)
+  {
+    is_initialized_osqp =
+      osqp_interface_.setUPOSQP_useTriplets(data_nmpc_.trajectory_data.X[0], data_nmpc_, params_opt_);
+
+    if (is_initialized_osqp)
+    {
+      auto exit_code = osqp_interface_.testSolver();
+      ns_utils::print("nmpc_core OSQP test solution run results : ", ToString(exit_code));
+
+    } else
+    {
+      RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
+                   "[mpc_nonlinear - initialization] OSQP Matrices could "
+                   "not be  initialized ...");
+
+      return false;
+    }
+  }
 
 
-//  bool is_initialized_osqp = false;
-//  if (!osqp_interface_.isInitialized() && is_initialized_traj && is_discretisized)
-//  {
-//    is_initialized_osqp =
-//        osqp_interface_.setUPOSQP_useTriplets(data_nmpc_.trajectory_data.X[0], data_nmpc_, params_opt_);
-//
-//    // DEBUG
-//    //  auto exit_code = osqp_interface_.testSolver();
-//    //  ns_utils::print("OSQP test solution run results : ", ToString(exit_code));
-//    // end of DEBUG
-//
-//    if (is_initialized_osqp)
-//    {
-//      auto exit_code = osqp_interface_.testSolver();
-//      ns_utils::print("OSQP test solution run results : ", ToString(exit_code));
-//    } else
-//    {
-//      RCLCPP_ERROR(
-//          rclcpp::get_logger(node_logger_name_),
-//          "[mpc_nonlinear - initialization] OSQP Matrices could "
-//          "not be  initialized ...");
-//    }
-//  }
-//
-//  initialized_ = is_initialized_traj && is_discretisized && is_initialized_osqp;
-//
-//  // DEBUG
+  // DEBUG
   //  // Get trajectories as a matrix and print for debugging purpose.
   //  auto &&Xtemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.X);
   //  auto &&Utemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.U);
@@ -652,21 +668,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   //  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
 
-  //    ns_utils::print("In the initialize trajectories");
-  //    ns_utils::print("Initialized Discrete Matrices : ");
-  //
-  //    for (size_t k = 0; k < K_mpc_steps - 1; k++)
-  //    {
-  //        ns_utils::print("A[k]");
-  //        ns_eigen_utils::printEigenMat(data_nmpc_.discretization_data.A.at(k));
-  //
-  //        ns_utils::print("B[k]");
-  //        ns_eigen_utils::printEigenMat(data_nmpc_.discretization_data.B.at(k));
-  //
-  //        ns_utils::print("z[k]");
-  //        ns_eigen_utils::printEigenMat(data_nmpc_.discretization_data.z.at(k));
-  //    }
-  //
+
   //    ns_utils::print("Are the trajectories and OSQP  initialized ? : ",
   //                    initialized_ ? " initialized ..." : "not initialized ...");
   // end of debug
