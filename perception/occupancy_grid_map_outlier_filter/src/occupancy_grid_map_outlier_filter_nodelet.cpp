@@ -28,6 +28,10 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
+#include <common/types.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -285,18 +289,17 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
   const OccupancyGrid & occupancy_grid_map, const PointCloud2 & pointcloud,
   PclPointCloud & high_confidence, PclPointCloud & low_confidence)
 {
-  for (sensor_msgs::PointCloud2ConstIterator<float> x(pointcloud, "x"), y(pointcloud, "y"),
-       z(pointcloud, "z");
-       x != x.end(); ++x, ++y, ++z) {
-    const auto cost = getCost(occupancy_grid_map, *x, *y);
+  point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{pointcloud};
+  for(const auto & point : view) {
+    const auto cost = getCost(occupancy_grid_map, point.x, point.y);
     if (cost) {
       if (cost_threshold_ < *cost) {
-        high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
+        high_confidence.push_back(pcl::PointXYZ(point.x, point.y, point.z));
       } else {
-        low_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
+        low_confidence.push_back(pcl::PointXYZ(point.x, point.y, point.z));
       }
     } else {
-      high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
+      high_confidence.push_back(pcl::PointXYZ(point.x, point.y, point.z));
     }
   }
 }
