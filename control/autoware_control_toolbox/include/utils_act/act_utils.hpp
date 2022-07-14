@@ -154,6 +154,14 @@ namespace ns_utils
     }
 
     template<typename T>
+    constexpr T angleDistance(T const &theta, T const &theta_ref)
+    {
+      auto angle_diff = theta - theta_ref;
+      return std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
+    }
+
+
+    template<typename T>
     T wrapToPi(T const &angle)
     {
       const std::complex<double> i(0, 1);
