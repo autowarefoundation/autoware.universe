@@ -15,7 +15,6 @@
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 #include <common/types.hpp>
-
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
 #include <deque>
@@ -73,8 +72,7 @@ void DistortionCorrectorComponent::onTwistWithCovarianceStamped(
       twist_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(twist_queue_.front().header.stamp) <
-      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0))
-    {
+      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
       twist_queue_.pop_front();
     }
     break;
@@ -105,13 +103,11 @@ void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstShare
     // for replay rosbag
     if (
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
-      rclcpp::Time(imu_msg->header.stamp))
-    {
+      rclcpp::Time(imu_msg->header.stamp)) {
       angular_velocity_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
-      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0))
-    {
+      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
       angular_velocity_queue_.pop_front();
     }
     break;
@@ -122,7 +118,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
 {
   stop_watch_ptr_->toc("processing_time", true);
   const auto points_sub_count = undistorted_points_pub_->get_subscription_count() +
-    undistorted_points_pub_->get_intra_process_subscription_count();
+                                undistorted_points_pub_->get_intra_process_subscription_count();
 
   if (points_sub_count < 1) {
     return;
@@ -182,9 +178,8 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     return false;
   }
 
-  if (!point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZTimestamp>::
-    can_be_created_from(points))
-  {
+  if (!point_cloud_msg_wrapper::PointCloud2View<
+        autoware::common::types::PointXYZTimestamp>::can_be_created_from(points)) {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 10000 /* ms */,
       "Required field time stamp doesn't exist in the point cloud.");
@@ -221,10 +216,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (auto & point : modifier) {
     for (;
-      (twist_it != std::end(twist_queue_) - 1 &&
-      point.time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
-      ++twist_it)
-    {
+         (twist_it != std::end(twist_queue_) - 1 &&
+          point.time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
+         ++twist_it) {
     }
 
     float v{static_cast<float>(twist_it->twist.linear.x)};
@@ -240,10 +234,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     if (use_imu_ && !angular_velocity_queue_.empty()) {
       for (;
-        (imu_it != std::end(angular_velocity_queue_) - 1 &&
-        point.time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
-        ++imu_it)
-      {
+           (imu_it != std::end(angular_velocity_queue_) - 1 &&
+            point.time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
+           ++imu_it) {
       }
       if (std::abs(point.time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(

@@ -111,8 +111,7 @@ void CropBoxFilterComponent::filter(
       memcpy(pt.data(), &input->data[i], sizeof(float) * 3);
       if (
         param_.min_z < pt.z() && pt.z() < param_.max_z && param_.min_y < pt.y() &&
-        pt.y() < param_.max_y && param_.min_x < pt.x() && pt.x() < param_.max_x)
-      {
+        pt.y() < param_.max_y && param_.min_x < pt.x() && pt.x() < param_.max_x) {
         memcpy(&output.data[j], &input->data[i], point_step);
         j += point_step;
       }
@@ -123,8 +122,7 @@ void CropBoxFilterComponent::filter(
       memcpy(pt.data(), &input->data[i], sizeof(float) * 3);
       if (
         param_.min_z > pt.z() || pt.z() > param_.max_z || param_.min_y > pt.y() ||
-        pt.y() > param_.max_y || param_.min_x > pt.x() || pt.x() > param_.max_x)
-      {
+        pt.y() > param_.max_y || param_.min_x > pt.x() || pt.x() > param_.max_x) {
         memcpy(&output.data[j], &input->data[i], point_step);
         j += point_step;
       }
@@ -156,12 +154,12 @@ void CropBoxFilterComponent::filter(
 void CropBoxFilterComponent::publishCropBoxPolygon()
 {
   auto generatePoint = [](double x, double y, double z) {
-      geometry_msgs::msg::Point32 point;
-      point.x = x;
-      point.y = y;
-      point.z = z;
-      return point;
-    };
+    geometry_msgs::msg::Point32 point;
+    point.x = x;
+    point.y = y;
+    point.z = z;
+    return point;
+  };
 
   const double x1 = param_.max_x;
   const double x2 = param_.min_x;
@@ -215,14 +213,12 @@ rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
     get_param(p, "min_x", new_param.min_x) && get_param(p, "min_y", new_param.min_y) &&
     get_param(p, "min_z", new_param.min_z) && get_param(p, "max_x", new_param.max_x) &&
     get_param(p, "max_y", new_param.max_y) && get_param(p, "max_z", new_param.max_z) &&
-    get_param(p, "negative", new_param.negative))
-  {
+    get_param(p, "negative", new_param.negative)) {
     if (
       param_.min_x != new_param.min_x || param_.max_x != new_param.max_x ||
       param_.min_y != new_param.min_y || param_.max_y != new_param.max_y ||
       param_.min_z != new_param.min_z || param_.max_z != new_param.max_z ||
-      param_.negative != new_param.negative)
-    {
+      param_.negative != new_param.negative) {
       RCLCPP_DEBUG(
         get_logger(), "[%s::paramCallback] Setting the minimum point to: %f %f %f.", get_name(),
         new_param.min_x, new_param.min_y, new_param.min_z);
