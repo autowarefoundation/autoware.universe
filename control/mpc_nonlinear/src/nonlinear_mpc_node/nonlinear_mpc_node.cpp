@@ -368,8 +368,8 @@ namespace ns_mpc_nonlinear
       x0_predicted_.setZero();
       nonlinear_mpc_controller_ptr_->getInitialState(x0_predicted_);
 
-      //  ns_utils::print("Initial state before prediction : ");
-      //  ns_eigen_utils::printEigenMat(x0_predicted_);
+      ns_utils::print("Initial state before prediction : ");
+      ns_eigen_utils::printEigenMat(x0_predicted_);
 
       // If there is no input delay in the system, predict_initial_states is set to false automatically
       // in the constructor.
@@ -384,8 +384,8 @@ namespace ns_mpc_nonlinear
         predictDelayedInitialStateBy_MPCPredicted_Inputs(x0_predicted_);
       }
 
-      //  ns_utils::print("Initial state after prediction : ");
-      //  ns_eigen_utils::printEigenMat(x0_predicted_);
+      ns_utils::print("Initial state after prediction : ");
+      ns_eigen_utils::printEigenMat(x0_predicted_);
 
       // Update the initial state of the NMPCcore object.
       nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
@@ -1892,17 +1892,28 @@ namespace ns_mpc_nonlinear
                                                   current_COG_pose_ptr_->pose.position.y};
 
       // Get Yaw angles of the reference waypoint and the vehicle
-      std::array<double, 3> const target_xy_yaw = nonlinear_mpc_controller_ptr_->getSmooth_XYYawAtCurrentDistance();
+      /**
+       * The stored yaw angles is unwrapped before storing them which removes [-pi, pi] interval constraints. This is
+       * necessary to be able to interpolate the angles given a trajectory.
+       * */
+      // std::array<double, 3> const target_xy_yaw = nonlinear_mpc_controller_ptr_->getSmooth_XYYawAtCurrentDistance();
+      // auto reference_yaw_angle = ns_utils::angleDistance(target_xy_yaw[2]);
 
-      auto const &reference_yaw_angle = ns_utils::angleDistance(target_xy_yaw[2]);
-      std::array<double, 2> interpolated_smooth_traj_point_xy{target_xy_yaw[0], target_xy_yaw[1]}; // [x, y]
+      /**
+       * Since the reference trajectory yaw angles are unwrapped during the construction, we need to wrap them back
+       * into [-pi, pi] interval as the vehicle yaw angle is in this range. The difference of angles will be taken
+       * care of by the angle distance methods.
+       */
+
+      // reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle); // overloaded angle distance also wraps.
+      // std::array<double, 2> interpolated_smooth_traj_point_xy{target_xy_yaw[0], target_xy_yaw[1]}; // [x, y]
 
       // We can also use the interpolated pose albeit noisy
-      // std::array<double, 2>
-      // interpolated_smooth_traj_point_xy{current_interpolated_traj_point_ptr_->pose.position.x,
-      // current_interpolated_traj_point_ptr_->pose.position.y};
-      //
-      // auto reference_yaw_angle = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
+      std::array<double, 2> interpolated_smooth_traj_point_xy{current_interpolated_traj_point_ptr_->pose.position.x,
+                                                              current_interpolated_traj_point_ptr_->pose.position.y};
+
+      auto reference_yaw_angle = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
+      reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle);
 
       double const &vehicle_yaw_angle = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
 

@@ -123,7 +123,12 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
   curvature.emplace_back(0.0);
 
   // Convert heading angle to a monotonic series
-  ns_utils::convertEulerAngleToMonotonic(&yaw);
+  // ns_utils::convertEulerAngleToMonotonic(&yaw);
+
+  /**
+   * Unwrap the yaw angle vector.
+   * */
+  ns_utils::unWrap(yaw);
 }
 
 void ns_data::MPCdataTrajectoryVectors::clear()
