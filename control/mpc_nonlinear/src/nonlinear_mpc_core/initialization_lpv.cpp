@@ -15,7 +15,6 @@
  */
 
 #include "nonlinear_mpc_core/initialization_lpv.hpp"
-
 #include <vector>
 
 bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
@@ -41,9 +40,9 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   auto xk = nmpc_data.trajectory_data.X[0];  // current value is x0.
   auto uk = nmpc_data.trajectory_data.U[0];
 
-  //  ns_utils::print("x0 and u0");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
+  ns_utils::print("x0 and u0");
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
 
   //  x  =[xw, yw, psi, s, e_y, e_yaw, v, delta]
 
@@ -68,7 +67,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   // Prepare param vector placeholder.
   Model::param_vector_t params{Model::param_vector_t::Zero()};
 
-  for (size_t k = 0; k < K; ++k)
+  for (size_t k = 0; k < K - 1; ++k)
   {
     // Compute feedback control using the Lyapunov matrices X[k] = sum(theta_i*X_i) and Y...
     // respectively. We need the nonlinear theta parameters that represent the nonlinear
@@ -169,8 +168,8 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Unwrap error and yaw angles.
 
     // Update xk, uk
-    nmpc_data.trajectory_data.X[k] = xk.eval();
-    nmpc_data.trajectory_data.U[k] = uk.eval();
+    nmpc_data.trajectory_data.X[k + 1] << xk.eval();
+    nmpc_data.trajectory_data.U[k] << uk.eval();
 
     // DEBUG
     //		ns_utils::print("\nIn LPV initialization :");
@@ -189,6 +188,9 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     //		ns_utils::print("Feedback controls : ", uk(0), ", ", uk(1));
     // end of debug
   }
+
+  // Copy the last input
+  nmpc_data.trajectory_data.U.rbegin()[0] = nmpc_data.trajectory_data.U.rbegin()[1];
 
   // DEBUG
   // Get trajectories as a matrix and print for debugging purpose.
