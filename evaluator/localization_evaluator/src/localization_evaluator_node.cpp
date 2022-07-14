@@ -113,7 +113,6 @@ void LocalizationEvaluatorNode::syncCallback(
 
   DiagnosticArray metrics_msg;
   metrics_msg.header.stamp = now();
-  stamps_.push_back(metrics_msg.header.stamp);
 
   geometry_msgs::msg::Point p_lc, p_gt;
   p_lc = msg->pose.pose.position;
@@ -126,6 +125,7 @@ void LocalizationEvaluatorNode::syncCallback(
     metrics_dict_[metric] = metrics_calculator_.updateStat(
       metrics_dict_[metric], metric, msg->pose.pose.position, msg_ref->pose.pose.position);
     metric_stats_[static_cast<size_t>(metric)].push_back(metrics_dict_[metric]);
+    stamps_.push_back(metrics_msg.header.stamp);
     if (metrics_dict_[metric].count() > 0) {
       metrics_msg.status.push_back(generateDiagnosticStatus(metric, metrics_dict_[metric]));
     }

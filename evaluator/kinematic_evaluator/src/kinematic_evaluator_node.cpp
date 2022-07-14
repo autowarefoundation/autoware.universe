@@ -54,32 +54,29 @@ KinematicEvaluatorNode::KinematicEvaluatorNode(const rclcpp::NodeOptions & node_
 KinematicEvaluatorNode::~KinematicEvaluatorNode()
 {
   if (!output_file_str_.empty()) {
-    // column width is the maximum size we might print + 1 for the space between columns
-    // const auto column_width = std::to_string(std::numeric_limits<double>::max()).size() + 1;
-    // Write data using format
     std::ofstream f(output_file_str_);
-    f << std::fixed << std::left;
+    f << std::left << std::fixed;
     // header
-    f << "#Stamp(ns)";
+    f << "#Data collected over: " << stamps_.back().seconds() - stamps_[0].seconds() << " seconds."
+      << std::endl;
+    f << std::setw(24) << "#Stamp [ns]";    
+
     for (Metric metric : metrics_) {
-      f << " " << metric_descriptions.at(metric);
-      f << " . .";  // extra "columns" to align columns headers
+      f << std::setw(30) << metric_descriptions.at(metric);
     }
     f << std::endl;
-    f << "#.";
+    f << std::setw(24) << "#";
     for (Metric metric : metrics_) {
       (void)metric;
-      f << " min max mean";
+      f << std::setw(9) << "min" << std::setw(9) << "max" << std::setw(12) << "mean";
     }
     f << std::endl;
     // data
-    for (size_t i = 0; i < stamps_.size(); ++i) {
-      f << stamps_[i].nanoseconds();
-      for (Metric metric : metrics_) {
-        const auto & stat = metric_stats_[static_cast<size_t>(metric)][i];
-        f << " " << stat;
-      }
-      f << std::endl;
+    f << std::setw(24) << stamps_.back().nanoseconds();
+    for (Metric metric : metrics_) {
+      const auto & stat = metric_stats_[static_cast<size_t>(metric)].back();
+      f << stat;
+      f << std::setw(4) << "";
     }
     f.close();
   }
@@ -108,17 +105,16 @@ void KinematicEvaluatorNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg
 {
   DiagnosticArray metrics_msg;
   metrics_msg.header.stamp = now();
+
   for (Metric metric : metrics_) {
     metrics_dict_[metric] = metrics_calculator_.updateStat(metric, *msg, metrics_dict_[metric]);
-    // std::cout << metrics_dict_[metric] << "\n";
-    // std::cout << "metric dict count" << metrics_dict_[metric].count() << "\n";
+    metric_stats_[static_cast<size_t>(metric)].push_back(metrics_dict_[metric]);
+    stamps_.push_back(metrics_msg.header.stamp);
     if (metrics_dict_[metric].count() > 0) {
       metrics_msg.status.push_back(generateDiagnosticStatus(metric, metrics_dict_[metric]));
     }
   }
   if (!metrics_msg.status.empty()) {
-    std::cout << "Data: " << metrics_msg.status[0].name << " size: " << metrics_msg.status.size()
-              << std::endl;
     metrics_pub_->publish(metrics_msg);
   }
 }
