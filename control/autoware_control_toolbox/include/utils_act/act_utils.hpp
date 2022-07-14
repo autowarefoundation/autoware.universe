@@ -245,8 +245,9 @@ void constexpr print_container(const ContainerType<ValueType, AllocType> & c)
 {
   std::cout << "\n [";
 
-  for (auto it = c.cbegin(); it != c.cend() - 1; ++it) {
-    std::cout << std::setprecision(4) << *it << ", ";
+  for (auto it = c.cbegin(); it != c.cend() - 1; ++it)
+  {
+      std::cout << std::setprecision(4) << *it << ", ";
   }
 
   auto it = c.end() - 1;
