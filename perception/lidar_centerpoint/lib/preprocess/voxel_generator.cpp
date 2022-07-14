@@ -73,7 +73,7 @@ std::size_t VoxelGenerator::pointsToVoxels(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
 
     point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{pc_msg};
-    for(const auto & point : view) {
+    for (const auto & point : view) {
       point_past << point.x, point.y, point.z;
       point_current = affine_past2current * point_past;
 
