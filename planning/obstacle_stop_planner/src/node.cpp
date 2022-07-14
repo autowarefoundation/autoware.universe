@@ -585,6 +585,13 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
   {
     std::lock_guard<std::mutex> lock(mutex_);
 
+    if (!object_ptr_) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+        "waiting for dynamic objects...");
+      return;
+    }
+
     if (!obstacle_ros_pointcloud_ptr) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
