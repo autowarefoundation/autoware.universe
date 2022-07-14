@@ -68,9 +68,9 @@ namespace ns_data
     {
         ParamsFilters()
         {
-            Vsqrt.setZero();
-            Wsqrt.setZero();
-            Psqrt.setZero();
+          Vsqrt.setZero();
+          Wsqrt.setZero();
+          Psqrt.setZero();
         }
 
         // ~ParamsFilters() = default;
@@ -89,19 +89,19 @@ namespace ns_data
         ParamsOptimization()
         {
 
-            // Prepare the weight matrices.
-            Q.setIdentity();
-            QN.setIdentity();
-            R.setIdentity();
-            Rj.setIdentity();
+          // Prepare the weight matrices.
+          Q.setIdentity();
+          QN.setIdentity();
+          R.setIdentity();
+          Rj.setIdentity();
 
-            // Prepare the scaling matrix and vectors.
-            Sx.setIdentity();  // prepare state scaling diagonal matrix.
-            Su.setIdentity();  // prepare control scaling diagonal matrix.
+          // Prepare the scaling matrix and vectors.
+          Sx.setIdentity();  // prepare state scaling diagonal matrix.
+          Su.setIdentity();  // prepare control scaling diagonal matrix.
 
-            // Prepare inverse scaling matrices.
-            Sx_inv.setIdentity();
-            Su_inv.setIdentity();
+          // Prepare inverse scaling matrices.
+          Sx_inv.setIdentity();
+          Su_inv.setIdentity();
         }
 
         //~ParamsOptimization() = default;
@@ -122,7 +122,7 @@ namespace ns_data
 
         /** @brief State and control scaling min, max values. */
         std::vector<double>
-                scaling_range{std::vector<double>(2, 0.0)};  // the range the variables scaled into [-1, 1] or any.
+          scaling_range{std::vector<double>(2, 0.0)};  // the range the variables scaled into [-1, 1] or any.
         Model::state_vector_t xmin_for_scaling{Model::state_vector_t::Zero()};
         Model::state_vector_t xmax_for_scaling{Model::state_vector_t::Zero()};
         Model::input_vector_t umin_for_scaling{Model::input_vector_t::Zero()};
@@ -172,8 +172,8 @@ namespace ns_data
 
         ParamsLPVFeedback()
         {
-            lpvXcontainer.reserve(numOfNonlinearTerms);  // !<@brief including X0, Y0
-            lpvYcontainer.reserve(numOfNonlinearTerms);
+          lpvXcontainer.reserve(numOfNonlinearTerms);  // !<@brief including X0, Y0
+          lpvYcontainer.reserve(numOfNonlinearTerms);
         }
 
         // ~ParamsLPVFeedback() = default;
@@ -194,18 +194,17 @@ namespace ns_data
     template<size_t mpc_numPredictionStepsK>
     struct DataNMPCcore
     {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         DataNMPCcore() = default;
 
         explicit DataNMPCcore(double const &mpc_dt) : mpc_prediction_dt{mpc_dt}
         {
-            trajectory_data.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
-            target_reference_states_and_controls.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
-            discretization_data.initializeDiscretizationMatrices(mpc_numPredictionStepsK, mpc_dt);
+          trajectory_data.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
+          target_reference_states_and_controls.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
+          discretization_data.initializeDiscretizationMatrices(mpc_numPredictionStepsK, mpc_dt);
 
-            auto u0 = trajectory_data.U.at(0);
-            u0.setZero();
+          auto u0 = trajectory_data.U.at(0);
+          u0.setZero();
         }
         // ~DataNMPCcore() = default;
 

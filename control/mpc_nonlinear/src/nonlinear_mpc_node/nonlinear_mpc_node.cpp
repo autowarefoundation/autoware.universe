@@ -1529,10 +1529,9 @@ namespace ns_mpc_nonlinear
           interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
         !is_updated)
       {
-        RCLCPP_ERROR(
-          get_logger(),
-          "[mpc_nonlinear - resampling] Could not update the point-wise curvature "
-          "interpolator_spline_pws  data ...");
+        RCLCPP_ERROR(get_logger(),
+                     "[mpc_nonlinear - resampling] Could not update the point-wise curvature "
+                     "interpolator_spline_pws  data ...");
         return false;
       }
 
@@ -1896,6 +1895,7 @@ namespace ns_mpc_nonlinear
        * The stored yaw angles is unwrapped before storing them which removes [-pi, pi] interval constraints. This is
        * necessary to be able to interpolate the angles given a trajectory.
        * */
+
       // std::array<double, 3> const target_xy_yaw = nonlinear_mpc_controller_ptr_->getSmooth_XYYawAtCurrentDistance();
       // auto reference_yaw_angle = ns_utils::angleDistance(target_xy_yaw[2]);
 
@@ -1908,12 +1908,12 @@ namespace ns_mpc_nonlinear
       // reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle); // overloaded angle distance also wraps.
       // std::array<double, 2> interpolated_smooth_traj_point_xy{target_xy_yaw[0], target_xy_yaw[1]}; // [x, y]
 
-      // We can also use the interpolated pose albeit noisy
+      // We can also use the interpolated pose which yields cleaner error states.
       std::array<double, 2> interpolated_smooth_traj_point_xy{current_interpolated_traj_point_ptr_->pose.position.x,
                                                               current_interpolated_traj_point_ptr_->pose.position.y};
 
       auto reference_yaw_angle = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
-      reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle);
+      reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle);  // overloaded angle distance also wraps.
 
       double const &vehicle_yaw_angle = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
 

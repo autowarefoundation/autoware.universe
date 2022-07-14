@@ -15,9 +15,6 @@
  */
 
 #include "utils/nmpc_utils.hpp"
-#include <vector>
 
-namespace ns_utils
-{
 
-}  // namespace ns_utils
+
