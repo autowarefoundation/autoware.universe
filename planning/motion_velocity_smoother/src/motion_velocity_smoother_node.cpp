@@ -478,7 +478,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   }
 
   // Smoothing velocity
-  if (!smoothVelocity(*traj_extracted, output)) {
+  if (!smoothVelocity(*traj_extracted, *traj_extracted_closest, output)) {
     return prev_output_;
   }
 
@@ -493,10 +493,18 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 }
 
 bool MotionVelocitySmootherNode::smoothVelocity(
-  const TrajectoryPoints & input, TrajectoryPoints & traj_smoothed) const
+  const TrajectoryPoints & input, const size_t input_closest,
+  TrajectoryPoints & traj_smoothed) const
 {
+  // Calculate initial motion for smoothing
+  double initial_vel{};
+  double initial_acc{};
+  InitializeType type{};
+  std::tie(initial_vel, initial_acc, type) = calcInitialMotion(input, input_closest, prev_output_);
+
   // Lateral acceleration limit
-  const auto traj_lateral_acc_filtered = smoother_->applyLateralAccelerationFilter(input);
+  const auto traj_lateral_acc_filtered =
+    smoother_->applyLateralAccelerationFilter(input, initial_vel, initial_acc, true);
   if (!traj_lateral_acc_filtered) {
     return false;
   }
@@ -512,6 +520,13 @@ bool MotionVelocitySmootherNode::smoothVelocity(
     RCLCPP_WARN(get_logger(), "Fail to do resampling before the optimization");
     return false;
   }
+  const auto traj_resampled_closest = motion_utils::findNearestIndex(
+    *traj_resampled, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
+  if (!traj_resampled_closest) {
+    RCLCPP_WARN(get_logger(), "Cannot find closest waypoint for resampled trajectory");
+    return false;
+  }
 
   // Set 0[m/s] in the terminal point
   if (!traj_resampled->empty()) {
@@ -520,20 +535,6 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
   // Publish Closest Resample Trajectory Velocity
   publishClosestVelocity(*traj_resampled, current_pose_ptr_->pose, debug_closest_max_velocity_);
-
-  // Calculate initial motion for smoothing
-  double initial_vel{};
-  double initial_acc{};
-  InitializeType type{};
-  const auto traj_resampled_closest = motion_utils::findNearestIndex(
-    *traj_resampled, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
-    node_param_.delta_yaw_threshold);
-  if (!traj_resampled_closest) {
-    RCLCPP_WARN(get_logger(), "Cannot find closest waypoint for resampled trajectory");
-    return false;
-  }
-  std::tie(initial_vel, initial_acc, type) =
-    calcInitialMotion(*traj_resampled, *traj_resampled_closest, prev_output_);
 
   // Clip trajectory from closest point
   TrajectoryPoints clipped;
