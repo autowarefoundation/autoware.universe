@@ -48,7 +48,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(std::vector<double> const &
   // Binary Search.
   ynew.reserve(tnew.size());
 
-  for (auto const &ti : tnew)
+  for (auto const &ti: tnew)
   {
     auto const &&left_ind = ns_utils::binary_index_search(ti, tbase);
     auto const &picewise_coeffs = coefficients_[left_ind];
@@ -86,7 +86,7 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(
   // Binary Search.
   ynew.reserve(tnew.size());
 
-  for (auto const &ti : tnew)
+  for (auto const &ti: tnew)
   {
     auto const &&left_ind = ns_utils::binary_index_search(ti, tbase_);
     auto const &picewise_coeffs = coefficients_[left_ind];
@@ -103,9 +103,9 @@ bool ns_splines::InterpolatingSplinePCG::Interpolate(
 }
 
 // Point-wise scalar interpolation - std::vector case.
-bool ns_splines::InterpolatingSplinePCG::Interpolate(
-  const std::vector<double> &tbase, const std::vector<double> &ybase, const double &tnew,
-  double &ynew)
+bool ns_splines::InterpolatingSplinePCG::Interpolate(const std::vector<double> &tbase, const std::vector<double> &ybase,
+                                                     const double &tnew,
+                                                     double &ynew)
 {
   if (tnew < tbase[0] && tnew > tbase.back())
   {
@@ -197,7 +197,7 @@ bool ns_splines::InterpolatingSplinePCG::compute_coefficients(std::vector<double
       std::cbegin(ybase), std::cend(ybase), std::cbegin(b_coeff), std::back_inserter(coefficients_),
       [](auto &ai, auto &bi)
       {
-        return std::vector<double>{ai, bi};
+          return std::vector<double>{ai, bi};
       });
     return true;
 
@@ -351,8 +351,7 @@ bool ns_splines::InterpolatingSplinePCG::checkIfMonotonic(const std::vector<doub
  *  using the existing parameters we need to initialize the interpolator setting reusing_coefficients=false, so that
  *  the interpolator re-computes the interpolation coefficients.
  * */
-bool ns_splines::InterpolatingSplinePCG::Initialize(
-  std::vector<double> const &tbase, std::vector<double> const &ybase)
+bool ns_splines::InterpolatingSplinePCG::Initialize(std::vector<double> const &tbase, std::vector<double> const &ybase)
 {
   double const &t0 = tbase[0];
   double y0{};
