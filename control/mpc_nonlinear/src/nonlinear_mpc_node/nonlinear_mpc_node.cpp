@@ -158,8 +158,8 @@ namespace ns_mpc_nonlinear
                                                         params_node_.will_stop_state_dist);
 
       // Initialize the control input queue.
-      inputs_buffer_common_ = std::deque < std::array < double, 4 >> (params_node_.input_delay_discrete_nsteps,
-        std::array<double, 4>());
+      inputs_buffer_common_ = std::deque<std::array<double, 4 >>(params_node_.input_delay_discrete_nsteps,
+                                                                 std::array<double, 4>());
 
       // Initialize the timer.
       initTimer(params_node_.control_period);
@@ -252,9 +252,9 @@ namespace ns_mpc_nonlinear
       const auto period_ns =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
 
-      timer_ = std::make_shared < rclcpp::GenericTimer < decltype(timer_callback) >> (this->get_clock(), period_ns,
-        std::move(timer_callback),
-        this->get_node_base_interface()->get_context());
+      timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback) >>(this->get_clock(), period_ns,
+                                                                                 std::move(timer_callback),
+                                                                                 this->get_node_base_interface()->get_context());
 
       this->get_node_timers_interface()->add_timer(timer_, nullptr);
     }
@@ -340,7 +340,7 @@ namespace ns_mpc_nonlinear
         // Reset the input que. [ax, vx, steering_rate, steering]
         for (auto &value: inputs_buffer_common_)
         {
-          value = std::array < double, 4 > {0.0, 0.0, 0.0, 0.0};
+          value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
         }
 
         // kalman_filter_.reset();
@@ -889,22 +889,22 @@ namespace ns_mpc_nonlinear
       params_filters.Vsqrt.setZero();
       std::vector<double> temp(Model::state_dim);
       std::vector<double> default_vec{0.2, 0.2, 0.05, 0.2, 0.05, 0.02, 0.15, 0.03, 0.05};
-      temp = declare_parameter < std::vector < double >> ("Vprocess", default_vec);
+      temp = declare_parameter<std::vector<double >>("Vprocess", default_vec);
       params_filters.Vsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
       params_filters.Wsqrt.setZero();
       temp.clear();
       temp.reserve(Model::state_dim);
-      default_vec = std::vector < double > {0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
-      temp = declare_parameter < std::vector < double >> ("Wmeasurement", default_vec);
+      default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
+      temp = declare_parameter<std::vector<double >>("Wmeasurement", default_vec);
       params_filters.Wsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
       // Updated covariance matrix.
       params_filters.Psqrt.setZero();
       temp.clear();
       temp.reserve(Model::state_dim);
-      default_vec = std::vector < double > {0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
-      temp = declare_parameter < std::vector < double >> ("Pkalman", default_vec);
+      default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
+      temp = declare_parameter<std::vector<double >>("Pkalman", default_vec);
       params_filters.Psqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
       // UKF specific parameters.
@@ -940,87 +940,87 @@ namespace ns_mpc_nonlinear
       // State and control weights. Q. Reads only the diagonal terms .
       std::vector<double> temp(Model::state_dim);
       std::vector<double> default_vec{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0., 0.0};
-      temp = declare_parameter < std::vector < double > > ("state_weights", default_vec);
+      temp = declare_parameter<std::vector<double> >("state_weights", default_vec);
       params_optimization.Q.diagonal() = Model::state_vector_t::Map(temp.data());
 
       // QN
       temp.clear();
       temp.reserve(Model::state_dim);
-      default_vec = std::vector < double > {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0};
-      temp = declare_parameter < std::vector < double > > ("state_weights_terminal", default_vec);
+      default_vec = std::vector<double>{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0};
+      temp = declare_parameter<std::vector<double> >("state_weights_terminal", default_vec);
       params_optimization.QN.diagonal() = Model::state_vector_t::Map(temp.data());
 
       // R - Control weights.
       temp.clear();
       temp.reserve(Model::input_dim);
-      default_vec = std::vector < double > {0.001, 0.0001};
-      temp = declare_parameter < std::vector < double > > ("control_weights", default_vec);
+      default_vec = std::vector<double>{0.001, 0.0001};
+      temp = declare_parameter<std::vector<double> >("control_weights", default_vec);
       params_optimization.R.diagonal() = Model::input_vector_t::Map(temp.data());
 
       // Rj - Jerk weights.
       temp.clear();
       temp.reserve(Model::input_dim);
-      default_vec = std::vector < double > {1., 1.};
-      temp = declare_parameter < std::vector < double > > ("jerk_weights", default_vec);
+      default_vec = std::vector<double>{1., 1.};
+      temp = declare_parameter<std::vector<double> >("jerk_weights", default_vec);
       params_optimization.Rj.diagonal() = Model::input_vector_t::Map(temp.data());
 
       // State and input bounds. xlower bound.
       temp.clear();
       temp.reserve(Model::state_dim);
       default_vec =
-        std::vector < double > {-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
-      temp = declare_parameter < std::vector < double > > ("xlower", default_vec);
+        std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
+      temp = declare_parameter<std::vector<double> >("xlower", default_vec);
       params_optimization.xlower = Model::state_vector_t::Map(temp.data());
 
       // State and input bounds. xupper bound.
       temp.clear();
       temp.reserve(Model::state_dim);
       default_vec =
-        std::vector < double > {kInfinity, kInfinity, kInfinity, kInfinity, 2.0, 1.0, 25.0, 0.69, kInfinity};
-      temp = declare_parameter < std::vector < double > > ("xupper", default_vec);
+        std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0, 1.0, 25.0, 0.69, kInfinity};
+      temp = declare_parameter<std::vector<double> >("xupper", default_vec);
       params_optimization.xupper = Model::state_vector_t::Map(temp.data());
 
       // State and input bounds. ulower bound.
       temp.clear();
       temp.reserve(Model::input_dim);
-      default_vec = std::vector < double > {-30., -1.};
-      temp = declare_parameter < std::vector < double > > ("ulower", default_vec);
+      default_vec = std::vector<double>{-30., -1.};
+      temp = declare_parameter<std::vector<double> >("ulower", default_vec);
       params_optimization.ulower = Model::input_vector_t::Map(temp.data());
 
       temp.clear();
       temp.reserve(Model::input_dim);
-      default_vec = std::vector < double > {30., 1.};
-      temp = declare_parameter < std::vector < double > > ("uupper", default_vec);
+      default_vec = std::vector<double>{30., 1.};
+      temp = declare_parameter<std::vector<double> >("uupper", default_vec);
       params_optimization.uupper = Model::input_vector_t::Map(temp.data());
 
       // xmax bound: xmax is used for scaling, whereas xlower is related to whether there is an upper bound.
       temp.clear();
       temp.reserve(Model::state_dim);
-      default_vec = std::vector < double > {-50., -50., -3.14, 0.0, -3.0, -1.0, 0.0, -0.69, -5.0};
-      temp = declare_parameter < std::vector < double > > ("xmin_for_scaling", default_vec);
+      default_vec = std::vector<double>{-50., -50., -3.14, 0.0, -3.0, -1.0, 0.0, -0.69, -5.0};
+      temp = declare_parameter<std::vector<double> >("xmin_for_scaling", default_vec);
       params_optimization.xmin_for_scaling = Model::state_vector_t::Map(temp.data());
 
       temp.clear();
       temp.reserve(Model::state_dim);
-      default_vec = std::vector < double > {50., 50., 3.14, 40.0, 3.0, 1.0, 10.0, 0.69, 5.0};
-      temp = declare_parameter < std::vector < double > > ("xmax_for_scaling", default_vec);
+      default_vec = std::vector<double>{50., 50., 3.14, 40.0, 3.0, 1.0, 10.0, 0.69, 5.0};
+      temp = declare_parameter<std::vector<double> >("xmax_for_scaling", default_vec);
       params_optimization.xmax_for_scaling = Model::state_vector_t::Map(temp.data());
 
       temp.clear();
       temp.reserve(Model::input_dim);
-      default_vec = std::vector < double > {-50., -1.0};
+      default_vec = std::vector<double>{-50., -1.0};
       temp = declare_parameter("umin_for_scaling", default_vec);
       params_optimization.umin_for_scaling = Model::input_vector_t::Map(temp.data());
 
       temp.clear();
       temp.reserve(Model::input_dim);
-      default_vec = std::vector < double > {50., 1.0};
-      temp = declare_parameter < std::vector < double > > ("umax_for_scaling", default_vec);
+      default_vec = std::vector<double>{50., 1.0};
+      temp = declare_parameter<std::vector<double> >("umax_for_scaling", default_vec);
       params_optimization.umax_for_scaling = Model::input_vector_t::Map(temp.data());
 
       // Load the normalization scaling range.
       params_optimization.scaling_range =
-        declare_parameter < std::vector < double >> ("scaling_range", std::vector < double > {-1., 1.});
+        declare_parameter<std::vector<double >>("scaling_range", std::vector<double>{-1., 1.});
 
       // OSQP parameters
       params_optimization.osqp_warm_start = declare_parameter<bool>("osqp_warm_start", true);
@@ -1065,8 +1065,8 @@ namespace ns_mpc_nonlinear
         auto labelX = labelX_tag + std::to_string(k + 1);
         auto labelY = labelY_tag + std::to_string(k + 1);
 
-        tempX = declare_parameter < std::vector < double >> (labelX);
-        tempY = declare_parameter < std::vector < double >> (labelY);
+        tempX = declare_parameter<std::vector<double >>(labelX);
+        tempY = declare_parameter<std::vector<double >>(labelY);
 
         auto tempXmat = Model::state_matrix_X_t::Map(tempX.data());
         auto tempYmat = Model::input_matrix_Y_t::Map(tempY.data());
@@ -1283,8 +1283,7 @@ namespace ns_mpc_nonlinear
 
       // ------------------- Smooth Trajectories ---------------------------------------
       // Create MPCtraj smooth_ref_traj.
-      bool const &&is_smoothed =
-        createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
+      bool const &&is_smoothed = createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
 
       // DEBUG
       //  ns_utils::print("Eigen resampled map : ");
@@ -1296,8 +1295,8 @@ namespace ns_mpc_nonlinear
       return is_smoothed;
     }
 
-    bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
-      const ns_data::MPCdataTrajectoryVectors &mpc_traj_raw, map_matrix_in_t &fixed_map_ref_sxyz)
+    bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVectors &mpc_traj_raw,
+                                                 map_matrix_in_t &fixed_map_ref_sxyz)
     {
       /**
        * @brief Raw trajectory enters in variable size, it is resampled into a fixed size, and curvature
@@ -1424,17 +1423,17 @@ namespace ns_mpc_nonlinear
       auto const &&curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
 
       // Create smooth MPCtraj given, s, x, y, v and curvature.
-      std::vector<double> s_smooth_vect(
-        interpolated_map.col(0).data(), interpolated_map.col(0).data() + map_out_mpc_size);
+      std::vector<double> s_smooth_vect(interpolated_map.col(0).data(),
+                                        interpolated_map.col(0).data() + map_out_mpc_size);
 
-      std::vector<double> x_smooth_vect(
-        interpolated_map.col(1).data(), interpolated_map.col(1).data() + map_out_mpc_size);
+      std::vector<double> x_smooth_vect(interpolated_map.col(1).data(),
+                                        interpolated_map.col(1).data() + map_out_mpc_size);
 
-      std::vector<double> y_smooth_vect(
-        interpolated_map.col(2).data(), interpolated_map.col(2).data() + map_out_mpc_size);
+      std::vector<double> y_smooth_vect(interpolated_map.col(2).data(),
+                                        interpolated_map.col(2).data() + map_out_mpc_size);
 
-      std::vector<double> z_smooth_vect(
-        interpolated_map.col(3).data(), interpolated_map.col(3).data() + map_out_mpc_size);
+      std::vector<double> z_smooth_vect(interpolated_map.col(3).data(),
+                                        interpolated_map.col(3).data() + map_out_mpc_size);
 
       std::vector<double> v_smooth_vect;
 
@@ -1923,6 +1922,8 @@ namespace ns_mpc_nonlinear
       // Set nmpc_performance yaw angles.
       nmpc_performance_vars_.yaw_angle_measured = vehicle_yaw_angle;
       nmpc_performance_vars_.yaw_angle_target = reference_yaw_angle;
+      nmpc_performance_vars_.yaw_angle_traj = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
+
 
       // nmpc_performance_vars_.virtual_car_distance =
       //        nonlinear_mpc_controller_ptr_->getVirtualCarDistance();
@@ -2142,7 +2143,7 @@ namespace ns_mpc_nonlinear
     void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::state_vector_t &xd0)
     {
       // Prepare the base vectors for the speed piecewise interpolator.
-      std::vector <std::vector<double>> tbase_vx_base;
+      std::vector<std::vector<double>> tbase_vx_base;
       nonlinear_mpc_controller_ptr_->getTimeSpeedVectsFromSmoothTraj(tbase_vx_base);
 
       // Get the current time.
@@ -2415,7 +2416,7 @@ namespace ns_mpc_nonlinear
         current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
       // state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
-      return std::array < double, 3 > {distance_to_stopping_point, current_vel, target_vel};
+      return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
     }
 
     void NonlinearMPCNode::publishErrorReport(ErrorReportMsg &error_rpt_msg)

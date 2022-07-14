@@ -131,17 +131,6 @@ namespace ns_utils
       return a > b ? a - b : b - a;
     }
 
-    /**
-     *  @brief Shortest distance between two angles.
-     * */
-    //    template<typename T>
-    //    constexpr T angleDistance(T const target_angle, T const reference_angle)
-    //    {
-    //      T diff = std::fmod(target_angle - reference_angle + M_PI_2, 2 * M_PI) - M_PI_2;
-    //      T diff_signed_correction = diff < -M_PI_2 ? diff + 2 * M_PI : diff;
-    //
-    //      return diff_signed_correction;
-    //    }
 
     /**
      * @brief angle wrapping w(x) = mod(x, +pi, 2*pi) - pi
@@ -150,14 +139,18 @@ namespace ns_utils
     constexpr T angleDistance(T const &theta)
     {
 
-      return std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
+      auto mod_theta_2pi = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
+
+      return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
     }
 
     template<typename T>
     constexpr T angleDistance(T const &theta, T const &theta_ref)
     {
-      auto angle_diff = theta - theta_ref;
-      return std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
+      auto const &&angle_diff = theta - theta_ref;
+      auto mod_theta_2pi = std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
+
+      return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
     }
 
 
@@ -168,6 +161,54 @@ namespace ns_utils
       auto complex_number = std::exp(i * angle);
       return std::arg(complex_number);
     }
+
+    /**
+     * @brief Unwraps a series of angles.
+     * */
+
+    template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+    void unWrap(std::vector<T> &vec)
+    {
+      auto const &n = vec.size();
+      auto constexpr EPS = std::numeric_limits<T>::epsilon();
+      auto pm = vec[0];
+
+      auto thr = M_PI - EPS;
+      T po{};
+
+      if (!vec.empty())
+      {
+        for (auto k = 1; k < n; ++k)
+        {
+          auto cp = vec[k] + po;
+          auto dp = cp - pm;
+          pm = cp;
+
+          if (dp > thr)
+          {
+            while (dp > thr)
+            {
+              po -= 2 * M_PI;
+              dp -= 2 * M_PI;
+            }
+          }
+
+          if (dp < -thr)
+          {
+            while (dp < -thr)
+            {
+              po += 2 * M_PI;
+              dp += 2 * M_PI;
+            }
+          }
+
+          cp = vec[k] + po;
+          pm = cp;
+          vec[k] = cp;
+        }
+      }
+    }
+
 
     template<typename T>
     void convertEulerAngleToMonotonic(std::vector<T> *a)
