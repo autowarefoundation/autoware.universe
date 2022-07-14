@@ -28,9 +28,8 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
-
 #include <common/types.hpp>
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -290,7 +289,7 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
   PclPointCloud & high_confidence, PclPointCloud & low_confidence)
 {
   point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{pointcloud};
-  for(const auto & point : view) {
+  for (const auto & point : view) {
     const auto cost = getCost(occupancy_grid_map, point.x, point.y);
     if (cost) {
       if (cost_threshold_ < *cost) {
