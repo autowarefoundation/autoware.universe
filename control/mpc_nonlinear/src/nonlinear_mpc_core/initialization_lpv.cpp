@@ -24,7 +24,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
                                           ns_data::ParamsOptimization const &params_opt,
                                           ns_data::data_nmpc_core_type_t &nmpc_data)
 {
-  ns_utils::print("in feedback initialization ...");
+  // ns_utils::print("in feedback initialization ...");
 
   // Get the size of the trajectory.
   size_t const &K = nmpc_data.trajectory_data.nX();  // number of state vectors stored in the  std::vector.
@@ -152,7 +152,6 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     //    ns_utils::print("Xr at k =0 after summing up before the inverse");
     //    ns_eigen_utils::printEigenMat(Xr);
 
-
     // Compute Feedback coefficients.
     auto const &Pr = Xr.inverse();  // Cost matrix P.
     auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
@@ -254,7 +253,7 @@ bool LPVinitializer::computeSingleFeedbackControls(
 
   auto vx_target = nmpc_data.target_reference_states_and_controls.X[0](6);  //
   x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) -
-               vx_target;  // [ey, epsi, error_vx, delta] - error in vx tracking.
+    vx_target;  // [ey, epsi, error_vx, delta] - error in vx tracking.
 
   // Get the s-state (distance travelled) and interpolate for
   // the curvature value at this distance point.
