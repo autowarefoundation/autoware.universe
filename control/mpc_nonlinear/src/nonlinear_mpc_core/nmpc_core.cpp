@@ -130,6 +130,7 @@ void ns_nmpc_interface::NonlinearMPCController::getRawRelativeTimeAtIdx(const si
   if (idx < current_MPCtraj_raw_vects_ptr_->t.size())
   {
     t_time = current_MPCtraj_raw_vects_ptr_->t.at(idx);
+
   } else
   {
     RCLCPP_ERROR(
@@ -142,8 +143,8 @@ void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(const Mod
   data_nmpc_.trajectory_data.X[0] = x0;
 
   // DEBUG
-  //	ns_utils::print("After updating the initial states in NMPCCore");
-  //	ns_eigen_utils::printEigenMat(data_nmpc_.trajectory_data.X[0]);
+  ns_utils::print("After updating the initial states in NMPCCore");
+  ns_eigen_utils::printEigenMat(data_nmpc_.trajectory_data.X[0]);
   // end of DEBUG
 }
 
@@ -345,12 +346,12 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
   std::vector<double> vx_interpolated_vect;
 
   ns_splines::InterpolatingSplinePCG interpolator_time_speed(1);
-  auto const &&is_interpolated = interpolator_time_speed.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
-                                                                     current_MPCtraj_smooth_vects_ptr_->vx,
-                                                                     t_predicted_coords,
-                                                                     vx_interpolated_vect);
 
-  if (!is_interpolated)
+
+  if (auto const &&is_interpolated = interpolator_time_speed.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
+                                                                         current_MPCtraj_smooth_vects_ptr_->vx,
+                                                                         t_predicted_coords,
+                                                                         vx_interpolated_vect);!is_interpolated)
   {
     RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
                  "[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target speeds ...");
@@ -571,15 +572,15 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   }
 
   // Get trajectories as a matrix and print for debugging purpose.
-  //  auto &&Xtemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.X);
-  //  auto &&Utemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.U);
-  //
-  //  ns_utils::print("\n[nmpc_core in initialization] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, "
-  //                  "vy]");
-  //  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
-  //
-  //  ns_utils::print("\n [nmpc_core in initialization] Initialized LPV trajectories U : ");
-  //  ns_eigen_utils::printEigenMat(Utemp.transpose());
+  auto &&Xtemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.X);
+  auto &&Utemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.U);
+
+  ns_utils::print("\n[nmpc_core in initialization] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, "
+                  "vy]");
+  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
+
+  ns_utils::print("\n [nmpc_core in initialization] Initialized LPV trajectories U : ");
+  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   if (!is_initialized_traj)
   {
