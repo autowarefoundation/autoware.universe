@@ -14,6 +14,10 @@
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
+#include <common/types.hpp>
+
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
 #include <deque>
 #include <string>
 #include <utility>
@@ -69,7 +73,8 @@ void DistortionCorrectorComponent::onTwistWithCovarianceStamped(
       twist_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(twist_queue_.front().header.stamp) <
-      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0))
+    {
       twist_queue_.pop_front();
     }
     break;
@@ -100,11 +105,13 @@ void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstShare
     // for replay rosbag
     if (
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
-      rclcpp::Time(imu_msg->header.stamp)) {
+      rclcpp::Time(imu_msg->header.stamp))
+    {
       angular_velocity_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
-      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0))
+    {
       angular_velocity_queue_.pop_front();
     }
     break;
@@ -115,7 +122,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
 {
   stop_watch_ptr_->toc("processing_time", true);
   const auto points_sub_count = undistorted_points_pub_->get_subscription_count() +
-                                undistorted_points_pub_->get_intra_process_subscription_count();
+    undistorted_points_pub_->get_intra_process_subscription_count();
 
   if (points_sub_count < 1) {
     return;
@@ -175,7 +182,8 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     return false;
   }
 
-  if(!point_cloud_msg_wrapper::PointCloud2View<PointXYZTimestamp>::can_be_created_from(points))
+  if (!point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZTimestamp>::
+    can_be_created_from(points))
   {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 10000 /* ms */,
@@ -183,17 +191,14 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     return false;
   }
 
-  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZTimestamp> modifier{points, "distorion_corrector"};
-  sensor_msgs::PointCloud2Iterator<float> it_x(points, "x");
-  sensor_msgs::PointCloud2Iterator<float> it_y(points, "y");
-  sensor_msgs::PointCloud2Iterator<float> it_z(points, "z");
-  sensor_msgs::PointCloud2ConstIterator<double> it_time_stamp(points, time_stamp_field_name_);
+  point_cloud_msg_wrapper::PointCloud2Modifier<autoware::common::types::PointXYZTimestamp> modifier{
+    points};
 
   float theta{0.0f};
   float x{0.0f};
   float y{0.0f};
-  double prev_time_stamp_sec{*it_time_stamp};
-  const double first_point_time_stamp_sec{*it_time_stamp};
+  double prev_time_stamp_sec{modifier.begin()->time_stamp};
+  const double first_point_time_stamp_sec{modifier.begin()->time_stamp};
 
   auto twist_it = std::lower_bound(
     std::begin(twist_queue_), std::end(twist_queue_), first_point_time_stamp_sec,
@@ -214,17 +219,18 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   }
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
-  for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
+  for (auto & point : modifier) {
     for (;
-         (twist_it != std::end(twist_queue_) - 1 &&
-          *it_time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
-         ++twist_it) {
+      (twist_it != std::end(twist_queue_) - 1 &&
+      point.time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
+      ++twist_it)
+    {
     }
 
     float v{static_cast<float>(twist_it->twist.linear.x)};
     float w{static_cast<float>(twist_it->twist.angular.z)};
 
-    if (std::abs(*it_time_stamp - rclcpp::Time(twist_it->header.stamp).seconds()) > 0.1) {
+    if (std::abs(point.time_stamp - rclcpp::Time(twist_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
         "twist time_stamp is too late. Could not interpolate.");
@@ -234,11 +240,12 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     if (use_imu_ && !angular_velocity_queue_.empty()) {
       for (;
-           (imu_it != std::end(angular_velocity_queue_) - 1 &&
-            *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
-           ++imu_it) {
+        (imu_it != std::end(angular_velocity_queue_) - 1 &&
+        point.time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
+        ++imu_it)
+      {
       }
-      if (std::abs(*it_time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
+      if (std::abs(point.time_stamp - rclcpp::Time(imu_it->header.stamp).seconds()) > 0.1) {
         RCLCPP_WARN_STREAM_THROTTLE(
           get_logger(), *get_clock(), 10000 /* ms */,
           "imu time_stamp is too late. Could not interpolate.");
@@ -247,9 +254,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       }
     }
 
-    const float time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
+    const float time_offset = static_cast<float>(point.time_stamp - prev_time_stamp_sec);
 
-    const tf2::Vector3 sensorTF_point{*it_x, *it_y, *it_z};
+    const tf2::Vector3 sensorTF_point{point.x, point.y, point.z};
 
     const tf2::Vector3 base_linkTF_point{tf2_base_link_to_sensor_inv * sensorTF_point};
 
@@ -268,11 +275,11 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     const tf2::Vector3 sensorTF_trans_point{tf2_base_link_to_sensor * base_linkTF_trans_point};
 
-    *it_x = sensorTF_trans_point.getX();
-    *it_y = sensorTF_trans_point.getY();
-    *it_z = sensorTF_trans_point.getZ();
+    point.x = sensorTF_trans_point.getX();
+    point.y = sensorTF_trans_point.getY();
+    point.z = sensorTF_trans_point.getZ();
 
-    prev_time_stamp_sec = *it_time_stamp;
+    prev_time_stamp_sec = point.time_stamp;
   }
   return true;
 }

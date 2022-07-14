@@ -237,9 +237,9 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   double yaw = 0.0;
   for (auto twist_ptr_it = old_twist_ptr_it; twist_ptr_it != new_twist_ptr_it + 1; ++twist_ptr_it) {
     const double dt =
-      (twist_ptr_it != new_twist_ptr_it)
-        ? (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds()
-        : (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
+      (twist_ptr_it != new_twist_ptr_it) ?
+      (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds() :
+      (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
 
     if (std::fabs(dt) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
@@ -309,9 +309,10 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   updater_.force_update();
 
   cloud_stdmap_ = cloud_stdmap_tmp_;
-  std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
-    e.second = nullptr;
-  });
+  std::for_each(
+    std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
+      e.second = nullptr;
+    });
   // add processing time for debug
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
@@ -332,7 +333,8 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
     *output_ptr, input_ptr->header.frame_id};
 
   if (point_cloud_msg_wrapper::PointCloud2View<
-        autoware::common::types::PointXYZI>::can_be_created_from(*input_ptr)) {
+      autoware::common::types::PointXYZI>::can_be_created_from(*input_ptr))
+  {
     point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZI> view{*input_ptr};
     for (const auto & point : view) {
       output_modifier.push_back({point.x, point.y, point.z, point.intensity});
@@ -372,7 +374,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
     std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
-    [](const auto & e) { return e.second != nullptr; });
+    [](const auto & e) {return e.second != nullptr;});
 
   if (is_already_subscribed_this) {
     cloud_stdmap_tmp_[topic_name] = xyzi_input_ptr;
@@ -392,7 +394,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),
-      [](const auto & e) { return e.second != nullptr; });
+      [](const auto & e) {return e.second != nullptr;});
 
     if (is_subscribed_all) {
       for (const auto & e : cloud_stdmap_tmp_) {
@@ -400,9 +402,10 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
           cloud_stdmap_[e.first] = e.second;
         }
       }
-      std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
-        e.second = nullptr;
-      });
+      std::for_each(
+        std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
+          e.second = nullptr;
+        });
 
       timer_->cancel();
       publish();
@@ -452,7 +455,8 @@ void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   while (!twist_ptr_queue_.empty()) {
     if (
       rclcpp::Time(twist_ptr_queue_.front()->header.stamp) + rclcpp::Duration::from_seconds(1.0) >
-      rclcpp::Time(input->header.stamp)) {
+      rclcpp::Time(input->header.stamp))
+    {
       break;
     }
     twist_ptr_queue_.pop_front();
@@ -474,12 +478,12 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
     stat.add(e, subscribe_status);
   }
 
-  const int8_t level = not_subscribed_topic_names_.empty()
-                         ? diagnostic_msgs::msg::DiagnosticStatus::OK
-                         : diagnostic_msgs::msg::DiagnosticStatus::WARN;
-  const std::string message = not_subscribed_topic_names_.empty()
-                                ? "Concatenate all topics"
-                                : "Some topics are not concatenated";
+  const int8_t level = not_subscribed_topic_names_.empty() ?
+    diagnostic_msgs::msg::DiagnosticStatus::OK :
+    diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  const std::string message = not_subscribed_topic_names_.empty() ?
+    "Concatenate all topics" :
+    "Some topics are not concatenated";
   stat.summary(level, message);
 }
 }  // namespace pointcloud_preprocessor
