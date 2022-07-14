@@ -556,7 +556,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   //    }
 
   // Initialize the trajectories.
-  bool is_initialized_traj{false};
+  bool is_initialized_traj{};
   if (use_linear_initialization)
   {
     is_initialized_traj = linearTrajectoryInitialization(piecewise_interpolator);
@@ -566,22 +566,20 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
     // ns_utils::print("calling feedback initialization ...");
     is_initialized_traj = lpv_initializer_.simulateWithFeedback(model_ptr_,
                                                                 piecewise_interpolator,
-                                                                params_lpv_,
-                                                                params_opt_,
-                                                                data_nmpc_);
+                                                                params_lpv_, params_opt_, data_nmpc_);
 
   }
 
   // Get trajectories as a matrix and print for debugging purpose.
-  auto &&Xtemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.X);
-  auto &&Utemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.U);
-
-  ns_utils::print("\n[nmpc_core in initialization] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, "
-                  "vy]");
-  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
-
-  ns_utils::print("\n [nmpc_core in initialization] Initialized LPV trajectories U : ");
-  ns_eigen_utils::printEigenMat(Utemp.transpose());
+  //  auto &&Xtemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.X);
+  //  auto &&Utemp = ns_eigen_utils::getTrajectory(data_nmpc_.trajectory_data.U);
+  //
+  //  ns_utils::print("\n[nmpc_core in initialization] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, "
+  //                  "vy]");
+  //  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
+  //
+  //  ns_utils::print("\n [nmpc_core in initialization] Initialized LPV trajectories U : ");
+  //  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   if (!is_initialized_traj)
   {
@@ -640,12 +638,13 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
     is_initialized_osqp =
       osqp_interface_.setUPOSQP_useTriplets(data_nmpc_.trajectory_data.X[0], data_nmpc_, params_opt_);
 
-    if (is_initialized_osqp)
-    {
-      auto exit_code = osqp_interface_.testSolver();
-      ns_utils::print("nmpc_core OSQP test solution run results : ", ToString(exit_code));
+    //    if (is_initialized_osqp)
+    //    {
+    //      auto exit_code = osqp_interface_.testSolver();
+    //      ns_utils::print("nmpc_core OSQP test solution run results : ", ToString(exit_code));
+    //    }
 
-    } else
+    if (!is_initialized_osqp)
     {
       RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
                    "[mpc_nonlinear - initialization] OSQP Matrices could "
@@ -654,6 +653,9 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
       return false;
     }
   }
+
+  initialized_ = true;
+
 
 
   // DEBUG
@@ -673,7 +675,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   //                    initialized_ ? " initialized ..." : "not initialized ...");
   // end of debug
 
-  return false; //initialized_;
+  return initialized_; //initialized_;
 }
 
 bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
