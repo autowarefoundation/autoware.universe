@@ -679,9 +679,11 @@ void VehicleCmdGate::onOperateSuddenStopService(
   const MRMOperation::Response::SharedPtr response)
 {
   if (request->operate == true) {
+    is_system_emergency_ = true;
     mrm_sudden_stop_status_.is_operating = true;
     response->response.success = true;
   } else {
+    is_system_emergency_ = false;
     mrm_sudden_stop_status_.is_operating = false;
     response->response.success = true;
   }
