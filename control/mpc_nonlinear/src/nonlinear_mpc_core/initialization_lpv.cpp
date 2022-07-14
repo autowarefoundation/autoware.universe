@@ -41,9 +41,9 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   auto xk = nmpc_data.trajectory_data.X[0];  // current value is x0.
   auto uk = nmpc_data.trajectory_data.U[0];
 
-  ns_utils::print("x0 and u0");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
+  //  ns_utils::print("x0 and u0");
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
 
   //  x  =[xw, yw, psi, s, e_y, e_yaw, v, delta]
 
@@ -87,7 +87,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     auto const &s0 = xk(ns_utils::toUType(VehicleStateIds::s));
     double kappa0{};
 
-    ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
+    // ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
     if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
     {
       ns_utils::print("LPV spline interpolator failed to compute the spline coefficients");
@@ -135,13 +135,12 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the
     Yr = params_lpv.lpvYcontainer.back();
 
-
-//    for (size_t j = 0; j < ntheta_; j++)
-//    {
-//      ns_utils::print("Xr at  k= ", j);
-//      Xr = params_lpv.lpvXcontainer[j];
-//      ns_eigen_utils::printEigenMat(Xr);
-//    }
+    //    for (size_t j = 0; j < ntheta_; j++)
+    //    {
+    //      ns_utils::print("Xr at  k= ", j);
+    //      Xr = params_lpv.lpvXcontainer[j];
+    //      ns_eigen_utils::printEigenMat(Xr);
+    //    }
 
     for (size_t j = 0; j < ntheta_ - 1; j++)
     {
@@ -171,8 +170,6 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Update xk, uk
     nmpc_data.trajectory_data.X[k] = xk.eval();
     nmpc_data.trajectory_data.U[k] = uk.eval();
-
-
 
     // DEBUG
     //		ns_utils::print("\nIn LPV initialization :");
