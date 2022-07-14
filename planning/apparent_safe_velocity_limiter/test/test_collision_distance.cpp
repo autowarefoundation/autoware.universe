@@ -34,7 +34,7 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
 {
   using apparent_safe_velocity_limiter::distanceToClosestCollision;
 
-  apparent_safe_velocity_limiter::segment_t vector = {{0.0, 0.0}, {5.0, 0.0}};
+  apparent_safe_velocity_limiter::linestring_t vector = {{0.0, 0.0}, {5.0, 0.0}};
   apparent_safe_velocity_limiter::polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon

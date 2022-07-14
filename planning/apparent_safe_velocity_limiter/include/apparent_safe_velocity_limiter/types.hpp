@@ -53,13 +53,54 @@ using segment_t = boost::geometry::model::segment<point_t>;
 using linestring_t = boost::geometry::model::linestring<point_t>;
 using multilinestring_t = boost::geometry::model::multi_linestring<linestring_t>;
 
-enum ObstacleType { POINTCLOUD, OCCUPANCYGRID };
+struct ObstacleParameters
+{
+  static constexpr auto DYN_SOURCE_PARAM = "obstacles.dynamic_source";
+  static constexpr auto OCC_GRID_THRESH_PARAM = "obstacles.occupancy_grid_threshold";
+  static constexpr auto BUFFER_PARAM = "obstacles.dynamic_obstacles_buffer";
+  static constexpr auto MIN_VEL_PARAM = "obstacles.dynamic_obstacles_min_vel";
+
+  enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
+  int8_t occupancy_grid_threshold{};
+  Float pcd_cluster_max_dist{};
+  Float dynamic_obstacles_buffer{};
+  Float dynamic_obstacles_min_vel{};
+
+  ObstacleParameters() = default;
+  explicit ObstacleParameters(rclcpp::Node & node)
+  {
+    updateType(node, node.declare_parameter<std::string>(DYN_SOURCE_PARAM));
+    occupancy_grid_threshold =
+      static_cast<int8_t>(node.declare_parameter<int>(OCC_GRID_THRESH_PARAM));
+    dynamic_obstacles_buffer = static_cast<Float>(node.declare_parameter<Float>(BUFFER_PARAM));
+    dynamic_obstacles_min_vel = static_cast<Float>(node.declare_parameter<Float>(MIN_VEL_PARAM));
+  }
+
+  bool updateType(rclcpp::Node & node, const std::string & type)
+  {
+    if (type == "pointcloud") {
+      dynamic_source = POINTCLOUD;
+    } else if (type == "occupancy_grid") {
+      dynamic_source = OCCUPANCYGRID;
+    } else if (type == "static_only") {
+      dynamic_source = STATIC_ONLY;
+    } else {
+      dynamic_source = STATIC_ONLY;
+      RCLCPP_WARN(
+        node.get_logger(), "Unknown '%s' value: '%s'. Using default 'static_only'.",
+        DYN_SOURCE_PARAM, type.c_str());
+      return false;
+    }
+    return true;
+  }
+};
 
 struct ProjectionParameters
 {
-  inline static const auto MODEL_PARAM_NAME = "forward_projection.model";
-  inline static const auto NBPOINTS_PARAM_NAME = "forward_projection.nb_points";
-  inline static const auto STEER_OFFSETS_PARAM_NAME = "forward_projection.steering_offsets";
+  static constexpr auto MODEL_PARAM = "forward_projection.model";
+  static constexpr auto NBPOINTS_PARAM = "forward_projection.nb_points";
+  static constexpr auto STEER_OFFSETS_PARAM = "forward_projection.steering_offsets";
+  static constexpr auto DURATION_PARAM = "min_ttc";
 
   enum { PARTICLE, BICYCLE } model = PARTICLE;
   double duration{};
@@ -75,10 +116,10 @@ struct ProjectionParameters
   ProjectionParameters() = default;
   explicit ProjectionParameters(rclcpp::Node & node)
   {
-    updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM_NAME));
-    updateNbPoints(node, node.declare_parameter<int>(NBPOINTS_PARAM_NAME));
-    updateSteeringOffsets(
-      node, node.declare_parameter<std::vector<double>>(STEER_OFFSETS_PARAM_NAME));
+    updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM));
+    updateNbPoints(node, node.declare_parameter<int>(NBPOINTS_PARAM));
+    updateSteeringOffsets(node, node.declare_parameter<std::vector<double>>(STEER_OFFSETS_PARAM));
+    duration = node.declare_parameter<double>(DURATION_PARAM);
   }
 
   bool updateModel(rclcpp::Node & node, const std::string & model_str)
@@ -127,6 +168,23 @@ struct ProjectionParameters
     velocity = point.longitudinal_velocity_mps;
     heading = tf2::getYaw(point.pose.orientation);
     steering_angle = point.front_wheel_angle_rad;
+  }
+};
+
+struct VelocityParameters
+{
+  static constexpr auto MIN_VEL_PARAM = "min_adjusted_velocity";
+  static constexpr auto MAX_DECEL_PARAM = "max_deceleration";
+
+  Float min_velocity{};
+  Float max_deceleration{};
+  Float current_ego_velocity{};
+
+  VelocityParameters() = default;
+  explicit VelocityParameters(rclcpp::Node & node)
+  {
+    min_velocity = static_cast<Float>(node.declare_parameter<double>(MIN_VEL_PARAM));
+    max_deceleration = static_cast<Float>(node.declare_parameter<double>(MAX_DECEL_PARAM));
   }
 };
 

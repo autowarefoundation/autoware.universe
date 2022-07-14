@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "apparent_safe_velocity_limiter/types.hpp"
+
 #include <apparent_safe_velocity_limiter/collision.hpp>
 
 #include <boost/assign.hpp>
@@ -29,10 +31,13 @@ namespace apparent_safe_velocity_limiter
 namespace bg = boost::geometry;
 
 std::optional<double> distanceToClosestCollision(
-  const segment_t & segment, const polygon_t & footprint, const multilinestring_t & obstacles)
+  const linestring_t & projection, const polygon_t & footprint, const multilinestring_t & obstacles)
 {
-  const auto segment_heading =
-    std::atan2(segment.second.y() - segment.first.y(), segment.second.x() - segment.first.x());
+  std::optional<double> distance;
+  if (projection.empty()) return distance;
+  // TODO(Maxime CLEMENT): proper calculation for curved linestrings
+  const auto projection_heading = std::atan2(
+    projection.back().y() - projection.front().y(), projection.back().x() - projection.front().x());
   double min_dist = std::numeric_limits<double>::max();
   for (const auto & obstacle : obstacles) {
     multilinestring_t intersection_lines;
@@ -40,18 +45,16 @@ std::optional<double> distanceToClosestCollision(
       for (const auto & intersection_line : intersection_lines) {
         for (const auto & obs_point : intersection_line) {
           // TODO(Maxime CLEMENT): add a simplified mode where euclidian distance is used
-          // Calculate longitudinal distance to the collision point along the segment
-          const auto collision_heading =
-            std::atan2(obs_point.y() - segment.first.y(), obs_point.x() - segment.first.x());
-          const auto angle = segment_heading - collision_heading;
-          const auto hypot_length = bg::distance(obs_point, segment.first);
+          const auto collision_heading = std::atan2(
+            obs_point.y() - projection.front().y(), obs_point.x() - projection.front().x());
+          const auto angle = projection_heading - collision_heading;
+          const auto hypot_length = bg::distance(obs_point, projection.front());
           const auto long_dist = std::abs(std::cos(angle)) * hypot_length;
           min_dist = std::min(min_dist, long_dist);
         }
       }
     }
   }
-  std::optional<double> distance;
   if (min_dist != std::numeric_limits<double>::max()) distance = min_dist;
   return distance;
 }

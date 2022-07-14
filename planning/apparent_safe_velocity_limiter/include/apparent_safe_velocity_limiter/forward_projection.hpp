@@ -34,7 +34,7 @@ segment_t forwardSimulatedSegment(
 /// @param [in] origin origin of the segment
 /// @param [in] params parameters of the forward projection
 /// @return lines from the origin to its positions after forward projection
-std::vector<linestring_t> bicycleProjectionLines(
+multilinestring_t bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
 
 /// @brief generate the footprint polygon of the forward projection
@@ -59,6 +59,12 @@ polygon_t generateFootprint(const segment_t & segment, const double lateral_offs
 /// @param [in] lateral_offset offset around the segment used to create the footprint
 /// @return footprint polygon
 polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset);
+
+/// @brief generate a footprint from multiple linestrings and a lateral offset
+/// @param [in] linestrings linestring from which to create the footprint
+/// @param [in] lateral_offset offset around the segment used to create the footprint
+/// @return footprint polygon
+polygon_t generateFootprint(const multilinestring_t & linestrings, const double lateral_offset);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__FORWARD_PROJECTION_HPP_

@@ -34,10 +34,10 @@ segment_t forwardSimulatedSegment(
   return segment_t{from, to};
 }
 
-std::vector<linestring_t> bicycleProjectionLines(
+multilinestring_t bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params)
 {
-  std::vector<linestring_t> lines;
+  multilinestring_t lines;
   const auto dt = params.duration / (params.points_per_projection - 1);
   point_t point;
   linestring_t line;
@@ -86,6 +86,20 @@ polygon_t forwardSimulatedPolygon(
     projected_straight_segment.second = straight_line.back();
   }
   return footprint;
+}
+
+polygon_t generateFootprint(const multilinestring_t & linestrings, const double lateral_offset)
+{
+  namespace bg = boost::geometry;
+  multipolygon_t union_polygons;
+  multipolygon_t result_polygons;
+  for (const auto & line : linestrings) {
+    const auto line_footprint = generateFootprint(line, lateral_offset);
+    bg::union_(line_footprint, union_polygons, result_polygons);
+    union_polygons = result_polygons;
+    bg::clear(result_polygons);
+  }
+  return union_polygons.front();
 }
 
 polygon_t generateFootprint(const segment_t & segment, const double lateral_offset)

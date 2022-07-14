@@ -27,12 +27,13 @@
 namespace apparent_safe_velocity_limiter
 {
 /// @brief calculate the closest distance to a collision
-/// @param [in] segment forward projection of a trajectory point
-/// @param [in] footprint footprint of the segment
+/// @param [in] projection forward projection line
+/// @param [in] footprint footprint of the projection
 /// @param [in] obstacles set of obstacles as linestrings
 /// @return distance to the closest collision if any
 std::optional<double> distanceToClosestCollision(
-  const segment_t & segment, const polygon_t & footprint, const multilinestring_t & obstacles);
+  const linestring_t & projection, const polygon_t & footprint,
+  const multilinestring_t & obstacles);
 
 // TODO(Maxime CLEMENT): move to occupancy_grid_utils
 /// @brief create a polygon from an object represented by a pose and a size

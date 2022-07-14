@@ -73,8 +73,25 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
   return envelope;
 }
 
-visualization_msgs::msg::Marker makeFootprintPointsMarker(
-  const multipolygon_t & polygons, const Float z)
+visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, const Float z)
+{
+  visualization_msgs::msg::Marker marker;
+  marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker.header.frame_id = "map";
+  marker.scale.x = 0.1;
+  marker.color.a = 1.0;
+  geometry_msgs::msg::Point point;
+  point.z = z;
+  for (const auto & p : polygon.outer()) {
+    point.x = p.x();
+    point.y = p.y();
+    marker.points.push_back(point);
+  }
+  return marker;
+}
+
+visualization_msgs::msg::Marker makePolygonPointsMarker(
+  const std::vector<polygon_t> & polygons, const Float z)
 {
   visualization_msgs::msg::Marker marker;
   marker.type = visualization_msgs::msg::Marker::POINTS;
@@ -98,20 +115,22 @@ visualization_msgs::msg::Marker makeFootprintPointsMarker(
 }
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & lines, ProjectionParameters & projection_params,
-  const multipolygon_t & footprint_polygons, const Float marker_z)
+  const multilinestring_t & lines, const std::vector<polygon_t> & footprint_polygons,
+  const polygon_t & envelope_polygon, const polygon_t & safe_envelope_polygon, const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
-  auto original_envelope = makeEnvelopeMarker(original_trajectory, projection_params);
+  // auto original_envelope = makeEnvelopeMarker(original_trajectory, projection_params);
+  auto original_envelope = makePolygonMarker(envelope_polygon, marker_z);
   original_envelope.color.r = 1.0;
   original_envelope.ns = "original";
   debug_markers.markers.push_back(original_envelope);
-  auto adjusted_envelope = makeEnvelopeMarker(adjusted_trajectory, projection_params);
+  auto adjusted_envelope = makePolygonMarker(safe_envelope_polygon, marker_z);
   adjusted_envelope.color.g = 1.0;
   adjusted_envelope.ns = "adjusted";
   debug_markers.markers.push_back(adjusted_envelope);
-  auto original_footprints = makeFootprintPointsMarker(footprint_polygons, marker_z);
+  auto original_footprints = makePolygonPointsMarker(footprint_polygons, marker_z);
+  original_footprints.ns = "original_footprints";
+  debug_markers.markers.push_back(original_footprints);
   original_footprints.ns = "original_footprints";
   debug_markers.markers.push_back(original_footprints);
 

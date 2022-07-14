@@ -16,37 +16,19 @@
 #define APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_NODE_HPP_
 
 #include "apparent_safe_velocity_limiter/types.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include <grid_map_ros/GridMapRosConverter.hpp>
-#include <rclcpp/duration.hpp>
-#include <rclcpp/logging.hpp>
-#include <rclcpp/qos.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <grid_map_msgs/msg/grid_map.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/optional.hpp>
 
-#include <rcutils/time.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/utils.h>
-
-#include <algorithm>
-#include <chrono>
-#include <exception>
 #include <memory>
 #include <optional>
 #include <set>
@@ -91,20 +73,11 @@ private:
 
   // parameters
   ProjectionParameters projection_params_;
-  Float time_buffer_ = static_cast<Float>(declare_parameter<Float>("time_buffer"));
+  ObstacleParameters obstacle_params_;
+  VelocityParameters velocity_params_;
   Float distance_buffer_ = static_cast<Float>(declare_parameter<Float>("distance_buffer"));
   Float start_distance_ = static_cast<Float>(declare_parameter<Float>("start_distance"));
-  Float min_adjusted_velocity_ =
-    static_cast<Float>(declare_parameter<Float>("min_adjusted_velocity"));
   int downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
-  int8_t occupancy_grid_obstacle_threshold_ =
-    static_cast<int8_t>(declare_parameter<int>("occupancy_grid_obstacle_threshold"));
-  Float dynamic_obstacles_buffer_ =
-    static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_buffer"));
-  Float dynamic_obstacles_min_vel_ =
-    static_cast<Float>(declare_parameter<Float>("dynamic_obstacles_min_vel"));
-  Float max_deceleration_ = static_cast<Float>(declare_parameter<Float>("max_deceleration"));
-  ObstacleType obstacle_type_ = POINTCLOUD;
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
   std::optional<Float> current_ego_velocity_;
@@ -120,86 +93,10 @@ private:
   /// @param[in] msg input trajectory message
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
-  /// @brief calculate the apparent safe velocity
-  /// @param[in] trajectory_point trajectory point for which to calculate the apparent safe velocity
-  /// @param[in] dist_to_collision distance from the trajectory point to the apparent collision
-  /// @return apparent safe velocity
-  Float calculateSafeVelocity(
-    const TrajectoryPoint & trajectory_point, const Float dist_to_collision) const;
-
-  /// @brief create and publish debug markers for the given trajectories and polygons
-  /// @param[in] original_trajectory original input trajectory
-  /// @param[in] adjusted_trajectory trajectory adjusted for apparent safety
-  /// @param[in] polygons polygons to publish as markers
-  void publishDebugMarkers(
-    const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-    const multilinestring_t & polygons) const;
-
-  /// @brief calculate trajectory index that is ahead of the given index by the given distance
-  /// @param[in] trajectory trajectory
-  /// @param[in] ego_idx index closest to the current ego position in the trajectory
-  /// @param[in] start_distance desired distance ahead of the ego_idx
-  /// @return trajectory index ahead of ego_idx by the start_distance
-  static size_t calculateStartIndex(
-    const Trajectory & trajectory, const size_t ego_idx, const Float start_distance);
-
-  /// @brief downsample a trajectory, reducing its number of points by the given factor
-  /// @param[in] trajectory input trajectory
-  /// @param[in] start_idx starting index of the input trajectory
-  /// @param[in] factor factor used for downsampling
-  /// @return downsampled trajectory
-  Trajectory downsampleTrajectory(
-    const Trajectory & trajectory, const size_t start_idx, const int factor) const;
-
-  /// @brief create negative polygon masks from the dynamic objects
-  /// @return polygons inside which obstacles should be ignored
-  multipolygon_t createPolygonMasks() const;
-
-  /// @brief create a polygon of the safety envelope
-  /// @details the safety envelope is the area covered by forward projections at each trajectory
-  /// point
-  /// @param[in] trajectory input trajectory
-  /// @param[in] start_idx starting index in the input trajectory
-  /// @param[in] projection_params parameters of the forward projection
-  /// @return the envelope polygon
-  polygon_t createEnvelopePolygon(
-    const Trajectory & trajectory, const size_t start_idx,
-    ProjectionParameters & projections_params) const;
-
   /// @brief validate the inputs of the node
   /// @param[in] ego_idx trajectory index closest to the current ego pose
   /// @return true if the inputs are valid
   bool validInputs(const boost::optional<size_t> & ego_idx);
-
-  /// @brief create linestrings around obstacles
-  /// @param[in] occupancy_grid occupancy grid
-  /// @param[in] pointcloud pointcloud
-  /// @param[in] polygon_masks negative masks where obstacles will be ignored
-  /// @param[in] envelope_polygon positive masks where obstacles must reside
-  /// @param[in] target_frame frame of the returned obstacles
-  /// @return linestrings representing obstacles to avoid
-  multilinestring_t createObstacleLines(
-    const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-    const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
-    const polygon_t & envelope_polygon, const std::string & target_frame);
-
-  /// @brief limit the velocity of the given trajectory
-  /// @param[in] trajectory input trajectory
-  /// @param[in] projection_params parameters used for forward projection
-  /// @param[in] obstacles obstacles that must be avoided by the forward projection
-  multipolygon_t limitVelocity(
-    Trajectory & trajectory, ProjectionParameters & projection_params,
-    const multilinestring_t & obstacles) const;
-
-  /// @brief copy the velocity profile of a downsampled trajectory to the original trajectory
-  /// @param[in] downsampled_trajectory downsampled trajectory
-  /// @param[in] trajectory input trajectory
-  /// @param[in] start_idx starting index of the downsampled trajectory relative to the input
-  /// @param[in] factor downsampling factor
-  /// @return input trajectory with the velocity profile of the downsampled trajectory
-  Trajectory copyDownsampledVelocity(
-    const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
-    const int factor) const;
 };
 }  // namespace apparent_safe_velocity_limiter
 

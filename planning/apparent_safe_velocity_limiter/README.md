@@ -35,7 +35,7 @@ Before being converted to an image, the dynamic obstacles are masked from occupa
 to avoid incorrectly detecting collision with vehicle moving at velocities higher than parameter `dynamic_obstacles_min_vel`.
 Parameter `dynamic_obstacles_buffer` is also used to increase the size of the mask and reduce noise.
 
-After the occupancy grid has been converted to an image, a threshold is applied to only keep cells with a value above parameter `occupancy_grid_obstacle_threshold`.
+After the occupancy grid has been converted to an image, a threshold is applied to only keep cells with a value above parameter `occupancy_grid_threshold`.
 
 Contours can then be extracted from the image and corresponding linestrings are created
 that can be checked for intersection with the footprint polygon using
@@ -60,16 +60,16 @@ that can be checked for intersection with the footprint polygon using
 
 ## Parameters
 
-| Name                                | Type  | Description                                                                                                         |
-| ----------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------- |
-| `time_buffer`                       | float | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity. |
-| `distance_buffer`                   | float | [m] required distance buffer with the obstacles.                                                                    |
-| `min_adjusted_velocity`             | float | [m/s] limit how much the node can reduce the target velocity.                                                       |
-| `start_distance`                    | float | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.         |
-| `downsample_factor`                 | int   | trajectory downsampling factor to allow tradeoff between precision and performance.                                 |
-| `occupancy_grid_obstacle_threshold` | int   | value in the occupancy grid above which a cell is considered an obstacle.                                           |
-| `dynamic_obstacles_buffer`          | float | buffer around dynamic obstacles used when masking an obstacle in order to prevent noise.                            |
-| `dynamic_obstacles_min_vel`         | float | velocity above which to mask a dynamic obstacle.                                                                    |
+| Name                        | Type  | Description                                                                                                         |
+| --------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------- |
+| `time_buffer`               | float | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity. |
+| `distance_buffer`           | float | [m] required distance buffer with the obstacles.                                                                    |
+| `min_adjusted_velocity`     | float | [m/s] limit how much the node can reduce the target velocity.                                                       |
+| `start_distance`            | float | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.         |
+| `downsample_factor`         | int   | trajectory downsampling factor to allow tradeoff between precision and performance.                                 |
+| `occupancy_grid_threshold`  | int   | value in the occupancy grid above which a cell is considered an obstacle.                                           |
+| `dynamic_obstacles_buffer`  | float | buffer around dynamic obstacles used when masking an obstacle in order to prevent noise.                            |
+| `dynamic_obstacles_min_vel` | float | velocity above which to mask a dynamic obstacle.                                                                    |
 
 ## Assumptions / Known limits
 

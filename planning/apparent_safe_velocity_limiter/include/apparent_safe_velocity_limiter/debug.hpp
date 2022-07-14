@@ -21,6 +21,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
+#include <vector>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -53,8 +54,15 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
 /// @param[in] z z-value to use for markers
 /// @return marker array with the original and adjusted envelope and the obstacle lines
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const Trajectory & original_trajectory, const Trajectory & adjusted_trajectory,
-  const multilinestring_t & lines, ProjectionParameters & projection_params,
-  const multipolygon_t & footprint_polygons, const Float z);
+  const multilinestring_t & lines, const std::vector<polygon_t> & footprint_polygons,
+  const polygon_t & envelope_polygon, const polygon_t & safe_envelope_polygon,
+  const Float marker_z);
+
+/// @brief make debug marker with Points for the given polygons
+/// @param[in] polygons footprint polygons
+/// @param[in] z z-value to use for markers
+/// @return marker array with the original and adjusted envelope and the obstacle lines
+visualization_msgs::msg::Marker makePolygonPointsMarker(
+  const std::vector<polygon_t> & polygons, const Float z);
 }  // namespace apparent_safe_velocity_limiter
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__DEBUG_HPP_
