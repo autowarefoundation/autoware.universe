@@ -513,6 +513,11 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   const auto traj_pre_resampled_closest = motion_utils::findNearestIndex(
     *traj_lateral_acc_filtered, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
     node_param_.delta_yaw_threshold);
+  if (!traj_pre_resampled_closest) {
+    RCLCPP_WARN(
+      get_logger(), "Cannot find closest waypoint for traj_lateral_acc_filtered trajectory");
+    return false;
+  }
   auto traj_resampled = smoother_->resampleTrajectory(
     *traj_lateral_acc_filtered, current_odometry_ptr_->twist.twist.linear.x,
     *traj_pre_resampled_closest);
