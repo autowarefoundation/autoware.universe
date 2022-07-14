@@ -12,6 +12,7 @@
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_ros</depend>
+  <build_depend>autoware_cmake</build_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
