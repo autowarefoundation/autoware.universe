@@ -668,7 +668,6 @@ void ObstacleStopPlannerNode::searchObstacle(
   const VehicleInfo & vehicle_info, const StopParam & stop_param,
   const sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr)
 {
-  if (!object_ptr_) return;
   // search candidate obstacle pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_candidate_pointcloud_ptr(
