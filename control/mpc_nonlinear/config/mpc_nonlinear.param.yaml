@@ -30,16 +30,16 @@
     #  -- Constraints - Upper-lower bounds.
     #  -- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
     # xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -2.0, -0.5, -0.65, -.inf ]
-    xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -1.0, 0.0, -0.65, -4.0 ]
-    xupper: [ .inf,  .inf,   .inf, .inf,  3.0,  1.0, 25.0, 0.65, 4.0 ]
+    xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -1.0, 0.0, -1.0, -4.0 ]
+    xupper: [ .inf,  .inf,   .inf, .inf,  3.0,  1.0, 25.0, 1.0, 4.0 ]
     ulower: [ -7., -1.0 ]  # vx speed input [m/s], steering input [rad]
     uupper: [ 7.,  1.0 ]
 
     # -- Scaling Mats ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
     scaling_range: [ -1., 1. ]
 
-    xmin_for_scaling: [ -25., -25., -3.14, 0.0,  -3.0, -1.0, 0.0, -0.65, -5.0 ]
-    xmax_for_scaling: [ 25.,  25.,  3.14, 25.0,   3.0,  1.0, 25.0,   0.65, 5.0 ]
+    xmin_for_scaling: [ -25., -25., -1.0, 0.0,  -3.0, -1.0, 0.0, -1.0, -5.0 ]
+    xmax_for_scaling: [ 25.,  25.,  1.0, 25.0,   3.0,  1.0, 25.0,   1.0, 5.0 ]
 
     umin_for_scaling: [ -7., -1.0 ]  # ax speed input [m/s], steering input [rad]
     umax_for_scaling: [ 7.,  1.0 ]
