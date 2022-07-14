@@ -63,8 +63,8 @@ protected:
 
     odom_pub_ =
       rclcpp::create_publisher<Odometry>(dummy_node, "/localization_evaluator/input/localization", 1);
-    odom_gt_pub_ =
-      rclcpp::create_publisher<Odometry>(dummy_node, "/localization_evaluator/input/localization/gt", 1);
+    odom_ref_pub_ =
+      rclcpp::create_publisher<Odometry>(dummy_node, "/localization_evaluator/input/localization/ref", 1);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(dummy_node);
   }
@@ -98,11 +98,11 @@ protected:
     return odometry;
   }
 
-  double publishOdometryAndGetMetric(const Odometry & odom, const Odometry & odom_gt)
+  double publishOdometryAndGetMetric(const Odometry & odom, const Odometry & odom_ref)
   {
     metric_updated_ = false;
     odom_pub_->publish(odom);
-    odom_gt_pub_->publish(odom_gt);
+    odom_ref_pub_->publish(odom_ref);
     while (!metric_updated_) {
       rclcpp::spin_some(eval_node);
       rclcpp::spin_some(dummy_node);
@@ -119,7 +119,7 @@ protected:
   EvalNode::SharedPtr eval_node;
   // Publishers
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<Odometry>::SharedPtr odom_gt_pub_;
+  rclcpp::Publisher<Odometry>::SharedPtr odom_ref_pub_;
   rclcpp::Subscription<DiagnosticArray>::SharedPtr metric_sub_;
   // TF broadcaster
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -129,20 +129,20 @@ TEST_F(EvalTest, TestLateralErrorStats)
 {
   setTargetMetric(localization_diagnostics::Metric::lateral_error);
   Odometry odom = makeOdometry(0.0, 0.0, 0.0);
-  Odometry odom_gt = makeOdometry(3.0, 4.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, odom_gt), 3.0);
+  Odometry odom_ref = makeOdometry(3.0, 4.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, odom_ref), 3.0);
   Odometry odom2 = makeOdometry(1.0, 1.0, 0.0);
-  Odometry odom2_gt = makeOdometry(1.0, 1.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, odom2_gt), 1.5);
+  Odometry odom2_ref = makeOdometry(1.0, 1.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, odom2_ref), 1.5);
 }
 
 TEST_F(EvalTest, TestAbsoluteErrorStats)
 {
   setTargetMetric(localization_diagnostics::Metric::absolute_error);
   Odometry odom = makeOdometry(0.0, 0.0, 0.0);
-  Odometry odom_gt = makeOdometry(3.0, 4.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, odom_gt), 5.0);
+  Odometry odom_ref = makeOdometry(3.0, 4.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, odom_ref), 5.0);
   Odometry odom2 = makeOdometry(1.0, 1.0, 0.0);
-  Odometry odom2_gt = makeOdometry(1.0, 1.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, odom2_gt), 2.5);
+  Odometry odom2_ref = makeOdometry(1.0, 1.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, odom2_ref), 2.5);
 }

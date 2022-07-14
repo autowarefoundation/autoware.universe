@@ -24,6 +24,7 @@
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <nav_msgs/msg/odometry.hpp>
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -39,6 +40,7 @@ namespace localization_diagnostics
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using nav_msgs::msg::Odometry;
+using geometry_msgs::msg::PoseWithCovarianceStamped;
 /**
  * @brief Node for localization evaluation
  */
@@ -51,9 +53,15 @@ public:
   /**
    * @brief synchronized callback on current and gt localization
    * @param [in] msg odometry message
-   * @param [in] msg_gt ground truth
+   * @param [in] msg_ref reference pose
    */
-  void syncCallback(const Odometry::ConstSharedPtr & msg, const Odometry::ConstSharedPtr & msg_gt);
+  void syncCallback(const Odometry::ConstSharedPtr & msg, const PoseWithCovarianceStamped::ConstSharedPtr & msg_ref);
+
+  /**
+   * @brief callback on current odometry
+   * @param [in] msg odometry message
+   */
+  void onOdom(const Odometry::SharedPtr msg);
 
   /**
    * @brief publish the given metric statistic
@@ -64,8 +72,9 @@ public:
 private:
   // ROS
   message_filters::Subscriber<Odometry> odom_sub_;
-  message_filters::Subscriber<Odometry> odom_gt_sub_;
-  typedef message_filters::sync_policies::ApproximateTime<Odometry, Odometry> SyncPolicy;
+  message_filters::Subscriber<PoseWithCovarianceStamped> pose_gt_sub_;
+
+  typedef message_filters::sync_policies::ApproximateTime<Odometry, PoseWithCovarianceStamped> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> SyncExact;
   SyncExact sync_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;

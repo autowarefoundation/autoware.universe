@@ -22,22 +22,21 @@ namespace metrics
 {
 
 Stat<double> updateLateralStats(
-  const Stat<double> stat_prev, const double & lateral_pos, const double & lateral_gt)
+  const Stat<double> stat_prev, const double & lateral_pos, const double & lateral_ref)
 {
   Stat<double> stat(stat_prev);
-  stat.add(std::abs(lateral_gt - lateral_pos));
-
+  stat.add(std::abs(lateral_ref - lateral_pos));
   return stat;
 }
 
 Stat<double> updateAbsoluteStats(
   const Stat<double> stat_prev, const geometry_msgs::msg::Point & pos,
-  const geometry_msgs::msg::Point & pos_gt)
+  const geometry_msgs::msg::Point & pos_ref)
 {
   Stat<double> stat(stat_prev);
   double dist = std::sqrt(
-    (pos_gt.x - pos.x) * (pos_gt.x - pos.x) + (pos_gt.y - pos.y) * (pos_gt.y - pos.y) +
-    (pos_gt.z - pos.z) * (pos_gt.z - pos.z));
+    (pos_ref.x - pos.x) * (pos_ref.x - pos.x) + (pos_ref.y - pos.y) * (pos_ref.y - pos.y) +
+    (pos_ref.z - pos.z) * (pos_ref.z - pos.z));
   stat.add(dist);
 
   return stat;

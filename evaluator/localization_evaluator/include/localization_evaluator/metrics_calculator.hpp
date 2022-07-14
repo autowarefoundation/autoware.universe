@@ -24,8 +24,6 @@
 
 namespace localization_diagnostics
 {
-using nav_msgs::msg::Odometry;
-
 class MetricsCalculator
 {
 public:
@@ -37,12 +35,12 @@ public:
    * @param [in] stat_prev Previous statistics
    * @param [in] metric metric enum value
    * @param [in] pos current position
-   * @param [in] pos_gt ground truth position
+   * @param [in] pos_ref reference position
    * @return string describing the requested metric
    */
   Stat<double> updateStat(
     const Stat<double> stat_prev, const Metric metric, const geometry_msgs::msg::Point & pos,
-    const geometry_msgs::msg::Point & pos_gt) const;
+    const geometry_msgs::msg::Point & pos_ref) const;
 };  // class MetricsCalculator
 
 }  // namespace localization_diagnostics

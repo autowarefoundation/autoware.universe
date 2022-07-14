@@ -23,28 +23,26 @@ namespace localization_diagnostics
 {
 namespace metrics
 {
-using nav_msgs::msg::Odometry;
-
 /**
  * @brief calculate lateral localization error
  * @param [in] stat_prev statistics to update
  * @param [in] lateral_pos lateral position of the vehicle
- * @param [in] lateral_gt ground truth lateral position
+ * @param [in] lateral_ref reference lateral position
  * @return calculated statistics
  */
 Stat<double> updateLateralStats(
-  const Stat<double> stat_prev, const double & lateral_pos, const double & lateral_gt);
+  const Stat<double> stat_prev, const double & lateral_pos, const double & lateral_ref);
 
 /**
  * @brief calculate absolute localization error
  * @param [in] stat_prev statistics to update
  * @param [in] pos current position of the vehicle
- * @param [in] pos_gt ground truth position of the vehicle
+ * @param [in] pos_ref reference position of the vehicle
  * @return calculated statistics
  */
 Stat<double> updateAbsoluteStats(
   const Stat<double> stat_prev, const geometry_msgs::msg::Point & pos,
-  const geometry_msgs::msg::Point & pos_gt);
+  const geometry_msgs::msg::Point & pos_ref);
 
 }  // namespace metrics
 }  // namespace localization_diagnostics
