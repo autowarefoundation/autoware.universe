@@ -2,8 +2,8 @@ repositories:
   # autoware
   autoware/universe:
     type: git
-    url: https://github.com/tier4/autoware.universe.git
-    version: tier4/main
+    url: https://github.com/autowarefoundation/autoware.universe.git
+    version: main
   autoware/common:
     type: git
     url: https://github.com/autowarefoundation/autoware_common.git
@@ -11,7 +11,7 @@ repositories:
   autoware/launcher:
     type: git
     url: https://github.com/tier4/autoware_launch.git
-    version: tier4/universe
+    version: awf-latest
   autoware/aip_launcher:
     type: git
     url: https://github.com/tier4/aip_launcher.git
