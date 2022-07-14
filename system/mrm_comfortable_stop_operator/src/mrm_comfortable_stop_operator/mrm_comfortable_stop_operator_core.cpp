@@ -67,7 +67,9 @@ void MRMComfortableStopOperator::operateComfortableStop(
 
 void MRMComfortableStopOperator::publishStatus() const
 {
-  pub_status_->publish(status_);
+  auto status = status_;
+  status.stamp = this->now();
+  pub_status_->publish(status);
 }
 
 void MRMComfortableStopOperator::publishVelocityLimit() const
