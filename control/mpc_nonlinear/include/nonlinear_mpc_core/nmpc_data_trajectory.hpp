@@ -86,10 +86,10 @@ namespace ns_data
     template<class Model>
     struct TrajectoryData
     {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
         typename Model::state_vector_v_t X;  // !<@brief state vector container of Eigen vector.
         typename Model::input_vector_v_t U;  // !<@brief control input vector container.
+        typename Model::state_vector_t x_type;
+        typename Model::input_vector_t u_type;
 
         /**
          * @brief initialize the state and control trajectories in the containers.
@@ -149,8 +149,14 @@ namespace ns_data
     template<class Model>
     void TrajectoryData<Model>::initializeTrajectory(size_t const &K, double const &dt_step)
     {
-      X.resize(K);
-      U.resize(K);
+      // X.resize(K);
+      // U.resize(K); // Alternative initialization of X and U is;
+
+      x_type.setZero();
+      u_type.setZero();
+
+      X = typename Model::state_vector_v_t(K, x_type);
+      U = typename Model::input_vector_v_t(K, u_type);
 
       // Initialize the control signal containers.
       u_model_solution_.setZero();
@@ -177,13 +183,11 @@ namespace ns_data
     {
       if (t > mpc_dt)
       {
-        ns_utils::print(
-          "[nonlinear_mpc] The control at time t greater than the MPC time is not implemented  "
-          "...");
+        ns_utils::print("[nonlinear_mpc] The control at time t greater than the MPC time is not implemented  "
+                        "...");
 
-        ns_utils::print(
-          "[nonlinear_mpc] The requested time for the control interpolation must be less than "
-          "the MPC  time step ");
+        ns_utils::print("[nonlinear_mpc] The requested time for the control interpolation must be less than "
+                        "the MPC  time step ");
         return;
       }
 
