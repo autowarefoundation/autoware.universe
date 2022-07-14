@@ -166,6 +166,8 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
 
     ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
+    // Unwrap error and yaw angles.
+
     // Update xk, uk
     nmpc_data.trajectory_data.X[k] = xk.eval();
     nmpc_data.trajectory_data.U[k] = uk.eval();
@@ -253,7 +255,7 @@ bool LPVinitializer::computeSingleFeedbackControls(
 
   auto vx_target = nmpc_data.target_reference_states_and_controls.X[0](6);  //
   x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) -
-    vx_target;  // [ey, epsi, error_vx, delta] - error in vx tracking.
+               vx_target;  // [ey, epsi, error_vx, delta] - error in vx tracking.
 
   // Get the s-state (distance travelled) and interpolate for
   // the curvature value at this distance point.
