@@ -3,7 +3,13 @@
 #include "common/gammma_conveter.hpp"
 #include "common/util.hpp"
 
+#include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+
+// #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/search/kdtree.h>
 
 namespace particle_filter
 {
@@ -45,12 +51,63 @@ void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & clo
   cloud_ = cloud;
 }
 
+void visualizeAngleMap(const cv::Mat & angle_image, const cv::Mat & intensity_image)
+{
+  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+  cloud->points.reserve(2000);
+  for (int i = 0; i < angle_image.rows; i++) {
+    const uchar * p1 = angle_image.ptr<uchar>(i);
+    for (int j = 0; j < angle_image.cols; j++) {
+      if (p1[j] == 0) continue;
+      pcl::PointXYZI xyz;
+      xyz.intensity = p1[j];
+      xyz.x = i, xyz.y = j, xyz.z = 0;
+      cloud->push_back(xyz);
+    }
+  }
+  pcl::search::KdTree<pcl::PointXYZI> kdtree;
+  kdtree.setInputCloud(cloud);
+
+  auto getNearest = [cloud, &kdtree](int i, int j) -> float {
+    if (cloud->empty()) {
+      return 0;
+    }
+    std::vector<int> indices;
+    std::vector<float> distances;
+    pcl::PointXYZI query;
+    query.x = i, query.y = j, query.z = 0;
+    kdtree.nearestKSearch(query, 1, indices, distances);
+    return cloud->at(indices.front()).intensity;
+  };
+
+  cv::Mat show_image = cv::Mat::zeros(angle_image.size(), CV_8UC3);
+
+  for (int i = 0; i < angle_image.rows; i++) {
+    const uchar * p1 = angle_image.ptr<uchar>(i);
+    const uchar * p2 = intensity_image.ptr<uchar>(i);
+    uchar * q = show_image.ptr<uchar>(i);
+    for (int j = 0; j < angle_image.cols; j++) {
+      cv::Scalar color(0, 0, 0);
+      if (p2[j] > 25) color = cv::Scalar(getNearest(i, j), p2[j], p2[j]);
+      // if (p2[j] > 10) color = cv::Scalar(p1[j], p2[j], p2[j]);
+
+      q[j * 3] = (uchar)color[0];
+      q[j * 3 + 1] = (uchar)color[1];
+      q[j * 3 + 2] = (uchar)color[2];
+    }
+  }
+  cv::cvtColor(show_image, show_image, cv::COLOR_HSV2BGR);
+
+  cv::imshow("angle", show_image);
+  cv::waitKey(5);
+}
+
 void HierarchicalCostMap::buildMap(const Area & area)
 {
   if (!cloud_.has_value()) return;
 
-  cv::Mat cost_map;
   cv::Mat image = 255 * cv::Mat::ones(cv::Size(image_size_, image_size_), CV_8UC1);
+  cv::Mat angle_image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
 
   auto cvPoint = [this, area](const Eigen::Vector3f & p) -> cv::Point {
     return this->toCvPoint(area, p.topRows(2));
@@ -60,6 +117,14 @@ void HierarchicalCostMap::buildMap(const Area & area)
     cv::line(
       image, cvPoint(pn.getVector3fMap()), cvPoint(pn.getNormalVector3fMap()), cv::Scalar::all(0),
       1);
+
+    Eigen::Vector3f d = pn.getVector3fMap() - pn.getNormalVector3fMap();
+    float rad = std::atan2(d.y(), d.x());
+    if (rad > M_PI) rad -= M_PI;
+    int deg = 180.f / 3.14 * rad;
+    cv::line(
+      angle_image, cvPoint(pn.getVector3fMap()), cvPoint(pn.getNormalVector3fMap()),
+      cv::Scalar::all(deg), 1);
   }
   cv::Mat distance;
   cv::distanceTransform(image, distance, cv::DIST_L2, 3);
@@ -71,6 +136,8 @@ void HierarchicalCostMap::buildMap(const Area & area)
 
   RCLCPP_INFO_STREAM(
     logger_, "successed to build map " << area(area) << " " << area.realScale().transpose());
+
+  visualizeAngleMap(angle_image, distance);
 }
 
 HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
