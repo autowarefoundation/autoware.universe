@@ -493,7 +493,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // Get Target Obstacles
   DebugData debug_data;
-  const bool is_driving_forward = isDrivingForward(*msg);
+  const bool is_driving_forward = motion_utils::isDrivingForward(msg->points);
   const auto target_obstacles = getTargetObstacles(
     *msg, current_pose_ptr->pose, current_twist_ptr_->twist.linear.x, is_driving_forward,
     debug_data);
@@ -541,32 +541,6 @@ bool ObstacleCruisePlannerNode::isStopObstacle(const uint8_t label)
 {
   const auto & types = stop_obstacle_types_;
   return std::find(types.begin(), types.end(), label) != types.end();
-}
-
-bool ObstacleCruisePlannerNode::isDrivingForward(const Trajectory traj)
-{
-  if (traj.points.size() < 2) {
-    return true;
-  }
-
-  const auto & first_traj_point = traj.points.at(0);
-  const auto & second_traj_point = traj.points.at(1);
-  if (
-    0.0 <= first_traj_point.longitudinal_velocity_mps &&
-    0.0 <= second_traj_point.longitudinal_velocity_mps) {
-    return true;
-  }
-
-  const double first_traj_yaw = tf2::getYaw(first_traj_point.pose.orientation);
-  const double driving_direction_yaw = tier4_autoware_utils::calcAzimuthAngle(
-    first_traj_point.pose.position, second_traj_point.pose.position);
-  if (
-    std::abs(tier4_autoware_utils::normalizeRadian(first_traj_yaw - driving_direction_yaw)) <
-    M_PI_2) {
-    return true;
-  }
-
-  return false;
 }
 
 ObstacleCruisePlannerData ObstacleCruisePlannerNode::createStopData(

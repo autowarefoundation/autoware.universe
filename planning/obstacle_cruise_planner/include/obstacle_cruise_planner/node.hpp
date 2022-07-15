@@ -71,7 +71,6 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // member Functions
-  bool isDrivingForward(const Trajectory traj);
   ObstacleCruisePlannerData createCruiseData(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
     const std::vector<TargetObstacle> & obstacles, const bool is_driving_forward);
