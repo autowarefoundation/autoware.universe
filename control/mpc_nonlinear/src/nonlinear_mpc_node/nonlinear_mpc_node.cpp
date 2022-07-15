@@ -146,7 +146,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   ns_data::ParamsFilters params_filters;
   loadFilterParameters(params_filters);
 
-  kalman_filter_ = ns_filters::KalmanUnscented(vehicle_model_ptr, params_node_.control_period);
+  kalman_filter_ = ns_filters::KalmanUnscentedSQRT(vehicle_model_ptr, params_node_.control_period);
   kalman_filter_.updateParameters(params_filters);
 
   /**
@@ -341,7 +341,7 @@ void NonlinearMPCNode::onTimer()
       value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
     }
 
-    // kalman_filter_.reset();
+    kalman_filter_.reset();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
                                    vehicle_motion_fsm_.fsmMessage().c_str());
 
@@ -386,10 +386,6 @@ void NonlinearMPCNode::onTimer()
    * */
   publishErrorReport(current_error_report_);
 
-
-  // Update the initial state of the NMPCcore object.
-  nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
-
   // ns_utils::print("before using comm delay error refs...");
   if (params_node_.use_cdob && current_comm_delay_ptr_)
   {
@@ -399,6 +395,9 @@ void NonlinearMPCNode::onTimer()
 
     ns_utils::print("NMPC using error references...");
   }
+
+  // Update the initial state of the NMPCcore object.
+  nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
 
   /**
    * Target states are predicted based-on the NMPC input trajectory [vx input, steering input].
@@ -2023,7 +2022,7 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   // end of DEBUG
 }
 
-void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &xd0)
+void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted)
 {
   Model::input_vector_t uk{Model::input_vector_t::Zero()};
   Model::param_vector_t params(Model::param_vector_t::Zero());
@@ -2035,7 +2034,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     uk(0) = all_controls[0];  // ax input
     uk(1) = all_controls[3];  // steering input
 
-    auto const &sd0 = xd0(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
+    auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
     double kappad0{};           // curvature placeholder
     double vxk{};               // to interpolate the target speed (virtual car speed).
 
@@ -2060,24 +2059,24 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     // computed with the sampling time step: params_node_.control_period
 
     ns_utils::print("Before simulating predictive state, the state vector is:");
-    ns_eigen_utils::printEigenMat(xd0);
+    ns_eigen_utils::printEigenMat(x0_predicted);
 
     ns_utils::print("Controls sent to the simulator:");
     ns_eigen_utils::printEigenMat(uk);
 
-    nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, params_node_.control_period, xd0);
+    nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, params_node_.control_period, x0_predicted);
 
     ns_utils::print("After simulateOneStep predictive state, the state vector is:");
-    ns_eigen_utils::printEigenMat(xd0);
+    ns_eigen_utils::printEigenMat(x0_predicted);
 
     // Saturate steering.
     //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
     nonlinear_mpc_controller_ptr_->applyControlConstraints(uk);
-    nonlinear_mpc_controller_ptr_->applyStateConstraints(xd0);
+    nonlinear_mpc_controller_ptr_->applyStateConstraints(x0_predicted);
   }
 
   // Set the current_predicted_s0_.  states = [x, y, psi, s, ey, epsi, v, delta]
-  current_predicted_s0_ = xd0(3);
+  current_predicted_s0_ = x0_predicted(3);
   nonlinear_mpc_controller_ptr_->setCurrent_s0_predicted(current_predicted_s0_);
 
   // Predict the curvature and Ackermann steering angle.
@@ -2275,8 +2274,8 @@ void NonlinearMPCNode::publishPredictedTrajectories(std::string const &ns, std::
 
 void NonlinearMPCNode::publishClosestPointMarker(const std::string &ns) const
 {
-  visualization_msgs::msg::Marker marker = createLocationMarker(
-    debug_data_.current_closest_pose, current_trajectory_ptr_->header.stamp, ns);
+  visualization_msgs::msg::Marker
+    marker = createLocationMarker(debug_data_.current_closest_pose, current_trajectory_ptr_->header.stamp, ns);
   pub_closest_point_debug_marker_->publish(marker);
 }
 
@@ -2311,15 +2310,15 @@ void NonlinearMPCNode::setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &
   current_COG_pose_ptr_ = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_temp);
 }
 
-ControlCmdMsg NonlinearMPCNode::createControlCommand(double const &ax, double const &vx,
+ControlCmdMsg NonlinearMPCNode::createControlCommand(double const &ax,
+                                                     double const &vx,
                                                      double const &steering_rate,
-                                                     double const &steering_val) const
+                                                     double const &steering_val)
 {
   ControlCmdMsg ctrl_cmd;
 
   ctrl_cmd.lateral.steering_tire_rotation_rate = static_cast<float>(steering_rate);
-  ctrl_cmd.lateral.steering_tire_angle =
-    static_cast<float>(steering_val) + current_feedforward_steering_;
+  ctrl_cmd.lateral.steering_tire_angle = static_cast<float>(steering_val);
 
   ctrl_cmd.longitudinal.acceleration = static_cast<float>(ax);
   ctrl_cmd.longitudinal.speed = static_cast<float>(vx);
@@ -2398,6 +2397,8 @@ rcl_interfaces::msg::SetParametersResult NonlinearMPCNode::onParameterUpdate(con
   try
   {
     update_param(parameters, "cdob_ctrl_period", params_node_.control_period);
+    update_param(parameters, "use_cdob", params_node_.use_cdob);
+    update_param(parameters, "use_dob", params_node_.use_dob);
   }
 
     // transaction succeeds, now assign values

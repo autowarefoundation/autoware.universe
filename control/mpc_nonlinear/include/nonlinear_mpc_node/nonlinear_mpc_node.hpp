@@ -91,7 +91,8 @@ using namespace std::chrono_literals;
 
 using autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
-auto constexpr EPS = std::numeric_limits<double>::epsilon();
+auto constexpr
+  EPS = std::numeric_limits<double>::epsilon();
 
 struct DebugData
 {
@@ -197,7 +198,7 @@ class NonlinearMPCNode : public rclcpp::Node
   /**
    * @brief Kalman filter to predict initial states.
    * */
-  ns_filters::KalmanUnscented kalman_filter_{};
+  ns_filters::KalmanUnscentedSQRT kalman_filter_{};
 
   /**
    * @brief Finite State Machine for tracking vehicle motion states.
@@ -418,7 +419,7 @@ class NonlinearMPCNode : public rclcpp::Node
    * @brief predict the initial states using the vx control input buffer.
    * @param [in-out] xd0 the integrated initial state iteratively.
    * */
-  void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &xd0);
+  void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted);
 
   /**
    * @brief predict the initial states using the vx received from the trajectory planner.
@@ -457,10 +458,10 @@ class NonlinearMPCNode : public rclcpp::Node
   bool createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
                                              map_matrix_in_t const &fixed_map_ref_sxyz);
 
-  ControlCmdMsg createControlCommand(double const &ax,
-                                     double const &vx,
-                                     double const &steering_rate,
-                                     double const &steering_val) const;
+  static ControlCmdMsg createControlCommand(double const &ax,
+                                            double const &vx,
+                                            double const &steering_rate,
+                                            double const &steering_val);
 
   /**
    * @brief publish control command as autoware_msgs/ControlCommand type
