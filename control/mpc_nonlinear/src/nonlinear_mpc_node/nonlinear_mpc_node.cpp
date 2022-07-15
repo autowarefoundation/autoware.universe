@@ -348,7 +348,7 @@ void NonlinearMPCNode::onTimer()
     auto &&control_cmd = getStopControlCommand();
 
     // Prevent reverse motion when stopped.
-    if (current_velocity_ptr_->twist.twist.linear.x <= std::numeric_limits<double>::epsilon())
+    if (current_velocity_ptr_->twist.twist.linear.x < EPS)
     {
       control_cmd.longitudinal.acceleration = 0.0;
 
@@ -455,8 +455,7 @@ void NonlinearMPCNode::onTimer()
   /**
    * @brief
    * - Simulate the controls starting from the delayed initial state.
-   * - Apply the predicted control to the vehicle model starting from predicted initial state and
-   * replace the
+   * - Apply the predicted control to the vehicle model starting from predicted initial state and replace the
    * - measured initial state with the predicted initial state.
    */
 
@@ -644,6 +643,7 @@ void NonlinearMPCNode::updateCurrentPose()
   ps.pose.position.y = transform.transform.translation.y;
   ps.pose.position.z = transform.transform.translation.z;
   ps.pose.orientation = transform.transform.rotation;
+
   current_pose_ptr_ = std::make_shared<geometry_msgs::msg::PoseStamped>(ps);
 
   setCurrentCOGPose(ps);
