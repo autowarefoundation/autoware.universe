@@ -2177,6 +2177,7 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
   if (new_shift_points) {  // clip from shift start index for visualize
     clipByMinStartIdx(*new_shift_points, shifted_path.path);
+    
     int i = new_shift_points->size()-1;
     for(;i>0;i--)
     {
