@@ -22,16 +22,16 @@
     # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
-    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.1, 0.0, 0.0 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 1., 0.0, 0.0 ]
-    control_weights: [ 0.01, 0.1 ]    # [vx speed input, steering input]
+    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.1, 0.1, 0.1, 0.0, 0.0 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, .1, 0.1, 0.1, 0.0, 0.0 ]
+    control_weights: [ 0.001, 0.001 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
     #  -- Constraints - Upper-lower bounds.
     #  -- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay'] --
     # xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -2.0, -0.5, -0.65, -.inf ]
-    xlower: [ -.inf, -.inf, -.inf, -.inf, -1.0, -1.0, 0.0, -1.0, -4.0 ]
-    xupper: [ .inf,  .inf,   .inf, .inf,  1.0,  1.0, 25.0, 1.0, 4.0 ]
+    xlower: [ -.inf, -.inf, -.inf, -.inf, -3.0, -1.0, 0.0, -1.0, -4.0 ]
+    xupper: [ .inf,  .inf,   .inf, .inf,  3.0,  1.0, 25.0, 1.0, 4.0 ]
     ulower: [ -7., -1.0 ]  # vx speed input [m/s], steering input [rad]
     uupper: [ 7.,  1.0 ]
 
@@ -39,7 +39,7 @@
     scaling_range: [ -1., 1. ]
 
     xmin_for_scaling: [ -25., -25., -1.0, 0.0,  -1.0, -1.0, 0.0, -1.0, -5.0 ]
-    xmax_for_scaling: [ 25.,  25.,  1.0, 25.0,   1.0,  1.0, 30.0,   1.0, 5.0 ]
+    xmax_for_scaling: [ 25.,  25.,  1.0, 25.0,   1.0,  1.0, 25.0,   1.0, 5.0 ]
 
     umin_for_scaling: [ -7., -1.0 ]  # ax speed input [m/s], steering input [rad]
     umax_for_scaling: [ 7.,  1.0 ]
