@@ -1,6 +1,7 @@
 #ifndef MODULARIZED_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_
 #define MODULARIZED_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_
 
+#include "modularized_particle_filter/common/mean.hpp"
 #include "modularized_particle_filter/common/visualize.hpp"
 
 #include <rclcpp/rclcpp.hpp>

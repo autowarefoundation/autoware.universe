@@ -1,5 +1,6 @@
 #include "modularized_particle_filter/prediction/predictor.hpp"
 
+#include "modularized_particle_filter/common/mean.hpp"
 #include "modularized_particle_filter/prediction/prediction_util.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
@@ -156,7 +157,7 @@ void Predictor::timerCallback()
 
   predicted_particles_pub_->publish(particle_array);
 
-  geometry_msgs::msg::Pose mean_pose{calculateMeanPose(particle_array)};
+  geometry_msgs::msg::Pose mean_pose{meanPose(particle_array)};
   publishMeanPose(mean_pose, current_time);
 
   if (visualize_) visualizer_->publish(particle_array);
@@ -184,66 +185,6 @@ void Predictor::weightedParticlesCallback(
   }
 
   particle_array_opt_ = particle_array;
-}
-
-geometry_msgs::msg::Pose Predictor::calculateMeanPose(const ParticleArray & particle_array)
-{
-  modularized_particle_filter_msgs::msg::ParticleArray normalized_particle_array{particle_array};
-  geometry_msgs::msg::Pose mean_pose;
-
-  auto minmax_weight = std::minmax_element(
-    normalized_particle_array.particles.begin(), normalized_particle_array.particles.end(),
-    [](auto p1, auto p2) { return p1.weight < p2.weight; });
-
-  const float num_of_particles_inv{1.0f / normalized_particle_array.particles.size()};
-  const float dif_weight{minmax_weight.second->weight - minmax_weight.first->weight};
-
-  for (auto & particle : normalized_particle_array.particles) {
-    if (dif_weight != 0.0f) {
-      particle.weight = (particle.weight - minmax_weight.first->weight) / dif_weight;
-    } else {
-      particle.weight = num_of_particles_inv;
-    }
-  }
-
-  double sum_weight{std::accumulate(
-    normalized_particle_array.particles.begin(), normalized_particle_array.particles.end(), 0.0,
-    [](double weight, modularized_particle_filter_msgs::msg::Particle & particle) {
-      return weight + particle.weight;
-    })};
-  if (std::isinf(sum_weight)) {
-    RCLCPP_WARN_STREAM(this->get_logger(), "sum_weight: " << sum_weight);
-  }
-
-  std::vector<double> rolls{};
-  std::vector<double> pitches{};
-  std::vector<double> yaws{};
-  std::vector<double> weights{};
-  for (modularized_particle_filter_msgs::msg::Particle particle :
-       normalized_particle_array.particles) {
-    double weight{1.0 / normalized_particle_array.particles.size()};
-    if (0.0f < sum_weight) weight = particle.weight / sum_weight;
-
-    mean_pose.position.x += particle.pose.position.x * weight;
-    mean_pose.position.y += particle.pose.position.y * weight;
-    mean_pose.position.z += particle.pose.position.z * weight;
-
-    double yaw{0.0}, pitch{0.0}, roll{0.0};
-    tf2::getEulerYPR(particle.pose.orientation, yaw, pitch, roll);
-
-    rolls.push_back(roll);
-    pitches.push_back(pitch);
-    yaws.push_back(yaw);
-    weights.push_back(weight);
-  }
-
-  const double mean_roll{prediction_util::meanRadian(rolls, weights)};
-  const double mean_pitch{prediction_util::meanRadian(pitches, weights)};
-  const double mean_yaw{prediction_util::meanRadian(yaws, weights)};
-  tf2::Quaternion q;
-  q.setRPY(mean_roll, mean_pitch, mean_yaw);
-  mean_pose.orientation = tf2::toMsg(q);
-  return mean_pose;
 }
 
 void Predictor::publishMeanPose(

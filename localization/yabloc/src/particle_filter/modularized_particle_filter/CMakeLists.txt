@@ -23,6 +23,7 @@ ament_auto_add_library(
   SHARED
   src/correction/abst_corrector.cpp
   src/common/visualize.cpp
+  src/common/mean.cpp
 )
 
 ament_auto_add_executable(predictor
@@ -30,6 +31,7 @@ ament_auto_add_executable(predictor
   src/prediction/predictor.cpp
   src/prediction/resampler.cpp
   src/common/visualize.cpp
+  src/common/mean.cpp
 )
 
 ament_auto_add_executable(lidar_pose_corrector

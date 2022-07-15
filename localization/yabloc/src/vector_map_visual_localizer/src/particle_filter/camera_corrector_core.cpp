@@ -18,16 +18,17 @@ CameraParticleCorrector::CameraParticleCorrector()
   using std::placeholders::_1;
 
   auto lsd_callback = std::bind(&CameraParticleCorrector::lsdCallback, this, _1);
-  lsd_sub_ = create_subscription<PointCloud2>("/lsd_cloud", 10, lsd_callback);
+  sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, lsd_callback);
 
   auto ll2_callback = std::bind(&CameraParticleCorrector::ll2Callback, this, _1);
-  ll2_sub_ = create_subscription<PointCloud2>("/ll2_road_marking", 10, ll2_callback);
+  sub_ll2_ = create_subscription<PointCloud2>("/ll2_road_marking", 10, ll2_callback);
 
   auto pose_callback = std::bind(&CameraParticleCorrector::poseCallback, this, _1);
-  pose_sub_ = create_subscription<PoseStamped>("/particle_pose", 10, pose_callback);
+  sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, pose_callback);
 
-  image_pub_ = create_publisher<Image>("/match_image", 10);
-  marker_pub_ = create_publisher<MarkerArray>("/cost_map_range", 10);
+  pub_image_ = create_publisher<Image>("/match_image", 10);
+  pub_marker_ = create_publisher<MarkerArray>("/cost_map_range", 10);
+  pub_scored_cloud_ = create_publisher<PointCloud2>("/scored_cloud", 10);
 }
 
 void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & lsd_msg)
@@ -63,12 +64,21 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   cost_map_.eraseObsolete();
 
   this->setWeightedParticleArray(weighted_particles);
-  marker_pub_->publish(cost_map_.showMapRange());
+  pub_marker_->publish(cost_map_.showMapRange());
+
+  // DEBUG: just visualization
+  {
+    Pose mean_pose = meanPose(weighted_particles);
+    Eigen::Affine3f transform = util::pose2Affine(mean_pose);
+    LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
+    pcl::PointCloud<pcl::PointXYZI> cloud = evaluateCloud(transformed_lsd, transform.translation());
+    util::publishCloud(*pub_scored_cloud_, cloud, lsd_msg.header.stamp);
+  }
 }
 
 void CameraParticleCorrector::poseCallback(const PoseStamped & msg)
 {
-  util::publishImage(*image_pub_, cost_map_.getMapImage(msg.pose), msg.header.stamp);
+  util::publishImage(*pub_image_, cost_map_.getMapImage(msg.pose), msg.header.stamp);
 }
 
 void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)
@@ -99,8 +109,32 @@ float CameraParticleCorrector::computeScore(
   return score;
 }
 
+pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
+  const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
+{
+  pcl::PointCloud<pcl::PointXYZI> cloud;
+  for (const pcl::PointNormal & pn1 : lsd_cloud) {
+    Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
+    float l1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).norm();
+
+    for (float distance = 0; distance < l1; distance += 0.1f) {
+      Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
+
+      // NOTE: Close points are prioritized
+      float squared_norm = (p - self_position).topRows(2).squaredNorm();
+      float gain = std::exp(-far_weight_gain_ * squared_norm);
+      float score = gain * (cost_map_.at(p.topRows(2)) + score_offset_);
+
+      pcl::PointXYZI xyzi(score);
+      xyzi.getVector3fMap() = p;
+      cloud.push_back(xyzi);
+    }
+  }
+  return cloud;
+}
+
 CameraParticleCorrector::LineSegment CameraParticleCorrector::transformCloud(
-  const LineSegment & src, const Eigen::Affine3f & transform)
+  const LineSegment & src, const Eigen::Affine3f & transform) const
 {
   LineSegment dst;
   dst.reserve(src.size());

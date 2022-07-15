@@ -46,7 +46,7 @@ void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & clo
   cloud_ = cloud;
 }
 
-void visualizeAngleMap(const cv::Mat & intensity_image)
+void makeOrientationMap(const cv::Mat & intensity_image)
 {
   cv::Mat show_image = cv::Mat::zeros(intensity_image.size(), CV_8UC3);
 
@@ -102,7 +102,7 @@ void HierarchicalCostMap::buildMap(const Area & area)
   RCLCPP_INFO_STREAM(
     logger_, "successed to build map " << area(area) << " " << area.realScale().transpose());
 
-  visualizeAngleMap(cost_maps_[area]);
+  // makeOrientationMap(cost_maps_[area]);
 }
 
 HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const

@@ -68,7 +68,6 @@ private:
   void weightedParticlesCallback(const ParticleArray::ConstSharedPtr weighted_particles);
   void timerCallback();
 
-  geometry_msgs::msg::Pose calculateMeanPose(const ParticleArray & particle_array);
   void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
 };
 

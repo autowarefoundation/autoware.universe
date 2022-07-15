@@ -185,4 +185,8 @@ template void publishCloud<pcl::PointNormal>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointNormal> &,
   const rclcpp::Time &);
 
+template void publishCloud<pcl::PointXYZI>(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZI> &,
+  const rclcpp::Time &);
+
 }  // namespace util

@@ -22,4 +22,4 @@ private:
   std_msgs::msg::ColorRGBA computeColor(float value);
 };
 
-#endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
+#endif  // MODULARIZED_PARTICLE_FILTER__COMMON__VISUALIZE_HPP_
