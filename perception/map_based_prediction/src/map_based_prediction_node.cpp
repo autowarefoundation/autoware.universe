@@ -542,26 +542,29 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   } else if (withinRoadLanelet(object, lanelet_map_ptr_)) {
     lanelet::ConstLanelet closest_crosswalk{};
     const auto & obj_pose = object.kinematics.pose_with_covariance.pose;
-    lanelet::utils::query::getClosestLanelet(crosswalks_, obj_pose, &closest_crosswalk);
+    const auto found_closest_crosswalk =
+      lanelet::utils::query::getClosestLanelet(crosswalks_, obj_pose, &closest_crosswalk);
 
-    const auto entry_point = getCrosswalkEntryPoint(closest_crosswalk);
+    if (found_closest_crosswalk) {
+      const auto entry_point = getCrosswalkEntryPoint(closest_crosswalk);
 
-    if (hasPotentialToReach(
-          object, entry_point.first, std::numeric_limits<double>::max(),
-          min_velocity_for_map_based_prediction_)) {
-      PredictedPath predicted_path =
-        path_generator_->generatePathToTargetPoint(object, entry_point.first);
-      predicted_path.confidence = 1.0;
-      predicted_object.kinematics.predicted_paths.push_back(predicted_path);
-    }
+      if (hasPotentialToReach(
+            object, entry_point.first, std::numeric_limits<double>::max(),
+            min_velocity_for_map_based_prediction_)) {
+        PredictedPath predicted_path =
+          path_generator_->generatePathToTargetPoint(object, entry_point.first);
+        predicted_path.confidence = 1.0;
+        predicted_object.kinematics.predicted_paths.push_back(predicted_path);
+      }
 
-    if (hasPotentialToReach(
-          object, entry_point.first, std::numeric_limits<double>::max(),
-          min_velocity_for_map_based_prediction_)) {
-      PredictedPath predicted_path =
-        path_generator_->generatePathToTargetPoint(object, entry_point.second);
-      predicted_path.confidence = 1.0;
-      predicted_object.kinematics.predicted_paths.push_back(predicted_path);
+      if (hasPotentialToReach(
+            object, entry_point.first, std::numeric_limits<double>::max(),
+            min_velocity_for_map_based_prediction_)) {
+        PredictedPath predicted_path =
+          path_generator_->generatePathToTargetPoint(object, entry_point.second);
+        predicted_path.confidence = 1.0;
+        predicted_object.kinematics.predicted_paths.push_back(predicted_path);
+      }
     }
 
   } else {
