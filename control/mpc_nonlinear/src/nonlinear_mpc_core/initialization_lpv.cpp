@@ -76,13 +76,18 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Update the error model states. [ey, e_yaw, eV, delta]
     x_error << xk.middleRows(4, Model::estate_dim);
 
-    auto const &vtarget = nmpc_data.target_reference_states_and_controls.X.at(k)(6);
+    auto const &vtarget = nmpc_data.target_reference_states_and_controls.X[k](ns_utils::toUType
+                                                                                (VehicleStateIds::vx));
 
     // [ey, epsi, error_vx, delta]
     x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) - vtarget;
 
-    // Get the s-state (distance travelled) and interpolate for the curvature
-    // value at this distance point.
+    ns_utils::print("Computed error states ");
+    ns_eigen_utils::printEigenMat(x_error);
+
+    ns_utils::print("In feedback vx vs vtarget", xk(ns_utils::toUType(VehicleStateIds::vx)), vtarget);
+
+    // Get the s-state (distance travelled) and interpolate for the curvature value at this distance point.
     auto const &s0 = xk(ns_utils::toUType(VehicleStateIds::s));
     double kappa0{};
 
@@ -92,7 +97,6 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
       ns_utils::print("LPV spline interpolator failed to compute the spline coefficients");
       return false;
     }
-
 
     //    ns_utils::print("x_error in feedback");
     //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
