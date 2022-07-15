@@ -78,8 +78,8 @@ class LateralCommunicationDelayCompensator
   void simulateOneStep(state_vector_vehicle_t const &current_measurements,
                        float64_t const &prev_steering_control_cmd,
                        float64_t const &current_steering_cmd,
-                       std::shared_ptr<DelayCompensatatorMsg> &msg_compensation_results,
-                       std::shared_ptr<DelayCompensatorDebugMsg> &msg_debug_results);
+                       std::shared_ptr<DelayCompensatatorMsg> const &msg_compensation_results,
+                       std::shared_ptr<DelayCompensatorDebugMsg> const &msg_debug_results);
 
   void setInitialStates();
   void resetInitialState();
