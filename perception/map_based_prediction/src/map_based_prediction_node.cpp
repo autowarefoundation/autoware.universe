@@ -624,20 +624,18 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   }
 
   // Compute yaw angle from the velocity and position of the object
-  const auto original_object_yaw =
-    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   const auto & object_pose = object.kinematics.pose_with_covariance.pose;
   const auto & object_twist = object.kinematics.twist_with_covariance.twist;
   const auto future_object_pose = tier4_autoware_utils::calcOffsetPose(
     object_pose, object_twist.linear.x * 0.1, object_twist.linear.y * 0.1, 0.0);
-  const auto updated_object_yaw =
-    tier4_autoware_utils::calcAzimuthAngle(object_pose.position, future_object_pose.position);
 
-  object.kinematics.pose_with_covariance.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(updated_object_yaw);
+  if (object.kinematics.twist_with_covariance.twist.linear.x < 0.0) {
+    const auto updated_object_yaw =
+      tier4_autoware_utils::calcAzimuthAngle(object_pose.position, future_object_pose.position);
 
-  // If the object yaw flips, we also flip the velocity
-  if (std::fabs(updated_object_yaw - original_object_yaw) > tier4_autoware_utils::pi / 2.0) {
+    object.kinematics.pose_with_covariance.pose.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(updated_object_yaw);
+
     object.kinematics.twist_with_covariance.twist.linear.x *= -1.0;
   }
 
