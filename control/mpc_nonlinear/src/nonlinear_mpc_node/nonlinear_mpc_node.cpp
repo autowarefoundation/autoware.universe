@@ -340,7 +340,7 @@ void NonlinearMPCNode::onTimer()
     // Reset the input que. [ax, vx, steering_rate, steering]
     for (auto &value : inputs_buffer_common_)
     {
-      value = std::array < double, 4 > {0.0, 0.0, 0.0, 0.0};
+      value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
     }
 
     // kalman_filter_.reset();
@@ -367,9 +367,6 @@ void NonlinearMPCNode::onTimer()
   x0_predicted_.setZero();
   nonlinear_mpc_controller_ptr_->getInitialState(x0_predicted_);
 
-  ns_utils::print("Initial state before prediction : ");
-  ns_eigen_utils::printEigenMat(x0_predicted_);
-
   // If there is no input delay in the system, predict_initial_states is set to false automatically
   // in the constructor.
 
@@ -382,9 +379,6 @@ void NonlinearMPCNode::onTimer()
 
     predictDelayedInitialStateBy_MPCPredicted_Inputs(x0_predicted_);
   }
-
-  ns_utils::print("Initial state after prediction : ");
-  ns_eigen_utils::printEigenMat(x0_predicted_);
 
   // Update the initial state of the NMPCcore object.
   nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
@@ -404,24 +398,6 @@ void NonlinearMPCNode::onTimer()
    * */
 
   nonlinear_mpc_controller_ptr_->updateRefTargetStatesByTimeInterpolation(average_mpc_solve_time_);
-
-  // TODO: delete debug block
-  //  {
-  //    auto const &trgd = nonlinear_mpc_controller_ptr_->getCurrentTargetTrajectoryData();
-  //    auto &&Xtemp = ns_eigen_utils::getTrajectory(trgd.X);
-  //
-  //    ns_utils::print("\n[in timer] Target trajectories :  [x, y, psi, s, ey, epsi, vx, delta, vy]");
-  //    ns_eigen_utils::printEigenMat(Xtemp.transpose());
-  //  }
-  //  if (1)
-  //  {
-  //    return;
-  //  }
-  // ------------ PREPARE the Controllers ------------ MPC or LPV Feedback ---------
-  /**
-   * @brief The NMPC core module is an interface to all NMPC functions. It also hosts to the OSQP
-   * problem and LPV initialization classes. These are initialized.
-   */
 
   if (!nonlinear_mpc_controller_ptr_->isInitialized())
   {
@@ -482,21 +458,6 @@ void NonlinearMPCNode::onTimer()
    * All inputs of the NMPC [vx, steering] are applied and the system is simulated.
    * */
   nonlinear_mpc_controller_ptr_->simulateControlSequenceByPredictedInputs(x0_predicted_, interpolator_curvature_pws);
-
-  // TODO: remove debug code
-  // Debug scope
-  {
-    auto const &td = nonlinear_mpc_controller_ptr_->getCurrentTrajectoryData();
-    auto &&Xtemp = ns_eigen_utils::getTrajectory(td.X);
-    auto &&Utemp = ns_eigen_utils::getTrajectory(td.U);
-
-    ns_utils::print("\n[in timer] Simulated trajectories X from predicted states :  [x, y, psi, s, ey, epsi, vx, "
-                    "delta, vy]");
-    ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
-
-    ns_utils::print("\n [in timer] Simulated trajectories from U from the predicted states: ");
-    ns_eigen_utils::printEigenMat(Utemp.transpose());
-  }
 
   // Model::input_vector_t u_model_solution_; // [velocity input - m/s, steering input - rad]
   // If we choose to use MPC. Get solution from OSQP into the traj_data_.
@@ -1239,10 +1200,10 @@ bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj) const
     const auto &wxf = point.front_wheel_angle_rad;
     const auto &wxr = point.rear_wheel_angle_rad;
 
-    return static_cast<bool>(  isfinite(p.x) && isfinite(p.y) && isfinite(p.z) && isfinite(o.x)
-                               && isfinite(o.y) && isfinite(o.z) && isfinite(o.w) && isfinite(vx) &&
-                               isfinite(vy) && isfinite(wxf) &&
-                               isfinite(wxr));
+    return static_cast<bool>(isfinite(p.x) && isfinite(p.y) && isfinite(p.z) && isfinite(o.x)
+                             && isfinite(o.y) && isfinite(o.z) && isfinite(o.w) && isfinite(vx) &&
+                             isfinite(vy) && isfinite(wxf) &&
+                             isfinite(wxr));
   });
 
   return check_condition;
@@ -2187,10 +2148,9 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::st
 
     if (!could_interpolate)
     {
-      RCLCPP_ERROR(
-        get_logger(),
-        "[nonlinear_mpc - predict initial state]: spline interpolator optimization. to compute"
-        " the  coefficients ...");
+      RCLCPP_ERROR(get_logger(),
+                   "[nonlinear_mpc - predict initial state]: spline interpolator optimization. to compute"
+                   " the  coefficients ...");
       return;
     }
 
@@ -2201,18 +2161,16 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::st
       td0,              /*current simulation time*/
       v0);
 
-    ns_utils::interp1d_linear(
-      tbase_vx_base[0], tbase_vx_base[1],
-      td0 + params_node_.control_period, /*next simulation time*/
-      v1);
+    ns_utils::interp1d_linear(tbase_vx_base[0], tbase_vx_base[1],
+                              td0 + params_node_.control_period, /*next simulation time*/
+                              v1);
 
     params(0) = kappad0;
     params(1) = v0;
 
     // Use kappa estimated to call simulate method of mpc. The delay time-step
     // is computed with the sampling time step: params_ptr_->control_period
-    nonlinear_mpc_controller_ptr_->simulateOneStepVariableSpeed(
-      uk, params, v0, v1, params_node_.control_period, xd0);
+    nonlinear_mpc_controller_ptr_->simulateOneStepVariableSpeed(uk, params, v0, v1, params_node_.control_period, xd0);
 
     // Saturate steering.
     // xd0(7) = std::max(std::min(params_ptr_->xupper(7), xd0(7)), params_ptr_->xlower(7));
@@ -2236,9 +2194,10 @@ void NonlinearMPCNode::getAverageMPCcomputeTime(double &avg_compute_time_in_sec)
   avg_compute_time_in_sec = average_mpc_solve_time_;
 }
 
-visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectoryMarkers(
-  std::string const &ns, std::string const &frame_id, std::array<double, 2> xy0,
-  Model::trajectory_data_t const &td) const
+visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectoryMarkers(std::string const &ns,
+                                                                                        std::string const &frame_id,
+                                                                                        std::array<double, 2> xy0,
+                                                                                        Model::trajectory_data_t const &td) const
 {
   visualization_msgs::msg::MarkerArray marker_array;
   size_t const &&nX = td.nX();
@@ -2248,10 +2207,9 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
     return marker_array;
   }
 
-  auto marker = createDefaultMarker(
-    "map", current_trajectory_ptr_->header.stamp, ns, 0,
-    visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.3, 0.1, 0.1),
-    createMarkerColor(1.0, 0.0, 0.0, static_cast<float>(1.0)));
+  auto marker = createDefaultMarker("map", current_trajectory_ptr_->header.stamp, ns, 0,
+                                    visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.3, 0.1, 0.1),
+                                    createMarkerColor(1.0, 0.0, 0.0, static_cast<float>(1.0)));
 
   for (unsigned int k = 0; k < nX; ++k)
   {
@@ -2280,8 +2238,7 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
   marker_poses.scale.z = 0.2;
   marker_poses.color.a = 1.0;  // Don't forget to set the alpha!
 
-  auto color = createMarkerColor(
-    0.0, static_cast<float>(0.8), static_cast<float>(0.8), static_cast<float>(1.8));
+  auto color = createMarkerColor(0.0, static_cast<float>(0.8), static_cast<float>(0.8), static_cast<float>(1.8));
   marker_poses.color = color;
 
   for (unsigned int k = 0; k < nX; ++k)
@@ -2301,8 +2258,7 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
   return marker_array;
 }
 
-void NonlinearMPCNode::publishPredictedTrajectories(
-  std::string const &ns, std::string const &header_id) const
+void NonlinearMPCNode::publishPredictedTrajectories(std::string const &ns, std::string const &header_id) const
 {
   auto const &td = nonlinear_mpc_controller_ptr_->getCurrentTrajectoryData();
 
@@ -2310,12 +2266,10 @@ void NonlinearMPCNode::publishPredictedTrajectories(
   // In order not to deal with big numbers, prepare x, y w.r.t x0, y0.
   //  double xw0 = current_trajectory_ptr_->points.at(0).pose.position.x;
   //  double yw0 = current_trajectory_ptr_->points.at(0).pose.position.y;
-  std::array<double, 2> const xy0{
-    current_COG_pose_ptr_->pose.position.x, current_COG_pose_ptr_->pose.position.y};
+  std::array<double, 2> const xy0{current_COG_pose_ptr_->pose.position.x, current_COG_pose_ptr_->pose.position.y};
 
   // Create visualization array for the predicted trajectory.
-  if (auto visualization_prediction_markers =
-      createPredictedTrajectoryMarkers(ns, header_id, xy0, td);
+  if (auto visualization_prediction_markers = createPredictedTrajectoryMarkers(ns, header_id, xy0, td);
     !visualization_prediction_markers.markers.empty())
   {
     pub_debug_predicted_traj_->publish(visualization_prediction_markers);
@@ -2370,9 +2324,9 @@ void NonlinearMPCNode::setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &
   current_COG_pose_ptr_ = std::make_unique<geometry_msgs::msg::PoseStamped>(pose_temp);
 }
 
-ControlCmdMsg NonlinearMPCNode::createControlCommand(
-  double const &ax, double const &vx, double const &steering_rate,
-  double const &steering_val) const
+ControlCmdMsg NonlinearMPCNode::createControlCommand(double const &ax, double const &vx,
+                                                     double const &steering_rate,
+                                                     double const &steering_val) const
 {
   ControlCmdMsg ctrl_cmd;
 
@@ -2427,8 +2381,7 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 {
   auto const &&distance_to_stopping_point = calcStopDistance(*idx_prev_wp_ptr_);
   auto const &current_vel = current_velocity_ptr_->twist.twist.linear.x;
-  auto const &target_vel =
-    current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
+  auto const &target_vel = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
   // state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
   return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
