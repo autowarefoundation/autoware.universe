@@ -29,7 +29,6 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   std::string prototxt_file;
   std::string caffemodel_file;
   score_threshold_ = node_->declare_parameter("score_threshold", 0.8);
-  std::cout<<"score_threshold_:"<<score_threshold_<<std::endl;
   range = node_->declare_parameter("range", 60);
   width = node_->declare_parameter("width", 640);
   height = node_->declare_parameter("height", 640);
