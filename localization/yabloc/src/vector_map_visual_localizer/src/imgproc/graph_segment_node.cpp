@@ -15,8 +15,9 @@ GraphSegment::GraphSegment() : Node("graph_segment")
     std::bind(&GraphSegment::callbackImage, this, _1));
 
   pub_cloud_ = create_publisher<PointCloud2>("/graph_segmented", 10);
+  pub_image_ = create_publisher<Image>("/segmented_image", 10);
 
-  gs = cv::ximgproc::segmentation::createGraphSegmentation();
+  segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation();
 }
 
 void GraphSegment::callbackImage(const Image & msg)
@@ -26,7 +27,7 @@ void GraphSegment::callbackImage(const Image & msg)
   cv::resize(image, resized, cv::Size(), 0.5, 0.5);
 
   cv::Mat segmented;
-  gs->processImage(resized, segmented);
+  segmentation_->processImage(resized, segmented);
 
   // TODO: THIS IS EFFICIENT BUT STUPID
   int target_class = segmented.at<int>(cv::Point2i(resized.cols / 2, resized.rows * 0.8));
@@ -41,7 +42,6 @@ void GraphSegment::callbackImage(const Image & msg)
   cv::resize(output_image, output_image, image.size(), 0, 0, cv::INTER_NEAREST);
 
   // Convert segmented area to polygon
-
   std::vector<std::vector<cv::Point2i>> contours;
   cv::findContours(output_image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   if (contours.size() == 0) {
@@ -54,8 +54,36 @@ void GraphSegment::callbackImage(const Image & msg)
     pcl::PointXYZ xyz(p.x, p.y, 0);
     cloud.push_back(xyz);
   }
-
   util::publishCloud(*pub_cloud_, cloud, msg.header.stamp);
+
+  publishImage(image, segmented, msg.header.stamp);
+}
+
+void GraphSegment::publishImage(
+  const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp)
+{
+  auto randomHsv = [](int index) -> cv::Scalar {
+    double base = (double)(index)*0.618033988749895 + 0.24443434;
+    return cv::Scalar(fmod(base, 1.2) * 255, 0.95 * 255, 0.8 * 255);
+  };
+
+  cv::Mat segmented_image = cv::Mat::zeros(segmentation.size(), CV_8UC3);
+  for (int i = 0; i < segmented_image.rows; i++) {
+    const int * p = segmentation.ptr<int>(i);
+    uchar * p2 = segmented_image.ptr<uchar>(i);
+    for (int j = 0; j < segmented_image.cols; j++) {
+      cv::Scalar color = randomHsv(p[j]);
+      p2[j * 3] = (uchar)color[0];
+      p2[j * 3 + 1] = (uchar)color[1];
+      p2[j * 3 + 2] = (uchar)color[2];
+    }
+  }
+  cv::cvtColor(segmented_image, segmented_image, cv::COLOR_HSV2BGR);
+  cv::resize(segmented_image, segmented_image, raw_image.size(), 0, 0, cv::INTER_NEAREST);
+
+  cv::Mat show_image;
+  cv::addWeighted(raw_image, 0.5, segmented_image, 0.8, 1.0, show_image);
+  util::publishImage(*pub_image_, show_image, stamp);
 }
 
 }  // namespace imgproc

@@ -17,6 +17,9 @@ class Mp4Publisher(Node):
 
     def timer_callback(self):
         ret, frame = self.video_.read()
+        if not ret:
+            self.video_.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            return
 
         msg = self.bridge_.cv2_to_imgmsg(frame)
         msg.header.stamp = self.get_clock().now().to_msg()

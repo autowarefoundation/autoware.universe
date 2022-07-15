@@ -17,9 +17,12 @@ public:
 private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
-  cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> gs;
+  rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> segmentation_;
 
   void callbackImage(const Image & msg);
   void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
+  void publishImage(
+    const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp);
 };
 }  // namespace imgproc
