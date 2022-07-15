@@ -199,8 +199,10 @@ class KalmanUnscentedSQRT
    * @param current_curvature current curvature of the path,
    * @param x_measured full states including [x, y, ...]
    * */
-  void getStateEstimate(Model::input_vector_t const &u0, Model::param_vector_t const &params,
-                        Model::state_vector_t const &x_measured, Model::state_vector_t &xest);
+  void getStateEstimate(Model::input_vector_t const &u0,
+                        Model::param_vector_t const &params,
+                        Model::state_vector_t const &x_measured,
+                        Model::state_vector_t &xest);
 
   /**
    * @brief set covariance matrices, V, W, S.
