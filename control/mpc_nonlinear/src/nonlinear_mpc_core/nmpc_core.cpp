@@ -407,8 +407,8 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
     // Scale the reference target velocity for simple feedforward-conditioning.
     data_nmpc_.target_reference_states_and_controls.X[k] << xk;
 
-    ns_utils::print("set and interpolated targets", data_nmpc_.target_reference_states_and_controls.X[k](6),
-                    vx_interpolated_vect[k]);
+    //    ns_utils::print("set and interpolated targets", data_nmpc_.target_reference_states_and_controls.X[k](6),
+    //                    vx_interpolated_vect[k]);
   }
 
   // DEBUG
