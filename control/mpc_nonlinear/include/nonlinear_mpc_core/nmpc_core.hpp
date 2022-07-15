@@ -134,8 +134,6 @@ class NonlinearMPCController
 
   void setLoggerName(std::string_view const &logger_name);
 
-
-
   // LPV control methods.
   /**
    * @brief LPV control methods.
@@ -174,10 +172,6 @@ class NonlinearMPCController
   void getRawDistanceAtIdx(size_t const &idx, double &s_distance) const;
 
   void getRawRelativeTimeAtIdx(size_t const &idx, double &t_time) const;
-
-  // !<-@brief returns current smooth target trajectory yaw angle.
-  /** disabled since it gives noisy errors */
-  // [[nodiscard]] std::array<double, 3> getSmooth_XYYawAtCurrentDistance() const;
 
   void getRawVxAtDistance(double const &s0, double &vx) const;
 
