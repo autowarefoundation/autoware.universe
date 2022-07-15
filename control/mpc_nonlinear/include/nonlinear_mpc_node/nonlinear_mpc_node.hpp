@@ -99,6 +99,18 @@ struct DebugData
 
 };
 
+template<typename T>
+void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
+{
+  auto it = std::find_if(parameters.cbegin(), parameters.cend(),
+                         [&name](const rclcpp::Parameter &parameter)
+                         { return parameter.get_name() == name; });
+  if (it != parameters.cend())
+  {
+    value = static_cast<T>(it->template get_value<T>());
+  }
+}
+
 class NonlinearMPCNode : public rclcpp::Node
 {
  public:
@@ -351,6 +363,13 @@ class NonlinearMPCNode : public rclcpp::Node
   * @brief set current measured steering with received message
   */
   void onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg);
+
+  /**
+   * @brief Dynamic update of the parameters.
+   * */
+  OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
+
+  rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
 
   void updateCurrentPose();
 

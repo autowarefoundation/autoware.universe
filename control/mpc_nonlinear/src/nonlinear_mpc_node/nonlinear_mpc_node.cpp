@@ -73,6 +73,10 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
                                                                 &NonlinearMPCNode::onCommDelayCompensation,
                                                                 this, _1));
 
+  // Dynamic Parameter Update.
+  is_parameters_set_res_ =
+    this->add_on_set_parameters_callback(std::bind(&NonlinearMPCNode::onParameterUpdate, this, _1));
+
   // Request wheel_base parameter.
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   wheel_base_ = vehicle_info.wheel_base_m;
@@ -2372,7 +2376,7 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 
 void NonlinearMPCNode::setErrorReport(Model::state_vector_t const &x)
 {
-  //  /** set the computed error */
+  /** set the computed error */
   current_error_report_.lateral_deviation_read = x(ns_utils::toUType(VehicleStateIds::ey));
   current_error_report_.heading_angle_error_read = x(ns_utils::toUType(VehicleStateIds::eyaw));
   current_error_report_.steering_read = x(ns_utils::toUType(VehicleStateIds::steering));
@@ -2383,6 +2387,34 @@ void NonlinearMPCNode::publishErrorReport(ErrorReportMsg &error_rpt_msg)
 {
   error_rpt_msg.stamp = this->now();
   pub_nmpc_error_report_->publish(error_rpt_msg);
+}
+
+rcl_interfaces::msg::SetParametersResult NonlinearMPCNode::onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  try
+  {
+    update_param(parameters, "cdob_ctrl_period", params_node_.control_period);
+  }
+
+    // transaction succeeds, now assign values
+  catch (const rclcpp::exceptions::InvalidParameterTypeException &e)
+  {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  for (const auto &param : parameters)
+  {
+    RCLCPP_INFO(this->get_logger(), "%s", param.get_name().c_str());
+    RCLCPP_INFO(this->get_logger(), "%s", param.get_type_name().c_str());
+    RCLCPP_INFO(this->get_logger(), "%s", param.value_to_string().c_str());
+  }
+
+  return result;
 }
 
 }  // namespace ns_mpc_nonlinear
