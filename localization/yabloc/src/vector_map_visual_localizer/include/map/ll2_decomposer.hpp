@@ -32,10 +32,17 @@ private:
   pcl::PointNormal toPointNormal(
     const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to) const;
 
-  pcl::PointCloud<pcl::PointNormal> extractSpecifiedLineString(
+  pcl::PointCloud<pcl::PointNormal> splitLineStrings(
+    const lanelet::ConstLineStrings3d & line_strings);
+
+  lanelet::ConstLineStrings3d extractSpecifiedLineString(
     const lanelet::LineStringLayer & line_strings, const std::set<std::string> & visible_labels);
 
   void mapCallback(const HADMapBin & msg);
+
+  MarkerArray makeSignMarkerMsg(
+    const lanelet::LineStringLayer & line_string_layer, const std::set<std::string> & labels,
+    const std::string & ns);
 
   void publishSignMarker(const lanelet::LineStringLayer & line_string_layer);
 };

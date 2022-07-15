@@ -31,26 +31,22 @@ void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin
   const std::set<std::string> road_marking_labels = {
     "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
 
-  pcl::PointCloud<pcl::PointNormal> ll2_sign_board =
-    extractSpecifiedLineString(lanelet_map->lineStringLayer, sign_board_labels);
-  pcl::PointCloud<pcl::PointNormal> ll2_road_marking =
-    extractSpecifiedLineString(lanelet_map->lineStringLayer, road_marking_labels);
+  const auto & ls_layer = lanelet_map->lineStringLayer;
+  auto tmp1 = extractSpecifiedLineString(ls_layer, sign_board_labels);
+  auto tmp2 = extractSpecifiedLineString(ls_layer, road_marking_labels);
+  pcl::PointCloud<pcl::PointNormal> ll2_sign_board = splitLineStrings(tmp1);
+  pcl::PointCloud<pcl::PointNormal> ll2_road_marking = splitLineStrings(tmp2);
 
   publishSignMarker(lanelet_map->lineStringLayer);
   util::publishCloud(*pub_sign_board_, ll2_sign_board, stamp);
   util::publishCloud(*pub_cloud_, ll2_road_marking, stamp);
 }
 
-pcl::PointCloud<pcl::PointNormal> Ll2Decomposer::extractSpecifiedLineString(
-  const lanelet::LineStringLayer & line_strings, const std::set<std::string> & visible_labels)
+pcl::PointCloud<pcl::PointNormal> Ll2Decomposer::splitLineStrings(
+  const lanelet::ConstLineStrings3d & line_strings)
 {
   pcl::PointCloud<pcl::PointNormal> extracted;
-
   for (const lanelet::ConstLineString3d & line : line_strings) {
-    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
-    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
-    if (visible_labels.count(attr.value()) == 0) continue;
-
     std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d to : line) {
       if (from.has_value()) {
@@ -61,6 +57,19 @@ pcl::PointCloud<pcl::PointNormal> Ll2Decomposer::extractSpecifiedLineString(
     }
   }
   return extracted;
+}
+
+lanelet::ConstLineStrings3d Ll2Decomposer::extractSpecifiedLineString(
+  const lanelet::LineStringLayer & line_string_layer, const std::set<std::string> & visible_labels)
+{
+  lanelet::ConstLineStrings3d line_strings;
+  for (const lanelet::ConstLineString3d & line : line_string_layer) {
+    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
+    if (visible_labels.count(attr.value()) == 0) continue;
+    line_strings.push_back(line);
+  }
+  return line_strings;
 }
 
 pcl::PointNormal Ll2Decomposer::toPointNormal(
@@ -76,30 +85,25 @@ pcl::PointNormal Ll2Decomposer::toPointNormal(
   return pn;
 }
 
-void Ll2Decomposer::publishSignMarker(const lanelet::LineStringLayer & line_string_layer)
+Ll2Decomposer::MarkerArray Ll2Decomposer::makeSignMarkerMsg(
+  const lanelet::LineStringLayer & line_string_layer, const std::set<std::string> & labels,
+  const std::string & ns)
 {
-  const std::unordered_set<std::string> visible_labels = {"sign-board"};
-
-  lanelet::ConstLineStrings3d sign_boards;
-  for (const lanelet::ConstLineString3d & line : line_string_layer) {
-    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
-    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
-    if (visible_labels.count(attr.value()) == 0) continue;
-    sign_boards.push_back(line);
-  }
+  lanelet::ConstLineStrings3d line_strings = extractSpecifiedLineString(line_string_layer, labels);
 
   MarkerArray marker_array;
   int id = 0;
-  for (const lanelet::ConstLineString3d & sign_board : sign_boards) {
+  for (const lanelet::ConstLineString3d & line_string : line_strings) {
     Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = get_clock()->now();
     marker.type = Marker::LINE_STRIP;
-    marker.color = util::color(1.0f, 1.0f, 1.0f, 1.0f);
+    marker.color = util::color(0.6f, 0.6f, 0.6f, 0.999f);
     marker.scale.x = 0.1;
+    marker.ns = ns;
     marker.id = id++;
 
-    for (const lanelet::ConstPoint3d & p : sign_board) {
+    for (const lanelet::ConstPoint3d & p : line_string) {
       geometry_msgs::msg::Point gp;
       gp.x = p.x();
       gp.y = p.y();
@@ -108,8 +112,16 @@ void Ll2Decomposer::publishSignMarker(const lanelet::LineStringLayer & line_stri
     }
     marker_array.markers.push_back(marker);
   }
+  return marker_array;
+}
 
-  pub_marker_->publish(marker_array);
+void Ll2Decomposer::publishSignMarker(const lanelet::LineStringLayer & line_string_layer)
+{
+  auto marker1 = makeSignMarkerMsg(line_string_layer, {"sign-board"}, "sign_board");
+  auto marker2 = makeSignMarkerMsg(line_string_layer, {"virtual"}, "virtual");
+
+  std::copy(marker2.markers.begin(), marker2.markers.end(), std::back_inserter(marker1.markers));
+  pub_marker_->publish(marker1);
 }
 
 }  // namespace map
