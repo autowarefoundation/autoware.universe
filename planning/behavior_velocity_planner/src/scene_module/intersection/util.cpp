@@ -503,14 +503,26 @@ lanelet::ConstLanelet generateOffsetLanelet(
 
 bool generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
+  const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
   autoware_auto_planning_msgs::msg::PathWithLaneId * output_path,
-  const double & offset, int * stuck_stop_line_idx,
+  int * stuck_stop_line_idx, int * pass_judge_line_idx,
   const rclcpp::Logger logger)
 {
+  /* set judge line dist */
+  const double current_vel = planner_data->current_velocity->twist.linear.x;
+  const double current_acc = planner_data->current_accel.get();
+  const double max_acc = planner_data->max_stop_acceleration_threshold;
+  const double max_jerk = planner_data->max_stop_jerk_threshold;
+  const double delay_response_time = planner_data->delay_response_time;
+  const double pass_judge_line_dist = planning_utils::calcJudgeLineDistWithJerkLimit(
+    current_vel, current_acc, max_acc, max_jerk, delay_response_time);
+
   /* set parameters */
   constexpr double interval = 0.2;
-  const int base2front_idx_dist = std::ceil(offset / interval);
+  const int base2front_idx_dist =
+    std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / interval);
+  const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
@@ -521,26 +533,19 @@ bool generateStopLineBeforeIntersection(
   for (size_t i = 0; i < path_ip.points.size(); i++) {
     const auto & p = path_ip.points.at(i).point.pose;
     if (lanelet::utils::isInLanelet(p, assigned_lanelet, 0.1)) {
-      if (static_cast<int>(i) == -1) {
+      if (static_cast<int>(i) <= 0) {
         RCLCPP_DEBUG(logger, "generate stopline, but no within lanelet.");
         return false;
-      }
-      if (static_cast<int>(i) == 0) {
-        RCLCPP_DEBUG(logger, "stuck stop point is path[0].");
-        *stuck_stop_line_idx = 0;
-        return true;
       }
       int stop_idx_ip;               // stop point index for interpolated path.
       stop_idx_ip = std::max(static_cast<int>(i) - base2front_idx_dist, 0);
 
       /* insert stop_point */
       const auto inserted_stop_point = path_ip.points.at(stop_idx_ip).point.pose;
-
       // if path has too close (= duplicated) point to the stop point, do not insert it
       // and consider the index of the duplicated point as *stuck_stop_line_idx
       if (!util::hasDuplicatedPoint(*output_path, inserted_stop_point.position, stuck_stop_line_idx)) {
         *stuck_stop_line_idx = util::insertPoint(inserted_stop_point, output_path);
-        std::cerr << "insert stuck stop point" << std::endl;
       }
 
       /* if another stop point exist before intersection stop_line, disable judge_line. */
@@ -552,10 +557,27 @@ bool generateStopLineBeforeIntersection(
         }
       }
 
+      /* insert judge point */
+      const int pass_judge_idx_ip = std::min(
+        static_cast<int>(path_ip.points.size()) - 1, std::max(stop_idx_ip - pass_judge_idx_dist, 0));
+      if (has_prior_stopline || stop_idx_ip == pass_judge_idx_ip) {
+        *pass_judge_line_idx = *stuck_stop_line_idx;
+      } else {
+        const auto inserted_pass_judge_point = path_ip.points.at(pass_judge_idx_ip).point.pose;
+        // if path has too close (= duplicated) point to the pass judge point, do not insert it
+        // and consider the index of the duplicated point as pass_judge_line_idx
+        if (!util::hasDuplicatedPoint(
+              *output_path, inserted_pass_judge_point.position, pass_judge_line_idx)) {
+          *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, output_path);
+          ++(*stuck_stop_line_idx);  // stop index is incremented by judge line insertion
+        }
+      }
+
       RCLCPP_DEBUG(
         logger,
-        "generateStopLine() : stuck_stop_line_idx = %d, stop_idx_ip = %d, has_prior_stopline = %d",
-        * stuck_stop_line_idx, stop_idx_ip, has_prior_stopline);
+        "generateStopLineBeforeIntersection() : stuck_stop_line_idx = %d, pass_judge_idx = %d,"
+        "stop_idx_ip = %d, pass_judge_idx_ip = %d, has_prior_stopline = %d",
+        * stuck_stop_line_idx, *pass_judge_line_idx, stop_idx_ip, pass_judge_idx_ip, has_prior_stopline);
       return true;
     }
   }
