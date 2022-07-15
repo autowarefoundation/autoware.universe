@@ -406,6 +406,18 @@ void NonlinearMPCNode::onTimer()
 
   nonlinear_mpc_controller_ptr_->updateRefTargetStatesByTimeInterpolation(average_mpc_solve_time_);
 
+  // TODO: delete debug block
+  //  {
+  //    auto const &trgd = nonlinear_mpc_controller_ptr_->getCurrentTargetTrajectoryData();
+  //    auto &&Xtemp = ns_eigen_utils::getTrajectory(trgd.X);
+  //
+  //    ns_utils::print("\n[in timer] Target trajectories :  [x, y, psi, s, ey, epsi, vx, delta, vy]");
+  //    ns_eigen_utils::printEigenMat(Xtemp.transpose());
+  //  }
+  //  if (1)
+  //  {
+  //    return;
+  //  }
   // ------------ PREPARE the Controllers ------------ MPC or LPV Feedback ---------
   /**
    * @brief The NMPC core module is an interface to all NMPC functions. It also hosts to the OSQP
@@ -419,7 +431,7 @@ void NonlinearMPCNode::onTimer()
     // Compute the initial reference trajectories and discretisize the system.
     if (auto const &&is_initialized =
         nonlinear_mpc_controller_ptr_->initializeTrajectories(interpolator_curvature_pws,
-                                                              use_linear_initialization);       !is_initialized)
+                                                              use_linear_initialization); !is_initialized)
     {
       // vehicle_motion_fsm_.setEmergencyFlag(true);
 
@@ -479,11 +491,11 @@ void NonlinearMPCNode::onTimer()
     auto &&Xtemp = ns_eigen_utils::getTrajectory(td.X);
     auto &&Utemp = ns_eigen_utils::getTrajectory(td.U);
 
-    ns_utils::print("\n[in timer] LPV trajectories from the predicted states :  [x, y, psi, s, ey, epsi, vx, delta, "
-                    "vy]");
+    ns_utils::print("\n[in timer] Simulated trajectories X from predicted states :  [x, y, psi, s, ey, epsi, vx, "
+                    "delta, vy]");
     ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
 
-    ns_utils::print("\n [in timer] LPV trajectories U from the predicted states: ");
+    ns_utils::print("\n [in timer] Simulated trajectories from U from the predicted states: ");
     ns_eigen_utils::printEigenMat(Utemp.transpose());
   }
 
@@ -1405,7 +1417,7 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
                                                              map_matrix_in_t const &fixed_map_ref_sxyz)
 {
-  auto const &&EPS = std::numeric_limits<double>::epsilon();
+
 
   // Maps the raw trajectory into the MPC trajectory.
   size_t const &map_out_mpc_size = ns_splines::MPC_MAP_SMOOTHER_OUT;  // to the NMPC
@@ -1469,8 +1481,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   // ns_utils::interp1d_map_linear(
   // mpc_traj_raw.s, mpc_traj_raw.yaw, s_smooth_vect, yaw_smooth_vect, true);
 
-  std::vector<double> curvature_smooth_vect(
-    curvature.col(0).data(), curvature.col(0).data() + map_out_mpc_size);
+  std::vector<double> curvature_smooth_vect(curvature.col(0).data(), curvature.col(0).data() + map_out_mpc_size);
 
   // Compute time and acceleration reference.
   // These are not smoothed, but they belong to the smooth MPCtraj.
@@ -2125,6 +2136,9 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
     ns_utils::print("Before simulating predictive state, the state vector is:");
     ns_eigen_utils::printEigenMat(xd0);
+
+    ns_utils::print("Controls sent to the simulator:");
+    ns_eigen_utils::printEigenMat(uk);
 
     nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, params_node_.control_period, xd0);
 

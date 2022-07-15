@@ -91,6 +91,7 @@ using namespace std::chrono_literals;
 
 using autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 struct DebugData
 {
