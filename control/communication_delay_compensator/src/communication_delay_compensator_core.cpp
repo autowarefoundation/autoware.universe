@@ -412,8 +412,8 @@ void observers::LateralDisturbanceCompensator::qfilterControlCommand(const float
 }
 
 void observers::LateralDisturbanceCompensator::estimateVehicleStates(const observers::state_vector_vehicle_t &/**current_measurements*/,
-                                                                     const float64_t & // prev_steering_control_cmd,
-                                                                     const float64_t & // current_steering_cmd)
+                                                                     const float64_t &prev_steering_control_cmd,
+                                                                     const float64_t &current_steering_cmd)
 {
   /**
   *   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ytime_delay_compensator)
@@ -436,19 +436,19 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
 
   // FIRST STEP: propagate the previous states.
   xbar_temp_ = xhat0_prev_.eval();
-  observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_qfiltered_control_cmd_);
+  observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_steering_control_cmd);
 
   /**
   * Here using yv_d0_ is the point of DDOB. The last row of xhat is the disturbance input estimated for compensation.
   * */
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - yv_td0_); // # xhat_k
-  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
+  dist_input_ = -ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
   // dist_input_ = xhat0_prev_.bottomRows<1>()(0);
 
   /**
    * UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
    * */
-  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_qfiltered_control_cmd_);
+  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
 
   // Send the qfiltered disturbance input to the vehicle model to get the response.
   //  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
