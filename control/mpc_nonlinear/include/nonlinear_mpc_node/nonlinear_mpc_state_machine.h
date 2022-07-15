@@ -50,8 +50,6 @@ class VehicleMotionState
 
   virtual ~VehicleMotionState() = default;
 
- private:
-
 };
 
 // Vehicle is in complete stop
@@ -210,9 +208,9 @@ class VehicleMotionFSM
   VehicleMotionFSM() = default;
 
   VehicleMotionFSM(double const &stop_entry_ego_speed,
-				   double const &stop_entry_target_speed,
-				   double const &keep_stopping_distance,
-				   double const &will_stop_distance);
+                   double const &stop_entry_target_speed,
+                   double const &keep_stopping_distance,
+                   double const &will_stop_distance);
 
   VehicleMotionFSM(VehicleMotionFSM const &other);
 
@@ -252,11 +250,11 @@ class VehicleMotionFSM
   std::array<double, 3> state_transition_vars_{};
 
   std::map<motionStateEnums, std::string> enum_texts{
-	  {motionStateEnums::isAtCompleteStop, "Vehicle is at complete stop."},
-	  {motionStateEnums::isStoppedWillMove, "Vehicle is stopping and will be moving."},
-	  {motionStateEnums::willStop, "Vehicle will stop."},
-	  {motionStateEnums::isMoving, "Vehicle is moving."},
-	  {motionStateEnums::isInEmergency, "Vehicle is in EMERGENCY state."}};
+    {motionStateEnums::isAtCompleteStop, "Vehicle is at complete stop."},
+    {motionStateEnums::isStoppedWillMove, "Vehicle is stopping and will be moving."},
+    {motionStateEnums::willStop, "Vehicle will stop."},
+    {motionStateEnums::isMoving, "Vehicle is moving."},
+    {motionStateEnums::isInEmergency, "Vehicle is in EMERGENCY state."}};
 
  private:
   VehicleMotionState *current_state_{&VehicleIsStoppedWillMove::getInstance()};
@@ -270,5 +268,5 @@ auto as_integer(Enumeration const value) -> typename std::underlying_type<Enumer
 {
   return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
-}
+} // namespace ns_states
 #endif //MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H

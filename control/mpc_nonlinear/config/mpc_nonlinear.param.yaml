@@ -11,7 +11,7 @@
     # -- Simulation model for planning simulator --
     use_mpc_controller: true    # if false it uses the feedback controllers.
     use_delay_sim_model: true   # for DELAY_STEER planning simulator model. For debugging only.
-    input_delay_time: 0.24 # 0.3    # input dead-time [s]
+    input_delay_time: 0.0 # 0.3    # input dead-time [s]
 
     # -- Use time or arc-length as the interpolation coordinates for predictions --
     use_acceleration_inputs: true                 # if false, traj speeds are used in the simulations
@@ -22,9 +22,9 @@
     # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
-    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.1, 0.0, 0.02 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.2, 0.0, 0.02 ]
-    control_weights: [ 0.1, 0.1 ]    # [vx speed input, steering input]
+    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.1, 0.0, 0.0 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.2, 0.0, 0.0 ]
+    control_weights: [ 0.01, 0.1 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
     #  -- Constraints - Upper-lower bounds.
@@ -99,5 +99,5 @@
     feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
 
     # CDOB - DOB parameters.
-    use_cdob: true
+    use_cdob: false
     use_dob: false # activating use_dob only enables use_cdob. They are both used.
