@@ -549,7 +549,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       const auto entry_point = getCrosswalkEntryPoint(closest_crosswalk);
 
       if (hasPotentialToReach(
-            object, entry_point.first, std::numeric_limits<double>::max(),
+            object, entry_point.first, prediction_time_horizon_ * 2.0,
             min_velocity_for_map_based_prediction_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, entry_point.first);
@@ -558,7 +558,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       }
 
       if (hasPotentialToReach(
-            object, entry_point.first, std::numeric_limits<double>::max(),
+            object, entry_point.first, prediction_time_horizon_ * 2.0,
             min_velocity_for_map_based_prediction_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, entry_point.second);
