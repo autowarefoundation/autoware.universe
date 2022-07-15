@@ -38,9 +38,6 @@ private:
   rclcpp::Publisher<Image>::SharedPtr image_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
 
-  const int image_size_;
-  const float max_range_;
-  const float gamma_;
   const float score_offset_;
   const float max_raw_score_;
   const float min_prob_;

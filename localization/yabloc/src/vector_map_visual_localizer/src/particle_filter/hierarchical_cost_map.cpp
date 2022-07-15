@@ -9,20 +9,23 @@ namespace particle_filter
 {
 float Area::unit_length_ = -1;
 
+HierarchicalCostMap::HierarchicalCostMap(rclcpp::Node * node)
+: max_range_(node->declare_parameter<float>("max_range")),
+  image_size_(node->declare_parameter<int>("image_size")),
+  max_map_count_(10),
+  logger_(node->get_logger())
+{
+  Area::unit_length_ = max_range_;
+  float gamma = node->declare_parameter<float>("gamma");
+  gamma_converter.reset(gamma);
+}
+
 cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vector2f p)
 {
   Eigen::Vector2f relative = p - area.realScale();
   float px = relative.x() / max_range_ * image_size_;
   float py = relative.y() / max_range_ * image_size_;
-  return {px, py};
-}
-
-HierarchicalCostMap::HierarchicalCostMap(
-  const rclcpp::Logger & logger, float max_range, float image_size, float gamma)
-: logger_(logger), max_range_(max_range), image_size_(image_size), max_map_count_(10)
-{
-  Area::unit_length_ = max_range;
-  gamma_converter.reset(gamma);
+  return {static_cast<int>(px), static_cast<int>(py)};
 }
 
 float HierarchicalCostMap::at(const Eigen::Vector2f & position)
