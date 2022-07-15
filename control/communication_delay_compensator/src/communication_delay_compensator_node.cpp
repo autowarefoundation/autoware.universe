@@ -147,7 +147,7 @@ void CommunicationDelayCompensatorNode::onTimer()
   {
     // DOB Reset
     // cdob_lateral_ptr_->resetInitialState();
-    // dob_lateral_ptr_->resetInitialState();
+    dob_lateral_ptr_->resetInitialState();
   }
 
   // Publish delay compensation reference.
