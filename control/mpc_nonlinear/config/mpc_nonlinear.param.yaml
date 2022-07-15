@@ -23,7 +23,7 @@
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
     state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.1, 0.0, 0.0 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.2, 0.0, 0.0 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 1., 0.0, 0.0 ]
     control_weights: [ 0.01, 0.1 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
