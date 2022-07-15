@@ -154,18 +154,26 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Compute Feedback coefficients.
     auto const &Pr = Xr.inverse();  // Cost matrix P.
     auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
-    uk = Kfb * x_error;              // Feedback control signal.
+    uk << Kfb * x_error;              // Feedback control signal.
 
-    uk(0) = ns_utils::clamp(uk(0), params_opt.ulower(0), params_opt.uupper(0));
-    uk(1) = ns_utils::clamp(uk(1), params_opt.ulower(1), params_opt.uupper(1));
-
-    // Saturate xk(7) delta
-    auto const &clamped_state = ns_utils::toUType(VehicleStateIds::steering);
-    xk(clamped_state) = ns_utils::clamp(xk(7), params_opt.xlower(clamped_state), params_opt.xupper(clamped_state));
+    for (auto j = 0; j < uk.size(); ++j)
+    {
+      uk(j) = ns_utils::clamp(uk(j), params_opt.ulower(j), params_opt.uupper(j));
+    }
 
     ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
+    // Saturate all states
+    for (auto j = 0; j < xk.size(); ++j)
+    {
+      if (params_opt.xlower(j) > kInfinity && params_opt.xupper(j) < kInfinity)
+      {
+        xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
+      }
+    }
+
     // Unwrap error and yaw angles.
+    xk(ns_utils::toUType(VehicleStateIds::yaw)) = ns_utils::angleDistance(xk(ns_utils::toUType(VehicleStateIds::yaw)));
 
     // Update xk, uk
     nmpc_data.trajectory_data.X[k + 1] << xk.eval();
@@ -238,7 +246,6 @@ bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &mod
   Model::state_matrix_t Ac{Model::state_matrix_t::Zero()};
   Model::control_matrix_t Bc{Model::control_matrix_t::Zero()};
 
-
   // Define Lyapunov matrices placeholders.
   Model::state_matrix_X_t Xr{Model::state_matrix_X_t::Zero()};
   Model::input_matrix_Y_t Yr{Model::input_matrix_Y_t::Zero()};
@@ -261,9 +268,8 @@ bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &mod
   // Interpolate the curvature - kappa[k].
   if (could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
   {
-    std::cerr
-      << "[nonlinear_mpc_core] LPV spline interpolator failed to compute the coefficients ..."
-      << std::endl;
+    ns_utils::print("[nonlinear_mpc_core] LPV spline interpolator failed to compute the coefficients ...");
+
     return false;
   }
 
@@ -304,7 +310,7 @@ bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &mod
   // Compute Feedback coefficients.
   auto &&Pr = Xr.inverse();  // Cost matrix P.
   auto Kfb = Yr * Pr;         // State feedback coefficients matrix.
-  uk = Kfb * x_error;         // Feedback control signal.
+  uk << Kfb * x_error;         // Feedback control signal.
 
   // Saturate the controls.
   // Saturate the controls. Pay attention to max-upper, and min-lower.
@@ -314,16 +320,22 @@ bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &mod
   // uk(0) = std::max(std::min(params_opt.uupper(0), uk(0)), params_opt.ulower(0));
   // uk(1) = std::max(std::min(params_opt.uupper(1), uk(1)), params_opt.ulower(1));
 
-  uk(0) = ns_utils::clamp(uk(0), params_opt.ulower(0), params_opt.uupper(0));
-  uk(1) = ns_utils::clamp(uk(1), params_opt.ulower(1), params_opt.uupper(1));
+  for (auto j = 0; j < uk.size(); ++j)
+  {
+    uk(j) = ns_utils::clamp(uk(j), params_opt.ulower(j), params_opt.uupper(j));
+  }
 
   ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
-  // Saturate xk(7) delta
-  // xk(7) = std::max(std::min(params_opt.xupper(7), xk(7)), params_opt.xlower(7));
-  xk(7) = ns_utils::clamp(xk(7), params_opt.xlower(7), params_opt.xupper(7));
-  xk(8) = ns_utils::clamp(xk(8), params_opt.xlower(8), params_opt.xupper(8));
+  // Saturate all states
+  for (auto j = 0; j < xk.size(); ++j)
+  {
+    if (params_opt.xlower(j) > kInfinity && params_opt.xupper(j) < kInfinity)
+    {
+      xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
+    }
 
+  }
   // Store the [vx, steering]  in the trajectory data
   nmpc_data.trajectory_data.setFeedbackControls(uk);  // [vx, steering]_inputs
 
