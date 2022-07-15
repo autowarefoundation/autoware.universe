@@ -383,20 +383,20 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
     return;
   }
 
-  //TODO : delete debug block
-  {
-    ns_utils::print("smoothed time vector");
-    ns_utils::print_container(current_MPCtraj_smooth_vects_ptr_->t);
-
-    ns_utils::print("smoothed vx vector");
-    ns_utils::print_container(current_MPCtraj_smooth_vects_ptr_->vx);
-
-    ns_utils::print("new time coordinates");
-    ns_utils::print_container(t_predicted_coords);
-
-    ns_utils::print("Interpolated vx");
-    ns_utils::print_container(vx_interpolated_vect);
-  }
+//  //TODO : delete debug block
+//  {
+//    ns_utils::print("smoothed time vector");
+//    ns_utils::print_container(current_MPCtraj_smooth_vects_ptr_->t);
+//
+//    ns_utils::print("smoothed vx vector");
+//    ns_utils::print_container(current_MPCtraj_smooth_vects_ptr_->vx);
+//
+//    ns_utils::print("new time coordinates");
+//    ns_utils::print_container(t_predicted_coords);
+//
+//    ns_utils::print("Interpolated vx");
+//    ns_utils::print_container(vx_interpolated_vect);
+//  }
 
   // Set the target states.
   for (size_t k = 0; k < nX; ++k)
