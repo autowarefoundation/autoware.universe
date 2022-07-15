@@ -310,12 +310,6 @@ void NonlinearMPCNode::onTimer()
   // Update the measured initial states.
   updateInitialStatesAndControls_fromMeasurements();
 
-  /**
-   * Publish the error before the controller computes the control signal based on this error for the
-   * time-delay compensators.
-   * */
-  publishErrorReport(current_error_report_);
-
   // Vehicle Motion State Machine keep tracks of if vehicle is moving, stopping.
   auto const &&dist_v0_vnext = getDistanceEgoTargetSpeeds();
 
@@ -380,18 +374,27 @@ void NonlinearMPCNode::onTimer()
     predictDelayedInitialStateBy_MPCPredicted_Inputs(x0_predicted_);
   }
 
+  setErrorReport(x0_predicted_);
+
+  /**
+   * Publish the error before the controller computes the control signal based on this error for the
+   * time-delay compensators.
+   * */
+  publishErrorReport(current_error_report_);
+
+
   // Update the initial state of the NMPCcore object.
   nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_predicted_);
 
   // ns_utils::print("before using comm delay error refs...");
-  //  if (params_node_.use_cdob && current_comm_delay_ptr_)
-  //  {
-  //    x0_predicted_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
-  //    x0_predicted_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
-  //    x0_predicted_(7) = current_comm_delay_ptr_->steering_compensation_ref;
-  //
-  //    ns_utils::print("NMPC using error references...");
-  //  }
+  if (params_node_.use_cdob && current_comm_delay_ptr_)
+  {
+    x0_predicted_(4) = current_comm_delay_ptr_->lateral_deviation_error_compensation_ref;
+    x0_predicted_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
+    x0_predicted_(7) = current_comm_delay_ptr_->steering_compensation_ref;
+
+    ns_utils::print("NMPC using error references...");
+  }
 
   /**
    * Target states are predicted based-on the NMPC input trajectory [vx input, steering input].
@@ -1896,33 +1899,13 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
   nmpc_performance_vars_.yaw_angle_target = reference_yaw_angle;
   nmpc_performance_vars_.yaw_angle_traj = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
 
-
-  // nmpc_performance_vars_.virtual_car_distance =
-  //        nonlinear_mpc_controller_ptr_->getVirtualCarDistance();
-
-  // DEBUG
-  //  ns_utils::print("Interpolated pose x : ",
-  //  current_interpolated_traj_point_ptr_->pose.position.x); ns_utils::print("Interpolated pose y :
-  //  ", current_interpolated_traj_point_ptr_->pose.position.y); ns_utils::print("Interpolated pose
-  //  z : ", current_interpolated_traj_point_ptr_->pose.position.z);
-  //
-
-  //    ns_utils::print("\nSmooth Target Yaw vs interpolated yaw  : ", reference_yaw_angle,
-  //                    tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation));
-
-  // ns_utils::print("Vehicle yaw : ", vehicle_yaw_angle);
-
-  //    ns_utils::print("\nLateral error e_y   : ", error_ey);
-  //    ns_utils::print("Heading error e_psi : ", heading_yaw_error);
-
-  // end of DEBUG
   std::array<double, 2> const error_states{error_ey, 1.0 * heading_yaw_error};
 
-  /** set the computed error */
-  current_error_report_.lateral_deviation_read = error_ey;
-  current_error_report_.heading_angle_error_read = heading_yaw_error;
-  current_error_report_.steering_read = current_steering_ptr_->steering_tire_angle;
-  current_error_report_.curvature_read = current_curvature_k0_;
+//  /** set the computed error */
+//  current_error_report_.lateral_deviation_read = error_ey;
+//  current_error_report_.heading_angle_error_read = heading_yaw_error;
+//  current_error_report_.steering_read = current_steering_ptr_->steering_tire_angle;
+//  current_error_report_.curvature_read = current_curvature_k0_;
 
   return error_states;
 }
@@ -2385,6 +2368,15 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 
   // state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
   return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
+}
+
+void NonlinearMPCNode::setErrorReport(Model::state_vector_t const &x)
+{
+  //  /** set the computed error */
+  current_error_report_.lateral_deviation_read = x(ns_utils::toUType(VehicleStateIds::ey));
+  current_error_report_.heading_angle_error_read = x(ns_utils::toUType(VehicleStateIds::eyaw));
+  current_error_report_.steering_read = x(ns_utils::toUType(VehicleStateIds::steering));
+  current_error_report_.curvature_read = current_predicted_curvature_p0_;
 }
 
 void NonlinearMPCNode::publishErrorReport(ErrorReportMsg &error_rpt_msg)

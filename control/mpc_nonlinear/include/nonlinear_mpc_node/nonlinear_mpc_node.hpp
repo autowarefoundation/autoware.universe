@@ -456,6 +456,7 @@ class NonlinearMPCNode : public rclcpp::Node
   void publishPredictedTrajectories(std::string const &ns, std::string const &frame_id) const;
   void publishClosestPointMarker(std::string const &ns) const;
 
+  void setErrorReport(Model::state_vector_t const &x);
   void publishErrorReport(ErrorReportMsg &error_rpt_msg);
 
   visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(std::string const &ns,
