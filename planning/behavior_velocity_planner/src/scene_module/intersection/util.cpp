@@ -501,5 +501,66 @@ lanelet::ConstLanelet generateOffsetLanelet(
   return std::move(lanelet_with_margin);
 }
 
+bool generateStopLineBeforeIntersection(
+  const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * output_path,
+  const double & offset, int * stuck_stop_line_idx,
+  const rclcpp::Logger logger)
+{
+  /* set parameters */
+  constexpr double interval = 0.2;
+  const int base2front_idx_dist = std::ceil(offset / interval);
+
+  /* spline interpolation */
+  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
+  if (!splineInterpolate(input_path, interval, &path_ip, logger)) {
+    return false;
+  }
+  const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
+  for (size_t i = 0; i < path_ip.points.size(); i++) {
+    const auto & p = path_ip.points.at(i).point.pose;
+    if (lanelet::utils::isInLanelet(p, assigned_lanelet, 0.1)) {
+      if (static_cast<int>(i) == -1) {
+        RCLCPP_DEBUG(logger, "generate stopline, but no within lanelet.");
+        return false;
+      }
+      if (static_cast<int>(i) == 0) {
+        RCLCPP_DEBUG(logger, "stuck stop point is path[0].");
+        *stuck_stop_line_idx = 0;
+        return true;
+      }
+      int stop_idx_ip;               // stop point index for interpolated path.
+      stop_idx_ip = std::max(static_cast<int>(i) - base2front_idx_dist, 0);
+
+      /* insert stop_point */
+      const auto inserted_stop_point = path_ip.points.at(stop_idx_ip).point.pose;
+
+      // if path has too close (= duplicated) point to the stop point, do not insert it
+      // and consider the index of the duplicated point as *stuck_stop_line_idx
+      if (!util::hasDuplicatedPoint(*output_path, inserted_stop_point.position, stuck_stop_line_idx)) {
+        *stuck_stop_line_idx = util::insertPoint(inserted_stop_point, output_path);
+        std::cerr << "insert stuck stop point" << std::endl;
+      }
+
+      /* if another stop point exist before intersection stop_line, disable judge_line. */
+      bool has_prior_stopline = false;
+      for (int i = 0; i < *stuck_stop_line_idx; ++i) {
+        if (std::fabs(output_path->points.at(i).point.longitudinal_velocity_mps) < 0.1) {
+          has_prior_stopline = true;
+          break;
+        }
+      }
+
+      RCLCPP_DEBUG(
+        logger,
+        "generateStopLine() : stuck_stop_line_idx = %d, stop_idx_ip = %d, has_prior_stopline = %d",
+        * stuck_stop_line_idx, stop_idx_ip, has_prior_stopline);
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace util
 }  // namespace behavior_velocity_planner

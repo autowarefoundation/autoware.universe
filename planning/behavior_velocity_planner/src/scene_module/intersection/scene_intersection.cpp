@@ -167,20 +167,16 @@ bool IntersectionModule::modifyPathVelocity(
   /* get dynamic object */
   const auto objects_ptr = planner_data_->predicted_objects;
 
-  int stuck_stop_idx = -1;
   /* calculate dynamic collision around detection area */
   bool has_collision =
     checkCollision(lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx);
   bool is_stuck = checkStuckVehicleInIntersection(
-    lanelet_map_ptr, *path, closest_idx, stop_line_idx, &stuck_stop_idx, objects_ptr);
+    lanelet_map_ptr, *path, closest_idx, stop_line_idx, objects_ptr);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
     is_entry_prohibited = true;
-  }
-  if(planner_param_.use_stuck_stopline && stuck_stop_idx > 0){
-    stop_line_idx = stuck_stop_idx;
   }
   state_machine_.setStateWithMarginTime(
     isActivated() ? State::GO : State::STOP, logger_.get_child("state_machine"), *clock_);
@@ -194,8 +190,16 @@ bool IntersectionModule::modifyPathVelocity(
 
   if (!isActivated()) {
     constexpr double v = 0.0;
+    if(planner_param_.use_stuck_stopline){
+      if(is_stuck){
+        int stuck_stop_line_idx = -1;
+        if(util::generateStopLineBeforeIntersection(lane_id_, lanelet_map_ptr, *path, path,
+              base_link2front, &stuck_stop_line_idx, logger_.get_child("util"))){
+          stop_line_idx = stuck_stop_line_idx;
+        };
+      }
+    }
     util::setVelocityFrom(stop_line_idx, v, path);
-
     debug_data_.stop_required = true;
     debug_data_.stop_wall_pose = util::getAheadPose(stop_line_idx, base_link2front, *path);
     debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
@@ -470,7 +474,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
 bool IntersectionModule::checkStuckVehicleInIntersection(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const int stop_idx, int * stuck_stop_idx,
+  const int stop_idx,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const
 {
   const double detect_length =
@@ -493,18 +497,6 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
     const Polygon2d obj_footprint = toFootprintPolygon(object);
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, stuck_vehicle_detect_area);
     if (is_in_stuck_area) {
-      const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-      const auto & lane_first_point = assigned_lanelet.centerline2d().front();
-      for (size_t i = 0; i < path.points.size(); i++) {
-        const auto & p = path.points.at(i).point.pose.position;
-        if (p.x == lane_first_point.x() && p.y == lane_first_point.y()) {
-          /* set parameters */
-          constexpr double interval = 0.2;
-          const int base2front_idx_dist =
-            std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
-          *stuck_stop_idx = std::max(static_cast<int>(i) - base2front_idx_dist, 0);
-        }
-      }
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
       debug_data_.stuck_targets.objects.push_back(object);
       return true;
