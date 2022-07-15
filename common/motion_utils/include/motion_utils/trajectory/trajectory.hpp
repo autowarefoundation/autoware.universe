@@ -1012,6 +1012,46 @@ inline boost::optional<size_t> insertStopPoint(
 
   return stop_idx;
 }
+
+template <class T>
+inline bool isDrivingForward(const T points_with_twist, size_t target_idx)
+{
+  constexpr double epsilon = 1e-6;
+
+  const auto overlap_removed_points_with_twist = removeOverlapPoints(points_with_twist, 0);
+
+  // 1. check velocity
+  const double target_velocity =
+    overlap_removed_points_with_twist.at(target_idx).longitudinal_velocity_mps;
+  if (epsilon < target_velocity) {
+    return true;
+  } else if (target_velocity < epsilon) {
+    return false;
+  }
+
+  // 2. check points size is enough
+  if (overlap_removed_points_with_twist.size() < 2) {
+    return true;
+  }
+
+  // 3. check points direction
+  const bool is_last_point = target_idx == overlap_removed_points_with_twist.size() - 1;
+  const size_t first_idx = is_last_point ? target_idx - 1 : target_idx;
+  const size_t second_idx = is_last_point ? target_idx : target_idx + 1;
+
+  const auto first_point = overlap_removed_points_with_twist.at(first_idx);
+  const auto second_point = overlap_removed_points_with_twist.at(second_idx);
+  const double first_traj_yaw = tf2::getYaw(first_point.pose.orientation);
+  const double driving_direction_yaw =
+    tier4_autoware_utils::calcAzimuthAngle(first_point.pose.position, second_point.pose.position);
+  if (
+    std::abs(tier4_autoware_utils::normalizeRadian(first_traj_yaw - driving_direction_yaw)) <
+    M_PI_2) {
+    return true;
+  }
+
+  return false;
+}
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
