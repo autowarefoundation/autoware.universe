@@ -220,9 +220,12 @@ class NonlinearMPCController
   // For visualization markers.
   [[nodiscard]] trajectory_data_t getCurrentTrajectoryData() const;
 
+  [[nodiscard]] trajectory_data_t getCurrentTargetTrajectoryData() const;
+
   [[nodiscard]] bool isInitialized() const;
 
  private:
+
   size_t K_mpc_steps{MPC_NUM_OF_PRED_STEPS};
 
   /**

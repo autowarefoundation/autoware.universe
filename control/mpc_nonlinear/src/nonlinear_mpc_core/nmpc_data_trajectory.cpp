@@ -65,13 +65,10 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
     double const &dz = point1.pose.position.z - point0.pose.position.z;
 
     double const &ds = std::sqrt(dx * dx + dy * dy + dz * dz);
-    double const &mean_v =
-      (point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2;  // used for trapezoidal integration
 
-
-    double dv = point1.longitudinal_velocity_mps - point0.longitudinal_velocity_mps;  // dv = v[k]-v[k-1],
-
-    double &&dt = ds / ns_utils::clamp(mean_v, EPS, mean_v);  // !<@brief to prevent zero division.
+    // used for trapezoidal integration
+    double const &mean_v = (point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2;
+    double &&dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);  // !<@brief to prevent zero division.
 
     // !<@brief this acceleration is implied by x,y,z and vx in the planner.
     // double &&acc_computed = dv / (EPS + dt);
@@ -96,7 +93,7 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
   double const ds = 1.0e-1;     // !<@brief for guaranteeing the monotonicity condition in s.
   s.emplace_back(s.back() + ds);   // !<@brief zero velocity no motion.
 
-  double const t_ext = 1.0;    // !<@brief extra time for MPC
+  double const t_ext = 10.0;    // !<@brief extra time for MPC
   t.emplace_back(t.back() + t_ext);
 
   auto atemp = ax.back();
@@ -175,44 +172,34 @@ void ns_data::MPCdataTrajectoryVectors::setTrajectoryCoordinate(char const &coor
 {
   switch (coord_name)
   {
-    case 's':
-      s = data_vect;
+    case 's':s = data_vect;
       break;
 
-    case 't':
-      t = data_vect;
+    case 't':t = data_vect;
       break;
 
-    case 'a':
-      ax = data_vect;
+    case 'a':ax = data_vect;
       break;
 
-    case 'x':
-      x = data_vect;
+    case 'x':x = data_vect;
       break;
 
-    case 'y':
-      y = data_vect;
+    case 'y':y = data_vect;
       break;
 
-    case 'z':
-      z = data_vect;
+    case 'z':z = data_vect;
       break;
 
-    case 'v':
-      vx = data_vect;
+    case 'v':vx = data_vect;
       break;
 
-    case 'w':
-      yaw = data_vect;
+    case 'w':yaw = data_vect;
       break;
 
-    case 'c':
-      curvature = data_vect;
+    case 'c':curvature = data_vect;
       break;
 
-    default:
-      break;
+    default:break;
   }
 }
 
@@ -222,7 +209,7 @@ void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const &avg_mpc_
   double const ds = 2.0e-1;          // for guaranteeing the monotonicity condition in s.
   s.emplace_back(s.back() + ds);  // zero velocity no motion.
 
-  double &&t_ext = 1.0 + avg_mpc_compute_time;
+  double &&t_ext = 10.0 + avg_mpc_compute_time;
   t.emplace_back(t.back() + t_ext);
 
   // Add x, y points on the current direction line.
