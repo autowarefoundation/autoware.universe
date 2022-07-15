@@ -620,7 +620,6 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   if (
     object.kinematics.orientation_availability ==
     autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
-    std::cerr << "Available" << std::endl;
     return;
   }
 
