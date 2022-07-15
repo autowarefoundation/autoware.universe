@@ -140,7 +140,7 @@ void ns_nmpc_interface::NonlinearMPCController::getRawRelativeTimeAtIdx(const si
 
 void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(const Model::state_vector_t &x0)
 {
-  data_nmpc_.trajectory_data.X[0] = x0;
+  data_nmpc_.trajectory_data.X[0] << x0;
 
   // DEBUG
   ns_utils::print("After updating the initial states in NMPCCore");
@@ -162,6 +162,18 @@ void ns_nmpc_interface::NonlinearMPCController::getInitialState(Model::state_vec
 void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(const Eigen::Index &idx, Model::state_vector_t &x)
 {
   x(idx) = ns_utils::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
+}
+
+void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(Model::state_vector_t &x)
+{
+  for (Eigen::Index idx = 0; idx < x.size(); ++idx)
+  {
+    if (!(params_opt_.xlower(idx) <= kInfinity) && !(params_opt_.xupper(idx) >= kInfinity))
+    {
+      x(idx) = ns_utils::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
+    }
+
+  }
 }
 
 void
@@ -238,7 +250,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
 
     // Make sure that steering stays in its limits.
     applyControlConstraints(uk);
-    applyStateConstraints(7, xk);
+    applyStateConstraints(xk);
 
     // Put xk at k to Xref.
     data_nmpc_.trajectory_data.X[k] << xk;  // x[k]
@@ -336,7 +348,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
   // Prepare the target trajectory data
   // number of stored states in the horizon.
   auto const &&nX = data_nmpc_.target_reference_states_and_controls.nX();
-  Model::state_vector_t xk{Model::state_vector_t};  // placeholder for the iterated states.
+  Model::state_vector_t xk{Model::state_vector_t::Zero()};  // placeholder for the iterated states.
 
   // Prepare the start time for the MPC trajectory.
   double const &t_mpc_start = current_t0_ + data_nmpc_.input_delay_time + current_avg_mpc_comp_time;
@@ -985,6 +997,15 @@ void ns_nmpc_interface::NonlinearMPCController::getControlSolutions(
                                                           u_solution);
 
   u_solution_last_ = u_solution;
+}
+
+double ns_nmpc_interface::NonlinearMPCController::getEstimatedVxControl()
+{
+  auto const &v0 = data_nmpc_.trajectory_data.X[0](ns_utils::toUType(VehicleStateIds::vx));
+  auto const &v1 = data_nmpc_.trajectory_data.X[1](ns_utils::toUType(VehicleStateIds::vx));
+
+  return (v0 + v1) / 2;
+
 }
 
 void ns_nmpc_interface::NonlinearMPCController::getTimeSpeedVectsFromSmoothTraj(
