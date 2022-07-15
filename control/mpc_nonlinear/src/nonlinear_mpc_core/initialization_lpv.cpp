@@ -207,19 +207,19 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   return true;
 }
 
-bool LPVinitializer::computeSingleFeedbackControls(
-  Model::model_ptr_t const &model_ptr,
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-  ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &params_opt,
-  ns_data::data_nmpc_core_type_t &nmpc_data, double const &dt)
+bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &model_ptr,
+                                                   ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+                                                   ns_data::param_lpv_type_t const &params_lpv,
+                                                   ns_data::ParamsOptimization const &params_opt,
+                                                   ns_data::data_nmpc_core_type_t &nmpc_data,
+                                                   double const &dt)
 {
   // Prepare an error state vector.
   /**
    *  Full states are [x, y, psi, s, ey, epsi, v, delta],
    *  and the error states [ey, epsi, v, delta].
    * */
-  Model::lpv_state_vector_t x_error;
-  x_error.setZero();
+  Model::lpv_state_vector_t x_error{Model::lpv_state_vector_t::Zero()};
 
   // Placeholders
   double s0{};
@@ -229,20 +229,15 @@ bool LPVinitializer::computeSingleFeedbackControls(
   // Set instrumental x, u to keep the results of the simulation (inplace integration) computations.
   auto xk = nmpc_data.trajectory_data.X[0];  // Copy the current value of x0.
 
-  Model::input_vector_t uk;  // Input to the model is [acc, steering_rate]
-  uk.setZero();
-
-  Model::param_vector_t params;
-  params.setZero();
+  Model::input_vector_t uk{Model::input_vector_t::Zero()};  // Input to the model is [acc, steering_rate]
+  Model::param_vector_t params{Model::param_vector_t::Zero()};
 
   // interval. x  =[xw, yw, psi, s, e_y, e_yaw, v, delta]
 
   // Define placeholders for the system matrices.
-  Model::state_matrix_t Ac;
-  Model::control_matrix_t Bc;
+  Model::state_matrix_t Ac{Model::state_matrix_t::Zero()};
+  Model::control_matrix_t Bc{Model::control_matrix_t::Zero()};
 
-  Ac.setZero();
-  Bc.setZero();
 
   // Define Lyapunov matrices placeholders.
   Model::state_matrix_X_t Xr{Model::state_matrix_X_t::Zero()};

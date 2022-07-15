@@ -197,11 +197,10 @@ void ns_nmpc_interface::NonlinearMPCController::simulateOneStepVariableSpeed(Mod
   ns_sim::simulateNonlinearModel_variableSpeed(model_ptr_, u, params, v0, v1, dt, xk);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredictedInputs(
-  Model::state_vector_t const &x0_predicted,
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredictedInputs(Model::state_vector_t const &x0_predicted,
+                                                                                         ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
 {
-  size_t const &&nX = data_nmpc_.trajectory_data.nX();  // get the size of nX.
+  size_t const &nX = data_nmpc_.trajectory_data.nX();  // get the size of nX.
 
   // Define a state placeholder for the integrator.
   auto xk = x0_predicted;
@@ -209,8 +208,10 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
   double kappa0{};  // curvature placeholder
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
-  for (size_t k = 1; k < nX; k++)
-  {  // start from k=1, x0 is already set
+  for (size_t k = 1; k < nX; ++k)
+  {
+
+    // start from k=1, x0 is already set
     // Get s0 and interpolate the curvature at this distance point.
     double const &s0 = xk(3);  // always (k-1)th. x[k-1].
 
@@ -230,8 +231,8 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
     auto uk = data_nmpc_.trajectory_data.U[k - 1];  // [vx input - m/s, steering input - rad]
 
     // feedforward steering
-    auto const &&uff = atan(kappa0 * data_nmpc_.wheel_base);
-    uk(1) += uff;
+    //auto const &&uff = atan(kappa0 * data_nmpc_.wheel_base);
+    // uk(1) += uff;
 
     simulateOneStep(uk, params, data_nmpc_.mpc_prediction_dt, xk);
 
@@ -240,7 +241,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
     applyStateConstraints(7, xk);
 
     // Put xk at k to Xref.
-    data_nmpc_.trajectory_data.X[k] = xk;  // x[k]
+    data_nmpc_.trajectory_data.X[k] << xk;  // x[k]
   }
 
   // DEBUG
@@ -330,24 +331,22 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
 bool ns_nmpc_interface::NonlinearMPCController::isInitialized() const
 { return initialized_; }
 
-void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInterpolation(
-  double const &current_avg_mpc_comp_time)
+void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInterpolation(double const &current_avg_mpc_comp_time)
 {
   // Prepare the target trajectory data
   // number of stored states in the horizon.
   auto const &&nX = data_nmpc_.target_reference_states_and_controls.nX();
-  Model::state_vector_t xk;  // placeholder for the iterated states.
+  Model::state_vector_t xk{Model::state_vector_t};  // placeholder for the iterated states.
 
   // Prepare the start time for the MPC trajectory.
-  double const &&t_mpc_start = current_t0_ + data_nmpc_.input_delay_time + current_avg_mpc_comp_time;
-  double const &&t_mpc_ends = t_mpc_start + static_cast<double>(K_mpc_steps - 1) * data_nmpc_.mpc_prediction_dt;
+  double const &t_mpc_start = current_t0_ + data_nmpc_.input_delay_time + current_avg_mpc_comp_time;
+  double const &t_mpc_ends = t_mpc_start + static_cast<double>(K_mpc_steps - 1) * data_nmpc_.mpc_prediction_dt;
 
   // to create a base time coordinate for the time-vx interpolator.
-  auto const &&t_predicted_coords = ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
+  auto const &t_predicted_coords = ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
   std::vector<double> vx_interpolated_vect;
 
   ns_splines::InterpolatingSplinePCG interpolator_time_speed(1);
-
 
   if (auto const &&is_interpolated = interpolator_time_speed.Interpolate(current_MPCtraj_smooth_vects_ptr_->t,
                                                                          current_MPCtraj_smooth_vects_ptr_->vx,
