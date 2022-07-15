@@ -1014,39 +1014,30 @@ inline boost::optional<size_t> insertStopPoint(
 }
 
 template <class T>
-inline bool isDrivingForward(const T points_with_twist, size_t target_idx)
+inline bool isDrivingForward(const T points_with_twist)
 {
-  constexpr double epsilon = 1e-6;
-
-  const auto overlap_removed_points_with_twist = removeOverlapPoints(points_with_twist, 0);
-
-  // 1. check velocity
-  const double target_velocity =
-    overlap_removed_points_with_twist.at(target_idx).longitudinal_velocity_mps;
-  if (epsilon < target_velocity) {
+  // if points size is smaller than 2
+  if (points_with_twist.empty()) {
     return true;
-  } else if (target_velocity < epsilon) {
+  }
+  if (points_with_twist.size() == 1) {
+    if (0.0 <= points_with_twist.front().longitudinal_velocity_mps) {
+      return true;
+    }
     return false;
   }
 
-  // 2. check points size is enough
-  if (overlap_removed_points_with_twist.size() < 2) {
-    return true;
-  }
+  // check the first point direction
+  const auto & first_points_with_twist_point = points_with_twist.at(0);
+  const auto & second_points_with_twist_point = points_with_twist.at(1);
 
-  // 3. check points direction
-  const bool is_last_point = target_idx == overlap_removed_points_with_twist.size() - 1;
-  const size_t first_idx = is_last_point ? target_idx - 1 : target_idx;
-  const size_t second_idx = is_last_point ? target_idx : target_idx + 1;
-
-  const auto first_point = overlap_removed_points_with_twist.at(first_idx);
-  const auto second_point = overlap_removed_points_with_twist.at(second_idx);
-  const double first_traj_yaw = tf2::getYaw(first_point.pose.orientation);
-  const double driving_direction_yaw =
-    tier4_autoware_utils::calcAzimuthAngle(first_point.pose.position, second_point.pose.position);
+  const double first_points_with_twist_yaw =
+    tf2::getYaw(first_points_with_twist_point.pose.orientation);
+  const double driving_direction_yaw = tier4_autoware_utils::calcAzimuthAngle(
+    first_points_with_twist_point.pose.position, second_points_with_twist_point.pose.position);
   if (
-    std::abs(tier4_autoware_utils::normalizeRadian(first_traj_yaw - driving_direction_yaw)) <
-    M_PI_2) {
+    std::abs(tier4_autoware_utils::normalizeRadian(
+      first_points_with_twist_yaw - driving_direction_yaw)) < M_PI_2) {
     return true;
   }
 
