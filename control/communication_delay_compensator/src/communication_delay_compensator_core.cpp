@@ -245,6 +245,7 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
   observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_steering_control_cmd);
 
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements); // # xhat_k
+  xhat0_prev_(1) = ns_utils::angleDistance(xhat0_prev_(1));
 
   // Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
   // Apply the q-filter to the disturbance state
@@ -399,7 +400,7 @@ observers::LateralDisturbanceCompensator::simulateOneStep(const observers::state
   estimateVehicleStates(current_measurements, prev_steering_control_cmd, current_steering_cmd);
 
   // Final assignment steps.
-  msg_compensation_results->steering_dob = dist_input_;
+  msg_compensation_results->steering_dob = -dist_input_;
 
 }
 
@@ -440,7 +441,9 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
   * Here using yv_d0_ is the point of DDOB. The last row of xhat is the disturbance input estimated for compensation.
   * */
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - yv_td0_); // # xhat_k
-  dist_input_ = -ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
+  xhat0_prev_(1) = ns_utils::angleDistance(xhat0_prev_(1));
+
+  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
   // dist_input_ = xhat0_prev_.bottomRows<1>()(0);
 
   /**
