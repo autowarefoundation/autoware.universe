@@ -213,6 +213,11 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_backward_filtered_trajectory_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_merged_filtered_trajectory_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_closest_merged_velocity_;
+
+  // helper functions
+  boost::optional<size_t> findNearestIndex(
+    const TrajectoryPoints & points, const geometry_msgs::msg::Pose & p) const;
+  boost::optional<size_t> findNearestIndexFromEgo(const TrajectoryPoints & points) const;
 };
 }  // namespace motion_velocity_smoother
 
