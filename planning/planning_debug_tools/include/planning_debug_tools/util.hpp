@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_DEBUG_TOOLS__UTIL_HPP
-#define PLANNING_DEBUG_TOOLS__UTIL_HPP
+#ifndef PLANNING_DEBUG_TOOLS__UTIL_HPP_
+#define PLANNING_DEBUG_TOOLS__UTIL_HPP_
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -82,4 +82,4 @@ inline std::vector<double> calcCurvature(const T & points)
 
 }  // namespace planning_debug_tools
 
-#endif  // PLANNING_DEBUG_TOOLS__TRAJECTORY_DEBUGGER_HPP_
+#endif  // PLANNING_DEBUG_TOOLS__UTIL_HPP_
