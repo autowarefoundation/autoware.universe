@@ -33,13 +33,17 @@ namespace observers
 {
 
 /*
- * @brief : Vehicle model for disturbance observers
+ * @brief : Vehicle model for disturbance observers with an additional disturbance state in the kinematic vehicle
+ * model. The nonlinear model is:
+ *                        ey_dot = v*sin(eyaw)
+ *                        eyaw_dot = v*tan(steering)/L - curvature*v*cos(eyaw)
+ *                        steering_dot = -1/tau * (steering - steering_input0
  */
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 class LinearVehicleModelsBase
 {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   using Atype = mat_type_t<STATE_DIM, STATE_DIM>;
   using Btype = mat_type_t<STATE_DIM, INPUT_DIM>;
   using Ctype = mat_type_t<MEASUREMENT_DIM, STATE_DIM>;
@@ -184,9 +188,9 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
   /**
    * @brief
    * A matrix
-   *          [ 0, V,                     0]
-   *          [ 0, 0, V/(L*cos(steering)^2)]
-   *          [ 0, 0,                  -1/tau]
+   *        ey          [ 0, V,                     0]
+   *        eyaw        [ 0, 0, V/(L*cos(steering)^2)]
+   *        steering    [ 0, 0,                  -1/tau]
    * */
 
   /**
