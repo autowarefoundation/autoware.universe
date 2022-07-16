@@ -447,16 +447,11 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
     return prev_output_;
   }
 
-  // Smoother can not handle negative velocity,
-  // so multiple -1 to velocity if any trajectory points have reverse
-  // velocity
-  const bool is_reverse = std::any_of(
-    traj_extracted.begin(), traj_extracted.end(),
-    [](auto & pt) { return pt.longitudinal_velocity_mps < 0; });
+  // Smoother can not handle negative velocity, so multiple -1 to velocity if any trajectory points
+  // have reverse velocity
+  const bool is_reverse = isReverse(traj_extracted);
   if (is_reverse) {
-    for (auto & pt : traj_extracted) {
-      pt.longitudinal_velocity_mps *= -1.0;
-    }
+    flipVelocity(traj_extracted);
   }
 
   // Debug
@@ -490,9 +485,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   // for reverse velocity
   if (is_reverse) {
-    for (auto & pt : output) {
-      pt.longitudinal_velocity_mps *= -1.0;
-    }
+    flipVelocity(output);
   }
 
   return output;
@@ -931,6 +924,20 @@ boost::optional<size_t> MotionVelocitySmootherNode::findNearestIndex(
 {
   return motion_utils::findNearestIndex(
     points, p, std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+}
+
+bool MotionVelocitySmootherNode::isReverse(const TrajectoryPoints & points) const
+{
+  if (points.empty()) return true;
+
+  return std::any_of(
+    points.begin(), points.end(), [](auto & pt) { return pt.longitudinal_velocity_mps < 0; });
+}
+void MotionVelocitySmootherNode::flipVelocity(TrajectoryPoints & points) const
+{
+  for (auto & pt : points) {
+    pt.longitudinal_velocity_mps *= -1.0;
+  }
 }
 
 }  // namespace motion_velocity_smoother

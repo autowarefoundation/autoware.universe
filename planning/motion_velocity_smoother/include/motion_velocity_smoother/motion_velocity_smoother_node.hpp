@@ -221,6 +221,8 @@ private:
   boost::optional<size_t> findNearestIndex(
     const TrajectoryPoints & points, const geometry_msgs::msg::Pose & p) const;
   boost::optional<size_t> findNearestIndexFromEgo(const TrajectoryPoints & points) const;
+  bool isReverse(const TrajectoryPoints & points) const;
+  void flipVelocity(TrajectoryPoints & points) const;
 };
 }  // namespace motion_velocity_smoother
 
