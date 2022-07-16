@@ -47,6 +47,7 @@ struct ParamsNMPCNode
   // For interpolator used in the prediction.
   bool use_acceleration_inputs{}; // parameters whether to use NMPC computed acc: Obsolete to be removed.
   bool use_kalman{false};
+  bool use_sqrt_version{false};
 
   // For trajectory initialization. Linear or LPV feedback trajectory initialization.
   bool use_linear_trajectory_initialization{};

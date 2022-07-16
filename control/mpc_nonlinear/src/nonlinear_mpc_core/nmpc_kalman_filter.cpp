@@ -16,39 +16,44 @@
 
 #include "nonlinear_mpc_core/nmpc_kalman_filter.hpp"
 
+#include <utility>
+
 namespace ns_filters
 {
 
-
 // Unscented Kalman filter methods.
-
-void KalmanUnscented::computeWeightsAndCoeffs()
+KalmanUKFbase::KalmanUKFbase(Model::model_ptr_t model, const double dt) : model_ptr_(std::move(model)), dt_{dt}
 {
-  xdim_ = static_cast<size_t>(V_.rows());
-  num_of_sigma_points_ = 2 * xdim_ + 1;
-  lambda_ = alpha_ * alpha_ * (static_cast<double>(xdim_) + kappa_) - static_cast<double>(xdim_);
-  gamma_ = std::sqrt(static_cast<double>(xdim_) + lambda_);
 
-  /**
-   * @brief compute the weights.
-   *
-   */
-
-  Weight0_m_ = lambda_ / (static_cast<double>(xdim_) + lambda_);
-  Weight0_c_ = lambda_ / (static_cast<double>(xdim_) + lambda_) + (1.0 - alpha_ * alpha_ + beta_);
-  Weight_common_ = 1. / (2.0 * (static_cast<double>(xdim_) + lambda_));
 }
 
-KalmanUnscented::KalmanUnscented(KalmanUnscented const &other)
-  : model_ptr_{other.model_ptr_},
-    dt_{other.dt_},
-    V_{other.V_},
-    W_{other.W_},
-    P_{other.P_},
+KalmanUnscented::KalmanUnscented(const Model::model_ptr_t &model, double const dt)
+  : KalmanUKFbase(model, dt)
+{
+  V_.setIdentity();
+  W_.setIdentity();
+  P_.setZero();
+  Psqrt_.setZero();
 
-    alpha_{other.alpha_},
-    beta_{other.beta_},
-    kappa_{other.kappa_}
+  Ck_.setZero();
+  Sk_.setZero();
+  Kk_.setZero();
+
+  sigmaPointsMat_x_.setZero();
+  sigmaPointsMat_y_.setZero();
+  sigmaPoints_fxfy_.setZero();
+
+  x_est_mean_full_.setZero();
+  y_est_mean_full_.setZero();
+}
+
+KalmanUnscented::KalmanUnscented(KalmanUnscented const &other) : KalmanUKFbase(other),
+                                                                 V_{other.V_},
+                                                                 W_{other.W_},
+                                                                 P_{other.P_},
+                                                                 alpha_{other.alpha_},
+                                                                 beta_{other.beta_},
+                                                                 kappa_{other.kappa_}
 {
   Psqrt_.setZero();
   Sk_.setZero();
@@ -56,12 +61,28 @@ KalmanUnscented::KalmanUnscented(KalmanUnscented const &other)
   computeWeightsAndCoeffs();
 }
 
+KalmanUnscented::KalmanUnscented(KalmanUnscented &&other) noexcept: KalmanUKFbase(other),
+                                                                    V_{std::move(other.V_)},
+                                                                    W_{std::move(other.W_)},
+                                                                    P_{std::move(other.P_)},
+                                                                    alpha_{other.alpha_},
+                                                                    beta_{other.beta_},
+                                                                    kappa_{other.kappa_}
+{
+  Psqrt_.setZero();
+  Sk_.setZero();
+  Ck_.setZero();
+
+  computeWeightsAndCoeffs();
+
+}
+
 KalmanUnscented &KalmanUnscented::operator=(KalmanUnscented const &other)
 {
   if (this != &other)
   {
-    model_ptr_ = other.model_ptr_;
-    dt_ = other.dt_;
+    KalmanUKFbase::model_ptr_ = other.model_ptr_;
+    KalmanUKFbase::dt_ = other.dt_;
 
     V_ = other.V_;
     W_ = other.W_;
@@ -79,6 +100,47 @@ KalmanUnscented &KalmanUnscented::operator=(KalmanUnscented const &other)
   }
 
   return *this;
+}
+KalmanUnscented &KalmanUnscented::operator=(KalmanUnscented &&other) noexcept
+{
+  if (this != &other)
+  {
+    model_ptr_ = other.model_ptr_;
+    dt_ = other.dt_;
+
+    V_ = std::move(other.V_);
+    W_ = std::move(other.W_);
+    P_ = std::move(other.P_);
+
+    Psqrt_.setZero();
+    Sk_.setZero();
+    Ck_.setZero();
+
+    alpha_ = other.alpha_;
+    beta_ = other.beta_;
+    kappa_ = other.kappa_;
+
+    computeWeightsAndCoeffs();
+  }
+
+  return *this;
+}
+
+void KalmanUnscented::computeWeightsAndCoeffs()
+{
+  xdim_ = V_.rows();
+  num_of_sigma_points_ = 2 * xdim_ + 1;
+  lambda_ = alpha_ * alpha_ * (static_cast<double>(xdim_) + kappa_) - static_cast<double>(xdim_);
+  gamma_ = std::sqrt(static_cast<double>(xdim_) + lambda_);
+
+  /**
+   * @brief compute the weights.
+   *
+   */
+
+  Weight0_m_ = lambda_ / (static_cast<double>(xdim_) + lambda_);
+  Weight0_c_ = lambda_ / (static_cast<double>(xdim_) + lambda_) + (1.0 - alpha_ * alpha_ + beta_);
+  Weight_common_ = 1. / (2.0 * (static_cast<double>(xdim_) + lambda_));
 }
 
 void KalmanUnscented::updateParameters(ns_data::ParamsFilters const &params_filters)
@@ -115,8 +177,7 @@ void KalmanUnscented::computeSQRTofCovarianceMatrix()
   // end of debug
 }
 
-void KalmanUnscented::propagateSigmaPoints_fx(
-  const Model::input_vector_t &u0, Model::param_vector_t const &params)
+void KalmanUnscented::propagateSigmaPoints_fx(const Model::input_vector_t &u0, Model::param_vector_t const &params)
 {
   sigmaPoints_fxfy_.setZero();
 
@@ -321,15 +382,15 @@ void KalmanUnscented::Initialize_xest0(Model::state_vector_t const &x0)
 
 void KalmanUnscentedSQRT::computeWeightsAndCoeffs()
 {
-  xdim_ = static_cast<size_t>(Vsqrt_.rows());
+  xdim_ = Vsqrt_.rows();
   num_of_sigma_points_ = 2 * xdim_ + 1;
   lambda_ = alpha_ * alpha_ * (static_cast<double>(xdim_) + kappa_) - static_cast<double>(xdim_);
   gamma_ = std::sqrt(static_cast<double>(xdim_) + lambda_);
 
   /**
-     * @brief compute the weights.
-     *
-     */
+  * @brief compute the weights.
+  *
+  */
 
   Weight0_m_ = lambda_ / (static_cast<double>(xdim_) + lambda_);
   Weight0_c_ = lambda_ / (static_cast<double>(xdim_) + lambda_) + (1.0 - alpha_ * alpha_ + beta_);
@@ -337,11 +398,10 @@ void KalmanUnscentedSQRT::computeWeightsAndCoeffs()
 }
 
 KalmanUnscentedSQRT::KalmanUnscentedSQRT(Model::model_ptr_t model, const double dt)
-  : model_ptr_(std::move(model)), dt_{dt}
+  : KalmanUKFbase(std::move(model), dt)
 {
   Vsqrt_.setIdentity();
   Wsqrt_.setIdentity();
-
   Sx_sqrt_.setZero();
 
   Ck_.setZero();
@@ -357,8 +417,7 @@ KalmanUnscentedSQRT::KalmanUnscentedSQRT(Model::model_ptr_t model, const double 
 }
 
 KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other)
-  : model_ptr_{other.model_ptr_},
-    dt_{other.dt_},
+  : KalmanUKFbase(other),
     Vsqrt_{other.Vsqrt_},
     Wsqrt_{other.Wsqrt_},
     Sx_sqrt_{other.Sx_sqrt_},
@@ -382,9 +441,6 @@ KalmanUnscentedSQRT &KalmanUnscentedSQRT::operator=(KalmanUnscentedSQRT const &o
 {
   if (this != &other)
   {
-    model_ptr_ = other.model_ptr_;
-    dt_ = other.dt_;
-
     Vsqrt_ = other.Vsqrt_;
     Wsqrt_ = other.Wsqrt_;
 
@@ -436,8 +492,7 @@ void KalmanUnscentedSQRT::updateParameters(ns_data::ParamsFilters const &params_
       ns_utils::print("Uncented Kalman filter, alpha, beta, kappa", alpha_, beta_, kappa_); */
 }
 
-void KalmanUnscentedSQRT::propagateSigmaPoints_fx(
-  const Model::input_vector_t &u0, Model::param_vector_t const &params)
+void KalmanUnscentedSQRT::propagateSigmaPoints_fx(const Model::input_vector_t &u0, Model::param_vector_t const &params)
 {
   sigmaPoints_fxfy_.setZero();
 
@@ -705,7 +760,7 @@ void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::stat
   //    ns_eigen_utils::printEigenMat(Kk_);
 
   // Update Sqrt_ once more
-  Eigen::MatrixXd U(Kk_ *Sy_sqrt_);
+  Eigen::MatrixXd U(Kk_ * Sy_sqrt_);
 
   //    ns_utils::print("U : ");
   //    ns_eigen_utils::printEigenMat(U);
@@ -764,4 +819,5 @@ void KalmanUnscentedSQRT::Initialize_xest0(Model::state_vector_t const &x0)
   x_est_mean_full_ = x0;
   is_initialized_ = true;
 }
+
 } // namespace ns_filters
