@@ -33,38 +33,61 @@
 namespace ns_filters
 {
 
-class KalmanUnscented
+class KalmanUKFbase
+{
+ public:
+  KalmanUKFbase() = default;
+  explicit KalmanUKFbase(Model::model_ptr_t model, double const dt);
+  KalmanUKFbase(KalmanUKFbase const &other) = default;
+  KalmanUKFbase &operator=(KalmanUKFbase const &other) = default;
+
+  KalmanUKFbase(KalmanUKFbase &&other) = default;
+  KalmanUKFbase &operator=(KalmanUKFbase &&other) = default;
+
+  virtual ~KalmanUKFbase() = default;
+
+  /**
+ * @brief set covariance matrices, V, W, P.
+ * @param Vsqrt process uncertainty variance (independent state assumption),
+ * @param Wsqrt measurement uncertainty variance,
+ * @param Psqrt updated variance .
+ * */
+  virtual void updateParameters(ns_data::ParamsFilters const &params_filters) = 0;
+  virtual void Initialize_xest0(Model::state_vector_t const &xe0) = 0;
+
+  virtual void getStateEstimate(Model::input_vector_t const &u0,
+                                Model::param_vector_t const &params,
+                                Model::state_vector_t const &x_measured,
+                                Model::state_vector_t &xest) = 0;
+
+  [[nodiscard]] bool isInitialized() const
+  { return is_initialized_; }
+
+  virtual void reset() = 0;
+  virtual void resetStateEstimate(size_t const &ind, double value) = 0;
+
+ protected:
+  Model::model_ptr_t model_ptr_{nullptr};
+  double dt_{};  // <-@brief model update time step.
+
+  // !<-@brief whether the initial state estimate is initialized or not.
+  bool is_initialized_{false};
+};
+
+class KalmanUnscented : public KalmanUKFbase
 {
  public:
   using sigma_point_mat_t = Eigen::Matrix<double, Model::state_dim, ns_filters::UKF_NUM_OF_SIGMAS>;
 
   KalmanUnscented() = default;
 
-  explicit KalmanUnscented(Model::model_ptr_t model, double const dt)
-    : model_ptr_(std::move(model)), dt_{dt}
-  {
-    V_.setIdentity();
-    W_.setIdentity();
-    P_.setZero();
-    Psqrt_.setZero();
-
-    Ck_.setZero();
-    Sk_.setZero();
-    Kk_.setZero();
-
-    sigmaPointsMat_x_.setZero();
-    sigmaPointsMat_y_.setZero();
-    sigmaPoints_fxfy_.setZero();
-
-    x_est_mean_full_.setZero();
-    y_est_mean_full_.setZero();
-  }
-
+  explicit KalmanUnscented(const Model::model_ptr_t &model, double const dt);
   KalmanUnscented(KalmanUnscented const &other);
-
+  KalmanUnscented(KalmanUnscented &&other) noexcept;
   KalmanUnscented &operator=(KalmanUnscented const &other);
+  KalmanUnscented &operator=(KalmanUnscented &&other) noexcept;
 
-  ~KalmanUnscented() = default;
+  ~KalmanUnscented() override = default;
 
   /**
    * @brief   implements the linear Kalman filter prediction and update steps.
@@ -76,7 +99,7 @@ class KalmanUnscented
   void getStateEstimate(Model::input_vector_t const &u0,
                         Model::param_vector_t const &params,
                         Model::state_vector_t const &x_measured,
-                        Model::state_vector_t &xest);
+                        Model::state_vector_t &xest) override;
 
   /**
    * @brief set covariance matrices, V, W, P.
@@ -84,28 +107,22 @@ class KalmanUnscented
    * @param Wsqrt measurement uncertainty variance,
    * @param Psqrt updated variance .
    * */
-  void updateParameters(ns_data::ParamsFilters const &params_filters);
+  void updateParameters(ns_data::ParamsFilters const &params_filters) override;
 
-  void Initialize_xest0(Model::state_vector_t const &xe0);
+  void Initialize_xest0(Model::state_vector_t const &xe0) override;
 
-  [[nodiscard]] bool isInitialized() const
-  { return is_initialized_; }
-
-  void reset()
+  void reset() override
   {
     x_est_mean_full_.setZero();
     is_initialized_ = false;
   }
 
-  void resetStateEstimate(size_t const &ind, double value)
+  void resetStateEstimate(size_t const &ind, double value) override
   {
-    x_est_mean_full_(ind) = value;
+    x_est_mean_full_(static_cast<Eigen::Index>(ind)) = value;
   }
 
  private:
-  Model::model_ptr_t model_ptr_{nullptr};
-  double dt_{};  // <-@brief model update time step.
-
   Model::state_matrix_t V_{Model::state_matrix_t::Identity()};  // !<-@brief process uncertainty covariance matrix.
   Model::state_matrix_t W_{Model::state_matrix_t::Identity()};  // !<-@brief measurement uncertainty covariance matrix.
   Model::state_matrix_t P_{Model::state_matrix_t::Zero()};  // !<-@brief initial and updated covariance.
@@ -151,9 +168,6 @@ class KalmanUnscented
   // !<-@brief mean of full state for the measurements.
   Model::state_vector_t y_est_mean_full_{Model::state_vector_t::Zero()};
 
-  // !<-@brief whether the initial state estimate is initialized or not.
-  bool is_initialized_{false};
-
   // Class methods.
   void computeSQRTofCovarianceMatrix();
 
@@ -169,9 +183,10 @@ class KalmanUnscented
    * @brief propagates sigma points by integrating them one-step; xnext = \int '\dot{x}=f(x).
    **/
   void propagateSigmaPoints_fx(const Model::input_vector_t &u0, Model::param_vector_t const &params);
+
 };
 
-class KalmanUnscentedSQRT
+class KalmanUnscentedSQRT : public KalmanUKFbase
 {
  public:
   using sigma_point_mat_t = Eigen::Matrix<double, Model::state_dim, ns_filters::UKF_NUM_OF_SIGMAS>;
@@ -191,7 +206,7 @@ class KalmanUnscentedSQRT
 
   KalmanUnscentedSQRT &operator=(KalmanUnscentedSQRT const &other);
 
-  ~KalmanUnscentedSQRT() = default;
+  ~KalmanUnscentedSQRT() override = default;
 
   /**
    * @brief   implements the linear Kalman filter prediction and update steps.
@@ -202,7 +217,7 @@ class KalmanUnscentedSQRT
   void getStateEstimate(Model::input_vector_t const &u0,
                         Model::param_vector_t const &params,
                         Model::state_vector_t const &x_measured,
-                        Model::state_vector_t &xest);
+                        Model::state_vector_t &xest) override;
 
   /**
    * @brief set covariance matrices, V, W, S.
@@ -210,28 +225,22 @@ class KalmanUnscentedSQRT
    * @param Wsqrt measurement uncertainty variance,
    * @param Ssqrt updated variances .
    * */
-  void updateParameters(ns_data::ParamsFilters const &params_filters);
+  void updateParameters(ns_data::ParamsFilters const &params_filters) override;
 
-  void Initialize_xest0(Model::state_vector_t const &xe0);
+  void Initialize_xest0(Model::state_vector_t const &xe0) override;
 
-  [[nodiscard]] bool isInitialized() const
-  { return is_initialized_; }
-
-  void reset()
+  void reset() override
   {
     x_est_mean_full_.setZero();
     is_initialized_ = false;
   }
 
-  void resetStateEstimate(size_t const &ind, double value)
+  void resetStateEstimate(size_t const &ind, double value) override
   {
-    x_est_mean_full_(ind) = value;
+    x_est_mean_full_(static_cast<Eigen::Index>(ind)) = value;
   }
 
  private:
-  Model::model_ptr_t model_ptr_{nullptr};
-  double dt_{};  // <-@brief model update time step.
-
   // !<-@brief process uncertainty sqrt covariance matrix.
   Model::state_matrix_t Vsqrt_{Model::state_matrix_t::Identity()};
 
@@ -286,11 +295,9 @@ class KalmanUnscentedSQRT
 
   // !<-@brief mean of full state for Jacobian computations.
   Model::state_vector_t x_est_mean_full_{Model::state_vector_t::Zero()};
-  Model::state_vector_t y_est_mean_full_{
-    Model::state_vector_t::Zero()};  // !<-@brief mean of full state for the measurements.
 
-  // !<-@brief whether the initial state estimate is initialized or not.
-  bool is_initialized_{false};
+  // !<-@brief mean of full state for the measurements.
+  Model::state_vector_t y_est_mean_full_{Model::state_vector_t::Zero()};
 
   // Class methods.
 
