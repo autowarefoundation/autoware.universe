@@ -50,8 +50,8 @@ std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory);
 
 std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & trajectory);
 
-boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
-  const TrajectoryPoints & trajectory, const size_t & idx_dist);
+std::vector<double> calcTrajectoryCurvatureFrom3Points(
+  const TrajectoryPoints & trajectory, size_t idx_dist);
 
 void setZeroVelocity(TrajectoryPoints & trajectory);
 
