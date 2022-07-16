@@ -91,6 +91,7 @@ struct Parameters
   float64_t qfilter_longitudinal_error_freq{10.};
 
   // Damping
+  float64_t qfilter_lateral_cdob_damping{1.};
   float64_t qfilter_lateral_dob_damping{1.};
 
   // First order vehicle state models.

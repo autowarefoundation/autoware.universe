@@ -351,8 +351,8 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters(observers::sLyapMa
   params_node_.qfilter_longitudinal_error_freq = declare_parameter<float64_t>("qfilter_longitudinal_error_freq");
 
   // Damping
-  params_node_.qfilter_lateral_dob_damping =
-    declare_parameter<float64_t>("qfilter_lateral_dob_damping");
+  params_node_.qfilter_lateral_cdob_damping = declare_parameter<float64_t>("qfilter_lateral_cdob_damping");
+  params_node_.qfilter_lateral_dob_damping = declare_parameter<float64_t>("qfilter_lateral_dob_damping");
 
   // First order state dynamics parameters.
   params_node_.steering_tau = declare_parameter<float64_t>("steering_time_constant_");
@@ -495,9 +495,22 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
   // --------------- Qfilter Construction for lateral error state -------------------------
   auto const &order_lat_error_cdob = params_node_.qfilter_lateral_error_cdob_order;
   auto const &wc_lat_error_cdob = params_node_.qfilter_lateral_error_cdob_freq;
+  auto const &remaining_order_lat_error_cdob = order_lat_error_cdob - 2;
+  auto const &damping_val_cdob = params_node_.qfilter_lateral_cdob_damping;
 
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
-  auto qfilter_lat_error_cdob = get_nthOrderTF(wc_lat_error_cdob, order_lat_error_cdob);
+  ns_control_toolbox::tf qfilter_lat_error_cdob;
+  if (order_lat_error_cdob > 1)
+  {
+    qfilter_lat_error_cdob = get_nthOrderTFwithDampedPoles(wc_lat_error_cdob,
+                                                           remaining_order_lat_error_cdob,
+                                                           damping_val_cdob);
+  } else
+  {
+
+    // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
+    qfilter_lat_error_cdob = get_nthOrderTF(wc_lat_error_cdob, order_lat_error_cdob);
+  }
 
   LateralCommunicationDelayCompensator delay_compensator_lat_cdob(dist_td_obs_vehicle_model_ptr_,
                                                                   vehicle_model_ptr_,
@@ -511,13 +524,14 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
   auto const &order_lat_error_dob = params_node_.qfilter_lateral_dob_order;
   auto const &remaining_order_lat_error_dob = order_lat_error_dob - 2;
   auto const &wc_lat_error_dob = params_node_.qfilter_lateral_dob_freq;
-  auto const &damping_val = params_node_.qfilter_lateral_dob_damping;
+  auto const &damping_val_dob = params_node_.qfilter_lateral_dob_damping;
 
   ns_control_toolbox::tf qfilter_lat_error_dob;
   if (order_lat_error_dob > 1)
   {
-    qfilter_lat_error_dob = get_nthOrderTFwithDampedPoles(wc_lat_error_dob, remaining_order_lat_error_dob,
-                                                          damping_val);
+    qfilter_lat_error_dob = get_nthOrderTFwithDampedPoles(wc_lat_error_dob,
+                                                          remaining_order_lat_error_dob,
+                                                          damping_val_dob);
   } else
   {
 
