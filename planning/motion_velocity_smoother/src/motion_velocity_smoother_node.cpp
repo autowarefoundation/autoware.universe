@@ -272,50 +272,51 @@ void MotionVelocitySmootherNode::onCurrentOdometry(const Odometry::ConstSharedPt
 
 void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
 {
+  // on the first time, apply directly
+  if (prev_output_.empty() || !prev_closest_point_) {
+    external_velocity_limit_ = msg->max_velocity;
+    pub_velocity_limit_->publish(*msg);
+    return;
+  }
+
   constexpr double eps = 1.0E-04;
   const double margin = node_param_.margin_to_insert_external_velocity_limit;
 
   // calculate distance and maximum velocity
   // to decelerate to external velocity limit with jerk and acceleration
-  // constraints
-  if (!prev_output_.empty()) {
-    // if external velocity limit decreases
-    if (std::fabs((external_velocity_limit_ - msg->max_velocity)) > eps) {
-      if (prev_closest_point_) {
-        const double v0 = prev_closest_point_->longitudinal_velocity_mps;
-        const double a0 = prev_closest_point_->acceleration_mps2;
+  // constraints.
+  // if external velocity limit decreases
+  if (std::fabs((external_velocity_limit_ - msg->max_velocity)) > eps) {
+    const double v0 = prev_closest_point_->longitudinal_velocity_mps;
+    const double a0 = prev_closest_point_->acceleration_mps2;
 
-        if (isEngageStatus(v0)) {
-          max_velocity_with_deceleration_ = msg->max_velocity;
-          external_velocity_limit_dist_ = 0.0;
-        } else {
-          const double a_min =
-            msg->use_constraints ? msg->constraints.min_acceleration : smoother_->getMinDecel();
-          const double j_max =
-            msg->use_constraints ? msg->constraints.max_jerk : smoother_->getMaxJerk();
-          const double j_min =
-            msg->use_constraints ? msg->constraints.min_jerk : smoother_->getMinJerk();
-          double stop_dist;
-          std::map<double, double> jerk_profile;
-          if (!trajectory_utils::calcStopDistWithJerkConstraints(
-                v0, a0, j_max, j_min, a_min, msg->max_velocity, jerk_profile, stop_dist)) {
-            RCLCPP_WARN(get_logger(), "Stop distance calculation is failed!");
-          }
-          external_velocity_limit_dist_ = stop_dist + margin;
-          // If the closest acceleration is positive, velocity will increase
-          // until the acceleration becomes zero
-          // So we set the maximum increased velocity as the velocity limit
-          if (a0 > 0) {
-            max_velocity_with_deceleration_ = v0 - 0.5 * a0 * a0 / j_min;
-          } else {
-            max_velocity_with_deceleration_ = v0;
-          }
+    if (isEngageStatus(v0)) {
+      max_velocity_with_deceleration_ = msg->max_velocity;
+      external_velocity_limit_dist_ = 0.0;
+    } else {
+      const auto & cstr = msg->constraints;
+      const auto a_min = msg->use_constraints ? cstr.min_acceleration : smoother_->getMinDecel();
+      const auto j_max = msg->use_constraints ? cstr.max_jerk : smoother_->getMaxJerk();
+      const auto j_min = msg->use_constraints ? cstr.min_jerk : smoother_->getMinJerk();
+      double stop_dist = 0.0;
+      std::map<double, double> jerk_profile;
+      if (!trajectory_utils::calcStopDistWithJerkConstraints(
+            v0, a0, j_max, j_min, a_min, msg->max_velocity, jerk_profile, stop_dist)) {
+        RCLCPP_WARN(get_logger(), "Stop distance calculation is failed!");
+      }
+      external_velocity_limit_dist_ = stop_dist + margin;
+      // If the closest acceleration is positive, velocity will increase
+      // until the acceleration becomes zero
+      // So we set the maximum increased velocity as the velocity limit
+      if (a0 > 0) {
+        max_velocity_with_deceleration_ = v0 - 0.5 * a0 * a0 / j_min;
+      } else {
+        max_velocity_with_deceleration_ = v0;
+      }
 
-          if (max_velocity_with_deceleration_ < msg->max_velocity) {
-            max_velocity_with_deceleration_ = msg->max_velocity;
-            external_velocity_limit_dist_ = 0.0;
-          }
-        }
+      if (max_velocity_with_deceleration_ < msg->max_velocity) {
+        max_velocity_with_deceleration_ = msg->max_velocity;
+        external_velocity_limit_dist_ = 0.0;
       }
     }
   }
