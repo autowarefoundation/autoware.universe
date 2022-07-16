@@ -34,8 +34,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 {
   using std::placeholders::_1;
 
-  initializeEigenPlaceholders();
-
   // Initialize the publishers.
   pub_control_cmd_ = create_publisher<ControlCmdMsg>("~/output/control_cmd", 1);
 
@@ -2336,21 +2334,6 @@ ControlCmdMsg NonlinearMPCNode::createControlCommand(double const &ax,
   ctrl_cmd.longitudinal.speed = static_cast<float>(vx);
 
   return ctrl_cmd;
-}
-
-void NonlinearMPCNode::initializeEigenPlaceholders()
-{
-  // Initialize compile time placeholders.
-  u_solution_.setZero();
-  u_previous_solution_.setZero();
-  x0_initial_states_.setZero();
-  x0_previous_initial_states_.setZero();
-  x0_predicted_.setZero();
-
-  x0_kalman_est_.setZero();
-  u0_kalman_.setZero();
-  current_model_params_.setZero();
-  predicted_model_params_.setZero();
 }
 
 void NonlinearMPCNode::estimateDisturbanceInput()
