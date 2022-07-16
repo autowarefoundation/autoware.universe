@@ -190,7 +190,7 @@ private:
     const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) const;
 
   Trajectory toTrajectoryMsg(
-    const TrajectoryPoints & points, const std_msgs::msg::Header & header) const;
+    const TrajectoryPoints & points, const std_msgs::msg::Header * header = nullptr) const;
 
   // parameter handling
   void initCommonParam();
