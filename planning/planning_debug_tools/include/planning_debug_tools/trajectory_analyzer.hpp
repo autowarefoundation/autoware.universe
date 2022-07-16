@@ -51,7 +51,7 @@ public:
   TrajectoryAnalyzer(rclcpp::Node * node, const std::string & sub_name)
   : node_(node), name_(sub_name)
   {
-    const auto pub_name = sub_name + "/additional_info";
+    const auto pub_name = sub_name + "/debug_info";
     pub_ = node->create_publisher<TrajectoryDebugInfo>(pub_name, 1);
     sub_ = node->create_subscription<T>(
       sub_name, 1, [this](const T_ConstSharedPtr msg) { run(msg->points); });
