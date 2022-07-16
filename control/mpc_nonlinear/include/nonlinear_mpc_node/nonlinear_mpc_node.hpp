@@ -292,25 +292,37 @@ class NonlinearMPCNode : public rclcpp::Node
   NonlinearMPCPerformanceMsg nmpc_performance_vars_{};
 
   // Vehicle motion finite state
-  ns_states::motionStateEnums current_fsm_state_{
-    ns_states::motionStateEnums::isAtCompleteStop};  // state machine.
+  ns_states::motionStateEnums current_fsm_state_{ns_states::motionStateEnums::isAtCompleteStop};  // state machine.
 
   /**
    * @brief PLACEHOLDERS where the computed variables are updated and hold.
    * */
-  Model::state_vector_t x0_initial_states_;  // !<-@brief measured initial states placeholder.
-  Model::state_vector_t x0_previous_initial_states_;         // !<-@brief measured previous initial states placeholder.
-  Model::state_vector_t x0_predicted_;   // !<-@brief predicted initial state for the input delay.
-  Model::state_vector_t x0_kalman_est_;  // !<-@brief Kalman filter estimate of the initial states.
-  Model::input_vector_t u0_kalman_;      // !<-@brief The first control vector in the queue.
-  Model::param_vector_t current_model_params_;  // !<-@brief [curvature_0, target_speed_0]
-  Model::param_vector_t predicted_model_params_;
+
+  // !<-@brief measured initial states placeholder.
+  Model::state_vector_t x0_initial_states_{Model::state_vector_t::Zero()};
+
+  // !<-@brief measured previous initial states placeholder.
+  Model::state_vector_t x0_previous_initial_states_{Model::state_vector_t::Zero()};
+
+  // !<-@brief predicted initial state for the input delay.
+  Model::state_vector_t x0_predicted_{Model::state_vector_t::Zero()};
+
+  // !<-@brief Kalman filter estimate of the initial states.
+  Model::state_vector_t x0_kalman_est_{Model::state_vector_t::Zero()};
+
+  // !<-@brief The first control vector in the queue.
+  Model::input_vector_t u0_kalman_{Model::input_vector_t::Zero()};
+
+  // !<-@brief [curvature_0, target_speed_0]
+  Model::param_vector_t current_model_params_{Model::param_vector_t::Zero()};
+  Model::param_vector_t predicted_model_params_{Model::param_vector_t::Zero()};
 
   // Control signals are stored in the following placeholders.
-  // !<-@brief These signals are computed in the model space, vehicle previous
-  // controls are stored in the delay queue.
-  Model::input_vector_t u_solution_;  // !<-@brief [vx input, steering input] controller solution
-  Model::input_vector_t u_previous_solution_;
+  // !<-@brief These signals are computed in the model space, vehicle previous controls are stored in the delay queue.
+
+  // !<-@brief [vx input, steering input] controller solution
+  Model::input_vector_t u_solution_{Model::input_vector_t::Zero()};
+  Model::input_vector_t u_previous_solution_{Model::input_vector_t::Zero()};
 
   // Node callback methods.
   /**
@@ -375,8 +387,6 @@ class NonlinearMPCNode : public rclcpp::Node
   void updateCurrentPose();
 
   bool isDataReady();
-
-  void initializeEigenPlaceholders();
 
   /**
    *  @brief finds the interval on the path on which the vehicle's position is projected.
