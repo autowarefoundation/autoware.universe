@@ -171,7 +171,6 @@ void KalmanUnscented::updateParameters(ns_data::ParamsFilters const &params_filt
 void KalmanUnscented::computeSQRTofCovarianceMatrix()
 {
   Psqrt_ = Model::state_matrix_t(P_.llt().matrixL());
-
   // DEBUG
   // ns_utils::print("UKF Psqrt ");
   // end of debug
@@ -186,8 +185,6 @@ void KalmanUnscented::propagateSigmaPoints_fx(const Model::input_vector_t &u0, M
     auto xk = Model::state_vector_t(sigmaPointsMat_x_.col(k));
     ns_sim::simulateNonlinearModel_zoh(model_ptr_, u0, params, dt_, xk);
 
-    xk(2) = ns_utils::angleDistance(xk(2)); // normalize yaw angle
-    xk(5) = ns_utils::angleDistance(xk(5)); // normalize e_yaw
     sigmaPoints_fxfy_.col(k) = xk;
   }
 
@@ -308,9 +305,6 @@ void KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(const Model::state_ve
 
   y_est_mean_full_ = first_column + right_columns.rowwise().sum();
 
-  y_est_mean_full_(2) = ns_utils::angleDistance(y_est_mean_full_(2)); // normalize yaw
-  y_est_mean_full_(5) = ns_utils::angleDistance(y_est_mean_full_(5)); // normalize e_yaw
-
   // <-@brief Update Covariance using the mean prior computed.
   auto &d_sigma_points_y = sigmaPointsMat_y_.col(0) - y_est_mean_full_;
   Model::state_matrix_t Stemp = Weight0_c_ * d_sigma_points_y * d_sigma_points_y.transpose();
@@ -346,8 +340,8 @@ void KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(const Model::state_ve
 
   x_est_mean_full_ = x_est_mean_full_ + Kk_ * innovation_error;
 
-  x_est_mean_full_(2) = ns_utils::angleDistance(x_est_mean_full_(2));
-  x_est_mean_full_(5) = ns_utils::angleDistance(x_est_mean_full_(5));
+//  x_est_mean_full_(2) = ns_utils::angleDistance(x_est_mean_full_(2));
+//  x_est_mean_full_(5) = ns_utils::angleDistance(x_est_mean_full_(5));
 
   // Normalize after the update.
   x_est_mean_full_(2) =
@@ -560,9 +554,6 @@ void KalmanUnscentedSQRT::propagateSigmaPoints_fx(const Model::input_vector_t &u
   {
     auto xk = Model::state_vector_t(sigmaPointsMat_x_.col(k));
     ns_sim::simulateNonlinearModel_zoh(model_ptr_, u0, params, dt_, xk);
-
-    xk(2) = ns_utils::angleDistance(xk(2)); // normalize yaw angle
-    xk(5) = ns_utils::angleDistance(xk(5)); // normalize e_yaw
 
     sigmaPoints_fxfy_.col(k) = xk;
   }
@@ -777,9 +768,6 @@ void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::stat
 
   y_est_mean_full_ = first_column + right_columns.rowwise().sum();
 
-  y_est_mean_full_(2) = ns_utils::angleDistance(y_est_mean_full_(2)); // normalize yaw
-  y_est_mean_full_(5) = ns_utils::angleDistance(y_est_mean_full_(5)); // normalize e_yaw
-
   // <-@brief Update Covariance using the mean prior computed.
   sigma_point_mat_t &&d_sigma_points_y = sigmaPointsMat_y_.colwise() - y_est_mean_full_;
 
@@ -857,8 +845,8 @@ void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::stat
   x_est_mean_full_ = x_est_mean_full_ + Kk_ * innovation_error;
 
   // Normalize after the update.
-  x_est_mean_full_(2) = ns_utils::angleDistance(x_est_mean_full_(2));
-  x_est_mean_full_(5) = ns_utils::angleDistance(x_est_mean_full_(5));
+  // x_est_mean_full_(2) = ns_utils::angleDistance(x_est_mean_full_(2));
+  // x_est_mean_full_(5) = ns_utils::angleDistance(x_est_mean_full_(5));
 
   // DEBUG
   /*   ns_utils::print("First column operation : ");
