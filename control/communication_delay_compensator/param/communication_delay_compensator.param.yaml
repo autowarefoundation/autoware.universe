@@ -3,9 +3,10 @@
     # -- System --
     cdob_ctrl_period: 0.033     # sampling period.
 
-    # -- Q-filters --
+    # -- Q-filters -- if the order is 2 or more, we use damping factors/
     qfilter_lateral_error_cdob_order: 1  # must be ==1 as the state observer needed to be redesigned.
     qfilter_lateral_error_cdob_freq: 20.  #qfilter frequency in Hz for lateral error
+    qfilter_lateral_cdob_damping: 2.
 
     qfilter_lateral_dob_order: 4     # disturbance observer qfilter order.
     qfilter_lateral_dob_freq: 2.    # qfilter frequency in Hz for lateral error
