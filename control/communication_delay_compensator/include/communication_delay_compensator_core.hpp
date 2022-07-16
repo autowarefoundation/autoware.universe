@@ -26,6 +26,7 @@
 // Autoware libs
 #include "node_denifitions/node_definitions.hpp"
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
+#include "vehicle_models/vehicle_definitions.hpp"
 
 #include "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
 #include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
