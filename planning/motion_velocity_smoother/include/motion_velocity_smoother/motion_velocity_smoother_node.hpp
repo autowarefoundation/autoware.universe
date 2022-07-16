@@ -58,6 +58,12 @@ using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 
+struct Motion
+{
+  double vel = 0.0;
+  double acc = 0.0;
+};
+
 class MotionVelocitySmootherNode : public rclcpp::Node
 {
 public:
@@ -163,7 +169,7 @@ private:
     const TrajectoryPoints & input, const size_t input_closest,
     TrajectoryPoints & traj_smoothed) const;
 
-  std::tuple<double, double, InitializeType> calcInitialMotion(
+  std::pair<Motion, InitializeType> calcInitialMotion(
     const TrajectoryPoints & input_traj, const size_t input_closest,
     const TrajectoryPoints & prev_traj) const;
 

@@ -503,14 +503,11 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   TrajectoryPoints & traj_smoothed) const
 {
   // Calculate initial motion for smoothing
-  double initial_vel{};
-  double initial_acc{};
-  InitializeType type{};
-  std::tie(initial_vel, initial_acc, type) = calcInitialMotion(input, input_closest, prev_output_);
+  const auto [initial_motion, type] = calcInitialMotion(input, input_closest, prev_output_);
 
   // Lateral acceleration limit
   const auto traj_lateral_acc_filtered =
-    smoother_->applyLateralAccelerationFilter(input, initial_vel, initial_acc, true);
+    smoother_->applyLateralAccelerationFilter(input, initial_motion.vel, initial_motion.acc, true);
   if (!traj_lateral_acc_filtered) {
     return false;
   }
@@ -550,7 +547,8 @@ bool MotionVelocitySmootherNode::smoothVelocity(
     clipped.end(), traj_resampled->begin() + *traj_resampled_closest, traj_resampled->end());
 
   std::vector<TrajectoryPoints> debug_trajectories;
-  if (!smoother_->apply(initial_vel, initial_acc, clipped, traj_smoothed, debug_trajectories)) {
+  if (!smoother_->apply(
+        initial_motion.vel, initial_motion.acc, clipped, traj_smoothed, debug_trajectories)) {
     RCLCPP_WARN(get_logger(), "Fail to solve optimization.");
   }
 
@@ -639,7 +637,7 @@ void MotionVelocitySmootherNode::publishStopDistance(
   pub_dist_to_stopline_->publish(dist_to_stopline);
 }
 
-std::tuple<double, double, MotionVelocitySmootherNode::InitializeType>
+std::pair<Motion, MotionVelocitySmootherNode::InitializeType>
 MotionVelocitySmootherNode::calcInitialMotion(
   const TrajectoryPoints & input_traj, const size_t input_closest,
   const TrajectoryPoints & prev_traj) const
@@ -647,16 +645,15 @@ MotionVelocitySmootherNode::calcInitialMotion(
   const double vehicle_speed{std::fabs(current_odometry_ptr_->twist.twist.linear.x)};
   const double target_vel{std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps)};
 
-  double initial_vel{};
-  double initial_acc{};
+  Motion initial_m;
   InitializeType type{};
 
   // first time
   if (prev_traj.empty()) {
-    initial_vel = vehicle_speed;
-    initial_acc = 0.0;
+    initial_m.vel = vehicle_speed;
+    initial_m.acc = 0.0;
     type = InitializeType::INIT;
-    return std::make_tuple(initial_vel, initial_acc, type);
+    return std::make_pair(initial_m, type);
   }
 
   const auto prev_output_closest_point =
@@ -667,14 +664,14 @@ MotionVelocitySmootherNode::calcInitialMotion(
   const double vel_error{vehicle_speed - std::fabs(desired_vel)};
   if (std::fabs(vel_error) > node_param_.replan_vel_deviation) {
     type = InitializeType::LARGE_DEVIATION_REPLAN;
-    initial_vel = vehicle_speed;  // use current vehicle speed
-    initial_acc = prev_output_closest_point.acceleration_mps2;
+    initial_m.vel = vehicle_speed;  // use current vehicle speed
+    initial_m.acc = prev_output_closest_point.acceleration_mps2;
     RCLCPP_DEBUG(
       get_logger(),
       "calcInitialMotion : Large deviation error for speed control. Use current speed for "
       "initial value, desired_vel = %f, vehicle_speed = %f, vel_error = %f, error_thr = %f",
       desired_vel, vehicle_speed, vel_error, node_param_.replan_vel_deviation);
-    return std::make_tuple(initial_vel, initial_acc, type);
+    return std::make_pair(initial_m, type);
   }
 
   // if current vehicle velocity is low && base_desired speed is high,
@@ -688,14 +685,14 @@ MotionVelocitySmootherNode::calcInitialMotion(
                                    : 0.0;
       if (!idx || stop_dist > node_param_.stop_dist_to_prohibit_engage) {
         type = InitializeType::ENGAGING;
-        initial_vel = node_param_.engage_velocity;
-        initial_acc = node_param_.engage_acceleration;
+        initial_m.vel = node_param_.engage_velocity;
+        initial_m.acc = node_param_.engage_acceleration;
         RCLCPP_DEBUG(
           get_logger(),
           "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
           vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist);
-        return std::make_tuple(initial_vel, initial_acc, type);
+        return std::make_pair(initial_m, type);
       } else {
         RCLCPP_DEBUG(
           get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
@@ -711,13 +708,13 @@ MotionVelocitySmootherNode::calcInitialMotion(
 
   // normal update: use closest in prev_output
   type = InitializeType::NORMAL;
-  initial_vel = prev_output_closest_point.longitudinal_velocity_mps;
-  initial_acc = prev_output_closest_point.acceleration_mps2;
+  initial_m.vel = prev_output_closest_point.longitudinal_velocity_mps;
+  initial_m.acc = prev_output_closest_point.acceleration_mps2;
   RCLCPP_DEBUG(
     get_logger(),
     "calcInitialMotion : normal update. v0 = %f, a0 = %f, vehicle_speed = %f, target_vel = %f",
-    initial_vel, initial_acc, vehicle_speed, target_vel);
-  return std::make_tuple(initial_vel, initial_acc, type);
+    initial_m.vel, initial_m.acc, vehicle_speed, target_vel);
+  return std::make_pair(initial_m, type);
 }
 
 void MotionVelocitySmootherNode::overwriteStopPoint(
