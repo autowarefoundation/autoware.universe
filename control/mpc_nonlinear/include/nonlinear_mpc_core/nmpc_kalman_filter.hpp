@@ -203,8 +203,10 @@ class KalmanUnscentedSQRT : public KalmanUKFbase
   explicit KalmanUnscentedSQRT(Model::model_ptr_t model, double const dt);
 
   KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other);
+  KalmanUnscentedSQRT(KalmanUnscentedSQRT &&other) noexcept;
 
   KalmanUnscentedSQRT &operator=(KalmanUnscentedSQRT const &other);
+  KalmanUnscentedSQRT &operator=(KalmanUnscentedSQRT &&other) noexcept;
 
   ~KalmanUnscentedSQRT() override = default;
 
