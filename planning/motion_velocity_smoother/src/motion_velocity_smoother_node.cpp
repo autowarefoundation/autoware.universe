@@ -442,7 +442,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   auto traj_extracted = trajectory_utils::extractPathAroundIndex(
     traj_input, *input_closest, node_param_.extract_ahead_dist, node_param_.extract_behind_dist);
-  if (!traj_extracted) {
+  if (traj_extracted.empty()) {
     RCLCPP_WARN(get_logger(), "Fail to extract the path from the input trajectory");
     return prev_output_;
   }
@@ -451,24 +451,24 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   // so multiple -1 to velocity if any trajectory points have reverse
   // velocity
   const bool is_reverse = std::any_of(
-    traj_extracted->begin(), traj_extracted->end(),
+    traj_extracted.begin(), traj_extracted.end(),
     [](auto & pt) { return pt.longitudinal_velocity_mps < 0; });
   if (is_reverse) {
-    for (auto & pt : *traj_extracted) {
+    for (auto & pt : traj_extracted) {
       pt.longitudinal_velocity_mps *= -1.0;
     }
   }
 
   // Debug
   if (publish_debug_trajs_) {
-    pub_trajectory_raw_->publish(toTrajectoryMsg(*traj_extracted, base_traj_raw_ptr_->header));
+    pub_trajectory_raw_->publish(toTrajectoryMsg(traj_extracted, base_traj_raw_ptr_->header));
   }
 
   // Apply external velocity limit
-  applyExternalVelocityLimit(*traj_extracted);
+  applyExternalVelocityLimit(traj_extracted);
 
   // Change trajectory velocity to zero when current_velocity == 0 & stop_dist is close
-  const auto traj_extracted_closest = findNearestIndexFromEgo(*traj_extracted);
+  const auto traj_extracted_closest = findNearestIndexFromEgo(traj_extracted);
 
   if (!traj_extracted_closest) {
     RCLCPP_WARN(get_logger(), "Cannot find the closest point from extracted trajectory");
@@ -476,15 +476,15 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   }
 
   // Apply velocity to approach stop point
-  applyStopApproachingVelocity(*traj_extracted);
+  applyStopApproachingVelocity(traj_extracted);
 
   // Debug
   if (publish_debug_trajs_) {
-    pub_trajectory_vel_lim_->publish(toTrajectoryMsg(*traj_extracted, base_traj_raw_ptr_->header));
+    pub_trajectory_vel_lim_->publish(toTrajectoryMsg(traj_extracted, base_traj_raw_ptr_->header));
   }
 
   // Smoothing velocity
-  if (!smoothVelocity(*traj_extracted, *traj_extracted_closest, output)) {
+  if (!smoothVelocity(traj_extracted, *traj_extracted_closest, output)) {
     return prev_output_;
   }
 

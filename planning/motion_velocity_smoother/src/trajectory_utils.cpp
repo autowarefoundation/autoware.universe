@@ -99,7 +99,7 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
   return traj_p;
 }
 
-boost::optional<TrajectoryPoints> extractPathAroundIndex(
+TrajectoryPoints extractPathAroundIndex(
   const TrajectoryPoints & trajectory, const size_t index, const double & ahead_length,
   const double & behind_length)
 {
@@ -139,7 +139,7 @@ boost::optional<TrajectoryPoints> extractPathAroundIndex(
     extracted_traj.push_back(trajectory.at(i));
   }
 
-  return boost::optional<TrajectoryPoints>(extracted_traj);
+  return extracted_traj;
 }
 
 double calcArcLength(const TrajectoryPoints & path, const int idx1, const int idx2)

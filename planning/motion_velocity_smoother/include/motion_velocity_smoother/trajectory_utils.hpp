@@ -40,7 +40,7 @@ using geometry_msgs::msg::Pose;
 TrajectoryPoint calcInterpolatedTrajectoryPoint(
   const TrajectoryPoints & trajectory, const Pose & target_pose);
 
-boost::optional<TrajectoryPoints> extractPathAroundIndex(
+TrajectoryPoints extractPathAroundIndex(
   const TrajectoryPoints & trajectory, const size_t index, const double & ahead_length,
   const double & behind_length);
 
