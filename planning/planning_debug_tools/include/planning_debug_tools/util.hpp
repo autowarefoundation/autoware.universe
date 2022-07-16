@@ -24,6 +24,8 @@
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 
+#include <vector>
+
 namespace planning_debug_tools
 {
 

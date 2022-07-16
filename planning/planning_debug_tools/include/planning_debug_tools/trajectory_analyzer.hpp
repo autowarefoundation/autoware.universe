@@ -30,6 +30,8 @@
 
 #include <iostream>
 #include <map>
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace planning_debug_tools
