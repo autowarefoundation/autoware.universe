@@ -86,13 +86,13 @@ public:
 
     TrajectoryDebugInfo data;
     data.stamp = node_->now();
+    data.size = points.size();
     data.curvature = calcCurvature(points);
     const auto arclength_offset = motion_utils::calcSignedArcLength(points, 0, ego_p);
     data.arclength = calcPathArcLengthArray(points, -arclength_offset);
     data.velocity = getVelocityArray(points);
 
-    const auto s = data.curvature.size();
-    if (s != data.arclength.size() || s != data.velocity.size()) {
+    if (data.size != data.arclength.size() || data.size != data.velocity.size()) {
       RCLCPP_ERROR(node_->get_logger(), "computation failed.");
       return;
     }
