@@ -290,11 +290,10 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
 
 }
 
-observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(
-  observers::LateralDisturbanceCompensator::obs_model_ptr_t observer_vehicle_model,
-  const observers::tf_t &qfilter_lateral,
-  const observers::sLyapMatrixVecs &lyap_matsXY,
-  const autoware::common::types::float64_t &dt)
+observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(observers::LateralDisturbanceCompensator::obs_model_ptr_t observer_vehicle_model,
+                                                                        const observers::tf_t &qfilter_lateral,
+                                                                        const observers::sLyapMatrixVecs &lyap_matsXY,
+                                                                        const autoware::common::types::float64_t &dt)
   : observer_vehicle_model_ptr_(std::move(observer_vehicle_model)),
     tf_qfilter_lat_{qfilter_lateral},
     vXs_{lyap_matsXY.vXs},
@@ -361,8 +360,7 @@ void observers::LateralDisturbanceCompensator::setInitialStates()
   }
 }
 
-void observers::LateralDisturbanceCompensator::computeObserverGains(
-  const observers::state_vector_vehicle_t &current_measurements)
+void observers::LateralDisturbanceCompensator::computeObserverGains(const observers::state_vector_vehicle_t &current_measurements)
 {
   // Get the current nonlinear Lyapunov parameters.
   theta_params_.setZero();
