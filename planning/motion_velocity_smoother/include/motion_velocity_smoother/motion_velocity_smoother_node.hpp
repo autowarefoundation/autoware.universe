@@ -70,28 +70,25 @@ public:
   explicit MotionVelocitySmootherNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Publisher<Trajectory>::SharedPtr
-    pub_trajectory_;  //!< @brief publisher for output trajectory
-  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr
-    pub_over_stop_velocity_;  //!< @brief publisher for over stop velocity warning
-  rclcpp::Subscription<Odometry>::SharedPtr
-    sub_current_odometry_;  //!< @brief subscriber for current velocity
-  rclcpp::Subscription<Trajectory>::SharedPtr
-    sub_current_trajectory_;  //!< @brief subscriber for reference trajectory
-  rclcpp::Subscription<VelocityLimit>::SharedPtr
-    sub_external_velocity_limit_;  //!< @brief subscriber for external velocity limit
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
+  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
+  rclcpp::Subscription<Odometry>::SharedPtr sub_current_odometry_;
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
+  rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
 
   PoseStamped::ConstSharedPtr current_pose_ptr_;   // current vehicle pose
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;   // current base_waypoints
   double external_velocity_limit_;                 // current external_velocity_limit
-  double max_velocity_with_deceleration_;          // maximum velocity with deceleration
-                                                   // for external velocity limit
-  double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
 
-  TrajectoryPoints prev_output_;                           // previously published trajectory
-  boost::optional<TrajectoryPoint> prev_closest_point_{};  // previous trajectory point
-                                                           // closest to ego vehicle
+  // maximum velocity with deceleration for external velocity limit
+  double max_velocity_with_deceleration_;
+  double external_velocity_limit_dist_{0.0};  // distance to set external velocity limit
+
+  TrajectoryPoints prev_output_;  // previously published trajectory
+
+  // previous trajectory point closest to ego vehicle
+  boost::optional<TrajectoryPoint> prev_closest_point_{};
 
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
