@@ -356,14 +356,7 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   }
 
   // calculate distance to insert external velocity limit
-  if (!prev_output_.empty()) {
-    const double travel_dist = calcTravelDistance();
-    external_velocity_limit_dist_ -= travel_dist;
-    external_velocity_limit_dist_ = std::max(external_velocity_limit_dist_, 0.0);
-    RCLCPP_DEBUG(
-      get_logger(), "run: travel_dist = %f, external_velocity_limit_dist_ = %f", travel_dist,
-      external_velocity_limit_dist_);
-  }
+  updateDataForExternalVelocityLimit();
 
   // calculate trajectory velocity
   TrajectoryPoints output =
@@ -416,6 +409,21 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   debug_calculation_time_->publish(calculation_time_data);
   RCLCPP_DEBUG(get_logger(), "run: calculation time = %f [ms]", calculation_time_data.data);
   RCLCPP_DEBUG(get_logger(), "========================== run() end ==========================\n\n");
+}
+
+void MotionVelocitySmootherNode::updateDataForExternalVelocityLimit()
+{
+  if (prev_output_.empty()) {
+    return;
+  }
+
+  // calculate distance to insert external velocity limit
+  const double travel_dist = calcTravelDistance();
+  external_velocity_limit_dist_ -= travel_dist;
+  external_velocity_limit_dist_ = std::max(external_velocity_limit_dist_, 0.0);
+  RCLCPP_DEBUG(
+    get_logger(), "run: travel_dist = %f, external_velocity_limit_dist_ = %f", travel_dist,
+    external_velocity_limit_dist_);
 }
 
 TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(

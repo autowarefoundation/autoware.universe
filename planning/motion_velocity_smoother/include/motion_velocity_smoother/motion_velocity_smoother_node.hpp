@@ -153,6 +153,8 @@ private:
   // const methods
   bool checkData() const;
 
+  void updateDataForExternalVelocityLimit();
+
   AlgorithmType getAlgorithmType(const std::string & algorithm_name) const;
 
   TrajectoryPoints calcTrajectoryVelocity(const TrajectoryPoints & input) const;
