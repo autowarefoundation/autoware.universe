@@ -819,7 +819,7 @@ void NonlinearMPCNode::loadNodeParameters()
   // Input delay.
   params_node_.input_delay_time = declare_parameter("input_delay_time", 0.24);
   params_node_.use_acceleration_inputs = declare_parameter<bool>("use_acceleration_inputs", true);
-  params_node_.use_kalman = declare_parameter<bool>("use_kalman", true);
+  params_node_.use_kalman = declare_parameter<bool>("kalman_filters.use_kalman", true);
 
   // Stop state parameters.
   params_node_.stop_state_entry_ego_speed = declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
@@ -868,14 +868,14 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
   params_filters.Vsqrt.setZero();
   std::vector<double> temp(Model::state_dim);
   std::vector<double> default_vec{0.2, 0.2, 0.05, 0.2, 0.05, 0.02, 0.15, 0.03, 0.05};
-  temp = declare_parameter<std::vector<double >>("Vprocess", default_vec);
+  temp = declare_parameter<std::vector<double >>("kalman_filters.Vprocess", default_vec);
   params_filters.Vsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
   params_filters.Wsqrt.setZero();
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
-  temp = declare_parameter<std::vector<double >>("Wmeasurement", default_vec);
+  temp = declare_parameter<std::vector<double >>("kalman_filters.Wmeasurement", default_vec);
   params_filters.Wsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // Updated covariance matrix.
@@ -883,12 +883,12 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
-  temp = declare_parameter<std::vector<double >>("Pkalman", default_vec);
+  temp = declare_parameter<std::vector<double >>("kalman_filters.Pkalman", default_vec);
   params_filters.Psqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // UKF specific parameters.
-  params_filters.ukf_alpha = declare_parameter("alpha", 0.9);
-  params_filters.ukf_beta = declare_parameter("beta", 2.0);
+  params_filters.ukf_alpha = declare_parameter("kalman_filters.alpha", 0.9);
+  params_filters.ukf_beta = declare_parameter("kalman_filters.beta", 2.0);
 }
 
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
