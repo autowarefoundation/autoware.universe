@@ -146,8 +146,15 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   ns_data::ParamsFilters params_filters;
   loadFilterParameters(params_filters);
 
-  kalman_filter_ = ns_filters::KalmanUnscentedSQRT(vehicle_model_ptr, params_node_.control_period);
-  kalman_filter_.updateParameters(params_filters);
+  if (params_node_.use_sqrt_version)
+  {
+    kalman_filter_ptr_ =
+      std::make_unique<ns_filters::KalmanUnscentedSQRT>(vehicle_model_ptr, params_node_.control_period);
+  } else
+  {
+    kalman_filter_ptr_ = std::make_unique<ns_filters::KalmanUnscented>(vehicle_model_ptr, params_node_.control_period);
+  }
+  kalman_filter_ptr_->updateParameters(params_filters);
 
   /**
    * @brief assigns an observer to predict disturbance input in the speed
@@ -341,7 +348,7 @@ void NonlinearMPCNode::onTimer()
       value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
     }
 
-    kalman_filter_.reset();
+    kalman_filter_ptr_->reset();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
                                    vehicle_motion_fsm_.fsmMessage().c_str());
 
@@ -353,7 +360,7 @@ void NonlinearMPCNode::onTimer()
       control_cmd.longitudinal.acceleration = 0.0;
 
       // Reset Kalman filter speed
-      kalman_filter_.resetStateEstimate(ns_utils::toUType(VehicleStateIds::vx), 0.0);
+      kalman_filter_ptr_->resetStateEstimate(ns_utils::toUType(VehicleStateIds::vx), 0.0);
     }
 
     publishControlsAndUpdateVars(control_cmd);
@@ -819,7 +826,9 @@ void NonlinearMPCNode::loadNodeParameters()
   // Input delay.
   params_node_.input_delay_time = declare_parameter("input_delay_time", 0.24);
   params_node_.use_acceleration_inputs = declare_parameter<bool>("use_acceleration_inputs", true);
+
   params_node_.use_kalman = declare_parameter<bool>("kalman_filters.use_kalman", true);
+  params_node_.use_sqrt_version = declare_parameter<bool>("kalman_filters.use_sqrt_version", false);
 
   // Stop state parameters.
   params_node_.stop_state_entry_ego_speed = declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
@@ -1973,16 +1982,19 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   // For Kalman filtering implementation.
   if (params_node_.use_kalman)
   {
-    if (!kalman_filter_.isInitialized())
+    if (!kalman_filter_ptr_->isInitialized())
     {
-      kalman_filter_.Initialize_xest0(x0_initial_states_);
+      kalman_filter_ptr_->Initialize_xest0(x0_initial_states_);
     }
 
     // Prepare Kalman estimate state.
     x0_kalman_est_.setZero();
 
     // Add applied previous disturbance to the previous computed control.
-    kalman_filter_.getStateEstimate(u0_kalman_, current_model_params_, x0_previous_initial_states_, x0_kalman_est_);
+    kalman_filter_ptr_->getStateEstimate(u0_kalman_,
+                                         current_model_params_,
+                                         x0_previous_initial_states_,
+                                         x0_kalman_est_);
 
     // Set initial states of the NMPCcore trajectory container.
     //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']

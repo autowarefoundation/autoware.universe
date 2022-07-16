@@ -198,7 +198,7 @@ class NonlinearMPCNode : public rclcpp::Node
   /**
    * @brief Kalman filter to predict initial states.
    * */
-  ns_filters::KalmanUnscentedSQRT kalman_filter_{};
+  std::unique_ptr<ns_filters::KalmanUKFbase> kalman_filter_ptr_{};
 
   /**
    * @brief Finite State Machine for tracking vehicle motion states.
