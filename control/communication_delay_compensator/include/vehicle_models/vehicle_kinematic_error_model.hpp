@@ -58,6 +58,12 @@ class LinearVehicleModelsBase
 
   LinearVehicleModelsBase(float64_t const &wheelbase, float64_t const &tau_steering, float64_t const &dt);
 
+  LinearVehicleModelsBase(LinearVehicleModelsBase const &other) = default;
+  LinearVehicleModelsBase &operator=(LinearVehicleModelsBase const &other) = default;
+
+  LinearVehicleModelsBase(LinearVehicleModelsBase &&other) noexcept = default;
+  LinearVehicleModelsBase &operator=(LinearVehicleModelsBase &&other) noexcept = default;
+
   // Destructors
   virtual ~LinearVehicleModelsBase() = default;
 
@@ -74,10 +80,8 @@ class LinearVehicleModelsBase
 
   void discretisizeBilinear();
   void discretisizeExact();
-  void getIdealRefSteering(float64_t &ref_steering);
-
+  void getIdealRefSteering(float64_t &ref_steering) const;
   void printContinuousSystem();
-
   void printDiscreteSystem();
 
   [[nodiscard]] bool areInitialStatesSet() const
@@ -115,7 +119,7 @@ class LinearVehicleModelsBase
   Dtype Dd_{Dtype::Zero()};
 
   Atype I_At2_{Atype::Zero()};  // inv(I - A*ts/2)
-  state_vector_t x0_;           // keep initial states.
+  state_vector_t x0_{state_vector_t::Zero()};           // keep initial states.
   float64_t long_velocity_{};
   float64_t curvature_{};
 
@@ -379,7 +383,7 @@ void LinearVehicleModelsBase<STATE_DIM,
 
 }
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRefSteering(float64_t &ref_steering)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRefSteering(float64_t &ref_steering) const
 {
   ref_steering = atan(curvature_ * wheelbase_);
 }
