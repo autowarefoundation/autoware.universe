@@ -13,11 +13,11 @@ public:
   using Ptr = std::shared_ptr<Vertex>;
 
   Vertex(const Eigen::Quaternionf & qf, const Eigen::Vector3f & vp, const Sophus::SO3f & dR)
-  : vp_(vp), dR_(dR), index(index_max++), q_(qf.coeffs().cast<double>())
+  : vp_(vp), dR_(dR), q_(qf.coeffs().cast<double>())
   {
   }
 
-  Vertex(const Vertex & v) : vp_(v.vp_), dR_(v.dR_), index(v.index), q_(v.q_) {}
+  Vertex(const Vertex & v) : vp_(v.vp_), dR_(v.dR_), q_(v.q_) {}
 
   Sophus::SO3f so3f() const
   {
@@ -28,11 +28,9 @@ public:
 
   const Eigen::Vector3f vp_;
   const Sophus::SO3f dR_;
-  const int index;
   Eigen::Vector4d q_;
 
 private:
-  static int index_max;
 };
 
 }  // namespace imgproc::opt

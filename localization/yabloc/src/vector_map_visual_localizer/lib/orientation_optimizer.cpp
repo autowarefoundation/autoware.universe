@@ -18,7 +18,6 @@ using ceres::Solver;
 
 namespace imgproc::opt
 {
-int Vertex::index_max = 0;
 
 std::vector<Sophus::SO3f> Optimizer::allRotations() const
 {
@@ -34,36 +33,40 @@ Sophus::SO3f Optimizer::optimize(
   const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical,
   const Sophus::SO3f & initial_R)
 {
+  // Push back a new vertex into ring buffer
   if (vertices_.empty()) {
     Vertex::Ptr v = std::make_shared<Vertex>(initial_R.unit_quaternion(), vp, dR);
     vertices_.push_back(v);
     return dR;
   }
-
   Sophus::SO3f last_R = vertices_.back()->so3f();
   Vertex::Ptr v = std::make_shared<Vertex>((last_R * dR).unit_quaternion(), vp, dR);
   vertices_.push_back(v);
 
-  ceres::LossFunction * loss = new ceres::CauchyLoss(0.1f);
-
   // Build opmization problem
   Problem problem;
+  ceres::LossFunction * loss = nullptr;
   for (int i = 0; i < vertices_.size(); i++) {
     Vertex::Ptr & v = vertices_.at(i);
     problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
-    if (i < (vertices_.size() - 2)) {
-      problem.AddResidualBlock(VanishPointFactor::create(vp), loss, v->q_.data());
-      problem.AddResidualBlock(HorizonFactor::create(vertical), loss, v->q_.data());
-    }
+    // vp-cost
+    problem.AddResidualBlock(VanishPointFactor::create(vp), loss, v->q_.data());
+    // horizontal-coost
+    problem.AddResidualBlock(HorizonFactor::create(vertical), loss, v->q_.data());
 
     if (i == 0) continue;
 
+    // imu-cost
     Vertex::Ptr & v_prev = vertices_.at(i - 1);
     problem.AddResidualBlock(
       ImuFactor::create(v->dR_, 10), nullptr, v_prev->q_.data(), v->q_.data());
   }
 
-  // Fix first vertix
+  std::cout << "=== BEFORE ===" << std::endl;
+  printEvaluation();
+
+  // TODO: Fix first vertix
+  // I guess we should fix it
   problem.SetParameterBlockConstant(vertices_.front()->q_.data());
 
   // Solve opmization problem
@@ -72,6 +75,10 @@ Sophus::SO3f Optimizer::optimize(
   options.linear_solver_type = ceres::DENSE_QR;
   Solver::Summary summary;
   Solve(options, &problem, &summary);
+
+  // Save after-loss infomation
+  std::cout << "=== AFTER ===" << std::endl;
+  printEvaluation();
   std::cout << summary.BriefReport() << std::endl;
 
   // DEBUG
@@ -88,6 +95,27 @@ Sophus::SO3f Optimizer::optimize(
   // }
 
   return vertices_.back()->so3f();
+}
+
+void Optimizer::printEvaluation() const
+{
+  // Evaluate before status
+  auto vp0 = vertices_.front();
+  float cost_vp0 = VanishPointFactor::eval(vp0->vp_, vp0->q_.data());
+  float cost_hz0 = HorizonFactor::eval(Eigen::Vector2f::UnitY(), vp0->q_.data());
+
+  if (vertices_.size() < 2) return;
+  auto vp1 = vertices_.at(1);
+  float cost_vp1 = VanishPointFactor::eval(vp1->vp_, vp1->q_.data());
+  float cost_hz1 = HorizonFactor::eval(Eigen::Vector2f::UnitY(), vp1->q_.data());
+
+  float cost_imu = ImuFactor::eval(vp1->dR_, vp0->q_.data(), vp1->q_.data());
+
+  std::cout << "vp0 " << cost_vp0 << std::endl;
+  std::cout << "vp1 " << cost_vp1 << std::endl;
+  std::cout << "hz0 " << cost_hz0 << std::endl;
+  std::cout << "hz1 " << cost_hz1 << std::endl;
+  std::cout << "imu " << cost_imu << std::endl;
 }
 
 Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp)

@@ -30,10 +30,11 @@ public:
     return true;
   }
 
-  double operator()(const double * const q_ptr) const
+  static double eval(const Eigen::Vector3f & vp, const double * const q_ptr)
   {
+    VanishPointFactor obj(vp.cast<double>());
     double residual[1];
-    (*this)(q_ptr, residual);
+    obj(q_ptr, residual);
     return residual[0];
   }
 
@@ -77,11 +78,19 @@ public:
     return residual[0];
   }
 
-  static ceres::CostFunction * create(const Eigen::Vector2f & vp)
+  static double eval(const Eigen::Vector2f & vertical, const double * const q_ptr)
+  {
+    HorizonFactor obj(vertical.cast<double>());
+    double residual[1];
+    obj(q_ptr, residual);
+    return residual[0];
+  }
+
+  static ceres::CostFunction * create(const Eigen::Vector2f & vertical)
   {
     // residual(1), q(4)
     return new ceres::AutoDiffCostFunction<HorizonFactor, 1, 4>(
-      new HorizonFactor(vp.cast<double>()));
+      new HorizonFactor(vertical.cast<double>()));
   }
 
 private:
@@ -108,10 +117,20 @@ public:
     return true;
   }
 
+  static double eval(
+    const Sophus::SO3f & dR, const double * const q1_ptr, const double * const q2_ptr)
+  {
+    ImuFactor obj(dR.unit_quaternion().cast<double>(), 10);
+    double residual[3];
+    obj(q1_ptr, q2_ptr, residual);
+    Eigen::Map<Eigen::Vector3d> residuals(residual);
+    return residuals.norm();
+  }
+
   static ceres::CostFunction * create(const Sophus::SO3f & dR, double gain)
   {
-    // residual(1), q1(4) ,q2(4)
-    return new ceres::AutoDiffCostFunction<ImuFactor, 1, 4, 4>(
+    // residual(3), q1(4) ,q2(4)
+    return new ceres::AutoDiffCostFunction<ImuFactor, 3, 4, 4>(
       new ImuFactor(dR.unit_quaternion().cast<double>(), gain));
   }
 

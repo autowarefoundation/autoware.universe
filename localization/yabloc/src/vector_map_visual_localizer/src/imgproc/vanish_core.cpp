@@ -36,13 +36,12 @@ void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
 
 Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 {
-  Sophus::SO3f integrated_rot;
-
   auto opt_ex =
     tf_subscriber_("traffic_light_left_camera/camera_optical_link", "tamagawa/imu_link");
-  if (!opt_ex.has_value()) return integrated_rot;
-  Sophus::SO3f ex_rot(opt_ex->rotation());
+  if (!opt_ex.has_value()) return Sophus::SO3f();
 
+  Sophus::SO3f ex_rot(opt_ex->rotation());
+  Sophus::SO3f integrated_rot;
   while (!imu_buffer_.empty()) {
     Imu msg = imu_buffer_.front();
     rclcpp::Time stamp = msg.header.stamp;
@@ -131,7 +130,7 @@ void VanishPoint::callbackImage(const Image & msg)
   drawVerticalLine(image, vanish, Eigen::Vector2f::UnitY());
 
   // Visualize estimated vanishing point
-  Sophus::SO3f init_rot = Sophus::SO3f(opt_camera_ex->rotation());
+  const Sophus::SO3f init_rot = Sophus::SO3f(opt_camera_ex->rotation());
   drawHorizontalLine(image, init_rot, cv::Scalar(0, 255, 255));
 
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
@@ -141,8 +140,11 @@ void VanishPoint::callbackImage(const Image & msg)
 
   drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 0));
 
-  // Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
-  // drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
+  {
+    Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
+    // Sophus::SO3f graph_opt_rot = opt::optimizeOnce(init_rot, vp, Eigen::Vector2f::UnitY());
+    drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
+  }
 
   // Pure measurement vanishing point
   cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);

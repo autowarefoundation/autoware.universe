@@ -25,6 +25,8 @@ public:
   std::vector<Sophus::SO3f> allRotations() const;
 
 private:
+  void printEvaluation() const;
+
   boost::circular_buffer<Vertex::Ptr> vertices_;
 };
 
