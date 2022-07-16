@@ -860,8 +860,8 @@ void NonlinearMPCNode::loadNodeParameters()
   params_node_.lr = declare_parameter<double>("cog_rear_lr", 1.4);
 
   // CDOB - DOB options
-  params_node_.use_cdob = declare_parameter<bool>("use_cdob", false);
-  params_node_.use_dob = declare_parameter<bool>("use_dob", false);
+  params_node_.use_cdob = declare_parameter<bool>("use_cdob");
+  params_node_.use_dob = declare_parameter<bool>("use_dob");
 
   if (params_node_.use_dob)
   {

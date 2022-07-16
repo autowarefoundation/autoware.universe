@@ -40,7 +40,7 @@
     scaling_range: [ -1., 1. ]
 
     xmin_for_scaling: [ -25., -25., -1.0, 0.0,  -2.0, -1.0, 0.0, -1.0, -5.0 ]
-    xmax_for_scaling: [ 25.,  25.,  1.0, 25.0,   2.0,  1.0, 4.0,  1.0, 5.0 ]
+    xmax_for_scaling: [ 25.,  25.,  1.0, 25.0,   2.0,  1.0, 10.0,  1.0, 5.0 ]
 
     umin_for_scaling: [ -7., -1.0 ]  # ax speed input [m/s], steering input [rad]
     umax_for_scaling: [ 7.,  1.0 ]
@@ -82,12 +82,19 @@
     # -- Accuracy parameters --
     number_of_sqp_iterations: 1
 
+    # -- Speed tracking PI control I-integrator saturation limits
+    feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
+
+    # CDOB - DOB parameters.
+    use_cdob: true
+    use_dob: true # activating use_dob only enables use_cdob. They are both used.
+
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
     # -- UKF specific parameters --
     kalman_filters:
-      use_kalman: true
-      use_sqrt_version: false
-      alpha: 0.01  # controls spread of the sigma points,
+      use_kalman: false
+      use_sqrt_version: true
+      alpha: 0.3  # controls spread of the sigma points,
       beta: 2.0   # for Gaussian distribution,
       kappa: 0.0  # scale the sigma points further from x_mean.
 
@@ -96,9 +103,3 @@
       Vprocess: [ 0.2, 0.2, 0.05, 0.1, 0.02, 0.01, 0.05, 0.03, 0.1 ]     # process [model] uncertainty variance estimate.
       Wmeasurement: [ 0.4, 0.4, 0.06, 0.2,  0.15, 0.1, 0.1, 0.02, 0.2 ]  # measurement uncertainty variance estimate
 
-      # -- Speed tracking PI control I-integrator saturation limits
-      feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
-
-      # CDOB - DOB parameters.
-      use_cdob: false
-      use_dob: false # activating use_dob only enables use_cdob. They are both used.
