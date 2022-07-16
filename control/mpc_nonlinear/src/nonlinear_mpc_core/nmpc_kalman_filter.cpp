@@ -61,7 +61,7 @@ KalmanUnscented::KalmanUnscented(KalmanUnscented const &other) : KalmanUKFbase(o
   computeWeightsAndCoeffs();
 }
 
-KalmanUnscented::KalmanUnscented(KalmanUnscented &&other) noexcept: KalmanUKFbase(other),
+KalmanUnscented::KalmanUnscented(KalmanUnscented &&other) noexcept: KalmanUKFbase(std::move(other)),
                                                                     V_{std::move(other.V_)},
                                                                     W_{std::move(other.W_)},
                                                                     P_{std::move(other.P_)},
@@ -186,6 +186,8 @@ void KalmanUnscented::propagateSigmaPoints_fx(const Model::input_vector_t &u0, M
     auto xk = Model::state_vector_t(sigmaPointsMat_x_.col(k));
     ns_sim::simulateNonlinearModel_zoh(model_ptr_, u0, params, dt_, xk);
 
+    xk(2) = ns_utils::angleDistance(xk(2)); // normalize yaw angle
+    xk(5) = ns_utils::angleDistance(xk(5)); // normalize e_yaw
     sigmaPoints_fxfy_.col(k) = xk;
   }
 
@@ -306,8 +308,11 @@ void KalmanUnscented::KalmanUnscentedMeasurementUpdateStep(const Model::state_ve
 
   y_est_mean_full_ = first_column + right_columns.rowwise().sum();
 
+  y_est_mean_full_(2) = ns_utils::angleDistance(y_est_mean_full_(2)); // normalize yaw
+  y_est_mean_full_(5) = ns_utils::angleDistance(y_est_mean_full_(5)); // normalize e_yaw
+
   // <-@brief Update Covariance using the mean prior computed.
-  auto &&d_sigma_points_y = sigmaPointsMat_y_.col(0) - y_est_mean_full_;
+  auto &d_sigma_points_y = sigmaPointsMat_y_.col(0) - y_est_mean_full_;
   Model::state_matrix_t Stemp = Weight0_c_ * d_sigma_points_y * d_sigma_points_y.transpose();
 
   auto &&d_sigma_points_x = sigmaPointsMat_x_.col(0) - x_est_mean_full_;
@@ -437,12 +442,67 @@ KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT const &other)
   computeWeightsAndCoeffs();
 }
 
+KalmanUnscentedSQRT::KalmanUnscentedSQRT(KalmanUnscentedSQRT &&other) noexcept
+  : KalmanUKFbase(std::move(other)),
+    Vsqrt_{std::move(other.Vsqrt_)},
+    Wsqrt_{std::move(other.Wsqrt_)},
+    Sx_sqrt_{std::move(other.Sx_sqrt_)},
+    alpha_{other.alpha_},
+    beta_{other.beta_},
+    kappa_{other.kappa_}
+{
+  // Initialize concatenated matrices
+  sigma_and_Vsqrt.setZero();
+  sigma_and_Vsqrt.rightCols(Vsqrt_.cols()) = Vsqrt_;
+
+  sigma_and_Wsqrt.setZero();
+  sigma_and_Wsqrt.rightCols(Wsqrt_.cols()) = Wsqrt_;
+
+  Sy_sqrt_.setZero();
+  Ck_.setZero();
+  computeWeightsAndCoeffs();
+}
+
 KalmanUnscentedSQRT &KalmanUnscentedSQRT::operator=(KalmanUnscentedSQRT const &other)
 {
   if (this != &other)
   {
+    KalmanUKFbase::model_ptr_ = other.model_ptr_;
+    KalmanUKFbase::dt_ = other.dt_;
+
     Vsqrt_ = other.Vsqrt_;
     Wsqrt_ = other.Wsqrt_;
+
+    // Initialize concatenated matrices
+    sigma_and_Vsqrt.setZero();
+    sigma_and_Vsqrt.rightCols(Vsqrt_.cols()) = Vsqrt_;
+
+    sigma_and_Wsqrt.setZero();
+    sigma_and_Wsqrt.rightCols(Wsqrt_.cols()) = Wsqrt_;
+
+    Sx_sqrt_ = other.Sx_sqrt_;
+    Sy_sqrt_.setZero();
+    Ck_.setZero();
+
+    alpha_ = other.alpha_;
+    beta_ = other.beta_;
+    kappa_ = other.kappa_;
+
+    computeWeightsAndCoeffs();
+  }
+
+  return *this;
+}
+
+KalmanUnscentedSQRT &KalmanUnscentedSQRT::operator=(KalmanUnscentedSQRT &&other) noexcept
+{
+  if (this != &other)
+  {
+    KalmanUKFbase::model_ptr_ = std::move(other.model_ptr_);
+    KalmanUKFbase::dt_ = other.dt_;
+
+    Vsqrt_ = std::move(other.Vsqrt_);
+    Wsqrt_ = std::move(other.Wsqrt_);
 
     // Initialize concatenated matrices
     sigma_and_Vsqrt.setZero();
@@ -500,6 +560,9 @@ void KalmanUnscentedSQRT::propagateSigmaPoints_fx(const Model::input_vector_t &u
   {
     auto xk = Model::state_vector_t(sigmaPointsMat_x_.col(k));
     ns_sim::simulateNonlinearModel_zoh(model_ptr_, u0, params, dt_, xk);
+
+    xk(2) = ns_utils::angleDistance(xk(2)); // normalize yaw angle
+    xk(5) = ns_utils::angleDistance(xk(5)); // normalize e_yaw
 
     sigmaPoints_fxfy_.col(k) = xk;
   }
@@ -713,6 +776,9 @@ void KalmanUnscentedSQRT::KalmanUnscentedMeasurementUpdateStep(const Model::stat
    **/
 
   y_est_mean_full_ = first_column + right_columns.rowwise().sum();
+
+  y_est_mean_full_(2) = ns_utils::angleDistance(y_est_mean_full_(2)); // normalize yaw
+  y_est_mean_full_(5) = ns_utils::angleDistance(y_est_mean_full_(5)); // normalize e_yaw
 
   // <-@brief Update Covariance using the mean prior computed.
   sigma_point_mat_t &&d_sigma_points_y = sigmaPointsMat_y_.colwise() - y_est_mean_full_;
