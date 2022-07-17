@@ -158,16 +158,16 @@ observers::LateralCommunicationDelayCompensator::simulateOneStep(const state_vec
   computeObserverGains(current_measurements);
 
   // Filter the current input and store it in the as the filtered previous input.
-  // qfilterControlCommand(current_steering_cmd);
+  qfilterControlCommand(current_steering_cmd);
 
   // Run the state observer to estimate the current state.
   estimateVehicleStates(current_measurements, prev_steering_control_cmd, current_steering_cmd);
 
   // Final assignment steps.
   msg_debug_results->lat_uf = static_cast<double>(static_cast<float>(current_qfiltered_control_cmd_));
-  msg_debug_results->lat_ey_hat = static_cast<double>(static_cast<float>(current_yobs_(0)));
-  msg_debug_results->lat_eyaw_hat = static_cast<double>(static_cast<float>(current_yobs_(1)));
-  msg_debug_results->lat_steering_hat = static_cast<double>(static_cast<float>(current_yobs_(2)));
+  msg_debug_results->lat_ey_hat = static_cast<double>(static_cast<float>(prev_yobs_(0)));
+  msg_debug_results->lat_eyaw_hat = static_cast<double>(static_cast<float>(prev_yobs_(1)));
+  msg_debug_results->lat_steering_hat = static_cast<double>(static_cast<float>(prev_yobs_(2)));
   msg_debug_results->lat_duf = static_cast<double>(static_cast<float>(df_d0_));
 
   msg_compensation_results->lateral_deviation_error_compensation_ref = yv_d0_(0);
@@ -175,20 +175,7 @@ observers::LateralCommunicationDelayCompensator::simulateOneStep(const state_vec
   msg_compensation_results->steering_compensation_ref = yv_d0_(2);
 
   // Debug
-  //  ns_utils::print("Current steering command read : ", current_steering_cmd);
-  //  ns_utils::print("Steering command read : ", current_steering_cmd);
-  //  ns_utils::print("Heading error read : ", msg_compensation_results->heading_angle_error_read);
-  //  ns_utils::print("lat_ey_hat : ", msg_debug_results->lat_ey_hat);
-  //
-  //  ns_utils::print("Current Measurements : ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_measurements));
-  //
-  //  ns_utils::print(
-  //      "Previous and current filtered commands :", previous_qfiltered_control_cmd_,
-  //      current_qfiltered_control_cmd_);
-
-  //  ns_utils::print("Current disturbance references : ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(yv_d0_));
+  // end of debug
 }
 
 void observers::LateralCommunicationDelayCompensator::computeObserverGains(
@@ -231,9 +218,10 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(cons
  * we use the previous values for the vehicle model. Upon estimating the current states, we
  * predict the next states and broadcast it.
  * */
-void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(state_vector_vehicle_t const &current_measurements,
-                                                                            float64_t const &prev_steering_control_cmd,
-                                                                            float64_t const &current_steering_cmd)
+void observers::LateralCommunicationDelayCompensator
+::estimateVehicleStates(state_vector_vehicle_t const &current_measurements,
+                        float64_t const &,/*prev_steering_control_cmd,*/
+                        float64_t const &/*current_steering_cmd*/)
 {
 
   /**
@@ -242,53 +230,30 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(stat
   * */
   // FIRST STEP: propagate the previous states.
   xbar_temp_ = xhat0_prev_.eval();
-  observer_vehicle_model_ptr_->simulateOneStep(ybar_temp_, xbar_temp_, prev_steering_control_cmd);
+  observer_vehicle_model_ptr_->simulateOneStep(prev_yobs_, xbar_temp_, prev_qfiltered_control_cmd_);
 
-  xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements); // # xhat_k
-  xhat0_prev_(1) = ns_utils::angleDistance(xhat0_prev_(1));
+  xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (prev_yobs_ - current_measurements); // # xhat_k
+  // xhat0_prev_(1) = ns_utils::angleDistance(xhat0_prev_(1));
 
   // Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
   // Apply the q-filter to the disturbance state
   auto dist_state = xhat0_prev_.eval().bottomRows<1>()(0);
+
+  // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
+  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_qfiltered_control_cmd_);
 
   /**
   * d = (u - ue^{-sT}) -- >  ue^{-sT} = uf - d which is the actual control acting on the vehicle (ue^{-sT})
   *
   * We filter this state because in the current_yobs_ C row is zero, we cannot observe it from this output.
   * */
-  df_d0_ = ss_qfilter_lat_.simulateOneStep(xd0_, current_steering_cmd - dist_state);
+  df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
 
-
-  // dist_qfiltered_ = ss_qfilter_lat_.simulateOneStep(xd0_, current_steering_cmd - dist_state);
-
-  // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
-  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
-
-  // Send the qfiltered disturbance input to the vehicle model to get the response.
-  // xv_d0_ = current_yobs_.eval(); // xhat0_prev_.topRows<3>().eval();
-
-  // yu-yd + yd
-  // xv_d0_ = xv_d0_.setZero(); //current_yobs_.eval(); //xhat0_prev_.eval().topRows<3>();
-  // vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, current_steering_cmd - dist_qfiltered_);
-  // yv_d0_ += current_measurements; //current_yobs_;
-
-  // xv_d0_ = current_measurements.eval(); //xhat0_prev_.eval().topRows<3>();
-  // vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, current_qfiltered_control_cmd_ - dist_qfiltered_);
-
-  xv_d0_ = current_measurements.eval(); //xhat0_prev_.eval().topRows<3>();
-  vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, df_d0_); // equivalent to yv_d0_ += current_measurements;
-
+  xv_d0_ = current_measurements.eval();
+  vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, df_d0_);
 
   // DEBUG
-  //  ns_utils::print("Current observer state ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xhat0_prev_));
-  //
-  //  ns_utils::print("Current simulated state to filtered disturbance ");
-  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xv_d0_));
-  //
-  //  ns_utils::print("Current measurements ");
-  //  ns_eigen_utils::printEigenMat(current_measurements);
-
+  // end
 }
 
 observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(observers::LateralDisturbanceCompensator::obs_model_ptr_t observer_vehicle_model,
