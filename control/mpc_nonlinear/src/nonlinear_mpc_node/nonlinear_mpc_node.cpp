@@ -343,7 +343,7 @@ void NonlinearMPCNode::onTimer()
     // Reset the input que. [ax, vx, steering_rate, steering]
     for (auto &value : inputs_buffer_common_)
     {
-      value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
+      value = std::array < double, 4 > {0.0, 0.0, 0.0, 0.0};
     }
 
     kalman_filter_ptr_->reset();
@@ -398,7 +398,7 @@ void NonlinearMPCNode::onTimer()
     x0_predicted_(5) = current_comm_delay_ptr_->heading_angle_error_compensation_ref;
     x0_predicted_(7) = current_comm_delay_ptr_->steering_compensation_ref;
 
-    ns_utils::print("NMPC using error references...");
+    // ns_utils::print("NMPC using error references...");
   }
 
   // Update the initial state of the NMPCcore object.
