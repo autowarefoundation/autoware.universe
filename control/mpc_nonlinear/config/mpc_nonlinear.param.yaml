@@ -86,14 +86,14 @@
     feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
 
     # CDOB - DOB parameters.
-    use_cdob: false
-    use_dob: false # activating use_dob only enables use_cdob. They are both used.
+    use_cdob: true
+    use_dob: true # activating use_dob only enables use_cdob. They are both used.
 
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
     # -- UKF specific parameters --
     kalman_filters:
       use_kalman: false
-      use_sqrt_version: true
+      use_sqrt_version: false
       alpha: 0.1  # controls spread of the sigma points,
       beta: 2.0   # for Gaussian distribution,
       kappa: 0.0  # scale the sigma points further from x_mean.
