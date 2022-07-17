@@ -495,13 +495,15 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
   // --------------- Qfilter Construction for lateral error state -------------------------
   auto const &order_lat_error_cdob = params_node_.qfilter_lateral_error_cdob_order;
   auto const &wc_lat_error_cdob = params_node_.qfilter_lateral_error_cdob_freq;
-  auto const &remaining_order_lat_error_cdob = order_lat_error_cdob - 2;
-  auto const &damping_val_cdob = params_node_.qfilter_lateral_cdob_damping;
+
 
   // Create nth order qfilter transfer function for the steering system. 1 /( tau*s + 1)&^n
   ns_control_toolbox::tf qfilter_lat_error_cdob;
   if (order_lat_error_cdob > 1)
   {
+    auto const &remaining_order_lat_error_cdob = order_lat_error_cdob - 2;
+    auto const &damping_val_cdob = params_node_.qfilter_lateral_cdob_damping;
+
     qfilter_lat_error_cdob = get_nthOrderTFwithDampedPoles(wc_lat_error_cdob,
                                                            remaining_order_lat_error_cdob,
                                                            damping_val_cdob);
@@ -512,23 +514,22 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
     qfilter_lat_error_cdob = get_nthOrderTF(wc_lat_error_cdob, order_lat_error_cdob);
   }
 
-  LateralCommunicationDelayCompensator delay_compensator_lat_cdob(dist_td_obs_vehicle_model_ptr_,
-                                                                  vehicle_model_ptr_,
-                                                                  qfilter_lat_error_cdob,
-                                                                  lyap_matsXY,
-                                                                  params_node_.cdob_ctrl_period);
-
-  cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(delay_compensator_lat_cdob);
+  cdob_lateral_ptr_ = std::make_unique<LateralCommunicationDelayCompensator>(dist_td_obs_vehicle_model_ptr_,
+                                                                             vehicle_model_ptr_,
+                                                                             qfilter_lat_error_cdob,
+                                                                             lyap_matsXY,
+                                                                             params_node_.cdob_ctrl_period);
 
   // Set the DOB
   auto const &order_lat_error_dob = params_node_.qfilter_lateral_dob_order;
-  auto const &remaining_order_lat_error_dob = order_lat_error_dob - 2;
   auto const &wc_lat_error_dob = params_node_.qfilter_lateral_dob_freq;
-  auto const &damping_val_dob = params_node_.qfilter_lateral_dob_damping;
 
   ns_control_toolbox::tf qfilter_lat_error_dob;
   if (order_lat_error_dob > 1)
   {
+    auto const &remaining_order_lat_error_dob = order_lat_error_dob - 2;
+    auto const &damping_val_dob = params_node_.qfilter_lateral_dob_damping;
+
     qfilter_lat_error_dob = get_nthOrderTFwithDampedPoles(wc_lat_error_dob,
                                                           remaining_order_lat_error_dob,
                                                           damping_val_dob);
@@ -539,12 +540,10 @@ void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs cons
     qfilter_lat_error_dob = get_nthOrderTF(wc_lat_error_dob, order_lat_error_dob);
   }
 
-  LateralDisturbanceCompensator compensator_lat_dob(dist_td_obs_vehicle_model_ptr_,
-                                                    qfilter_lat_error_cdob,
-                                                    lyap_matsXY,
-                                                    params_node_.cdob_ctrl_period);
-
-  dob_lateral_ptr_ = std::make_unique<LateralDisturbanceCompensator>(compensator_lat_dob);
+  dob_lateral_ptr_ = std::make_unique<LateralDisturbanceCompensator>(dist_td_obs_vehicle_model_ptr_,
+                                                                     qfilter_lat_error_dob,
+                                                                     lyap_matsXY,
+                                                                     params_node_.cdob_ctrl_period);
 }
 
 void CommunicationDelayCompensatorNode::computeLateralCDOB()
@@ -585,19 +584,19 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
                                     current_delay_ref_msg_ptr_);
 
   // DEBUG
-  {
-    ns_utils::print("Current readings [ey, eyaw, delta, ideal steer, curvature] : ", current_lat_error,
-                    current_heading_error, current_steering,
-                    prev_ideal_steering_, prev_curvature_);
 
-    //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
-    //
-    //    ns_utils::print("Previous inputs to CDOB : ");
-    //    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
+  //    ns_utils::print("Current readings [ey, eyaw, delta, ideal steer, curvature] : ", current_lat_error,
+  //                    current_heading_error, current_steering,
+  //                    prev_ideal_steering_, prev_curvature_);
 
-    // get the vehicle model parameters on which the controllers compute the control signals.
-    // previous : curvature, previous_target velocity
-  }
+  //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+  //
+  //    ns_utils::print("Previous inputs to CDOB : ");
+  //    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
+
+  // get the vehicle model parameters on which the controllers compute the control signals.
+  // previous : curvature, previous_target velocity
+
 }
 
 }  // namespace observers
