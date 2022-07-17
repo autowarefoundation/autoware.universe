@@ -233,7 +233,6 @@ void observers::LateralCommunicationDelayCompensator
   observer_vehicle_model_ptr_->simulateOneStep(prev_yobs_, xbar_temp_, prev_qfiltered_control_cmd_);
 
   xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (prev_yobs_ - current_measurements); // # xhat_k
-  // xhat0_prev_(1) = ns_utils::angleDistance(xhat0_prev_(1));
 
   // Before updating the observer states, use xhat0 current estimate to simulate the disturbance input.
   // Apply the q-filter to the disturbance state
@@ -242,18 +241,19 @@ void observers::LateralCommunicationDelayCompensator
   // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
   observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_qfiltered_control_cmd_);
 
+
   /**
-  * d = (u - ue^{-sT}) -- >  ue^{-sT} = uf - d which is the actual control acting on the vehicle (ue^{-sT})
-  *
-  * We filter this state because in the current_yobs_ C row is zero, we cannot observe it from this output.
-  * */
+    * d = (u - ue^{-sT})
+    * uf - dfilt = ue^{-sT}
+    * We filter this state because in the current_yobs_ C row is zero, we cannot observe it from this output.
+    * */
   df_d0_ = current_qfiltered_control_cmd_ - ss_qfilter_lat_.simulateOneStep(xd0_, dist_state);
+
+  // Send the qfiltered disturbance input to the vehicle model to get the response.
 
   xv_d0_ = current_measurements.eval();
   vehicle_model_ptr_->simulateOneStepZeroState(yv_d0_, xv_d0_, df_d0_);
 
-  // DEBUG
-  // end
 }
 
 observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(observers::LateralDisturbanceCompensator::obs_model_ptr_t observer_vehicle_model,
@@ -375,7 +375,7 @@ void observers::LateralDisturbanceCompensator::qfilterControlCommand(const float
   current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
 }
 
-void observers::LateralDisturbanceCompensator::estimateVehicleStates(const observers::state_vector_vehicle_t &/**current_measurements*/,
+void observers::LateralDisturbanceCompensator::estimateVehicleStates(const observers::state_vector_vehicle_t &current_measurements,
                                                                      const float64_t &prev_steering_control_cmd,
                                                                      const float64_t &current_steering_cmd)
 {
@@ -386,17 +386,11 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
   * x and y belong to the VEHICLE state observer.
   * */
 
-  // First filter the time-delay compensator estimated outputs.
-  /**
-   * Q-filter three states
-   * */
-
-  observer_vehicle_model_ptr_->getObservedValues_y(yv_td0_);
-
   /**
   * Qfilter the time-delay state estimator output ytime_delay = y(without delay) - dcurvature
   * dcurvature is an output disturbance, we want to find out an input causing this output.
   * */
+
 
   // FIRST STEP: propagate the previous states.
   xbar_temp_ = xhat0_prev_.eval();
@@ -405,19 +399,13 @@ void observers::LateralDisturbanceCompensator::estimateVehicleStates(const obser
   /**
   * Here using yv_d0_ is the point of DDOB. The last row of xhat is the disturbance input estimated for compensation.
   * */
-  xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - yv_td0_); // # xhat_k
-  xhat0_prev_(1) = ns_utils::angleDistance(xhat0_prev_(1));
-
-  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
-  // dist_input_ = xhat0_prev_.bottomRows<1>()(0);
+  xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (ybar_temp_ - current_measurements); // # xhat_k
+  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.eval().bottomRows<1>()(0));
 
   /**
    * UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
    * */
   observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
-
-  // Send the qfiltered disturbance input to the vehicle model to get the response.
-  //  dist_input_ = ss_qfilter_lat_.simulateOneStep(xd0_, xhat0_prev_.bottomRows<1>()(0));
 
 }
 
