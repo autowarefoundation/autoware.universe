@@ -16,7 +16,7 @@
     qfilter_longitudinal_error_freq: 5.  #qfilter frequency in Hz for heading error
 
     # -- Vehicle Model Selection -- Currently we have only one.
-    steering_time_constant_: 0.27 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
+    steering_time_constant_: 0.24 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
     velocity_time_constant_: 0.1 # first order velocity model time-constant
     acc_time_constant_: 0.1 # first order velocity model time-constant
 

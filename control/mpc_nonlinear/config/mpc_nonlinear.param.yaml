@@ -86,7 +86,7 @@
     feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
 
     # CDOB - DOB parameters.
-    use_cdob: true
+    use_cdob: false
     use_dob: false # activating use_dob only enables use_cdob. They are both used.
 
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
