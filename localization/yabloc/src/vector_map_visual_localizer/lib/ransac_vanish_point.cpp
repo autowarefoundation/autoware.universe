@@ -25,7 +25,7 @@ void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
   }
 }
 
-cv::Point2f RansacVanishPoint::estimate(const cv::Mat & line_segments)
+std::optional<cv::Point2f> RansacVanishPoint::estimate(const cv::Mat & line_segments)
 {
   SegmentVec horizontals, verticals;
 
@@ -38,12 +38,10 @@ cv::Point2f RansacVanishPoint::estimate(const cv::Mat & line_segments)
     }
   }
 
-  Eigen::Vector2f vanish = estimateVanishPoint(horizontals);
-
-  return cv::Point2f(vanish.x(), vanish.y());
+  return estimateVanishPoint(horizontals);
 }
 
-cv::Point2f RansacVanishPoint::operator()(const cv::Mat & image)
+std::optional<cv::Point2f> RansacVanishPoint::operator()(const cv::Mat & image)
 {
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
@@ -52,7 +50,7 @@ cv::Point2f RansacVanishPoint::operator()(const cv::Mat & image)
   return estimate(line_segments);
 }
 
-Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizontals)
+std::optional<cv::Point2f> RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizontals)
 {
   std::mt19937 engine{seed_gen_()};
 
@@ -115,8 +113,9 @@ Eigen::Vector2f RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizo
       last_inlier_horizontal_indices_ = inlier_indices;
     }
   }
+  if (last_inlier_horizontal_indices_.empty()) return std::nullopt;
 
-  return best_candidate;
+  return cv::Point2f(best_candidate.x(), best_candidate.y());
 }
 
 }  // namespace imgproc

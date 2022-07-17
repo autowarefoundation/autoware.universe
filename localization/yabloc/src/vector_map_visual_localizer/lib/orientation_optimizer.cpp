@@ -59,7 +59,7 @@ Sophus::SO3f Optimizer::optimize(
     // imu-cost
     Vertex::Ptr & v_prev = vertices_.at(i - 1);
     problem.AddResidualBlock(
-      ImuFactor::create(v->dR_, 10), nullptr, v_prev->q_.data(), v->q_.data());
+      ImuFactor::create(v->dR_, 2), nullptr, v_prev->q_.data(), v->q_.data());
   }
 
   std::cout << "=== BEFORE ===" << std::endl;
@@ -80,19 +80,6 @@ Sophus::SO3f Optimizer::optimize(
   std::cout << "=== AFTER ===" << std::endl;
   printEvaluation();
   std::cout << summary.BriefReport() << std::endl;
-
-  // DEBUG
-  // {
-  //   auto vn = *std::prev(vertices_.end(), 1);
-  //   auto vm = *std::prev(vertices_.end(), 2);
-  //   // std::cout << "Rn: " << vn->so3f().unit_quaternion().coeffs().transpose() << std::endl;
-  //   // std::cout << "Rm: " << vm->so3f().unit_quaternion().coeffs().transpose() << std::endl;
-  //   Eigen::Quaternionf dq = (vm->so3f().inverse() * vn->so3f()).unit_quaternion();
-  //   std::cout << "ddR: " << dq.coeffs().transpose() << std::endl;
-  //   std::cout << " dR: " << dR.unit_quaternion().coeffs().transpose() << std::endl;
-  //   std::cout << "|dq| " << (dq.inverse() * dR.unit_quaternion()).vec().norm() << std::endl;
-  //   std::cout << " Rn: " << vn->so3f().unit_quaternion().coeffs().transpose() << std::endl;
-  // }
 
   return vertices_.back()->so3f();
 }

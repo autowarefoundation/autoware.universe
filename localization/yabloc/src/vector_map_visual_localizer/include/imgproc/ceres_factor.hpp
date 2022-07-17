@@ -120,7 +120,7 @@ public:
   static double eval(
     const Sophus::SO3f & dR, const double * const q1_ptr, const double * const q2_ptr)
   {
-    ImuFactor obj(dR.unit_quaternion().cast<double>(), 10);
+    ImuFactor obj(dR.unit_quaternion().cast<double>(), 2);
     double residual[3];
     obj(q1_ptr, q2_ptr, residual);
     Eigen::Map<Eigen::Vector3d> residuals(residual);

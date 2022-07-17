@@ -125,9 +125,10 @@ void VanishPoint::callbackImage(const Image & msg)
   Sophus::SO3f dR = integral(msg.header.stamp);
 
   cv::Mat image = util::decompress2CvMat(msg);
-  cv::Point2f vanish = (*ransac_vanish_point_)(image);
+  std::optional<cv::Point2f> vanish = (*ransac_vanish_point_)(image);
   ransac_vanish_point_->drawActiveLines(image);
-  drawVerticalLine(image, vanish, Eigen::Vector2f::UnitY());
+
+  if (vanish.has_value()) drawVerticalLine(image, vanish.value(), Eigen::Vector2f::UnitY());
 
   // Visualize estimated vanishing point
   const Sophus::SO3f init_rot = Sophus::SO3f(opt_camera_ex->rotation());
@@ -135,24 +136,23 @@ void VanishPoint::callbackImage(const Image & msg)
 
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
-  Eigen::Vector3f vp = K.inverse() * Eigen::Vector3f(vanish.x, vanish.y, 1);
-  Sophus::SO3f opt_rot = opt::optimizeOnce(init_rot, vp, Eigen::Vector2f::UnitY());
 
-  drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 0));
-
-  {
-    Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
-    // Sophus::SO3f graph_opt_rot = opt::optimizeOnce(init_rot, vp, Eigen::Vector2f::UnitY());
-    drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
+  std::optional<Eigen::Vector3f> vp = std::nullopt;
+  if (vanish.has_value()) {
+    vp = K.inverse() * Eigen::Vector3f(vanish->x, vanish->y, 1);
+    Sophus::SO3f opt_rot = opt::optimizeOnce(init_rot, vp.value(), Eigen::Vector2f::UnitY());
+    drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 0));
   }
+  Sophus::SO3f graph_opt_rot = optimizer_.optimize(dR, vp, Eigen::Vector2f::UnitY(), init_rot);
+  drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
 
   // Pure measurement vanishing point
-  cv::circle(image, vanish, 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);
-  cv::circle(image, vanish, 20, cv::Scalar(0, 255, 0), 2, cv::LINE_8);
+  if (vanish.has_value()) {
+    cv::circle(image, vanish.value(), 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);
+    RCLCPP_INFO_STREAM(get_logger(), "nice vanish point " << vanish.value());
+  }
   cv::imshow("lsd", image);
   cv::waitKey(1);
-
-  RCLCPP_INFO_STREAM(get_logger(), "nice vanish point " << vanish);
 }
 
 }  // namespace imgproc

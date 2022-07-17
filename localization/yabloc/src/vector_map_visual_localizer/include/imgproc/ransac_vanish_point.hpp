@@ -61,8 +61,8 @@ public:
 
   RansacVanishPoint(const RansacVanishParam & param = RansacVanishParam());
 
-  cv::Point2f operator()(const cv::Mat & image);
-  cv::Point2f estimate(const cv::Mat & line_segments);
+  std::optional<cv::Point2f> operator()(const cv::Mat & image);
+  std::optional<cv::Point2f> estimate(const cv::Mat & line_segments);
 
   void drawActiveLines(const cv::Mat & image) const;
 
@@ -74,6 +74,6 @@ private:
 
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd_{nullptr};
 
-  Eigen::Vector2f estimateVanishPoint(const SegmentVec & horizontals);
+  std::optional<cv::Point2f> estimateVanishPoint(const SegmentVec & horizontals);
 };
 }  // namespace imgproc
