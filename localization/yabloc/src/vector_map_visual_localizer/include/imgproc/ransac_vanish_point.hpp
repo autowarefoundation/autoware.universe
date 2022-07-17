@@ -60,7 +60,7 @@ public:
   using OptPoint2f = std::optional<cv::Point2f>;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RansacVanishPoint(const RansacVanishParam & param = RansacVanishParam());
+  RansacVanishPoint(rclcpp::Node * node);
 
   OptPoint2f operator()(const cv::Mat & image);
   OptPoint2f estimate(const cv::Mat & line_segments);

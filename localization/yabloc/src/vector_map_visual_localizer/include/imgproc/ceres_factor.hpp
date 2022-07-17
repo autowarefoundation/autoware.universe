@@ -9,7 +9,7 @@ class VanishPointFactor
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  VanishPointFactor(const Eigen::Vector3d & vp) : vp_(vp) {}
+  VanishPointFactor(const Eigen::Vector3d & vp, double gain) : vp_(vp), gain_(gain) {}
 
   template <typename T>
   bool operator()(const T * const q_ptr, T * residual) const
@@ -26,34 +26,35 @@ public:
     Vector3T s;
     s << -nz / nx, T(0), T(1);
     T tmp = normal.dot(s - vp_);
-    residual[0] = tmp * tmp / n2;
+    residual[0] = gain_ * tmp * tmp / n2;
     return true;
   }
 
   static double eval(const Eigen::Vector3f & vp, const double * const q_ptr)
   {
-    VanishPointFactor obj(vp.cast<double>());
+    VanishPointFactor obj(vp.cast<double>(), 1.0);
     double residual[1];
     obj(q_ptr, residual);
     return residual[0];
   }
 
-  static ceres::CostFunction * create(const Eigen::Vector3f & vp)
+  static ceres::CostFunction * create(const Eigen::Vector3f & vp, double gain)
   {
     // residual(1), q(4)
     return new ceres::AutoDiffCostFunction<VanishPointFactor, 1, 4>(
-      new VanishPointFactor(vp.cast<double>()));
+      new VanishPointFactor(vp.cast<double>(), gain));
   }
 
 private:
   Eigen::Vector3d vp_;
+  const double gain_;
 };
 
 class HorizonFactor
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  HorizonFactor(const Eigen::Vector2d & vertical) : vertical_(vertical) {}
+  HorizonFactor(const Eigen::Vector2d & vertical, double gain) : vertical_(vertical), gain_(gain) {}
 
   template <typename T>
   bool operator()(const T * const q_ptr, T * residual) const
@@ -67,7 +68,7 @@ public:
     T n2 = nx * nx + ny * ny;
     T tmp = -ny * vertical_.x() + nx * vertical_.y();
 
-    residual[0] = 4.0 * tmp * tmp / n2;
+    residual[0] = gain_ * tmp * tmp / n2;
     return true;
   }
 
@@ -80,21 +81,22 @@ public:
 
   static double eval(const Eigen::Vector2f & vertical, const double * const q_ptr)
   {
-    HorizonFactor obj(vertical.cast<double>());
+    HorizonFactor obj(vertical.cast<double>(), 1.0);
     double residual[1];
     obj(q_ptr, residual);
     return residual[0];
   }
 
-  static ceres::CostFunction * create(const Eigen::Vector2f & vertical)
+  static ceres::CostFunction * create(const Eigen::Vector2f & vertical, double gain)
   {
     // residual(1), q(4)
     return new ceres::AutoDiffCostFunction<HorizonFactor, 1, 4>(
-      new HorizonFactor(vertical.cast<double>()));
+      new HorizonFactor(vertical.cast<double>(), gain));
   }
 
 private:
   Eigen::Vector2d vertical_;
+  const double gain_;
 };
 
 class ImuFactor
@@ -120,7 +122,7 @@ public:
   static double eval(
     const Sophus::SO3f & dR, const double * const q1_ptr, const double * const q2_ptr)
   {
-    ImuFactor obj(dR.unit_quaternion().cast<double>(), 2);
+    ImuFactor obj(dR.unit_quaternion().cast<double>(), 1.0);
     double residual[3];
     obj(q1_ptr, q2_ptr, residual);
     Eigen::Map<Eigen::Vector3d> residuals(residual);
@@ -136,6 +138,6 @@ public:
 
 private:
   Eigen::Quaterniond dq_;
-  double gain_;
+  const double gain_;
 };
 }  // namespace imgproc::opt

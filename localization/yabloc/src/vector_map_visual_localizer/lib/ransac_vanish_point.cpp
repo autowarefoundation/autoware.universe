@@ -8,7 +8,13 @@
 
 namespace imgproc
 {
-RansacVanishPoint::RansacVanishPoint(const RansacVanishParam & param) : param_(param)
+RansacVanishPoint::RansacVanishPoint(rclcpp::Node * node)
+: param_{
+    node->declare_parameter<int>("max_iteration", 500),
+    node->declare_parameter<int>("sample_count", 4),
+    node->declare_parameter<float>("inlier_ratio", 0.2f),
+    node->declare_parameter<float>("error_threshold", 0.996f),
+    node->declare_parameter<float>("lsd_sigma", 1.5f)}
 {
   using cv::lsd::createLineSegmentDetector;
   lsd_ = createLineSegmentDetector(

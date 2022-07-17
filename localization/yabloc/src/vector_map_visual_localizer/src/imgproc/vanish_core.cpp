@@ -20,16 +20,8 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
     "/sensing/camera/traffic_light/camera_info", 10,
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
 
-  {
-    RansacVanishParam param;
-    param.max_iteration_ = declare_parameter<int>("max_iteration", 500);
-    param.sample_count_ = declare_parameter<int>("sample_count", 4);
-    param.inlier_ratio_ = declare_parameter<float>("inlier_ratio", 0.2);
-    param.error_threshold_ = declare_parameter<float>("error_threshold", 0.996);
-    param.lsd_sigma_ = declare_parameter<float>("lsd_sigma", 1.5);
-
-    ransac_vanish_point_ = std::make_shared<RansacVanishPoint>(param);
-  }
+  ransac_vanish_point_ = std::make_shared<RansacVanishPoint>(this);
+  optimizer_ = std::make_shared<opt::Optimizer>(this);
 }
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
@@ -154,7 +146,7 @@ void VanishPoint::callbackImage(const Image & msg)
 
   // Optimize using graph optimizer
   Sophus::SO3f graph_opt_rot =
-    optimizer_.optimize(dR, vp_image, Eigen::Vector2f::UnitY(), init_rot);
+    optimizer_->optimize(dR, vp_image, Eigen::Vector2f::UnitY(), init_rot);
   drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 0));
 
   // Visualize

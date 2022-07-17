@@ -18,6 +18,13 @@ using ceres::Solver;
 
 namespace imgproc::opt
 {
+Optimizer::Optimizer(rclcpp::Node * node)
+: vertices_(node->declare_parameter<int>("opt.max_vertex_cnt", 5)),
+  imu_factor_gain_(node->declare_parameter<float>("opt.imu_factor_gain", 1.0f)),
+  vp_factor_gain_(node->declare_parameter<float>("opt.vp_factor_gain", 1.0f)),
+  hz_factor_gain_(node->declare_parameter<float>("opt.hz_factor_gain", 1.0f))
+{
+}
 
 std::vector<Sophus::SO3f> Optimizer::allRotations() const
 {
@@ -53,23 +60,23 @@ Sophus::SO3f Optimizer::optimize(
     problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
     // vp-cost
     if (v->vp_.has_value())
-      problem.AddResidualBlock(VanishPointFactor::create(v->vp_.value()), loss, v->q_.data());
+      problem.AddResidualBlock(
+        VanishPointFactor::create(v->vp_.value(), vp_factor_gain_), loss, v->q_.data());
     // horizontal-coost
-    problem.AddResidualBlock(HorizonFactor::create(vertical), loss, v->q_.data());
+    problem.AddResidualBlock(HorizonFactor::create(vertical, hz_factor_gain_), loss, v->q_.data());
 
     if (i == 0) continue;
 
     // imu-cost
     Vertex::Ptr & v_prev = vertices_.at(i - 1);
     problem.AddResidualBlock(
-      ImuFactor::create(v->dR_, 2), nullptr, v_prev->q_.data(), v->q_.data());
+      ImuFactor::create(v->dR_, imu_factor_gain_), nullptr, v_prev->q_.data(), v->q_.data());
   }
 
   std::cout << "=== BEFORE ===" << std::endl;
   printEvaluation();
 
-  // TODO: Fix first vertix
-  // I guess we should fix it
+  // Fix first vertix (I believe we should anchor it)
   problem.SetParameterBlockConstant(vertices_.front()->q_.data());
 
   // Solve opmization problem
@@ -116,7 +123,7 @@ Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp)
 
   Eigen::Vector4d q = R.unit_quaternion().coeffs().cast<double>();
   problem.AddParameterBlock(q.data(), 4, new ceres::EigenQuaternionParameterization());
-  problem.AddResidualBlock(VanishPointFactor::create(vp), nullptr, q.data());
+  problem.AddResidualBlock(VanishPointFactor::create(vp, 1.0), nullptr, q.data());
 
   Solver::Options options;
   options.max_num_iterations = 50;
@@ -157,8 +164,8 @@ Sophus::SO3f optimizeOnce(
 
   Eigen::Vector4d q = R.unit_quaternion().coeffs().cast<double>();
   problem.AddParameterBlock(q.data(), 4, new ceres::EigenQuaternionParameterization());
-  problem.AddResidualBlock(VanishPointFactor::create(vp), nullptr, q.data());
-  problem.AddResidualBlock(HorizonFactor::create(vertical), nullptr, q.data());
+  problem.AddResidualBlock(VanishPointFactor::create(vp, 1.0), nullptr, q.data());
+  problem.AddResidualBlock(HorizonFactor::create(vertical, 1.0), nullptr, q.data());
 
   Solver::Options options;
   options.max_num_iterations = 50;
