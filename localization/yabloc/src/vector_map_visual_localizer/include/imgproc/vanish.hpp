@@ -20,6 +20,7 @@ public:
   using Imu = sensor_msgs::msg::Imu;
   using Image = sensor_msgs::msg::Image;
   using CameraInfo = sensor_msgs::msg::CameraInfo;
+  using OptPoint2f = std::optional<cv::Point2f>;
 
   VanishPoint();
 

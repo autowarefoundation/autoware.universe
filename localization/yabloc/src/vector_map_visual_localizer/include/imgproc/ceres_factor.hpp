@@ -67,7 +67,7 @@ public:
     T n2 = nx * nx + ny * ny;
     T tmp = -ny * vertical_.x() + nx * vertical_.y();
 
-    residual[0] = tmp * tmp / n2;
+    residual[0] = 4.0 * tmp * tmp / n2;
     return true;
   }
 

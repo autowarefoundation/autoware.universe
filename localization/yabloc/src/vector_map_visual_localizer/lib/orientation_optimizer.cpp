@@ -30,15 +30,17 @@ std::vector<Sophus::SO3f> Optimizer::allRotations() const
 }
 
 Sophus::SO3f Optimizer::optimize(
-  const Sophus::SO3f & dR, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical,
+  const Sophus::SO3f & dR, const OptVector3f & vp, const Eigen::Vector2f & vertical,
   const Sophus::SO3f & initial_R)
 {
-  // Push back a new vertex into ring buffer
+  // Store the first vertex and return ASAP
   if (vertices_.empty()) {
     Vertex::Ptr v = std::make_shared<Vertex>(initial_R.unit_quaternion(), vp, dR);
     vertices_.push_back(v);
-    return dR;
+    return initial_R;
   }
+
+  // Push back a new vertex into ring buffer
   Sophus::SO3f last_R = vertices_.back()->so3f();
   Vertex::Ptr v = std::make_shared<Vertex>((last_R * dR).unit_quaternion(), vp, dR);
   vertices_.push_back(v);
@@ -50,7 +52,8 @@ Sophus::SO3f Optimizer::optimize(
     Vertex::Ptr & v = vertices_.at(i);
     problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
     // vp-cost
-    problem.AddResidualBlock(VanishPointFactor::create(vp), loss, v->q_.data());
+    if (v->vp_.has_value())
+      problem.AddResidualBlock(VanishPointFactor::create(v->vp_.value()), loss, v->q_.data());
     // horizontal-coost
     problem.AddResidualBlock(HorizonFactor::create(vertical), loss, v->q_.data());
 
@@ -88,12 +91,14 @@ void Optimizer::printEvaluation() const
 {
   // Evaluate before status
   auto vp0 = vertices_.front();
-  float cost_vp0 = VanishPointFactor::eval(vp0->vp_, vp0->q_.data());
+  float cost_vp0 = 0;
+  if (vp0->vp_.has_value()) cost_vp0 = VanishPointFactor::eval(vp0->vp_.value(), vp0->q_.data());
   float cost_hz0 = HorizonFactor::eval(Eigen::Vector2f::UnitY(), vp0->q_.data());
 
   if (vertices_.size() < 2) return;
   auto vp1 = vertices_.at(1);
-  float cost_vp1 = VanishPointFactor::eval(vp1->vp_, vp1->q_.data());
+  float cost_vp1 = 0;
+  if (vp1->vp_.has_value()) cost_vp1 = VanishPointFactor::eval(vp1->vp_.value(), vp0->q_.data());
   float cost_hz1 = HorizonFactor::eval(Eigen::Vector2f::UnitY(), vp1->q_.data());
 
   float cost_imu = ImuFactor::eval(vp1->dR_, vp0->q_.data(), vp1->q_.data());

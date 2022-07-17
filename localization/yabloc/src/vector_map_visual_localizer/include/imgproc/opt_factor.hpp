@@ -11,8 +11,9 @@ class Vertex
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<Vertex>;
+  using OptVector3f = std::optional<Eigen::Vector3f>;
 
-  Vertex(const Eigen::Quaternionf & qf, const Eigen::Vector3f & vp, const Sophus::SO3f & dR)
+  Vertex(const Eigen::Quaternionf & qf, const OptVector3f & vp, const Sophus::SO3f & dR)
   : vp_(vp), dR_(dR), q_(qf.coeffs().cast<double>())
   {
   }
@@ -26,7 +27,7 @@ public:
     return Sophus::SO3f(qf);
   }
 
-  const Eigen::Vector3f vp_;
+  const OptVector3f vp_;
   const Sophus::SO3f dR_;
   Eigen::Vector4d q_;
 

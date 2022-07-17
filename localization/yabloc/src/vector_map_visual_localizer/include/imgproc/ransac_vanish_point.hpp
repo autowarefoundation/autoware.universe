@@ -57,12 +57,13 @@ class RansacVanishPoint
 public:
   using Vec3Vec = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
   using SegmentVec = std::vector<LineSegment>;
+  using OptPoint2f = std::optional<cv::Point2f>;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   RansacVanishPoint(const RansacVanishParam & param = RansacVanishParam());
 
-  std::optional<cv::Point2f> operator()(const cv::Mat & image);
-  std::optional<cv::Point2f> estimate(const cv::Mat & line_segments);
+  OptPoint2f operator()(const cv::Mat & image);
+  OptPoint2f estimate(const cv::Mat & line_segments);
 
   void drawActiveLines(const cv::Mat & image) const;
 
@@ -74,6 +75,6 @@ private:
 
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd_{nullptr};
 
-  std::optional<cv::Point2f> estimateVanishPoint(const SegmentVec & horizontals);
+  OptPoint2f estimateVanishPoint(const SegmentVec & horizontals);
 };
 }  // namespace imgproc
