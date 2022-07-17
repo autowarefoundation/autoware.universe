@@ -31,6 +31,7 @@
 
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
 
+#include <Eigen/Dense>
 #include <motion_utils/motion_utils.hpp>
 
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
@@ -55,7 +56,6 @@
 #include <queue>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
 
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
@@ -166,7 +166,7 @@ private:
   BrakeMap new_brake_map_;
   std::vector<double> part_original_accel_mse_que_;
   std::vector<double> full_original_accel_mse_que_;
-  //std::vector<double> full_original_accel_esm_que_;
+  // std::vector<double> full_original_accel_esm_que_;
   std::vector<double> full_original_accel_l1_que_;
   std::vector<double> full_original_accel_sq_l1_que_;
   std::vector<double> new_accel_mse_que_;
