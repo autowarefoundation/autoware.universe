@@ -2068,16 +2068,16 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     // Use kappa estimated to call simulate method of mpc. The delay time-step is
     // computed with the sampling time step: params_node_.control_period
 
-    ns_utils::print("Before simulating predictive state, the state vector is:");
-    ns_eigen_utils::printEigenMat(x0_predicted);
-
-    ns_utils::print("Controls sent to the simulator:");
-    ns_eigen_utils::printEigenMat(uk);
+    //    ns_utils::print("Before simulating predictive state, the state vector is:");
+    //    ns_eigen_utils::printEigenMat(x0_predicted);
+    //
+    //    ns_utils::print("Controls sent to the simulator:");
+    //    ns_eigen_utils::printEigenMat(uk);
 
     nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, params_node_.control_period, x0_predicted);
 
-    ns_utils::print("After simulateOneStep predictive state, the state vector is:");
-    ns_eigen_utils::printEigenMat(x0_predicted);
+    //    ns_utils::print("After simulateOneStep predictive state, the state vector is:");
+    //    ns_eigen_utils::printEigenMat(x0_predicted);
 
     // Saturate steering.
     //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
