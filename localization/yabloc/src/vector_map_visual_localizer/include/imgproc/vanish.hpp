@@ -41,6 +41,10 @@ private:
     const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
     const cv::Scalar & color = cv::Scalar(0, 255, 0));
 
+  void drawCrossLine(
+    const cv::Mat & image, const cv::Point2f & vp,
+    const cv::Scalar & color = cv::Scalar(0, 255, 0));
+
   void drawHorizontalLine(
     const cv::Mat & image, const Sophus::SO3f & rot,
     const cv::Scalar & color = cv::Scalar(0, 255, 0), int thick = 2);

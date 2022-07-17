@@ -17,7 +17,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using OptVector3f = std::optional<Eigen::Vector3f>;
 
-  Optimizer(int max_vertex_size = 5) : vertices_(max_vertex_size) {}
+  Optimizer(int max_vertex_size = 10) : vertices_(max_vertex_size) {}
 
   Sophus::SO3f optimize(
     const Sophus::SO3f & dR, const OptVector3f & vp, const Eigen::Vector2f & vertical,

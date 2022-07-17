@@ -112,46 +112,52 @@ void VanishPoint::drawVerticalLine(
   cv::line(image, cv::Point(u1, 0), cv::Point2i(u2, H), color, 1);
 }
 
+void VanishPoint::drawCrossLine(
+  const cv::Mat & image, const cv::Point2f & vp, const cv::Scalar & color)
+{
+  const int H = image.rows;
+  const int W = image.cols;
+  cv::line(image, cv::Point(vp.x, 0), cv::Point2i(vp.x, H), color, 1);
+  cv::line(image, cv::Point(0, vp.y), cv::Point2i(W, vp.y), color, 1);
+  cv::circle(image, vp, 5, color, 1, cv::LINE_8);
+}
+
 void VanishPoint::callbackImage(const Image & msg)
 {
+  // Prepare coodinate transformation
   auto opt_imu_ex =
     tf_subscriber_("traffic_light_left_camera/camera_optical_link", "tamagawa/imu_link");
   auto opt_camera_ex = tf_subscriber_("base_link", "traffic_light_left_camera/camera_optical_link");
+  const Sophus::SO3f init_rot = Sophus::SO3f(opt_camera_ex->rotation());
+  const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
+  const Eigen::Matrix3f K = Kd.cast<float>();
 
+  // Return soon if at least one transformation is not ready
   if (!opt_imu_ex.has_value()) return;
   if (!opt_camera_ex.has_value()) return;
   if (!info_.has_value()) return;
 
+  // Obtain relative rotation from last frame
   Sophus::SO3f dR = integral(msg.header.stamp);
 
+  // Detect vanishing point using LSD & RANSAC
   cv::Mat image = util::decompress2CvMat(msg);
   OptPoint2f vanish = (*ransac_vanish_point_)(image);
   ransac_vanish_point_->drawActiveLines(image);
+  if (vanish.has_value()) drawCrossLine(image, vanish.value(), cv::Scalar(0, 255, 0));
 
-  if (vanish.has_value()) drawVerticalLine(image, vanish.value(), Eigen::Vector2f::UnitY());
-
-  // Visualize estimated vanishing point
-  const Sophus::SO3f init_rot = Sophus::SO3f(opt_camera_ex->rotation());
-  // drawHorizontalLine(image, init_rot, cv::Scalar(0, 255, 255));
-
-  const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
-  const Eigen::Matrix3f K = Kd.cast<float>();
-
+  // Transform vanishing point from the image coordinate to camera coordinate
   std::optional<Eigen::Vector3f> vp_image = std::nullopt;
   if (vanish.has_value()) {
     vp_image = K.inverse() * Eigen::Vector3f(vanish->x, vanish->y, 1);
-    Sophus::SO3f opt_rot = opt::optimizeOnce(init_rot, vp_image.value(), Eigen::Vector2f::UnitY());
-    drawHorizontalLine(image, opt_rot, cv::Scalar(0, 255, 0));
   }
+
+  // Optimize using graph optimizer
   Sophus::SO3f graph_opt_rot =
     optimizer_.optimize(dR, vp_image, Eigen::Vector2f::UnitY(), init_rot);
   drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
 
-  // Pure measurement vanishing point
-  if (vanish.has_value()) {
-    cv::circle(image, vanish.value(), 5, cv::Scalar(0, 255, 0), 1, cv::LINE_8);
-    RCLCPP_INFO_STREAM(get_logger(), "nice vanish point " << vanish.value());
-  }
+  // Visualize
   cv::imshow("lsd", image);
   cv::waitKey(1);
 }
