@@ -70,7 +70,7 @@ public:
 private:
   const RansacVanishParam param_;
   mutable std::random_device seed_gen_;
-  SegmentVec last_horizontals_;
+  SegmentVec last_diagonal_, last_perpendicular_;
   std::vector<int> last_inlier_horizontal_indices_;
 
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd_{nullptr};

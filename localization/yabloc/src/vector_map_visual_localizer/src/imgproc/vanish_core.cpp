@@ -155,7 +155,7 @@ void VanishPoint::callbackImage(const Image & msg)
   // Optimize using graph optimizer
   Sophus::SO3f graph_opt_rot =
     optimizer_.optimize(dR, vp_image, Eigen::Vector2f::UnitY(), init_rot);
-  drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 255));
+  drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 0));
 
   // Visualize
   cv::imshow("lsd", image);

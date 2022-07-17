@@ -17,8 +17,22 @@ RansacVanishPoint::RansacVanishPoint(const RansacVanishParam & param) : param_(p
 
 void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
 {
+  cv::Mat overlay = cv::Mat::zeros(image.size(), CV_8UC3);
+
+  auto drawWholeLineSegments = [&overlay](SegmentVec line_segments) -> void {
+    for (const LineSegment & ls : line_segments) {
+      cv::Point2i from(ls.from_.x(), ls.from_.y());
+      cv::Point2i to(ls.to_.x(), ls.to_.y());
+      auto color = (ls.is_diagonal_) ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 165, 255);
+      cv::line(overlay, from, to, color, 1);
+    }
+  };
+  drawWholeLineSegments(last_diagonal_);
+  drawWholeLineSegments(last_perpendicular_);
+
+  cv::addWeighted(image, 0.8, overlay, 0.5, 1.0, image);
   for (int index : last_inlier_horizontal_indices_) {
-    const auto & segment = last_horizontals_.at(index);
+    const auto & segment = last_diagonal_.at(index);
     cv::Point2i from(segment.from_.x(), segment.from_.y());
     cv::Point2i to(segment.to_.x(), segment.to_.y());
     cv::line(image, from, to, cv::Scalar(0, 0, 255), 2);
@@ -27,18 +41,21 @@ void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
 
 std::optional<cv::Point2f> RansacVanishPoint::estimate(const cv::Mat & line_segments)
 {
-  SegmentVec horizontals, verticals;
+  SegmentVec perpendicular, diagonal;
 
   for (int i = 0; i < line_segments.rows; i++) {
     LineSegment segment(line_segments.row(i));
     if (segment.is_diagonal_) {
-      horizontals.push_back(segment);
+      diagonal.push_back(segment);
     } else {
-      verticals.push_back(segment);
+      perpendicular.push_back(segment);
     }
   }
 
-  return estimateVanishPoint(horizontals);
+  last_diagonal_ = diagonal;
+  last_perpendicular_ = perpendicular;
+
+  return estimateVanishPoint(diagonal);
 }
 
 std::optional<cv::Point2f> RansacVanishPoint::operator()(const cv::Mat & image)
@@ -50,22 +67,21 @@ std::optional<cv::Point2f> RansacVanishPoint::operator()(const cv::Mat & image)
   return estimate(line_segments);
 }
 
-std::optional<cv::Point2f> RansacVanishPoint::estimateVanishPoint(const SegmentVec & horizontals)
+std::optional<cv::Point2f> RansacVanishPoint::estimateVanishPoint(const SegmentVec & diagonals)
 {
   std::mt19937 engine{seed_gen_()};
 
   Eigen::Vector2f best_candidate = Eigen::Vector2f::Zero();
   float best_residual = std::numeric_limits<float>::max();
 
-  const int N = horizontals.size();
+  const int N = diagonals.size();
 
   last_inlier_horizontal_indices_.clear();
-  last_horizontals_ = horizontals;
 
   for (int itr = 0; itr < param_.max_iteration_; itr++) {
     SegmentVec samples;
     std::sample(
-      horizontals.begin(), horizontals.end(), std::back_inserter(samples), param_.sample_count_,
+      diagonals.begin(), diagonals.end(), std::back_inserter(samples), param_.sample_count_,
       engine);
 
     Eigen::MatrixXf A_sample(param_.sample_count_, 2);
@@ -81,7 +97,7 @@ std::optional<cv::Point2f> RansacVanishPoint::estimateVanishPoint(const SegmentV
     SegmentVec inliers;
     std::vector<int> inlier_indices;
     for (int i = 0; i < N; i++) {
-      const LineSegment & segment = horizontals.at(i);
+      const LineSegment & segment = diagonals.at(i);
       const Eigen::Vector2f mid = segment.mid_;
       const float theta = segment.theta_;
 
