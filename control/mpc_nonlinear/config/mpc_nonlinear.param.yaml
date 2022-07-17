@@ -12,7 +12,7 @@
     # -- Simulation model for planning simulator --
     use_mpc_controller: true    # if false it uses the feedback controllers.
     use_delay_sim_model: true   # for DELAY_STEER planning simulator model. For debugging only.
-    input_delay_time: 0.1 # 0.3    # input dead-time [s]
+    input_delay_time: 0.0 # 0.3    # input dead-time [s]
 
     # -- Use time or arc-length as the interpolation coordinates for predictions --
     use_acceleration_inputs: true                 # if false, traj speeds are used in the simulations
@@ -86,8 +86,8 @@
     feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
 
     # CDOB - DOB parameters.
-    use_cdob: false
-    use_dob: false # activating use_dob only enables use_cdob. They are both used.
+    use_cdob: true
+    use_dob: true # activating use_dob only enables use_cdob. They are both used.
 
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
     # -- UKF specific parameters --

@@ -8,7 +8,7 @@
     qfilter_lateral_error_cdob_freq: 10.  #qfilter frequency in Hz for lateral error
     qfilter_lateral_cdob_damping: 2.
 
-    qfilter_lateral_dob_order: 4     # disturbance observer qfilter order.
+    qfilter_lateral_dob_order: 2     # disturbance observer qfilter order.
     qfilter_lateral_dob_freq: 10.    # qfilter frequency in Hz for lateral error
     qfilter_lateral_dob_damping: 5. # damping for the dob filter.
 

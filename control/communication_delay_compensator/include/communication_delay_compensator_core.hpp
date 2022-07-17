@@ -109,6 +109,7 @@ class LateralCommunicationDelayCompensator
   state_vector_observer_t xhat0_prev_{state_vector_observer_t::Zero()};
 
   //@brief estimated vehicle states, disturbance row is zero (cannot observed)
+  state_vector_vehicle_t prev_yobs_{state_vector_vehicle_t::Zero()};
   state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
 
   // @brief temporary variables
@@ -214,7 +215,6 @@ class LateralDisturbanceCompensator
   state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
 
   // -------------- VEHICLE MODEL VARIABLES ----------------------------
-  state_vector_vehicle_t x_yv_d0_{state_vector_vehicle_t::Zero()}; // time-delay obs outputs:y
   state_vector_vehicle_t yv_td0_{state_vector_vehicle_t::Zero()}; // time-delay obs outputs:y
   state_vector_vehicle_t yv_f0_{state_vector_vehicle_t::Zero()}; // filtered outputs.
 
