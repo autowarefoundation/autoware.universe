@@ -17,6 +17,10 @@ repositories:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_msgs.git # TODO(Tier IV): Rename to tier4/tier4_autoware_msgs
     version: tier4/universe
+  universe/external/morai_msgs:
+    type: git
+    url: https://github.com/MORAI-Autonomous/MORAI-ROS2_morai_msgs.git
+    version: main
   universe/vendor/grid_map:
     type: git
     url: https://github.com/ANYbotics/grid_map.git
