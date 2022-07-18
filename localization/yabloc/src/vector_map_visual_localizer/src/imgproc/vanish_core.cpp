@@ -26,6 +26,52 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
 
+void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & lines)
+{
+  auto opt_camera_ex = tf_subscriber_("traffic_light_left_camera/camera_optical_link", "base_link");
+  const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
+  const Eigen::Matrix3f K = Kd.cast<float>();
+  const float max_range = 20;
+  const float image_size = 800;
+  auto toCvPoint = [max_range, image_size](const Eigen::Vector3f & v) -> cv ::Point2i {
+    cv::Point pt;
+    pt.x = -v.y() / max_range * image_size * 0.5f + image_size / 2;
+    pt.y = -v.x() / max_range * image_size * 0.5f + image_size;
+    return pt;
+  };
+
+  const Eigen::Matrix3f Kinv = K.inverse();
+  const Eigen::Vector3f t = opt_camera_ex->translation();
+  const Eigen::Quaternionf q(opt_camera_ex->rotation());
+  auto project_func = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
+    Eigen::Vector3f u3(u.x(), u.y(), 1);
+    Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
+    if (u_bearing.z() > -0.01) return std::nullopt;
+    float u_distance = -t.z() / u_bearing.z();
+    Eigen::Vector3f v;
+    v.x() = t.x() + u_bearing.x() * u_distance;
+    v.y() = t.y() + u_bearing.y() * u_distance;
+    v.z() = 0;
+    return v;
+  };
+
+  cv::Mat image = cv::Mat::zeros(cv::Size(image_size, image_size), CV_8UC3);
+
+  for (int i = 0; i < lines.rows; i++) {
+    cv::Mat xy_xy(lines.row(i));
+    Eigen::Vector3f from, to;
+    from << xy_xy.at<float>(0), xy_xy.at<float>(1), 1;
+    to << xy_xy.at<float>(2), xy_xy.at<float>(3), 1;
+    std::optional<Eigen::Vector3f> opt1 = project_func(from);
+    std::optional<Eigen::Vector3f> opt2 = project_func(to);
+    if (!opt1.has_value()) continue;
+    if (!opt2.has_value()) continue;
+    cv::line(image, toCvPoint(*opt1), toCvPoint(*opt2), cv::Scalar(0, 255, 255), 1);
+  }
+
+  cv::imshow("projected", image);
+}
+
 Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 {
   auto opt_ex =
@@ -65,10 +111,9 @@ void VanishPoint::drawHorizontalLine(
   const float cx = K(0, 2);
   const float fx = K(0, 0);
 
-  // The argument `normal` is in coordinate of normalized camera, where intrinsic parameter is not
-  // considered. If normal is [0,-1,0], then it points upper side of image and it means horizontal
-  // plane is literally horizontal.
-  // n\cdot [x,y,z]=0
+  // The argument `rot` is rotation in coordinate of normalized camera, where intrinsic parameter is
+  // not considered. If normal is [0,-1,0], then it points upper side of image and it means
+  // horizontal plane is literally horizontal. n\cdot [x,y,z]=0
 
   // This function assumes that horizontal line accross image almost horizontally.
   // So, all we need to compute is the left point and right point of line.
@@ -134,7 +179,8 @@ void VanishPoint::callbackImage(const Image & msg)
 
   // Detect vanishing point using LSD & RANSAC
   cv::Mat image = util::decompress2CvMat(msg);
-  OptPoint2f vanish = (*ransac_vanish_point_)(image);
+  cv::Mat lines = ransac_vanish_point_->lsd(image);
+  OptPoint2f vanish = ransac_vanish_point_->estimate(lines);
   ransac_vanish_point_->drawActiveLines(image);
   if (vanish.has_value()) drawCrossLine(image, vanish.value(), cv::Scalar(0, 255, 0));
 
@@ -150,6 +196,7 @@ void VanishPoint::callbackImage(const Image & msg)
   drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 0));
 
   // Visualize
+  projectOnPlane(graph_opt_rot, lines);
   cv::imshow("lsd", image);
   cv::waitKey(1);
 }

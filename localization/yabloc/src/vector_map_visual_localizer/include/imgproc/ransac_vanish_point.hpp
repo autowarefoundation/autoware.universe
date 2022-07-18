@@ -67,6 +67,8 @@ public:
 
   void drawActiveLines(const cv::Mat & image) const;
 
+  cv::Mat lsd(const cv::Mat & image) const;
+
 private:
   const RansacVanishParam param_;
   mutable std::random_device seed_gen_;

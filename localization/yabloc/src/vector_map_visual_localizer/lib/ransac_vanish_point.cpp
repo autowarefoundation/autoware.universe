@@ -21,6 +21,14 @@ RansacVanishPoint::RansacVanishPoint(rclcpp::Node * node)
     cv::lsd::LSD_REFINE_STD, 0.8, param_.lsd_sigma_, 2.0, 22.5, 0, 0.7, 1024);
 }
 
+cv::Mat RansacVanishPoint::lsd(const cv::Mat & image) const
+{
+  cv::Mat gray_image, line_segments;
+  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+  lsd_->detect(gray_image, line_segments);
+  return line_segments;
+}
+
 void RansacVanishPoint::drawActiveLines(const cv::Mat & image) const
 {
   cv::Mat overlay = cv::Mat::zeros(image.size(), CV_8UC3);
@@ -66,10 +74,7 @@ std::optional<cv::Point2f> RansacVanishPoint::estimate(const cv::Mat & line_segm
 
 std::optional<cv::Point2f> RansacVanishPoint::operator()(const cv::Mat & image)
 {
-  cv::Mat gray_image;
-  cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-  cv::Mat line_segments;
-  lsd_->detect(gray_image, line_segments);
+  cv::Mat line_segments = lsd(image);
   return estimate(line_segments);
 }
 

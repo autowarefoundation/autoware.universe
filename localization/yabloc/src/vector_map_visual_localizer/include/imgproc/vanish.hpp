@@ -54,5 +54,6 @@ private:
   Sophus::SO3f integral(const rclcpp::Time & image_stamp);
   void callbackImu(const Imu & msg);
   void callbackImage(const Image & msg);
+  void projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & lines);
 };
 }  // namespace imgproc
