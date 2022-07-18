@@ -19,7 +19,7 @@ public:
   using OptVector3f = std::optional<Eigen::Vector3f>;
   using Ptr = std::shared_ptr<Optimizer>;
 
-  Optimizer(rclcpp::Node * node);
+  Optimizer(rclcpp::Node * node, bool verbose = false);
 
   Sophus::SO3f optimize(
     const Sophus::SO3f & dR, const OptVector3f & vp, const Eigen::Vector2f & vertical,
@@ -28,6 +28,7 @@ public:
   std::vector<Sophus::SO3f> allRotations() const;
 
 private:
+  const bool verbose_;
   const float imu_factor_gain_;
   const float vp_factor_gain_;
   const float hz_factor_gain_;

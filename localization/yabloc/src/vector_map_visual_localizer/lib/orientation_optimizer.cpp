@@ -18,8 +18,9 @@ using ceres::Solver;
 
 namespace imgproc::opt
 {
-Optimizer::Optimizer(rclcpp::Node * node)
-: vertices_(node->declare_parameter<int>("opt.max_vertex_cnt", 5)),
+Optimizer::Optimizer(rclcpp::Node * node, bool verbose)
+: verbose_(verbose),
+  vertices_(node->declare_parameter<int>("opt.max_vertex_cnt", 5)),
   imu_factor_gain_(node->declare_parameter<float>("opt.imu_factor_gain", 1.0f)),
   vp_factor_gain_(node->declare_parameter<float>("opt.vp_factor_gain", 1.0f)),
   hz_factor_gain_(node->declare_parameter<float>("opt.hz_factor_gain", 1.0f))
@@ -73,8 +74,10 @@ Sophus::SO3f Optimizer::optimize(
       ImuFactor::create(v->dR_, imu_factor_gain_), nullptr, v_prev->q_.data(), v->q_.data());
   }
 
-  std::cout << "=== BEFORE ===" << std::endl;
-  printEvaluation();
+  if (verbose_) {
+    std::cout << "=== BEFORE ===" << std::endl;
+    printEvaluation();
+  }
 
   // Fix first vertix (I believe we should anchor it)
   problem.SetParameterBlockConstant(vertices_.front()->q_.data());
@@ -87,9 +90,11 @@ Sophus::SO3f Optimizer::optimize(
   Solve(options, &problem, &summary);
 
   // Save after-loss infomation
-  std::cout << "=== AFTER ===" << std::endl;
-  printEvaluation();
-  std::cout << summary.BriefReport() << std::endl;
+  if (verbose_) {
+    std::cout << "=== AFTER ===" << std::endl;
+    printEvaluation();
+    std::cout << summary.BriefReport() << std::endl;
+  }
 
   return vertices_.back()->so3f();
 }

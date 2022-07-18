@@ -37,9 +37,9 @@ private:
   std::list<Imu> imu_buffer_;
   std::optional<rclcpp::Time> last_imu_stamp_{std::nullopt};
 
-  void drawVerticalLine(
-    const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
-    const cv::Scalar & color = cv::Scalar(0, 255, 0));
+  void drawGridLine(const cv::Mat & image);
+
+  void rotateImage(const cv::Mat & image, const Sophus::SO3f & rot);
 
   void drawCrossLine(
     const cv::Mat & image, const cv::Point2f & vp,

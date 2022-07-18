@@ -2,8 +2,10 @@
 #include "imgproc/orientation_optimizer.hpp"
 #include "imgproc/vanish.hpp"
 
+#include <opencv4/opencv2/core/eigen.hpp>
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+#include <opencv4/opencv2/stitching/detail/warpers.hpp>
 
 namespace imgproc
 {
@@ -28,11 +30,17 @@ void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
 
 void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & lines)
 {
+  // Prepare vairables
   auto opt_camera_ex = tf_subscriber_("traffic_light_left_camera/camera_optical_link", "base_link");
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
   const float max_range = 20;
   const float image_size = 800;
+  const Eigen::Matrix3f Kinv = K.inverse();
+  const Eigen::Vector3f t = opt_camera_ex->translation();
+  const Eigen::Quaternionf q(opt_camera_ex->rotation());
+
+  // Prepare functions
   auto toCvPoint = [max_range, image_size](const Eigen::Vector3f & v) -> cv ::Point2i {
     cv::Point pt;
     pt.x = -v.y() / max_range * image_size * 0.5f + image_size / 2;
@@ -40,9 +48,6 @@ void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & 
     return pt;
   };
 
-  const Eigen::Matrix3f Kinv = K.inverse();
-  const Eigen::Vector3f t = opt_camera_ex->translation();
-  const Eigen::Quaternionf q(opt_camera_ex->rotation());
   auto project_func = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
     Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
@@ -55,8 +60,8 @@ void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & 
     return v;
   };
 
+  // Project all lins on ground plane
   cv::Mat image = cv::Mat::zeros(cv::Size(image_size, image_size), CV_8UC3);
-
   for (int i = 0; i < lines.rows; i++) {
     cv::Mat xy_xy(lines.row(i));
     Eigen::Vector3f from, to;
@@ -68,8 +73,56 @@ void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & 
     if (!opt2.has_value()) continue;
     cv::line(image, toCvPoint(*opt1), toCvPoint(*opt2), cv::Scalar(0, 255, 255), 1);
   }
-
   cv::imshow("projected", image);
+
+  // DEBUG:
+  static bool first = true;
+
+  Eigen::Vector3f tmp_rx = q.toRotationMatrix().col(0);
+  Eigen::Vector3f rz = q.toRotationMatrix().col(2);
+  Eigen::Vector3f ry = (rz.cross(tmp_rx)).normalized();
+  Eigen::Vector3f rx = ry.cross(rz);
+
+  Eigen::Matrix3f normalized;
+  normalized.col(0) = rx;
+  normalized.col(1) = ry;
+  normalized.col(2) = rz;
+
+  if (first) {
+    std::cout << "static tf" << std::endl;
+    std::cout << q.toRotationMatrix() << std::endl;
+    std::cout << "optimized tf" << std::endl;
+    std::cout << rotation.matrix() << std::endl;
+    std::cout << "normalized" << std::endl;
+    std::cout << normalized << std::endl;
+    first = false;
+  }
+}
+
+void VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
+{
+  const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
+  const Eigen::Matrix3f K = Kd.cast<float>();
+  const Eigen::Matrix3f Kinv = K.inverse();
+
+  const cv::Size size = image.size();
+  cv::Mat xmap = cv::Mat::zeros(size, CV_32FC1);
+  cv::Mat ymap = cv::Mat::zeros(size, CV_32FC1);
+
+  for (int i = 0; i < size.width; i++) {
+    for (int j = 0; j < size.height; j++) {
+      Eigen::Vector3f u(i, j, 1);
+      Eigen::Vector3f v = K * (rot * (Kinv * u));
+      v = v / v.z();
+
+      xmap.at<float>(j, i) = v.x();
+      ymap.at<float>(j, i) = v.y();
+    }
+  }
+
+  cv::Mat rotated_image;
+  cv::remap(image, rotated_image, xmap, ymap, cv::INTER_LINEAR);
+  cv::imshow("rot", rotated_image);
 }
 
 Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
@@ -133,20 +186,16 @@ void VanishPoint::drawHorizontalLine(
   cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, thick);
 }
 
-void VanishPoint::drawVerticalLine(
-  const cv::Mat & image, const cv::Point2f & vp, const Eigen::Vector2f & tangent,
-  const cv::Scalar & color)
+void VanishPoint::drawGridLine(const cv::Mat & image)
 {
   const int H = image.rows;
-
-  Eigen::Vector2f t = tangent;
-  if (t.y() < 0) t = -t;
-
-  float lambda1 = -vp.y / (t.y() + 1e-6f);
-  float lambda2 = (H - vp.y) / (t.y() + 1e-6f);
-  float u1 = lambda1 * tangent.x() + vp.x;
-  float u2 = lambda2 * tangent.x() + vp.x;
-  cv::line(image, cv::Point(u1, 0), cv::Point2i(u2, H), color, 1);
+  const int W = image.cols;
+  const int N = 5;
+  for (int i = 0; i < N - 1; i++) {
+    cv::line(
+      image, cv::Point(0, (i + 1) * H / N), cv::Point2i(W, (i + 1) * H / N),
+      cv::Scalar(255, 255, 0), 1);
+  }
 }
 
 void VanishPoint::drawCrossLine(
@@ -183,6 +232,7 @@ void VanishPoint::callbackImage(const Image & msg)
   OptPoint2f vanish = ransac_vanish_point_->estimate(lines);
   ransac_vanish_point_->drawActiveLines(image);
   if (vanish.has_value()) drawCrossLine(image, vanish.value(), cv::Scalar(0, 255, 0));
+  drawHorizontalLine(image, init_rot, cv::Scalar(200, 255, 0), 1);
 
   // Transform vanishing point from the image coordinate to camera coordinate
   std::optional<Eigen::Vector3f> vp_image = std::nullopt;
@@ -196,7 +246,8 @@ void VanishPoint::callbackImage(const Image & msg)
   drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 0));
 
   // Visualize
-  projectOnPlane(graph_opt_rot, lines);
+  rotateImage(image, Sophus::SO3f::rotX(0.1));
+  projectOnPlane(graph_opt_rot.inverse(), lines);
   cv::imshow("lsd", image);
   cv::waitKey(1);
 }
