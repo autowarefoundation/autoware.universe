@@ -86,6 +86,7 @@ struct DynamicObstacleData
   PredictedObjects predicted_objects;
   pcl::PointCloud<pcl::PointXYZ> compare_map_filtered_pointcloud;
   PathWithLaneId path;
+  Polygons2d detection_area_polygon;
 };
 
 /**
@@ -96,13 +97,15 @@ class DynamicObstacleCreator
 public:
   explicit DynamicObstacleCreator(rclcpp::Node & node) : node_(node) {}
   virtual ~DynamicObstacleCreator() = default;
-  virtual std::vector<DynamicObstacle> createDynamicObstacles() const = 0;
+  virtual std::vector<DynamicObstacle> createDynamicObstacles() = 0;
   void setParam(const DynamicObstacleParam & param) { param_ = param; }
-  void setData(const PlannerData & planner_data, const PathWithLaneId & path)
+  void setData(
+    const PlannerData & planner_data, const PathWithLaneId & path, const Polygons2d & poly)
   {
     // compare map filtered points are subscribed in derived class that needs points
     dynamic_obstacle_data_.predicted_objects = *planner_data.predicted_objects;
     dynamic_obstacle_data_.path = path;
+    dynamic_obstacle_data_.detection_area_polygon = poly;
   }
 
 protected:
@@ -118,7 +121,7 @@ class DynamicObstacleCreatorForObject : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForObject(rclcpp::Node & node);
-  std::vector<DynamicObstacle> createDynamicObstacles() const override;
+  std::vector<DynamicObstacle> createDynamicObstacles() override;
 };
 
 /**
@@ -129,7 +132,7 @@ class DynamicObstacleCreatorForObjectWithoutPath : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForObjectWithoutPath(rclcpp::Node & node);
-  std::vector<DynamicObstacle> createDynamicObstacles() const override;
+  std::vector<DynamicObstacle> createDynamicObstacles() override;
 };
 
 /**
@@ -140,7 +143,7 @@ class DynamicObstacleCreatorForPoints : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForPoints(rclcpp::Node & node);
-  std::vector<DynamicObstacle> createDynamicObstacles() const override;
+  std::vector<DynamicObstacle> createDynamicObstacles() override;
 
 private:
   void onCompareMapFilteredPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
@@ -150,6 +153,9 @@ private:
   // tf
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+
+  // mutex for compare_map_filtered_pointcloud
+  std::mutex mutex_;
 };
 
 }  // namespace behavior_velocity_planner

@@ -76,8 +76,7 @@ bool IntersectionModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::INTERSECTION);
 
-  const auto input_path = *path;
-  debug_data_.path_raw = input_path;
+  debug_data_.path_raw = *path;
 
   State current_state = state_machine_.getState();
   RCLCPP_DEBUG(logger_, "lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
@@ -142,7 +141,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* calc closest index */
   int closest_idx = -1;
-  if (!planning_utils::calcClosestIndex(input_path, current_pose.pose, closest_idx)) {
+  if (!planning_utils::calcClosestIndex(*path, current_pose.pose, closest_idx)) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "calcClosestIndex fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
@@ -158,9 +157,9 @@ bool IntersectionModule::modifyPathVelocity(
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
-    setDistance(tier4_autoware_utils::calcSignedArcLength(
-      input_path.points, planner_data_->current_pose.pose.position,
-      input_path.points.at(stop_line_idx).point.pose.position));
+    setDistance(motion_utils::calcSignedArcLength(
+      path->points, planner_data_->current_pose.pose.position,
+      path->points.at(stop_line_idx).point.pose.position));
     return true;  // no plan needed.
   }
 
@@ -181,14 +180,12 @@ bool IntersectionModule::modifyPathVelocity(
   state_machine_.setStateWithMarginTime(
     isActivated() ? State::GO : State::STOP, logger_.get_child("state_machine"), *clock_);
 
-  /* set stop speed : TODO behavior on straight lane should be improved*/
-  const bool is_stop_required = is_stuck || !has_traffic_light_ || turn_direction_ != "straight";
   const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  setSafe(!(is_stop_required && is_entry_prohibited) || (state_machine_.getState() == State::GO));
-  setDistance(tier4_autoware_utils::calcSignedArcLength(
-    input_path.points, planner_data_->current_pose.pose.position,
-    input_path.points.at(stop_line_idx).point.pose.position));
+  setSafe(!is_entry_prohibited);
+  setDistance(motion_utils::calcSignedArcLength(
+    path->points, planner_data_->current_pose.pose.position,
+    path->points.at(stop_line_idx).point.pose.position));
 
   if (!isActivated()) {
     const double v = 0.0;
@@ -211,15 +208,6 @@ bool IntersectionModule::modifyPathVelocity(
     RCLCPP_DEBUG(logger_, "not activated. stop at the line.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return true;
-  }
-
-  if (state_machine_.getState() == State::STOP && is_entry_prohibited) {
-    const double v = planner_param_.decel_velocity;
-    util::setVelocityFrom(stop_line_idx, v, path);
-    setSafe(true);
-
-    debug_data_.stop_required = false;
-    debug_data_.slow_wall_pose = util::getAheadPose(stop_line_idx, base_link2front, *path);
   }
 
   RCLCPP_DEBUG(logger_, "===== plan end =====");
@@ -284,7 +272,6 @@ bool IntersectionModule::checkCollision(
     const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
     if (checkAngleForTargetLanelets(object_direction, detection_area_lanelet_ids)) {
       target_objects.objects.push_back(object);
-      break;
     }
   }
 
@@ -540,6 +527,8 @@ bool IntersectionModule::isTargetCollisionVehicleType(
     object.classification.at(0).label ==
       autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+    object.classification.at(0).label ==
       autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
     object.classification.at(0).label ==
       autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) {
@@ -558,6 +547,8 @@ bool IntersectionModule::isTargetStuckVehicleType(
       autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.at(0).label ==
       autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
     object.classification.at(0).label ==
       autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
     return true;

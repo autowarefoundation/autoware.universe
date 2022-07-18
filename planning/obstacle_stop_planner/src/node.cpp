@@ -42,11 +42,11 @@
 
 namespace motion_planning
 {
+using motion_utils::calcSignedArcLength;
+using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcAzimuthAngle;
 using tier4_autoware_utils::calcDistance2d;
-using tier4_autoware_utils::calcSignedArcLength;
 using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::findNearestIndex;
 using tier4_autoware_utils::getRPY;
 
 namespace
@@ -452,7 +452,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.max_velocity = declare_parameter("max_velocity", 20.0);
     p.hunting_threshold = declare_parameter("hunting_threshold", 0.5);
     p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
-    lpf_acc_ = std::make_shared<LowpassFilter1d>(0.0, p.lowpass_gain);
+    lpf_acc_ = std::make_shared<LowpassFilter1d>(p.lowpass_gain);
     const double max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 90.0);
     p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(max_yaw_deviation_deg);
   }
@@ -603,17 +603,25 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     }
   }
 
+  // TODO(someone): support negative velocity
+  if (isBackwardPath(*input_msg)) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000, "Negative velocity NOT supported. publish input as it is.");
+    path_pub_->publish(*input_msg);
+    return;
+  }
+
   PlannerData planner_data{};
 
   getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
 
   Trajectory output_trajectory = *input_msg;
   TrajectoryPoints output_trajectory_points =
-    tier4_autoware_utils::convertToTrajectoryPointArray(*input_msg);
+    motion_utils::convertToTrajectoryPointArray(*input_msg);
 
   // trim trajectory from self pose
   const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
-    tier4_autoware_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
+    motion_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
     planner_data.trajectory_trim_index);
   // extend trajectory to consider obstacles after the goal
   const auto extend_trajectory = extendTrajectory(base_trajectory, stop_param.extend_distance);
@@ -637,10 +645,21 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     resetExternalVelocityLimit(current_acc);
   }
 
-  auto trajectory = tier4_autoware_utils::convertToTrajectory(output_trajectory_points);
+  auto trajectory = motion_utils::convertToTrajectory(output_trajectory_points);
+  publishDebugData(planner_data, current_acc);
+
   trajectory.header = input_msg->header;
   path_pub_->publish(trajectory);
-  publishDebugData(planner_data, current_acc);
+}
+
+bool ObstacleStopPlannerNode::isBackwardPath(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory) const
+{
+  const bool has_negative_velocity = std::any_of(
+    trajectory.points.begin(), trajectory.points.end(),
+    [&](const auto & p) { return p.longitudinal_velocity_mps < 0; });
+
+  return has_negative_velocity;
 }
 
 void ObstacleStopPlannerNode::searchObstacle(
@@ -1233,10 +1252,10 @@ TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
   TrajectoryPoints output{};
 
   size_t min_distance_index = 0;
-  const auto nearest_index = tier4_autoware_utils::findNearestIndex(
-    input, self_pose, 10.0, node_param_.max_yaw_deviation_rad);
+  const auto nearest_index =
+    motion_utils::findNearestIndex(input, self_pose, 10.0, node_param_.max_yaw_deviation_rad);
   if (!nearest_index) {
-    min_distance_index = tier4_autoware_utils::findNearestIndex(input, self_pose.position);
+    min_distance_index = motion_utils::findNearestIndex(input, self_pose.position);
   } else {
     min_distance_index = nearest_index.value();
   }

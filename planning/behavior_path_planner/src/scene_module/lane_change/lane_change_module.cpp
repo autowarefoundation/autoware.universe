@@ -39,8 +39,8 @@ LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters)
 : SceneModuleInterface{name, node},
   parameters_{parameters},
-  rtc_interface_left_(node, "lane_change_left"),
-  rtc_interface_right_(node, "lane_change_right"),
+  rtc_interface_left_(&node, "lane_change_left"),
+  rtc_interface_right_(&node, "lane_change_right"),
   uuid_left_{generateUUID()},
   uuid_right_{generateUUID()}
 {
@@ -50,6 +50,7 @@ BehaviorModuleOutput LaneChangeModule::run()
 {
   RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
   current_state_ = BT::NodeStatus::RUNNING;
+  is_activated_ = isActivated();
   const auto output = plan();
   const auto turn_signal_info = output.turn_signal_info;
   if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
@@ -193,7 +194,7 @@ CandidateOutput LaneChangeModule::planCandidate() const
   output.path_candidate = selected_path.path;
   output.lateral_shift = selected_path.shifted_path.shift_length.at(end_idx) -
                          selected_path.shifted_path.shift_length.at(start_idx);
-  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+  output.distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.start.position);
 
@@ -207,6 +208,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);
+  waitApproval();
   return out;
 }
 
@@ -301,7 +303,8 @@ lanelet::ConstLanelets LaneChangeModule::getCurrentLanes() const
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
-    RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
     return {};  // TODO(Horibe) what should be returned?
   }
 
@@ -474,7 +477,7 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
     return false;
   }
 
-  if (!isActivated()) {
+  if (!is_activated_) {
     return false;
   }
 

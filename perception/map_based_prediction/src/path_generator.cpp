@@ -15,20 +15,109 @@
 #include "map_based_prediction/path_generator.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 
 namespace map_based_prediction
 {
-PathGenerator::PathGenerator(const double time_horizon, const double sampling_time_interval)
-: time_horizon_(time_horizon), sampling_time_interval_(sampling_time_interval)
+PathGenerator::PathGenerator(
+  const double time_horizon, const double sampling_time_interval,
+  const double min_velocity_for_map_based_prediction)
+: time_horizon_(time_horizon),
+  sampling_time_interval_(sampling_time_interval),
+  min_velocity_for_map_based_prediction_(min_velocity_for_map_based_prediction)
 {
 }
 
 PredictedPath PathGenerator::generatePathForNonVehicleObject(const TrackedObject & object)
 {
   return generateStraightPath(object);
+}
+
+PredictedPath PathGenerator::generatePathToTargetPoint(
+  const TrackedObject & object, const Eigen::Vector2d & point) const
+{
+  PredictedPath predicted_path{};
+  const double ep = 0.001;
+
+  const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
+  const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
+
+  const Eigen::Vector2d pedestrian_to_entry_point(point.x() - obj_pos.x, point.y() - obj_pos.y);
+  const auto velocity =
+    std::max(std::hypot(obj_vel.x, obj_vel.y), min_velocity_for_map_based_prediction_);
+  const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
+
+  for (double dt = 0.0; dt < arrival_time + ep; dt += sampling_time_interval_) {
+    geometry_msgs::msg::Pose world_frame_pose;
+    world_frame_pose.position.x =
+      obj_pos.x + velocity * pedestrian_to_entry_point.normalized().x() * dt;
+    world_frame_pose.position.y =
+      obj_pos.y + velocity * pedestrian_to_entry_point.normalized().y() * dt;
+    world_frame_pose.position.z = obj_pos.z;
+    world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
+    predicted_path.path.push_back(world_frame_pose);
+    if (predicted_path.path.size() >= predicted_path.path.max_size()) {
+      break;
+    }
+  }
+
+  predicted_path.confidence = 1.0;
+  predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
+
+  return predicted_path;
+}
+
+PredictedPath PathGenerator::generatePathForCrosswalkUser(
+  const TrackedObject & object, const EntryPoint & reachable_crosswalk) const
+{
+  PredictedPath predicted_path{};
+  const double ep = 0.001;
+
+  const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
+  const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
+
+  const Eigen::Vector2d pedestrian_to_entry_point(
+    reachable_crosswalk.first.x() - obj_pos.x, reachable_crosswalk.first.y() - obj_pos.y);
+  const Eigen::Vector2d entry_to_exit_point(
+    reachable_crosswalk.second.x() - reachable_crosswalk.first.x(),
+    reachable_crosswalk.second.y() - reachable_crosswalk.first.y());
+  const auto velocity =
+    std::max(std::hypot(obj_vel.x, obj_vel.y), min_velocity_for_map_based_prediction_);
+  const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
+
+  for (double dt = 0.0; dt < time_horizon_ + ep; dt += sampling_time_interval_) {
+    geometry_msgs::msg::Pose world_frame_pose;
+    if (dt < arrival_time) {
+      world_frame_pose.position.x =
+        obj_pos.x + velocity * pedestrian_to_entry_point.normalized().x() * dt;
+      world_frame_pose.position.y =
+        obj_pos.y + velocity * pedestrian_to_entry_point.normalized().y() * dt;
+      world_frame_pose.position.z = obj_pos.z;
+      world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
+      predicted_path.path.push_back(world_frame_pose);
+    } else {
+      world_frame_pose.position.x =
+        reachable_crosswalk.first.x() +
+        velocity * entry_to_exit_point.normalized().x() * (dt - arrival_time);
+      world_frame_pose.position.y =
+        reachable_crosswalk.first.y() +
+        velocity * entry_to_exit_point.normalized().y() * (dt - arrival_time);
+      world_frame_pose.position.z = obj_pos.z;
+      world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
+      predicted_path.path.push_back(world_frame_pose);
+    }
+    if (predicted_path.path.size() >= predicted_path.path.max_size()) {
+      break;
+    }
+  }
+
+  predicted_path.confidence = 1.0;
+  predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
+
+  return predicted_path;
 }
 
 PredictedPath PathGenerator::generatePathForLowSpeedVehicle(const TrackedObject & object) const
@@ -82,7 +171,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const TrackedObject & object, const PosePath & ref_path)
 {
   // Get current Frenet Point
-  const double ref_path_len = tier4_autoware_utils::calcArcLength(ref_path);
+  const double ref_path_len = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
   // Step1. Set Target Frenet Point
@@ -208,7 +297,7 @@ PosePath PathGenerator::interpolateReferencePath(
     base_path_x.push_back(base_path.at(i).position.x);
     base_path_y.push_back(base_path.at(i).position.y);
     base_path_z.push_back(base_path.at(i).position.z);
-    base_path_s.push_back(tier4_autoware_utils::calcSignedArcLength(base_path, 0, i));
+    base_path_s.push_back(motion_utils::calcSignedArcLength(base_path, 0, i));
   }
 
   std::vector<double> resampled_s(frenet_predicted_path.size());
@@ -281,10 +370,9 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
-  const size_t nearest_segment_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(ref_path, obj_point);
+  const size_t nearest_segment_idx = motion_utils::findNearestSegmentIndex(ref_path, obj_point);
   const double l =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
+    motion_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
   const float vx = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.x);
   const float vy = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.y);
   const float obj_yaw =
@@ -293,8 +381,8 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     static_cast<float>(tf2::getYaw(ref_path.at(nearest_segment_idx).orientation));
   const float delta_yaw = obj_yaw - lane_yaw;
 
-  frenet_point.s = tier4_autoware_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
-  frenet_point.d = tier4_autoware_utils::calcLateralOffset(ref_path, obj_point);
+  frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
+  frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
   frenet_point.s_vel = vx * std::cos(delta_yaw) - vy * std::sin(delta_yaw);
   frenet_point.d_vel = vx * std::sin(delta_yaw) + vy * std::cos(delta_yaw);
   frenet_point.s_acc = 0.0;

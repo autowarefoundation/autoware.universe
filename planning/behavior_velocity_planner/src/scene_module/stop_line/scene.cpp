@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/stop_line/scene.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <algorithm>
@@ -230,7 +230,7 @@ bool StopLineModule::modifyPathVelocity(
 
   // If no collision found, do nothing
   if (!collision) {
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000 /* ms */, "is no collision");
+    RCLCPP_DEBUG_THROTTLE(logger_, *clock_, 5000 /* ms */, "is no collision");
     return true;
   }
   const double center_line_z = (stop_line_[0].z() + stop_line_[1].z()) / 2.0;

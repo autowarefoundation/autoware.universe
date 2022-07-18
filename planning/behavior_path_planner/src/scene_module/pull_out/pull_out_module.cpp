@@ -15,10 +15,10 @@
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/pull_out/util.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 #include "behavior_path_planner/util/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -40,7 +40,7 @@ PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node, const PullOutParameters & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
-  rtc_interface_ptr_ = std::make_shared<RTCInterface>(node, "pull_out");
+  rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_out");
 }
 
 BehaviorModuleOutput PullOutModule::run()
@@ -199,7 +199,7 @@ CandidateOutput PullOutModule::planCandidate() const
         selected_retreat_path.pull_out_path.path.header =
           planner_data_->route_handler->getRouteHeader();
         CandidateOutput output_retreat(selected_retreat_path.pull_out_path.path);
-        output_retreat.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+        output_retreat.distance_to_path_change = motion_utils::calcSignedArcLength(
           selected_retreat_path.pull_out_path.path.points, current_pose.position,
           selected_retreat_path.backed_pose.position);
         return output_retreat;
@@ -210,7 +210,7 @@ CandidateOutput PullOutModule::planCandidate() const
 
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
   CandidateOutput output(selected_path.path);
-  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+  output.distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.start.position);
   return output;
 }
@@ -242,6 +242,8 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   out.path = std::make_shared<PathWithLaneId>(candidate_path);
 
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
+
+  waitApproval();
 
   return out;
 }
@@ -359,7 +361,8 @@ lanelet::ConstLanelets PullOutModule::getCurrentLanes() const
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
-    RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
     return {};  // TODO(Horibe) what should be returned?
   }
 
@@ -394,7 +397,7 @@ lanelet::ConstLanelets PullOutModule::getPullOutLanes(
       shoulder_lane, current_pose, pull_out_lane_length_, pull_out_lane_length_);
 
   } else {
-    RCLCPP_ERROR(getLogger(), "getPullOverTarget didn't work");
+    RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "getPullOverTarget didn't work");
     shoulder_lanes.clear();
   }
 
@@ -479,7 +482,7 @@ std::pair<bool, bool> PullOutModule::getSafeRetreatPath(
   const auto shoulder_line_path = route_handler->getCenterLinePath(
     pull_out_lanes, arc_position_pose.length - pull_out_lane_length_,
     arc_position_pose.length + pull_out_lane_length_);
-  const auto idx = tier4_autoware_utils::findNearestIndex(shoulder_line_path.points, current_pose);
+  const auto idx = motion_utils::findNearestIndex(shoulder_line_path.points, current_pose);
   const auto yaw_shoulder_lane =
     tf2::getYaw(shoulder_line_path.points.at(*idx).point.pose.orientation);
 
@@ -556,8 +559,7 @@ bool PullOutModule::getBackDistance(
     const auto shoulder_line_path = route_handler->getCenterLinePath(
       pull_out_lanes, arc_position_pose.length - pull_out_lane_length_,
       arc_position_pose.length + pull_out_lane_length_);
-    const auto idx =
-      tier4_autoware_utils::findNearestIndex(shoulder_line_path.points, current_pose);
+    const auto idx = motion_utils::findNearestIndex(shoulder_line_path.points, current_pose);
     yaw_shoulder_lane = tf2::getYaw(shoulder_line_path.points.at(*idx).point.pose.orientation);
   }
 

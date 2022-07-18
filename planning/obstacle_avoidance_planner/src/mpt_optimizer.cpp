@@ -329,7 +329,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
       // calc non fixed traj points
       const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
         points_utils::convertToPoints(fixed_ref_points));
-      const auto seg_idx_optional = tier4_autoware_utils::findNearestSegmentIndex(
+      const auto seg_idx_optional = motion_utils::findNearestSegmentIndex(
         smoothed_points, fixed_ref_points_with_yaw.back(), std::numeric_limits<double>::max(),
         traj_param_.delta_yaw_threshold_for_closest_point);
 
@@ -344,7 +344,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
         std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{
           smoothed_points.begin() + seg_idx, smoothed_points.end()};
 
-      const double offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+      const double offset = motion_utils::calcLongitudinalOffsetToSegment(
                               non_fixed_traj_points, 0, fixed_ref_points.back().p) +
                             mpt_param_.delta_arc_length_for_mpt_points;
       const auto non_fixed_interpolated_traj_points = interpolation_utils::getInterpolatedPoints(
@@ -411,8 +411,11 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
 {
   // if plan from ego
   constexpr double epsilon = 1e-04;
-  const bool plan_from_ego =
-    mpt_param_.plan_from_ego && std::abs(current_ego_vel_) < epsilon && ref_points.size() > 1;
+  const double trajectory_length = motion_utils::calcArcLength(ref_points);
+
+  const bool plan_from_ego = mpt_param_.plan_from_ego && std::abs(current_ego_vel_) < epsilon &&
+                             ref_points.size() > 1 &&
+                             trajectory_length < mpt_param_.max_plan_from_ego_length;
   if (plan_from_ego) {
     for (auto & ref_point : ref_points) {
       ref_point.fix_kinematic_state = boost::none;
@@ -501,7 +504,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
     const auto & prev_ref_point = prev_ref_points.at(i);
 
     if (!points_reaching_prev_points_flag) {
-      if (tier4_autoware_utils::calcSignedArcLength(points, 0, prev_ref_point.p) < 0) {
+      if (motion_utils::calcSignedArcLength(points, 0, prev_ref_point.p) < 0) {
         continue;
       }
       points_reaching_prev_points_flag = true;
@@ -634,24 +637,19 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
   std::vector<Eigen::Triplet<double>> Qex_triplet_vec;
   for (size_t i = 0; i < N_ref; ++i) {
     // this is for plan_from_ego
-    const bool near_kinematic_state_while_planning_from_ego = [&]() {
-      const size_t min_idx = static_cast<size_t>(std::max(0, static_cast<int>(i) - 20));
-      const size_t max_idx = std::min(ref_points.size() - 1, i + 20);
-      for (size_t j = min_idx; j <= max_idx; ++j) {
-        if (ref_points.at(j).plan_from_ego && ref_points.at(j).fix_kinematic_state) {
-          return true;
-        }
-      }
-      return false;
-    }();
+    // const bool near_kinematic_state_while_planning_from_ego = [&]() {
+    //   const size_t min_idx = static_cast<size_t>(std::max(0, static_cast<int>(i) - 20));
+    //   const size_t max_idx = std::min(ref_points.size() - 1, i + 20);
+    //   for (size_t j = min_idx; j <= max_idx; ++j) {
+    //     if (ref_points.at(j).plan_from_ego && ref_points.at(j).fix_kinematic_state) {
+    //       return true;
+    //     }
+    //   }
+    //   return false;
+    // }();
 
     const auto adaptive_error_weight = [&]() -> std::array<double, 2> {
-      if (near_kinematic_state_while_planning_from_ego) {
-        constexpr double obstacle_avoid_error_weight_ratio = 1 / 100.0;
-        return {
-          mpt_param_.obstacle_avoid_lat_error_weight * obstacle_avoid_error_weight_ratio,
-          mpt_param_.obstacle_avoid_yaw_error_weight * obstacle_avoid_error_weight_ratio};
-      } else if (ref_points.at(i).near_objects) {
+      if (ref_points.at(i).near_objects) {
         return {
           mpt_param_.obstacle_avoid_lat_error_weight, mpt_param_.obstacle_avoid_yaw_error_weight};
       } else if (i == N_ref - 1 && is_containing_path_terminal_point) {
@@ -725,9 +723,9 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
     const size_t D_x = vehicle_model_ptr_->getDimX();
 
     if (prev_trajs && prev_trajs->mpt_ref_points.size() > 1) {
-      const size_t seg_idx = tier4_autoware_utils::findNearestSegmentIndex(
-        prev_trajs->mpt_ref_points, ref_points.front().p);
-      double offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+      const size_t seg_idx =
+        motion_utils::findNearestSegmentIndex(prev_trajs->mpt_ref_points, ref_points.front().p);
+      double offset = motion_utils::calcLongitudinalOffsetToSegment(
         prev_trajs->mpt_ref_points, seg_idx, ref_points.front().p);
 
       u0(0) = prev_trajs->mpt_ref_points.at(seg_idx).optimized_kinematic_state(0);
@@ -803,7 +801,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   // check solution status
   const int solution_status = std::get<3>(result);
   if (solution_status != 1) {
-    utils::logOSQPSolutionStatus(solution_status);
+    utils::logOSQPSolutionStatus(solution_status, "MPT: ");
     return boost::none;
   }
 
@@ -1232,10 +1230,9 @@ size_t MPTOptimizer::findNearestIndexWithSoftYawConstraints(
   const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
 
   const auto nearest_idx_optional =
-    tier4_autoware_utils::findNearestIndex(points_with_yaw, pose, dist_threshold, yaw_threshold);
-  return nearest_idx_optional
-           ? *nearest_idx_optional
-           : tier4_autoware_utils::findNearestIndex(points_with_yaw, pose.position);
+    motion_utils::findNearestIndex(points_with_yaw, pose, dist_threshold, yaw_threshold);
+  return nearest_idx_optional ? *nearest_idx_optional
+                              : motion_utils::findNearestIndex(points_with_yaw, pose.position);
 }
 
 void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) const

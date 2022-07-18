@@ -74,14 +74,12 @@ namespace simple_planning_simulator
 {
 
 SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & options)
-: Node("simple_planning_simulator", options),
-  tf_buffer_(get_clock()),
-  tf_listener_(tf_buffer_, std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false)
+: Node("simple_planning_simulator", options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
 {
   simulated_frame_id_ = declare_parameter("simulated_frame_id", "base_link");
   origin_frame_id_ = declare_parameter("origin_frame_id", "odom");
   add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
-  current_engage_ = declare_parameter<bool>("initial_engage_state");
+  simulate_motion_ = declare_parameter<bool>("initial_engage_state");
 
   using rclcpp::QoS;
   using std::placeholders::_1;
@@ -91,9 +89,16 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     "/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
   sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
     "input/ackermann_control_command", QoS{1},
-    std::bind(&SimplePlanningSimulator::on_ackermann_cmd, this, _1));
+    [this](const AckermannControlCommand::SharedPtr msg) { current_ackermann_cmd_ = *msg; });
+  sub_manual_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
+    "input/manual_ackermann_control_command", QoS{1},
+    [this](const AckermannControlCommand::SharedPtr msg) { current_manual_ackermann_cmd_ = *msg; });
   sub_gear_cmd_ = create_subscription<GearCommand>(
-    "input/gear_command", QoS{1}, std::bind(&SimplePlanningSimulator::on_gear_cmd, this, _1));
+    "input/gear_command", QoS{1},
+    [this](const GearCommand::SharedPtr msg) { current_gear_cmd_ = *msg; });
+  sub_manual_gear_cmd_ = create_subscription<GearCommand>(
+    "input/manual_gear_command", QoS{1},
+    [this](const GearCommand::SharedPtr msg) { current_manual_gear_cmd_ = *msg; });
   sub_turn_indicators_cmd_ = create_subscription<TurnIndicatorsCommand>(
     "input/turn_indicators_command", QoS{1},
     std::bind(&SimplePlanningSimulator::on_turn_indicators_cmd, this, _1));
@@ -102,6 +107,12 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     std::bind(&SimplePlanningSimulator::on_hazard_lights_cmd, this, _1));
   sub_trajectory_ = create_subscription<Trajectory>(
     "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
+
+  srv_mode_req_ = create_service<tier4_vehicle_msgs::srv::ControlModeRequest>(
+    "input/control_mode_request",
+    std::bind(&SimplePlanningSimulator::on_control_mode_request, this, _1, _2));
+
+  // TODO(Horibe): should be replaced by mode_request. Keep for the backward compatibility.
   sub_engage_ = create_subscription<Engage>(
     "input/engage", rclcpp::QoS{1}, std::bind(&SimplePlanningSimulator::on_engage, this, _1));
 
@@ -116,6 +127,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
   pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
+  pub_acc_ = create_publisher<AccelWithCovarianceStamped>("output/acceleration", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
 
   /* set param callback */
@@ -164,6 +176,10 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     x_stddev_ = declare_parameter("x_stddev", 0.0001);
     y_stddev_ = declare_parameter("y_stddev", 0.0001);
   }
+
+  // control mode
+  current_control_mode_.data = ControlMode::AUTO;
+  current_manual_gear_cmd_.command = GearCommand::DRIVE;
 }
 
 void SimplePlanningSimulator::initialize_vehicle_model()
@@ -243,7 +259,15 @@ void SimplePlanningSimulator::on_timer()
   {
     const float64_t dt = delta_time_.get_dt(get_clock()->now());
 
-    if (current_engage_) {
+    if (current_control_mode_.data == ControlMode::AUTO) {
+      vehicle_model_ptr_->setGear(current_gear_cmd_.command);
+      set_input(current_ackermann_cmd_);
+    } else {
+      vehicle_model_ptr_->setGear(current_manual_gear_cmd_.command);
+      set_input(current_manual_ackermann_cmd_);
+    }
+
+    if (simulate_motion_) {
       vehicle_model_ptr_->update(dt);
     }
   }
@@ -270,6 +294,7 @@ void SimplePlanningSimulator::on_timer()
   publish_odometry(current_odometry_);
   publish_velocity(current_velocity_);
   publish_steering(current_steer_);
+  publish_acceleration();
 
   publish_control_mode_report();
   publish_gear_report();
@@ -301,27 +326,22 @@ void SimplePlanningSimulator::on_set_pose(
   response->status = tier4_api_utils::response_success();
 }
 
-void SimplePlanningSimulator::on_ackermann_cmd(
-  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
+void SimplePlanningSimulator::set_input(const AckermannControlCommand & cmd)
 {
-  current_ackermann_cmd_ptr_ = msg;
-  set_input(
-    msg->lateral.steering_tire_angle, msg->longitudinal.speed, msg->longitudinal.acceleration);
-}
+  const auto steer = cmd.lateral.steering_tire_angle;
+  const auto vel = cmd.longitudinal.speed;
+  const auto accel = cmd.longitudinal.acceleration;
 
-void SimplePlanningSimulator::set_input(const float steer, const float vel, const float accel)
-{
   using autoware_auto_vehicle_msgs::msg::GearCommand;
   Eigen::VectorXd input(vehicle_model_ptr_->getDimU());
+  const auto gear = vehicle_model_ptr_->getGear();
 
   // TODO(Watanabe): The definition of the sign of acceleration in REVERSE mode is different
   // between .auto and proposal.iv, and will be discussed later.
   float acc = accel;
-  if (!current_gear_cmd_ptr_) {
+  if (gear == GearCommand::NONE) {
     acc = 0.0;
-  } else if (
-    current_gear_cmd_ptr_->command == GearCommand::REVERSE ||
-    current_gear_cmd_ptr_->command == GearCommand::REVERSE_2) {
+  } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
     acc = -accel;
   }
 
@@ -339,17 +359,6 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
     input << acc, steer;
   }
   vehicle_model_ptr_->setInput(input);
-}
-
-void SimplePlanningSimulator::on_gear_cmd(const GearCommand::ConstSharedPtr msg)
-{
-  current_gear_cmd_ptr_ = msg;
-
-  if (
-    vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED) {
-    vehicle_model_ptr_->setGear(current_gear_cmd_ptr_->command);
-  }
 }
 
 void SimplePlanningSimulator::on_turn_indicators_cmd(
@@ -370,7 +379,16 @@ void SimplePlanningSimulator::on_trajectory(const Trajectory::ConstSharedPtr msg
 
 void SimplePlanningSimulator::on_engage(const Engage::ConstSharedPtr msg)
 {
-  current_engage_ = msg->engage;
+  simulate_motion_ = msg->engage;
+}
+
+void SimplePlanningSimulator::on_control_mode_request(
+  const ControlModeRequest::Request::SharedPtr request,
+  const ControlModeRequest::Response::SharedPtr response)
+{
+  current_control_mode_ = request->mode;
+  response->success = true;
+  return;
 }
 
 void SimplePlanningSimulator::add_measurement_noise(
@@ -502,11 +520,28 @@ void SimplePlanningSimulator::publish_steering(const SteeringReport & steer)
   pub_steer_->publish(msg);
 }
 
+void SimplePlanningSimulator::publish_acceleration()
+{
+  AccelWithCovarianceStamped msg;
+  msg.header.frame_id = "/base_link";
+  msg.header.stamp = get_clock()->now();
+  msg.accel.accel.linear.x = vehicle_model_ptr_->getAx();
+
+  constexpr auto COV = 0.001;
+  msg.accel.covariance.at(6 * 0 + 0) = COV;  // linear x
+  msg.accel.covariance.at(6 * 1 + 1) = COV;  // linear y
+  msg.accel.covariance.at(6 * 2 + 2) = COV;  // linear z
+  msg.accel.covariance.at(6 * 3 + 3) = COV;  // angular x
+  msg.accel.covariance.at(6 * 4 + 4) = COV;  // angular y
+  msg.accel.covariance.at(6 * 5 + 5) = COV;  // angular z
+  pub_acc_->publish(msg);
+}
+
 void SimplePlanningSimulator::publish_control_mode_report()
 {
   ControlModeReport msg;
   msg.stamp = get_clock()->now();
-  if (current_engage_) {
+  if (current_control_mode_.data == ControlMode::AUTO) {
     msg.mode = ControlModeReport::AUTONOMOUS;
   } else {
     msg.mode = ControlModeReport::MANUAL;
@@ -516,12 +551,9 @@ void SimplePlanningSimulator::publish_control_mode_report()
 
 void SimplePlanningSimulator::publish_gear_report()
 {
-  if (!current_gear_cmd_ptr_) {
-    return;
-  }
   GearReport msg;
   msg.stamp = get_clock()->now();
-  msg.report = current_gear_cmd_ptr_->command;
+  msg.report = vehicle_model_ptr_->getGear();
   pub_gear_report_->publish(msg);
 }
 

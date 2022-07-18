@@ -15,11 +15,11 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER_HPP_  // NOLINT
 #define MOTION_VELOCITY_SMOOTHER__SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER_HPP_  // NOLINT
 
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
-#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -75,7 +75,9 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   boost::optional<TrajectoryPoints> applyLateralAccelerationFilter(
-    const TrajectoryPoints & input) const override;
+    const TrajectoryPoints & input, [[maybe_unused]] const double v0,
+    [[maybe_unused]] const double a0,
+    [[maybe_unused]] const bool enable_smooth_limit) const override;
 
   void setParam(const Param & param);
   Param getParam() const;

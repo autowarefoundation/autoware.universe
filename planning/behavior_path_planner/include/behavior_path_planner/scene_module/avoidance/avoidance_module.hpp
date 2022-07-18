@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -59,7 +59,7 @@ public:
     rtc_interface_right_.publishCooperateStatus(clock_->now());
   }
 
-  bool isActivated() const override
+  bool isActivated() override
   {
     if (rtc_interface_left_.isRegistered(uuid_left_)) {
       return rtc_interface_left_.isActivated(uuid_left_);
@@ -107,6 +107,20 @@ private:
     rtc_interface_right_.clearCooperateStatus();
   }
 
+  void removePreviousRTCStatusLeft()
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    }
+  }
+
+  void removePreviousRTCStatusRight()
+  {
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    }
+  }
+
   // data used in previous planning
   ShiftedPath prev_output_;
   ShiftedPath prev_linear_shift_path_;  // used for shift point check
@@ -137,6 +151,8 @@ private:
     AvoidPointArray & current_raw_shift_points, DebugData & debug) const;
 
   // shift point generation: generator
+  double getShiftLength(
+    const ObjectData & object, const bool & is_object_on_right, const double & avoid_margin) const;
   AvoidPointArray calcRawShiftPointsFromObjects(const ObjectDataArray & objects) const;
   double getRightShiftBound() const;
   double getLeftShiftBound() const;
