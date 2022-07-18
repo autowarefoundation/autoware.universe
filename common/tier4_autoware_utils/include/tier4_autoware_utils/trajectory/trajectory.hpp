@@ -344,9 +344,10 @@ double calcArcLength(const T & points)
 
 /**
  * Example Usage of calcSignedArcLength
- * const size_t ego_seg_idx = findNearestSegmentIndexWithDistYawThreshold(points, ego_pose, ego_dist_threshold, ego_yaw_threshold);
- * const size_t obj_seg_idx = findNearestSegmentIndexWithDistThreshold(points, obj_pos, obj_dist_threshold);
- * const double signed_length = calcSignedArcLength(points, ego_pose.position, ego_seg_idx, obj_pos,
+ * const size_t ego_seg_idx = findNearestSegmentIndexWithDistYawThreshold(points, ego_pose,
+ * ego_dist_threshold, ego_yaw_threshold); const size_t obj_seg_idx =
+ * findNearestSegmentIndexWithDistThreshold(points, obj_pos, obj_dist_threshold); const double
+ * signed_length = calcSignedArcLength(points, ego_pose.position, ego_seg_idx, obj_pos,
  * obj_seg_idx);
  */
 template <class T>
@@ -372,7 +373,8 @@ size_t findNearestSegmentIndexWithDistYawThreshold(
 {
   validateNonEmpty(points);
 
-  const auto nearest_with_dist_yaw_thresh = findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
+  const auto nearest_with_dist_yaw_thresh =
+    findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
   if (nearest_with_dist_yaw_thresh) {
     return nearest_with_dist_yaw_thresh.get();
   }
@@ -389,12 +391,24 @@ size_t findNearestSegmentIndexWithDistThreshold(
   geometry_msgs::msg::Pose tmp_pose;
   tmp_pose.position = pos;
 
-  const auto nearest_with_dist_thresh = findNearestSegmentIndex(points, tmp_pose, dist_threshold, std::numeric_limits<double>::max());
+  const auto nearest_with_dist_thresh =
+    findNearestSegmentIndex(points, tmp_pose, dist_threshold, std::numeric_limits<double>::max());
   if (nearest_with_dist_thresh) {
     return nearest_with_dist_thresh.get();
   }
 
   return findNearestSegmentIndex(points, pos);
+}
+
+template <class T>
+size_t findNearestSegmentIndexWithinRange(
+  const T & points, const geometry_msgs::msg::Point & pos, const size_t start_idx,
+  const size_t end_idx)
+{
+  const auto sub_points = T{points.begin() + start_idx, points.begin() + end_idx + 1};
+  validateNonEmpty(sub_points);
+
+  return findNearestSegmentIndex(sub_points, pos);
 }
 }  // namespace tier4_autoware_utils
 
