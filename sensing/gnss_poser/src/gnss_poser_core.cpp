@@ -155,7 +155,7 @@ void GNSSPoser::callbackNavSatFix(
 void GNSSPoser::callbackAutowareOrientation(
   const autoware_sensing_msgs::msg::GnssInsOrientationStamped::ConstSharedPtr msg)
 {
-    *orientation_msg_ = *msg;
+  *orientation_msg_ = *msg;
 }
 
 bool GNSSPoser::isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg)
