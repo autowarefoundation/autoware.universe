@@ -451,8 +451,6 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.enable_slow_down = declare_parameter("enable_slow_down", false);
     p.max_velocity = declare_parameter("max_velocity", 20.0);
     p.hunting_threshold = declare_parameter("hunting_threshold", 0.5);
-    p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
-    lpf_acc_ = std::make_shared<LowpassFilter1d>(p.lowpass_gain);
     const double max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 90.0);
     p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(max_yaw_deviation_deg);
   }
@@ -534,6 +532,11 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/odometry", 1,
     std::bind(&ObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1),
     createSubscriptionOptions(this));
+  current_acceleration_sub_ =
+    this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
+      "~/input/acceleration", 1,
+      std::bind(&ObstacleStopPlannerNode::currentAccelCallback, this, std::placeholders::_1),
+      createSubscriptionOptions(this));
   dynamic_object_sub_ = this->create_subscription<PredictedObjects>(
     "~/input/objects", 1,
     std::bind(&ObstacleStopPlannerNode::dynamicObjectCallback, this, std::placeholders::_1),
@@ -1146,26 +1149,14 @@ void ObstacleStopPlannerNode::currentVelocityCallback(
 {
   // mutex for current_acc_, lpf_acc_
   std::lock_guard<std::mutex> lock(mutex_);
-
   current_velocity_ptr_ = input_msg;
+}
 
-  if (!prev_velocity_ptr_) {
-    prev_velocity_ptr_ = current_velocity_ptr_;
-    return;
-  }
-
-  const double dv =
-    current_velocity_ptr_->twist.twist.linear.x - prev_velocity_ptr_->twist.twist.linear.x;
-  const double dt = std::max(
-    (rclcpp::Time(current_velocity_ptr_->header.stamp) -
-     rclcpp::Time(prev_velocity_ptr_->header.stamp))
-      .seconds(),
-    1e-03);
-
-  const double accel = dv / dt;
-
-  current_acc_ = lpf_acc_->filter(accel);
-  prev_velocity_ptr_ = current_velocity_ptr_;
+void ObstacleStopPlannerNode::currentAccelCallback(
+  const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr input_msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  current_acc_ = input_msg->accel.accel.linear.x;
 }
 
 TrajectoryPoint ObstacleStopPlannerNode::getExtendTrajectoryPoint(
