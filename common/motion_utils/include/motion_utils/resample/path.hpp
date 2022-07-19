@@ -33,6 +33,8 @@
 #include <stdexcept>
 #include <vector>
 
+namespace motion_utils
+{
 inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
   const autoware_auto_planning_msgs::msg::Path & input_path,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy = false,
@@ -111,9 +113,15 @@ inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
     const double yaw = tier4_autoware_utils::calcAzimuthAngle(src_point, dst_point);
     interpolated_path.points.at(i).pose.orientation =
       tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
+    if (i == interpolated_path.points.size() - 2) {
+      // Terminal Orientation is same as the point before it
+      interpolated_path.points.at(i + 1).pose.orientation =
+        interpolated_path.points.at(i).pose.orientation;
+    }
   }
 
   return interpolated_path;
 }
+}  // namespace motion_utils
 
 #endif  // MOTION_UTILS__RESAMPLE__PATH_HPP_
