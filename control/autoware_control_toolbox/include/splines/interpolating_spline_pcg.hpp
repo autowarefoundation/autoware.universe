@@ -94,7 +94,6 @@ class InterpolatingSplinePCG
   bool Interpolate(std::vector<double> const &tnew, std::vector<double> &ynew) const;
 
   // Initialize to eliminate settings frequently reusing var.
-
   bool Initialize(std::vector<double> const &tbase, std::vector<double> const &ybase);
 
  private:
