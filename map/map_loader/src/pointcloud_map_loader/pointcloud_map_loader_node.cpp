@@ -271,7 +271,7 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDPartially(
   pub_debug_loading_time_ms_->publish(msg);
   RCLCPP_INFO_STREAM(
     get_logger(), "KOJI loadPCDPartially @map_loader: " << loading_time << " [ms], num points: "
-                                                        << int(filtered_pcd.data.size()));
+                                                        << int(filtered_pcd.width));
 
   filtered_pcd.header.frame_id = "map";
   return filtered_pcd;
