@@ -164,3 +164,6 @@ target_link_libraries(main_bspline_interp_template ${CONTROL_LIB} fmt::fmt stdc+
 
 add_executable(main_unwrap usage_examples/helper_functions/main_unwrap.cpp)
 target_link_libraries(main_unwrap ${CONTROL_LIB} fmt::fmt stdc++fs)
+
+add_executable(main_1d_interp usage_examples/helper_functions/main_linear_1dinterp.cpp)
+target_link_libraries(main_1d_interp ${CONTROL_LIB} fmt::fmt stdc++fs)

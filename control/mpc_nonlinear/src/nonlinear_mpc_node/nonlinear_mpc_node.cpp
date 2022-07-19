@@ -343,7 +343,7 @@ void NonlinearMPCNode::onTimer()
     // Reset the input que. [ax, vx, steering_rate, steering]
     for (auto &value : inputs_buffer_common_)
     {
-      value = std::array < double, 4 > {0.0, 0.0, 0.0, 0.0};
+      value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
     }
 
     kalman_filter_ptr_->reset();
@@ -1293,6 +1293,14 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
   std::vector<double> s_fixed_size_coordinate = ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
 
   /**
+   * Make sure that, the base coordinates, s and t are not out of range of the derived coordinates.
+   * */
+  auto dif_s0 = initial_distance - s_fixed_size_coordinate[0];
+  auto dif_send = final_distance - s_fixed_size_coordinate.back();
+
+  ns_utils::print("diff s0, and diff send", dif_s0, dif_send);
+
+  /**
    * @brief Create a piece-wise cubic interpolator for x and y.
    * */
   ns_splines::InterpolatingSplinePCG interpolator_spline_pws(3);  // piecewise
@@ -1922,6 +1930,7 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 
 void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 {
+  using ns_utils::toUType;
   // Compute the errors  [e_y, e_psi].
   std::array<double, 2> const &&error_states = computeErrorStates();
 
@@ -1932,17 +1941,19 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   // Vehicle x-y are always zero at each iteration.
   // x0_initial_states_(0) = 0.0;  // <-@brief current_pose_ptr_->pose.position.x - xw0;
   // x0_initial_states_(1) = 0.0;  // <-@brief current_pose_ptr_->pose.position.y - yw0;
-  x0_initial_states_(2) = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
-  x0_initial_states_(3) = current_s0_;
+  x0_initial_states_(toUType(VehicleStateIds::yaw)) = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
+  x0_initial_states_(toUType(VehicleStateIds::s)) = current_s0_;
 
   // Error model states.
-  x0_initial_states_(4) = error_states[0];  // e_y  : lateral tracking error.
-  x0_initial_states_(5) = error_states[1];  // e_psi : heading error
+  x0_initial_states_(toUType(VehicleStateIds::ey)) = error_states[0];  // e_y  : lateral tracking error.
+  x0_initial_states_(toUType(VehicleStateIds::eyaw)) = error_states[1];  // e_psi : heading error
 
   auto const &vx_meas = current_velocity_ptr_->twist.twist.linear.x;
-  x0_initial_states_(6) = vx_meas;  // vx longitudinal speed state
-  x0_initial_states_(7) = static_cast<double>(current_steering_ptr_->steering_tire_angle);  // steering state
-  x0_initial_states_(8) = current_velocity_ptr_->twist.twist.linear.y;
+  x0_initial_states_(toUType(VehicleStateIds::vx)) = vx_meas;  // vx longitudinal speed state
+  x0_initial_states_(toUType(VehicleStateIds::steering)) =
+    static_cast<double>(current_steering_ptr_->steering_tire_angle);
+
+  x0_initial_states_(toUType(VehicleStateIds::vy)) = current_velocity_ptr_->twist.twist.linear.y;
 
   //	// ns_utils::print("before using comm delay error refs...");
   //	if (params_node_.use_cdob && current_comm_delay_ptr_)
@@ -1971,11 +1982,11 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   // Create the dynamic parameters
   Model::param_vector_t params(Model::param_vector_t::Zero());
   current_model_params_.setZero();
-  current_model_params_(0) = current_curvature_k0_;
+  current_model_params_(toUType(VehicleParamIds::curvature)) = current_curvature_k0_;
 
   double vx_target_0{};
   nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(current_s0_, vx_target_0);
-  current_model_params_(1) = vx_target_0;  // for modeling a virtual car tracking.
+  current_model_params_(toUType(VehicleParamIds::target_vx)) = vx_target_0;  // for modeling a virtual car tracking.
 
   // For Kalman filtering implementation.
   if (params_node_.use_kalman)
@@ -1998,9 +2009,12 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
     //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
 
     // Prevent negative speed Kalman estimate
-    x0_kalman_est_(6) = std::max(x0_kalman_est_(6), 0.0);  // prevent negative speeds
+    x0_kalman_est_(ns_utils::toUType(VehicleStateIds::vx)) =
+      std::max(x0_kalman_est_(toUType(VehicleStateIds::vx)), 0.0);
+
     nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_kalman_est_);
   }
+
     // if Kalman filter is not used
   else
   {
@@ -2015,14 +2029,14 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
   nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.twist.linear.x;
 
-  nmpc_performance_vars_.lateral_error_ukf = x0_kalman_est_(4);
-  nmpc_performance_vars_.yaw_error_ukf = x0_kalman_est_(5);
-  nmpc_performance_vars_.long_velocity_ukf = x0_kalman_est_(6);
-  nmpc_performance_vars_.steering_angle_ukf = x0_kalman_est_(7);
+  nmpc_performance_vars_.lateral_error_ukf = x0_kalman_est_(toUType(VehicleStateIds::ey));
+  nmpc_performance_vars_.yaw_error_ukf = x0_kalman_est_(toUType(VehicleStateIds::eyaw));
+  nmpc_performance_vars_.long_velocity_ukf = x0_kalman_est_(toUType(VehicleStateIds::vx));
+  nmpc_performance_vars_.steering_angle_ukf = x0_kalman_est_(toUType(VehicleStateIds::steering));
   nmpc_performance_vars_.nmpc_curvature = current_curvature_k0_;
 
   // vy, or ay
-  nmpc_performance_vars_.lateral_velocity = x0_kalman_est_(8);
+  nmpc_performance_vars_.lateral_velocity = x0_kalman_est_(toUType(VehicleStateIds::vy));
 
   // DEBUG
   // ns_utils::print("Initial states : ");
@@ -2034,6 +2048,7 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
 void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted)
 {
+  using ns_utils::toUType;
   Model::input_vector_t uk{Model::input_vector_t::Zero()};
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
@@ -2041,8 +2056,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   for (auto const &all_controls : inputs_buffer_common_)
   {
     // Extract the controls from the input buffer.
-    uk(0) = all_controls[0];  // ax input
-    uk(1) = all_controls[3];  // steering input
+    uk(toUType(VehicleControlIds::u_vx)) = all_controls[0];  // ax input
+    uk(toUType(VehicleControlIds::u_steering)) = all_controls[3];  // steering input
 
     auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
     double kappad0{};           // curvature placeholder
@@ -2062,8 +2077,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     // double vxk;  // to interpolate the target speed (virtual car speed).
     nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
 
-    params(ns_utils::toUType(VehicleParamIds::curvature)) = kappad0;
-    params(ns_utils::toUType(VehicleParamIds::target_vx)) = vxk;
+    params(toUType(VehicleParamIds::curvature)) = kappad0;
+    params(toUType(VehicleParamIds::target_vx)) = vxk;
 
     // Use kappa estimated to call simulate method of mpc. The delay time-step is
     // computed with the sampling time step: params_node_.control_period
