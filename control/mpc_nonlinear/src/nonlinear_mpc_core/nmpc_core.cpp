@@ -1043,6 +1043,15 @@ void ns_nmpc_interface::NonlinearMPCController::getSmoothYawAtDistance(double co
   ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, s, yaw);
 }
 
+void ns_nmpc_interface::NonlinearMPCController::getSmoothXYZAtDistance(double const &s,
+                                                                       std::array<double, 3> &xyz) const
+{
+
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, s, xyz[0]);
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s, xyz[1]);
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->z, s, xyz[2]);
+}
+
 void ns_nmpc_interface::NonlinearMPCController::getSpeedDynamics_vdot(const double &current_long_speed,
                                                                       const double &current_speed_input,
                                                                       double &vdot) const

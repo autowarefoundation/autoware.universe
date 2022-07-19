@@ -1737,15 +1737,17 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
     return;
   }
 
+
+
   /**
    *  Create two vectors originating from the previous waypoints to the next waypoint and the
    * vehicle position and find projection of vehicle vector on the the trajectory section
    * */
 
-  // First get yaw angles of all three poses
-  double const &&prev_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.orientation);
-
-  double const &&next_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.orientation);
+  // Get yaw angles of all three poses
+  // double const &&prev_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.orientation);
+  // double const &&next_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.orientation);
+  // double const &&dyaw_prev_to_next = ns_utils::angleDistance(next_yaw, prev_yaw);
 
   // Previous waypoint to next waypoint
   double const &&dx_prev_to_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.position.x -
@@ -1757,10 +1759,10 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   double const &&dz_prev_to_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.position.z -
                                    current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z;
 
-  double const &&dyaw_prev_to_next = ns_utils::angleDistance(next_yaw, prev_yaw);
+
 
   // Create a vector from p0 (prev) --> p1 (to next wp).
-  std::vector<double> v_prev_to_next_wp{dx_prev_to_next, dy_prev_to_next};
+  // std::vector<double> v_prev_to_next_wp{dx_prev_to_next, dy_prev_to_next};
 
   // Previous waypoint to the vehicle pose
   /**
@@ -1799,22 +1801,26 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
    * */
 
   // clamp signature (val, lower, upper)
-  double const &&ratio_t = ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0., 1.);
+  // double const &&ratio_t = ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0., 1.);
 
   // InterpolateInCoordinates pose.position and pose.orientation
-  interpolated_traj_point.pose.position.x = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x +
-                                            ratio_t * dx_prev_to_next;
-
-  interpolated_traj_point.pose.position.y = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.y +
-                                            ratio_t * dy_prev_to_next;
-
-  interpolated_traj_point.pose.position.z = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z +
-                                            ratio_t * dz_prev_to_next;
+  //  interpolated_traj_point.pose.position.x = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x +
+  //                                            ratio_t * dx_prev_to_next;
+  //  interpolated_traj_point.pose.position.y = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.y +
+  //                                            ratio_t * dy_prev_to_next;
+  //  interpolated_traj_point.pose.position.z = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z +
+  //                                            ratio_t * dz_prev_to_next;
 
   // InterpolateInCoordinates the yaw angle of pi : interpolated waypoint
   /**
    * Using the smooth variables.
    * */
+  std::array<double, 3> xyz{};
+  nonlinear_mpc_controller_ptr_->getSmoothXYZAtDistance(current_s0_, xyz);
+
+  interpolated_traj_point.pose.position.x = xyz[0];
+  interpolated_traj_point.pose.position.y = xyz[1];
+  interpolated_traj_point.pose.position.z = xyz[2];
 
   double interp_yaw_angle{};
   nonlinear_mpc_controller_ptr_->getSmoothYawAtDistance(current_s0_, interp_yaw_angle);
