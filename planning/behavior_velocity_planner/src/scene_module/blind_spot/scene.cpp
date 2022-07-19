@@ -42,7 +42,8 @@ BlindSpotModule::BlindSpotModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
-  turn_direction_(TurnDirection::INVALID)
+  turn_direction_(TurnDirection::INVALID),
+  is_over_pass_judge_line_(false)
 {
   planner_param_ = planner_param;
   const auto & assigned_lanelet =
@@ -93,6 +94,8 @@ bool BlindSpotModule::modifyPathVelocity(
     RCLCPP_DEBUG(
       logger_, "[Blind Spot] stop line or pass judge line is at path[0], ignore planning.");
     *path = input_path;  // reset path
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
     return true;
   }
 
@@ -113,16 +116,18 @@ bool BlindSpotModule::modifyPathVelocity(
   debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
 
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
-  bool is_over_pass_judge_line = static_cast<bool>(closest_idx > pass_judge_line_idx);
+  is_over_pass_judge_line_ = static_cast<bool>(closest_idx > pass_judge_line_idx);
   if (closest_idx == pass_judge_line_idx) {
     geometry_msgs::msg::Pose pass_judge_line = path->points.at(pass_judge_line_idx).point.pose;
-    is_over_pass_judge_line = util::isAheadOf(current_pose.pose, pass_judge_line);
+    is_over_pass_judge_line_ = util::isAheadOf(current_pose.pose, pass_judge_line);
   }
   if (planner_param_.use_pass_judge_line) {
-    if (current_state == State::GO && is_over_pass_judge_line) {
+    if (current_state == State::GO && is_over_pass_judge_line_) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       *path = input_path;  // reset path
-      return true;         // no plan needed.
+      setSafe(true);
+      setDistance(std::numeric_limits<double>::lowest());
+      return true;  // no plan needed.
     }
   }
 
@@ -136,7 +141,10 @@ bool BlindSpotModule::modifyPathVelocity(
     has_obstacle ? State::STOP : State::GO, logger_.get_child("state_machine"), *clock_);
 
   /* set stop speed */
-  if (state_machine_.getState() == State::STOP) {
+  setSafe(state_machine_.getState() != State::STOP);
+  setDistance(motion_utils::calcSignedArcLength(
+    path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position));
+  if (!isActivated()) {
     constexpr double stop_vel = 0.0;
     util::setVelocityFrom(stop_line_idx, stop_vel, path);
 
@@ -148,7 +156,6 @@ bool BlindSpotModule::modifyPathVelocity(
   } else {
     *path = input_path;  // reset path
   }
-
   return true;
 }
 

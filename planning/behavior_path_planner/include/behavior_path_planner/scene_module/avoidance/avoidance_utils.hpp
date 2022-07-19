@@ -15,15 +15,23 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_
 
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
+using behavior_path_planner::PlannerData;
 bool isOnRight(const ObjectData & obj);
+
+double calcShiftLength(
+  const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
+
+bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length);
 
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose,
@@ -43,8 +51,9 @@ double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap);
 
 void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & path);
 
-double calcDistanceToClosestFootprintPoint(
-  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos);
+void fillLongitudinalAndLengthByClosestFootprint(
+  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
+  ObjectData & obj);
 
 double calcOverhangDistance(
   const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);

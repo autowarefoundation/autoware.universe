@@ -18,9 +18,11 @@
 #include <rosidl_runtime_cpp/message_initialization.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/pose_deviation.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -40,6 +42,7 @@
 namespace lane_departure_checker
 {
 using autoware_auto_planning_msgs::msg::HADMapRoute;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::LinearRing2d;
@@ -55,6 +58,7 @@ struct Param
   double max_lateral_deviation;
   double max_longitudinal_deviation;
   double max_yaw_deviation_deg;
+  double delta_yaw_threshold_for_closest_point;
 };
 
 struct Input
@@ -93,12 +97,22 @@ public:
 
   void setParam(const Param & param) { param_ = param; }
 
+  void setVehicleInfo(const vehicle_info_util::VehicleInfo vehicle_info)
+  {
+    vehicle_info_ptr_ = std::make_shared<vehicle_info_util::VehicleInfo>(vehicle_info);
+  }
+
+  bool checkPathWillLeaveLane(const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path);
+
+  vehicle_info_util::VehicleInfo vehicle_info_public_;
+
 private:
   Param param_;
   std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
 
   static PoseDeviation calcTrajectoryDeviation(
-    const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose);
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
+    const double yaw_threshold);
 
   //! This function assumes the input trajectory is sampled dense enough
   static TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double interval);
@@ -108,6 +122,7 @@ private:
   std::vector<LinearRing2d> createVehicleFootprints(
     const geometry_msgs::msg::PoseWithCovariance & covariance, const TrajectoryPoints & trajectory,
     const Param & param);
+  std::vector<LinearRing2d> createVehicleFootprints(const PathWithLaneId & path);
 
   static std::vector<LinearRing2d> createVehiclePassingAreas(
     const std::vector<LinearRing2d> & vehicle_footprints);

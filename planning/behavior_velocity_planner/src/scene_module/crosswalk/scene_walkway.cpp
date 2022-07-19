@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/crosswalk/scene_walkway.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <cmath>
@@ -38,8 +38,7 @@ WalkwayModule::WalkwayModule(
 }
 
 bool WalkwayModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  PathWithLaneId * path, tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -63,14 +62,14 @@ bool WalkwayModule::modifyPathVelocity(
       getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
     if (!!stop_line_opt) {
       if (!insertTargetVelocityPoint(
-            input, stop_line_opt.get(), planner_param_.stop_margin, 0.0, *planner_data_, *path,
-            debug_data_, first_stop_path_point_index_)) {
+            input, stop_line_opt.get(), 0.0, 0.0, *planner_data_, *path, debug_data_,
+            first_stop_path_point_index_)) {
         return false;
       }
     } else {
       if (!insertTargetVelocityPoint(
-            input, polygon, planner_param_.stop_line_distance + planner_param_.stop_margin, 0.0,
-            *planner_data_, *path, debug_data_, first_stop_path_point_index_)) {
+            input, polygon, planner_param_.stop_line_distance, 0.0, *planner_data_, *path,
+            debug_data_, first_stop_path_point_index_)) {
         return false;
       }
     }
@@ -82,7 +81,7 @@ bool WalkwayModule::modifyPathVelocity(
     planning_utils::appendStopReason(stop_factor, stop_reason);
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
-    const double signed_arc_dist_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
+    const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_pose.pose.position,
       debug_data_.first_stop_pose.position);
     const double distance_threshold = 1.0;

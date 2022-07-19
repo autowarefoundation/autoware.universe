@@ -14,6 +14,7 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
+  <depend>motion_utils</depend>
   <depend>raw_vehicle_cmd_converter</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
@@ -22,6 +23,7 @@
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
+  <depend>tier4_external_api_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>
   <depend>visualization_msgs</depend>
 

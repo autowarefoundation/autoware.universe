@@ -56,9 +56,11 @@ bool hasDuplicatedPoint(
  */
 bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length,
-  std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_result, const rclcpp::Logger logger);
+  const int lane_id, const double detection_area_length, const double right_margin,
+  const double left_margin, std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
+  const rclcpp::Logger logger);
 
 /**
  * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
@@ -77,6 +79,21 @@ bool generateStopLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
   int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger);
+
+/**
+ * @brief If use_stuck_stopline is true, a stop line is generated before the intersection.
+ * @param input_path      input path
+ * @param output_path     output path
+ * @param stuck_stop_line_idx   generated stuck stop line index
+ * @param pass_judge_line_idx  generated pass judge line index
+ * @return false when generation failed
+ */
+bool generateStopLineBeforeIntersection(
+  const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * output_path, int * stuck_stop_line_idx,
+  int * pass_judge_line_idx, const rclcpp::Logger logger);
 
 /**
  * @brief Calculate first path index that is in the polygon.
@@ -107,6 +124,8 @@ double calcArcLengthFromPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const size_t src_idx,
   const size_t dst_idx);
 
+lanelet::ConstLanelet generateOffsetLanelet(
+  const lanelet::ConstLanelet lanelet, double right_margin, double left_margin);
 }  // namespace util
 }  // namespace behavior_velocity_planner
 

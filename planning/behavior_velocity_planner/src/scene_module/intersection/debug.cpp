@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/motion_utils.hpp>
 #include <scene_module/intersection/scene_intersection.hpp>
 #include <scene_module/intersection/scene_merge_from_private_road.hpp>
 #include <utilization/marker_helper.hpp>
@@ -204,6 +205,11 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     current_time, &debug_marker_array);
 
   appendMarkerArray(
+    createLaneletPolygonsMarkerArray(
+      debug_data_.detection_area_with_margin, "detection_area_with_margin", lane_id_),
+    current_time, &debug_marker_array);
+
+  appendMarkerArray(
     createPolygonMarkerArray(debug_data_.ego_lane_polygon, "ego_lane", lane_id_, 0.0, 0.3, 0.7),
     current_time, &debug_marker_array);
 
@@ -257,18 +263,16 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   const auto now = this->clock_->now();
   const auto state = state_machine_.getState();
 
-  if (state == IntersectionModule::State::STOP) {
-    if (debug_data_.stop_required) {
-      appendMarkerArray(
-        tier4_autoware_utils::createStopVirtualWallMarker(
-          debug_data_.stop_wall_pose, "intersection", now, lane_id_),
-        now, &wall_marker);
-    } else {
-      appendMarkerArray(
-        tier4_autoware_utils::createStopVirtualWallMarker(
-          debug_data_.slow_wall_pose, "intersection", now, lane_id_),
-        now, &wall_marker);
-    }
+  if (debug_data_.stop_required) {
+    appendMarkerArray(
+      motion_utils::createStopVirtualWallMarker(
+        debug_data_.stop_wall_pose, "intersection", now, lane_id_),
+      now, &wall_marker);
+  } else if (state == IntersectionModule::State::STOP) {
+    appendMarkerArray(
+      motion_utils::createStopVirtualWallMarker(
+        debug_data_.slow_wall_pose, "intersection", now, lane_id_),
+      now, &wall_marker);
   }
   return wall_marker;
 }
@@ -299,7 +303,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWa
   const auto now = this->clock_->now();
   if (state == MergeFromPrivateRoadModule::State::STOP) {
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(
+      motion_utils::createStopVirtualWallMarker(
         debug_data_.virtual_wall_pose, "merge_from_private_road", now, lane_id_),
       now, &wall_marker);
   }

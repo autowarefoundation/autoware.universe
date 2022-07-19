@@ -80,7 +80,7 @@ Abstracted obstacle data has following information.
 | min_velocity_mps | `float`                                                                 | minimum velocity of the obstacle. specified by parameter of `dynamic_obstacle.min_vel_kmph`                            |
 | max_velocity_mps | `float`                                                                 | maximum velocity of the obstacle. specified by parameter of `dynamic_obstacle.max_vel_kmph`                            |
 
-Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](#Collision-detection).
+Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](./run-out-design.md#Collision-detection).
 
 Future work: Determine the maximum/minimum velocity from the estimated velocity with covariance of the object
 
@@ -114,7 +114,7 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 Along the ego vehicle path, determine the points where collision detection is to be performed for each `detection_span`.
 
-The travel times to the each points are calculated from [the expected target velocity](#Calculate-the-expected-target-velocity-for-ego-vehicle).
+The travel times to the each points are calculated from [the expected target velocity](./run-out-design.md#Calculate-the-expected-target-velocity-for-ego-vehicle).
 
 ![brief](./docs/run_out/create_polygon_on_path_point.svg)
 
@@ -158,12 +158,10 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `detection_span`        | double | [m] calculate collision with this span to reduce calculation time                                                        |
 | `min_vel_ego_kmph`      | double | [km/h] min velocity to calculate time to collision                                                                       |
 
-| Parameter /detection_area_size | Type   | Description                           |
-| ------------------------------ | ------ | ------------------------------------- |
-| `dist_ahead`                   | double | [m] ahead distance from ego position  |
-| `dist_behind`                  | double | [m] behind distance from ego position |
-| `dist_right`                   | double | [m] right distance from ego position  |
-| `dist_left`                    | double | [m] left distance from ego position   |
+| Parameter /detection_area | Type   | Description                                  |
+| ------------------------- | ------ | -------------------------------------------- |
+| `margin_ahead`            | double | [m] ahead margin for detection area polygon  |
+| `margin_behind`           | double | [m] behind margin for detection area polygon |
 
 | Parameter /dynamic_obstacle | Type   | Description                                                                                                 |
 | --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
