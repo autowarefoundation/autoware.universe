@@ -36,9 +36,9 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
   pub_status_ = create_publisher<autoware_ad_api_msgs::msg::MRMBehaviorStatus>(
     "~/output/mrm/comfortable_stop/status", 1);
   pub_velocity_limit_ = create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
-    "~/output/velocity_limit", 1);
+    "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
   pub_velocity_limit_clear_command_ = create_publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>(
-    "~/output/velocity_limit/clear", 1);
+    "~/output/velocity_limit/clear", rclcpp::QoS{1}.transient_local());
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
