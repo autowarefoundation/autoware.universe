@@ -1292,13 +1292,6 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
    **/
   std::vector<double> s_fixed_size_coordinate = ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
 
-  /**
-   * Make sure that, the base coordinates, s and t are not out of range of the derived coordinates.
-   * */
-  auto dif_s0 = initial_distance - s_fixed_size_coordinate[0];
-  auto dif_send = final_distance - s_fixed_size_coordinate.back();
-
-  ns_utils::print("diff s0, and diff send", dif_s0, dif_send);
 
   /**
    * @brief Create a piece-wise cubic interpolator for x and y.
@@ -1315,6 +1308,10 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
   std::vector<double> yinterp;
   std::vector<double> zinterp;
 
+  xinterp.reserve(map_in_fixed_size);
+  yinterp.reserve(map_in_fixed_size);
+  zinterp.reserve(map_in_fixed_size);
+
   // Resample the varying size raw trajectory into a fixed size trajectory points.
   auto const &&is_interpolated_x =
     interpolator_spline_pws.Interpolate(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
@@ -1324,6 +1321,8 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 
   auto const &&is_interpolated_z =
     interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
+
+  ns_utils::print("on trajectory vector sizes, zinterp vs map size", zinterp.size(), map_in_fixed_size);
 
   /**
    * @brief save into the reference map which accepts the resampled fixed size coordinates.
