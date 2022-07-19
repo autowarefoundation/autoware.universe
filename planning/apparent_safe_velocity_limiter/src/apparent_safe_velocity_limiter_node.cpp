@@ -23,7 +23,6 @@
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -146,6 +145,7 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
 
 void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
+  const auto t_start = std::chrono::system_clock::now();
   const auto ego_idx =
     tier4_autoware_utils::findNearestIndex(msg->points, self_pose_listener_.getCurrentPose()->pose);
   if (!validInputs(ego_idx)) return;
@@ -153,32 +153,15 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   velocity_params_.current_ego_velocity = *current_ego_velocity_;
   const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
   Trajectory downsampled_traj = downsampleTrajectory(*msg, start_idx, downsample_factor_);
-  // TODO(Maxime CLEMENT): used for debugging, remove before merging
-  double obs_mask_duration{};
-  double envelope_duration{};
-  double projection_duration{};
-  double obs_filter_duration{};
-  double footprint_duration{};
-  double dist_poly_duration{};
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
-  stopwatch.tic("obs_mask_duration");
   const auto polygon_masks = createPolygonMasks(
     *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
-  obs_mask_duration += stopwatch.toc("obs_mask_duration");
-  stopwatch.tic("projection");
   const auto projected_linestrings = createProjectedLines(downsampled_traj, projection_params_);
-  projection_duration += stopwatch.toc("projection");
-  stopwatch.tic("footprints");
   const auto footprint_polygons =
     createFootprintPolygons(projected_linestrings, vehicle_lateral_offset_);
-  footprint_duration += stopwatch.toc("footprints");
-  stopwatch.tic("envelope_duration");
   const auto envelope_polygon = createEnvelopePolygon(footprint_polygons);
-  envelope_duration += stopwatch.toc("envelope_duration");
   multilinestring_t obstacles = static_map_obstacles_;
   if (obstacle_params_.dynamic_source != ObstacleParameters::STATIC_ONLY) {
-    stopwatch.tic("obs_filter_duration");
     PointCloud debug_pointcloud;
     const auto dynamic_obstacles = createObstacleLines(
       *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, transform_listener_,
@@ -186,7 +169,6 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     debug_pointcloud.header.stamp = now();
     debug_pointcloud.header.frame_id = msg->header.frame_id;
     pub_debug_pointcloud_->publish(debug_pointcloud);
-    obs_filter_duration += stopwatch.toc("obs_filter_duration");
     obstacles.insert(obstacles.end(), dynamic_obstacles.begin(), dynamic_obstacles.end());
   }
   limitVelocity(
@@ -198,6 +180,10 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 
   pub_trajectory_->publish(safe_trajectory);
 
+  const auto t_end = std::chrono::system_clock::now();
+  const auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
+  RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %d ms", runtime);
+
   const auto safe_projected_linestrings =
     createProjectedLines(downsampled_traj, projection_params_);
   const auto safe_footprint_polygons =
@@ -206,23 +192,6 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   pub_debug_markers_->publish(makeDebugMarkers(
     obstacles, footprint_polygons, envelope_polygon, safe_envelope_polygon,
     occupancy_grid_ptr_->info.origin.position.z));
-  // TODO(Maxime CLEMENT): removes or change to RCLCPP_DEBUG before merging
-  RCLCPP_WARN(get_logger(), "Runtimes");
-  RCLCPP_WARN(get_logger(), "  obstacles masks      = %2.2fms", obs_mask_duration);
-  RCLCPP_WARN(get_logger(), "  safety envelope      = %2.2fms", envelope_duration);
-  RCLCPP_WARN(get_logger(), "  projection           = %2.2fms", projection_duration);
-  RCLCPP_WARN(get_logger(), "  obstacles filter     = %2.2fms", obs_filter_duration);
-  RCLCPP_WARN(get_logger(), "  footprint generation = %2.2fms", footprint_duration);
-  RCLCPP_WARN(get_logger(), "  distance to obstacle = %2.2fms", dist_poly_duration);
-  const auto runtime = stopwatch.toc();
-  runtimes.insert(runtime);
-  const auto sum = std::accumulate(runtimes.begin(), runtimes.end(), 0.0);
-  RCLCPP_WARN(get_logger(), "**************** Total = %2.2fms", runtime);
-  RCLCPP_WARN(get_logger(), "**************** Total (max) = %2.2fms", *std::prev(runtimes.end()));
-  RCLCPP_WARN(
-    get_logger(), "**************** Total (med) = %2.2fms",
-    *std::next(runtimes.begin(), runtimes.size() / 2));
-  RCLCPP_WARN(get_logger(), "**************** Total (avg) = %2.2fms", sum / runtimes.size());
 }
 
 bool ApparentSafeVelocityLimiterNode::validInputs(const boost::optional<size_t> & ego_idx)
