@@ -111,7 +111,7 @@ int sgn(T val)
  * Linear extrapolation
  * */
 template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T extrapolate(std::vector<T> const &tbase, std::vector<T> const &ybase, T const &tnew)
+void extrapolate(std::vector<T> const &tbase, std::vector<T> const &ybase, T const &tnew, T &ynew)
 {
   if (tnew < tbase[0])
   {
@@ -121,10 +121,9 @@ T extrapolate(std::vector<T> const &tbase, std::vector<T> const &ybase, T const 
     auto const &y0 = ybase[0];
     auto const &y1 = ybase[1];
 
-    auto const &ratio = (tnew - t0) / (t1 - t0);
-    auto const &yi = y0 - ratio * (y1 - y0);
+    auto const &ratio = (t0 - tnew) / (t1 - t0);
+    ynew = y0 - ratio * (y1 - y0);
 
-    return yi;
   }
 
   if (tnew > tbase.back())
@@ -136,9 +135,7 @@ T extrapolate(std::vector<T> const &tbase, std::vector<T> const &ybase, T const 
     auto const &yn_1 = ybase.rbegin()[1];
 
     auto const &ratio = (tnew - tn) / (tn - tn_1);
-    auto const &yi = y0 - ratio * (yn - yn_1);
-
-    return yi;
+    ynew = yn + ratio * (yn - yn_1);
 
   }
 
