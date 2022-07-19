@@ -11,14 +11,14 @@ The `gnss_poser` is a node that subscribes gnss sensing messages and calculates 
 ### Input
 
 | Name             | Type                          | Description                                                                                                     |
-|------------------|-------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| ---------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `~/input/fix`    | `sensor_msgs::msg::NavSatFix` | gnss status message                                                                                             |
 | `~/input/navpvt` | `ublox_msgs::msg::NavPVT`     | position, velocity and time solution. [click here for more details](https://github.com/KumarRobotics/ublox.git) |
 
 ### Output
 
 | Name                     | Type                                            | Description                                                    |
-|--------------------------|-------------------------------------------------|----------------------------------------------------------------|
+| ------------------------ | ----------------------------------------------- | -------------------------------------------------------------- |
 | `~/output/pose`          | `geometry_msgs::msg::PoseStamped`               | vehicle pose calculated from gnss sensing data                 |
 | `~/output/gnss_pose_cov` | `geometry_msgs::msg::PoseWithCovarianceStamped` | vehicle pose with covariance calculated from gnss sensing data |
 | `~/output/gnss_fixed`    | `tier4_debug_msgs::msg::BoolStamped`            | gnss fix status                                                |
@@ -28,7 +28,7 @@ The `gnss_poser` is a node that subscribes gnss sensing messages and calculates 
 ### Core Parameters
 
 | Name                 | Type   | Default Value    | Description                                                                                                                                |
-|----------------------|--------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| -------------------- | ------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `base_frame`         | string | "base_link"      | frame d                                                                                                                                    |
 | `gnss_frame`         | string | "gnss"           | frame id                                                                                                                                   |
 | `gnss_base_frame`    | string | "gnss_base_link" | frame id                                                                                                                                   |
