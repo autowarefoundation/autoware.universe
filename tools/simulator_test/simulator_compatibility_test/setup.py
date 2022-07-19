@@ -29,7 +29,7 @@ setup(
     maintainer_email="shpark@morai.ai",
     description="TODO: Package description",
     license="TODO: License declaration",
-    tests_require=["pytest"],
+    tests_require=[],
     entry_points={
         "console_scripts": [
             # Client
