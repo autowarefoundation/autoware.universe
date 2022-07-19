@@ -354,8 +354,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     logger_, planner_param_.show_processing_time, "- step2: %f ms",
     stop_watch_.toc("total_processing_time", false));
 
-  const auto nearest_stop_point = findNearestStopPoint(ego_path, *stop_reason);
-  const auto rtc_stop_point = findRTCStopPoint(ego_path);
+  StopFactor stop_factor{};
+
+  const auto nearest_stop_point = findNearestStopPoint(ego_path, stop_factor);
+  const auto rtc_stop_point = findRTCStopPoint(ego_path, stop_factor);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step3: %f ms",
@@ -381,6 +383,8 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   } else if (rtc_stop_point) {
     insertDecelPoint(rtc_stop_point.get(), 0.0, *path);
   }
+
+  planning_utils::appendStopReason(stop_factor, stop_reason);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step4: %f ms",
@@ -419,7 +423,7 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::g
 }
 
 boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTCStopPoint(
-  const PathWithLaneId & ego_path)
+  const PathWithLaneId & ego_path, StopFactor & stop_factor)
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
@@ -435,14 +439,15 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTC
   const auto residual_length = calcLongitudinalOffsetToSegment(ego_path.points, base_idx, p_stop);
   const auto update_margin = margin - residual_length + base_link2front;
 
-  return getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
+  const auto stop_point = getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
+  stop_factor.stop_pose = stop_point.get().second.point.pose;
+
+  return stop_point;
 }
 
 boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNearestStopPoint(
-  const PathWithLaneId & ego_path, StopReason & stop_reason)
+  const PathWithLaneId & ego_path, StopFactor & stop_factor)
 {
-  StopFactor stop_factor{};
-
   bool found_pedestrians = false;
   bool found_stuck_vehicle = false;
 
@@ -565,7 +570,6 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
 
   const auto stop_point = getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
   stop_factor.stop_pose = stop_point.get().second.point.pose;
-  planning_utils::appendStopReason(stop_factor, &stop_reason);
 
   return stop_point;
 }
