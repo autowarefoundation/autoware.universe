@@ -61,10 +61,10 @@ protected:
       std::cerr << "Failed to set logging severity to DEBUG\n";
     }
 
-    odom_pub_ =
-      rclcpp::create_publisher<Odometry>(dummy_node, "/localization_evaluator/input/localization", 1);
-    odom_ref_pub_ =
-      rclcpp::create_publisher<Odometry>(dummy_node, "/localization_evaluator/input/localization/ref", 1);
+    odom_pub_ = rclcpp::create_publisher<Odometry>(
+      dummy_node, "/localization_evaluator/input/localization", 1);
+    odom_ref_pub_ = rclcpp::create_publisher<Odometry>(
+      dummy_node, "/localization_evaluator/input/localization/ref", 1);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(dummy_node);
   }

@@ -59,7 +59,7 @@ KinematicEvaluatorNode::~KinematicEvaluatorNode()
     // header
     f << "#Data collected over: " << stamps_.back().seconds() - stamps_[0].seconds() << " seconds."
       << std::endl;
-    f << std::setw(24) << "#Stamp [ns]";    
+    f << std::setw(24) << "#Stamp [ns]";
 
     for (Metric metric : metrics_) {
       f << std::setw(30) << metric_descriptions.at(metric);
