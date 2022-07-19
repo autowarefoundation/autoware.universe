@@ -93,13 +93,13 @@ private:
   std::string map_frame_;
 
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin_;
-  autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr orientation_msg_;
-
   bool use_gnss_heading_;
 
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
 
   int plane_zone_;
+
+  autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr orientation_msg_;
 };
 }  // namespace gnss_poser
 

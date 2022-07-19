@@ -32,7 +32,8 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   gnss_base_frame_(declare_parameter("gnss_base_frame", "gnss_base_link")),
   map_frame_(declare_parameter("map_frame", "map")),
   use_gnss_heading_(declare_parameter("use_gnss_heading", true)),
-  plane_zone_(declare_parameter("plane_zone", 9))
+  plane_zone_(declare_parameter("plane_zone", 9)),
+  orientation_msg_(std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>())
 {
   int coordinate_system =
     declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
@@ -93,7 +94,7 @@ void GNSSPoser::callbackNavSatFix(
 
   // calc gnss antenna orientation
   geometry_msgs::msg::Quaternion orientation;
-  if (use_gnss_heading_ && orientation_msg_ != nullptr) {
+  if (use_gnss_heading_) {
     orientation = orientation_msg_->orientation.orientation;
   } else {
     static auto prev_position = median_position;
@@ -154,8 +155,7 @@ void GNSSPoser::callbackNavSatFix(
 void GNSSPoser::callbackAutowareOrientation(
   const autoware_sensing_msgs::msg::GnssInsOrientationStamped::ConstSharedPtr msg)
 {
-  orientation_msg_->header = msg->header;
-  orientation_msg_->orientation = msg->orientation;
+    *orientation_msg_ = *msg;
 }
 
 bool GNSSPoser::isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg)
