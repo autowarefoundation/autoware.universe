@@ -44,7 +44,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   // create smoother
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
-      smoother_ = std::make_shared<JerkFilteredSmoother>(*this);
+      smoother_ = std::make_shared<JerkFilteredSolver>(*this);
 
       // Set Publisher for jerk filtered algorithm
       pub_forward_filtered_trajectory_ =
@@ -58,15 +58,15 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
       break;
     }
     case AlgorithmType::L2: {
-      smoother_ = std::make_shared<L2PseudoJerkSmoother>(*this);
+      smoother_ = std::make_shared<L2PseudoJerkSolver>(*this);
       break;
     }
     case AlgorithmType::LINF: {
-      smoother_ = std::make_shared<LinfPseudoJerkSmoother>(*this);
+      smoother_ = std::make_shared<LinfPseudoJerkSolver>(*this);
       break;
     }
     case AlgorithmType::ANALYTICAL: {
-      smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(*this);
+      smoother_ = std::make_shared<AnalyticalJerkConstrainedSolver>(*this);
       break;
     }
     default:
@@ -174,33 +174,33 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
-      auto p = std::dynamic_pointer_cast<JerkFilteredSmoother>(smoother_)->getParam();
+      auto p = std::dynamic_pointer_cast<JerkFilteredSolver>(smoother_)->getParam();
       update_param("jerk_weight", p.jerk_weight);
       update_param("over_v_weight", p.over_v_weight);
       update_param("over_a_weight", p.over_a_weight);
       update_param("over_j_weight", p.over_j_weight);
       update_param("jerk_filter_ds", p.jerk_filter_ds);
-      std::dynamic_pointer_cast<JerkFilteredSmoother>(smoother_)->setParam(p);
+      std::dynamic_pointer_cast<JerkFilteredSolver>(smoother_)->setParam(p);
       break;
     }
     case AlgorithmType::L2: {
-      auto p = std::dynamic_pointer_cast<L2PseudoJerkSmoother>(smoother_)->getParam();
+      auto p = std::dynamic_pointer_cast<L2PseudoJerkSolver>(smoother_)->getParam();
       update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
       update_param("over_v_weight", p.over_v_weight);
       update_param("over_a_weight", p.over_a_weight);
-      std::dynamic_pointer_cast<L2PseudoJerkSmoother>(smoother_)->setParam(p);
+      std::dynamic_pointer_cast<L2PseudoJerkSolver>(smoother_)->setParam(p);
       break;
     }
     case AlgorithmType::LINF: {
-      auto p = std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->getParam();
+      auto p = std::dynamic_pointer_cast<LinfPseudoJerkSolver>(smoother_)->getParam();
       update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
       update_param("over_v_weight", p.over_v_weight);
       update_param("over_a_weight", p.over_a_weight);
-      std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->setParam(p);
+      std::dynamic_pointer_cast<LinfPseudoJerkSolver>(smoother_)->setParam(p);
       break;
     }
     case AlgorithmType::ANALYTICAL: {
-      auto p = std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->getParam();
+      auto p = std::dynamic_pointer_cast<AnalyticalJerkConstrainedSolver>(smoother_)->getParam();
       update_param("resample.delta_yaw_threshold", p.resample.delta_yaw_threshold);
       update_param(
         "latacc.constant_velocity_dist_threshold", p.latacc.constant_velocity_dist_threshold);
@@ -215,7 +215,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
       update_param("backward.min_acc_mild_stop", p.backward.min_acc_mild_stop);
       update_param("backward.min_acc", p.backward.min_acc);
       update_param("backward.span_jerk", p.backward.span_jerk);
-      std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->setParam(p);
+      std::dynamic_pointer_cast<AnalyticalJerkConstrainedSolver>(smoother_)->setParam(p);
       break;
     }
     default:

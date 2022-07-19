@@ -313,7 +313,7 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
 void BehaviorVelocityPlannerNode::onParam()
 {
   planner_data_.velocity_smoother_ =
-    std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
+    std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSolver>(*this);
   return;
 }
 

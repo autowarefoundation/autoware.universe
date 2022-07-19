@@ -28,7 +28,7 @@
 
 namespace motion_velocity_smoother
 {
-class LinfPseudoJerkSmoother : public SmootherBase
+class LinfPseudoJerkSolver : public SolverBase
 {
 public:
   struct Param
@@ -38,7 +38,7 @@ public:
     double over_a_weight;
   };
 
-  explicit LinfPseudoJerkSmoother(rclcpp::Node & node);
+  explicit LinfPseudoJerkSolver(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,

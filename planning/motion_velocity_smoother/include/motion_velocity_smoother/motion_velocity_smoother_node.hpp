@@ -128,7 +128,7 @@ private:
     AlgorithmType algorithm_type;  // Option : JerkFiltered, Linf, L2
   } node_param_{};
 
-  std::shared_ptr<SmootherBase> smoother_;
+  std::shared_ptr<SolverBase> smoother_;
 
   bool publish_debug_trajs_;  // publish planned trajectories
 

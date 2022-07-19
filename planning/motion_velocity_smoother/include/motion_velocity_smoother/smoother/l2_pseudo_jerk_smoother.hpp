@@ -28,7 +28,7 @@
 
 namespace motion_velocity_smoother
 {
-class L2PseudoJerkSmoother : public SmootherBase
+class L2PseudoJerkSolver : public SolverBase
 {
 public:
   struct Param
@@ -38,7 +38,7 @@ public:
     double over_a_weight;
   };
 
-  explicit L2PseudoJerkSmoother(rclcpp::Node & node);
+  explicit L2PseudoJerkSolver(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
