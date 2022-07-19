@@ -1500,6 +1500,7 @@ ObstacleAvoidancePlanner::alignVelocity(
   for (size_t i = 0; i < fine_traj_points_with_vel.size(); ++i) {
     const auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
     if(truncated_points.size()<1)continue;
+    
     const auto & target_pose = fine_traj_points_with_vel[i].pose;
     const auto closest_seg_idx_optional = tier4_autoware_utils::findNearestSegmentIndex(
       truncated_points, target_pose, traj_param_.delta_dist_threshold_for_closest_point,
