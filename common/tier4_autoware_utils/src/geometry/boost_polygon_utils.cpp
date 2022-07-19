@@ -59,7 +59,7 @@ double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions)
 }
 }  // namespace
 
-namespace polygon_utils
+namespace tier4_autoware_utils
 {
 bool isClockWise(const Polygon2d & polygon)
 {
@@ -174,4 +174,4 @@ double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
 
   throw std::logic_error("The shape type is not supported in tier4_autoware_utils.");
 }
-}  // namespace polygon_utils
+}  // namespace tier4_autoware_utils

@@ -26,11 +26,9 @@
 
 #include <vector>
 
-namespace polygon_utils
+namespace tier4_autoware_utils
 {
 namespace bg = boost::geometry;
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
 
 bool isClockWise(const Polygon2d & polygon);
 Polygon2d inverseClockWise(const Polygon2d & polygon);
@@ -40,6 +38,6 @@ Polygon2d toPolygon2d(
   const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape);
 double getArea(const autoware_auto_perception_msgs::msg::Shape & shape);
 
-}  // namespace polygon_utils
+}  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__BOOST_POLYGON_UTILS_HPP_
