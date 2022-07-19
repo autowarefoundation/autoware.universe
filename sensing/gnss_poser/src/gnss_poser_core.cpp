@@ -140,12 +140,20 @@ void GNSSPoser::callbackNavSatFix(
     canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[4] : 10.0;
   gnss_base_pose_cov_msg.pose.covariance[6 * 2 + 2] =
     canGetCovariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] : 10.0;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] =
-    orientation_msg_ != nullptr ? std::pow(orientation_msg_->orientation.rmse_rotation_x, 2) : 0.1;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] =
-    orientation_msg_ != nullptr ? std::pow(orientation_msg_->orientation.rmse_rotation_y, 2) : 0.1;
-  gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] =
-    orientation_msg_ != nullptr ? std::pow(orientation_msg_->orientation.rmse_rotation_z, 2) : 1.0;
+
+  if (use_gnss_heading_) {
+    gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] =
+      std::pow(orientation_msg_->orientation.rmse_rotation_x, 2);
+    gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] =
+      std::pow(orientation_msg_->orientation.rmse_rotation_y, 2);
+    gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] =
+      std::pow(orientation_msg_->orientation.rmse_rotation_z, 2);
+  } else {
+    gnss_base_pose_cov_msg.pose.covariance[6 * 3 + 3] = 0.1;
+    gnss_base_pose_cov_msg.pose.covariance[6 * 4 + 4] = 0.1;
+    gnss_base_pose_cov_msg.pose.covariance[6 * 5 + 5] = 1.0;
+  }
+
   pose_cov_pub_->publish(gnss_base_pose_cov_msg);
 
   // broadcast map to gnss_base_link
