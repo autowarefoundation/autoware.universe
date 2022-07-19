@@ -107,6 +107,19 @@ int sgn(T val)
   return (T(0) < val) - (val < T(0));
 }
 
+// Comparing data types.
+template<class T, typename std::enable_if_t<std::is_integral_v<T>, bool> * = nullptr>
+bool isEqual(T a, T b)
+{
+  return a == b;
+}
+
+template<class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
+bool isEqual(T a, T b)
+{
+  return abs(a - b) < std::numeric_limits<T>::epsilon();
+}
+
 /**
  * Linear extrapolation
  * */
@@ -385,24 +398,96 @@ size_t constexpr binary_index_search(T const &ti, std::vector<T> const &tbase)
 }
 
 /**
- * @brief Interpolates the data at the new coordinates given the base coordinate-data pair.
+ * @brief Interpolates the data at the new coordinates given the base coordinate-data pair. The data out of bound is
+ * extrapolated to prevent the numerical problems.
  * @param [in] sbase_coord the base coordinate, monotonic series,
  * @param [in] base_data the base data,
  * @param [in] snew_coords the new coordinates,
  * @param [out] new_data_to_be_interpolated.
  * */
-void interp1d_map_linear(std::vector<double>
-                         const &sbase_coord,
-                         std::vector<double> const &base_data, std::vector<double>
-                         const &snew_coords,
-                         std::vector<double> &new_data_to_be_interpolated);
+template<class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
 
-void interp1d_linear(std::vector<double>
-                     const &sbase_coord,
-                     std::vector<double> const &base_data,
-                     double const &snew_coord,
-                     double &new_data_to_be_interpolated);
+bool interp1d_linear(std::vector<T> const &tbase,
+                     std::vector<T> const &ybase,
+                     std::vector<T> const &tnew,
+                     std::vector<T> &ynew)
+{
+  // Prepare the data container to be interpolated.
+  ynew.clear();
+  ynew.reserve(tbase.size());
 
+  auto const &&EPS = std::numeric_limits<double>::epsilon();
+
+  // For each coordinate in the new coordinate vector.
+  for (double const &tk : tnew)
+  {
+    if (tk < tbase[0] || tk > tbase.back())
+    {
+      T yk{};
+      ns_utils::extrapolate(tbase, ybase, tk, yk);
+      ynew.emplace_back(yk);
+      continue;
+    }
+
+    // Get indices.
+    size_t const &left_ind = binary_index_search(tk, tbase);
+    size_t const &right_ind = left_ind + 1;  // We guaranteed the existence of right_ind.
+
+    // find interval length and ratio.
+    auto const &t0 = tbase[left_ind];
+    auto const &t1 = tbase[right_ind];
+
+    if (isEqual(t1, t0))
+    {
+      return false;
+    }
+
+    auto const &ratio = (tk - t0) / (t1 - t0);
+
+    // Get terminal data items.
+    auto const &yk = ybase[left_ind] + ratio * (ybase[right_ind] - ybase[left_ind]);
+
+    // Push back.
+    ynew.emplace_back(yk);
+  }
+  return true;
+}
+
+template<class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
+bool interp1d_linear(std::vector<T> const &tbase,
+                     std::vector<T> const &ybase,
+                     T const &tnew, T &ynew)
+{
+
+  if (tnew < tbase[0] || tnew > tbase.back())
+  {
+
+    ns_utils::extrapolate(tbase, ybase, tnew, ynew);
+
+    return true;
+  }
+
+  // For each coordinate in the new coordinate vector.
+  // Get indices.
+  size_t const &left_ind = binary_index_search(tnew, tbase);
+  size_t const &right_ind = left_ind + 1;  // We guaranteed the existence of right.
+
+  // find interval length and ratio.
+  auto const &t0 = tbase[left_ind];
+  auto const &t1 = tbase[right_ind];
+
+  if (isEqual(t1, t0))
+  {
+    return false;
+  }
+
+  auto const &ratio = (tnew - t0) / (t1 - t0);
+
+  // Get terminal data items.
+  ynew = ybase[left_ind] + ratio * (ybase[right_ind] - ybase[left_ind]);
+
+  return true;
+}
 // Cross Product
 template<typename T>
 constexpr std::vector<T> crossProduct(std::vector<T> const &va, std::vector<T> const &vb)
@@ -520,19 +605,6 @@ std::vector<T> zero_pad_left_first_arg(std::vector<T> const &a, std::vector<T> c
 
   return
     a;
-}
-
-// Comparing data types.
-template<class T, typename std::enable_if_t<std::is_integral_v<T>, bool> * = nullptr>
-bool isEqual(T a, T b)
-{
-  return a == b;
-}
-
-template<class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
-bool isEqual(T a, T b)
-{
-  return abs(a - b) < std::numeric_limits<T>::epsilon();
 }
 
 /**
