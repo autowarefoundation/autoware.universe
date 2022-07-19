@@ -104,11 +104,10 @@ void VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
 
 Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 {
-  auto opt_ex =
-    tf_subscriber_("traffic_light_left_camera/camera_optical_link", "tamagawa/imu_link");
+  auto opt_ex = tf_subscriber_("base_link", "tamagawa/imu_link");
   if (!opt_ex.has_value()) return Sophus::SO3f();
+  const Sophus::SO3f ex_rot(opt_ex->rotation());
 
-  Sophus::SO3f ex_rot(opt_ex->rotation());
   Sophus::SO3f integrated_rot;
   while (!imu_buffer_.empty()) {
     Imu msg = imu_buffer_.front();
@@ -123,7 +122,7 @@ Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 
     Eigen::Vector3f w;
     w << msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z;
-    integrated_rot *= Sophus::SO3f::exp(ex_rot.inverse() * w * dt);
+    integrated_rot *= Sophus::SO3f::exp(ex_rot * w * dt);
 
     imu_buffer_.pop_front();
     last_imu_stamp_ = stamp;
