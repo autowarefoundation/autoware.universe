@@ -19,6 +19,26 @@ set(CMAKE_CXX_STANDARD 17)
 #    message("In release mode ...")
 #endif ()
 
+
+# -------------  FLAGS ---------------------------------------------------
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wno-unused-parameter
+            -Wno-unused-variable
+            -Wno-narrowing
+            -Wno-error=unused-but-set-variable
+            # -Wno-conversion
+            # -Wno-sign-conversion
+            -Wno-sign-compare
+            #  -Wdouble-promotion
+            # -Wfloat-equal
+            -Waddress
+            -fvisibility=default
+            -fPIC) # visibility hidden or default is set here.
+endif ()
 ## ----------------- Library headers and sources -------------------------------
 
 ## ------------- CONTROL LIB  ----------------------------------

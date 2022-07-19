@@ -33,8 +33,8 @@ bool InterpolatingSplinePCG::Interpolate(std::vector<double> const &tbase,
 
   if (tnew[0] < tbase[0] && tnew.back() > tbase.back())
   {
-    std::cout << " The scalar new coordinates is out of the base coordinates, extrapolation is requested ...\n";
-    std::cout << " Please make sure that the requested point within the base coordinate interval \n";
+    ns_utils::print(" The scalar new coordinates is out of the base coordinates, extrapolation is requested ...\n");
+    ns_utils::print(" Please make sure that the requested point within the base coordinate interval \n");
     return false;
   }
 
@@ -207,13 +207,13 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const &yba
 
     Eigen::Map<Eigen::VectorXd> b(brhs.data(), dimy_eig, 1);
 
-//    // DEBUG
-//    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Asprs));
-//
-//    auto main_diag = Asprs.diagonal();
-//    ns_eigen_utils::printEigenMat(main_diag);
-//    ns_eigen_utils::printEigenMat(b);
-//    // End of DEBUG
+    //    // DEBUG
+    //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Asprs));
+    //
+    //    auto main_diag = Asprs.diagonal();
+    //    ns_eigen_utils::printEigenMat(main_diag);
+    //    ns_eigen_utils::printEigenMat(b);
+    //    // End of DEBUG
 
     std::vector<double> solution_c(dimy);
     // Solve Ax = b.
@@ -226,11 +226,11 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const &yba
       return true;
 
     }
-    std::cout << "Failed to solve for interpolating coefficients .. \n";
+    ns_utils::print("Failed to solve for interpolating coefficients .. \n");
     return false;
 
   }
-  std::cout << "\nOnly polynomial degrees one and three are implemented ... \n ";
+  ns_utils::print("\nOnly polynomial degrees one and three are implemented ... \n ");
   return false;
 
 }
@@ -277,9 +277,8 @@ void InterpolatingSplinePCG::set_bd_coeffs_(std::vector<double> const &ybase,
 bool InterpolatingSplinePCG::prepareCoefficients(std::vector<double> const &tbase,
                                                  std::vector<double> const &ybase)
 {
-  bool isMonotonic = checkIfMonotonic(tbase); // Just produces a warning.
-
-  if (!isMonotonic)
+  // Just produces a warning.
+  if (bool isMonotonic = checkIfMonotonic(tbase); !isMonotonic)
   {
     return false; // Data is not a monotonic series.
   }
@@ -289,7 +288,7 @@ bool InterpolatingSplinePCG::prepareCoefficients(std::vector<double> const &tbas
 
   if (auto const couldSolve = compute_coefficients(ybase);!couldSolve)
   {
-    std::cout << "[spline_pcg]: Couldn't solve the problem ...\n";
+    ns_utils::print("[spline_pcg]: Couldn't solve the problem ...\n");
     return false; // couldn't solve.
   }
 
@@ -306,7 +305,7 @@ bool InterpolatingSplinePCG::checkIfMonotonic(const std::vector<double> &tbase)
 
   if (!isMonotonic)
   {
-    std::cout << "\n Data coordinates are not monotonic series ... \n";
+    ns_utils::print("\n Data coordinates are not monotonic series ... \n");
   }
 
   return isMonotonic;
