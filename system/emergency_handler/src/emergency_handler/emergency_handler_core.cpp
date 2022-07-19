@@ -196,11 +196,11 @@ void EmergencyHandler::publishControlCommands()
 void EmergencyHandler::operateMRM()
 {
   using autoware_auto_system_msgs::msg::EmergencyState;
-  using autoware_ad_api_msgs::msg::MRMStatus;
+  using autoware_ad_api_msgs::msg::MRMState;
 
   if (emergency_state_ == EmergencyState::NORMAL) {
     // Cancel MRM behavior when returning to NORMAL state
-    const auto current_mrm_behavior = MRMStatus::NONE;
+    const auto current_mrm_behavior = MRMState::NONE;
     if (current_mrm_behavior != mrm_behavior_) {
       cancelMRMBehavior(mrm_behavior_);
       mrm_behavior_ = current_mrm_behavior;
@@ -233,14 +233,14 @@ void EmergencyHandler::operateMRM()
 }
 
 void EmergencyHandler::callMRMBehavior(
-    const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const
+    const autoware_ad_api_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
 {
-  using autoware_ad_api_msgs::msg::MRMStatus;
+  using autoware_ad_api_msgs::msg::MRMState;
 
   auto request = std::make_shared<autoware_ad_api_msgs::srv::MRMOperation::Request>();
   request->operate = true;
 
-  if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
+  if (mrm_behavior == MRMState::COMFORTABLE_STOP) {
     auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
@@ -249,7 +249,7 @@ void EmergencyHandler::callMRMBehavior(
     }
     return;
   }
-  if (mrm_behavior == MRMStatus::SUDDEN_STOP) {
+  if (mrm_behavior == MRMState::SUDDEN_STOP) {
     auto result = client_mrm_sudden_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Sudden stop is operated");
@@ -262,14 +262,14 @@ void EmergencyHandler::callMRMBehavior(
 }
 
 void EmergencyHandler::cancelMRMBehavior(
-  const autoware_ad_api_msgs::msg::MRMStatus::_behavior_type & mrm_behavior) const
+  const autoware_ad_api_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
 {
-  using autoware_ad_api_msgs::msg::MRMStatus;
+  using autoware_ad_api_msgs::msg::MRMState;
 
   auto request = std::make_shared<autoware_ad_api_msgs::srv::MRMOperation::Request>();
   request->operate = false;
 
-  if (mrm_behavior == MRMStatus::COMFORTABLE_STOP) {
+  if (mrm_behavior == MRMState::COMFORTABLE_STOP) {
     auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
@@ -278,7 +278,7 @@ void EmergencyHandler::cancelMRMBehavior(
     }
     return;
   }
-  if (mrm_behavior == MRMStatus::SUDDEN_STOP) {
+  if (mrm_behavior == MRMState::SUDDEN_STOP) {
     auto result = client_mrm_sudden_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Sudden stop is canceled");
@@ -417,26 +417,26 @@ void EmergencyHandler::updateEmergencyState()
   }
 }
 
-autoware_ad_api_msgs::msg::MRMStatus::_behavior_type EmergencyHandler::updateMRMBehavior()
+autoware_ad_api_msgs::msg::MRMState::_behavior_type EmergencyHandler::updateMRMBehavior()
 {
   using autoware_auto_system_msgs::msg::HazardStatus;
-  using autoware_ad_api_msgs::msg::MRMStatus;
+  using autoware_ad_api_msgs::msg::MRMState;
 
   // Get hazard level
   const auto level = hazard_status_stamped_->status.level;
 
   // State machine
-  if (mrm_behavior_ == MRMStatus::NONE) {
+  if (mrm_behavior_ == MRMState::NONE) {
     if (level == HazardStatus::LATENT_FAULT) {
-      return MRMStatus::COMFORTABLE_STOP;
+      return MRMState::COMFORTABLE_STOP;
     }
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
-      return MRMStatus::SUDDEN_STOP;
+      return MRMState::SUDDEN_STOP;
     }
   }
-  if (mrm_behavior_ == MRMStatus::COMFORTABLE_STOP) {
+  if (mrm_behavior_ == MRMState::COMFORTABLE_STOP) {
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
-      return MRMStatus::SUDDEN_STOP;
+      return MRMState::SUDDEN_STOP;
     }
   }
 
