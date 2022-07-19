@@ -1322,7 +1322,7 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
   auto const &&is_interpolated_z =
     interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
 
-  ns_utils::print("on trajectory vector sizes, zinterp vs map size", zinterp.size(), map_in_fixed_size);
+  // ns_utils::print("on trajectory vector sizes, zinterp vs map size", zinterp.size(), map_in_fixed_size);
 
   /**
    * @brief save into the reference map which accepts the resampled fixed size coordinates.
@@ -1610,9 +1610,8 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
     // this->current_pose_ptr_->pose.position.x - pose_0.position.x,
     // this->current_pose_ptr_->pose.position.y - pose_0.position.y};
 
-    std::array<double, 2> const &&vehicle_vec{
-      this->current_COG_pose_ptr_->pose.position.x - pose_0.position.x,
-      this->current_COG_pose_ptr_->pose.position.y - pose_0.position.y};
+    std::array<double, 2> const &&vehicle_vec{this->current_COG_pose_ptr_->pose.position.x - pose_0.position.x,
+                                              this->current_COG_pose_ptr_->pose.position.y - pose_0.position.y};
 
     // <-@brief ds = <p1, p2> / |p2|
     double const
@@ -1677,9 +1676,8 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
   // Check if the computed closest point index is valid.
   if (*idx_prev_wp_ptr_ > current_trajectory_size_)
   {
-    RCLCPP_ERROR(
-      get_logger(),
-      "[mpc_nonlinear] The computed closest point indices are out of trajectory size ...");
+    RCLCPP_ERROR(get_logger(),
+                 "[mpc_nonlinear] The computed closest point indices are out of trajectory size ...");
   }
 
   // Set the next waypoint index.
@@ -1793,7 +1791,6 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   // Get the current distance from the origin and keep in te current_s0_ variable.
   nonlinear_mpc_controller_ptr_->getRawDistanceAtIdx(*idx_prev_wp_ptr_, current_s0_);
   current_s0_ += ds_distance_p0_to_p_interp;
-
   nonlinear_mpc_controller_ptr_->setCurrent_s0(current_s0_);
 
   /**
@@ -1815,7 +1812,16 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
                                             ratio_t * dz_prev_to_next;
 
   // InterpolateInCoordinates the yaw angle of pi : interpolated waypoint
-  double const &&interp_yaw_angle = ns_utils::angleDistance(prev_yaw + ratio_t * dyaw_prev_to_next);
+  /**
+   * Using the smooth variables.
+   * */
+
+  double interp_yaw_angle{};
+  nonlinear_mpc_controller_ptr_->getSmoothYawAtDistance(current_s0_, interp_yaw_angle);
+  interp_yaw_angle = ns_utils::wrapToPi(interp_yaw_angle);
+
+  // nmpc_performance_vars_.lateral_velocity = interp_yaw_angles;
+  // double const &&interp_yaw_angle = ns_utils::angleDistance(prev_yaw + ratio_t * dyaw_prev_to_next);
 
   geometry_msgs::msg::Quaternion orient_msg = ns_utils::createOrientationMsgfromYaw(interp_yaw_angle);
   interpolated_traj_point.pose.orientation = orient_msg;
@@ -1823,7 +1829,10 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   // InterpolateInCoordinates the Vx longitudinal speed.
   double const &vx_prev = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).longitudinal_velocity_mps;
   double const &vx_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
-  double const &&vx_target = vx_prev + ratio_t * (vx_next - vx_prev);
+
+  // double const &&vx_target = vx_prev + ratio_t * (vx_next - vx_prev);
+  double vx_target{};
+  nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(current_s0_, vx_target);
   interpolated_traj_point.longitudinal_velocity_mps = vx_target;
 
   // Set the current target speed of nmpc_performance_vars_.
@@ -2036,7 +2045,7 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   nmpc_performance_vars_.nmpc_curvature = current_curvature_k0_;
 
   // vy, or ay
-  nmpc_performance_vars_.lateral_velocity = x0_kalman_est_(toUType(VehicleStateIds::vy));
+  // nmpc_performance_vars_.lateral_velocity = x0_kalman_est_(toUType(VehicleStateIds::vy));
 
   // DEBUG
   // ns_utils::print("Initial states : ");

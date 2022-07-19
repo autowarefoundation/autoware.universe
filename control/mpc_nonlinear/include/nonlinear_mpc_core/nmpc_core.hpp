@@ -176,6 +176,7 @@ class NonlinearMPCController
   void getRawVxAtDistance(double const &s0, double &vx) const;
 
   void getSmoothVxAtDistance(double const &s0, double &vx) const;
+  void getSmoothYawAtDistance(double const &s0, double &yaw) const;
 
   /** @brief gets the base arc-length coordinates from the raw trajectory data. */
   void getPlannerTravelledDistanceVector(std::vector<double> &s_distance_vector) const;
