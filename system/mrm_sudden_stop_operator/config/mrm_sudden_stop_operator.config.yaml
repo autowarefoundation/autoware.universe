@@ -1,0 +1,7 @@
+# Default configuration for emergency handler
+---
+/**:
+  ros__parameters:
+    update_rate: 30
+    target_acceleration: -2.5
+    target_jerk: -1.5
