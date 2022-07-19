@@ -15,7 +15,7 @@
 
   <arg name="coordinate_system" default="1" description="0:UTM, 1:MGRS, 2:PLANE, 3:LocalCartesian"/>
   <arg name="buff_epoch" default="1"/>
-  <arg name="use_gnss_heading" default="true"/>
+  <arg name="use_gnss_ins_orientation" default="true"/>
   <arg name="plane_zone" default="9"/>
 
   <node pkg="gnss_poser" exec="gnss_poser" name="gnss_poser" output="screen">

@@ -49,7 +49,7 @@ public:
 
 private:
   void callbackNavSatFix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
-  void callbackAutowareOrientation(
+  void callbackGnssInsOrientationStamped(
     const autoware_sensing_msgs::msg::GnssInsOrientationStamped::ConstSharedPtr msg);
 
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
@@ -80,7 +80,7 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
   rclcpp::Subscription<autoware_sensing_msgs::msg::GnssInsOrientationStamped>::SharedPtr
-    autoware_orientation_sub;
+    autoware_orientation_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_cov_pub_;
@@ -93,13 +93,14 @@ private:
   std::string map_frame_;
 
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin_;
-  bool use_gnss_heading_;
+  bool use_gnss_ins_orientation_;
 
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
 
   int plane_zone_;
 
-  autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr orientation_msg_;
+  autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr
+    msg_gnss_ins_orientation_stamped_;
 };
 }  // namespace gnss_poser
 
