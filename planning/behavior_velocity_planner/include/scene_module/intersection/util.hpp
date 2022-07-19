@@ -92,9 +92,8 @@ bool generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * output_path,
-   int * stuck_stop_line_idx, int * pass_judge_line_idx,
-  const rclcpp::Logger logger);
+  autoware_auto_planning_msgs::msg::PathWithLaneId * output_path, int * stuck_stop_line_idx,
+  int * pass_judge_line_idx, const rclcpp::Logger logger);
 
 /**
  * @brief Calculate first path index that is in the polygon.
