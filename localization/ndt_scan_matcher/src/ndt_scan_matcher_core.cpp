@@ -209,7 +209,7 @@ NDTScanMatcher::NDTScanMatcher()
 
   sensor_aligned_pose_pub_ =
     this->create_stee_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
-  ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
+  ndt_pose_pub_ = this->create_stee_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "ndt_pose_with_covariance", 10);

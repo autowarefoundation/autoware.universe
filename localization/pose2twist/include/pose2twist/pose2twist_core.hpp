@@ -33,7 +33,7 @@ public:
 private:
   void callbackPose(geometry_msgs::msg::PoseStamped::SharedPtr pose_msg_ptr);
 
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr linear_x_pub_;

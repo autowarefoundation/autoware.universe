@@ -130,7 +130,7 @@ private:
   tilde::SteeSubscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
 
   tilde::SteePublisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
+  tilde::SteePublisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_covariance_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
