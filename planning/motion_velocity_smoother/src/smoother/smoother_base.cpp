@@ -23,7 +23,7 @@
 
 namespace motion_velocity_smoother
 {
-SmootherBase::SmootherBase(rclcpp::Node & node)
+SolverBase::SolverBase(rclcpp::Node & node)
 {
   auto & p = base_param_;
   p.max_accel = node.declare_parameter("normal.max_acc", 2.0);
@@ -46,19 +46,19 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
     node.declare_parameter("sparse_min_interval_distance", 4.0);
 }
 
-void SmootherBase::setParam(const BaseParam & param) { base_param_ = param; }
+void SolverBase::setParam(const BaseParam & param) { base_param_ = param; }
 
-SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
+SolverBase::BaseParam SolverBase::getBaseParam() const { return base_param_; }
 
-double SmootherBase::getMaxAccel() const { return base_param_.max_accel; }
+double SolverBase::getMaxAccel() const { return base_param_.max_accel; }
 
-double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
+double SolverBase::getMinDecel() const { return base_param_.min_decel; }
 
-double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
+double SolverBase::getMaxJerk() const { return base_param_.max_jerk; }
 
-double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
+double SolverBase::getMinJerk() const { return base_param_.min_jerk; }
 
-boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
+boost::optional<TrajectoryPoints> SolverBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
   [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit) const
 {

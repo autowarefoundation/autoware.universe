@@ -30,7 +30,7 @@
 
 namespace motion_velocity_smoother
 {
-class AnalyticalJerkConstrainedSmoother : public SmootherBase
+class AnalyticalJerkConstrainedSolver : public SolverBase
 {
 public:
   struct Param
@@ -65,7 +65,7 @@ public:
     } backward;
   };
 
-  explicit AnalyticalJerkConstrainedSmoother(rclcpp::Node & node);
+  explicit AnalyticalJerkConstrainedSolver(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,

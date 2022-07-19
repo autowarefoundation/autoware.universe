@@ -24,7 +24,7 @@
 
 namespace motion_velocity_smoother
 {
-LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
+LinfPseudoJerkSolver::LinfPseudoJerkSolver(rclcpp::Node & node) : SolverBase(node)
 {
   auto & p = smoother_param_;
   p.pseudo_jerk_weight = node.declare_parameter("pseudo_jerk_weight", 200.0);
@@ -38,14 +38,14 @@ LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node) : SmootherBa
   qp_solver_.updateVerbose(false);
 }
 
-void LinfPseudoJerkSmoother::setParam(const Param & smoother_param)
+void LinfPseudoJerkSolver::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
 }
 
-LinfPseudoJerkSmoother::Param LinfPseudoJerkSmoother::getParam() const { return smoother_param_; }
+LinfPseudoJerkSolver::Param LinfPseudoJerkSolver::getParam() const { return smoother_param_; }
 
-bool LinfPseudoJerkSmoother::apply(
+bool LinfPseudoJerkSolver::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
   TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
 {
@@ -233,7 +233,7 @@ bool LinfPseudoJerkSmoother::apply(
   return true;
 }
 
-boost::optional<TrajectoryPoints> LinfPseudoJerkSmoother::resampleTrajectory(
+boost::optional<TrajectoryPoints> LinfPseudoJerkSolver::resampleTrajectory(
   const TrajectoryPoints & input, const double v_current, const int closest_id) const
 {
   return resampling::resampleTrajectory(input, v_current, closest_id, base_param_.resample_param);

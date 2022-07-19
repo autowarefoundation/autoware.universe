@@ -26,7 +26,7 @@
 
 namespace motion_velocity_smoother
 {
-JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
+JerkFilteredSolver::JerkFilteredSolver(rclcpp::Node & node) : SolverBase(node)
 {
   auto & p = smoother_param_;
   p.jerk_weight = node.declare_parameter("jerk_weight", 10.0);
@@ -42,14 +42,14 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(n
   qp_solver_.updateVerbose(false);
 }
 
-void JerkFilteredSmoother::setParam(const Param & smoother_param)
+void JerkFilteredSolver::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
 }
 
-JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
+JerkFilteredSolver::Param JerkFilteredSolver::getParam() const { return smoother_param_; }
 
-bool JerkFilteredSmoother::apply(
+bool JerkFilteredSolver::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories)
 {
@@ -349,7 +349,7 @@ bool JerkFilteredSmoother::apply(
   return true;
 }
 
-TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
+TrajectoryPoints JerkFilteredSolver::forwardJerkFilter(
   const double v0, const double a0, const double a_max, const double a_start, const double j_max,
   const TrajectoryPoints & input) const
 {
@@ -401,7 +401,7 @@ TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   return output;
 }
 
-TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
+TrajectoryPoints JerkFilteredSolver::backwardJerkFilter(
   const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
   const TrajectoryPoints & input) const
 {
@@ -416,7 +416,7 @@ TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   return filtered;
 }
 
-TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
+TrajectoryPoints JerkFilteredSolver::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
   const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const
 {
@@ -467,7 +467,7 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   return merged;
 }
 
-boost::optional<TrajectoryPoints> JerkFilteredSmoother::resampleTrajectory(
+boost::optional<TrajectoryPoints> JerkFilteredSolver::resampleTrajectory(
   const TrajectoryPoints & input, const double /*v_current*/, const int closest_id) const
 {
   return resampling::resampleTrajectory(
