@@ -23,6 +23,7 @@
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <nav_msgs/msg/odometry.hpp>
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
 #include "boost/lexical_cast.hpp"
 
@@ -34,6 +35,7 @@
 using EvalNode = localization_diagnostics::LocalizationEvaluatorNode;
 using diagnostic_msgs::msg::DiagnosticArray;
 using nav_msgs::msg::Odometry;
+using geometry_msgs::msg::PoseWithCovarianceStamped;
 
 class EvalTest : public ::testing::Test
 {
@@ -63,7 +65,7 @@ protected:
 
     odom_pub_ = rclcpp::create_publisher<Odometry>(
       dummy_node, "/localization_evaluator/input/localization", 1);
-    odom_ref_pub_ = rclcpp::create_publisher<Odometry>(
+    pos_ref_pub_ = rclcpp::create_publisher<PoseWithCovarianceStamped>(
       dummy_node, "/localization_evaluator/input/localization/ref", 1);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(dummy_node);
@@ -98,11 +100,21 @@ protected:
     return odometry;
   }
 
-  double publishOdometryAndGetMetric(const Odometry & odom, const Odometry & odom_ref)
+  PoseWithCovarianceStamped makePos(const double x, const double y, const double z)
+  {
+    PoseWithCovarianceStamped pos;
+    pos.header.frame_id = "map";
+    pos.pose.pose.position.x = x;
+    pos.pose.pose.position.y = y;
+    pos.pose.pose.position.z = z;
+    return pos;
+  }
+
+  double publishOdometryAndGetMetric(const Odometry & odom, const PoseWithCovarianceStamped & pos_ref)
   {
     metric_updated_ = false;
     odom_pub_->publish(odom);
-    odom_ref_pub_->publish(odom_ref);
+    pos_ref_pub_->publish(pos_ref);
     while (!metric_updated_) {
       rclcpp::spin_some(eval_node);
       rclcpp::spin_some(dummy_node);
@@ -119,7 +131,7 @@ protected:
   EvalNode::SharedPtr eval_node;
   // Publishers
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<Odometry>::SharedPtr odom_ref_pub_;
+  rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pos_ref_pub_;
   rclcpp::Subscription<DiagnosticArray>::SharedPtr metric_sub_;
   // TF broadcaster
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -128,21 +140,21 @@ protected:
 TEST_F(EvalTest, TestLateralErrorStats)
 {
   setTargetMetric(localization_diagnostics::Metric::lateral_error);
-  Odometry odom = makeOdometry(0.0, 0.0, 0.0);
-  Odometry odom_ref = makeOdometry(3.0, 4.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, odom_ref), 3.0);
+  Odometry odom = makeOdometry(1.0, 1.0, 0.0);
+  PoseWithCovarianceStamped pos_ref = makePos(4.0, 5.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, pos_ref), 3.0);
   Odometry odom2 = makeOdometry(1.0, 1.0, 0.0);
-  Odometry odom2_ref = makeOdometry(1.0, 1.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, odom2_ref), 1.5);
+  PoseWithCovarianceStamped pos2_ref = makePos(1.0, 1.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, pos2_ref), 1.5);
 }
 
 TEST_F(EvalTest, TestAbsoluteErrorStats)
 {
   setTargetMetric(localization_diagnostics::Metric::absolute_error);
-  Odometry odom = makeOdometry(0.0, 0.0, 0.0);
-  Odometry odom_ref = makeOdometry(3.0, 4.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, odom_ref), 5.0);
+  Odometry odom = makeOdometry(1.0, 1.0, 0.0);
+  PoseWithCovarianceStamped pos_ref = makePos(4.0, 5.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, pos_ref), 5.0);
   Odometry odom2 = makeOdometry(1.0, 1.0, 0.0);
-  Odometry odom2_ref = makeOdometry(1.0, 1.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, odom2_ref), 2.5);
+  PoseWithCovarianceStamped pos2_ref = makePos(1.0, 1.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom2, pos2_ref), 2.5);
 }
