@@ -1127,7 +1127,6 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization &param
 // Callbacks.
 void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
 {
-  current_trajectory_ptr_ = msg;
 
   if (msg->points.size() < 3)
   {
@@ -1141,6 +1140,7 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
     return;
   }
 
+  current_trajectory_ptr_ = msg;
   current_trajectory_size_ = msg->points.size();
 
   // Resample the planning trajectory and store in the MPCdataTrajectoryVectors.
