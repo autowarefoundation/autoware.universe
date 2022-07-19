@@ -35,7 +35,7 @@
     resample_time: 5.0                  # resample total time for dense sampling [s]
     dense_resample_dt: 0.1              # resample time interval for dense sampling [s]
     dense_min_interval_distance: 0.1    # minimum points-interval length for dense sampling [m]
-    sparse_resample_dt: 0.5              # resample time interval for sparse sampling [s]
+    sparse_resample_dt: 0.5             # resample time interval for sparse sampling [s]
     sparse_min_interval_distance: 4.0   # minimum points-interval length for sparse sampling [m]
 
     # resampling parameters for post process
