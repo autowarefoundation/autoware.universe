@@ -152,8 +152,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(const Mod
   // end of DEBUG
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getPlannerTravelledDistanceVector(
-  std::vector<double> &s_distance_vector) const
+void ns_nmpc_interface::NonlinearMPCController::getPlannerTravelledDistanceVector(std::vector<double> &s_distance_vector) const
 {
   s_distance_vector = current_MPCtraj_raw_vects_ptr_->s;
 }
