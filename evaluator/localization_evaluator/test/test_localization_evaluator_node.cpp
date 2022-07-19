@@ -21,9 +21,9 @@
 #include <localization_evaluator/localization_evaluator_node.hpp>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <nav_msgs/msg/odometry.hpp>
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
 #include "boost/lexical_cast.hpp"
 
@@ -34,8 +34,8 @@
 
 using EvalNode = localization_diagnostics::LocalizationEvaluatorNode;
 using diagnostic_msgs::msg::DiagnosticArray;
-using nav_msgs::msg::Odometry;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
+using nav_msgs::msg::Odometry;
 
 class EvalTest : public ::testing::Test
 {
@@ -110,7 +110,8 @@ protected:
     return pos;
   }
 
-  double publishOdometryAndGetMetric(const Odometry & odom, const PoseWithCovarianceStamped & pos_ref)
+  double publishOdometryAndGetMetric(
+    const Odometry & odom, const PoseWithCovarianceStamped & pos_ref)
   {
     metric_updated_ = false;
     odom_pub_->publish(odom);
