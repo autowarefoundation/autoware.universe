@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MOTION_UTILS__RESAMPLE__TRAJECTORY_HPP_
-#define MOTION_UTILS__RESAMPLE__TRAJECTORY_HPP_
+#ifndef MOTION_UTILS__RESAMPLE__PATH_HPP_
+#define MOTION_UTILS__RESAMPLE__PATH_HPP_
 
 #include "interpolation/interpolation_utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
@@ -116,4 +116,4 @@ inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
   return interpolated_path;
 }
 
-#endif  // MOTION_UTILS__RESAMPLE__TRAJECTORY_HPP_
+#endif  // MOTION_UTILS__RESAMPLE__PATH_HPP_
