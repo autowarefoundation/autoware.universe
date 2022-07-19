@@ -1,3 +1,4 @@
+#include "common/color.hpp"
 #include "common/util.hpp"
 #include "map/ground_server.hpp"
 #include "map/ll2_util.hpp"

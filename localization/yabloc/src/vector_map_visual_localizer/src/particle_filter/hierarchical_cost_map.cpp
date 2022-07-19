@@ -1,5 +1,6 @@
 #include "particle_filter/hierarchical_cost_map.hpp"
 
+#include "common/color.hpp"
 #include "common/gammma_conveter.hpp"
 #include "common/util.hpp"
 

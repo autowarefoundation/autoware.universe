@@ -1,6 +1,7 @@
 #include "particle_filter/gnss_corrector.hpp"
 
 #include <GeographicLib/Geocentric.hpp>
+#include <common/color.hpp>
 #include <common/util.hpp>
 #include <trajectory/fix2mgrs.hpp>
 
@@ -86,7 +87,7 @@ void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position, bool
     marker.pose.position.z = latest_height_.data;
 
     float prob = (1 - min_prob_) * i / 4 + min_prob_;
-    marker.color = util::toRgba(prob);
+    marker.color = util::toJet(prob);
     marker.color.a = 0.3f;
     marker.scale.x = 0.1;
     drawCircle(marker.points, inversePdf(prob, fixed));

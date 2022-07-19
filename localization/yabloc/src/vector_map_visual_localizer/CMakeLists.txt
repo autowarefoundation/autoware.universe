@@ -59,9 +59,16 @@ include_directories(${GeographicLib_INCLUDE_DIRS})
 # ===================================================
 # Library
 macro(ADD_LIB)
-  cmake_parse_arguments(_ARG "" "SRC;TARGET" "LIB;INC" ${ARGN})
-  file(GLOB SOURCE_TMP ${_ARG_SRC})
-  ament_auto_add_library(${_ARG_TARGET} SHARED ${SOURCE_TMP})
+  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
+
+  set(SOURCE "")
+
+  foreach(QUERY IN ITEMS ${_ARG_SRC})
+    file(GLOB SOURCE_TMP ${QUERY})
+    set(SOURCE "${SOURCE};${SOURCE_TMP}")
+  endforeach()
+
+  ament_auto_add_library(${_ARG_TARGET} SHARED ${SOURCE})
   target_include_directories(${_ARG_TARGET} PUBLIC ${_ARG_INC})
   target_link_libraries(${_ARG_TARGET} ${_ARG_LIB})
   target_compile_definitions(${_ARG_TARGET} PUBLIC SOPHUS_USE_BASIC_LOGGING=1)
@@ -70,7 +77,7 @@ endmacro()
 ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${OpenCV_LIBS})
 ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd/regulatory_elements/include)
 ADD_LIB(TARGET ll2_util SRC lib/ll2_util.cpp INC 3rd/regulatory_elements/include include)
-ADD_LIB(TARGET util SRC lib/util.cpp INC include)
+ADD_LIB(TARGET util SRC lib/util.cpp lib/color.cpp INC include)
 ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
 ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)

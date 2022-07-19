@@ -15,9 +15,6 @@
 
 namespace util
 {
-std_msgs::msg::ColorRGBA toRgba(float value);
-std_msgs::msg::ColorRGBA color(float red, float green, float blue, float alpha = 1.0f);
-
 cv::Mat decompress2CvMat(const sensor_msgs::msg::Image & img);
 
 sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(

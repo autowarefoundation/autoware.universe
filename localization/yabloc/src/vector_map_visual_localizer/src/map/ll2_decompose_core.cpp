@@ -1,3 +1,4 @@
+#include "common/color.hpp"
 #include "common/util.hpp"
 #include "map/ll2_decomposer.hpp"
 #include "map/ll2_util.hpp"

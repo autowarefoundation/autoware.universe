@@ -1,3 +1,4 @@
+#include "common/color.hpp"
 #include "common/util.hpp"
 #include "imgproc/orientation_optimizer.hpp"
 #include "imgproc/vanish.hpp"
@@ -5,7 +6,6 @@
 #include <opencv4/opencv2/core/eigen.hpp>
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
-#include <opencv4/opencv2/stitching/detail/warpers.hpp>
 
 namespace imgproc
 {
@@ -99,7 +99,7 @@ void VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
 
   cv::Mat rotated_image;
   cv::remap(image, rotated_image, xmap, ymap, cv::INTER_LINEAR);
-  cv::imshow("rot", rotated_image);
+  cv::imshow("rotation corected", rotated_image);
 }
 
 Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
@@ -161,6 +161,16 @@ void VanishPoint::drawHorizontalLine(
   float v1 = (K * pl)(1);
   float v2 = (K * pr)(1);
   cv::line(image, cv::Point(0, v1), cv::Point2i(W, v2), color, thick);
+
+  for (int i = 0; i < 20; i++) {
+    cv::Scalar color = util::toJet(i / 20.f);
+    Eigen::Vector3f azimuth(std::sin(M_PI * i / 10), std::cos(M_PI * i / 10), 0);
+    azimuth = rot * azimuth;
+    if (azimuth.z() < 1e-3f) continue;
+    Eigen::Vector3f u = K * azimuth;
+    u = u / u.z();
+    cv::circle(image, cv::Point(u.x(), u.y()), 4, color, -1);
+  }
 }
 
 void VanishPoint::drawGridLine(const cv::Mat & image)
@@ -209,7 +219,7 @@ void VanishPoint::callbackImage(const Image & msg)
   OptPoint2f vanish = ransac_vanish_point_->estimate(lines);
   ransac_vanish_point_->drawActiveLines(image);
   if (vanish.has_value()) drawCrossLine(image, vanish.value(), cv::Scalar(0, 255, 0));
-  drawHorizontalLine(image, init_rot, cv::Scalar(200, 255, 0), 1);
+  // drawHorizontalLine(image, init_rot, cv::Scalar(200, 255, 0), 1);
 
   // Transform vanishing point from the image coordinate to camera coordinate
   std::optional<Eigen::Vector3f> vp_image = std::nullopt;
@@ -223,10 +233,10 @@ void VanishPoint::callbackImage(const Image & msg)
   drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 0));
 
   // Visualize
-  projectOnPlane(graph_opt_rot.inverse(), lines);
+  // projectOnPlane(graph_opt_rot.inverse(), lines);
   Sophus::SO3f correction = opt::extractNominalRotation(init_rot, graph_opt_rot);
   rotateImage(image, correction);
-  cv::imshow("lsd", image);
+  cv::imshow("vanishing point", image);
   cv::waitKey(1);
 }
 
