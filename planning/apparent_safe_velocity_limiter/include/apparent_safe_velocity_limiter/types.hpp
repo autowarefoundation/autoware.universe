@@ -59,12 +59,14 @@ struct ObstacleParameters
   static constexpr auto OCC_GRID_THRESH_PARAM = "obstacles.occupancy_grid_threshold";
   static constexpr auto BUFFER_PARAM = "obstacles.dynamic_obstacles_buffer";
   static constexpr auto MIN_VEL_PARAM = "obstacles.dynamic_obstacles_min_vel";
+  static constexpr auto MAP_TAGS_PARAM = "obstacles.static_map_tags";
 
   enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
   int8_t occupancy_grid_threshold{};
   Float pcd_cluster_max_dist{};
   Float dynamic_obstacles_buffer{};
   Float dynamic_obstacles_min_vel{};
+  std::vector<std::string> static_map_tags{};
 
   ObstacleParameters() = default;
   explicit ObstacleParameters(rclcpp::Node & node)
@@ -74,6 +76,8 @@ struct ObstacleParameters
       static_cast<int8_t>(node.declare_parameter<int>(OCC_GRID_THRESH_PARAM));
     dynamic_obstacles_buffer = static_cast<Float>(node.declare_parameter<Float>(BUFFER_PARAM));
     dynamic_obstacles_min_vel = static_cast<Float>(node.declare_parameter<Float>(MIN_VEL_PARAM));
+    static_map_tags = static_cast<std::vector<std::string>>(
+      node.declare_parameter<std::vector<std::string>>(MAP_TAGS_PARAM));
   }
 
   bool updateType(rclcpp::Node & node, const std::string & type)

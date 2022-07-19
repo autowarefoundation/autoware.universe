@@ -17,6 +17,8 @@
   <depend>grid_map_msgs</depend>
   <depend>grid_map_ros</depend>
   <depend>grid_map_utils</depend>
+  <depend>lanelet2_core</depend>
+  <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>nav_msgs</depend>
   <depend>pcl_ros</depend>

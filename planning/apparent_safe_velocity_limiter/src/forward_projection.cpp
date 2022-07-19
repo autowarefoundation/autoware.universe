@@ -99,6 +99,7 @@ polygon_t generateFootprint(const multilinestring_t & linestrings, const double 
     union_polygons = result_polygons;
     bg::clear(result_polygons);
   }
+  if (union_polygons.empty()) return {};
   return union_polygons.front();
 }
 
@@ -116,6 +117,7 @@ polygon_t generateFootprint(const linestring_t & linestring, const double latera
     linestring, footprint, strategy::distance_symmetric<double>(lateral_offset),
     strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
     strategy::point_square());
+  if (footprint.empty()) return {};
   return footprint[0];
 }
 }  // namespace apparent_safe_velocity_limiter

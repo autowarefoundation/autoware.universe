@@ -5,6 +5,8 @@
   <arg name="input_occupancy_grid" default="/perception/occupancy_grid_map/map"/>
   <arg name="input_obstacle_pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="input_odometry" default="/localization/kinematic_state"/>
+  <arg name="input_map" default="/map/vector_map"/>
+  <arg name="input_route" default="/planning/mission_planning/route"/>
   <arg name="output_trajectory" default="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory"/>
   <arg name="output_debug_markers" default="/planning/scenario_planning/apparent_safe_velocity_limiter/debug_markers"/>
 
@@ -29,6 +31,8 @@
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/input/dynamic_obstacles" to="$(var input_dynamic_obstacles)"/>
     <remap from="~/input/odometry" to="$(var input_odometry)"/>
+    <remap from="~/input/map" to="$(var input_map)"/>
+    <remap from="~/input/route" to="$(var input_route)"/>
     <remap from="~/output/trajectory" to="$(var output_trajectory)"/>
     <remap from="~/output/debug_markers" to="$(var output_debug_markers)"/>
   </node>

@@ -21,13 +21,18 @@
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/detail/had_map_route__struct.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/optional.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
 
 #include <memory>
 #include <optional>
@@ -62,11 +67,16 @@ private:
     sub_pointcloud_;  //!< @brief subscriber for obstacle pointcloud
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
     sub_odom_;  //!< @brief subscriber for the current velocity
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
   // cached inputs
   PredictedObjects::ConstSharedPtr dynamic_obstacles_ptr_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
+  lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
+  multilinestring_t static_map_obstacles_;
+  std::optional<Float> current_ego_velocity_;
 
   // Benchmarking & Debugging
   std::multiset<double> runtimes;
@@ -80,7 +90,6 @@ private:
   int downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
-  std::optional<Float> current_ego_velocity_;
 
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
@@ -92,6 +101,10 @@ private:
   /// @brief callback for input trajectories. Publishes a trajectory with updated velocities
   /// @param[in] msg input trajectory message
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
+
+  /// @brief callback for input route. Updates the static obstacles.
+  /// @param[in] msg input route message
+  void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
 
   /// @brief validate the inputs of the node
   /// @param[in] ego_idx trajectory index closest to the current ego pose

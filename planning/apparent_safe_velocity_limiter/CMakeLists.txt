@@ -19,6 +19,11 @@ ament_auto_add_library(apparent_safe_velocity_limiter_node SHARED
   DIRECTORY src
 )
 
+# Disable warnings due to external dependencies
+get_target_property(lanelet2_core_INCLUDE_DIR
+  lanelet2_core::lanelet2_core INTERFACE_INCLUDE_DIRECTORIES
+)
+
 rclcpp_components_register_node(apparent_safe_velocity_limiter_node
   PLUGIN "apparent_safe_velocity_limiter::ApparentSafeVelocityLimiterNode"
   EXECUTABLE apparent_safe_velocity_limiter

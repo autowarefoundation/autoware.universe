@@ -16,14 +16,18 @@
 
 #include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter.hpp"
 #include "apparent_safe_velocity_limiter/debug.hpp"
+#include "apparent_safe_velocity_limiter/map_utils.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <algorithm>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -45,9 +49,17 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
     "~/input/dynamic_obstacles", 1,
     [this](const PredictedObjects::ConstSharedPtr msg) { dynamic_obstacles_ptr_ = msg; });
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1}, [&](const nav_msgs::msg::Odometry::ConstSharedPtr msg) {
+    "~/input/odometry", rclcpp::QoS{1}, [this](const nav_msgs::msg::Odometry::ConstSharedPtr msg) {
       current_ego_velocity_ = static_cast<Float>(msg->twist.twist.linear.x);
     });
+  map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+    "~/input/map", rclcpp::QoS{1}.transient_local(),
+    [this](const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) {
+      lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr_);
+    });
+  route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
+    "~/input/route", rclcpp::QoS{1}.transient_local(),
+    std::bind(&ApparentSafeVelocityLimiterNode::onRoute, this, std::placeholders::_1));
 
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
@@ -164,7 +176,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   stopwatch.tic("envelope_duration");
   const auto envelope_polygon = createEnvelopePolygon(footprint_polygons);
   envelope_duration += stopwatch.toc("envelope_duration");
-  multilinestring_t obstacles;  // TODO(Maxime CLEMENT): get static obstacles from lanelet map
+  multilinestring_t obstacles = static_map_obstacles_;
   if (obstacle_params_.dynamic_source != ObstacleParameters::STATIC_ONLY) {
     stopwatch.tic("obs_filter_duration");
     PointCloud debug_pointcloud;
@@ -175,6 +187,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     debug_pointcloud.header.frame_id = msg->header.frame_id;
     pub_debug_pointcloud_->publish(debug_pointcloud);
     obs_filter_duration += stopwatch.toc("obs_filter_duration");
+    obstacles.insert(obstacles.end(), dynamic_obstacles.begin(), dynamic_obstacles.end());
   }
   limitVelocity(
     downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
@@ -228,6 +241,13 @@ bool ApparentSafeVelocityLimiterNode::validInputs(const boost::optional<size_t> 
   return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && ego_idx && current_ego_velocity_;
 }
 
+void ApparentSafeVelocityLimiterNode::onRoute(
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
+{
+  if (!lanelet_map_ptr_) return;
+  static_map_obstacles_ =
+    extractStaticObstacles(*lanelet_map_ptr_, *msg, obstacle_params_.static_map_tags);
+}
 }  // namespace apparent_safe_velocity_limiter
 
 #include "rclcpp_components/register_node_macro.hpp"
