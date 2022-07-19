@@ -31,25 +31,25 @@ bool InterpolatingSplinePCG::Interpolate(std::vector<double> const &tbase,
                                          std::vector<double> &ynew)
 {
 
-  if (tnew[0] < tbase[0] && tnew.back() > tbase.back())
-  {
-    ns_utils::print(" The scalar new coordinates is out of the base coordinates, extrapolation is requested ...\n");
-    ns_utils::print(" Please make sure that the requested point within the base coordinate interval \n");
-    return false;
-  }
-
   bool couldSolve_and_Monotonic = prepareCoefficients(tbase, ybase);
 
   // Binary Search.
   for (auto const &ti : tnew)
   {
+    if (ti < tbase[0] || ti > tbase.back())
+    {
+      double yval{};
+      ns_utils::extrapolate(tbase, ybase, ti, yval);
+      ynew.emplace_back(yval);
+      continue;
+    }
     auto const &left_ind = ns_utils::binary_index_search(ti, tbase);
     auto const &picewise_coeffs = coefficients_[left_ind];
 
     // Compute mpc_dt.
     auto const &dt = (ti - tbase[left_ind]) / (tbase[left_ind + 1] - tbase[left_ind]);
 
-//    std::cout << mpc_dt << std::endl;
+    //std::cout << mpc_dt << std::endl;
     auto const &yval = evaluatePolynomial(dt, picewise_coeffs);
     ynew.emplace_back(yval);
   }
@@ -70,6 +70,15 @@ bool InterpolatingSplinePCG::Interpolate(std::vector<double> const &tnew,
   // Binary Search.
   for (auto const &ti : tnew)
   {
+
+    if (ti < tbase_[0] || ti > tbase_.back())
+    {
+      double yval{};
+      ns_utils::extrapolate(tbase_, ybase_, ti, yval);
+      ynew.emplace_back(yval);
+      continue;
+    }
+
     auto const &left_ind = ns_utils::binary_index_search(ti, tbase_);
     auto const &picewise_coeffs = coefficients_[left_ind];
 
@@ -91,14 +100,18 @@ bool InterpolatingSplinePCG::Interpolate(const std::vector<double> &tbase,
                                          double &ynew)
 {
 
-  if (tnew < tbase[0] && tnew > tbase.back())
+  bool couldSolve_and_Monotonic = prepareCoefficients(tbase, ybase);
+
+  if (!couldSolve_and_Monotonic)
   {
-    ns_utils::print(" The scalar; new coordinates is out of the base coordinates, extrapolation is requested ...\n");
-    ns_utils::print(" Please make sure that the requested point within the base coordinate interval \n");
     return false;
   }
 
-  bool couldSolve_and_Monotonic = prepareCoefficients(tbase, ybase);
+  if (tnew < tbase[0] || tnew > tbase.back())
+  {
+    ns_utils::extrapolate(tbase, ybase, tnew, ynew);
+    return true;
+  }
 
   // Binary Search.
   auto const &left_ind = ns_utils::binary_index_search(tnew, tbase);
@@ -115,11 +128,11 @@ bool InterpolatingSplinePCG::Interpolate(const std::vector<double> &tbase,
 
 bool InterpolatingSplinePCG::Interpolate(const double &tnew, double &ynew) const
 {
-  if (tnew < tbase_[0] && tnew > tbase_.back())
+
+  if (tnew < tbase_[0] || tnew > tbase_.back())
   {
-    ns_utils::print(" The scalar; new coordinates is out of the base coordinates, extrapolation is requested ...\n");
-    ns_utils::print(" Please make sure that the requested point within the base coordinate interval \n");
-    return false;
+    ns_utils::extrapolate(tbase_, ybase_, tnew, ynew);
+    return true;
   }
 
 

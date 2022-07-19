@@ -69,7 +69,7 @@ int main()
 
   // Create new interpolating coordinates
   // double sfinal = svec.back();
-  auto se_new = ns_utils::linspace(svec[0] + 0.2, svec.back(), 50);
+  auto se_new = ns_utils::linspace(svec[0] - 2., svec.back() + 3., 50);
 
   writeToFile(log_path, xvec, "xe");
   writeToFile(log_path, yvec, "ye");
