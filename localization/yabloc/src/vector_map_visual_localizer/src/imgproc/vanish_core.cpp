@@ -74,29 +74,6 @@ void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & 
     cv::line(image, toCvPoint(*opt1), toCvPoint(*opt2), cv::Scalar(0, 255, 255), 1);
   }
   cv::imshow("projected", image);
-
-  // DEBUG:
-  static bool first = true;
-
-  Eigen::Vector3f tmp_rx = q.toRotationMatrix().col(0);
-  Eigen::Vector3f rz = q.toRotationMatrix().col(2);
-  Eigen::Vector3f ry = (rz.cross(tmp_rx)).normalized();
-  Eigen::Vector3f rx = ry.cross(rz);
-
-  Eigen::Matrix3f normalized;
-  normalized.col(0) = rx;
-  normalized.col(1) = ry;
-  normalized.col(2) = rz;
-
-  if (first) {
-    std::cout << "static tf" << std::endl;
-    std::cout << q.toRotationMatrix() << std::endl;
-    std::cout << "optimized tf" << std::endl;
-    std::cout << rotation.matrix() << std::endl;
-    std::cout << "normalized" << std::endl;
-    std::cout << normalized << std::endl;
-    first = false;
-  }
 }
 
 void VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
@@ -246,8 +223,9 @@ void VanishPoint::callbackImage(const Image & msg)
   drawHorizontalLine(image, graph_opt_rot, cv::Scalar(255, 0, 0));
 
   // Visualize
-  rotateImage(image, Sophus::SO3f::rotX(0.1));
   projectOnPlane(graph_opt_rot.inverse(), lines);
+  Sophus::SO3f correction = opt::extractNominalRotation(init_rot, graph_opt_rot);
+  rotateImage(image, correction);
   cv::imshow("lsd", image);
   cv::waitKey(1);
 }

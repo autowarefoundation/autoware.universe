@@ -12,6 +12,8 @@ Sophus::SO3f optimizeOnce(const Sophus::SO3f & R, const Eigen::Vector3f & vp);
 Sophus::SO3f optimizeOnce(
   const Sophus::SO3f & R, const Eigen::Vector3f & vp, const Eigen::Vector2f & vertical);
 
+Sophus::SO3f extractNominalRotation(const Sophus::SO3f & R_base, const Sophus::SO3f & R);
+
 class Optimizer
 {
 public:
