@@ -1420,6 +1420,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
                                     interpolated_map.col(3).data() + map_out_mpc_size);
 
   std::vector<double> v_smooth_vect;
+  v_smooth_vect.reserve(map_out_mpc_size);
 
   // Prepare a linear interpolator.
   ns_splines::InterpolatingSplinePCG interpolator_linear(1);
@@ -1428,11 +1429,12 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect, v_smooth_vect);
 
   // Smooth yaw.
-  std::vector<double> yaw_smooth_vect(map_out_mpc_size);  // We do not use yaw as a reference.
+  std::vector<double> yaw_smooth_vect;  // We do not use yaw as a reference.
+  yaw_smooth_vect.reserve(map_out_mpc_size);
 
   for (Eigen::Index k = 0; k < rdot_interp.rows(); ++k)
   {
-    yaw_smooth_vect.at(k) = std::atan2(rdot_interp(k, 1), rdot_interp(k, 0));
+    yaw_smooth_vect.emplace_back(std::atan2(rdot_interp(k, 1), rdot_interp(k, 0)));
   }
 
   // ns_utils::computeYawFromXY(x_smooth_vect, y_smooth_vect, yaw_smooth_vect);
@@ -1472,7 +1474,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   acc_smooth_vect.rend()[-1] = acc_smooth_vect.rend()[-2];  // emplace_back(acc_smooth_vect.back());
 
   // Convert smooth yaw to a monotonic series
-  ns_utils::convertEulerAngleToMonotonic(&yaw_smooth_vect);
+  ns_utils::unWrap(yaw_smooth_vect);
 
   // Create the rest of the smooth vectors; handled in MPCtraj class.
   mpc_traj_smoothed.setTrajectoryCoordinate('s', s_smooth_vect);
@@ -1496,10 +1498,9 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   // Verify size
   if (auto const &&size_of_mpc_smooth = mpc_traj_smoothed.size(); size_of_mpc_smooth == 0)
   {
-    RCLCPP_ERROR(
-      get_logger(),
-      "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ]  smooth "
-      "MPCdataTrajectoryVectors  are not assigned properly ... ");
+    RCLCPP_ERROR(get_logger(),
+                 "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ] the smooth "
+                 "MPCdataTrajectoryVectors  are not assigned properly ... ");
     return false;
   }
 
