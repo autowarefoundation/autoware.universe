@@ -719,30 +719,30 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
   std::vector<double> ax_predicted;
 
   // Fill the empty predicted vectors.
-  ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
-                                current_MPCtraj_smooth_vects_ptr_->x,
-                                s_predicted_vect,
-                                xpredicted);  // x
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s,
+                            current_MPCtraj_smooth_vects_ptr_->x,
+                            s_predicted_vect,
+                            xpredicted);  // x
 
-  ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
-                                current_MPCtraj_smooth_vects_ptr_->y,
-                                s_predicted_vect,
-                                ypredicted);  // y
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s,
+                            current_MPCtraj_smooth_vects_ptr_->y,
+                            s_predicted_vect,
+                            ypredicted);  // y
 
-  ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
-                                current_MPCtraj_smooth_vects_ptr_->yaw,
-                                s_predicted_vect,
-                                yaw_predicted);  // yaw
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s,
+                            current_MPCtraj_smooth_vects_ptr_->yaw,
+                            s_predicted_vect,
+                            yaw_predicted);  // yaw
 
-  ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
-                                current_MPCtraj_smooth_vects_ptr_->vx,
-                                s_predicted_vect,
-                                vx_predicted);  // Vx
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s,
+                            current_MPCtraj_smooth_vects_ptr_->vx,
+                            s_predicted_vect,
+                            vx_predicted);  // Vx
 
-  ns_utils::interp1d_map_linear(current_MPCtraj_smooth_vects_ptr_->s,
-                                current_MPCtraj_smooth_vects_ptr_->ax,
-                                s_predicted_vect,
-                                ax_predicted);  // ax
+  ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s,
+                            current_MPCtraj_smooth_vects_ptr_->ax,
+                            s_predicted_vect,
+                            ax_predicted);  // ax
 
   ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);  //  [x, y, psi, s, ey, epsi, delta]
 
