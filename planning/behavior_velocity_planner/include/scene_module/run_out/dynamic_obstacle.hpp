@@ -144,7 +144,7 @@ class DynamicObstacleCreatorForPoints : public DynamicObstacleCreator
 public:
   explicit DynamicObstacleCreatorForPoints(rclcpp::Node & node);
   void onCompareMapFilteredPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-    sub_compare_map_filtered_pointcloud_;
+  sub_compare_map_filtered_pointcloud_;
 
   // tf
   tf2_ros::Buffer tf_buffer_;
