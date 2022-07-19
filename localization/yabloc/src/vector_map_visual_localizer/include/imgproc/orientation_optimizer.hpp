@@ -31,10 +31,10 @@ public:
 
 private:
   const bool verbose_;
+  boost::circular_buffer<Vertex::Ptr> vertices_;
   const float imu_factor_gain_;
   const float vp_factor_gain_;
   const float hz_factor_gain_;
-  boost::circular_buffer<Vertex::Ptr> vertices_;
 
   void printEvaluation() const;
 };

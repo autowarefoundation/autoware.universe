@@ -185,9 +185,8 @@ Sophus::SO3f optimizeOnce(
 
 Sophus::SO3f extractNominalRotation(const Sophus::SO3f & R_base, const Sophus::SO3f & R)
 {
-  // DEBUG:
-  static bool first = true;
-
+  // NOTE: We must explain what is happened in this function
+  // However, I am not sure
   Eigen::Vector3f tmp_rx = R_base.matrix().col(0);
   Eigen::Vector3f rz = R.matrix().col(2);
   Eigen::Vector3f ry = (rz.cross(tmp_rx)).normalized();
@@ -199,23 +198,13 @@ Sophus::SO3f extractNominalRotation(const Sophus::SO3f & R_base, const Sophus::S
   tmp.col(2) = rz;
   Sophus::SO3f normalized(tmp);
 
-  if (first) {
-    std::cout << "static tf" << std::endl;
-    std::cout << R_base.matrix() << std::endl;
-    std::cout << "optimized tf" << std::endl;
-    std::cout << R.matrix() << std::endl;
-    std::cout << "normalized" << std::endl;
-    std::cout << normalized.matrix() << std::endl;
-    first = false;
-  }
-
   // NOTE:
   // I do not know which one is correct.
   // I guess C is true one
-  auto A = R_base.inverse() * normalized;
-  auto B = R_base * normalized.inverse();
+  // auto A = R_base.inverse() * normalized;
+  // auto B = R_base * normalized.inverse();
   auto C = normalized * R_base.inverse();  // = B.transpose()
-  auto D = normalized.inverse() * R_base;  // = A.transpose()
+  // auto D = normalized.inverse() * R_base;  // = A.transpose()
 
   return C;
 }

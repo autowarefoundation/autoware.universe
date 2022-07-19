@@ -63,4 +63,7 @@
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="/particle_pose"/>
     </node>
+
+    <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
+    </node>
 </launch>
