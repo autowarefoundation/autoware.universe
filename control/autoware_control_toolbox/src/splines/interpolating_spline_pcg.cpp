@@ -129,6 +129,12 @@ bool InterpolatingSplinePCG::Interpolate(const std::vector<double> &tbase,
 bool InterpolatingSplinePCG::Interpolate(const double &tnew, double &ynew) const
 {
 
+  if (!initialized_ || tbase_.empty() || ybase_.empty())
+  {
+    ns_utils::print("The interpolator is not initialized. Please initialize first.");
+    return false;
+  }
+
   if (tnew < tbase_[0] || tnew > tbase_.back())
   {
     ns_utils::extrapolate(tbase_, ybase_, tnew, ynew);
