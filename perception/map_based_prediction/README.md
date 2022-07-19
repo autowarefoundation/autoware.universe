@@ -13,6 +13,7 @@
   - Road network information with Lanelet2 format
 
 ## Inner-workings / Algorithms
+
 ### Flow chart
 
 <div align="center">
@@ -21,11 +22,11 @@
 
 ### Path prediction for road users
 
-1. Remove old object history
+#### Remove old object history
 
 Store time-series data of objects to determine the vehicle's route and to detect lane change for several duration. Object Data contains the object's position, speed, and time information.
 
-2. Get Current lanelet and update Object history
+#### Get current lanelet and update Object history
 
 Search one or more lanelets satisfying the following conditions for each target object and store them in the ObjectData.
 
@@ -35,9 +36,9 @@ Search one or more lanelets satisfying the following conditions for each target 
   - The angle flip is allowed, the condition is `diff_yaw < threshold or diff_yaw > pi - threshold`.
 - The lanelet must be reachable from the lanelet recorded in the past history.
 
-3. Get Predicted Reference Path
+#### Get predicted reference path
 
-- Get Reference Path
+- Get reference path
   - Create a reference path for the object from the associated lanelet.
 - Predict Object Maneuver
   - Generate predicted paths for the object.
@@ -48,16 +49,14 @@ Search one or more lanelets satisfying the following conditions for each target 
 
 The conditions for the lane change detection then becomes
 
-Left Lane Change Detection
+```cpp
+//  Left Lane Change Detection
+(d_current_left / d_lane) > dl_ratio_threshold &&
+(d_current_left - d_previous_left) > ddl_threshold
 
-```
-if(d_current, left/d_lane > dl_ratio_threshold && (d_current, left - d_previous, left) > ddl_threshold)
-```
-
-Right Lane Change Detection
-
-```
-if(d_current, right/d_lane < dr_ratio_threshold && (d_current, right - d_previous, right) < ddr_threshold)
+// Right Lane Change Detection
+(d_current_right / d_lane) < dr_ratio_threshold &&
+(d_current_right - d_previous_right) < ddr_threshold
 ```
 
 where the parameter is explained in the picture below. An example of how to tune the parameters is described later.
@@ -73,9 +72,7 @@ where the parameter is explained in the picture below. An example of how to tune
 ### Lane change detection logic
 
 This is an example to tune the parameters for lane change detection.
-
 The default parameters are set so that the lane change can be detected 1 second before the vehicle crosses the lane boundary. Here, 15 data in the lane change / non lane change cases are plotted.
-
 
 ![right change data](./media/lanechange_detection_right_to_left.png)
 
@@ -109,7 +106,6 @@ If the target object is inside the road or crosswalk, this module outputs one or
 <div align="center">
   <img src="images/inside_road.svg" width=90%>
 </div>
-
 
 ## Inputs / Outputs
 
