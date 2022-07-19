@@ -12,6 +12,13 @@ ament_auto_find_build_dependencies(REQUIRED
         )
 set(CMAKE_CXX_STANDARD 17)
 
+# Release, Debug, RelWithDebInfo, MinSizeRel
+#set(CMAKE_BUILD_TYPE "Debug")
+#if (CMAKE_BUILD_TYPE MATCHES RELEASE)
+#    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+#    message("In release mode ...")
+#endif ()
+
 ## ----------------- Library headers and sources -------------------------------
 
 ## ------------- CONTROL LIB  ----------------------------------
