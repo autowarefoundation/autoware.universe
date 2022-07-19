@@ -42,7 +42,7 @@ double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const t
 }
 
 PoseInitializer::PoseInitializer()
-: Node("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
+: SteeNode("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
 {
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
 

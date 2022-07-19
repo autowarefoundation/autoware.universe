@@ -27,7 +27,7 @@
 #include <utility>
 
 LocalizationErrorMonitor::LocalizationErrorMonitor()
-: Node("localization_error_monitor"), updater_(this)
+: SteeNode("localization_error_monitor"), updater_(this)
 {
   scale_ = this->declare_parameter("scale", 3.0);
   error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);

@@ -22,6 +22,9 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 struct Ellipse
 {
@@ -32,7 +35,7 @@ struct Ellipse
   double size_lateral_direction;
 };
 
-class LocalizationErrorMonitor : public rclcpp::Node
+class LocalizationErrorMonitor : public tilde::SteeNode
 {
 private:
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_with_cov_sub_;

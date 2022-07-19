@@ -14,7 +14,7 @@
 
 #include "vehicle_velocity_converter/vehicle_velocity_converter.hpp"
 
-VehicleVelocityConverter::VehicleVelocityConverter() : Node("vehicle_velocity_converter")
+VehicleVelocityConverter::VehicleVelocityConverter() : SteeNode("vehicle_velocity_converter")
 {
   // set covariance value for twist with covariance msg
   std::vector<double> covariance = declare_parameter<std::vector<double>>("twist_covariance");

@@ -41,8 +41,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class EKFLocalizer : public rclcpp::Node
+class EKFLocalizer : public tilde::SteeNode
 {
 public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);

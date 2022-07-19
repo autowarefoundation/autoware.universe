@@ -31,7 +31,7 @@
 using std::placeholders::_1;
 
 StopFilter::StopFilter(const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options)
+: SteeNode(node_name, node_options)
 {
   vx_threshold_ = declare_parameter("vx_threshold", 0.01);
   wz_threshold_ = declare_parameter("wz_threshold", 0.01);

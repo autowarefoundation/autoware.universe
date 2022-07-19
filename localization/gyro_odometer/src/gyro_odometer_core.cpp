@@ -21,7 +21,7 @@
 #include <string>
 
 GyroOdometer::GyroOdometer()
-: Node("gyro_odometer"),
+: SteeNode("gyro_odometer"),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   output_frame_(declare_parameter("base_link", "base_link")),
@@ -31,7 +31,7 @@ GyroOdometer::GyroOdometer()
     "vehicle/twist_with_covariance", rclcpp::QoS{100},
     std::bind(&GyroOdometer::callbackTwistWithCovariance, this, std::placeholders::_1));
 
-  imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
+  imu_sub_ = create_stee_subscription<sensor_msgs::msg::Imu>(
     "imu", rclcpp::QoS{100}, std::bind(&GyroOdometer::callbackImu, this, std::placeholders::_1));
 
   twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("twist", rclcpp::QoS{10});

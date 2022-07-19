@@ -20,7 +20,7 @@
 #include <cstddef>
 #include <functional>
 
-Pose2Twist::Pose2Twist() : Node("pose2twist_core")
+Pose2Twist::Pose2Twist() : SteeNode("pose2twist_core")
 {
   using std::placeholders::_1;
 

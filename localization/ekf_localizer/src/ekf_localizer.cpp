@@ -33,7 +33,7 @@
 using std::placeholders::_1;
 
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
+: SteeNode(node_name, node_options), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
 {
   show_debug_info_ = declare_parameter("show_debug_info", false);
   ekf_rate_ = declare_parameter("predict_frequency", 50.0);

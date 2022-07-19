@@ -20,8 +20,11 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class Pose2Twist : public rclcpp::Node
+class Pose2Twist : public tilde::SteeNode
 {
 public:
   Pose2Twist();

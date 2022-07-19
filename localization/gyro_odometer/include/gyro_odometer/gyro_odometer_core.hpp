@@ -27,8 +27,11 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class GyroOdometer : public rclcpp::Node
+class GyroOdometer : public tilde::SteeNode
 {
 public:
   GyroOdometer();
@@ -44,7 +47,7 @@ private:
 
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     vehicle_twist_with_cov_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  tilde::SteeSubscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr

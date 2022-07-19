@@ -94,7 +94,7 @@ bool isLocalOptimalSolutionOscillation(
 }
 
 NDTScanMatcher::NDTScanMatcher()
-: Node("ndt_scan_matcher"),
+: SteeNode("ndt_scan_matcher"),
   tf2_buffer_(this->get_clock()),
   tf2_listener_(tf2_buffer_),
   tf2_broadcaster_(*this),
