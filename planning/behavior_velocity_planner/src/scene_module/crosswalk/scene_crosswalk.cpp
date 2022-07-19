@@ -355,9 +355,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_watch_.toc("total_processing_time", false));
 
   StopFactor stop_factor{};
+  StopFactor stop_factor_rtc{};
 
   const auto nearest_stop_point = findNearestStopPoint(ego_path, stop_factor);
-  const auto rtc_stop_point = findRTCStopPoint(ego_path, stop_factor);
+  const auto rtc_stop_point = findRTCStopPoint(ego_path, stop_factor_rtc);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step3: %f ms",
@@ -380,11 +381,11 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   if (nearest_stop_point) {
     insertDecelPoint(nearest_stop_point.get(), 0.0, *path);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
   } else if (rtc_stop_point) {
     insertDecelPoint(rtc_stop_point.get(), 0.0, *path);
+    planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
   }
-
-  planning_utils::appendStopReason(stop_factor, stop_reason);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step4: %f ms",
