@@ -31,7 +31,7 @@ This module uses RPE(Relative Pose Error) as an evaluation metric. To put simply
 
 ## Recommanded Usage
 
-Given reliable ground truth poses, this package could be used to evaluate the precision of localization module. The calculated error is published through `PoseStamped` messages, which could be visualized with [plotjuggler](https://www.plotjuggler.io/). 
+Given reliable ground truth poses, this package could be used to evaluate the precision of localization module. The calculated error is published through `PoseStamped` messages, which could be visualized with [plotjuggler](https://www.plotjuggler.io/).
 
 ## Instruction To Create Test Data from KITTI Dataset
 
@@ -61,7 +61,10 @@ Tools could be found in the following repo:
 
 ### 4. Bring up `Universe`
 
-- Follow the instructions below, up to `vcs import src < autoware.repos` (DO NOT BUILD AT THIS TIME) [Autoware Doc](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/docker-installation/)
+- Follow the instructions below, up to `vcs import src < autoware.repos` (DO NOT BUILD AT THIS TIME)
+
+[Autoware Doc](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/docker-installation/)
+
 - Terminal 1
   `cd src/launcher/autoware_launch`
   `git checkout kitti_test`
@@ -76,14 +79,18 @@ Tools could be found in the following repo:
   `source ~/autoware/install/setup.bash`
   `ros2 bag play PATH_TO_ROS2BAG/ros2_bag.db3 --qos-profile-overrides-path qos.yaml -d 3`
 - New Terminal 4
-  `source ~/autoware/install/setup.bash`
-  `ros2 service call /rosbag2_player/toggle_paused rosbag2_interfaces/srv/TogglePaused`
+
+`source ~/autoware/install/setup.bash`
+`ros2 service call /rosbag2_player/toggle_paused rosbag2_interfaces/srv/TogglePaused`
+
 - Go to Rviz of Terminal 1, set an intial pose, when Terminal 1 output `Alignment called`, go to Terminal 4 and rerun the last command. Then you are good to go.
-  Check the link below for a video demonstration. [Sample Video](https://github.com/orgs/autowarefoundation/discussions/334)
 
+Check the link below for a video demonstration. [Sample Video](https://github.com/autowarefoundation/autoware/discussions/2618)
 
-## Reference:
+## Reference
+
 [A_benchmark_for_the_evaluation_of_RGB-D_SLAM_systems](https://www.researchgate.net/publication/261353760_A_benchmark_for_the_evaluation_of_RGB-D_SLAM_systems)
 
-Original Issue Link:
+## Original Issue Link
+
 [Evaluate performance of localization pipeline](https://github.com/autowarefoundation/autoware.universe/issues/602)
