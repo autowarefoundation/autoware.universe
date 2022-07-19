@@ -63,7 +63,7 @@ private:
     const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
+  tilde::SteeSubscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
 
   // TODO(Takagi, Isamu): deprecated
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;

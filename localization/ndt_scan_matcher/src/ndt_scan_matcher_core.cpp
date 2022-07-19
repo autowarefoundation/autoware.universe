@@ -200,15 +200,15 @@ NDTScanMatcher::NDTScanMatcher()
     "ekf_pose_with_covariance", 100,
     std::bind(&NDTScanMatcher::callbackInitialPose, this, std::placeholders::_1),
     initial_pose_sub_opt);
-  map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  map_points_sub_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1), main_sub_opt);
-  sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  sensor_points_sub_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
     std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1), main_sub_opt);
 
   sensor_aligned_pose_pub_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
+    this->create_stee_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
   ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
