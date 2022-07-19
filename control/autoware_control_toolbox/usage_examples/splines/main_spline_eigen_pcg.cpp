@@ -69,7 +69,7 @@ int main()
 
   // Create new interpolating coordinates
   // double sfinal = svec.back();
-  auto se_new = ns_utils::linspace(svec[0], svec.back(), 101);
+  auto se_new = ns_utils::linspace(svec[0] + 0.2, svec.back(), 50);
 
   writeToFile(log_path, xvec, "xe");
   writeToFile(log_path, yvec, "ye");
@@ -97,7 +97,9 @@ int main()
   const double timer_interpolation = tic();
 
   // Don't keep coefficients.
-  interpolating_spline_aw.Interpolate(svec, yvec, se_new, yinterp);
+  auto is_interpolated = interpolating_spline_aw.Interpolate(svec, yvec, se_new, yinterp);
+  ns_utils::print("Is interpolated :", is_interpolated);
+
   fmt::print("{:<{}}{:.2f}ms\n", "Time: PCG spline initialization:", 50, toc(timer_interpolation));
 
   writeToFile(log_path, yinterp, "yinterp");
@@ -107,14 +109,19 @@ int main()
 
   // Set reuse coeffs true so that we can use the same coefficients for the repeated interpolation.
   // When creating the interpolator first time, we set reuse false so that it computes the coefficients.
-  interpolating_spline_aw.Interpolate(svec, zvec, se_new, zinterp);
+
+  is_interpolated = interpolating_spline_aw.Interpolate(svec, zvec, se_new, zinterp);
+  ns_utils::print("Is interpolated :", is_interpolated);
+
   fmt::print("{:<{}}{:.2f} ms\n", "Time: spline initialization:", 50, toc(timer_interpolation2));
   writeToFile(log_path, zinterp, "zinterp");
 
   // REUSE EXAMPLE.
-  auto se_new2 = ns_utils::linspace(svec[0], svec.back(), 20);
+  auto se_new2 = ns_utils::linspace(svec[0], svec.back(), 200);
   std::vector<double> zinterp2;
-  interpolating_spline_aw.Interpolate(svec, zvec, se_new2, zinterp2);
+
+  is_interpolated = interpolating_spline_aw.Interpolate(svec, zvec, se_new2, zinterp2);
+  ns_utils::print("Is interpolated :", is_interpolated);
 
   writeToFile(log_path, se_new2, "se_new2");
   writeToFile(log_path, zinterp2, "zinterp2");
@@ -124,8 +131,46 @@ int main()
   double single_interp_point_zval{};
 
   interpolating_spline_aw.Interpolate(svec, zvec, ti, single_interp_point_zval);
+
   std::cout << " Expected interpolated value : " << zinterp[10] << std::endl;
   std::cout << " Single interpolated value : " << single_interp_point_zval << std::endl;
+
+  /**
+  * Two new interpolation is added, if the interpolator is initialized.
+  * */
+  interpolating_spline_aw.Initialize(svec, zvec);
+
+  std::vector<double> zinterp_itemwise;
+  for (auto const &s : se_new2)
+  {
+    double zint{};
+    interpolating_spline_aw.Interpolate(s, zint);
+    zinterp_itemwise.emplace_back(zint);
+  }
+
+  writeToFile(log_path, zinterp_itemwise, "zinterp_itemwise");
+
+  /**
+   * Initialized and vector interpolation
+   * */
+  auto se_new3 = ns_utils::linspace(svec[0] + 0.5, svec.back(), 30);
+
+  std::vector<double> zvectorwise;
+  interpolating_spline_aw.Interpolate(se_new3, zvectorwise);
+
+  writeToFile(log_path, se_new3, "snew3");
+  writeToFile(log_path, zvectorwise, "zvectorwise");
+
+
+  /**
+   * LINEAR INTERPOLATION
+   * */
+  std::vector<double> ylinear;
+  ns_splines::InterpolatingSplinePCG linear_interp(1);
+  is_interpolated = interpolating_spline_aw.Interpolate(svec, yvec, se_new, ylinear);
+  ns_utils::print("Is interpolated :", is_interpolated);
+
+  writeToFile(log_path, ylinear, "ylinear");
 
   return 0;
 }
