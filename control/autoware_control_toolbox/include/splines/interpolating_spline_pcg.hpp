@@ -77,10 +77,10 @@ class InterpolatingSplinePCG
 
   // For vector interpolation.
 
-  [[nodiscard]] bool Interpolate(std::vector<double> const &tbase,
-                                 std::vector<double> const &ybase,
-                                 std::vector<double> const &tnew,
-                                 std::vector<double> &ynew);
+  bool Interpolate(std::vector<double> const &tbase,
+                   std::vector<double> const &ybase,
+                   std::vector<double> const &tnew,
+                   std::vector<double> &ynew);
 
   // For scalar point interpolation.
 
