@@ -95,10 +95,9 @@ void TurnSignalDisplay::update(float wall_dt, float ros_dt)
   unsigned int signal_type;
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
-    if (!last_msg_ptr_) {
-      return;
+    if (last_msg_ptr_) {
+      signal_type = last_msg_ptr_->report;
     }
-    signal_type = last_msg_ptr_->report;
   }
 
   QColor background_color;
