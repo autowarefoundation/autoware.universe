@@ -74,7 +74,6 @@ public:
 
 protected:
   BaseParam base_param_;
-  rclcpp::Logger logger_{rclcpp::get_logger("smoother")};
 };
 }  // namespace motion_velocity_smoother
 

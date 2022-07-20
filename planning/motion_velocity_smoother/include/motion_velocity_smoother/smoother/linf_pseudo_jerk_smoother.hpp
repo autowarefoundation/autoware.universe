@@ -53,7 +53,6 @@ public:
 private:
   Param smoother_param_;
   autoware::common::osqp::OSQPInterface qp_solver_;
-  // rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("linf_pseudo_jerk_smoother")};
 };
 }  // namespace motion_velocity_smoother
 

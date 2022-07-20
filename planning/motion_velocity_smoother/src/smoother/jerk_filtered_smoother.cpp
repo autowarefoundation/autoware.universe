@@ -53,10 +53,11 @@ bool JerkFilteredSolver::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories)
 {
+  auto logger = rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother");
   output = input;
 
   if (input.empty()) {
-    RCLCPP_WARN(logger_, "Input TrajectoryPoints to the jerk filtered optimization is empty.");
+    RCLCPP_WARN(logger, "Input TrajectoryPoints to the jerk filtered optimization is empty.");
     return false;
   }
 
@@ -104,7 +105,7 @@ bool JerkFilteredSolver::apply(
     resampling::resampleTrajectory(filtered, v0, 0, base_param_.resample_param);
 
   if (!opt_resampled_trajectory) {
-    RCLCPP_WARN(logger_, "Resample failed!");
+    RCLCPP_WARN(logger, "Resample failed!");
     return false;
   }
   // Ensure terminal velocity is zero
@@ -127,7 +128,7 @@ bool JerkFilteredSolver::apply(
     *opt_resampled_trajectory, 1, opt_resampled_trajectory->size());
 
   if (!zero_vel_id) {
-    RCLCPP_WARN(logger_, "opt_resampled_trajectory must have stop point.");
+    RCLCPP_WARN(logger, "opt_resampled_trajectory must have stop point.");
     return false;
   }
 
@@ -288,7 +289,7 @@ bool JerkFilteredSolver::apply(
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =
     std::chrono::duration_cast<std::chrono::nanoseconds>(tf1 - ts).count() * 1.0e-6;
-  RCLCPP_DEBUG(logger_, "optimization time = %f [ms]", dt_ms1);
+  RCLCPP_DEBUG(logger, "optimization time = %f [ms]", dt_ms1);
 
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i) {
@@ -303,7 +304,7 @@ bool JerkFilteredSolver::apply(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    RCLCPP_ERROR(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    RCLCPP_ERROR(logger, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
   }
 
   if (TMP_SHOW_DEBUG_INFO) {
