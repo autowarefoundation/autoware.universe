@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/geometry/boost_geometry_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+
+#include <tf2/utils.h>
 
 namespace
 {
@@ -35,6 +38,10 @@ void appendPointToPolygon(Polygon2d & polygon, const Point2d point)
   bg::append(polygon.outer(), point);
 }
 
+/*
+ * NOTE: Area is negative when footprint.points is clock wise.
+ *       Area is positive when footprint.points is anti clock wise.
+ */
 double getPolygonArea(const geometry_msgs::msg::Polygon & footprint)
 {
   double area = 0.0;
@@ -78,11 +85,9 @@ bool isClockWise(const Polygon2d & polygon)
 
 Polygon2d inverseClockWise(const Polygon2d & polygon)
 {
-  Polygon2d inverted_polygon;
-  for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
-    inverted_polygon.outer().push_back(polygon.outer().at(i));
-  }
-  return inverted_polygon;
+  auto output_polygon = polygon;
+  boost::geometry::reverse(output_polygon);
+  return output_polygon;
 }
 
 geometry_msgs::msg::Polygon rotatePolygon(
