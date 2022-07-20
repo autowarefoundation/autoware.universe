@@ -96,13 +96,12 @@ struct Parameters
 
   // First order vehicle state models.
   float64_t steering_tau{0.3};
-  float64_t velocity_tau{0.3};
+  float64_t velocity_tau{0.1};
   float64_t acc_tau{0.3};
 };
 
 template<typename T>
-void update_param(
-  const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
+void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),

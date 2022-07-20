@@ -136,19 +136,22 @@ void CommunicationDelayCompensatorNode::onTimer()
   // dist_td_obs_vehicle_model_ptr_->printDiscreteSystem();
   // dist_td_obs_vehicle_model_ptr_->printContinuousSystem();
   // vehicle_model_ptr_->printDiscreteSystem();
+  // cdob_lateral_ptr_->printdummy(current_lat_measurements_);
 
   is_vehicle_stopped_ = isVehicleStopping();
 
   // Compute lateral CDOB references.
-  if (!is_vehicle_stopped_)
-  {
-    computeLateralCDOB();
-  } else
-  {
-    // DOB Reset
-    // cdob_lateral_ptr_->resetInitialState();
-    dob_lateral_ptr_->resetInitialState();
-  }
+//  if (!is_vehicle_stopped_)
+//  {
+//    computeLateralCDOB();
+//  } else
+//  {
+//    // DOB Reset
+//    // cdob_lateral_ptr_->resetInitialState();
+//    dob_lateral_ptr_->resetInitialState();
+//  }
+
+  computeLateralCDOB();
 
   // Publish delay compensation reference.
   publishCompensationReferences();
@@ -302,6 +305,15 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
   }
 
   if (!current_control_cmd_ptr_)
+  {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
+                                   *get_clock(),
+                                   (1000ms).count(),
+                                   "[communication_delay] Waiting for the control command ...");
+    return false;
+  }
+
+  if (!previous_control_cmd_ptr_)
   {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(),
                                    *get_clock(),
@@ -589,7 +601,7 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
   //                    current_heading_error, current_steering,
   //                    prev_ideal_steering_, prev_curvature_);
 
-  //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
   //
   //    ns_utils::print("Previous inputs to CDOB : ");
   //    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
