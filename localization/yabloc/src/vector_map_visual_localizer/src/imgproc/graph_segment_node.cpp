@@ -62,17 +62,21 @@ void GraphSegment::callbackImage(const Image & msg)
 void GraphSegment::publishImage(
   const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp)
 {
+  const cv::Size size = segmentation.size();
+  int target_class = segmentation.at<int>(cv::Point2i(size.width / 2, size.height * 0.8));
+
   auto randomHsv = [](int index) -> cv::Scalar {
     double base = (double)(index)*0.618033988749895 + 0.24443434;
-    return cv::Scalar(fmod(base, 1.2) * 255, 0.95 * 255, 0.8 * 255);
+    return cv::Scalar(fmod(base, 1.2) * 255, 0.70 * 255, 0.5 * 255);
   };
 
-  cv::Mat segmented_image = cv::Mat::zeros(segmentation.size(), CV_8UC3);
+  cv::Mat segmented_image = cv::Mat::zeros(size, CV_8UC3);
   for (int i = 0; i < segmented_image.rows; i++) {
     const int * p = segmentation.ptr<int>(i);
     uchar * p2 = segmented_image.ptr<uchar>(i);
     for (int j = 0; j < segmented_image.cols; j++) {
-      cv::Scalar color = randomHsv(p[j]);
+      cv::Scalar color(30, 255, 255);
+      if (p[j] != target_class) color = randomHsv(p[j]);
       p2[j * 3] = (uchar)color[0];
       p2[j * 3 + 1] = (uchar)color[1];
       p2[j * 3 + 2] = (uchar)color[2];

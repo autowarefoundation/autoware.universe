@@ -4,7 +4,6 @@
 #include <lsd/lsd.hpp>
 #include <opencv4/opencv2/core/eigen.hpp>
 #include <opencv4/opencv2/opencv.hpp>
-#include <opencv4/opencv2/ximgproc/segmentation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -32,15 +31,14 @@ public:
   LineSegmentDetector();
 
 private:
+  const int truncate_pixel_threshold_;
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_lsd_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
 
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd_;
-  cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> gs_;
 
   void imageCallback(const sensor_msgs::msg::Image & msg);
   void execute(const cv::Mat & image, const rclcpp::Time & stamp);
-  cv::Mat segmentationGraph(const cv::Mat & image);
 };
 }  // namespace imgproc

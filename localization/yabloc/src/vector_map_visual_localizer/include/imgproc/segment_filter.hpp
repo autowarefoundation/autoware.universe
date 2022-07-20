@@ -23,18 +23,17 @@ public:
   SegmentFilter();
 
 private:
+  using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f &)>;
+  const int image_size_;
+  const float max_range_;
+  const int truncate_pixel_threshold_;
+
   SyncroSubscriber<PointCloud2, PointCloud2> subscriber_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   std::optional<CameraInfo> info_{std::nullopt};
   common::StaticTfSubscriber tf_subscriber_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
-
-  const int image_size_;
-  const float max_range_;
-  const int truncate_pixel_threshold_;
-
-  using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f &)>;
 
   pcl::PointCloud<pcl::PointNormal> projectLines(
     const pcl::PointCloud<pcl::PointNormal> & lines, ProjectFunc project) const;
