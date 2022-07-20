@@ -17,6 +17,7 @@
 
 #include "perception_utils/geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <boost/geometry.hpp>
 
@@ -37,12 +38,14 @@ inline double get2dIoU(
   const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & source_object,
   const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto & source_pose = getPose(std::get<0>(source_object));
+  const auto & target_pose = getPose(std::get<0>(target_object));
+  const auto & source_shape = std::get<1>(source_object);
+  const auto & target_shape = std::get<1>(target_object);
 
   tier4_autoware_utils::Polygon2d source_polygon, target_polygon;
-  toPolygon2d(std::get<0>(source_pose), std::get<1>(source_object), source_polygon);
-  toPolygon2d(std::get<0>(target_pose), std::get<1>(target_object), target_polygon);
+  tier4_autoware_utils::toPolygon2d(source_pose, source_shape, source_polygon);
+  tier4_autoware_utils::toPolygon2d(target_pose, target_shape, target_polygon);
 
   std::vector<tier4_autoware_utils::Polygon2d> union_polygons;
   std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
@@ -69,12 +72,14 @@ inline double get2dPrecision(
   const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & source_object,
   const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto & source_pose = getPose(std::get<0>(source_object));
+  const auto & target_pose = getPose(std::get<0>(target_object));
+  const auto & source_shape = std::get<1>(source_object);
+  const auto & target_shape = std::get<1>(target_object);
 
   tier4_autoware_utils::Polygon2d source_polygon, target_polygon;
-  toPolygon2d(std::get<0>(source_pose), std::get<1>(source_object), source_polygon);
-  toPolygon2d(std::get<0>(target_pose), std::get<1>(target_object), target_polygon);
+  tier4_autoware_utils::toPolygon2d(source_pose, source_shape, source_polygon);
+  tier4_autoware_utils::toPolygon2d(target_pose, target_shape, target_polygon);
 
   std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
   boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
@@ -97,12 +102,14 @@ inline double get2dRecall(
   const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & source_object,
   const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto & source_pose = getPose(std::get<0>(source_object));
+  const auto & target_pose = getPose(std::get<0>(target_object));
+  const auto & source_shape = std::get<1>(source_object);
+  const auto & target_shape = std::get<1>(target_object);
 
   tier4_autoware_utils::Polygon2d source_polygon, target_polygon;
-  toPolygon2d(std::get<0>(source_pose), std::get<1>(source_object), source_polygon);
-  toPolygon2d(std::get<0>(target_pose), std::get<1>(target_object), target_polygon);
+  tier4_autoware_utils::toPolygon2d(source_pose, source_shape, source_polygon);
+  tier4_autoware_utils::toPolygon2d(target_pose, target_shape, target_polygon);
 
   std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
   boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
