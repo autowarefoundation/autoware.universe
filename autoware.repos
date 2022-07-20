@@ -129,3 +129,7 @@ repositories:
     type: git
     url: https://github.com/tier4/spinnaker.git
     version: 4c74d319ef9186a4fb643dbd82e1b5f7918e75ea
+  vender/morai_msgs:
+    type: git
+    url: https://github.com/MORAI-Autonomous/MORAI-ROS2_morai_msgs.git
+    version: main
