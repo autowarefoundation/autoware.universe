@@ -80,7 +80,7 @@ TEST(boost_geometry, boost_inverseClockWise)
   // empty
   Polygon2d empty_polygon;
   const auto reversed_empty_polygon = inverseClockWise(empty_polygon);
-  EXPECT_EQ(reversed_empty_polygon.outer().size(), 0);
+  EXPECT_EQ(static_cast<int>(reversed_empty_polygon.outer().size()), 0);
 
   // normal case
   Polygon2d clock_wise_polygon{{{0.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}}};
@@ -107,7 +107,7 @@ TEST(boost_geometry, boost_rotatePolygon)
   // empty
   geometry_msgs::msg::Polygon empty_polygon;
   const auto rotated_empty_polygon = rotatePolygon(empty_polygon, 0.0);
-  EXPECT_EQ(rotated_empty_polygon.points.size(), 0);
+  EXPECT_EQ(static_cast<int>(rotated_empty_polygon.points.size()), 0);
 
   // normal case
   geometry_msgs::msg::Polygon clock_wise_polygon;
