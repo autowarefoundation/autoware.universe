@@ -55,7 +55,7 @@ public:
 private:
   Param smoother_param_;
   autoware::common::osqp::OSQPInterface qp_solver_;
-  rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
+  // rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
   TrajectoryPoints forwardJerkFilter(
     const double v0, const double a0, const double a_max, const double a_stop, const double j_max,
