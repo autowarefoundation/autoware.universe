@@ -22,7 +22,6 @@
 #include <boost/geometry.hpp>
 
 #include <algorithm>
-#include <tuple>
 #include <vector>
 
 namespace perception_utils
@@ -33,19 +32,14 @@ std::uint8_t getHighestProbLabel(
 autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
   const autoware_auto_perception_msgs::msg::DetectedObject & detected_object);
 
-template <class T>
-inline double get2dIoU(
-  const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & source_object,
-  const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & target_object)
+template <class T1, class T2>
+inline double get2dIoU(const T1 source_object, const T2 target_object)
 {
-  const auto & source_pose = getPose(std::get<0>(source_object));
-  const auto & target_pose = getPose(std::get<0>(target_object));
-  const auto & source_shape = std::get<1>(source_object);
-  const auto & target_shape = std::get<1>(target_object);
+  const auto & source_pose = getPose(source_object);
+  const auto & target_pose = getPose(target_object);
 
-  tier4_autoware_utils::Polygon2d source_polygon, target_polygon;
-  tier4_autoware_utils::toPolygon2d(source_pose, source_shape, source_polygon);
-  tier4_autoware_utils::toPolygon2d(target_pose, target_shape, target_polygon);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
 
   std::vector<tier4_autoware_utils::Polygon2d> union_polygons;
   std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
@@ -67,19 +61,14 @@ inline double get2dIoU(
   return iou;
 }
 
-template <class T>
-inline double get2dPrecision(
-  const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & source_object,
-  const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & target_object)
+template <class T1, class T2>
+inline double get2dPrecision(const T1 source_object, const T2 target_object)
 {
-  const auto & source_pose = getPose(std::get<0>(source_object));
-  const auto & target_pose = getPose(std::get<0>(target_object));
-  const auto & source_shape = std::get<1>(source_object);
-  const auto & target_shape = std::get<1>(target_object);
+  const auto & source_pose = getPose(source_object);
+  const auto & target_pose = getPose(target_object);
 
-  tier4_autoware_utils::Polygon2d source_polygon, target_polygon;
-  tier4_autoware_utils::toPolygon2d(source_pose, source_shape, source_polygon);
-  tier4_autoware_utils::toPolygon2d(target_pose, target_shape, target_polygon);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
 
   std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
   boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
@@ -97,19 +86,14 @@ inline double get2dPrecision(
   return precision;
 }
 
-template <class T>
-inline double get2dRecall(
-  const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & source_object,
-  const std::tuple<const T &, const autoware_auto_perception_msgs::msg::Shape &> & target_object)
+template <class T1, class T2>
+inline double get2dRecall(const T1 source_object, const T2 target_object)
 {
-  const auto & source_pose = getPose(std::get<0>(source_object));
-  const auto & target_pose = getPose(std::get<0>(target_object));
-  const auto & source_shape = std::get<1>(source_object);
-  const auto & target_shape = std::get<1>(target_object);
+  const auto & source_pose = getPose(source_object);
+  const auto & target_pose = getPose(target_object);
 
-  tier4_autoware_utils::Polygon2d source_polygon, target_polygon;
-  tier4_autoware_utils::toPolygon2d(source_pose, source_shape, source_polygon);
-  tier4_autoware_utils::toPolygon2d(target_pose, target_shape, target_polygon);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
 
   std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
   boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);

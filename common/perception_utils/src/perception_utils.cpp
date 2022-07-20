@@ -41,6 +41,8 @@ autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
   tracked_object.kinematics.pose_with_covariance = detected_object.kinematics.pose_with_covariance;
   tracked_object.kinematics.twist_with_covariance =
     detected_object.kinematics.twist_with_covariance;
+  tracked_object.kinematics.orientation_availability =
+    detected_object.kinematics.orientation_availability;
 
   tracked_object.shape = detected_object.shape;
   return tracked_object;
