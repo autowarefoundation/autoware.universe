@@ -56,15 +56,26 @@ inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
   std::vector<double> v_lon(input_path.points.size());
   std::vector<double> v_lat(input_path.points.size());
   std::vector<double> heading_rate(input_path.points.size());
-  for (size_t i = 0; i < input_path.points.size(); ++i) {
-    const double ds = motion_utils::calcSignedArcLength(input_path.points, 0, i);
-    input_arclength.at(i) = ds;
-    x.at(i) = input_path.points.at(i).pose.position.x;
-    y.at(i) = input_path.points.at(i).pose.position.y;
-    z.at(i) = input_path.points.at(i).pose.position.z;
-    v_lon.at(i) = input_path.points.at(i).longitudinal_velocity_mps;
-    v_lat.at(i) = input_path.points.at(i).lateral_velocity_mps;
-    heading_rate.at(i) = input_path.points.at(i).heading_rate_rps;
+
+  input_arclength.front() = 0.0;
+  x.front() = input_path.points.front().pose.position.x;
+  y.front() = input_path.points.front().pose.position.y;
+  z.front() = input_path.points.front().pose.position.z;
+  v_lon.front() = input_path.points.front().longitudinal_velocity_mps;
+  v_lat.front() = input_path.points.front().lateral_velocity_mps;
+  heading_rate.front() = input_path.points.front().heading_rate_rps;
+  for (size_t i = 1; i < input_path.points.size(); ++i) {
+    const auto & prev_pt = input_path.points.at(i - 1);
+    const auto & curr_pt = input_path.points.at(i);
+    const double ds =
+      tier4_autoware_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+    input_arclength.at(i) = ds + input_arclength.at(i - 1);
+    x.at(i) = curr_pt.pose.position.x;
+    y.at(i) = curr_pt.pose.position.y;
+    z.at(i) = curr_pt.pose.position.z;
+    v_lon.at(i) = curr_pt.longitudinal_velocity_mps;
+    v_lat.at(i) = curr_pt.lateral_velocity_mps;
+    heading_rate.at(i) = curr_pt.heading_rate_rps;
   }
 
   // Interpolate

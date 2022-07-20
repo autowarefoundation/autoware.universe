@@ -280,3 +280,191 @@ TEST(resample_path, resample_path_by_vector)
     }
   }
 }
+
+TEST(resample_path, resample_path_by_vector_non_default)
+{
+  using motion_utils::resamplePath;
+
+  // Lerp x, y
+  {
+    autoware_auto_planning_msgs::msg::Path path;
+    path.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      path.points.at(i) = generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+    }
+    std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
+
+    const auto resampled_path = resamplePath(path, resampled_arclength, true);
+    EXPECT_NE(resampled_path, boost::none);
+    {
+      const auto p = resampled_path->points.at(0);
+      EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(1);
+      EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 1.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(2);
+      EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 5.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 2.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(3);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+    }
+
+    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
+      const auto p = resampled_path->points.at(i);
+      EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, 1.0, epsilon);
+    }
+  }
+
+  // Slerp z
+  {
+    autoware_auto_planning_msgs::msg::Path path;
+    path.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      path.points.at(i) =
+        generateTestPathPoint(i * 1.0, 0.0, i * 1.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+    }
+    std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
+
+    const auto resampled_path = resamplePath(path, resampled_arclength, false, false);
+    EXPECT_NE(resampled_path, boost::none);
+    {
+      const auto p = resampled_path->points.at(0);
+      EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(1);
+      EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 1.2, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 1.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(2);
+      EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 5.3, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 5.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 2.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(3);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 9.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+    }
+
+    const double pitch = std::atan(1.0);
+    const auto ans_quat = tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, 0.0);
+    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
+      const auto p = resampled_path->points.at(i);
+      EXPECT_NEAR(p.pose.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // Lerp v
+  {
+    autoware_auto_planning_msgs::msg::Path path;
+    path.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      path.points.at(i) = generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+    }
+    std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
+
+    const auto resampled_path = resamplePath(path, resampled_arclength, false, true, false);
+    EXPECT_NE(resampled_path, boost::none);
+    {
+      const auto p = resampled_path->points.at(0);
+      EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(1);
+      EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 1.2, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.6, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(2);
+      EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 5.3, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 2.65, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+    }
+
+    {
+      const auto p = resampled_path->points.at(3);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+    }
+
+    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
+      const auto p = resampled_path->points.at(i);
+      EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, 1.0, epsilon);
+    }
+  }
+}
