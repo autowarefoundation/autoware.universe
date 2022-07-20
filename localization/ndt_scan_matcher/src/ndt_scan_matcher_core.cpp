@@ -231,7 +231,7 @@ NDTScanMatcher::NDTScanMatcher()
     std::bind(&NDTScanMatcher::callbackInitialPose, this, std::placeholders::_1),
     initial_pose_sub_opt);
   map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "pointcloud_map", rclcpp::QoS{1}.transient_local(),
+    "pointcloud_map", rclcpp::QoS{1},
     std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1), map_sub_opt);
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
@@ -468,8 +468,8 @@ void NDTScanMatcher::callbackMapPoints(
   new_ndt_ptr->setInputTarget(map_points_ptr);
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  new_ndt_ptr->align(
-    *output_cloud, Eigen::Matrix4f::Identity());  // No longer necessary for ndt_omp
+  // new_ndt_ptr->align(
+  //   *output_cloud, Eigen::Matrix4f::Identity());  // No longer necessary for ndt_omp
 
   const auto KOJI_exe_end_time = std::chrono::system_clock::now();
   const double KOJI_exe_time =

@@ -162,7 +162,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 
   if (enable_partial_load_) {
     pub_partial_pointcloud_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-      "output/pointcloud_map/partial", durable_qos);
+      "output/pointcloud_map/partial", rclcpp::QoS{1});
     pcd_file_metadata_array_ = generatePCDMetadata(pcd_paths);
     load_pcd_partially_service_ = this->create_service<autoware_map_srvs::srv::LoadPCDPartially>(
       "load_pcd_partially", std::bind(
