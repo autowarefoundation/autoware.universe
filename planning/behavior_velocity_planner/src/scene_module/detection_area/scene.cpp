@@ -77,7 +77,7 @@ boost::optional<Point2d> getNearestCollisionPoint(
 }
 
 boost::optional<PathIndexWithPoint2d> findCollisionSegment(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line)
+  const PathWithLaneId & path, const LineString2d & stop_line)
 {
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
     const auto & p1 = path.points.at(i).point.pose.position;      // Point before collision point
@@ -95,8 +95,7 @@ boost::optional<PathIndexWithPoint2d> findCollisionSegment(
 }
 
 boost::optional<PathIndexWithOffset> findForwardOffsetSegment(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
-  const double offset_length)
+  const PathWithLaneId & path, const size_t base_idx, const double offset_length)
 {
   double sum_length = 0.0;
   for (size_t i = base_idx; i < path.points.size() - 1; ++i) {
@@ -118,8 +117,7 @@ boost::optional<PathIndexWithOffset> findForwardOffsetSegment(
 }
 
 boost::optional<PathIndexWithOffset> findBackwardOffsetSegment(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
-  const double offset_length)
+  const PathWithLaneId & path, const size_t base_idx, const double offset_length)
 {
   double sum_length = 0.0;
   const auto start = static_cast<std::int32_t>(base_idx) - 1;
@@ -141,8 +139,8 @@ boost::optional<PathIndexWithOffset> findBackwardOffsetSegment(
 }
 
 boost::optional<PathIndexWithOffset> findOffsetSegment(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const PathIndexWithPoint2d & collision_segment, const double offset_length)
+  const PathWithLaneId & path, const PathIndexWithPoint2d & collision_segment,
+  const double offset_length)
 {
   const size_t & collision_idx = collision_segment.first;
   const Point2d & collision_point = collision_segment.second;
@@ -159,8 +157,7 @@ boost::optional<PathIndexWithOffset> findOffsetSegment(
 }
 
 geometry_msgs::msg::Pose calcTargetPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const PathIndexWithOffset & offset_segment)
+  const PathWithLaneId & path, const PathIndexWithOffset & offset_segment)
 {
   const size_t offset_idx = offset_segment.first;
   const double remain_offset_length = offset_segment.second;
@@ -211,9 +208,7 @@ LineString2d DetectionAreaModule::getStopLineGeometry2d() const
     stop_line[0], stop_line[1], planner_data_->stop_line_extend_length);
 }
 
-bool DetectionAreaModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   // Store original path
   const auto original_path = *path;
@@ -221,8 +216,7 @@ bool DetectionAreaModule::modifyPathVelocity(
   // Reset data
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::DETECTION_AREA);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::DETECTION_AREA);
 
   // Find obstacles in detection area
   const auto obstacle_points = getObstaclePoints();
@@ -307,7 +301,7 @@ bool DetectionAreaModule::modifyPathVelocity(
 
   // Create StopReason
   {
-    tier4_planning_msgs::msg::StopFactor stop_factor;
+    StopFactor stop_factor{};
     stop_factor.stop_pose = stop_point->second;
     stop_factor.stop_factor_points = obstacle_points;
     planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -370,10 +364,10 @@ bool DetectionAreaModule::canClearStopState() const
 }
 
 bool DetectionAreaModule::isOverLine(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
+  const PathWithLaneId & path, const geometry_msgs::msg::Pose & self_pose,
+  const geometry_msgs::msg::Pose & line_pose) const
 {
-  return motion_utils::calcSignedArcLength(path.points, self_pose.position, line_pose.position) < 0;
+  return calcSignedArcLength(path.points, self_pose.position, line_pose.position) < 0;
 }
 
 bool DetectionAreaModule::hasEnoughBrakingDistance(
@@ -405,8 +399,7 @@ void DetectionAreaModule::insertStopPoint(
 }
 
 boost::optional<PathIndexWithPose> DetectionAreaModule::createTargetPoint(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-  const double margin) const
+  const PathWithLaneId & path, const LineString2d & stop_line, const double margin) const
 {
   // Find collision segment
   const auto collision_segment = findCollisionSegment(path, stop_line);
