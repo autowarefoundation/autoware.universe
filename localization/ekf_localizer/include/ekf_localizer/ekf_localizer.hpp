@@ -54,7 +54,7 @@ private:
   //!< @brief ekf estimated pose publisher
   tilde::SteePublisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;
   //!< @brief estimated ekf pose with covariance publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_;
+  tilde::SteePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_;
   //!< @brief estimated ekf odometry publisher
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   //!< @brief ekf estimated twist publisher
@@ -70,12 +70,12 @@ private:
   //!< @brief ekf estimated yaw bias publisher
   tilde::SteePublisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+  tilde::SteePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     pub_pose_cov_no_yawbias_;
   //!< @brief initial pose subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;
   //!< @brief measurement twist with covariance subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     sub_twist_with_cov_;

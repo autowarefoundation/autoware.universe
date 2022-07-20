@@ -38,7 +38,7 @@ struct Ellipse
 class LocalizationErrorMonitor : public tilde::SteeNode
 {
 private:
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_with_cov_sub_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_with_cov_sub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr ellipse_marker_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;

@@ -125,15 +125,15 @@ private:
 
   void timerDiagnostic();
 
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   tilde::SteeSubscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
   tilde::SteeSubscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
 
   tilde::SteePublisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
   tilde::SteePublisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+  tilde::SteePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_covariance_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+  tilde::SteePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     initial_pose_with_covariance_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;

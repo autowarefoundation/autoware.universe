@@ -196,7 +196,7 @@ NDTScanMatcher::NDTScanMatcher()
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
-  initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  initial_pose_sub_ = this->create_stee_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_pose_with_covariance", 100,
     std::bind(&NDTScanMatcher::callbackInitialPose, this, std::placeholders::_1),
     initial_pose_sub_opt);
@@ -211,10 +211,10 @@ NDTScanMatcher::NDTScanMatcher()
     this->create_stee_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
   ndt_pose_pub_ = this->create_stee_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
-    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    this->create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "ndt_pose_with_covariance", 10);
   initial_pose_with_covariance_pub_ =
-    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    this->create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "initial_pose_with_covariance", 10);
   exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =

@@ -210,7 +210,7 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdatePoseWithCovariance)
   rclcpp::sleep_for(std::chrono::milliseconds(200));
   auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
 
-  auto pub_pose = ekf->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  auto pub_pose = ekf->create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "/in_pose_with_covariance", 1);
   geometry_msgs::msg::PoseWithCovarianceStamped in_pose;
   in_pose.header.frame_id = "world";

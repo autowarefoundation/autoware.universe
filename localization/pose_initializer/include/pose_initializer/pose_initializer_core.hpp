@@ -62,15 +62,15 @@ private:
   bool callAlignServiceAndPublishResult(
     const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
   tilde::SteeSubscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
 
   // TODO(Takagi, Isamu): deprecated
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
+  tilde::SteeSubscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<tier4_localization_msgs::msg::PoseInitializationRequest>::SharedPtr
     pose_initialization_request_sub_;
 
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
+  tilde::SteePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
 
   rclcpp::Client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
 

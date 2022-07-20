@@ -71,13 +71,13 @@ PoseInitializer::PoseInitializer()
   }
 
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
-  initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  initial_pose_sub_ = this->create_stee_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 10,
     std::bind(&PoseInitializer::callbackInitialPose, this, std::placeholders::_1));
   map_points_sub_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
-  gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  gnss_pose_sub_ = this->create_stee_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "gnss_pose_cov", 1,
     std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
   pose_initialization_request_sub_ =
@@ -86,7 +86,7 @@ PoseInitializer::PoseInitializer()
       std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
 
   initial_pose_pub_ =
-    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
+    this->create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
 
   ndt_client_ =
     this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>("ndt_align_srv");

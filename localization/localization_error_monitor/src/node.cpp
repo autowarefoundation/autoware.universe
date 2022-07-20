@@ -38,7 +38,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   warn_ellipse_size_lateral_direction_ =
     this->declare_parameter("warn_ellipse_size_lateral_direction", 0.2);
 
-  pose_with_cov_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  pose_with_cov_sub_ = this->create_stee_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "input/pose_with_cov", 1,
     std::bind(&LocalizationErrorMonitor::onPoseWithCovariance, this, std::placeholders::_1));
 

@@ -81,7 +81,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   pub_pose_ = create_stee_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =
-    create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("ekf_pose_with_covariance", 1);
+    create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("ekf_pose_with_covariance", 1);
   pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("ekf_odom", 1);
   pub_twist_ = create_publisher<geometry_msgs::msg::TwistStamped>("ekf_twist", 1);
   pub_twist_cov_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
@@ -89,11 +89,11 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pub_yaw_bias_ = create_publisher<tier4_debug_msgs::msg::Float64Stamped>("estimated_yaw_bias", 1);
   pub_pose_no_yawbias_ =
     create_stee_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose_without_yawbias", 1);
-  pub_pose_cov_no_yawbias_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  pub_pose_cov_no_yawbias_ = create_stee_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_pose_with_covariance_without_yawbias", 1);
-  sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  sub_initialpose_ = create_stee_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&EKFLocalizer::callbackInitialPose, this, _1));
-  sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  sub_pose_with_cov_ = create_stee_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "in_pose_with_covariance", 1, std::bind(&EKFLocalizer::callbackPoseWithCovariance, this, _1));
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
