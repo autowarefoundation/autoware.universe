@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    speed_bump:
+      slow_margin: 1.0
+      acceleration_margin: 0.5

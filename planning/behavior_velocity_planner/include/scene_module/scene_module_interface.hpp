@@ -79,6 +79,9 @@ public:
     planner_data_ = planner_data;
   }
 
+  // speed_bump internal check to unregister
+  bool is_speed_bump_module_expired_;
+
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand()
   {
     return infrastructure_command_;

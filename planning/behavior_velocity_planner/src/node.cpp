@@ -41,6 +41,7 @@
 #include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/run_out/manager.hpp>
+#include <scene_module/speed_bump/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
 #include <scene_module/virtual_traffic_light/manager.hpp>
@@ -167,6 +168,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_crosswalk", true)) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
     planner_manager_.launchSceneModule(std::make_shared<WalkwayModuleManager>(*this));
+  }
+  if (this->declare_parameter("launch_speed_bump", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<SpeedBumpModuleManager>(*this));
   }
   if (this->declare_parameter("launch_traffic_light", true)) {
     planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
