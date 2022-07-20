@@ -30,6 +30,9 @@
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using motion_utils::calcSignedArcLength;
+using motion_utils::findNearestSegmentIndex;
+using motion_utils::insertTargetPoint;
 
 namespace
 {
@@ -240,10 +243,17 @@ bool DetectionAreaModule::modifyPathVelocity(
     return true;
   }
 
-  const auto & stop_pose = stop_point->second;
+  const auto is_stopped = planner_data_->isVehicleStopped(0.0);
 
-  setDistance(
-    motion_utils::calcSignedArcLength(path->points, self_pose.position, stop_pose.position));
+  auto stop_pose = stop_point->second;
+  const auto stop_dist = calcSignedArcLength(path->points, self_pose.position, stop_pose.position);
+
+  // Don't re-approach when the ego stops closer to the stop point than max_stop_distance
+  if (is_stopped && stop_dist < planner_param_.max_stop_distance) {
+    stop_pose = self_pose;
+  }
+
+  setDistance(stop_dist);
 
   // Check state
   setSafe(canClearStopState());
@@ -272,14 +282,14 @@ bool DetectionAreaModule::modifyPathVelocity(
   }
 
   // Ignore objects detected after stop_line if not in STOP state
-  if (state_ != State::STOP && isOverLine(original_path, self_pose, stop_pose)) {
+  if (state_ != State::STOP && isOverLine(original_path, self_pose, stop_point->second)) {
     setSafe(true);
     return true;
   }
 
   // Ignore objects if braking distance is not enough
   if (planner_param_.use_pass_judge_line) {
-    if (state_ != State::STOP && !hasEnoughBrakingDistance(self_pose, stop_pose)) {
+    if (state_ != State::STOP && !hasEnoughBrakingDistance(self_pose, stop_point->second)) {
       RCLCPP_WARN_THROTTLE(
         logger_, *clock_, std::chrono::milliseconds(1000).count(),
         "[detection_area] vehicle is over stop border");
@@ -290,10 +300,10 @@ bool DetectionAreaModule::modifyPathVelocity(
 
   // Insert stop point
   state_ = State::STOP;
-  *path = insertStopPoint(original_path, *stop_point);
+  insertStopPoint(stop_pose, *path);
 
   // For virtual wall
-  debug_data_.stop_poses.push_back(stop_pose);
+  debug_data_.stop_poses.push_back(stop_point->second);
 
   // Create StopReason
   {
@@ -310,7 +320,7 @@ bool DetectionAreaModule::modifyPathVelocity(
     if (
       !first_stop_path_point_index_ ||
       static_cast<int>(insert_idx) < first_stop_path_point_index_) {
-      debug_data_.first_stop_pose = stop_pose;
+      debug_data_.first_stop_pose = stop_point->second;
       first_stop_path_point_index_ = static_cast<int>(insert_idx);
     }
   }
@@ -379,24 +389,19 @@ bool DetectionAreaModule::hasEnoughBrakingDistance(
   return calcSignedDistance(self_pose, line_pose.position) > pass_judge_line_distance;
 }
 
-autoware_auto_planning_msgs::msg::PathWithLaneId DetectionAreaModule::insertStopPoint(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const PathIndexWithPose & stop_point) const
+void DetectionAreaModule::insertStopPoint(
+  const geometry_msgs::msg::Pose & stop_pose, PathWithLaneId & path) const
 {
-  auto output_path = path;
+  const size_t base_idx = findNearestSegmentIndex(path.points, stop_pose.position);
+  const auto insert_idx = insertTargetPoint(base_idx, stop_pose.position, path.points);
 
-  size_t insert_idx = static_cast<size_t>(stop_point.first + 1);
-  const auto stop_pose = stop_point.second;
+  if (!insert_idx) {
+    return;
+  }
 
-  // To PathPointWithLaneId
-  autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
-  stop_point_with_lane_id = output_path.points.at(insert_idx);
-  stop_point_with_lane_id.point.pose = stop_pose;
-  stop_point_with_lane_id.point.longitudinal_velocity_mps = 0.0;
-
-  // Insert stop point or replace with zero velocity
-  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx);
-  return output_path;
+  for (size_t i = insert_idx.get(); i < path.points.size(); ++i) {
+    path.points.at(i).point.longitudinal_velocity_mps = 0.0;
+  }
 }
 
 boost::optional<PathIndexWithPose> DetectionAreaModule::createTargetPoint(

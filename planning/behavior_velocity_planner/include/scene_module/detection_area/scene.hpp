@@ -36,6 +36,7 @@ namespace behavior_velocity_planner
 using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;  // front index, pose
 using PathIndexWithPoint2d = std::pair<size_t, Point2d>;                // front index, point2d
 using PathIndexWithOffset = std::pair<size_t, double>;                  // front index, offset
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
 class DetectionAreaModule : public SceneModuleInterface
 {
@@ -58,6 +59,7 @@ public:
     double dead_line_margin;
     bool use_pass_judge_line;
     double state_clear_time;
+    double max_stop_distance;
   };
 
 public:
@@ -87,9 +89,7 @@ private:
   bool hasEnoughBrakingDistance(
     const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPoint(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const PathIndexWithPose & stop_point) const;
+  void insertStopPoint(const geometry_msgs::msg::Pose & stop_pose, PathWithLaneId & path) const;
 
   boost::optional<PathIndexWithPose> createTargetPoint(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
