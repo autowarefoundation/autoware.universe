@@ -239,10 +239,15 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOne
 
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
+
+
   y0 = Cd_ * x0.eval() + Dd_ * u;
   x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
 
-  yobs_ = y0;
+  //  ns_utils::print("in linear vehicle base, current input ", u);
+  //  ns_eigen_utils::printEigenMat(x0, "Current state in vehicle ");
+  //  ns_eigen_utils::printEigenMat(x0, "Current state in vehicle ");
+  //  ns_eigen_utils::printEigenMat(y0, "Current updated y0 ");
 
 }
 
