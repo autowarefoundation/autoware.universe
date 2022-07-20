@@ -516,8 +516,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   std::tie(initial_vel, initial_acc, type) = calcInitialMotion(input, input_closest, prev_output_);
 
   // Steering angle rate limit
-  const auto traj_steering_rate_limited =
-    smoother_->applySteeringRateLimit(input);
+  const auto traj_steering_rate_limited = smoother_->applySteeringRateLimit(input);
   if (!traj_steering_rate_limited) {
     RCLCPP_ERROR(get_logger(), "Fail to do traj_steering_rate_limited");
 
@@ -525,8 +524,8 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   }
 
   // Lateral acceleration limit
-  const auto traj_lateral_acc_filtered =
-    smoother_->applyLateralAccelerationFilter(*traj_steering_rate_limited, initial_vel, initial_acc, true);
+  const auto traj_lateral_acc_filtered = smoother_->applyLateralAccelerationFilter(
+    *traj_steering_rate_limited, initial_vel, initial_acc, true);
   if (!traj_lateral_acc_filtered) {
     RCLCPP_ERROR(get_logger(), "Fail to do traj_lateral_acc_filtered");
 
