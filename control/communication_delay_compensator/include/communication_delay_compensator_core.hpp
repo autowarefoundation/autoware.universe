@@ -91,15 +91,22 @@ class LateralCommunicationDelayCompensator
 
   // transfer functions
   tf_t tf_qfilter_lat_;
+  tf_t tf_one_minus_qfilter_lat_;
 
   // state-space models.
   ss_t ss_qfilter_lat_;
+  ss_t ss_one_min_qfilter_lat_;
 
   // ------------ QFILTER VARIABLES ----------------------------------
   // state vectors for filtering inputs.
   Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
   Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
   float64_t df_d0_{}; // q-filtered disturbance response
+
+  // ---------------- 1-Q variables -------------------------------
+  Eigen::MatrixXd xey0_;     // @brief state vector for the filtered input
+  Eigen::MatrixXd xeyaw0_;     // @brief state vector for the filtered input
+  Eigen::MatrixXd xsteer0_;     // @brief state vector for the filtered input
 
   // ------------ OBSERVER VARIABLES ----------------------------------
   /**
@@ -119,6 +126,10 @@ class LateralCommunicationDelayCompensator
   // -------------- VEHICLE MODEL VARIABLES ----------------------------
   state_vector_vehicle_t xv_d0_{state_vector_vehicle_t::Zero()}; // states for disturbance input simulations
   state_vector_vehicle_t yv_d0_{state_vector_vehicle_t::Zero()}; // response for disturbance input simulations
+
+  state_vector_vehicle_t xv_hat0_current_{state_vector_vehicle_t::Zero()}; // state of vehicle model
+  state_vector_vehicle_t yv_hat0_current_{state_vector_vehicle_t::Zero()}; // output of vehicle model
+  state_vector_vehicle_t y_one_minus_Q_{state_vector_vehicle_t::Zero()}; // output of 1-Q
 
   // Lyapunov matrices to compute
   std::vector<state_matrix_observer_t> vXs_;
@@ -151,6 +162,10 @@ class LateralCommunicationDelayCompensator
   void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
                              float64_t const &prev_steering_control_cmd,
                              float64_t const &current_steering_cmd);
+
+  void estimateVehicleStatesQ(const state_vector_vehicle_t &current_measurements,
+                              float64_t const &prev_steering_control_cmd,
+                              float64_t const &current_steering_cmd);
 
 };
 

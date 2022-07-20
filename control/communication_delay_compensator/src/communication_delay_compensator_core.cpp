@@ -80,6 +80,27 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
   // Compute the state-space model of QGinv(s)
   ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
 
+  /**
+   * Compute 1-Q transfer function and the ss representation
+   * */
+  ns_control_toolbox::tf_factor num_fc_({tf_qfilter_lat_.num()});
+  ns_control_toolbox::tf_factor den_fc_({tf_qfilter_lat_.den()});
+
+  auto den_num = den_fc_ - num_fc_;
+
+  tf_one_minus_qfilter_lat_ = tf_t(den_num(), den_fc_());
+  ss_one_min_qfilter_lat_ = ss_t(tf_one_minus_qfilter_lat_, dt_);
+
+  /** initialize (1-Q) filter states */
+  xey0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
+  xeyaw0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
+  xsteer0_ = Eigen::MatrixXd(tf_one_minus_qfilter_lat_.order(), 1);
+
+  xey0_.setZero();
+  xeyaw0_.setZero();
+  xsteer0_.setZero();
+
+  /** Initialize input and disturbance filter states */
   xu0_ = Eigen::MatrixXd(qfilter_order_, 1);
   xd0_ = Eigen::MatrixXd(qfilter_order_, 1);
 
@@ -92,6 +113,9 @@ void observers::LateralCommunicationDelayCompensator::printQfilterTFs() const
   ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
   ns_utils::print("Transfer function of qfilter of lateral error : \n");
   tf_qfilter_lat_.print();
+
+  ns_utils::print("Transfer function of [1-Q] of lateral error : \n");
+  tf_one_minus_qfilter_lat_.print();
 }
 
 void observers::LateralCommunicationDelayCompensator::printQfilterSSs() const
@@ -99,6 +123,9 @@ void observers::LateralCommunicationDelayCompensator::printQfilterSSs() const
   ns_utils::print(" --------- DELAY COMPENSATOR SUMMARY -------------  \n");
   ns_utils::print("State-Space Matrices of qfilter of lateral error : \n");
   ss_qfilter_lat_.print();
+
+  ns_utils::print("State-Space Matrices of [1_Q] qfilter of lateral error : \n");
+  ss_one_min_qfilter_lat_.print();
 }
 
 void observers::LateralCommunicationDelayCompensator::printLyapMatrices() const
@@ -161,7 +188,7 @@ observers::LateralCommunicationDelayCompensator::simulateOneStep(const state_vec
   qfilterControlCommand(current_steering_cmd);
 
   // Run the state observer to estimate the current state.
-  estimateVehicleStates(current_measurements, prev_steering_control_cmd, current_steering_cmd);
+  estimateVehicleStatesQ(current_measurements, prev_steering_control_cmd, current_steering_cmd);
 
   // Final assignment steps.
   msg_debug_results->lat_uf = static_cast<double>(static_cast<float>(current_qfiltered_control_cmd_));
@@ -218,10 +245,9 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(cons
  * we use the previous values for the vehicle model. Upon estimating the current states, we
  * predict the next states and broadcast it.
  * */
-void observers::LateralCommunicationDelayCompensator
-::estimateVehicleStates(state_vector_vehicle_t const &current_measurements,
-                        float64_t const &,/*prev_steering_control_cmd,*/
-                        float64_t const &/*current_steering_cmd*/)
+void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(state_vector_vehicle_t const &current_measurements,
+                                                                            float64_t const &,/*prev_steering_control_cmd,*/
+                                                                            float64_t const &/*current_steering_cmd*/)
 {
 
   /**
@@ -256,6 +282,50 @@ void observers::LateralCommunicationDelayCompensator
 
 }
 
+void observers::LateralCommunicationDelayCompensator::estimateVehicleStatesQ(state_vector_vehicle_t const &current_measurements,
+                                                                             float64_t const &prev_steering_control_cmd,
+                                                                             float64_t const &current_steering_cmd)
+{
+
+  /**
+  * xbar = A @ x0_hat + B * u_prev + Bwd
+  * ybar = C @ xbar + D * uk_qf
+  * */
+
+
+  // FIRST STEP: propagate the previous states.
+  xbar_temp_ << xhat0_prev_.eval();
+  observer_vehicle_model_ptr_->simulateOneStep(prev_yobs_, xbar_temp_, prev_steering_control_cmd);
+
+  xhat0_prev_ = xbar_temp_ + Lobs_.transpose() * (prev_yobs_ - current_measurements); // # xhat_k
+
+  /**
+   * Compute (1-Q) outputs
+   * */
+
+  y_one_minus_Q_(0) = ss_one_min_qfilter_lat_.simulateOneStep(xey0_, current_measurements(0));
+  y_one_minus_Q_(1) = ss_one_min_qfilter_lat_.simulateOneStep(xeyaw0_, current_measurements(1));
+  y_one_minus_Q_(2) = ss_one_min_qfilter_lat_.simulateOneStep(xsteer0_, current_measurements(2));
+
+
+  // get the current estimated state before updating for the next state.
+  xv_hat0_current_ = xhat0_prev_.eval().topRows(3);
+
+  // UPDATE the OBSERVER STATE: Second step: simulate the current states and controls.
+  observer_vehicle_model_ptr_->simulateOneStep(current_yobs_, xhat0_prev_, current_steering_cmd);
+
+  /**
+   *  Simulate the current qfiltered command
+   * */
+  vehicle_model_ptr_->simulateOneStepZeroState(yv_hat0_current_, xv_hat0_current_, current_qfiltered_control_cmd_);
+
+  yv_d0_ = yv_hat0_current_ + y_one_minus_Q_;
+
+  // Debug
+  // ns_eigen_utils::printEigenMat(yv_d0_, "Delay Compensation References :");
+
+}
+
 observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(observers::LateralDisturbanceCompensator::obs_model_ptr_t observer_vehicle_model,
                                                                         const observers::tf_t &qfilter_lateral,
                                                                         const observers::sLyapMatrixVecs &lyap_matsXY,
@@ -270,6 +340,9 @@ observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(observer
   // Compute the state-space model of QGinv(s)
   ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
 
+  /**
+   * Initialize the vectors.
+   * */
   xu0_ = Eigen::MatrixXd(qfilter_order_, 1);
   xd0_ = Eigen::MatrixXd(qfilter_order_, 1);  // {state_vector_qfilter<qfilter_lateral.order()>::Zero()}
 
