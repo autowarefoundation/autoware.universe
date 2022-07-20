@@ -30,10 +30,18 @@ namespace apparent_safe_velocity_limiter
 /// @param [in] projection forward projection line
 /// @param [in] footprint footprint of the projection
 /// @param [in] obstacles set of obstacles as linestrings
+/// @param [in] params projection parameters
 /// @return distance to the closest collision if any
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint,
-  const multilinestring_t & obstacles);
+  const linestring_t & projection, const polygon_t & footprint, const multilinestring_t & obstacles,
+  const ProjectionParameters & params);
+
+/// @brief calculate the closest distance along a circle to a given target point
+/// @param [in] origin starting point
+/// @param [in] heading heading used to calculate the tangent to the circle at the origin
+/// @param [in] target target point
+/// @return distance from origin to target along a circle
+double arcDistance(const point_t & origin, const double heading, const point_t & target);
 
 // TODO(Maxime CLEMENT): move to occupancy_grid_utils
 /// @brief create a polygon from an object represented by a pose and a size

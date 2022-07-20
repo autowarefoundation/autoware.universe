@@ -159,7 +159,7 @@ multilinestring_t createObstacleLines(
 void limitVelocity(
   Trajectory & trajectory, const multilinestring_t & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
-  const ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
+  ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
 {
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
@@ -172,8 +172,9 @@ void limitVelocity(
     }
     // First linestring is used to calculate distance
     if (projections[i].empty()) continue;
+    projection_params.update(trajectory_point);
     const auto dist_to_collision =
-      distanceToClosestCollision(projections[i][0], footprints[i], obstacles);
+      distanceToClosestCollision(projections[i][0], footprints[i], obstacles, projection_params);
     if (dist_to_collision) {
       const auto min_feasible_velocity =
         velocity_params.current_ego_velocity - velocity_params.max_deceleration * time;

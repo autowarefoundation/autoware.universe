@@ -123,7 +123,7 @@ multilinestring_t createObstacleLines(
 void limitVelocity(
   Trajectory & trajectory, const multilinestring_t & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
-  const ProjectionParameters & projection_params, const VelocityParameters & velocity_params);
+  ProjectionParameters & projection_params, const VelocityParameters & velocity_params);
 
 /// @brief copy the velocity profile of a downsampled trajectory to the original trajectory
 /// @param[in] downsampled_trajectory downsampled trajectory

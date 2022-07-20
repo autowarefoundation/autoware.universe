@@ -43,7 +43,6 @@ multilinestring_t bicycleProjectionLines(
 /// @param [in] lateral_offset lateral offset around the projection to make the footprint
 /// @param [out] projected_straight_segment the segment of the forward projection
 /// @return lines from the origin to its positions after forward projection
-// TODO(Maxime CLEMENT): should return a linestring instead of a segment OR calc distance
 polygon_t forwardSimulatedPolygon(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params,
   const double lateral_offset, segment_t & projected_straight_segment);

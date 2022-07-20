@@ -14,6 +14,7 @@
 
 #include "apparent_safe_velocity_limiter/types.hpp"
 
+#include <Eigen/Core>
 #include <apparent_safe_velocity_limiter/collision.hpp>
 
 #include <boost/assign.hpp>
@@ -31,32 +32,59 @@ namespace apparent_safe_velocity_limiter
 namespace bg = boost::geometry;
 
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint, const multilinestring_t & obstacles)
+  const linestring_t & projection, const polygon_t & footprint, const multilinestring_t & obstacles,
+  const ProjectionParameters & params)
 {
   std::optional<double> distance;
   if (projection.empty()) return distance;
-  // TODO(Maxime CLEMENT): proper calculation for curved linestrings
-  const auto projection_heading = std::atan2(
-    projection.back().y() - projection.front().y(), projection.back().x() - projection.front().x());
   double min_dist = std::numeric_limits<double>::max();
   for (const auto & obstacle : obstacles) {
     multilinestring_t intersection_lines;
     if (bg::intersection(footprint, obstacle, intersection_lines)) {
       for (const auto & intersection_line : intersection_lines) {
         for (const auto & obs_point : intersection_line) {
-          // TODO(Maxime CLEMENT): add a simplified mode where euclidian distance is used
-          const auto collision_heading = std::atan2(
-            obs_point.y() - projection.front().y(), obs_point.x() - projection.front().x());
-          const auto angle = projection_heading - collision_heading;
-          const auto hypot_length = bg::distance(obs_point, projection.front());
-          const auto long_dist = std::abs(std::cos(angle)) * hypot_length;
-          min_dist = std::min(min_dist, long_dist);
+          const auto euclidian_dist = bg::distance(obs_point, projection.front());
+          if (params.distance_method == ProjectionParameters::EXACT) {
+            if (params.model == ProjectionParameters::PARTICLE) {  // TODO(Maxime CLEMENT): 0 steer
+                                                                   // angle bicycle case
+              const auto collision_heading = std::atan2(
+                obs_point.y() - projection.front().y(), obs_point.x() - projection.front().x());
+              const auto angle = params.heading - collision_heading;
+              const auto long_dist = std::abs(std::cos(angle)) * euclidian_dist;
+              min_dist = std::min(min_dist, long_dist);
+            } else {  // BICYCLE model with curved projection
+              min_dist =
+                std::min(min_dist, arcDistance(projection.front(), params.heading, obs_point));
+            }
+          } else {  // APPROXIMATION
+            min_dist = std::min(min_dist, euclidian_dist);
+          }
         }
       }
     }
   }
   if (min_dist != std::numeric_limits<double>::max()) distance = min_dist;
   return distance;
+}
+
+double arcDistance(const point_t & origin, const double heading, const point_t & target)
+{
+  const auto squared_dist = [](const auto & a, const auto & b) {
+    return (a.x() - b.x()) * (a.x() - b.x()) + (a.y() - b.y()) * (a.y() - b.y());
+  };
+  // Circle passing through the origin and the target such that origin+heading is tangent
+  const auto normal = Eigen::Vector2d{origin.x(), origin.y()};
+  const auto d_normal = Eigen::Vector2d{-std::sin(heading), std::cos(heading)};
+  const auto midpoint =
+    Eigen::Vector2d{(target.x() + origin.x()) / 2, (target.y() + origin.y()) / 2};
+  const auto mid_to_target = Eigen::Vector2d{target.x() - midpoint.x(), target.y() - midpoint.y()};
+  const auto circle_center =
+    normal + (midpoint - normal).dot(mid_to_target) / (mid_to_target.dot(d_normal)) * d_normal;
+  const auto squared_radius = squared_dist(circle_center, origin);
+  // Arc distance
+  const auto arg = (2 * squared_radius - squared_dist(origin, target)) / (2 * squared_radius);
+  const auto angle = std::acos(arg);
+  return std::sqrt(squared_radius) * angle;
 }
 
 polygon_t createObjectPolygon(

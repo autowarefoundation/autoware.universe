@@ -12,6 +12,7 @@
       # parameters used only with the bicycle model
       steering_offsets: [-0.01, 0.0, 0.01]  # [rad] steering angle offsets used to model uncertainty in the forward projection
       nb_points: 5  # number of points representing the curved projections
+      distance_method: exact  # distance calculation method. Either "exact" or "approx".
 
     obstacles:
       dynamic_source: occupancy_grid  # source of dynamic obstacles. Must be 'pointcloud', 'occupancy_grid', or 'static_only'.

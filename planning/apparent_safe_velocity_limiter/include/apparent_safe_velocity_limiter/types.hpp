@@ -104,9 +104,11 @@ struct ProjectionParameters
   static constexpr auto MODEL_PARAM = "forward_projection.model";
   static constexpr auto NBPOINTS_PARAM = "forward_projection.nb_points";
   static constexpr auto STEER_OFFSETS_PARAM = "forward_projection.steering_offsets";
+  static constexpr auto DISTANCE_METHOD_PARAM = "forward_projection.distance_method";
   static constexpr auto DURATION_PARAM = "min_ttc";
 
   enum { PARTICLE, BICYCLE } model = PARTICLE;
+  enum { EXACT, APPROXIMATION } distance_method = EXACT;
   double duration{};
   double extra_length{};
   double velocity{};
@@ -121,6 +123,7 @@ struct ProjectionParameters
   explicit ProjectionParameters(rclcpp::Node & node)
   {
     updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM));
+    updateDistanceMethod(node, node.declare_parameter<std::string>(DISTANCE_METHOD_PARAM));
     updateNbPoints(node, node.declare_parameter<int>(NBPOINTS_PARAM));
     updateSteeringOffsets(node, node.declare_parameter<std::vector<double>>(STEER_OFFSETS_PARAM));
     duration = node.declare_parameter<double>(DURATION_PARAM);
@@ -136,6 +139,21 @@ struct ProjectionParameters
       RCLCPP_WARN(
         node.get_logger(), "Unknown projection model: '%s'. Using default PARTICLE model.",
         model_str.c_str());
+      return false;
+    }
+    return true;
+  }
+
+  bool updateDistanceMethod(rclcpp::Node & node, const std::string & method_str)
+  {
+    if (method_str == "exact") {
+      distance_method = EXACT;
+    } else if (method_str == "approximation") {
+      distance_method = APPROXIMATION;
+    } else {
+      RCLCPP_WARN(
+        node.get_logger(), "Unknown distance calculation method: '%s'. Using default EXACT method.",
+        method_str.c_str());
       return false;
     }
     return true;
