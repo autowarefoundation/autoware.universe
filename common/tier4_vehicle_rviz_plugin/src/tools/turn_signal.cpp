@@ -92,7 +92,7 @@ void TurnSignalDisplay::update(float wall_dt, float ros_dt)
   (void)wall_dt;
   (void)ros_dt;
 
-  unsigned int signal_type;
+  unsigned int signal_type = 0;
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
     if (last_msg_ptr_) {
