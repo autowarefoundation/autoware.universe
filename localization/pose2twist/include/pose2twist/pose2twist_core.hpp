@@ -35,7 +35,7 @@ private:
 
   tilde::SteeSubscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
 
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
+  tilde::SteePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr linear_x_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr angular_z_pub_;
 };

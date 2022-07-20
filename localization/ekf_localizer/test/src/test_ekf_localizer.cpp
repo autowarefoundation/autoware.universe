@@ -43,7 +43,7 @@ public:
   TestEKFLocalizerNode(const std::string & node_name, const rclcpp::NodeOptions & node_options)
   : EKFLocalizer(node_name, node_options)
   {
-    sub_twist = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    sub_twist = this->create_stee_subscription<geometry_msgs::msg::TwistStamped>(
       "/ekf_twist", 1, std::bind(&TestEKFLocalizerNode::testCallbackTwist, this, _1));
     sub_pose = this->create_stee_subscription<geometry_msgs::msg::PoseStamped>(
       "/ekf_pose", 1, std::bind(&TestEKFLocalizerNode::testCallbackPose, this, _1));
@@ -57,7 +57,7 @@ public:
   std::string frame_id_a_ = "world";
   std::string frame_id_b_ = "base_link";
 
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist;
+  tilde::SteeSubscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist;
   tilde::SteeSubscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose;
 
   rclcpp::TimerBase::SharedPtr test_timer_;
@@ -164,7 +164,7 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTwist)
   rclcpp::NodeOptions node_options;
   auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
 
-  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistStamped>("/in_twist", 1);
+  auto pub_twist = ekf->create_stee_publisher<geometry_msgs::msg::TwistStamped>("/in_twist", 1);
   geometry_msgs::msg::TwistStamped in_twist;
   in_twist.header.frame_id = "base_link";
 

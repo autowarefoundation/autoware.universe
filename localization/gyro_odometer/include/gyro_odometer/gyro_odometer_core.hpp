@@ -49,7 +49,7 @@ private:
     vehicle_twist_with_cov_sub_;
   tilde::SteeSubscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
+  tilde::SteePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_pub_;
 
