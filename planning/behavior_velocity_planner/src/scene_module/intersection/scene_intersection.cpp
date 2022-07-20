@@ -157,7 +157,7 @@ bool IntersectionModule::modifyPathVelocity(
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
-    setDistance(tier4_autoware_utils::calcSignedArcLength(
+    setDistance(motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_pose.pose.position,
       path->points.at(stop_line_idx).point.pose.position));
     return true;  // no plan needed.
@@ -183,14 +183,23 @@ bool IntersectionModule::modifyPathVelocity(
   const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   setSafe(!is_entry_prohibited);
-  setDistance(tier4_autoware_utils::calcSignedArcLength(
+  setDistance(motion_utils::calcSignedArcLength(
     path->points, planner_data_->current_pose.pose.position,
     path->points.at(stop_line_idx).point.pose.position));
 
   if (!isActivated()) {
-    const double v = 0.0;
+    constexpr double v = 0.0;
+    if (planner_param_.use_stuck_stopline && is_stuck) {
+      int stuck_stop_line_idx = -1;
+      int stuck_pass_judge_line_idx = -1;
+      if (util::generateStopLineBeforeIntersection(
+            lane_id_, lanelet_map_ptr, planner_data_, *path, path, &stuck_stop_line_idx,
+            &stuck_pass_judge_line_idx, logger_.get_child("util"))) {
+        stop_line_idx = stuck_stop_line_idx;
+        pass_judge_line_idx = stuck_pass_judge_line_idx;
+      }
+    }
     util::setVelocityFrom(stop_line_idx, v, path);
-
     debug_data_.stop_required = true;
     debug_data_.stop_wall_pose = util::getAheadPose(stop_line_idx, base_link2front, *path);
     debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
@@ -272,7 +281,6 @@ bool IntersectionModule::checkCollision(
     const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
     if (checkAngleForTargetLanelets(object_direction, detection_area_lanelet_ids)) {
       target_objects.objects.push_back(object);
-      break;
     }
   }
 

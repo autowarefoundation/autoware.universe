@@ -16,6 +16,7 @@
 #define UTILIZATION__UTIL_HPP_
 
 #include <lanelet2_extension/utility/query.hpp>
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
@@ -176,7 +177,7 @@ size_t findNearestSegmentIndex(const T & points, const PointWithSearchRangeIndex
   const auto & index = point_with_index.index;
   const auto point = point_with_index.point;
 
-  tier4_autoware_utils::validateNonEmpty(points);
+  motion_utils::validateNonEmpty(points);
 
   double min_dist = std::numeric_limits<double>::max();
   size_t nearest_idx = 0;
@@ -197,7 +198,7 @@ size_t findNearestSegmentIndex(const T & points, const PointWithSearchRangeIndex
   }
 
   const double signed_length =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
+    motion_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
 
   if (signed_length <= 0) {
     return nearest_idx - 1;
@@ -212,7 +213,7 @@ template <class T>
 PointWithSearchRangeIndex findFirstNearSearchRangeIndex(
   const T & points, const geometry_msgs::msg::Point & point, const double distance_thresh = 9.0)
 {
-  tier4_autoware_utils::validateNonEmpty(points);
+  motion_utils::validateNonEmpty(points);
 
   bool min_idx_found = false;
   bool max_idx_found = false;
@@ -241,14 +242,14 @@ double calcSignedArcLengthWithSearchIndex(
   const T & points, const PointWithSearchRangeIndex & src_point_with_range,
   const PointWithSearchRangeIndex & dst_point_with_range)
 {
-  tier4_autoware_utils::validateNonEmpty(points);
+  motion_utils::validateNonEmpty(points);
   const size_t src_idx = planning_utils::findNearestSegmentIndex(points, src_point_with_range);
   const size_t dst_idx = planning_utils::findNearestSegmentIndex(points, dst_point_with_range);
-  const double signed_length = tier4_autoware_utils::calcSignedArcLength(points, src_idx, dst_idx);
-  const double signed_length_src_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
-    points, src_idx, src_point_with_range.point);
-  const double signed_length_dst_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
-    points, dst_idx, dst_point_with_range.point);
+  const double signed_length = motion_utils::calcSignedArcLength(points, src_idx, dst_idx);
+  const double signed_length_src_offset =
+    motion_utils::calcLongitudinalOffsetToSegment(points, src_idx, src_point_with_range.point);
+  const double signed_length_dst_offset =
+    motion_utils::calcLongitudinalOffsetToSegment(points, dst_idx, dst_point_with_range.point);
   return signed_length - signed_length_src_offset + signed_length_dst_offset;
 }
 Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object);
@@ -296,36 +297,36 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   return concat_vec;
 }
 
+boost::optional<int64_t> getNearestLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose,
+  boost::optional<size_t> & nearest_segment_idx);
+
 template <class T>
 std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> getRegElemMapOnPath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose)
 {
   std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> reg_elem_map_on_path;
-  std::set<int64_t> unique_lane_ids;
-  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-    path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
   // Add current lane id
-  lanelet::ConstLanelets current_lanes;
-  if (
-    lanelet::utils::query::getCurrentLanelets(
-      lanelet::utils::query::laneletLayer(lanelet_map), current_pose, &current_lanes) &&
-    nearest_segment_idx) {
-    for (const auto & ll : current_lanes) {
-      if (
-        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
-        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
-        unique_lane_ids.insert(ll.id());
-      }
-    }
+  boost::optional<size_t> nearest_segment_idx;
+  const auto nearest_lane_id =
+    getNearestLaneId(path, lanelet_map, current_pose, nearest_segment_idx);
+
+  std::vector<int64_t> unique_lane_ids;
+  if (nearest_lane_id) {
+    unique_lane_ids.emplace_back(*nearest_lane_id);
   }
 
   // Add forward path lane_id
-  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  const size_t start_idx = nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
   for (size_t i = start_idx; i < path.points.size(); i++) {
-    unique_lane_ids.insert(
-      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+    const int64_t lane_id = path.points.at(i).lane_ids.at(0);
+    if (
+      std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) == unique_lane_ids.end()) {
+      unique_lane_ids.emplace_back(lane_id);
+    }
   }
 
   for (const auto lane_id : unique_lane_ids) {

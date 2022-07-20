@@ -68,24 +68,23 @@ bool createDetectionAreaPolygons(
   const size_t max_index = static_cast<size_t>(path.points.size() - 1);
   //! avoid bug with same point polygon
   const double eps = 1e-3;
-  auto nearest_idx = tier4_autoware_utils::findNearestIndex(path.points, pose.position);
+  auto nearest_idx = motion_utils::findNearestIndex(path.points, pose.position);
   if (max_index == nearest_idx) return false;  // case of path point is not enough size
   auto p0 = path.points.at(nearest_idx).point;
   auto first_idx = nearest_idx + 1;
 
   // use ego point as start point if same point as ego is not in the path
   const auto dist_to_nearest =
-    std::fabs(tier4_autoware_utils::calcSignedArcLength(path.points, pose.position, nearest_idx));
+    std::fabs(motion_utils::calcSignedArcLength(path.points, pose.position, nearest_idx));
   if (dist_to_nearest > eps) {
-    const auto nearest_seg_idx =
-      tier4_autoware_utils::findNearestSegmentIndex(path.points, pose.position);
+    const auto nearest_seg_idx = motion_utils::findNearestSegmentIndex(path.points, pose.position);
 
     // interpolate ego point
     const auto & pp = path.points;
     const double ds =
       tier4_autoware_utils::calcDistance2d(pp.at(nearest_seg_idx), pp.at(nearest_seg_idx + 1));
     const double dist_to_nearest_seg =
-      tier4_autoware_utils::calcSignedArcLength(path.points, nearest_seg_idx, pose.position);
+      motion_utils::calcSignedArcLength(path.points, nearest_seg_idx, pose.position);
     const double ratio = dist_to_nearest_seg / ds;
     p0 = getLerpPathPointWithLaneId(
       pp.at(nearest_seg_idx).point, pp.at(nearest_seg_idx + 1).point, ratio);
@@ -593,34 +592,66 @@ LineString2d extendLine(
     {(p1 - length * t).x(), (p1 - length * t).y()}, {(p2 + length * t).x(), (p2 + length * t).y()}};
 }
 
-std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
+boost::optional<int64_t> getNearestLaneId(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose)
+  const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose,
+  boost::optional<size_t> & nearest_segment_idx)
 {
-  std::set<int64_t> unique_lane_ids;
-  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
+  boost::optional<int64_t> nearest_lane_id;
+
+  nearest_segment_idx = motion_utils::findNearestSegmentIndex(
     path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
-  // Add current lane id
+  if (!nearest_segment_idx) {
+    return boost::none;
+  }
+
   lanelet::ConstLanelets current_lanes;
   if (
     lanelet::utils::query::getCurrentLanelets(
       lanelet::utils::query::laneletLayer(lanelet_map), current_pose, &current_lanes) &&
     nearest_segment_idx) {
     for (const auto & ll : current_lanes) {
-      if (
-        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
-        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
-        unique_lane_ids.insert(ll.id());
+      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
+        nearest_lane_id = ll.id();
+        return nearest_lane_id;
+      }
+    }
+
+    // if the lane_id of nearest_segment_idx does not involved in current_lanes,
+    // search the lane_id of nearest_segment_idx + 1
+    *nearest_segment_idx += 1;
+    for (const auto & ll : current_lanes) {
+      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
+        nearest_lane_id = ll.id();
+        return nearest_lane_id;
       }
     }
   }
+  return boost::none;
+}
+
+std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map, const geometry_msgs::msg::Pose & current_pose)
+{
+  boost::optional<size_t> nearest_segment_idx;
+  const auto nearest_lane_id =
+    getNearestLaneId(path, lanelet_map, current_pose, nearest_segment_idx);
+
+  std::vector<int64_t> unique_lane_ids;
+  if (nearest_lane_id) {
+    unique_lane_ids.emplace_back(*nearest_lane_id);
+  }
 
   // Add forward path lane_id
-  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  const size_t start_idx = nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
   for (size_t i = start_idx; i < path.points.size(); i++) {
-    unique_lane_ids.insert(
-      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+    const int64_t lane_id = path.points.at(i).lane_ids.at(0);
+    if (
+      std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) == unique_lane_ids.end()) {
+      unique_lane_ids.emplace_back(lane_id);
+    }
   }
 
   std::vector<lanelet::ConstLanelet> lanelets;
