@@ -45,12 +45,12 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr);
 
-  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+  tilde::SteeSubscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     vehicle_twist_with_cov_sub_;
   tilde::SteeSubscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
   tilde::SteePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+  tilde::SteePublisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_pub_;
 
   tf2_ros::Buffer tf_buffer_;

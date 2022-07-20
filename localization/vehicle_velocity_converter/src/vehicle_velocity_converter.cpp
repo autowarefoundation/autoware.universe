@@ -27,7 +27,7 @@ VehicleVelocityConverter::VehicleVelocityConverter() : SteeNode("vehicle_velocit
     "velocity_status", rclcpp::QoS{100},
     std::bind(&VehicleVelocityConverter::callbackVelocityReport, this, std::placeholders::_1));
 
-  twist_with_covariance_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+  twist_with_covariance_pub_ = create_stee_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "twist_with_covariance", rclcpp::QoS{10});
 }
 

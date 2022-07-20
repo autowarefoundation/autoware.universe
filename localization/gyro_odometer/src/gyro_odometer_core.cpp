@@ -27,7 +27,7 @@ GyroOdometer::GyroOdometer()
   output_frame_(declare_parameter("base_link", "base_link")),
   message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2))
 {
-  vehicle_twist_with_cov_sub_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
+  vehicle_twist_with_cov_sub_ = create_stee_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "vehicle/twist_with_covariance", rclcpp::QoS{100},
     std::bind(&GyroOdometer::callbackTwistWithCovariance, this, std::placeholders::_1));
 
@@ -35,7 +35,7 @@ GyroOdometer::GyroOdometer()
     "imu", rclcpp::QoS{100}, std::bind(&GyroOdometer::callbackImu, this, std::placeholders::_1));
 
   twist_pub_ = create_stee_publisher<geometry_msgs::msg::TwistStamped>("twist", rclcpp::QoS{10});
-  twist_with_covariance_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+  twist_with_covariance_pub_ = create_stee_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "twist_with_covariance", rclcpp::QoS{10});
 
   // TODO(YamatoAndo) createTimer

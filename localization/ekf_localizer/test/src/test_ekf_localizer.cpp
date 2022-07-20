@@ -264,7 +264,7 @@ TEST_F(EKFLocalizerTestSuite, measurementUpdateTwistWithCovariance)
   rclcpp::NodeOptions node_options;
   auto ekf = std::make_shared<TestEKFLocalizerNode>("EKFLocalizerTestSuite", node_options);
 
-  auto pub_twist = ekf->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+  auto pub_twist = ekf->create_stee_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "/in_twist_with_covariance", 1);
   geometry_msgs::msg::TwistWithCovarianceStamped in_twist;
   in_twist.header.frame_id = "base_link";
