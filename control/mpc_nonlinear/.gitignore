@@ -1,6 +1,8 @@
 .idea
-**/.idea
+*/.idea
 cmake-build-debug-coverage
 cmake-build-debug
 *.json
 /.cache/
+runtime_lib/CppAD/*
+runtime_lib/CppADCodeGen/*
