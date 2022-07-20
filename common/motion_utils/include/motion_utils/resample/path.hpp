@@ -68,25 +68,22 @@ inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
   }
 
   // Interpolate
-  const auto interpolated_x = use_lerp_for_xy
-                                ? interpolation::lerp(input_arclength, x, resampled_arclength)
-                                : interpolation::slerp(input_arclength, x, resampled_arclength);
-  const auto interpolated_y = use_lerp_for_xy
-                                ? interpolation::lerp(input_arclength, y, resampled_arclength)
-                                : interpolation::slerp(input_arclength, y, resampled_arclength);
-  const auto interpolated_z = use_lerp_for_z
-                                ? interpolation::lerp(input_arclength, z, resampled_arclength)
-                                : interpolation::slerp(input_arclength, z, resampled_arclength);
-  const auto interpolated_v_lon =
-    use_zero_order_hold_for_v
-      ? interpolation::zero_order_hold(input_arclength, v_lon, resampled_arclength)
-      : interpolation::lerp(input_arclength, v_lon, resampled_arclength);
-  const auto interpolated_v_lat =
-    use_zero_order_hold_for_v
-      ? interpolation::zero_order_hold(input_arclength, v_lat, resampled_arclength)
-      : interpolation::lerp(input_arclength, v_lat, resampled_arclength);
-  const auto interpolated_heading_rate =
-    interpolation::lerp(input_arclength, heading_rate, resampled_arclength);
+  const auto lerp = [&](const auto & input) {
+    return interpolation::lerp(input_arclength, input, resampled_arclength);
+  };
+  const auto slerp = [&](const auto & input) {
+    return interpolation::slerp(input_arclength, input, resampled_arclength);
+  };
+  const auto zoh = [&](const auto & input) {
+    return interpolation::zero_order_hold(input_arclength, input, resampled_arclength);
+  };
+
+  const auto interpolated_x = use_lerp_for_xy ? lerp(x) : slerp(x);
+  const auto interpolated_y = use_lerp_for_xy ? lerp(y) : slerp(y);
+  const auto interpolated_z = use_lerp_for_z ? lerp(z) : slerp(z);
+  const auto interpolated_v_lon = use_zero_order_hold_for_v ? zoh(v_lon) : lerp(v_lon);
+  const auto interpolated_v_lat = use_zero_order_hold_for_v ? zoh(v_lat) : lerp(v_lat);
+  const auto interpolated_heading_rate = lerp(heading_rate);
 
   autoware_auto_planning_msgs::msg::Path interpolated_path;
   interpolated_path.header = input_path.header;
