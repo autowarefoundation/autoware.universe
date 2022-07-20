@@ -22,14 +22,104 @@
 #include <algorithm>
 #include <vector>
 
-namespace utils
+namespace
 {
+geometry_msgs::msg::Polygon rotatePolygon(
+  const geometry_msgs::msg::Polygon & polygon, const double & angle)
+{
+  const double cos = std::cos(angle);
+  const double sin = std::sin(angle);
+  geometry_msgs::msg::Polygon rotated_polygon;
+  for (const auto & point : polygon.points) {
+    auto rotated_point = point;
+    rotated_point.x = cos * point.x - sin * point.y;
+    rotated_point.y = sin * point.x + cos * point.y;
+    rotated_polygon.points.push_back(rotated_point);
+  }
+  return rotated_polygon;
+}
+
+tier4_autoware_utils::Polygon2d inverseClockWise(const tier4_autoware_utils::Polygon2d & polygon)
+{
+  tier4_autoware_utils::Polygon2d inverted_polygon;
+  for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
+    inverted_polygon.outer().push_back(polygon.outer().at(i));
+  }
+  return inverted_polygon;
+}
+
+bool isClockWise(const tier4_autoware_utils::Polygon2d & polygon)
+{
+  const int n = polygon.outer().size();
+  const double x_offset = polygon.outer().at(0).x();
+  const double y_offset = polygon.outer().at(0).y();
+  double sum = 0.0;
+  for (std::size_t i = 0; i < polygon.outer().size(); ++i) {
+    sum +=
+      (polygon.outer().at(i).x() - x_offset) * (polygon.outer().at((i + 1) % n).y() - y_offset) -
+      (polygon.outer().at(i).y() - y_offset) * (polygon.outer().at((i + 1) % n).x() - x_offset);
+  }
+
+  return sum < 0.0;
+}
+
 void toPolygon2d(
   const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
-  tier4_autoware_utils::Polygon2d & output);
-bool isClockWise(const tier4_autoware_utils::Polygon2d & polygon);
-tier4_autoware_utils::Polygon2d inverseClockWise(const tier4_autoware_utils::Polygon2d & polygon);
+  tier4_autoware_utils::Polygon2d & output)
+{
+  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    const double yaw = tier4_autoware_utils::normalizeRadian(tf2::getYaw(pose.orientation));
+    Eigen::Matrix2d rotation;
+    rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
+    Eigen::Vector2d offset0, offset1, offset2, offset3;
+    offset0 = rotation * Eigen::Vector2d(shape.dimensions.x * 0.5f, shape.dimensions.y * 0.5f);
+    offset1 = rotation * Eigen::Vector2d(shape.dimensions.x * 0.5f, -shape.dimensions.y * 0.5f);
+    offset2 = rotation * Eigen::Vector2d(-shape.dimensions.x * 0.5f, -shape.dimensions.y * 0.5f);
+    offset3 = rotation * Eigen::Vector2d(-shape.dimensions.x * 0.5f, shape.dimensions.y * 0.5f);
+    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
+      pose.position.x + offset0.x(), pose.position.y + offset0.y()));
+    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
+      pose.position.x + offset1.x(), pose.position.y + offset1.y()));
+    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
+      pose.position.x + offset2.x(), pose.position.y + offset2.y()));
+    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
+      pose.position.x + offset3.x(), pose.position.y + offset3.y()));
+    output.outer().push_back(output.outer().front());
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    const auto & center = pose.position;
+    const auto & radius = shape.dimensions.x * 0.5;
+    constexpr int n = 6;
+    for (int i = 0; i < n; ++i) {
+      Eigen::Vector2d point;
+      point.x() = std::cos(
+                    (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                    M_PI / static_cast<double>(n)) *
+                    radius +
+                  center.x;
+      point.y() = std::sin(
+                    (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                    M_PI / static_cast<double>(n)) *
+                    radius +
+                  center.y;
+      output.outer().push_back(
+        boost::geometry::make<tier4_autoware_utils::Point2d>(point.x(), point.y()));
+    }
+    output.outer().push_back(output.outer().front());
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    const double yaw = tf2::getYaw(pose.orientation);
+    const auto rotated_footprint = rotatePolygon(shape.footprint, yaw);
+    for (const auto & point : rotated_footprint.points) {
+      output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
+        pose.position.x + point.x, pose.position.y + point.y));
+    }
+    output.outer().push_back(output.outer().front());
+  }
+  output = ::isClockWise(output) ? output : ::inverseClockWise(output);
+}
+}  // namespace
 
+namespace utils
+{
 double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
 {
   double area = 0.0;
@@ -174,98 +264,5 @@ double get2dRecall(
   return get2dRecall(
     {source_object.kinematics.pose_with_covariance.pose, source_object.shape},
     {target_object.kinematics.pose_with_covariance.pose, target_object.shape});
-}
-
-tier4_autoware_utils::Polygon2d inverseClockWise(const tier4_autoware_utils::Polygon2d & polygon)
-{
-  tier4_autoware_utils::Polygon2d inverted_polygon;
-  for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
-    inverted_polygon.outer().push_back(polygon.outer().at(i));
-  }
-  return inverted_polygon;
-}
-
-bool isClockWise(const tier4_autoware_utils::Polygon2d & polygon)
-{
-  const int n = polygon.outer().size();
-  const double x_offset = polygon.outer().at(0).x();
-  const double y_offset = polygon.outer().at(0).y();
-  double sum = 0.0;
-  for (std::size_t i = 0; i < polygon.outer().size(); ++i) {
-    sum +=
-      (polygon.outer().at(i).x() - x_offset) * (polygon.outer().at((i + 1) % n).y() - y_offset) -
-      (polygon.outer().at(i).y() - y_offset) * (polygon.outer().at((i + 1) % n).x() - x_offset);
-  }
-
-  return sum < 0.0;
-}
-
-void toPolygon2d(
-  const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
-  tier4_autoware_utils::Polygon2d & output)
-{
-  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    const double yaw = tier4_autoware_utils::normalizeRadian(tf2::getYaw(pose.orientation));
-    Eigen::Matrix2d rotation;
-    rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
-    Eigen::Vector2d offset0, offset1, offset2, offset3;
-    offset0 = rotation * Eigen::Vector2d(shape.dimensions.x * 0.5f, shape.dimensions.y * 0.5f);
-    offset1 = rotation * Eigen::Vector2d(shape.dimensions.x * 0.5f, -shape.dimensions.y * 0.5f);
-    offset2 = rotation * Eigen::Vector2d(-shape.dimensions.x * 0.5f, -shape.dimensions.y * 0.5f);
-    offset3 = rotation * Eigen::Vector2d(-shape.dimensions.x * 0.5f, shape.dimensions.y * 0.5f);
-    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
-      pose.position.x + offset0.x(), pose.position.y + offset0.y()));
-    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
-      pose.position.x + offset1.x(), pose.position.y + offset1.y()));
-    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
-      pose.position.x + offset2.x(), pose.position.y + offset2.y()));
-    output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
-      pose.position.x + offset3.x(), pose.position.y + offset3.y()));
-    output.outer().push_back(output.outer().front());
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
-    const auto & center = pose.position;
-    const auto & radius = shape.dimensions.x * 0.5;
-    constexpr int n = 6;
-    for (int i = 0; i < n; ++i) {
-      Eigen::Vector2d point;
-      point.x() = std::cos(
-                    (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                    M_PI / static_cast<double>(n)) *
-                    radius +
-                  center.x;
-      point.y() = std::sin(
-                    (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
-                    M_PI / static_cast<double>(n)) *
-                    radius +
-                  center.y;
-      output.outer().push_back(
-        boost::geometry::make<tier4_autoware_utils::Point2d>(point.x(), point.y()));
-    }
-    output.outer().push_back(output.outer().front());
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-    const double yaw = tf2::getYaw(pose.orientation);
-    const auto rotated_footprint = rotatePolygon(shape.footprint, yaw);
-    for (const auto & point : rotated_footprint.points) {
-      output.outer().push_back(boost::geometry::make<tier4_autoware_utils::Point2d>(
-        pose.position.x + point.x, pose.position.y + point.y));
-    }
-    output.outer().push_back(output.outer().front());
-  }
-  output = isClockWise(output) ? output : inverseClockWise(output);
-}
-
-geometry_msgs::msg::Polygon rotatePolygon(
-  const geometry_msgs::msg::Polygon & polygon, const double angle)
-{
-  const double cos = std::cos(angle);
-  const double sin = std::sin(angle);
-  geometry_msgs::msg::Polygon rotated_polygon;
-  for (const auto & point : polygon.points) {
-    auto rotated_point = point;
-    rotated_point.x = cos * point.x - sin * point.y;
-    rotated_point.y = sin * point.x + cos * point.y;
-    rotated_polygon.points.push_back(rotated_point);
-  }
-  return rotated_polygon;
 }
 }  // namespace utils
