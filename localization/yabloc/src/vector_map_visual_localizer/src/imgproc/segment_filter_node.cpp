@@ -17,7 +17,8 @@ SegmentFilter::SegmentFilter()
   subscriber_(rclcpp::Node::SharedPtr{this}, "lsd_cloud", "graph_segmented"),
   tf_subscriber_(this->get_clock()),
   image_size_(declare_parameter<int>("image_size", 800)),
-  max_range_(declare_parameter<float>("max_range", 20.f))
+  max_range_(declare_parameter<float>("max_range", 20.f)),
+  truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -121,6 +122,28 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   util::publishImage(*pub_image_, reliable_line_image, stamp);
 }
 
+bool SegmentFilter::isLowerElement(
+  const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const
+{
+  float lower_px = std::max(pn.y, pn.normal_y);
+  float higher_px = std::min(pn.y, pn.normal_y);
+  if (lower_px < truncate_pixel_threshold_) return false;
+  if (higher_px > truncate_pixel_threshold_) {
+    truncated_pn = pn;
+    return true;
+  }
+
+  truncated_pn = pn;
+  Eigen::Vector3f t = pn.getVector3fMap() - pn.getNormalVector3fMap();
+  float lambda = (truncate_pixel_threshold_ - pn.y) / t.y();
+  Eigen::Vector3f m = pn.getVector3fMap() + lambda * t;
+  if (pn.y < pn.normal_y)
+    truncated_pn.getVector3fMap() = m;
+  else
+    truncated_pn.getNormalVector3fMap() = m;
+  return true;
+}
+
 std::set<ushort> getUniquePixelValue(cv::Mat & image)
 {
   // `image` is a set of ushort.
@@ -151,8 +174,12 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::projectLines(
 {
   pcl::PointCloud<pcl::PointNormal> projected_points;
   for (const auto & pn : points) {
-    std::optional<Eigen::Vector3f> opt1 = project(pn.getVector3fMap());
-    std::optional<Eigen::Vector3f> opt2 = project(pn.getNormalVector3fMap());
+    pcl::PointNormal truncated_pn = pn;
+    if (truncate_pixel_threshold_ > 0)
+      if (!isLowerElement(pn, truncated_pn)) continue;
+
+    std::optional<Eigen::Vector3f> opt1 = project(truncated_pn.getVector3fMap());
+    std::optional<Eigen::Vector3f> opt2 = project(truncated_pn.getNormalVector3fMap());
     if (!opt1.has_value()) continue;
     if (!opt2.has_value()) continue;
     pcl::PointNormal xyz;

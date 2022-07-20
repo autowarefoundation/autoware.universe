@@ -32,6 +32,7 @@ private:
 
   const int image_size_;
   const float max_range_;
+  const int truncate_pixel_threshold_;
 
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f &)>;
 
@@ -45,5 +46,7 @@ private:
 
   cv::Point2i toCvPoint(const Eigen::Vector3f & v) const;
   void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
+
+  bool isLowerElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
 }  // namespace imgproc
