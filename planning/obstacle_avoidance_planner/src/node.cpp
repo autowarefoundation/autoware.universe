@@ -1498,7 +1498,7 @@ ObstacleAvoidancePlanner::alignVelocity(
   auto fine_traj_points_with_vel = fine_traj_points_with_path_zero_vel;
   size_t prev_begin_idx = 0;
   for (size_t i = 0; i < fine_traj_points_with_vel.size(); ++i) {
-    const auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
+    auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
     if(truncated_points.empty())
     {
       truncated_points.assign(path_points.begin(),path_points.end());
