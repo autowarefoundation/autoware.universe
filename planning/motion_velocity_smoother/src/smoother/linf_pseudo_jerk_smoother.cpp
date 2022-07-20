@@ -49,6 +49,7 @@ bool LinfPseudoJerkSolver::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
   TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
 {
+  auto logger = rclcpp::get_logger("smoother").get_child("linf_pseudo_jerk_smoother");
   debug_trajectories.clear();
 
   const auto ts = std::chrono::system_clock::now();
@@ -57,7 +58,7 @@ bool LinfPseudoJerkSolver::apply(
 
   if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
     RCLCPP_DEBUG(
-      logger_,
+      logger,
       "closest v_max < 0.1, keep stopping. "
       "return.");
     return false;
@@ -223,13 +224,13 @@ bool LinfPseudoJerkSolver::apply(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    RCLCPP_WARN(logger, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
   }
 
   const auto tf2 = std::chrono::system_clock::now();
   const double dt_ms2 =
     std::chrono::duration_cast<std::chrono::nanoseconds>(tf2 - ts2).count() * 1.0e-6;
-  RCLCPP_DEBUG(logger_, "init time = %f [ms], optimization time = %f [ms]", dt_ms1, dt_ms2);
+  RCLCPP_DEBUG(logger, "init time = %f [ms], optimization time = %f [ms]", dt_ms1, dt_ms2);
   return true;
 }
 

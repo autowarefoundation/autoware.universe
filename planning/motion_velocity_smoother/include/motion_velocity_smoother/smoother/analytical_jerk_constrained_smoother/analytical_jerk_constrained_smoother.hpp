@@ -84,8 +84,6 @@ public:
 
 private:
   Param smoother_param_;
-  // rclcpp::Logger logger_{
-  //  rclcpp::get_logger("smoother").get_child("analytical_jerk_constrained_smoother")};
 
   bool searchDecelTargetIndices(
     const TrajectoryPoints & trajectory, const size_t closest_index,
