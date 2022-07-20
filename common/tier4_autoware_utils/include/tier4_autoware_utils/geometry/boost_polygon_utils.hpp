@@ -30,8 +30,8 @@ namespace tier4_autoware_utils
 {
 namespace bg = boost::geometry;
 
-bool isClockWise(const Polygon2d & polygon);
-Polygon2d inverseClockWise(const Polygon2d & polygon);
+bool isClockwise(const Polygon2d & polygon);
+Polygon2d inverseClockwise(const Polygon2d & polygon);
 geometry_msgs::msg::Polygon rotatePolygon(
   const geometry_msgs::msg::Polygon & polygon, const double & angle);
 Polygon2d toPolygon2d(

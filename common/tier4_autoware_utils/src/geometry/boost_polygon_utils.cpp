@@ -68,7 +68,7 @@ double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions)
 
 namespace tier4_autoware_utils
 {
-bool isClockWise(const Polygon2d & polygon)
+bool isClockwise(const Polygon2d & polygon)
 {
   const int n = polygon.outer().size();
   const double x_offset = polygon.outer().at(0).x();
@@ -83,7 +83,7 @@ bool isClockWise(const Polygon2d & polygon)
   return sum < 0.0;
 }
 
-Polygon2d inverseClockWise(const Polygon2d & polygon)
+Polygon2d inverseClockwise(const Polygon2d & polygon)
 {
   auto output_polygon = polygon;
   boost::geometry::reverse(output_polygon);
@@ -164,7 +164,7 @@ Polygon2d toPolygon2d(
     appendPointToPolygon(polygon, polygon.outer().front());
   }
 
-  return isClockWise(polygon) ? polygon : inverseClockWise(polygon);
+  return isClockwise(polygon) ? polygon : inverseClockwise(polygon);
 }
 
 double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)

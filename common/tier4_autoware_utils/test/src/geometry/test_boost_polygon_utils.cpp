@@ -47,56 +47,56 @@ geometry_msgs::msg::Pose createPose(const double x, const double y, const double
 }
 }  // namespace
 
-TEST(boost_geometry, boost_isClockWise)
+TEST(boost_geometry, boost_isClockwise)
 {
-  using tier4_autoware_utils::isClockWise;
+  using tier4_autoware_utils::isClockwise;
 
   // empty
   Polygon2d empty_polygon;
-  EXPECT_THROW(isClockWise(empty_polygon), std::out_of_range);
+  EXPECT_THROW(isClockwise(empty_polygon), std::out_of_range);
 
   // normal case
   Polygon2d clock_wise_polygon{{{0.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}}};
-  EXPECT_TRUE(isClockWise(clock_wise_polygon));
+  EXPECT_TRUE(isClockwise(clock_wise_polygon));
 
   Polygon2d anti_clock_wise_polygon{{{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}}};
-  EXPECT_FALSE(isClockWise(anti_clock_wise_polygon));
+  EXPECT_FALSE(isClockwise(anti_clock_wise_polygon));
 
   // duplicated
   Polygon2d duplicated_clock_wise_polygon{
     {{0.0, 0.0}, {0.0, 1.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}}};
-  EXPECT_TRUE(isClockWise(duplicated_clock_wise_polygon));
+  EXPECT_TRUE(isClockwise(duplicated_clock_wise_polygon));
 
   Polygon2d duplicated_anti_clock_wise_polygon{
     {{0.0, 0.0}, {1.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}}};
-  EXPECT_FALSE(isClockWise(duplicated_anti_clock_wise_polygon));
+  EXPECT_FALSE(isClockwise(duplicated_anti_clock_wise_polygon));
 }
 
-TEST(boost_geometry, boost_inverseClockWise)
+TEST(boost_geometry, boost_inverseClockwise)
 {
-  using tier4_autoware_utils::inverseClockWise;
-  using tier4_autoware_utils::isClockWise;
+  using tier4_autoware_utils::inverseClockwise;
+  using tier4_autoware_utils::isClockwise;
 
   // empty
   Polygon2d empty_polygon;
-  const auto reversed_empty_polygon = inverseClockWise(empty_polygon);
+  const auto reversed_empty_polygon = inverseClockwise(empty_polygon);
   EXPECT_EQ(static_cast<int>(reversed_empty_polygon.outer().size()), 0);
 
   // normal case
   Polygon2d clock_wise_polygon{{{0.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}}};
-  EXPECT_FALSE(isClockWise(inverseClockWise(clock_wise_polygon)));
+  EXPECT_FALSE(isClockwise(inverseClockwise(clock_wise_polygon)));
 
   Polygon2d anti_clock_wise_polygon{{{0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}}};
-  EXPECT_TRUE(isClockWise(inverseClockWise(anti_clock_wise_polygon)));
+  EXPECT_TRUE(isClockwise(inverseClockwise(anti_clock_wise_polygon)));
 
   // duplicated
   Polygon2d duplicated_clock_wise_polygon{
     {{0.0, 0.0}, {0.0, 1.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}}};
-  EXPECT_FALSE(isClockWise(inverseClockWise(duplicated_clock_wise_polygon)));
+  EXPECT_FALSE(isClockwise(inverseClockwise(duplicated_clock_wise_polygon)));
 
   Polygon2d duplicated_anti_clock_wise_polygon{
     {{0.0, 0.0}, {1.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0}}};
-  EXPECT_TRUE(isClockWise(inverseClockWise(duplicated_anti_clock_wise_polygon)));
+  EXPECT_TRUE(isClockwise(inverseClockwise(duplicated_anti_clock_wise_polygon)));
 }
 
 TEST(boost_geometry, boost_rotatePolygon)
