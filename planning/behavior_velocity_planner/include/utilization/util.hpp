@@ -76,35 +76,17 @@ struct PointWithSearchRangeIndex
   SearchRangeIndex index;
 };
 
+using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
+using Polygons2d = std::vector<Polygon2d>;
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
-using Polygons2d = std::vector<Polygon2d>;
+using tier4_autoware_utils::getPoint;
+
 namespace planning_utils
 {
 using geometry_msgs::msg::Pose;
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) { return p; }
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) { return p.position; }
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
-{
-  return p.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(const autoware_auto_planning_msgs::msg::PathPoint & p)
-{
-  return p.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
-{
-  return p.pose.position;
-}
 inline geometry_msgs::msg::Pose getPose(
   const autoware_auto_planning_msgs::msg::Path & path, int idx)
 {
