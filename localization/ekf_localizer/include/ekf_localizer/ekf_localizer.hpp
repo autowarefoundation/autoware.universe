@@ -56,7 +56,7 @@ private:
   //!< @brief estimated ekf pose with covariance publisher
   tilde::SteePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_;
   //!< @brief estimated ekf odometry publisher
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
+  tilde::SteePublisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   //!< @brief ekf estimated twist publisher
   tilde::SteePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;
   //!< @brief ekf estimated twist with covariance publisher

@@ -43,10 +43,10 @@ public:
   StopFilter(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;  //!< @brief odom publisher
+  tilde::SteePublisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;  //!< @brief odom publisher
   rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr
     pub_stop_flag_;  //!< @brief stop flag publisher
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr
     sub_odom_;  //!< @brief measurement odometry subscriber
 
   double vx_threshold_;  //!< @brief vx threshold
