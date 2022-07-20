@@ -515,20 +515,20 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   InitializeType type{};
   std::tie(initial_vel, initial_acc, type) = calcInitialMotion(input, input_closest, prev_output_);
 
-  // Lateral acceleration limit
-  const auto traj_lateral_acc_filtered =
-    smoother_->applyLateralAccelerationFilter(input, initial_vel, initial_acc, true);
-  if (!traj_lateral_acc_filtered) {
-    RCLCPP_ERROR(get_logger(), "Fail to do traj_lateral_acc_filtered");
+  // Steering angle rate limit
+  const auto traj_steering_rate_limited =
+    smoother_->applySteeringRateLimit(input);
+  if (!traj_steering_rate_limited) {
+    RCLCPP_ERROR(get_logger(), "Fail to do traj_steering_rate_limited");
 
     return false;
   }
 
-  // Steering angle rate limit
-  const auto traj_steering_rate_limited =
-    smoother_->applySteeringRateLimit(*traj_lateral_acc_filtered);
-  if (!traj_steering_rate_limited) {
-    RCLCPP_ERROR(get_logger(), "Fail to do traj_steering_rate_limited");
+  // Lateral acceleration limit
+  const auto traj_lateral_acc_filtered =
+    smoother_->applyLateralAccelerationFilter(*traj_steering_rate_limited, initial_vel, initial_acc, true);
+  if (!traj_lateral_acc_filtered) {
+    RCLCPP_ERROR(get_logger(), "Fail to do traj_lateral_acc_filtered");
 
     return false;
   }
@@ -543,7 +543,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
     return false;
   }
   auto traj_resampled = smoother_->resampleTrajectory(
-    *traj_steering_rate_limited, current_odometry_ptr_->twist.twist.linear.x,
+    *traj_lateral_acc_filtered, current_odometry_ptr_->twist.twist.linear.x,
     *traj_pre_resampled_closest);
   if (!traj_resampled) {
     RCLCPP_WARN(get_logger(), "Fail to do resampling before the optimization");

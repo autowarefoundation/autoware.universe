@@ -48,9 +48,9 @@
     post_sparse_min_interval_distance: 1.0   # minimum points-interval length for sparse sampling [m]
 
     # steering angle rate limit parameters
-    max_steering_angle_rate: 0.0872665       # steering angle rate [rad/s]
+    max_steering_angle_rate: 20.0             # steering angle rate [degree/s]
     resample_ds: 0.1                         # distance between trajectory points [m]
-    lookup_distance: 2.5                     # maximum lookup distance [m]
+    lookup_distance: 10.0                     # maximum lookup distance [m]
 
     # system
     over_stop_velocity_warn_thr: 1.389       # used to check if the optimization exceeds the input velocity on the stop point
