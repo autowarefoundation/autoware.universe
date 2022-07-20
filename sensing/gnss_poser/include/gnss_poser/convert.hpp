@@ -103,19 +103,19 @@ GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger)
 {
-  GNSSStat utm_origin;
   GNSSStat utm_local;
-  utm_origin.coordinate_system = CoordinateSystem::UTM;
   utm_local.coordinate_system = CoordinateSystem::UTM;
-  double global_x;
-  double global_y;
   try {
-    // origin of the local coordinate system in global
+    // origin of the local coordinate system in global frame
+    GNSSStat utm_origin;
+    utm_origin.coordinate_system = CoordinateSystem::UTM;
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
       utm_origin.northup, utm_origin.x, utm_origin.y);
     utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_origin, logger);
     // individual coordinates of global coordinate system
+    double global_x = 0.0;
+    double global_y = 0.0;
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm_origin.zone, utm_origin.northup,
       global_x, global_y);
