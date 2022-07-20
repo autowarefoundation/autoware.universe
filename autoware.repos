@@ -28,6 +28,10 @@ repositories:
     type: git
     url: https://github.com/tier4/autoware_auto_msgs.git
     version: tier4/main
+  autoware/autoware_msgs:
+    type: git
+    url: https://github.com/autowarefoundation/autoware_msgs.git
+    version: main
   autoware/individual_params:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
@@ -50,10 +54,6 @@ repositories:
     type: git
     url: https://github.com/tier4/scenario_simulator_v2.git
     version: master
-  simulator/tier4_autoware_msgs: # for scenario_simulator_v2 backward compatibility.
-    type: git
-    url: https://github.com/tier4/tier4_autoware_msgs.git
-    version: main
   simulator/logsim:
     type: git
     url: git@github.com:tier4/logsim.git
