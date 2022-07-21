@@ -28,7 +28,7 @@ private:
   const float max_range_;
   const int truncate_pixel_threshold_;
 
-  SyncroSubscriber<PointCloud2, PointCloud2> subscriber_;
+  SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   std::optional<CameraInfo> info_{std::nullopt};
   common::StaticTfSubscriber tf_subscriber_;

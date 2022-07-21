@@ -14,7 +14,7 @@ namespace imgproc
 {
 SegmentFilter::SegmentFilter()
 : Node("segment_filter"),
-  subscriber_(rclcpp::Node::SharedPtr{this}, "lsd_cloud", "graph_segmented"),
+  subscriber_(this, "lsd_cloud", "graph_segmented"),
   tf_subscriber_(this->get_clock()),
   image_size_(declare_parameter<int>("image_size", 800)),
   max_range_(declare_parameter<float>("max_range", 20.f)),

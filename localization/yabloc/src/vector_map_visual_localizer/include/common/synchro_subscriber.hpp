@@ -6,16 +6,16 @@
 #include <message_filters/time_synchronizer.h>
 
 template <typename Msg1, typename Msg2>
-class SyncroSubscriber
+class SynchroSubscriber
 {
 public:
+  using SharedPtr = std::shared_ptr<SynchroSubscriber>;
   using Sub1 = message_filters::Subscriber<Msg1>;
   using Sub2 = message_filters::Subscriber<Msg2>;
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<Msg1, Msg2>;
   using UserCallback = std::function<void(const Msg1 &, const Msg2 &)>;
 
-  SyncroSubscriber(
-    rclcpp::Node::SharedPtr n, const std::string & topic1, const std::string & topic2)
+  SynchroSubscriber(rclcpp::Node * n, const std::string & topic1, const std::string & topic2)
   {
     using std::placeholders::_1;
     using std::placeholders::_2;
@@ -24,7 +24,7 @@ public:
     sub1_ = std::make_shared<Sub1>(n, topic1);
     sub2_ = std::make_shared<Sub2>(n, topic2);
     syncronizer_ = std::make_shared<Synchronizer>(SyncPolicy(80), *sub1_, *sub2_);
-    syncronizer_->registerCallback(std::bind(&SyncroSubscriber::rawCallback, this, _1, _2));
+    syncronizer_->registerCallback(std::bind(&SynchroSubscriber::rawCallback, this, _1, _2));
   }
 
   void setCallback(const UserCallback & callback) { user_callback_ = callback; }
