@@ -40,6 +40,7 @@ public:
     double jerk_filter_ds;
   };
 
+  JerkFilteredSolver();
   explicit JerkFilteredSolver(rclcpp::Node & node);
 
   bool apply(
@@ -50,6 +51,7 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & param);
+  Param getParam(rclcpp::Node & node) const;
   Param getParam() const;
 
 private:

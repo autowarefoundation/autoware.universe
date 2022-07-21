@@ -65,6 +65,7 @@ public:
     } backward;
   };
 
+  AnalyticalJerkConstrainedSolver();
   explicit AnalyticalJerkConstrainedSolver(rclcpp::Node & node);
 
   bool apply(
@@ -80,6 +81,7 @@ public:
     [[maybe_unused]] const bool enable_smooth_limit) const override;
 
   void setParam(const Param & param);
+  Param getParam(rclcpp::Node & node) const;
   Param getParam() const;
 
 private:

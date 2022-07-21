@@ -38,6 +38,7 @@ public:
     double over_a_weight;
   };
 
+  LinfPseudoJerkSolver();
   explicit LinfPseudoJerkSolver(rclcpp::Node & node);
 
   bool apply(
@@ -48,6 +49,7 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & smoother_param);
+  Param getParam(rclcpp::Node & node) const;
   Param getParam() const;
 
 private:
