@@ -46,7 +46,7 @@
 #include <Eigen/Geometry>
 
 ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & options)
-: Node("elevation_map_loader", options)
+: SteeNode("elevation_map_loader", options)
 {
   layer_name_ = this->declare_parameter("map_layer_name", std::string("elevation"));
   std::string param_file_path = this->declare_parameter("param_file_path", "path_default");

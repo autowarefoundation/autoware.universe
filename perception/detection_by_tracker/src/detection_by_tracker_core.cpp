@@ -197,7 +197,7 @@ bool TrackerHandler::estimateTrackedObjects(
 }
 
 DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("detection_by_tracker", node_options),
+: SteeNode("detection_by_tracker", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {

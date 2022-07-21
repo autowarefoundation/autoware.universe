@@ -16,6 +16,7 @@
   <depend>kalman_filter</depend>
   <depend>mussp</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>

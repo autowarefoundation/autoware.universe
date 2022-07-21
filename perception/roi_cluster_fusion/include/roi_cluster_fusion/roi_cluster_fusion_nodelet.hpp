@@ -37,6 +37,9 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace roi_cluster_fusion
 {
@@ -60,7 +63,7 @@ private:
   std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
 };
 
-class RoiClusterFusionNodelet : public rclcpp::Node
+class RoiClusterFusionNodelet : public tilde::SteeNode
 {
 public:
   explicit RoiClusterFusionNodelet(const rclcpp::NodeOptions & options);

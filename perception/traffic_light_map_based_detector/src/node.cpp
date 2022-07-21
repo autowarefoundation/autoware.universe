@@ -89,7 +89,7 @@ void roundInImageFrame(
 namespace traffic_light
 {
 MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
-: Node("traffic_light_map_based_detector", node_options),
+: SteeNode("traffic_light_map_based_detector", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {

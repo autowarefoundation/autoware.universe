@@ -13,6 +13,7 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tier4_autoware_utils</depend>

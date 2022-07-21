@@ -30,7 +30,7 @@
 namespace object_association
 {
 ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("cluster_data_association_node", node_options),
+: SteeNode("cluster_data_association_node", node_options),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
   object0_sub_(this, "input/object0", rclcpp::QoS{1}.get_rmw_qos_profile()),

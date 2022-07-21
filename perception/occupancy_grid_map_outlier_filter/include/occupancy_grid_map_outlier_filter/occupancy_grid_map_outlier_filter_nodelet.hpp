@@ -37,6 +37,9 @@
 
 #include <memory>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace occupancy_grid_map_outlier_filter
 {
@@ -65,7 +68,7 @@ private:
   pcl::search::Search<pcl::PointXY>::Ptr kd_tree_;
 };
 
-class OccupancyGridMapOutlierFilterComponent : public rclcpp::Node
+class OccupancyGridMapOutlierFilterComponent : public tilde::SteeNode
 {
 public:
   explicit OccupancyGridMapOutlierFilterComponent(const rclcpp::NodeOptions & options);

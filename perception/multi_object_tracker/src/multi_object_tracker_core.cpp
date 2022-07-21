@@ -160,7 +160,7 @@ bool isSpecificAlivePattern(
 }  // namespace
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("multi_object_tracker", node_options),
+: SteeNode("multi_object_tracker", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {

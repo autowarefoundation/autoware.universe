@@ -38,6 +38,9 @@
 #include <deque>
 #include <memory>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 class TrackerHandler
 {
@@ -52,7 +55,7 @@ public:
     const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObjects & output);
 };
 
-class DetectionByTracker : public rclcpp::Node
+class DetectionByTracker : public tilde::SteeNode
 {
 public:
   explicit DetectionByTracker(const rclcpp::NodeOptions & node_options);

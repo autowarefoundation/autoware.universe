@@ -26,10 +26,13 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace traffic_light
 {
-class TrafficLightMapVisualizerNode : public rclcpp::Node
+class TrafficLightMapVisualizerNode : public tilde::SteeNode
 {
 public:
   TrafficLightMapVisualizerNode(const std::string & node_name, const rclcpp::NodeOptions & options);

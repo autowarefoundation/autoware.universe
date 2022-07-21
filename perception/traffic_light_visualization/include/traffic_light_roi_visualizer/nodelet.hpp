@@ -33,6 +33,9 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace traffic_light
 {
@@ -42,7 +45,7 @@ struct ClassificationResult
   std::string label;
 };
 
-class TrafficLightRoiVisualizerNodelet : public rclcpp::Node
+class TrafficLightRoiVisualizerNodelet : public tilde::SteeNode
 {
 public:
   explicit TrafficLightRoiVisualizerNodelet(const rclcpp::NodeOptions & options);

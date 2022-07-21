@@ -29,7 +29,7 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_options)
-: Node("shape_estimation", node_options)
+: SteeNode("shape_estimation", node_options)
 {
   using std::placeholders::_1;
   sub_ = create_subscription<DetectedObjectsWithFeature>(

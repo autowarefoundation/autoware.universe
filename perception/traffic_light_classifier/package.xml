@@ -16,6 +16,7 @@
   <depend>libboost-filesystem-dev</depend>
   <depend>message_filters</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <!-- The export tag contains other, unspecified, tags -->

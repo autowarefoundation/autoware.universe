@@ -41,7 +41,7 @@ std::vector<std::string> getFilePath(const std::string & input_dir)
 namespace object_recognition
 {
 TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
-: Node("tensorrt_yolo", options)
+: SteeNode("tensorrt_yolo", options)
 {
   using std::placeholders::_1;
 

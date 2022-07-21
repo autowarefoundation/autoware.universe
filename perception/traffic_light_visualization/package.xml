@@ -15,6 +15,7 @@
   <depend>lanelet2_extension</depend>
   <depend>message_filters</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
 

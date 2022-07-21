@@ -18,7 +18,7 @@
 
 LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
   const rclcpp::NodeOptions & node_options)
-: Node("lidar_apollo_instance_segmentation_node", node_options)
+: SteeNode("lidar_apollo_instance_segmentation_node", node_options)
 {
   using std::placeholders::_1;
   detector_ptr_ = std::make_shared<LidarApolloInstanceSegmentation>(this);

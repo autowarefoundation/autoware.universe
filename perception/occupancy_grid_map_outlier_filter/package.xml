@@ -30,6 +30,7 @@
   <depend>pcl_ros</depend>
   <depend>pointcloud_preprocessor</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>

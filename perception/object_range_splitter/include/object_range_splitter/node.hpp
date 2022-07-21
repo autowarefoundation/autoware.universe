@@ -20,10 +20,13 @@
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace object_range_splitter
 {
-class ObjectRangeSplitterNode : public rclcpp::Node
+class ObjectRangeSplitterNode : public tilde::SteeNode
 {
 public:
   explicit ObjectRangeSplitterNode(const rclcpp::NodeOptions & node_options);

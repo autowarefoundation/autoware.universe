@@ -28,7 +28,7 @@
 namespace centerpoint
 {
 LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_options)
-: Node("lidar_center_point", node_options), tf_buffer_(this->get_clock())
+: SteeNode("lidar_center_point", node_options), tf_buffer_(this->get_clock())
 {
   score_threshold_ = this->declare_parameter("score_threshold", 0.4);
   std::string densification_world_frame_id =

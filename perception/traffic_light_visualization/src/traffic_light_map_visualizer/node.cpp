@@ -117,7 +117,7 @@ namespace traffic_light
 {
 TrafficLightMapVisualizerNode::TrafficLightMapVisualizerNode(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options)
+: SteeNode(node_name, node_options)
 {
   light_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/traffic_light", 1);

@@ -40,6 +40,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace tf2_ros
 {
@@ -86,7 +89,7 @@ enum class Maneuver {
 
 class MapBasedPrediction;
 
-class MapBasedPredictionROS : public rclcpp::Node
+class MapBasedPredictionROS : public tilde::SteeNode
 {
 private:
   double prediction_time_horizon_;

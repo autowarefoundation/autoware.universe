@@ -35,6 +35,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 class DataManager
 {
@@ -55,7 +58,7 @@ public:
   bool use_lane_filter_ = false;
 };
 
-class ElevationMapLoaderNode : public rclcpp::Node
+class ElevationMapLoaderNode : public tilde::SteeNode
 {
 public:
   explicit ElevationMapLoaderNode(const rclcpp::NodeOptions & options);

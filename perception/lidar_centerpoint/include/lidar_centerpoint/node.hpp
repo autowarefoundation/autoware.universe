@@ -28,12 +28,15 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace centerpoint
 {
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
-class LidarCenterPointNode : public rclcpp::Node
+class LidarCenterPointNode : public tilde::SteeNode
 {
 public:
   explicit LidarCenterPointNode(const rclcpp::NodeOptions & node_options);

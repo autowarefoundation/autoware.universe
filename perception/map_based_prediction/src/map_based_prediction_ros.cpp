@@ -51,7 +51,7 @@ std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
 namespace map_based_prediction
 {
 MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_options)
-: Node("map_based_prediction", node_options),
+: SteeNode("map_based_prediction", node_options),
   interpolating_resolution_(0.5),
   debug_accumulated_time_(0.0)
 {

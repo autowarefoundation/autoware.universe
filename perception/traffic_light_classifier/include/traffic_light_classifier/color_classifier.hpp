@@ -27,6 +27,9 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace traffic_light
 {

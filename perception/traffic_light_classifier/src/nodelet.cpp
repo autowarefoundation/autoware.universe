@@ -21,7 +21,7 @@
 namespace traffic_light
 {
 TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options)
-: Node("traffic_light_classifier_node", options)
+: SteeNode("traffic_light_classifier_node", options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

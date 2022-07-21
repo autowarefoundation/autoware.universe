@@ -22,7 +22,7 @@ namespace euclidean_cluster
 {
 VoxelGridBasedEuclideanClusterNode::VoxelGridBasedEuclideanClusterNode(
   const rclcpp::NodeOptions & options)
-: Node("voxel_grid_based_euclidean_cluster_node", options)
+: SteeNode("voxel_grid_based_euclidean_cluster_node", options)
 {
   const bool use_height = this->declare_parameter("use_height", false);
   const int min_cluster_size = this->declare_parameter("min_cluster_size", 1);

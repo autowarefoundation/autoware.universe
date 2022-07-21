@@ -24,7 +24,7 @@ namespace traffic_light
 {
 TrafficLightRoiVisualizerNodelet::TrafficLightRoiVisualizerNodelet(
   const rclcpp::NodeOptions & options)
-: Node("traffic_light_roi_visualizer_node", options)
+: SteeNode("traffic_light_roi_visualizer_node", options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

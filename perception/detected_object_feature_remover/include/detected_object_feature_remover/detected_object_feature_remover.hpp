@@ -19,13 +19,16 @@
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace detected_object_feature_remover
 {
 using autoware_auto_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 
-class DetectedObjectFeatureRemover : public rclcpp::Node
+class DetectedObjectFeatureRemover : public tilde::SteeNode
 {
 public:
   explicit DetectedObjectFeatureRemover(const rclcpp::NodeOptions & node_options);

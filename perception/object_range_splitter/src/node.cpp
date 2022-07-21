@@ -17,7 +17,7 @@
 namespace object_range_splitter
 {
 ObjectRangeSplitterNode::ObjectRangeSplitterNode(const rclcpp::NodeOptions & node_options)
-: Node("object_range_splitter_node", node_options)
+: SteeNode("object_range_splitter_node", node_options)
 {
   using std::placeholders::_1;
   spilt_range_ = declare_parameter("split_range", 30.0);

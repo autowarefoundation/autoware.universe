@@ -174,7 +174,7 @@ void RadiusSearch2dfilter::filter(
 
 OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
-: Node("OccupancyGridMapOutlierFilter", options)
+: SteeNode("OccupancyGridMapOutlierFilter", options)
 {
   /* params */
   map_frame_ = declare_parameter("map_frame", "map");

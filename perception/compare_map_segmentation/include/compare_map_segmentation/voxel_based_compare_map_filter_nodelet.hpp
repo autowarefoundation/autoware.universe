@@ -21,6 +21,9 @@
 #include <pcl/search/pcl_search.h>
 
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace compare_map_segmentation
 {

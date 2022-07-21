@@ -46,10 +46,13 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace traffic_light
 {
-class TrafficLightClassifierNodelet : public rclcpp::Node
+class TrafficLightClassifierNodelet : public tilde::SteeNode
 {
 public:
   explicit TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options);

@@ -140,7 +140,7 @@ void Debugger::showImage(
 }
 
 RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & options)
-: Node("roi_cluster_fusion_node", options),
+: SteeNode("roi_cluster_fusion_node", options),
   tf_buffer_(this->get_clock()),
   tf_listener_ptr_(tf_buffer_)
 {

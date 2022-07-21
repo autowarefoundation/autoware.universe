@@ -17,6 +17,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 class Debugger
 {

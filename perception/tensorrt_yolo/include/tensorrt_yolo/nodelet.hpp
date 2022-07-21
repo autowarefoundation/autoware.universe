@@ -35,10 +35,13 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace object_recognition
 {
-class TensorrtYoloNodelet : public rclcpp::Node
+class TensorrtYoloNodelet : public tilde::SteeNode
 {
 public:
   explicit TensorrtYoloNodelet(const rclcpp::NodeOptions & options);

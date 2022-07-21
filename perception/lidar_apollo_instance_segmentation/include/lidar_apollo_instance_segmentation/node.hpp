@@ -20,6 +20,9 @@
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 class LidarInstanceSegmentationInterface
 {
@@ -31,7 +34,7 @@ public:
     tier4_perception_msgs::msg::DetectedObjectsWithFeature & output) = 0;
 };
 
-class LidarInstanceSegmentationNode : public rclcpp::Node
+class LidarInstanceSegmentationNode : public tilde::SteeNode
 {
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;

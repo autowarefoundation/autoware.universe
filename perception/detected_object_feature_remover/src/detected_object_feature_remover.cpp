@@ -17,7 +17,7 @@
 namespace detected_object_feature_remover
 {
 DetectedObjectFeatureRemover::DetectedObjectFeatureRemover(const rclcpp::NodeOptions & node_options)
-: Node("detected_object_feature_remover", node_options)
+: SteeNode("detected_object_feature_remover", node_options)
 {
   using std::placeholders::_1;
   pub_ = this->create_publisher<DetectedObjects>("~/output", rclcpp::QoS(1));

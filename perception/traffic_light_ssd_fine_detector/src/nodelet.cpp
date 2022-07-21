@@ -31,7 +31,7 @@ inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 
 TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const rclcpp::NodeOptions & options)
-: Node("traffic_light_ssd_fine_detector_node", options)
+: SteeNode("traffic_light_ssd_fine_detector_node", options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

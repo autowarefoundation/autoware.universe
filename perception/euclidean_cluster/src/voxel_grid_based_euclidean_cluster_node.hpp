@@ -23,10 +23,13 @@
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace euclidean_cluster
 {
-class VoxelGridBasedEuclideanClusterNode : public rclcpp::Node
+class VoxelGridBasedEuclideanClusterNode : public tilde::SteeNode
 {
 public:
   explicit VoxelGridBasedEuclideanClusterNode(const rclcpp::NodeOptions & options);

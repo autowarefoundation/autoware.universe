@@ -28,10 +28,13 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace object_association
 {
-class ObjectAssociationMergerNode : public rclcpp::Node
+class ObjectAssociationMergerNode : public tilde::SteeNode
 {
 public:
   explicit ObjectAssociationMergerNode(const rclcpp::NodeOptions & node_options);
