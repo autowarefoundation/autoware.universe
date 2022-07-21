@@ -335,6 +335,33 @@ inline boost::optional<size_t> insertTargetPoint(
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
+
+inline boost::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int64_t lane_id)
+{
+  size_t start_idx;
+  size_t end_idx;
+
+  bool found_first_idx = false;
+  for (size_t i = 0; i < path.points.size(); i++) {
+    const auto & p = path.points.at(i);
+    for (const auto & id : p.lane_ids) {
+      if (id == lane_id) {
+        if (!found_first_idx) {
+          start_idx = i;
+          found_first_idx = true;
+        }
+        end_idx = i;
+      }
+    }
+  }
+
+  if (found_first_idx) {
+    return std::make_pair(start_idx, end_idx);
+  }
+
+  return {};
+}
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__PATH_WITH_LANE_ID_HPP_
