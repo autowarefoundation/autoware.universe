@@ -3489,3 +3489,135 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     EXPECT_EQ(insertStopPoint(src_pose, 10.0, traj_out.points, max_dist, deg2rad(45)), boost::none);
   }
 }
+
+TEST(trajectory, findFirstNearestIndexWithSoftConstraints)
+{
+  using motion_utils::findFirstNearestIndexWithSoftConstraints;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  { // non overlapped points
+   {// Dist and yaw thresholds are given
+    // normal cases
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.4),
+      2U);
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5, 1.0),
+    4U);
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0, 0.1),
+    8U);
+
+  // dist is out of range
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.4),
+    2U);
+
+  // yaw is out of range
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.2),
+    2U);
+
+  // dist and yaw is out of range
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.2),
+    2U);
+
+  // empty points
+  EXPECT_THROW(
+    findFirstNearestIndexWithSoftConstraints(
+      Trajectory{}.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.2),
+    std::invalid_argument);
+}
+
+{  // Dist threshold is given
+  // normal cases
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0),
+    2U);
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5),
+    4U);
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0),
+    8U);
+
+  // dist is out of range
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0),
+    2U);
+}
+
+{  // No threshold is given
+  // normal cases
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3)),
+    2U);
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8)),
+    4U);
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(
+      traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0)),
+    8U);
+
+  // dist is out of range
+  EXPECT_EQ(
+    findFirstNearestIndexWithSoftConstraints(traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3)),
+    2U);
+}
+}
+
+{
+  // vertically crossing points
+}
+
+{
+  // Points has a loop structure with the opposite direction (= u-turn)
+}
+
+{  // Points has a loop structure with the same direction
+}
+}
+
+TEST(trajectory, findNearestIndexWithinRange)
+{
+  using motion_utils::findNearestIndexWithinRange;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // normal cases
+  EXPECT_EQ(findNearestIndexWithinRange(traj.points, createPoint(2.4, 1.3, 0.0), 0, 9), 2U);
+  EXPECT_EQ(findNearestIndexWithinRange(traj.points, createPoint(4.1, 0.3, 0.0), 3, 5), 4U);
+  EXPECT_EQ(findNearestIndexWithinRange(traj.points, createPoint(8.5, -0.5, 0.0), 8, 8), 8U);
+
+  // nearest is not within range
+  EXPECT_EQ(findNearestIndexWithinRange(traj.points, createPoint(2.4, 1.3, 0.0), 3, 8), 3U);
+
+  // start_idx is out of range
+  EXPECT_EQ(findNearestIndexWithinRange(traj.points, createPoint(2.4, 1.3, 0.0), -1, 9), 2U);
+
+  // end_idx is out of range
+  EXPECT_EQ(findNearestIndexWithinRange(traj.points, createPoint(2.4, 1.3, 0.0), 0, 10), 2U);
+
+  // start_idx is larger than end_idx
+  EXPECT_THROW(
+    findNearestIndexWithinRange(traj.points, createPoint(2.4, 1.3, 0.0), 4, 3),
+    std::invalid_argument);
+
+  // empty points
+  // NOTE: This cannot be handled since this fails with segmentation fault.
+  // findNearestIndexWithinRange(Trajectory{}.points, createPoint(2.4, 1.3, 0.0), 0, 10);
+}
