@@ -30,6 +30,39 @@ std::uint8_t getHighestProbLabel(
   return label;
 }
 
+autoware_auto_perception_msgs::msg::DetectedObject toDetectedObject(
+  const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object)
+{
+  autoware_auto_perception_msgs::msg::DetectedObject detected_object;
+  detected_object.existence_probability = tracked_object.existence_probability;
+
+  detected_object.classification = tracked_object.classification;
+
+  detected_object.kinematics.pose_with_covariance = tracked_object.kinematics.pose_with_covariance;
+  detected_object.kinematics.has_position_covariance = true;
+  detected_object.kinematics.orientation_availability =
+    tracked_object.kinematics.orientation_availability;
+  detected_object.kinematics.twist_with_covariance =
+    tracked_object.kinematics.twist_with_covariance;
+  detected_object.kinematics.has_twist = true;
+  detected_object.kinematics.has_twist_covariance = true;
+
+  detected_object.shape = tracked_object.shape;
+  return detected_object;
+}
+
+autoware_auto_perception_msgs::msg::DetectedObjects toDetectedObjects(
+  const autoware_auto_perception_msgs::msg::TrackedObjects & tracked_objects)
+{
+  autoware_auto_perception_msgs::msg::DetectedObjects detected_objects;
+  detected_objects.header = tracked_objects.header;
+
+  for (auto & tracked_object : tracked_objects.objects) {
+    detected_objects.objects.push_back(toDetectedObject(tracked_object));
+  }
+  return detected_objects;
+}
+
 autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
   const autoware_auto_perception_msgs::msg::DetectedObject & detected_object)
 {
@@ -46,5 +79,17 @@ autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
 
   tracked_object.shape = detected_object.shape;
   return tracked_object;
+}
+
+autoware_auto_perception_msgs::msg::TrackedObjects toTrackedObjects(
+  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects)
+{
+  autoware_auto_perception_msgs::msg::TrackedObjects tracked_objects;
+  tracked_objects.header = detected_objects.header;
+
+  for (auto & detected_object : detected_objects.objects) {
+    tracked_objects.objects.push_back(toTrackedObject(detected_object));
+  }
+  return tracked_objects;
 }
 }  // namespace perception_utils
