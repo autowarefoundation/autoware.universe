@@ -41,6 +41,7 @@ lane_changing_distance = max(lane_change_prepare_velocity * lane_changing_durati
 ### Essential lane change parameters
 
 The following parameters are configurable in `behavior_path_planner.param.yaml`.
+
 | Name | Unit | Type | Description | Default value |
 |:-----------------------------------------|------|--------|---------------------------------------------------------------------------------------|---------------|
 | `backward_length_buffer_for_end_of_lane` | [m] | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change | 5.0 |
