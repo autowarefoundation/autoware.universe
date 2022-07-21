@@ -39,7 +39,7 @@
 
 namespace
 {
-boost::optional<geometry_msgs::msg::Transform> getTransform(
+[[maybe_unused]] boost::optional<geometry_msgs::msg::Transform> getTransform(
   const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
   const std::string & target_frame_id, const rclcpp::Time & time)
 {
