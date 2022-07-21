@@ -2075,13 +2075,6 @@ double stoppingDistance(const double & vehicle_velocity, const double & vehicle_
   return -std::pow(vehicle_velocity, 2) / (2.0 * deceleration);
 }
 
-double stoppingDistance(
-  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
-  const double & rear_vehicle_reaction_time)
-{
-  return rear_vehicle_velocity * rear_vehicle_reaction_time +
-         stoppingDistance(rear_vehicle_velocity, rear_vehicle_accel);
-}
 double frontVehicleStopDistance(
   const double & front_vehicle_velocity, const double & front_vehicle_accel,
   const double & distance_to_collision)
@@ -2091,10 +2084,11 @@ double frontVehicleStopDistance(
 
 double rearVehicleStopDistance(
   const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
-  const double & rear_vehicle_reaction_time, const double & safety_time_margin_for_control)
+  const double & rear_vehicle_reaction_time, const double & rear_vehicle_safety_time_margin)
 {
-  return stoppingDistance(rear_vehicle_velocity, rear_vehicle_accel, rear_vehicle_reaction_time) +
-         rear_vehicle_velocity * safety_time_margin_for_control;
+  return rear_vehicle_velocity * rear_vehicle_reaction_time +
+         stoppingDistance(rear_vehicle_velocity, rear_vehicle_accel) +
+         rear_vehicle_velocity * rear_vehicle_safety_time_margin;
 }
 
 bool isLongitudinalDistanceEnough(
@@ -2133,7 +2127,7 @@ bool hasEnoughDistance(
 
   const auto rear_vehicle_stop_threshold = rearVehicleStopDistance(
     util::l2Norm(rear_vehicle_velocity), rear_vehicle_accel, param.rear_vehicle_reaction_time,
-    param.safety_time_margin_for_control);
+    param.rear_vehicle_safety_time_margin);
 
   return isLongitudinalDistanceEnough(rear_vehicle_stop_threshold, front_vehicle_stop_threshold);
 }

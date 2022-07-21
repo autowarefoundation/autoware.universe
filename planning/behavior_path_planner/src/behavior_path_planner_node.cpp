@@ -213,7 +213,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -1.0);
   p.expected_rear_deceleration = declare_parameter("expected_rear_deceleration", -1.0);
   p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 1.0);
-  p.safety_time_margin_for_control = declare_parameter("safety_time_margin_for_control", 2.0);
+  p.rear_vehicle_safety_time_margin = declare_parameter("rear_vehicle_safety_time_margin", 2.0);
   return p;
 }
 
@@ -318,16 +318,12 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   };
 
   LaneChangeParameters p{};
-  p.min_stop_distance = dp("min_stop_distance", 5.0);
-  p.stop_time = dp("stop_time", 2.0);
-  p.hysteresis_buffer_distance = dp("hysteresis_buffer_distance", 2.0);
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
   p.lane_changing_duration = dp("lane_changing_duration", 4.0);
+  p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
   p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 8.3);
-  p.prediction_duration = dp("prediction_duration", 8.0);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
-  p.static_obstacle_velocity_thresh = dp("static_obstacle_velocity_thresh", 0.1);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
   p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
@@ -338,7 +334,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.abort_lane_change_angle_thresh =
     dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
-  p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
   p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
 
   // validation of parameters

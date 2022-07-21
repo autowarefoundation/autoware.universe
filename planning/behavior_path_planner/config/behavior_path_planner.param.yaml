@@ -23,4 +23,4 @@
     expected_front_deceleration: -1.0
     expected_rear_deceleration: -1.0
     rear_vehicle_reaction_time: 1.0
-    safety_time_margin_for_control: 2.0
+    rear_vehicle_safety_time_margin: 2.0

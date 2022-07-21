@@ -93,9 +93,8 @@ bool LaneChangeModule::isExecutionRequested() const
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
   // Find lane change path
-  bool found_valid_path, found_safe_path;
   LaneChangePath selected_path;
-  std::tie(found_valid_path, found_safe_path) =
+  const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
 
   return found_valid_path;
@@ -111,10 +110,8 @@ bool LaneChangeModule::isExecutionReady() const
   const auto current_lanes = getCurrentLanes();
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
-  // Find lane change path
-  bool found_valid_path, found_safe_path;
   LaneChangePath selected_path;
-  std::tie(found_valid_path, found_safe_path) =
+  const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
 
   return found_safe_path;
@@ -182,12 +179,8 @@ CandidateOutput LaneChangeModule::planCandidate() const
   const auto current_lanes = getCurrentLanes();
   const auto lane_change_lanes = getLaneChangeLanes(current_lanes, lane_change_lane_length_);
 
-  // Find lane change path
-  bool found_valid_path = false;
-  bool found_safe_path = false;
-
   LaneChangePath selected_path;
-  std::tie(found_valid_path, found_safe_path) =
+  [[maybe_unused]] const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
@@ -233,9 +226,8 @@ void LaneChangeModule::updateLaneChangeStatus()
   status_.lane_change_lanes = lane_change_lanes;
 
   // Find lane change path
-  bool found_valid_path, found_safe_path;
   LaneChangePath selected_path;
-  std::tie(found_valid_path, found_safe_path) =
+  const auto [found_valid_path, found_safe_path] =
     getSafePath(lane_change_lanes, check_distance_, selected_path);
 
   // Update status

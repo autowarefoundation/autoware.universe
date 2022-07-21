@@ -45,6 +45,12 @@ PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLa
 bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets);
+double getExpectedVelocityWhenDecelerate(
+  const double & current_velocity, const double & expected_acceleration,
+  const double & lane_change_prepare_duration);
+double getDistanceWhenDecelerate(
+  const double & velocity, const double & expected_acceleration, const double & duration,
+  const double & minimum_distance);
 std::vector<LaneChangePath> getLaneChangePaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets, const Pose & pose, const Twist & twist,
