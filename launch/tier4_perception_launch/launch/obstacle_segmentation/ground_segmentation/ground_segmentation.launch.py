@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 
-from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
@@ -34,8 +33,8 @@ class GroundSegmentationPipeline:
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
         ground_segmentation_param_path = os.path.join(
-            get_package_share_directory("tier4_perception_launch"),
-            "config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml",
+            LaunchConfiguration("tier4_perception_launch_param_path").perform(context),
+            "obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml",
         )
         with open(ground_segmentation_param_path, "r") as f:
             self.ground_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -329,8 +328,9 @@ class GroundSegmentationPipeline:
                         "inpaint_radius": 1.0,
                         "param_file_path": PathJoinSubstitution(
                             [
-                                FindPackageShare("tier4_perception_launch"),
-                                "config",
+                                LaunchConfiguration("tier4_perception_launch_param_path").perform(
+                                    context
+                                ),
                                 "obstacle_segmentation",
                                 "ground_segmentation",
                                 "elevation_map_parameters.yaml",
@@ -517,6 +517,9 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
     add_launch_arg("container_name", "perception_pipeline_container")
+    add_launch_arg(
+        "tier4_perception_launch_param_path", None, "tier4_perception_launch parameter path"
+    )
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
