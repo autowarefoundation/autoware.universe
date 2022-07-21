@@ -36,6 +36,20 @@ lane_change_prepare_velocity = current_speed + deceleration * lane_change_prepar
 lane_changing_distance = max(lane_change_prepare_velocity * lane_changing_duration + 0.5 * deceleration * lane_changing_duration^2, minimum_lane_change_length + backward_length_buffer_for_end_of_lane)
 ```
 
+The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
+
+#### If the lane is blocked and multiple lane changes
+
+When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance computation is as follows.
+
+```C++
+minimum_lane_change_distance = num_of_lane_changes * (minimum_lane_change_length + backward_length_buffer_for_end_of_lane)
+```
+
+The following figure illustrates when the lane is blocked in multiple lane changes cases.
+
+![multiple-lane-changes](./image/lane_change/lane_change-when_cannot_change_lanes.png)
+
 ## Parameters
 
 ### Essential lane change parameters
