@@ -48,7 +48,7 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using tier4_autoware_utils::VehicleStopChecker;
+using motion_utils::VehicleStopChecker;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using vehicle_info_util::VehicleInfo;
