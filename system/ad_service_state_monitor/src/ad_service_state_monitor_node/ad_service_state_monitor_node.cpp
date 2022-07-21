@@ -228,6 +228,8 @@ bool AutowareStateMonitorNode::onResetRouteService(
   constexpr double timeout = 3.0;
   while (rclcpp::ok()) {
     {
+      // To avoid dead lock, 2-phase lock is required here.
+      std::lock_guard<std::mutex> lock(lock_state_input_);
       std::lock_guard<std::mutex> lock(lock_state_machine_);
       if (state_machine_->getCurrentState() == AutowareState::WaitingForRoute) {
         state_input_.is_route_reset_required = false;
@@ -273,6 +275,7 @@ void AutowareStateMonitorNode::onTimer()
     state_input_.current_time = this->now();
 
     // Update state
+    // To avoid dead lock, 2-phase lock is required here.
     std::lock_guard<std::mutex> lock2(lock_state_machine_);
     prev_autoware_state = state_machine_->getCurrentState();
     autoware_state = state_machine_->updateState(state_input_);
