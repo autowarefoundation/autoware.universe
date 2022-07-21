@@ -115,7 +115,6 @@ bool isDrivingForward(const T points)
 template <class T>
 bool isDrivingForwardWithTwist(const T points_with_twist)
 {
-  // if points size is smaller than 2
   if (points_with_twist.empty()) {
     return true;
   }
