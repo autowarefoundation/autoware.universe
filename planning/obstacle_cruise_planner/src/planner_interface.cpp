@@ -133,7 +133,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
   // Generate Output Trajectory
   auto output_traj = planner_data.traj;
   const double zero_vel_dist =
-    closest_obstacle_dist - abs_ego_offset - feasible_margin_from_obstacle;
+    std::max(0.0, closest_obstacle_dist - abs_ego_offset - feasible_margin_from_obstacle);
   const auto zero_vel_idx = motion_utils::insertStopPoint(0, zero_vel_dist, output_traj.points);
   if (zero_vel_idx) {
     const auto wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
