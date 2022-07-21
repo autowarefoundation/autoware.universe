@@ -37,7 +37,7 @@ public:
 class LidarInstanceSegmentationNode : public tilde::SteeNode
 {
 private:
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+  tilde::SteeSubscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr
     dynamic_objects_pub_;
   std::shared_ptr<LidarInstanceSegmentationInterface> detector_ptr_;

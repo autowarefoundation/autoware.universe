@@ -93,15 +93,15 @@ private:
   private:
     void transformToBaseLink(
       const PclPointCloud & input, const Header & header, PointCloud2 & output);
-    rclcpp::Publisher<PointCloud2>::SharedPtr outlier_pointcloud_pub_;
-    rclcpp::Publisher<PointCloud2>::SharedPtr low_confidence_pointcloud_pub_;
-    rclcpp::Publisher<PointCloud2>::SharedPtr high_confidence_pointcloud_pub_;
+    tilde::SteePublisher<PointCloud2>::SharedPtr outlier_pointcloud_pub_;
+    tilde::SteePublisher<PointCloud2>::SharedPtr low_confidence_pointcloud_pub_;
+    tilde::SteePublisher<PointCloud2>::SharedPtr high_confidence_pointcloud_pub_;
     const OccupancyGridMapOutlierFilterComponent & node_;
   };
 
 private:
   // publishers and subscribers
-  rclcpp::Publisher<PointCloud2>::SharedPtr pointcloud_pub_;
+  tilde::SteePublisher<PointCloud2>::SharedPtr pointcloud_pub_;
   message_filters::Subscriber<OccupancyGrid> occupancy_grid_map_sub_;
   message_filters::Subscriber<PointCloud2> pointcloud_sub_;
   using SyncPolicy = message_filters::sync_policies::ExactTime<OccupancyGrid, PointCloud2>;

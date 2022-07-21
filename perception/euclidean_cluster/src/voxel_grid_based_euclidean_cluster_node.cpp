@@ -35,13 +35,13 @@ VoxelGridBasedEuclideanClusterNode::VoxelGridBasedEuclideanClusterNode(
     min_points_number_per_voxel);
 
   using std::placeholders::_1;
-  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  pointcloud_sub_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "input", rclcpp::SensorDataQoS().keep_last(1),
     std::bind(&VoxelGridBasedEuclideanClusterNode::onPointCloud, this, _1));
 
   cluster_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "output", rclcpp::QoS{1});
-  debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
+  debug_pub_ = this->create_stee_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
 void VoxelGridBasedEuclideanClusterNode::onPointCloud(

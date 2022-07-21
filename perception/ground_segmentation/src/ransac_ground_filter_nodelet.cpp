@@ -128,7 +128,7 @@ void RANSACGroundFilterComponent::setDebugPublisher()
   debug_pose_array_pub_ =
     create_publisher<geometry_msgs::msg::PoseArray>("debug/plane_pose_array", max_queue_size_);
   debug_ground_cloud_pub_ =
-    create_publisher<sensor_msgs::msg::PointCloud2>("debug/ground/pointcloud", max_queue_size_);
+    create_stee_publisher<sensor_msgs::msg::PointCloud2>("debug/ground/pointcloud", max_queue_size_);
   is_initialized_debug_message_ = true;
 }
 

@@ -33,7 +33,7 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   set_map_in_voxel_grid_ = false;
 
   using std::placeholders::_1;
-  sub_map_ = this->create_subscription<PointCloud2>(
+  sub_map_ = this->create_stee_subscription<PointCloud2>(
     "map", rclcpp::QoS{1}.transient_local(),
     std::bind(&VoxelBasedCompareMapFilterComponent::input_target_callback, this, _1));
 

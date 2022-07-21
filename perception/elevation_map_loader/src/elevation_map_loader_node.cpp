@@ -77,7 +77,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
     this->create_publisher<grid_map_msgs::msg::GridMap>("output/elevation_map", durable_qos);
 
   if (use_elevation_map_cloud_publisher_) {
-    pub_elevation_map_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    pub_elevation_map_cloud_ = this->create_stee_publisher<sensor_msgs::msg::PointCloud2>(
       "output/elevation_map_cloud", durable_qos);
   }
 
@@ -85,7 +85,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   sub_map_hash_ = create_subscription<tier4_external_api_msgs::msg::MapHash>(
     "/api/autoware/get/map/info/hash", durable_qos,
     std::bind(&ElevationMapLoaderNode::onMapHash, this, _1));
-  sub_pointcloud_map_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  sub_pointcloud_map_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "input/pointcloud_map", durable_qos,
     std::bind(&ElevationMapLoaderNode::onPointcloudMap, this, _1));
   sub_vector_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(

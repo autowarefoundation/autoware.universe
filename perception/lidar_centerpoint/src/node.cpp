@@ -55,12 +55,12 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   detector_ptr_ = std::make_unique<CenterPointTRT>(
     static_cast<int>(class_names_.size()), encoder_param, head_param, densification_param);
 
-  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  pointcloud_sub_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
     std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
   objects_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
-  pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+  pointcloud_pub_ = this->create_stee_publisher<sensor_msgs::msg::PointCloud2>(
     "~/debug/pointcloud_densification", rclcpp::SensorDataQoS{}.keep_last(1));
 }
 

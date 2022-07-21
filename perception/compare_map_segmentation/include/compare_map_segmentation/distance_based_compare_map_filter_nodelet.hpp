@@ -36,7 +36,7 @@ protected:
   void input_target_callback(const PointCloud2ConstPtr map);
 
 private:
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
+  tilde::SteeSubscription<PointCloud2>::SharedPtr sub_map_;
   PointCloudConstPtr map_ptr_;
   double distance_threshold_;
   pcl::search::Search<pcl::PointXYZ>::Ptr tree_;

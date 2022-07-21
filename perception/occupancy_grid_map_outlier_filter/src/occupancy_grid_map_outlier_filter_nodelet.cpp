@@ -195,7 +195,7 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   sync_ptr_->registerCallback(std::bind(
     &OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2, this,
     std::placeholders::_1, std::placeholders::_2));
-  pointcloud_pub_ = create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
+  pointcloud_pub_ = create_stee_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   /* Radius search 2d filter */
   if (use_radius_search_2d_filter) {
@@ -277,11 +277,11 @@ OccupancyGridMapOutlierFilterComponent::Debugger::Debugger(
   OccupancyGridMapOutlierFilterComponent & node)
 : node_(node)
 {
-  outlier_pointcloud_pub_ = node.create_publisher<PointCloud2>(
+  outlier_pointcloud_pub_ = node.create_stee_publisher<PointCloud2>(
     "~/output/debug/outlier/pointcloud", rclcpp::SensorDataQoS());
-  low_confidence_pointcloud_pub_ = node.create_publisher<PointCloud2>(
+  low_confidence_pointcloud_pub_ = node.create_stee_publisher<PointCloud2>(
     "~/output/debug/low_confidence/pointcloud", rclcpp::SensorDataQoS());
-  high_confidence_pointcloud_pub_ = node.create_publisher<PointCloud2>(
+  high_confidence_pointcloud_pub_ = node.create_stee_publisher<PointCloud2>(
     "~/output/debug/high_confidence/pointcloud", rclcpp::SensorDataQoS());
 }
 

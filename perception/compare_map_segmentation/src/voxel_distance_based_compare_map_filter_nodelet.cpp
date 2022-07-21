@@ -31,7 +31,7 @@ VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterC
   distance_threshold_ = static_cast<double>(declare_parameter("distance_threshold", 0.3));
 
   using std::placeholders::_1;
-  sub_map_ = this->create_subscription<PointCloud2>(
+  sub_map_ = this->create_stee_subscription<PointCloud2>(
     "map", rclcpp::QoS{1}.transient_local(),
     std::bind(&VoxelDistanceBasedCompareMapFilterComponent::input_target_callback, this, _1));
 

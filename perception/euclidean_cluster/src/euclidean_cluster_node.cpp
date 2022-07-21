@@ -31,13 +31,13 @@ EuclideanClusterNode::EuclideanClusterNode(const rclcpp::NodeOptions & options)
     std::make_shared<EuclideanCluster>(use_height, min_cluster_size, max_cluster_size, tolerance);
 
   using std::placeholders::_1;
-  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  pointcloud_sub_ = this->create_stee_subscription<sensor_msgs::msg::PointCloud2>(
     "input", rclcpp::SensorDataQoS().keep_last(1),
     std::bind(&EuclideanClusterNode::onPointCloud, this, _1));
 
   cluster_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "output", rclcpp::QoS{1});
-  debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
+  debug_pub_ = this->create_stee_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
 void EuclideanClusterNode::onPointCloud(

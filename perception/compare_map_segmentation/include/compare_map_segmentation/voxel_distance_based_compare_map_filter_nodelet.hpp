@@ -37,7 +37,7 @@ protected:
 
 private:
   // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
+  tilde::SteeSubscription<PointCloud2>::SharedPtr sub_map_;
   PointCloudPtr voxel_map_ptr_;
   PointCloudConstPtr map_ptr_;
   double distance_threshold_;
