@@ -24,17 +24,29 @@
 #include <numeric>
 #include <vector>
 
+static double get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const double & default_value)
+{
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_double();
+}
+
 namespace motion_velocity_smoother
 {
+
+JerkFilteredSolver::JerkFilteredSolver() : SolverBase()
+{
+  qp_solver_.updateMaxIter(20000);
+  qp_solver_.updateRhoInterval(0);  // 0 means automatic
+  qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
+  qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
+  qp_solver_.updateVerbose(false);
+}
+
 JerkFilteredSolver::JerkFilteredSolver(rclcpp::Node & node) : SolverBase(node)
 {
-  auto & p = smoother_param_;
-  p.jerk_weight = node.declare_parameter("jerk_weight", 10.0);
-  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = node.declare_parameter("over_a_weight", 5000.0);
-  p.over_j_weight = node.declare_parameter("over_j_weight", 2000.0);
-  p.jerk_filter_ds = node.declare_parameter("jerk_filter_ds", 0.1);
-
+  smoother_param_ = getParam(node);
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -45,6 +57,18 @@ JerkFilteredSolver::JerkFilteredSolver(rclcpp::Node & node) : SolverBase(node)
 void JerkFilteredSolver::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+}
+
+JerkFilteredSolver::Param JerkFilteredSolver::getParam(rclcpp::Node & node) const
+{
+  JerkFilteredSolver::Param smoother_param;
+  auto & p = smoother_param;
+  p.jerk_weight = get_parameter_or(node, "jerk_weight", 10.0);
+  p.over_v_weight = get_parameter_or(node, "over_v_weight", 100000.0);
+  p.over_a_weight = get_parameter_or(node, "over_a_weight", 5000.0);
+  p.over_j_weight = get_parameter_or(node, "over_j_weight", 2000.0);
+  p.jerk_filter_ds = get_parameter_or(node, "jerk_filter_ds", 0.1);
+  return smoother_param;
 }
 
 JerkFilteredSolver::Param JerkFilteredSolver::getParam() const { return smoother_param_; }

@@ -50,6 +50,7 @@ public:
     resampling::ResampleParam resample_param;
   };
 
+  SolverBase() {}
   explicit SolverBase(rclcpp::Node & node);
   virtual ~SolverBase() = default;
   virtual bool apply(
@@ -70,11 +71,13 @@ public:
   double getMinJerk() const;
 
   void setParam(const BaseParam & param);
+  BaseParam getBaseParam(rclcpp::Node & node) const;
   BaseParam getBaseParam() const;
 
 protected:
   BaseParam base_param_;
 };
+
 }  // namespace motion_velocity_smoother
 
 #endif  // MOTION_VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_

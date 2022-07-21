@@ -20,6 +20,30 @@
 #include <utility>
 #include <vector>
 
+static double get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const double & default_value)
+{
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_double();
+}
+
+static int get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const int & default_value)
+{
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_double();
+}
+
+static bool get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const bool & default_value)
+{
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_bool();
+}
+
 namespace
 {
 using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
@@ -62,33 +86,43 @@ bool applyMaxVelocity(
 
 namespace motion_velocity_smoother
 {
+
+AnalyticalJerkConstrainedSolver::AnalyticalJerkConstrainedSolver() : SolverBase() {}
 AnalyticalJerkConstrainedSolver::AnalyticalJerkConstrainedSolver(rclcpp::Node & node)
 : SolverBase(node)
 {
-  auto & p = smoother_param_;
-  p.resample.ds_resample = node.declare_parameter("resample.ds_resample", 0.1);
-  p.resample.num_resample = node.declare_parameter("resample.num_resample", 1);
-  p.resample.delta_yaw_threshold = node.declare_parameter("resample.delta_yaw_threshold", 0.785);
-  p.latacc.enable_constant_velocity_while_turning =
-    node.declare_parameter("latacc.enable_constant_velocity_while_turning", false);
-  p.latacc.constant_velocity_dist_threshold =
-    node.declare_parameter("latacc.constant_velocity_dist_threshold", 2.0);
-  p.forward.max_acc = node.declare_parameter("forward.max_acc", 1.0);
-  p.forward.min_acc = node.declare_parameter("forward.min_acc", -1.0);
-  p.forward.max_jerk = node.declare_parameter("forward.max_jerk", 0.3);
-  p.forward.min_jerk = node.declare_parameter("forward.min_jerk", -0.3);
-  p.forward.kp = node.declare_parameter("forward.kp", 0.3);
-  p.backward.start_jerk = node.declare_parameter("backward.start_jerk", -0.1);
-  p.backward.min_jerk_mild_stop = node.declare_parameter("backward.min_jerk_mild_stop", -0.3);
-  p.backward.min_jerk = node.declare_parameter("backward.min_jerk", -1.5);
-  p.backward.min_acc_mild_stop = node.declare_parameter("backward.min_acc_mild_stop", -1.0);
-  p.backward.min_acc = node.declare_parameter("backward.min_acc", -2.5);
-  p.backward.span_jerk = node.declare_parameter("backward.span_jerk", -0.01);
+  smoother_param_ = getParam(node);
 }
 
 void AnalyticalJerkConstrainedSolver::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+}
+
+AnalyticalJerkConstrainedSolver::Param AnalyticalJerkConstrainedSolver::getParam(
+  rclcpp::Node & node) const
+{
+  AnalyticalJerkConstrainedSolver::Param smoother_param;
+  auto & p = smoother_param;
+  p.resample.ds_resample = get_parameter_or(node, "resample.ds_resample", 0.1);
+  p.resample.num_resample = get_parameter_or(node, "resample.num_resample", 1);
+  p.resample.delta_yaw_threshold = get_parameter_or(node, "resample.delta_yaw_threshold", 0.785);
+  p.latacc.enable_constant_velocity_while_turning =
+    get_parameter_or(node, "latacc.enable_constant_velocity_while_turning", false);
+  p.latacc.constant_velocity_dist_threshold =
+    get_parameter_or(node, "latacc.constant_velocity_dist_threshold", 2.0);
+  p.forward.max_acc = get_parameter_or(node, "forward.max_acc", 1.0);
+  p.forward.min_acc = get_parameter_or(node, "forward.min_acc", -1.0);
+  p.forward.max_jerk = get_parameter_or(node, "forward.max_jerk", 0.3);
+  p.forward.min_jerk = get_parameter_or(node, "forward.min_jerk", -0.3);
+  p.forward.kp = get_parameter_or(node, "forward.kp", 0.3);
+  p.backward.start_jerk = get_parameter_or(node, "backward.start_jerk", -0.1);
+  p.backward.min_jerk_mild_stop = get_parameter_or(node, "backward.min_jerk_mild_stop", -0.3);
+  p.backward.min_jerk = get_parameter_or(node, "backward.min_jerk", -1.5);
+  p.backward.min_acc_mild_stop = get_parameter_or(node, "backward.min_acc_mild_stop", -1.0);
+  p.backward.min_acc = get_parameter_or(node, "backward.min_acc", -2.5);
+  p.backward.span_jerk = get_parameter_or(node, "backward.span_jerk", -0.01);
+  return smoother_param;
 }
 
 AnalyticalJerkConstrainedSolver::Param AnalyticalJerkConstrainedSolver::getParam() const
