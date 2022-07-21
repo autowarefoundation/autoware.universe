@@ -33,7 +33,7 @@ static double get_parameter_or(
 namespace motion_velocity_smoother
 {
 
-L2PseudoJerkSolver::L2PseudoJerkSolver() : SolverBase()
+L2PseudoJerkSmoother::L2PseudoJerkSmoother() : SmootherBase()
 {
   qp_solver_.updateMaxIter(4000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
@@ -42,24 +42,25 @@ L2PseudoJerkSolver::L2PseudoJerkSolver() : SolverBase()
   qp_solver_.updateVerbose(false);
 }
 
-L2PseudoJerkSolver::L2PseudoJerkSolver(rclcpp::Node & node) : SolverBase(node)
+L2PseudoJerkSmoother::L2PseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
-  smoother_param_ = getParam(node);
   qp_solver_.updateMaxIter(4000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
   qp_solver_.updateEpsAbs(1.0e-4);  // def: 1.0e-4
   qp_solver_.updateVerbose(false);
+  setParam(getParam(node));
 }
 
-void L2PseudoJerkSolver::setParam(const Param & smoother_param)
+void L2PseudoJerkSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+  param_init_ = true;
 }
 
-L2PseudoJerkSolver::Param L2PseudoJerkSolver::getParam(rclcpp::Node & node) const
+L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam(rclcpp::Node & node) const
 {
-  L2PseudoJerkSolver::Param smoother_param;
+  L2PseudoJerkSmoother::Param smoother_param;
   auto & p = smoother_param;
   p.pseudo_jerk_weight = get_parameter_or(node, "pseudo_jerk_weight", 100.0);
   p.over_v_weight = get_parameter_or(node, "over_v_weight", 100000.0);
@@ -67,14 +68,16 @@ L2PseudoJerkSolver::Param L2PseudoJerkSolver::getParam(rclcpp::Node & node) cons
   return smoother_param;
 }
 
-L2PseudoJerkSolver::Param L2PseudoJerkSolver::getParam() const { return smoother_param_; }
+L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam() const { return smoother_param_; }
 
-bool L2PseudoJerkSolver::apply(
+bool L2PseudoJerkSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
   TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
 {
   auto logger = rclcpp::get_logger("smoother").get_child("l2_pseudo_jerk_smoother");
   debug_trajectories.clear();
+
+  if (!param_init_) RCLCPP_WARN(logger, "apply was called before smoother_param_ initialization.");
 
   const auto ts = std::chrono::system_clock::now();
 
@@ -246,7 +249,7 @@ bool L2PseudoJerkSolver::apply(
   return true;
 }
 
-boost::optional<TrajectoryPoints> L2PseudoJerkSolver::resampleTrajectory(
+boost::optional<TrajectoryPoints> L2PseudoJerkSmoother::resampleTrajectory(
   const TrajectoryPoints & input, const double v_current, const int closest_id) const
 {
   return resampling::resampleTrajectory(input, v_current, closest_id, base_param_.resample_param);

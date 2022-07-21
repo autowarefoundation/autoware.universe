@@ -21,6 +21,7 @@
 #include <cmath>
 #include <vector>
 
+// workaround for avoiding calling "declare_parameter" twice
 static double get_parameter_or(
   rclcpp::Node & node, const std::string & param_name, const double & default_value)
 {
@@ -31,16 +32,18 @@ static double get_parameter_or(
 
 namespace motion_velocity_smoother
 {
-SolverBase::SolverBase(rclcpp::Node & node) { base_param_ = getBaseParam(node); }
+SmootherBase::SmootherBase(rclcpp::Node & node) { setParam(getBaseParam(node)); }
 
-void SolverBase::setParam(const BaseParam & param) { base_param_ = param; }
-
-SolverBase::BaseParam SolverBase::getBaseParam(rclcpp::Node & node) const
+void SmootherBase::setParam(const BaseParam & param)
 {
-  SolverBase::BaseParam base_param;
+  base_param_ = param;
+  base_param_init_ = true;
+}
+
+SmootherBase::BaseParam SmootherBase::getBaseParam(rclcpp::Node & node) const
+{
+  SmootherBase::BaseParam base_param;
   auto & p = base_param;
-  // if used as a solver and still need to get parameter through rclcpp::Node, calling
-  // "declare_parameter" twice throws exception
   p.max_accel = get_parameter_or(node, "normal.max_acc", 2.0);
   p.min_decel = get_parameter_or(node, "normal.min_acc", -3.0);
   p.stop_decel = get_parameter_or(node, "stop_decel", 0.0);
@@ -62,20 +65,26 @@ SolverBase::BaseParam SolverBase::getBaseParam(rclcpp::Node & node) const
   return base_param;
 }
 
-SolverBase::BaseParam SolverBase::getBaseParam() const { return base_param_; }
+SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
 
-double SolverBase::getMaxAccel() const { return base_param_.max_accel; }
+double SmootherBase::getMaxAccel() const { return base_param_.max_accel; }
 
-double SolverBase::getMinDecel() const { return base_param_.min_decel; }
+double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
 
-double SolverBase::getMaxJerk() const { return base_param_.max_jerk; }
+double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
 
-double SolverBase::getMinJerk() const { return base_param_.min_jerk; }
+double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
 
-boost::optional<TrajectoryPoints> SolverBase::applyLateralAccelerationFilter(
+boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
   [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit) const
 {
+  auto logger = rclcpp::get_logger("smoother").get_child("smoother_base");
+
+  if (!base_param_init_)
+    RCLCPP_WARN(
+      logger, "applyLateralAccelerationFilter was called before base_param_ initialization.");
+
   if (input.empty()) {
     return boost::none;
   }
@@ -93,9 +102,7 @@ boost::optional<TrajectoryPoints> SolverBase::applyLateralAccelerationFilter(
   }
   auto output = trajectory_utils::applyLinearInterpolation(in_arclength, input, out_arclength);
   if (!output) {
-    RCLCPP_WARN(
-      rclcpp::get_logger("smoother").get_child("smoother_base"),
-      "interpolation failed at lateral acceleration filter.");
+    RCLCPP_WARN(logger, "interpolation failed at lateral acceleration filter.");
     return boost::none;
   }
   output->back() = input.back();  // keep the final speed.

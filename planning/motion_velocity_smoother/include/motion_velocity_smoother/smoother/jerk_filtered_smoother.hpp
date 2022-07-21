@@ -28,7 +28,7 @@
 
 namespace motion_velocity_smoother
 {
-class JerkFilteredSolver : public SolverBase
+class JerkFilteredSmoother : public SmootherBase
 {
 public:
   struct Param
@@ -40,8 +40,8 @@ public:
     double jerk_filter_ds;
   };
 
-  JerkFilteredSolver();
-  explicit JerkFilteredSolver(rclcpp::Node & node);
+  JerkFilteredSmoother();
+  explicit JerkFilteredSmoother(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -56,6 +56,7 @@ public:
 
 private:
   Param smoother_param_;
+  bool param_init_ = false;
   autoware::common::osqp::OSQPInterface qp_solver_;
 
   TrajectoryPoints forwardJerkFilter(

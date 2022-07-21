@@ -33,7 +33,7 @@ namespace motion_velocity_smoother
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
-class SolverBase
+class SmootherBase
 {
 public:
   struct BaseParam
@@ -50,9 +50,9 @@ public:
     resampling::ResampleParam resample_param;
   };
 
-  SolverBase() {}
-  explicit SolverBase(rclcpp::Node & node);
-  virtual ~SolverBase() = default;
+  SmootherBase() {}
+  explicit SmootherBase(rclcpp::Node & node);
+  virtual ~SmootherBase() = default;
   virtual bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
     TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) = 0;
@@ -76,6 +76,9 @@ public:
 
 protected:
   BaseParam base_param_;
+
+private:
+  bool base_param_init_ = false;
 };
 
 }  // namespace motion_velocity_smoother

@@ -33,7 +33,7 @@ static double get_parameter_or(
 namespace motion_velocity_smoother
 {
 
-LinfPseudoJerkSolver::LinfPseudoJerkSolver() : SolverBase()
+LinfPseudoJerkSmoother::LinfPseudoJerkSmoother() : SmootherBase()
 {
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(5000);
@@ -42,9 +42,9 @@ LinfPseudoJerkSolver::LinfPseudoJerkSolver() : SolverBase()
   qp_solver_.updateVerbose(false);
 }
 
-LinfPseudoJerkSolver::LinfPseudoJerkSolver(rclcpp::Node & node) : SolverBase(node)
+LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
-  smoother_param_ = getParam(node);
+  setParam(getParam(node));
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(5000);
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -52,14 +52,15 @@ LinfPseudoJerkSolver::LinfPseudoJerkSolver(rclcpp::Node & node) : SolverBase(nod
   qp_solver_.updateVerbose(false);
 }
 
-void LinfPseudoJerkSolver::setParam(const Param & smoother_param)
+void LinfPseudoJerkSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+  param_init_ = true;
 }
 
-LinfPseudoJerkSolver::Param LinfPseudoJerkSolver::getParam(rclcpp::Node & node) const
+LinfPseudoJerkSmoother::Param LinfPseudoJerkSmoother::getParam(rclcpp::Node & node) const
 {
-  LinfPseudoJerkSolver::Param smoother_param;
+  LinfPseudoJerkSmoother::Param smoother_param;
   auto & p = smoother_param;
   p.pseudo_jerk_weight = get_parameter_or(node, "pseudo_jerk_weight", 200.0);
   p.over_v_weight = get_parameter_or(node, "over_v_weight", 100000.0);
@@ -67,9 +68,9 @@ LinfPseudoJerkSolver::Param LinfPseudoJerkSolver::getParam(rclcpp::Node & node) 
   return smoother_param;
 }
 
-LinfPseudoJerkSolver::Param LinfPseudoJerkSolver::getParam() const { return smoother_param_; }
+LinfPseudoJerkSmoother::Param LinfPseudoJerkSmoother::getParam() const { return smoother_param_; }
 
-bool LinfPseudoJerkSolver::apply(
+bool LinfPseudoJerkSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
   TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
 {
@@ -79,6 +80,8 @@ bool LinfPseudoJerkSolver::apply(
   const auto ts = std::chrono::system_clock::now();
 
   output = input;
+
+  if (!param_init_) RCLCPP_WARN(logger, "apply was called before smoother_param_ initialization.");
 
   if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
     RCLCPP_DEBUG(
@@ -258,7 +261,7 @@ bool LinfPseudoJerkSolver::apply(
   return true;
 }
 
-boost::optional<TrajectoryPoints> LinfPseudoJerkSolver::resampleTrajectory(
+boost::optional<TrajectoryPoints> LinfPseudoJerkSmoother::resampleTrajectory(
   const TrajectoryPoints & input, const double v_current, const int closest_id) const
 {
   return resampling::resampleTrajectory(input, v_current, closest_id, base_param_.resample_param);

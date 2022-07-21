@@ -28,7 +28,7 @@
 
 namespace motion_velocity_smoother
 {
-class LinfPseudoJerkSolver : public SolverBase
+class LinfPseudoJerkSmoother : public SmootherBase
 {
 public:
   struct Param
@@ -38,8 +38,8 @@ public:
     double over_a_weight;
   };
 
-  LinfPseudoJerkSolver();
-  explicit LinfPseudoJerkSolver(rclcpp::Node & node);
+  LinfPseudoJerkSmoother();
+  explicit LinfPseudoJerkSmoother(rclcpp::Node & node);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -54,6 +54,7 @@ public:
 
 private:
   Param smoother_param_;
+  bool param_init_ = false;
   autoware::common::osqp::OSQPInterface qp_solver_;
 };
 }  // namespace motion_velocity_smoother

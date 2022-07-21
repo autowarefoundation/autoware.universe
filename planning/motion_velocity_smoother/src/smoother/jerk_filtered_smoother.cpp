@@ -35,8 +35,9 @@ static double get_parameter_or(
 namespace motion_velocity_smoother
 {
 
-JerkFilteredSolver::JerkFilteredSolver() : SolverBase()
+JerkFilteredSmoother::JerkFilteredSmoother() : SmootherBase()
 {
+  // this should not be set externally
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -44,24 +45,25 @@ JerkFilteredSolver::JerkFilteredSolver() : SolverBase()
   qp_solver_.updateVerbose(false);
 }
 
-JerkFilteredSolver::JerkFilteredSolver(rclcpp::Node & node) : SolverBase(node)
+JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
-  smoother_param_ = getParam(node);
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
   qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
   qp_solver_.updateVerbose(false);
+  setParam(getParam(node));
 }
 
-void JerkFilteredSolver::setParam(const Param & smoother_param)
+void JerkFilteredSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+  param_init_ = true;
 }
 
-JerkFilteredSolver::Param JerkFilteredSolver::getParam(rclcpp::Node & node) const
+JerkFilteredSmoother::Param JerkFilteredSmoother::getParam(rclcpp::Node & node) const
 {
-  JerkFilteredSolver::Param smoother_param;
+  JerkFilteredSmoother::Param smoother_param;
   auto & p = smoother_param;
   p.jerk_weight = get_parameter_or(node, "jerk_weight", 10.0);
   p.over_v_weight = get_parameter_or(node, "over_v_weight", 100000.0);
@@ -71,14 +73,16 @@ JerkFilteredSolver::Param JerkFilteredSolver::getParam(rclcpp::Node & node) cons
   return smoother_param;
 }
 
-JerkFilteredSolver::Param JerkFilteredSolver::getParam() const { return smoother_param_; }
+JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
 
-bool JerkFilteredSolver::apply(
+bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories)
 {
   auto logger = rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother");
   output = input;
+
+  if (!param_init_) RCLCPP_WARN(logger, "apply was called before smoother_param_ initialization.");
 
   if (input.empty()) {
     RCLCPP_WARN(logger, "Input TrajectoryPoints to the jerk filtered optimization is empty.");
@@ -374,7 +378,7 @@ bool JerkFilteredSolver::apply(
   return true;
 }
 
-TrajectoryPoints JerkFilteredSolver::forwardJerkFilter(
+TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   const double v0, const double a0, const double a_max, const double a_start, const double j_max,
   const TrajectoryPoints & input) const
 {
@@ -426,7 +430,7 @@ TrajectoryPoints JerkFilteredSolver::forwardJerkFilter(
   return output;
 }
 
-TrajectoryPoints JerkFilteredSolver::backwardJerkFilter(
+TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
   const TrajectoryPoints & input) const
 {
@@ -441,7 +445,7 @@ TrajectoryPoints JerkFilteredSolver::backwardJerkFilter(
   return filtered;
 }
 
-TrajectoryPoints JerkFilteredSolver::mergeFilteredTrajectory(
+TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
   const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const
 {
@@ -492,7 +496,7 @@ TrajectoryPoints JerkFilteredSolver::mergeFilteredTrajectory(
   return merged;
 }
 
-boost::optional<TrajectoryPoints> JerkFilteredSolver::resampleTrajectory(
+boost::optional<TrajectoryPoints> JerkFilteredSmoother::resampleTrajectory(
   const TrajectoryPoints & input, const double /*v_current*/, const int closest_id) const
 {
   return resampling::resampleTrajectory(
