@@ -28,7 +28,8 @@ private:
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_stamped_;
 
   void particleAndPose(const ParticleArray & particles, const PoseStamped & pose);
-  Eigen::Vector3f computeEigens(const ParticleArray & array) const;
+  Eigen::Vector3f computeStd(
+    const ParticleArray & array, const Eigen::Quaternionf & orientation) const;
   void publishPoseCovStamped(const PoseStamped & pose, const Eigen::Vector3f & covariance);
 };
 

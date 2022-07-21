@@ -15,22 +15,24 @@ CovarianceMonitor::CovarianceMonitor() : Node("covariance_monitor")
   synchro_subscriber_->setCallback(cb_synchro);
 
   pub_diagnostic_ = create_publisher<String>("/covariance_diag", 10);
-  pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("/pose_with_covariane", 10);
+  pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("/pose_with_covariance", 10);
 }
 
 void CovarianceMonitor::particleAndPose(const ParticleArray & particles, const PoseStamped & pose)
 {
-  Eigen::Vector3f eigens = computeEigens(particles);
+  auto ori = pose.pose.orientation;
+  Eigen::Quaternionf orientation(ori.w, ori.x, ori.y, ori.z);
+  Eigen::Vector3f std = computeStd(particles, orientation);
 
   std::streamsize default_precision = std::cout.precision();
 
   std::stringstream ss;
   ss << "--- Particles Status ---" << std::endl;
   ss << "count: " << particles.particles.size() << std::endl;
-  ss << "eigens: " << std::fixed << std::setprecision(2) << eigens.x() << ", " << eigens.y() << ", "
-     << eigens.z() << std::setprecision(default_precision) << std::endl;
+  ss << "std: " << std::fixed << std::setprecision(2) << std.x() << ", " << std.y() << ", "
+     << std.z() << std::setprecision(default_precision) << std::endl;
 
-  publishPoseCovStamped(pose, eigens);
+  publishPoseCovStamped(pose, std.cwiseAbs2());
 
   String msg;
   msg.data = ss.str();
@@ -49,7 +51,8 @@ void CovarianceMonitor::publishPoseCovStamped(
   pub_pose_cov_stamped_->publish(msg);
 }
 
-Eigen::Vector3f CovarianceMonitor::computeEigens(const ParticleArray & array) const
+Eigen::Vector3f CovarianceMonitor::computeStd(
+  const ParticleArray & array, const Eigen::Quaternionf & orientation) const
 {
   if (array.particles.empty()) return Eigen::Vector3f::Zero();
 
@@ -65,11 +68,11 @@ Eigen::Vector3f CovarianceMonitor::computeEigens(const ParticleArray & array) co
   for (const Particle & p : array.particles) {
     Eigen::Affine3f affine = util::pose2Affine(p.pose);
     Eigen::Vector3f d = affine.translation() - mean;
+    d = orientation.conjugate() * d;
     sigma += (d * d.transpose()) * invN;
   }
 
-  Eigen::JacobiSVD<Eigen::MatrixXf> svd(sigma, Eigen::ComputeThinV | Eigen::ComputeThinU);
-  return svd.singularValues().cwiseSqrt();
+  return sigma.diagonal().cwiseMax(1e-4f).cwiseSqrt();
 }
 
 }  // namespace validation
