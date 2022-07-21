@@ -174,7 +174,7 @@ void MaxVelocityDisplay::processMessage(
   painter.setFont(font);
   std::ostringstream velocity_ss;
   float velocity = 0.0;
-  if(msg_ptr != nullptr){
+  if (msg_ptr != nullptr) {
     velocity = msg_ptr->max_velocity;
   }
   velocity_ss << std::fixed << std::setprecision(0) << "limited" << std::endl
