@@ -844,7 +844,7 @@ inline boost::optional<size_t> insertTargetPoint(
   const auto overlap_with_back =
     tier4_autoware_utils::calcDistance2d(p_target, p_back) < overlap_threshold;
 
-  bool is_driving_forward = isDrivingForward(points);
+  const bool is_driving_forward = isDrivingForward(points);
 
   geometry_msgs::msg::Pose target_pose;
   {
