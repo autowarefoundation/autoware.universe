@@ -273,8 +273,6 @@ void AutowareStateMonitorNode::onTimer()
     // Prepare state input
     state_input_.current_pose = getCurrentPose(tf_buffer_);
     if (state_input_.current_pose == nullptr) {
-      lock_state_input.unlock();
-
       RCLCPP_WARN_THROTTLE(
         this->get_logger(), *this->get_clock(), 5000 /* ms */,
         "Fail lookupTransform base_link to map");
