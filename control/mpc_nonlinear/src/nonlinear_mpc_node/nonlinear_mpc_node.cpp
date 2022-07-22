@@ -2063,10 +2063,34 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   Model::input_vector_t uk{Model::input_vector_t::Zero()};
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
+
+  /**
+   * Find the first command in the queue that has been applied to the system.
+   * */
+
+  auto it_first_cmd_to_appy =
+    std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
+
+  /**
+   * Update inputs for the Kalman model.
+   * */
+  if (it_first_cmd_to_appy != inputs_buffer_.end())
+  {
+    control_cmd_kalman_ = *it_first_cmd_to_appy;
+    ns_utils::print("First command steering : ", control_cmd_kalman_.lateral.steering_tire_angle);
+
+    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) = control_cmd_kalman_.longitudinal.acceleration;  // ax
+    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) = control_cmd_kalman_.lateral.steering_tire_angle;
+
+  } else
+  {
+    u0_kalman_.setZero();
+  }
+
+
   /**
    * Apply the controls in the input queue using the their time durations.
    * */
-
   for (auto it = inputs_buffer_.begin(); it != std::prev(inputs_buffer_.end());)
   {
     if (rclcpp::Time(it->stamp) < rclcpp::Time(timestamp))
@@ -2074,61 +2098,45 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
       it = inputs_buffer_.erase(it); // erase return next iterator
     } else
     {
+      // Compute dt to the next command.
       auto dt_to_next = (rclcpp::Time(std::next(it)->stamp) - rclcpp::Time(it->stamp)).seconds();
       ns_utils::print("dt between control commands in the buffer : ", dt_to_next);
 
+
+      // Extract the controls from the input buffer.
+      uk(toUType(VehicleControlIds::u_vx)) = it->longitudinal.acceleration;  // ax input
+      uk(toUType(VehicleControlIds::u_steering)) = it->lateral.steering_tire_angle;  // steering input
+
+      auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
+      double kappad0{};           // curvature placeholder
+      double vxk{};               // to interpolate the target speed (virtual car speed).
+
+      // Estimate the curvature.  The spline data is updated in the onTrajectory().
+      if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
+        !could_interpolate)
+      {
+        RCLCPP_ERROR(get_logger(),
+                     "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
+                     "coefficients ...");
+        return;
+      }
+
+      nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
+
+      params(toUType(VehicleParamIds::curvature)) = kappad0;
+      params(toUType(VehicleParamIds::target_vx)) = vxk;
+
+      nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, dt_to_next, x0_predicted);
+
+      // Saturate steering.
+      //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
+      nonlinear_mpc_controller_ptr_->applyControlConstraints(uk);
+      nonlinear_mpc_controller_ptr_->applyStateConstraints(x0_predicted);
+
+      // increase the iterator.
       ++it;
     }
   }
-
-
-
-//      if (rclcpp::Time(it->stamp) < rclcpp::Time(timestamp))
-//      {
-//        it = inputs_buffer_.erase(it); // erase return next iterator
-//      } else
-//      {
-//
-//        auto dt_to_next = (rclcpp::Time(std::next(it)->second.stamp) - rclcpp::Time(it->second.stamp)).seconds();
-//
-//        ns_utils::print("dt between control commands in the buffer : ", dt_to_next);
-//        // Extract the controls from the input buffer.
-//        uk(toUType(VehicleControlIds::u_vx)) = it->second.longitudinal.acceleration;  // ax input
-//        uk(toUType(VehicleControlIds::u_steering)) = it->second.lateral.steering_tire_angle;  // steering input
-//
-//        auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
-//        double kappad0{};           // curvature placeholder
-//        double vxk{};               // to interpolate the target speed (virtual car speed).
-//
-//        // The spline data is updated in the onTrajectory().
-//        if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-//          !could_interpolate)
-//        {
-//          RCLCPP_ERROR(get_logger(),
-//                       "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
-//                       "coefficients ...");
-//          return;
-//        }
-//
-//        // Get target state estimate at the next sd0 distance.
-//        // double vxk;  // to interpolate the target speed (virtual car speed).
-//        nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
-//
-//        params(toUType(VehicleParamIds::curvature)) = kappad0;
-//        params(toUType(VehicleParamIds::target_vx)) = vxk;
-//
-//        nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, dt_to_next, x0_predicted);
-//
-//        // Saturate steering.
-//        //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
-//        nonlinear_mpc_controller_ptr_->applyControlConstraints(uk);
-//        nonlinear_mpc_controller_ptr_->applyStateConstraints(x0_predicted);
-//
-//        it++;
-//      }
-//
-//    }
-
 
   // Set the current_predicted_s0_.  states = [x, y, psi, s, ey, epsi, v, delta]
   current_predicted_s0_ = x0_predicted(3);
@@ -2141,22 +2149,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
   // Set the predicted model params.
   predicted_model_params_ = params;  // [curvature, predicted longitudinal speed vxk]
-
-  /**
-   * Update inputs for the Kalman model.
-   * */
-//  if (!inputs_buffer_map_.empty())
-//  {
-//    // !< @brief temporary variable that is used for the input buffer key
-//    auto itlow = inputs_buffer_map_.lower_bound(control_cmd_map_);
-//    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) = itlow->second.longitudinal.acceleration;  // ax
-//    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) = itlow->second.lateral.steering_tire_angle;
-//
-//  } else
-//  {
-//    u0_kalman_.setZero();
-//  }
-
 
   // DEBUG
   //  ns_utils::print("virtual car distance : ");
