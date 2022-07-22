@@ -23,8 +23,8 @@
     # state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
     # state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.0, 0.0 ]
 
-    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.01, 0.1, 0.5, 0.0, 0.0 ]
-    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.01, 0.1, 0.5, 0.0, 0.0 ]
+    state_weights: [ 0.0, 0.0, 0.0, 0.0, 0.01, 0.05, 0.5, 0.0, 0.0 ]
+    state_weights_terminal: [ 0.0, 0.0, 0.0, 0.0, 0.01, 0.05, 0.5, 0.0, 0.0 ]
     control_weights: [ 0.1, 0.1 ]    # [vx speed input, steering input]
     jerk_weights: [ 0.5, 0.5 ]        # [acc and steering_rate]
 
@@ -87,7 +87,7 @@
 
     # CDOB - DOB parameters.
     use_cdob: true
-    use_dob: false # activating use_dob only enables use_cdob. They are both used.
+    use_dob: true # activating use_dob only enables use_cdob. They are both used.
 
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
     # -- UKF specific parameters --
