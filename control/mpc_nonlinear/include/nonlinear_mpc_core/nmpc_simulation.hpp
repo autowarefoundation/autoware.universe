@@ -22,7 +22,6 @@
 #include "nonlinear_mpc_core/active_model.hpp"
 #include "utils/nmpc_utils.hpp"
 
-
 namespace ns_sim
 {
 
@@ -36,32 +35,32 @@ namespace ns_sim
 class ODEzoh
 {
  public:
-	ODEzoh() = default;
+  ODEzoh() = default;
 
-	explicit ODEzoh(Model::model_ptr_t const &model, const Model::input_vector_t &u,
-									Model::param_vector_t const &params, double dt);
+  explicit ODEzoh(Model::model_ptr_t const &model, const Model::input_vector_t &u,
+                  Model::param_vector_t const &params, double dt);
 
-	ODEzoh(ODEzoh const &) = default;
+  ODEzoh(ODEzoh const &) = default;
 
-	ODEzoh &operator=(ODEzoh const &) = default;
+  ODEzoh &operator=(ODEzoh const &) = default;
 
-	ODEzoh(ODEzoh &&) noexcept = default;
+  ODEzoh(ODEzoh &&) noexcept = default;
 
-	ODEzoh &operator=(ODEzoh &&) noexcept = default;
+  ODEzoh &operator=(ODEzoh &&) noexcept = default;
 
-	~ODEzoh() = default;
+  ~ODEzoh() = default;
 
-	/**
-	 * @brief Boost integration library integration function signature. f(x, dxdt, t)
-	 *
-	 * */
-	void operator()(const Model::state_vector_t &x, Model::state_vector_t &dfdt, double t);
+  /**
+   * @brief Boost integration library integration function signature. f(x, dxdt, t)
+   *
+   * */
+  void operator()(const Model::state_vector_t &x, Model::state_vector_t &dfdt, double t);
 
  private:
-	Model::model_ptr_t model_;
-	Model::input_vector_t u_{Model::input_vector_t::Zero()};
-	Model::param_vector_t params_{Model::param_vector_t::Zero()};
-	double dt_;
+  Model::model_ptr_t model_;
+  Model::input_vector_t u_{Model::input_vector_t::Zero()};
+  Model::param_vector_t params_{Model::param_vector_t::Zero()};
+  double dt_{};
 };
 
 /**
@@ -70,42 +69,44 @@ class ODEzoh
 class ODEfoh
 {
  public:
-	ODEfoh() = default;
+  ODEfoh() = default;
 
-	explicit ODEfoh(Model::model_ptr_t const &model, const Model::input_vector_t &u0,
-									const Model::input_vector_t &u1, Model::param_vector_t const &params0,
-									Model::param_vector_t const &params1, double dt);
+  explicit ODEfoh(Model::model_ptr_t const &model,
+                  const Model::input_vector_t &u0,
+                  const Model::input_vector_t &u1,
+                  Model::param_vector_t const &params0,
+                  Model::param_vector_t const &params1, double dt);
 
-	ODEfoh(ODEfoh const &) = default;
+  ODEfoh(ODEfoh const &) = default;
 
-	ODEfoh &operator=(ODEfoh const &) = default;
+  ODEfoh &operator=(ODEfoh const &) = default;
 
-	ODEfoh(ODEfoh &&) noexcept = default;
+  ODEfoh(ODEfoh &&) noexcept = default;
 
-	ODEfoh &operator=(ODEfoh &&) noexcept = default;
+  ODEfoh &operator=(ODEfoh &&) noexcept = default;
 
-	~ODEfoh() = default;
+  ~ODEfoh() = default;
 
-	/**
-	 * @brief Boost integration library integration function signature. f(x, dxdt, t)
-	 * */
-	void operator()(const Model::state_vector_t &x, Model::state_vector_t &dxdt, double t);
+  /**
+   * @brief Boost integration library integration function signature. f(x, dxdt, t)
+   * */
+  void operator()(const Model::state_vector_t &x, Model::state_vector_t &dxdt, double t);
 
  private:
-	Model::model_ptr_t model_;  // !<-@brief pointer to the vehicle model.
+  Model::model_ptr_t model_;  // !<-@brief pointer to the vehicle model.
 
-	// !<-@brief control input vector at the beginning of integration.
-	Model::input_vector_t u0_{Model::input_vector_t::Zero()};
+  // !<-@brief control input vector at the beginning of integration.
+  Model::input_vector_t u0_{Model::input_vector_t::Zero()};
 
-	// !<-@brief control input vector at the end of integration.
-	Model::input_vector_t u1_{Model::input_vector_t::Zero()};
+  // !<-@brief control input vector at the end of integration.
+  Model::input_vector_t u1_{Model::input_vector_t::Zero()};
 
-	// !<-@brief [curvature and vx_target] at the beginning of integration
-	Model::param_vector_t params0_{Model::param_vector_t::Zero()};
+  // !<-@brief [curvature and vx_target] at the beginning of integration
+  Model::param_vector_t params0_{Model::param_vector_t::Zero()};
 
-	// !<-@brief [curvature and vx_target]  at the end.
-	Model::param_vector_t params1_{Model::param_vector_t::Zero()};
-	double dt_{};                      // !<-@brief time step.
+  // !<-@brief [curvature and vx_target]  at the end.
+  Model::param_vector_t params1_{Model::param_vector_t::Zero()};
+  double dt_{};                      // !<-@brief time step.
 };
 
 /**
@@ -117,32 +118,32 @@ class ODEvariableSpeed
 {
  public:
 
-	ODEvariableSpeed() = default;
-	explicit ODEvariableSpeed(Model::model_ptr_t const &model, Model::input_vector_t const &u0,
-														Model::param_vector_t const &params0, double const &v0, double const &v1, double dt);
+  ODEvariableSpeed() = default;
+  explicit ODEvariableSpeed(Model::model_ptr_t const &model, Model::input_vector_t const &u0,
+                            Model::param_vector_t const &params0, double const &v0, double const &v1, double dt);
 
-	ODEvariableSpeed(ODEvariableSpeed const &) = default;
+  ODEvariableSpeed(ODEvariableSpeed const &) = default;
 
-	ODEvariableSpeed &operator=(ODEvariableSpeed const &) = default;
+  ODEvariableSpeed &operator=(ODEvariableSpeed const &) = default;
 
-	ODEvariableSpeed(ODEvariableSpeed &&) noexcept = default;
+  ODEvariableSpeed(ODEvariableSpeed &&) noexcept = default;
 
-	ODEvariableSpeed &operator=(ODEvariableSpeed &&) noexcept = default;
+  ODEvariableSpeed &operator=(ODEvariableSpeed &&) noexcept = default;
 
-	~ODEvariableSpeed() = default;
+  ~ODEvariableSpeed() = default;
 
-	/**
-	* @brief Boost integration library integration function signature. f(x, dxdt, t)
-	* */
-	void operator()(Model::state_vector_t &x, Model::state_vector_t &dxdt, double t);
+  /**
+  * @brief Boost integration library integration function signature. f(x, dxdt, t)
+  * */
+  void operator()(Model::state_vector_t &x, Model::state_vector_t &dxdt, double t);
 
  private:
-	Model::model_ptr_t model_;       // pointer to the vehicle model.
-	Model::input_vector_t u0_;       // control input vector at the beginning of integration.
-	Model::param_vector_t params0_;  // path curvature at the beginning of integration
-	double v0_;
-	double v1;
-	double dt_;  // time step.
+  Model::model_ptr_t model_;       // pointer to the vehicle model.
+  Model::input_vector_t u0_;       // control input vector at the beginning of integration.
+  Model::param_vector_t params0_;  // path curvature at the beginning of integration
+  double v0_{};
+  double v1{};
+  double dt_{};  // time step.
 };
 
 /**
@@ -153,26 +154,26 @@ class ODEvariableSpeed
 *  @param x; initial state. The final state will be stored in it.
 * */
 void simulateNonlinearModel_zoh(Model::model_ptr_t model,
-																Model::input_vector_t const &u0,
-																Model::param_vector_t const &params,
-																const double &dt,
-																Model::state_vector_t &x);
+                                Model::input_vector_t const &u0,
+                                Model::param_vector_t const &params,
+                                const double &dt,
+                                Model::state_vector_t &x);
 
 void simulateNonlinearModel_foh(Model::model_ptr_t model,
-																Model::input_vector_t const &u0,
-																Model::input_vector_t const &u1,
-																Model::param_vector_t const &params0,
-																Model::param_vector_t const &params1,
-																const double &dt,
-																Model::state_vector_t &x);
+                                Model::input_vector_t const &u0,
+                                Model::input_vector_t const &u1,
+                                Model::param_vector_t const &params0,
+                                Model::param_vector_t const &params1,
+                                const double &dt,
+                                Model::state_vector_t &x);
 
 void simulateNonlinearModel_variableSpeed(Model::model_ptr_t model,
-																					Model::input_vector_t const &u0,
-																					Model::param_vector_t const &params0,
-																					double const &v0,
-																					double const &v1,
-																					const double &dt,
-																					Model::state_vector_t &x);
+                                          Model::input_vector_t const &u0,
+                                          Model::param_vector_t const &params0,
+                                          double const &v0,
+                                          double const &v1,
+                                          const double &dt,
+                                          Model::state_vector_t &x);
 
 }  // namespace ns_sim
 

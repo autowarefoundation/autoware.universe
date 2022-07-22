@@ -141,6 +141,9 @@ class NonlinearMPCNode : public rclcpp::Node
   ns_splines::InterpolatingSplinePCG interpolator_curvature_pws;  // pws stands for point-wise
 
  private:
+  //!< @brief ROS clock
+  // rclcpp::Clock::SharedPtr ros_clock_ = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);
+
   // Publishers and subscribers.
   // PUBLISHERS.
   //<-@brief publishes control command.
@@ -481,7 +484,7 @@ class NonlinearMPCNode : public rclcpp::Node
   void publishClosestPointMarker(std::string const &ns) const;
 
   void setErrorReport(Model::state_vector_t const &x);
-  void publishErrorReport(ErrorReportMsg &error_rpt_msg);
+  void publishErrorReport(ErrorReportMsg &error_rpt_msg) const;
 
   visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(std::string const &ns,
                                                                         std::string const &frame_id,
