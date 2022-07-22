@@ -51,6 +51,25 @@ tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
   return stop_reason_array;
 }
 
+tier4_planning_msgs::msg::StopReasonArray makeEmptyStopReasonArray(
+  const rclcpp::Time & current_time)
+{
+  // create header
+  std_msgs::msg::Header header;
+  header.frame_id = "map";
+  header.stamp = current_time;
+
+  // create stop reason stamped
+  tier4_planning_msgs::msg::StopReason stop_reason_msg;
+  stop_reason_msg.reason = tier4_planning_msgs::msg::StopReason::OBSTACLE_STOP;
+
+  // create stop reason array
+  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+  stop_reason_array.header = header;
+  stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
+  return stop_reason_array;
+}
+
 double calcMinimumDistanceToStop(
   const double initial_vel, const double max_acc, const double min_acc)
 {
@@ -70,6 +89,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
   if (planner_data.target_obstacles.empty()) {
+    stop_reasons_pub_->publish(makeEmptyStopReasonArray(planner_data.current_time));
     return planner_data.traj;
   }
 
@@ -130,37 +150,33 @@ Trajectory PlannerInterface::generateStopTrajectory(
     will_collide_with_obstacle = true;
   }
 
-  const size_t collision_idx = motion_utils::findNearestIndex(
-    planner_data.traj.points, closest_stop_obstacle->collision_point);
-  const size_t zero_vel_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
-    planner_data.traj.points, -abs_ego_offset - feasible_margin_from_obstacle, collision_idx);
-  const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
-    planner_data.traj.points, -feasible_margin_from_obstacle, collision_idx);
-
-  // TODO(shimizu) insert stop point with interpolation
   // Generate Output Trajectory
   auto output_traj = planner_data.traj;
-  for (size_t o_idx = zero_vel_idx; o_idx < output_traj.points.size(); ++o_idx) {
-    output_traj.points.at(o_idx).longitudinal_velocity_mps = 0.0;
+  const double zero_vel_dist =
+    std::max(0.0, closest_obstacle_dist - abs_ego_offset - feasible_margin_from_obstacle);
+  const auto zero_vel_idx = motion_utils::insertStopPoint(0, zero_vel_dist, output_traj.points);
+  if (zero_vel_idx) {
+    const auto wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
+      output_traj.points, abs_ego_offset, *zero_vel_idx);
+
+    // virtual wall marker for stop obstacle
+    const auto marker_pose = output_traj.points.at(wall_idx).pose;
+    const auto markers = motion_utils::createStopVirtualWallMarker(
+      marker_pose, "obstacle stop", planner_data.current_time, 0);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
+    debug_data.obstacles_to_stop.push_back(*closest_stop_obstacle);
+
+    // Publish Stop Reason
+    const auto stop_pose = output_traj.points.at(*zero_vel_idx).pose;
+    const auto stop_reasons_msg =
+      makeStopReasonArray(planner_data.current_time, stop_pose, *closest_stop_obstacle);
+    stop_reasons_pub_->publish(stop_reasons_msg);
+
+    // Publish if ego vehicle collides with the obstacle with a limit acceleration
+    const auto stop_speed_exceeded_msg =
+      createStopSpeedExceededMsg(planner_data.current_time, will_collide_with_obstacle);
+    stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
   }
-
-  // virtual wall marker for stop obstacle
-  const auto marker_pose = planner_data.traj.points.at(wall_idx).pose;
-  const auto markers = motion_utils::createStopVirtualWallMarker(
-    marker_pose, "obstacle stop", planner_data.current_time, 0);
-  tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
-  debug_data.obstacles_to_stop.push_back(*closest_stop_obstacle);
-
-  // Publish Stop Reason
-  const auto stop_pose = output_traj.points.at(zero_vel_idx).pose;
-  const auto stop_reasons_msg =
-    makeStopReasonArray(planner_data.current_time, stop_pose, *closest_stop_obstacle);
-  stop_reasons_pub_->publish(stop_reasons_msg);
-
-  // Publish if ego vehicle collides with the obstacle with a limit acceleration
-  const auto stop_speed_exceeded_msg =
-    createStopSpeedExceededMsg(planner_data.current_time, will_collide_with_obstacle);
-  stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
 
   return output_traj;
 }
