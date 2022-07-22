@@ -23,12 +23,12 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
 
   ransac_vanish_point_ = std::make_shared<RansacVanishPoint>(this);
-  optimizer_ = std::make_shared<opt::Optimizer>(this);
+  optimizer_ = std::make_shared<opt::Optimizer>(this, true);
 }
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
 
-void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & lines)
+void VanishPoint::projectOnPlane(const Sophus::SO3f &, const cv::Mat & lines)
 {
   // Prepare vairables
   auto opt_camera_ex = tf_subscriber_("traffic_light_left_camera/camera_optical_link", "base_link");
@@ -76,7 +76,7 @@ void VanishPoint::projectOnPlane(const Sophus::SO3f & rotation, const cv::Mat & 
   cv::imshow("projected", image);
 }
 
-void VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
+cv::Mat VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
 {
   const Eigen::Matrix3d Kd = Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).transpose();
   const Eigen::Matrix3f K = Kd.cast<float>();
@@ -99,7 +99,7 @@ void VanishPoint::rotateImage(const cv::Mat & image, const Sophus::SO3f & rot)
 
   cv::Mat rotated_image;
   cv::remap(image, rotated_image, xmap, ymap, cv::INTER_LINEAR);
-  cv::imshow("rotation corected", rotated_image);
+  return rotated_image;
 }
 
 Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
@@ -216,6 +216,12 @@ void VanishPoint::callbackImage(const Image & msg)
   cv::Mat image = util::decompress2CvMat(msg);
   cv::Mat lines = ransac_vanish_point_->lsd(image);
   OptPoint2f vanish = ransac_vanish_point_->estimate(lines);
+  if (vanish.has_value()) {
+    cv::Point2f dp = vanish.value() - cv::Point2f(image.cols / 2, image.rows / 2);
+    float diff = dp.x * dp.x + dp.y * dp.y;
+    if (diff > 400) vanish = std::nullopt;
+  }
+
   ransac_vanish_point_->drawActiveLines(image);
   if (vanish.has_value()) drawCrossLine(image, vanish.value(), cv::Scalar(0, 255, 0));
   // drawHorizontalLine(image, init_rot, cv::Scalar(200, 255, 0), 1);
@@ -234,7 +240,9 @@ void VanishPoint::callbackImage(const Image & msg)
   // Visualize
   // projectOnPlane(graph_opt_rot.inverse(), lines);
   Sophus::SO3f correction = opt::extractNominalRotation(init_rot, graph_opt_rot);
-  rotateImage(image, correction);
+  cv::Mat rotated_image = rotateImage(image, correction);
+
+  cv::hconcat(image, rotated_image, image);
   cv::imshow("vanishing point", image);
   cv::waitKey(1);
 }

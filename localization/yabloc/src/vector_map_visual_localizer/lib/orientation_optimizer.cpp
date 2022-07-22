@@ -23,7 +23,8 @@ Optimizer::Optimizer(rclcpp::Node * node, bool verbose)
   vertices_(node->declare_parameter<int>("opt.max_vertex_cnt", 5)),
   imu_factor_gain_(node->declare_parameter<float>("opt.imu_factor_gain", 1.0f)),
   vp_factor_gain_(node->declare_parameter<float>("opt.vp_factor_gain", 1.0f)),
-  hz_factor_gain_(node->declare_parameter<float>("opt.hz_factor_gain", 1.0f))
+  hz_factor_gain_(node->declare_parameter<float>("opt.hz_factor_gain", 1.0f)),
+  vp_loss_thr_(node->declare_parameter<float>("opt.vp_loss_thr", 0.01f))
 {
 }
 
@@ -55,16 +56,17 @@ Sophus::SO3f Optimizer::optimize(
 
   // Build opmization problem
   Problem problem;
-  ceres::LossFunction * loss = nullptr;
+  ceres::LossFunction * vp_loss = new ceres::CauchyLoss(vp_loss_thr_);
   for (int i = 0; i < vertices_.size(); i++) {
     Vertex::Ptr & v = vertices_.at(i);
     problem.AddParameterBlock(v->q_.data(), 4, new ceres::EigenQuaternionParameterization());
     // vp-cost
     if (v->vp_.has_value())
       problem.AddResidualBlock(
-        VanishPointFactor::create(v->vp_.value(), vp_factor_gain_), loss, v->q_.data());
+        VanishPointFactor::create(v->vp_.value(), vp_factor_gain_), vp_loss, v->q_.data());
     // horizontal-coost
-    problem.AddResidualBlock(HorizonFactor::create(vertical, hz_factor_gain_), loss, v->q_.data());
+    problem.AddResidualBlock(
+      HorizonFactor::create(vertical, hz_factor_gain_), nullptr, v->q_.data());
 
     if (i == 0) continue;
 

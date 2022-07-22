@@ -35,6 +35,7 @@ private:
   const float imu_factor_gain_;
   const float vp_factor_gain_;
   const float hz_factor_gain_;
+  const float vp_loss_thr_;
 
   void printEvaluation() const;
 };

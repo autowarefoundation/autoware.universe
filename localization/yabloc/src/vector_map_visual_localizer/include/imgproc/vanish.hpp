@@ -39,7 +39,7 @@ private:
 
   void drawGridLine(const cv::Mat & image);
 
-  void rotateImage(const cv::Mat & image, const Sophus::SO3f & rot);
+  cv::Mat rotateImage(const cv::Mat & image, const Sophus::SO3f & rot);
 
   void drawCrossLine(
     const cv::Mat & image, const cv::Point2f & vp,
