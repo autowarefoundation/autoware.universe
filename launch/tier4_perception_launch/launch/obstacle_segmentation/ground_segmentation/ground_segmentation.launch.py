@@ -57,7 +57,7 @@ class GroundSegmentationPipeline:
         p["max_longitudinal_offset"] = p["front_overhang"] + p["wheel_base"]
         p["min_lateral_offset"] = -(p["wheel_tread"] / 2.0 + p["right_overhang"])
         p["max_lateral_offset"] = p["wheel_tread"] / 2.0 + p["left_overhang"]
-        p["min_height_offset"] = 0.0
+        p["min_height_offset"] = -2.0
         p["max_height_offset"] = p["vehicle_height"]
         return p
 
@@ -103,7 +103,8 @@ class GroundSegmentationPipeline:
                     ("output", f"{lidar_name}/pointcloud"),
                 ],
                 parameters=[
-                    self.ground_segmentation_param[f"{lidar_name}_ground_filter"]["parameters"]
+                    {"maximum_detection_range": self.vehicle_info["max_height_offset"]},
+                    self.ground_segmentation_param[f"{lidar_name}_ground_filter"]["parameters"],
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -237,6 +238,7 @@ class GroundSegmentationPipeline:
                     ("output", output_topic),
                 ],
                 parameters=[
+                    {"maximum_detection_range": self.vehicle_info["max_height_offset"]},
                     self.ground_segmentation_param["common_ground_filter"]["parameters"],
                     self.vehicle_info,
                 ],

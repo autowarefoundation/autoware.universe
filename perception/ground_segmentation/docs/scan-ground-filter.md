@@ -36,6 +36,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `radial_divider_angle`            | double | 1.0           | The angle which divide the whole pointcloud to sliced group [deg]             |
 | `split_points_distance_tolerance` | double | 0.2           | The xy-distance threshold to to distinguishing far and near [m]               |
 | `split_height_distance`           | double | 0.2           | The height threshold to distinguishing far and near [m]                       |
+| `maximum_detection_range`         | float  | 2.5           | maximum of detection range from ground                                        |
+| `minimum_detection_range`         | float  | -0.2          | minimum of detection range from ground                                        |
 | `use_virtual_ground_point`        | bool   | true          | whether to use the ground center of front wheels as the virtual ground point. |
 
 ## Assumptions / Known limits
