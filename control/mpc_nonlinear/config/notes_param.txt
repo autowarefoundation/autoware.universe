@@ -1,0 +1,4 @@
+We performed the simulations and present the results with the following disturbance parameters:
+Td = 0.4 in steering,
+No time delay in acceleration,
+Time delays are constant.
