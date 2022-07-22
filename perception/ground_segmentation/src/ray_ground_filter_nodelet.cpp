@@ -60,6 +60,7 @@ RayGroundFilterComponent::RayGroundFilterComponent(const rclcpp::NodeOptions & o
     use_vehicle_footprint_ = declare_parameter("use_vehicle_footprint", false);
 
     base_frame_ = declare_parameter("base_frame", "base_link");
+    z_offset_ = declare_parameter("z_offset", 0.0);
     general_max_slope_ = declare_parameter("general_max_slope", 8.0);
     local_max_slope_ = declare_parameter("local_max_slope", 6.0);
     initial_max_slope_ = declare_parameter("initial_max_slope", 3.0);
@@ -221,6 +222,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
       float points_distance = in_radial_ordered_clouds[i][j].radius - prev_radius;
       float height_threshold = tan(DEG2RAD(local_max_slope)) * points_distance;
       float current_height = in_radial_ordered_clouds[i][j].point.z;
+      //current_height means height from plat ground
+      current_height = current_height + z_offset_;
       float general_height_threshold =
         tan(DEG2RAD(general_max_slope_)) * in_radial_ordered_clouds[i][j].radius;
 
@@ -273,6 +276,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
 
       prev_radius = in_radial_ordered_clouds[i][j].radius;
       prev_height = in_radial_ordered_clouds[i][j].point.z;
+      //prev_height means height from plat ground
+      prev_height = prev_height + z_offset_;
     }
   }
 }
