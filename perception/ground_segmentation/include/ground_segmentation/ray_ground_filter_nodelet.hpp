@@ -111,6 +111,7 @@ protected:
 
 private:
   std::string base_frame_ = "base_link";
+  double z_offset_;
   double general_max_slope_;            // degrees
   double local_max_slope_;              // degrees
   double initial_max_slope_;            // degrees
