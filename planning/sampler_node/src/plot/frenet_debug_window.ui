@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1218</width>
+    <height>815</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Frenet Planner Debug Visualization</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QTabWidget" name="options">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>150</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>300</height>
+       </size>
+      </property>
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="display">
+       <attribute name="title">
+        <string>Display Options</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1191</width>
+          <height>121</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="checkBox_3">
+           <property name="text">
+            <string>Hide invalid</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QCheckBox" name="checkBox">
+           <property name="text">
+            <string>Highlight selected</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QCheckBox" name="checkBox_2">
+           <property name="text">
+            <string>Show </string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="checkBox_4">
+           <property name="text">
+            <string>Autoscale</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="sampling">
+       <attribute name="title">
+        <string>Sampling Parameters</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>1</y>
+          <width>1201</width>
+          <height>111</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="3" column="1">
+          <widget class="QDoubleSpinBox" name="durationMax"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSpinBox" name="durationNbSamples"/>
+         </item>
+         <item row="4" column="4">
+          <widget class="QSpinBox" name="lonAccNbSamples"/>
+         </item>
+         <item row="4" column="6">
+          <widget class="QSpinBox" name="latVelNbSamples"/>
+         </item>
+         <item row="2" column="4">
+          <widget class="QDoubleSpinBox" name="lonAccMin">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="HeaderMin">
+           <property name="text">
+            <string>Min</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="5">
+          <widget class="QSpinBox" name="latDevNbSamples"/>
+         </item>
+         <item row="2" column="6">
+          <widget class="QDoubleSpinBox" name="latVelMin">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QDoubleSpinBox" name="lonVelMax">
+           <property name="minimum">
+            <double>-99.989999999999995</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="7">
+          <widget class="QDoubleSpinBox" name="latAccMax">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="HeaderNbSamples">
+           <property name="text">
+            <string>Number of samples</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="5">
+          <widget class="QDoubleSpinBox" name="latDevMax">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="7">
+          <widget class="QDoubleSpinBox" name="latAccMin">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="5">
+          <widget class="QLabel" name="latDevLabel">
+           <property name="text">
+            <string>Lateral deviation (m)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="3">
+          <widget class="QSpinBox" name="lonVelNbSamples"/>
+         </item>
+         <item row="2" column="3">
+          <widget class="QDoubleSpinBox" name="lonVelMin">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="6">
+          <widget class="QDoubleSpinBox" name="latVelMax">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="durationMin"/>
+         </item>
+         <item row="0" column="6">
+          <widget class="QLabel" name="latVelLabel">
+           <property name="text">
+            <string>velocity (m/s)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="durationLabel">
+           <property name="text">
+            <string>Duration (s)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="lonVelLabel">
+           <property name="text">
+            <string>velocity (m/s)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="7">
+          <widget class="QLabel" name="latAccLabel">
+           <property name="text">
+            <string>acceleration (m/s²)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QLabel" name="lonAccLabel">
+           <property name="text">
+            <string>acceleration (m/s²)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="HeaderMax">
+           <property name="text">
+            <string>Max</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="7">
+          <widget class="QSpinBox" name="latAccNbSamples"/>
+         </item>
+         <item row="2" column="5">
+          <widget class="QDoubleSpinBox" name="latDevMin">
+           <property name="minimum">
+            <double>-99.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QDoubleSpinBox" name="lonAccMax">
+           <property name="minimum">
+            <double>-99.989999999999995</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="lonDevLabel">
+           <property name="text">
+            <string>Longitudinal deviation (m)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QDoubleSpinBox" name="lonDevMin">
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QDoubleSpinBox" name="lonDevMax">
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QSpinBox" name="lonDevNbSamples"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="enableSamplingParameters">
+           <property name="text">
+            <string>Enable</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="constraints">
+       <attribute name="title">
+        <string>Hard Constraints </string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1191</width>
+          <height>121</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="drivableAreaCheck">
+           <property name="text">
+            <string>Drivable Area</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Objective Function</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="plots">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QCustomPlot" name="frenet_cartesian_plot">
+       <attribute name="title">
+        <string>Frenet/Cartesian</string>
+       </attribute>
+      </widget>
+      <widget class="QCustomPlot" name="frenet_polynomials_plot">
+       <attribute name="title">
+        <string>Frenet Polynomials</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1218</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

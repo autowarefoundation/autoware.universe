@@ -28,6 +28,10 @@ namespace common
 namespace had_map_utils
 {
 
+lanelet::Polygon3d HAD_MAP_UTILS_PUBLIC coalesce_lanelets(
+  const lanelet::Ids & ids,
+  const lanelet::LaneletMap & lanelet_map);
+
 lanelet::Polygon3d HAD_MAP_UTILS_PUBLIC coalesce_drivable_areas(
   const autoware_auto_planning_msgs::msg::HADMapRoute & had_map_route,
   const lanelet::LaneletMapPtr & lanelet_map_ptr);
