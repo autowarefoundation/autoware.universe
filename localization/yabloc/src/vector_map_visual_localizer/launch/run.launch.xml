@@ -58,12 +58,22 @@
         <remap from="pose" to="/init/pose"/>
     </node>
 
-    <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="src_image" to="$(var resized_image)"/>
-        <remap from="src_info" to="$(var resized_info)"/>
-        <remap from="particle_pose" to="/particle_pose"/>
-    </node>
+    <!-- ========================================= -->
+    <!-- =============== VALIDATION ============== -->
+    <!-- ========================================= -->
+    <group>
+      <push-ros-namespace namespace="validation"/>
+        <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
+            <remap from="/src_image" to="$(var resized_image)"/>
+            <remap from="/src_info" to="$(var resized_info)"/>
+            <remap from="/particle_pose" to="/particle_pose"/>
+        </node>
 
-    <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
-    </node>
+        <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
+        </node>
+
+        <node name="ape" pkg="vector_map_visual_localizer" exec="ape_node" output="screen" args="--ros-args --log-level warn">
+        </node>
+    </group>
+
 </launch>
