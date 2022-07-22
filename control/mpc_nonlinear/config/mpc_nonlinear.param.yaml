@@ -92,7 +92,7 @@
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
     # -- UKF specific parameters --
     kalman_filters:
-      use_kalman: false
+      use_kalman: true
       use_sqrt_version: false
       alpha: 0.1  # controls spread of the sigma points,
       beta: 2.0   # for Gaussian distribution,
