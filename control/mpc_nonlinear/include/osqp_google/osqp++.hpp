@@ -248,7 +248,7 @@ class OsqpSolver
 
   // Solves the instance by calling osqp_solve(). CHECK-fails if IsInitialized()
   // is false.
-  OsqpExitCode Solve();
+  OsqpExitCode Solve() const;
 
   // The number of iterations taken. CHECK-fails if IsInitialized() is false.
   [[nodiscard]] c_int iterations() const;
@@ -297,7 +297,7 @@ class OsqpSolver
   // - InvalidArgumentError if the vector does not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetPrimalWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector);
+  Status SetPrimalWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector) const;
 
   // Sets a warm-start for the dual iterate for the next solve. Use a vector
   // of zeros to reset to the default initialization.
@@ -305,7 +305,7 @@ class OsqpSolver
   // - InvalidArgumentError if the vector does not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetDualWarmStart(const Eigen::Ref<const Eigen::VectorXd> &dual_vector) const;
+  [[nodiscard]] Status SetDualWarmStart(const Eigen::Ref<const Eigen::VectorXd> &dual_vector) const;
 
   // Sets the objective vector for the next solve. Returns:
   // - FailedPreconditionError if IsInitialized() is false
