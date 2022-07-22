@@ -81,10 +81,13 @@ private:
   bool use_objects_;
   bool use_points_;
   bool use_wayarea_;
+  bool use_extra_occgrid_;
+  float extra_occgrid_thres_;
 
   lanelet::LaneletMapPtr lanelet_map_;
   autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_;
   sensor_msgs::msg::PointCloud2::ConstSharedPtr points_;
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr extra_occgrid_;
 
   std::string costmap_frame_;
   std::string vehicle_frame_;
@@ -115,6 +118,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     sub_objects_;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_extra_occgrid_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_bin_map_;
   rclcpp::Subscription<tier4_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
 
@@ -135,6 +139,7 @@ private:
     static constexpr const char * objects = "objects";
     static constexpr const char * points = "points";
     static constexpr const char * wayarea = "wayarea";
+    static constexpr const char * extra = "extra";
     static constexpr const char * combined = "combined";
   };
 
@@ -155,6 +160,8 @@ private:
   void onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
 
   void onScenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr msg);
+
+  void onOccgrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
 
   void onTimer();
 

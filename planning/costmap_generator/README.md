@@ -12,6 +12,7 @@ This node reads `PointCloud` and/or `DynamicObjectArray` and creates an `Occupan
 | `~input/points_no_ground` | sensor_msgs::PointCloud2                        | ground-removed points, for obstacle areas which can't be detected as objects |
 | `~input/vector_map`       | autoware_auto_mapping_msgs::HADMapBin           | vector map, for drivable areas                                               |
 | `~input/scenario`         | tier4_planning_msgs::Scenario                   | scenarios to be activated, for node activation                               |
+| `~/input/extra_occgrid`   | nav_msgs::OccupancyGrid                         | extra occgrid which is merged into the costmap                               |
 
 ### Output topics
 
@@ -38,6 +39,7 @@ None
 | `use_objects`                | bool   | whether using `~input/objects` or not                                                          |
 | `use_points`                 | bool   | whether using `~input/points_no_ground` or not                                                 |
 | `use_wayarea`                | bool   | whether using `wayarea` from `~input/vector_map` or not                                        |
+| `use_extra`                  | bool   | whether using extra costmap from `~/input/extra_occgrid` or not                                |
 | `costmap_frame`              | string | created costmap's coordinate                                                                   |
 | `vehicle_frame`              | string | vehicle's coordinate                                                                           |
 | `map_frame`                  | string | map's coordinate                                                                               |
@@ -50,6 +52,7 @@ None
 | `grid_position_y`            | int    | offset from coordinate in y direction                                                          |
 | `maximum_lidar_height_thres` | double | maximum height threshold for pointcloud data                                                   |
 | `minimum_lidar_height_thres` | double | minimum height threshold for pointcloud data                                                   |
+| `extra_occgrid_thres_`       | double | grids above this threshold will be considered as obstacle                                      |
 | `expand_rectangle_size`      | double | expand object's rectangle with this value                                                      |
 | `size_of_expansion_kernel`   | int    | kernel size for blurring effect on object's costmap                                            |
 
