@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
