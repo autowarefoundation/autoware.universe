@@ -37,3 +37,9 @@ ament_auto_package(
   INSTALL_TO_SHARE
     launch
 )
+
+install(PROGRAMS
+  scripts/trajectory_visualizer.py
+  scripts/closest_velocity_checker.py
+  DESTINATION lib/${PROJECT_NAME}
+)
