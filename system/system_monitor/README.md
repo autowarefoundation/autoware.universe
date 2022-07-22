@@ -63,7 +63,13 @@ Every topic is published in 1 minute interval.
 | HDD Monitor     | HDD Temperature        |   ✓   |      ✓       |      ✓       |                                                               |
 |                 | HDD PowerOnHours       |   ✓   |      ✓       |      ✓       |                                                               |
 |                 | HDD TotalDataWritten   |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD RecoveredError     |   ✓   |      ✓       |      ✓       |                                                               |
 |                 | HDD Usage              |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD ReadDataRate       |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD WriteDataRate      |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD ReadIOPS           |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD WriteIOPS          |   ✓   |      ✓       |      ✓       |                                                               |
+|                 | HDD Connection         |   ✓   |      ✓       |      ✓       |                                                               |
 | Memory Monitor  | Memory Usage           |   ✓   |      ✓       |      ✓       |                                                               |
 | Net Monitor     | Network Usage          |   ✓   |      ✓       |      ✓       |                                                               |
 | NTP Monitor     | NTP Offset             |   ✓   |      ✓       |      ✓       |                                                               |

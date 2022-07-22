@@ -279,16 +279,21 @@ int get_ata_SMARTData(int fd, HDDInfo * info, const HDDDevice & device)
     return errno;
   }
 
-  std::bitset<static_cast<uint8_t>(ATAAttributeIDs::SIZE)> found_flag;
+  info->is_valid_temp_ = false;
+  info->is_valid_power_on_hours_ = false;
   info->is_valid_total_data_written_ = false;
+  info->is_valid_recovered_error_ = false;
   // Retrieve S.M.A.R.T. Informations
   for (int i = 0; i < 30; ++i) {
-    if (data.attribute_entry_[i].attribute_id_ == 0xC2) {  // Temperature - Device Internal
+    if (data.attribute_entry_[i].attribute_id_ == device.temp_attribute_id_) {  // Temperature -
+                                                                                // Device Internal
       info->temp_ = static_cast<uint8_t>(data.attribute_entry_[i].data_);
-      found_flag.set(static_cast<uint8_t>(ATAAttributeIDs::TEMPERATURE));
-    } else if (data.attribute_entry_[i].attribute_id_ == 0x09) {  // Power-on Hours Count
+      info->is_valid_temp_ = true;
+    } else if (
+      data.attribute_entry_[i].attribute_id_ ==
+      device.power_on_hours_attribute_id_) {  // Power-on Hours Count
       info->power_on_hours_ = data.attribute_entry_[i].data_;
-      found_flag.set(static_cast<uint8_t>(ATAAttributeIDs::POWER_ON_HOURS));
+      info->is_valid_power_on_hours_ = true;
     } else if (
       data.attribute_entry_[i].attribute_id_ ==
       device.total_data_written_attribute_id_) {  // Total LBAs Written
@@ -296,14 +301,15 @@ int get_ata_SMARTData(int fd, HDDInfo * info, const HDDDevice & device)
         (data.attribute_entry_[i].data_ |
          (static_cast<uint64_t>(data.attribute_entry_[i].attribute_specific_) << 32));
       info->is_valid_total_data_written_ = true;
+    } else if (
+      data.attribute_entry_[i].attribute_id_ ==
+      device.recovered_error_attribute_id_) {  // Hardware ECC Recovered
+      info->recovered_error_ = data.attribute_entry_[i].data_;
+      info->is_valid_recovered_error_ = true;
     }
   }
 
-  if (found_flag.all()) {
-    return EXIT_SUCCESS;
-  }
-
-  return ENOENT;
+  return EXIT_SUCCESS;
 }
 
 /**
@@ -376,6 +382,7 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
   // Bytes 2:1 Composite Temperature
   // Convert kelvin to celsius
   unsigned int temperature = ((data[2] << 8) | data[1]) - 273;
+  info->is_valid_temp_ = true;
   info->temp_ = static_cast<uint8_t>(temperature);
 
   // Bytes 63:48 Data Units Written
@@ -389,7 +396,11 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
   info->total_data_written_ = *(reinterpret_cast<uint64_t *>(&data[48]));
 
   // Bytes 143:128 Power On Hours
+  info->is_valid_power_on_hours_ = true;
   info->power_on_hours_ = *(reinterpret_cast<uint64_t *>(&data[128]));
+
+  // NVMe S.M.A.R.T has no information of recovered error count
+  info->is_valid_recovered_error_ = false;
 
   return EXIT_SUCCESS;
 }
