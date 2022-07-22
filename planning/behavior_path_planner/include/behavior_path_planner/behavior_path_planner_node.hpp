@@ -35,6 +35,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
@@ -66,6 +67,7 @@ using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using diagnostic_msgs::msg::DiagnosticStatus;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
@@ -167,6 +169,7 @@ private:
   rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
+  rclcpp::Publisher<DiagnosticStatus>::SharedPtr debug_diag_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
 };
 }  // namespace behavior_path_planner
