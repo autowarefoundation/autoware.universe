@@ -24,17 +24,20 @@
 #include <numeric>
 #include <vector>
 
+static double get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const double & default_value)
+{
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_double();
+}
+
 namespace motion_velocity_smoother
 {
-JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
-{
-  auto & p = smoother_param_;
-  p.jerk_weight = node.declare_parameter("jerk_weight", 10.0);
-  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = node.declare_parameter("over_a_weight", 5000.0);
-  p.over_j_weight = node.declare_parameter("over_j_weight", 2000.0);
-  p.jerk_filter_ds = node.declare_parameter("jerk_filter_ds", 0.1);
 
+JerkFilteredSmoother::JerkFilteredSmoother() : SmootherBase()
+{
+  // this should not be set externally
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -42,9 +45,32 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(n
   qp_solver_.updateVerbose(false);
 }
 
+JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
+{
+  qp_solver_.updateMaxIter(20000);
+  qp_solver_.updateRhoInterval(0);  // 0 means automatic
+  qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
+  qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
+  qp_solver_.updateVerbose(false);
+  setParam(getParam(node));
+}
+
 void JerkFilteredSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+  param_init_ = true;
+}
+
+JerkFilteredSmoother::Param JerkFilteredSmoother::getParam(rclcpp::Node & node) const
+{
+  JerkFilteredSmoother::Param smoother_param;
+  auto & p = smoother_param;
+  p.jerk_weight = get_parameter_or(node, "jerk_weight", 10.0);
+  p.over_v_weight = get_parameter_or(node, "over_v_weight", 100000.0);
+  p.over_a_weight = get_parameter_or(node, "over_a_weight", 5000.0);
+  p.over_j_weight = get_parameter_or(node, "over_j_weight", 2000.0);
+  p.jerk_filter_ds = get_parameter_or(node, "jerk_filter_ds", 0.1);
+  return smoother_param;
 }
 
 JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
@@ -53,10 +79,13 @@ bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories)
 {
+  auto logger = rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother");
   output = input;
 
+  if (!param_init_) RCLCPP_WARN(logger, "apply was called before smoother_param_ initialization.");
+
   if (input.empty()) {
-    RCLCPP_WARN(logger_, "Input TrajectoryPoints to the jerk filtered optimization is empty.");
+    RCLCPP_WARN(logger, "Input TrajectoryPoints to the jerk filtered optimization is empty.");
     return false;
   }
 
@@ -104,7 +133,7 @@ bool JerkFilteredSmoother::apply(
     resampling::resampleTrajectory(filtered, v0, 0, base_param_.resample_param);
 
   if (!opt_resampled_trajectory) {
-    RCLCPP_WARN(logger_, "Resample failed!");
+    RCLCPP_WARN(logger, "Resample failed!");
     return false;
   }
   // Ensure terminal velocity is zero
@@ -127,7 +156,7 @@ bool JerkFilteredSmoother::apply(
     *opt_resampled_trajectory, 1, opt_resampled_trajectory->size());
 
   if (!zero_vel_id) {
-    RCLCPP_WARN(logger_, "opt_resampled_trajectory must have stop point.");
+    RCLCPP_WARN(logger, "opt_resampled_trajectory must have stop point.");
     return false;
   }
 
@@ -288,7 +317,7 @@ bool JerkFilteredSmoother::apply(
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =
     std::chrono::duration_cast<std::chrono::nanoseconds>(tf1 - ts).count() * 1.0e-6;
-  RCLCPP_DEBUG(logger_, "optimization time = %f [ms]", dt_ms1);
+  RCLCPP_DEBUG(logger, "optimization time = %f [ms]", dt_ms1);
 
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i) {
@@ -303,7 +332,7 @@ bool JerkFilteredSmoother::apply(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    RCLCPP_ERROR(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    RCLCPP_ERROR(logger, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
   }
 
   if (TMP_SHOW_DEBUG_INFO) {

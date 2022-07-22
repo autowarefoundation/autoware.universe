@@ -40,6 +40,7 @@ public:
     double jerk_filter_ds;
   };
 
+  JerkFilteredSmoother();
   explicit JerkFilteredSmoother(rclcpp::Node & node);
 
   bool apply(
@@ -50,12 +51,13 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & param);
+  Param getParam(rclcpp::Node & node) const;
   Param getParam() const;
 
 private:
   Param smoother_param_;
+  bool param_init_ = false;
   autoware::common::osqp::OSQPInterface qp_solver_;
-  rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
   TrajectoryPoints forwardJerkFilter(
     const double v0, const double a0, const double a_max, const double a_stop, const double j_max,

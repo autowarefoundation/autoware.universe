@@ -22,15 +22,19 @@
 #include <limits>
 #include <vector>
 
+static double get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const double & default_value)
+{
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_double();
+}
+
 namespace motion_velocity_smoother
 {
-L2PseudoJerkSmoother::L2PseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
-{
-  auto & p = smoother_param_;
-  p.pseudo_jerk_weight = node.declare_parameter("pseudo_jerk_weight", 100.0);
-  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = node.declare_parameter("over_a_weight", 1000.0);
 
+L2PseudoJerkSmoother::L2PseudoJerkSmoother() : SmootherBase()
+{
   qp_solver_.updateMaxIter(4000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
   qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -38,9 +42,30 @@ L2PseudoJerkSmoother::L2PseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(n
   qp_solver_.updateVerbose(false);
 }
 
+L2PseudoJerkSmoother::L2PseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
+{
+  qp_solver_.updateMaxIter(4000);
+  qp_solver_.updateRhoInterval(0);  // 0 means automatic
+  qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
+  qp_solver_.updateEpsAbs(1.0e-4);  // def: 1.0e-4
+  qp_solver_.updateVerbose(false);
+  setParam(getParam(node));
+}
+
 void L2PseudoJerkSmoother::setParam(const Param & smoother_param)
 {
   smoother_param_ = smoother_param;
+  param_init_ = true;
+}
+
+L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam(rclcpp::Node & node) const
+{
+  L2PseudoJerkSmoother::Param smoother_param;
+  auto & p = smoother_param;
+  p.pseudo_jerk_weight = get_parameter_or(node, "pseudo_jerk_weight", 100.0);
+  p.over_v_weight = get_parameter_or(node, "over_v_weight", 100000.0);
+  p.over_a_weight = get_parameter_or(node, "over_a_weight", 1000.0);
+  return smoother_param;
 }
 
 L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam() const { return smoother_param_; }
@@ -49,21 +74,24 @@ bool L2PseudoJerkSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
   TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
 {
+  auto logger = rclcpp::get_logger("smoother").get_child("l2_pseudo_jerk_smoother");
   debug_trajectories.clear();
+
+  if (!param_init_) RCLCPP_WARN(logger, "apply was called before smoother_param_ initialization.");
 
   const auto ts = std::chrono::system_clock::now();
 
   output = input;
 
   if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
-    RCLCPP_DEBUG(logger_, "closest v_max < 0.1. assume vehicle stopped. return.");
+    RCLCPP_DEBUG(logger, "closest v_max < 0.1. assume vehicle stopped. return.");
     return true;
   }
 
   const unsigned int N = input.size();
 
   if (N < 2) {
-    RCLCPP_WARN(logger_, "trajectory length is not enough.");
+    RCLCPP_WARN(logger, "trajectory length is not enough.");
     return false;
   }
 
@@ -210,13 +238,13 @@ bool L2PseudoJerkSmoother::apply(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    RCLCPP_WARN(logger, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
   }
 
   const auto tf2 = std::chrono::system_clock::now();
   const double dt_ms2 =
     std::chrono::duration_cast<std::chrono::nanoseconds>(tf2 - ts2).count() * 1.0e-6;
-  RCLCPP_DEBUG(logger_, "init time = %f [ms], optimization time = %f [ms]", dt_ms1, dt_ms2);
+  RCLCPP_DEBUG(logger, "init time = %f [ms], optimization time = %f [ms]", dt_ms1, dt_ms2);
 
   return true;
 }

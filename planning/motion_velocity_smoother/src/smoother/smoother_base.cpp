@@ -21,32 +21,49 @@
 #include <cmath>
 #include <vector>
 
-namespace motion_velocity_smoother
+// workaround for avoiding calling "declare_parameter" twice
+static double get_parameter_or(
+  rclcpp::Node & node, const std::string & param_name, const double & default_value)
 {
-SmootherBase::SmootherBase(rclcpp::Node & node)
-{
-  auto & p = base_param_;
-  p.max_accel = node.declare_parameter("normal.max_acc", 2.0);
-  p.min_decel = node.declare_parameter("normal.min_acc", -3.0);
-  p.stop_decel = node.declare_parameter("stop_decel", 0.0);
-  p.max_jerk = node.declare_parameter("normal.max_jerk", 0.3);
-  p.min_jerk = node.declare_parameter("normal.min_jerk", -0.1);
-  p.max_lateral_accel = node.declare_parameter("max_lateral_accel", 0.2);
-  p.decel_distance_before_curve = node.declare_parameter("decel_distance_before_curve", 3.5);
-  p.decel_distance_after_curve = node.declare_parameter("decel_distance_after_curve", 0.0);
-  p.min_curve_velocity = node.declare_parameter("min_curve_velocity", 1.38);
-  p.resample_param.max_trajectory_length = node.declare_parameter("max_trajectory_length", 200.0);
-  p.resample_param.min_trajectory_length = node.declare_parameter("min_trajectory_length", 30.0);
-  p.resample_param.resample_time = node.declare_parameter("resample_time", 10.0);
-  p.resample_param.dense_resample_dt = node.declare_parameter("dense_resample_dt", 0.1);
-  p.resample_param.dense_min_interval_distance =
-    node.declare_parameter("dense_min_interval_distance", 0.1);
-  p.resample_param.sparse_resample_dt = node.declare_parameter("sparse_resample_dt", 0.5);
-  p.resample_param.sparse_min_interval_distance =
-    node.declare_parameter("sparse_min_interval_distance", 4.0);
+  rclcpp::Parameter param;
+  node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
+  return param.as_double();
 }
 
-void SmootherBase::setParam(const BaseParam & param) { base_param_ = param; }
+namespace motion_velocity_smoother
+{
+SmootherBase::SmootherBase(rclcpp::Node & node) { setParam(getBaseParam(node)); }
+
+void SmootherBase::setParam(const BaseParam & param)
+{
+  base_param_ = param;
+  base_param_init_ = true;
+}
+
+SmootherBase::BaseParam SmootherBase::getBaseParam(rclcpp::Node & node) const
+{
+  SmootherBase::BaseParam base_param;
+  auto & p = base_param;
+  p.max_accel = get_parameter_or(node, "normal.max_acc", 2.0);
+  p.min_decel = get_parameter_or(node, "normal.min_acc", -3.0);
+  p.stop_decel = get_parameter_or(node, "stop_decel", 0.0);
+  p.max_jerk = get_parameter_or(node, "normal.max_jerk", 0.3);
+  p.min_jerk = get_parameter_or(node, "normal.min_jerk", -0.1);
+  p.max_lateral_accel = get_parameter_or(node, "max_lateral_accel", 0.2);
+  p.decel_distance_before_curve = get_parameter_or(node, "decel_distance_before_curve", 3.5);
+  p.decel_distance_after_curve = get_parameter_or(node, "decel_distance_after_curve", 0.0);
+  p.min_curve_velocity = get_parameter_or(node, "min_curve_velocity", 1.38);
+  p.resample_param.max_trajectory_length = get_parameter_or(node, "max_trajectory_length", 200.0);
+  p.resample_param.min_trajectory_length = get_parameter_or(node, "min_trajectory_length", 30.0);
+  p.resample_param.resample_time = get_parameter_or(node, "resample_time", 10.0);
+  p.resample_param.dense_resample_dt = get_parameter_or(node, "dense_resample_dt", 0.1);
+  p.resample_param.dense_min_interval_distance =
+    get_parameter_or(node, "dense_min_interval_distance", 0.1);
+  p.resample_param.sparse_resample_dt = get_parameter_or(node, "sparse_resample_dt", 0.5);
+  p.resample_param.sparse_min_interval_distance =
+    get_parameter_or(node, "sparse_min_interval_distance", 4.0);
+  return base_param;
+}
 
 SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
 
@@ -62,6 +79,12 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
   [[maybe_unused]] const double a0, [[maybe_unused]] const bool enable_smooth_limit) const
 {
+  auto logger = rclcpp::get_logger("smoother").get_child("smoother_base");
+
+  if (!base_param_init_)
+    RCLCPP_WARN(
+      logger, "applyLateralAccelerationFilter was called before base_param_ initialization.");
+
   if (input.empty()) {
     return boost::none;
   }
@@ -79,9 +102,7 @@ boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
   }
   auto output = trajectory_utils::applyLinearInterpolation(in_arclength, input, out_arclength);
   if (!output) {
-    RCLCPP_WARN(
-      rclcpp::get_logger("smoother").get_child("smoother_base"),
-      "interpolation failed at lateral acceleration filter.");
+    RCLCPP_WARN(logger, "interpolation failed at lateral acceleration filter.");
     return boost::none;
   }
   output->back() = input.back();  // keep the final speed.

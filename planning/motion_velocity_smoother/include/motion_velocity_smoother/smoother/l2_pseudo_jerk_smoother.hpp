@@ -38,6 +38,7 @@ public:
     double over_a_weight;
   };
 
+  L2PseudoJerkSmoother();
   explicit L2PseudoJerkSmoother(rclcpp::Node & node);
 
   bool apply(
@@ -48,12 +49,13 @@ public:
     const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & smoother_param);
+  Param getParam(rclcpp::Node & node) const;
   Param getParam() const;
 
 private:
   Param smoother_param_;
+  bool param_init_ = false;
   autoware::common::osqp::OSQPInterface qp_solver_;
-  rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("l2_pseudo_jerk_smoother")};
 };
 }  // namespace motion_velocity_smoother
 

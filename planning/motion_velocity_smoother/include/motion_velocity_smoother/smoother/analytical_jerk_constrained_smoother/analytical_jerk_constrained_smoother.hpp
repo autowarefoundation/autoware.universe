@@ -65,6 +65,7 @@ public:
     } backward;
   };
 
+  AnalyticalJerkConstrainedSmoother();
   explicit AnalyticalJerkConstrainedSmoother(rclcpp::Node & node);
 
   bool apply(
@@ -80,12 +81,12 @@ public:
     [[maybe_unused]] const bool enable_smooth_limit) const override;
 
   void setParam(const Param & param);
+  Param getParam(rclcpp::Node & node) const;
   Param getParam() const;
 
 private:
   Param smoother_param_;
-  rclcpp::Logger logger_{
-    rclcpp::get_logger("smoother").get_child("analytical_jerk_constrained_smoother")};
+  bool param_init_ = false;
 
   bool searchDecelTargetIndices(
     const TrajectoryPoints & trajectory, const size_t closest_index,
