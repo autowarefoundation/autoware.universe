@@ -40,21 +40,19 @@ multilinestring_t bicycleProjectionLines(
   multilinestring_t lines;
   const auto dt = params.duration / (params.points_per_projection - 1);
   point_t point;
-  linestring_t line;
   // TODO(Maxime CLEMENT): use Eigen for faster calculation
   for (const auto steering_offset : params.steering_angle_offsets) {
-    point.x(origin.x);
-    point.y(origin.y);
-    line = {point};
+    linestring_t line;
+    line.reserve(params.points_per_projection);
+    line.emplace_back(origin.x, origin.y);
     const auto steering_angle = params.steering_angle + steering_offset;
     const auto rotation_rate = params.velocity * std::tan(steering_angle) / params.wheel_base;
     for (auto i = 1; i < params.points_per_projection; ++i) {
       const auto t = i * dt;
       const auto heading = params.heading + rotation_rate * t;
       const auto length = params.velocity * t + params.extra_length;
-      point.x(origin.x + length * std::cos(heading));
-      point.y(origin.y + length * std::sin(heading));
-      line.push_back(point);
+      line.emplace_back(
+        origin.x + length * std::cos(heading), origin.y + length * std::sin(heading));
     }
     lines.push_back(line);
   }

@@ -16,19 +16,13 @@
 #define APPARENT_SAFE_VELOCITY_LIMITER__TYPES_HPP_
 
 #include <rclcpp/node.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/multi_linestring.hpp>
-#include <boost/geometry/geometries/multi_polygon.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/geometries/segment.hpp>
 
 #include <tf2/utils.h>
 
@@ -46,12 +40,12 @@ using PointCloud = sensor_msgs::msg::PointCloud2;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
 
-using point_t = boost::geometry::model::d2::point_xy<double>;
-using polygon_t = boost::geometry::model::polygon<point_t>;
-using multipolygon_t = boost::geometry::model::multi_polygon<polygon_t>;
-using segment_t = boost::geometry::model::segment<point_t>;
-using linestring_t = boost::geometry::model::linestring<point_t>;
-using multilinestring_t = boost::geometry::model::multi_linestring<linestring_t>;
+using point_t = tier4_autoware_utils::Point2d;
+using polygon_t = tier4_autoware_utils::Polygon2d;
+using multipolygon_t = tier4_autoware_utils::MultiPolygon2d;
+using segment_t = tier4_autoware_utils::Segment2d;
+using linestring_t = tier4_autoware_utils::LineString2d;
+using multilinestring_t = tier4_autoware_utils::MultiLineString2d;
 
 struct ObstacleParameters
 {

@@ -69,21 +69,16 @@ std::optional<double> distanceToClosestCollision(
 
 double arcDistance(const point_t & origin, const double heading, const point_t & target)
 {
-  const auto squared_dist = [](const auto & a, const auto & b) {
-    return (a.x() - b.x()) * (a.x() - b.x()) + (a.y() - b.y()) * (a.y() - b.y());
-  };
   // Circle passing through the origin and the target such that origin+heading is tangent
-  const auto normal = Eigen::Vector2d{origin.x(), origin.y()};
-  const auto d_normal = Eigen::Vector2d{-std::sin(heading), std::cos(heading)};
-  const auto midpoint =
-    Eigen::Vector2d{(target.x() + origin.x()) / 2, (target.y() + origin.y()) / 2};
-  const auto mid_to_target = Eigen::Vector2d{target.x() - midpoint.x(), target.y() - midpoint.y()};
+  const auto d_normal = point_t{-std::sin(heading), std::cos(heading)};
+  const auto midpoint = (origin + target) / 2;
+  const auto mid_to_target = target - midpoint;
   const auto circle_center =
-    normal + (midpoint - normal).dot(mid_to_target) / (mid_to_target.dot(d_normal)) * d_normal;
-  const auto squared_radius = squared_dist(circle_center, origin);
-  // Arc distance
-  const auto arg = (2 * squared_radius - squared_dist(origin, target)) / (2 * squared_radius);
-  const auto angle = std::acos(arg);
+    origin + (midpoint - origin).dot(mid_to_target) / (mid_to_target.dot(d_normal)) * d_normal;
+  const auto squared_radius = (circle_center - origin).squaredNorm();
+  // Arc distance from angle between origin and target on the origin
+  const auto angle =
+    std::acos((2 * squared_radius - (origin - target).squaredNorm()) / (2 * squared_radius));
   return std::sqrt(squared_radius) * angle;
 }
 

@@ -94,11 +94,9 @@ polygon_t createEnvelopePolygon(
     projection_params.update(point);
     const auto forward_simulated_vector =
       forwardSimulatedSegment(point.pose.position, projection_params);
-    envelope_polygon.outer()[i].x(forward_simulated_vector.second.x());
-    envelope_polygon.outer()[i].y(forward_simulated_vector.second.y());
+    envelope_polygon.outer()[i] = forward_simulated_vector.second;
     const auto reverse_index = 2 * trajectory_size - i - 1;
-    envelope_polygon.outer()[reverse_index].x(forward_simulated_vector.first.x());
-    envelope_polygon.outer()[reverse_index].y(forward_simulated_vector.first.y());
+    envelope_polygon.outer()[reverse_index] = forward_simulated_vector.first;
   }
   envelope_polygon.outer().push_back(envelope_polygon.outer().front());
   boost::geometry::correct(envelope_polygon);
