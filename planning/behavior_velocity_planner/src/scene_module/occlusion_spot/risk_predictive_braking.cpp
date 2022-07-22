@@ -35,7 +35,6 @@ void applySafeVelocityConsideringPossibleCollision(
   const double a0 = param.v.a_ego;
   const double j_min = param.v.max_slow_down_jerk;
   const double a_min = param.v.max_slow_down_accel;
-  const double v_min = param.v.min_allowed_velocity;
   for (auto & possible_collision : possible_collisions) {
     const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
     const double original_vel = possible_collision.collision_with_margin.longitudinal_velocity_mps;
@@ -51,7 +50,7 @@ void applySafeVelocityConsideringPossibleCollision(
     // skip non effective velocity insertion
     if (original_vel < v_safe) continue;
     // compare safe velocity consider EBS, minimum allowed velocity and original velocity
-    const double safe_velocity = calculateInsertVelocity(v_slow_down, v_safe, v_min, original_vel);
+    const double safe_velocity = calculateInsertVelocity(v_slow_down, v_safe, original_vel);
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;
     insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
@@ -112,14 +111,11 @@ SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
 }
 
 double calculateInsertVelocity(
-  const double min_allowed_vel, const double safe_vel, const double min_vel,
-  const double original_vel)
+  const double min_allowed_vel, const double safe_vel, const double original_vel)
 {
   const double max_vel_noise = 0.05;
   // ensure safe velocity doesn't exceed maximum allowed pbs deceleration
   double cmp_safe_vel = std::max(min_allowed_vel + max_vel_noise, safe_vel);
-  // ensure safe path velocity is also above ego min velocity
-  cmp_safe_vel = std::max(cmp_safe_vel, min_vel);
   // ensure we only lower the original velocity (and do not increase it)
   cmp_safe_vel = std::min(cmp_safe_vel, original_vel);
   return cmp_safe_vel;
