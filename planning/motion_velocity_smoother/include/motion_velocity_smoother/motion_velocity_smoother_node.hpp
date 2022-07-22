@@ -82,6 +82,7 @@ private:
   double max_velocity_with_deceleration_;          // maximum velocity with deceleration
                                                    // for external velocity limit
   double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
+  double wheelbase_;                               // wheelbase
 
   TrajectoryPoints prev_output_;                           // previously published trajectory
   boost::optional<TrajectoryPoint> prev_closest_point_{};  // previous trajectory point
@@ -199,6 +200,7 @@ private:
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_vel_lim_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_latacc_filtered_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_steering_rate_limited_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_resampled_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
