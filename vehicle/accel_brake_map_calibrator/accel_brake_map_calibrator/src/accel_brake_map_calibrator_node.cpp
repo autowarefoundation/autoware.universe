@@ -891,11 +891,11 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   map_offset(0) = accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)
                              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l);
   map_offset(1) = accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_l)
-                             : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l);
+                             : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_l);
   map_offset(2) = accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_h)
-                             : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l);
+                             : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_h);
   map_offset(3) = accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_h)
-                             : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l);
+                             : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_h);
 
   Eigen::MatrixXd covariance = accel_mode ? accel_covariance_vec_.at(ped_idx_l).at(vel_idx_l)
                                           : brake_covariance_vec_.at(ped_idx_l).at(vel_idx_l);
@@ -918,11 +918,11 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   (accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)
               : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(0);
   (accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_l)
-              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(1);
+              : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_l)) = map_offset(1);
   (accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_h)
-              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(2);
+              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_h)) = map_offset(2);
   (accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_h)
-              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(3);
+              : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_h)) = map_offset(3);
 
   (accel_mode ? accel_covariance_vec_.at(ped_idx_l).at(vel_idx_l)
               : brake_covariance_vec_.at(ped_idx_l).at(vel_idx_l)) = covariance;
