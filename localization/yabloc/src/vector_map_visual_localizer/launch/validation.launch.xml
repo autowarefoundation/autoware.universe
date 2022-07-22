@@ -9,6 +9,6 @@
     </node>
 
     <node name="ape" pkg="vector_map_visual_localizer" exec="ape_node" output="screen" args="--ros-args --log-level warn">
-        <param name="reference_bags_path" value="$(env HOME)/Desktop/vmvl_eval/reference/13-30-38_reference"/>
+        <param name="reference_bags_path" value="$(env HOME)/Reference/05-20-wangansen/"/>
     </node>
 </launch>
