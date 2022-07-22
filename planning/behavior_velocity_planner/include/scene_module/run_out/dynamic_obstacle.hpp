@@ -143,12 +143,8 @@ class DynamicObstacleCreatorForPoints : public DynamicObstacleCreator
 {
 public:
   explicit DynamicObstacleCreatorForPoints(rclcpp::Node & node);
-  std::vector<DynamicObstacle> createDynamicObstacles() override;
-
-private:
   void onCompareMapFilteredPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr
-    sub_compare_map_filtered_pointcloud_;
+  sub_compare_map_filtered_pointcloud_;
 
   // tf
   tf2_ros::Buffer tf_buffer_;
