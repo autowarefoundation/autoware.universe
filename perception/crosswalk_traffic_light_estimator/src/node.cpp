@@ -82,7 +82,6 @@ CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
   using std::placeholders::_1;
 
   use_last_detect_color_ = this->declare_parameter("use_last_detect_color", true);
-  traffic_light_timeout_ = this->declare_parameter("traffic_light_timeout", 10.0);
 
   sub_map_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
@@ -158,12 +157,9 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
 
   TrafficSignalArray output = *msg;
 
-  std::unordered_map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map;
+  std::unordered_map<lanelet::Id, TrafficSignal> traffic_light_id_map;
   for (const auto & traffic_signal : msg->signals) {
-    TrafficSignalStamped traffic_signal_stamped{};
-    traffic_signal_stamped.header = msg->header;
-    traffic_signal_stamped.signal = traffic_signal;
-    traffic_light_id_map[traffic_signal.map_primitive_id] = traffic_signal_stamped;
+    traffic_light_id_map[traffic_signal.map_primitive_id] = traffic_signal;
   }
 
   for (const auto & crosswalk : conflicting_crosswalks_) {
@@ -175,7 +171,7 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
     setCrosswalkTrafficSignal(crosswalk, crosswalk_tl_color, output);
   }
 
-  updateLastDetectedSignal(msg);
+  updateLastDetectedSignal(traffic_light_id_map);
 
   pub_traffic_light_array_->publish(output);
   pub_processing_time_->publish<Float64Stamped>("processing_time_ms", stop_watch.toc("Total"));
@@ -184,10 +180,10 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
 }
 
 void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
-  const TrafficSignalArray::ConstSharedPtr traffic_signals)
+  const TrafficLightIdMap & traffic_light_id_map)
 {
-  for (const auto & traffic_signal : traffic_signals->signals) {
-    const auto & lights = traffic_signal.lights;
+  for (const auto & input_traffic_signal : traffic_light_id_map) {
+    const auto & lights = input_traffic_signal.second.lights;
 
     if (lights.empty()) {
       continue;
@@ -197,18 +193,22 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
       continue;
     }
 
-    TrafficSignalStamped traffic_signal_stamped{};
-    traffic_signal_stamped.header = traffic_signals->header;
-    traffic_signal_stamped.signal = traffic_signal;
-
-    const auto & id = traffic_signal.map_primitive_id;
+    const auto & id = input_traffic_signal.second.map_primitive_id;
 
     if (last_detect_color_.count(id) == 0) {
-      last_detect_color_.insert(std::make_pair(id, traffic_signal_stamped));
+      last_detect_color_.insert(std::make_pair(id, input_traffic_signal.second));
       continue;
     }
 
-    last_detect_color_.at(id) = traffic_signal_stamped;
+    last_detect_color_.at(id) = input_traffic_signal.second;
+  }
+
+  for (auto & last_traffic_signal : last_detect_color_) {
+    const auto & id = last_traffic_signal.second.map_primitive_id;
+
+    if (traffic_light_id_map.count(id) == 0) {
+      last_detect_color_.erase(id);
+    }
   }
 }
 
@@ -235,8 +235,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
 }
 
 lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getGreenLanelets(
-  const lanelet::ConstLanelets & lanelets,
-  const std::unordered_map<lanelet::Id, TrafficSignalStamped> & traffic_light_id_map) const
+  const lanelet::ConstLanelets & lanelets, const TrafficLightIdMap & traffic_light_id_map) const
 {
   lanelet::ConstLanelets green_lanelets{};
 
@@ -251,13 +250,24 @@ lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getGreenLanelets(
     const auto traffic_lights_for_vehicle = tl_reg_elem->trafficLights();
 
     const auto current_detected_signal =
-      getHighestConfidenceTrafficSignal(traffic_lights_for_vehicle, traffic_light_id_map, false);
-    const auto is_green = current_detected_signal == TrafficLight::GREEN;
+      getHighestConfidenceTrafficSignal(traffic_lights_for_vehicle, traffic_light_id_map);
+
+    if (!current_detected_signal) {
+      continue;
+    }
+
+    const auto is_green = current_detected_signal.get() == TrafficLight::GREEN;
 
     const auto last_detected_signal =
-      getHighestConfidenceTrafficSignal(traffic_lights_for_vehicle, last_detect_color_, true);
-    const auto was_green = current_detected_signal == TrafficLight::UNKNOWN &&
-                           last_detected_signal == TrafficLight::GREEN && use_last_detect_color_;
+      getHighestConfidenceTrafficSignal(traffic_lights_for_vehicle, last_detect_color_);
+
+    if (!last_detected_signal) {
+      continue;
+    }
+
+    const auto was_green = current_detected_signal.get() == TrafficLight::UNKNOWN &&
+                           last_detected_signal.get() == TrafficLight::GREEN &&
+                           use_last_detect_color_;
 
     if (!is_green && !was_green) {
       continue;
@@ -305,12 +315,11 @@ uint8_t CrosswalkTrafficLightEstimatorNode::estimateCrosswalkTrafficSignal(
                                                                         : TrafficLight::UNKNOWN;
 }
 
-uint8_t CrosswalkTrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(
+boost::optional<uint8_t> CrosswalkTrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(
   const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-  const std::unordered_map<lanelet::Id, TrafficSignalStamped> & traffic_light_id_map,
-  const bool enable_timeout) const
+  const TrafficLightIdMap & traffic_light_id_map) const
 {
-  uint8_t ret = TrafficLight::UNKNOWN;
+  boost::optional<uint8_t> ret{boost::none};
 
   double highest_confidence = 0.0;
   for (const auto & traffic_light : traffic_lights) {
@@ -323,14 +332,7 @@ uint8_t CrosswalkTrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(
       continue;
     }
 
-    const auto & traffic_light_stamped = traffic_light_id_map.at(id);
-
-    const auto & header = traffic_light_stamped.header;
-    if (enable_timeout && traffic_light_timeout_ < ((this->now() - header.stamp).seconds())) {
-      continue;
-    }
-
-    const auto & lights = traffic_light_stamped.signal.lights;
+    const auto & lights = traffic_light_id_map.at(id).lights;
     if (lights.empty()) {
       continue;
     }

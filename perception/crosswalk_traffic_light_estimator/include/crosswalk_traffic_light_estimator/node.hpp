@@ -25,7 +25,6 @@
 #include <autoware_auto_perception_msgs/msg/traffic_light.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_signal.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_stamped.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
@@ -46,11 +45,11 @@ using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::TrafficLight;
 using autoware_auto_perception_msgs::msg::TrafficSignal;
 using autoware_auto_perception_msgs::msg::TrafficSignalArray;
-using autoware_auto_perception_msgs::msg::TrafficSignalStamped;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
+using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignal>;
 
 class CrosswalkTrafficLightEstimatorNode : public rclcpp::Node
 {
@@ -74,28 +73,25 @@ private:
   void onRoute(const HADMapRoute::ConstSharedPtr msg);
   void onTrafficLightArray(const TrafficSignalArray::ConstSharedPtr msg);
 
-  void updateLastDetectedSignal(const TrafficSignalArray::ConstSharedPtr traffic_signals);
+  void updateLastDetectedSignal(const TrafficLightIdMap & traffic_signals);
   void setCrosswalkTrafficSignal(
     const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg) const;
 
   lanelet::ConstLanelets getGreenLanelets(
-    const lanelet::ConstLanelets & lanelets,
-    const std::unordered_map<lanelet::Id, TrafficSignalStamped> & traffic_light_id_map) const;
+    const lanelet::ConstLanelets & lanelets, const TrafficLightIdMap & traffic_light_id_map) const;
 
   uint8_t estimateCrosswalkTrafficSignal(
     const lanelet::ConstLanelet & crosswalk, const lanelet::ConstLanelets & green_lanelets) const;
 
-  uint8_t getHighestConfidenceTrafficSignal(
+  boost::optional<uint8_t> getHighestConfidenceTrafficSignal(
     const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-    const std::unordered_map<lanelet::Id, TrafficSignalStamped> & traffic_light_id_map,
-    const bool enable_timeout) const;
+    const TrafficLightIdMap & traffic_light_id_map) const;
 
   // Node param
   bool use_last_detect_color_;
-  double traffic_light_timeout_;
 
   // Signal history
-  std::unordered_map<lanelet::Id, TrafficSignalStamped> last_detect_color_;
+  TrafficLightIdMap last_detect_color_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
