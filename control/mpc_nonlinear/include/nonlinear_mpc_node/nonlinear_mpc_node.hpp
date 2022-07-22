@@ -111,6 +111,17 @@ void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::s
   }
 }
 
+struct sCommandTimeStampFind
+{
+  explicit sCommandTimeStampFind(rclcpp::Time const &timestamp) : time_stamp_(timestamp)
+  {}
+
+  bool operator()(ControlCmdMsg const &cmd) const
+  { return rclcpp::Time(cmd.stamp) < rclcpp::Time(time_stamp_); }
+
+  rclcpp::Time time_stamp_;
+};
+
 /**
  * @bried node implementation.
  * */
@@ -272,7 +283,7 @@ class NonlinearMPCNode : public rclcpp::Node
   ControlCmdMsg control_cmd_prev_{};  // !< @brief previous control command
 
   // !< @brief temporary variable that is used for the input buffer key
-  ControlCmdMsg control_cmd_map_{};
+  ControlCmdMsg control_cmd_kalman_{};
 
   /**
   * @brief  nonlinear MPC performance variables messages to be published.
