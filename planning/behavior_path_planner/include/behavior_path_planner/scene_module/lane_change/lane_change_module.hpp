@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 
+#include "behavior_path_planner/scene_module/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utilities.hpp"
@@ -31,12 +32,14 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using marker_utils::CollisionCheckDebug;
 
 struct LaneChangeParameters
 {
@@ -61,6 +64,7 @@ struct LaneChangeParameters
   bool use_all_predicted_path;
   bool enable_blocked_by_obstacle;
   double lane_change_search_distance;
+  double publish_debug_marker;
 };
 
 struct LaneChangeStatus
@@ -174,11 +178,14 @@ private:
   void updateLaneChangeStatus();
 
   bool isSafe() const;
-  bool isLaneBlocked(const lanelet::ConstLanelets & lanes) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied() const;
   bool hasFinishedLaneChange() const;
+
+  void setObjectDebugVisualization() const;
+  mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
+  mutable std::vector<LaneChangePath> candidate_path_;
 };
 }  // namespace behavior_path_planner
 

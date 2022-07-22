@@ -202,6 +202,11 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.base_link2front = vehicle_info.max_longitudinal_offset_m;
   p.base_link2rear = p.rear_overhang;
 
+  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 3.0);
+  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -1.0);
+  p.expected_rear_deceleration = declare_parameter("expected_rear_deceleration", -1.0);
+  p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 1.0);
+  p.safety_time_margin_for_control = declare_parameter("safety_time_margin_for_control", 2.0);
   return p;
 }
 
@@ -328,6 +333,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
   p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
   p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
+  p.publish_debug_marker = dp("publish_debug_marker", false);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
