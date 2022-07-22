@@ -72,6 +72,13 @@ lanelet::ConstLanelets crosswalkLanelets(const lanelet::ConstLanelets lls);
 lanelet::ConstLanelets walkwayLanelets(const lanelet::ConstLanelets lls);
 
 /**
+ * [speedBumpLanelets extracts speedBump lanelets]
+ * @param  lls [input lanelets with speed_bump subtype]
+ * @return     [speedBump lanelets]
+ */
+lanelet::ConstLanelets speedBumpLanelets(const lanelet::ConstLanelets lls);
+
+/**
  * [roadLanelets extracts road lanelets]
  * @param  lls [input lanelets with subtype road]
  * @return     [road lanelets]

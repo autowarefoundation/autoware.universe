@@ -319,6 +319,18 @@ def launch_setup(context, *args, **kwargs):
     with open(run_out_param_path, "r") as f:
         run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    speed_bump_param_path = os.path.join(
+        get_package_share_directory("tier4_planning_launch"),
+        "config",
+        "scenario_planning",
+        "lane_driving",
+        "behavior_planning",
+        "behavior_velocity_planner",
+        "speed_bump.param.yaml",
+    )
+    with open(speed_bump_param_path, "r") as f:
+        speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     behavior_velocity_planner_param_path = os.path.join(
         get_package_share_directory("tier4_planning_launch"),
         "config",
@@ -385,6 +397,7 @@ def launch_setup(context, *args, **kwargs):
             virtual_traffic_light_param,
             occlusion_spot_param,
             no_stopping_area_param,
+            speed_bump_param,
             vehicle_info_param,
             run_out_param,
             common_param,

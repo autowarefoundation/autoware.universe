@@ -80,6 +80,11 @@ lanelet::ConstLanelets query::crosswalkLanelets(const lanelet::ConstLanelets lls
   return query::subtypeLanelets(lls, lanelet::AttributeValueString::Crosswalk);
 }
 
+lanelet::ConstLanelets query::speedBumpLanelets(const lanelet::ConstLanelets lls)
+{
+  return query::subtypeLanelets(lls, "speed_bump");
+}
+
 lanelet::ConstLanelets query::walkwayLanelets(const lanelet::ConstLanelets lls)
 {
   return query::subtypeLanelets(lls, lanelet::AttributeValueString::Walkway);
