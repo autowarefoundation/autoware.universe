@@ -91,8 +91,7 @@ using namespace std::chrono_literals;
 
 using autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
-auto constexpr
-  EPS = std::numeric_limits<double>::epsilon();
+auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 struct DebugData
 {
@@ -254,7 +253,8 @@ class NonlinearMPCNode : public rclcpp::Node
   std::unique_ptr<size_t> idx_next_wp_ptr_{nullptr};
 
   // BUFFERS. Use a single buffer.
-  std::deque<std::array<double, 4>> inputs_buffer_common_;  // !< @brief  [ax, vx, steering_rate, steering]
+
+  std::map<rclcpp::Time, ControlCmdMsg> inputs_buffer_map_; // !< @brief  [ax, vx, steering_rate, steering]
 
   // Data members.
   bool is_ctrl_cmd_prev_initialized_{false};  // !< @brief flag of ctrl_cmd_prev_ initialization
@@ -430,12 +430,6 @@ class NonlinearMPCNode : public rclcpp::Node
    * @param [in-out] xd0 the integrated initial state iteratively.
    * */
   void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted);
-
-  /**
-   * @brief predict the initial states using the vx received from the trajectory planner.
-   * @param [in-out] x_predicted_ the integrated initial state iteratively.
-   * */
-  void predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::state_vector_t &xd0);
 
   void estimateDisturbanceInput();
 
