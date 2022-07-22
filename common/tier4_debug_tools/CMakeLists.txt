@@ -20,6 +20,15 @@ rclcpp_components_register_node(lateral_error_publisher
   EXECUTABLE lateral_error_publisher_node
 )
 
+ament_auto_add_library(trajectory_unsequencer SHARED
+  src/trajectory_unsequencer.cpp
+)
+
+rclcpp_components_register_node(trajectory_unsequencer
+  PLUGIN "TrajectoryUnsequencer"
+  EXECUTABLE trajectory_unsequencer_node
+)
+
 ament_auto_package(
   INSTALL_TO_SHARE
     config

@@ -1,0 +1,8 @@
+<launch>
+  <arg name="trajectory_topic" default="/planning/scenario_planning/lane_driving/trajectory"/>
+
+  <node pkg="tier4_debug_tools" exec="trajectory_unsequencer_node" name="trajectory_unsequencer" output="screen">
+    <remap from="~/input" to="$(var trajectory_topic)"/>
+    <remap from="~/output" to="$(var trajectory_topic)/unsequenced"/>
+  </node>
+</launch>
