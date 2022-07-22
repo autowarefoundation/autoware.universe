@@ -1,4 +1,5 @@
 #pragma once
+#include <eigen3/Eigen/StdVector>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -29,9 +30,10 @@ private:
 
   rclcpp::Publisher<String>::SharedPtr pub_string_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_stamped_;
-  std::unordered_map<std::string, Reference> references_;
+  std::vector<Reference> references_;
 
+  Eigen::Vector2f computeApe(const Reference & ref, const PoseCovStamped & pose_cov) const;
   void poseCallback(const PoseCovStamped & pose_cov);
-  void loadRosbag(const std::string & bag_file);
+  void loadReferenceRosbag(const std::string & bag_file);
 };
 }  // namespace validation

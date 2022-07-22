@@ -1,9 +1,11 @@
+#include "common/util.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "validation/ape.hpp"
 
 #include <filesystem>
 #include <sstream>
+
 namespace validation
 {
 AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
@@ -18,12 +20,12 @@ AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
 
   namespace fs = std::filesystem;
   for (const fs::directory_entry & x : fs::directory_iterator(reference_bags_path)) {
-    loadRosbag(x.path());
+    loadReferenceRosbag(x.path());
   }
   RCLCPP_INFO_STREAM(get_logger(), "successed to read " << references_.size());
 }
 
-void AbsolutePoseError::loadRosbag(const std::string & bag_file)
+void AbsolutePoseError::loadReferenceRosbag(const std::string & bag_file)
 {
   RCLCPP_INFO_STREAM(get_logger(), "opeing " << bag_file.size());
 
@@ -48,14 +50,47 @@ void AbsolutePoseError::loadRosbag(const std::string & bag_file)
 
   reference.start_stamp_ = reference.poses_.front().header.stamp;
   reference.end_stamp_ = reference.poses_.back().header.stamp;
-  references_[bag_file] = reference;
+  references_.push_back(std::move(reference));
+}
+
+Eigen::Vector2f AbsolutePoseError::computeApe(
+  const Reference & ref, const PoseCovStamped & pose_cov) const
+{
+  PoseStamped stamped;
+  stamped.header = pose_cov.header;
+
+  auto itr = std::upper_bound(
+    ref.poses_.begin(), ref.poses_.end(), stamped,
+    [](const PoseStamped & a, const PoseStamped & b) -> bool {
+      return rclcpp::Time(a.header.stamp) < rclcpp::Time(b.header.stamp);
+    });
+
+  Eigen::Affine3f ref_affine = util::pose2Affine(itr->pose);
+  Eigen::Affine3f est_affine = util::pose2Affine(pose_cov.pose.pose);
+
+  Eigen::Affine3f diff_affine = ref_affine.inverse() * est_affine;
+  Eigen::Vector3f ape = diff_affine.translation();
+  return ape.cwiseAbs().topRows(2);
 }
 
 void AbsolutePoseError::poseCallback(const PoseCovStamped & pose_cov)
 {
+  const rclcpp::Time stamp = pose_cov.header.stamp;
+  std::optional<Reference> corresponding_reference{std::nullopt};
+
+  for (const Reference & ref : references_) {
+    if (stamp > ref.start_stamp_ & stamp < ref.end_stamp_) corresponding_reference = ref;
+  }
+
   std::stringstream ss;
-  // TODO:
-  ss << "APE: " << pose_cov.pose.pose.position.x;
+  ss << "--- APE Status ---" << std::endl;
+  if (corresponding_reference.has_value()) {
+    Eigen::Vector2f ape = computeApe(corresponding_reference.value(), pose_cov);
+    ss << "APE: " << std::fixed << std::setprecision(2) << ape.x() << " " << ape.y();
+  } else {
+    ss << "APE: NaN";
+  }
+
   String msg;
   msg.data = ss.str();
   pub_string_->publish(msg);
