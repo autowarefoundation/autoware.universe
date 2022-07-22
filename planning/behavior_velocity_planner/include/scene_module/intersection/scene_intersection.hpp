@@ -124,7 +124,8 @@ public:
     double collision_start_margin_time;  //! start margin time to check collision
     double collision_end_margin_time;    //! end margin time to check collision
     bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
-    double frontcar_expected_decel;  //! the expected deceleration of frontcar when frontcar as well
+    double
+      assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
     bool enable_front_car_decel_prediction;  //! flag for using above feature
   };
 
@@ -167,7 +168,7 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<int> & detection_area_lanelet_ids,
-    const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+    const std::vector<int> & conflicting_area_lanelet_ids,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
@@ -292,7 +293,7 @@ private:
 
   /**
    * @brief Check if the ego is expected to stop in the opposite lane if the front vehicle starts
-   * deceleration from current veloctiy and stop befor the crosswalk. If the stop position of front
+   * deceleration from current velocity and stop befor the crosswalk. If the stop position of front
    * vehicle is in stuck area, and the position `ego_length` meter behind is in detection area,
    * return true
    * @param ego_poly Polygon of ego_with_next_lane
@@ -301,7 +302,7 @@ private:
    */
   bool checkFrontVehicleDeceleration(
     lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-    const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+    const std::vector<int> & conflicting_area_lanelet_ids,
     const Polygon2d & stuck_vehicle_detect_area,
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
   StateMachine state_machine_;  //! for state

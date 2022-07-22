@@ -50,13 +50,6 @@ static geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
-static geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position = p;
-  return pose;
-}
-
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
@@ -174,7 +167,6 @@ bool IntersectionModule::modifyPathVelocity(
   /* get dynamic object */
   const auto objects_ptr = planner_data_->predicted_objects;
 
-  // std::vector<lanelet::ConstLanelets> stuck_vehicle_detect_area_lanelets;
   /* calculate dynamic collision around detection area */
   const double detect_length =
     planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
@@ -183,8 +175,8 @@ bool IntersectionModule::modifyPathVelocity(
     planner_param_.stuck_vehicle_detect_dist);
   bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_area_lanelet_ids, conflicting_areas, objects_ptr, closest_idx,
-    stuck_vehicle_detect_area);
+    lanelet_map_ptr, *path, detection_area_lanelet_ids, conflicting_area_lanelet_ids, objects_ptr,
+    closest_idx, stuck_vehicle_detect_area);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
     is_entry_prohibited = false;
@@ -263,7 +255,7 @@ bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<int> & detection_area_lanelet_ids,
-  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::vector<int> & conflicting_area_lanelet_ids,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
 {
@@ -300,8 +292,8 @@ bool IntersectionModule::checkCollision(
       if (
         planner_param_.enable_front_car_decel_prediction &&
         checkFrontVehicleDeceleration(
-          ego_lane_with_next_lane, closest_lanelet, conflicting_areas, stuck_vehicle_detect_area,
-          object))
+          ego_lane_with_next_lane, closest_lanelet, conflicting_area_lanelet_ids,
+          stuck_vehicle_detect_area, object))
         return true;
     }
 
@@ -696,7 +688,7 @@ double IntersectionModule::calcDistanceUntilIntersectionLanelet(
 
 bool IntersectionModule::checkFrontVehicleDeceleration(
   lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::vector<int> & conflicting_area_lanelet_ids,
   const Polygon2d & stuck_vehicle_detect_area,
   const autoware_auto_perception_msgs::msg::PredictedObject & object) const
 {
@@ -706,39 +698,39 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
   const double object_decel = planner_param_.assumed_front_car_decel;  // NOTE: this is positive
   const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
 
-  std::vector<geometry_msgs::msg::Point> centerpoints;
+  std::vector<geometry_msgs::msg::Point> center_points;
   for (auto && p : ego_lane_with_next_lane[0].centerline())
-    centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
+    center_points.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
   for (auto && p : ego_lane_with_next_lane[1].centerline())
-    centerpoints.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
+    center_points.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
   const double lat_offset =
-    std::fabs(tier4_autoware_utils::calcLateralOffset(centerpoints, object_pose.position));
+    std::fabs(motion_utils::calcLateralOffset(center_points, object_pose.position));
   // get the nearest centerpoint to object
-  std::vector<double> dist_obj_centerpoints;
-  for (const auto & p : centerpoints)
-    dist_obj_centerpoints.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position, p));
+  std::vector<double> dist_obj_center_points;
+  for (const auto & p : center_points)
+    dist_obj_center_points.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position, p));
   const int obj_closest_centerpoint_idx = std::distance(
-    dist_obj_centerpoints.begin(),
-    std::min_element(dist_obj_centerpoints.begin(), dist_obj_centerpoints.end()));
-  // find two centerpoints whose distances from `closest_centerpoint` cross stopping_distance
+    dist_obj_center_points.begin(),
+    std::min_element(dist_obj_center_points.begin(), dist_obj_center_points.end()));
+  // find two center_points whose distances from `closest_centerpoint` cross stopping_distance
   double acc_dist_prev = 0.0, acc_dist = 0.0;
-  auto p1 = centerpoints[obj_closest_centerpoint_idx];
-  auto p2 = centerpoints[obj_closest_centerpoint_idx];
-  for (unsigned i = obj_closest_centerpoint_idx; i < centerpoints.size() - 1; ++i) {
-    p1 = centerpoints[i];
-    p2 = centerpoints[i + 1];
+  auto p1 = center_points[obj_closest_centerpoint_idx];
+  auto p2 = center_points[obj_closest_centerpoint_idx];
+  for (unsigned i = obj_closest_centerpoint_idx; i < center_points.size() - 1; ++i) {
+    p1 = center_points[i];
+    p2 = center_points[i + 1];
     acc_dist_prev = acc_dist;
     const auto arc_position_p1 =
-      lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, toPose(p1));
+      lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, util::toPose(p1));
     const auto arc_position_p2 =
-      lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, toPose(p2));
+      lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, util::toPose(p2));
     const double delta = arc_position_p2.length - arc_position_p1.length;
     acc_dist += delta;
     if (acc_dist > stopping_distance) {
       break;
     }
   }
-  // if stopping_distance >= centerpoints, stopping_point is centerpoints[end]
+  // if stopping_distance >= center_points, stopping_point is center_points[end]
   const double ratio = (acc_dist <= stopping_distance)
                          ? 0.0
                          : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
@@ -767,20 +759,22 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
   acc_dist = 0;
   unsigned behind_predicted_obj_point_idx = 0;
   for (unsigned i = obj_closest_centerpoint_idx; i >= 1; --i) {
-    const auto & p1 = centerpoints[i];
-    const auto & p2 = centerpoints[i - 1];
+    const auto & p1 = center_points[i];
+    const auto & p2 = center_points[i - 1];
     acc_dist += tier4_autoware_utils::calcDistance2d(p1, p2);
     behind_predicted_obj_point_idx = i;
     if (acc_dist > vehicle_length) break;
   }
   bool is_behind_point_in_detection_area = false;
-  for (const auto & conflicting_area : conflicting_areas) {
-    const auto conflicting_area_ = lanelet::utils::to2D(conflicting_area);
+  const auto & laneletLayer = planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer;
+  for (const auto & conflicting_area_lanelet_id : conflicting_area_lanelet_ids) {
+    const auto conflicting_area =
+      lanelet::utils::to2D(std::move(laneletLayer.get(conflicting_area_lanelet_id).polygon3d()));
     Polygon2d poly{};
-    for (const auto & p : conflicting_area_) {
+    for (const auto & p : conflicting_area) {
       poly.outer().emplace_back(p.x(), p.y());
     }
-    if (bg::intersects(to_bg2d(centerpoints[behind_predicted_obj_point_idx]), poly)) {
+    if (bg::intersects(to_bg2d(center_points[behind_predicted_obj_point_idx]), poly)) {
       is_behind_point_in_detection_area = true;
       break;
     }
