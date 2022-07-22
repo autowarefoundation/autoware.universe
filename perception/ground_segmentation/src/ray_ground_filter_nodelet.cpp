@@ -222,7 +222,7 @@ void RayGroundFilterComponent::ClassifyPointCloud(
       float points_distance = in_radial_ordered_clouds[i][j].radius - prev_radius;
       float height_threshold = tan(DEG2RAD(local_max_slope)) * points_distance;
       float current_height = in_radial_ordered_clouds[i][j].point.z;
-      //current_height means height from plat ground
+      // current_height means height from plat ground
       current_height = current_height + z_offset_;
       float general_height_threshold =
         tan(DEG2RAD(general_max_slope_)) * in_radial_ordered_clouds[i][j].radius;
@@ -276,7 +276,7 @@ void RayGroundFilterComponent::ClassifyPointCloud(
 
       prev_radius = in_radial_ordered_clouds[i][j].radius;
       prev_height = in_radial_ordered_clouds[i][j].point.z;
-      //prev_height means height from plat ground
+      // prev_height means height from plat ground
       prev_height = prev_height + z_offset_;
     }
   }
