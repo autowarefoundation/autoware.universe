@@ -10,12 +10,16 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <!-- ========================================= -->
-
+    <!-- ============ PARTICLE FILTER ============ -->
+    <!-- ========================================= -->
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/pf.launch.xml" if="$(var pf)">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
     </include>
 
+    <!-- ========================================= -->
+    <!-- ============ IMAGE PROCESSING =========== -->
+    <!-- ========================================= -->
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/imgproc.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
@@ -26,7 +30,14 @@
     </include>
 
     <!-- ========================================= -->
+    <!-- =============== VALIDATION ============== -->
+    <!-- ========================================= -->
+    <group>
+        <push-ros-namespace namespace="validation"/>
+        <include file="$(find-pkg-share vector_map_visual_localizer)/launch/validation.launch.xml"/>
+    </group>
 
+    <!-- ========================================= -->
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
     <node name="fix_to_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
@@ -36,9 +47,9 @@
     </node>
 
     <node name="pose_to_path" pkg="vector_map_visual_localizer" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose]"/>
         <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path]"/>
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
     <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
@@ -57,23 +68,5 @@
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="pose" to="/init/pose"/>
     </node>
-
-    <!-- ========================================= -->
-    <!-- =============== VALIDATION ============== -->
-    <!-- ========================================= -->
-    <group>
-      <push-ros-namespace namespace="validation"/>
-        <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
-            <remap from="/src_image" to="$(var resized_image)"/>
-            <remap from="/src_info" to="$(var resized_info)"/>
-            <remap from="/particle_pose" to="/particle_pose"/>
-        </node>
-
-        <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
-        </node>
-
-        <node name="ape" pkg="vector_map_visual_localizer" exec="ape_node" output="screen" args="--ros-args --log-level warn">
-        </node>
-    </group>
 
 </launch>

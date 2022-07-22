@@ -1,3 +1,5 @@
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "validation/ape.hpp"
 
 #include <sstream>
@@ -9,10 +11,26 @@ AbsolutePoseError::AbsolutePoseError()
 {
   using std::placeholders::_1;
   auto cb_pose = std::bind(&AbsolutePoseError::poseCallback, this, _1);
-  sub_pose_cov_stamped_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 10, cb_pose);
+  sub_pose_cov_stamped_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 1, cb_pose);
   pub_string_ = create_publisher<String>("/ape_diag", 10);
 
   RCLCPP_INFO_STREAM(get_logger(), "reference bag path: " << reference_bags_path_);
+
+  {
+    std::cout << "try to read rosbag2" << std::endl;
+    rosbag2_cpp::Reader reader;
+    reader.open(reference_bags_path_);
+    while (reader.has_next()) {
+      auto bag_message = reader.read_next();
+      if (bag_message->topic_name == "/localization/kinematic_state") {
+        rclcpp::SerializedMessage serialized_msg(*bag_message->serialized_data);
+        Odometry msg;
+        rclcpp::Serialization<Odometry> serialization;
+        serialization.deserialize_message(&serialized_msg, &msg);
+      }
+    }
+    std::cout << "successed to read rosbag2" << std::endl;
+  }
 }
 
 void AbsolutePoseError::poseCallback(const PoseCovStamped & pose_cov)

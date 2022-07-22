@@ -2,6 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
 
 namespace validation
@@ -10,6 +11,7 @@ class AbsolutePoseError : public rclcpp::Node
 {
 public:
   using String = std_msgs::msg::String;
+  using Odometry = nav_msgs::msg::Odometry;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   AbsolutePoseError();

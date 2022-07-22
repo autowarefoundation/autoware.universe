@@ -24,6 +24,9 @@
   <depend>lanelet2_core</depend>
   <depend>lanelet2_io</depend>
 
+  <depend>rosbag2</depend>
+  <depend>rosbag2_cpp</depend>
+
   <depend>ublox_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
 
