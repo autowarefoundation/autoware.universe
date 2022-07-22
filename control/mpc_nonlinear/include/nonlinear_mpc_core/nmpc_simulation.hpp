@@ -21,7 +21,7 @@
 #include <boost/numeric/odeint.hpp>
 #include "nonlinear_mpc_core/active_model.hpp"
 #include "utils/nmpc_utils.hpp"
-#include "utils/nmpc_utils_eigen.hpp"
+
 
 namespace ns_sim
 {

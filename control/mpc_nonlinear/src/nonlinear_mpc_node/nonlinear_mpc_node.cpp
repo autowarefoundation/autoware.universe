@@ -1829,7 +1829,7 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   // nmpc_performance_vars_.lateral_velocity = interp_yaw_angles;
   // double const &&interp_yaw_angle = ns_utils::angleDistance(prev_yaw + ratio_t * dyaw_prev_to_next);
 
-  geometry_msgs::msg::Quaternion orient_msg = ns_utils::createOrientationMsgfromYaw(interp_yaw_angle);
+  geometry_msgs::msg::Quaternion orient_msg = ns_nmpc_utils::createOrientationMsgfromYaw(interp_yaw_angle);
   interpolated_traj_point.pose.orientation = orient_msg;
 
   // InterpolateInCoordinates the Vx longitudinal speed.
@@ -1839,7 +1839,8 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   // double const &&vx_target = vx_prev + ratio_t * (vx_next - vx_prev);
   double vx_target{};
   nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(current_s0_, vx_target);
-  interpolated_traj_point.longitudinal_velocity_mps = vx_target;
+  interpolated_traj_point.longitudinal_velocity_mps = static_cast<decltype(interpolated_traj_point
+    .longitudinal_velocity_mps)>(vx_target);
 
   // Set the current target speed of nmpc_performance_vars_.
   nmpc_performance_vars_.long_velocity_target = vx_target;
@@ -2277,7 +2278,7 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
     marker_poses.pose.position.z = 0.0;
 
     auto const &&yaw_angle = ns_utils::wrapToPi(td.X.at(k)(2));
-    marker_poses.pose.orientation = ns_utils::getQuaternionFromYaw(yaw_angle);
+    marker_poses.pose.orientation = ns_nmpc_utils::getQuaternionFromYaw(yaw_angle);
     marker_array.markers.emplace_back(marker_poses);
   }
 

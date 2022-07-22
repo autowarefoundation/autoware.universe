@@ -76,7 +76,7 @@
 #include "splines/bspline_interpolator_templated.hpp"
 #include "splines/bsplines_smoother.hpp"
 #include "utils/nmpc_utils.hpp"
-#include "utils/nmpc_utils_eigen.hpp"
+
 #include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
 
 namespace ns_mpc_nonlinear
