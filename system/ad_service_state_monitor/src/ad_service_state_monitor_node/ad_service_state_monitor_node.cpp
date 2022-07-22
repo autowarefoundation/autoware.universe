@@ -206,12 +206,14 @@ bool AutowareStateMonitorNode::onResetRouteService(
   [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
-  std::unique_lock<std::mutex> lock(lock_state_machine_);
-  if (state_machine_->getCurrentState() != AutowareState::WaitingForEngage) {
-    lock.unlock();
-    response->success = false;
-    response->message = "Reset route can be accepted only under WaitingForEngage.";
-    return true;
+  {
+    std::unique_lock<std::mutex> lock(lock_state_machine_);
+    if (state_machine_->getCurrentState() != AutowareState::WaitingForEngage) {
+      lock.unlock();
+      response->success = false;
+      response->message = "Reset route can be accepted only under WaitingForEngage.";
+      return true;
+    }
   }
 
   {
