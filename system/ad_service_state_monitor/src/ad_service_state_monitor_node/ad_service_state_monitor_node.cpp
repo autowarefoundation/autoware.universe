@@ -183,8 +183,10 @@ bool AutowareStateMonitorNode::onShutdownService(
     // rclcpp::spin_some(this->get_node_base_interface());
 
     {
-      std::lock_guard<std::mutex> lock(lock_state_machine_);
+      std::unique_lock<std::mutex> lock(lock_state_machine_);
       if (state_machine_->getCurrentState() == AutowareState::Finalizing) {
+        lock.unlock();
+
         response->success = true;
         response->message = "Shutdown Autoware.";
         return true;
@@ -211,8 +213,10 @@ bool AutowareStateMonitorNode::onResetRouteService(
   const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   {
-    std::lock_guard<std::mutex> lock(lock_state_machine_);
+    std::unique_lock<std::mutex> lock(lock_state_machine_);
     if (state_machine_->getCurrentState() != AutowareState::WaitingForEngage) {
+      lock.unlock();
+
       response->success = false;
       response->message = "Reset route can be accepted only under WaitingForEngage.";
       return true;
@@ -229,10 +233,15 @@ bool AutowareStateMonitorNode::onResetRouteService(
   while (rclcpp::ok()) {
     {
       // To avoid dead lock, 2-phase lock is required here.
-      std::lock_guard<std::mutex> lock(lock_state_input_);
-      std::lock_guard<std::mutex> lock(lock_state_machine_);
+      // If you change the order of the locks below, it may be dead-lock.
+      std::unique_lock<std::mutex> lock_state_input(lock_state_input_);
+      std::unique_lock<std::mutex> lock_state_machine(lock_state_machine_);
       if (state_machine_->getCurrentState() == AutowareState::WaitingForRoute) {
         state_input_.is_route_reset_required = false;
+
+        lock_state_machine.unlock();
+        lock_state_input.unlock();
+
         response->success = true;
         response->message = "Reset route.";
         return true;
@@ -259,11 +268,13 @@ void AutowareStateMonitorNode::onTimer()
   AutowareState autoware_state;
 
   {
-    std::lock_guard<std::mutex> lock(lock_state_input_);
+    std::unique_lock<std::mutex> lock_state_input(lock_state_input_);
 
     // Prepare state input
     state_input_.current_pose = getCurrentPose(tf_buffer_);
     if (state_input_.current_pose == nullptr) {
+      lock_state_input.unlock();
+
       RCLCPP_WARN_THROTTLE(
         this->get_logger(), *this->get_clock(), 5000 /* ms */,
         "Fail lookupTransform base_link to map");
@@ -276,7 +287,8 @@ void AutowareStateMonitorNode::onTimer()
 
     // Update state
     // To avoid dead lock, 2-phase lock is required here.
-    std::lock_guard<std::mutex> lock2(lock_state_machine_);
+    std::lock_guard<std::mutex> lock_state_machine(lock_state_machine_);
+
     prev_autoware_state = state_machine_->getCurrentState();
     autoware_state = state_machine_->updateState(state_input_);
   }
