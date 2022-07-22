@@ -18,44 +18,44 @@
 #include <string>
 
 visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose const &waypoint_pose,
-																										 const builtin_interfaces::msg::Time &stamp,
-																										 std::string const &ns)
+                                                     const builtin_interfaces::msg::Time &stamp,
+                                                     std::string const &ns)
 {
-	auto marker =
-		createDefaultMarker("map", stamp, ns, 0, visualization_msgs::msg::Marker::SPHERE, createMarkerScale(1.2, 1.2, 1.2),
-												createMarkerColor(0.0, 1.0, 0.0, 1.0));
+  auto marker =
+    createDefaultMarker("map", stamp, ns, 0, visualization_msgs::msg::Marker::SPHERE, createMarkerScale(1.2, 1.2, 1.2),
+                        createMarkerColor(0.0, 1.0, 0.0, 1.0));
 
-	marker.pose.position.x = waypoint_pose.position.x;
-	marker.pose.position.y = waypoint_pose.position.y;
-	marker.pose.position.z = 0.0;
+  marker.pose.position.x = waypoint_pose.position.x;
+  marker.pose.position.y = waypoint_pose.position.y;
+  marker.pose.position.z = 0.0;
 
-	return marker;
+  return marker;
 }
 
 bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std::array<double, 2> const &xy0,
-																				 autoware_auto_planning_msgs::msg::Trajectory *autoware_traj)
+                                         autoware_auto_planning_msgs::msg::Trajectory *autoware_traj)
 {
-	if (!autoware_traj)
-	{
-		return false;
-	}
+  if (!autoware_traj)
+  {
+    return false;
+  }
 
-	autoware_traj->points.clear();
+  autoware_traj->points.clear();
 
-	// States stored in the td ['xw', 'yw', 'yaw', 's', 'e_y', 'e_yaw', 'Vx', 'delta'].
-	auto size_of_trajectory_data = td.nX();
+  // States stored in the td ['xw', 'yw', 'yaw', 's', 'e_y', 'e_yaw', 'Vx', 'delta'].
+  auto size_of_trajectory_data = td.nX();
 
-	for (size_t i = 0; i < size_of_trajectory_data; ++i)
-	{
-		autoware_auto_planning_msgs::msg::TrajectoryPoint p;
+  for (size_t i = 0; i < size_of_trajectory_data; ++i)
+  {
+    autoware_auto_planning_msgs::msg::TrajectoryPoint p;
 
-		p.pose.position.x = td.X.at(i)(0) + xy0[0];
-		p.pose.position.y = td.X.at(i)(1) + xy0[1];
-		p.pose.position.z = 0.0;
+    p.pose.position.x = td.X.at(i)(0) + xy0[0];
+    p.pose.position.y = td.X.at(i)(1) + xy0[1];
+    p.pose.position.z = 0.0;
 
-		p.pose.orientation = ns_utils::getQuaternionFromYaw(ns_utils::wrapToPi(td.X.at(i)(2)));
-		p.longitudinal_velocity_mps = td.X.at(i)(6);
-		autoware_traj->points.push_back(p);
-	}
-	return true;
+    p.pose.orientation = ns_nmpc_utils::getQuaternionFromYaw(ns_utils::wrapToPi(td.X.at(i)(2)));
+    p.longitudinal_velocity_mps = static_cast<decltype(p.longitudinal_velocity_mps)> (td.X.at(i)(6));
+    autoware_traj->points.push_back(p);
+  }
+  return true;
 }
