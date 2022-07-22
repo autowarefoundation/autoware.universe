@@ -85,18 +85,21 @@ geometry_msgs::msg::PoseStamped::SharedPtr getCurrentPose(const tf2_ros::Buffer 
 void AutowareStateMonitorNode::onAutowareEngage(
   const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(lock_state_input_);
   state_input_.autoware_engage = msg;
 }
 
 void AutowareStateMonitorNode::onVehicleControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(lock_state_input_);
   state_input_.control_mode_ = msg;
 }
 
 void AutowareStateMonitorNode::onModifiedGoal(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(lock_state_input_);
   state_input_.modified_goal_pose = msg;
 }
 
@@ -119,7 +122,9 @@ void AutowareStateMonitorNode::onRoute(
   if (!is_route_valid) {
     return;
   }
+  lock_state_input_.lock();
   state_input_.route = msg;
+  lock_state_input_.unlock();
 
   // Get goal pose
   {
@@ -136,6 +141,7 @@ void AutowareStateMonitorNode::onRoute(
 
 void AutowareStateMonitorNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(lock_state_input_);
   state_input_.odometry = msg;
 
   state_input_.odometry_buffer.push_back(msg);
@@ -164,14 +170,19 @@ bool AutowareStateMonitorNode::onShutdownService(
   const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   (void)request_header;
-  state_input_.is_finalizing = true;
+  {
+    std::lock_guard<std::mutex> lock(lock_state_input_);
+    state_input_.is_finalizing = true;
+  }
 
   const auto t_start = this->get_clock()->now();
   constexpr double timeout = 3.0;
   while (rclcpp::ok()) {
     // rclcpp::spin_some(this->get_node_base_interface());
 
+    lock_state_machine_.lock();
     if (state_machine_->getCurrentState() == AutowareState::Finalizing) {
+      lock_state_machine_.unlock();
       response->success = true;
       response->message = "Shutdown Autoware.";
       return true;
@@ -196,19 +207,25 @@ bool AutowareStateMonitorNode::onResetRouteService(
   [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
+  lock_state_machine_.lock();
   if (state_machine_->getCurrentState() != AutowareState::WaitingForEngage) {
+    lock_state_machine_.unlock();
     response->success = false;
     response->message = "Reset route can be accepted only under WaitingForEngage.";
     return true;
   }
 
+  lock_state_input_.lock();
   state_input_.is_route_reset_required = true;
+  lock_state_input_.unlock();
 
   const auto t_start = this->now();
   constexpr double timeout = 3.0;
   while (rclcpp::ok()) {
+    lock_state_input_.lock();
     if (state_machine_->getCurrentState() == AutowareState::WaitingForRoute) {
       state_input_.is_route_reset_required = false;
+      lock_state_input_.unlock();
       response->success = true;
       response->message = "Reset route.";
       return true;
@@ -231,6 +248,7 @@ bool AutowareStateMonitorNode::onResetRouteService(
 void AutowareStateMonitorNode::onTimer()
 {
   // Prepare state input
+  lock_state_input_.lock();
   state_input_.current_pose = getCurrentPose(tf_buffer_);
   if (state_input_.current_pose == nullptr) {
     RCLCPP_WARN_THROTTLE(
@@ -243,8 +261,11 @@ void AutowareStateMonitorNode::onTimer()
   state_input_.tf_stats = getTfStats();
   state_input_.current_time = this->now();
   // Update state
+  lock_state_machine_.lock();
   const auto prev_autoware_state = state_machine_->getCurrentState();
   const auto autoware_state = state_machine_->updateState(state_input_);
+  lock_state_input_.unlock();
+  lock_state_machine_.unlock();
 
   if (autoware_state != prev_autoware_state) {
     RCLCPP_INFO(
@@ -401,6 +422,7 @@ TfStats AutowareStateMonitorNode::getTfStats() const
 
 bool AutowareStateMonitorNode::isEngaged()
 {
+  std::lock_guard<std::mutex> lock(lock_state_input_);
   if (!state_input_.autoware_engage) {
     return false;
   }
