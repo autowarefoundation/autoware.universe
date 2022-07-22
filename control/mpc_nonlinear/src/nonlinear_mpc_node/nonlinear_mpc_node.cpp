@@ -2087,7 +2087,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     u0_kalman_.setZero();
   }
 
-
   /**
    * Apply the controls in the input queue using the their time durations.
    * */
