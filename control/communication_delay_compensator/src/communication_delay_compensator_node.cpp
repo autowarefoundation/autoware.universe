@@ -601,7 +601,7 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
   //                    current_heading_error, current_steering,
   //                    prev_ideal_steering_, prev_curvature_);
 
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
+  // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
   //
   //    ns_utils::print("Previous inputs to CDOB : ");
   //    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);

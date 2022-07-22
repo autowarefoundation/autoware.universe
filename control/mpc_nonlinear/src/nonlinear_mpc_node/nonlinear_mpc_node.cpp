@@ -166,9 +166,20 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
                                                     params_node_.stop_state_keep_stopping_dist,
                                                     params_node_.will_stop_state_dist);
 
-  // Initialize the control input queue.
-  inputs_buffer_common_ = std::deque<std::array<double, 4 >>(params_node_.input_delay_discrete_nsteps,
-                                                             std::array<double, 4>());
+
+  /**
+   * Initialize input buffer map.
+   * */
+  for (auto k = 0; k < params_node_.input_delay_discrete_nsteps; ++k)
+  {
+    ControlCmdMsg cmd{};
+    cmd.longitudinal.acceleration = 0.0;
+    cmd.lateral.steering_tire_angle = 0.0;
+    cmd.stamp = this->now() + rclcpp::Duration::from_seconds(params_node_.control_period * k);
+
+    inputs_buffer_map_.emplace(cmd.stamp, cmd);
+  }
+
 
   // Initialize the timer.
   initTimer(params_node_.control_period);
@@ -340,12 +351,6 @@ void NonlinearMPCNode::onTimer()
   //        current_fsm_state_ == ns_states::motionStateEnums::isInEmergency)
   if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop)
   {
-    // Reset the input que. [ax, vx, steering_rate, steering]
-    for (auto &value : inputs_buffer_common_)
-    {
-      value = std::array<double, 4>{0.0, 0.0, 0.0, 0.0};
-    }
-
     kalman_filter_ptr_->reset();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
                                    vehicle_motion_fsm_.fsmMessage().c_str());
@@ -431,13 +436,6 @@ void NonlinearMPCNode::onTimer()
       return;
     }
 
-    // is_moving_state_ = true;
-    // ns_utils::print("the NMPC is initialized successfully  ...");
-
-    // DEBUG
-    // Publish the predicted trajectories.
-    // publishPredictedTrajectories("predicted_trajectory",
-    // current_trajectory_ptr_->header.frame_id); Debug
   }
 
   //  if (vehicle_motion_fsm_.isReinitializationRequired())
@@ -541,26 +539,17 @@ void NonlinearMPCNode::onTimer()
   // Publish the control command.
   publishControlsAndUpdateVars(control_cmd);
 
-  // Publish NMPC performance variables.
-  // publishPerformanceVariables(control_cmd);
-
   // Publish the predicted trajectories.
   publishPredictedTrajectories("predicted_trajectory", current_trajectory_ptr_->header.frame_id);
 
-  // Maintain the input and steering_buffer for predicting the initial states.
-  // [acc, vx, steering_rate, steering value]
-  std::array<double, 4> all_control_cmds{control_cmd.longitudinal.acceleration,            // ax
-                                         control_cmd.longitudinal.speed,                   // vx
-                                         control_cmd.lateral.steering_tire_rotation_rate,  // steering rate
-                                         control_cmd.lateral.steering_tire_angle           // steering angle
-  };
+  /**
+   *  Maintain the input and steering_buffer for predicting the initial states.
+   * Put the control command into the input_buffer_map for prediction.
+   * */
+  auto const &time_that_input_will_apply = rclcpp::Duration::from_seconds(params_node_.input_delay_time) +
+                                           this->now();
 
-  //  ns_utils::print("\nControls put in the que :");
-  //
-  //  ns_utils::print("ax control", all_control_cmds[0]);
-  //  ns_utils::print("vx control", all_control_cmds[1]);
-  //  ns_utils::print("steering rate control", all_control_cmds[2]);
-  //  ns_utils::print("steering control", all_control_cmds[3]);
+  inputs_buffer_map_.emplace(time_that_input_will_apply, control_cmd);
 
   // Store the first control signal to be applied to the vehicle in the kalman
   // control variable. input_buffer_[acc, vx, steering_rate, steering value]
@@ -568,9 +557,6 @@ void NonlinearMPCNode::onTimer()
   // u0_kalman_(0) = inputs_buffer_common_.front()[0];  // ax
   // u0_kalman_(1) = inputs_buffer_common_.front()[3];  // steering angle
 
-  // Maintain the queue.
-  inputs_buffer_common_.pop_front();
-  inputs_buffer_common_.emplace_back(all_control_cmds);
   // end of NMPC loop.
 
   auto const &&current_mpc_solve_time_msec = ns_utils::toc(timer_mpc_step);
@@ -588,7 +574,7 @@ void NonlinearMPCNode::onTimer()
 
   // ------------- END of the MPC loop. -------------
   // Set Debug Marker next waypoint
-  debug_data_.current_closest_pose = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose;
+  debug_data_.current_closest_pose = current_interpolated_traj_point_ptr_->pose;
 
   // Publish the closest point of the trajectory to the vehicle.
   publishClosestPointMarker("closest_point");
@@ -747,8 +733,9 @@ void NonlinearMPCNode::publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd)
   u_previous_solution_ = u_solution_;  // required for the disturbance observer
 
   // Update inputs for the Kalman model.
-  u0_kalman_(0) = inputs_buffer_common_.front()[0];  // ax
-  u0_kalman_(1) = inputs_buffer_common_.front()[3];  // steering angle
+  auto itlow = inputs_buffer_map_.lower_bound(this->now());
+  u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) = itlow->second.longitudinal.acceleration;  // ax
+  u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) = itlow->second.lateral.steering_tire_angle;
 }
 
 void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_cmd)
@@ -1935,7 +1922,6 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 
   std::array<double, 2> const error_states{error_ey, 1.0 * heading_yaw_error};
 
-//  /** set the computed error */
 //  current_error_report_.lateral_deviation_read = error_ey;
 //  current_error_report_.heading_angle_error_read = heading_yaw_error;
 //  current_error_report_.steering_read = current_steering_ptr_->steering_tire_angle;
@@ -2068,52 +2054,57 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   Model::input_vector_t uk{Model::input_vector_t::Zero()};
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
-  // Input buffer content : // [acc, vx, steering_rate, steering]
-  for (auto const &all_controls : inputs_buffer_common_)
+  /**
+   * Apply the controls in the input queue using the their time durations.
+   * */
+  auto current_time_stamp = this->now();
+  // auto it_begin = inputs_buffer_map_.upper_bound(current_time_stamp);
+
+  for (auto it = inputs_buffer_map_.begin(); it != std::prev(inputs_buffer_map_.end()); it++)
   {
-    // Extract the controls from the input buffer.
-    uk(toUType(VehicleControlIds::u_vx)) = all_controls[0];  // ax input
-    uk(toUType(VehicleControlIds::u_steering)) = all_controls[3];  // steering input
 
-    auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
-    double kappad0{};           // curvature placeholder
-    double vxk{};               // to interpolate the target speed (virtual car speed).
-
-    // set the interpolator re-using_coefficients=true. The spline data is updated in the onTime().
-    if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-      !could_interpolate)
+    if (it->first < current_time_stamp)
     {
-      RCLCPP_ERROR(get_logger(),
-                   "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
-                   "coefficients ...");
-      return;
+      inputs_buffer_map_.erase(it->first);
+    } else
+    {
+      auto dt_to_current_time = (it->first - current_time_stamp).seconds();
+      auto dt_to_next = (std::next(it)->first - it->first).seconds();
+
+      // Extract the controls from the input buffer.
+      uk(toUType(VehicleControlIds::u_vx)) = it->second.longitudinal.acceleration;  // ax input
+      uk(toUType(VehicleControlIds::u_steering)) = it->second.lateral.steering_tire_angle;  // steering input
+
+      auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
+      double kappad0{};           // curvature placeholder
+      double vxk{};               // to interpolate the target speed (virtual car speed).
+
+      // The spline data is updated in the onTrajectory().
+      if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
+        !could_interpolate)
+      {
+        RCLCPP_ERROR(get_logger(),
+                     "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
+                     "coefficients ...");
+        return;
+      }
+
+      // Get target state estimate at the next sd0 distance.
+      // double vxk;  // to interpolate the target speed (virtual car speed).
+      nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
+
+      params(toUType(VehicleParamIds::curvature)) = kappad0;
+      params(toUType(VehicleParamIds::target_vx)) = vxk;
+
+      nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, dt_to_next, x0_predicted);
+
+      // Saturate steering.
+      //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
+      nonlinear_mpc_controller_ptr_->applyControlConstraints(uk);
+      nonlinear_mpc_controller_ptr_->applyStateConstraints(x0_predicted);
+
     }
 
-    // Get target state estimate at the next sd0 distance.
-    // double vxk;  // to interpolate the target speed (virtual car speed).
-    nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
-
-    params(toUType(VehicleParamIds::curvature)) = kappad0;
-    params(toUType(VehicleParamIds::target_vx)) = vxk;
-
-    // Use kappa estimated to call simulate method of mpc. The delay time-step is
-    // computed with the sampling time step: params_node_.control_period
-
-    //    ns_utils::print("Before simulating predictive state, the state vector is:");
-    //    ns_eigen_utils::printEigenMat(x0_predicted);
-    //
-    //    ns_utils::print("Controls sent to the simulator:");
-    //    ns_eigen_utils::printEigenMat(uk);
-
-    nonlinear_mpc_controller_ptr_->simulateOneStep(uk, params, params_node_.control_period, x0_predicted);
-
-    //    ns_utils::print("After simulateOneStep predictive state, the state vector is:");
-    //    ns_eigen_utils::printEigenMat(x0_predicted);
-
-    // Saturate steering.
-    //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
-    nonlinear_mpc_controller_ptr_->applyControlConstraints(uk);
-    nonlinear_mpc_controller_ptr_->applyStateConstraints(x0_predicted);
   }
 
   // Set the current_predicted_s0_.  states = [x, y, psi, s, ey, epsi, v, delta]
@@ -2128,91 +2119,9 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   // Set the predicted model params.
   predicted_model_params_ = params;  // [curvature, predicted longitudinal speed vxk]
 
-  // Set the next predicted virtual car distance for integral control action.
-  //    if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop) {
-  //        kalman_filter_.reset();
-  //    }
-  //    else
-  //    {
-  //        // Estimate the disturbance input for the physical system.
-  //    }
-
   // DEBUG
   //  ns_utils::print("virtual car distance : ");
   //  ns_utils::print_container(virtual_car_distance_state_vect);
-  // end of debug
-}
-
-void NonlinearMPCNode::predictDelayedInitialStateBy_TrajPlanner_Speeds(Model::state_vector_t &xd0)
-{
-  // Prepare the base vectors for the speed piecewise interpolator.
-  std::vector<std::vector<double>> tbase_vx_base;
-  nonlinear_mpc_controller_ptr_->getTimeSpeedVectsFromSmoothTraj(tbase_vx_base);
-
-  // Get the current time.
-  double td0 = current_t0_;
-
-  Model::input_vector_t uk(Model::input_vector_t::Zero());
-  Model::param_vector_t params(Model::param_vector_t::Zero());
-
-  // Predict the delayed initial state given the input sequence.
-  // Input buffer content : // [acc, vx, steering_rate, steering]
-  for (auto const &all_controls : inputs_buffer_common_)
-  {
-    // Placeholders for the speed interpolation.
-    double v0{};
-    double v1{};
-
-    // Extract the controls from the input buffer.
-    uk(0) = all_controls[0];  // ax input
-    uk(1) = all_controls[3];  // steering input
-
-    auto sd0 = xd0(3);  // d is for  delayed states.
-    double kappad0{};
-
-    // set the interpolator re-using_coefficients=true. The spline data is updated in the onTime().
-    auto could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-
-    if (!could_interpolate)
-    {
-      RCLCPP_ERROR(get_logger(),
-                   "[nonlinear_mpc - predict initial state]: spline interpolator optimization. to compute"
-                   " the  coefficients ...");
-      return;
-    }
-
-    // InterpolateInCoordinates the target v0, v1 on the trajectory.
-    ns_utils::interp1d_linear(
-      tbase_vx_base[0], /*time vector*/
-      tbase_vx_base[1], /*vx speed vector*/
-      td0,              /*current simulation time*/
-      v0);
-
-    ns_utils::interp1d_linear(tbase_vx_base[0], tbase_vx_base[1],
-                              td0 + params_node_.control_period, /*next simulation time*/
-                              v1);
-
-    params(0) = kappad0;
-    params(1) = v0;
-
-    // Use kappa estimated to call simulate method of mpc. The delay time-step
-    // is computed with the sampling time step: params_ptr_->control_period
-    nonlinear_mpc_controller_ptr_->simulateOneStepVariableSpeed(uk, params, v0, v1, params_node_.control_period, xd0);
-
-    // Saturate steering.
-    // xd0(7) = std::max(std::min(params_ptr_->xupper(7), xd0(7)), params_ptr_->xlower(7));
-    nonlinear_mpc_controller_ptr_->applyStateConstraints(7, xd0);
-
-    // Update the simulation time.
-    td0 += params_node_.control_period;  // update the current simulation time.
-  }
-
-  // Set the current predicted trajectory.
-  // Set the current predicted trajectory.
-  current_predicted_s0_ = xd0(3);
-  nonlinear_mpc_controller_ptr_->setCurrent_s0_predicted(current_predicted_s0_);
-
-  // DEBUG
   // end of debug
 }
 
