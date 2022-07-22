@@ -190,7 +190,7 @@ Status CheckDimensions(const int left_value,
 
 #define OSQP_RETURN_IF_ERROR(expr)   \
   {                                  \
-    const Status result = expr;      \
+    Status result = expr;      \
     if (!result.ok()) return result; \
   }
 
@@ -535,7 +535,7 @@ OsqpExitCode StatusToExitCode(const c_int status_val)
 
 }  // namespace
 
-OsqpExitCode OsqpSolver::Solve()
+OsqpExitCode OsqpSolver::Solve() const
 {
   OSQP_CHECK(IsInitialized());
   if (osqp_solve(workspace_.get()) != 0)
@@ -585,8 +585,7 @@ Map<const VectorXd> OsqpSolver::primal_infeasibility_certificate() const
   return {workspace_->delta_y, workspace_->data->m};
 }
 
-Status OsqpSolver::SetWarmStart(
-  const Ref<const VectorXd> &primal_vector, const Ref<const VectorXd> &dual_vector)
+Status OsqpSolver::SetWarmStart(const Ref<const VectorXd> &primal_vector, const Ref<const VectorXd> &dual_vector)
 {
   // This is identical to calling osqp_warm_start with both vectors at once.
   OSQP_RETURN_IF_ERROR(SetPrimalWarmStart(primal_vector))
@@ -594,7 +593,7 @@ Status OsqpSolver::SetWarmStart(
   return Status::OkStatus();
 }
 
-Status OsqpSolver::SetPrimalWarmStart(const Ref<const VectorXd> &primal_vector)
+Status OsqpSolver::SetPrimalWarmStart(const Ref<const VectorXd> &primal_vector) const
 {
   if (!IsInitialized())
   {
