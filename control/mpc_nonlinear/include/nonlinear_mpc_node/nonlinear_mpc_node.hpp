@@ -112,17 +112,6 @@ void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::s
 }
 
 /**
- * std::map custom key implementation.
- * */
-struct s_controlCommandCompare
-{
-  bool operator()(const ControlCmdMsg &lhs, const ControlCmdMsg &rhs) const
-  {
-    return rclcpp::Time(lhs.stamp) < rclcpp::Time(rhs.stamp);
-  }
-};
-
-/**
  * @bried node implementation.
  * */
 
@@ -271,9 +260,7 @@ class NonlinearMPCNode : public rclcpp::Node
   std::unique_ptr<size_t> idx_next_wp_ptr_{nullptr};
 
   // BUFFERS. Use a single buffer.
-
-  std::map<ControlCmdMsg, ControlCmdMsg, s_controlCommandCompare> inputs_buffer_map_; // !< @brief  [ax, vx,
-  // steering_rate, steering]
+  std::deque<ControlCmdMsg> inputs_buffer_;  // !< @brief an input buffer for state prediction.
 
   // Data members.
   bool is_control_cmd_prev_initialized_{false};  // !< @brief flag of control_cmd_prev_ initialization
