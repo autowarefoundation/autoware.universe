@@ -18,7 +18,6 @@
 #include "pointcloud_preprocessor/filter.hpp"
 
 #include <geometry_msgs/msg/polygon_stamped.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>

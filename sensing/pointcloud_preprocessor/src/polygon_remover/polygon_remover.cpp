@@ -14,6 +14,9 @@
 
 #include "pointcloud_preprocessor/polygon_remover/polygon_remover.hpp"
 
+#include <common/types.hpp>
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
 using K = CGAL::Exact_predicates_inexact_constructions_kernel;
 using PointCgal = K::Point_2;
 
@@ -143,17 +146,17 @@ sensor_msgs::msg::PointCloud2 PolygonRemoverComponent::remove_polygon_cgal_from_
 
   sensor_msgs::msg::PointCloud2 transformed_cluster = *cloud_in_ptr;
 
-  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
-       iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
-       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+  point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{
+    transformed_cluster};
+  for (const auto & point : view) {
     if (
       CGAL::bounded_side_2(
-        polyline_polygon.begin(), polyline_polygon.end(), PointCgal(*iter_x, *iter_y), K()) ==
+        polyline_polygon.begin(), polyline_polygon.end(), PointCgal(point.x, point.y), K()) ==
       CGAL::ON_UNBOUNDED_SIDE) {
       pcl::PointXYZ p;
-      p.x = *iter_x;
-      p.y = *iter_y;
-      p.z = *iter_z;
+      p.x = point.x;
+      p.y = point.y;
+      p.z = point.z;
       pcl_output.emplace_back(p);
     }
   }
