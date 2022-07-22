@@ -40,12 +40,13 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   auto xk = nmpc_data.trajectory_data.X[0];  // current value is x0.
   auto uk = nmpc_data.trajectory_data.U[0];
 
-  ns_utils::print("x0 and u0");
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
-  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
+  //  ns_utils::print("x0 and u0");
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(xk));
+  //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(uk));
 
-  //  x  =[xw, yw, psi, s, e_y, e_yaw, v, delta]
-
+  /**
+   * x  =[xw, yw, psi, s, e_y, e_yaw, v, delta]
+   * */
   // Define placeholders for the system matrices.
   Model::state_matrix_t Ac{Model::state_matrix_t::Zero()};
   Model::control_matrix_t Bc{Model::control_matrix_t::Zero()};
@@ -82,10 +83,9 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // [ey, epsi, error_vx, delta]
     x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) - vtarget;
 
-    ns_utils::print("Computed error states ");
-    ns_eigen_utils::printEigenMat(x_error);
-
-    ns_utils::print("In feedback vx vs vtarget", xk(ns_utils::toUType(VehicleStateIds::vx)), vtarget);
+    // ns_utils::print("Computed error states ");
+    // ns_eigen_utils::printEigenMat(x_error);
+    // ns_utils::print("In feedback vx vs vtarget", xk(ns_utils::toUType(VehicleStateIds::vx)), vtarget);
 
     // Get the s-state (distance travelled) and interpolate for the curvature value at this distance point.
     auto const &s0 = xk(ns_utils::toUType(VehicleStateIds::s));

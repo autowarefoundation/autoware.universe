@@ -111,6 +111,21 @@ void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::s
   }
 }
 
+/**
+ * std::map custom key implementation.
+ * */
+struct s_controlCommandCompare
+{
+  bool operator()(const ControlCmdMsg &lhs, const ControlCmdMsg &rhs) const
+  {
+    return rclcpp::Time(lhs.stamp) < rclcpp::Time(rhs.stamp);
+  }
+};
+
+/**
+ * @bried node implementation.
+ * */
+
 class NonlinearMPCNode : public rclcpp::Node
 {
  public:
@@ -257,16 +272,20 @@ class NonlinearMPCNode : public rclcpp::Node
 
   // BUFFERS. Use a single buffer.
 
-  std::map<rclcpp::Time, ControlCmdMsg> inputs_buffer_map_; // !< @brief  [ax, vx, steering_rate, steering]
+  std::map<ControlCmdMsg, ControlCmdMsg, s_controlCommandCompare> inputs_buffer_map_; // !< @brief  [ax, vx,
+  // steering_rate, steering]
 
   // Data members.
-  bool is_ctrl_cmd_prev_initialized_{false};  // !< @brief flag of ctrl_cmd_prev_ initialization
+  bool is_control_cmd_prev_initialized_{false};  // !< @brief flag of control_cmd_prev_ initialization
 
   // MPC booleans
   bool is_mpc_solved_{false};
   bool is_data_ready_{false};
 
-  ControlCmdMsg ctrl_cmd_prev_{};  // !< @brief previous control command
+  ControlCmdMsg control_cmd_prev_{};  // !< @brief previous control command
+
+  // !< @brief temporary variable that is used for the input buffer key
+  ControlCmdMsg control_cmd_map_{};
 
   /**
   * @brief  nonlinear MPC performance variables messages to be published.
@@ -295,7 +314,8 @@ class NonlinearMPCNode : public rclcpp::Node
   NonlinearMPCPerformanceMsg nmpc_performance_vars_{};
 
   // Vehicle motion finite state
-  ns_states::motionStateEnums current_fsm_state_{ns_states::motionStateEnums::isAtCompleteStop};  // state machine.
+  ns_states::motionStateEnums current_fsm_state_{
+    ns_states::motionStateEnums::isAtCompleteStop};  // state machine.
 
   /**
    * @brief PLACEHOLDERS where the computed variables are updated and hold.
@@ -476,14 +496,16 @@ class NonlinearMPCNode : public rclcpp::Node
    */
   void publishControlCommands(ControlCmdMsg &control_cmd) const;
 
-  void publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd);
+  void publishControlsAndUpdateVars(ControlCmdMsg &control_cmd);
 
   void publishPerformanceVariables(const ControlCmdMsg &control_cmd);
 
   void publishPredictedTrajectories(std::string const &ns, std::string const &frame_id) const;
+
   void publishClosestPointMarker(std::string const &ns) const;
 
   void setErrorReport(Model::state_vector_t const &x);
+
   void publishErrorReport(ErrorReportMsg &error_rpt_msg) const;
 
   visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(std::string const &ns,

@@ -169,19 +169,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
                                                     params_node_.will_stop_state_dist);
 
 
-  /**
-   * Initialize input buffer map.
-   * */
-  for (auto k = 0; k < params_node_.input_delay_discrete_nsteps; ++k)
-  {
-    ControlCmdMsg cmd{};
-    cmd.longitudinal.acceleration = 0.0;
-    cmd.lateral.steering_tire_angle = 0.0;
-    cmd.stamp = this->now() + rclcpp::Duration::from_seconds(params_node_.control_period * k);
-
-    inputs_buffer_map_.try_emplace(cmd.stamp, cmd);
-  }
-
 
   // Initialize the timer.
   initTimer(params_node_.control_period);
@@ -287,6 +274,23 @@ void NonlinearMPCNode::onTimer()
   RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "Control frequency %g",
                                  params_node_.control_frequency);
 
+  /**
+  * Initialize input buffer map.
+  * */
+
+  if (inputs_buffer_map_.empty())
+  {
+    for (auto k = 0; k < params_node_.input_delay_discrete_nsteps; ++k)
+    {
+      ControlCmdMsg cmd{};
+      cmd.longitudinal.acceleration = 0.0;
+      cmd.lateral.steering_tire_angle = 0.0;
+      cmd.stamp = this->now() + rclcpp::Duration::from_seconds(params_node_.control_period * k);
+
+      inputs_buffer_map_.try_emplace(cmd, cmd);
+    }
+  }
+
   // ns_utils::print("Control Frequency : ", params_node_.control_frequency);
   // ns_utils::print("Logger string : ", get_logger().get_name());
   // end of debug
@@ -308,13 +312,13 @@ void NonlinearMPCNode::onTimer()
   }
 
   // If the previous control command is not assigned, assign.
-  if (!is_ctrl_cmd_prev_initialized_)
+  if (!is_control_cmd_prev_initialized_)
   {
-    ctrl_cmd_prev_ = getInitialControlCommand();
-    is_ctrl_cmd_prev_initialized_ = true;
+    control_cmd_prev_ = getInitialControlCommand();
+    is_control_cmd_prev_initialized_ = true;
 
-    publishControlsAndUpdateVars(ctrl_cmd_prev_);
-    // publishPerformanceVariables(ctrl_cmd_prev_);
+    publishControlsAndUpdateVars(control_cmd_prev_);
+    // publishPerformanceVariables(control_cmd_prev_);
     return;
   }
 
@@ -353,6 +357,17 @@ void NonlinearMPCNode::onTimer()
   //        current_fsm_state_ == ns_states::motionStateEnums::isInEmergency)
   if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop)
   {
+
+    // Reset the input que. [ax, vx, steering_rate, steering]
+    for (auto &[key, val] : inputs_buffer_map_)
+    {
+      val.longitudinal.acceleration = 0.0;
+      val.longitudinal.speed = 0.0;
+
+      val.lateral.steering_tire_angle = 0.0;
+      val.lateral.steering_tire_rotation_rate = 0.0;
+    }
+
     kalman_filter_ptr_->reset();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
                                    vehicle_motion_fsm_.fsmMessage().c_str());
@@ -433,8 +448,8 @@ void NonlinearMPCNode::onTimer()
                                      vehicle_motion_fsm_.fsmMessage().c_str());
 
       // Publish previous control command.
-      publishControlsAndUpdateVars(ctrl_cmd_prev_);
-      // publishPerformanceVariables(ctrl_cmd_prev_);
+      publishControlsAndUpdateVars(control_cmd_prev_);
+      // publishPerformanceVariables(control_cmd_prev_);
       return;
     }
 
@@ -527,18 +542,17 @@ void NonlinearMPCNode::onTimer()
   }
 
   auto const
-    steering_rate =
-    (u_solution_(1) - ctrl_cmd_prev_.lateral.steering_tire_angle) / params_node_.control_period;
+    steering_rate = (u_solution_(1) - control_cmd_prev_.lateral.steering_tire_angle) / params_node_.control_period;
 
   // createControlCommand(ax, vx, steer_rate, steer_val)
   ControlCmdMsg control_cmd{};
 
   // Set the control command.
 
-  control_cmd = createControlCommand(u_solution_(0),  /* ax */
+  control_cmd = createControlCommand(u_solution_(ns_utils::toUType(VehicleControlIds::u_vx)),  /* ax */
                                      mpc_vx,          /* vx input */
                                      steering_rate,   /* steering_rate */
-                                     u_solution_(1)); /* steering input */
+                                     u_solution_(ns_utils::toUType(VehicleControlIds::u_steering))); /* steering input */
 
   // Publish the control command.
   publishControlsAndUpdateVars(control_cmd);
@@ -547,14 +561,14 @@ void NonlinearMPCNode::onTimer()
   publishPredictedTrajectories("predicted_trajectory", current_trajectory_ptr_->header.frame_id);
 
   /**
-   *  Maintain the input and steering_buffer for predicting the initial states.
+   * Maintain the input and steering_buffer for predicting the initial states.
    * Put the control command into the input_buffer_map for prediction.
    * */
-  auto const
-    &time_that_input_will_apply =
-    this->now() + rclcpp::Duration::from_seconds(params_node_.input_delay_time);
 
-  inputs_buffer_map_.try_emplace(time_that_input_will_apply, control_cmd);
+  auto const &time_that_input_will_apply = this->now() + rclcpp::Duration::from_seconds(params_node_.input_delay_time);
+
+  control_cmd.stamp = time_that_input_will_apply;
+  inputs_buffer_map_.try_emplace(control_cmd, control_cmd);
 
   // end of NMPC loop.
 
@@ -716,34 +730,23 @@ bool NonlinearMPCNode::isDataReady()
   return true;
 }
 
-void NonlinearMPCNode::publishControlCommands(ControlCmdMsg &ctrl_cmd) const
+void NonlinearMPCNode::publishControlCommands(ControlCmdMsg &control_cmd) const
 {
-  ctrl_cmd.stamp = this->now();
-  pub_control_cmd_->publish(ctrl_cmd);
+  control_cmd.stamp = this->now();
+  pub_control_cmd_->publish(control_cmd);
 }
 
-void NonlinearMPCNode::publishControlsAndUpdateVars(ControlCmdMsg &ctrl_cmd)
+void NonlinearMPCNode::publishControlsAndUpdateVars(ControlCmdMsg &control_cmd)
 {
   // publish the control command.
-  publishControlCommands(ctrl_cmd);
+  publishControlCommands(control_cmd);
 
   // Publish NMPC performance variables.
-  publishPerformanceVariables(ctrl_cmd);
+  publishPerformanceVariables(control_cmd);
 
   // Update the node variables
-  ctrl_cmd_prev_ = ctrl_cmd;
+  control_cmd_prev_ = control_cmd;
   u_previous_solution_ = u_solution_;  // required for the disturbance observer
-
-  // Update inputs for the Kalman model.
-//  if (!inputs_buffer_map_.empty())
-//  {
-//    auto itlow = inputs_buffer_map_.lower_bound(rclcpp::Time(ctrl_cmd.stamp));
-//    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) = itlow->second.longitudinal.acceleration;  // ax
-//    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) = itlow->second.lateral.steering_tire_angle;
-//  } else
-//  {
-//    u0_kalman_.setZero();
-//  }
 
 }
 
@@ -950,7 +953,8 @@ void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &dat
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec =
-    std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
+    std::vector<double>
+      {-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
   temp = declare_parameter<std::vector<double> >("xlower", default_vec);
   params_optimization.xlower = Model::state_vector_t::Map(temp.data());
 
@@ -1845,7 +1849,8 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   double vx_target{};
   nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(current_s0_, vx_target);
   interpolated_traj_point.longitudinal_velocity_mps = static_cast<decltype(interpolated_traj_point
-    .longitudinal_velocity_mps)>(vx_target);
+    .longitudinal_velocity_mps) >
+  (vx_target);
 
   // Set the current target speed of nmpc_performance_vars_.
   nmpc_performance_vars_.long_velocity_target = vx_target;
@@ -2057,9 +2062,10 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
 void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted)
 {
+  control_cmd_map_.stamp = this->now();
 
-  // auto it_begin = inputs_buffer_map_.upper_bound(current_time_stamp);
-  if (inputs_buffer_map_.empty())
+  if (auto it_begin = inputs_buffer_map_.lower_bound(control_cmd_map_);
+    inputs_buffer_map_.empty() || it_begin == inputs_buffer_map_.cend())
   {
     return;
   }
@@ -2071,19 +2077,24 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   /**
    * Apply the controls in the input queue using the their time durations.
    * */
-  auto current_time_stamp = this->now();
 
   for (auto it = inputs_buffer_map_.begin(); it != std::prev(inputs_buffer_map_.end()); it++)
   {
 
-    if (it->first < current_time_stamp)
+    /**
+     *  Remove the control commands that have been alread applied. These commands have time stamp less than the
+     *  current time.
+     *  -------------------> now ---------------------->
+     *    (PAST INPUTS)          (FUTURE INPUTS TO BE APPLIED TO THE SYSTEM)
+     * */
+    if (rclcpp::Time(it->first.stamp) < rclcpp::Time(control_cmd_map_.stamp))
     {
       inputs_buffer_map_.erase(it->first);
     } else
     {
+      auto dt_to_next = (rclcpp::Time(std::next(it)->second.stamp) - rclcpp::Time(it->second.stamp)).seconds();
 
-      auto dt_to_next = (std::next(it)->first - it->first).seconds();
-
+      ns_utils::print("dt between control commands in the buffer : ", dt_to_next);
       // Extract the controls from the input buffer.
       uk(toUType(VehicleControlIds::u_vx)) = it->second.longitudinal.acceleration;  // ax input
       uk(toUType(VehicleControlIds::u_steering)) = it->second.lateral.steering_tire_angle;  // steering input
@@ -2115,8 +2126,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
       //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
       nonlinear_mpc_controller_ptr_->applyControlConstraints(uk);
       nonlinear_mpc_controller_ptr_->applyStateConstraints(x0_predicted);
-
     }
+
   }
 
   // Set the current_predicted_s0_.  states = [x, y, psi, s, ey, epsi, v, delta]
@@ -2130,6 +2141,22 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
   // Set the predicted model params.
   predicted_model_params_ = params;  // [curvature, predicted longitudinal speed vxk]
+
+  /**
+   * Update inputs for the Kalman model.
+   * */
+//  if (!inputs_buffer_map_.empty())
+//  {
+//    // !< @brief temporary variable that is used for the input buffer key
+//    auto itlow = inputs_buffer_map_.lower_bound(control_cmd_map_);
+//    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) = itlow->second.longitudinal.acceleration;  // ax
+//    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) = itlow->second.lateral.steering_tire_angle;
+//
+//  } else
+//  {
+//    u0_kalman_.setZero();
+//  }
+
 
   // DEBUG
   //  ns_utils::print("virtual car distance : ");
