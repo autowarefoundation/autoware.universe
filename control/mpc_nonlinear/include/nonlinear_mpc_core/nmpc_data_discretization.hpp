@@ -25,48 +25,47 @@ namespace ns_data
 template<class Model>
 struct DiscretizationData
 {
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	typename Model::state_matrix_v_t A;  // !<-@brief vector of state transition matrices A.
 
+  typename Model::state_matrix_v_t A;  // !<-@brief vector of state transition matrices A.
 
-	// !<-@brief vector of control matrices at the beginning of time interval
-	typename Model::control_matrix_v_t B;
+  // !<-@brief vector of control matrices at the beginning of time interval
+  typename Model::control_matrix_v_t B;
 
-	// !<-@brief vector of control matrices at the end of time interval
-	typename Model::control_matrix_v_t C;
+  // !<-@brief vector of control matrices at the end of time interval
+  typename Model::control_matrix_v_t C;
 
-	typename Model::state_vector_v_t z;  // !<-@brief f0 - Ax0 - Bu0 - Cu1
+  typename Model::state_vector_v_t z;  // !<-@brief f0 - Ax0 - Bu0 - Cu1
 
-	void initializeDiscretizationMatrices(size_t const &K, double const &dt_step);
-	[[nodiscard]] std::size_t nX() const;
+  void initializeDiscretizationMatrices(size_t const &K, double const &dt_step);
+  [[nodiscard]] std::size_t nX() const;
 
-	[[nodiscard]] __attribute__((unused)) std::size_t nU() const;
+  [[nodiscard]] __attribute__((unused)) std::size_t nU() const;
 
-	double dt{};
+  double dt{};
 };
 
 template<class Model>
 void DiscretizationData<Model>::initializeDiscretizationMatrices(size_t const &K, double const &dt_step)
 {
 
-	A.resize(K - 1, Model::state_matrix_t::Zero());     // !<-@brief vector of As
-	B.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs
-	C.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs at the end of the section.
-	z.resize(K - 1, Model::state_vector_t::Zero());     // !<-@brief f0 - Ax0 - Bu0 - Cu1
-	dt = dt_step;
+  A.resize(K - 1, Model::state_matrix_t::Zero());     // !<-@brief vector of As
+  B.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs
+  C.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs at the end of the section.
+  z.resize(K - 1, Model::state_vector_t::Zero());     // !<-@brief f0 - Ax0 - Bu0 - Cu1
+  dt = dt_step;
 
 }
 
 template<class Model>
 std::size_t DiscretizationData<Model>::nX() const
 {
-	return A.size();
+  return A.size();
 }
 
 template<class Model>
 std::size_t DiscretizationData<Model>::nU() const
 {
-	return B.size();
+  return B.size();
 }
 
 }  // namespace ns_data

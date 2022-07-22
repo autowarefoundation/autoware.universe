@@ -18,9 +18,12 @@
 #include <vector>
 #include "utils/nmpc_utils.hpp"
 
-ns_discretization::ODEfoh::ODEfoh(
-  Model::model_ptr_t model, const Model::input_vector_t &u0, const Model::input_vector_t &u1,
-  Model::param_vector_t const &params0, Model::param_vector_t const &params1, double dt)
+ns_discretization::ODEfoh::ODEfoh(Model::model_ptr_t model,
+                                  const Model::input_vector_t &u0,
+                                  const Model::input_vector_t &u1,
+                                  Model::param_vector_t const &params0,
+                                  Model::param_vector_t const &params1,
+                                  double dt)
   : model_(model), u0_(u0), u1_(u1), params0_(params0), params1_(params1), dt_(dt)
 {
 }
