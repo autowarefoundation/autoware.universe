@@ -343,21 +343,21 @@ void NonlinearMPCNode::onTimer()
   // vehicle_motion_fsm_.printCurrentStateMsg();
   // ns_utils::print("Distance, V0, Vnext ", dist_v0_vnext[0], dist_v0_vnext[1], dist_v0_vnext[2]);
 
-  current_fsm_state_ = vehicle_motion_fsm_.getCurrentState();
+  current_fsm_state_ = vehicle_motion_fsm_.getCurrentStateType();
   // ns_utils::print("Finite state machine state numbers : ",
   // ns_states::as_integer(current_fsm_state_));
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
-                                 vehicle_motion_fsm_.fsmMessage().c_str());
+                                 std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
-  //    if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop ||
+  //    if (current_fsm_state_ == ns_states::motionStateEnums::isAtComplete   Stop ||
   //        current_fsm_state_ == ns_states::motionStateEnums::isInEmergency)
   if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop)
   {
 
     kalman_filter_ptr_->reset();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
-                                   vehicle_motion_fsm_.fsmMessage().c_str());
+                                   std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
     auto &&control_cmd = getStopControlCommand();
 
@@ -437,7 +437,7 @@ void NonlinearMPCNode::onTimer()
 
       RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
                                      "[mpc_nonlinear] Couldn't initialize the LPV controller ... %s \n",
-                                     vehicle_motion_fsm_.fsmMessage().c_str());
+                                     std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
       // Publish previous control command.
       publishControlsAndUpdateVars(control_cmd_prev_);
@@ -503,7 +503,7 @@ void NonlinearMPCNode::onTimer()
 
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
                                    "[nonlinear_mpc]: Could not solve the mpc problem ... %s \n",
-                                   vehicle_motion_fsm_.fsmMessage().c_str());
+                                   std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
     // ROS_ERROR("[nonlinear_mpc]: Could not solve the mpc problem ... ");
 
@@ -761,7 +761,7 @@ void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_
   nmpc_performance_vars_.nmpc_value = value_function_value;
 
   // Finite state machine state.
-  nmpc_performance_vars_.fsm_state = static_cast<int8_t>(as_integer(current_fsm_state_));
+  nmpc_performance_vars_.fsm_state = static_cast<int8_t>(ns_utils::toUType(current_fsm_state_));
 
   // Average computation time.
   nmpc_performance_vars_.avg_nmpc_computation_time = average_mpc_solve_time_ * 1000;  // s->ms
@@ -1196,7 +1196,7 @@ void NonlinearMPCNode::onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg)
   // end of DEBUG
 }
 
-bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj) const
+bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj)
 {
   bool const &&check_condition = std::all_of(std::cbegin(msg_traj.points), std::cend(msg_traj.points),
                                              [](auto point)
@@ -1486,7 +1486,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   mpc_traj_smoothed.setTrajectoryCoordinate('c', curvature_smooth_vect);
 
   // Compute relative time and acceleration from the given data.
-  if (current_fsm_state_ == ns_states::motionStateEnums::willStop)
+  if (current_fsm_state_ == ns_states::motionStateEnums::willbeStopping)
   {
     mpc_traj_smoothed.addExtraEndPoints(average_mpc_solve_time_);
   }
@@ -1735,8 +1735,6 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
     RCLCPP_ERROR(get_logger(), "[mpc_nonlinear_core] Cannot find the next waypoint.");
     return;
   }
-
-
 
   /**
    *  Create two vectors originating from the previous waypoints to the next waypoint and the
