@@ -459,7 +459,7 @@ class NonlinearMPCNode : public rclcpp::Node
    **/
   void initTimer(double period_s);  //!< @brief Set the timer object.
 
-  bool isValidTrajectory(const TrajectoryMsg &msg_traj) const;
+  static bool isValidTrajectory(const TrajectoryMsg &msg_traj);
 
   /**
    * f resamples the current trajectory with a varying size into a fixed-sized trajectories and store them in an associated raw trajectory data class.
