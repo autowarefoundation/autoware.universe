@@ -31,7 +31,12 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             # -Wfloat-equal
             -Waddress
             -fvisibility=default
-            -fPIC) # visibility hidden or default is set here.
+            -fPIC
+            # for eigen parallel support) # visibility hidden or default is set here.
+            #  -fopenmp
+            #  -mfma
+            #  -mavx
+    )
 endif ()
 
 # Clang tidy
@@ -67,6 +72,14 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 if (COMPILER_SUPPORTS_MARCH_NATIVE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    message(STATUS "Enabling MARCH NATIVE ")
+endif ()
+
+check_cxx_compiler_flag("-fopenmp" COMPILER_SUPPORT_OPENMP)
+if (COMPILER_SUPPORT_OPENMP)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    message(STATUS "Enabling OpenMP ")
+
 endif ()
 
 
