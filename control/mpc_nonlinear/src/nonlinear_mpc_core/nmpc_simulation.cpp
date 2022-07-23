@@ -137,7 +137,7 @@ void simulateNonlinearModel_zoh(Model::model_ptr_t model,
   //  ns_utils::print("u0 before integration \n");
   //  ns_eigen_utils::printEigenMat(u0);
 
-  double num_of_tsteps = 10;  // Number of time steps for the RK integration. 1 for a single step.
+  double num_of_tsteps = 5;  // Number of time steps for the RK integration. 1 for a single step.
   boost::numeric::odeint::integrate_adaptive(stepper, ode, x, 0., dt, dt / num_of_tsteps);
 
   //  ns_print::print("x after integration \n");
