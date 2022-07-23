@@ -21,7 +21,7 @@ public:
   using OptVector3f = std::optional<Eigen::Vector3f>;
   using Ptr = std::shared_ptr<Optimizer>;
 
-  Optimizer(rclcpp::Node * node, bool verbose = false);
+  Optimizer(rclcpp::Node * node);
 
   Sophus::SO3f optimize(
     const Sophus::SO3f & dR, const OptVector3f & vp, const Eigen::Vector2f & vertical,

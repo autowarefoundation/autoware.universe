@@ -15,4 +15,5 @@
       max_vertex_cnt: 10
       imu_factor_gain: 1.0
       vp_factor_gain: 2.0
-      hz_factor_gain: 1.0
+      hz_factor_gain: 2.0
+      verbose: false

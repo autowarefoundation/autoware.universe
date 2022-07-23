@@ -18,8 +18,8 @@ using ceres::Solver;
 
 namespace imgproc::opt
 {
-Optimizer::Optimizer(rclcpp::Node * node, bool verbose)
-: verbose_(verbose),
+Optimizer::Optimizer(rclcpp::Node * node)
+: verbose_(node->declare_parameter<bool>("opt.verbose", 5)),
   vertices_(node->declare_parameter<int>("opt.max_vertex_cnt", 5)),
   imu_factor_gain_(node->declare_parameter<float>("opt.imu_factor_gain", 1.0f)),
   vp_factor_gain_(node->declare_parameter<float>("opt.vp_factor_gain", 1.0f)),

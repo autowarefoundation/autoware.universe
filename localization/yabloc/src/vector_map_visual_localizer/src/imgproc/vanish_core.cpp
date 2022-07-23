@@ -23,7 +23,7 @@ VanishPoint::VanishPoint() : Node("vanish_point"), tf_subscriber_(get_clock())
     [this](const CameraInfo & msg) -> void { this->info_ = msg; });
 
   ransac_vanish_point_ = std::make_shared<RansacVanishPoint>(this);
-  optimizer_ = std::make_shared<opt::Optimizer>(this, true);
+  optimizer_ = std::make_shared<opt::Optimizer>(this);
 }
 
 void VanishPoint::callbackImu(const Imu & msg) { imu_buffer_.push_back(msg); }
@@ -106,7 +106,7 @@ Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 {
   auto opt_ex = tf_subscriber_("base_link", "tamagawa/imu_link");
   if (!opt_ex.has_value()) return Sophus::SO3f();
-  const Sophus::SO3f ex_rot(opt_ex->rotation());
+  const Sophus::SO3f ex_rot(opt_ex->rotation().inverse());
 
   Sophus::SO3f integrated_rot;
   while (!imu_buffer_.empty()) {
@@ -122,7 +122,7 @@ Sophus::SO3f VanishPoint::integral(const rclcpp::Time & image_stamp)
 
     Eigen::Vector3f w;
     w << msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z;
-    integrated_rot *= Sophus::SO3f::exp(ex_rot * w * dt);
+    integrated_rot *= Sophus::SO3f::exp(ex_rot * w * (-dt));
 
     imu_buffer_.pop_front();
     last_imu_stamp_ = stamp;
