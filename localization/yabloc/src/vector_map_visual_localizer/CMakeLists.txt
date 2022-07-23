@@ -125,5 +125,8 @@ ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_ut
 ADD_EXE(TARGET ground_server_node SRC src/map/ground_server_*.cpp INC LIB)
 ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
 
+# sign_board
+ADD_EXE(TARGET sign_node SRC src/sign_board/sign_*.cpp INC LIB util)
+
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)
