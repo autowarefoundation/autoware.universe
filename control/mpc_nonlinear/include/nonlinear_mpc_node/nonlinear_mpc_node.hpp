@@ -71,7 +71,6 @@
 // NMPC package headers.
 #include "nonlinear_mpc_core/nmpc_core.hpp"
 #include "nonlinear_mpc_core/nmpc_kalman_filter.hpp"
-#include "nonlinear_mpc_core/nmpc_speed_tracking_input_observer.hpp"
 #include "nonlinear_mpc_node_visualization.hpp"
 #include "splines/bspline_interpolator_templated.hpp"
 #include "splines/bsplines_smoother.hpp"
