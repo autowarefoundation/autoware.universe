@@ -252,8 +252,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   auto const &triplets_Rj = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Rj), eps_triplet_zero);
 
   // Q, QN, R, Rj starts at the different cols.
-  auto col_startR = K * STATE_DIM;  // !<@brief R columns start from in the cost matrix.
-  auto col_startRj = K * STATE_DIM + K * INPUT_DIM;  // !<@brief int the cost matrix.
+  auto const &col_startR = K * STATE_DIM;  // !<@brief R columns start from in the cost matrix.
+  auto const &col_startRj = K * STATE_DIM + K * INPUT_DIM;  // !<@brief int the cost matrix.
 
   // Prepare an Identity matrix to be used in Jerk matrices.
   Eigen::MatrixXd uId(INPUT_DIM, INPUT_DIM);
@@ -264,8 +264,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   {
     // Set P triplets. P start index is [k * STATE_DIM, k * STATE_DIM] for
 
-    auto const &&rowQ = k * STATE_DIM;
-    auto const &&colQ = k * STATE_DIM;
+    auto const &rowQ = k * STATE_DIM;
+    auto const &colQ = k * STATE_DIM;
 
     std::transform(triplets_Q.cbegin(), triplets_Q.cend(), std::back_inserter(triplets_P),
                    [&rowQ, &colQ](auto const &titem)
@@ -278,8 +278,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert Triplets of R
-    auto rowR = k * INPUT_DIM + col_startR;
-    auto colR = k * INPUT_DIM + col_startR;
+    auto const &rowR = k * INPUT_DIM + col_startR;
+    auto const &colR = k * INPUT_DIM + col_startR;
 
     std::transform(triplets_R.cbegin(), triplets_R.cend(), std::back_inserter(triplets_P),
                    [&rowR, &colR](auto const &titem)
@@ -292,8 +292,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert Triplets of Rj ------------------------------
-    auto rowRj = k * INPUT_DIM + col_startRj;
-    auto colRj = k * INPUT_DIM + col_startRj;
+    auto const &rowRj = k * INPUT_DIM + col_startRj;
+    auto const &colRj = k * INPUT_DIM + col_startRj;
 
     std::transform(triplets_Rj.cbegin(), triplets_Rj.cend(), std::back_inserter(triplets_P),
                    [&rowRj, &colRj](auto const &titem)
@@ -307,8 +307,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
     // A_equality on the main diagonal set -Sx.
 
-    auto rowSx = k * STATE_DIM;
-    auto colSx = k * STATE_DIM;
+    auto const &rowSx = k * STATE_DIM;
+    auto const &colSx = k * STATE_DIM;
 
     auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
@@ -345,10 +345,10 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert B into Aequality.
-    auto rowB = (k + 1) * STATE_DIM;
-    auto colB = K * STATE_DIM + k * INPUT_DIM;
+    auto const &rowB = (k + 1) * STATE_DIM;
+    auto const &colB = K * STATE_DIM + k * INPUT_DIM;
 
-    auto &&BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
+    auto const &BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
     auto triplet_list_B = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), eps_triplet_zero);
 
     std::transform(triplet_list_B.cbegin(), triplet_list_B.cend(), std::back_inserter(triplets_A),
@@ -366,8 +366,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
     // [AX + BU + z.; 0 d(u) du]
 
     // Set -Id on the main diagonals.  // Just after X = AX + BU + z
-    auto rowBjmain = K * STATE_DIM + k * INPUT_DIM;
-    auto colBjmain = K * STATE_DIM + k * INPUT_DIM;
+    auto const &rowBjmain = K * STATE_DIM + k * INPUT_DIM;
+    auto const &colBjmain = K * STATE_DIM + k * INPUT_DIM;
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
                    [&rowBjmain, &colBjmain, this](auto &titem)
@@ -385,8 +385,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
     // Set Id on the diagonal k=1.
     // Id is just one input colon block ahead of -Id.
-    auto rowBj_k1 = K * STATE_DIM + k * INPUT_DIM;
-    auto colBj_k1 = K * STATE_DIM + (k + 1) * INPUT_DIM;
+    auto const &rowBj_k1 = K * STATE_DIM + k * INPUT_DIM;
+    auto const &colBj_k1 = K * STATE_DIM + (k + 1) * INPUT_DIM;
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
                    [&rowBj_k1, &colBj_k1, this](auto const &titem)
@@ -404,8 +404,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
     // Set Identity for picking Bj = -I *du variable in Aequality.
     // This is below Aeq [AX BU 0;0 d(u) du]
-    auto rowdu = K * STATE_DIM + k * INPUT_DIM;
-    auto coldu = K * STATE_DIM + K * INPUT_DIM + k * INPUT_DIM;
+    auto const &rowdu = K * STATE_DIM + k * INPUT_DIM;
+    auto const &coldu = K * STATE_DIM + K * INPUT_DIM + k * INPUT_DIM;
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
                    [&rowdu, &coldu, this](auto const &titem)
@@ -454,8 +454,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // -------------------- Insert -Sx at K-1 ----------------
 
-  auto rowSx = (K - 1) * STATE_DIM;
-  auto colSx = (K - 1) * STATE_DIM;
+  auto const &rowSx = (K - 1) * STATE_DIM;
+  auto const &colSx = (K - 1) * STATE_DIM;
 
   auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
@@ -474,8 +474,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                  });
 
   // ----------- Set Ainequality at one go -----------------------
-  auto row_aineq = osqp_dims_.Aineq_start_row;  // Inequality matrix start at this row.
-  auto col_aineq = osqp_dims_.Aineq_start_col;
+  auto const &row_aineq = osqp_dims_.Aineq_start_row;  // Inequality matrix start at this row.
+  auto const &col_aineq = osqp_dims_.Aineq_start_col;
 
   // We need to set lower and upper bound for inequality here.
   Eigen::MatrixXd Aineq(osqp_dims_.Pdim, osqp_dims_.Pdim);
@@ -509,16 +509,16 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   // auto xhat0 = trajectory_data_t::ScaleInv_x(mpc_to_osqp_params_.Sx_inv,
   // mpc_to_osqp_params_.Cx, x0);
 
-  auto &&Cx = params_optimization.Cx;
-  auto &&Cu = params_optimization.Cu;
+  auto const &Cx = params_optimization.Cx;
+  auto const &Cu = params_optimization.Cu;
 
   osqp_instance_.lower_bounds.template segment<STATE_DIM>(0) = -(x0 - Cx);
   osqp_instance_.upper_bounds.template segment<STATE_DIM>(0) = -(x0 - Cx);
 
   for (size_t k = 1; k < K; ++k)
   {
-    auto &&zk = discretization_data.z.at(k - 1) + discretization_data.A.at(k - 1) * Cx
-                + discretization_data.B.at(k - 1) * Cu - Cx;
+    auto const &zk = discretization_data.z.at(k - 1) + discretization_data.A.at(k - 1) * Cx
+                     + discretization_data.B.at(k - 1) * Cu - Cx;
 
     osqp_instance_.lower_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
     osqp_instance_.upper_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
@@ -528,8 +528,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // Controls start position in Aineq.
   // after we set state bounds along K*nx
-  auto row_inq_u = row_aineq + K * STATE_DIM;  // Inequalities start at for controls at this row.
-  auto row_inq_j = row_inq_u + K * INPUT_DIM;  // Inequalities start at for jerks at this row.
+  auto const &row_inq_u = row_aineq + K * STATE_DIM;  // Inequalities start at for controls at this row.
+  auto const &row_inq_j = row_inq_u + K * INPUT_DIM;  // Inequalities start at for jerks at this row.
 
   for (size_t k = 0; k < K - 1; ++k)
   {
@@ -550,18 +550,14 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   }
 
   // Set state bounds at (K-1)
-  osqp_instance_.upper_bounds.segment<STATE_DIM>(
-    row_aineq + (K - 1) * STATE_DIM) = params_optimization.xupper_scaled;
+  osqp_instance_.upper_bounds.segment<STATE_DIM>(row_aineq + (K - 1) * STATE_DIM) = params_optimization.xupper_scaled;
 
-  osqp_instance_.lower_bounds.segment<STATE_DIM>(
-    row_aineq + (K - 1) * STATE_DIM) = params_optimization.xlower_scaled;
+  osqp_instance_.lower_bounds.segment<STATE_DIM>(row_aineq + (K - 1) * STATE_DIM) = params_optimization.xlower_scaled;
 
   // Set control bounds at (K-1)
-  osqp_instance_.upper_bounds.segment<INPUT_DIM>(
-    row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.uupper_scaled;
+  osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.uupper_scaled;
 
-  osqp_instance_.lower_bounds.segment<INPUT_DIM>(
-    row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.ulower_scaled;
+  osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.ulower_scaled;
 
   // DEBUG
   //  ns_utils::print("State Inequality Bounds in SetupOSQP:");
@@ -680,10 +676,10 @@ template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_nmpc_core_type_t const &data_nmpc,
                                                                   ns_data::ParamsOptimization const &param_opt)
 {
-  auto &&params_optimization = param_opt;
-  auto &&discretization_data = data_nmpc.discretization_data;
-  auto &&trajectory_data = data_nmpc.trajectory_data;
-  auto &&target_references = data_nmpc.target_reference_states_and_controls;
+  auto const &params_optimization = param_opt;
+  auto const &discretization_data = data_nmpc.discretization_data;
+  auto const &trajectory_data = data_nmpc.trajectory_data;
+  auto const &target_references = data_nmpc.target_reference_states_and_controls;
 
   // Re-instantiate the Constraint matrix.
   Aconst_ = Eigen::SparseMatrix<double>(osqp_dims_.Arow_dim, osqp_dims_.Acol_dim);
@@ -695,21 +691,21 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
   std::vector<triplet_type> triplets_A;
 
   // if item abs is greater than eps, the item is assumed to be nonzero.
-  double EPS = std::numeric_limits<double>::epsilon();
+  double const &EPS = std::numeric_limits<double>::epsilon();
 
   // Extract Q, QN to use in the new objective vector q.
-  auto &&Q = params_optimization.Q;
-  auto &&QN = params_optimization.QN;
+  auto const &Q = params_optimization.Q;
+  auto const &QN = params_optimization.QN;
 
   // Set new As and Bs in the constraint matrix.
   for (size_t k = 0; k < K - 1; ++k)
   {
     // Aequality on the diagonal k=-1 set A*Sx.
 
-    auto rowA = (k + 1) * STATE_DIM;
-    auto colA = k * STATE_DIM;
+    auto const &rowA = (k + 1) * STATE_DIM;
+    auto const &colA = k * STATE_DIM;
 
-    auto &&ASx = Eigen::MatrixXd(discretization_data.A[k] * params_optimization.Sx);
+    auto const &ASx = Eigen::MatrixXd(discretization_data.A[k] * params_optimization.Sx);
     auto triplet_list_A = ns_eigen_utils::ToTriplets(ASx, EPS);
 
     // ns_utils::print("\nASx\n");
@@ -721,19 +717,19 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
     std::transform(triplet_list_A.cbegin(), triplet_list_A.cend(), std::back_inserter(triplets_A),
                    [&rowA, &colA](auto const &titem)
                    {
-                     auto &&trow = titem[0] + rowA;
-                     auto &&tcol = titem[1] + colA;
-                     auto &&val = titem[2];
+                     auto const &trow = titem[0] + rowA;
+                     auto const &tcol = titem[1] + colA;
+                     auto const &val = titem[2];
 
                      return triplet_type(trow, tcol, val);
                    });
 
     // Set the objective vector.
     // Insert B into Aequality.
-    auto rowB = (k + 1) * STATE_DIM;
-    auto colB = K * STATE_DIM + k * INPUT_DIM;
+    auto const &rowB = (k + 1) * STATE_DIM;
+    auto const &colB = K * STATE_DIM + k * INPUT_DIM;
 
-    auto &&BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
+    auto const &BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
     auto triplet_list_B = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), EPS);
 
     std::transform(triplet_list_B.cbegin(), triplet_list_B.cend(), std::back_inserter(triplets_A),
@@ -753,7 +749,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
     //  -1 * Q *  target_references.X[k];
 
     // scale the targets in [-1, 1]
-    auto
+    auto const
       &xref_hat = params_optimization.Sx_inv * (target_references.X[k] * data_nmpc.feedforward_speed_set_point_scale -
                                                 params_optimization.Cx);
 
@@ -791,18 +787,18 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
   // ---------------------- Set Equality Constraints RHS---------------------------------
   // Optimization operates on the scaled variables. The motion system matrices are scaled.
 
-  auto &&Cx = params_optimization.Cx;  // State centering vector.
-  auto &&Cu = params_optimization.Cu;  // Control centering vector.
+  auto const &Cx = params_optimization.Cx;  // State centering vector.
+  auto const &Cu = params_optimization.Cu;  // Control centering vector.
 
-  auto &&x0 = trajectory_data.X[0];  // take out the initial states.
+  auto const &x0 = trajectory_data.X[0];  // take out the initial states.
 
   osqp_instance_.lower_bounds.template segment<STATE_DIM>(0) = -(x0 - Cx);
   osqp_instance_.upper_bounds.template segment<STATE_DIM>(0) = -(x0 - Cx);
 
   for (size_t k = 1; k < K; ++k)
   {
-    auto &&zk = discretization_data.z[k - 1] + discretization_data.A[k - 1] * Cx +
-                discretization_data.B[k - 1] * Cu - Cx;
+    auto const &zk = discretization_data.z[k - 1] + discretization_data.A[k - 1] * Cx +
+                     discretization_data.B[k - 1] * Cu - Cx;
 
     osqp_instance_.lower_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
     osqp_instance_.upper_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
