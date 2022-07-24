@@ -29,6 +29,7 @@ using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
 using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::getPose;
 
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::ConstLanelet & walkway,
@@ -111,8 +112,6 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
 
     insertStopPoint(stop_pose.get().position, *path);
 
-    debug_data_.stop_poses.push_back(stop_pose.get());
-
     /* get stop point and stop factor */
     StopFactor stop_factor;
     stop_factor.stop_pose = stop_pose.get();
@@ -164,5 +163,7 @@ void WalkwayModule::insertStopPoint(
   for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
     output.points.at(i).point.longitudinal_velocity_mps = 0.0;
   }
+
+  debug_data_.stop_poses.push_back(getPose(output.points.at(insert_idx.get())));
 }
 }  // namespace behavior_velocity_planner

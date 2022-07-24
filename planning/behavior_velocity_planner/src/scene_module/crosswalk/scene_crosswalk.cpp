@@ -196,7 +196,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       }
 
       const auto crosswalk_distance =
-        calcSignedArcLength(ego_path.points, ego_pos, getPoint(rtc_stop_point.get().second));
+        calcSignedArcLength(ego_path.points, ego_pos, getPoint(rtc_stop_point.get()));
       setDistance(crosswalk_distance);
       return true;
     }
