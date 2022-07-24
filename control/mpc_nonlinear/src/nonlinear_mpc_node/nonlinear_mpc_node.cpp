@@ -32,6 +32,9 @@ namespace ns_mpc_nonlinear
 NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   : Node("mpc_nonlinear", node_options)
 {
+  // Eigen::setNbThreads(4);
+  // Eigen::initParallel();
+
   using std::placeholders::_1;
 
   // Initialize the publishers.
