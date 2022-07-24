@@ -3,6 +3,7 @@
 #include "common/static_tf_subscriber.hpp"
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
+#include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -23,6 +24,7 @@ public:
   using CameraInfo = sensor_msgs::msg::CameraInfo;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using SignBoard = lanelet::ConstLineString3d;
   using SignBoards = lanelet::ConstLineStrings3d;
   SignDetector();
 
@@ -42,6 +44,10 @@ private:
 
   float distanceToSignBoard(
     const lanelet::ConstLineString3d & board, const Eigen::Vector3f & position);
+
+  void drawSignBoardContour(
+    const cv::Mat & image, const ParticleArray & array, const SignBoard board,
+    const Eigen::Affine3f & affine);
 
   void callbackImage(const Image & image);
   void callbackVectorMap(const HADMapBin & map_bin);

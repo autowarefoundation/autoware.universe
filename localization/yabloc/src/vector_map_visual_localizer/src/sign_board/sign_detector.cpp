@@ -4,11 +4,16 @@
 #include "map/ll2_util.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
+#include <opencv4/opencv2/imgproc.hpp>
 #include <range/v3/algorithm/min_element.hpp>
 #include <range/v3/view/transform.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
+#include <boost/assign/list_of.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
 
+#include <pcl_conversions/pcl_conversions.h>
 namespace sign_board
 {
 SignDetector::SignDetector() : AbstCorrector("sign_detector"), tf_subscriber_(get_clock())
@@ -66,18 +71,14 @@ void SignDetector::callbackImage(const Image & msg)
   const rclcpp::Time stamp = msg.header.stamp;
   auto array = getSyncronizedParticleArray(stamp);
   if (!array.has_value()) return;
+  if (!info_.has_value()) return;
+  if (!camera_extrinsic_.has_value()) return;
   if (sign_boards_.empty()) return;
 
   using Pose = geometry_msgs::msg::Pose;
 
   cv::Mat image = util::decompress2CvMat(msg);
-  cv::imshow("test", image);
-  cv::waitKey(5);
-
-  RCLCPP_INFO_STREAM(get_logger(), "search nearest sign-boards");
-
   Eigen::Affine3f affine = util::pose2Affine(meanPose(array.value()));
-  std::cout << affine.matrix() << std::endl;
 
   // Search nearest sign-boards
   using namespace ranges;
@@ -87,8 +88,79 @@ void SignDetector::callbackImage(const Image & msg)
   int step = std::distance(distances.begin(), ranges::min_element(distances));
   lanelet::ConstLineString3d nearest_sign = *std::next(sign_boards_.begin(), step);
 
-  std::cout << nearest_sign.front().x() << " " << nearest_sign.front().y() << " "
-            << nearest_sign.front().z() << std::endl;
+  float shortest_distance = distances.at(step);
+  RCLCPP_INFO_STREAM(
+    get_logger(), "nearest sign-boards: " << nearest_sign.id() << " " << shortest_distance);
+
+  drawSignBoardContour(image, array.value(), nearest_sign, affine);
+}
+
+std::vector<cv::Point2i> computeConvexHull(const std::vector<cv::Point2f> & src)
+{
+  namespace bg = boost::geometry;
+
+  typedef bg::model::d2::point_xy<double> point;
+  typedef bg::model::polygon<point> polygon;
+
+  polygon poly;
+  // std::cout << "raw: ";
+  for (const auto & p : src) {
+    bg::append(poly, point(p.x, p.y));
+    // std::cout << p << " ";
+  }
+  // std::cout << std::endl;
+
+  polygon hull;
+  bg::convex_hull(poly, hull);
+
+  std::vector<cv::Point2i> dst;
+  std::cout << "convex: ";
+  for (auto p : hull.outer()) {
+    cv::Point2f cvp(p.x(), p.y());
+    std::cout << cvp << " ";
+    dst.push_back(cvp);
+  }
+  std::cout << std::endl;
+  return dst;
+}
+
+void SignDetector::drawSignBoardContour(
+  const cv::Mat & image, const ParticleArray & array, const SignBoard board,
+  const Eigen::Affine3f & affine)
+{
+  const Eigen::Matrix3f K =
+    Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
+
+  // Because sign boards are convex polygons and perspective projection preserves their convexity,
+  // to obtain the road sign on a image, we can find the convex hull of the projected vertex.
+  Eigen::Affine3f T = camera_extrinsic_.value();
+
+  auto project = [K, T](
+                   const Eigen::Affine3f & transform,
+                   const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+    return cv::Point2i(uv1.x(), uv1.y());
+  };
+
+  std::vector<cv::Point2f> projected;
+  for (const Particle & p : array.particles) {
+    Eigen::Affine3f affine = util::pose2Affine(p.pose);
+    for (const auto & p : board) {
+      auto opt_p = project(affine, {p.x(), p.y(), p.z()});
+      if (opt_p.has_value()) projected.push_back(opt_p.value());
+    }
+  }
+
+  if (projected.empty()) return;
+
+  std::vector<cv::Point2i> contour = computeConvexHull(projected);
+  if (contour.empty()) return;
+
+  cv::polylines(image, contour, false, cv::Scalar(0, 255, 255), 2);
+  cv::imshow("test", image);
+  cv::waitKey(5);
 }
 
 void SignDetector::callbackInfo(const CameraInfo & msg)
