@@ -89,11 +89,8 @@ def generate_launch_description():
 
     add_launch_arg(
         "tier4_localization_launch_param_path",
-        [
-            FindPackageShare("tier4_localization_launch"),
-            "/config"
-        ],
-        "tier4_localization_launch param path"
+        [FindPackageShare("tier4_localization_launch"), "/config"],
+        "tier4_localization_launch param path",
     )
     add_launch_arg(
         "crop_box_filter_measurement_range_param_path",
@@ -107,7 +104,7 @@ def generate_launch_description():
         "voxel_grid_downsample_filter_param_path",
         [
             LaunchConfiguration("tier4_localization_launch_param_path"),
-            "/voxel_grid_filter.param.yaml"
+            "/voxel_grid_filter.param.yaml",
         ],
         "path to the parameter file of voxel_grid_downsample_filter",
     )
