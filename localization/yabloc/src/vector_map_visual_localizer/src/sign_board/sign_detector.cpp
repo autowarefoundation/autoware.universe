@@ -5,15 +5,10 @@
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
-#include <range/v3/algorithm/min_element.hpp>
-#include <range/v3/view/transform.hpp>
-
-#include <boost/assign/list_of.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
+#include <sign_board/sign_lib.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+
 namespace sign_board
 {
 SignDetector::SignDetector() : AbstCorrector("sign_detector"), tf_subscriber_(get_clock())
@@ -51,22 +46,9 @@ SignDetector::SignBoards SignDetector::extractSpecifiedLineString(
   return line_strings;
 }
 
-float SignDetector::distanceToSignBoard(
-  const lanelet::ConstLineString3d & board, const Eigen::Vector3f & position)
-{
-  int vertex_count = 0;
-  Eigen::Vector3f centroid = Eigen::Vector3f::Zero();
-  for (auto p : board) {
-    centroid += Eigen::Vector3f(p.x(), p.y(), p.z());
-    vertex_count++;
-  }
-  centroid /= static_cast<float>(vertex_count);
-  return (centroid - position).norm();
-}
-
 void SignDetector::callbackImage(const Image & msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "callbackImage is called");
+  // RCLCPP_INFO_STREAM(get_logger(), "callbackImage is called");
 
   const rclcpp::Time stamp = msg.header.stamp;
   auto array = getSyncronizedParticleArray(stamp);
@@ -75,58 +57,24 @@ void SignDetector::callbackImage(const Image & msg)
   if (!camera_extrinsic_.has_value()) return;
   if (sign_boards_.empty()) return;
 
-  using Pose = geometry_msgs::msg::Pose;
-
   cv::Mat image = util::decompress2CvMat(msg);
-  Eigen::Affine3f affine = util::pose2Affine(meanPose(array.value()));
+  Eigen::Affine3f mean_affine = util::pose2Affine(meanPose(array.value()));
 
-  // Search nearest sign-boards
-  using namespace ranges;
-  auto lambda = std::bind(
-    &SignDetector::distanceToSignBoard, this, std::placeholders::_1, affine.translation());
-  auto distances = sign_boards_ | ranges::views::transform(lambda);
-  int step = std::distance(distances.begin(), ranges::min_element(distances));
-  lanelet::ConstLineString3d nearest_sign = *std::next(sign_boards_.begin(), step);
+  std::vector<Contour> contours;
+  for (const auto board : sign_boards_) {
+    float distance = distanceToSignBoard(board, mean_affine.translation());
+    if (distance > 80) continue;
+    std::optional<Contour> opt_c = extractSignBoardContour(array.value(), board);
+    if (opt_c.has_value()) contours.push_back(opt_c.value());
+  }
 
-  float shortest_distance = distances.at(step);
-  RCLCPP_INFO_STREAM(
-    get_logger(), "nearest sign-boards: " << nearest_sign.id() << " " << shortest_distance);
-
-  drawSignBoardContour(image, array.value(), nearest_sign, affine);
+  for (const auto c : contours) cv::polylines(image, c.polygon, false, randomColor(c.id), 1);
+  cv::imshow("test", image);
+  cv::waitKey(5);
 }
 
-std::vector<cv::Point2i> computeConvexHull(const std::vector<cv::Point2f> & src)
-{
-  namespace bg = boost::geometry;
-
-  typedef bg::model::d2::point_xy<double> point;
-  typedef bg::model::polygon<point> polygon;
-
-  polygon poly;
-  // std::cout << "raw: ";
-  for (const auto & p : src) {
-    bg::append(poly, point(p.x, p.y));
-    // std::cout << p << " ";
-  }
-  // std::cout << std::endl;
-
-  polygon hull;
-  bg::convex_hull(poly, hull);
-
-  std::vector<cv::Point2i> dst;
-  std::cout << "convex: ";
-  for (auto p : hull.outer()) {
-    cv::Point2f cvp(p.x(), p.y());
-    std::cout << cvp << " ";
-    dst.push_back(cvp);
-  }
-  std::cout << std::endl;
-  return dst;
-}
-
-void SignDetector::drawSignBoardContour(
-  const cv::Mat & image, const ParticleArray & array, const SignBoard board,
-  const Eigen::Affine3f & affine)
+std::optional<SignDetector::Contour> SignDetector::extractSignBoardContour(
+  const ParticleArray & array, const SignBoard board)
 {
   const Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
@@ -153,14 +101,10 @@ void SignDetector::drawSignBoardContour(
     }
   }
 
-  if (projected.empty()) return;
+  if (projected.empty()) return std::nullopt;
 
-  std::vector<cv::Point2i> contour = computeConvexHull(projected);
-  if (contour.empty()) return;
-
-  cv::polylines(image, contour, false, cv::Scalar(0, 255, 255), 2);
-  cv::imshow("test", image);
-  cv::waitKey(5);
+  std::vector<cv::Point2i> convex_hull = computeConvexHull(projected);
+  return Contour{board.id(), convex_hull};
 }
 
 void SignDetector::callbackInfo(const CameraInfo & msg)

@@ -38,16 +38,18 @@ private:
   std::optional<Eigen::Affine3f> camera_extrinsic_;
   SignBoards sign_boards_;
 
+  struct Contour
+  {
+    signed long id;
+    std::vector<cv::Point2i> polygon;
+  };
+
   SignBoards extractSpecifiedLineString(
     const lanelet::LineStringLayer & line_string_layer,
     const std::set<std::string> & visible_labels);
 
-  float distanceToSignBoard(
-    const lanelet::ConstLineString3d & board, const Eigen::Vector3f & position);
-
-  void drawSignBoardContour(
-    const cv::Mat & image, const ParticleArray & array, const SignBoard board,
-    const Eigen::Affine3f & affine);
+  std::optional<Contour> extractSignBoardContour(
+    const ParticleArray & array, const SignBoard board);
 
   void callbackImage(const Image & image);
   void callbackVectorMap(const HADMapBin & map_bin);
