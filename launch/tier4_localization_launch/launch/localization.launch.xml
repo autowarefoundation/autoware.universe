@@ -17,7 +17,9 @@
     <!-- pose_estimator module -->
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml">
+        <arg name="tier4_localization_launch_param_path" value="$(var tier4_localization_launch_param_path)"/>
+      </include>
     </group>
     <!-- twist_estimator module -->
     <group>
@@ -31,7 +33,9 @@
     </group>
     <!-- localization_error_monitor_module -->
     <group>
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml">
+        <arg name="param_file" value="$(var tier4_localization_launch_param_path)/config/localization_error_monitor.param.yaml"/>
+      </include>
     </group>
   </group>
 </launch>
