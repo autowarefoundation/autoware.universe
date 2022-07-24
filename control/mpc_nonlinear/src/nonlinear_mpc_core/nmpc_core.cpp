@@ -934,10 +934,9 @@ bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(ns_splines::In
   return true;
 }
 
-[[maybe_unused]] void ns_nmpc_interface::NonlinearMPCController::computeSteeringFeedbackControls(
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-  double const &dt,
-  Model::input_vector_t &u_solution)
+[[maybe_unused]] void ns_nmpc_interface::NonlinearMPCController::computeSteeringFeedbackControls(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+                                                                                                 double const &dt,
+                                                                                                 Model::input_vector_t &u_solution)
 {
   // Compute a steering feedback signal and store it in the trajectory_data.
   if (bool const &&is_feedback_computed = lpv_initializer_.computeSingleFeedbackControls(model_ptr_,

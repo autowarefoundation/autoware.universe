@@ -28,17 +28,17 @@ ns_discretization::ODEfoh::ODEfoh(Model::model_ptr_t model,
 {
 }
 
-ns_discretization::ODEzoh::ODEzoh(
-  Model::model_ptr_t model, const Model::input_vector_t &u0, Model::param_vector_t const &params0,
-  double dt)
+ns_discretization::ODEzoh::ODEzoh(Model::model_ptr_t model,
+                                  const Model::input_vector_t &u0,
+                                  Model::param_vector_t const &params0,
+                                  double dt)
   : model_(model), u0_(u0), params0_(params0), dt_(dt)
 {
 }
 
 // --------- Integration Operator -------------------
 
-void ns_discretization::ODEfoh::operator()(
-  const ode_matrix_t &V, ode_matrix_t &dVdt, const double t)
+void ns_discretization::ODEfoh::operator()(const ode_matrix_t &V, ode_matrix_t &dVdt, const double t)
 {
   const Model::state_vector_t x = V.col(0);
   Model::input_vector_t u(Model::input_vector_t::Zero());
@@ -108,8 +108,7 @@ void ns_discretization::ODEfoh::operator()(
   assert(cols == ode_matrix_t::ColsAtCompileTime);
 }
 
-void ns_discretization::ODEzoh::operator()(
-  const ode_matrix_t &V, ode_matrix_t &dVdt, const double t)
+void ns_discretization::ODEzoh::operator()(const ode_matrix_t &V, ode_matrix_t &dVdt, const double t)
 {
   const Model::state_vector_t x = V.col(0);
   Model::input_vector_t u(Model::input_vector_t::Zero());
@@ -162,7 +161,7 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
 {
 
   size_t const &&K = dd.nX();  // number of matrices in the state matrix container.
-  double const num_of_tsteps = 2;  // number of time steps for the RK integration. 1 for a single step.
+  double const num_of_tsteps{2};  // number of time steps for the RK integration. 1 for a single step.
 
   // Start computing Ak, B0k, B1k and zk where zk is the residual in the Taylor
   // expansion; x[k+1]  = Ax + Bu + f(xk, uk) - Axk - Buk and zk = f(xk, uk) -
@@ -175,9 +174,11 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
   //  vector_space_algebra> stepper; euler<ode_matrix_t, double, ode_matrix_t,
   //  double, vector_space_algebra> stepper;
 
-  boost::numeric::odeint::runge_kutta4<
-    ode_matrix_t, double, ode_matrix_t, double, boost::numeric::odeint::vector_space_algebra>
-    stepper;
+  boost::numeric::odeint::runge_kutta4<ode_matrix_t,
+                                       double,
+                                       ode_matrix_t,
+                                       double,
+                                       boost::numeric::odeint::vector_space_algebra> stepper;
 
   //  boost::numeric::odeint::runge_kutta_fehlberg78<
   //    ode_matrix_t, double, ode_matrix_t, double, boost::numeric::odeint::vector_space_algebra>
@@ -190,7 +191,7 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
   Model::param_vector_t params0(Model::param_vector_t::Zero());
   Model::param_vector_t params1(Model::param_vector_t::Zero());
 
-  for (size_t k = 0; k < K; k++)
+  for (size_t k = 0; k < K; ++k)
   {
     // Compute kappa0, kappa1.
     auto const x0 = trajectory_data.X.at(k);
@@ -212,11 +213,12 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
       return false;
     }
 
-    params0(0) = kappa0_kappa1[0];
-    params0(1) = target_states.X[k](6);  // virtual car speed
+    params0(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0_kappa1[0];
+    params0(ns_utils::toUType(VehicleParamIds::target_vx)) = target_states.X[k](ns_utils::toUType(VehicleStateIds::vx));
 
-    params1(0) = kappa0_kappa1[1];
-    params1(1) = target_states.X[k + 1](6);  // virtual car speed
+    params1(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0_kappa1[1];
+    params1(ns_utils::toUType(VehicleParamIds::target_vx)) =
+      target_states.X[k + 1](ns_utils::toUType(VehicleStateIds::vx));
 
     // Create ODEzoh a functor that keeps internal parameters to facilitate Boost  OdeInt.
     // u1 is redundant in the ZOH method, but we keep there for FOH to switch the methods easily.
@@ -239,11 +241,10 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
 
     // Integrate ODEzoh matrices. We can increase the integration accuracy
     // dt/ nRKorder defines the number of integration steps.
-    boost::numeric::odeint::integrate_adaptive(
-      stepper, ode_multipleshooting, V, 0., dt, dt / num_of_tsteps);
+    boost::numeric::odeint::integrate_adaptive(stepper, ode_multipleshooting, V, 0., dt, dt / num_of_tsteps);
 
     // Assign the discrete matrices. Vectorized matrices start at column 1.
-    Eigen::Index cols = 1;
+    Eigen::Index cols{1};
 
     dd.A[k] = V.template block<Model::state_dim, Model::state_dim>(0, cols);
     cols += Model::state_dim;
@@ -261,11 +262,12 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
 }
 
 // We can also use the Bi-linear transformation method for discretization.
-[[maybe_unused]] bool ns_discretization::bilinearTransformation(
-  Model::model_ptr_t const &model_ptr, trajectory_data_t const &trajectory_data,
-  trajectory_data_t const &target_state,
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &ts,
-  discretization_data_t &dd)
+[[maybe_unused]] bool ns_discretization::bilinearTransformation(Model::model_ptr_t const &model_ptr,
+                                                                trajectory_data_t const &trajectory_data,
+                                                                trajectory_data_t const &target_state,
+                                                                ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+                                                                double const &ts,
+                                                                discretization_data_t &dd)
 {
   size_t const &K = dd.nX();  // number of matrices in the state matrix container.
 
@@ -285,7 +287,7 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
 
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
-  for (size_t k = 0; k < K; k++)
+  for (size_t k = 0; k < K; ++k)
   {
     auto const x_eq = trajectory_data.X.at(k);
     auto const u_eq = trajectory_data.U.at(k);
@@ -294,17 +296,15 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
     double kappa0{};
 
     // InterpolateInCoordinates wit PCG setting reusing_param true.
-    auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-
-    if (!could_interpolate)
+    if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
     {
       // ROS_ERROR("[nonlinear_mpc-discretization] Couldn't InterpolateInCoordinates
       // at time %zu of %zu ", k, K);
       return false;
     }
 
-    params(0) = kappa0;
-    params(1) = target_state.X[k](6);
+    params(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0;
+    params(ns_utils::toUType(VehicleParamIds::target_vx)) = target_state.X[k](ns_utils::toUType(VehicleStateIds::vx));
 
     model_ptr->computeJacobians(x_eq, u_eq, params, Ac, Bc);
     model_ptr->computeFx(x_eq, u_eq, params, f);
@@ -312,7 +312,7 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
     Model::state_vector_t z = f - Ac * x_eq - Bc * u_eq;
 
     // Bi-linear Transformation.
-    Model::state_matrix_t &&I_At2_inv = (Id - Ac * ts / 2).inverse();
+    Model::state_matrix_t const &I_At2_inv = (Id - Ac * ts / 2).inverse();
 
     dd.A[k] = I_At2_inv * (Id + Ac * ts / 2);
     dd.B[k] = I_At2_inv * Bc * ts;
@@ -322,16 +322,18 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
   return true;
 }
 
-bool multipleShootingSingleStep(
-  Model::model_ptr_t const &model_ptr, Model::state_vector_t const &x0,
-  Model::input_vector_t const &u0, double const &curvature_0, double const &dt,
-  Model::state_matrix_t &Ad, Model::control_matrix_t &Bd);
+bool multipleShootingSingleStep(Model::model_ptr_t const &model_ptr, Model::state_vector_t const &x0,
+                                Model::input_vector_t const &u0, double const &curvature_0, double const &dt,
+                                Model::state_matrix_t &Ad, Model::control_matrix_t &Bd);
 
 // One-step discretization methods.
-bool ns_discretization::multipleShootingSingleStep(
-  Model::model_ptr_t const &model_ptr, Model::state_vector_t const &x0,
-  Model::input_vector_t const &u0, Model::param_vector_t const &params0, double const &dt,
-  Model::state_matrix_t &Ad, Model::control_matrix_t &Bd)
+bool ns_discretization::multipleShootingSingleStep(Model::model_ptr_t const &model_ptr,
+                                                   Model::state_vector_t const &x0,
+                                                   Model::input_vector_t const &u0,
+                                                   Model::param_vector_t const &params0,
+                                                   double const &dt,
+                                                   Model::state_matrix_t &Ad,
+                                                   Model::control_matrix_t &Bd)
 {
   double const num_of_tsteps{4};  // Number of time steps for the RK integration. 1 for a single step.
 
@@ -346,8 +348,11 @@ bool ns_discretization::multipleShootingSingleStep(
   //  vector_space_algebra> stepper; euler<ode_matrix_t, double, ode_matrix_t,
   //  double, vector_space_algebra> stepper;
 
-  boost::numeric::odeint::runge_kutta4<
-    ode_matrix_t, double, ode_matrix_t, double, boost::numeric::odeint::vector_space_algebra>
+  boost::numeric::odeint::runge_kutta4<ode_matrix_t,
+                                       double,
+                                       ode_matrix_t,
+                                       double,
+                                       boost::numeric::odeint::vector_space_algebra>
     stepper;
 
   // runge_kutta_fehlberg78<ode_matrix_t, double, ode_matrix_t,
