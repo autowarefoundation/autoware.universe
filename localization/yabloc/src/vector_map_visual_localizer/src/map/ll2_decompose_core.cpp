@@ -23,7 +23,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
 }
 
-void Ll2Decomposer::mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
+void Ll2Decomposer::mapCallback(const HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
