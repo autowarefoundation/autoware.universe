@@ -14,6 +14,8 @@
 
 #include "trajectory_follower/mpc.hpp"
 
+#include "motion_utils/motion_utils.hpp"
+
 #include <algorithm>
 #include <deque>
 #include <limits>
@@ -214,11 +216,9 @@ void MPC::setReferenceTrajectory(
 
   /* calculate yaw angle */
   if (current_pose_ptr) {
-    const int64_t nearest_idx =
-      MPCUtils::calcNearestIndex(mpc_traj_smoothed, current_pose_ptr->pose);
-    const float64_t ego_yaw = tf2::getYaw(current_pose_ptr->pose.orientation);
-    trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(
-      &mpc_traj_smoothed, nearest_idx, ego_yaw);
+    const bool is_forward_shift =
+      motion_utils::isDrivingForward(mpc_traj_smoothed.toTrajectoryPoints());
+    trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, is_forward_shift);
     trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
   }
 
@@ -546,8 +546,6 @@ MPCMatrix MPC::generateMPCMatrix(
   MatrixXd Cd(DIM_Y, DIM_X);
   MatrixXd Uref(DIM_U, 1);
 
-  constexpr float64_t ep = 1.0e-3;  // large enough to ignore velocity noise
-
   /* predict dynamics for N times */
   for (int64_t i = 0; i < N; ++i) {
     const float64_t ref_vx = reference_trajectory.vx[static_cast<size_t>(i)];
@@ -611,9 +609,12 @@ MPCMatrix MPC::generateMPCMatrix(
   }
 
   /* add lateral jerk : weight for (v * {u(i) - u(i-1)} )^2 */
+  const bool is_forward_shift =
+    motion_utils::isDrivingForward(reference_trajectory.toTrajectoryPoints());
+  m_sign_vx = is_forward_shift ? 1 : -1;
   for (int64_t i = 0; i < N - 1; ++i) {
     const float64_t ref_vx = reference_trajectory.vx[static_cast<size_t>(i)];
-    m_sign_vx = ref_vx > ep ? 1 : (ref_vx < -ep ? -1 : m_sign_vx);
+    m_sign_vx = is_forward_shift ? 1 : -1;
     const float64_t ref_k = reference_trajectory.k[static_cast<size_t>(i)] * m_sign_vx;
     const float64_t j = ref_vx * ref_vx * getWeightLatJerk(ref_k) / (DT * DT);
     const Eigen::Matrix2d J = (Eigen::Matrix2d() << j, -j, -j, j).finished();
