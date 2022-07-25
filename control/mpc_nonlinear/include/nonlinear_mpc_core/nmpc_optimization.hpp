@@ -750,8 +750,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 
     // scale the targets in [-1, 1]
     auto const
-      &xref_hat = params_optimization.Sx_inv * (target_references.X[k] * data_nmpc.feedforward_speed_set_point_scale -
-                                                params_optimization.Cx);
+      &xref_hat = params_optimization.Sx_inv * (target_references.X[k] - params_optimization.Cx);
 
     new_objective_vector.template segment<STATE_DIM>(k * STATE_DIM) = -1 * Q * xref_hat;
 
@@ -768,8 +767,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
   // = -1 * QN * target_references.X[K - 1];
 
   auto const
-    &xref_hat = params_optimization.Sx_inv * (target_references.X[K - 1] * data_nmpc.feedforward_speed_set_point_scale -
-                                              params_optimization.Cx);  // scale the targets in [-1, 1]
+    &xref_hat =
+    params_optimization.Sx_inv * (target_references.X[K - 1] - params_optimization.Cx);  // scale the targets in [-1, 1]
 
   new_objective_vector.template segment<STATE_DIM>((K - 1) * STATE_DIM) = -1 * QN * xref_hat;
 

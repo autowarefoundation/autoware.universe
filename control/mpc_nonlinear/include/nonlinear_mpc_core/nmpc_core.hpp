@@ -187,28 +187,8 @@ class NonlinearMPCController
 
   void getInitialState(Model::state_vector_t &x0) const;
 
-  /**
-   * @brief gets the current rate of change of speed from the system equations.
-   * @param [in] current_long_speed current predicted speed
-   * @param [in] current_speed_input current predicted speed control value
-   * @param [out] vdot rate of change of speed
-   * */
-  void getSpeedDynamics_vdot(
-    const double &current_long_speed, const double &current_speed_input, double &vdot) const;
-
-  /**
-   * @brief gets the current rate of change of steering from the system equations.
-   * @param [in] current_steering current predicted steering
-   * @param [in] current_steering_input current predicted steering control value
-   * @param [out] vdot rate of change of steering
-   * */
-  void getSteeringDynamics_deltadot(const double &current_steering,
-                                    const double &current_steering_input,
-                                    double &delta_dot) const;
-
   // Given a speed trajectory, predict the travelled distance depending on the speed.
-  void
-  getPredictedArcLengthDistanceVector(std::vector<double> &s_predicted, double const &current_predicted_s0) const;
+  void getPredictedArcLengthDistanceVector(std::vector<double> &s_predicted, double const &current_predicted_s0) const;
 
   // Gets the total cost (value function value from the OSQP object.)
   [[nodiscard]] double getObjectiveValue() const;

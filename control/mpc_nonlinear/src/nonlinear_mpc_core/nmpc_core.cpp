@@ -994,8 +994,7 @@ void ns_nmpc_interface::NonlinearMPCController::shiftControls()
 //    data_nmpc_.trajectory_data.U[nU - 1] = data_nmpc_.trajectory_data.U[nU - 2];
 //}
 
-void ns_nmpc_interface::NonlinearMPCController::getControlSolutions(
-  Model::input_vector_t &u_solution)
+void ns_nmpc_interface::NonlinearMPCController::getControlSolutions(Model::input_vector_t &u_solution)
 {
   // Interpolates the OSQP solutions between U[0] and U[1].
   data_nmpc_.trajectory_data.getControlMPCSolutionsAtTime(0.0,  // params_ptr_->control_period,
@@ -1050,16 +1049,3 @@ void ns_nmpc_interface::NonlinearMPCController::getSmoothXYZAtDistance(double co
   ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->z, s, xyz[2]);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSpeedDynamics_vdot(const double &current_long_speed,
-                                                                      const double &current_speed_input,
-                                                                      double &vdot) const
-{
-  vdot = model_ptr_->getLongSpeedDynamics_vdot(current_long_speed, current_speed_input);
-}
-
-void ns_nmpc_interface::NonlinearMPCController::getSteeringDynamics_deltadot(const double &current_steering,
-                                                                             const double &current_steering_input,
-                                                                             double &delta_dot) const
-{
-  delta_dot = model_ptr_->getSteeringDynamics_deltadot(current_steering, current_steering_input);
-}

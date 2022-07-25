@@ -81,10 +81,7 @@
 
     # -- Accuracy parameters --
     number_of_sqp_iterations: 1
-
-    # -- Speed tracking PI control I-integrator saturation limits
-    feedforward_speed_set_point_scale: 1.0 # Scale the reference longitudinal speed.
-
+     
     # CDOB - DOB parameters.
     use_cdob: true
     use_dob: true # activating use_dob only enables use_cdob. They are both used.
