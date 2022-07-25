@@ -8,9 +8,6 @@ ament_auto_find_build_dependencies(REQUIRED
         ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
 
 find_package(Eigen3 CONFIG)
-find_package(AVX QUIET)
-option(WITH_AVX "Compile with avx intrinsics" ${AVX_FOUND})
-
 
 # set(CMAKE_CXX_STANDARD 17)
 # Release, Debug, RelWithDebInfo, MinSizeRel
@@ -78,17 +75,20 @@ if (COMPILER_SUPPORTS_MARCH_NATIVE)
     message(STATUS "Enabling MARCH NATIVE ")
 endif ()
 
-check_cxx_compiler_flag("-fopenmp" COMPILER_SUPPORT_OPENMP)
-if (COMPILER_SUPPORT_OPENMP)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-    message(STATUS "Enabling OpenMP ")
-endif ()
+#check_cxx_compiler_flag("-fopenmp" COMPILER_SUPPORT_OPENMP)
+#if (COMPILER_SUPPORT_OPENMP)
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+#    message(STATUS "Enabling OpenMP ")
+#endif ()
 
-if (${AVX_FOUND})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${AVX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${AVX_FLAGS}")
-    message(STATUS "Enabling AVX ")
-endif (${AVX_FOUND})
+
+#find_package(AVX QUIET)
+#option(WITH_AVX "Compile with avx intrinsics" ${AVX_FOUND})
+#if (${AVX_FOUND})
+#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${AVX_FLAGS}")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${AVX_FLAGS}")
+#    message(STATUS "Enabling AVX ")
+#endif (${AVX_FOUND})
 
 
 # CppAD
