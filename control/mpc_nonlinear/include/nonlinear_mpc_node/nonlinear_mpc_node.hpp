@@ -516,7 +516,7 @@ class NonlinearMPCNode : public rclcpp::Node
   /**
    * @brief get stop command
    */
-  static ControlCmdMsg getStopControlCommand();
+  void getStopControlCommand(ControlCmdMsg &control_cmd);
 
   // Debug Parameters
   mutable DebugData debug_data_{};
