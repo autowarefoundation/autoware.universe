@@ -133,8 +133,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
         result.successful = false;
         result.reason = "number of points for projections must be at least 2";
       }
-    } else if (parameter.get_name() == ProjectionParameters::STEER_OFFSETS_PARAM) {
-      projection_params_.updateSteeringOffsets(*this, parameter.as_double_array());
+    } else if (parameter.get_name() == ProjectionParameters::STEER_OFFSET_PARAM) {
+      projection_params_.steering_angle_offset = parameter.as_double();
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;

@@ -31,21 +31,20 @@ segment_t forwardSimulatedSegment(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
 
 /// @brief generate lines for the forward projection using the bicycle model
-/// @param [in] origin origin of the segment
+/// @param [in] origin origin of the projection
 /// @param [in] params parameters of the forward projection
-/// @return lines from the origin to its positions after forward projection
+/// @return lines from the origin to its positions after forward projection, ordered left to right
 multilinestring_t bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params);
 
-/// @brief generate the footprint polygon of the forward projection
-/// @param [in] origin origin of the segment
+/// @brief generate projection line using the bicycle model
+/// @param [in] origin origin of the projection
 /// @param [in] params parameters of the forward projection
-/// @param [in] lateral_offset lateral offset around the projection to make the footprint
-/// @param [out] projected_straight_segment the segment of the forward projection
-/// @return lines from the origin to its positions after forward projection
-polygon_t forwardSimulatedPolygon(
+/// @param [in] steering_angle steering angle used for the projection
+/// @return line from the origin to its position after forward projection
+linestring_t bicycleProjectionLine(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params,
-  const double lateral_offset, segment_t & projected_straight_segment);
+  const double steering_angle);
 
 /// @brief generate a footprint from a segment and a lateral offset
 /// @param [in] segment segment from which to create the footprint
@@ -60,10 +59,10 @@ polygon_t generateFootprint(const segment_t & segment, const double lateral_offs
 polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset);
 
 /// @brief generate a footprint from multiple linestrings and a lateral offset
-/// @param [in] linestrings linestring from which to create the footprint
+/// @param [in] lines linestring from which to create the footprint
 /// @param [in] lateral_offset offset around the segment used to create the footprint
 /// @return footprint polygon
-polygon_t generateFootprint(const multilinestring_t & linestrings, const double lateral_offset);
+polygon_t generateFootprint(const multilinestring_t & lines, const double lateral_offset);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__FORWARD_PROJECTION_HPP_

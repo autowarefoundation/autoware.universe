@@ -112,6 +112,7 @@ polygon_t createEnvelopePolygon(const std::vector<polygon_t> & footprints)
     unions = result;
     boost::geometry::clear(result);
   }
+  if (unions.empty()) return {};
   return unions.front();
 }
 
