@@ -47,22 +47,10 @@ class StopLineModule : public SceneModuleInterface
 public:
   enum class State { APPROACH, STOPPED, START };
 
-  struct SegmentIndexWithPose
-  {
-    size_t index;
-    geometry_msgs::msg::Pose pose;
-  };
-
   struct SegmentIndexWithPoint2d
   {
     size_t index;
     Point2d point;
-  };
-
-  struct SegmentIndexWithOffset
-  {
-    size_t index;
-    double offset;
   };
 
   struct DebugData
@@ -96,33 +84,26 @@ public:
 private:
   int64_t module_id_;
 
-  geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
-
   boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
     const PathWithLaneId & path, const LineString2d & stop_line,
     const SearchRangeIndex & search_index);
-
-  boost::optional<StopLineModule::SegmentIndexWithOffset> findOffsetSegment(
-    const PathWithLaneId & path, const StopLineModule::SegmentIndexWithPoint2d & collision);
-
-  boost::optional<StopLineModule::SegmentIndexWithPose> calcStopPose(
-    const PathWithLaneId & path,
-    const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment);
 
   void insertStopPoint(const geometry_msgs::msg::Point & stop_point, PathWithLaneId & path) const;
 
   std::shared_ptr<const rclcpp::Time> stopped_time_;
 
   lanelet::ConstLineString3d stop_line_;
+
   int64_t lane_id_;
 
+  // State machine
   State state_;
 
   // Parameter
   PlannerParam planner_param_;
 
   // Debug
-  DebugData debug_data_;
+  mutable DebugData debug_data_;
 };
 }  // namespace behavior_velocity_planner
 
