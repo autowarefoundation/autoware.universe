@@ -119,7 +119,7 @@ class OptimizationProblemOSQP
   [[nodiscard]] bool isUpdated() const
   { return is_updated_; }
 
-  osqp::OsqpExitCode testSolver();
+  [[nodiscard]] osqp::OsqpExitCode testSolver() const;
 
   void getSolution(ns_data::ParamsOptimization const &params_optimization, Model::trajectory_data_t &td);
 
@@ -132,7 +132,7 @@ class OptimizationProblemOSQP
                   ns_data::ParamsOptimization const &param_opt);
 
   // Solve
-  osqp::OsqpExitCode solve() const;
+  [[nodiscard]] osqp::OsqpExitCode solve() const;
 
   [[nodiscard]] double getObjectiveValue() const
   { return osqp_solver_.objective_value(); }
@@ -152,9 +152,7 @@ class OptimizationProblemOSQP
 
   // Keep the following triplets which are constants and to be reused regularly.
   // There are the constant parts of the OSQP constraint matrix.
-  std::vector<Eigen::Triplet<double>> triplets_Sx_;              // !<@brief Scaling matrix.
-  std::vector<Eigen::Triplet<double>> triplets_Aequality_jerk_;  // !<@brief Equality constraint.
-  std::vector<Eigen::Triplet<double>> triplets_Aineq_;           // !<@brief Inequality constraint.
+  std::vector<Eigen::Triplet<double>> triplets_constants_; // [Sx, Jerk, Aineq]
 
   bool is_initialized_{false};  // !<-brief Initialization of optimization structure.
   bool is_updated_{false};      // !<-@brief whether the matrices are updated or not.
@@ -178,9 +176,7 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP(const 
     osqp_solver_{osqp::OsqpSolver()},
     Pcost_(other.Pcost_),
     Aconst_(other.Aconst_),
-    triplets_Sx_(other.triplets_Sx_),
-    triplets_Aequality_jerk_(other.triplets_Aequality_jerk_),
-    triplets_Aineq_(other.triplets_Aineq_)
+    triplets_constants_(other.triplets_constants_)
 {
 }
 
@@ -196,9 +192,7 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::operator=(const OptimizationPr
     Pcost_ = other.Pcost_;
     Aconst_ = other.Aconst_;
 
-    triplets_Sx_ = other.triplets_Sx_;
-    triplets_Aequality_jerk_ = other.triplets_Aequality_jerk_;
-    triplets_Aineq_ = other.triplets_Aineq_;
+    triplets_constants_ = other.triplets_constants_;
 
     // OSQP classes.
     osqp_settings_ = other.osqp_settings_;
@@ -219,6 +213,10 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   // Prepare P and A sparse matrix members.
   Pcost_ = Eigen::SparseMatrix<double>(osqp_dims_.Pdim, osqp_dims_.Pdim);  // !<@brief Penalty matrix.
   Aconst_ = Eigen::SparseMatrix<double>(osqp_dims_.Arow_dim, osqp_dims_.Acol_dim);  // !<@briefConstraint matrix.
+
+  std::vector<Eigen::Triplet<double>> triplets_Sx_;              // !<@brief Scaling matrix.
+  std::vector<Eigen::Triplet<double>> triplets_Aequality_jerk_;  // !<@brief Equality constraint.
+  std::vector<Eigen::Triplet<double>> triplets_Aineq_;           // !<@brief Inequality constraint.
 
   /**
    *  To prevent KKT conditioning error we add values in the diagonals of P matrix at the end of this method.
@@ -300,14 +298,13 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // A_equality on the main diagonal set -Sx.
-
     auto const &rowSx = k * STATE_DIM;
     auto const &colSx = k * STATE_DIM;
 
     auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
     std::transform(triplet_list_S.cbegin(), triplet_list_S.cend(), std::back_inserter(triplets_A),
-                   [&rowSx, &colSx, this](auto const &titem)
+                   [&rowSx, &colSx, &triplets_Sx_](auto const &titem)
                    {
                      auto &&trow = titem[0] + rowSx;
                      auto &&tcol = titem[1] + colSx;
@@ -315,13 +312,12 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
                      // Set the class member for the triplet_Sx.
                      auto &&triplet_temp = triplet_type(trow, tcol, val);
-                     this->triplets_Sx_.template emplace_back(triplet_temp);
+                     triplets_Sx_.template emplace_back(triplet_temp);
 
                      return triplet_temp;
                    });
 
     // A_equality on the diagonal k=-1 set A*Sx.
-
     auto rowA = (k + 1) * STATE_DIM;
     auto colA = k * STATE_DIM;
 
@@ -355,16 +351,21 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                      return triplet_type(trow, tcol, val);
                    });
 
-    // Insert Bj triplets [-1, 1; -1, 1; ...]. Takes difference of u, d(u) =  u1-u0.
-    // This jerk equalities is just below the state equalities X=AX + BU + z.
-    // [AX + BU + z.; 0 d(u) du]
+    /**
+     * @brief  Insert Bj triplets [-1, 1; -1, 1; ...]. Takes difference of u, d(u) =  u1-u0.
+     *  This jerk equalities is just below the state equalities X=AX + BU + z.
+     *  [AX + BU + z.; 0 d(u) du].
+     *
+     *  Since we use equalities  [A  B  0][X;U;0]  = -z
+     *                           [0 -d(u) 1][u;du] = 0
+     */
 
     // Set -Id on the main diagonals.  // Just after X = AX + BU + z
     auto const &rowBjmain = K * STATE_DIM + k * INPUT_DIM;
     auto const &colBjmain = K * STATE_DIM + k * INPUT_DIM;
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
-                   [&rowBjmain, &colBjmain, this](auto &titem)
+                   [&rowBjmain, &colBjmain, &triplets_Aequality_jerk_](auto &titem)
                    {
                      auto &&trow = titem[0] + rowBjmain;
                      auto &&tcol = titem[1] + colBjmain;
@@ -372,7 +373,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
                      // Keep these also in the class member.
                      auto &&triplet_temp = triplet_type(trow, tcol, val);
-                     this->triplets_Aequality_jerk_.template emplace_back(triplet_temp);
+                     triplets_Aequality_jerk_.template emplace_back(triplet_temp);
 
                      return triplet_temp;
                    });
@@ -383,7 +384,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
     auto const &colBj_k1 = K * STATE_DIM + (k + 1) * INPUT_DIM;
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
-                   [&rowBj_k1, &colBj_k1, this](auto const &titem)
+                   [&rowBj_k1, &colBj_k1, &triplets_Aequality_jerk_](auto const &titem)
                    {
                      auto &&trow = titem[0] + rowBj_k1;
                      auto &&tcol = titem[1] + colBj_k1;
@@ -391,7 +392,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
                      // Keep these also in the class member.
                      auto &&triplet_temp = triplet_type(trow, tcol, val);
-                     this->triplets_Aequality_jerk_.template emplace_back(triplet_temp);
+                     triplets_Aequality_jerk_.template emplace_back(triplet_temp);
 
                      return triplet_temp;
                    });
@@ -402,7 +403,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
     auto const &coldu = K * STATE_DIM + K * INPUT_DIM + k * INPUT_DIM;
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
-                   [&rowdu, &coldu, this](auto const &titem)
+                   [&rowdu, &coldu, &triplets_Aequality_jerk_](auto const &titem)
                    {
                      auto &&trow = titem[0] + rowdu;
                      auto &&tcol = titem[1] + coldu;
@@ -410,7 +411,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
                      // Keep these also in the class member.
                      auto &&triplet_temp = triplet_type(trow, tcol, val);
-                     this->triplets_Aequality_jerk_.template emplace_back(triplet_temp);
+                     triplets_Aequality_jerk_.template emplace_back(triplet_temp);
 
                      return triplet_temp;
                    });
@@ -454,7 +455,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
   std::transform(triplet_list_S.cbegin(), triplet_list_S.cend(), std::back_inserter(triplets_A),
-                 [&rowSx, &colSx, this](auto const &titem)
+                 [&rowSx, &colSx, &triplets_Sx_](auto const &titem)
                  {
                    auto &&trow = titem[0] + rowSx;
                    auto &&tcol = titem[1] + colSx;
@@ -462,7 +463,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
                    // Set the class member for the triplet_Sx.
                    auto &&triplet_temp = triplet_type(trow, tcol, val);
-                   this->triplets_Sx_.template emplace_back(triplet_temp);
+                   triplets_Sx_.template emplace_back(triplet_temp);
 
                    return triplet_temp;
                  });
@@ -478,7 +479,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   auto triplet_Aineq = ns_eigen_utils::ToTriplets(Aineq, eps_triplet_zero, row_aineq, col_aineq);
 
   std::transform(triplet_Aineq.cbegin(), triplet_Aineq.cend(), std::back_inserter(triplets_A),
-                 [this](auto const &titem)
+                 [&triplets_Aineq_](auto const &titem)
                  {
                    auto &&trow = titem[0];
                    auto &&tcol = titem[1];
@@ -486,7 +487,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
                    // Set the class member for the triplet_Sx.
                    auto &&triplet_temp = triplet_type(trow, tcol, val);
-                   this->triplets_Aineq_.template emplace_back(triplet_temp);
+                   triplets_Aineq_.template emplace_back(triplet_temp);
 
                    return triplet_temp;
                  });
@@ -610,6 +611,13 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   is_initialized_ = osqp_solver_.IsInitialized();
 
+  /**
+   * Combine constant parts  of the triplets
+   * */
+
+  // [Sx, Jerk, Aineq]
+  triplets_constants_ = ns_utils::join_vectors(triplets_Sx_, triplets_Aequality_jerk_, triplets_Aineq_);
+
   // DEBUG
   ns_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
   ns_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
@@ -636,7 +644,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
  * */
 
 template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
-osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::testSolver()
+osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::testSolver() const
 {
   osqp::OsqpExitCode exit_code = osqp_solver_.Solve();
 
@@ -682,7 +690,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
   Eigen::VectorXd new_objective_vector(osqp_dims_.Pdim, 1);
   new_objective_vector.setZero();
 
-  std::vector<triplet_type> triplets_A;
+  std::vector<triplet_type> triplets_A{triplets_constants_};
 
   // if item abs is greater than eps, the item is assumed to be nonzero.
   double const &EPS = std::numeric_limits<double>::epsilon();
@@ -771,10 +779,9 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 
   // Update triplet_A constant items by copying the constant triplets into the
   // new constraint matrix.
-  std::copy(triplets_Sx_.cbegin(), triplets_Sx_.cend(), std::back_inserter(triplets_A));
-  std::copy(triplets_Aequality_jerk_.cbegin(), triplets_Aequality_jerk_.cend(), std::back_inserter(triplets_A));
-
-  std::copy(triplets_Aineq_.cbegin(), triplets_Aineq_.cend(), std::back_inserter(triplets_A));
+  // std::copy(triplets_Sx_.cbegin(), triplets_Sx_.cend(), std::back_inserter(triplets_A));
+  // std::copy(triplets_Aequality_jerk_.cbegin(), triplets_Aequality_jerk_.cend(), std::back_inserter(triplets_A));
+  // std::copy(triplets_Aineq_.cbegin(), triplets_Aineq_.cend(), std::back_inserter(triplets_A));
 
   // ---------------------- Set Equality Constraints RHS---------------------------------
   // Optimization operates on the scaled variables. The motion system matrices are scaled.

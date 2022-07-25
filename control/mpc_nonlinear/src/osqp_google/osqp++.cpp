@@ -453,6 +453,7 @@ Status OsqpSolver::UpdateObjectiveMatrix(const Eigen::SparseMatrix<double, Eigen
   // If not upper triangular, make a temporary.
   Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> objective_matrix_upper_triangle =
     objective_matrix.triangularView<Eigen::Upper>();
+
   return UpdateUpperTriangularObjectiveMatrix(objective_matrix_upper_triangle, workspace_.get());
 }
 
@@ -492,15 +493,18 @@ Status OsqpSolver::UpdateObjectiveAndConstraintMatrices(const Eigen::SparseMatri
   // temporary.
   if (IsUpperTriangular(objective_matrix))
   {
-    return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
-      objective_matrix, constraint_matrix, workspace_.get());
+    return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(objective_matrix,
+                                                                   constraint_matrix,
+                                                                   workspace_.get());
   }
 
   // If not upper triangular, make a temporary.
   Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> objective_matrix_upper_triangle =
     objective_matrix.triangularView<Eigen::Upper>();
-  return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
-    objective_matrix_upper_triangle, constraint_matrix, workspace_.get());
+
+  return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(objective_matrix_upper_triangle,
+                                                                 constraint_matrix,
+                                                                 workspace_.get());
 }
 
 namespace
@@ -585,7 +589,7 @@ Map<const VectorXd> OsqpSolver::primal_infeasibility_certificate() const
   return {workspace_->delta_y, workspace_->data->m};
 }
 
-Status OsqpSolver::SetWarmStart(const Ref<const VectorXd> &primal_vector, const Ref<const VectorXd> &dual_vector)
+Status OsqpSolver::SetWarmStart(const Ref<const VectorXd> &primal_vector, const Ref<const VectorXd> &dual_vector) const
 {
   // This is identical to calling osqp_warm_start with both vectors at once.
   OSQP_RETURN_IF_ERROR(SetPrimalWarmStart(primal_vector))
