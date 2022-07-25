@@ -12,8 +12,7 @@
 
 namespace validation
 {
-Overlay::Overlay(const std::string & node_name)
-: Node(node_name), pose_buffer_{40}, tf_subscriber_(get_clock())
+Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock())
 {
   using std::placeholders::_1;
 

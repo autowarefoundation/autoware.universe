@@ -125,7 +125,7 @@ ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp 
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 ADD_EXE(TARGET covariance_node SRC src/validation/covariance_*.cpp INC include LIB util)
 ADD_EXE(TARGET ape_node SRC src/validation/ape_*.cpp INC include LIB util)
-ADD_EXE(TARGET refine_node SRC src/validation/refine_node.cpp src/validation/overlay_core.cpp INC include LIB util)
+ADD_EXE(TARGET refine_node SRC src/validation/refine_node.cpp INC include LIB util)
 
 # map
 ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_util Geographic)
