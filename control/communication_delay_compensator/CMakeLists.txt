@@ -31,6 +31,29 @@ endif ()
 #    message("In release mode ...")
 #endif ()
 
+## ------------------ External Library Dependencies ------------------------
+# For Eigen vectorization.
+include(CheckCXXCompilerFlag)
+
+check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+if (COMPILER_SUPPORTS_MARCH_NATIVE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    message(STATUS "Enabling MARCH NATIVE ")
+endif ()
+
+check_cxx_compiler_flag("-fopenmp" COMPILER_SUPPORT_OPENMP)
+if (COMPILER_SUPPORT_OPENMP)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    message(STATUS "Enabling OpenMP ")
+endif ()
+
+if (${AVX_FOUND})
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${AVX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${AVX_FLAGS}")
+    message(STATUS "Enabling AVX ")
+endif (${AVX_FOUND})
+
+
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS
         include)
