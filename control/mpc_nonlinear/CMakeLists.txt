@@ -27,16 +27,11 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             # -Wno-conversion
             # -Wno-sign-conversion
             -Wno-sign-compare
-            #  -Wdouble-promotion
-            # -Wfloat-equal
+            -Wdouble-promotion
+            -Wfloat-equal
             -Waddress
             -fvisibility=default
-            -fPIC
-            # for eigen parallel support) # visibility hidden or default is set here.
-            #  -fopenmp
-            #  -mfma
-            #  -mavx
-    )
+            -fPIC)
 endif ()
 
 # Clang tidy
@@ -56,14 +51,12 @@ if (TIDY_WITH_CLANG)
             "readability-*")
 endif ()
 
-
 if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif ()
-
 
 ## ------------------ External Library Dependencies ------------------------
 # For Eigen vectorization.
@@ -173,9 +166,7 @@ ament_auto_add_library(${NMPC_CORE}
         include/external)
 
 target_link_libraries(mpc_nonlinear_lib_core
-        osqp-cpp
-        #	Eigen3::Eigen
-        )
+        osqp-cpp)
 
 # -------------- NMPC Node ---------------------------------------------
 set(NMPC_NODE mpc_nonlinear_node)

@@ -669,7 +669,7 @@ double NonlinearMPCNode::calcStopDistance(const size_t &prev_waypoint_index) con
     auto it = std::find_if(current_trajectory_ptr_->points.cbegin() + static_cast<int>(prev_waypoint_index),
                            current_trajectory_ptr_->points.cend(), [](auto &point)
                            {
-                             return std::fabs(point.longitudinal_velocity_mps) < zero_velocity;
+                             return static_cast<double>(std::fabs(point.longitudinal_velocity_mps)) < zero_velocity;
                            });
 
     if (it == current_trajectory_ptr_->points.cend())
@@ -2044,7 +2044,6 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
 void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted)
 {
-  auto timestamp = this->now();
 
   if (inputs_buffer_.empty())
   {
@@ -2055,7 +2054,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   Model::input_vector_t uk{Model::input_vector_t::Zero()};
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
-
   /**
    * Find the first command in the queue that has been applied to the system.
    * */
@@ -2063,6 +2061,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   /**
    * Update inputs for the Kalman model.
    * */
+  auto timestamp = this->now();
+
   if (auto it_first_cmd_to_appy =
       std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
     it_first_cmd_to_appy != inputs_buffer_.end())
@@ -2094,8 +2094,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
       // ns_utils::print("dt between control commands in the buffer : ", dt_to_next);
 
       // Extract the controls from the input buffer.
-      uk(toUType(VehicleControlIds::u_vx)) = it->longitudinal.acceleration;  // ax input
-      uk(toUType(VehicleControlIds::u_steering)) = it->lateral.steering_tire_angle;  // steering input
+      uk(toUType(VehicleControlIds::u_vx)) = static_cast<double>(it->longitudinal.acceleration);
+      uk(toUType(VehicleControlIds::u_steering)) = static_cast<double>(it->lateral.steering_tire_angle);
 
       auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
       double kappad0{};           // curvature placeholder
@@ -2308,7 +2308,7 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
   auto const &target_vel = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
   // state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
-  return std::array<double, 3>{distance_to_stopping_point, current_vel, target_vel};
+  return std::array<double, 3>{distance_to_stopping_point, current_vel, static_cast<double>(target_vel)};
 }
 
 void NonlinearMPCNode::setErrorReport(Model::state_vector_t const &x)
@@ -2360,5 +2360,4 @@ NonlinearMPCNode::onParameterUpdate(const std::vector<rclcpp::Parameter> &parame
 }  // namespace ns_mpc_nonlinear
 
 #include "rclcpp_components/register_node_macro.hpp"
-
 RCLCPP_COMPONENTS_REGISTER_NODE(ns_mpc_nonlinear::NonlinearMPCNode)
