@@ -251,6 +251,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   // Prepare an Identity matrix to be used in Jerk matrices.
   Eigen::MatrixXd uId(INPUT_DIM, INPUT_DIM);
   uId.setIdentity();
+
   auto triplets_uId = ns_eigen_utils::ToTriplets(uId, eps_triplet_zero);
 
   for (size_t k = 0; k < K - 1; ++k)
@@ -771,8 +772,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
   // Update triplet_A constant items by copying the constant triplets into the
   // new constraint matrix.
   std::copy(triplets_Sx_.cbegin(), triplets_Sx_.cend(), std::back_inserter(triplets_A));
-  std::copy(triplets_Aequality_jerk_.cbegin(), triplets_Aequality_jerk_.cend(),
-            std::back_inserter(triplets_A));
+  std::copy(triplets_Aequality_jerk_.cbegin(), triplets_Aequality_jerk_.cend(), std::back_inserter(triplets_A));
 
   std::copy(triplets_Aineq_.cbegin(), triplets_Aineq_.cend(), std::back_inserter(triplets_A));
 
@@ -849,8 +849,9 @@ osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::solve() con
  * */
 template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 void OptimizationProblemOSQP<STATE_DIM,
-                             INPUT_DIM, K>::getSolution(ns_data::ParamsOptimization const &params_optimization,
-                                                        trajectory_data_t &td)
+                             INPUT_DIM,
+                             K>::getSolution(ns_data::ParamsOptimization const &params_optimization,
+                                             trajectory_data_t &td)
 {
   /**
    * states = x = [xw, yw, psi, s, ey, epxi, v, delta].
@@ -858,7 +859,7 @@ void OptimizationProblemOSQP<STATE_DIM,
    */
 
   Eigen::VectorXd &&optimal_solution = osqp_solver_.primal_solution();
-  auto row_cont_start = K * STATE_DIM;
+  auto const &row_cont_start = K * STATE_DIM;
 
   // We push the first state at the end of the vectors so that we can skip
   // shifting the matrices. Solutions are all scaled. We need to scale back.
