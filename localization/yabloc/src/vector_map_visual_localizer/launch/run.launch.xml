@@ -72,7 +72,7 @@
     <!-- ========================================= -->
     <!-- ================ SIGN BOARD ============= -->
     <!-- ========================================= -->
-    <node name="sign_node" pkg="vector_map_visual_localizer" exec="sign_node" output="screen" args="--ros-args --log-level info">
+    <node if="false" name="sign_node" pkg="vector_map_visual_localizer" exec="sign_node" output="screen" args="--ros-args --log-level info">
         <remap from="/src_image" to="$(var resized_image)"/>
         <remap from="/src_info" to="$(var resized_info)"/>
     </node>

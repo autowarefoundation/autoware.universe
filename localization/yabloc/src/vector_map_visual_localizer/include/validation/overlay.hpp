@@ -33,9 +33,9 @@ public:
   using Image = sensor_msgs::msg::Image;
   using Float32Array = std_msgs::msg::Float32MultiArray;
 
-  Overlay();
+  Overlay(const std::string & node_name = "overlay");
 
-private:
+protected:
   common::StaticTfSubscriber tf_subscriber_;
   GroundPlane ground_plane_;
 
@@ -56,7 +56,7 @@ private:
   boost::circular_buffer<PoseStamped> pose_buffer_;
 
   void infoCallback(const CameraInfo & msg);
-  void imageCallback(const Image & msg);
+  virtual void imageCallback(const Image & msg);
   void lsdCallback(const PointCloud2 & msg);
 
   LineSegments extractNaerLineSegments(const Pose & pose, const LineSegments & linesegments);

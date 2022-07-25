@@ -86,11 +86,17 @@ ADD_LIB(TARGET orientation SRC lib/orientation_optimizer.cpp INC include LIB ${C
 # ===================================================
 # Executable
 macro(ADD_EXE)
-  cmake_parse_arguments(_ARG "" "SRC;TARGET" "LIB;INC" ${ARGN})
+  cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
 
-  file(GLOB SOURCE_TMP ${_ARG_SRC})
+  set(SOURCE "")
+
+  foreach(QUERY IN ITEMS ${_ARG_SRC})
+    file(GLOB SOURCE_TMP ${QUERY})
+    set(SOURCE "${SOURCE};${SOURCE_TMP}")
+  endforeach()
+
   set(TARGET_NAME ${_ARG_TARGET})
-  ament_auto_add_executable(${TARGET_NAME} ${SOURCE_TMP})
+  ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
   target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
@@ -119,6 +125,7 @@ ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp 
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 ADD_EXE(TARGET covariance_node SRC src/validation/covariance_*.cpp INC include LIB util)
 ADD_EXE(TARGET ape_node SRC src/validation/ape_*.cpp INC include LIB util)
+ADD_EXE(TARGET refine_node SRC src/validation/refine_node.cpp src/validation/overlay_core.cpp INC include LIB util)
 
 # map
 ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_util Geographic)

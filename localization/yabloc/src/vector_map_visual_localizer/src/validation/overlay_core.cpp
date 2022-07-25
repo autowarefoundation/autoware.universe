@@ -1,19 +1,19 @@
 #include "common/util.hpp"
-#include "map/ll2_util.hpp"
 #include "validation/overlay.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
 #include <opencv4/opencv2/core/eigen.hpp>
 #include <opencv4/opencv2/highgui.hpp>
+#include <opencv4/opencv2/imgproc.hpp>
 #include <sophus/geometry.hpp>
 
-#include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace validation
 {
-Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock())
+Overlay::Overlay(const std::string & node_name)
+: Node(node_name), pose_buffer_{40}, tf_subscriber_(get_clock())
 {
   using std::placeholders::_1;
 
@@ -41,7 +41,7 @@ Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock
   pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
 }
 
-void Overlay::infoCallback(const sensor_msgs::msg::CameraInfo & msg)
+void Overlay::infoCallback(const CameraInfo & msg)
 {
   info_ = msg;
   camera_extrinsic_ = tf_subscriber_(info_->header.frame_id, "base_link");
