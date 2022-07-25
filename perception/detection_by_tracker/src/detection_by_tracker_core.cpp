@@ -202,7 +202,7 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_)
 {
   // Create publishers and subscribers
-  trackers_sub_ = create_subscription<autoware_auto_perception_msgs::msg::TrackedObjects>(
+  trackers_sub_ = create_stee_subscription<autoware_auto_perception_msgs::msg::TrackedObjects>(
     "~/input/tracked_objects", rclcpp::QoS{1},
     std::bind(&TrackerHandler::onTrackedObjects, &tracker_handler_, std::placeholders::_1));
   initial_objects_sub_ =

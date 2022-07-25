@@ -169,7 +169,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     "input", rclcpp::QoS{1},
     std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
   tracked_objects_pub_ =
-    create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
+    create_stee_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // Parameters
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);

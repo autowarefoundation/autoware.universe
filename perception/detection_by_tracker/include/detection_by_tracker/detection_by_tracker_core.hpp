@@ -62,7 +62,7 @@ public:
 
 private:
   tilde::SteePublisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr trackers_sub_;
+  tilde::SteeSubscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr trackers_sub_;
   rclcpp::Subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr
     initial_objects_sub_;
 

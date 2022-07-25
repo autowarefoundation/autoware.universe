@@ -83,7 +83,7 @@ MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_op
   map_based_prediction_ = std::make_shared<MapBasedPrediction>(
     interpolating_resolution_, prediction_time_horizon_, prediction_sampling_delta_time_);
 
-  sub_objects_ = this->create_subscription<TrackedObjects>(
+  sub_objects_ = this->create_stee_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,
     std::bind(&MapBasedPredictionROS::objectsCallback, this, std::placeholders::_1));
   sub_map_ = this->create_subscription<HADMapBin>(

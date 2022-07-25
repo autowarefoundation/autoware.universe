@@ -107,7 +107,7 @@ private:
   double diff_dist_threshold_to_left_bound_;
   double diff_dist_threshold_to_right_bound_;
 
-  rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
+  tilde::SteeSubscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   tilde::SteePublisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
