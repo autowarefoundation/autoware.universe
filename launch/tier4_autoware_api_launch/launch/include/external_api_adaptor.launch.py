@@ -14,6 +14,8 @@
 
 import launch
 from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
+from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
@@ -29,17 +31,7 @@ def _create_api_node(node_name, class_name, **kwargs):
     )
 
 
-def generate_launch_description():
-    launch_arguments = []
-
-    def add_launch_arg(name: str, default_value=None, description=None):
-        launch_arguments.append(
-            DeclareLaunchArgument(name, default_value=default_value, description=description)
-        )
-
-    add_launch_arg("launch_calibration_status_api", None, "launch calibration status api")
-    add_launch_arg("launch_start_api", None, "launch start api")
-
+def launch_setup(context, *args, **kwargs):
     components = [
         _create_api_node("cpu_usage", "CpuUsage"),
         _create_api_node("diagnostics", "Diagnostics"),
@@ -57,9 +49,9 @@ def generate_launch_description():
         _create_api_node("velocity", "Velocity"),
         _create_api_node("version", "Version"),
     ]
-    if LaunchConfiguration("launch_calibration_status_api"):
+    if LaunchConfiguration("launch_calibration_status_api").perform(context) == "true":
         components.append(_create_api_node("calibration_status", "CalibrationStatus"))
-    if LaunchConfiguration("launch_start_api"):
+    if LaunchConfiguration("launch_start_api").perform(context) == "true":
         components.append(_create_api_node("start", "Start"))
 
     container = ComposableNodeContainer(
@@ -70,4 +62,20 @@ def generate_launch_description():
         composable_node_descriptions=components,
         output="screen",
     )
-    return launch.LaunchDescription(launch_arguments + [container])
+    group = GroupAction([container])
+
+    return [group]
+
+
+def generate_launch_description():
+    launch_arguments = []
+
+    def add_launch_arg(name: str, default_value=None, description=None):
+        launch_arguments.append(
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
+        )
+
+    add_launch_arg("launch_calibration_status_api", None, "launch calibration status api")
+    add_launch_arg("launch_start_api", None, "launch start api")
+
+    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
