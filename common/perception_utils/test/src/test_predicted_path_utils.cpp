@@ -125,3 +125,31 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
     }
   }
 }
+
+TEST(predicted_path_utils, resamplePredictedPath_by_Vector)
+{
+  using perception_utils::resamplePredictedPath;
+  using tier4_autoware_utils::createQuaternionFromRPY;
+  using tier4_autoware_utils::createQuaternionFromYaw;
+  using tier4_autoware_utils::deg2rad;
+
+  // Resample Same Points
+  {
+    const auto path = createTestPredictedPath(10, 1.0, 1.0);
+    const std::vector<double> resampling_vec = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
+    const auto resampled_path = resamplePredictedPath(path, resampling_vec);
+
+    EXPECT_EQ(resampled_path.path.size(), path.path.size());
+    EXPECT_NEAR(path.confidence, resampled_path.confidence, epsilon);
+
+    for (size_t i = 0; i < path.path.size(); ++i) {
+      EXPECT_NEAR(path.path.at(i).position.x, resampled_path.path.at(i).position.x, epsilon);
+      EXPECT_NEAR(path.path.at(i).position.y, resampled_path.path.at(i).position.y, epsilon);
+      EXPECT_NEAR(path.path.at(i).position.z, resampled_path.path.at(i).position.z, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.x, resampled_path.path.at(i).orientation.x, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.y, resampled_path.path.at(i).orientation.y, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.z, resampled_path.path.at(i).orientation.z, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.w, resampled_path.path.at(i).orientation.w, epsilon);
+    }
+  }
+}

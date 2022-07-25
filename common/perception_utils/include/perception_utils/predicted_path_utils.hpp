@@ -45,13 +45,13 @@ inline boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
   }
 
   constexpr double epsilon = 1e-6;
-  const auto & time_step = rclcpp::Duration(path.time_step).seconds();
+  const double & time_step = rclcpp::Duration(path.time_step).seconds();
   for (size_t path_idx = 1; path_idx < path.path.size(); ++path_idx) {
     const auto & pt = path.path.at(path_idx);
     const auto & prev_pt = path.path.at(path_idx - 1);
-    if (relative_time + epsilon < time_step * static_cast<double>(path_idx)) {
-      const auto offset = relative_time - time_step * static_cast<double>(path_idx - 1);
-      const auto ratio = std::clamp(offset / time_step, 0.0, 1.0);
+    if (relative_time - epsilon < time_step * path_idx) {
+      const double offset = relative_time - time_step * (path_idx - 1);
+      const double ratio = std::clamp(offset / time_step, 0.0, 1.0);
       return tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
     }
   }
@@ -60,7 +60,8 @@ inline boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
 }
 
 /**
- * @brief Resampling predicted path by time step vector
+ * @brief Resampling predicted path by time step vector. Note this function does not substitute
+ * original time step
  * @param path Input predicted path
  * @param relative_time_vec time at each resampling point. Each time should be within [0.0,
  * time_step*(num_of_path_points)]
@@ -72,7 +73,6 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
 {
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
   resampled_path.confidence = path.confidence;
-  resampled_path.time_step = path.time_step;
 
   for (const auto & rel_time : relative_time_vec) {
     const auto opt_pose = calcInterpolatedPose(path, rel_time);
@@ -114,7 +114,10 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
     }
   }
 
-  return resamplePredictedPath(path, sampling_time_vector);
+  // Insert time step
+  auto resampled_path = resamplePredictedPath(path, sampling_time_vector);
+  resampled_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval);
+  return resampled_path;
 }
 }  // namespace perception_utils
 
