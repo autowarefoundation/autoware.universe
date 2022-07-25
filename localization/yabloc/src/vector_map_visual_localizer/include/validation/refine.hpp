@@ -4,7 +4,6 @@
 #include "common/ground_plane.hpp"
 #include "common/static_tf_subscriber.hpp"
 #include "common/synchro_subscriber.hpp"
-#include "common/timer.hpp"
 
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
@@ -15,7 +14,6 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
-#include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -62,7 +60,7 @@ protected:
 
   cv::Mat makeCostMap(LineSegments & lsd);
 
-  void drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
+  cv::Mat drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
   void drawOverlayLineSegments(
     cv::Mat & image, const Pose & pose, const LineSegments & linesegments);
 };

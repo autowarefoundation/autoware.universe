@@ -1,6 +1,7 @@
 #include "common/util.hpp"
 #include "validation/overlay.hpp"
 #include "validation/refine.hpp"
+#include "validation/refine_optimizer.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -64,29 +65,35 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   LineSegments lsd;
   pcl::fromROSMsg(lsd_msg, lsd);
   cv::Mat cost_image = makeCostMap(lsd);
-  cv::Mat rgb_cost_image;
-  cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
-  cv::imshow("lsd cost image", rgb_cost_image);
+
+  {
+    // TODO:
+    // Optimization
+    Eigen::Matrix3f K =
+      Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
+    Eigen::Affine3f T = camera_extrinsic_.value();
+
+    auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
+    Eigen::Affine3f transform = util::pose2Affine(synched_pose.pose);
+    Eigen::Affine3f opt_pose = refinePose(T, K, cost_image, transform, linesegments);
+    // TODO:
+  }
+
+  cv::Mat show_image = drawOverlay(cost_image, synched_pose.pose, latest_pose_stamp);
+  cv::imshow("cost", show_image);
   cv::waitKey(5);
-  // cv::Mat image = util::decompress2CvMat(image_msg);
-  // drawOverlay(image, synched_pose.pose, latest_pose_stamp);
 }
 
-void RefineOptimizer::drawOverlay(
-  const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
+cv::Mat RefineOptimizer::drawOverlay(
+  const cv::Mat & cost_image, const Pose & pose, const rclcpp::Time & stamp)
 {
-  if (ll2_cloud_.empty()) return;
+  cv::Mat rgb_cost_image;
+  cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
 
-  cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
-  drawOverlayLineSegments(overlayed_image, pose, extractNaerLineSegments(pose, ll2_cloud_));
+  if (ll2_cloud_.empty()) return rgb_cost_image;
 
-  cv::Mat show_image;
-  cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
-  // util::publishImage(*pub_image_, show_image, stamp);
-
-  // TODO:
-  cv::imshow("refine", show_image);
-  cv::waitKey(5);
+  drawOverlayLineSegments(rgb_cost_image, pose, extractNaerLineSegments(pose, ll2_cloud_));
+  return rgb_cost_image;
 }
 
 void RefineOptimizer::drawOverlayLineSegments(
@@ -161,7 +168,8 @@ cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
   cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
-  return gamma_converter_(distance);
+  // NOTE:TODO: stupid convertion
+  return 255 * cv::Mat::ones(distance.size(), CV_8UC1) - gamma_converter_(distance);
 }
 
 }  // namespace validation
