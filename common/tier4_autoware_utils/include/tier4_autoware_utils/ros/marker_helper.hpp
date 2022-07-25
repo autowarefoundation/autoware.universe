@@ -91,7 +91,7 @@ inline visualization_msgs::msg::Marker createDefaultMarker(
 inline void appendMarkerArray(
   const visualization_msgs::msg::MarkerArray & additional_marker_array,
   visualization_msgs::msg::MarkerArray * marker_array,
-  const boost::optional<rclcpp::Time> & current_time)
+  const boost::optional<rclcpp::Time> & current_time = {})
 {
   for (const auto & marker : additional_marker_array.markers) {
     marker_array->markers.push_back(marker);
