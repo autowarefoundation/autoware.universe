@@ -140,12 +140,15 @@ bool IntersectionModule::modifyPathVelocity(
   }
 
   /* calc closest index */
-  int closest_idx = -1;
-  if (!planning_utils::calcClosestIndex(*path, current_pose.pose, closest_idx)) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "calcClosestIndex fail");
+  const auto closest_idx_opt =
+    motion_utils::findNearestIndex(path->points, current_pose.pose, 3.0, M_PI_4);
+  if (!closest_idx_opt) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
+  const size_t closest_idx = closest_idx_opt.get();
 
   /* if current_state = GO, and current_pose is in front of stop_line, ignore planning. */
   bool is_over_pass_judge_line = static_cast<bool>(closest_idx > pass_judge_line_idx);
@@ -441,7 +444,8 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
   int assigned_lane_found = false;
 
   for (size_t i = closest_idx + 1; i < path.points.size(); ++i) {
-    const double dist = planning_utils::calcDist2d(path.points.at(i - 1), path.points.at(i));
+    const double dist =
+      tier4_autoware_utils::calcDistance2d(path.points.at(i - 1), path.points.at(i));
     dist_sum += dist;
     // calc vel in idx i+1 (v_{i+1}^2 - v_{i}^2 = 2ax)
     const double next_vel = std::min(
