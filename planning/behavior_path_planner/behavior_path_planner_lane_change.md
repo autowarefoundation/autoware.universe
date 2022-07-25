@@ -50,6 +50,69 @@ The following figure illustrates when the lane is blocked in multiple lane chang
 
 ![multiple-lane-changes](./image/lane_change/lane_change-when_cannot_change_lanes.png)
 
+#### Multiple candidate path samples
+
+![path_samples](./image/lane_change/lane_change-candidate_path_samples.png)
+
+#### Candidate Path's validity check
+
+```plantuml
+@startuml
+skinparam monochrome true
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title Selecting Valid Candidate Paths
+start
+:**INPUT** std::vector<LaneChangePath> input_paths;
+
+partition selectValidPaths {
+:**INITIALIZE** std::vector<LaneChangePath> valid_paths;
+
+:idx = 0;
+
+while (idx < input_paths.size()?)
+
+:path = input_paths.at(idx);
+
+partition hasEnoughDistance {
+
+if(lane_change_total_distance > distance to end of current lanes
+&&
+lane_change_total_distance > distance to the next intersection
+&&
+lane_change_total_distance > distance from current pose to the goal
+&&
+lane_change_total_distance > distance to crosswalk
+&&
+goal is in route
+) then (true)
+:path_validity  = true;
+else (\n false)
+:path_validity  = false;
+endif
+}
+
+if(path_validity == true)then (true)
+
+:valid_paths.push_back(path);
+
+else (\nfalse)
+endif
+:++idx;
+endwhile (false)
+
+:**RETURN** valid_paths;
+
+}
+stop
+@enduml
+```
+
+#### Candidate Path's Safety check
+
+![Safety check](./image/lane_change/lane_change-collision_check.png)
+
 ## Parameters
 
 ### Essential lane change parameters
