@@ -126,16 +126,17 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
   }
 }
 
-TEST(predicted_path_utils, resamplePredictedPath_by_Vector)
+TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 {
   using perception_utils::resamplePredictedPath;
   using tier4_autoware_utils::createQuaternionFromRPY;
   using tier4_autoware_utils::createQuaternionFromYaw;
   using tier4_autoware_utils::deg2rad;
 
+  const auto path = createTestPredictedPath(10, 1.0, 1.0);
+
   // Resample Same Points
   {
-    const auto path = createTestPredictedPath(10, 1.0, 1.0);
     const std::vector<double> resampling_vec = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     const auto resampled_path = resamplePredictedPath(path, resampling_vec);
 
@@ -151,5 +152,121 @@ TEST(predicted_path_utils, resamplePredictedPath_by_Vector)
       EXPECT_NEAR(path.path.at(i).orientation.z, resampled_path.path.at(i).orientation.z, epsilon);
       EXPECT_NEAR(path.path.at(i).orientation.w, resampled_path.path.at(i).orientation.w, epsilon);
     }
+  }
+
+  // Resample random case
+  {
+    const std::vector<double> resampling_vec = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 1.3, 2.8,
+                                                3.7, 4.2, 5.1, 6.9, 7.3, 8.5, 9.0};
+    const auto resampled_path = resamplePredictedPath(path, resampling_vec);
+
+    EXPECT_EQ(resampled_path.path.size(), resampling_vec.size());
+    EXPECT_NEAR(path.confidence, resampled_path.confidence, epsilon);
+
+    for (size_t i = 0; i < resampled_path.path.size(); ++i) {
+      EXPECT_NEAR(resampled_path.path.at(i).position.x, resampling_vec.at(i) * 1.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.w, 1.0, epsilon);
+    }
+  }
+
+  // Some points are out of range
+  {
+    const std::vector<double> resampling_vec = {-1.0, 0.0, 5.0, 9.0, 9.1};
+    EXPECT_THROW(resamplePredictedPath(path, resampling_vec), std::invalid_argument);
+  }
+}
+
+TEST(predicted_path_utils, resamplePredictedPath_by_sampling_time)
+{
+  using perception_utils::resamplePredictedPath;
+  using tier4_autoware_utils::createQuaternionFromRPY;
+  using tier4_autoware_utils::createQuaternionFromYaw;
+  using tier4_autoware_utils::deg2rad;
+
+  const auto path = createTestPredictedPath(10, 1.0, 1.0);
+
+  // Sample same points
+  {
+    const auto resampled_path = resamplePredictedPath(path, 1.0, 9.0);
+
+    EXPECT_EQ(resampled_path.path.size(), path.path.size());
+    EXPECT_NEAR(rclcpp::Duration(resampled_path.time_step).seconds(), 1.0, epsilon);
+    for (size_t i = 0; i < path.path.size(); ++i) {
+      EXPECT_NEAR(path.path.at(i).position.x, resampled_path.path.at(i).position.x, epsilon);
+      EXPECT_NEAR(path.path.at(i).position.y, resampled_path.path.at(i).position.y, epsilon);
+      EXPECT_NEAR(path.path.at(i).position.z, resampled_path.path.at(i).position.z, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.x, resampled_path.path.at(i).orientation.x, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.y, resampled_path.path.at(i).orientation.y, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.z, resampled_path.path.at(i).orientation.z, epsilon);
+      EXPECT_NEAR(path.path.at(i).orientation.w, resampled_path.path.at(i).orientation.w, epsilon);
+    }
+  }
+
+  // Fine sampling
+  {
+    const auto resampled_path = resamplePredictedPath(path, 0.1, 9.0);
+
+    EXPECT_EQ(resampled_path.path.size(), static_cast<size_t>(91));
+    EXPECT_NEAR(rclcpp::Duration(resampled_path.time_step).seconds(), 0.1, epsilon);
+    for (size_t i = 0; i < resampled_path.path.size(); ++i) {
+      EXPECT_NEAR(resampled_path.path.at(i).position.x, 0.1 * i, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.w, 1.0, epsilon);
+    }
+  }
+
+  // Coarse Sampling
+  {
+    const auto resampled_path = resamplePredictedPath(path, 2.0, 9.0);
+
+    EXPECT_EQ(resampled_path.path.size(), static_cast<size_t>(5));
+    EXPECT_NEAR(rclcpp::Duration(resampled_path.time_step).seconds(), 2.0, epsilon);
+    for (size_t i = 0; i < resampled_path.path.size(); ++i) {
+      EXPECT_NEAR(resampled_path.path.at(i).position.x, 2.0 * i, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.w, 1.0, epsilon);
+    }
+  }
+
+  // Shorter horizon
+  {
+    const auto resampled_path = resamplePredictedPath(path, 1.5, 7.0);
+
+    EXPECT_EQ(resampled_path.path.size(), static_cast<size_t>(5));
+    EXPECT_NEAR(rclcpp::Duration(resampled_path.time_step).seconds(), 1.5, epsilon);
+    for (size_t i = 0; i < resampled_path.path.size(); ++i) {
+      EXPECT_NEAR(resampled_path.path.at(i).position.x, 1.5 * i, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).position.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(resampled_path.path.at(i).orientation.w, 1.0, epsilon);
+    }
+  }
+
+  // No Sampling
+  {
+    // Negative resampling time or resampling time horizon
+    EXPECT_THROW(resamplePredictedPath(path, 0.0, 9.0), std::invalid_argument);
+    EXPECT_THROW(resamplePredictedPath(path, -1.0, 9.0), std::invalid_argument);
+    EXPECT_THROW(resamplePredictedPath(path, 1.0, 0.0), std::invalid_argument);
+    EXPECT_THROW(resamplePredictedPath(path, 1.0, -9.0), std::invalid_argument);
+
+    PredictedPath empty_path;
+    EXPECT_THROW(resamplePredictedPath(empty_path, 1.0, 10.0), std::invalid_argument);
   }
 }

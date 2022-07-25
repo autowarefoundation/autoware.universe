@@ -15,6 +15,8 @@
 #ifndef PERCEPTION_UTILS__PREDICTED_PATH_UTILS_HPP_
 #define PERCEPTION_UTILS__PREDICTED_PATH_UTILS_HPP_
 
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 #include "perception_utils/geometry.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
@@ -25,6 +27,7 @@
 
 #include <boost/optional.hpp>
 
+#include <algorithm>
 #include <vector>
 
 namespace perception_utils
@@ -63,25 +66,64 @@ inline boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
  * @brief Resampling predicted path by time step vector. Note this function does not substitute
  * original time step
  * @param path Input predicted path
- * @param relative_time_vec time at each resampling point. Each time should be within [0.0,
+ * @param resampled_time resampled time at each resampling point. Each time should be within [0.0,
  * time_step*(num_of_path_points)]
  * @return resampled path
  */
 autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedPath & path,
-  const std::vector<double> & relative_time_vec)
+  const std::vector<double> & resampled_time, const bool use_spline_for_xy = true,
+  const bool use_spline_for_z = false)
 {
+  if (path.path.empty() || resampled_time.empty()) {
+    throw std::invalid_argument("input path or resampled_time is empty");
+  }
+
+  const double & time_step = rclcpp::Duration(path.time_step).seconds();
+  std::vector<double> input_time(path.path.size());
+  std::vector<double> x(path.path.size());
+  std::vector<double> y(path.path.size());
+  std::vector<double> z(path.path.size());
+  for (size_t i = 0; i < path.path.size(); ++i) {
+    input_time.at(i) = time_step * i;
+    x.at(i) = path.path.at(i).position.x;
+    y.at(i) = path.path.at(i).position.y;
+    z.at(i) = path.path.at(i).position.z;
+  }
+
+  const auto lerp = [&](const auto & input) {
+    return interpolation::lerp(input_time, input, resampled_time);
+  };
+  const auto slerp = [&](const auto & input) {
+    return interpolation::slerp(input_time, input, resampled_time);
+  };
+
+  const auto interpolated_x = use_spline_for_xy ? slerp(x) : lerp(x);
+  const auto interpolated_y = use_spline_for_xy ? slerp(y) : lerp(y);
+  const auto interpolated_z = use_spline_for_z ? slerp(z) : lerp(z);
+
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
   resampled_path.confidence = path.confidence;
+  resampled_path.path.resize(resampled_time.size());
 
-  for (const auto & rel_time : relative_time_vec) {
-    const auto opt_pose = calcInterpolatedPose(path, rel_time);
-    if (!opt_pose) {
-      continue;
-    }
-
-    resampled_path.path.push_back(*opt_pose);
+  // Set Position
+  for (size_t i = 0; i < resampled_path.path.size(); ++i) {
+    const auto p = tier4_autoware_utils::createPoint(
+      interpolated_x.at(i), interpolated_y.at(i), interpolated_z.at(i));
+    resampled_path.path.at(i).position = p;
   }
+
+  // Set Quaternion
+  for (size_t i = 0; i < resampled_path.path.size() - 1; ++i) {
+    const auto & src_point = resampled_path.path.at(i).position;
+    const auto & dst_point = resampled_path.path.at(i + 1).position;
+    const double pitch = tier4_autoware_utils::calcElevationAngle(src_point, dst_point);
+    const double yaw = tier4_autoware_utils::calcAzimuthAngle(src_point, dst_point);
+    resampled_path.path.at(i).orientation =
+      tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
+  }
+  resampled_path.path.back().orientation =
+    resampled_path.path.at(resampled_path.path.size() - 2).orientation;
 
   return resampled_path;
 }
@@ -91,31 +133,37 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
  * terminal point as well as points by sampling time interval
  * @param path Input predicted path
  * @param sampling_time_interval sampling time interval for each point
- * @param enable_sampling_terminal_point flag if to sample terminal point
+ * @param sampling_horizon sampling time horizon
  * @return resampled path
  */
 autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedPath & path,
-  const double sampling_time_interval, bool enable_sampling_terminal_point = true)
+  const double sampling_time_interval, const double sampling_horizon,
+  const bool use_spline_for_xy = true, const bool use_spline_for_z = false)
 {
-  std::vector<double> sampling_time_vector;
+  if (path.path.empty()) {
+    throw std::invalid_argument("Predicted Path is empty");
+  }
+
+  if (sampling_time_interval <= 0.0 || sampling_horizon <= 0.0) {
+    throw std::invalid_argument("sampling time interval or sampling time horizon is negative");
+  }
+
+  // Calculate Horizon
   const double predicted_horizon =
     rclcpp::Duration(path.time_step).seconds() * static_cast<double>(path.path.size() - 1);
-  for (double t = 0.0; t < predicted_horizon; t += sampling_time_interval) {
+  const double horizon = std::min(predicted_horizon, sampling_horizon);
+
+  // Get sampling time vector
+  constexpr double epsilon = 1e-6;
+  std::vector<double> sampling_time_vector;
+  for (double t = 0.0; t < horizon + epsilon; t += sampling_time_interval) {
     sampling_time_vector.push_back(t);
   }
 
-  // Insert Predicted Horizon(Terminal Predicted Point)
-  if (enable_sampling_terminal_point) {
-    if (predicted_horizon - sampling_time_vector.back() > 1e-3) {
-      sampling_time_vector.push_back(predicted_horizon);
-    } else {
-      sampling_time_vector.back() = predicted_horizon;
-    }
-  }
-
-  // Insert time step
-  auto resampled_path = resamplePredictedPath(path, sampling_time_vector);
+  // Resample and substitute time interval
+  auto resampled_path =
+    resamplePredictedPath(path, sampling_time_vector, use_spline_for_xy, use_spline_for_z);
   resampled_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval);
   return resampled_path;
 }
