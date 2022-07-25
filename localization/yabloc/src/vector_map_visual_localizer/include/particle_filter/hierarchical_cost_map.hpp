@@ -1,5 +1,5 @@
 #pragma once
-#include "common/gammma_conveter.hpp"
+#include "common/gamma_converter.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/core.hpp>

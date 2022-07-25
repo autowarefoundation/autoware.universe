@@ -1,8 +1,6 @@
 #pragma once
 #include <opencv4/opencv2/core.hpp>
 
-namespace particle_filter
-{
 class GammaConverter
 {
 public:
@@ -26,4 +24,3 @@ public:
 private:
   cv::Mat lut_;
 };
-}  // namespace particle_filter

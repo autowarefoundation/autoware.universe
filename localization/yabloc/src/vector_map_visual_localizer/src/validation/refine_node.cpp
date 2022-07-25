@@ -17,7 +17,7 @@ RefineOptimizer::RefineOptimizer() : Node("refine"), pose_buffer_{40}, tf_subscr
 {
   using std::placeholders::_1, std::placeholders::_2;
 
-  auto cb_synchro = std::bind(&RefineOptimizer::imageAndlsdCallback, this, _1, _2);
+  auto cb_synchro = std::bind(&RefineOptimizer::imageAndLsdCallback, this, _1, _2);
   sub_synchro_ =
     std::make_shared<SynchroSubscriber<Image, PointCloud2>>(this, "/src_image", "/lsd_cloud");
   sub_synchro_->setCallback(cb_synchro);
@@ -33,6 +33,8 @@ RefineOptimizer::RefineOptimizer() : Node("refine"), pose_buffer_{40}, tf_subscr
   sub_ll2_ = create_subscription<PointCloud2>(
     "/ll2_road_marking", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
+
+  gamma_converter_.reset(5.0);
 }
 
 void RefineOptimizer::infoCallback(const CameraInfo & msg)
@@ -41,7 +43,7 @@ void RefineOptimizer::infoCallback(const CameraInfo & msg)
   camera_extrinsic_ = tf_subscriber_(info_->header.frame_id, "base_link");
 }
 
-void RefineOptimizer::imageAndlsdCallback(const Image & image_msg, const PointCloud2 & lsd_msg)
+void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
 
@@ -59,8 +61,15 @@ void RefineOptimizer::imageAndlsdCallback(const Image & image_msg, const PointCl
   if (min_dt > 0.1) return;
   auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
 
-  cv::Mat image = util::decompress2CvMat(image_msg);
-  drawOverlay(image, synched_pose.pose, latest_pose_stamp);
+  LineSegments lsd;
+  pcl::fromROSMsg(lsd_msg, lsd);
+  cv::Mat cost_image = makeCostMap(lsd);
+  cv::Mat rgb_cost_image;
+  cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
+  cv::imshow("lsd cost image", rgb_cost_image);
+  cv::waitKey(5);
+  // cv::Mat image = util::decompress2CvMat(image_msg);
+  // drawOverlay(image, synched_pose.pose, latest_pose_stamp);
 }
 
 void RefineOptimizer::drawOverlay(
@@ -88,7 +97,6 @@ void RefineOptimizer::drawOverlayLineSegments(
   Eigen::Affine3f T = camera_extrinsic_.value();
 
   Eigen::Affine3f transform = ground_plane_.alineWithSlope(util::pose2Affine(pose));
-  // Eigen::Affine3f transform = (util::pose2Affine(pose));
 
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
     Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
@@ -135,6 +143,27 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
   }
   return near_linestrings;
 }
+
+cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
+{
+  const cv::Size size(info_->width, info_->height);
+  cv::Mat image = 255 * cv::Mat::ones(size, CV_8UC1);
+
+  auto cvPoint = [](const Eigen::Vector3f & p) -> cv::Point { return cv::Point2f(p.x(), p.y()); };
+
+  for (const auto pn : lsd) {
+    cv::line(
+      image, cvPoint(pn.getVector3fMap()), cvPoint(pn.getNormalVector3fMap()), cv::Scalar::all(0),
+      1);
+  }
+  cv::Mat distance;
+  cv::distanceTransform(image, distance, cv::DIST_L2, 3);
+  cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
+  distance.convertTo(distance, CV_8UC1, -2.55, 255);
+
+  return gamma_converter_(distance);
+}
+
 }  // namespace validation
 
 int main(int argc, char * argv[])

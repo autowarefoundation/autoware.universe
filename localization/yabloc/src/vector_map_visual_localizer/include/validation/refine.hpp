@@ -1,4 +1,6 @@
 #pragma once
+
+#include "common/gamma_converter.hpp"
 #include "common/ground_plane.hpp"
 #include "common/static_tf_subscriber.hpp"
 #include "common/synchro_subscriber.hpp"
@@ -50,11 +52,15 @@ protected:
   boost::circular_buffer<PoseStamped> pose_buffer_;
   SynchroSubscriber<Image, PointCloud2>::SharedPtr sub_synchro_;
 
+  GammaConverter gamma_converter_{5.0};
+
   void infoCallback(const CameraInfo & msg);
 
-  void imageAndlsdCallback(const Image & image, const PointCloud2 & msg);
+  void imageAndLsdCallback(const Image & image, const PointCloud2 & msg);
 
   LineSegments extractNaerLineSegments(const Pose & pose, const LineSegments & linesegments);
+
+  cv::Mat makeCostMap(LineSegments & lsd);
 
   void drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
   void drawOverlayLineSegments(
