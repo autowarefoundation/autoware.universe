@@ -15,6 +15,7 @@
 #ifndef SCENE_MODULE__STOP_LINE__SCENE_HPP_
 #define SCENE_MODULE__STOP_LINE__SCENE_HPP_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -108,12 +109,13 @@ private:
     const PathWithLaneId & path,
     const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment);
 
-  PathWithLaneId insertStopPose(
-    const PathWithLaneId & path,
-    const StopLineModule::SegmentIndexWithPose & insert_index_with_pose, StopReason * stop_reason);
+  void insertStopPoint(const geometry_msgs::msg::Point & stop_point, PathWithLaneId & path) const;
+
+  std::shared_ptr<const rclcpp::Time> stopped_time_;
 
   lanelet::ConstLineString3d stop_line_;
   int64_t lane_id_;
+
   State state_;
 
   // Parameter
