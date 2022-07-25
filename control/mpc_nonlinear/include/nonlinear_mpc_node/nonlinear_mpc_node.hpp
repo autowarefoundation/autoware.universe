@@ -451,8 +451,6 @@ class NonlinearMPCNode : public rclcpp::Node
    * */
   void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted);
 
-  void estimateDisturbanceInput();
-
   /**
    * @brief Set the timer object.
    **/
