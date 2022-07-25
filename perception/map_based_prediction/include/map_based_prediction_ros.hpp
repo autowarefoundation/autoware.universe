@@ -109,7 +109,7 @@ private:
 
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
-  rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
+  tilde::SteePublisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   std::unordered_map<std::string, std::deque<ObjectData>> object_buffer_;

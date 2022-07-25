@@ -90,7 +90,7 @@ MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_op
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionROS::mapCallback, this, std::placeholders::_1));
 
-  pub_objects_ = this->create_publisher<PredictedObjects>("objects", rclcpp::QoS{1});
+  pub_objects_ = this->create_stee_publisher<PredictedObjects>("objects", rclcpp::QoS{1});
   pub_markers_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
     "objects_path_markers", rclcpp::QoS{1});
 }
