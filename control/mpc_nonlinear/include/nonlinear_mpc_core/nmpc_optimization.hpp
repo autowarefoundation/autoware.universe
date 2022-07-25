@@ -598,6 +598,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // Set verbosity.
   osqp_settings_.verbose = params_optimization.osqp_verbose;
+  // osqp_settings_.solver_type = true; //for intel-mkl pardiso option.
 
   // Set OSQP instance - Pmatrix must be upper diagonal.
   // On the diagonals of P we add a small value to force it not to behave ill-conditioned.
