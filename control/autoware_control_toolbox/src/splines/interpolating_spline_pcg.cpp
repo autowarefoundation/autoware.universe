@@ -452,17 +452,18 @@ bool PCG::solve(Eigen::SparseMatrix<double> const &Asparse,
 bool PCG::isConvergedL1(Eigen::VectorXd const &residuals) const
 {
   auto l1norm = residuals.cwiseAbs().sum();
-//  std::cout << "L1 norm of the residuals is : " << l1norm << std::endl;
+  // std::cout << "L1 norm of the residuals is : " << l1norm << std::endl;
+
   return l1norm < eps_;
 }
 
 double PCG::pApnorm(const Eigen::MatrixXd &p)
 {
-  auto dim_p = p.rows();
+  auto const &dim_p = p.rows();
 
   // results, p[0]**2 + p[n]**2
   double panorm = p(0) * p(0) + p(dim_p - 1) * p(dim_p - 1);
-  for (int k = 1; k < (int) dim_p - 1; k++)
+  for (int k = 1; k < (int) dim_p - 1; ++k)
   {
     panorm += p(k) * (p(k - 1) + 4 * p(k) + p(k + 1));
   }
