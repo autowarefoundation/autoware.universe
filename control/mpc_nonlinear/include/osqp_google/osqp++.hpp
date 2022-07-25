@@ -229,8 +229,7 @@ class OsqpSolver
   // a good starting point given the new objective matrix. If that's the
   // case, one can call SetWarmStart with zero vectors to reset the state of the
   // solver.
-  Status UpdateObjectiveMatrix(
-    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix);
+  Status UpdateObjectiveMatrix(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix);
 
   // Updates the elements of matrix the constraint matrix A.
   // The new matrix should have the same sparsity structure.
@@ -238,9 +237,12 @@ class OsqpSolver
     const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &constraint_matrix);
 
   // Combines call of UpdateObjectiveMatrix and UpdateConstraintMatrix.
-  Status UpdateObjectiveAndConstraintMatrices(
-    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix,
-    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &constraint_matrix);
+  Status UpdateObjectiveAndConstraintMatrices(const Eigen::SparseMatrix<double,
+                                                                        Eigen::ColMajor,
+                                                                        c_int> &objective_matrix,
+                                              const Eigen::SparseMatrix<double,
+                                                                        Eigen::ColMajor,
+                                                                        c_int> &constraint_matrix);
 
   // Returns true if Init() has been called successfully.
   [[nodiscard]] bool IsInitialized() const
@@ -248,7 +250,7 @@ class OsqpSolver
 
   // Solves the instance by calling osqp_solve(). CHECK-fails if IsInitialized()
   // is false.
-  OsqpExitCode Solve() const;
+  [[nodiscard]] OsqpExitCode Solve() const;
 
   // The number of iterations taken. CHECK-fails if IsInitialized() is false.
   [[nodiscard]] c_int iterations() const;
@@ -288,8 +290,8 @@ class OsqpSolver
   // - InvalidArgumentError if the vectors do not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector,
-                      const Eigen::Ref<const Eigen::VectorXd> &dual_vector);
+  [[nodiscard]] Status SetWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector,
+                                    const Eigen::Ref<const Eigen::VectorXd> &dual_vector) const;
 
   // Sets a warm-start for the primal iterate for the next solve. Use a vector
   // of zeros to reset to the default initialization.
@@ -297,7 +299,7 @@ class OsqpSolver
   // - InvalidArgumentError if the vector does not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetPrimalWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector) const;
+  [[nodiscard]] Status SetPrimalWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector) const;
 
   // Sets a warm-start for the dual iterate for the next solve. Use a vector
   // of zeros to reset to the default initialization.
@@ -320,9 +322,8 @@ class OsqpSolver
   // - InvalidArgumentError if lower_bounds[i] > upper_bounds[i] for some i
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetBounds(
-    const Eigen::Ref<const Eigen::VectorXd> &lower_bounds,
-    const Eigen::Ref<const Eigen::VectorXd> &upper_bounds);
+  Status SetBounds(const Eigen::Ref<const Eigen::VectorXd> &lower_bounds,
+                   const Eigen::Ref<const Eigen::VectorXd> &upper_bounds);
 
   // Updates the max_iter setting for this solver.  Returns:
   // - FailedPreconditionError if IsInitialized() is false
