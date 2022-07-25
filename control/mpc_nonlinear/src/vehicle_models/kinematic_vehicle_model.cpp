@@ -31,8 +31,6 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
                                                                 const VehicleDynamicsBase::param_vector_ad_t &params,
                                                                 VehicleDynamicsBase::state_vector_ad_t &f_xdot)
 {
-  // For guarding zero division.
-  auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
   // auto xw = x(0);  // Xw, Yw are the global coordinates.
   // auto yw = x(1);
@@ -69,16 +67,13 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
   if (use_delay_models_)
   {
     // f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
-
     f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
     f_xdot(7) = -(delta - steering_input) / steering_tau_;
-    //f_xdot(8) = -(f_xdot(3) - vx_virtual_car) / speed_tau_;
 
   } else
   {
     f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
     f_xdot(7) = steering_input;
-
   }
 
   f_xdot(8) = f_xdot(2) * f_xdot(6) * cos(beta + e_yaw); // ay_dot = psi_dot x Vx
@@ -98,11 +93,10 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
   input_vector_t u;
   u.setRandom();
 
-  param_vector_t params;
-  params.setZero();
+  param_vector_t params{param_vector_t::Zero()};
 
   params(0) = 0.1;  // curvature
-  params(1) = 3.0;  // virtual car speed.
+  params(1) = 3.0;  // target speed
 
   computeFx(x, u, params, f_of_dx);
 
@@ -110,54 +104,12 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
   ns_eigen_utils::printEigenMat(f_of_dx);
 
   // Compute Jacobian --
-  state_matrix_t A;
-  A.setZero();
-
-  control_matrix_t B;
-  B.setZero();
+  state_matrix_t A{state_matrix_t::Zero()};
+  control_matrix_t B{control_matrix_t::Zero()};
 
   computeJacobians(x, u, params, A, B);
 
   ns_utils::print("Jacobian test: state matrix A and control matrix B \n");
   ns_eigen_utils::printEigenMat(A);
   ns_eigen_utils::printEigenMat(B);
-}
-
-double ns_models::KinematicModelSingleTrackModel::getLongSpeedDynamics_vdot(const double &current_long_speed,
-                                                                            const double & /*current_speed_input*/) const
-{
-  auto const &v = current_long_speed;
-  auto const &vx_acc_brk_input = current_long_speed;
-
-  double vdot{};
-
-  // Control states.
-  if (use_delay_models_)
-  {
-    vdot = -(v - vx_acc_brk_input) / speed_tau_;
-
-  } else
-  {
-    vdot = vx_acc_brk_input;  // !<@brief acceleration brake input
-  }
-  return vdot;
-}
-
-double ns_models::KinematicModelSingleTrackModel::getSteeringDynamics_deltadot(const double &current_steering,
-                                                                               const double &current_steering_input) const
-{
-  auto &&delta = current_steering;
-  auto &&steering_input = current_steering_input;
-
-  double delta_dot{};
-  // Control states.
-  if (use_delay_models_)
-  {
-    delta_dot = -(delta - steering_input) / steering_tau_;
-
-  } else
-  {
-    delta_dot = steering_input;
-  }
-  return delta_dot;
 }
