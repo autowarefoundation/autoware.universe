@@ -1,4 +1,5 @@
 #pragma once
+#include <eigen3/Eigen/Geometry>
 #include <eigen3/Eigen/StdVector>
 
 #include <std_msgs/msg/float32_multi_array.hpp>
@@ -26,6 +27,22 @@ struct GroundPlane
   }
 
   float height() const { return xyz.z(); }
+
+  Eigen::Affine3f alineWithSlope(const Eigen::Affine3f & pose) const
+  {
+    Eigen::Matrix3f R = pose.rotation();
+    Eigen::Vector3f t = pose.translation();
+    {
+      Eigen::Vector3f rz = this->normal;
+      Eigen::Vector3f azimuth = R * Eigen::Vector3f::UnitX();
+      Eigen::Vector3f ry = (rz.cross(azimuth)).normalized();
+      Eigen::Vector3f rx = ry.cross(rz);
+      R.col(0) = rx;
+      R.col(1) = ry;
+      R.col(2) = rz;
+    }
+    return Eigen::Translation3f(t) * R;
+  }
 
   Float32Array msg() const
   {

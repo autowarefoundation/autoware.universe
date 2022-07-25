@@ -19,6 +19,9 @@ SignDetector::SignDetector() : AbstCorrector("sign_detector"), tf_subscriber_(ge
   auto cb_map = std::bind(&SignDetector::callbackVectorMap, this, _1);
   auto cb_info = std::bind(&SignDetector::callbackInfo, this, _1);
   auto cb_image = std::bind(&SignDetector::callbackImage, this, _1);
+  auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
+
+  sub_ground_plane_ = create_subscription<Float32Array>("/ground", 10, cb_ground);
   sub_vector_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
   sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
   sub_image_ = create_subscription<Image>("/src_image", 10, cb_image);
@@ -107,6 +110,7 @@ std::optional<SignDetector::Contour> SignDetector::extractSignBoardContour(
   std::vector<cv::Point2f> projected;
   for (const Particle & p : array.particles) {
     Eigen::Affine3f affine = util::pose2Affine(p.pose);
+    affine = ground_plane_.alineWithSlope(affine);
     for (const auto & p : board) {
       auto opt_p = project(affine, {p.x(), p.y(), p.z()});
       if (opt_p.has_value()) projected.push_back(opt_p.value());

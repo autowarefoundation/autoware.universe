@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/ground_plane.hpp"
 #include "common/static_tf_subscriber.hpp"
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
@@ -11,6 +12,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <pcl/point_cloud.h>
@@ -27,14 +29,17 @@ public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using SignBoard = lanelet::ConstLineString3d;
   using SignBoards = lanelet::ConstLineStrings3d;
+  using Float32Array = std_msgs::msg::Float32MultiArray;
   SignDetector();
 
 private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<Float32Array>::SharedPtr sub_ground_plane_;
   common::StaticTfSubscriber tf_subscriber_;
 
+  GroundPlane ground_plane_;
   std::optional<CameraInfo> info_;
   std::optional<Eigen::Affine3f> camera_extrinsic_;
   SignBoards sign_boards_;
