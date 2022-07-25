@@ -240,7 +240,7 @@ bool BlindSpotModule::generateStopLine(
     geometry_msgs::msg::Pose intersection_enter_pose;
     intersection_enter_pose.position = intersection_enter_point_opt.get();
     const auto stop_idx_ip_opt =
-      motion_utils::findNearestIndex(path_ip.points, intersection_enter_pose, 10.0);
+      motion_utils::findNearestIndex(path_ip.points, intersection_enter_pose, 10.0, M_PI_4);
     if (stop_idx_ip_opt) {
       stop_idx_ip = stop_idx_ip_opt.get();
     }
