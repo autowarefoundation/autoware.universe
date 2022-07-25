@@ -4,6 +4,7 @@
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
+#include <opencv4/opencv2/features2d.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -38,6 +39,8 @@ private:
   std::optional<Eigen::Affine3f> camera_extrinsic_;
   SignBoards sign_boards_;
 
+  cv::Ptr<cv::ORB> feature_detector_;
+
   struct Contour
   {
     signed long id;
@@ -55,4 +58,4 @@ private:
   void callbackVectorMap(const HADMapBin & map_bin);
   void callbackInfo(const CameraInfo & info);
 };
-};  // namespace sign_board
+}  // namespace sign_board

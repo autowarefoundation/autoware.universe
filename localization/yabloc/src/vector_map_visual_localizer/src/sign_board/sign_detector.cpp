@@ -22,6 +22,8 @@ SignDetector::SignDetector() : AbstCorrector("sign_detector"), tf_subscriber_(ge
   sub_vector_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
   sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
   sub_image_ = create_subscription<Image>("/src_image", 10, cb_image);
+
+  feature_detector_ = cv::ORB::create();
 }
 
 void SignDetector::callbackVectorMap(const HADMapBin & map_bin)
@@ -68,8 +70,18 @@ void SignDetector::callbackImage(const Image & msg)
     if (opt_c.has_value()) contours.push_back(opt_c.value());
   }
 
-  for (const auto c : contours) cv::polylines(image, c.polygon, false, randomColor(c.id), 1);
-  cv::imshow("test", image);
+  cv::Mat show_image = image.clone();
+  cv::Mat mask = cv::Mat::zeros(image.size(), CV_8UC1);
+  for (const auto c : contours) {
+    cv::polylines(show_image, c.polygon, false, randomColor(c.id), 2);
+    std::vector<std::vector<cv::Point2i>> tmp{c.polygon};
+    cv::fillPoly(mask, tmp, cv::Scalar::all(255), 8, 0);
+  }
+  std::vector<cv::KeyPoint> keypoints;
+  feature_detector_->detect(image, keypoints, mask);
+  cv::drawKeypoints(show_image, keypoints, show_image);
+
+  cv::imshow("test", show_image);
   cv::waitKey(5);
 }
 
