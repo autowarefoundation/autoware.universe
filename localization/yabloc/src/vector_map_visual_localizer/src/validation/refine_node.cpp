@@ -115,7 +115,7 @@ void RefineOptimizer::drawOverlayLineSegments(
   for (const pcl::PointNormal & pn : near_segments) {
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
+    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 0), 2);
   }
 }
 
@@ -127,7 +127,7 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
 
   // Compute distance between pose and linesegment of linestring
   auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
-    const float max_range = 40;
+    const float max_range = 30;
 
     const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
     const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
@@ -168,8 +168,7 @@ cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
   cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
-  // NOTE:TODO: stupid convertion
-  return 255 * cv::Mat::ones(distance.size(), CV_8UC1) - gamma_converter_(distance);
+  return gamma_converter_(distance);
 }
 
 }  // namespace validation
