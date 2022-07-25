@@ -47,13 +47,6 @@ class LPVinitializer
                             ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &param_opt,
                             ns_data::data_nmpc_core_type_t &nmpc_data);
 
-  bool computeSingleFeedbackControls(Model::model_ptr_t const &model_ptr,
-                                     ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                                     ns_data::param_lpv_type_t const &params_lpv,
-                                     ns_data::ParamsOptimization const &params_opt,
-                                     ns_data::data_nmpc_core_type_t &nmpc_data,
-                                     double const &dt);
-
  private:
   size_t ntheta_{};  // <- @brief Number of nonlinear terms in the state transition matrix A(theta).
   std::vector<double> thetas_{};  // <-@brief Computed non-linearities are stored in this vector.

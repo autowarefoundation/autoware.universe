@@ -116,20 +116,6 @@ struct TrajectoryData
   void getControlMPCSolutionsAtTime(double const &t, double const &mpc_dt,
                                     typename Model::input_vector_t &u_solutions_mpc) const;
 
-  // For LPV feedback solutions.
-  /**
-   * @brief gets the control signals computed by the LPV feedback. The controls are [vx, steering]_inputs.
-   * @param [out] u_feedback_solution the feedback controls is passed into.
-   * */
-  void getFeedbackControls(typename Model::input_vector_t &u_feedback_solution) const;
-
-  // SETTERS.
-  /**
-   * @brief sets the control signals computed by the LPV feedback.
-   * @param [in] u_feedback_model_msg the feedback controls is passed into.
-   * */
-  void setFeedbackControls(typename Model::input_vector_t const &u_feedback_model_msg);
-
   // DATA MEMBERS
   double dt{};  // trajectory time step.
 
@@ -202,19 +188,6 @@ void TrajectoryData<Model>::getControlMPCSolutionsAtTime(const double &t,
     auto const u1 = U.at(1);
     u_solutions_mpc = u0 + (t / mpc_dt) * (u1 - u0);
   }
-}
-
-// u_model_solution_ = [ax, steering_rate]
-template<class Model>
-void TrajectoryData<Model>::setFeedbackControls(typename Model::input_vector_t const &u_feedback_model_msg)
-{
-  u_model_solution_ = u_feedback_model_msg;
-}
-
-template<class Model>
-void TrajectoryData<Model>::getFeedbackControls(typename Model::input_vector_t &u_feedback_solution_msg) const
-{
-  u_feedback_solution_msg = u_model_solution_;
 }
 
 }  // namespace ns_data
