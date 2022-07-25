@@ -20,7 +20,6 @@
 
 #include <algorithm>
 #include <deque>
-#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -542,7 +541,8 @@ void NonlinearMPCNode::onTimer()
   }
 
   auto const
-    steering_rate = (u_solution_(1) - control_cmd_prev_.lateral.steering_tire_angle) / params_node_.control_period;
+    steering_rate =
+    (u_solution_(1) - static_cast<double>(control_cmd_prev_.lateral.steering_tire_angle)) / params_node_.control_period;
 
   // createControlCommand(ax, vx, steer_rate, steer_val)
   ControlCmdMsg control_cmd{};
@@ -655,7 +655,8 @@ void NonlinearMPCNode::updateCurrentPose()
 double NonlinearMPCNode::calcStopDistance(const size_t &prev_waypoint_index) const
 {
   const double &zero_velocity = EPS;
-  const double &origin_velocity = current_trajectory_ptr_->points.at(prev_waypoint_index).longitudinal_velocity_mps;
+  const double &origin_velocity =
+    static_cast<double>(current_trajectory_ptr_->points.at(prev_waypoint_index).longitudinal_velocity_mps);
 
   double stop_dist{};
 
@@ -667,7 +668,7 @@ double NonlinearMPCNode::calcStopDistance(const size_t &prev_waypoint_index) con
   if (std::fabs(origin_velocity) > zero_velocity)
   {
     auto it = std::find_if(current_trajectory_ptr_->points.cbegin() + static_cast<int>(prev_waypoint_index),
-                           current_trajectory_ptr_->points.cend(), [](auto &point)
+                           current_trajectory_ptr_->points.cend(), [&zero_velocity](auto &point)
                            {
                              return static_cast<double>(std::fabs(point.longitudinal_velocity_mps)) < zero_velocity;
                            });
@@ -750,11 +751,12 @@ void NonlinearMPCNode::publishPerformanceVariables(ControlCmdMsg const &control_
 {
   // Set nmpc performance variables.
   nmpc_performance_vars_.stamp = this->now();
-  nmpc_performance_vars_.steering_angle_input = control_cmd.lateral.steering_tire_angle;
-  nmpc_performance_vars_.steering_angle_rate_input = control_cmd.lateral.steering_tire_rotation_rate;
+  nmpc_performance_vars_.steering_angle_input = static_cast<double>(control_cmd.lateral.steering_tire_angle);
+  nmpc_performance_vars_.steering_angle_rate_input =
+    static_cast<double>(control_cmd.lateral.steering_tire_rotation_rate);
 
-  nmpc_performance_vars_.acceleration_input = control_cmd.longitudinal.acceleration;
-  nmpc_performance_vars_.long_velocity_input = control_cmd.longitudinal.speed;
+  nmpc_performance_vars_.acceleration_input = static_cast<double>(control_cmd.longitudinal.acceleration);
+  nmpc_performance_vars_.long_velocity_input = static_cast<double>(control_cmd.longitudinal.speed);
 
   // Set the measured vehicle steering.
   double &&current_steering =
@@ -1515,65 +1517,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   }
 
   // DEBUG
-  //
-  // ns_utils::print("Interpolated map");
-  // ns_eigen_utils::printEigenMat(interpolated_map);
-  //
-  // ns_utils::print("rdot");
-  // ns_eigen_utils::printEigenMat(rdot_interp.topRows(10));
-  // ns_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
-  //
-  // ns_utils::print("rddot");
-  // ns_eigen_utils::printEigenMat(rdot_interp.topRows(10));
-  // ns_eigen_utils::printEigenMat(rdot_interp.bottomRows(10));
 
-  // ns_utils::print("MPC raw vs smooth data members, s, t, x, y, z, vx, acc");
-
-  //  ns_utils::print("\n Raw s -------------- \n");
-  //  ns_utils::print_container(mpc_traj_raw.s);
-
-  //  ns_utils::print("\n Smooth s -------------- \n");
-  //  ns_utils::print_container(mpc_traj_smoothed.s);
-
-  //  ns_utils::print("\n Raw t -------------- \n");
-  //  ns_utils::print_container(mpc_traj_raw.t);
-
-  //  ns_utils::print("\n Smooth t -------------- \n");
-  //  ns_utils::print_container(mpc_traj_raw.t);
-
-  //  ns_utils::print("\n Raw x -------------- \n");
-  //  ns_utils::print_container(mpc_traj_raw.x);
-
-  //  ns_utils::print("\n Smooth x -------------- \n");
-  //  ns_utils::print_container(mpc_traj_smoothed.x);
-
-  //  ns_utils::print("\n Raw y -------------- \n");
-  //  ns_utils::print_container(mpc_traj_raw.y);
-
-  //  ns_utils::print("\n Smooth y -------------- \n");
-  //  ns_utils::print_container(mpc_traj_smoothed.y);
-
-  //  ns_utils::print("\n Raw z -------------- \n");
-  //  ns_utils::print_container(mpc_traj_raw.z);
-
-  //  ns_utils::print("\n Smooth z -------------- \n");
-  //  ns_utils::print_container(mpc_traj_smoothed.z);
-
-  // ns_utils::print("\n Reference yaw ------------ \n");
-  // ns_utils::print_container(mpc_traj_raw.yaw);
-
-  // ns_utils::print("\n Smooth yaw ------------ \n");
-  // ns_utils::print_container(mpc_traj_smoothed.yaw);
-
-  //  ns_utils::print("\nvx -------------- ");
-  //  ns_utils::print_container(mpc_traj_smoothed.vx);
-  //
-  // ns_utils::print("\nacc -------------- ");
-  // ns_utils::print_container(mpc_traj_smoothed.acc);
-  //
-  //  ns_utils::print("\ncurvature -------------- ");
-  //  ns_utils::print_container(mpc_traj_smoothed.curvature);
-  //
   // end of DEBUG
 
   return true;
@@ -1825,12 +1769,14 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   interpolated_traj_point.pose.orientation = orient_msg;
 
   // InterpolateInCoordinates the Vx longitudinal speed.
-  double const &vx_prev = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).longitudinal_velocity_mps;
+  double const &vx_prev =
+    static_cast<double>(current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).longitudinal_velocity_mps);
   // double const &vx_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
   // double const &&vx_target = vx_prev + ratio_t * (vx_next - vx_prev);
   double vx_target{};
   nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(current_s0_, vx_target);
+
   interpolated_traj_point.longitudinal_velocity_mps =
     static_cast<decltype(interpolated_traj_point.longitudinal_velocity_mps) > (vx_target);
 
@@ -2071,8 +2017,11 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
     // ns_utils::print("First command steering : ", control_cmd_kalman_.lateral.steering_tire_angle);
 
-    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) = control_cmd_kalman_.longitudinal.acceleration;  // ax
-    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) = control_cmd_kalman_.lateral.steering_tire_angle;
+    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) =
+      static_cast<double>(control_cmd_kalman_.longitudinal.acceleration);
+
+    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) =
+      static_cast<double>(control_cmd_kalman_.lateral.steering_tire_angle);
 
   } else
   {
