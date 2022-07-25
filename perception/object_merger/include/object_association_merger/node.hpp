@@ -46,7 +46,7 @@ private:
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  tilde::SteePublisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     merged_object_pub_;
   message_filters::Subscriber<autoware_auto_perception_msgs::msg::DetectedObjects> object0_sub_;
   message_filters::Subscriber<autoware_auto_perception_msgs::msg::DetectedObjects> object1_sub_;

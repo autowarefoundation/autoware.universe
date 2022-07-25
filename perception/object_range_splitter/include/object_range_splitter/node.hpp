@@ -35,11 +35,11 @@ private:
   void objectCallback(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg);
 
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  tilde::SteePublisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     long_range_object_pub_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  tilde::SteePublisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     short_range_object_pub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr sub_;
+  tilde::SteeSubscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr sub_;
 
   // ROS Parameters
   float spilt_range_;

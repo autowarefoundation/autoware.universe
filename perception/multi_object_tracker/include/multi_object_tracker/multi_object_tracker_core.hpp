@@ -51,7 +51,7 @@ public:
 private:
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     tracked_objects_pub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;  // publish timer
 

@@ -165,7 +165,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_)
 {
   // Create publishers and subscribers
-  detected_object_sub_ = create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  detected_object_sub_ = create_stee_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "input", rclcpp::QoS{1},
     std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
   tracked_objects_pub_ =

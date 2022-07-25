@@ -209,7 +209,7 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
     create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
       "~/input/initial_objects", rclcpp::QoS{1},
       std::bind(&DetectionByTracker::onObjects, this, std::placeholders::_1));
-  objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  objects_pub_ = create_stee_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output", rclcpp::QoS{1});
 
   shape_estimator_ = std::make_shared<ShapeEstimator>(true, true);

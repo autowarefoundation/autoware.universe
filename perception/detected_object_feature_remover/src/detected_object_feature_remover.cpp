@@ -20,7 +20,7 @@ DetectedObjectFeatureRemover::DetectedObjectFeatureRemover(const rclcpp::NodeOpt
 : SteeNode("detected_object_feature_remover", node_options)
 {
   using std::placeholders::_1;
-  pub_ = this->create_publisher<DetectedObjects>("~/output", rclcpp::QoS(1));
+  pub_ = this->create_stee_publisher<DetectedObjects>("~/output", rclcpp::QoS(1));
   sub_ = this->create_subscription<DetectedObjectsWithFeature>(
     "~/input", 1, std::bind(&DetectedObjectFeatureRemover::objectCallback, this, _1));
 }
