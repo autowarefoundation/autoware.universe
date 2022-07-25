@@ -35,14 +35,14 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
 {
   using apparent_safe_velocity_limiter::distanceToClosestCollision;
 
+  apparent_safe_velocity_limiter::ProjectionParameters params;
+  params.model = apparent_safe_velocity_limiter::ProjectionParameters::PARTICLE;
+  params.heading = 0.0;
   apparent_safe_velocity_limiter::linestring_t vector = {{0.0, 0.0}, {5.0, 0.0}};
   apparent_safe_velocity_limiter::polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
   apparent_safe_velocity_limiter::multilinestring_t obstacles;
-
-  apparent_safe_velocity_limiter::ProjectionParameters params;
-  params.model = apparent_safe_velocity_limiter::ProjectionParameters::PARTICLE;
 
   std::optional<double> result = distanceToClosestCollision(vector, footprint, obstacles, params);
   ASSERT_FALSE(result.has_value());
@@ -72,6 +72,7 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
 
   // Change vector and footprint
   vector = {{0.0, 0.0}, {5.0, 5.0}};
+  params.heading = M_PI_4;
   footprint.outer() = {{-1.0, 1.0}, {4.0, 6.0}, {6.0, 4.0}, {1.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
   obstacles.clear();
@@ -111,6 +112,7 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
   EXPECT_NEAR(*result, 0.353, 1e-3);
 
   // Change vector (opposite direction)
+  params.heading = -3 * M_PI_4;
   vector = {{5.0, 5.0}, {0.0, 0.0}};
   obstacles.clear();
 

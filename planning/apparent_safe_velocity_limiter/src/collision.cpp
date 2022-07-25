@@ -45,8 +45,7 @@ std::optional<double> distanceToClosestCollision(
         for (const auto & obs_point : intersection_line) {
           const auto euclidian_dist = bg::distance(obs_point, projection.front());
           if (params.distance_method == ProjectionParameters::EXACT) {
-            if (params.model == ProjectionParameters::PARTICLE) {  // TODO(Maxime CLEMENT): 0 steer
-                                                                   // angle bicycle case
+            if (params.model == ProjectionParameters::PARTICLE) {
               const auto collision_heading = std::atan2(
                 obs_point.y() - projection.front().y(), obs_point.x() - projection.front().x());
               const auto angle = params.heading - collision_heading;
