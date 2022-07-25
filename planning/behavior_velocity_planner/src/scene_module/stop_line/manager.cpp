@@ -39,8 +39,7 @@ StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
 }
 
 std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map)
 {
   std::vector<StopLineWithLaneId> stop_lines_with_lane_id;
 
@@ -62,8 +61,7 @@ std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnP
 }
 
 std::set<int64_t> StopLineModuleManager::getStopLineIdSetOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map)
 {
   std::set<int64_t> stop_line_id_set;
 
@@ -74,8 +72,7 @@ std::set<int64_t> StopLineModuleManager::getStopLineIdSetOnPath(
   return stop_line_id_set;
 }
 
-void StopLineModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+void StopLineModuleManager::launchNewModules(const PathWithLaneId & path)
 {
   for (const auto & stop_line_with_lane_id :
        getStopLinesWithLaneIdOnPath(path, planner_data_->route_handler_->getLaneletMapPtr())) {
@@ -90,8 +87,7 @@ void StopLineModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-StopLineModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+StopLineModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
 {
   const auto stop_line_id_set =
     getStopLineIdSetOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());

@@ -32,8 +32,7 @@ double calcYawFromPoints(
 }
 
 geometry_msgs::msg::Pose calcInterpolatedPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const StopLineModule::SegmentIndexWithOffset & offset_segment)
+  const PathWithLaneId & path, const StopLineModule::SegmentIndexWithOffset & offset_segment)
 {
   // Get segment points
   const auto & p_front = path.points.at(offset_segment.index).point.pose.position;
@@ -66,8 +65,7 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
 }
 
 boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegment(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
-  const double offset_length)
+  const PathWithLaneId & path, const size_t base_idx, const double offset_length)
 {
   double sum_length = 0.0;
   const auto start = static_cast<std::int32_t>(base_idx) - 1;
@@ -104,7 +102,7 @@ StopLineModule::StopLineModule(
 }
 
 boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCollision(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
+  const PathWithLaneId & path, const LineString2d & stop_line,
   const SearchRangeIndex & search_index)
 {
   const size_t min_search_index = std::max(static_cast<size_t>(0), search_index.min_idx);
@@ -145,8 +143,7 @@ boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCol
 }
 
 boost::optional<StopLineModule::SegmentIndexWithOffset> StopLineModule::findOffsetSegment(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const StopLineModule::SegmentIndexWithPoint2d & collision)
+  const PathWithLaneId & path, const StopLineModule::SegmentIndexWithPoint2d & collision)
 {
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto base_backward_length = planner_param_.stop_margin + base_link2front;
@@ -158,7 +155,7 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> StopLineModule::findOffs
 }
 
 boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const PathWithLaneId & path,
   const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment)
 {
   // If no stop point found due to out of range, use front point on path
@@ -170,10 +167,9 @@ boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPo
     offset_segment->index, calcInterpolatedPose(path, *offset_segment)};
 }
 
-autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const StopLineModule::SegmentIndexWithPose & stop_pose_with_index,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+PathWithLaneId StopLineModule::insertStopPose(
+  const PathWithLaneId & path, const StopLineModule::SegmentIndexWithPose & stop_pose_with_index,
+  StopReason * stop_reason)
 {
   auto modified_path = path;
 
@@ -192,7 +188,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
 
   // Get stop point and stop factor
   {
-    tier4_planning_msgs::msg::StopFactor stop_factor;
+    StopFactor stop_factor;
     stop_factor.stop_pose = stop_point_with_lane_id.point.pose;
     stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
     planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -201,17 +197,14 @@ autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
   return modified_path;
 }
 
-bool StopLineModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_ = DebugData();
   if (path->points.empty()) return true;
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.base_link2front = base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::STOP_LINE);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::STOP_LINE);
 
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);

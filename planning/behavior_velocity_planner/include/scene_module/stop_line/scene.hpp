@@ -34,6 +34,11 @@
 
 namespace behavior_velocity_planner
 {
+
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::StopFactor;
+using tier4_planning_msgs::msg::StopReason;
+
 class StopLineModule : public SceneModuleInterface
 {
   using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
@@ -82,9 +87,7 @@ public:
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -95,21 +98,19 @@ private:
   geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
   boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
+    const PathWithLaneId & path, const LineString2d & stop_line,
     const SearchRangeIndex & search_index);
 
   boost::optional<StopLineModule::SegmentIndexWithOffset> findOffsetSegment(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const StopLineModule::SegmentIndexWithPoint2d & collision);
+    const PathWithLaneId & path, const StopLineModule::SegmentIndexWithPoint2d & collision);
 
   boost::optional<StopLineModule::SegmentIndexWithPose> calcStopPose(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const PathWithLaneId & path,
     const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment);
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPose(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const StopLineModule::SegmentIndexWithPose & insert_index_with_pose,
-    tier4_planning_msgs::msg::StopReason * stop_reason);
+  PathWithLaneId insertStopPose(
+    const PathWithLaneId & path,
+    const StopLineModule::SegmentIndexWithPose & insert_index_with_pose, StopReason * stop_reason);
 
   lanelet::ConstLineString3d stop_line_;
   int64_t lane_id_;
