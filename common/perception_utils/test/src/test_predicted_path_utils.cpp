@@ -67,7 +67,7 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
   using tier4_autoware_utils::createQuaternionFromYaw;
   using tier4_autoware_utils::deg2rad;
 
-  const auto path = createTestPredictedPath(100, 1.0, 1.0);
+  const auto path = createTestPredictedPath(100, 0.1, 1.0);
 
   {
     const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
@@ -82,6 +82,28 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
       EXPECT_NEAR(p->orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p->orientation.z, ans_quat.z, epsilon);
       EXPECT_NEAR(p->orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // No Interpolation
+  {
+    // Negative time
+    {
+      const auto p = calcInterpolatedPose(path, -1.0);
+      EXPECT_EQ(p, boost::none);
+    }
+
+    // Over the time horizon
+    {
+      const auto p = calcInterpolatedPose(path, 10.0 + 1e-6);
+      EXPECT_EQ(p, boost::none);
+    }
+
+    // Empty Path
+    {
+      PredictedPath empty_path;
+      const auto p = calcInterpolatedPose(empty_path, -1.0);
+      EXPECT_EQ(p, boost::none);
     }
   }
 }
