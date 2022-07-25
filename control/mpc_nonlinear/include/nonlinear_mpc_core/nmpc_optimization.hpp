@@ -40,13 +40,6 @@ struct OsqpMatDims
 {
   OsqpMatDims() // : nxK{STATE_DIM * K}, nuK{INPUT_DIM * K}, njK{INPUT_DIM * (K - 1)}
   {
-
-    /*nxK = STATE_DIM * K;
-    // We have a dummy last control action if we use FOH the last control is used.
-    nuK = INPUT_DIM * K;        // !<@brief B = [0, 0, 0 ; B, 0, 0; 0, B, 0;... ]
-    njK = INPUT_DIM * (K - 1);  // !<@brief Jerk input uj = du.
-    */
-
     dcs_xu = nxK + nuK + njK;  // !<@brief size of P and q.
     Pxdim = nxK;
     Pudim = nuK;
@@ -139,7 +132,7 @@ class OptimizationProblemOSQP
                   ns_data::ParamsOptimization const &param_opt);
 
   // Solve
-  osqp::OsqpExitCode solve();
+  osqp::OsqpExitCode solve() const;
 
   [[nodiscard]] double getObjectiveValue() const
   { return osqp_solver_.objective_value(); }
@@ -840,7 +833,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
 }
 
 template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
-osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::solve()
+osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::solve() const
 {
   osqp::OsqpExitCode exit_code = osqp_solver_.Solve();
   return exit_code;
