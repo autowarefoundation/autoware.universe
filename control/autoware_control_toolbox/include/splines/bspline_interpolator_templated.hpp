@@ -477,7 +477,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::solveByDemmlerReisch(
   Sdiag.setZero();
 
   Sdiag.diagonal() = svd.singularValues();
-  auto &&A = basis_mat * Rinv * svd.matrixU();  // A = Basis @ Rinverse @ U
+  auto const &&A = basis_mat * Rinv * svd.matrixU();  // A = Basis @ Rinverse @ U
 
   // To be computed in the constructor.
   /**
@@ -488,8 +488,8 @@ void BSplineInterpolatorTemplated<Nin, Nout>::solveByDemmlerReisch(
    * */
 
   // y_interp = A(A^T@A + )
-  projection_mat_base_ = Rinv * svd.matrixU() *
-    (A.transpose() * A + lambda_ * lambda_ * Sdiag).inverse() * A.transpose();
+  projection_mat_base_ =
+    Rinv * svd.matrixU() * (A.transpose() * A + lambda_ * lambda_ * Sdiag).inverse() * A.transpose();
 }
 
 template<int Nin, int Nout>
@@ -514,7 +514,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::solveByQR(
   auto const &&Q1 = Q.topRows(m);
 
   auto const &&Rinv = R.inverse();
-  auto const RinvQ1T = Rinv * Q1.transpose();
+  auto const &&RinvQ1T = Rinv * Q1.transpose();
 
   //  ns_eigen_utils::printEigenMat(RinvQ1T);
   projection_mat_base_ = basis_mat * RinvQ1T;

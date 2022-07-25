@@ -27,10 +27,10 @@
 
 namespace ns_eigen_utils
 {
-template <typename T>
+template<typename T>
 using eigen_dynamic_type = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 
-template <typename T>
+template<typename T>
 using eigen_vector_type = Eigen::Matrix<T, Eigen::Dynamic, 1>;
 
 /**
@@ -45,9 +45,10 @@ using eigen_vector_type = Eigen::Matrix<T, Eigen::Dynamic, 1>;
  * @return The new shape matrix
  */
 
-template <typename T>
-constexpr eigen_dynamic_type<T> reshape(
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> & x, size_t const r, size_t const c)
+template<typename T>
+constexpr eigen_dynamic_type<T> reshape(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> &x,
+                                        size_t const r,
+                                        size_t const c)
 {
   Eigen::Map<eigen_dynamic_type<T>> rx(x.data(), r, c);
   return rx;
@@ -62,18 +63,21 @@ constexpr eigen_dynamic_type<T> reshape(
  * @param m2 second matrix *
  * @return stacked matrix
  */
-template <typename T, class M>
-constexpr eigen_dynamic_type<T> vstack(M const & m1, M const & m2)
+template<typename T, class M>
+constexpr eigen_dynamic_type<T> vstack(M const &m1, M const &m2)
 {
-  if (m1.rows() == 0) {
+  if (m1.rows() == 0)
+  {
     return m2;
   }
-  if (m2.rows() == 0) {
+  if (m2.rows() == 0)
+  {
     return m1;
   }
 
   size_t ncol = m1.cols();
-  if (ncol == 0) {
+  if (ncol == 0)
+  {
     ncol = m2.cols();
   }
 
@@ -82,8 +86,8 @@ constexpr eigen_dynamic_type<T> vstack(M const & m1, M const & m2)
   return rm;
 }
 
-template <typename T, class M, class... Args>
-constexpr eigen_dynamic_type<T> vstack(M const & first, Args const &... args)
+template<typename T, class M, class... Args>
+constexpr eigen_dynamic_type<T> vstack(M const &first, Args const &... args)
 {
   return vstack(first, vstack(args...));
 }
@@ -99,19 +103,22 @@ constexpr eigen_dynamic_type<T> vstack(M const & first, Args const &... args)
  * @return stacked matrix
  */
 
-template <typename T, class M>
-constexpr eigen_dynamic_type<T> hstack(M const & m1, M const & m2)
+template<typename T, class M>
+constexpr eigen_dynamic_type<T> hstack(M const &m1, M const &m2)
 {
-  if (m1.cols() == 0) {
+  if (m1.cols() == 0)
+  {
     return m2;
   }
 
-  if (m2.cols() == 0) {
+  if (m2.cols() == 0)
+  {
     return m1;
   }
 
   Eigen::Index nrow = m1.rows();
-  if (nrow == 0) {
+  if (nrow == 0)
+  {
     nrow = m2.rows();
   }
 
@@ -121,15 +128,15 @@ constexpr eigen_dynamic_type<T> hstack(M const & m1, M const & m2)
   return rm;
 }
 
-template <typename T, class M, class... Args>
-constexpr eigen_dynamic_type<T> hstack(M const & first, Args const &... args)
+template<typename T, class M, class... Args>
+constexpr eigen_dynamic_type<T> hstack(M const &first, Args const &... args)
 {
   return hstack<T>(first, hstack<T>(args...));
 }
 
-template <typename T>
+template<typename T>
 constexpr eigen_dynamic_type<T> block_diag(
-  eigen_dynamic_type<T> const & m1, eigen_dynamic_type<T> const & m2)
+  eigen_dynamic_type<T> const &m1, eigen_dynamic_type<T> const &m2)
 {
   uint32_t m1r = m1.rows();
   uint32_t m1c = m1.cols();
@@ -143,9 +150,9 @@ constexpr eigen_dynamic_type<T> block_diag(
   return mf;
 }
 
-template <typename T, class... Args>
+template<typename T, class... Args>
 constexpr eigen_dynamic_type<T> block_diag(
-  eigen_dynamic_type<T> const & first, Args const &... args)
+  eigen_dynamic_type<T> const &first, Args const &... args)
 {
   return block_diag(first, block_diag(args...));
 }
@@ -161,10 +168,10 @@ constexpr eigen_dynamic_type<T> block_diag(
  *
  * @return A result of the Kronecker product
  */
-template <typename T, typename Derived>
+template<typename T, typename Derived>
 constexpr eigen_dynamic_type<T>
 
-kron(const Derived & m1, const eigen_dynamic_type<T> & m2)
+kron(const Derived &m1, const eigen_dynamic_type<T> &m2)
 {
   size_t const m1r = m1.rows();
   size_t const m1c = m1.cols();
@@ -174,8 +181,10 @@ kron(const Derived & m1, const eigen_dynamic_type<T> & m2)
 
   eigen_dynamic_type<T> m3(m1r * m2r, m1c * m2c);
 
-  for (size_t i = 0; i < m1r; i++) {
-    for (size_t j = 0; j < m1c; j++) {
+  for (size_t i = 0; i < m1r; i++)
+  {
+    for (size_t j = 0; j < m1c; j++)
+    {
       m3.block(i * m2r, j * m2c, m2r, m2c) = m1(i, j) * m2;
     }
   }
@@ -183,10 +192,10 @@ kron(const Derived & m1, const eigen_dynamic_type<T> & m2)
   return m3;
 }
 
-template <typename T, typename Derived>
+template<typename T, typename Derived>
 constexpr eigen_dynamic_type<T>
 
-kron(const eigen_dynamic_type<T> & m1, Derived const & m2)
+kron(const eigen_dynamic_type<T> &m1, Derived const &m2)
 {
   size_t m1r = m1.rows();
   size_t m1c = m1.cols();
@@ -196,8 +205,10 @@ kron(const eigen_dynamic_type<T> & m1, Derived const & m2)
 
   eigen_dynamic_type<T> m3(m1r * m2r, m1c * m2c);
 
-  for (size_t i = 0; i < m1r; i++) {
-    for (size_t j = 0; j < m1c; j++) {
+  for (size_t i = 0; i < m1r; i++)
+  {
+    for (size_t j = 0; j < m1c; j++)
+    {
       m3.block(i * m2r, j * m2c, m2r, m2c) = m1(i, j) * m2;
     }
   }
@@ -205,10 +216,10 @@ kron(const eigen_dynamic_type<T> & m1, Derived const & m2)
   return m3;
 }
 
-template <typename T, typename Derived1, typename Derived2>
+template<typename T, typename Derived1, typename Derived2>
 constexpr eigen_dynamic_type<T>
 
-kron(const Derived1 & m1, const Derived2 & m2)
+kron(const Derived1 &m1, const Derived2 &m2)
 {
   size_t const m1r = m1.rows();
   size_t m1c = m1.cols();
@@ -218,8 +229,10 @@ kron(const Derived1 & m1, const Derived2 & m2)
 
   eigen_dynamic_type<T> m3(m1r * m2r, m1c * m2c);
 
-  for (size_t i = 0; i < m1r; i++) {
-    for (size_t j = 0; j < m1c; j++) {
+  for (size_t i = 0; i < m1r; i++)
+  {
+    for (size_t j = 0; j < m1c; j++)
+    {
       m3.block(i * m2r, j * m2c, m2r, m2c) = m1(i, j) * m2;
     }
   }
@@ -227,18 +240,19 @@ kron(const Derived1 & m1, const Derived2 & m2)
   return m3;
 }
 
-template <typename T>
+template<typename T>
 eigen_dynamic_type<T> convertToEigenMatrix(std::vector<std::vector<T>> data)
 {
   eigen_dynamic_type<T> eMatrix(data.size(), data[0].size());
-  for (size_t i = 0; i < data.size(); ++i) {
+  for (size_t i = 0; i < data.size(); ++i)
+  {
     eMatrix.row(i) = eigen_vector_type<T>::Map(&data[i][0], data[0].size());
   }
   return eMatrix;
 }
 
-template <class M, typename S = std::string_view>
-void printEigenMat(M const & mat, S additional_info = "")
+template<class M, typename S = std::string_view>
+void printEigenMat(M const &mat, S additional_info = "")
 {
   std::cout << additional_info;
   std::string sep = "\n----------------------------------------\n";
@@ -252,8 +266,8 @@ void printEigenMat(M const & mat, S additional_info = "")
   std::cout << '\n' << mat.format(CleanFmt) << sep;
 }
 
-template <typename T, typename S = std::string_view>
-void printEigenMat(eigen_dynamic_type<T> const & mat, S additional_info)
+template<typename T, typename S = std::string_view>
+void printEigenMat(eigen_dynamic_type<T> const &mat, S additional_info)
 {
   std::string sep = "\n----------------------------------------\n";
   Eigen::IOFormat CommaInitFmt(
@@ -271,14 +285,15 @@ void printEigenMat(eigen_dynamic_type<T> const & mat, S additional_info)
  * = [x1, y1] .
  *
  * */
-template <typename T>
+template<typename T>
 eigen_dynamic_type<T> crossProduct(eigen_dynamic_type<T> const r0, eigen_dynamic_type<T> const r1)
 {
   auto m = r0.rows();
   eigen_dynamic_type<T> cross_product(m, 1);
   cross_product.setZero();
 
-  for (size_t k = 0; k < m; k++) {
+  for (size_t k = 0; k < m; k++)
+  {
     cross_product(k) = r0(k, 0) * r1(k, 1) - r0(k, 1) * r1(k, 0);
   }
 
@@ -288,7 +303,7 @@ eigen_dynamic_type<T> crossProduct(eigen_dynamic_type<T> const r0, eigen_dynamic
 /**
  *  Apply the curvature expression defined in the differential geometry.
  * */
-template <typename T>
+template<typename T>
 eigen_dynamic_type<T> Curvature(
   eigen_dynamic_type<T> const rdot, eigen_dynamic_type<T> const rdotdot)
 {
@@ -296,9 +311,10 @@ eigen_dynamic_type<T> Curvature(
   eigen_dynamic_type<T> curvature(m, 1);
   curvature.setZero();
 
-  auto && EPS = std::numeric_limits<double>::epsilon();
-  for (Eigen::Index k = 0; k < m; k++) {
-    auto && cubed_norm = std::pow(rdot.row(k).norm(), 3) + EPS;
+  auto &&EPS = std::numeric_limits<double>::epsilon();
+  for (Eigen::Index k = 0; k < m; k++)
+  {
+    auto &&cubed_norm = std::pow(rdot.row(k).norm(), 3) + EPS;
     curvature(k) = (rdot(k, 0) * rdotdot(k, 1) - rdot(k, 1) * rdotdot(k, 0)) / cubed_norm;
   }
   return curvature;
@@ -311,10 +327,11 @@ eigen_dynamic_type<T> Curvature(
  * @tparam T scalar type
  * @tparam ArgType Eigen matrix class.
  * */
-template <class ArgType>
-std::vector<std::vector<double>> ToTriplets(
-  const Eigen::MatrixBase<ArgType> & arg_mat, double const & eps_tol, size_t rowstart = 0,
-  size_t colstart = 0)
+template<class ArgType>
+std::vector<std::vector<double>> ToTriplets(const Eigen::MatrixBase<ArgType> &arg_mat,
+                                            double const &eps_tol,
+                                            size_t rowstart = 0,
+                                            size_t colstart = 0)
 {
   auto BoolMat = arg_mat.cwiseAbs().array() >= eps_tol;
 
@@ -322,28 +339,29 @@ std::vector<std::vector<double>> ToTriplets(
   // std::vector<unsigned int> NNZind;
   Eigen::VectorXi NNZflatind = Eigen::VectorXi::LinSpaced(BoolMat.size(), 0, BoolMat.size() - 1);
 
-  auto NNZindit = std::stable_partition(
-    NNZflatind.data(), NNZflatind.data() + NNZflatind.size(),
-    [&BoolMat](int i) { return BoolMat(i); });
+  auto NNZindit = std::stable_partition(NNZflatind.data(), NNZflatind.data() + NNZflatind.size(),
+                                        [&BoolMat](int i)
+                                        { return BoolMat(i); });
 
   NNZflatind.conservativeResize(NNZindit - NNZflatind.data());
 
   // printEigenMat(NNZflatind);
   // ColMajor Index and value extraction.
-  size_t const & n = arg_mat.rows();
-  size_t const & m = arg_mat.cols();
+  size_t const &n = arg_mat.rows();
+  size_t const &m = arg_mat.cols();
 
   // Triplet manipulation.
   std::vector<std::vector<double>> triplet_list;
   triplet_list.reserve(NNZflatind.size());
 
-  for (Eigen::Index k = 0; k < NNZflatind.size(); k++) {
-    auto val = arg_mat(NNZflatind[k]);
-    size_t col = NNZflatind[k] / (ArgType::Flags & Eigen::RowMajorBit ? m : n);
-    size_t row = NNZflatind[k] % (ArgType::Flags & Eigen::RowMajorBit ? m : n);
+  for (Eigen::Index k = 0; k < NNZflatind.size(); ++k)
+  {
+    auto const &val = arg_mat(NNZflatind[k]);
+    size_t const &col = NNZflatind[k] / (ArgType::Flags & Eigen::RowMajorBit ? m : n);
+    size_t const &row = NNZflatind[k] % (ArgType::Flags & Eigen::RowMajorBit ? m : n);
 
-    triplet_list.template emplace_back(std::vector<double>{
-      static_cast<double>(row + rowstart), static_cast<double>(col + colstart), val});
+    triplet_list.template emplace_back(std::vector<double>{static_cast<double>(row + rowstart),
+                                                           static_cast<double>(col + colstart), val});
     // triplet_list.template emplace_back(triplet_type(row, col, val));
   }
 
@@ -353,30 +371,33 @@ std::vector<std::vector<double>> ToTriplets(
 /**
  * @brief prints a trajectory container in the matrix form.
  * */
-template <template <typename, typename> class ContainerType, typename ValueType, typename AllocType>
-void printTrajectory(const ContainerType<ValueType, AllocType> & eigen_matrix_vec)
+template<template<typename, typename> class ContainerType, typename ValueType, typename AllocType>
+void printTrajectory(const ContainerType<ValueType, AllocType> &eigen_matrix_vec)
 {
-  auto nX = eigen_matrix_vec.size();
-  auto const nrow = eigen_matrix_vec[0].rows();
+  auto const &nX = eigen_matrix_vec.size();
+  auto const &nrow = eigen_matrix_vec[0].rows();
+
   Eigen::MatrixXd X(nrow, nX);
   X.setZero();
 
-  for (Eigen::Index k = 0; k < nX; k++) {
+  for (Eigen::Index k = 0; k < nX; ++k)
+  {
     X.col(k) = eigen_matrix_vec[k];
   }
 
   printEigenMat(X);
 }
 
-template <template <typename, typename> class ContainerType, typename ValueType, typename AllocType>
-Eigen::MatrixXd getTrajectory(const ContainerType<ValueType, AllocType> & eigen_matrix_vec)
+template<template<typename, typename> class ContainerType, typename ValueType, typename AllocType>
+Eigen::MatrixXd getTrajectory(const ContainerType<ValueType, AllocType> &eigen_matrix_vec)
 {
-  auto nX = eigen_matrix_vec.size();
-  auto const nrow = eigen_matrix_vec[0].rows();
+  auto const &nX = eigen_matrix_vec.size();
+  auto const &nrow = eigen_matrix_vec[0].rows();
   Eigen::MatrixXd X(nrow, nX);
   X.setZero();
 
-  for (size_t k = 0; k < nX; k++) {
+  for (size_t k = 0; k < nX; ++k)
+  {
     X.col(static_cast<Eigen::Index>(k)) = eigen_matrix_vec[k];
   }
 
@@ -387,38 +408,45 @@ Eigen::MatrixXd getTrajectory(const ContainerType<ValueType, AllocType> & eigen_
  *
  * @param char type_R u- for Rupper, l for Rlower
  * */
-template <typename T, class Derived1, class Derived2>
-void backSubstitution(
-  eigen_dynamic_type<T> const & R, Eigen::MatrixBase<Derived1> const & B,
-  Eigen::MatrixBase<Derived2> & Xtobesolved, char type_of_R)
+template<typename T, class Derived1, class Derived2>
+void backSubstitution(  eigen_dynamic_type<T> const &R, Eigen::MatrixBase<Derived1> const &B,
+  Eigen::MatrixBase<Derived2> &Xtobesolved, char type_of_R)
 {
-  auto && mrow = B.rows();
-  auto && ncol = R.cols();
+  auto &&mrow = B.rows();
+  auto &&ncol = R.cols();
 
   Xtobesolved.setZero();
 
-  if (type_of_R == 'u') {
-    for (auto i = 0; i < mrow; ++i) {
+  if (type_of_R == 'u')
+  {
+    for (auto i = 0; i < mrow; ++i)
+    {
       Xtobesolved(i, 0) = B(i, 0) / R(0, 0);
 
-      for (auto k = 1; k < ncol; ++k) {
+      for (auto k = 1; k < ncol; ++k)
+      {
         Xtobesolved(i, k) = B(i, k);
 
-        for (auto j = 0; j < k; ++j) {
+        for (auto j = 0; j < k; ++j)
+        {
           Xtobesolved(i, k) = Xtobesolved(i, k) - Xtobesolved(i, j) * R(j, k);
         }
 
         Xtobesolved(i, k) = Xtobesolved(i, k) / R(k, k);
       }
     }
-  } else {
-    for (auto i = 0; i < mrow; ++i) {
+  } else
+  {
+    for (auto i = 0; i < mrow; ++i)
+    {
       Xtobesolved(i, ncol - 1) = B(i, ncol - 1) / R(ncol - 1, ncol - 1);
 
-      for (auto k = ncol - 2; k >= 0; --k) {
+      for (auto k = ncol - 2; k >= 0; --k)
+      {
         Xtobesolved(i, k) = B(i, k);
 
-        for (auto j = k + 1; j < ncol; ++j) {
+        for (auto j = k + 1; j < ncol; ++j)
+        {
           Xtobesolved(i, k) = Xtobesolved(i, k) - Xtobesolved(i, j) * R(j, k);
         }
 
@@ -436,9 +464,8 @@ void backSubstitution(
  * @param U: the matrix the column of which is used to update  S
  * @param weight: sign of which defines update or downdate
  */
-template <typename T, class Derived1, class Derived2>
-void cholesky_update(
-  Eigen::MatrixBase<Derived1> & R, Eigen::MatrixBase<Derived2> const & U, T const & weight)
+template<typename T, class Derived1, class Derived2>
+void cholesky_update(Eigen::MatrixBase<Derived1> &R, Eigen::MatrixBase<Derived2> const &U, T const &weight)
 {
   //        Eigen::MatrixXd R{Rsqrt};
   //        std::cout << "Printing input R ... in cholesky update ";
@@ -450,33 +477,35 @@ void cholesky_update(
   double rowsum{};
 
   // Check if R is upper triangular.
-  for (auto i = 0; i < R.rows(); ++i) {
+  for (auto i = 0; i < R.rows(); ++i)
+  {
     rowsum += R(i, 0);
   }
 
-  if (std::fabs(rowsum - R(0, 0)) > std::numeric_limits<double>::epsilon()) {
-    std::cout << " Matrix is not Upper Triangular "
-              << "\n";
+  if (std::fabs(rowsum - R(0, 0)) > std::numeric_limits<double>::epsilon())
+  {
+    std::cout << " Matrix is not Upper Triangular " << "\n";
     return;
   }
 
-  auto const && sign = sgn(weight);
-  auto const && weight_abs = std::fabs(weight);
-  auto const && nrows = U.rows();
+  auto const &&sign = sgn(weight);
+  auto const &&weight_abs = std::fabs(weight);
+  auto const &&nrows = U.rows();
 
-  for (auto j = 0; j < U.cols(); ++j) {
+  for (auto j = 0; j < U.cols(); ++j)
+  {
     eigen_dynamic_type<T> x(weight_abs * U.col(j));
 
-    for (auto k = 0; k < nrows; ++k) {
-      auto const && r_squared = R(k, k) * R(k, k) + sign * x(k, 0) * x(k, 0);
-      auto const && r = r_squared < 0 ? 0. : std::sqrt(r_squared);
-      auto const && c = r / R(k, k);
-      auto const && s = x(k, 0) / R(k, k);
+    for (auto k = 0; k < nrows; ++k)
+    {
+      auto const &&r_squared = R(k, k) * R(k, k) + sign * x(k, 0) * x(k, 0);
+      auto const &&r = r_squared < 0 ? 0. : std::sqrt(r_squared);
+      auto const &&c = r / R(k, k);
+      auto const &&s = x(k, 0) / R(k, k);
       R(k, k) = r;
 
       R.row(k).rightCols(nrows - 1 - k) =
-        (R.row(k).rightCols(nrows - 1 - k) + sign * s * x.bottomRows(nrows - 1 - k).transpose()) /
-        c;
+        (R.row(k).rightCols(nrows - 1 - k) + sign * s * x.bottomRows(nrows - 1 - k).transpose()) / c;
 
       x.bottomRows(nrows - k - 1) =
         c * x.bottomRows(nrows - k - 1) - s * R.row(k).rightCols(nrows - 1 - k).transpose();
