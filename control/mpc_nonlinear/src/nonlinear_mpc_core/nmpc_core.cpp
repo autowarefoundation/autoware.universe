@@ -399,8 +399,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
   // end of debug
 }
 
-void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetStatesByArcLength(
-  double const &current_predicted_s0)
+void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetStatesByArcLength(double const &current_predicted_s0)
 {
   // Prepare the target trajectory data;
   // number of stored states in the horizon.
@@ -611,6 +610,12 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_spline
                                                                               dt,
                                                                               data_nmpc_.discretization_data);
 
+  if (!is_discretisized)
+  {
+    return false;
+  }
+
+
   //  // Alternative methods for the discretizations.
   //  bool is_discretisized = ns_discretization::bilinearTransformation(model_ptr_,
   //                                                                    data_nmpc_.trajectory_data,
@@ -639,13 +644,9 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_spline
   //                  is_discretisized ? " initialized ..." : "not initialized ...");
 
 
-  if (!is_discretisized)
-  {
-    return false;
-  }
 
   bool is_initialized_osqp{false};
-  if (!osqp_interface_.isInitialized() && is_initialized_traj && is_discretisized)
+  if (!osqp_interface_.isInitialized())
   {
     is_initialized_osqp =
       osqp_interface_.setUPOSQP_useTriplets(data_nmpc_.trajectory_data.X[0], data_nmpc_, params_opt_);
@@ -690,8 +691,8 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_spline
   return initialized_; //initialized_;
 }
 
-bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(ns_splines::InterpolatingSplinePCG const
+                                                                               &piecewise_interpolator)
 {
   // Create the new s-coordinates from the predicted speed trajectory.
   std::vector<double> s_predicted_vect;
