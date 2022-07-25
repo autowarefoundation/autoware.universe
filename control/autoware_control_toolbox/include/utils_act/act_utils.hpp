@@ -416,7 +416,7 @@ bool interp1d_linear(std::vector<T> const &tbase,
   ynew.clear();
   ynew.reserve(tbase.size());
 
-  auto const &&EPS = std::numeric_limits<double>::epsilon();
+  // auto const &&EPS = std::numeric_limits<double>::epsilon();
 
   // For each coordinate in the new coordinate vector.
   for (double const &tk : tnew)
