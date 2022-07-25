@@ -15,6 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_HPP_
 
+#include "apparent_safe_velocity_limiter/obstacles.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
@@ -104,7 +105,7 @@ std::vector<multilinestring_t> createProjectedLines(
 /// @param[in] obstacle_params obstacle parameters
 /// @param[out] debug_pointcloud resulting filtered pointcloud
 /// @return linestrings representing obstacles to avoid
-multilinestring_t createObstacleLines(
+std::vector<Obstacle> createObstacles(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
   const polygon_t & envelope_polygon, tier4_autoware_utils::TransformListener & transform_listener,
@@ -121,7 +122,7 @@ multilinestring_t createObstacleLines(
 /// @param[in] params projection parameters
 /// @param[in] min_velocity minimum velocity that can be set by this function
 void limitVelocity(
-  Trajectory & trajectory, const multilinestring_t & obstacles,
+  Trajectory & trajectory, const std::vector<Obstacle> & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params);
 

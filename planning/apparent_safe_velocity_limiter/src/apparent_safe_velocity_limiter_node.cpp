@@ -122,6 +122,10 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       obstacle_params_.dynamic_obstacles_buffer = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == ObstacleParameters::MIN_VEL_PARAM) {
       obstacle_params_.dynamic_obstacles_min_vel = static_cast<Float>(parameter.as_double());
+    } else if (parameter.get_name() == ObstacleParameters::MAP_TAGS_PARAM) {
+      obstacle_params_.static_map_tags = parameter.as_string_array();
+    } else if (parameter.get_name() == ObstacleParameters::FILTERING_PARAM) {
+      obstacle_params_.filter_envelope = parameter.as_bool();
       // Projection parameters
     } else if (parameter.get_name() == ProjectionParameters::MODEL_PARAM) {
       if (!projection_params_.updateModel(*this, parameter.as_string())) {
@@ -135,6 +139,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       }
     } else if (parameter.get_name() == ProjectionParameters::STEER_OFFSET_PARAM) {
       projection_params_.steering_angle_offset = parameter.as_double();
+    } else if (parameter.get_name() == ProjectionParameters::DISTANCE_METHOD_PARAM) {
+      projection_params_.updateDistanceMethod(*this, parameter.as_string());
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -159,11 +165,13 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   const auto projected_linestrings = createProjectedLines(downsampled_traj, projection_params_);
   const auto footprint_polygons =
     createFootprintPolygons(projected_linestrings, vehicle_lateral_offset_);
-  const auto envelope_polygon = createEnvelopePolygon(footprint_polygons);
-  multilinestring_t obstacles = static_map_obstacles_;
+  polygon_t envelope_polygon;
+  if (obstacle_params_.filter_envelope)
+    envelope_polygon = createEnvelopePolygon(footprint_polygons);
+  auto obstacles = static_map_obstacles_;
   if (obstacle_params_.dynamic_source != ObstacleParameters::STATIC_ONLY) {
     PointCloud debug_pointcloud;
-    const auto dynamic_obstacles = createObstacleLines(
+    const auto dynamic_obstacles = createObstacles(
       *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, transform_listener_,
       msg->header.frame_id, obstacle_params_, debug_pointcloud);
     debug_pointcloud.header.stamp = now();

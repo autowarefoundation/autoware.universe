@@ -12,17 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "apparent_safe_velocity_limiter/types.hpp"
+#include <apparent_safe_velocity_limiter/distance.hpp>
 
-#include <Eigen/Core>
-#include <apparent_safe_velocity_limiter/collision.hpp>
-
-#include <boost/assign.hpp>
 #include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/detail/distance/interface.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
-
-#include <tf2/utils.h>
 
 #include <algorithm>
 #include <limits>
@@ -32,15 +27,17 @@ namespace apparent_safe_velocity_limiter
 namespace bg = boost::geometry;
 
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint, const multilinestring_t & obstacles,
-  const ProjectionParameters & params)
+  const linestring_t & projection, const polygon_t & footprint,
+  const std::vector<Obstacle> & obstacles, const ProjectionParameters & params,
+  const double max_obstacle_distance)
 {
   std::optional<double> distance;
   if (projection.empty()) return distance;
   double min_dist = std::numeric_limits<double>::max();
   for (const auto & obstacle : obstacles) {
+    if (bg::distance(obstacle.centroid, projection.front()) > max_obstacle_distance) continue;
     multilinestring_t intersection_lines;
-    if (bg::intersection(footprint, obstacle, intersection_lines)) {
+    if (bg::intersection(footprint, obstacle.line, intersection_lines)) {
       for (const auto & intersection_line : intersection_lines) {
         for (const auto & obs_point : intersection_line) {
           const auto euclidian_dist = bg::distance(obs_point, projection.front());
@@ -79,51 +76,5 @@ double arcDistance(const point_t & origin, const double heading, const point_t &
   const auto angle =
     std::acos((2 * squared_radius - (origin - target).squaredNorm()) / (2 * squared_radius));
   return std::sqrt(squared_radius) * angle;
-}
-
-polygon_t createObjectPolygon(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & dimensions,
-  const double buffer)
-{
-  // (objects.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
-  // rename
-  const double x = pose.position.x;
-  const double y = pose.position.y;
-  const double h = dimensions.x + buffer;
-  const double w = dimensions.y + buffer;
-  const double yaw = tf2::getYaw(pose.orientation);
-
-  // create base polygon
-  polygon_t obj_poly;
-  boost::geometry::exterior_ring(obj_poly) = boost::assign::list_of<point_t>(h / 2.0, w / 2.0)(
-    -h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
-
-  // rotate polygon(yaw)
-  boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
-  polygon_t rotate_obj_poly;
-  boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
-
-  // translate polygon(x, y)
-  boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
-  polygon_t translate_obj_poly;
-  boost::geometry::transform(rotate_obj_poly, translate_obj_poly, translate);
-  return translate_obj_poly;
-}
-
-multipolygon_t createObjectPolygons(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
-  const double min_velocity)
-{
-  multipolygon_t polygons;
-  for (const auto & object : objects.objects) {
-    if (
-      object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_velocity ||
-      object.kinematics.initial_twist_with_covariance.twist.linear.x <= -min_velocity) {
-      polygons.push_back(createObjectPolygon(
-        object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions, buffer));
-    }
-  }
-  return polygons;
 }
 }  // namespace apparent_safe_velocity_limiter

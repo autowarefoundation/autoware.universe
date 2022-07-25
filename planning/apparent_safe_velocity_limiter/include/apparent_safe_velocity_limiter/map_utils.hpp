@@ -15,6 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__MAP_UTILS_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__MAP_UTILS_HPP_
 
+#include "apparent_safe_velocity_limiter/obstacles.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
@@ -26,7 +27,7 @@
 
 namespace apparent_safe_velocity_limiter
 {
-multilinestring_t extractStaticObstacles(
+std::vector<Obstacle> extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map,
   const autoware_auto_planning_msgs::msg::HADMapRoute & route,
   const std::vector<std::string> & tags);

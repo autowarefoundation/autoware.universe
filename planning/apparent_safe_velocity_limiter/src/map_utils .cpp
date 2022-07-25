@@ -21,12 +21,12 @@
 
 namespace apparent_safe_velocity_limiter
 {
-multilinestring_t extractStaticObstacles(
+std::vector<Obstacle> extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map,
   const autoware_auto_planning_msgs::msg::HADMapRoute & route,
   const std::vector<std::string> & tags)
 {
-  multilinestring_t obstacles;
+  std::vector<Obstacle> obstacles;
   lanelet::Ids ids;
   for (const auto & segment : route.segments) {
     ids.push_back(segment.preferred_primitive_id);
@@ -40,12 +40,12 @@ multilinestring_t extractStaticObstacles(
     if (std::find(tags.begin(), tags.end(), left_type) != tags.end()) {
       linestring_t ls;
       for (const auto & p : lanelet->leftBound2d()) ls.push_back(point_t{p.x(), p.y()});
-      obstacles.push_back(ls);
+      obstacles.emplace_back(ls);
     }
     if (std::find(tags.begin(), tags.end(), right_type) != tags.end()) {
       linestring_t ls;
       for (const auto & p : lanelet->rightBound2d()) ls.push_back(point_t{p.x(), p.y()});
-      obstacles.push_back(ls);
+      obstacles.emplace_back(ls);
     }
   }
   return obstacles;

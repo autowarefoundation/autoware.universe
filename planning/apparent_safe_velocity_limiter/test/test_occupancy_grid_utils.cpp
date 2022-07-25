@@ -14,13 +14,15 @@
 
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 
+#include "nav_msgs/msg/detail/occupancy_grid__struct.hpp"
+
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <gtest/gtest.h>
 
 TEST(TestOccupancyGridUtils, extractObstacleLines)
 {
-  using apparent_safe_velocity_limiter::extractObstacleLines;
+  using apparent_safe_velocity_limiter::multipolygon_t;
   using apparent_safe_velocity_limiter::polygon_t;
   constexpr int8_t occupied_thr = 10;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
@@ -34,18 +36,27 @@ TEST(TestOccupancyGridUtils, extractObstacleLines)
   full_mask.outer() = {{0.0, 0.0}, {0.0, 5.0}, {5.0, 5.0}, {5.0, 0.0}};
   boost::geometry::correct(full_mask);
 
-  auto polygons = extractObstacleLines(occupancy_grid, {}, full_mask, occupied_thr);
-  EXPECT_TRUE(polygons.empty());
+  constexpr auto extractObstacles = [](
+                                      const nav_msgs::msg::OccupancyGrid & occupancy_grid,
+                                      const multipolygon_t & in_mask, const polygon_t & out_mask,
+                                      const double thr) {
+    auto grid_map = apparent_safe_velocity_limiter::convertToGridMap(occupancy_grid);
+    apparent_safe_velocity_limiter::threshold(grid_map, thr);
+    apparent_safe_velocity_limiter::maskPolygons(grid_map, in_mask, out_mask);
+    return apparent_safe_velocity_limiter::extractObstacles(grid_map, occupancy_grid);
+  };
+  auto obstacles = extractObstacles(occupancy_grid, {}, full_mask, occupied_thr);
+  EXPECT_TRUE(obstacles.empty());
 
   occupancy_grid.data.at(5) = 10;
-  polygons = extractObstacleLines(occupancy_grid, {}, full_mask, occupied_thr);
-  EXPECT_EQ(polygons.size(), 1ul);
+  obstacles = extractObstacles(occupancy_grid, {}, full_mask, occupied_thr);
+  EXPECT_EQ(obstacles.size(), 1ul);
 
   for (auto i = 1; i < 4; ++i)
     for (auto j = 1; j < 4; ++j) occupancy_grid.data[j + i * occupancy_grid.info.width] = 10;
-  polygons = extractObstacleLines(occupancy_grid, {}, full_mask, occupied_thr);
-  EXPECT_EQ(polygons.size(), 1ul);
+  obstacles = extractObstacles(occupancy_grid, {}, full_mask, occupied_thr);
+  EXPECT_EQ(obstacles.size(), 1ul);
 
-  polygons = extractObstacleLines(occupancy_grid, {full_mask}, full_mask, occupied_thr);
-  EXPECT_EQ(polygons.size(), 0ul);
+  obstacles = extractObstacles(occupancy_grid, {full_mask}, full_mask, occupied_thr);
+  EXPECT_EQ(obstacles.size(), 0ul);
 }

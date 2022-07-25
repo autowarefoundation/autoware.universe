@@ -21,14 +21,14 @@
 
 namespace apparent_safe_velocity_limiter
 {
-visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & lines, const Float z)
+visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, const Float z)
 {
   visualization_msgs::msg::Marker marker;
   marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   marker.scale.x = 0.1;
   marker.color.b = 1.0;
   marker.color.a = 1.0;
-  for (const auto & point : lines) {
+  for (const auto & point : obstacle.line) {
     geometry_msgs::msg::Point p;
     p.x = point.x();
     p.y = point.y();
@@ -39,12 +39,12 @@ visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & lines,
 }
 
 visualization_msgs::msg::MarkerArray makeLinestringMarkers(
-  const multilinestring_t & lines, const Float z, const std::string & ns)
+  const std::vector<Obstacle> & obstacles, const Float z, const std::string & ns)
 {
   visualization_msgs::msg::MarkerArray markers;
   auto id = 0;
-  for (const auto & line : lines) {
-    auto marker = makeLinestringMarker(line, z);
+  for (const auto & obstacle : obstacles) {
+    auto marker = makeLinestringMarker(obstacle, z);
     marker.header.frame_id = "map";
     marker.id = id++;
     marker.ns = ns;
@@ -115,7 +115,7 @@ visualization_msgs::msg::Marker makePolygonPointsMarker(
 }
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const multilinestring_t & lines, const std::vector<polygon_t> & footprint_polygons,
+  const std::vector<Obstacle> & obstacles, const std::vector<polygon_t> & footprint_polygons,
   const polygon_t & envelope_polygon, const polygon_t & safe_envelope_polygon, const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
@@ -135,7 +135,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   debug_markers.markers.push_back(original_footprints);
 
   static auto max_id = 0lu;
-  const auto line_markers = makeLinestringMarkers(lines, marker_z, "obstacles");
+  const auto line_markers = makeLinestringMarkers(obstacles, marker_z, "obstacles");
   debug_markers.markers.insert(
     debug_markers.markers.begin(), line_markers.markers.begin(), line_markers.markers.end());
   auto id = line_markers.markers.size();

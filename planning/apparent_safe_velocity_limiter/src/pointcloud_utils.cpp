@@ -37,11 +37,16 @@ namespace apparent_safe_velocity_limiter
 {
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
-  const PointCloud & pointcloud_msg, const geometry_msgs::msg::Transform & transform)
+  const PointCloud & pointcloud_msg, tier4_autoware_utils::TransformListener & transform_listener,
+  const std::string & target_frame)
 {
-  const Eigen::Matrix4f transform_matrix = tf2::transformToEigen(transform).matrix().cast<float>();
+  const auto & header = pointcloud_msg.header;
+  const auto transform = transform_listener.getTransform(
+    target_frame, header.frame_id, header.stamp, rclcpp::Duration::from_nanoseconds(0));
+  const Eigen::Matrix4f transform_matrix =
+    tf2::transformToEigen(transform->transform).matrix().cast<float>();
 
-  sensor_msgs::msg::PointCloud2 transformed_msg;
+  PointCloud transformed_msg;
   pcl_ros::transformPointCloud(transform_matrix, pointcloud_msg, transformed_msg);
   pcl::PointCloud<pcl::PointXYZ> transformed_pointcloud;
   pcl::fromROSMsg(transformed_msg, transformed_pointcloud);
@@ -93,30 +98,11 @@ void filterPointCloud(
   std::cerr << "* masks filter size = " << pointcloud->size() << "\n";
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr transformAndFilterPointCloud(
-  const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
-  const polygon_t & envelope, tier4_autoware_utils::TransformListener & transform_listener,
-  const std::string & target_frame)
-{
-  tier4_autoware_utils::StopWatch stopwatch;
-  const auto & header = pointcloud.header;
-  const auto transform = transform_listener.getTransform(
-    target_frame, header.frame_id, header.stamp, rclcpp::Duration::from_nanoseconds(0));
-  auto obstacle_pointcloud = transformPointCloud(pointcloud, transform->transform);
-  // TODO(Maxime CLEMENT): remove before merging
-  std::cerr << "* pointcloud transform = " << stopwatch.toc() << " s\n";
-  stopwatch.tic("filter");
-  filterPointCloud(obstacle_pointcloud, polygon_masks, envelope);
-  std::cerr << "* pointcloud filter traj = " << stopwatch.toc("filter") << " s\n";
-  std::cerr << "** pointcloud total = " << stopwatch.toc() << " s\n";
-  return obstacle_pointcloud;
-}
-
-multilinestring_t extractObstacleLines(
+std::vector<Obstacle> extractObstacles(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr, const double cluster_tolerance)
 {
-  multilinestring_t lines;
-  if (pointcloud_ptr->empty()) return lines;
+  std::vector<Obstacle> obstacles;
+  if (pointcloud_ptr->empty()) return obstacles;
 
   tier4_autoware_utils::StopWatch stopwatch;
   const pcl::PointCloud<pcl::PointXYZ>::Ptr projected_pointcloud_ptr(
@@ -147,7 +133,7 @@ multilinestring_t extractObstacleLines(
   ec.setInputCloud(projected_pointcloud_ptr);
   ec.extract(cluster_indices);
 
-  lines.reserve(cluster_indices.size());
+  obstacles.reserve(cluster_indices.size());
   for (const auto & cluster : cluster_indices) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZ>);
     for (const auto idx : cluster.indices)
@@ -166,12 +152,12 @@ multilinestring_t extractObstacleLines(
     for (const auto & point : cloud_hull) line.push_back(point_t{point.x, point.y});
     if (!line.empty()) {
       line.push_back(line.front());
-      lines.push_back(line);
+      obstacles.emplace_back(line);
     }
   }
   std::cerr << "* pointcloud extract = " << stopwatch.toc("extract") << " s\n";
   std::cerr << "** pointcloud obstacle total = " << stopwatch.toc() << " s\n";
-  return lines;
+  return obstacles;
 }
 
 }  // namespace apparent_safe_velocity_limiter

@@ -23,7 +23,7 @@
     <param name="input_frame" value="base_link"/>
     <param name="output_frame" value="map"/>
   </node>
-  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="$(var gdb-launch-prefix)">
+  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="">
     <param from="$(var param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>

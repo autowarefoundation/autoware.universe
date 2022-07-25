@@ -15,6 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__DEBUG_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__DEBUG_HPP_
 
+#include "apparent_safe_velocity_limiter/obstacles.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <visualization_msgs/msg/marker.hpp>
@@ -26,18 +27,18 @@
 namespace apparent_safe_velocity_limiter
 {
 /// @brief make the visualization Marker of the given linestring
-/// @param[in] line linestring to turn into a marker
+/// @param[in] obstacle Obstacle object to turn into a marker
 /// @param[in] z z-value to use in the marker
 /// @return marker representing the linestring
-visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & line, const Float z);
+visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, const Float z);
 
 /// @brief make the visualization Markers of the given linestrings
-/// @param[in] lines linestrings to turn into markers
+/// @param[in] obstacles obstacles to turn into markers
 /// @param[in] z z-value to use in the markers
 /// @param[in] ns namespace to use in the markers
 /// @return markers representing the linestrings
 visualization_msgs::msg::MarkerArray makeLinestringMarkers(
-  const multilinestring_t & lines, const Float z, const std::string & ns);
+  const std::vector<Obstacle> & obstacles, const Float z, const std::string & ns);
 
 /// @brief make the Marker showing the apparent safety envelope of the given trajectory
 /// @param[in] trajectory trajectory for which to make the apparent safety envelope
@@ -49,12 +50,12 @@ visualization_msgs::msg::Marker makeEnvelopeMarker(
 /// @brief make debug marker array of obstacle lines and original & adjusted envelopes
 /// @param[in] original_trajectory trajectory with original velocities
 /// @param[in] adjusted_trajectory trajectory with adjusted velocities
-/// @param[in] polygons obstacle polygons
+/// @param[in] obstacles obstacles
 /// @param[in] projection_params parameters for forward projection
 /// @param[in] z z-value to use for markers
 /// @return marker array with the original and adjusted envelope and the obstacle lines
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const multilinestring_t & lines, const std::vector<polygon_t> & footprint_polygons,
+  const std::vector<Obstacle> & obstacles, const std::vector<polygon_t> & footprint_polygons,
   const polygon_t & envelope_polygon, const polygon_t & safe_envelope_polygon,
   const Float marker_z);
 

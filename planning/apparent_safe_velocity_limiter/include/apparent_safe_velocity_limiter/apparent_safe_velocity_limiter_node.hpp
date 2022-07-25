@@ -15,6 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_NODE_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_NODE_HPP_
 
+#include "apparent_safe_velocity_limiter/obstacles.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -75,7 +76,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
-  multilinestring_t static_map_obstacles_;
+  std::vector<Obstacle> static_map_obstacles_;
   std::optional<Float> current_ego_velocity_;
 
   // Benchmarking & Debugging

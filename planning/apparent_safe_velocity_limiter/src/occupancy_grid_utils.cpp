@@ -22,6 +22,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
+#include "nav_msgs/msg/detail/occupancy_grid__struct.hpp"
+
 namespace apparent_safe_velocity_limiter
 {
 void maskPolygons(
@@ -66,21 +68,23 @@ void threshold(grid_map::GridMap & grid_map, const float threshold)
   }
 }
 
-multilinestring_t extractObstacleLines(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const multipolygon_t & polygon_in_masks,
-  const polygon_t & polygon_out_mask, const int8_t occupied_threshold)
+grid_map::GridMap convertToGridMap(const nav_msgs::msg::OccupancyGrid & occupancy_grid)
 {
-  cv::Mat cv_image;
   grid_map::GridMap grid_map;
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
-  maskPolygons(grid_map, polygon_in_masks, polygon_out_mask);
-  threshold(grid_map, occupied_threshold);
+  return grid_map;
+}
+
+std::vector<Obstacle> extractObstacles(
+  const grid_map::GridMap & grid_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid)
+{
+  cv::Mat cv_image;
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, cv_image);
   cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-  multilinestring_t lines;
+  std::vector<Obstacle> obstacles;
   const auto & info = occupancy_grid.info;
   for (const auto & contour : contours) {
     linestring_t line;
@@ -89,8 +93,8 @@ multilinestring_t extractObstacleLines(
         (info.width - 1.0 - point.y) * info.resolution + info.origin.position.x,
         (info.height - 1.0 - point.x) * info.resolution + info.origin.position.y);
     }
-    lines.push_back(line);
+    obstacles.emplace_back(line);
   }
-  return lines;
+  return obstacles;
 }
 }  // namespace apparent_safe_velocity_limiter
