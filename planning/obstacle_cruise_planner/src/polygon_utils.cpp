@@ -31,11 +31,6 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   bg::append(polygon.outer(), point);
 }
 
-void appendPointToPolygon(Polygon2d & polygon, const Point2d point)
-{
-  bg::append(polygon.outer(), point);
-}
-
 Polygon2d createOneStepPolygon(
   const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose & next_step_pose,
   const vehicle_info_util::VehicleInfo & vehicle_info, const double expand_width)
