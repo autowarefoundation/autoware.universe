@@ -5,7 +5,6 @@
 
 namespace validation
 {
-
 using Grid = ceres::Grid2D<uchar>;
 using Interpolator = ceres::BiCubicInterpolator<Grid>;
 
@@ -67,7 +66,8 @@ Eigen::Affine3f refinePose(
   const Interpolator interpolator(grid);
 
   Eigen::Vector3d param_t = pose.translation().cast<double>();
-  Eigen::Vector4d param_q = Eigen::Quaternionf(pose.rotation()).coeffs().cast<double>();
+  Eigen::Quaterniond param_quat = Eigen::Quaternionf(pose.rotation()).cast<double>();
+  Eigen::Vector4d param_q = param_quat.coeffs();
 
   const Eigen::Affine3d extrinsic_d = extrinsic.cast<double>();
   const Eigen::Matrix3d intrinsic_d = intrinsic.cast<double>();
@@ -79,16 +79,50 @@ Eigen::Affine3f refinePose(
   problem.AddParameterBlock(param_q.data(), 4);
   problem.SetManifold(param_q.data(), quaternion_manifold);
 
+  {
+    Eigen::Vector3d point = linesegments.front().getVector3fMap().cast<double>();
+    Eigen::Vector3d from_camera =
+      intrinsic_d * extrinsic_d.inverse() * (param_quat.conjugate() * (point - param_t));
+
+    cv::Rect2i rect(0, 0, cost_image.cols, cost_image.rows);
+    if (from_camera.z() < 1e-3f) {
+      std::cout << "out of image  " << from_camera.transpose() << std::endl;
+    } else {
+      Eigen::Vector3d u = from_camera /= from_camera.z();
+      if (rect.contains(cv::Point2i(u.x(), u.y()))) {
+        double score;
+        interpolator.Evaluate(u.y(), u.x(), &score);
+
+        double expected = cost_image.at<uchar>(u.y(), u.x());
+        double grid_score;
+        grid.GetValue(u.y(), u.x(), &grid_score);
+
+        std::cout << "score " << score << " expected: " << expected << " grid: " << grid_score
+                  << std::endl;
+      } else {
+        std::cout << "invalid range: " << u.transpose() << std::endl;
+      }
+    }
+  }
+
   for (const pcl::PointNormal & pn : linesegments) {
-    Eigen::Vector3d target = pn.getVector3fMap().cast<double>();
-    problem.AddResidualBlock(
-      ProjectionCost::Create(interpolator, target, intrinsic_d, extrinsic_d), nullptr,
-      param_t.data(), param_q.data());
+    Eigen::Vector3f t = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
+    float l = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
+
+    for (float distance = 0; distance < l; distance += 5.f) {
+      Eigen::Vector3f p = pn.getVector3fMap() + t * distance;
+
+      problem.AddResidualBlock(
+        ProjectionCost::Create(interpolator, p.cast<double>(), intrinsic_d, extrinsic_d), nullptr,
+        param_t.data(), param_q.data());
+      break;
+    }
+    break;
   }
 
   ceres::Solver::Options options;
   options.max_num_iterations = 10;
-  options.minimizer_progress_to_stdout = true;
+  // options.minimizer_progress_to_stdout = true;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
   std::cout << summary.BriefReport() << '\n';

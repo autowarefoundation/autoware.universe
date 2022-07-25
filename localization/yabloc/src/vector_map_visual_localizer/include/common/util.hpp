@@ -29,7 +29,7 @@ void publishImage(
   const rclcpp::Time & stamp);
 
 Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose);
-geometry_msgs::msg::Pose pose2Affine(const Eigen::Affine3f & affine);
+geometry_msgs::msg::Pose affine2Pose(const Eigen::Affine3f & affine);
 
 rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg);
 

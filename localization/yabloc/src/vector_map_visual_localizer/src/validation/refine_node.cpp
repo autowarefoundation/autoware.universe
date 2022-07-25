@@ -60,14 +60,13 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     }
   }
   if (min_dt > 0.1) return;
-  auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
 
   LineSegments lsd;
   pcl::fromROSMsg(lsd_msg, lsd);
   cv::Mat cost_image = makeCostMap(lsd);
 
+  Pose opt_pose;
   {
-    // TODO:
     // Optimization
     Eigen::Matrix3f K =
       Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
@@ -75,29 +74,24 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
 
     auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
     Eigen::Affine3f transform = util::pose2Affine(synched_pose.pose);
-    Eigen::Affine3f opt_pose = refinePose(T, K, cost_image, transform, linesegments);
-    // TODO:
+    Eigen::Affine3f opt_affine = refinePose(T, K, cost_image, transform, linesegments);
+    std::cout << "opt: " << opt_affine.translation().transpose()
+              << " raw:" << transform.translation().transpose() << std::endl;
+    opt_pose = util::affine2Pose(opt_affine);
   }
 
-  cv::Mat show_image = drawOverlay(cost_image, synched_pose.pose, latest_pose_stamp);
-  cv::imshow("cost", show_image);
-  cv::waitKey(5);
-}
-
-cv::Mat RefineOptimizer::drawOverlay(
-  const cv::Mat & cost_image, const Pose & pose, const rclcpp::Time & stamp)
-{
   cv::Mat rgb_cost_image;
   cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
 
-  if (ll2_cloud_.empty()) return rgb_cost_image;
-
-  drawOverlayLineSegments(rgb_cost_image, pose, extractNaerLineSegments(pose, ll2_cloud_));
-  return rgb_cost_image;
+  auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
+  drawOverlayLineSegments(rgb_cost_image, synched_pose.pose, linesegments, cv::Scalar::all(255));
+  drawOverlayLineSegments(rgb_cost_image, opt_pose, linesegments, cv::Scalar(0, 255, 0));
+  cv::imshow("cost", rgb_cost_image);
+  cv::waitKey(5);
 }
 
 void RefineOptimizer::drawOverlayLineSegments(
-  cv::Mat & image, const Pose & pose, const LineSegments & near_segments)
+  cv::Mat & image, const Pose & pose, const LineSegments & near_segments, const cv::Scalar & color)
 {
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
@@ -115,7 +109,7 @@ void RefineOptimizer::drawOverlayLineSegments(
   for (const pcl::PointNormal & pn : near_segments) {
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 0), 2);
+    cv::line(image, p1.value(), p2.value(), color, 2);
   }
 }
 
