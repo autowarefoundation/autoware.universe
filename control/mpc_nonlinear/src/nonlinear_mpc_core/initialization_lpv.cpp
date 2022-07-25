@@ -170,7 +170,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Saturate all states
     for (auto j = 0; j < xk.size(); ++j)
     {
-      if (params_opt.xlower(j) > kInfinity && params_opt.xupper(j) < kInfinity)
+      if (params_opt.xlower(j) > -kInfinity && params_opt.xupper(j) < kInfinity)
       {
         xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
       }
@@ -334,7 +334,7 @@ bool LPVinitializer::computeSingleFeedbackControls(Model::model_ptr_t const &mod
   // Saturate all states
   for (auto j = 0; j < xk.size(); ++j)
   {
-    if (params_opt.xlower(j) > kInfinity && params_opt.xupper(j) < kInfinity)
+    if (params_opt.xlower(j) > -kInfinity && params_opt.xupper(j) < kInfinity)
     {
       xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
     }
