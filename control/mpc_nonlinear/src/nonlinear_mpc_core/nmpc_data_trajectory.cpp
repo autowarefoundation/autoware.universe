@@ -40,7 +40,6 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
 
   // [s, t, ax, x, y, z, yaw, vx, curvature ]  nine members
 
-  auto const &&EPS = std::numeric_limits<double>::epsilon();
   // Insert the first elements.
   s.emplace_back(0.0);
   t.emplace_back(0.0);
@@ -67,8 +66,10 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
     double const &ds = std::sqrt(dx * dx + dy * dy + dz * dz);
 
     // used for trapezoidal integration
-    double const &mean_v = (point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2;
-    double &&dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);  // !<@brief to prevent zero division.
+    double const &mean_v =
+      static_cast<double>((point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2);
+
+    double const &dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);  // !<@brief to prevent zero division.
 
     // !<@brief this acceleration is implied by x,y,z and vx in the planner.
     // double &&acc_computed = dv / (EPS + dt);
