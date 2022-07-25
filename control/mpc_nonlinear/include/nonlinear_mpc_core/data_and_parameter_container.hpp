@@ -214,9 +214,6 @@ struct DataNMPCcore
   double mpc_prediction_dt{};
   double input_delay_time{};  // !<@brief to use in the predictions.
 
-  // !<-@brief reference speed scaling for feedforward cont.
-  double feedforward_speed_set_point_scale{};
-
   trajectory_data_t trajectory_data;
   trajectory_data_t target_reference_states_and_controls;
   discretization_data_t discretization_data;
