@@ -267,7 +267,8 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 // Destructor.
 NonlinearMPCNode::~NonlinearMPCNode()
 {
-  ControlCmdMsg stop_cmd = getStopControlCommand();
+  ControlCmdMsg stop_cmd{};
+  getStopControlCommand(stop_cmd);
   publishControlCommands(stop_cmd);
 }
 
@@ -305,7 +306,8 @@ void NonlinearMPCNode::onTimer()
     // Warnings are generated in the isDataReady() method.
     // Send stop command to the vehicle.
 
-    auto &&stop_cmd = getStopControlCommand();
+    ControlCmdMsg stop_cmd{};
+    getStopControlCommand(stop_cmd);
     publishControlsAndUpdateVars(stop_cmd);
     // publishPerformanceVariables(stop_cmd);
     return;
@@ -362,7 +364,8 @@ void NonlinearMPCNode::onTimer()
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
                                    std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
-    auto &&control_cmd = getStopControlCommand();
+    ControlCmdMsg control_cmd{};
+    getStopControlCommand(control_cmd);
 
     // Prevent reverse motion when stopped.
     if (current_velocity_ptr_->twist.twist.linear.x < EPS)
@@ -512,7 +515,8 @@ void NonlinearMPCNode::onTimer()
 
     // Publish stopping command.
 
-    auto stop_cmd = getStopControlCommand();
+    ControlCmdMsg stop_cmd{};
+    getStopControlCommand(stop_cmd);
     publishControlsAndUpdateVars(stop_cmd);
 
     return;
@@ -788,19 +792,16 @@ ControlCmdMsg NonlinearMPCNode::getInitialControlCommand() const
   return cmd;
 }
 
-ControlCmdMsg NonlinearMPCNode::getStopControlCommand()
+void NonlinearMPCNode::getStopControlCommand(ControlCmdMsg &control_cmd)
 {
-  ControlCmdMsg cmd;
-
   // Steering values.
-  cmd.lateral.steering_tire_angle = 0.0;
-  cmd.lateral.steering_tire_rotation_rate = 0.0;
+  control_cmd.lateral.steering_tire_angle = 0.0;
+  control_cmd.lateral.steering_tire_rotation_rate = 0.0;
 
   // Longitudinal control values.
-  cmd.longitudinal.speed = 0.0;
-  cmd.longitudinal.acceleration = -1.5;
+  control_cmd.longitudinal.speed = 0.0;
+  control_cmd.longitudinal.acceleration = -1.5;
 
-  return cmd;
 }
 
 void NonlinearMPCNode::loadNodeParameters()
@@ -2059,13 +2060,12 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
    * Find the first command in the queue that has been applied to the system.
    * */
 
-  auto it_first_cmd_to_appy =
-    std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
-
   /**
    * Update inputs for the Kalman model.
    * */
-  if (it_first_cmd_to_appy != inputs_buffer_.end())
+  if (auto it_first_cmd_to_appy =
+      std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
+    it_first_cmd_to_appy != inputs_buffer_.end())
   {
     control_cmd_kalman_ = *it_first_cmd_to_appy;
 
