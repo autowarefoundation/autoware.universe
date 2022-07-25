@@ -119,8 +119,8 @@ bool BlindSpotModule::modifyPathVelocity(
   debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
 
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
-  is_over_pass_judge_line_ = static_cast<bool>(closest_idx > pass_judge_line_idx);
-  if (closest_idx == pass_judge_line_idx) {
+  is_over_pass_judge_line_ = static_cast<bool>(static_cast<int>(closest_idx) > pass_judge_line_idx);
+  if (static_cast<int>(closest_idx) == pass_judge_line_idx) {
     geometry_msgs::msg::Pose pass_judge_line = path->points.at(pass_judge_line_idx).point.pose;
     is_over_pass_judge_line_ = util::isAheadOf(current_pose.pose, pass_judge_line);
   }
@@ -219,7 +219,7 @@ bool BlindSpotModule::generateStopLine(
   debug_data_.spline_path = path_ip;
 
   /* generate stop point */
-  int stop_idx_ip;  // stop point index for interpolated path.
+  int stop_idx_ip = 0;  // stop point index for interpolated path.
   if (straight_lanelets.size() > 0) {
     boost::optional<int> first_idx_conflicting_lane_opt =
       getFirstPointConflictingLanelets(path_ip, straight_lanelets);

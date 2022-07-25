@@ -151,8 +151,9 @@ bool IntersectionModule::modifyPathVelocity(
   const size_t closest_idx = closest_idx_opt.get();
 
   /* if current_state = GO, and current_pose is in front of stop_line, ignore planning. */
-  bool is_over_pass_judge_line = static_cast<bool>(closest_idx > pass_judge_line_idx);
-  if (closest_idx == pass_judge_line_idx) {
+  bool is_over_pass_judge_line =
+    static_cast<bool>(static_cast<int>(closest_idx) > pass_judge_line_idx);
+  if (static_cast<int>(closest_idx) == pass_judge_line_idx) {
     geometry_msgs::msg::Pose pass_judge_line = path->points.at(pass_judge_line_idx).point.pose;
     is_over_pass_judge_line = util::isAheadOf(current_pose.pose, pass_judge_line);
   }
