@@ -5,6 +5,9 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
+
+set(DEPRECATION_FLAG "-Wno-error=deprecated-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEPRECATION_FLAG}"
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
 find_package(CUDA)
