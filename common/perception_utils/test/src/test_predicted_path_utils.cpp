@@ -69,9 +69,27 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
 
   const auto path = createTestPredictedPath(100, 0.1, 1.0);
 
+  // Normal Case (same point as the original point)
   {
     const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
-    for (double t = 0.0; t < 10.0; t += 1.0) {
+    for (double t = 0.0; t < 9.0 + 1e-6; t += 1.0) {
+      const auto p = calcInterpolatedPose(path, t);
+
+      EXPECT_NE(p, boost::none);
+      EXPECT_NEAR(p->position.x, t * 1.0, epsilon);
+      EXPECT_NEAR(p->position.y, 0.0, epsilon);
+      EXPECT_NEAR(p->position.z, 0.0, epsilon);
+      EXPECT_NEAR(p->orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p->orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p->orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p->orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // Normal Case (random case)
+  {
+    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    for (double t = 0.0; t < 9.0; t += 0.3) {
       const auto p = calcInterpolatedPose(path, t);
 
       EXPECT_NE(p, boost::none);
@@ -95,14 +113,14 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
 
     // Over the time horizon
     {
-      const auto p = calcInterpolatedPose(path, 10.0 + 1e-6);
+      const auto p = calcInterpolatedPose(path, 11.0);
       EXPECT_EQ(p, boost::none);
     }
 
     // Empty Path
     {
       PredictedPath empty_path;
-      const auto p = calcInterpolatedPose(empty_path, -1.0);
+      const auto p = calcInterpolatedPose(empty_path, 5.0);
       EXPECT_EQ(p, boost::none);
     }
   }

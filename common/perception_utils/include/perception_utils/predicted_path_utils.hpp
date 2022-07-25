@@ -44,13 +44,14 @@ inline boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
     return boost::none;
   }
 
+  constexpr double epsilon = 1e-6;
   const auto & time_step = rclcpp::Duration(path.time_step).seconds();
   for (size_t path_idx = 1; path_idx < path.path.size(); ++path_idx) {
     const auto & pt = path.path.at(path_idx);
     const auto & prev_pt = path.path.at(path_idx - 1);
-    if (relative_time <= time_step * static_cast<double>(path_idx)) {
+    if (relative_time + epsilon < time_step * static_cast<double>(path_idx)) {
       const auto offset = relative_time - time_step * static_cast<double>(path_idx - 1);
-      const auto ratio = offset / time_step;
+      const auto ratio = std::clamp(offset / time_step, 0.0, 1.0);
       return tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
     }
   }
