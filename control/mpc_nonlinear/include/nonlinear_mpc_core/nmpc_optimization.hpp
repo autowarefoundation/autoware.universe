@@ -243,8 +243,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   auto const &triplets_Rj = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Rj), eps_triplet_zero);
 
   // Q, QN, R, Rj starts at the different cols.
-  auto const &col_startR = K * STATE_DIM;  // !<@brief R columns start from in the cost matrix.
-  auto const &col_startRj = K * STATE_DIM + K * INPUT_DIM;  // !<@brief int the cost matrix.
+  auto const &col_startR = static_cast<double>(K * STATE_DIM);  // !<@brief R columns start from in the cost matrix.
+  auto const &col_startRj = static_cast<double>(K * STATE_DIM + K * INPUT_DIM);  // !<@brief int the cost matrix.
 
   // Prepare an Identity matrix to be used in Jerk matrices.
   Eigen::MatrixXd uId(INPUT_DIM, INPUT_DIM);
@@ -256,8 +256,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   {
     // Set P triplets. P start index is [k * STATE_DIM, k * STATE_DIM] for
 
-    auto const &rowQ = k * STATE_DIM;
-    auto const &colQ = k * STATE_DIM;
+    auto const &rowQ = static_cast<double>(k * STATE_DIM);
+    auto const &colQ = static_cast<double>(k * STATE_DIM);
 
     std::transform(triplets_Q.cbegin(), triplets_Q.cend(), std::back_inserter(triplets_P),
                    [&rowQ, &colQ](auto const &titem)
@@ -270,8 +270,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert Triplets of R
-    auto const &rowR = k * INPUT_DIM + col_startR;
-    auto const &colR = k * INPUT_DIM + col_startR;
+    auto const &rowR = static_cast<double>(k * INPUT_DIM + col_startR);
+    auto const &colR = static_cast<double>(k * INPUT_DIM + col_startR);
 
     std::transform(triplets_R.cbegin(), triplets_R.cend(), std::back_inserter(triplets_P),
                    [&rowR, &colR](auto const &titem)
@@ -284,8 +284,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert Triplets of Rj ------------------------------
-    auto const &rowRj = k * INPUT_DIM + col_startRj;
-    auto const &colRj = k * INPUT_DIM + col_startRj;
+    auto const &rowRj = static_cast<double>( k * INPUT_DIM + col_startRj);
+    auto const &colRj = static_cast<double>(k * INPUT_DIM + col_startRj);
 
     std::transform(triplets_Rj.cbegin(), triplets_Rj.cend(), std::back_inserter(triplets_P),
                    [&rowRj, &colRj](auto const &titem)
@@ -298,8 +298,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // A_equality on the main diagonal set -Sx.
-    auto const &rowSx = k * STATE_DIM;
-    auto const &colSx = k * STATE_DIM;
+    auto const &rowSx = static_cast<double>(k * STATE_DIM);
+    auto const &colSx = static_cast<double>(k * STATE_DIM);
 
     auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
@@ -318,8 +318,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // A_equality on the diagonal k=-1 set A*Sx.
-    auto rowA = (k + 1) * STATE_DIM;
-    auto colA = k * STATE_DIM;
+    auto rowA = static_cast<double>((k + 1) * STATE_DIM);
+    auto colA = static_cast<double>(k * STATE_DIM);
 
     auto &&ASx = Eigen::MatrixXd(discretization_data.A[k] * params_optimization.Sx);
     auto triplet_list_A = ns_eigen_utils::ToTriplets(ASx, eps_triplet_zero);
@@ -335,8 +335,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert B into Aequality.
-    auto const &rowB = (k + 1) * STATE_DIM;
-    auto const &colB = K * STATE_DIM + k * INPUT_DIM;
+    auto const &rowB = static_cast<double>((k + 1) * STATE_DIM);
+    auto const &colB = static_cast<double>(K * STATE_DIM + k * INPUT_DIM);
 
     auto const &BSu = discretization_data.B[k] * params_optimization.Su;  // Apply scaling to B.
     auto triplet_list_B = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(BSu), eps_triplet_zero);
@@ -361,8 +361,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
      */
 
     // Set -Id on the main diagonals.  // Just after X = AX + BU + z
-    auto const &rowBjmain = K * STATE_DIM + k * INPUT_DIM;
-    auto const &colBjmain = K * STATE_DIM + k * INPUT_DIM;
+    auto const &rowBjmain = static_cast<double>(K * STATE_DIM + k * INPUT_DIM);
+    auto const &colBjmain = static_cast<double>(K * STATE_DIM + k * INPUT_DIM);
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
                    [&rowBjmain, &colBjmain, &triplets_Aequality_jerk_](auto &titem)
@@ -380,8 +380,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
     // Set Id on the diagonal k=1.
     // Id is just one input colon block ahead of -Id.
-    auto const &rowBj_k1 = K * STATE_DIM + k * INPUT_DIM;
-    auto const &colBj_k1 = K * STATE_DIM + (k + 1) * INPUT_DIM;
+    auto const &rowBj_k1 = static_cast<double>(K * STATE_DIM + k * INPUT_DIM);
+    auto const &colBj_k1 = static_cast<double>(K * STATE_DIM + (k + 1) * INPUT_DIM);
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
                    [&rowBj_k1, &colBj_k1, &triplets_Aequality_jerk_](auto const &titem)
@@ -399,8 +399,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
     // Set Identity for picking Bj = -I *du variable in Aequality.
     // This is below Aeq [AX BU 0;0 d(u) du]
-    auto const &rowdu = K * STATE_DIM + k * INPUT_DIM;
-    auto const &coldu = K * STATE_DIM + K * INPUT_DIM + k * INPUT_DIM;
+    auto const &rowdu = static_cast<double>(K * STATE_DIM + k * INPUT_DIM);
+    auto const &coldu = static_cast<double>(K * STATE_DIM + K * INPUT_DIM + k * INPUT_DIM);
 
     std::transform(triplets_uId.cbegin(), triplets_uId.cend(), std::back_inserter(triplets_A),
                    [&rowdu, &coldu, &triplets_Aequality_jerk_](auto const &titem)
@@ -419,8 +419,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // Insert QN at (K-1). -----------------------------------------------
 
-  auto row = (K - 1) * STATE_DIM;  // Last Q start positions
-  auto col = (K - 1) * STATE_DIM;
+  auto row = static_cast<double>((K - 1) * STATE_DIM);  // Last Q start positions
+  auto col = static_cast<double>((K - 1) * STATE_DIM);
 
   std::transform(triplets_QN.cbegin(), triplets_QN.cend(), std::back_inserter(triplets_P),
                  [&row, &col](auto const &titem)
@@ -434,8 +434,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // Insert R at (K-1).---------------------------------------------
 
-  row = col_startR + (K - 1) * INPUT_DIM;  // last R start position
-  col = col_startR + (K - 1) * INPUT_DIM;
+  row = static_cast<double>(col_startR + (K - 1) * INPUT_DIM);  // last R start position
+  col = static_cast<double>(col_startR + (K - 1) * INPUT_DIM);
 
   std::transform(triplets_R.cbegin(), triplets_R.cend(), std::back_inserter(triplets_P),
                  [&row, &col](auto const &titem)
@@ -449,8 +449,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // -------------------- Insert -Sx at K-1 ----------------
 
-  auto const &rowSx = (K - 1) * STATE_DIM;
-  auto const &colSx = (K - 1) * STATE_DIM;
+  auto const &rowSx = static_cast<double>((K - 1) * STATE_DIM);
+  auto const &colSx = static_cast<double>((K - 1) * STATE_DIM);
 
   auto triplet_list_S = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Sx), 0.0);
 
