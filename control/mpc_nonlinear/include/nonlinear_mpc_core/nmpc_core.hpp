@@ -134,16 +134,6 @@ class NonlinearMPCController
 
   void setLoggerName(std::string_view const &logger_name);
 
-  // LPV control methods.
-  /**
-   * @brief LPV control methods.
-   * @param u_model_solution_:  [vx, steering] inputs
-   * */
-  [[maybe_unused]] void
-  computeSteeringFeedbackControls(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                                  double const &dt,
-                                  Model::input_vector_t &u_solution);
-
   // NMPC solution medhods.
   bool solveNMPC_problem(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
@@ -221,7 +211,7 @@ class NonlinearMPCController
   /**
    * @brief for initialization of the trajectories by LPV feedback.
    * */
-  LPVinitializer lpv_initializer_;
+  LPVinitializer lpv_initializer_{};
 
   // @<-brief an interface to the osqp problem.
   optproblem_type osqp_interface_;

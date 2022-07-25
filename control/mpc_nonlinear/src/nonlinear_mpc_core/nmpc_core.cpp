@@ -934,30 +934,6 @@ bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(ns_splines::In
   return true;
 }
 
-[[maybe_unused]] void ns_nmpc_interface::NonlinearMPCController::computeSteeringFeedbackControls(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                                                                                                 double const &dt,
-                                                                                                 Model::input_vector_t &u_solution)
-{
-  // Compute a steering feedback signal and store it in the trajectory_data.
-  if (bool const &&is_feedback_computed = lpv_initializer_.computeSingleFeedbackControls(model_ptr_,
-                                                                                         piecewise_interpolator,
-                                                                                         params_lpv_,
-                                                                                         params_opt_,
-                                                                                         data_nmpc_,
-                                                                                         dt);!is_feedback_computed)
-  {
-    RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_),
-                 "[nonlinear_mpc_core] Could not compute the feedback signal ...");
-    return;
-  }
-
-  // Release the feedback signal.
-  data_nmpc_.trajectory_data.getFeedbackControls(u_solution);
-
-  // Store the computed values.
-  u_solution_last_ = u_solution;
-}
-
 void ns_nmpc_interface::NonlinearMPCController::readSolutionsFromOSQP()
 {
   // Get the solution from OSQP and store them in the trajectory_data_.
