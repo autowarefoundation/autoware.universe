@@ -20,7 +20,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             -Wall
             -Wextra
             -Wpedantic
-            # -Wno-unused-parameter
+            -Wno-unused-parameter
             # -Wno-unused-variable
             -Wno-narrowing
             # -Wno-error=unused-but-set-variable
