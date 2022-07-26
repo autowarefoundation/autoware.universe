@@ -37,6 +37,8 @@
 #include <sys/ioctl.h>
 
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -46,8 +48,11 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   last_update_time_{0, 0, this->get_clock()->get_clock_type()},
   device_params_(
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
+  last_reasm_fails_(0),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
-  traffic_reader_port_(declare_parameter<int>("traffic_reader_port", TRAFFIC_READER_PORT))
+  traffic_reader_port_(declare_parameter<int>("traffic_reader_port", TRAFFIC_READER_PORT)),
+  reasm_fails_check_duration_(declare_parameter<int>("ip_reasm_fails_check_duration", 1)),
+  reasm_fails_count_threshold_(declare_parameter<int>("ip_reasm_fails_count_threshold", 1))
 {
   if (monitor_program_.empty()) {
     monitor_program_ = GET_ALL_STR;
@@ -60,6 +65,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   updater_.setHardwareID(hostname_);
   updater_.add("Network Usage", this, &NetMonitor::checkUsage);
   updater_.add("Network Traffic", this, &NetMonitor::monitorTraffic);
+  updater_.add("IP Packet Reassembles Failed", this, &NetMonitor::checkIpReasmFails);
 
   nl80211_.init();
 }
@@ -370,6 +376,82 @@ void NetMonitor::monitorTraffic(diagnostic_updater::DiagnosticStatusWrapper & st
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
+}
+
+void NetMonitor::checkIpReasmFails(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  int whole_level = DiagStatus::OK;
+  std::string error_str;
+  uint64_t total_reasm_fails = 0;
+  uint64_t unit_reasm_fails = 0;
+
+  if (getIpReasmFails(total_reasm_fails)) {
+    reasm_fails_queue_.push_back(total_reasm_fails - last_reasm_fails_);
+    while (reasm_fails_queue_.size() > reasm_fails_check_duration_) {
+      reasm_fails_queue_.pop_front();
+    }
+
+    for (auto reasm_fails : reasm_fails_queue_) {
+      unit_reasm_fails += reasm_fails;
+    }
+
+    stat.add(fmt::format("total packet reassembles failed"), total_reasm_fails);
+    stat.add(fmt::format("packet reassembles failed per unit time"), unit_reasm_fails);
+
+    if (unit_reasm_fails >= reasm_fails_count_threshold_) {
+      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
+      error_str = "reassembles failed";
+    }
+
+    last_reasm_fails_ = total_reasm_fails;
+  } else {
+    reasm_fails_queue_.push_back(0);
+    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
+    error_str = "failed to read /proc/net/snmp";
+  }
+
+  if (!error_str.empty()) {
+    stat.summary(whole_level, error_str);
+  } else {
+    stat.summary(whole_level, "OK");
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
+}
+
+bool NetMonitor::getIpReasmFails(uint64_t & reasm_fails)
+{
+  std::ifstream ifs("/proc/net/snmp");
+  if (!ifs) {
+    return false;
+  }
+
+  std::string line;
+  while (std::getline(ifs, line)) {
+    std::vector<std::string> title_list;
+    boost::split(title_list, line, boost::is_space());
+    if (title_list.size() > 1 && title_list[0] == "Ip:") {
+      for (std::size_t i = 1; i < title_list.size(); i++) {
+        if (title_list[i] == "ReasmFails") {
+          if (std::getline(ifs, line)) {
+            std::vector<std::string> value_list;
+            boost::split(value_list, line, boost::is_space());
+            if (value_list.size() > i) {
+              reasm_fails = std::stoull(value_list[i]);
+              return true;
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+  }
+  return false;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

@@ -25,6 +25,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
+#include <deque>
 #include <map>
 #include <string>
 #include <vector>
@@ -87,11 +88,27 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
   /**
+   * @brief check IP packet reassembles failed
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
+   * to pass diagnostic message updated in this function to diagnostic publish calls.
+   */
+  void checkIpReasmFails(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+
+  /**
    * @brief get wireless speed
    * @param [in] ifa_name interface name
    * @return wireless speed
    */
   float getWirelessSpeed(const char * ifa_name);
+
+  /**
+   * @brief get IP packet reassembles failed
+   * @param [out] reasm_fails IP packet reassembles failed
+   * @return execution result
+   */
+  bool getIpReasmFails(uint64_t & reasm_fails);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
@@ -101,9 +118,17 @@ protected:
   std::vector<std::string> device_params_;  //!< @brief list of devices
   NL80211 nl80211_;                         // !< @brief 802.11 netlink-based interface
 
-  std::string monitor_program_;  //!< @brief nethogs monitor program name
-  bool nethogs_all_;             //!< @brief nethogs result all mode
-  int traffic_reader_port_;      //!< @brief port number to connect to traffic_reader
+  std::deque<unsigned int>
+    reasm_fails_queue_;  //!< @brief queue that holds count of IP packet reassembles failed
+  uint64_t
+    last_reasm_fails_;  //!< @brief IP packet reassembles failed at the time of the last monitoring
+
+  std::string monitor_program_;              //!< @brief nethogs monitor program name
+  bool nethogs_all_;                         //!< @brief nethogs result all mode
+  int traffic_reader_port_;                  //!< @brief port number to connect to traffic_reader
+  unsigned int reasm_fails_check_duration_;  //!< @brief IP packet reassembles failed check duration
+  unsigned int
+    reasm_fails_count_threshold_;  //!< @brief IP packet reassembles failed count threshold
 
   /**
    * @brief Network usage status messages
