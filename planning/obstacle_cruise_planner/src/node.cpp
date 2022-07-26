@@ -17,6 +17,7 @@
 #include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <boost/format.hpp>
@@ -493,7 +494,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // Get Target Obstacles
   DebugData debug_data;
-  const bool is_driving_forward = motion_utils::isDrivingForward(msg->points);
+  const bool is_driving_forward = motion_utils::isDrivingForwardWithTwist(msg->points);
   const auto target_obstacles = getTargetObstacles(
     *msg, current_pose_ptr->pose, current_twist_ptr_->twist.linear.x, is_driving_forward,
     debug_data);
@@ -691,7 +692,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
 
     // calculate collision points
     const auto obstacle_polygon =
-      polygon_utils::convertObstacleToPolygon(object_pose, predicted_object.shape);
+      tier4_autoware_utils::toPolygon2d(object_pose, predicted_object.shape);
     std::vector<geometry_msgs::msg::Point> collision_points;
     const auto first_within_idx = polygon_utils::getFirstCollisionIndex(
       decimated_traj_polygons, obstacle_polygon, collision_points);

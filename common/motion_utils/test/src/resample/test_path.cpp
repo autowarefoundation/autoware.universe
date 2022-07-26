@@ -100,9 +100,8 @@ TEST(resample_path, resample_path_by_vector)
 
     {
       const auto resampled_path = resamplePath(path, resampled_arclength);
-      EXPECT_NE(resampled_path, boost::none);
-      for (size_t i = 0; i < resampled_path->points.size(); ++i) {
-        const auto p = resampled_path->points.at(i);
+      for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+        const auto p = resampled_path.points.at(i);
         const auto ans_p = path.points.at(i);
         EXPECT_NEAR(p.pose.position.x, ans_p.pose.position.x, epsilon);
         EXPECT_NEAR(p.pose.position.y, ans_p.pose.position.y, epsilon);
@@ -122,9 +121,8 @@ TEST(resample_path, resample_path_by_vector)
       generateTestPathPoint(9.0, 0.0, 0.0, tier4_autoware_utils::pi / 3.0, 3.0, 1.0, 0.01);
     {
       const auto resampled_path = resamplePath(path, resampled_arclength);
-      EXPECT_NE(resampled_path, boost::none);
-      for (size_t i = 0; i < resampled_path->points.size() - 1; ++i) {
-        const auto p = resampled_path->points.at(i);
+      for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {
+        const auto p = resampled_path.points.at(i);
         const auto ans_p = path.points.at(i);
         EXPECT_NEAR(p.pose.position.x, ans_p.pose.position.x, epsilon);
         EXPECT_NEAR(p.pose.position.y, ans_p.pose.position.y, epsilon);
@@ -138,7 +136,7 @@ TEST(resample_path, resample_path_by_vector)
         EXPECT_NEAR(p.heading_rate_rps, ans_p.heading_rate_rps, epsilon);
       }
 
-      const auto p = resampled_path->points.back();
+      const auto p = resampled_path.points.back();
       const auto ans_p = path.points.back();
       const auto ans_quat = tier4_autoware_utils::createQuaternion(0.0, 0.0, 0.0, 1.0);
       EXPECT_NEAR(p.pose.position.x, ans_p.pose.position.x, epsilon);
@@ -164,10 +162,9 @@ TEST(resample_path, resample_path_by_vector)
     std::vector<double> resampled_arclength = {0.0, 1.2, 1.5, 5.3, 7.5, 9.0};
 
     const auto resampled_path = resamplePath(path, resampled_arclength);
-    EXPECT_NE(resampled_path, boost::none);
 
     {
-      const auto p = resampled_path->points.at(0);
+      const auto p = resampled_path.points.at(0);
       EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -177,7 +174,7 @@ TEST(resample_path, resample_path_by_vector)
     }
 
     {
-      const auto p = resampled_path->points.at(1);
+      const auto p = resampled_path.points.at(1);
       EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -187,7 +184,7 @@ TEST(resample_path, resample_path_by_vector)
     }
 
     {
-      const auto p = resampled_path->points.at(2);
+      const auto p = resampled_path.points.at(2);
       EXPECT_NEAR(p.pose.position.x, 1.5, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -197,7 +194,7 @@ TEST(resample_path, resample_path_by_vector)
     }
 
     {
-      const auto p = resampled_path->points.at(3);
+      const auto p = resampled_path.points.at(3);
       EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -207,7 +204,7 @@ TEST(resample_path, resample_path_by_vector)
     }
 
     {
-      const auto p = resampled_path->points.at(4);
+      const auto p = resampled_path.points.at(4);
       EXPECT_NEAR(p.pose.position.x, 7.5, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -217,7 +214,7 @@ TEST(resample_path, resample_path_by_vector)
     }
 
     {
-      const auto p = resampled_path->points.at(5);
+      const auto p = resampled_path.points.at(5);
       EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -226,8 +223,8 @@ TEST(resample_path, resample_path_by_vector)
       EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
     }
 
-    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
-      const auto p = resampled_path->points.at(i);
+    for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+      const auto p = resampled_path.points.at(i);
       EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
@@ -248,7 +245,27 @@ TEST(resample_path, resample_path_by_vector)
       std::vector<double> resampled_arclength = generateArclength(10, 1.0);
 
       const auto resampled_path = resamplePath(path, resampled_arclength);
-      EXPECT_FALSE(resampled_path);
+      EXPECT_EQ(resampled_path.points.size(), path.points.size());
+      for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.x, path.points.at(i).pose.position.x, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.y, path.points.at(i).pose.position.y, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.z, path.points.at(i).pose.position.z, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.x, path.points.at(i).pose.orientation.x,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.y, path.points.at(i).pose.orientation.y,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.z, path.points.at(i).pose.orientation.z,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.w, path.points.at(i).pose.orientation.w,
+          epsilon);
+      }
     }
 
     // Resampled Arclength size is not enough for interpolation
@@ -262,7 +279,27 @@ TEST(resample_path, resample_path_by_vector)
       std::vector<double> resampled_arclength = generateArclength(1, 1.0);
 
       const auto resampled_path = resamplePath(path, resampled_arclength);
-      EXPECT_FALSE(resampled_path);
+      EXPECT_EQ(resampled_path.points.size(), path.points.size());
+      for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.x, path.points.at(i).pose.position.x, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.y, path.points.at(i).pose.position.y, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.z, path.points.at(i).pose.position.z, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.x, path.points.at(i).pose.orientation.x,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.y, path.points.at(i).pose.orientation.y,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.z, path.points.at(i).pose.orientation.z,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.w, path.points.at(i).pose.orientation.w,
+          epsilon);
+      }
     }
 
     // Resampled Arclength is longer than input path
@@ -276,7 +313,27 @@ TEST(resample_path, resample_path_by_vector)
       std::vector<double> resampled_arclength = generateArclength(3, 5.0);
 
       const auto resampled_path = resamplePath(path, resampled_arclength);
-      EXPECT_FALSE(resampled_path);
+      EXPECT_EQ(resampled_path.points.size(), path.points.size());
+      for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.x, path.points.at(i).pose.position.x, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.y, path.points.at(i).pose.position.y, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.position.z, path.points.at(i).pose.position.z, epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.x, path.points.at(i).pose.orientation.x,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.y, path.points.at(i).pose.orientation.y,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.z, path.points.at(i).pose.orientation.z,
+          epsilon);
+        EXPECT_NEAR(
+          resampled_path.points.at(i).pose.orientation.w, path.points.at(i).pose.orientation.w,
+          epsilon);
+      }
     }
   }
 }
@@ -295,9 +352,8 @@ TEST(resample_path, resample_path_by_vector_non_default)
     std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
 
     const auto resampled_path = resamplePath(path, resampled_arclength, true);
-    EXPECT_NE(resampled_path, boost::none);
     {
-      const auto p = resampled_path->points.at(0);
+      const auto p = resampled_path.points.at(0);
       EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -307,7 +363,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(1);
+      const auto p = resampled_path.points.at(1);
       EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -317,7 +373,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(2);
+      const auto p = resampled_path.points.at(2);
       EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -327,7 +383,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(3);
+      const auto p = resampled_path.points.at(3);
       EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -336,8 +392,8 @@ TEST(resample_path, resample_path_by_vector_non_default)
       EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
     }
 
-    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
-      const auto p = resampled_path->points.at(i);
+    for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+      const auto p = resampled_path.points.at(i);
       EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
@@ -356,9 +412,8 @@ TEST(resample_path, resample_path_by_vector_non_default)
     std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
 
     const auto resampled_path = resamplePath(path, resampled_arclength, false, false);
-    EXPECT_NE(resampled_path, boost::none);
     {
-      const auto p = resampled_path->points.at(0);
+      const auto p = resampled_path.points.at(0);
       EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -368,7 +423,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(1);
+      const auto p = resampled_path.points.at(1);
       EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 1.2, epsilon);
@@ -378,7 +433,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(2);
+      const auto p = resampled_path.points.at(2);
       EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 5.3, epsilon);
@@ -388,7 +443,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(3);
+      const auto p = resampled_path.points.at(3);
       EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 9.0, epsilon);
@@ -399,8 +454,8 @@ TEST(resample_path, resample_path_by_vector_non_default)
 
     const double pitch = std::atan(1.0);
     const auto ans_quat = tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, 0.0);
-    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
-      const auto p = resampled_path->points.at(i);
+    for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+      const auto p = resampled_path.points.at(i);
       EXPECT_NEAR(p.pose.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p.pose.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p.pose.orientation.z, ans_quat.z, epsilon);
@@ -418,9 +473,8 @@ TEST(resample_path, resample_path_by_vector_non_default)
     std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
 
     const auto resampled_path = resamplePath(path, resampled_arclength, false, true, false);
-    EXPECT_NE(resampled_path, boost::none);
     {
-      const auto p = resampled_path->points.at(0);
+      const auto p = resampled_path.points.at(0);
       EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -430,7 +484,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(1);
+      const auto p = resampled_path.points.at(1);
       EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -440,7 +494,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(2);
+      const auto p = resampled_path.points.at(2);
       EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -450,7 +504,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
     }
 
     {
-      const auto p = resampled_path->points.at(3);
+      const auto p = resampled_path.points.at(3);
       EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
@@ -459,8 +513,8 @@ TEST(resample_path, resample_path_by_vector_non_default)
       EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
     }
 
-    for (size_t i = 0; i < resampled_path->points.size(); ++i) {
-      const auto p = resampled_path->points.at(i);
+    for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+      const auto p = resampled_path.points.at(i);
       EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);

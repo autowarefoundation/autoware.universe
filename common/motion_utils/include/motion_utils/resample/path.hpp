@@ -35,7 +35,7 @@
 
 namespace motion_utils
 {
-inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
+inline autoware_auto_planning_msgs::msg::Path resamplePath(
   const autoware_auto_planning_msgs::msg::Path & input_path,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy = false,
   const bool use_lerp_for_z = true, const bool use_zero_order_hold_for_v = true)
@@ -45,7 +45,10 @@ inline boost::optional<autoware_auto_planning_msgs::msg::Path> resamplePath(
   if (
     input_path.points.size() < 2 || resampled_arclength.size() < 2 ||
     input_path_len < resampled_arclength.back()) {
-    return {};
+    std::cerr
+      << "[motion_utils]: input path size, input path length or resampled arclength is wrong"
+      << std::endl;
+    return input_path;
   }
 
   // Input Path Information
