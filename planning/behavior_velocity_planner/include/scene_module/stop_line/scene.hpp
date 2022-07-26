@@ -27,7 +27,6 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
-#include <utilization/boost_geometry_helper.hpp>
 #include <utilization/util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -42,30 +41,21 @@ using tier4_planning_msgs::msg::StopReason;
 
 class StopLineModule : public SceneModuleInterface
 {
-  using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
-
 public:
   enum class State { APPROACH, STOPPED, START };
-
-  struct SegmentIndexWithPoint2d
-  {
-    size_t index;
-    Point2d point;
-  };
 
   struct DebugData
   {
     double base_link2front;
     boost::optional<geometry_msgs::msg::Pose> stop_pose;
-    std::vector<LineString2d> search_segments;
     LineString2d search_stopline;
   };
 
   struct PlannerParam
   {
     double stop_margin;
-    double stop_check_dist;
     double stop_duration_sec;
+    double hold_stop_margin_distance;
     bool use_initialization_stop_line_state;
   };
 
@@ -82,10 +72,6 @@ public:
 
 private:
   int64_t module_id_;
-
-  boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
-    const PathWithLaneId & path, const LineString2d & stop_line,
-    const SearchRangeIndex & search_index);
 
   void insertStopPoint(const geometry_msgs::msg::Point & stop_point, PathWithLaneId & path) const;
 

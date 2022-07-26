@@ -23,6 +23,8 @@ namespace behavior_velocity_planner
 {
 
 namespace bg = boost::geometry;
+using Point = bg::model::d2::point_xy<double>;
+using Line = bg::model::linestring<Point>;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
@@ -30,6 +32,53 @@ using motion_utils::insertTargetPoint;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
+
+namespace
+{
+std::vector<Point> getLinestringIntersects(
+  const PathWithLaneId & ego_path, const Line & linestring,
+  const geometry_msgs::msg::Point & ego_pos,
+  const size_t max_num = std::numeric_limits<size_t>::max())
+{
+  std::vector<Point> intersects{};
+
+  bool found_max_num = false;
+  for (size_t i = 0; i < ego_path.points.size() - 1; ++i) {
+    const auto & p_back = ego_path.points.at(i).point.pose.position;
+    const auto & p_front = ego_path.points.at(i + 1).point.pose.position;
+    const Line segment{{p_back.x, p_back.y}, {p_front.x, p_front.y}};
+
+    std::vector<Point> tmp_intersects{};
+    bg::intersection(segment, linestring, tmp_intersects);
+
+    for (const auto & p : tmp_intersects) {
+      intersects.push_back(p);
+      if (intersects.size() == max_num) {
+        found_max_num = true;
+        break;
+      }
+    }
+
+    if (found_max_num) {
+      break;
+    }
+  }
+
+  const auto compare = [&](const Point & p1, const Point & p2) {
+    const auto dist_l1 =
+      calcSignedArcLength(ego_path.points, size_t(0), createPoint(p1.x(), p1.y(), ego_pos.z));
+
+    const auto dist_l2 =
+      calcSignedArcLength(ego_path.points, size_t(0), createPoint(p2.x(), p2.y(), ego_pos.z));
+
+    return dist_l1 < dist_l2;
+  };
+
+  std::sort(intersects.begin(), intersects.end(), compare);
+
+  return intersects;
+}
+}  // namespace
 
 StopLineModule::StopLineModule(
   const int64_t module_id, const size_t lane_id, const lanelet::ConstLineString3d & stop_line,
@@ -44,45 +93,6 @@ StopLineModule::StopLineModule(
   planner_param_ = planner_param;
 }
 
-boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCollision(
-  const PathWithLaneId & path, const LineString2d & stop_line,
-  const SearchRangeIndex & search_index)
-{
-  const size_t min_search_index = std::max(static_cast<size_t>(0), search_index.min_idx);
-  const size_t max_search_index = std::min(search_index.max_idx, path.points.size() - 1);
-
-  // for creating debug marker
-  debug_data_.search_stopline = stop_line;
-  for (size_t i = min_search_index; i < max_search_index; ++i) {
-    const auto & p_front = path.points.at(i).point.pose.position;
-    const auto & p_back = path.points.at(i + 1).point.pose.position;
-    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
-    debug_data_.search_segments.push_back(path_segment);
-  }
-
-  for (size_t i = min_search_index; i < max_search_index; ++i) {
-    const auto & p_front = path.points.at(i).point.pose.position;
-    const auto & p_back = path.points.at(i + 1).point.pose.position;
-
-    // Find intersection
-    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
-    std::vector<Point2d> collision_points;
-    bg::intersection(stop_line, path_segment, collision_points);
-
-    // Ignore if no collision found
-    if (collision_points.empty()) {
-      continue;
-    }
-
-    // Select first collision
-    const auto & collision_point = collision_points.at(0);
-
-    return StopLineModule::SegmentIndexWithPoint2d{i, collision_point};
-  }
-
-  return {};
-}
-
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -93,26 +103,18 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
   const auto ego_path = *path;
   const auto & ego_pos = planner_data_->current_pose.pose.position;
 
-  const LineString2d stop_line = planning_utils::extendLine(
+  const auto stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
-  SearchRangeIndex dst_search_range =
-    planning_utils::getPathIndexRangeIncludeLaneId(ego_path, lane_id_);
 
-  // extend following and previous search range to avoid no collision
-  if (dst_search_range.max_idx < ego_path.points.size() - 1) dst_search_range.max_idx++;
-  if (dst_search_range.min_idx > 0) dst_search_range.min_idx--;
+  debug_data_.search_stopline = stop_line;
 
-  // Find collision
-  const auto collision = findCollision(ego_path, stop_line, dst_search_range);
+  const auto intersects = getLinestringIntersects(ego_path, stop_line, ego_pos, 1);
 
-  // If no collision found, do nothing
-  if (!collision) {
-    RCLCPP_DEBUG_THROTTLE(logger_, *clock_, 5000 /* ms */, "is no collision");
-    return true;
+  if (intersects.empty()) {
+    return false;
   }
 
-  const auto p_stop_line =
-    createPoint(collision.get().point.x(), collision.get().point.y(), ego_pos.z);
+  const auto p_stop_line = createPoint(intersects.front().x(), intersects.front().y(), ego_pos.z);
   const auto margin = planner_param_.stop_margin + base_link2front;
   const auto stop_pose = calcLongitudinalOffsetPose(ego_path.points, p_stop_line, -margin);
 
@@ -141,14 +143,14 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
       debug_data_.stop_pose = stop_pose.get();
 
       if (
-        signed_arc_dist_to_stop_point < planner_param_.stop_check_dist &&
+        signed_arc_dist_to_stop_point < planner_param_.hold_stop_margin_distance &&
         planner_data_->isVehicleStopped()) {
         RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
 
         state_ = State::STOPPED;
         stopped_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
 
-        if (signed_arc_dist_to_stop_point < -planner_param_.stop_check_dist) {
+        if (signed_arc_dist_to_stop_point < -planner_param_.hold_stop_margin_distance) {
           RCLCPP_ERROR(
             logger_, "Failed to stop near stop line but ego stopped. Change state to STOPPED");
         }
@@ -182,7 +184,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     case State::START: {
       // Initialize if vehicle is far from stop_line
       if (planner_param_.use_initialization_stop_line_state) {
-        if (signed_arc_dist_to_stop_point > planner_param_.stop_check_dist) {
+        if (signed_arc_dist_to_stop_point > planner_param_.hold_stop_margin_distance) {
           RCLCPP_INFO(logger_, "START -> APPROACH");
           state_ = State::APPROACH;
         }

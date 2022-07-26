@@ -39,18 +39,6 @@ MarkerArray StopLineModule::createDebugMarkerArray()
   MarkerArray msg;
 
   const auto now = this->clock_->now();
-  // Search Segments
-  {
-    auto marker = createDefaultMarker(
-      "map", now, "search_segments", module_id_, Marker::SPHERE_LIST,
-      createMarkerScale(0.1, 0.1, 0.1), createMarkerColor(0.0, 0.0, 1.0, 0.999));
-
-    for (const auto & e : debug_data_.search_segments) {
-      marker.points.push_back(createPoint(e.front().x(), e.front().y(), 0.0));
-      marker.points.push_back(createPoint(e.back().x(), e.back().y(), 0.0));
-    }
-    msg.markers.push_back(marker);
-  }
 
   // Search stopline
   {
@@ -59,8 +47,11 @@ MarkerArray StopLineModule::createDebugMarkerArray()
       createMarkerScale(0.1, 0.1, 0.1), createMarkerColor(0.0, 0.0, 1.0, 0.999));
 
     const auto line = debug_data_.search_stopline;
-    marker.points.push_back(createPoint(line.front().x(), line.front().y(), 0.0));
-    marker.points.push_back(createPoint(line.back().x(), line.back().y(), 0.0));
+    if (!line.empty()) {
+      marker.points.push_back(createPoint(line.front().x(), line.front().y(), 0.0));
+      marker.points.push_back(createPoint(line.back().x(), line.back().y(), 0.0));
+    }
+
     msg.markers.push_back(marker);
   }
 
