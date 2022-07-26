@@ -114,7 +114,7 @@ void Overlay::drawOverlayLineSegments(
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
-  Eigen::Affine3f transform = ground_plane_.alineWithSlope(util::pose2Affine(pose));
+  Eigen::Affine3f transform = ground_plane_.alignWithSlope(util::pose2Affine(pose));
   // Eigen::Affine3f transform = (util::pose2Affine(pose));
 
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {

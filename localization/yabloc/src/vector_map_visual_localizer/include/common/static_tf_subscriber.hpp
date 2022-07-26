@@ -1,5 +1,6 @@
 #pragma once
 #include <eigen3/Eigen/Geometry>
+#include <sophus/geometry.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -18,6 +19,16 @@ struct StaticTfSubscriber
   {
     tf_buffer_ = std::make_unique<tf2_ros::Buffer>(clock);
     transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  }
+
+  std::optional<Sophus::SE3f> se3f(
+    const std::string & frame_id, const std::string & parent_frame_id = "base_link")
+  {
+    std::optional<Eigen::Affine3f> opt_aff = (*this)(frame_id, parent_frame_id);
+    if (!opt_aff.has_value()) return std::nullopt;
+
+    Sophus::SE3f se3f(opt_aff->rotation(), opt_aff->translation());
+    return se3f;
   }
 
   std::optional<Eigen::Affine3f> operator()(

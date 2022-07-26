@@ -8,6 +8,7 @@
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <sophus/geometry.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -45,7 +46,7 @@ protected:
   rclcpp::Subscription<Float32Array>::SharedPtr sub_ground_plane_;
 
   std::optional<CameraInfo> info_{std::nullopt};
-  std::optional<Eigen::Affine3f> camera_extrinsic_{std::nullopt};
+  std::optional<Sophus::SE3f> camera_extrinsic_{std::nullopt};
   LineSegments ll2_cloud_;
   boost::circular_buffer<PoseStamped> pose_buffer_;
   SynchroSubscriber<Image, PointCloud2>::SharedPtr sub_synchro_;
@@ -56,12 +57,13 @@ protected:
 
   void imageAndLsdCallback(const Image & image, const PointCloud2 & msg);
 
-  LineSegments extractNaerLineSegments(const Pose & pose, const LineSegments & linesegments);
+  LineSegments extractNaerLineSegments(
+    const Sophus::SE3f & pose, const LineSegments & linesegments);
 
   cv::Mat makeCostMap(LineSegments & lsd);
 
   void drawOverlayLineSegments(
-    cv::Mat & image, const Eigen::Affine3f & pose_affine, const LineSegments & linesegments,
+    cv::Mat & image, const Sophus::SE3f & pose_affine, const LineSegments & linesegments,
     const cv::Scalar & color);
 };
 }  // namespace validation

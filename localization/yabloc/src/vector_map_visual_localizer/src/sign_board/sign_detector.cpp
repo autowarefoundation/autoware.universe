@@ -110,7 +110,7 @@ std::optional<SignDetector::Contour> SignDetector::extractSignBoardContour(
   std::vector<cv::Point2f> projected;
   for (const Particle & p : array.particles) {
     Eigen::Affine3f affine = util::pose2Affine(p.pose);
-    affine = ground_plane_.alineWithSlope(affine);
+    affine = ground_plane_.alignWithSlope(affine);
     for (const auto & p : board) {
       auto opt_p = project(affine, {p.x(), p.y(), p.z()});
       if (opt_p.has_value()) projected.push_back(opt_p.value());

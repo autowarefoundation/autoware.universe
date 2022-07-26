@@ -41,7 +41,7 @@ RefineOptimizer::RefineOptimizer() : Node("refine"), pose_buffer_{40}, tf_subscr
 void RefineOptimizer::infoCallback(const CameraInfo & msg)
 {
   info_ = msg;
-  camera_extrinsic_ = tf_subscriber_(info_->header.frame_id, "base_link");
+  camera_extrinsic_ = tf_subscriber_.se3f(info_->header.frame_id, "base_link");
 }
 
 void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCloud2 & lsd_msg)
@@ -65,32 +65,31 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   pcl::fromROSMsg(lsd_msg, lsd);
   cv::Mat cost_image = makeCostMap(lsd);
 
-  Eigen::Affine3f raw_pose = util::pose2Affine(synched_pose.pose);
+  Sophus::SE3f raw_pose = util::pose2Se3(synched_pose.pose);
+  auto linesegments = extractNaerLineSegments(raw_pose, ll2_cloud_);
 
   // DEBUG:
-  Eigen::Affine3f debug_offset(Eigen::Translation3f(0, 0.8, 0));
+  Sophus::SE3f debug_offset(Eigen::Quaternionf::Identity(), Eigen::Vector3f(0, 0.8, 0));
   raw_pose = raw_pose * debug_offset;
 
-  Eigen::Affine3f opt_pose;
+  Sophus::SE3f opt_pose;
   {
     // Optimization
     Eigen::Matrix3f K =
       Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
-    Eigen::Affine3f T = camera_extrinsic_.value();
+    Sophus::SE3f T = camera_extrinsic_.value();
 
-    auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
     opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments);
 
-    Eigen::Affine3f estimated_offset = opt_pose.inverse() * raw_pose;
-    std::cout << "true offset:\n" << debug_offset.matrix() << std::endl;
-    std::cout << "estimated offset:\n" << estimated_offset.matrix() << std::endl;
+    Sophus::SE3f estimated_offset = opt_pose.inverse() * raw_pose;
+    std::cout << "true offset: " << debug_offset.translation().transpose() << std::endl;
+    std::cout << "estimated offset: " << estimated_offset.translation().transpose() << std::endl;
   }
 
   // cv::Mat rgb_cost_image;
   // cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
 
   cv::Mat rgb_image = util::decompress2CvMat(image_msg);
-  auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
   drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 255));
   drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(0, 255, 0));
   cv::imshow("cost", rgb_image);
@@ -98,17 +97,17 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
 }
 
 void RefineOptimizer::drawOverlayLineSegments(
-  cv::Mat & image, const Eigen::Affine3f & pose_affine, const LineSegments & near_segments,
+  cv::Mat & image, const Sophus::SE3f & pose_affine, const LineSegments & near_segments,
   const cv::Scalar & color)
 {
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
-  Eigen::Affine3f T = camera_extrinsic_.value();
+  Sophus::SE3f T = camera_extrinsic_.value();
 
-  Eigen::Affine3f transform = ground_plane_.alineWithSlope(pose_affine);
+  Sophus::SE3f transform = ground_plane_.alignWithSlope(pose_affine);
 
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
-    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
+    Eigen::Vector3f from_camera = K * (T.inverse() * transform.inverse() * xyz);
     if (from_camera.z() < 1e-3f) return std::nullopt;
     Eigen::Vector3f uv1 = from_camera /= from_camera.z();
     return cv::Point2i(uv1.x(), uv1.y());
@@ -122,26 +121,30 @@ void RefineOptimizer::drawOverlayLineSegments(
 }
 
 RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
-  const Pose & pose, const LineSegments & linesegments)
+  const Sophus::SE3f & pose, const LineSegments & linesegments)
 {
-  Eigen::Vector3f pose_vector;
-  pose_vector << pose.position.x, pose.position.y, pose.position.z;
+  // Compute distance between linesegment and pose.
+  // Note that the linesegment may pass close to the pose even if both end points are far from pose.
+  auto checkIntersection = [this, pose](const pcl::PointNormal & pn) -> bool {
+    const Eigen::Vector3f from = pose.inverse() * pn.getVector3fMap();
+    const Eigen::Vector3f to = pose.inverse() * pn.getVector3fMap();
+    const Eigen::Vector3f tangent = to - from;
 
-  // Compute distance between pose and linesegment of linestring
-  auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
-    const float max_range = 20;
+    float inner = from.dot(tangent);
 
-    const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
-    const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
-    Eigen::Vector3f dir = to - from;
-    float inner = from.dot(dir);
-    if (std::abs(inner) < 1e-3f) {
-      return from.norm() < 1.42 * max_range;
+    // The closest point of the linesegment to pose
+    Eigen::Vector3f nearest = from;
+    if (std::abs(inner) > 1e-3f) {
+      float mu = std::clamp(tangent.squaredNorm() / inner, 0.f, 1.0f);
+      nearest = from + tangent * mu;
     }
 
-    float mu = std::clamp(dir.squaredNorm() / inner, 0.f, 1.0f);
-    Eigen::Vector3f nearest = from + dir * mu;
-    return nearest.norm() < 2 * 1.42 * max_range;
+    // The allowable distance along longitudinal direction is greater than one along
+    // lateral direction. This is because line segments that are far apart along lateral
+    // direction are not suitable for the overlaying optimization.
+    float dx = nearest.x() / 80;  // allowable longitudinal error[m]
+    float dy = nearest.y() / 20;  // allowable lateral error[m]
+    return dx * dx + dy * dy < 1;
   };
 
   LineSegments near_linestrings;
