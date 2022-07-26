@@ -159,7 +159,111 @@ stop
 
 ```
 
+```plantuml
+@startuml
+skinparam monochrome true
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title Collision/Safety Check
+start
+:**INPUT** valid_path;
+
+:**CONVERT** valid_path **to** ego_predicted_path;
+
+:idx = 0;
+
+:is_safe_path = true;
+
+:objects = dynamic_objects in current and target lane;
+while (idx < objects.size()?) is (TRUE)
+
+:obj = objects.at(idx);
+
+:**INITIALIZE** time = 0;
+
+:check_time = prepare_duration + lane_changing_duration;
+
+while(time == check_time?) is (FALSE)
+
+if(lateral distance is sufficient) then (TRUE)
+
+else
+if (is ego in front of object?) then (YES)
+:v_front = v_ego
+v_rear = v_obj;
+else (NO)
+:v_front = v_obj
+v_rear = v_ego;
+endif
+if(longitudinal distance is sufficient) then (YES)
+else (NO)
+:is_safe_path = false;
+break
+endif
+endif
+
+:t+=prediction_time_resolution;
+
+endwhile (TRUE)
+
+if(if_safe_path == TRUE?) then (YES)
+else (NO)
+break;
+endif
+
+:++idx;
+
+endwhile (FALSE)
+
+:**RETURN** is_safe_path;
+
+stop
+@enduml
+
+```
+
+A path safe is safe if it satisfies the lateral distance criteria,
+
+```C++
+lateral distance > `lateral_distance_threshold`
+```
+
+However, suppose the lateral distance is insufficient. In that case, longitudinal distance will be evaluated. The candidate path is safe only when the longitudinal gap between the ego vehicle and the dynamic object is wide enough.
+
+##### Calculating and evaluating longitudinal distance
+
+A sufficient longitudinal gap between vehicles will prevent any rear-end collision from happening. This includes an emergency stop or sudden braking scenarios.
+
+The following information is required to evaluate the longitudinal distance between vehicles
+
+1. estimated speed of the dynamic objects
+2. predicted path of dynamic objects
+3. ego vehicle's current speed
+4. ego vehicle's predicted path (converted/estimated from candidate path)
+
+The following figure illustrates how the safety check is performed on ego vs. dynamic objects.
+
 ![Safety check](./image/lane_change/lane_change-collision_check.png)
+
+Let `v_front` and `a_front` be the front vehicle's velocity and deceleration, respectively, and `v_rear` and `a_rear` be the rear vehicle's velocity and deceleration, respectively.
+Front vehicle and rear vehicle assignment will depend on ego, and dynamic object predicted path's pose currently being evaluated.
+
+Assuming the front vehicle brakes, then `d_front` is the distance the front vehicle will travel until it comes to a complete stop. The distance is computed from the equation of motion, which yield.
+
+```C++
+d_front = -std::pow(v_front,2) / (2*a_front)
+```
+
+Using the same formula to evaluate the rear vehicle's stopping distance `d_rear` is insufficient. This is because as the rear vehicle's driver saw the front vehicle's sudden brake, it will take some time for the driver to process the information and react by pressing the brake. We call this delay the reaction time.
+
+The reaction time is considered from the duration starting from the driver seeing the front vehicle brake light until the brake is pressed. As the brake is pressed, the time margin (which might be caused by mechanical or control delay) also needs to be considered. With these two parameters included, the formula for `d_rear` will be as follows.
+
+```C++
+d_rear = v_rear * rear_vehicle_reaction_time + v_rear * rear_Vehicle_safety_time_margin + (-std::pow(v_front,2) / 2 * a_rear)
+```
+
+Both `a_front` and `a_rear` are parameterized to estimate how much deceleration will occur when the brake is pressed.
 
 ## Parameters
 
