@@ -12,32 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ground_segmentation/scan_ground_filter_nodelet.hpp>
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include "tf2_ros/transform_broadcaster.h"
+
+#include <ground_segmentation/scan_ground_filter_nodelet.hpp>
+
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <gtest/gtest.h>
 
 class ScanGroundFilterTest : public ::testing::Test
 {
 protected:
-  void SetUp() override 
-  { 
-    rclcpp::init(0, nullptr); 
+  void SetUp() override
+  {
+    rclcpp::init(0, nullptr);
 
     dummy_node_ = std::make_shared<rclcpp::Node>("ScanGroundFilterTest");
-    input_pointcloud_pub_ =
-      rclcpp::create_publisher<sensor_msgs::msg::PointCloud2>(dummy_node_,"/test_scan_ground_filter/input_cloud", 1);
+    input_pointcloud_pub_ = rclcpp::create_publisher<sensor_msgs::msg::PointCloud2>(
+      dummy_node_, "/test_scan_ground_filter/input_cloud", 1);
 
-    output_pointcloud_pub_ = 
-      rclcpp::create_publisher<sensor_msgs::msg::PointCloud2>(dummy_node_,"/test_scan_ground_filter/output_cloud", 1);
+    output_pointcloud_pub_ = rclcpp::create_publisher<sensor_msgs::msg::PointCloud2>(
+      dummy_node_, "/test_scan_ground_filter/output_cloud", 1);
 
-    tf_broadcaster_ =
-      std::make_unique<tf2_ros::TransformBroadcaster>(*dummy_node_);
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*dummy_node_);
 
-    //no real uages,ScanGroundFilterComponent cosntruct need these params
-    rclcpp::NodeOptions  options;
+    // no real uages,ScanGroundFilterComponent cosntruct need these params
+    rclcpp::NodeOptions options;
     std::vector<rclcpp::Parameter> parameters;
     parameters.emplace_back(rclcpp::Parameter("wheel_radius", 0.39));
     parameters.emplace_back(rclcpp::Parameter("wheel_width", 0.42));
@@ -53,20 +54,17 @@ protected:
 
     scan_ground_filter_ = std::make_shared<ground_segmentation::ScanGroundFilterComponent>(options);
 
-    //read pcd to pointcloud
+    // read pcd to pointcloud
     input_msg_ptr_ = std::make_shared<sensor_msgs::msg::PointCloud2>();
     const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
     const auto pcd_path = share_dir + "/data/test.pcd";
     pcl::PointCloud<pcl::PointXYZ> cloud;
     pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_path, cloud);
     pcl::toROSMsg(cloud, *input_msg_ptr_);
-    input_msg_ptr_->header.frame_id="velodyne_top";
+    input_msg_ptr_->header.frame_id = "velodyne_top";
   }
 
-  ScanGroundFilterTest()
-  {
-
-  }
+  ScanGroundFilterTest() {}
 
   ~ScanGroundFilterTest() override { rclcpp::shutdown(); }
 
@@ -78,10 +76,10 @@ public:
 
   sensor_msgs::msg::PointCloud2::SharedPtr input_msg_ptr_;
 
-  //wrapper function to test private function filter
+  // wrapper function to test private function filter
   void filter(sensor_msgs::msg::PointCloud2 & out_cloud)
   {
-    scan_ground_filter_->filter(input_msg_ptr_,nullptr,out_cloud);
+    scan_ground_filter_->filter(input_msg_ptr_, nullptr, out_cloud);
   }
 
   // TF broadcaster
@@ -111,79 +109,74 @@ public:
 
 TEST_F(ScanGroundFilterTest, TestCase1)
 {
-    input_pointcloud_pub_->publish(*input_msg_ptr_);
-    sensor_msgs::msg::PointCloud2 out_cloud;
-    
-    //set filter parameter
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("base_frame", "velodyne_top"));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg",10.0));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", 30.0));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", 0.2));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", 0.2));
+  input_pointcloud_pub_->publish(*input_msg_ptr_);
+  sensor_msgs::msg::PointCloud2 out_cloud;
 
-    filter(out_cloud);
-    output_pointcloud_pub_->publish(out_cloud);
+  // set filter parameter
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("base_frame", "velodyne_top"));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg", 10.0));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", 30.0));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", 0.2));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", 0.2));
 
-    //check out_cloud
-    int effect_num = 0;
-    int total_num = 0;
-    const float min_noground_point_z = -1.8;
-    for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(out_cloud, "x"),
-            iter_y(out_cloud, "y"), iter_z(out_cloud, "z");
-            iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-    {
-        const float z = *iter_z;
-        // std::cout<<"z="<<z<<std::endl;
-        total_num += 1;
-        if (z > min_noground_point_z)
-        {
-            effect_num += 1;
-        }
+  filter(out_cloud);
+  output_pointcloud_pub_->publish(out_cloud);
+
+  // check out_cloud
+  int effect_num = 0;
+  int total_num = 0;
+  const float min_noground_point_z = -1.8;
+  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(out_cloud, "x"), iter_y(out_cloud, "y"),
+       iter_z(out_cloud, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+    const float z = *iter_z;
+    // std::cout<<"z="<<z<<std::endl;
+    total_num += 1;
+    if (z > min_noground_point_z) {
+      effect_num += 1;
     }
-    const float percent = 1.0 * effect_num/total_num;
-    std::cout<<"effect_num="<<effect_num<<",total_num="<<total_num
-            <<",percentage:"<<percent<<std::endl;
-    EXPECT_GE(percent,0.9);
+  }
+  const float percent = 1.0 * effect_num / total_num;
+  std::cout << "effect_num=" << effect_num << ",total_num=" << total_num
+            << ",percentage:" << percent << std::endl;
+  EXPECT_GE(percent, 0.9);
 }
-
 
 TEST_F(ScanGroundFilterTest, TestCase2)
 {
-    input_pointcloud_pub_->publish(*input_msg_ptr_);
-    sensor_msgs::msg::PointCloud2 out_cloud;
+  input_pointcloud_pub_->publish(*input_msg_ptr_);
+  sensor_msgs::msg::PointCloud2 out_cloud;
 
-    send_tf();
-    //sleep a while to make sure tf sent
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("base_frame", "base_link"));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg",6.0));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", 10.0));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", 0.2));
-    scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", 0.2));
+  send_tf();
+  // sleep a while to make sure tf sent
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
-    filter(out_cloud);
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("base_frame", "base_link"));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg", 6.0));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", 10.0));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", 0.2));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", 0.2));
 
-    output_pointcloud_pub_->publish(out_cloud);
+  filter(out_cloud);
 
-    //check out_cloud
-    int effect_num = 0;
-    int total_num = 0;
-    const float min_noground_point_z = 0.1;
-    for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(out_cloud, "x"),
-            iter_y(out_cloud, "y"), iter_z(out_cloud, "z");
-            iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-    {
-        const float z = *iter_z;
-        // std::cout<<"z="<<z<<std::endl;
-        total_num += 1;
-        if (z > min_noground_point_z)
-        {
-            effect_num += 1;
-        }
+  output_pointcloud_pub_->publish(out_cloud);
+
+  // check out_cloud
+  int effect_num = 0;
+  int total_num = 0;
+  const float min_noground_point_z = 0.1;
+  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(out_cloud, "x"), iter_y(out_cloud, "y"),
+       iter_z(out_cloud, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+    const float z = *iter_z;
+    // std::cout<<"z="<<z<<std::endl;
+    total_num += 1;
+    if (z > min_noground_point_z) {
+      effect_num += 1;
     }
-    const float percent = 1.0 * effect_num/total_num;
-    std::cout<<"effect_num="<<effect_num<<",total_num="<<total_num
-            <<",percentage:"<<percent<<std::endl;
-    EXPECT_GE(percent,0.9);
+  }
+  const float percent = 1.0 * effect_num / total_num;
+  std::cout << "effect_num=" << effect_num << ",total_num=" << total_num
+            << ",percentage:" << percent << std::endl;
+  EXPECT_GE(percent, 0.9);
 }

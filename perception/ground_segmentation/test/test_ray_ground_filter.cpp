@@ -33,7 +33,7 @@ class RayGroundFilterComponentTest : public ground_segmentation::RayGroundFilter
 {
 public:
   explicit RayGroundFilterComponentTest(const rclcpp::NodeOptions & options)
-  :RayGroundFilterComponent(options),tf2_broadcaster_(*this)
+  : RayGroundFilterComponent(options), tf2_broadcaster_(*this)
   {
     input_pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
       "/test_ray_ground_filter/input_cloud", 1);

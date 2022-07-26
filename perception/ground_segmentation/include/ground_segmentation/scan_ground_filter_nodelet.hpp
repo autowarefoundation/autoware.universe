@@ -185,7 +185,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit ScanGroundFilterComponent(const rclcpp::NodeOptions & options);
 
-  //for test
+  // for test
   friend ScanGroundFilterTest;
 };
 }  // namespace ground_segmentation
