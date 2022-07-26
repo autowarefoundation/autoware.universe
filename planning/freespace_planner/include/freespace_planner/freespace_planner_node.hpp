@@ -51,6 +51,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace freespace_planner
 {
@@ -80,7 +83,7 @@ struct NodeParam
   bool replan_when_course_out;
 };
 
-class FreespacePlannerNode : public rclcpp::Node
+class FreespacePlannerNode : public tilde::SteeNode
 {
 public:
   explicit FreespacePlannerNode(const rclcpp::NodeOptions & node_options);

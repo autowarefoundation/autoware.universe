@@ -27,7 +27,7 @@ using tier4_autoware_utils::calcCurvature;
 using tier4_autoware_utils::calcDistance2d;
 
 PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & node_options)
-: Node("planning_error_monitor", node_options)
+: SteeNode("planning_error_monitor", node_options)
 {
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;

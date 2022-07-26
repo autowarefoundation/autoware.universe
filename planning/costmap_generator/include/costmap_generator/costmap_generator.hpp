@@ -67,8 +67,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class CostmapGenerator : public rclcpp::Node
+class CostmapGenerator : public tilde::SteeNode
 {
 public:
   explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);

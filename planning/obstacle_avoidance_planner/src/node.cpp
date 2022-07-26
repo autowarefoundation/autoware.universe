@@ -49,7 +49,7 @@
 #include <vector>
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options)
-: Node("obstacle_avoidance_planner", node_options), min_num_points_for_getting_yaw_(2)
+: SteeNode("obstacle_avoidance_planner", node_options), min_num_points_for_getting_yaw_(2)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   tf_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(clock);

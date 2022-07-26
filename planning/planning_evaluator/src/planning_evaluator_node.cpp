@@ -27,7 +27,7 @@
 namespace planning_diagnostics
 {
 PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_options)
-: Node("planning_evaluator", node_options)
+: SteeNode("planning_evaluator", node_options)
 {
   using std::placeholders::_1;
 

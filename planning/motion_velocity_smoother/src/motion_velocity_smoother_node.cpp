@@ -32,7 +32,7 @@
 namespace motion_velocity_smoother
 {
 MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions & node_options)
-: Node("motion_velocity_smoother", node_options)
+: SteeNode("motion_velocity_smoother", node_options)
 {
   using std::placeholders::_1;
 

@@ -16,6 +16,7 @@
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>

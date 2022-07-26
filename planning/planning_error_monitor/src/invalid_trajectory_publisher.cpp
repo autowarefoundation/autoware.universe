@@ -22,7 +22,7 @@ namespace planning_diagnostics
 {
 InvalidTrajectoryPublisherNode::InvalidTrajectoryPublisherNode(
   const rclcpp::NodeOptions & node_options)
-: Node("invalid_trajectory_publisher", node_options)
+: SteeNode("invalid_trajectory_publisher", node_options)
 {
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;

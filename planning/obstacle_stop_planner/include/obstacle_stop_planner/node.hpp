@@ -55,6 +55,9 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace motion_planning
 {
@@ -88,7 +91,7 @@ struct SlowDownSection
   double velocity;
 };
 
-class ObstacleStopPlannerNode : public rclcpp::Node
+class ObstacleStopPlannerNode : public tilde::SteeNode
 {
 public:
   explicit ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options);

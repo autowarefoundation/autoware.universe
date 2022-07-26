@@ -30,10 +30,13 @@
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace mission_planner
 {
-class MissionPlanner : public rclcpp::Node
+class MissionPlanner : public tilde::SteeNode
 {
 protected:
   MissionPlanner(const std::string & node_name, const rclcpp::NodeOptions & node_options);

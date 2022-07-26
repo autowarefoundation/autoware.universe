@@ -24,6 +24,7 @@
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>
   <depend>sensor_msgs</depend>

@@ -45,6 +45,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace motion_velocity_smoother
 {
@@ -58,7 +61,7 @@ using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 
-class MotionVelocitySmootherNode : public rclcpp::Node
+class MotionVelocitySmootherNode : public tilde::SteeNode
 {
 public:
   explicit MotionVelocitySmootherNode(const rclcpp::NodeOptions & node_options);

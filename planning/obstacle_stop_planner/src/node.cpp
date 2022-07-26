@@ -419,7 +419,7 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 }  // namespace
 
 ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("obstacle_stop_planner", node_options)
+: SteeNode("obstacle_stop_planner", node_options)
 {
   // Vehicle Parameters
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();

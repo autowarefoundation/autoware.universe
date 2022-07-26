@@ -19,10 +19,13 @@
 
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace mission_planner
 {
-class GoalPoseVisualizer : public rclcpp::Node
+class GoalPoseVisualizer : public tilde::SteeNode
 {
 public:
   explicit GoalPoseVisualizer(const rclcpp::NodeOptions & node_options);

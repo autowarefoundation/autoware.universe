@@ -24,6 +24,9 @@
 
 #include <memory>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 enum class PoseType : int8_t { NoStart = 0 };
 enum class PointType : int8_t { NoStart = 0 };

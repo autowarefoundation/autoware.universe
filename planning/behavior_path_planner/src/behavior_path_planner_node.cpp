@@ -36,7 +36,7 @@ using tier4_planning_msgs::msg::PathChangeModuleId;
 using vehicle_info_util::VehicleInfoUtil;
 
 BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("behavior_path_planner", node_options)
+: SteeNode("behavior_path_planner", node_options)
 {
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;

@@ -35,10 +35,13 @@
 
 #include <memory>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace behavior_velocity_planner
 {
-class BehaviorVelocityPlannerNode : public rclcpp::Node
+class BehaviorVelocityPlannerNode : public tilde::SteeNode
 {
 public:
   explicit BehaviorVelocityPlannerNode(const rclcpp::NodeOptions & node_options);

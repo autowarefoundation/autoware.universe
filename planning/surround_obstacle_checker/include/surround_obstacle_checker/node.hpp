@@ -44,6 +44,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 using Polygon2d =
@@ -54,7 +57,7 @@ using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 enum class State { PASS, STOP };
 
-class SurroundObstacleCheckerNode : public rclcpp::Node
+class SurroundObstacleCheckerNode : public tilde::SteeNode
 {
 public:
   explicit SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options);

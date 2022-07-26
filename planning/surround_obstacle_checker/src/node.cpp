@@ -31,7 +31,7 @@
 #include <Eigen/Geometry>
 
 SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options)
-: Node("surround_obstacle_checker_node", node_options),
+: SteeNode("surround_obstacle_checker_node", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())

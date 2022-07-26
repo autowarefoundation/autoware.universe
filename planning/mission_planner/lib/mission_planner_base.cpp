@@ -28,7 +28,7 @@ namespace mission_planner
 {
 MissionPlanner::MissionPlanner(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: Node(node_name, node_options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
+: SteeNode(node_name, node_options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
 {
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");

@@ -50,6 +50,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace behavior_path_planner
 {
@@ -69,7 +72,7 @@ using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::PathChangeModuleArray;
 using visualization_msgs::msg::MarkerArray;
 
-class BehaviorPathPlannerNode : public rclcpp::Node
+class BehaviorPathPlannerNode : public tilde::SteeNode
 {
 public:
   explicit BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options);

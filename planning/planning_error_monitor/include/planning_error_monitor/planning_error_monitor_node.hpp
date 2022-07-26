@@ -24,6 +24,9 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace planning_diagnostics
 {
@@ -32,7 +35,7 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 
-class PlanningErrorMonitorNode : public rclcpp::Node
+class PlanningErrorMonitorNode : public tilde::SteeNode
 {
 public:
   explicit PlanningErrorMonitorNode(const rclcpp::NodeOptions & node_options);

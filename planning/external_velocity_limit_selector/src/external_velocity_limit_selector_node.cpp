@@ -69,7 +69,7 @@ VelocityLimit getHardestLimit(
 
 ExternalVelocityLimitSelectorNode::ExternalVelocityLimitSelectorNode(
   const rclcpp::NodeOptions & node_options)
-: Node("external_velocity_limit_selector", node_options)
+: SteeNode("external_velocity_limit_selector", node_options)
 {
   using std::placeholders::_1;
   // Input

@@ -32,6 +32,9 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace behavior_path_planner
 {

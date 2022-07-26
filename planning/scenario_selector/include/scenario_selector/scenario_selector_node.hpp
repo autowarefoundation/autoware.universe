@@ -34,8 +34,11 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class ScenarioSelectorNode : public rclcpp::Node
+class ScenarioSelectorNode : public tilde::SteeNode
 {
 public:
   explicit ScenarioSelectorNode(const rclcpp::NodeOptions & node_options);

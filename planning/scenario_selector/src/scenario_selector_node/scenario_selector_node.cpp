@@ -319,7 +319,7 @@ void ScenarioSelectorNode::publishTrajectory(
 }
 
 ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_options)
-: Node("scenario_selector", node_options),
+: SteeNode("scenario_selector", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   current_scenario_(tier4_planning_msgs::msg::Scenario::EMPTY),

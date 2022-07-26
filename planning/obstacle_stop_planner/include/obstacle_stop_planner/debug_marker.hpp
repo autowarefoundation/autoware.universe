@@ -34,6 +34,9 @@
 #define EIGEN_MPL2_ONLY
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 namespace motion_planning
 {
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;

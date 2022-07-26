@@ -30,6 +30,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace planning_diagnostics
 {
@@ -39,7 +42,7 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 /**
  * @brief Node for planning evaluation
  */
-class MotionEvaluatorNode : public rclcpp::Node
+class MotionEvaluatorNode : public tilde::SteeNode
 {
 public:
   explicit MotionEvaluatorNode(const rclcpp::NodeOptions & node_options);

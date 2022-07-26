@@ -207,7 +207,7 @@ bool isStopped(
 namespace freespace_planner
 {
 FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("freespace_planner", node_options)
+: SteeNode("freespace_planner", node_options)
 {
   using std::placeholders::_1;
 

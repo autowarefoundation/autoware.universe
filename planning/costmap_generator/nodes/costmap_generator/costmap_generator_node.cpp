@@ -109,7 +109,7 @@ pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
 }  // namespace
 
 CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
-: Node("costmap_generator", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+: SteeNode("costmap_generator", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // Parameters
   costmap_frame_ = this->declare_parameter<std::string>("costmap_frame", "map");

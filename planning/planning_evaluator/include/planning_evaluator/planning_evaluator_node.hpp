@@ -31,6 +31,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace planning_diagnostics
 {
@@ -43,7 +46,7 @@ using diagnostic_msgs::msg::DiagnosticStatus;
 /**
  * @brief Node for planning evaluation
  */
-class PlanningEvaluatorNode : public rclcpp::Node
+class PlanningEvaluatorNode : public tilde::SteeNode
 {
 public:
   explicit PlanningEvaluatorNode(const rclcpp::NodeOptions & node_options);

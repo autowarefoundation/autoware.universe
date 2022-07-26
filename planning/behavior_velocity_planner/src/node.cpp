@@ -66,7 +66,7 @@ autoware_auto_planning_msgs::msg::Path to_path(
 }  // namespace
 
 BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("behavior_velocity_planner_node", node_options),
+: SteeNode("behavior_velocity_planner_node", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   planner_data_(*this)

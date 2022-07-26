@@ -20,13 +20,16 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace planning_diagnostics
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
-class InvalidTrajectoryPublisherNode : public rclcpp::Node
+class InvalidTrajectoryPublisherNode : public tilde::SteeNode
 {
 public:
   explicit InvalidTrajectoryPublisherNode(const rclcpp::NodeOptions & node_options);

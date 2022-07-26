@@ -17,7 +17,7 @@
 namespace mission_planner
 {
 GoalPoseVisualizer::GoalPoseVisualizer(const rclcpp::NodeOptions & node_options)
-: Node("goal_pose_visualizer_node", node_options)
+: SteeNode("goal_pose_visualizer_node", node_options)
 {
   sub_route_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1}.transient_local(),

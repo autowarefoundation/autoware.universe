@@ -31,10 +31,10 @@ using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using planning_diagnostics::PlanningErrorMonitorNode;
 
-class PubSubManager : public rclcpp::Node
+class PubSubManager : public tilde::SteeNode
 {
 public:
-  PubSubManager() : Node("test_pub_sub")
+  PubSubManager() : SteeNode("test_pub_sub")
   {
     traj_pub_ = create_publisher<Trajectory>("/planning_error_monitor/input/trajectory", 1);
     diag_sub_ = create_subscription<DiagnosticArray>(

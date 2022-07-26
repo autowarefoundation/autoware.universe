@@ -24,12 +24,15 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using tier4_planning_msgs::msg::VelocityLimitConstraints;
 
-class ExternalVelocityLimitSelectorNode : public rclcpp::Node
+class ExternalVelocityLimitSelectorNode : public tilde::SteeNode
 {
 public:
   explicit ExternalVelocityLimitSelectorNode(const rclcpp::NodeOptions & node_options);

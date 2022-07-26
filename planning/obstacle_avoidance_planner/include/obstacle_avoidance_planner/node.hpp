@@ -37,6 +37,9 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace ros
 {
@@ -64,7 +67,7 @@ struct MPTParam;
 struct DebugData;
 struct Trajectories;
 
-class ObstacleAvoidancePlanner : public rclcpp::Node
+class ObstacleAvoidancePlanner : public tilde::SteeNode
 {
 private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
