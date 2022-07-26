@@ -217,8 +217,6 @@ private:
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
 private:
-  bool isBackwardPath(const autoware_auto_planning_msgs::msg::Trajectory & trajectory) const;
-
   bool withinPolygon(
     const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
     const Point2d & next_point, pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
@@ -236,7 +234,7 @@ private:
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data,
     const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-    const double current_acc, const StopParam & stop_param);
+    const double current_acc, const double current_vel, const StopParam & stop_param);
 
   TrajectoryPoints decimateTrajectory(
     const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
@@ -286,7 +284,7 @@ private:
   SlowDownSection createSlowDownSection(
     const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
     const double dist_remain, const double dist_vehicle_to_obstacle,
-    const VehicleInfo & vehicle_info, const double current_acc);
+    const VehicleInfo & vehicle_info, const double current_acc, const double current_vel);
 
   SlowDownSection createSlowDownSectionFromMargin(
     const int idx, const TrajectoryPoints & base_trajectory, const double forward_margin,
@@ -301,9 +299,10 @@ private:
 
   void setExternalVelocityLimit();
 
-  void resetExternalVelocityLimit(const double current_acc);
+  void resetExternalVelocityLimit(const double current_acc, const double current_vel);
 
-  void publishDebugData(const PlannerData & planner_data, const double current_acc);
+  void publishDebugData(
+    const PlannerData & planner_data, const double current_acc, const double current_vel);
 };
 }  // namespace motion_planning
 

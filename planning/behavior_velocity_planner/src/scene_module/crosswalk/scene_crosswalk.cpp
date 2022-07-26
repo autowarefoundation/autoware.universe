@@ -229,11 +229,13 @@ PathPointWithLaneId getBackwardPointFromBasePoint(
   PathPointWithLaneId output;
   const double dx = p_to.point.pose.position.x - p_from.point.pose.position.x;
   const double dy = p_to.point.pose.position.y - p_from.point.pose.position.y;
-  const double norm = std::hypot(dx, dy);
+  const double dz = p_to.point.pose.position.z - p_from.point.pose.position.z;
+  const double norm = std::hypot(dx, dy, dz);
 
   output = p_base;
   output.point.pose.position.x += backward_length * dx / norm;
   output.point.pose.position.y += backward_length * dy / norm;
+  output.point.pose.position.z += backward_length * dz / norm;
 
   return output;
 }
@@ -354,8 +356,11 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     logger_, planner_param_.show_processing_time, "- step2: %f ms",
     stop_watch_.toc("total_processing_time", false));
 
-  const auto nearest_stop_point = findNearestStopPoint(ego_path, *stop_reason);
-  const auto rtc_stop_point = findRTCStopPoint(ego_path);
+  StopFactor stop_factor{};
+  StopFactor stop_factor_rtc{};
+
+  const auto nearest_stop_point = findNearestStopPoint(ego_path, stop_factor);
+  const auto rtc_stop_point = findRTCStopPoint(ego_path, stop_factor_rtc);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step3: %f ms",
@@ -365,6 +370,14 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   if (isActivated()) {
     if (!nearest_stop_point) {
+      if (!rtc_stop_point) {
+        setDistance(std::numeric_limits<double>::lowest());
+        return true;
+      }
+
+      const auto crosswalk_distance =
+        calcSignedArcLength(ego_path.points, ego_pos, getPoint(rtc_stop_point.get().second));
+      setDistance(crosswalk_distance);
       return true;
     }
 
@@ -378,8 +391,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   if (nearest_stop_point) {
     insertDecelPoint(nearest_stop_point.get(), 0.0, *path);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
   } else if (rtc_stop_point) {
     insertDecelPoint(rtc_stop_point.get(), 0.0, *path);
+    planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -419,7 +434,7 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::g
 }
 
 boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTCStopPoint(
-  const PathWithLaneId & ego_path)
+  const PathWithLaneId & ego_path, StopFactor & stop_factor)
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
@@ -435,14 +450,15 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTC
   const auto residual_length = calcLongitudinalOffsetToSegment(ego_path.points, base_idx, p_stop);
   const auto update_margin = margin - residual_length + base_link2front;
 
-  return getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
+  const auto stop_point = getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
+  stop_factor.stop_pose = stop_point.get().second.point.pose;
+
+  return stop_point;
 }
 
 boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNearestStopPoint(
-  const PathWithLaneId & ego_path, StopReason & stop_reason)
+  const PathWithLaneId & ego_path, StopFactor & stop_factor)
 {
-  StopFactor stop_factor{};
-
   bool found_pedestrians = false;
   bool found_stuck_vehicle = false;
 
@@ -565,7 +581,6 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
 
   const auto stop_point = getBackwardInsertPointFromBasePoint(base_idx, ego_path, update_margin);
   stop_factor.stop_pose = stop_point.get().second.point.pose;
-  planning_utils::appendStopReason(stop_factor, &stop_reason);
 
   return stop_point;
 }
@@ -638,7 +653,12 @@ void CrosswalkModule::insertDecelPoint(
   setDistance(stop_point_distance);
 
   debug_data_.first_stop_pose = stop_point.second.point.pose;
-  debug_data_.stop_poses.push_back(stop_point.second.point.pose);
+
+  if (std::abs(target_velocity) < 1e-3) {
+    debug_data_.stop_poses.push_back(stop_point.second.point.pose);
+  } else {
+    debug_data_.slow_poses.push_back(stop_point.second.point.pose);
+  }
 }
 
 float CrosswalkModule::calcTargetVelocity(
