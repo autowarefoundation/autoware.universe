@@ -30,6 +30,7 @@
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
@@ -244,7 +245,14 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
 
   // Don't re-approach when the ego stops closer to the stop point than hold_stop_margin_distance
   if (is_stopped && stop_dist < planner_param_.hold_stop_margin_distance) {
-    stop_pose = self_pose;
+    const auto ego_pos_on_path =
+      calcLongitudinalOffsetPose(original_path.points, self_pose.position, 0.0);
+
+    if (!ego_pos_on_path) {
+      return false;
+    }
+
+    stop_pose = ego_pos_on_path.get();
   }
 
   setDistance(stop_dist);
