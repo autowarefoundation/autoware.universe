@@ -76,34 +76,35 @@ Eigen::Affine3f refinePose(
   ceres::Manifold * quaternion_manifold = new ceres::EigenQuaternionManifold;
 
   problem.AddParameterBlock(param_t.data(), 3);
-  problem.AddParameterBlock(param_q.data(), 4);
-  problem.SetManifold(param_q.data(), quaternion_manifold);
+  problem.AddParameterBlock(param_q.data(), 4);              // Orientation is too sensitive to cost
+  problem.SetManifold(param_q.data(), quaternion_manifold);  // and it sometime changes
+  problem.SetParameterBlockConstant(param_q.data());         // dramatically. So I fix it temporally
 
-  {
-    Eigen::Vector3d point = linesegments.front().getVector3fMap().cast<double>();
-    Eigen::Vector3d from_camera =
-      intrinsic_d * extrinsic_d.inverse() * (param_quat.conjugate() * (point - param_t));
+  // {
+  //   Eigen::Vector3d point = linesegments.front().getVector3fMap().cast<double>();
+  //   Eigen::Vector3d from_camera =
+  //     intrinsic_d * extrinsic_d.inverse() * (param_quat.conjugate() * (point - param_t));
 
-    cv::Rect2i rect(0, 0, cost_image.cols, cost_image.rows);
-    if (from_camera.z() < 1e-3f) {
-      std::cout << "out of image  " << from_camera.transpose() << std::endl;
-    } else {
-      Eigen::Vector3d u = from_camera /= from_camera.z();
-      if (rect.contains(cv::Point2i(u.x(), u.y()))) {
-        double score;
-        interpolator.Evaluate(u.y(), u.x(), &score);
+  //   cv::Rect2i rect(0, 0, cost_image.cols, cost_image.rows);
+  //   if (from_camera.z() < 1e-3f) {
+  //     std::cout << "out of image  " << from_camera.transpose() << std::endl;
+  //   } else {
+  //     Eigen::Vector3d u = from_camera /= from_camera.z();
+  //     if (rect.contains(cv::Point2i(u.x(), u.y()))) {
+  //       double score;
+  //       interpolator.Evaluate(u.y(), u.x(), &score);
 
-        double expected = cost_image.at<uchar>(u.y(), u.x());
-        double grid_score;
-        grid.GetValue(u.y(), u.x(), &grid_score);
+  //       double expected = cost_image.at<uchar>(u.y(), u.x());
+  //       double grid_score;
+  //       grid.GetValue(u.y(), u.x(), &grid_score);
 
-        std::cout << "score " << score << " expected: " << expected << " grid: " << grid_score
-                  << std::endl;
-      } else {
-        std::cout << "invalid range: " << u.transpose() << std::endl;
-      }
-    }
-  }
+  //       std::cout << "score " << score << " expected: " << expected << " grid: " << grid_score
+  //                 << std::endl;
+  //     } else {
+  //       std::cout << "invalid range: " << u.transpose() << std::endl;
+  //     }
+  //   }
+  // }
 
   for (const pcl::PointNormal & pn : linesegments) {
     Eigen::Vector3f t = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
@@ -115,9 +116,7 @@ Eigen::Affine3f refinePose(
       problem.AddResidualBlock(
         ProjectionCost::Create(interpolator, p.cast<double>(), intrinsic_d, extrinsic_d), nullptr,
         param_t.data(), param_q.data());
-      break;
     }
-    break;
   }
 
   ceres::Solver::Options options;
@@ -129,7 +128,8 @@ Eigen::Affine3f refinePose(
 
   {
     Eigen::Translation3f t(param_t.x(), param_t.y(), param_t.z());
-    Eigen::Quaternionf q(param_q.w(), param_q.x(), param_q.y(), param_q.z());
+    Eigen::Quaternionf q;
+    q.coeffs() = param_q.cast<float>();
     return t * q;
   }
 }

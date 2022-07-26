@@ -65,7 +65,13 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   pcl::fromROSMsg(lsd_msg, lsd);
   cv::Mat cost_image = makeCostMap(lsd);
 
-  Pose opt_pose;
+  Eigen::Affine3f raw_pose = util::pose2Affine(synched_pose.pose);
+
+  // DEBUG:
+  Eigen::Affine3f debug_offset(Eigen::Translation3f(0, 0.8, 0));
+  raw_pose = raw_pose * debug_offset;
+
+  Eigen::Affine3f opt_pose;
   {
     // Optimization
     Eigen::Matrix3f K =
@@ -73,31 +79,33 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     Eigen::Affine3f T = camera_extrinsic_.value();
 
     auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
-    Eigen::Affine3f transform = util::pose2Affine(synched_pose.pose);
-    Eigen::Affine3f opt_affine = refinePose(T, K, cost_image, transform, linesegments);
-    std::cout << "opt: " << opt_affine.translation().transpose()
-              << " raw:" << transform.translation().transpose() << std::endl;
-    opt_pose = util::affine2Pose(opt_affine);
+    opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments);
+
+    Eigen::Affine3f estimated_offset = opt_pose.inverse() * raw_pose;
+    std::cout << "true offset:\n" << debug_offset.matrix() << std::endl;
+    std::cout << "estimated offset:\n" << estimated_offset.matrix() << std::endl;
   }
 
-  cv::Mat rgb_cost_image;
-  cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
+  // cv::Mat rgb_cost_image;
+  // cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
 
+  cv::Mat rgb_image = util::decompress2CvMat(image_msg);
   auto linesegments = extractNaerLineSegments(synched_pose.pose, ll2_cloud_);
-  drawOverlayLineSegments(rgb_cost_image, synched_pose.pose, linesegments, cv::Scalar::all(255));
-  drawOverlayLineSegments(rgb_cost_image, opt_pose, linesegments, cv::Scalar(0, 255, 0));
-  cv::imshow("cost", rgb_cost_image);
+  drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 255));
+  drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(0, 255, 0));
+  cv::imshow("cost", rgb_image);
   cv::waitKey(5);
 }
 
 void RefineOptimizer::drawOverlayLineSegments(
-  cv::Mat & image, const Pose & pose, const LineSegments & near_segments, const cv::Scalar & color)
+  cv::Mat & image, const Eigen::Affine3f & pose_affine, const LineSegments & near_segments,
+  const cv::Scalar & color)
 {
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
-  Eigen::Affine3f transform = ground_plane_.alineWithSlope(util::pose2Affine(pose));
+  Eigen::Affine3f transform = ground_plane_.alineWithSlope(pose_affine);
 
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
     Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
@@ -121,7 +129,7 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
 
   // Compute distance between pose and linesegment of linestring
   auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
-    const float max_range = 30;
+    const float max_range = 20;
 
     const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
     const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;

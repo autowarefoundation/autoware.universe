@@ -61,7 +61,7 @@ protected:
   cv::Mat makeCostMap(LineSegments & lsd);
 
   void drawOverlayLineSegments(
-    cv::Mat & image, const Pose & pose, const LineSegments & linesegments,
+    cv::Mat & image, const Eigen::Affine3f & pose_affine, const LineSegments & linesegments,
     const cv::Scalar & color);
 };
 }  // namespace validation
