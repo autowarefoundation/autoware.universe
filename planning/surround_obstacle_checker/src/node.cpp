@@ -65,7 +65,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
       "~/input/objects", 1,
       std::bind(&SurroundObstacleCheckerNode::dynamicObjectCallback, this, std::placeholders::_1));
-  current_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+  current_velocity_sub_ = this->create_stee_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1,
     std::bind(&SurroundObstacleCheckerNode::currentVelocityCallback, this, std::placeholders::_1));
 }

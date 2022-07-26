@@ -71,7 +71,7 @@ private:
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr
     pub_over_stop_velocity_;  //!< @brief publisher for over stop velocity warning
-  rclcpp::Subscription<Odometry>::SharedPtr
+  tilde::SteeSubscription<Odometry>::SharedPtr
     sub_current_odometry_;  //!< @brief subscriber for current velocity
   tilde::SteeSubscription<Trajectory>::SharedPtr
     sub_current_trajectory_;  //!< @brief subscriber for reference trajectory

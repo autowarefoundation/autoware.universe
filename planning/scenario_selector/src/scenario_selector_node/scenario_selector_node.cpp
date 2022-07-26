@@ -348,7 +348,7 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&ScenarioSelectorNode::onRoute, this, std::placeholders::_1));
-  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+  sub_odom_ = this->create_stee_subscription<nav_msgs::msg::Odometry>(
     "input/odometry", rclcpp::QoS{100},
     std::bind(&ScenarioSelectorNode::onOdom, this, std::placeholders::_1));
 

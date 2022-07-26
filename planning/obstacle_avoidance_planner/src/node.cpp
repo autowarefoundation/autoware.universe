@@ -79,7 +79,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   path_sub_ = create_stee_subscription<autoware_auto_planning_msgs::msg::Path>(
     "~/input/path", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::pathCallback, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+  odom_sub_ = create_stee_subscription<nav_msgs::msg::Odometry>(
     "/localization/kinematic_state", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::odomCallback, this, std::placeholders::_1));
   objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(

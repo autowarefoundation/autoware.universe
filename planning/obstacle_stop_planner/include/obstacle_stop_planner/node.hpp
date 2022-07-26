@@ -171,7 +171,7 @@ private:
   // publisher and subscriber
   tilde::SteeSubscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
   tilde::SteePublisher<Trajectory>::SharedPtr path_pub_;

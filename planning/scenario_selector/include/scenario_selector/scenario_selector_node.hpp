@@ -66,7 +66,7 @@ private:
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr sub_route_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   tilde::SteeSubscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_lane_driving_trajectory_;
   tilde::SteeSubscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr

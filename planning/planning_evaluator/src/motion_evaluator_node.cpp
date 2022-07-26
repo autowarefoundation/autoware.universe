@@ -28,7 +28,7 @@ MotionEvaluatorNode::MotionEvaluatorNode(const rclcpp::NodeOptions & node_option
   tf_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ptr_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_ptr_);
 
-  twist_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+  twist_sub_ = create_stee_subscription<nav_msgs::msg::Odometry>(
     "~/input/twist", rclcpp::QoS{1},
     std::bind(&MotionEvaluatorNode::onOdom, this, std::placeholders::_1));
 

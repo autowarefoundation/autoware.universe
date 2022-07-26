@@ -97,7 +97,7 @@ private:
   rclcpp::Subscription<HADMapRoute>::SharedPtr route_sub_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  tilde::SteeSubscription<Odometry>::SharedPtr odom_sub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 

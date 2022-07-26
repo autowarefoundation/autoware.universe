@@ -238,7 +238,7 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
       "~/input/occupancy_grid", 1, std::bind(&FreespacePlannerNode::onOccupancyGrid, this, _1));
     scenario_sub_ = create_subscription<Scenario>(
       "~/input/scenario", 1, std::bind(&FreespacePlannerNode::onScenario, this, _1));
-    odom_sub_ = create_subscription<Odometry>(
+    odom_sub_ = create_stee_subscription<Odometry>(
       "~/input/odometry", 100, std::bind(&FreespacePlannerNode::onOdometry, this, _1));
   }
 

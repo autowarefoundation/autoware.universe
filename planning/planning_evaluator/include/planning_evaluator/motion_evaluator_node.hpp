@@ -58,7 +58,7 @@ private:
   geometry_msgs::msg::Pose getCurrentEgoPose() const;
 
   // ROS
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr twist_sub_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr twist_sub_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_ptr_;
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;
 
