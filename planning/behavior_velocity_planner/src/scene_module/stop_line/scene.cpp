@@ -23,6 +23,7 @@ namespace behavior_velocity_planner
 {
 
 namespace bg = boost::geometry;
+using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
 using motion_utils::insertTargetPoint;
@@ -139,6 +140,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
       insertStopPoint(stop_pose.get().position, *path);
       planning_utils::appendStopReason(stop_factor, stop_reason);
 
+      debug_data_.stop_pose = stop_pose.get();
+
       if (
         signed_arc_dist_to_stop_point < planner_param_.stop_check_dist &&
         planner_data_->isVehicleStopped()) {
@@ -157,8 +160,16 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     }
 
     case State::STOPPED: {
-      insertStopPoint(ego_pos, *path);
+      const auto ego_pos_on_path = calcLongitudinalOffsetPoint(ego_path.points, ego_pos, 0.0);
+
+      if (!ego_pos_on_path) {
+        break;
+      }
+
+      insertStopPoint(ego_pos_on_path.get(), *path);
       planning_utils::appendStopReason(stop_factor, stop_reason);
+
+      debug_data_.stop_pose = stop_pose.get();
 
       const auto elapsed_time = (clock_->now() - *stopped_time_).seconds();
 
@@ -202,7 +213,5 @@ void StopLineModule::insertStopPoint(
   for (size_t i = insert_idx.get(); i < path.points.size(); ++i) {
     path.points.at(i).point.longitudinal_velocity_mps = 0.0;
   }
-
-  debug_data_.stop_pose = getPose(path.points.at(insert_idx.get()));
 }
 }  // namespace behavior_velocity_planner
