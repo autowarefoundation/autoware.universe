@@ -42,7 +42,6 @@ def generate_launch_description():
     add_launch_arg("launch_calibration_status_api", None, "launch calibration status api")
     add_launch_arg("launch_start_api", None, "launch start api")
 
-
     default_components = [
         _create_api_node("cpu_usage", "CpuUsage"),
         _create_api_node("diagnostics", "Diagnostics"),
@@ -81,4 +80,6 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration("launch_start_api")),
     )
 
-    return launch.LaunchDescription(launch_arguments + [container, calibration_status_loader, start_loader])
+    return launch.LaunchDescription(
+        launch_arguments + [container, calibration_status_loader, start_loader]
+    )
