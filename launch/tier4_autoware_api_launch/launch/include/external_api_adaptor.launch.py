@@ -14,8 +14,6 @@
 
 import launch
 from launch.actions import DeclareLaunchArgument
-from launch.actions import GroupAction
-from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
@@ -33,7 +31,18 @@ def _create_api_node(node_name, class_name, **kwargs):
     )
 
 
-def launch_setup(context, *args, **kwargs):
+def generate_launch_description():
+    launch_arguments = []
+
+    def add_launch_arg(name: str, default_value=None, description=None):
+        launch_arguments.append(
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
+        )
+
+    add_launch_arg("launch_calibration_status_api", None, "launch calibration status api")
+    add_launch_arg("launch_start_api", None, "launch start api")
+
+
     default_components = [
         _create_api_node("cpu_usage", "CpuUsage"),
         _create_api_node("diagnostics", "Diagnostics"),
@@ -72,26 +81,4 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(LaunchConfiguration("launch_start_api")),
     )
 
-    group = GroupAction(
-        [
-            container,
-            calibration_status_loader,
-            start_loader,
-        ]
-    )
-
-    return [group]
-
-
-def generate_launch_description():
-    launch_arguments = []
-
-    def add_launch_arg(name: str, default_value=None, description=None):
-        launch_arguments.append(
-            DeclareLaunchArgument(name, default_value=default_value, description=description)
-        )
-
-    add_launch_arg("launch_calibration_status_api", None, "launch calibration status api")
-    add_launch_arg("launch_start_api", None, "launch start api")
-
-    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
+    return launch.LaunchDescription(launch_arguments + [container, calibration_status_loader, start_loader])
