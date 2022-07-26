@@ -111,6 +111,54 @@ stop
 
 #### Candidate Path's Safety check
 
+```plantuml
+@startuml
+skinparam monochrome true
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title Safe and Force Lane Change
+start
+:**INPUT** std::vector<LaneChangePath> valid_paths;
+
+partition selectValidPaths {
+:**INITIALIZE** std::vector<LaneChangePath> valid_paths;
+
+:idx = 0;
+
+while (idx < input_paths.size()?) is (TRUE)
+
+:path = valid_paths.at(idx);
+
+
+if(path pass safety check?) then (TRUE)
+:selected_path = path, is_path_safe = true;
+else (NO)
+endif
+
+:++idx;
+endwhile (FALSE)
+
+if(valid_paths.empty()?)then (true)
+
+:selected_path = valid_paths.front(), is_path_safe = false;
+note left
+used for
+**FORCE LANE CHANGE**
+if FORCE is needed,
+then there is no safe path
+end note
+else (\nfalse)
+endif
+
+:**RETURN** selected_path && is_path_safe;
+
+}
+stop
+@enduml
+
+```
+
 ![Safety check](./image/lane_change/lane_change-collision_check.png)
 
 ## Parameters
