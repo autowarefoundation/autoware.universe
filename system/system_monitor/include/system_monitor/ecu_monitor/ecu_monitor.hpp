@@ -20,8 +20,9 @@
 #ifndef SYSTEM_MONITOR__ECU_MONITOR__ADLINK_ECU_MONITOR_HPP_
 #define SYSTEM_MONITOR__ECU_MONITOR__ADLINK_ECU_MONITOR_HPP_
 
-#include "system_monitor/ecu_monitor/ecu_monitor_base.hpp"
+#include <diagnostic_updater/diagnostic_updater.hpp>
 
+#include <climits>
 #include <string>
 
 class ECUMonitor : public rclcpp::Node
