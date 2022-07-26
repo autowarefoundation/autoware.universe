@@ -94,7 +94,7 @@ Sophus::SE3f refinePose(
   }
 
   ceres::Solver::Options options;
-  options.max_num_iterations = 10;
+  options.max_num_iterations = 30;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
   std::cout << summary.BriefReport() << '\n';

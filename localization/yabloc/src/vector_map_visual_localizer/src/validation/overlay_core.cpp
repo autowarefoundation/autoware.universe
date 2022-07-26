@@ -170,14 +170,14 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(
 
     const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
     const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
-    Eigen::Vector3f dir = to - from;
-    float inner = from.dot(dir);
-    if (std::abs(inner) < 1e-3f) {
+    Eigen::Vector3f tangent = to - from;
+    float inner = from.dot(tangent);
+    if (tangent.squaredNorm() < 1e-3f) {
       return from.norm() < 1.42 * max_range;
     }
 
-    float mu = std::clamp(dir.squaredNorm() / inner, 0.f, 1.0f);
-    Eigen::Vector3f nearest = from + dir * mu;
+    float mu = std::clamp(inner / tangent.squaredNorm(), 0.f, 1.0f);
+    Eigen::Vector3f nearest = from + tangent * mu;
     return nearest.norm() < 2 * 1.42 * max_range;
   };
 

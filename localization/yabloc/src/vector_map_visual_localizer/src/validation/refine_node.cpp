@@ -127,17 +127,15 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
   // Note that the linesegment may pass close to the pose even if both end points are far from pose.
   auto checkIntersection = [this, pose](const pcl::PointNormal & pn) -> bool {
     const Eigen::Vector3f from = pose.inverse() * pn.getVector3fMap();
-    const Eigen::Vector3f to = pose.inverse() * pn.getVector3fMap();
+    const Eigen::Vector3f to = pose.inverse() * pn.getNormalVector3fMap();
     const Eigen::Vector3f tangent = to - from;
 
-    float inner = from.dot(tangent);
+    if (tangent.squaredNorm() < 1e-3f) return false;
 
     // The closest point of the linesegment to pose
-    Eigen::Vector3f nearest = from;
-    if (std::abs(inner) > 1e-3f) {
-      float mu = std::clamp(tangent.squaredNorm() / inner, 0.f, 1.0f);
-      nearest = from + tangent * mu;
-    }
+    float inner = from.dot(tangent);
+    float mu = std::clamp(inner / tangent.squaredNorm(), 0.f, 1.0f);
+    Eigen::Vector3f nearest = from + tangent * mu;
 
     // The allowable distance along longitudinal direction is greater than one along
     // lateral direction. This is because line segments that are far apart along lateral
