@@ -38,23 +38,22 @@ lane_changing_distance = max(lane_change_prepare_velocity * lane_changing_durati
 
 The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
 
-#### If the lane is blocked and multiple lane changes
-
-When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance computation is as follows.
-
-```C++
-minimum_lane_change_distance = num_of_lane_changes * (minimum_lane_change_length + backward_length_buffer_for_end_of_lane)
-```
-
-The following figure illustrates when the lane is blocked in multiple lane changes cases.
-
-![multiple-lane-changes](./image/lane_change/lane_change-when_cannot_change_lanes.png)
-
 #### Multiple candidate path samples
 
 ![path_samples](./image/lane_change/lane_change-candidate_path_samples.png)
 
 #### Candidate Path's validity check
+
+A candidate path is valid if the total lane change distance is less than
+
+1. distance to the end of current lane
+2. distance to the next intersection
+3. distance from current pose to the goal.
+4. distance to the crosswalk.
+
+The goal must also be in the list of the preferred lane.
+
+The following flow chart illustrates the validity check.
 
 ```plantuml
 @startuml
@@ -77,13 +76,13 @@ while (idx < input_paths.size()?)
 
 partition hasEnoughDistance {
 
-if(lane_change_total_distance > distance to end of current lanes
+if(lane_change_total_distance < distance to end of current lanes
 &&
-lane_change_total_distance > distance to the next intersection
+lane_change_total_distance < distance to the next intersection
 &&
-lane_change_total_distance > distance from current pose to the goal
+lane_change_total_distance < distance from current pose to the goal
 &&
-lane_change_total_distance > distance to crosswalk
+lane_change_total_distance < distance to crosswalk
 &&
 goal is in route
 ) then (true)
@@ -110,6 +109,8 @@ stop
 ```
 
 #### Candidate Path's Safety check
+
+Valid candidate path is evaluated for safety before is was selected as the output candidate path. The flow of the process is as follows.
 
 ```plantuml
 @startuml
@@ -158,6 +159,18 @@ stop
 @enduml
 
 ```
+
+If all valid candidate path is unsafe, then the operator will have the option to perform force lane change by using the front-most candidate path as the output. The force lane change will ignore all safety checks.
+
+A candidate path's is safe if it satisfies the following lateral distance criteria,
+
+```C++
+lateral distance > `lateral_distance_threshold`
+```
+
+However, suppose the lateral distance is insufficient. In that case, longitudinal distance will be evaluated. The candidate path is safe only when the longitudinal gap between the ego vehicle and the dynamic object is wide enough.
+
+The following charts illustrate the flow of the safety checks
 
 ```plantuml
 @startuml
@@ -223,14 +236,6 @@ stop
 
 ```
 
-A path safe is safe if it satisfies the lateral distance criteria,
-
-```C++
-lateral distance > `lateral_distance_threshold`
-```
-
-However, suppose the lateral distance is insufficient. In that case, longitudinal distance will be evaluated. The candidate path is safe only when the longitudinal gap between the ego vehicle and the dynamic object is wide enough.
-
 ##### Calculating and evaluating longitudinal distance
 
 A sufficient longitudinal gap between vehicles will prevent any rear-end collision from happening. This includes an emergency stop or sudden braking scenarios.
@@ -247,7 +252,7 @@ The following figure illustrates how the safety check is performed on ego vs. dy
 ![Safety check](./image/lane_change/lane_change-collision_check.png)
 
 Let `v_front` and `a_front` be the front vehicle's velocity and deceleration, respectively, and `v_rear` and `a_rear` be the rear vehicle's velocity and deceleration, respectively.
-Front vehicle and rear vehicle assignment will depend on ego, and dynamic object predicted path's pose currently being evaluated.
+Front vehicle and rear vehicle assignment will depend on which predicted path's pose is currently being evaluated.
 
 Assuming the front vehicle brakes, then `d_front` is the distance the front vehicle will travel until it comes to a complete stop. The distance is computed from the equation of motion, which yield.
 
@@ -260,10 +265,22 @@ Using the same formula to evaluate the rear vehicle's stopping distance `d_rear`
 The reaction time is considered from the duration starting from the driver seeing the front vehicle brake light until the brake is pressed. As the brake is pressed, the time margin (which might be caused by mechanical or control delay) also needs to be considered. With these two parameters included, the formula for `d_rear` will be as follows.
 
 ```C++
-d_rear = v_rear * rear_vehicle_reaction_time + v_rear * rear_Vehicle_safety_time_margin + (-std::pow(v_front,2) / 2 * a_rear)
+d_rear = v_rear * rear_vehicle_reaction_time + v_rear * rear_vehicle_safety_time_margin + (-std::pow(v_front,2) / 2 * a_rear)
 ```
 
-Both `a_front` and `a_rear` are parameterized to estimate how much deceleration will occur when the brake is pressed.
+Since there is no absolute value for the deceleration`a_front` and `a_rear`, both of the values are parameterized (`expected_front_deceleration` and `expected_rear_deceleration`, respectively) with the estimation of how much deceleration will occur if the brake is pressed.
+
+#### If the lane is blocked and multiple lane changes
+
+When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance computation is as follows.
+
+```C++
+minimum_lane_change_distance = num_of_lane_changes * (minimum_lane_change_length + backward_length_buffer_for_end_of_lane)
+```
+
+The following figure illustrates when the lane is blocked in multiple lane changes cases.
+
+![multiple-lane-changes](./image/lane_change/lane_change-when_cannot_change_lanes.png)
 
 ## Parameters
 
