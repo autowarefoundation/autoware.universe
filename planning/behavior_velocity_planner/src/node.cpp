@@ -74,7 +74,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   using std::placeholders::_1;
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
-    this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+    this->create_stee_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
       "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   // Subscribers

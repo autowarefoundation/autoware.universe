@@ -65,7 +65,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/route", 1, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1));
 
   // publisher
-  path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
+  path_publisher_ = create_stee_publisher<PathWithLaneId>("~/output/path", 1);
   path_candidate_publisher_ = create_publisher<Path>("~/output/path_candidate", 1);
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);

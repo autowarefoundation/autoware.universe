@@ -84,7 +84,7 @@ private:
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<ApprovalMsg>::SharedPtr external_approval_subscriber_;
   rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_subscriber_;
-  rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
+  tilde::SteePublisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr force_available_publisher_;
   rclcpp::Publisher<PathChangeModule>::SharedPtr plan_ready_publisher_;

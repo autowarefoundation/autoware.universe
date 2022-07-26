@@ -52,7 +52,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   // subscriber
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_planning_msgs::msg::PathWithLaneId>::SharedPtr
     trigger_sub_path_with_lane_id_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     sub_predicted_objects_;
