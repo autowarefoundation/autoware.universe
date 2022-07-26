@@ -1474,15 +1474,27 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   ns_utils::unWrap(yaw_smooth_vect);
 
   // Create the rest of the smooth vectors; handled in MPCtraj class.
-  mpc_traj_smoothed.setTrajectoryCoordinate('s', s_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('t', t_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('a', acc_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('x', x_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('y', y_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('z', z_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('v', v_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('w', yaw_smooth_vect);
-  mpc_traj_smoothed.setTrajectoryCoordinate('c', curvature_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('s', s_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('t', t_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('a', acc_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('x', x_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('y', y_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('z', z_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('v', v_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('w', yaw_smooth_vect);
+//  mpc_traj_smoothed.setTrajectoryCoordinate('c', curvature_smooth_vect);
+
+  using ::ns_data::trajVectorVariant;
+
+  mpc_traj_smoothed.setTrajectoryVector(s_smooth_vect, trajVectorVariant{ns_data::s_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(t_smooth_vect, trajVectorVariant{ns_data::t_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(acc_smooth_vect, trajVectorVariant{ns_data::a_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(x_smooth_vect, trajVectorVariant{ns_data::x_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(y_smooth_vect, trajVectorVariant{ns_data::y_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(z_smooth_vect, trajVectorVariant{ns_data::z_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(v_smooth_vect, trajVectorVariant{ns_data::vx_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(yaw_smooth_vect, trajVectorVariant{ns_data::yaw_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(curvature_smooth_vect, trajVectorVariant{ns_data::curv_tag()});
 
   // Compute relative time and acceleration from the given data.
   if (current_fsm_state_ == ns_states::motionStateEnums::willbeStopping)
@@ -1515,11 +1527,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
                  "interpolator_spline_pws  data ...");
     return false;
   }
-
   // DEBUG
-
   // end of DEBUG
-
   return true;
 }
 

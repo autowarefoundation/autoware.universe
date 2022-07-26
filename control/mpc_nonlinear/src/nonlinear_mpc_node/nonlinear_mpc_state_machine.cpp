@@ -110,11 +110,12 @@ State VehicleMotionFSM::onEvent(state::willbeStopping) const
 {
   auto const &dist_to_stop_point = state_transition_vars_[0];
   auto const &ego_speed = std::fabs(state_transition_vars_[1]);
-  auto const &next_point_speed_ref = std::fabs(state_transition_vars_[2]);
 
-  if (dist_to_stop_point < will_stop_dist_ &&
-      ego_speed < stop_state_entry_ego_speed_ &&
-      next_point_speed_ref < stop_state_entry_target_speed_)
+  if (auto const &next_point_speed_ref = std::fabs(state_transition_vars_[2]); dist_to_stop_point < will_stop_dist_ &&
+                                                                               ego_speed < stop_state_entry_ego_speed_
+                                                                               &&
+                                                                               next_point_speed_ref
+                                                                               < stop_state_entry_target_speed_)
   {
     return state::isatCompleteStop{};
   }
