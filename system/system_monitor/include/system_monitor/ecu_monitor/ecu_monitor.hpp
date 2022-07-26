@@ -24,7 +24,7 @@
 
 #include <string>
 
-class ECUMonitor : public ECUMonitorBase
+class ECUMonitor : public rclcpp::Node
 {
 public:
   /**
@@ -33,18 +33,40 @@ public:
    */
   explicit ECUMonitor(const rclcpp::NodeOptions & options);
 
-protected:
   /**
-   * @brief check ECU thermal throttling
+   * @brief Update the diagnostic state.
+   */
+  void update();
+
+protected:
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
+
+  diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
+
+  char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
+
+  /**
+   * @brief check ECU CMOS Battey
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
   void checkVoltage(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+  /**
+   * @brief check ECU CMOS Battey
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
+   * to pass diagnostic message updated in this function to diagnostic publish calls.
+   */
+  void checkBatteryStatus(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+
+
   bool sensors_exists_;                      //!< @brief flag if sensors exists
   float voltage_warn_;
   float voltage_error_;
+  std::string voltage_string_;
 };
 
 #endif  // SYSTEM_MONITOR__ECU_MONITOR__ADLINK_ECU_MONITOR_HPP_

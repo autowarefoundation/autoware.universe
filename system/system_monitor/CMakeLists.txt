@@ -62,11 +62,6 @@ else()
   endif()
 endif()
 
-if(CMAKE_ECU_PLATFORM STREQUAL "adlink")
-  set(CMAKE_ECU_PLATFORM "adlink")
-else()
-  set(CMAKE_ECU_PLATFORM "unknown")
-endif()
 
 message(STATUS "HOST_SYSTEM_VERSION: " ${CMAKE_HOST_SYSTEM_VERSION})
 message(STATUS "SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
@@ -75,8 +70,7 @@ message(STATUS "GPU PLATFORM: " ${CMAKE_GPU_PLATFORM})
 message(STATUS "ECU PLATFORM: " ${CMAKE_ECU_PLATFORM})
 
 set(ECU_MONITOR_SOURCE
-  src/ecu_monitor/ecu_monitor_base.cpp
-  src/ecu_monitor/${CMAKE_ECU_PLATFORM}_ecu_monitor.cpp
+  src/ecu_monitor/ecu_monitor.cpp
 )
 
 ament_auto_add_library(ecu_monitor_lib SHARED

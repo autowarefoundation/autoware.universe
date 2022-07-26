@@ -17,7 +17,7 @@
  * @brief  CPU monitor class
  */
 
-#include "system_monitor/ecu_monitor/adlink_ecu_monitor.hpp"
+#include "system_monitor/ecu_monitor/ecu_monitor.hpp"
 
 #include "system_monitor/system_monitor_utility.hpp"
 
@@ -40,19 +40,37 @@
 
 namespace bp = boost::process;
 
-ECUMonitor::ECUMonitor(const rclcpp::NodeOptions & options) : ECUMonitorBase("ecu_monitor", options)
+ECUMonitor::ECUMonitor(const rclcpp::NodeOptions & options) 
+: Node("ecu_monitor", options),
+  updater_(this),
+  hostname_()
 {
-  voltage_warn_ = declare_parameter<float>("low cmos battery warn", 2.9);
-  voltage_error_ = declare_parameter<float>("low cmos battery error", 2.7);
-
-  updater_.add("ECU CMOS Battery Voltage", this, &ECUMonitor::checkVoltage);
   gethostname(hostname_, sizeof(hostname_));
-  // Check if command exists
-  fs::path p = bp::search_path("sensors");
-  sensors_exists_ = (p.empty()) ? false : true;
+
+  updater_.setHardwareID(hostname_);
+  // Publisher
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
+
+  voltage_string_ = declare_parameter<std::string>("cmos_battery_voltage", "");
+  voltage_warn_ = declare_parameter<float>("cmos_battery_warn", 2.95);
+  voltage_error_ = declare_parameter<float>("cmos_battery_error", 2.75);
+  if( voltage_string_ == "" ) {
+    sensors_exists_ = false;
+  } else {
+    // Check if command exists
+    fs::path p = bp::search_path("sensors");
+    sensors_exists_ = (p.empty()) ? false : true;
+  }
+  gethostname(hostname_, sizeof(hostname_));
+  auto callback = &ECUMonitor::checkBatteryStatus;
+  if( sensors_exists_ ) {
+    callback = &ECUMonitor::checkVoltage;
+  }
+  updater_.add("ECU CMOS Battery Status", this, callback);
 }
 
-static float getVoltage() {
+static float getVoltage(std::string voltage_string) {
     bp::ipstream is_out;
     bp::ipstream is_err;
     fs::path p = bp::search_path("sensors");
@@ -64,8 +82,9 @@ static float getVoltage() {
     }
     std::string line;
     std::regex re(R"((\d+).(\d+))"); //in7:             3.06 V  (min =  +0.00 V, max =  +4.08 V)
+    //auto voltage_string = voltage_string_.c_str();
     for(int i = 0; i < 200 && std::getline(is_out, line); i++) {
-        auto voltageStringPos = line.find("in7:");
+        auto voltageStringPos = line.find(voltage_string.c_str());
         if( voltageStringPos != std::string::npos) {
             std::smatch match;
             std::regex_search(line, match, re);
@@ -88,7 +107,7 @@ void ECUMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat
     return;
   }
 
-  auto v = getVoltage();
+  auto v = getVoltage(voltage_string_);
 
   stat.add("CMOS battey voltage", fmt::format("{}",v));
   if( RCUTILS_UNLIKELY(v < voltage_warn_) ) {
@@ -100,6 +119,51 @@ void ECUMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
+
+void ECUMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  // Get CPU Usage
+  bp::ipstream is_out;
+  bp::ipstream is_err;
+  bp::child c("cat /proc/driver/rtc", bp::std_out > is_out, bp::std_err > is_err);
+  c.wait();
+
+  if (c.exit_code() != 0) {
+    std::ostringstream os;
+    is_err >> os.rdbuf();
+    stat.summary(DiagStatus::ERROR, "rtc error");
+    stat.add("rtc", os.str().c_str());
+    return;
+  }
+
+  std::string line;
+  bool status = false;
+  for(int i = 0; i < 200 && std::getline(is_out, line); i++) {
+    auto batStatusLine = line.find("batt_status");
+    if( batStatusLine != std::string::npos) {
+      auto batStatus = line.find("okay");
+      if( batStatus != std::string::npos) {
+        status = true;
+        break;
+      }
+    }
+  }
+
+  stat.add("CMOS battey status", std::string(status ? "OK" : "LOW BATTERY"));
+  if( RCUTILS_LIKELY(status) ) {
+    stat.summary(DiagStatus::OK, "OK");
+  } else {
+    stat.summary(DiagStatus::WARN, "LOW BATTERY");
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
+}
+
+void ECUMonitor::update() { updater_.force_update(); }
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(ECUMonitor)
