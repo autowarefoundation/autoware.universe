@@ -476,7 +476,7 @@ def launch_setup(context, *args, **kwargs):
                 output_topic=relay_topic
                 if pipeline.use_time_series_filter
                 else pipeline.output_topic,
-                context,
+                context=context,
             )
         )
     if pipeline.use_time_series_filter:
