@@ -1372,7 +1372,7 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
                                                              map_matrix_in_t const &fixed_map_ref_sxyz)
 {
-
+  using ::ns_data::trajVectorVariant;
 
   // Maps the raw trajectory into the MPC trajectory.
   size_t const &map_out_mpc_size = ns_splines::MPC_MAP_SMOOTHER_OUT;  // to the NMPC
@@ -1404,71 +1404,75 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   auto const &&curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
 
   // Create smooth MPCtraj given, s, x, y, v and curvature.
-  std::vector<double> s_smooth_vect(interpolated_map.col(0).data(),
-                                    interpolated_map.col(0).data() + map_out_mpc_size);
+  //  std::vector<double> s_smooth_vect(interpolated_map.col(0).data(),
+  //                                    interpolated_map.col(0).data() + map_out_mpc_size);
+  //
+  //  std::vector<double> x_smooth_vect(interpolated_map.col(1).data(),
+  //                                    interpolated_map.col(1).data() + map_out_mpc_size);
+  //
+  //  std::vector<double> y_smooth_vect(interpolated_map.col(2).data(),
+  //                                    interpolated_map.col(2).data() + map_out_mpc_size);
+  //
+  //  std::vector<double> z_smooth_vect(interpolated_map.col(3).data(),
+  //                                    interpolated_map.col(3).data() + map_out_mpc_size);
 
-  std::vector<double> x_smooth_vect(interpolated_map.col(1).data(),
-                                    interpolated_map.col(1).data() + map_out_mpc_size);
+  // std::vector<double> curvature_smooth_vect(curvature.col(0).data(), curvature.col(0).data() + map_out_mpc_size);
 
-  std::vector<double> y_smooth_vect(interpolated_map.col(2).data(),
-                                    interpolated_map.col(2).data() + map_out_mpc_size);
+  std::vector<double> s_smooth_vect(map_out_mpc_size);
+  std::vector<double> x_smooth_vect(map_out_mpc_size);
+  std::vector<double> y_smooth_vect(map_out_mpc_size);
+  std::vector<double> z_smooth_vect(map_out_mpc_size);
+  std::vector<double> v_smooth_vect(map_out_mpc_size);
+  std::vector<double> curvature_smooth_vect(map_out_mpc_size);
 
-  std::vector<double> z_smooth_vect(interpolated_map.col(3).data(),
-                                    interpolated_map.col(3).data() + map_out_mpc_size);
-
-  std::vector<double> v_smooth_vect;
-  v_smooth_vect.reserve(map_out_mpc_size);
-
-  // Prepare a linear interpolator.
-  ns_splines::InterpolatingSplinePCG interpolator_linear(1);
-
-  // Call signature (monotonic s or t, x(s, or t), new s or t series, interpolated x_hat)
-  interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect, v_smooth_vect);
-
-  // Smooth yaw.
-  std::vector<double> yaw_smooth_vect;  // We do not use yaw as a reference.
-  yaw_smooth_vect.reserve(map_out_mpc_size);
-
-  for (Eigen::Index k = 0; k < rdot_interp.rows(); ++k)
-  {
-    yaw_smooth_vect.emplace_back(std::atan2(rdot_interp(k, 1), rdot_interp(k, 0)));
-  }
-
-  // ns_utils::computeYawFromXY(x_smooth_vect, y_smooth_vect, yaw_smooth_vect);
-  // ns_utils::interp1d_map_linear(
-  // mpc_traj_raw.s, mpc_traj_raw.yaw, s_smooth_vect, yaw_smooth_vect, true);
-
-  std::vector<double> curvature_smooth_vect(curvature.col(0).data(), curvature.col(0).data() + map_out_mpc_size);
-
-  // Compute time and acceleration reference.
   // These are not smoothed, but they belong to the smooth MPCtraj.
+
   std::vector<double> t_smooth_vect(map_out_mpc_size);
   std::vector<double> acc_smooth_vect(map_out_mpc_size);
 
+  // Smooth yaw.
+  std::vector<double> yaw_smooth_vect(map_out_mpc_size);  // We do not use yaw as a reference.
+
+  // Compute time and acceleration reference.
   // Insert the first elements.
-  t_smooth_vect.at(0) = 0.0;
+  t_smooth_vect.at(0) = 0.;
 
-  // copy x,y, psi, vx of raw trajectory into their corresponding vectors.
-  for (size_t k = 1; k < s_smooth_vect.size(); ++k)
+  for (Eigen::Index k = 0; k < rdot_interp.rows(); ++k)
   {
-    double const &&ds = s_smooth_vect.at(k) - s_smooth_vect.at(k - 1);
+    s_smooth_vect.at(k) = interpolated_map.col(0)(k);
+    x_smooth_vect.at(k) = interpolated_map.col(1)(k);
+    y_smooth_vect.at(k) = interpolated_map.col(2)(k);
+    z_smooth_vect.at(k) = interpolated_map.col(3)(k);
 
-    // used for trapezoidal integration rule.
-    double const &&mean_v = (v_smooth_vect.at(k) + v_smooth_vect.at(k - 1)) / 2;
-    double const &dv = v_smooth_vect.at(k) - v_smooth_vect.at(k - 1);  // dv = v[k]-v[k-1],
+    // interpolate the longitudinal speed.
+    double vx_temp{};
+    ns_utils::interp1d_linear(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect.at(k), vx_temp);
 
-    double const &dt = ds / std::max(mean_v, 0.1);  // to prevent zero division.
+    v_smooth_vect.at(k) = vx_temp;
 
-    // this acceleration is implied by x,y,z and vx in the planner.
-    double const &&acc_computed = dv / (EPS + dt);
+    curvature_smooth_vect.at(k) = curvature.col(0)(k);
+    yaw_smooth_vect.at(k) = std::atan2(rdot_interp(k, 1), rdot_interp(k, 0));
 
     // Insert  t and acc,
-    t_smooth_vect.at(k) = t_smooth_vect.at(k - 1) + dt;
-    acc_smooth_vect.at(k) = acc_computed;
+    if (k > 0)
+    {
+      // until k-1
+      double const &&ds = s_smooth_vect.at(k) - s_smooth_vect.at(k - 1);
+
+      // used for trapezoidal integration rule.
+      double const &&mean_v = (v_smooth_vect.at(k) + v_smooth_vect.at(k - 1)) / 2;
+      double const &dv = v_smooth_vect.at(k) - v_smooth_vect.at(k - 1);  // dv = v[k]-v[k-1],
+      double const &dt = ds / std::max(mean_v, 0.1);  // to prevent zero division.
+
+      // this acceleration is implied by x,y,z and vx in the planner.
+      double const &&acc_computed = dv / (EPS + dt);
+      t_smooth_vect.at(k) = t_smooth_vect.at(k - 1) + dt;
+      acc_smooth_vect.at(k - 1) = acc_computed;
+    }
   }
 
   // Repeat the last acceleration.
-  acc_smooth_vect.rend()[-1] = acc_smooth_vect.rend()[-2];  // emplace_back(acc_smooth_vect.back());
+  acc_smooth_vect.rbegin()[0] = acc_smooth_vect.rbegin()[1];
 
   // Convert smooth yaw to a monotonic series
   ns_utils::unWrap(yaw_smooth_vect);
@@ -1483,8 +1487,6 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 //  mpc_traj_smoothed.setTrajectoryCoordinate('v', v_smooth_vect);
 //  mpc_traj_smoothed.setTrajectoryCoordinate('w', yaw_smooth_vect);
 //  mpc_traj_smoothed.setTrajectoryCoordinate('c', curvature_smooth_vect);
-
-  using ::ns_data::trajVectorVariant;
 
   mpc_traj_smoothed.setTrajectoryVector(s_smooth_vect, trajVectorVariant{ns_data::s_tag()});
   mpc_traj_smoothed.setTrajectoryVector(t_smooth_vect, trajVectorVariant{ns_data::t_tag()});
