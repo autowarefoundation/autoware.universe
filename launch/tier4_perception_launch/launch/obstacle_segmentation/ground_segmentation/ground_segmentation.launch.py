@@ -308,7 +308,7 @@ class GroundSegmentationPipeline:
         return components
 
     @staticmethod
-    def create_single_frame_outlier_filter_components(input_topic, output_topic):
+    def create_single_frame_outlier_filter_components(input_topic, output_topic, context):
         components = []
         components.append(
             ComposableNode(
@@ -476,6 +476,7 @@ def launch_setup(context, *args, **kwargs):
                 output_topic=relay_topic
                 if pipeline.use_time_series_filter
                 else pipeline.output_topic,
+                context,
             )
         )
     if pipeline.use_time_series_filter:
