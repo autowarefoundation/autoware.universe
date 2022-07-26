@@ -400,7 +400,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<double>("mpt.common.delta_arc_length_for_mpt_points");
 
     // kinematics
-    mpt_param_.max_steer_rad = vehicle_info.max_steer_angle_rad * 180.0 / M_PI;
+    mpt_param_.max_steer_rad = vehicle_info.max_steer_angle_rad;
 
     // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
     // The 0.8 scale is adopted as it performed the best.
