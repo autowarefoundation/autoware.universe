@@ -583,9 +583,10 @@ Map<const VectorXd> OsqpSolver::primal_infeasibility_certificate() const
 {
   OSQP_CHECK(IsInitialized());
   const OsqpExitCode exit_code = StatusToExitCode(workspace_->info->status_val);
-  OSQP_CHECK(
-    exit_code == OsqpExitCode::kPrimalInfeasible ||
-    exit_code == OsqpExitCode::kPrimalInfeasibleInaccurate);
+
+  OSQP_CHECK(exit_code == OsqpExitCode::kPrimalInfeasible ||
+             exit_code == OsqpExitCode::kPrimalInfeasibleInaccurate);
+
   return {workspace_->delta_y, workspace_->data->m};
 }
 
