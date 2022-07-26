@@ -26,6 +26,8 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
+#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
+#include <variant>
 
 namespace ns_data
 {
@@ -34,6 +36,21 @@ enum class controlSampling_order : size_t
   ZOH = 0,  // zero order hold.
   FOH = 1   // first order hold.
 };
+
+using ns_states::overload;
+struct s_tag {};
+struct t_tag {};
+struct a_tag {};
+struct x_tag {};
+struct y_tag {};
+struct z_tag {};
+struct yaw_tag {};
+struct vx_tag {};
+struct curv_tag {};
+
+using trajVectorVariant = std::variant<s_tag, t_tag, a_tag,
+                                       x_tag, y_tag, z_tag, yaw_tag,
+                                       vx_tag, curv_tag>;
 
 /**
  * @brief stores raw and smoothed trajectories in the std::vectors received from Autoware planning modules.
@@ -56,6 +73,7 @@ class MPCdataTrajectoryVectors
   std::vector<double> vx;         //!< @brief vx velocity vx vector [m/s]
   std::vector<double> curvature;  //!< @brief path curvature [1/m]
 
+
   /**
    * @brief push_back for all values.
    * @param msg trajectory message.
@@ -67,6 +85,40 @@ class MPCdataTrajectoryVectors
    * @param coord_letter data variable name; s, x, y, z ...
    * */
   void setTrajectoryCoordinate(char const &coord_letter, std::vector<double> const &data);
+
+  void setTrajectoryVector(std::vector<double> &vect, trajVectorVariant const &vartag)
+  {
+
+    std::visit(overload{
+      [this, &vect](s_tag const &)
+      { this->s = std::move(vect); },
+
+      [this, &vect](t_tag const &)
+      { this->t = std::move(vect); },
+
+      [this, &vect](a_tag const &)
+      { this->ax = std::move(vect); },
+
+      [this, &vect](x_tag const &)
+      { this->x = std::move(vect); },
+
+      [this, &vect](y_tag const &)
+      { this->y = std::move(vect); },
+
+      [this, &vect](z_tag const &)
+      { this->z = std::move(vect); },
+
+      [this, &vect](yaw_tag const &)
+      { this->yaw = std::move(vect); },
+
+      [this, &vect](vx_tag const &)
+      { this->vx = std::move(vect); },
+
+      [this, &vect](curv_tag const &)
+      { this->curvature = std::move(vect); }
+
+    }, vartag);
+  }
 
   /**
    * @brief adds an additional point to the std:vectors to extend the coordinates at the end.
