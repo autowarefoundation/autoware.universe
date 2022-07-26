@@ -31,10 +31,10 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
 {
   using std::placeholders::_1;
 
-  traj_sub_ = create_subscription<Trajectory>(
+  traj_sub_ = create_stee_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&PlanningEvaluatorNode::onTrajectory, this, _1));
 
-  ref_sub_ = create_subscription<Trajectory>(
+  ref_sub_ = create_stee_subscription<Trajectory>(
     "~/input/reference_trajectory", 1,
     std::bind(&PlanningEvaluatorNode::onReferenceTrajectory, this, _1));
 

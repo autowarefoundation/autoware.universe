@@ -65,7 +65,7 @@ private:
     const Trajectory & traj, const size_t curr_id, const double distance);
 
   // ROS
-  rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
   Updater updater_{this};
 

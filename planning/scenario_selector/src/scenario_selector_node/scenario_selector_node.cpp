@@ -334,11 +334,11 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
 
   // Input
   sub_lane_driving_trajectory_ =
-    this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+    this->create_stee_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
       "input/lane_driving/trajectory", rclcpp::QoS{1},
       std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
 
-  sub_parking_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+  sub_parking_trajectory_ = this->create_stee_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/parking/trajectory", rclcpp::QoS{1},
     std::bind(&ScenarioSelectorNode::onParkingTrajectory, this, std::placeholders::_1));
 
@@ -355,7 +355,7 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   // Output
   pub_scenario_ =
     this->create_publisher<tier4_planning_msgs::msg::Scenario>("output/scenario", rclcpp::QoS{1});
-  pub_trajectory_ = this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+  pub_trajectory_ = this->create_stee_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "output/trajectory", rclcpp::QoS{1});
 
   // Timer Callback

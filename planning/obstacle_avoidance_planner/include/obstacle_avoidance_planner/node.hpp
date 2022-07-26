@@ -110,9 +110,9 @@ private:
   std::unique_ptr<rclcpp::Time> prev_replanned_time_ptr_;
 
   // ROS
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr avoiding_traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+  tilde::SteePublisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
+  tilde::SteePublisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr avoiding_traj_pub_;
+  tilde::SteePublisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     debug_smoothed_points_pub_;
   rclcpp::Publisher<tier4_planning_msgs::msg::IsAvoidancePossible>::SharedPtr
     is_avoidance_possible_pub_;

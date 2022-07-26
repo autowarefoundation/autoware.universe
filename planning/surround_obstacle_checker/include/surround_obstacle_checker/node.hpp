@@ -96,12 +96,12 @@ private:
    * ROS
    */
   // publisher and subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     dynamic_object_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
+  tilde::SteePublisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
   tf2_ros::Buffer tf_buffer_;

@@ -246,7 +246,7 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
   {
     rclcpp::QoS qos{1};
     qos.transient_local();  // latch
-    trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", qos);
+    trajectory_pub_ = create_stee_publisher<Trajectory>("~/output/trajectory", qos);
     debug_pose_array_pub_ = create_publisher<PoseArray>("~/debug/pose_array", qos);
     debug_partial_pose_array_pub_ = create_publisher<PoseArray>("~/debug/partial_pose_array", qos);
   }

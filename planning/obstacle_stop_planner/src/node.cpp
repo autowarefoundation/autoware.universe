@@ -492,7 +492,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   last_detection_time_ = this->now();
 
   // Publishers
-  path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
+  path_pub_ = this->create_stee_publisher<Trajectory>("~/output/trajectory", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
   pub_clear_velocity_limit_ =
@@ -503,7 +503,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1));
-  path_sub_ = this->create_subscription<Trajectory>(
+  path_sub_ = this->create_stee_subscription<Trajectory>(
     "~/input/trajectory", 1,
     std::bind(&ObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1));
   current_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(

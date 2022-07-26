@@ -34,7 +34,7 @@ PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & n
 
   debug_marker_.initialize(this);
 
-  traj_sub_ = create_subscription<Trajectory>(
+  traj_sub_ = create_stee_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&PlanningErrorMonitorNode::onCurrentTrajectory, this, _1));
 
   updater_.setHardwareID("planning_error_monitor");

@@ -36,13 +36,13 @@ class PubSubManager : public tilde::SteeNode
 public:
   PubSubManager() : SteeNode("test_pub_sub")
   {
-    traj_pub_ = create_publisher<Trajectory>("/planning_error_monitor/input/trajectory", 1);
+    traj_pub_ = create_stee_publisher<Trajectory>("/planning_error_monitor/input/trajectory", 1);
     diag_sub_ = create_subscription<DiagnosticArray>(
       "/diagnostics", 1,
       [this](const DiagnosticArray::ConstSharedPtr msg) { received_diags_.push_back(msg); });
   }
 
-  rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
+  tilde::SteePublisher<Trajectory>::SharedPtr traj_pub_;
   rclcpp::Subscription<DiagnosticArray>::SharedPtr diag_sub_;
 
   std::vector<DiagnosticArray::ConstSharedPtr> received_diags_;

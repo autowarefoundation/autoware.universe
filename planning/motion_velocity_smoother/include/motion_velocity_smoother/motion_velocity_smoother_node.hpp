@@ -67,13 +67,13 @@ public:
   explicit MotionVelocitySmootherNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Publisher<Trajectory>::SharedPtr
+  tilde::SteePublisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr
     pub_over_stop_velocity_;  //!< @brief publisher for over stop velocity warning
   rclcpp::Subscription<Odometry>::SharedPtr
     sub_current_odometry_;  //!< @brief subscriber for current velocity
-  rclcpp::Subscription<Trajectory>::SharedPtr
+  tilde::SteeSubscription<Trajectory>::SharedPtr
     sub_current_trajectory_;  //!< @brief subscriber for reference trajectory
   rclcpp::Subscription<VelocityLimit>::SharedPtr
     sub_external_velocity_limit_;  //!< @brief subscriber for external velocity limit
@@ -212,11 +212,11 @@ private:
   std::shared_ptr<rclcpp::Time> prev_time_;
   double prev_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_dist_to_stopline_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_raw_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_trajectory_raw_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_vel_lim_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_latacc_filtered_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_resampled_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_trajectory_vel_lim_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_trajectory_latacc_filtered_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_trajectory_resampled_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;
@@ -224,9 +224,9 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_max_velocity_;
 
   // For Jerk Filtered Algorithm Debug
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_forward_filtered_trajectory_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_backward_filtered_trajectory_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_merged_filtered_trajectory_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_forward_filtered_trajectory_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_backward_filtered_trajectory_;
+  tilde::SteePublisher<Trajectory>::SharedPtr pub_merged_filtered_trajectory_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_closest_merged_velocity_;
 };
 }  // namespace motion_velocity_smoother

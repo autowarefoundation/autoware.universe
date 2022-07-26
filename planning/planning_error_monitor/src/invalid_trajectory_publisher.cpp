@@ -27,11 +27,11 @@ InvalidTrajectoryPublisherNode::InvalidTrajectoryPublisherNode(
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;
 
-  traj_sub_ = create_subscription<Trajectory>(
+  traj_sub_ = create_stee_subscription<Trajectory>(
     "~/input/trajectory", 1,
     std::bind(&InvalidTrajectoryPublisherNode::onCurrentTrajectory, this, _1));
 
-  traj_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
+  traj_pub_ = create_stee_publisher<Trajectory>("~/output/trajectory", 1);
 
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&InvalidTrajectoryPublisherNode::onTimer, this));

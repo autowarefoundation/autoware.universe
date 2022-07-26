@@ -169,12 +169,12 @@ private:
    * ROS
    */
   // publisher and subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
+  tilde::SteePublisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;

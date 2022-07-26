@@ -85,8 +85,8 @@ private:
   static bool isFinite(const TrajectoryPoint & p);
 
   // ROS
-  rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  rclcpp::Subscription<Trajectory>::SharedPtr ref_sub_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr traj_sub_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr ref_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};

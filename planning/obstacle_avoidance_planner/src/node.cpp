@@ -59,11 +59,11 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   durable_qos.transient_local();
 
   trajectory_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/path", 1);
-  avoiding_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+    create_stee_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/path", 1);
+  avoiding_traj_pub_ = create_stee_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_candidate_trajectory",
     durable_qos);
-  debug_smoothed_points_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+  debug_smoothed_points_pub_ = create_stee_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/debug/smoothed_points", durable_qos);
   is_avoidance_possible_pub_ = create_publisher<tier4_planning_msgs::msg::IsAvoidancePossible>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_ready", durable_qos);
