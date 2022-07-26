@@ -175,8 +175,8 @@ bool IntersectionModule::modifyPathVelocity(
     planner_param_.stuck_vehicle_detect_dist);
   bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_area_lanelet_ids, conflicting_area_lanelet_ids, objects_ptr,
-    closest_idx, stuck_vehicle_detect_area);
+    lanelet_map_ptr, *path, detection_area_lanelet_ids, objects_ptr, closest_idx,
+    stuck_vehicle_detect_area);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
     is_entry_prohibited = false;
@@ -255,7 +255,6 @@ bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<int> & detection_area_lanelet_ids,
-  const std::vector<int> & conflicting_area_lanelet_ids,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
 {
@@ -292,8 +291,7 @@ bool IntersectionModule::checkCollision(
       if (
         planner_param_.enable_front_car_decel_prediction &&
         checkFrontVehicleDeceleration(
-          ego_lane_with_next_lane, closest_lanelet, conflicting_area_lanelet_ids,
-          stuck_vehicle_detect_area, object))
+          ego_lane_with_next_lane, closest_lanelet, stuck_vehicle_detect_area, object))
         return true;
     }
 
@@ -688,7 +686,6 @@ double IntersectionModule::calcDistanceUntilIntersectionLanelet(
 
 bool IntersectionModule::checkFrontVehicleDeceleration(
   lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-  const std::vector<int> & conflicting_area_lanelet_ids,
   const Polygon2d & stuck_vehicle_detect_area,
   const autoware_auto_perception_msgs::msg::PredictedObject & object) const
 {
@@ -736,10 +733,10 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
                          : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
   // linear interpolation
   geometry_msgs::msg::Point stopping_point;
-  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
   stopping_point.x = (p1.x * ratio + p2.x) / (1 + ratio);
   stopping_point.y = (p1.y * ratio + p2.y) / (1 + ratio);
   stopping_point.z = (p1.z * ratio + p2.z) / (1 + ratio);
+  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
   stopping_point.x += lat_offset * std::cos(lane_yaw + M_PI / 2.0);
   stopping_point.y += lat_offset * std::sin(lane_yaw + M_PI / 2.0);
 
@@ -754,32 +751,7 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
   debug_data_.predicted_obj_pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
 
-  // find the centerpoint ego_vehicle_length[m] behind stopping_point
-  const double vehicle_length = planner_data_->vehicle_info_.vehicle_length_m;
-  acc_dist = 0;
-  unsigned behind_predicted_obj_point_idx = 0;
-  for (unsigned i = obj_closest_centerpoint_idx; i >= 1; --i) {
-    const auto & p1 = center_points[i];
-    const auto & p2 = center_points[i - 1];
-    acc_dist += tier4_autoware_utils::calcDistance2d(p1, p2);
-    behind_predicted_obj_point_idx = i;
-    if (acc_dist > vehicle_length) break;
-  }
-  bool is_behind_point_in_detection_area = false;
-  const auto & laneletLayer = planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer;
-  for (const auto & conflicting_area_lanelet_id : conflicting_area_lanelet_ids) {
-    const auto conflicting_area =
-      lanelet::utils::to2D(std::move(laneletLayer.get(conflicting_area_lanelet_id).polygon3d()));
-    Polygon2d poly{};
-    for (const auto & p : conflicting_area) {
-      poly.outer().emplace_back(p.x(), p.y());
-    }
-    if (bg::intersects(to_bg2d(center_points[behind_predicted_obj_point_idx]), poly)) {
-      is_behind_point_in_detection_area = true;
-      break;
-    }
-  }
-  if (is_in_stuck_area && is_behind_point_in_detection_area) {
+  if (is_in_stuck_area) {
     return true;
   }
   return false;

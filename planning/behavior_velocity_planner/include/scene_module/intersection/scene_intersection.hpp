@@ -168,7 +168,6 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<int> & detection_area_lanelet_ids,
-    const std::vector<int> & conflicting_area_lanelet_ids,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
@@ -302,7 +301,6 @@ private:
    */
   bool checkFrontVehicleDeceleration(
     lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-    const std::vector<int> & conflicting_area_lanelet_ids,
     const Polygon2d & stuck_vehicle_detect_area,
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
   StateMachine state_machine_;  //! for state
