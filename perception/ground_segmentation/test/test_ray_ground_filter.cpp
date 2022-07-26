@@ -30,7 +30,7 @@ protected:
 class RayGroundFilterComponentTest : public ground_segmentation::RayGroundFilterComponent
 {
 public:
-  RayGroundFilterComponentTest(const rclcpp::NodeOptions & options)
+  explicit RayGroundFilterComponentTest(const rclcpp::NodeOptions & options)
   :RayGroundFilterComponent(options),tf2_broadcaster_(*this)
   {
     input_pointcloud_pub_ =

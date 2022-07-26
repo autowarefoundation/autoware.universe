@@ -71,4 +71,12 @@ if(BUILD_TESTING)
   target_link_libraries(test_ray_ground_filter
     ground_segmentation
   )
+
+  ament_add_ros_isolated_gtest(test_scan_ground_filter
+    test/test_scan_ground_filter.cpp
+  )
+
+  target_link_libraries(test_scan_ground_filter
+    ground_segmentation
+  )
 endif()
