@@ -172,7 +172,7 @@ void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::
   // Debug
   // ns_utils::print("ACT On control method ");
   // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
+  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "onControlCommands");
   // end of debug
 }
 
@@ -188,7 +188,7 @@ void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::Sha
 
   // ns_utils::print("ACT On velocity method ");
   // ns_utils::print("Read parameter control period :", params_node_.cdob_ctrl_period);
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Velocity");
+  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Velocity");
 }
 
 void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(ControllerErrorReportMsg::SharedPtr const msg)
@@ -207,7 +207,7 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(ControllerErr
   // auto vel_error = static_cast<double>(current_long_errors_ptr_->velocity_error_read);
   // ns_utils::print("Longitudinal velocity error :", vel_error);
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Longitudinal Error");
+  // RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Longitudinal Error");
   // end of debug
 }
 
@@ -232,7 +232,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(ControllerErrorRe
   }
 
   // Debug
-  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
+  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
 
   // 			if (current_lat_errors_ptr_)
   // 			{
