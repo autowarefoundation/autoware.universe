@@ -66,12 +66,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // publisher
   path_publisher_ = create_stee_publisher<PathWithLaneId>("~/output/path", 1);
-  path_candidate_publisher_ = create_publisher<Path>("~/output/path_candidate", 1);
+  path_candidate_publisher_ = create_stee_publisher<Path>("~/output/path_candidate", 1);
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   debug_drivable_area_publisher_ = create_publisher<OccupancyGrid>("~/debug/drivable_area", 1);
-  debug_path_publisher_ = create_publisher<Path>("~/debug/path_for_visualize", 1);
+  debug_path_publisher_ = create_stee_publisher<Path>("~/debug/path_for_visualize", 1);
 
   // For remote operation
   plan_ready_publisher_ = create_publisher<PathChangeModule>("~/output/ready", 1);

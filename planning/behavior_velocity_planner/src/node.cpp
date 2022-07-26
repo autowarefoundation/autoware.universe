@@ -115,7 +115,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1));
 
   // Publishers
-  path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
+  path_pub_ = this->create_stee_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);

@@ -76,7 +76,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   debug_area_with_objects_pub_ =
     create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/area_with_objects", durable_qos);
 
-  path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
+  path_sub_ = create_stee_subscription<autoware_auto_planning_msgs::msg::Path>(
     "~/input/path", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::pathCallback, this, std::placeholders::_1));
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(

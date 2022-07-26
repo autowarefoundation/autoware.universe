@@ -85,7 +85,7 @@ private:
   rclcpp::Subscription<ApprovalMsg>::SharedPtr external_approval_subscriber_;
   rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_subscriber_;
   tilde::SteePublisher<PathWithLaneId>::SharedPtr path_publisher_;
-  rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
+  tilde::SteePublisher<Path>::SharedPtr path_candidate_publisher_;
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr force_available_publisher_;
   rclcpp::Publisher<PathChangeModule>::SharedPtr plan_ready_publisher_;
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr plan_running_publisher_;
@@ -159,7 +159,7 @@ private:
 
 private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
-  rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
+  tilde::SteePublisher<Path>::SharedPtr debug_path_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
 };
