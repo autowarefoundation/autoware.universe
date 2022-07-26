@@ -67,6 +67,26 @@ public:
     sub = create_subscription_impl<SpecT>(node_, std::forward<CallbackT>(callback));
   }
 
+  /// Relay message.
+  template <class P, class S>
+  void relay_message(P & pub, S & sub) const
+  {
+    using MsgT = typename P::element_type::SpecType::Message::ConstSharedPtr;
+    init_pub(pub);
+    init_sub(sub, [pub](MsgT msg) { pub->publish(*msg); });
+  }
+
+  /// Relay service.
+  template <class C, class S>
+  void relay_service(C & cli, S & srv, CallbackGroup group, double timeout = 0.0) const
+  {
+    using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
+    using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
+    init_cli(cli);
+    init_srv(
+      srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+  }
+
 private:
   // Use a node pointer because shared_from_this cannot be used in constructor.
   rclcpp::Node * node_;
