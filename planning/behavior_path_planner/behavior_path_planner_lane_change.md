@@ -165,7 +165,7 @@ If all valid candidate path is unsafe, then the operator will have the option to
 A candidate path's is safe if it satisfies the following lateral distance criteria,
 
 ```C++
-lateral distance > `lateral_distance_threshold`
+lateral distance > lateral_distance_threshold
 ```
 
 However, suppose the lateral distance is insufficient. In that case, longitudinal distance will be evaluated. The candidate path is safe only when the longitudinal gap between the ego vehicle and the dynamic object is wide enough.
@@ -254,6 +254,10 @@ The following figure illustrates how the safety check is performed on ego vs. dy
 Let `v_front` and `a_front` be the front vehicle's velocity and deceleration, respectively, and `v_rear` and `a_rear` be the rear vehicle's velocity and deceleration, respectively.
 Front vehicle and rear vehicle assignment will depend on which predicted path's pose is currently being evaluated.
 
+The following figure illustrates front and rear vehicle velocity assignment.
+
+![front rear assignment](./image/lane_change/lane_change-collision_check_parked_vehicle.png)
+
 Assuming the front vehicle brakes, then `d_front` is the distance the front vehicle will travel until it comes to a complete stop. The distance is computed from the equation of motion, which yield.
 
 ```C++
@@ -270,6 +274,14 @@ d_rear = v_rear * rear_vehicle_reaction_time + v_rear * rear_vehicle_safety_time
 
 Since there is no absolute value for the deceleration`a_front` and `a_rear`, both of the values are parameterized (`expected_front_deceleration` and `expected_rear_deceleration`, respectively) with the estimation of how much deceleration will occur if the brake is pressed.
 
+Finally, the longitudinal distance is evaluated as follows
+
+```C++
+d_rear < d_front + d_inter
+```
+
+where `d_inter` is the relative longitudinal distance obtained at each evaluated predicted pose.
+
 #### If the lane is blocked and multiple lane changes
 
 When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance computation is as follows.
@@ -281,6 +293,14 @@ minimum_lane_change_distance = num_of_lane_changes * (minimum_lane_change_length
 The following figure illustrates when the lane is blocked in multiple lane changes cases.
 
 ![multiple-lane-changes](./image/lane_change/lane_change-when_cannot_change_lanes.png)
+
+#### Intersection
+
+Lane change in the intersection is prohibited following traffic regulation. Therefore, if the goal is place close passed the intersection, the lane change needs to be completed before ego vehicle enters the intersection region. Similar to the lane blocked case, in case of the path is unsafe, ego vehicle will stop and waits for the dynamic object to pass by.
+
+The following figure illustrate the intersection case.
+
+[!intersection](./image/lane_change/lane_change-intersection_case.png)
 
 ## Parameters
 
