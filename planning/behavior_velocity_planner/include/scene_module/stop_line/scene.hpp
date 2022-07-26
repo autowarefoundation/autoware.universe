@@ -67,7 +67,6 @@ public:
     double stop_check_dist;
     double stop_duration_sec;
     bool use_initialization_stop_line_state;
-    bool show_stopline_collision_check;
   };
 
 public:
@@ -103,7 +102,7 @@ private:
   PlannerParam planner_param_;
 
   // Debug
-  mutable DebugData debug_data_;
+  DebugData debug_data_;
 };
 }  // namespace behavior_velocity_planner
 
