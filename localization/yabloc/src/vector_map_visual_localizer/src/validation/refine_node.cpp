@@ -69,7 +69,7 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   auto linesegments = extractNaerLineSegments(raw_pose, ll2_cloud_);
 
   // DEBUG:
-  Sophus::SE3f debug_offset(Eigen::Quaternionf::Identity(), Eigen::Vector3f(0, 0.8, 0));
+  Sophus::SE3f debug_offset(Eigen::Quaternionf::Identity(), Eigen::Vector3f(0, 0.5, 0));
   raw_pose = raw_pose * debug_offset;
 
   Sophus::SE3f opt_pose;
@@ -82,8 +82,7 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments);
 
     Sophus::SE3f estimated_offset = opt_pose.inverse() * raw_pose;
-    std::cout << "true offset: " << debug_offset.translation().transpose() << std::endl;
-    std::cout << "estimated offset: " << estimated_offset.translation().transpose() << std::endl;
+    std::cout << "Estimated offset: " << estimated_offset.translation().transpose() << std::endl;
   }
 
   // cv::Mat rgb_cost_image;
@@ -137,11 +136,13 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
     float mu = std::clamp(inner / tangent.squaredNorm(), 0.f, 1.0f);
     Eigen::Vector3f nearest = from + tangent * mu;
 
+    if (nearest.x() < 0) return false;
+
     // The allowable distance along longitudinal direction is greater than one along
     // lateral direction. This is because line segments that are far apart along lateral
     // direction are not suitable for the overlaying optimization.
     float dx = nearest.x() / 80;  // allowable longitudinal error[m]
-    float dy = nearest.y() / 20;  // allowable lateral error[m]
+    float dy = nearest.y() / 10;  // allowable lateral error[m]
     return dx * dx + dy * dy < 1;
   };
 
