@@ -16,8 +16,10 @@ import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
 from launch.actions import OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 
 
@@ -32,7 +34,7 @@ def _create_api_node(node_name, class_name, **kwargs):
 
 
 def launch_setup(context, *args, **kwargs):
-    components = [
+    default_components = [
         _create_api_node("cpu_usage", "CpuUsage"),
         _create_api_node("diagnostics", "Diagnostics"),
         _create_api_node("door", "Door"),
@@ -49,20 +51,34 @@ def launch_setup(context, *args, **kwargs):
         _create_api_node("velocity", "Velocity"),
         _create_api_node("version", "Version"),
     ]
-    if LaunchConfiguration("launch_calibration_status_api").perform(context) == "true":
-        components.append(_create_api_node("calibration_status", "CalibrationStatus"))
-    if LaunchConfiguration("launch_start_api").perform(context) == "true":
-        components.append(_create_api_node("start", "Start"))
-
     container = ComposableNodeContainer(
         namespace="external",
         name="autoware_iv_adaptor",
         package="rclcpp_components",
         executable="component_container_mt",
-        composable_node_descriptions=components,
+        composable_node_descriptions=default_components,
         output="screen",
     )
-    group = GroupAction([container])
+
+    calibration_status_loader = LoadComposableNodes(
+        composable_node_descriptions=[_create_api_node("calibration_status", "CalibrationStatus")],
+        target_container=container,
+        condition=IfCondition(LaunchConfiguration("launch_calibration_status_api")),
+    )
+
+    start_loader = LoadComposableNodes(
+        composable_node_descriptions=[_create_api_node("start", "Start")],
+        target_container=container,
+        condition=IfCondition(LaunchConfiguration("launch_start_api")),
+    )
+
+    group = GroupAction(
+        [
+            container,
+            calibration_status_loader,
+            start_loader,
+        ]
+    )
 
     return [group]
 
