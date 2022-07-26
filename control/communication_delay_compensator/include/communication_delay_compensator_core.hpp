@@ -86,8 +86,8 @@ class LateralCommunicationDelayCompensator
   void resetInitialState();
 
  private:
-  obs_model_ptr_t observer_vehicle_model_ptr_{}; // state observer model
-  model_ptr_t vehicle_model_ptr_{}; // vehicle model
+  obs_model_ptr_t observer_vehicle_model_ptr_{nullptr}; // state observer model
+  model_ptr_t vehicle_model_ptr_{nullptr}; // vehicle model
 
   // transfer functions
   tf_t tf_qfilter_lat_;
