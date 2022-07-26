@@ -61,7 +61,7 @@ public:
     double dead_line_margin;
     bool use_pass_judge_line;
     double state_clear_time;
-    double max_stop_distance;
+    double hold_stop_margin_distance;
   };
 
 public:

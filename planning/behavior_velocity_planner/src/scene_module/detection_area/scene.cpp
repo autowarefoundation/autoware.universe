@@ -242,8 +242,8 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   auto stop_pose = stop_point->second;
   const auto stop_dist = calcSignedArcLength(path->points, self_pose.position, stop_pose.position);
 
-  // Don't re-approach when the ego stops closer to the stop point than max_stop_distance
-  if (is_stopped && stop_dist < planner_param_.max_stop_distance) {
+  // Don't re-approach when the ego stops closer to the stop point than hold_stop_margin_distance
+  if (is_stopped && stop_dist < planner_param_.hold_stop_margin_distance) {
     stop_pose = self_pose;
   }
 
