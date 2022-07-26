@@ -17,9 +17,9 @@
 #include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
+#include "perception_utils/predicted_path_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
-#include "perception_utils/predicted_path_utils.hpp"
 
 #include <boost/format.hpp>
 
@@ -749,15 +749,14 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
         continue;
       }
 
-      const auto predicted_path =
-        getHighestConfidencePredictedPath(predicted_object);
+      const auto predicted_path = getHighestConfidencePredictedPath(predicted_object);
 
-      const auto resampled_predicted_path = perception_utils::resamplePredictedPath(predicted_path, 0.1, 10.0);
+      const auto resampled_predicted_path =
+        perception_utils::resamplePredictedPath(predicted_path, 0.1, 10.0);
 
       std::vector<geometry_msgs::msg::Point> future_collision_points;
       const auto collision_traj_poly_idx = polygon_utils::willCollideWithSurroundObstacle(
-        decimated_traj, decimated_traj_polygons, resampled_predicted_path,
-        predicted_object.shape,
+        decimated_traj, decimated_traj_polygons, resampled_predicted_path, predicted_object.shape,
         vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_detection_area_expand_width,
         obstacle_filtering_param_.ego_obstacle_overlap_time_threshold,
         obstacle_filtering_param_.max_prediction_time_for_collision_check, future_collision_points);
@@ -950,9 +949,9 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const auto & object_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
   const auto & object_velocity =
     predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const auto predicted_path =
-    getHighestConfidencePredictedPath(predicted_object);
-  const auto resampled_predicted_path = perception_utils::resamplePredictedPath(predicted_path, 0.2, 10.0);
+  const auto predicted_path = getHighestConfidencePredictedPath(predicted_object);
+  const auto resampled_predicted_path =
+    perception_utils::resamplePredictedPath(predicted_path, 0.2, 10.0);
 
   const double time_to_collision = [&]() {
     const double abs_ego_offset = is_driving_forward
@@ -967,8 +966,7 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
 
   const double time_to_obstacle_getting_out = [&]() {
     const auto obstacle_getting_out_idx = polygon_utils::getFirstNonCollisionIndex(
-      decimated_traj_polygons, resampled_predicted_path, predicted_object.shape,
-      first_within_idx);
+      decimated_traj_polygons, resampled_predicted_path, predicted_object.shape, first_within_idx);
     if (!obstacle_getting_out_idx) {
       return std::numeric_limits<double>::max();
     }
