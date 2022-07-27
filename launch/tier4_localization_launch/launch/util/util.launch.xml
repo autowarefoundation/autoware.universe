@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- Topics -->
-  <arg name="input/pointcloud" description="input topic name"/>
-  <arg name="tier4_localization_launch_param_path" description="tier4_localization_launch param path"/>
-  <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
-  <!-- container -->
-  <arg name="container" default="/sensing/lidar/top/pointcloud_preprocessor/velodyne_node_container" description="container name"/>
 
-  <!-- option -->
+  <arg name="tier4_localization_launch_param_path" description="tier4_localization_launch param path"/>
+
+  <arg name="input/pointcloud" description="input topic name"/>
+  <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
+  <arg name="container" description="container name which input topic belongs"/>
   <arg name="use_intra_process" default="true" description="use ROS2 component container communication"/>
 
   <!-- pose_initializer -->
   <group>
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml"/>
   </group>
+
   <!-- util -->
   <group>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/util/util.launch.py">
