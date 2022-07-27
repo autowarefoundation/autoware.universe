@@ -42,7 +42,7 @@ public:
 
 private:
   rclcpp::CallbackGroup::SharedPtr group_srv_;
-  rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_align_;
+  rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_reset_;
   rclcpp::Client<RequestPoseAlignment>::SharedPtr cli_align_;
   component_interface_utils::Publisher<State>::SharedPtr pub_state_;
   component_interface_utils::Service<Initialize>::SharedPtr srv_initialize_;

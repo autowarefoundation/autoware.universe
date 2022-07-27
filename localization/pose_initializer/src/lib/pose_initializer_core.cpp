@@ -27,7 +27,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, BIND_SERVICE(this, OnInitialize), group_srv_);
-  pub_align_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset", 1);
+  pub_reset_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset", 1);
   cli_align_ = create_client<RequestPoseAlignment>("ndt_align");
 
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
@@ -67,7 +67,7 @@ void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
     ChangeState(State::Message::INITIALIZING);
     const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
     const auto aligned_pose = AlignPose(request_pose);
-    pub_align_->publish(aligned_pose);
+    pub_reset_->publish(aligned_pose);
     res->status.success = true;
     ChangeState(State::Message::INITIALIZED);
   } catch (const ServiceException & error) {
