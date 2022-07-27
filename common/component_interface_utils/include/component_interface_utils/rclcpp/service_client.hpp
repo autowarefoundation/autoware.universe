@@ -83,7 +83,7 @@ public:
     };
 
     RCLCPP_INFO_STREAM(logger_, "client call: " << SpecT::name << "\n" << to_yaml(*request));
-    return client_->async_send_request(request, wrapped);
+    return client_->async_send_request(request, wrapped).future;
   }
 
 private:
