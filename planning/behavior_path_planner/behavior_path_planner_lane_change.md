@@ -300,7 +300,7 @@ Lane change in the intersection is prohibited following traffic regulation. Ther
 
 The following figure illustrate the intersection case.
 
-[!intersection](./image/lane_change/lane_change-intersection_case.png)
+![intersection](./image/lane_change/lane_change-intersection_case.png)
 
 ## Parameters
 
