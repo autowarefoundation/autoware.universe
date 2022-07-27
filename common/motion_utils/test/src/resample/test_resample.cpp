@@ -58,13 +58,15 @@ PathPoint generateTestPathPoint(
 
 TrajectoryPoint generateTestTrajectoryPoint(
   const double x, const double y, const double z, const double theta = 0.0,
-  const double vel_lon = 0.0, const double vel_lat = 0.0, const double heading_rate = 0.0)
+  const double vel_lon = 0.0, const double vel_lat = 0.0, const double heading_rate = 0.0,
+  const double acc = 0.0)
 {
   TrajectoryPoint p;
   p.pose = createPose(x, y, z, 0.0, 0.0, theta);
   p.longitudinal_velocity_mps = vel_lon;
   p.lateral_velocity_mps = vel_lat;
   p.heading_rate_rps = heading_rate;
+  p.acceleration_mps2 = acc;
   return p;
 }
 
@@ -96,8 +98,8 @@ T generateTestPath(
 template <class T>
 T generateTestTrajectory(
   const size_t num_points, const double point_interval, const double vel_lon = 0.0,
-  const double vel_lat = 0.0, const double heading_rate_rps = 0.0, const double init_theta = 0.0,
-  const double delta_theta = 0.0)
+  const double vel_lat = 0.0, const double heading_rate_rps = 0.0, const double acc = 0.0,
+  const double init_theta = 0.0, const double delta_theta = 0.0)
 {
   using Point = typename T::_points_type::value_type;
 
@@ -112,6 +114,7 @@ T generateTestTrajectory(
     p.longitudinal_velocity_mps = vel_lon;
     p.lateral_velocity_mps = vel_lat;
     p.heading_rate_rps = heading_rate_rps;
+    p.acceleration_mps2 = acc;
     traj.points.push_back(p);
   }
 
@@ -567,7 +570,7 @@ TEST(resample_path, resample_trajectory_by_vector)
   using motion_utils::resampleTrajectory;
   // Output is same as input
   {
-    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 3.0, 1.0, 0.01);
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 3.0, 1.0, 0.01, 0.5);
     std::vector<double> resampled_arclength = generateArclength(10, 1.0);
 
     {
@@ -585,12 +588,13 @@ TEST(resample_path, resample_trajectory_by_vector)
         EXPECT_NEAR(p.longitudinal_velocity_mps, ans_p.longitudinal_velocity_mps, epsilon);
         EXPECT_NEAR(p.lateral_velocity_mps, ans_p.lateral_velocity_mps, epsilon);
         EXPECT_NEAR(p.heading_rate_rps, ans_p.heading_rate_rps, epsilon);
+        EXPECT_NEAR(p.acceleration_mps2, ans_p.acceleration_mps2, epsilon);
       }
     }
 
     // Change the last point orientation
-    traj.points.back() =
-      generateTestTrajectoryPoint(9.0, 0.0, 0.0, tier4_autoware_utils::pi / 3.0, 3.0, 1.0, 0.01);
+    traj.points.back() = generateTestTrajectoryPoint(
+      9.0, 0.0, 0.0, tier4_autoware_utils::pi / 3.0, 3.0, 1.0, 0.01, 0.5);
     {
       const auto resampled_path = resampleTrajectory(traj, resampled_arclength);
       for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {
@@ -606,6 +610,7 @@ TEST(resample_path, resample_trajectory_by_vector)
         EXPECT_NEAR(p.longitudinal_velocity_mps, ans_p.longitudinal_velocity_mps, epsilon);
         EXPECT_NEAR(p.lateral_velocity_mps, ans_p.lateral_velocity_mps, epsilon);
         EXPECT_NEAR(p.heading_rate_rps, ans_p.heading_rate_rps, epsilon);
+        EXPECT_NEAR(p.acceleration_mps2, ans_p.acceleration_mps2, epsilon);
       }
 
       const auto p = resampled_path.points.back();
@@ -621,6 +626,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, ans_p.longitudinal_velocity_mps, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, ans_p.lateral_velocity_mps, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, ans_p.heading_rate_rps, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, ans_p.acceleration_mps2, epsilon);
     }
   }
 
@@ -630,7 +636,7 @@ TEST(resample_path, resample_trajectory_by_vector)
     traj.points.resize(10);
     for (size_t i = 0; i < 10; ++i) {
       traj.points.at(i) =
-        generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+        generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
     }
     std::vector<double> resampled_arclength = {0.0, 1.2, 1.5, 5.3, 7.5, 9.0};
 
@@ -644,6 +650,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.0, epsilon);
     }
 
     {
@@ -654,6 +661,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, 1.0, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, 0.5, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.05, epsilon);
     }
 
     {
@@ -664,6 +672,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, 1.0, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, 0.5, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, 0.15, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.05, epsilon);
     }
 
     {
@@ -674,6 +683,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, 5.0, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, 2.5, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.25, epsilon);
     }
 
     {
@@ -684,6 +694,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, 7.0, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, 3.5, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, 0.75, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.35, epsilon);
     }
 
     {
@@ -694,6 +705,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
       EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.45, epsilon);
     }
 
     for (size_t i = 0; i < resampled_path.points.size(); ++i) {
@@ -713,7 +725,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       traj.points.resize(1);
       for (size_t i = 0; i < 1; ++i) {
         traj.points.at(i) =
-          generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+          generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
       }
       std::vector<double> resampled_arclength = generateArclength(10, 1.0);
 
@@ -747,7 +759,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       traj.points.resize(10);
       for (size_t i = 0; i < 10; ++i) {
         traj.points.at(i) =
-          generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+          generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
       }
       std::vector<double> resampled_arclength = generateArclength(1, 1.0);
 
@@ -781,7 +793,7 @@ TEST(resample_path, resample_trajectory_by_vector)
       traj.points.resize(10);
       for (size_t i = 0; i < 10; ++i) {
         traj.points.at(i) =
-          generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
+          generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
       }
       std::vector<double> resampled_arclength = generateArclength(3, 5.0);
 

@@ -256,6 +256,11 @@ inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   v_lon.front() = input_trajectory.points.front().longitudinal_velocity_mps;
   v_lat.front() = input_trajectory.points.front().lateral_velocity_mps;
   heading_rate.front() = input_trajectory.points.front().heading_rate_rps;
+  acceleration.front() = input_trajectory.points.front().acceleration_mps2;
+  front_wheel_angle.front() = input_trajectory.points.front().front_wheel_angle_rad;
+  rear_wheel_angle.front() = input_trajectory.points.front().rear_wheel_angle_rad;
+  time_from_start.front() =
+    rclcpp::Duration(input_trajectory.points.front().time_from_start).seconds();
   for (size_t i = 1; i < input_trajectory.points.size(); ++i) {
     const auto & prev_pt = input_trajectory.points.at(i - 1);
     const auto & curr_pt = input_trajectory.points.at(i);
