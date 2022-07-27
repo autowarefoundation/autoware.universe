@@ -173,6 +173,40 @@ double calcAlignedAdaptiveCruise(
 
   return object_vel * std::cos(object_yaw - traj_yaw);
 }
+
+std::vector<double> calcPredictionResamplingTimeVector(
+  const PredictedPath & predicted_path, const double dense_resampling_horizon,
+  const double dense_resampling_time_interval, const double sparse_resampling_time_interval)
+{
+  const double & time_step = rclcpp::Duration(predicted_path.time_step).seconds();
+  const double max_time_horizon = time_step * (predicted_path.path.size() - 1);
+
+  std::vector<double> resampling_time_vector;
+  // Dense resampling
+  const double horizon = std::min(dense_resampling_horizon, max_time_horizon);
+  for (double t = 0.0; t < horizon; t += dense_resampling_time_interval) {
+    resampling_time_vector.push_back(t);
+  }
+  if (resampling_time_vector.back() - horizon < 1e-3) {
+    resampling_time_vector.back() = horizon;
+  } else {
+    resampling_time_vector.push_back(horizon);
+  }
+  // Sparse Resampling
+  const double start_time = resampling_time_vector.empty()
+                              ? 0.0
+                              : resampling_time_vector.back() + sparse_resampling_time_interval;
+  for (double t = start_time; t < max_time_horizon; t += sparse_resampling_time_interval) {
+    resampling_time_vector.push_back(t);
+  }
+  if (resampling_time_vector.back() - max_time_horizon < 1e-3) {
+    resampling_time_vector.back() = max_time_horizon;
+  } else {
+    resampling_time_vector.push_back(max_time_horizon);
+  }
+
+  return resampling_time_vector;
+}
 }  // namespace
 
 namespace motion_planning
@@ -271,6 +305,12 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("obstacle_filtering.crossing_obstacle_traj_angle_threshold");
     obstacle_filtering_param_.stop_obstacle_hold_time_threshold =
       declare_parameter<double>("obstacle_filtering.stop_obstacle_hold_time_threshold");
+    obstacle_filtering_param_.prediction_dense_resampling_time_horizon =
+      declare_parameter<double>("obstacle_filtering.prediction_dense_resampling_time_horizon");
+    obstacle_filtering_param_.prediction_dense_resampling_time_interval =
+      declare_parameter<double>("obstacle_filtering.prediction_dense_resampling_time_interval");
+    obstacle_filtering_param_.prediction_sparse_resampling_time_interval =
+      declare_parameter<double>("obstacle_filtering.prediction_sparse_resampling_time_interval");
 
     {
       if (declare_parameter<bool>("obstacle_filtering.ignored_outside_obstacle_type.unknown")) {
@@ -452,6 +492,15 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "obstacle_filtering.stop_obstacle_hold_time_threshold",
     obstacle_filtering_param_.stop_obstacle_hold_time_threshold);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "obstacle_filtering.prediction_dense_resampling_time_horizon",
+    obstacle_filtering_param_.prediction_dense_resampling_time_horizon);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "obstacle_filtering.prediction_dense_resampling_time_interval",
+    obstacle_filtering_param_.prediction_dense_resampling_time_interval);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "obstacle_filtering.prediction_sparse_resampling_time_interval",
+    obstacle_filtering_param_.prediction_sparse_resampling_time_interval);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -750,9 +799,12 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       }
 
       const auto predicted_path = getHighestConfidencePredictedPath(predicted_object);
-
+      const auto resampled_time_vec = calcPredictionResamplingTimeVector(
+        predicted_path, obstacle_filtering_param_.prediction_dense_resampling_time_horizon,
+        obstacle_filtering_param_.prediction_dense_resampling_time_interval,
+        obstacle_filtering_param_.prediction_sparse_resampling_time_interval);
       const auto resampled_predicted_path =
-        perception_utils::resamplePredictedPath(predicted_path, 0.1, 10.0);
+        perception_utils::resamplePredictedPath(predicted_path, resampled_time_vec);
 
       std::vector<geometry_msgs::msg::Point> future_collision_points;
       const auto collision_traj_poly_idx = polygon_utils::willCollideWithSurroundObstacle(
@@ -950,8 +1002,12 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const auto & object_velocity =
     predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
   const auto predicted_path = getHighestConfidencePredictedPath(predicted_object);
+  const auto resampled_time_vec = calcPredictionResamplingTimeVector(
+    predicted_path, obstacle_filtering_param_.prediction_dense_resampling_time_horizon,
+    obstacle_filtering_param_.prediction_dense_resampling_time_interval,
+    obstacle_filtering_param_.prediction_sparse_resampling_time_interval);
   const auto resampled_predicted_path =
-    perception_utils::resamplePredictedPath(predicted_path, 0.2, 10.0);
+    perception_utils::resamplePredictedPath(predicted_path, resampled_time_vec);
 
   const double time_to_collision = [&]() {
     const double abs_ego_offset = is_driving_forward

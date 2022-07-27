@@ -104,19 +104,19 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
 
   // autoware_auto_perception_msgs::msg::PredictedPath::_path_type::max_size << std::endl;
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
-  std::cerr << "Capacity: " << resampled_path.path.max_size() << std::endl;
+  const auto resampled_size = std::min(resampled_path.path.max_size(), resampled_time.size());
   resampled_path.confidence = path.confidence;
-  resampled_path.path.resize(resampled_time.size());
+  resampled_path.path.resize(resampled_size);
 
   // Set Position
-  for (size_t i = 0; i < resampled_path.path.size(); ++i) {
+  for (size_t i = 0; i < resampled_size; ++i) {
     const auto p = tier4_autoware_utils::createPoint(
       interpolated_x.at(i), interpolated_y.at(i), interpolated_z.at(i));
     resampled_path.path.at(i).position = p;
   }
 
   // Set Quaternion
-  for (size_t i = 0; i < resampled_path.path.size() - 1; ++i) {
+  for (size_t i = 0; i < resampled_size - 1; ++i) {
     const auto & src_point = resampled_path.path.at(i).position;
     const auto & dst_point = resampled_path.path.at(i + 1).position;
     const double pitch = tier4_autoware_utils::calcElevationAngle(src_point, dst_point);
@@ -124,8 +124,7 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
     resampled_path.path.at(i).orientation =
       tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
   }
-  resampled_path.path.back().orientation =
-    resampled_path.path.at(resampled_path.path.size() - 2).orientation;
+  resampled_path.path.back().orientation = resampled_path.path.at(resampled_size - 2).orientation;
 
   return resampled_path;
 }
