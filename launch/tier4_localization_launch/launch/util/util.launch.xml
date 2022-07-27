@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-
   <arg name="tier4_localization_launch_param_path" description="tier4_localization_launch param path"/>
 
   <arg name="input/pointcloud" description="input topic name"/>
