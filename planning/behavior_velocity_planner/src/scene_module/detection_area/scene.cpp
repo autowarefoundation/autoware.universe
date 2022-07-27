@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/detection_area/scene.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -228,18 +228,30 @@ bool DetectionAreaModule::modifyPathVelocity(
     last_obstacle_found_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
   }
 
-  // Check state
-  if (canClearStopState()) {
-    state_ = State::GO;
-    last_obstacle_found_time_ = {};
-    return true;
-  }
-
   // Get stop line geometry
   const auto stop_line = getStopLineGeometry2d();
 
   // Get self pose
   const auto & self_pose = planner_data_->current_pose.pose;
+
+  // Get stop point
+  const auto stop_point = createTargetPoint(original_path, stop_line, planner_param_.stop_margin);
+  if (!stop_point) {
+    return true;
+  }
+
+  const auto & stop_pose = stop_point->second;
+
+  setDistance(
+    motion_utils::calcSignedArcLength(path->points, self_pose.position, stop_pose.position));
+
+  // Check state
+  setSafe(canClearStopState());
+  if (isActivated()) {
+    state_ = State::GO;
+    last_obstacle_found_time_ = {};
+    return true;
+  }
 
   // Force ignore objects after dead_line
   if (planner_param_.use_dead_line) {
@@ -253,21 +265,15 @@ bool DetectionAreaModule::modifyPathVelocity(
 
       if (isOverLine(original_path, self_pose, dead_line_pose)) {
         RCLCPP_WARN(logger_, "[detection_area] vehicle is over dead line");
+        setSafe(true);
         return true;
       }
     }
   }
 
-  // Get stop point
-  const auto stop_point = createTargetPoint(original_path, stop_line, planner_param_.stop_margin);
-  if (!stop_point) {
-    return true;
-  }
-
-  const auto & stop_pose = stop_point->second;
-
   // Ignore objects detected after stop_line if not in STOP state
   if (state_ != State::STOP && isOverLine(original_path, self_pose, stop_pose)) {
+    setSafe(true);
     return true;
   }
 
@@ -277,6 +283,7 @@ bool DetectionAreaModule::modifyPathVelocity(
       RCLCPP_WARN_THROTTLE(
         logger_, *clock_, std::chrono::milliseconds(1000).count(),
         "[detection_area] vehicle is over stop border");
+      setSafe(true);
       return true;
     }
   }
@@ -356,8 +363,7 @@ bool DetectionAreaModule::isOverLine(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
 {
-  return tier4_autoware_utils::calcSignedArcLength(
-           path.points, self_pose.position, line_pose.position) < 0;
+  return motion_utils::calcSignedArcLength(path.points, self_pose.position, line_pose.position) < 0;
 }
 
 bool DetectionAreaModule::hasEnoughBrakingDistance(

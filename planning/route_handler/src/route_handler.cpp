@@ -16,6 +16,7 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/route_checker.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -310,6 +311,7 @@ void RouteHandler::setRouteLanelets(const lanelet::ConstLanelets & path_lanelets
   for (const auto & id : route_lanelets_id) {
     route_lanelets_.push_back(lanelet_map_ptr_->laneletLayer.get(id));
   }
+  is_handler_ready_ = true;
 }
 
 void RouteHandler::setLaneletsFromRouteMsg()
@@ -319,6 +321,10 @@ void RouteHandler::setLaneletsFromRouteMsg()
   }
   route_lanelets_.clear();
   preferred_lanelets_.clear();
+  bool is_route_valid = lanelet::utils::route::isRouteValid(route_msg_, lanelet_map_ptr_);
+  if (!is_route_valid) {
+    return;
+  }
   for (const auto & route_section : route_msg_.segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
@@ -400,9 +406,9 @@ void RouteHandler::setPullOverGoalPose(
     lanelet::utils::getArcCoordinates({target_lane}, route_msg_.goal_pose);
   Path centerline_path = convertToPathFromPathWithLaneId(
     getCenterLinePath({target_lane}, 0.0, arc_position_goal.length + 10));
-  const auto seg_idx = tier4_autoware_utils::findNearestSegmentIndex(
-    centerline_path.points, route_msg_.goal_pose.position);
-  const double d_lat = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+  const auto seg_idx =
+    motion_utils::findNearestSegmentIndex(centerline_path.points, route_msg_.goal_pose.position);
+  const double d_lat = motion_utils::calcLongitudinalOffsetToSegment(
     centerline_path.points, seg_idx, route_msg_.goal_pose.position);
   const auto shoulder_point =
     tier4_autoware_utils::calcOffsetPose(centerline_path.points.at(seg_idx).pose, d_lat, 0.0, 0.0);
@@ -938,6 +944,9 @@ lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(
   while (lanelet_at_left) {
     linestring_shared.push_back(lanelet_at_left.get());
     lanelet_at_left = getLeftLanelet(lanelet_at_left.get());
+    if (!lanelet_at_left) {
+      break;
+    }
     lanelet_at_left_opposite = getLeftOppositeLanelets(lanelet_at_left.get());
   }
 
@@ -961,6 +970,9 @@ lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
   while (lanelet_at_right) {
     linestring_shared.push_back(lanelet_at_right.get());
     lanelet_at_right = getRightLanelet(lanelet_at_right.get());
+    if (!lanelet_at_right) {
+      break;
+    }
     lanelet_at_right_opposite = getRightOppositeLanelets(lanelet_at_right.get());
   }
 

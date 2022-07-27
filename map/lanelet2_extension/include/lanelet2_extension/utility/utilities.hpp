@@ -35,6 +35,10 @@ lanelet::LineString3d generateFineCenterline(
   const lanelet::ConstLanelet & lanelet_obj, const double resolution = 5.0);
 lanelet::ConstLineString3d getCenterlineWithOffset(
   const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
+lanelet::ConstLineString3d getRightBoundWithOffset(
+  const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
+lanelet::ConstLineString3d getLeftBoundWithOffset(
+  const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
 
 lanelet::ConstLanelet getExpandedLanelet(
   const lanelet::ConstLanelet & lanelet_obj, const double left_offset, const double right_offset);
@@ -77,7 +81,8 @@ double getLaneletAngle(
 bool isInLanelet(
   const geometry_msgs::msg::Pose & current_pose, const lanelet::ConstLanelet & lanelet,
   const double radius = 0.0);
-
+geometry_msgs::msg::Pose getClosestCenterPose(
+  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & search_point);
 }  // namespace utils
 }  // namespace lanelet
 

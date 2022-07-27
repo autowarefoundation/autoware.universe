@@ -340,7 +340,7 @@ std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
   std::vector<DynamicObstacle> extracted_dynamic_obstacle;
   for (const auto & obstacle : dynamic_obstacles) {
     const auto obstacle_nearest_idx =
-      tier4_autoware_utils::findNearestIndex(path_points, obstacle.pose.position);
+      motion_utils::findNearestIndex(path_points, obstacle.pose.position);
     const auto & obstacle_nearest_path_point =
       path_points.at(obstacle_nearest_idx).point.pose.position;
 
@@ -394,8 +394,7 @@ PathWithLaneId trimPathFromSelfPose(
   const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
   const double trim_distance)
 {
-  const size_t nearest_idx =
-    tier4_autoware_utils::findNearestIndex(input.points, self_pose.position);
+  const size_t nearest_idx = motion_utils::findNearestIndex(input.points, self_pose.position);
 
   PathWithLaneId output{};
   output.header = input.header;
@@ -414,27 +413,6 @@ PathWithLaneId trimPathFromSelfPose(
   }
 
   return output;
-}
-
-std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
-  const geometry_msgs::msg::Pose & current_pose, const DetectionAreaSize detection_area_size)
-{
-  const auto & d = detection_area_size;
-  const auto p1 = tier4_autoware_utils::calcOffsetPose(current_pose, d.dist_ahead, d.dist_left, 0);
-  const auto p2 =
-    tier4_autoware_utils::calcOffsetPose(current_pose, d.dist_ahead, -d.dist_right, 0);
-  const auto p3 =
-    tier4_autoware_utils::calcOffsetPose(current_pose, -d.dist_behind, -d.dist_right, 0);
-  const auto p4 =
-    tier4_autoware_utils::calcOffsetPose(current_pose, -d.dist_behind, d.dist_left, 0);
-
-  std::vector<geometry_msgs::msg::Point> detection_area;
-  detection_area.emplace_back(p1.position);
-  detection_area.emplace_back(p2.position);
-  detection_area.emplace_back(p3.position);
-  detection_area.emplace_back(p4.position);
-
-  return detection_area;
 }
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk

@@ -18,6 +18,8 @@
 #include "obstacle_stop_planner/adaptive_cruise_control.hpp"
 #include "obstacle_stop_planner/debug_marker.hpp"
 
+#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -26,8 +28,6 @@
 #include <signal_processing/lowpass_filter_1d.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -234,7 +234,7 @@ private:
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data,
     const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-    const double current_acc, const StopParam & stop_param);
+    const double current_acc, const double current_vel, const StopParam & stop_param);
 
   TrajectoryPoints decimateTrajectory(
     const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
@@ -284,7 +284,7 @@ private:
   SlowDownSection createSlowDownSection(
     const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
     const double dist_remain, const double dist_vehicle_to_obstacle,
-    const VehicleInfo & vehicle_info, const double current_acc);
+    const VehicleInfo & vehicle_info, const double current_acc, const double current_vel);
 
   SlowDownSection createSlowDownSectionFromMargin(
     const int idx, const TrajectoryPoints & base_trajectory, const double forward_margin,
@@ -299,9 +299,10 @@ private:
 
   void setExternalVelocityLimit();
 
-  void resetExternalVelocityLimit(const double current_acc);
+  void resetExternalVelocityLimit(const double current_acc, const double current_vel);
 
-  void publishDebugData(const PlannerData & planner_data, const double current_acc);
+  void publishDebugData(
+    const PlannerData & planner_data, const double current_acc, const double current_vel);
 };
 }  // namespace motion_planning
 

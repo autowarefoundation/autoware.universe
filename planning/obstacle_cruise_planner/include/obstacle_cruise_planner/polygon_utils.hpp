@@ -34,9 +34,6 @@ namespace bg = boost::geometry;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
-Polygon2d convertObstacleToPolygon(
-  const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape);
-
 boost::optional<size_t> getFirstCollisionIndex(
   const std::vector<Polygon2d> & traj_polygons, const Polygon2d & obj_polygon,
   std::vector<geometry_msgs::msg::Point> & collision_points);
@@ -46,13 +43,14 @@ boost::optional<size_t> getFirstNonCollisionIndex(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const size_t start_idx);
 
-bool willCollideWithSurroundObstacle(
+boost::optional<size_t> willCollideWithSurroundObstacle(
   const autoware_auto_planning_msgs::msg::Trajectory & traj,
   const std::vector<Polygon2d> & traj_polygons,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const double max_dist,
   const double ego_obstacle_overlap_time_threshold,
-  const double max_prediction_time_for_collision_check);
+  const double max_prediction_time_for_collision_check,
+  std::vector<geometry_msgs::msg::Point> & collision_geom_points);
 
 std::vector<Polygon2d> createOneStepPolygons(
   const autoware_auto_planning_msgs::msg::Trajectory & traj,

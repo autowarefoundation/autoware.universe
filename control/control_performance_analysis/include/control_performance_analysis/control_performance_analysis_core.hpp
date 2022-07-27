@@ -56,14 +56,16 @@ public:
   ControlPerformanceAnalysisCore();
   ControlPerformanceAnalysisCore(
     double wheelbase, double curvature_interval_length, uint odom_interval,
-    double acceptable_min_waypoint_distance, double prevent_zero_division_value);
+    double acceptable_min_waypoint_distance, double prevent_zero_division_value,
+    double lpf_gain_val);
 
   // Setters
   void setCurrentPose(const Pose & msg);
   void setCurrentWaypoints(const Trajectory & trajectory);
   void setCurrentControlValue(const AckermannControlCommand & msg);
   void setInterpolatedVars(
-    Pose & interpolated_pose, double & interpolated_velocity, double & interpolated_acceleration);
+    Pose & interpolated_pose, double & interpolated_velocity, double & interpolated_acceleration,
+    double & interpolated_steering_angle);
   void setOdomHistory(const Odometry & odom);
   void setSteeringStatus(const SteeringReport & steering);
 
@@ -89,6 +91,7 @@ private:
   uint odom_interval_;
   double acceptable_min_waypoint_distance_;
   double prevent_zero_division_value_;
+  double lpf_gain_;
 
   // Variables Received Outside
   std::shared_ptr<PoseArray> current_waypoints_ptr_;
@@ -113,6 +116,7 @@ private:
   std::shared_ptr<Pose> interpolated_pose_ptr_;
   std::shared_ptr<double> interpolated_velocity_ptr_;
   std::shared_ptr<double> interpolated_acceleration_ptr_;
+  std::shared_ptr<double> interpolated_steering_angle_ptr_;
 
   // V = xPx' ; Value function from DARE Lyap matrix P
   Eigen::Matrix2d const lyap_P_ = (Eigen::MatrixXd(2, 2) << 2.342, 8.60, 8.60, 64.29).finished();
