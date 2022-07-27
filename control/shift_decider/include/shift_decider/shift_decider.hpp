@@ -21,8 +21,11 @@
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class ShiftDecider : public rclcpp::Node
+class ShiftDecider : public tilde::SteeNode
 {
 public:
   explicit ShiftDecider(const rclcpp::NodeOptions & node_options);

@@ -33,6 +33,9 @@
 
 #include <memory>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace obstacle_collision_checker
 {
@@ -41,7 +44,7 @@ struct NodeParam
   double update_rate;
 };
 
-class ObstacleCollisionCheckerNode : public rclcpp::Node
+class ObstacleCollisionCheckerNode : public tilde::SteeNode
 {
 public:
   explicit ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options);

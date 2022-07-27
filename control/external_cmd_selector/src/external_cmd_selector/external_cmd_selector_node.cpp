@@ -22,7 +22,7 @@
 #include <utility>
 
 ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_options)
-: Node("external_cmd_selector", node_options)
+: SteeNode("external_cmd_selector", node_options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;

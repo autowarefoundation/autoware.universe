@@ -16,6 +16,7 @@
   <depend>autoware_auto_system_msgs</depend>
   <depend>trajectory_follower</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
   <depend>vehicle_info_util</depend>
 

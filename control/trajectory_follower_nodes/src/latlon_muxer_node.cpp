@@ -27,7 +27,7 @@ namespace trajectory_follower_nodes
 {
 
 LatLonMuxer::LatLonMuxer(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("latlon_muxer", node_options)
+: SteeNode("latlon_muxer", node_options)
 {
   m_control_cmd_pub =
     create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(

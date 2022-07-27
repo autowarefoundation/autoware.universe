@@ -22,7 +22,7 @@
 #include <utility>
 
 ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
-: Node("shift_decider", node_options)
+: SteeNode("shift_decider", node_options)
 {
   using std::placeholders::_1;
 

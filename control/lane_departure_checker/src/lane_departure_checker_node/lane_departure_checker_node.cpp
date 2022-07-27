@@ -113,7 +113,7 @@ void update_param(
 namespace lane_departure_checker
 {
 LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & options)
-: Node("lane_departure_checker_node", options)
+: SteeNode("lane_departure_checker_node", options)
 {
   using std::placeholders::_1;
 

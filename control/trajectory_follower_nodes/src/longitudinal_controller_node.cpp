@@ -35,7 +35,7 @@ namespace control
 namespace trajectory_follower_nodes
 {
 LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_options)
-: Node("longitudinal_controller", node_options)
+: SteeNode("longitudinal_controller", node_options)
 {
   using std::placeholders::_1;
 

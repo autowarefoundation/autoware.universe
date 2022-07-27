@@ -44,7 +44,7 @@ void update_param(
 namespace obstacle_collision_checker
 {
 ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options)
-: Node("obstacle_collision_checker_node", node_options), updater_(this)
+: SteeNode("obstacle_collision_checker_node", node_options), updater_(this)
 {
   using std::placeholders::_1;
 

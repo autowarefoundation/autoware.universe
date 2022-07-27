@@ -444,7 +444,7 @@ void AutowareJoyControllerNode::initTimer(double period_s)
 }
 
 AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions & node_options)
-: Node("joy_controller", node_options)
+: SteeNode("joy_controller", node_options)
 {
   // Parameter
   joy_type_ = declare_parameter("joy_type", std::string("DS4"));

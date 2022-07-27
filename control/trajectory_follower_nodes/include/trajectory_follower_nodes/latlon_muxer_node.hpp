@@ -27,6 +27,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace autoware
 {
@@ -39,7 +42,7 @@ namespace trajectory_follower_nodes
 {
 /// \class LatLonMuxer
 /// \brief The node class used for muxing lateral and longitudinal messages
-class LatLonMuxer : public rclcpp::Node
+class LatLonMuxer : public tilde::SteeNode
 {
 public:
   explicit TRAJECTORY_FOLLOWER_PUBLIC LatLonMuxer(const rclcpp::NodeOptions & node_options);

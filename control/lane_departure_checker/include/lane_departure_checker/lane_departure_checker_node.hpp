@@ -38,6 +38,9 @@
 
 #include <memory>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace lane_departure_checker
 {
@@ -49,7 +52,7 @@ struct NodeParam
   bool visualize_lanelet;
 };
 
-class LaneDepartureCheckerNode : public rclcpp::Node
+class LaneDepartureCheckerNode : public tilde::SteeNode
 {
 public:
   explicit LaneDepartureCheckerNode(const rclcpp::NodeOptions & options);

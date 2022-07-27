@@ -41,6 +41,9 @@
 #include "trajectory_follower/pid.hpp"
 #include "trajectory_follower/smooth_stop.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace autoware
 {
@@ -57,7 +60,7 @@ namespace motion_common = ::autoware::motion::motion_common;
 
 /// \class LongitudinalController
 /// \brief The node class used for generating longitudinal control commands (velocity/acceleration)
-class TRAJECTORY_FOLLOWER_PUBLIC LongitudinalController : public rclcpp::Node
+class TRAJECTORY_FOLLOWER_PUBLIC LongitudinalController : public tilde::SteeNode
 {
 public:
   explicit LongitudinalController(const rclcpp::NodeOptions & node_options);

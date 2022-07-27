@@ -49,6 +49,9 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 
 namespace autoware
@@ -63,7 +66,7 @@ using autoware::common::types::float64_t;
 using autoware::common::types::bool8_t;
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
-class TRAJECTORY_FOLLOWER_PUBLIC LateralController : public rclcpp::Node
+class TRAJECTORY_FOLLOWER_PUBLIC LateralController : public tilde::SteeNode
 {
 public:
   /**

@@ -49,6 +49,9 @@
 
 #include <memory>
 #include <vector>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace pure_pursuit
 {
@@ -71,7 +74,7 @@ struct DebugData
   geometry_msgs::msg::Point next_target;
 };
 
-class PurePursuitNode : public rclcpp::Node
+class PurePursuitNode : public tilde::SteeNode
 {
 public:
   explicit PurePursuitNode(const rclcpp::NodeOptions & node_options);

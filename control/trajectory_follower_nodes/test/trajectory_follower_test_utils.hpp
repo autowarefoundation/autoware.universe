@@ -23,6 +23,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace test_utils
 {

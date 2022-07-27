@@ -30,6 +30,9 @@
 #include <boost/optional.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace control_performance_analysis
 {
@@ -51,7 +54,7 @@ struct Param
   double control_period;
 };
 
-class ControlPerformanceAnalysisNode : public rclcpp::Node
+class ControlPerformanceAnalysisNode : public tilde::SteeNode
 {
 public:
   explicit ControlPerformanceAnalysisNode(const rclcpp::NodeOptions & node_options);

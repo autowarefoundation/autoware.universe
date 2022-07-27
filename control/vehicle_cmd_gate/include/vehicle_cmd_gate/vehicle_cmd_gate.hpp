@@ -39,6 +39,9 @@
 #include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 struct Commands
 {
@@ -53,7 +56,7 @@ struct Commands
   }
 };
 
-class VehicleCmdGate : public rclcpp::Node
+class VehicleCmdGate : public tilde::SteeNode
 {
   using VehicleEmergencyStamped = tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
 

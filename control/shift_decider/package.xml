@@ -12,6 +12,7 @@
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>tilde</depend>
   <depend>rclcpp_components</depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>

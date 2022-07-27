@@ -20,6 +20,9 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
 namespace pure_pursuit
 {

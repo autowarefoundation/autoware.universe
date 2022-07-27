@@ -50,7 +50,7 @@ using vehicle_info_util::VehicleInfoUtil;
 
 ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   const rclcpp::NodeOptions & node_options)
-: Node("control_performance_analysis", node_options)
+: SteeNode("control_performance_analysis", node_options)
 {
   using std::placeholders::_1;
 

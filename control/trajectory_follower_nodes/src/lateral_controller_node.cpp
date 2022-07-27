@@ -50,7 +50,7 @@ void update_param(
 }  // namespace
 
 LateralController::LateralController(const rclcpp::NodeOptions & node_options)
-: Node("lateral_controller", node_options)
+: SteeNode("lateral_controller", node_options)
 {
   using std::placeholders::_1;
 

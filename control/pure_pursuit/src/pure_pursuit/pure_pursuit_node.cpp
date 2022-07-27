@@ -54,7 +54,7 @@ double calcLookaheadDistance(
 namespace pure_pursuit
 {
 PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
-: Node("pure_pursuit", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+: SteeNode("pure_pursuit", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   pure_pursuit_ = std::make_unique<PurePursuit>();
 

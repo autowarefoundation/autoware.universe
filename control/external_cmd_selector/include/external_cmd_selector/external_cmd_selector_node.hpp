@@ -30,8 +30,11 @@
 #include <tier4_external_api_msgs/msg/turn_signal_stamped.hpp>
 
 #include <memory>
+#include "tilde/stee_subscription.hpp"
+#include "tilde/stee_publisher.hpp"
+#include "tilde/stee_node.hpp"
 
-class ExternalCmdSelector : public rclcpp::Node
+class ExternalCmdSelector : public tilde::SteeNode
 {
 public:
   explicit ExternalCmdSelector(const rclcpp::NodeOptions & node_options);
