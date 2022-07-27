@@ -1,7 +1,6 @@
 #include "common/util.hpp"
 #include "validation/overlay.hpp"
 #include "validation/refine.hpp"
-#include "validation/refine_optimizer.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -35,6 +34,7 @@ RefineOptimizer::RefineOptimizer() : Node("refine"), pose_buffer_{40}, tf_subscr
     "/ll2_road_marking", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
 
+  opt_config_ = RefineConfig{this};
   gamma_converter_.reset(5.0);
 }
 
@@ -107,7 +107,7 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
       Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
     Sophus::SE3f T = camera_extrinsic_.value();
 
-    opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments, &summary_text);
+    opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments, opt_config_, &summary_text);
   }
 
   cv::Mat rgb_image;
@@ -187,12 +187,11 @@ cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
   const cv::Size size(info_->width, info_->height);
   cv::Mat image = 255 * cv::Mat::ones(size, CV_8UC1);
 
-  auto cvPoint = [](const Eigen::Vector3f & p) -> cv::Point { return cv::Point2f(p.x(), p.y()); };
-
+  auto cvPoint = [](const Eigen::Vector3f & p) -> cv::Point2f { return cv::Point2f(p.x(), p.y()); };
   for (const auto pn : lsd) {
-    cv::line(
-      image, cvPoint(pn.getVector3fMap()), cvPoint(pn.getNormalVector3fMap()), cv::Scalar::all(0),
-      1);
+    cv::Point2f from = cvPoint(pn.getVector3fMap());
+    cv::Point2f to = cvPoint(pn.getNormalVector3fMap());
+    cv::line(image, from, to, cv::Scalar::all(0), 1);
   }
   cv::Mat distance;
   cv::distanceTransform(image, distance, cv::DIST_L2, 3);

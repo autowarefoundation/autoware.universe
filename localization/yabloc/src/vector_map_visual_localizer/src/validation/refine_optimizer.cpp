@@ -11,6 +11,13 @@ namespace validation
 using Grid = ceres::Grid2D<uchar>;
 using Interpolator = ceres::BiCubicInterpolator<Grid>;
 
+RefineConfig::RefineConfig(rclcpp::Node * node)
+{
+  verbose_ = node->declare_parameter<bool>("refine.verbose", false);
+  max_iteration_ = node->declare_parameter<int>("refine.max_iteration", 30);
+  euler_bound_ = node->declare_parameter<double>("refine.euler_bound", 0.1);
+}
+
 struct ProjectionCost
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -78,42 +85,34 @@ struct ProjectionCost
 Sophus::SE3f refinePose(
   const Sophus::SE3f & extrinsic, const Eigen::Matrix3f & intrinsic, const cv::Mat & cost_image,
   const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments,
-  std::string * summary_text)
+  const RefineConfig & config, std::string * summary_text)
 {
   // Convert types from something float to double*
-  Eigen::Vector3d param_t = Eigen::Vector3d::Zero();
-  // Eigen::Vector4d param_q(0, 0, 0, 1);
-  Eigen::Vector3d param_euler(0, 0, 0);
   const Sophus::SE3d extrinsic_d = extrinsic.cast<double>();
   const Sophus::SE3d pose_d = pose.cast<double>();
   const Eigen::Matrix3d intrinsic_d = intrinsic.cast<double>();
 
-  // Declare optimization problem
+  // Declare optimization problem and variables
   ceres::Problem problem;
+  Eigen::Vector3d param_t = Eigen::Vector3d::Zero();
+  Eigen::Vector3d param_euler(0, 0, 0);
   const Grid grid(cost_image.data, 0, cost_image.rows, 0, cost_image.cols);
   const Interpolator interpolator(grid);
 
   // Add parameter blocks
   problem.AddParameterBlock(param_t.data(), 3);
-  // NOTE: Orientation is too sensitive to cost and it sometime might change dramatically.
-  // NOTE: So I fix it temporallya and I will unfix it someday.
-  // ceres::Manifold * quaternion_manifold = new ceres::EigenQuaternionManifold;
-  // problem.AddParameterBlock(param_q.data(), 4);
-  // problem.SetManifold(param_q.data(), quaternion_manifold);
-  // problem.SetParameterBlockConstant(param_q.data());
   problem.AddParameterBlock(param_euler.data(), 3);
 
   // Add boundary conditions
   problem.SetParameterLowerBound(param_t.data(), 0, param_t.x() - 0.1);  // longitudinal
   problem.SetParameterUpperBound(param_t.data(), 0, param_t.x() + 0.1);  // longitudinal
-  problem.SetParameterLowerBound(param_t.data(), 1, param_t.y() - 1.0);  // lateral
-  problem.SetParameterUpperBound(param_t.data(), 1, param_t.y() + 1.0);  // lateral
+  problem.SetParameterLowerBound(param_t.data(), 1, param_t.y() - 1.0);  // lateral (wider range)
+  problem.SetParameterUpperBound(param_t.data(), 1, param_t.y() + 1.0);  // lateral (wider range)
   problem.SetParameterLowerBound(param_t.data(), 2, param_t.z() - 0.1);  // height
   problem.SetParameterUpperBound(param_t.data(), 2, param_t.z() + 0.1);  // height
-
   for (int axis = 0; axis < 3; ++axis) {
-    problem.SetParameterLowerBound(param_euler.data(), axis, -0.2);
-    problem.SetParameterUpperBound(param_euler.data(), axis, 0.2);
+    problem.SetParameterLowerBound(param_euler.data(), axis, -config.euler_bound_);
+    problem.SetParameterUpperBound(param_euler.data(), axis, config.euler_bound_);
   }
 
   // Add residual blocks
@@ -131,12 +130,12 @@ Sophus::SE3f refinePose(
 
   // Solve the optimization problem
   ceres::Solver::Options options;
-  options.max_num_iterations = 30;
-  // options.minimizer_progress_to_stdout = true;
+  options.max_num_iterations = config.max_iteration_;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
-  std::cout << summary.BriefReport() << std::endl;
+  if (config.verbose_) std::cout << summary.BriefReport() << std::endl;
 
+  // Assemble status string
   {
     std::stringstream ss;
     ss << std::showpos << std::fixed << std::setprecision(2);
@@ -152,9 +151,6 @@ Sophus::SE3f refinePose(
   // Assemble optimized parameters
   {
     Eigen::Vector3f t(param_t.x(), param_t.y(), param_t.z());
-    // Eigen::Quaternionf q;
-    // q.coeffs() = param_q.cast<float>();
-
     double R_data[9];
     ceres::EulerAnglesToRotationMatrix(param_euler.data(), 3, R_data);
     Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > R(R_data);

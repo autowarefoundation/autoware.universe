@@ -4,6 +4,7 @@
 #include "common/ground_plane.hpp"
 #include "common/static_tf_subscriber.hpp"
 #include "common/synchro_subscriber.hpp"
+#include "validation/refine_optimizer.hpp"
 
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
@@ -52,6 +53,7 @@ protected:
   SynchroSubscriber<Image, PointCloud2>::SharedPtr sub_synchro_;
 
   GammaConverter gamma_converter_{5.0};
+  RefineConfig opt_config_;
 
   void infoCallback(const CameraInfo & msg);
 

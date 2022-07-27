@@ -10,8 +10,10 @@
         <remap from="/src_info" to="$(var resized_info)"/>
         <remap from="/particle_pose" to="/particle_pose"/>
 
-        <remap from="/marker" to="/disabled/marker"/>
-        <remap from="/overlay_image" to="/disabled/overlay_image"/>
+        <param name="refine.verbose" value="true"/>
+        <param name="refine.max_iteration" value="30"/>
+        <param name="refine.euler_bound" value="3.0"/>
+
     </node>
 
     <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
