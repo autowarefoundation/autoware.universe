@@ -4,7 +4,7 @@
 
 This is a utility package that provides the following features:
 
-- Instantiation of wrapper class
+- Instantiation of the wrapper class
 - Logging for service and client
 - Service exception for response
 - Macros
@@ -16,7 +16,7 @@ This package provides the wrappers for the interface classes of rclcpp.
 The wrappers limit the usage of the original class to enforce the processing recommended by the component interface.
 Do not inherit the class of rclcpp, and forward or wrap the member function that is allowed to be used.
 
-## Instantiation of wrapper class
+## Instantiation of the wrapper class
 
 The wrapper class requires interface information in this format.
 
@@ -37,7 +37,7 @@ struct SampleMessage
 };
 ```
 
-Create a wrapper using the above definition as follows.
+Create the wrapper using the above definition as follows.
 
 ```cpp
 // header file
@@ -102,7 +102,7 @@ void ServiceCallback(
 ```
 
 Developers only needs what type the callback argument is for.
-This macro complements the intersection from the type name.
+This macro completes the arguments from the type name.
 
 ```cpp
 void ServiceCallback(ROS_SERVICE_ARG(some_package_name::srv::ServiceName));
