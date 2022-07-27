@@ -46,9 +46,9 @@ namespace motion_utils
  * @param input_path input path(poses) to resample
  * @param resampled_arclength arclength that contains length of each resampling points from initial
  * point
- * @param use_lerp_for_xy If this is true, it uses linear interpolation to resample position x and
+ * @param use_lerp_for_xy If true, it uses linear interpolation to resample position x and
  * y. Otherwise, it uses spline interpolation
- * @param use_lerp_for_z If this is true, it uses linear interpolation to resample position z.
+ * @param use_lerp_for_z If true, it uses linear interpolation to resample position z.
  * Otherwise, it uses spline interpolation
  * @return resampled path(poses)
  */
@@ -100,33 +100,33 @@ inline std::vector<geometry_msgs::msg::Pose> resamplePath(
   const auto interpolated_y = use_lerp_for_xy ? lerp(y) : slerp(y);
   const auto interpolated_z = use_lerp_for_z ? lerp(z) : slerp(z);
 
-  std::vector<geometry_msgs::msg::Pose> interpolated_points;
-  interpolated_points.resize(interpolated_x.size());
+  std::vector<geometry_msgs::msg::Pose> resampled_points;
+  resampled_points.resize(interpolated_x.size());
 
   // Insert Position, Velocity and Heading Rate
-  for (size_t i = 0; i < interpolated_points.size(); ++i) {
+  for (size_t i = 0; i < resampled_points.size(); ++i) {
     geometry_msgs::msg::Pose pose;
     pose.position.x = interpolated_x.at(i);
     pose.position.y = interpolated_y.at(i);
     pose.position.z = interpolated_z.at(i);
-    interpolated_points.at(i) = pose;
+    resampled_points.at(i) = pose;
   }
 
   // Insert Orientation
-  for (size_t i = 0; i < interpolated_points.size() - 1; ++i) {
-    const auto & src_point = interpolated_points.at(i).position;
-    const auto & dst_point = interpolated_points.at(i + 1).position;
+  for (size_t i = 0; i < resampled_points.size() - 1; ++i) {
+    const auto & src_point = resampled_points.at(i).position;
+    const auto & dst_point = resampled_points.at(i + 1).position;
     const double pitch = tier4_autoware_utils::calcElevationAngle(src_point, dst_point);
     const double yaw = tier4_autoware_utils::calcAzimuthAngle(src_point, dst_point);
-    interpolated_points.at(i).orientation =
+    resampled_points.at(i).orientation =
       tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
-    if (i == interpolated_points.size() - 2) {
+    if (i == resampled_points.size() - 2) {
       // Terminal Orientation is same as the point before it
-      interpolated_points.at(i + 1).orientation = interpolated_points.at(i).orientation;
+      resampled_points.at(i + 1).orientation = resampled_points.at(i).orientation;
     }
   }
 
-  return interpolated_points;
+  return resampled_points;
 }
 
 /**
@@ -138,11 +138,11 @@ inline std::vector<geometry_msgs::msg::Pose> resamplePath(
  * @param input_path input path to resample
  * @param resampled_arclength arclength that contains length of each resampling points from initial
  * point
- * @param use_lerp_for_xy If this is true, it uses linear interpolation to resample position x and
+ * @param use_lerp_for_xy If true, it uses linear interpolation to resample position x and
  * y. Otherwise, it uses spline interpolation
- * @param use_lerp_for_z If this is true, it uses linear interpolation to resample position z.
+ * @param use_lerp_for_z If true, it uses linear interpolation to resample position z.
  * Otherwise, it uses spline interpolation
- * @param use_zero_order_hold_for_v If this is true, it uses zero_order_hold to resample
+ * @param use_zero_order_hold_for_v If true, it uses zero_order_hold to resample
  * longitudinal and lateral velocity. Otherwise, it uses linear interpolation
  * @return resampled path
  */
@@ -211,7 +211,7 @@ inline autoware_auto_planning_msgs::msg::Path resamplePath(
   resampled_path.drivable_area = input_path.drivable_area;
   resampled_path.points.resize(interpolated_pose.size());
 
-  // Insert Position, Velocity and Heading Rate
+  // Insert Pose, Velocity and Heading Rate
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;
     path_point.pose = interpolated_pose.at(i);
@@ -224,6 +224,24 @@ inline autoware_auto_planning_msgs::msg::Path resamplePath(
   return resampled_path;
 }
 
+/**
+ * @brief A resampling function for a trajectory. Note that in a default setting, position xy are
+ * resampled by spline interpolation, position z are resampled by linear interpolation, twist
+ * informaiton(velocity and acceleration) are resampled by zero_order_hold, and heading rate is
+ * resampled by linear interpolation. The rest of the category is resampled by linear interpolation.
+ * Orientation of the resampled path are calculated by a forward difference method based on the
+ * interpolated position x and y.
+ * @param input_trajectory input trajectory to resample
+ * @param resampled_arclength arclength that contains length of each resampling points from initial
+ * point
+ * @param use_lerp_for_xy If true, it uses linear interpolation to resample position x and
+ * y. Otherwise, it uses spline interpolation
+ * @param use_lerp_for_z If true, it uses linear interpolation to resample position z.
+ * Otherwise, it uses spline interpolation
+ * @param use_zero_order_hold_for_twist If true, it uses zero_order_hold to resample
+ * longitudinal, lateral velocity and acceleration. Otherwise, it uses linear interpolation
+ * @return resampled path
+ */
 inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy = false,
@@ -240,7 +258,7 @@ inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
     return input_trajectory;
   }
 
-  // Input Path Information
+  // Input Trajectory Information
   std::vector<double> input_arclength(input_trajectory.points.size());
   std::vector<geometry_msgs::msg::Pose> input_pose(input_trajectory.points.size());
   std::vector<double> v_lon(input_trajectory.points.size());
@@ -306,7 +324,7 @@ inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   resampled_trajectory.header = input_trajectory.header;
   resampled_trajectory.points.resize(interpolated_pose.size());
 
-  // Insert Position, Velocity and Heading Rate
+  // Insert Pose, Velocity and Heading Rate
   for (size_t i = 0; i < resampled_trajectory.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose = interpolated_pose.at(i);
