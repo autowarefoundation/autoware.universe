@@ -4,6 +4,8 @@
 #include <ceres/cubic_interpolation.h>
 #include <ceres/rotation.h>
 
+#include <iomanip>
+
 namespace validation
 {
 using Grid = ceres::Grid2D<uchar>;
@@ -134,16 +136,16 @@ Sophus::SE3f refinePose(
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
   std::cout << summary.BriefReport() << std::endl;
-  std::cout << "euler: " << param_euler.transpose() << std::endl;
 
   {
     std::stringstream ss;
+    ss << std::showpos << std::fixed << std::setprecision(2);
     ss << "x: " << param_t(0) << std::endl;
     ss << "y: " << param_t(1) << std::endl;
     ss << "z: " << param_t(2) << std::endl;
-    ss << "roll: " << param_euler(0) << std::endl;
-    ss << "pitch: " << param_euler(1) << std::endl;
-    ss << "yaw: " << param_euler(2) << std::endl;
+    ss << "r: " << param_euler(0) << std::endl;
+    ss << "p: " << param_euler(1) << std::endl;
+    ss << "y: " << param_euler(2) << std::endl;
     *summary_text = ss.str();
   }
 

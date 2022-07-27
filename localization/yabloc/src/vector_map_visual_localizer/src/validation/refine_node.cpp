@@ -44,6 +44,37 @@ void RefineOptimizer::infoCallback(const CameraInfo & msg)
   camera_extrinsic_ = tf_subscriber_.se3f(info_->header.frame_id, "base_link");
 }
 
+void addText(const std::string & text, const cv::Mat & image)
+{
+  const int fontscale = 2;
+  const int fontface = cv::FONT_HERSHEY_PLAIN;
+  const int thickness = 2;
+  int cumulative_height = 10;
+  int max_width = 10;
+
+  std::stringstream ss(text);
+  std::string line;
+  while (std::getline(ss, line)) {
+    int balse_line;
+    cv::Size size = cv::getTextSize(line, fontface, fontscale, thickness, &balse_line);
+    cumulative_height += (size.height + 5);
+    max_width = std::max(max_width, size.width);
+  }
+  cv::rectangle(
+    image, cv::Rect(40 + 5, 20 - 5, max_width, cumulative_height), cv::Scalar::all(0), -1);
+  cumulative_height = 10;
+
+  ss = std::stringstream(text);
+  while (std::getline(ss, line)) {
+    int balse_line;
+    cv::Size size = cv::getTextSize(line, fontface, fontscale, thickness, &balse_line);
+    cumulative_height += (size.height + 5);
+    cv::putText(
+      image, line, cv::Point2i(50, cumulative_height), fontface, fontscale, cv::Scalar::all(255),
+      thickness);
+  }
+}
+
 void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
@@ -77,9 +108,6 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     Sophus::SE3f T = camera_extrinsic_.value();
 
     opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments, &summary_text);
-
-    Sophus::SE3f estimated_offset = opt_pose.inverse() * raw_pose;
-    std::cout << "Estimated offset: " << estimated_offset.translation().transpose() << std::endl;
   }
 
   cv::Mat rgb_image;
@@ -87,6 +115,8 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   // cv::Mat rgb_image = util::decompress2CvMat(image_msg);
   drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 0));
   drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(255, 255, 255));
+
+  addText(summary_text, rgb_image);
 
   cv::imshow("6DoF fine optimization", rgb_image);
   cv::waitKey(5);
