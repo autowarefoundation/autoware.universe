@@ -822,3 +822,202 @@ TEST(resample_path, resample_trajectory_by_vector)
     }
   }
 }
+
+TEST(resample_trajectory, resample_trajectory_by_vector_non_default)
+{
+  using motion_utils::resampleTrajectory;
+
+  // Lerp x, y
+  {
+    autoware_auto_planning_msgs::msg::Trajectory traj;
+    traj.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      traj.points.at(i) =
+        generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
+    }
+    std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
+
+    const auto resampled_traj = resampleTrajectory(traj, resampled_arclength, true);
+    {
+      const auto p = resampled_traj.points.at(0);
+      EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.0, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(1);
+      EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 1.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.05, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(2);
+      EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 5.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 2.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.25, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(3);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.45, epsilon);
+    }
+
+    for (size_t i = 0; i < resampled_traj.points.size(); ++i) {
+      const auto p = resampled_traj.points.at(i);
+      EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, 1.0, epsilon);
+    }
+  }
+
+  // Slerp z
+  {
+    autoware_auto_planning_msgs::msg::Trajectory traj;
+    traj.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      traj.points.at(i) = generateTestTrajectoryPoint(
+        i * 1.0, 0.0, i * 1.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
+    }
+    std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
+
+    const auto resampled_traj = resampleTrajectory(traj, resampled_arclength, false, false);
+    {
+      const auto p = resampled_traj.points.at(0);
+      EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.0, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(1);
+      EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 1.2, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 1.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.05, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(2);
+      EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 5.3, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 5.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 2.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.25, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(3);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 9.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.45, epsilon);
+    }
+
+    const double pitch = std::atan(1.0);
+    const auto ans_quat = tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, 0.0);
+    for (size_t i = 0; i < resampled_traj.points.size(); ++i) {
+      const auto p = resampled_traj.points.at(i);
+      EXPECT_NEAR(p.pose.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // Lerp twist
+  {
+    autoware_auto_planning_msgs::msg::Trajectory traj;
+    traj.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      traj.points.at(i) =
+        generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
+    }
+    std::vector<double> resampled_arclength = {0.0, 1.2, 5.3, 9.0};
+
+    const auto resampled_traj = resampleTrajectory(traj, resampled_arclength, false, true, false);
+    {
+      const auto p = resampled_traj.points.at(0);
+      EXPECT_NEAR(p.pose.position.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.0, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.0, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.0, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(1);
+      EXPECT_NEAR(p.pose.position.x, 1.2, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 1.2, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 0.6, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.12, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.06, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(2);
+      EXPECT_NEAR(p.pose.position.x, 5.3, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 5.3, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 2.65, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.53, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.265, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(3);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.longitudinal_velocity_mps, 9.0, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, 4.5, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, 0.45, epsilon);
+    }
+
+    for (size_t i = 0; i < resampled_traj.points.size(); ++i) {
+      const auto p = resampled_traj.points.at(i);
+      EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, 1.0, epsilon);
+    }
+  }
+}

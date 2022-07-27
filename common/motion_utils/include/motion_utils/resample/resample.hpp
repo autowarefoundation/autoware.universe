@@ -210,8 +210,6 @@ inline autoware_auto_planning_msgs::msg::Path resamplePath(
   resampled_path.header = input_path.header;
   resampled_path.drivable_area = input_path.drivable_area;
   resampled_path.points.resize(interpolated_pose.size());
-
-  // Insert Pose, Velocity and Heading Rate
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;
     path_point.pose = interpolated_pose.at(i);
@@ -240,7 +238,7 @@ inline autoware_auto_planning_msgs::msg::Path resamplePath(
  * Otherwise, it uses spline interpolation
  * @param use_zero_order_hold_for_twist If true, it uses zero_order_hold to resample
  * longitudinal, lateral velocity and acceleration. Otherwise, it uses linear interpolation
- * @return resampled path
+ * @return resampled trajectory
  */
 inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory,
@@ -323,8 +321,6 @@ inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   autoware_auto_planning_msgs::msg::Trajectory resampled_trajectory;
   resampled_trajectory.header = input_trajectory.header;
   resampled_trajectory.points.resize(interpolated_pose.size());
-
-  // Insert Pose, Velocity and Heading Rate
   for (size_t i = 0; i < resampled_trajectory.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose = interpolated_pose.at(i);
