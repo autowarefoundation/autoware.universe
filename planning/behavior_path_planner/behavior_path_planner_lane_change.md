@@ -40,7 +40,20 @@ The `backward_length_buffer_for_end_of_lane` is added to allow some window for a
 
 #### Multiple candidate path samples
 
+Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
+Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `lane_change_prepare_distance`, `lane_change_prepare_velocity` and `lane_changing_distance` equation.
+
+The predetermined deceleration are a set of value that starts from `deceleration = 0.0`, and decrease by `acceleration_resolution` until it reaches`deceleration = -maximum_deceleration`. The `acceleration_resolution` is determine by the following
+
+```C++
+acceleration_resolution = maximum_deceleration / lane_change_sampling_num
+```
+
+The following figure illustrates when `lane_change_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
+
 ![path_samples](./image/lane_change/lane_change-candidate_path_samples.png)
+
+Which path will be chosen will depend on validity and collision check.
 
 #### Candidate Path's validity check
 
@@ -339,7 +352,7 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 | `lateral_distance_max_threshold`  | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 5.0           |
 | `expected_front_deceleration`     | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*2)                                                                   | -1.0          |
 | `expected_rear_deceleration`      | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*2)                                                                     | -1.0          |
-| `rear_vehicle_reaction_time`      | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 1.0           |
+| `rear_vehicle_reaction_time`      | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 2.0           |
 | `rear_vehicle_safety_time_margin` | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 2.0           |
 
 (\*2) the value must be negative.
