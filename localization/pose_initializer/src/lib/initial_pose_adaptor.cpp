@@ -21,7 +21,8 @@
 InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_rviz_helper"), map_fit_(this)
 {
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_cli(cli_initialize_);
+  group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  node.init_cli(cli_initialize_, group_cli_);
 
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "initialpose", rclcpp::QoS(1),
@@ -36,8 +37,7 @@ void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr
     const auto req = std::make_shared<Initialize::Service::Request>();
     req->pose.push_back(map_fit_.FitHeight(*msg));
     req->pose.back().pose.covariance = rviz_particle_covariance_;
-    cli_initialize_->async_send_request(req);
+    cli_initialize_->call(req);
   } catch (const component_interface_utils::ServiceException & error) {
-    RCLCPP_ERROR_STREAM(get_logger(), error.what());
   }
 }

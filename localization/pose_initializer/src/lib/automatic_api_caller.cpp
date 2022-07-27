@@ -36,19 +36,8 @@ void AutomaticApiCaller::OnTimer()
     RCLCPP_INFO_STREAM(get_logger(), "Request to initialize pose.");
     const auto req = std::make_shared<Initialize::Service::Request>();
     try {
-      cli_initialize_->call(req, 1.0);
+      cli_initialize_->call(req);
     } catch (const component_interface_utils::ServiceException & error) {
     }
   }
-}
-
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<AutomaticApiCaller>();
-  executor.add_node(node);
-  executor.spin();
-  executor.remove_node(node);
-  rclcpp::shutdown();
 }
