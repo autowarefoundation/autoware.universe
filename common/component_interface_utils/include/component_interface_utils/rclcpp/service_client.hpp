@@ -83,7 +83,12 @@ public:
     };
 
     RCLCPP_INFO_STREAM(logger_, "client call: " << SpecT::name << "\n" << to_yaml(*request));
+
+#ifdef ROS_DISTRO_GALACTIC
     return client_->async_send_request(request, wrapped);
+#else
+    return client_->async_send_request(request, wrapped).future;
+#endif
   }
 
 private:
