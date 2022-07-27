@@ -79,7 +79,6 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
 
   for (auto & object : input.objects->objects) {
     // Link between 3d bounding box and radar data
-
     std::shared_ptr<std::vector<RadarInput>> radars_within_object =
       filterRadarWithinObject(object, input.radars);
 
