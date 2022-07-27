@@ -90,10 +90,10 @@ void validateNonSharpAngle(
 }
 
 template <class T>
-bool isDrivingForward(const T points)
+boost::optional<bool> isDrivingForward(const T points)
 {
   if (points.size() < 2) {
-    return true;
+    return boost::none;
   }
 
   // check the first point direction
@@ -104,16 +104,19 @@ bool isDrivingForward(const T points)
 }
 
 template <class T>
-bool isDrivingForwardWithTwist(const T points_with_twist)
+boost::optional<bool> isDrivingForwardWithTwist(const T points_with_twist)
 {
   if (points_with_twist.empty()) {
-    return true;
+    return boost::none;
   }
   if (points_with_twist.size() == 1) {
-    if (0.0 <= tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
+    if (0.0 < tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
       return true;
+    } else if (0.0 > tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
+      return false;
+    } else {
+      return boost::none;
     }
-    return false;
   }
 
   return isDrivingForward(points_with_twist);
