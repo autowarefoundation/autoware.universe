@@ -31,7 +31,7 @@ Store time-series data of objects to determine the vehicle's route and to detect
 Search one or more lanelets satisfying the following conditions for each target object and store them in the ObjectData.
 
 - The CoG of the object must be inside the lanelet.
-- The centerline of the lanalet must have two or more points.
+- The centerline of the lanelet must have two or more points.
 - The angle difference between the lanelet and the direction of the object must be within the threshold given by the parameters.
   - The angle flip is allowed, the condition is `diff_yaw < threshold or diff_yaw > pi - threshold`.
 - The lanelet must be reachable from the lanelet recorded in the past history.
