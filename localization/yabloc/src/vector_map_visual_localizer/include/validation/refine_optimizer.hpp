@@ -10,6 +10,7 @@ namespace validation
 {
 Sophus::SE3f refinePose(
   const Sophus::SE3f & extrinsic, const Eigen::Matrix3f & intrinsic, const cv::Mat & cost_image,
-  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments);
+  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments,
+  std::string * summary_text);
 
 }  // namespace validation

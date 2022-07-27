@@ -68,30 +68,27 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   Sophus::SE3f raw_pose = util::pose2Se3(synched_pose.pose);
   auto linesegments = extractNaerLineSegments(raw_pose, ll2_cloud_);
 
-  // DEBUG:
-  Sophus::SE3f debug_offset(Eigen::Quaternionf::Identity(), Eigen::Vector3f(0, 0.5, 0));
-  raw_pose = raw_pose * debug_offset;
-
   Sophus::SE3f opt_pose;
+  std::string summary_text;
   {
     // Optimization
     Eigen::Matrix3f K =
       Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
     Sophus::SE3f T = camera_extrinsic_.value();
 
-    opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments);
+    opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments, &summary_text);
 
     Sophus::SE3f estimated_offset = opt_pose.inverse() * raw_pose;
     std::cout << "Estimated offset: " << estimated_offset.translation().transpose() << std::endl;
   }
 
-  // cv::Mat rgb_cost_image;
-  // cv::applyColorMap(cost_image, rgb_cost_image, cv::COLORMAP_JET);
+  cv::Mat rgb_image;
+  cv::applyColorMap(cost_image, rgb_image, cv::COLORMAP_JET);
+  // cv::Mat rgb_image = util::decompress2CvMat(image_msg);
+  drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 0));
+  drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(255, 255, 255));
 
-  cv::Mat rgb_image = util::decompress2CvMat(image_msg);
-  drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 255));
-  drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(0, 255, 0));
-  cv::imshow("cost", rgb_image);
+  cv::imshow("6DoF fine optimization", rgb_image);
   cv::waitKey(5);
 }
 
@@ -115,7 +112,7 @@ void RefineOptimizer::drawOverlayLineSegments(
   for (const pcl::PointNormal & pn : near_segments) {
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(image, p1.value(), p2.value(), color, 2);
+    cv::line(image, p1.value(), p2.value(), color, 3);
   }
 }
 
@@ -141,7 +138,7 @@ RefineOptimizer::LineSegments RefineOptimizer::extractNaerLineSegments(
     // The allowable distance along longitudinal direction is greater than one along
     // lateral direction. This is because line segments that are far apart along lateral
     // direction are not suitable for the overlaying optimization.
-    float dx = nearest.x() / 80;  // allowable longitudinal error[m]
+    float dx = nearest.x() / 60;  // allowable longitudinal error[m]
     float dy = nearest.y() / 10;  // allowable lateral error[m]
     return dx * dx + dy * dy < 1;
   };

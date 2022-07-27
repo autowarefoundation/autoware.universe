@@ -2,6 +2,7 @@
 
 #include <ceres/ceres.h>
 #include <ceres/cubic_interpolation.h>
+#include <ceres/rotation.h>
 
 namespace validation
 {
@@ -19,13 +20,17 @@ struct ProjectionCost
     using Vector3T = Eigen::Matrix<T, 3, 1>;
     using QuatT = Eigen::Quaternion<T>;
 
-    Eigen::Map<const Vector3T> position(p);
-    Eigen::Map<const QuatT> orientation(q);
+    T R_data[9];
+    ceres::EulerAnglesToRotationMatrix(q, 3, R_data);
+    Eigen::Map<const Eigen::Matrix<T, 3, 3, Eigen::RowMajor> > R(R_data);
 
-    // from_camera = K (T^{-1} p)
+    Eigen::Map<const Vector3T> position(p);
+    // Eigen::Map<const QuatT> orientation(q);
+
+    // from_camera = (T^{-1} p)
     // where, T=pose * variable * extrinsic
     Vector3d from_biased_base_link = pose_.inverse() * point_;
-    Vector3T from_base_link = orientation.conjugate() * (from_biased_base_link - position);
+    Vector3T from_base_link = R.transpose() * (from_biased_base_link - position);
     Vector3T from_camera = extrinsic_.inverse() * from_base_link;
 
     if (from_camera.z() < 1e-3f) {
@@ -57,7 +62,7 @@ struct ProjectionCost
     const Interpolator & interpolator, const Eigen::Vector3d & point,
     const Eigen::Matrix3d & intrinsic, const Sophus::SE3d & extrinsic, const Sophus::SE3d & pose)
   {
-    return new ceres::AutoDiffCostFunction<ProjectionCost, 1, 3, 4>(
+    return new ceres::AutoDiffCostFunction<ProjectionCost, 1, 3, 3>(
       new ProjectionCost(interpolator, point, intrinsic, extrinsic, pose));
   }
 
@@ -70,11 +75,13 @@ struct ProjectionCost
 
 Sophus::SE3f refinePose(
   const Sophus::SE3f & extrinsic, const Eigen::Matrix3f & intrinsic, const cv::Mat & cost_image,
-  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments)
+  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments,
+  std::string * summary_text)
 {
   // Convert types from something float to double*
   Eigen::Vector3d param_t = Eigen::Vector3d::Zero();
-  Eigen::Vector4d param_q(0, 0, 0, 1);
+  // Eigen::Vector4d param_q(0, 0, 0, 1);
+  Eigen::Vector3d param_euler(0, 0, 0);
   const Sophus::SE3d extrinsic_d = extrinsic.cast<double>();
   const Sophus::SE3d pose_d = pose.cast<double>();
   const Eigen::Matrix3d intrinsic_d = intrinsic.cast<double>();
@@ -88,10 +95,11 @@ Sophus::SE3f refinePose(
   problem.AddParameterBlock(param_t.data(), 3);
   // NOTE: Orientation is too sensitive to cost and it sometime might change dramatically.
   // NOTE: So I fix it temporallya and I will unfix it someday.
-  ceres::Manifold * quaternion_manifold = new ceres::EigenQuaternionManifold;
-  problem.AddParameterBlock(param_q.data(), 4);
-  problem.SetManifold(param_q.data(), quaternion_manifold);
-  problem.SetParameterBlockConstant(param_q.data());
+  // ceres::Manifold * quaternion_manifold = new ceres::EigenQuaternionManifold;
+  // problem.AddParameterBlock(param_q.data(), 4);
+  // problem.SetManifold(param_q.data(), quaternion_manifold);
+  // problem.SetParameterBlockConstant(param_q.data());
+  problem.AddParameterBlock(param_euler.data(), 3);
 
   // Add boundary conditions
   problem.SetParameterLowerBound(param_t.data(), 0, param_t.x() - 0.1);  // longitudinal
@@ -100,6 +108,11 @@ Sophus::SE3f refinePose(
   problem.SetParameterUpperBound(param_t.data(), 1, param_t.y() + 1.0);  // lateral
   problem.SetParameterLowerBound(param_t.data(), 2, param_t.z() - 0.1);  // height
   problem.SetParameterUpperBound(param_t.data(), 2, param_t.z() + 0.1);  // height
+
+  for (int axis = 0; axis < 3; ++axis) {
+    problem.SetParameterLowerBound(param_euler.data(), axis, -0.2);
+    problem.SetParameterUpperBound(param_euler.data(), axis, 0.2);
+  }
 
   // Add residual blocks
   for (const pcl::PointNormal & pn : linesegments) {
@@ -110,7 +123,7 @@ Sophus::SE3f refinePose(
       Eigen::Vector3f p = pn.getVector3fMap() + t * distance;
       problem.AddResidualBlock(
         ProjectionCost::Create(interpolator, p.cast<double>(), intrinsic_d, extrinsic_d, pose_d),
-        nullptr, param_t.data(), param_q.data());
+        nullptr, param_t.data(), param_euler.data());
     }
   }
 
@@ -120,14 +133,30 @@ Sophus::SE3f refinePose(
   // options.minimizer_progress_to_stdout = true;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
-  std::cout << summary.BriefReport() << '\n';
+  std::cout << summary.BriefReport() << std::endl;
+  std::cout << "euler: " << param_euler.transpose() << std::endl;
+
+  {
+    std::stringstream ss;
+    ss << "x: " << param_t(0) << std::endl;
+    ss << "y: " << param_t(1) << std::endl;
+    ss << "z: " << param_t(2) << std::endl;
+    ss << "roll: " << param_euler(0) << std::endl;
+    ss << "pitch: " << param_euler(1) << std::endl;
+    ss << "yaw: " << param_euler(2) << std::endl;
+    *summary_text = ss.str();
+  }
 
   // Assemble optimized parameters
   {
     Eigen::Vector3f t(param_t.x(), param_t.y(), param_t.z());
-    Eigen::Quaternionf q;
-    q.coeffs() = param_q.cast<float>();
-    return pose * Sophus::SE3f{q, t};
+    // Eigen::Quaternionf q;
+    // q.coeffs() = param_q.cast<float>();
+
+    double R_data[9];
+    ceres::EulerAnglesToRotationMatrix(param_euler.data(), 3, R_data);
+    Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor> > R(R_data);
+    return pose * Sophus::SE3f{R.cast<float>(), t};
   }
 }
 
