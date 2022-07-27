@@ -434,7 +434,6 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   const auto input_closest = findNearestIndexFromEgo(traj_input);
 
   if (!input_closest) {
-    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
     RCLCPP_WARN_THROTTLE(
       get_logger(), *clock_, 5000, "Cannot find the closest point from input trajectory");
     return prev_output_;
