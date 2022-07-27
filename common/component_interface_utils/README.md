@@ -61,13 +61,13 @@ If the wrapper class is used, logging is automatically enabled. The log level is
 ## Service exception for response
 
 If the wrapper class is used, throwing `ServiceException` will automatically catch it and set it to response status.
-This is useful for abending service processing in a function called from the service callback.
+This is useful when returning an error from a function called from the service callback.
 
 ```cpp
 void ServiceCallback(Request req, Response res)
 {
    Function();
-   req->status.success = true;
+   res->status.success = true;
 }
 
 void Function()
@@ -83,7 +83,7 @@ void ServiceCallback(Request req, Response res)
 {
    try {
       Function();
-      req->status.success = true;
+      res->status.success = true;
    } catch (const ServiceException & error) {
       res->status = error.status();
    }
