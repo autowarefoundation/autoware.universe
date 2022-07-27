@@ -5,9 +5,10 @@
 
   <!-- vehicle -->
   <xacro:property name="vehicle_model_property" value="$(arg vehicle_model)"/>
-  <xacro:include filename="$(find ${vehicle_model_property}_description)/urdf/vehicle.xacro"/>
+  <xacro:include filename="$(find ${vehicle_model_property}_description)/urdf/base_vehicle.xacro"/>
 
   <!-- sensors -->
+  <!-- NOTE: sensors internally look up "config_dir" for sensors_calibration.yaml -->
   <xacro:property name="sensor_model_property" value="$(arg sensor_model)"/>
   <xacro:include filename="$(find ${sensor_model_property}_description)/urdf/sensors.xacro"/>
 </robot>
