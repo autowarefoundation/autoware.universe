@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/pose_initializer_core.hpp"
+#include "lib/initial_pose_adaptor.hpp"
 
 #include <memory>
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<PoseInitializer>();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  auto node = std::make_shared<InitialPoseAdaptor>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);
