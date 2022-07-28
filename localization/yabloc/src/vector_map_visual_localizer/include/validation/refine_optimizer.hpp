@@ -24,7 +24,7 @@ struct RefineConfig
 
 Sophus::SE3f refinePose(
   const Sophus::SE3f & extrinsic, const Eigen::Matrix3f & intrinsic, const cv::Mat & cost_image,
-  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments,
-  const RefineConfig & config, std::string * summary_text);
+  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointXYZ> & samples, const RefineConfig & config,
+  std::string * summary_text);
 
 }  // namespace validation

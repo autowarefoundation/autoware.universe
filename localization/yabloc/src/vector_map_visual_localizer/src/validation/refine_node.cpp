@@ -9,11 +9,17 @@
 #include <opencv4/opencv2/imgproc.hpp>
 #include <sophus/geometry.hpp>
 
+#include <boost/functional/hash.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace validation
 {
-RefineOptimizer::RefineOptimizer() : Node("refine"), pose_buffer_{40}, tf_subscriber_(get_clock())
+RefineOptimizer::RefineOptimizer()
+: Node("refine"),
+  pixel_interval_(declare_parameter<int>("refine.pixel_interval", 10)),
+  pose_buffer_{40},
+  tf_subscriber_(get_clock())
 {
   using std::placeholders::_1, std::placeholders::_2;
 
@@ -98,8 +104,9 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
 
   Sophus::SE3f raw_pose = util::pose2Se3(synched_pose.pose);
   auto linesegments = extractNaerLineSegments(raw_pose, ll2_cloud_);
+  pcl::PointCloud<pcl::PointXYZ> samples = sampleUniformlyOnImage(raw_pose, linesegments);
 
-  Sophus::SE3f opt_pose;
+  Sophus::SE3f opt_pose = raw_pose;
   std::string summary_text;
   {
     // Optimization
@@ -107,13 +114,14 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
       Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
     Sophus::SE3f T = camera_extrinsic_.value();
 
-    opt_pose = refinePose(T, K, cost_image, raw_pose, linesegments, opt_config_, &summary_text);
+    opt_pose = refinePose(T, K, cost_image, raw_pose, samples, opt_config_, &summary_text);
   }
 
   cv::Mat rgb_image;
   cv::applyColorMap(cost_image, rgb_image, cv::COLORMAP_JET);
   // cv::Mat rgb_image = util::decompress2CvMat(image_msg);
-  drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 0));
+  // drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 0));
+  drawOverlayPoints(rgb_image, raw_pose, samples, cv::Scalar::all(0));
   drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(255, 255, 255));
 
   addText(summary_text, rgb_image);
@@ -143,6 +151,30 @@ void RefineOptimizer::drawOverlayLineSegments(
     auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
     if (!p1.has_value() || !p2.has_value()) continue;
     cv::line(image, p1.value(), p2.value(), color, 3);
+  }
+}
+
+void RefineOptimizer::drawOverlayPoints(
+  cv::Mat & image, const Sophus::SE3f & pose_affine, const pcl::PointCloud<pcl::PointXYZ> & points,
+  const cv::Scalar & color)
+{
+  Eigen::Matrix3f K =
+    Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
+  Sophus::SE3f T = camera_extrinsic_.value();
+
+  Sophus::SE3f transform = ground_plane_.alignWithSlope(pose_affine);
+
+  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
+    Eigen::Vector3f from_camera = K * (T.inverse() * transform.inverse() * xyz);
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
+    return cv::Point2i(uv1.x(), uv1.y());
+  };
+
+  for (const pcl::PointXYZ & p : points) {
+    auto p1 = project(p.getArray3fMap());
+    if (!p1.has_value()) continue;
+    cv::circle(image, p1.value(), 3, color, -1);
   }
 }
 
@@ -199,6 +231,53 @@ cv::Mat RefineOptimizer::makeCostMap(LineSegments & lsd)
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
   return gamma_converter_(distance);
+}
+
+pcl::PointCloud<pcl::PointXYZ> RefineOptimizer::sampleUniformlyOnImage(
+  const Sophus::SE3f & pose, const LineSegments & segments)
+{
+  Eigen::Matrix3f intrinsic =
+    Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
+  Eigen::Matrix3f intrinsic_inv = intrinsic.inverse();
+  Sophus::SE3f extrinsic = camera_extrinsic_.value();
+
+  auto pixelHash = [this](const Eigen::Vector2f & u) -> size_t {
+    const int L = this->pixel_interval_;
+    long x = static_cast<long>(std::floor(u.x() / L));
+    long y = static_cast<long>(std::floor(u.y() / L));
+    std::size_t seed = 0;
+    boost::hash_combine(seed, x);
+    boost::hash_combine(seed, y);
+    return seed;
+  };
+  auto project = [pose, extrinsic,
+                  intrinsic](const Eigen::Vector3f & p) -> std::optional<Eigen::Vector2f> {
+    Eigen::Vector3f from_base_link = pose.inverse() * p;
+    Eigen::Vector3f from_camera = extrinsic.inverse() * from_base_link;
+    if (from_camera.z() < 1e-3f) return std::nullopt;
+    Eigen::Vector3f u = intrinsic * from_camera / from_camera.z();
+    return u.topRows(2);
+  };
+
+  std::unordered_set<size_t> already_occupied_pixels;
+  pcl::PointCloud<pcl::PointXYZ> samples;
+  for (const pcl::PointNormal & pn : segments) {
+    const Eigen::Vector3f from = pn.getVector3fMap();
+    const Eigen::Vector3f to = pn.getNormalVector3fMap();
+    const Eigen::Vector3f t = (to - from).normalized();
+    const float l = (from - to).norm();
+    for (float distance = 0; distance < l; distance += 0.1f) {
+      Eigen::Vector3f target = from + t * distance;
+      std::optional<Eigen::Vector2f> u_opt = project(target);
+      if ((!u_opt.has_value())) continue;
+
+      size_t hash_id = pixelHash(u_opt.value());
+      if (already_occupied_pixels.count(hash_id) != 0) continue;
+      already_occupied_pixels.insert(hash_id);
+      samples.push_back({target.x(), target.y(), target.z()});
+    }
+  }
+  return samples;
 }
 
 }  // namespace validation

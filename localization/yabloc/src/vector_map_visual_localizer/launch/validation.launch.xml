@@ -11,9 +11,10 @@
         <remap from="/particle_pose" to="/particle_pose"/>
 
         <param name="refine.verbose" value="true"/>
-        <param name="refine.max_iteration" value="30"/>
-        <param name="refine.euler_bound" value="3.0"/>
-
+        <param name="refine.max_iteration" value="50"/>
+        <param name="refine.pixel_interval" value="20"/>
+        <param name="refine.euler_bound" value="-2.0"/>
+        <!-- If give a minus value to euler_bound, then rotation is not optimized -->
     </node>
 
     <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">

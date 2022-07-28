@@ -32,9 +32,7 @@ struct ProjectionCost
     T R_data[9];
     ceres::EulerAnglesToRotationMatrix(q, 3, R_data);
     Eigen::Map<const Eigen::Matrix<T, 3, 3, Eigen::RowMajor> > R(R_data);
-
     Eigen::Map<const Vector3T> position(p);
-    // Eigen::Map<const QuatT> orientation(q);
 
     // from_camera = (T^{-1} p)
     // where, T=pose * variable * extrinsic
@@ -84,8 +82,8 @@ struct ProjectionCost
 
 Sophus::SE3f refinePose(
   const Sophus::SE3f & extrinsic, const Eigen::Matrix3f & intrinsic, const cv::Mat & cost_image,
-  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointNormal> & linesegments,
-  const RefineConfig & config, std::string * summary_text)
+  const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointXYZ> & samples, const RefineConfig & config,
+  std::string * summary_text)
 {
   // Convert types from something float to double*
   const Sophus::SE3d extrinsic_d = extrinsic.cast<double>();
@@ -110,22 +108,21 @@ Sophus::SE3f refinePose(
   problem.SetParameterUpperBound(param_t.data(), 1, param_t.y() + 1.0);  // lateral (wider range)
   problem.SetParameterLowerBound(param_t.data(), 2, param_t.z() - 0.1);  // height
   problem.SetParameterUpperBound(param_t.data(), 2, param_t.z() + 0.1);  // height
-  for (int axis = 0; axis < 3; ++axis) {
-    problem.SetParameterLowerBound(param_euler.data(), axis, -config.euler_bound_);
-    problem.SetParameterUpperBound(param_euler.data(), axis, config.euler_bound_);
+  if (config.euler_bound_ > 0) {
+    for (int axis = 0; axis < 3; ++axis) {
+      problem.SetParameterLowerBound(param_euler.data(), axis, -config.euler_bound_);
+      problem.SetParameterUpperBound(param_euler.data(), axis, config.euler_bound_);
+    }
+  } else {
+    problem.SetParameterBlockConstant(param_euler.data());
   }
 
   // Add residual blocks
-  for (const pcl::PointNormal & pn : linesegments) {
-    Eigen::Vector3f t = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
-    float l = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
-
-    for (float distance = 0; distance < l; distance += 5.f) {
-      Eigen::Vector3f p = pn.getVector3fMap() + t * distance;
-      problem.AddResidualBlock(
-        ProjectionCost::Create(interpolator, p.cast<double>(), intrinsic_d, extrinsic_d, pose_d),
-        nullptr, param_t.data(), param_euler.data());
-    }
+  for (const pcl::PointXYZ & p : samples) {
+    Eigen::Vector3d pd = p.getVector3fMap().cast<double>();
+    problem.AddResidualBlock(
+      ProjectionCost::Create(interpolator, pd, intrinsic_d, extrinsic_d, pose_d), nullptr,
+      param_t.data(), param_euler.data());
   }
 
   // Solve the optimization problem
@@ -142,8 +139,8 @@ Sophus::SE3f refinePose(
     ss << "x: " << param_t(0) << std::endl;
     ss << "y: " << param_t(1) << std::endl;
     ss << "z: " << param_t(2) << std::endl;
-    ss << "r: " << param_euler(0) << std::endl;
-    ss << "p: " << param_euler(1) << std::endl;
+    ss << "p: " << param_euler(0) << std::endl;
+    ss << "r: " << param_euler(1) << std::endl;
     ss << "y: " << param_euler(2) << std::endl;
     *summary_text = ss.str();
   }

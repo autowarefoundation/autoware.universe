@@ -52,6 +52,7 @@ protected:
   boost::circular_buffer<PoseStamped> pose_buffer_;
   SynchroSubscriber<Image, PointCloud2>::SharedPtr sub_synchro_;
 
+  const int pixel_interval_;
   GammaConverter gamma_converter_{5.0};
   RefineConfig opt_config_;
 
@@ -64,6 +65,12 @@ protected:
 
   cv::Mat makeCostMap(LineSegments & lsd);
 
+  pcl::PointCloud<pcl::PointXYZ> sampleUniformlyOnImage(
+    const Sophus::SE3f & pose, const LineSegments & segments);
+
+  void drawOverlayPoints(
+    cv::Mat & image, const Sophus::SE3f & pose_affine,
+    const pcl::PointCloud<pcl::PointXYZ> & points, const cv::Scalar & color);
   void drawOverlayLineSegments(
     cv::Mat & image, const Sophus::SE3f & pose_affine, const LineSegments & linesegments,
     const cv::Scalar & color);
