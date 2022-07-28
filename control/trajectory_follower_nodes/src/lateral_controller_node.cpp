@@ -154,7 +154,7 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
   m_sub_steering = create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
     "~/input/current_steering", rclcpp::QoS{1}, std::bind(
       &LateralController::onSteering, this, _1));
-  m_sub_odometry = create_subscription<nav_msgs::msg::Odometry>(
+  m_sub_odometry = create_stee_subscription<nav_msgs::msg::Odometry>(
     "~/input/current_odometry", rclcpp::QoS{1}, std::bind(
       &LateralController::onOdometry, this, _1));
 

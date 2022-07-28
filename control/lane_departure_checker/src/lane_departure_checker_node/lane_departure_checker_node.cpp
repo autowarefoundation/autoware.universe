@@ -144,7 +144,7 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Subscriber
-  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+  sub_odom_ = this->create_stee_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1, std::bind(&LaneDepartureCheckerNode::onOdometry, this, _1));
   sub_lanelet_map_bin_ = this->create_subscription<HADMapBin>(
     "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local(),

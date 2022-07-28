@@ -86,7 +86,7 @@ private:
   };
 
   // ros variables
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr
     m_sub_current_velocity;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_trajectory;
   tilde::SteePublisher<autoware_auto_control_msgs::msg::LongitudinalCommand>::SharedPtr m_pub_control_cmd;

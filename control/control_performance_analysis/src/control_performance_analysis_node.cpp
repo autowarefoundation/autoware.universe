@@ -78,7 +78,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
     "~/input/measured_steering", 1,
     std::bind(&ControlPerformanceAnalysisNode::onVecSteeringMeasured, this, _1));
 
-  sub_velocity_ = create_subscription<Odometry>(
+  sub_velocity_ = create_stee_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&ControlPerformanceAnalysisNode::onVelocity, this, _1));
 
   // Publishers

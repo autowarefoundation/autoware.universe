@@ -76,7 +76,7 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_1;
   sub_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1, std::bind(&PurePursuitNode::onTrajectory, this, _1));
-  sub_current_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
+  sub_current_odometry_ = this->create_stee_subscription<nav_msgs::msg::Odometry>(
     "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
 
   // Publishers

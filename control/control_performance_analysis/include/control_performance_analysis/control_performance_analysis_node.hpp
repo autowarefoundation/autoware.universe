@@ -64,7 +64,7 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;  // subscribe to trajectory
   tilde::SteeSubscription<AckermannLateralCommand>::SharedPtr
     sub_control_steering_;                                  // subscribe to steering control value
-  rclcpp::Subscription<Odometry>::SharedPtr sub_velocity_;  // subscribe to velocity
+  tilde::SteeSubscription<Odometry>::SharedPtr sub_velocity_;  // subscribe to velocity
   rclcpp::Subscription<SteeringReport>::SharedPtr sub_vehicle_steering_;
 
   // Self Pose listener.

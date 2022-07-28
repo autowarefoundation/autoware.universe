@@ -58,7 +58,7 @@ private:
     sub_reference_trajectory_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_predicted_trajectory_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;

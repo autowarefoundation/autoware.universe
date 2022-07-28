@@ -79,7 +79,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   sub_predicted_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/predicted_trajectory", 1,
     std::bind(&ObstacleCollisionCheckerNode::onPredictedTrajectory, this, _1));
-  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
+  sub_odom_ = create_stee_subscription<nav_msgs::msg::Odometry>(
     "input/odometry", 1, std::bind(&ObstacleCollisionCheckerNode::onOdom, this, _1));
 
   // Publisher

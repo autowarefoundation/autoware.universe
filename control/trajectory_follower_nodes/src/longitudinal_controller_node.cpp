@@ -172,7 +172,7 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
   m_min_pitch_rad = declare_parameter<float64_t>("min_pitch_rad");  // [rad]
 
   // subscriber, publisher
-  m_sub_current_velocity = create_subscription<nav_msgs::msg::Odometry>(
+  m_sub_current_velocity = create_stee_subscription<nav_msgs::msg::Odometry>(
     "~/input/current_odometry", rclcpp::QoS{1},
     std::bind(&LongitudinalController::callbackCurrentVelocity, this, _1));
   m_sub_trajectory = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(

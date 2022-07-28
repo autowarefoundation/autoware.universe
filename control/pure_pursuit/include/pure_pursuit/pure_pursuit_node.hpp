@@ -83,7 +83,7 @@ private:
   // Subscriber
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_current_odometry_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_current_odometry_;
 
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_;

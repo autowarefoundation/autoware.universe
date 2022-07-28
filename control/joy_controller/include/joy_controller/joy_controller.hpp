@@ -73,7 +73,7 @@ private:
 
   // Subscriber
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr sub_joy_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   rclcpp::Time last_joy_received_time_;
   std::shared_ptr<const JoyConverterBase> joy_;

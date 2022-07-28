@@ -474,7 +474,7 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   sub_joy_ = this->create_subscription<sensor_msgs::msg::Joy>(
     "input/joy", 1, std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1),
     subscriber_option);
-  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+  sub_odom_ = this->create_stee_subscription<nav_msgs::msg::Odometry>(
     "input/odometry", 1,
     std::bind(&AutowareJoyControllerNode::onOdometry, this, std::placeholders::_1),
     subscriber_option);

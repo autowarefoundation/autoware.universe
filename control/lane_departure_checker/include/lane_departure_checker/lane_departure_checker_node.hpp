@@ -60,7 +60,7 @@ public:
 private:
   // Subscriber
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_lanelet_map_bin_;
   rclcpp::Subscription<HADMapRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_reference_trajectory_;

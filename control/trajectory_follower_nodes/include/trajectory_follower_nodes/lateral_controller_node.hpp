@@ -91,7 +91,7 @@ private:
   //!< @brief topic subscription for reference waypoints
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_ref_path;
   //!< @brief subscription for current velocity
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_sub_odometry;
+  tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr m_sub_odometry;
   //!< @brief subscription for current steering
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr m_sub_steering;
   //!< @brief timer to update after a given interval
