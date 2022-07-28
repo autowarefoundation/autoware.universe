@@ -494,9 +494,10 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
     return {{0.0, 0.0}};  // has already passed the intersection.
   }
 
-  PathWithLaneId smoothed_reference_path;
-  if (!smoothPath(reference_path, smoothed_reference_path, planner_data_))
-    smoothed_reference_path = reference_path;
+  PathWithLaneId smoothed_reference_path = reference_path;
+  if (!smoothPath(reference_path, smoothed_reference_path, planner_data_)) {
+    RCLCPP_WARN(logger_, "smoothPath failed");
+  }
 
   TimeDistanceArray time_distance_array{};
   dist_sum = 0.0;
