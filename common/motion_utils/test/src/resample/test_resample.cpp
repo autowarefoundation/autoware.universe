@@ -1122,6 +1122,54 @@ TEST(resample_trajectory, resample_trajectory_by_same_interval)
     }
   }
 
+  // Normal Case without stop point but with terminal point
+  {
+    autoware_auto_planning_msgs::msg::Trajectory traj;
+    traj.points.resize(10);
+    for (size_t i = 0; i < 10; ++i) {
+      traj.points.at(i) =
+        generateTestTrajectoryPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1, i * 0.05);
+    }
+    traj.points.at(0).longitudinal_velocity_mps = 5.0;
+
+    const auto resampled_traj = resampleTrajectory(traj, 0.4);
+    for (size_t i = 0; i < resampled_traj.points.size() - 1; ++i) {
+      const auto p = resampled_traj.points.at(i);
+      EXPECT_NEAR(p.pose.position.x, 0.4 * i, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, 1.0, epsilon);
+
+      const size_t idx = i / 2.5;
+      EXPECT_NEAR(
+        p.longitudinal_velocity_mps, traj.points.at(idx).longitudinal_velocity_mps, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, traj.points.at(idx).lateral_velocity_mps, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.04 * i, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, traj.points.at(idx).acceleration_mps2, epsilon);
+    }
+
+    {
+      const auto p = resampled_traj.points.at(23);
+      EXPECT_NEAR(p.pose.position.x, 9.0, epsilon);
+      EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.y, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.z, 0.0, epsilon);
+      EXPECT_NEAR(p.pose.orientation.w, 1.0, epsilon);
+
+      const size_t idx = 9;
+      EXPECT_NEAR(
+        p.longitudinal_velocity_mps, traj.points.at(idx).longitudinal_velocity_mps, epsilon);
+      EXPECT_NEAR(p.lateral_velocity_mps, traj.points.at(idx).lateral_velocity_mps, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, 0.9, epsilon);
+      EXPECT_NEAR(p.acceleration_mps2, traj.points.at(idx).acceleration_mps2, epsilon);
+    }
+  }
+
   // Normal Case with duplicated zero point
   {
     autoware_auto_planning_msgs::msg::Trajectory traj;
