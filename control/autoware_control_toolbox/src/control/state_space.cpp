@@ -130,10 +130,10 @@ ns_control_toolbox::tf2ss::tf2ss(
   discretisize(Ts);
 }
 
-void ns_control_toolbox::tf2ss::computeSystemMatrices(
-  const std::vector<double> &num, const std::vector<double> &den)
+void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double> &num,
+                                                      const std::vector<double> &den)
 {
-  auto const nx = N_;  // static_cast<long>(den.size() - 1);       // Order of the system.
+  auto const &nx = N_;  // static_cast<long>(den.size() - 1);       // Order of the system.
 
   // We can put system check function if the nx = 0 -- i.e throw exception.
   // B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
@@ -167,7 +167,7 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   Tsimilarity_mat_.setIdentity();
 
   // Zero padding the numerator.
-  auto num_of_zero = den.size() - num.size();
+  auto const &num_of_zero = den.size() - num.size();
 
   std::vector<double> zero_padded_num{num};
 
@@ -183,15 +183,13 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   // normalize the numerator
   if (std::fabs(den_first_item) > EPS)
   {
-    std::transform(
-      zero_padded_num.begin(), zero_padded_num.end(), zero_padded_num.begin(),
-      [&den_first_item](auto x)
-      { return x / den_first_item; });
+    std::transform(zero_padded_num.begin(), zero_padded_num.end(), zero_padded_num.begin(),
+                   [&den_first_item](auto const &x)
+                   { return x / den_first_item; });
 
-    std::transform(
-      normalized_den.begin(), normalized_den.end(), normalized_den.begin(),
-      [&den_first_item](auto x)
-      { return x / den_first_item; });
+    std::transform(normalized_den.begin(), normalized_den.end(), normalized_den.begin(),
+                   [&den_first_item](auto const &x)
+                   { return x / den_first_item; });
   } else
   {
     throw std::invalid_argument("The first item in the denominator cannot be zero ...");
@@ -214,7 +212,7 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   // denominator's values excluding the first item of the denominator.
   for (size_t k = 1; k < normalized_den.size(); k++)
   {
-    Eigen::Index ind_eig{static_cast<long>(k - 1)};
+    auto const &ind_eig = Eigen::Index{static_cast<long>(k - 1)};
     A_(0, ind_eig) = -1 * normalized_den[k];
     C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
   }
@@ -230,12 +228,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
 
   // Balance C_ and B_;
-  double nB = B_.lpNorm<1>();
-  double nC = C_.lpNorm<1>();
+  double const &nB = B_.lpNorm<1>();
+  double const &nC = C_.lpNorm<1>();
 
-  // alpha is a conditioning number that multiplies the smaller normed vector, divides the larger
-  // one.
-  double alpha = ns_control_toolbox::balance_symmetric(nB, nC);
+  // alpha is a conditioning number that multiplies the smaller normed vector, divides the larger one.
+  double const &alpha = ns_control_toolbox::balance_symmetric(nB, nC);
   // ns_utils::print("Alpha :", alpha);
 
   if (nB < nC)
