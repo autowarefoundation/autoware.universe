@@ -283,7 +283,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
   Model::param_vector_t params;
   params.setZero();
 
-  for (size_t k = 1; k < nX - 1; k++)
+  for (size_t k = 1; k < nX - 1; ++k)
   {  // start from k=1, x0 is already set
     double kappa0{};                       // curvature placeholder
     double v0{};
@@ -404,7 +404,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetState
   // Prepare the target trajectory data;
   // number of stored states in the horizon.
   auto const &&nX = data_nmpc_.target_reference_states_and_controls.nX();
-  Model::state_vector_t xk(Model::state_vector_t::Zero());  // place holder for the iterated integration.
+  Model::state_vector_t xk(Model::state_vector_t::Zero());  // placeholder for the iterated integration.
 
   // Prepare the predicted road travelled distance vector.
   std::vector<double> s_predicted;
@@ -603,14 +603,14 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(ns_spline
    * */
 
   auto const &dt = data_nmpc_.mpc_prediction_dt;
-  auto const is_discretisized = ns_discretization::multipleShootingTrajectory(model_ptr_,
-                                                                              data_nmpc_.trajectory_data,
-                                                                              data_nmpc_.target_reference_states_and_controls,
-                                                                              piecewise_interpolator,
-                                                                              dt,
-                                                                              data_nmpc_.discretization_data);
 
-  if (!is_discretisized)
+  if (auto const
+      &is_discretisized = ns_discretization::multipleShootingTrajectory(model_ptr_,
+                                                                        data_nmpc_.trajectory_data,
+                                                                        data_nmpc_.target_reference_states_and_controls,
+                                                                        piecewise_interpolator,
+                                                                        dt,
+                                                                        data_nmpc_.discretization_data);!is_discretisized)
   {
     return false;
   }
@@ -696,6 +696,7 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(n
 {
   // Create the new s-coordinates from the predicted speed trajectory.
   std::vector<double> s_predicted_vect;
+
   auto s_predicted0 = current_s0_predicted_;
   getPredictedArcLengthDistanceVector(s_predicted_vect, s_predicted0);
 
@@ -744,8 +745,8 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(n
                             s_predicted_vect,
                             ax_predicted);  // ax
 
-  ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);  //  [x, y, psi, s, ey, epsi, delta]
-
+  //  [x, y, psi, s, ey, epsi, delta]
+  ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);
   eyaw_predicted = ns_utils::linspace(xinitial_measured(5), 0.0, K_mpc_steps);
 
   // Target speeds
@@ -948,8 +949,7 @@ void ns_nmpc_interface::NonlinearMPCController::shiftControls()
   data_nmpc_.trajectory_data.U[k - 1] = data_nmpc_.trajectory_data.U[k];
   } */
 
-  for (auto &&it = data_nmpc_.trajectory_data.U.begin() + 1;
-       it != data_nmpc_.trajectory_data.U.end(); ++it)
+  for (auto &&it = data_nmpc_.trajectory_data.U.begin() + 1; it != data_nmpc_.trajectory_data.U.end(); ++it)
   {
     *std::prev(it) = *it;
   }
@@ -990,8 +990,7 @@ double ns_nmpc_interface::NonlinearMPCController::getEstimatedVxControl()
 
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getTimeSpeedVectsFromSmoothTraj(
-  std::vector<std::vector<double>> &t_speed_vects) const
+void ns_nmpc_interface::NonlinearMPCController::getTimeSpeedVectsFromSmoothTraj(std::vector<std::vector<double>> &t_speed_vects) const
 {
   t_speed_vects.emplace_back(current_MPCtraj_smooth_vects_ptr_->t);
   t_speed_vects.emplace_back(current_MPCtraj_smooth_vects_ptr_->vx);
