@@ -204,9 +204,9 @@ class NonlinearMPCController
    * @brief Parameter and data struct that holds Eigen states, control and reference vectors along with the
    * required parameters for the NMPC and member classes.
    * */
-  ns_data::data_nmpc_core_type_t data_nmpc_;
-  ns_data::param_lpv_type_t params_lpv_;
-  ns_data::ParamsOptimization params_opt_;
+  ns_data::data_nmpc_core_type_t data_nmpc_{};
+  ns_data::param_lpv_type_t params_lpv_{};
+  ns_data::ParamsOptimization params_opt_{};
 
   /**
    * @brief for initialization of the trajectories by LPV feedback.
