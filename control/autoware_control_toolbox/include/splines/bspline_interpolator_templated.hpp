@@ -531,7 +531,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::InterpolateImplicitCoordinates(
 
   if (auto const &&numrows = ybase.rows() <= 1)
   {
-    std::cerr << "\nNumber of rows must be more than 1 " << std::endl;
+    ns_utils::print("\nNumber of rows must be more than 1 ");
     return;
   }
 
@@ -543,8 +543,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::InterpolateImplicitCoordinates(
 
   auto const &&normalized_interpolated_data = projection_mat_w_new_base_ * ybase_normalized;
 
-  data_tobe_interpolated.resize(
-    normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
+  data_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
   // Unnormalize
   normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_tobe_interpolated);
@@ -552,14 +551,13 @@ void BSplineInterpolatorTemplated<Nin, Nout>::InterpolateImplicitCoordinates(
 }
 
 template<int Nin, int Nout>
-void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(
-  const Eigen::MatrixXd &ybase, Eigen::MatrixXd &data_dot_tobe_interpolated)
+void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(const Eigen::MatrixXd &ybase,
+                                                                 Eigen::MatrixXd &data_dot_tobe_interpolated)
 {
   if (!compute_derivatives_)
   {
-    std::cout << " The interpolator was not prepared by the compute_derivative_option = True. "
-                 "Cannot return the "
-                 "derivatives... ";
+    ns_utils::print(" The interpolator was not prepared by the compute_derivative_option = True. "
+                    "Cannot return the derivatives... ");
     return;
   }
 
@@ -569,7 +567,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(
 
   if (auto const &&numrows = ybase.rows() <= 1)
   {
-    std::cout << "\nNumber of rows must be more than 1 " << std::endl;
+    ns_utils::print("\nNumber of rows must be more than 1 ");
     return;
   }
 
@@ -581,8 +579,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(
 
   auto const &&normalized_interpolated_data = projection_mat_w_new_base_dot_ * ybase_normalized;
 
-  data_dot_tobe_interpolated.resize(
-    normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
+  data_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
   // Unnormalize
   normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_dot_tobe_interpolated);
@@ -593,14 +590,13 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(
 }
 
 template<int Nin, int Nout>
-void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(
-  const Eigen::MatrixXd &ybase, Eigen::MatrixXd &data_dot_dot_tobe_interpolated)
+void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(const Eigen::MatrixXd &ybase,
+                                                                  Eigen::MatrixXd &data_dot_dot_tobe_interpolated)
 {
   if (!compute_derivatives_)
   {
-    std::cout << " The interpolator was not prepared by the compute_derivative_option = True. "
-                 "Cannot return the "
-                 "derivatives... ";
+    ns_utils::print(" The interpolator was not prepared by the compute_derivative_option = True. "
+                    "Cannot return the derivatives... ");
     return;
   }
 
@@ -610,7 +606,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(
 
   if (auto const &&numrows = ybase.rows() <= 1)
   {
-    std::cout << "\nNumber of rows must be more than 1 " << std::endl;
+    ns_utils::print("\nNumber of rows must be more than 1 ");
     return;
   }
 
@@ -621,8 +617,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(
   normalizeColumns(ybase, ybase_normalized, colmaxvec);
 
   auto &&normalized_interpolated_data = projection_mat_w_new_base_dot_dot_ * ybase_normalized;
-  data_dot_dot_tobe_interpolated.resize(
-    normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
+  data_dot_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
   // Unnormalize
   normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_dot_dot_tobe_interpolated);
@@ -633,8 +628,8 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(
 }
 
 template<int Nin, int Nout>
-BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(
-  BSplineInterpolatorTemplated<Nin, Nout> const &other)
+BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(BSplineInterpolatorTemplated<Nin,
+                                                                                                   Nout> const &other)
 {
   this->n_base_points_ = Nin;
   this->new_npoints_ = Nout;
@@ -705,9 +700,8 @@ void BSplineInterpolatorTemplated<Nin, Nout>::normalizeColumns_Back(const Eigen:
   for (auto k = 0; k < numcols; ++k)
   {
     auto const &colmax = col_maxs[k];
-    unnormalized_output_matrix.col(k) = normalized_estimate.col(k).unaryExpr(
-      [colmax](auto const &x)
-      { return x * colmax; });
+    unnormalized_output_matrix.col(k) = normalized_estimate.col(k).template unaryViewExpr([colmax](auto const &x)
+                                                                                          { return x * colmax; });
   }
 }
 }  // namespace ns_splines

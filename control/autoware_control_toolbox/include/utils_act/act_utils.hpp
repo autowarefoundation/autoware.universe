@@ -519,11 +519,10 @@ constexpr void print(T0 const &msg0, T1 const &msg1)
   std::cout << msg0 << "  " << msg1 << std::endl;
 }
 
-template<class T0, class... Args>
-constexpr void print(T0 &first, Args const &... args)
+template<typename... Args>
+void print(Args &&... args)
 {
-  std::cout << first << " ";
-  print(args...);
+  ((std::cout << args << " "), ...);
 }
 
 // ------------ TIME MODULES -----------------------
@@ -533,8 +532,8 @@ double toc(double start);
 
 constexpr double exponentialMovingAverage(double const &previous_avg, double const &period, double const &new_value)
 {
-  const double smoothing_factor = 2. / (period + 1.);  // 2/(EMA_length + 1)
-  const double results = (new_value - previous_avg) * smoothing_factor + previous_avg;
+  double const &smoothing_factor = 2. / (period + 1.);  // 2/(EMA_length + 1)
+  double const &results = (new_value - previous_avg) * smoothing_factor + previous_avg;
   return results;
 }
 
@@ -599,12 +598,10 @@ std::vector<T> zero_pad_left_first_arg(std::vector<T> const &a, std::vector<T> c
   if (bsize > asize)
   {
     auto &&c = join_vectors(std::vector<T>(diff), a);
-    return
-      c;
+    return c;
   }
 
-  return
-    a;
+  return a;
 }
 
 /**
@@ -613,7 +610,7 @@ std::vector<T> zero_pad_left_first_arg(std::vector<T> const &a, std::vector<T> c
 template<typename E>
 constexpr auto toUType(E e) noexcept
 {
-  return static_cast        <std::underlying_type_t<E>>(e);
+  return static_cast<std::underlying_type_t<E>>(e);
 }
 
 /**
@@ -637,4 +634,4 @@ constexpr auto toUType(E e) noexcept
 
 }  // namespace ns_utils
 
-#endif  // UTILS__NMPC_UTILS_HPP_
+#endif  // UTILS__ACT_UTILS_HPP_
