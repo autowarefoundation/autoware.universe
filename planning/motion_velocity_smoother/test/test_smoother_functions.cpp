@@ -18,11 +18,8 @@
 
 #include <vector>
 
-namespace motion_velocity_smoother
-{
-
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using trajectory_utils::TrajectoryPoints;
+using motion_velocity_smoother::trajectory_utils::TrajectoryPoints;
 
 TrajectoryPoints genStraightTrajectory(const size_t size)
 {
@@ -45,13 +42,14 @@ TrajectoryPoints genStraightTrajectory(const size_t size)
   return tps;
 }
 
-TEST(test_trajectory_utils, test_calcTrajectoryCurvatureFrom3Points)
+TEST(TestTrajectoryUtils, CalcTrajectoryCurvatureFrom3Points)
 {
   // the output curvature vector should have the same size of the input trajectory.
   const auto checkOutputSize = [](const size_t trajectory_size, const size_t idx_dist) {
     const auto trajectory_points = genStraightTrajectory(trajectory_size);
     const auto curvatures =
-      trajectory_utils::calcTrajectoryCurvatureFrom3Points(trajectory_points, idx_dist);
+      motion_velocity_smoother::trajectory_utils::calcTrajectoryCurvatureFrom3Points(
+        trajectory_points, idx_dist);
     EXPECT_EQ(curvatures.size(), trajectory_size) << ", idx_dist = " << idx_dist;
   };
 
@@ -63,5 +61,3 @@ TEST(test_trajectory_utils, test_calcTrajectoryCurvatureFrom3Points)
     }
   }
 }
-
-}  // namespace motion_velocity_smoother
