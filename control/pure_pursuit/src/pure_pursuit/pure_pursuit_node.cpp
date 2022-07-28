@@ -80,7 +80,7 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
     "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
 
   // Publishers
-  pub_ctrl_cmd_ = this->create_publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
+  pub_ctrl_cmd_ = this->create_stee_publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
     "output/control_raw", 1);
 
   // Debug Publishers

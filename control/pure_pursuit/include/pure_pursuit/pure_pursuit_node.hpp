@@ -99,7 +99,7 @@ private:
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   // Publisher
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
+  tilde::SteePublisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
     pub_ctrl_cmd_;
 
   void publishCommand(const double target_curvature);

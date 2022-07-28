@@ -59,7 +59,7 @@ private:
   bool checkTimeout();
 
   tilde::SteePublisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr m_control_cmd_pub;
-  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
     m_lat_control_cmd_sub;
   rclcpp::Subscription<autoware_auto_control_msgs::msg::LongitudinalCommand>::SharedPtr
     m_lon_control_cmd_sub;

@@ -81,7 +81,7 @@ public:
 
 private:
   //!< @brief topic publisher for control command
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
+  tilde::SteePublisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
     m_pub_ctrl_cmd;
   //!< @brief topic publisher for predicted trajectory
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_pub_predicted_traj;

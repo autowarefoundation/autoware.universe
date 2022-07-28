@@ -139,7 +139,7 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
   initTimer(m_mpc.m_ctrl_period);
 
   m_pub_ctrl_cmd =
-    create_publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
+    create_stee_publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
     "~/output/control_cmd", 1);
   m_pub_predicted_traj =
     create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(

@@ -71,7 +71,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
     "~/input/reference_trajectory", 1,
     std::bind(&ControlPerformanceAnalysisNode::onTrajectory, this, _1));
 
-  sub_control_steering_ = create_subscription<AckermannLateralCommand>(
+  sub_control_steering_ = create_stee_subscription<AckermannLateralCommand>(
     "~/input/control_raw", 1, std::bind(&ControlPerformanceAnalysisNode::onControlRaw, this, _1));
 
   sub_vehicle_steering_ = create_subscription<SteeringReport>(

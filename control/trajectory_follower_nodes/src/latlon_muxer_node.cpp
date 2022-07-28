@@ -34,7 +34,7 @@ LatLonMuxer::LatLonMuxer(const rclcpp::NodeOptions & node_options)
     "~/output/control_cmd",
     rclcpp::QoS{1}.transient_local());
   m_lat_control_cmd_sub =
-    create_subscription<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
+    create_stee_subscription<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
     "~/input/lateral/control_cmd", rclcpp::QoS{1},
     std::bind(&LatLonMuxer::latCtrlCmdCallback, this, std::placeholders::_1));
   m_lon_control_cmd_sub =
