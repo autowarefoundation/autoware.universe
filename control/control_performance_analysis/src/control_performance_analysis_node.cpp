@@ -67,7 +67,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
     param_.wheel_base, param_.curvature_interval_length);
 
   // Subscribers.
-  sub_trajectory_ = create_subscription<Trajectory>(
+  sub_trajectory_ = create_stee_subscription<Trajectory>(
     "~/input/reference_trajectory", 1,
     std::bind(&ControlPerformanceAnalysisNode::onTrajectory, this, _1));
 

@@ -152,10 +152,10 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   sub_route_ = this->create_subscription<HADMapRoute>(
     "~/input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&LaneDepartureCheckerNode::onRoute, this, _1));
-  sub_reference_trajectory_ = this->create_subscription<Trajectory>(
+  sub_reference_trajectory_ = this->create_stee_subscription<Trajectory>(
     "~/input/reference_trajectory", 1,
     std::bind(&LaneDepartureCheckerNode::onReferenceTrajectory, this, _1));
-  sub_predicted_trajectory_ = this->create_subscription<Trajectory>(
+  sub_predicted_trajectory_ = this->create_stee_subscription<Trajectory>(
     "~/input/predicted_trajectory", 1,
     std::bind(&LaneDepartureCheckerNode::onPredictedTrajectory, this, _1));
 

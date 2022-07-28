@@ -61,7 +61,7 @@ public:
 
 private:
   // Subscribers and Local Variable Assignment
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;  // subscribe to trajectory
+  tilde::SteeSubscription<Trajectory>::SharedPtr sub_trajectory_;  // subscribe to trajectory
   tilde::SteeSubscription<AckermannLateralCommand>::SharedPtr
     sub_control_steering_;                                  // subscribe to steering control value
   tilde::SteeSubscription<Odometry>::SharedPtr sub_velocity_;  // subscribe to velocity

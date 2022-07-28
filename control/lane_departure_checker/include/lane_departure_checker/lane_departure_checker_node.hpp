@@ -63,8 +63,8 @@ private:
   tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_lanelet_map_bin_;
   rclcpp::Subscription<HADMapRoute>::SharedPtr sub_route_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_reference_trajectory_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_trajectory_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr sub_reference_trajectory_;
+  tilde::SteeSubscription<Trajectory>::SharedPtr sub_predicted_trajectory_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;

@@ -54,9 +54,9 @@ private:
   std::shared_ptr<tier4_autoware_utils::SelfPoseListener> self_pose_listener_;
   std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_obstacle_pointcloud_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_reference_trajectory_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_predicted_trajectory_;
   tilde::SteeSubscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
