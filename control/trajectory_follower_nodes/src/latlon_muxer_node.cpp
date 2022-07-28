@@ -38,7 +38,7 @@ LatLonMuxer::LatLonMuxer(const rclcpp::NodeOptions & node_options)
     "~/input/lateral/control_cmd", rclcpp::QoS{1},
     std::bind(&LatLonMuxer::latCtrlCmdCallback, this, std::placeholders::_1));
   m_lon_control_cmd_sub =
-    create_subscription<autoware_auto_control_msgs::msg::LongitudinalCommand>(
+    create_stee_subscription<autoware_auto_control_msgs::msg::LongitudinalCommand>(
     "~/input/longitudinal/control_cmd", rclcpp::QoS{1},
     std::bind(&LatLonMuxer::lonCtrlCmdCallback, this, std::placeholders::_1));
   m_timeout_thr_sec = declare_parameter<double>("timeout_thr_sec");
