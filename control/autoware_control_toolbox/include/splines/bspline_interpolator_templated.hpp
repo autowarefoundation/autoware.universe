@@ -168,8 +168,8 @@ class BSplineInterpolatorTemplated
 };
 
 template<int Nin, int Nout>
-BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(
-  double num_of_knots_ratio, bool compute_derivatives)
+BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num_of_knots_ratio,
+                                                                      bool compute_derivatives)
   : knots_ratio_(num_of_knots_ratio), compute_derivatives_{compute_derivatives}
 {
   /**
