@@ -1,5 +1,6 @@
 <launch>
   <arg name="cpu_monitor_config_file" default="$(find-pkg-share system_monitor)/config/cpu_monitor.param.yaml"/>
+  <arg name="hardware_monitor_config_file" default="$(find-pkg-share system_monitor)/config/hardware_monitor.param.yaml"/>
   <arg name="hdd_monitor_config_file" default="$(find-pkg-share system_monitor)/config/hdd_monitor.param.yaml"/>
   <arg name="mem_monitor_config_file" default="$(find-pkg-share system_monitor)/config/mem_monitor.param.yaml"/>
   <arg name="net_monitor_config_file" default="$(find-pkg-share system_monitor)/config/net_monitor.param.yaml"/>
@@ -11,6 +12,9 @@
   <group>
     <node pkg="system_monitor" exec="cpu_monitor" name="cpu_monitor" output="log" respawn="true">
       <param from="$(var cpu_monitor_config_file)"/>
+    </node>
+    <node pkg="system_monitor" exec="hardware_monitor" name="hardware_monitor" output="log" respawn="true">
+      <param from="$(var hardware_monitor_config_file)"/>
     </node>
     <node pkg="system_monitor" exec="hdd_monitor" name="hdd_monitor" output="log" respawn="true">
       <param from="$(var hdd_monitor_config_file)"/>
