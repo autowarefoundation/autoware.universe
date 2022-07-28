@@ -102,7 +102,6 @@ inline autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   const auto interpolated_y = use_spline_for_xy ? slerp(y) : lerp(y);
   const auto interpolated_z = use_spline_for_z ? slerp(z) : lerp(z);
 
-  // autoware_auto_perception_msgs::msg::PredictedPath::_path_type::max_size << std::endl;
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
   const auto resampled_size = std::min(resampled_path.path.max_size(), resampled_time.size());
   resampled_path.confidence = path.confidence;
