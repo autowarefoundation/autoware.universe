@@ -574,7 +574,7 @@ void NonlinearMPCNode::onTimer()
 
   // convert milliseconds to seconds.
   auto &&current_mpc_solve_time_sec = current_mpc_solve_time_msec * 1e-3;
-  average_mpc_solve_time_ = ns_utils::exponentialMovingAverage(average_mpc_solve_time_, 20,
+  average_mpc_solve_time_ = ns_utils::exponentialMovingAverage(average_mpc_solve_time_, 100,
                                                                current_mpc_solve_time_sec);
 
   // Set NMPC avg_mpc_computation_time.
@@ -1401,7 +1401,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   bspline_interpolator_ptr_->getSecondDerivative(xy_data, rddot_interp);
 
   /** @brief Compute the curvature column. */
-  auto const &&curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
+  auto const &curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
 
   // Create smooth MPCtraj given, s, x, y, v and curvature.
   //  std::vector<double> s_smooth_vect(interpolated_map.col(0).data(),
