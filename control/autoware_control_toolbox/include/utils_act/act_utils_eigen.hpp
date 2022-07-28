@@ -241,7 +241,7 @@ kron(const Derived1 &m1, const Derived2 &m2)
 }
 
 template<typename T>
-eigen_dynamic_type<T> convertToEigenMatrix(std::vector<std::vector<T>> data)
+eigen_dynamic_type<T> convertToEigenMatrix(std::vector<std::vector<T>> const &data)
 {
   eigen_dynamic_type<T> eMatrix(data.size(), data[0].size());
   for (size_t i = 0; i < data.size(); ++i)
@@ -252,7 +252,7 @@ eigen_dynamic_type<T> convertToEigenMatrix(std::vector<std::vector<T>> data)
 }
 
 template<class M, typename S = std::string_view>
-void printEigenMat(M const &mat, S additional_info = "")
+void printEigenMat(M const &mat, S const &additional_info = "")
 {
   std::cout << additional_info;
   std::string sep = "\n----------------------------------------\n";
@@ -267,7 +267,7 @@ void printEigenMat(M const &mat, S additional_info = "")
 }
 
 template<typename T, typename S = std::string_view>
-void printEigenMat(eigen_dynamic_type<T> const &mat, S additional_info)
+void printEigenMat(eigen_dynamic_type<T> const &mat, S const &additional_info)
 {
   std::string sep = "\n----------------------------------------\n";
   Eigen::IOFormat CommaInitFmt(
@@ -286,7 +286,7 @@ void printEigenMat(eigen_dynamic_type<T> const &mat, S additional_info)
  *
  * */
 template<typename T>
-eigen_dynamic_type<T> crossProduct(eigen_dynamic_type<T> const r0, eigen_dynamic_type<T> const r1)
+eigen_dynamic_type<T> crossProduct(eigen_dynamic_type<T> const &r0, eigen_dynamic_type<T> const &r1)
 {
   auto m = r0.rows();
   eigen_dynamic_type<T> cross_product(m, 1);
@@ -304,8 +304,8 @@ eigen_dynamic_type<T> crossProduct(eigen_dynamic_type<T> const r0, eigen_dynamic
  *  Apply the curvature expression defined in the differential geometry.
  * */
 template<typename T>
-eigen_dynamic_type<T> Curvature(
-  eigen_dynamic_type<T> const rdot, eigen_dynamic_type<T> const rdotdot)
+eigen_dynamic_type<T> Curvature(eigen_dynamic_type<T> const &rdot,
+                                eigen_dynamic_type<T> const &rdotdot)
 {
   auto m = rdot.rows();
   eigen_dynamic_type<T> curvature(m, 1);
@@ -330,8 +330,8 @@ eigen_dynamic_type<T> Curvature(
 template<class ArgType>
 std::vector<std::vector<double>> ToTriplets(const Eigen::MatrixBase<ArgType> &arg_mat,
                                             double const &eps_tol,
-                                            size_t rowstart = 0,
-                                            size_t colstart = 0)
+                                            size_t const &rowstart = 0,
+                                            size_t const &colstart = 0)
 {
   auto BoolMat = arg_mat.cwiseAbs().array() >= eps_tol;
 
@@ -409,8 +409,9 @@ Eigen::MatrixXd getTrajectory(const ContainerType<ValueType, AllocType> &eigen_m
  * @param char type_R u- for Rupper, l for Rlower
  * */
 template<typename T, class Derived1, class Derived2>
-void backSubstitution(  eigen_dynamic_type<T> const &R, Eigen::MatrixBase<Derived1> const &B,
-  Eigen::MatrixBase<Derived2> &Xtobesolved, char type_of_R)
+void backSubstitution(eigen_dynamic_type<T> const &R,
+                      Eigen::MatrixBase<Derived1> const &B,
+                      Eigen::MatrixBase<Derived2> &Xtobesolved, char const &type_of_R)
 {
   auto &&mrow = B.rows();
   auto &&ncol = R.cols();
