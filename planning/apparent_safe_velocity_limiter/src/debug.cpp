@@ -21,14 +21,14 @@
 
 namespace apparent_safe_velocity_limiter
 {
-visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, const Float z)
+visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const Float z)
 {
   visualization_msgs::msg::Marker marker;
   marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   marker.scale.x = 0.1;
-  marker.color.b = 1.0;
   marker.color.a = 1.0;
-  for (const auto & point : obstacle.line) {
+  marker.header.frame_id = "map";
+  for (const auto & point : ls) {
     geometry_msgs::msg::Point p;
     p.x = point.x();
     p.y = point.y();
@@ -36,41 +36,6 @@ visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, 
     marker.points.push_back(p);
   }
   return marker;
-}
-
-visualization_msgs::msg::MarkerArray makeLinestringMarkers(
-  const std::vector<Obstacle> & obstacles, const Float z, const std::string & ns)
-{
-  visualization_msgs::msg::MarkerArray markers;
-  auto id = 0;
-  for (const auto & obstacle : obstacles) {
-    auto marker = makeLinestringMarker(obstacle, z);
-    marker.header.frame_id = "map";
-    marker.id = id++;
-    marker.ns = ns;
-    markers.markers.push_back(marker);
-  }
-  return markers;
-}
-
-visualization_msgs::msg::Marker makeEnvelopeMarker(
-  const Trajectory & trajectory, ProjectionParameters & projection_params)
-{
-  visualization_msgs::msg::Marker envelope;
-  envelope.header = trajectory.header;
-  envelope.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  envelope.scale.x = 0.1;
-  envelope.color.a = 1.0;
-  for (const auto & point : trajectory.points) {
-    projection_params.update(point);
-    const auto vector = forwardSimulatedSegment(point.pose.position, projection_params);
-    geometry_msgs::msg::Point p;
-    p.x = vector.second.x();
-    p.y = vector.second.y();
-    p.z = point.pose.position.z;
-    envelope.points.push_back(p);
-  }
-  return envelope;
 }
 
 visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, const Float z)
@@ -90,63 +55,76 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
   return marker;
 }
 
-visualization_msgs::msg::Marker makePolygonPointsMarker(
-  const std::vector<polygon_t> & polygons, const Float z)
-{
-  visualization_msgs::msg::Marker marker;
-  marker.type = visualization_msgs::msg::Marker::POINTS;
-  marker.header.frame_id = "map";
-  marker.scale.x = 0.5;
-  marker.scale.y = 0.5;
-  marker.color.a = 1.0;
-  marker.color.r = 0.9;
-  marker.color.g = 0.2;
-  marker.color.b = 0.2;
-  geometry_msgs::msg::Point point;
-  point.z = z;
-  for (const auto & polygon : polygons) {
-    for (const auto & p : polygon.outer()) {
-      point.x = p.x();
-      point.y = p.y();
-      marker.points.push_back(point);
-    }
-  }
-  return marker;
-}
-
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const std::vector<Obstacle> & obstacles, const std::vector<polygon_t> & footprint_polygons,
-  const polygon_t & envelope_polygon, const polygon_t & safe_envelope_polygon, const Float marker_z)
+  const std::vector<Obstacle> & obstacles,
+  const std::vector<multilinestring_t> & original_projections,
+  const std::vector<multilinestring_t> & adjusted_projections,
+  const std::vector<polygon_t> & original_footprints,
+  const std::vector<polygon_t> & adjusted_footprints, const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
-  // auto original_envelope = makeEnvelopeMarker(original_trajectory, projection_params);
-  auto original_envelope = makePolygonMarker(envelope_polygon, marker_z);
-  original_envelope.color.r = 1.0;
-  original_envelope.ns = "original";
-  debug_markers.markers.push_back(original_envelope);
-  auto adjusted_envelope = makePolygonMarker(safe_envelope_polygon, marker_z);
-  adjusted_envelope.color.g = 1.0;
-  adjusted_envelope.ns = "adjusted";
-  debug_markers.markers.push_back(adjusted_envelope);
-  auto original_footprints = makePolygonPointsMarker(footprint_polygons, marker_z);
-  original_footprints.ns = "original_footprints";
-  debug_markers.markers.push_back(original_footprints);
-  original_footprints.ns = "original_footprints";
-  debug_markers.markers.push_back(original_footprints);
+  auto id = 0;
+  for (auto i = 0ul; i < original_projections.size(); ++i) {
+    for (const auto ls : original_projections[i]) {
+      auto marker = makeLinestringMarker(ls, marker_z);
+      marker.ns = "original_projections";
+      marker.id = id++;
+      marker.color.r = 0.7;
+      marker.color.b = 0.2;
+      debug_markers.markers.push_back(marker);
+    }
+    for (const auto ls : adjusted_projections[i]) {
+      auto marker = makeLinestringMarker(ls, marker_z);
+      marker.ns = "adjusted_projections";
+      marker.id = id++;
+      marker.color.g = 0.7;
+      marker.color.b = 0.2;
+      debug_markers.markers.push_back(marker);
+    }
+    {
+      auto marker = makePolygonMarker(original_footprints[i], marker_z);
+      marker.ns = "original_footprints";
+      marker.id = id++;
+      marker.color.r = 0.7;
+      debug_markers.markers.push_back(marker);
+    }
+    {
+      auto marker = makePolygonMarker(adjusted_footprints[i], marker_z);
+      marker.ns = "adjusted_footprints";
+      marker.id = id++;
+      marker.color.g = 0.7;
+      debug_markers.markers.push_back(marker);
+    }
+  }
+  auto obs_id = 0;
+  for (const auto & obs : obstacles) {
+    auto marker = makeLinestringMarker(obs.line, marker_z);
+    marker.ns = "obstacles";
+    marker.id = obs_id++;
+    marker.color.b = 1.0;
+    debug_markers.markers.push_back(marker);
+  }
 
-  static auto max_id = 0lu;
-  const auto line_markers = makeLinestringMarkers(obstacles, marker_z, "obstacles");
-  debug_markers.markers.insert(
-    debug_markers.markers.begin(), line_markers.markers.begin(), line_markers.markers.end());
-  auto id = line_markers.markers.size();
-  max_id = std::max(id, max_id);
+  static auto prev_max_id = 0lu;
+  static auto prev_max_obs_id = 0lu;
   visualization_msgs::msg::Marker marker;
   marker.action = visualization_msgs::msg::Marker::DELETE;
   marker.ns = "obstacles";
-  while (id <= max_id) {
-    marker.id = id++;
+  for (auto delete_id = obs_id; delete_id < prev_max_obs_id; ++delete_id) {
+    marker.id = delete_id;
     debug_markers.markers.push_back(marker);
   }
+  for (const auto & ns :
+       {"original_projections", "adjusted_projections", "original_footprints",
+        "adjusted_footprints"}) {
+    marker.ns = ns;
+    for (auto delete_id = id; delete_id < prev_max_id; ++delete_id) {
+      marker.id = delete_id;
+      debug_markers.markers.push_back(marker);
+    }
+  }
+  prev_max_id = id;
+  prev_max_obs_id = obs_id;
   return debug_markers;
 }
 

@@ -30,13 +30,12 @@ namespace apparent_safe_velocity_limiter
 /// @param [in] footprint footprint of the projection
 /// @param [in] obstacles set of obstacles to check for collision
 /// @param [in] params projection parameters
-/// @param [in] max_obstacle_distance only obstacles whose centroid is within this distance are
-/// considered
+/// @param [in] max_obstacle_distance optional maximum distance for obstacles to be considered
 /// @return distance to the closest collision if any
 std::optional<double> distanceToClosestCollision(
   const linestring_t & projection, const polygon_t & footprint,
   const std::vector<Obstacle> & obstacles, const ProjectionParameters & params,
-  const double max_obstacle_distance);
+  const std::optional<double> max_obstacle_distance);
 
 /// @brief calculate the closest distance along a circle to a given target point
 /// @param [in] origin starting point

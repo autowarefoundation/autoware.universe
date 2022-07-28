@@ -181,7 +181,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   }
   limitVelocity(
     downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
-    velocity_params_);
+    velocity_params_, obstacle_params_.filter_envelope);
   auto safe_trajectory =
     copyDownsampledVelocity(downsampled_traj, *msg, start_idx, downsample_factor_);
   safe_trajectory.header.stamp = now();
@@ -196,10 +196,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     createProjectedLines(downsampled_traj, projection_params_);
   const auto safe_footprint_polygons =
     createFootprintPolygons(safe_projected_linestrings, vehicle_lateral_offset_);
-  const auto safe_envelope_polygon = createEnvelopePolygon(safe_footprint_polygons);
   pub_debug_markers_->publish(makeDebugMarkers(
-    obstacles, footprint_polygons, envelope_polygon, safe_envelope_polygon,
-    occupancy_grid_ptr_->info.origin.position.z));
+    obstacles, projected_linestrings, safe_projected_linestrings, footprint_polygons,
+    safe_footprint_polygons, occupancy_grid_ptr_->info.origin.position.z));
 }
 
 bool ApparentSafeVelocityLimiterNode::validInputs(const boost::optional<size_t> & ego_idx)

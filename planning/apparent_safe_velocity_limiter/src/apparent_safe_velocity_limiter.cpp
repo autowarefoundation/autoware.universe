@@ -164,8 +164,10 @@ std::vector<Obstacle> createObstacles(
 void limitVelocity(
   Trajectory & trajectory, const std::vector<Obstacle> & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
-  ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
+  ProjectionParameters & projection_params, const VelocityParameters & velocity_params,
+  const bool filter_envelope)
 {
+  constexpr auto no_filter_envelope = std::optional<double>();
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
     auto & trajectory_point = trajectory.points[i];
@@ -180,7 +182,9 @@ void limitVelocity(
     projection_params.update(trajectory_point);
     const auto dist_to_collision = distanceToClosestCollision(
       projections[i][0], footprints[i], obstacles, projection_params,
-      trajectory_point.longitudinal_velocity_mps * projection_params.duration);
+      filter_envelope ? no_filter_envelope
+                      : trajectory_point.longitudinal_velocity_mps * projection_params.duration +
+                          projection_params.extra_length);
     if (dist_to_collision) {
       const auto min_feasible_velocity =
         velocity_params.current_ego_velocity - velocity_params.max_deceleration * time;

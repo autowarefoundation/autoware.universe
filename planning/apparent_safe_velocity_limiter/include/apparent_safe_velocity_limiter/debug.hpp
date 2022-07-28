@@ -32,38 +32,20 @@ namespace apparent_safe_velocity_limiter
 /// @return marker representing the linestring
 visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, const Float z);
 
-/// @brief make the visualization Markers of the given linestrings
-/// @param[in] obstacles obstacles to turn into markers
-/// @param[in] z z-value to use in the markers
-/// @param[in] ns namespace to use in the markers
-/// @return markers representing the linestrings
-visualization_msgs::msg::MarkerArray makeLinestringMarkers(
-  const std::vector<Obstacle> & obstacles, const Float z, const std::string & ns);
-
-/// @brief make the Marker showing the apparent safety envelope of the given trajectory
-/// @param[in] trajectory trajectory for which to make the apparent safety envelope
-/// @param[in] projection_params parameters for forward projection
-/// @return marker representing the apparent safety envelope of the trajectory
-visualization_msgs::msg::Marker makeEnvelopeMarker(
-  const Trajectory & trajectory, ProjectionParameters & projection_params);
-
-/// @brief make debug marker array of obstacle lines and original & adjusted envelopes
-/// @param[in] original_trajectory trajectory with original velocities
-/// @param[in] adjusted_trajectory trajectory with adjusted velocities
+/// @brief make debug marker array
 /// @param[in] obstacles obstacles
-/// @param[in] projection_params parameters for forward projection
-/// @param[in] z z-value to use for markers
-/// @return marker array with the original and adjusted envelope and the obstacle lines
+/// @param[in] original_projections original forward projection linestrings
+/// @param[in] adjusted_projections adjusted forward projection linestrings
+/// @param[in] original_footprints original forward projection footprints
+/// @param[in] adjusted_footprints adjusted forward projection footprints
+/// @param[in] marker_z z-value to use for markers
+/// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const std::vector<Obstacle> & obstacles, const std::vector<polygon_t> & footprint_polygons,
-  const polygon_t & envelope_polygon, const polygon_t & safe_envelope_polygon,
-  const Float marker_z);
+  const std::vector<Obstacle> & obstacles,
+  const std::vector<multilinestring_t> & original_projections,
+  const std::vector<multilinestring_t> & adjusted_projections,
+  const std::vector<polygon_t> & original_footprints,
+  const std::vector<polygon_t> & adjusted_footprints, const Float marker_z);
 
-/// @brief make debug marker with Points for the given polygons
-/// @param[in] polygons footprint polygons
-/// @param[in] z z-value to use for markers
-/// @return marker array with the original and adjusted envelope and the obstacle lines
-visualization_msgs::msg::Marker makePolygonPointsMarker(
-  const std::vector<polygon_t> & polygons, const Float z);
 }  // namespace apparent_safe_velocity_limiter
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__DEBUG_HPP_
