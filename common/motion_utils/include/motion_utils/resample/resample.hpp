@@ -335,6 +335,24 @@ inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   return resampled_trajectory;
 }
 
+/**
+ * @brief A resampling function for a trajectory. This function resamples closest stop point,
+ * terminal point and points by resample interval. Note that in a default setting, position xy are
+ * resampled by spline interpolation, position z are resampled by linear interpolation, twist
+ * informaiton(velocity and acceleration) are resampled by zero_order_hold, and heading rate is
+ * resampled by linear interpolation. The rest of the category is resampled by linear interpolation.
+ * Orientation of the resampled path are calculated by a forward difference method based on the
+ * interpolated position x and y.
+ * @param input_trajectory input trajectory to resample
+ * @param resampled_interval resampling interval
+ * @param use_lerp_for_xy If true, it uses linear interpolation to resample position x and
+ * y. Otherwise, it uses spline interpolation
+ * @param use_lerp_for_z If true, it uses linear interpolation to resample position z.
+ * Otherwise, it uses spline interpolation
+ * @param use_zero_order_hold_for_twist If true, it uses zero_order_hold to resample
+ * longitudinal, lateral velocity and acceleration. Otherwise, it uses linear interpolation
+ * @return resampled trajectory
+ */
 inline autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory,
   const double resample_interval, const bool use_lerp_for_xy = false,
