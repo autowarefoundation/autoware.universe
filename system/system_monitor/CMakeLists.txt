@@ -67,14 +67,10 @@ message(STATUS "HOST_SYSTEM_VERSION: " ${CMAKE_HOST_SYSTEM_VERSION})
 message(STATUS "SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
 message(STATUS "CPU PLATFORM: " ${CMAKE_CPU_PLATFORM})
 message(STATUS "GPU PLATFORM: " ${CMAKE_GPU_PLATFORM})
-message(STATUS "ECU PLATFORM: " ${CMAKE_ECU_PLATFORM})
+message(STATUS "HARDWARE PLATFORM: " ${CMAKE_HARDWARE_PLATFORM})
 
-set(ECU_MONITOR_SOURCE
-  src/ecu_monitor/ecu_monitor.cpp
-)
-
-ament_auto_add_library(ecu_monitor_lib SHARED
-  ${ECU_MONITOR_SOURCE}
+ament_auto_add_library(hardware_monitor_lib SHARED
+  src/hardware_monitor/hardware_monitor.cpp
 )
 
 set(CPU_MONITOR_SOURCE
@@ -139,7 +135,7 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(ecu_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(hardware_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(cpu_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(hdd_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(mem_monitor_lib ${LIBRARIES})
@@ -186,9 +182,9 @@ rclcpp_components_register_node(gpu_monitor_lib
   EXECUTABLE gpu_monitor
 )
 
-rclcpp_components_register_node(ecu_monitor_lib
-  PLUGIN "ECUMonitor"
-  EXECUTABLE ecu_monitor
+rclcpp_components_register_node(hardware_monitor_lib
+  PLUGIN "HardwareMonitor"
+  EXECUTABLE hardware_monitor
 )
 
 # TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.

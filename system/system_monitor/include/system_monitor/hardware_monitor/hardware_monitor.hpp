@@ -13,26 +13,26 @@
 // limitations under the License.
 
 /**
- * @file adlink_ecu_monitor.h
- * @brief  ECU monitor class
+ * @file hardware_monitor.h
+ * @brief  hardware monitor class
  */
 
-#ifndef SYSTEM_MONITOR__ECU_MONITOR__ADLINK_ECU_MONITOR_HPP_
-#define SYSTEM_MONITOR__ECU_MONITOR__ADLINK_ECU_MONITOR_HPP_
+#ifndef SYSTEM_MONITOR__HARDWARE_MONITOR__ADLINK_EHARDWARE_MONITOR_HPP_
+#define SYSTEM_MONITOR__HARDWARE_MONITOR__ADLINK_EHARDWARE_MONITOR_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
 #include <string>
 
-class ECUMonitor : public rclcpp::Node
+class HardwareMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  explicit ECUMonitor(const rclcpp::NodeOptions & options);
+  explicit HardwareMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.
@@ -47,7 +47,7 @@ protected:
   char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
 
   /**
-   * @brief check ECU CMOS Battey
+   * @brief check CMOS Battey
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
@@ -55,7 +55,7 @@ protected:
   void checkVoltage(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
   /**
-   * @brief check ECU CMOS Battey
+   * @brief check CMOS Battey
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
@@ -70,4 +70,4 @@ protected:
   std::string voltage_string_;
 };
 
-#endif  // SYSTEM_MONITOR__ECU_MONITOR__ADLINK_ECU_MONITOR_HPP_
+#endif  // SYSTEM_MONITOR__HARDWARE_MONITOR__ADLINK_EHARDWARE_MONITOR_HPP_

@@ -96,14 +96,14 @@ def launch_setup(context, *args, **kwargs):
             gpu_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("ecu_monitor_config_file").perform(context), "r") as f:
-        ecu_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
-    ecu_monitor = ComposableNode(
+    with open(LaunchConfiguration("hardware_monitor_config_file").perform(context), "r") as f:
+        hardware_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
+    hardware_monitor = ComposableNode(
         package="system_monitor",
-        plugin="ECUMonitor",
-        name="ecu_monitor",
+        plugin="HardwareMonitor",
+        name="hardware_monitor",
         parameters=[
-            ecu_monitor_config,
+            hardware_monitor_config,
         ],
     )
 
@@ -114,7 +114,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container_mt",
         composable_node_descriptions=[
-            ecu_monitor,
+            hardware_monitor,
             cpu_monitor,
             hdd_monitor,
             mem_monitor,
@@ -163,8 +163,8 @@ def generate_launch_description():
                 default_value=os.path.join(system_monitor_path, "gpu_monitor.param.yaml"),
             ),
             DeclareLaunchArgument(
-                "ecu_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "ecu_monitor.param.yaml"),
+                "hardware_monitor_config_file",
+                default_value=os.path.join(system_monitor_path, "hardware_monitor.param.yaml"),
             ),
             OpaqueFunction(function=launch_setup),
         ]

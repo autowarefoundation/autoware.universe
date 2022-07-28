@@ -13,11 +13,11 @@
 // limitations under the License.
 
 /**
- * @file _cpu_monitor.cpp
- * @brief  CPU monitor class
+ * @file _hardware_monitor.cpp
+ * @brief  hardware monitor class
  */
 
-#include "system_monitor/ecu_monitor/ecu_monitor.hpp"
+#include "system_monitor/hardware_monitor/hardware_monitor.hpp"
 
 #include "system_monitor/system_monitor_utility.hpp"
 
@@ -40,8 +40,8 @@
 
 namespace bp = boost::process;
 
-ECUMonitor::ECUMonitor(const rclcpp::NodeOptions & options) 
-: Node("ecu_monitor", options),
+HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options) 
+: Node("hardware_monitor", options),
   updater_(this),
   hostname_()
 {
@@ -63,11 +63,11 @@ ECUMonitor::ECUMonitor(const rclcpp::NodeOptions & options)
     sensors_exists_ = (p.empty()) ? false : true;
   }
   gethostname(hostname_, sizeof(hostname_));
-  auto callback = &ECUMonitor::checkBatteryStatus;
+  auto callback = &HardwareMonitor::checkBatteryStatus;
   if( sensors_exists_ ) {
-    callback = &ECUMonitor::checkVoltage;
+    callback = &HardwareMonitor::checkVoltage;
   }
-  updater_.add("ECU CMOS Battery Status", this, callback);
+  updater_.add("CMOS Battery Status", this, callback);
 }
 
 static float getVoltage(std::string voltage_string) {
@@ -81,8 +81,7 @@ static float getVoltage(std::string voltage_string) {
       return 0;
     }
     std::string line;
-    std::regex re(R"((\d+).(\d+))"); //in7:             3.06 V  (min =  +0.00 V, max =  +4.08 V)
-    //auto voltage_string = voltage_string_.c_str();
+    std::regex re(R"((\d+).(\d+))"); //    3.06 V  (min =  +0.00 V, max =  +4.08 V)
     for(int i = 0; i < 200 && std::getline(is_out, line); i++) {
         auto voltageStringPos = line.find(voltage_string.c_str());
         if( voltageStringPos != std::string::npos) {
@@ -95,7 +94,7 @@ static float getVoltage(std::string voltage_string) {
     return 0;//failed to read voltage
 }
 
-void ECUMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HardwareMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -120,12 +119,12 @@ void ECUMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void ECUMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HardwareMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  // Get CPU Usage
+  // Get status of RTC
   bp::ipstream is_out;
   bp::ipstream is_err;
   bp::child c("cat /proc/driver/rtc", bp::std_out > is_out, bp::std_err > is_err);
@@ -163,7 +162,7 @@ void ECUMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper 
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void ECUMonitor::update() { updater_.force_update(); }
+void HardwareMonitor::update() { updater_.force_update(); }
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ECUMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(HardwareMonitor)
