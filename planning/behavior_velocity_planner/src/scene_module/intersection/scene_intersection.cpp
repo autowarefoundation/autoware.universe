@@ -506,8 +506,10 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
     const double dist = planning_utils::calcDist2d(
       smoothed_reference_path.points.at(i - 1), smoothed_reference_path.points.at(i));
     dist_sum += dist;
+    // to avoid zero division
     passing_time +=
-      (dist / smoothed_reference_path.points.at(i - 1).point.longitudinal_velocity_mps);
+      (dist / std::max<double>(
+                0.01, smoothed_reference_path.points.at(i - 1).point.longitudinal_velocity_mps));
     time_distance_array.emplace_back(passing_time, dist_sum);
   }
   RCLCPP_DEBUG(logger_, "intersection dist = %f, passing_time = %f", dist_sum, passing_time);
