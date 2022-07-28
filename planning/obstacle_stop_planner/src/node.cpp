@@ -778,6 +778,8 @@ void ObstacleStopPlannerNode::insertVelocity(
   const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
   const double current_acc, const double current_vel, const StopParam & stop_param)
 {
+  const auto & base_link2front = vehicle_info.max_longitudinal_offset_m;
+
   if (planner_data.stop_require) {
     // insert stop point
     const auto traj_end_idx = output.size() - 1;
@@ -790,6 +792,14 @@ void ObstacleStopPlannerNode::insertVelocity(
         planner_data.nearest_collision_point.x, planner_data.nearest_collision_point.y, 0));
 
     if (index_with_dist_remain) {
+      const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
+      const auto dist_baselink_to_obstacle =
+        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
+
+      debug_ptr_->setDebugValues(
+        DebugValues::TYPE::COLLISION_OBSTACLE_DISTANCE,
+        dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
+
       const auto stop_point = searchInsertPoint(
         index_with_dist_remain.get().first, output, index_with_dist_remain.get().second,
         stop_param);
@@ -836,8 +846,8 @@ void ObstacleStopPlannerNode::insertVelocity(
         calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
 
       debug_ptr_->setDebugValues(
-        DebugValues::TYPE::OBSTACLE_DISTANCE,
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second);
+        DebugValues::TYPE::SLOWDOWN_OBSTACLE_DISTANCE,
+        dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
       const auto slow_down_section = createSlowDownSection(
         index_with_dist_remain.get().first, output, planner_data.lateral_deviation,
         index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
