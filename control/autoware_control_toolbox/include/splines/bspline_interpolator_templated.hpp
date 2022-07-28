@@ -526,7 +526,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::InterpolateImplicitCoordinates(
 {
 
   // Standardize or normalize the data and restore back.
-  auto const &&numcols = ybase.cols();
+  // auto const &&numcols = ybase.cols();
   // auto const &&numrows = ybase.rows();
 
   if (auto const &&numrows = ybase.rows() <= 1)
@@ -535,18 +535,22 @@ void BSplineInterpolatorTemplated<Nin, Nout>::InterpolateImplicitCoordinates(
     return;
   }
 
-  std::vector<double> colmaxvec(static_cast<size_t>(numcols));
-  Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
+//  std::vector<double> colmaxvec(static_cast<size_t>(numcols));
+//  Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
+//
+//  // Normalize
+//  normalizeColumns(ybase, ybase_normalized, colmaxvec);
+//
+//  auto const &&normalized_interpolated_data = projection_mat_w_new_base_ * ybase_normalized;
+//
+//  data_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
+//
+//  // Unnormalize
+//  normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_tobe_interpolated);
 
-  // Normalize
-  normalizeColumns(ybase, ybase_normalized, colmaxvec);
-
-  auto const &&normalized_interpolated_data = projection_mat_w_new_base_ * ybase_normalized;
-
-  data_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
-
-  // Unnormalize
-  normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_tobe_interpolated);
+  // If we want to skip normalization procedures above, just use
+  // the line below and comment out all the previous lines.
+  data_tobe_interpolated = projection_mat_w_new_base_ * ybase;
 
 }
 
@@ -562,7 +566,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(const Eigen::Ma
   }
 
   // Standardize or normalize the data and restore back.
-  auto const &&numcols = ybase.cols();
+  // auto const &&numcols = ybase.cols();
   // auto const &&numrows = ybase.rows();
 
   if (auto const &&numrows = ybase.rows() <= 1)
@@ -571,22 +575,22 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getFirstDerivative(const Eigen::Ma
     return;
   }
 
-  std::vector<double> colmaxvec(static_cast<size_t>(numcols));
-  Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
-
-  // Normalize
-  normalizeColumns(ybase, ybase_normalized, colmaxvec);
-
-  auto const &&normalized_interpolated_data = projection_mat_w_new_base_dot_ * ybase_normalized;
-
-  data_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
-
-  // Unnormalize
-  normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_dot_tobe_interpolated);
+//  std::vector<double> colmaxvec(static_cast<size_t>(numcols));
+//  Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
+//
+//  // Normalize
+//  normalizeColumns(ybase, ybase_normalized, colmaxvec);
+//
+//  auto const &&normalized_interpolated_data = projection_mat_w_new_base_dot_ * ybase_normalized;
+//
+//  data_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
+//
+//  // Unnormalize
+//  normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_dot_tobe_interpolated);
 
   // If we want to skip normalization procedures above, just use
   // the line below and comment out all the previous lines.
-  //  data_dot_tobe_interpolated = projection_mat_w_new_base_ * ybase;
+  data_dot_tobe_interpolated = projection_mat_w_new_base_dot_ * ybase;
 }
 
 template<int Nin, int Nout>
@@ -601,7 +605,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(const Eigen::M
   }
 
   // Standardize or normalize the data and restore back.
-  auto const &&numcols = ybase.cols();
+  // auto const &&numcols = ybase.cols();
   // auto const &&numrows = ybase.rows();
 
   if (auto const &&numrows = ybase.rows() <= 1)
@@ -610,21 +614,21 @@ void BSplineInterpolatorTemplated<Nin, Nout>::getSecondDerivative(const Eigen::M
     return;
   }
 
-  std::vector<double> colmaxvec(static_cast<size_t>(numcols));
-  Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
-
-  // Normalize
-  normalizeColumns(ybase, ybase_normalized, colmaxvec);
-
-  auto &&normalized_interpolated_data = projection_mat_w_new_base_dot_dot_ * ybase_normalized;
-  data_dot_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
-
-  // Unnormalize
-  normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_dot_dot_tobe_interpolated);
+//  std::vector<double> colmaxvec(static_cast<size_t>(numcols));
+//  Eigen::MatrixXd ybase_normalized(ybase.rows(), ybase.cols());
+//
+//  // Normalize
+//  normalizeColumns(ybase, ybase_normalized, colmaxvec);
+//
+//  auto &&normalized_interpolated_data = projection_mat_w_new_base_dot_dot_ * ybase_normalized;
+//  data_dot_dot_tobe_interpolated.resize(normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
+//
+//  // Unnormalize
+//  normalizeColumns_Back(normalized_interpolated_data, colmaxvec, data_dot_dot_tobe_interpolated);
 
   // If we want to skip normalization procedures above, just use the line below and
   // comment out all the previous lines.
-  // data_dot_dot_tobe_interpolated = projection_mat_w_new_base_dot_dot_ * ybase;
+  data_dot_dot_tobe_interpolated = projection_mat_w_new_base_dot_dot_ * ybase;
 }
 
 template<int Nin, int Nout>
