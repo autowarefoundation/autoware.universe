@@ -225,14 +225,6 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
     }
   }
 
-  // for debug
-  if (k_arr.empty()) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
-      "k_arr.size() = 0, something wrong. pls check.");
-    return {};
-  }
-
   // first and last curvature is copied from next value
   for (size_t i = 0; i < idx_dist; ++i) {
     k_arr.insert(k_arr.begin(), k_arr.front());
