@@ -32,7 +32,7 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
 
   pub_shift_cmd_ =
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("output/gear_cmd", durable_qos);
-  sub_control_cmd_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+  sub_control_cmd_ = create_stee_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "input/control_cmd", queue_size, std::bind(&ShiftDecider::onControlCmd, this, _1));
 
   initTimer(0.1);

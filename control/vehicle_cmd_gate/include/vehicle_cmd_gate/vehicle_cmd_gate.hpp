@@ -66,7 +66,7 @@ public:
 private:
   // Publisher
   rclcpp::Publisher<VehicleEmergencyStamped>::SharedPtr vehicle_cmd_emergency_pub_;
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  tilde::SteePublisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     control_cmd_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr gear_cmd_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand>::SharedPtr
@@ -106,7 +106,7 @@ private:
 
   // Subscriber for auto
   Commands auto_commands_;
-  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     auto_control_cmd_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand>::SharedPtr
     auto_turn_indicator_cmd_sub_;
@@ -122,7 +122,7 @@ private:
 
   // Subscription for external
   Commands remote_commands_;
-  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     remote_control_cmd_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand>::SharedPtr
     remote_turn_indicator_cmd_sub_;
@@ -140,7 +140,7 @@ private:
 
   // Subscription for emergency
   Commands emergency_commands_;
-  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     emergency_control_cmd_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
     emergency_hazard_light_cmd_sub_;

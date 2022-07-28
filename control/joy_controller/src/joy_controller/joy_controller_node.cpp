@@ -481,7 +481,7 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
 
   // Publisher
   pub_control_command_ =
-    this->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    this->create_stee_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "output/control_command", 1);
   pub_external_control_command_ =
     this->create_publisher<tier4_external_api_msgs::msg::ControlCommandStamped>(

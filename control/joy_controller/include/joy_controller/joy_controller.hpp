@@ -83,7 +83,7 @@ private:
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  tilde::SteePublisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     pub_control_command_;
   rclcpp::Publisher<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_external_control_command_;

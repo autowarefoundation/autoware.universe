@@ -30,7 +30,7 @@ LatLonMuxer::LatLonMuxer(const rclcpp::NodeOptions & node_options)
 : SteeNode("latlon_muxer", node_options)
 {
   m_control_cmd_pub =
-    create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    create_stee_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_cmd",
     rclcpp::QoS{1}.transient_local());
   m_lat_control_cmd_sub =

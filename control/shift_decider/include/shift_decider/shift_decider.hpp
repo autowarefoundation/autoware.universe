@@ -37,7 +37,7 @@ private:
   void initTimer(double period_s);
 
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_shift_cmd_;
-  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  tilde::SteeSubscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     sub_control_cmd_;
   rclcpp::TimerBase::SharedPtr timer_;
 

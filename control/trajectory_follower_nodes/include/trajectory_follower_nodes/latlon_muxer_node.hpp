@@ -58,7 +58,7 @@ private:
   // \return bool True if the stored messages timed out
   bool checkTimeout();
 
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr m_control_cmd_pub;
+  tilde::SteePublisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr m_control_cmd_pub;
   rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
     m_lat_control_cmd_sub;
   rclcpp::Subscription<autoware_auto_control_msgs::msg::LongitudinalCommand>::SharedPtr

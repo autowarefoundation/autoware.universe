@@ -54,7 +54,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   vehicle_cmd_emergency_pub_ =
     this->create_publisher<VehicleEmergencyStamped>("output/vehicle_cmd_emergency", durable_qos);
   control_cmd_pub_ =
-    this->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    this->create_stee_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "output/control_cmd", durable_qos);
   gear_cmd_pub_ = this->create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>(
     "output/gear_cmd", durable_qos);
@@ -88,7 +88,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Subscriber for auto
   auto_control_cmd_sub_ =
-    this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    this->create_stee_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "input/auto/control_cmd", 1, std::bind(&VehicleCmdGate::onAutoCtrlCmd, this, _1));
 
   auto_turn_indicator_cmd_sub_ =
@@ -106,7 +106,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Subscriber for external
   remote_control_cmd_sub_ =
-    this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    this->create_stee_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "input/external/control_cmd", 1, std::bind(&VehicleCmdGate::onRemoteCtrlCmd, this, _1));
 
   remote_turn_indicator_cmd_sub_ =
@@ -124,7 +124,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Subscriber for emergency
   emergency_control_cmd_sub_ =
-    this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    this->create_stee_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "input/emergency/control_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyCtrlCmd, this, _1));
 
   emergency_hazard_light_cmd_sub_ =
