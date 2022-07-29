@@ -180,9 +180,13 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.base_link2front = vehicle_info.max_longitudinal_offset_m;
   p.base_link2rear = p.rear_overhang;
 
-  // NOTE: backward_path_length is used not only calculating path length but also calculating the size of a drivable area.
-  //       The drivable area has to cover not the base link but the vehicle itself. Therefore rear_overhang must be added to backward_path_length.
-  //       In addition, because of the calculation of the drivable area in the obstacle_avoidance_planner package, the drivable area has to be a little longer than the backward_path_length parameter by adding min_backward_offset.
+  // NOTE: backward_path_length is used not only calculating path length but also calculating the
+  // size of a drivable area.
+  //       The drivable area has to cover not the base link but the vehicle itself. Therefore
+  //       rear_overhang must be added to backward_path_length. In addition, because of the
+  //       calculation of the drivable area in the obstacle_avoidance_planner package, the drivable
+  //       area has to be a little longer than the backward_path_length parameter by adding
+  //       min_backward_offset.
   constexpr double min_backward_offset = 1.0;
   const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
 
