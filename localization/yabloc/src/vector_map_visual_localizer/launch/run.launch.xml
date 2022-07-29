@@ -9,6 +9,9 @@
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
+    <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
+
+
     <arg name="rtk_enabled" default="true"/>
 
     <!-- ========================================= -->
@@ -61,6 +64,7 @@
 
     <node name="ll2_decompose" pkg="vector_map_visual_localizer" exec="ll2_decompose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="road_marking_labels" value="$(var road_marking_labels)"/>
     </node>
 
     <node name="twist_estimator" pkg="vector_map_visual_localizer" exec="twist_node" output="screen" args="--ros-args --log-level warn">

@@ -21,6 +21,17 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   // Subscriber
   auto cb_map = std::bind(&Ll2Decomposer::mapCallback, this, _1);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
+
+  {
+    // Load road marking labels from ros params
+    declare_parameter("road_marking_labels", std::vector<std::string>{});
+    auto labels = get_parameter("road_marking_labels").as_string_array();
+    for (auto l : labels) road_marking_labels_.insert(l);
+    if (road_marking_labels_.empty()) {
+      RCLCPP_FATAL_STREAM(
+        get_logger(), "There are no road marking labels. No LL2 elements will publish");
+    }
+  }
 }
 
 void Ll2Decomposer::mapCallback(const HADMapBin & msg)
@@ -29,12 +40,10 @@ void Ll2Decomposer::mapCallback(const HADMapBin & msg)
 
   const rclcpp::Time stamp = msg.header.stamp;
   const std::set<std::string> sign_board_labels = {"sign-board"};
-  const std::set<std::string> road_marking_labels = {
-    "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
 
   const auto & ls_layer = lanelet_map->lineStringLayer;
   auto tmp1 = extractSpecifiedLineString(ls_layer, sign_board_labels);
-  auto tmp2 = extractSpecifiedLineString(ls_layer, road_marking_labels);
+  auto tmp2 = extractSpecifiedLineString(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = splitLineStrings(tmp1);
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = splitLineStrings(tmp2);
 
