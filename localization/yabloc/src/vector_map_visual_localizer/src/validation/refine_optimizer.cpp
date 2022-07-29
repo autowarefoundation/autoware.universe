@@ -16,6 +16,10 @@ RefineConfig::RefineConfig(rclcpp::Node * node)
   verbose_ = node->declare_parameter<bool>("refine.verbose", false);
   max_iteration_ = node->declare_parameter<int>("refine.max_iteration", 30);
   euler_bound_ = node->declare_parameter<double>("refine.euler_bound", 0.1);
+
+  long_bound_ = node->declare_parameter<double>("refine.long_bound", 0.1);
+  late_bound_ = node->declare_parameter<double>("refine.late_bound", 1.0);
+  height_bound_ = node->declare_parameter<double>("refine.height_bound", 0.1);
 }
 
 struct ProjectionCost
@@ -102,12 +106,15 @@ Sophus::SE3f refinePose(
   problem.AddParameterBlock(param_euler.data(), 3);
 
   // Add boundary conditions
-  problem.SetParameterLowerBound(param_t.data(), 0, param_t.x() - 0.1);  // longitudinal
-  problem.SetParameterUpperBound(param_t.data(), 0, param_t.x() + 0.1);  // longitudinal
-  problem.SetParameterLowerBound(param_t.data(), 1, param_t.y() - 1.0);  // lateral (wider range)
-  problem.SetParameterUpperBound(param_t.data(), 1, param_t.y() + 1.0);  // lateral (wider range)
-  problem.SetParameterLowerBound(param_t.data(), 2, param_t.z() - 0.1);  // height
-  problem.SetParameterUpperBound(param_t.data(), 2, param_t.z() + 0.1);  // height
+  double lon = config.long_bound_;
+  double lat = config.late_bound_;
+  double hei = config.height_bound_;
+  problem.SetParameterLowerBound(param_t.data(), 0, param_t.x() - lon);  // longitudinal
+  problem.SetParameterUpperBound(param_t.data(), 0, param_t.x() + lon);  // longitudinal
+  problem.SetParameterLowerBound(param_t.data(), 1, param_t.y() - lat);  // lateral (wider range)
+  problem.SetParameterUpperBound(param_t.data(), 1, param_t.y() + lat);  // lateral (wider range)
+  problem.SetParameterLowerBound(param_t.data(), 2, param_t.z() - hei);  // height
+  problem.SetParameterUpperBound(param_t.data(), 2, param_t.z() + hei);  // height
   if (config.euler_bound_ > 0) {
     for (int axis = 0; axis < 3; ++axis) {
       problem.SetParameterLowerBound(param_euler.data(), axis, -config.euler_bound_);

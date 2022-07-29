@@ -14,6 +14,9 @@
         <param name="refine.max_iteration" value="50"/>
         <param name="refine.pixel_interval" value="20"/>
         <param name="refine.euler_bound" value="-2.0"/>
+        <param name="refine.long_bound" value="0.1"/>
+        <param name="refine.late_bound" value="0.5"/>
+        <param name="refine.height_bound" value="0.1"/>
         <!-- If give a minus value to euler_bound, then rotation is not optimized -->
     </node>
 

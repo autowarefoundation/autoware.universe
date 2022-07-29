@@ -45,6 +45,8 @@ protected:
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<Float32Array>::SharedPtr sub_ground_plane_;
+  rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
 
   std::optional<CameraInfo> info_{std::nullopt};
   std::optional<Sophus::SE3f> camera_extrinsic_{std::nullopt};

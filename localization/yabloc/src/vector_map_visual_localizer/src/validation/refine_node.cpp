@@ -33,6 +33,10 @@ RefineOptimizer::RefineOptimizer()
   auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
   auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
 
+  // Publisher
+  pub_image_ = create_publisher<Image>("/refine_image", 10);
+  pub_pose_ = create_publisher<PoseStamped>("/refine_pose", 10);
+
   sub_ground_plane_ = create_subscription<Float32Array>("/ground", 10, cb_ground);
   sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
   sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
@@ -41,7 +45,9 @@ RefineOptimizer::RefineOptimizer()
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
 
   opt_config_ = RefineConfig{this};
-  gamma_converter_.reset(5.0);
+
+  float gamma = declare_parameter<float>("refine.gamma", 5);
+  gamma_converter_.reset(gamma);
 }
 
 void RefineOptimizer::infoCallback(const CameraInfo & msg)
@@ -126,8 +132,15 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
 
   addText(summary_text, rgb_image);
 
-  cv::imshow("6DoF fine optimization", rgb_image);
-  cv::waitKey(5);
+  util::publishImage(*pub_image_, rgb_image, stamp);
+
+  PoseStamped pose_stamped;
+  pose_stamped.header.frame_id = "map";
+  pose_stamped.header.stamp = stamp;
+  pose_stamped.pose = util::se32Pose(opt_pose);
+  pub_pose_->publish(pose_stamped);
+  // cv::imshow("6DoF fine optimization", rgb_image);
+  // cv::waitKey(5);
 }
 
 void RefineOptimizer::drawOverlayLineSegments(
