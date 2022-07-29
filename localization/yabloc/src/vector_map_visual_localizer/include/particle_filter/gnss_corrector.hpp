@@ -30,6 +30,7 @@ private:
   const float min_prob_;
   const float sigma_;
   const float float_range_gain_;
+  const bool rtk_enabled_;
   Float32 latest_height_;
 
   void ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg);

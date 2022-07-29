@@ -6,25 +6,25 @@ from rosbag2_py import SequentialReader
 from rosbag2_py import StorageOptions
 from rosbag2_py import ConverterOptions
 
-YAML_PATH = './tmp_qos_override.yaml'
+TMP_YAML_PATH = './tmp_qos_override.yaml'
 TOPICS = [
-    "/clock",
-    "/sensing/gnss/ublox/fix_velocity",
-    "/sensing/gnss/ublox/nav_sat_fix",
-    "/sensing/gnss/ublox/navpvt",
-    "/sensing/imu/tamagawa/imu_raw",
-    "/sensing/lidar/left/velodyne_packets",
-    "/sensing/lidar/right/velodyne_packets",
-    "/sensing/lidar/rear/velodyne_packets",
-    "/sensing/lidar/top/velodyne_packets",
-    "/sensing/camera/traffic_light/camera_info",
-    "/sensing/camera/traffic_light/image_raw/compressed",
-    "/vehicle/status/control_mode",
-    "/vehicle/status/gear_status",
-    "/vehicle/status/steering_status",
-    "/vehicle/status/velocity_status",
+    '/clock',
+    '/sensing/gnss/ublox/fix_velocity',
+    '/sensing/gnss/ublox/nav_sat_fix',
+    '/sensing/gnss/ublox/navpvt',
+    '/sensing/imu/tamagawa/imu_raw',
+    '/sensing/lidar/left/velodyne_packets',
+    '/sensing/lidar/right/velodyne_packets',
+    '/sensing/lidar/rear/velodyne_packets',
+    '/sensing/lidar/top/velodyne_packets',
+    '/sensing/camera/traffic_light/camera_info',
+    '/sensing/camera/traffic_light/image_raw/compressed',
+    '/vehicle/status/control_mode',
+    '/vehicle/status/gear_status',
+    '/vehicle/status/steering_status',
+    '/vehicle/status/velocity_status',
     # .iv
-    "/vehicle/status/twist",
+    '/vehicle/status/twist',
 ]
 
 OVERRIDE_TEXT = '''
@@ -96,7 +96,7 @@ def main():
 
     if args.override:
         command.append('--qos-profile-overrides-path')
-        command.append(YAML_PATH)
+        command.append(TMP_YAML_PATH)
 
     command.append('--topics')
     for t in TOPICS:
@@ -105,10 +105,10 @@ def main():
 
     printCommand(command)
     try:
-        makeOverrideYaml(YAML_PATH)
+        makeOverrideYaml(TMP_YAML_PATH)
         subprocess.run(command)
     finally:
-        removeOverrideYaml(YAML_PATH)
+        removeOverrideYaml(TMP_YAML_PATH)
 
 
 if __name__ == '__main__':

@@ -12,6 +12,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   flat_radius_(declare_parameter("flat_radius", 1.0f)),
   min_prob_(declare_parameter("min_prob", 0.01f)),
   sigma_(declare_parameter("sigma", 25.0f)),
+  rtk_enabled_(declare_parameter("rtk_enabled", true)),
   float_range_gain_(5.0f)
 {
   using std::placeholders::_1;
@@ -30,7 +31,9 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
   const int FIX_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FIXED;
   const int FLOAT_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FLOAT;
 
-  if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) return;
+  if (rtk_enabled_) {
+    if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) return;
+  }
 
   std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
   if (!opt_particles.has_value()) {

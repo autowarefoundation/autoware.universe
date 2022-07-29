@@ -4,6 +4,7 @@
 
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
+    <arg name="rtk_enabled" default="true"/>
 
     <!-- ========================================= -->
     <!-- ============= predict update ============ -->
@@ -50,6 +51,7 @@
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="2.0"/>
         <param name="sigma" value="4.0"/>
+        <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
         <remap from="/weighted_particles" to="/weighted_particles"/>
     </node>

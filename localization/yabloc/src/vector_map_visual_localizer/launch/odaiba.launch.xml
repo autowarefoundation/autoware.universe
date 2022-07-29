@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">
+        <arg name="rtk_enabled" value="false"/>
+    </include>
+</launch>
