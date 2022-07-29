@@ -69,7 +69,7 @@ class ViewPlot(Node):
         if calibration_method is None:
             calibration_method = "eachcell"
         elif not ((calibration_method == "eachcell") | (calibration_method == "fourcell")):
-            print("inbalid method.")
+            print("invalid method.")
             calibration_method = "eachcell"
 
         print("default map dir: {}".format(default_map_dir))
