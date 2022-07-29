@@ -33,7 +33,7 @@ static int get_parameter_or(
 {
   rclcpp::Parameter param;
   node.get_parameter_or(param_name, param, rclcpp::Parameter(param_name, default_value));
-  return param.as_double();
+  return param.as_int();
 }
 
 static bool get_parameter_or(
