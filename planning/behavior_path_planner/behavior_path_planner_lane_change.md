@@ -287,13 +287,19 @@ d_rear = v_rear * rear_vehicle_reaction_time + v_rear * rear_vehicle_safety_time
 
 Since there is no absolute value for the deceleration`a_front` and `a_rear`, both of the values are parameterized (`expected_front_deceleration` and `expected_rear_deceleration`, respectively) with the estimation of how much deceleration will occur if the brake is pressed.
 
-Finally, the longitudinal distance is evaluated as follows
+The longitudinal distance is evaluated as follows
 
 ```C++
 d_rear < d_front + d_inter
 ```
 
 where `d_inter` is the relative longitudinal distance obtained at each evaluated predicted pose.
+
+Finally minimum longitudinal distance for `d_rear` is added to compensate for object to near to each other when `d_rear = 0.0`. This yields
+
+```C++
+std::max(longitudinal_distance_min_threshold, d_rear) < d_front + d_inter
+```
 
 #### If the lane is blocked and multiple lane changes
 
@@ -347,13 +353,14 @@ The following parameters are configurable in `lane_change.param.yaml`.
 
 The following parameters are configurable in `behavior_path_planner.param.yaml`.
 
-| Name                              | Unit    | Type   | Description                                                                                                                                                    | Default value |
-| :-------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `lateral_distance_max_threshold`  | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 5.0           |
-| `expected_front_deceleration`     | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*2)                                                                   | -1.0          |
-| `expected_rear_deceleration`      | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*2)                                                                     | -1.0          |
-| `rear_vehicle_reaction_time`      | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 2.0           |
-| `rear_vehicle_safety_time_margin` | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 2.0           |
+| Name                                  | Unit    | Type   | Description                                                                                                                                                    | Default value |
+| :------------------------------------ | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 5.0           |
+| `longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
+| `expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*2)                                                                   | -1.0          |
+| `expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*2)                                                                     | -1.0          |
+| `rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 2.0           |
+| `rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 2.0           |
 
 (\*2) the value must be negative.
 
