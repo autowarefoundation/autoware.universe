@@ -51,10 +51,10 @@ void applySafeVelocityConsideringPossibleCollision(
     // min allowed velocity : min allowed velocity consider maximum allowed braking
     // 緩やかな減速に制限しているところ(l_obs<0は自車が死角を通り過ぎたとき)
     const double v_slow_down =
-      (l_obs < 0 ||v0 <= v_safe)
+      (l_obs < 0 || v0 <= v_safe)
         ? v_safe
-        : max_vel_noise + planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
-
+        : max_vel_noise + planning_utils::calcDecelerationVelocityFromDistanceToTarget(
+                            j_min, a_min, a0, v0, l_obs);
 
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;

@@ -56,7 +56,6 @@ std::vector<std::pair<grid_map::Position, grid_map::Position>> pointsToRays(
   return lines;
 }
 
-
 void findOcclusionSpots(
   std::vector<grid_map::Position> & occlusion_spot_positions, const grid_map::GridMap & grid,
   const Polygon2d & polygon, [[maybe_unused]] double min_size)
