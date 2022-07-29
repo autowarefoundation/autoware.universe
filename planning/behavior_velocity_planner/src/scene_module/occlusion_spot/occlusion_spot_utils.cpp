@@ -136,6 +136,7 @@ void calcSlowDownPointsForPossibleCollision(
   size_t collision_index = 0;
   double dist_along_path_point = offset;
   double dist_along_next_path_point = dist_along_path_point;
+  // 死角に対して予め上限の速度を決めてあげる
   for (size_t idx = closest_idx; idx < path.points.size() - 1; idx++) {
     auto p_prev = path.points.at(idx).point;
     auto p_next = path.points.at(idx + 1).point;
@@ -393,6 +394,7 @@ bool generatePossibleCollisionsFromGridMap(
   }
   double distance_lower_bound = std::numeric_limits<double>::max();
   const Polygons2d & da_polygons = debug_data.detection_area_polygons;
+  // 各区画ごとに死角を処理
   for (const Polygon2d & detection_area_slice : da_polygons) {
     std::vector<grid_map::Position> occlusion_spot_positions;
     grid_utils::findOcclusionSpots(
@@ -408,6 +410,7 @@ bool generatePossibleCollisionsFromGridMap(
     if (occlusion_spot_positions.empty()) continue;
     // for each partition find nearest occlusion spot from polygon's origin
     const Point2d base_point = detection_area_slice.outer().at(0);
+    // 各区画から一番経路に近そうな死角を採用
     const auto pc = generateOneNotableCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, base_point, path_lanelet, param,
       debug_data);

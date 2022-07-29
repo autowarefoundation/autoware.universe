@@ -56,29 +56,6 @@ std::vector<std::pair<grid_map::Position, grid_map::Position>> pointsToRays(
   return lines;
 }
 
-void addObjectsToGridMap(const std::vector<PredictedObject> & objs, grid_map::GridMap & grid)
-{
-  auto & grid_data = grid["layer"];
-  for (const auto & obj : objs) {
-    Polygon2d foot_print_polygon = planning_utils::toFootprintPolygon(obj);
-    grid_map::Polygon grid_polygon;
-    const auto & pos = obj.kinematics.initial_pose_with_covariance.pose.position;
-    if (grid.isInside(grid_map::Position(pos.x, pos.y))) continue;
-    try {
-      for (const auto & point : foot_print_polygon.outer()) {
-        grid_polygon.addVertex({point.x(), point.y()});
-      }
-      for (grid_map_utils::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
-           ++iterator) {
-        const grid_map::Index & index = *iterator;
-        if (!grid.isValid(index)) continue;
-        grid_data(index.x(), index.y()) = grid_utils::occlusion_cost_value::OCCUPIED;
-      }
-    } catch (const std::invalid_argument & e) {
-      std::cerr << e.what() << std::endl;
-    }
-  }
-}
 
 void findOcclusionSpots(
   std::vector<grid_map::Position> & occlusion_spot_positions, const grid_map::GridMap & grid,
@@ -293,6 +270,7 @@ void generateOccupiedImage(
   std::vector<std::vector<cv::Point>> cv_polygons;
   std::vector<cv::Point> cv_polygon;
   Polygon2d occupancy_poly = generateOccupancyPolygon(occupancy_grid.info);
+  // 動物体情報から弾く死角領域を作成
   if (use_object_raycast) {
     for (const auto & foot_print : moving_vehicle_foot_prints) {
       // calculate occlusion polygon from moving vehicle
@@ -309,6 +287,7 @@ void generateOccupiedImage(
       cv_polygon.clear();
     }
   }
+  // 静止物体からかけている死角の領域を補間
   if (use_object_foot_print) {
     for (const auto & foot_print : stuck_vehicle_foot_prints) {
       for (const auto & p : foot_print.outer()) {
@@ -321,6 +300,7 @@ void generateOccupiedImage(
       cv_polygon.clear();
     }
   }
+  // 最後に静止物体、動物体の情報をすべてimage（OccupancyGrid）に反映
   for (const auto & p : cv_polygons) {
     // fill in occlusion area and copy to occupancy grid
     cv::fillConvexPoly(inout_image, p, cv::Scalar(occupied_space));

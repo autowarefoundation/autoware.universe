@@ -36,22 +36,26 @@ void applySafeVelocityConsideringPossibleCollision(
   const double j_min = param.v.max_slow_down_jerk;
   const double a_min = param.v.max_slow_down_accel;
   const double v_min = param.v.min_allowed_velocity;
+
+  // Do not exceeds original velocity and allowed brake of jerk/acc
   for (auto & possible_collision : possible_collisions) {
     const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
     const double original_vel = possible_collision.collision_with_margin.longitudinal_velocity_mps;
 
     // safe velocity : Consider ego emergency braking deceleration
     const double v_safe = possible_collision.obstacle_info.safe_motion.safe_velocity;
-
-    // min allowed velocity : min allowed velocity consider maximum allowed braking
-    const double v_slow_down =
-      (l_obs < 0 && v0 <= v_safe)
-        ? v_safe
-        : planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
     // skip non effective velocity insertion
     if (original_vel < v_safe) continue;
     // compare safe velocity consider EBS, minimum allowed velocity and original velocity
-    const double safe_velocity = calculateInsertVelocity(v_slow_down, v_safe, v_min, original_vel);
+    const double safe_velocity = std::max(v_safe, v_min);
+    // min allowed velocity : min allowed velocity consider maximum allowed braking
+    // 緩やかな減速に制限しているところ(l_obs<0は自車が死角を通り過ぎたとき)
+    const double v_slow_down =
+      (l_obs < 0 ||v0 <= v_safe)
+        ? v_safe
+        : max_vel_noise + planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
+
+
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;
     insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
@@ -111,20 +115,6 @@ SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
   }
   stop_dist += v.safe_margin;
   return sm;
-}
-
-double calculateInsertVelocity(
-  const double min_allowed_vel, const double safe_vel, const double min_vel,
-  const double original_vel)
-{
-  const double max_vel_noise = 0.05;
-  // ensure safe velocity doesn't exceed maximum allowed pbs deceleration
-  double cmp_safe_vel = std::max(min_allowed_vel + max_vel_noise, safe_vel);
-  // ensure safe path velocity is also above ego min velocity
-  cmp_safe_vel = std::max(cmp_safe_vel, min_vel);
-  // ensure we only lower the original velocity (and do not increase it)
-  cmp_safe_vel = std::min(cmp_safe_vel, original_vel);
-  return cmp_safe_vel;
 }
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

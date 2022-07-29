@@ -93,6 +93,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
     param_.v.a_ego = planner_data_->current_accel.get();
     param_.v.delay_time = planner_data_->system_delay;
+    // 緩やかに減速して速度０になる範囲まで見る（今はつかってない）
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
         param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
@@ -101,11 +102,14 @@ bool OcclusionSpotModule::modifyPathVelocity(
   }
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   PathWithLaneId clipped_path;
+  // pathは２００ｍあるが長過ぎるのでカット
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
+  // pathの間隔が広すぎるので補間をかけている。
   splineInterpolate(clipped_path, 1.0, &path_interpolated, logger_);
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
+  //経路上どの位置にいるのか計算
   const auto offset = motion_utils::calcSignedArcLength(
     path_interpolated.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
   if (offset == boost::none) return true;
@@ -122,6 +126,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
+  //　検知エリア
   if (!utils::buildDetectionAreaPolygon(
         debug_data_.detection_area_polygons, predicted_path, ego_pose, param_)) {
     return true;  // path point is not enough
@@ -129,6 +134,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   DEBUG_PRINT(show_time, "generate poly[ms]: ", stop_watch_.toc("processing_time", true));
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // extract only close lanelet
+  // ガードレール、フェンス、壁の外からは人はでてこない
   if (param_.use_partition_lanelet) {
     planning_utils::extractClosePartition(
       ego_pose.position, partition_lanelets_, debug_data_.close_partition);
@@ -137,6 +143,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
   const auto objects_ptr = planner_data_->predicted_objects;
   const auto vehicles =
     utils::extractVehicles(objects_ptr, ego_pose.position, param_.detection_area_length);
+  // 検知エリア内の車両を抽出
   const std::vector<PredictedObject> filtered_vehicles =
     utils::filterVehiclesByDetectionArea(vehicles, debug_data_.detection_area_polygons);
   DEBUG_PRINT(show_time, "filter obj[ms]: ", stop_watch_.toc("processing_time", true));
@@ -146,11 +153,13 @@ bool OcclusionSpotModule::modifyPathVelocity(
     grid_map::GridMap grid_map;
     Polygons2d stuck_vehicle_foot_prints;
     Polygons2d moving_vehicle_foot_prints;
+    // 動いている車両か止まっている車両かを判定：ここで動いている車両のポリゴンを大きめにつくるといいかも
     utils::categorizeVehicles(
       filtered_vehicles, stuck_vehicle_foot_prints, moving_vehicle_foot_prints,
       param_.stuck_vehicle_vel);
     // occ -> image
     // find out occlusion from erode occlusion candidate num iter is strength of filter
+    // フィルターの強さ
     const int num_iter = static_cast<int>(
       (param_.detection_area.min_occlusion_spot_size / occ_grid_ptr->info.resolution) - 1);
     grid_utils::denoiseOccupancyGridCV(
