@@ -8,8 +8,7 @@ find_package(Boost REQUIRED)
 
 ament_auto_add_library(tier4_autoware_utils SHARED
   src/tier4_autoware_utils.cpp
-  src/planning/planning_marker_helper.cpp
-  src/vehicle/vehicle_state_checker.cpp
+  src/geometry/boost_polygon_utils.cpp
 )
 
 if(BUILD_TESTING)

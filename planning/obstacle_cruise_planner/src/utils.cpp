@@ -14,8 +14,6 @@
 
 #include "obstacle_cruise_planner/utils.hpp"
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
 namespace obstacle_cruise_utils
 {
 bool isVehicle(const uint8_t label)
@@ -41,18 +39,17 @@ visualization_msgs::msg::Marker getObjectMarker(
 }
 
 boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t nearest_idx,
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t start_idx,
   const double target_length)
 {
   if (traj.points.empty()) {
     return {};
   }
 
-  size_t search_idx = nearest_idx;
+  size_t search_idx = start_idx;
   double length_to_search_idx = 0.0;
   for (; search_idx < traj.points.size(); ++search_idx) {
-    length_to_search_idx =
-      tier4_autoware_utils::calcSignedArcLength(traj.points, nearest_idx, search_idx);
+    length_to_search_idx = motion_utils::calcSignedArcLength(traj.points, start_idx, search_idx);
     if (length_to_search_idx > target_length) {
       break;
     } else if (search_idx == traj.points.size() - 1) {
@@ -73,40 +70,8 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
   const double seg_length =
     tier4_autoware_utils::calcDistance2d(pre_pose.position, next_pose.position);
   const double lerp_ratio = (length_to_search_idx - target_length) / seg_length;
-  target_pose.position.x =
-    pre_pose.position.x + (next_pose.position.x - pre_pose.position.x) * lerp_ratio;
-  target_pose.position.y =
-    pre_pose.position.y + (next_pose.position.y - pre_pose.position.y) * lerp_ratio;
-  target_pose.position.z =
-    pre_pose.position.z + (next_pose.position.z - pre_pose.position.z) * lerp_ratio;
 
-  // lerp orientation
-  const double pre_yaw = tf2::getYaw(pre_pose.orientation);
-  const double next_yaw = tf2::getYaw(next_pose.orientation);
-  target_pose.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(pre_yaw + (next_yaw - pre_yaw) * lerp_ratio);
-
-  return target_pose;
-}
-
-geometry_msgs::msg::Pose lerpByPose(
-  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, const double t)
-{
-  tf2::Transform tf_transform1, tf_transform2;
-  tf2::fromMsg(p1, tf_transform1);
-  tf2::fromMsg(p2, tf_transform2);
-  const auto & tf_point = tf2::lerp(tf_transform1.getOrigin(), tf_transform2.getOrigin(), t);
-  const auto & tf_quaternion =
-    tf2::slerp(tf_transform1.getRotation(), tf_transform2.getRotation(), t);
-
-  geometry_msgs::msg::Pose pose;
-  {
-    pose.position.x = tf_point.x();
-    pose.position.y = tf_point.y();
-    pose.position.z = tf_point.z();
-  }
-  pose.orientation = tf2::toMsg(tf_quaternion);
-  return pose;
+  return tier4_autoware_utils::calcInterpolatedPose(pre_pose, next_pose, lerp_ratio);
 }
 
 boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
@@ -125,7 +90,7 @@ boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
     if (rel_time <= rclcpp::Duration(path.time_step) * static_cast<double>(i)) {
       const auto offset = rel_time - rclcpp::Duration(path.time_step) * static_cast<double>(i - 1);
       const auto ratio = offset.seconds() / rclcpp::Duration(path.time_step).seconds();
-      return lerpByPose(prev_pt, pt, ratio);
+      return tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
     }
   }
 
@@ -185,5 +150,40 @@ geometry_msgs::msg::Pose getCurrentObjectPose(
   }
 
   return interpolated_pose.get();
+}
+
+boost::optional<TargetObstacle> getClosestStopObstacle(
+  const autoware_auto_planning_msgs::msg::Trajectory & traj,
+  const std::vector<TargetObstacle> & target_obstacles)
+{
+  if (target_obstacles.empty()) {
+    return boost::none;
+  }
+
+  boost::optional<TargetObstacle> closest_stop_obstacle = boost::none;
+  double dist_to_closest_stop_obstacle = std::numeric_limits<double>::max();
+  for (const auto & obstacle : target_obstacles) {
+    // Ignore obstacle that has not stopped
+    if (!obstacle.has_stopped) {
+      continue;
+    }
+
+    const double dist_to_stop_obstacle =
+      motion_utils::calcSignedArcLength(traj.points, 0, obstacle.collision_point);
+    if (dist_to_stop_obstacle < dist_to_closest_stop_obstacle) {
+      dist_to_closest_stop_obstacle = dist_to_stop_obstacle;
+      closest_stop_obstacle = obstacle;
+    }
+  }
+  return closest_stop_obstacle;
+}
+
+std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
+{
+  std::stringstream ss;
+  for (auto i = 0; i < 16; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
+  }
+  return ss.str();
 }
 }  // namespace obstacle_cruise_utils

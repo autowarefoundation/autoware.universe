@@ -18,8 +18,8 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -115,6 +115,7 @@ struct PlannerParam
   bool use_moving_object_ray_cast;  // [-]
   bool use_partition_lanelet;       // [-]
   // parameters in yaml
+  double detection_area_offset;      // [m]
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
   double stuck_vehicle_vel;          // [m/s]

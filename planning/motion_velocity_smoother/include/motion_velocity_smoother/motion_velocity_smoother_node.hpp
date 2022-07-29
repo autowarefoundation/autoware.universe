@@ -15,6 +15,8 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__MOTION_VELOCITY_SMOOTHER_NODE_HPP_
 #define MOTION_VELOCITY_SMOOTHER__MOTION_VELOCITY_SMOOTHER_NODE_HPP_
 
+#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
@@ -30,8 +32,6 @@
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 #include "tier4_autoware_utils/ros/self_pose_listener.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
-#include "tier4_autoware_utils/trajectory/tmp_conversion.hpp"
-#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
@@ -44,6 +44,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace motion_velocity_smoother
@@ -58,34 +59,37 @@ using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 
+struct Motion
+{
+  double vel = 0.0;
+  double acc = 0.0;
+};
+
 class MotionVelocitySmootherNode : public rclcpp::Node
 {
 public:
   explicit MotionVelocitySmootherNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Publisher<Trajectory>::SharedPtr
-    pub_trajectory_;  //!< @brief publisher for output trajectory
-  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr
-    pub_over_stop_velocity_;  //!< @brief publisher for over stop velocity warning
-  rclcpp::Subscription<Odometry>::SharedPtr
-    sub_current_odometry_;  //!< @brief subscriber for current velocity
-  rclcpp::Subscription<Trajectory>::SharedPtr
-    sub_current_trajectory_;  //!< @brief subscriber for reference trajectory
-  rclcpp::Subscription<VelocityLimit>::SharedPtr
-    sub_external_velocity_limit_;  //!< @brief subscriber for external velocity limit
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
+  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
+  rclcpp::Subscription<Odometry>::SharedPtr sub_current_odometry_;
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
+  rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
 
   PoseStamped::ConstSharedPtr current_pose_ptr_;   // current vehicle pose
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;   // current base_waypoints
   double external_velocity_limit_;                 // current external_velocity_limit
-  double max_velocity_with_deceleration_;          // maximum velocity with deceleration
-                                                   // for external velocity limit
-  double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
 
-  TrajectoryPoints prev_output_;                           // previously published trajectory
-  boost::optional<TrajectoryPoint> prev_closest_point_{};  // previous trajectory point
-                                                           // closest to ego vehicle
+  // maximum velocity with deceleration for external velocity limit
+  double max_velocity_with_deceleration_;
+  double external_velocity_limit_dist_{0.0};  // distance to set external velocity limit
+
+  TrajectoryPoints prev_output_;  // previously published trajectory
+
+  // previous trajectory point closest to ego vehicle
+  boost::optional<TrajectoryPoint> prev_closest_point_{};
 
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
@@ -130,6 +134,8 @@ private:
 
   double over_stop_velocity_warn_thr_;  // threshold to publish over velocity warn
 
+  mutable rclcpp::Clock::SharedPtr clock_;
+
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
@@ -153,13 +159,17 @@ private:
   // const methods
   bool checkData() const;
 
+  void updateDataForExternalVelocityLimit();
+
   AlgorithmType getAlgorithmType(const std::string & algorithm_name) const;
 
   TrajectoryPoints calcTrajectoryVelocity(const TrajectoryPoints & input) const;
 
-  bool smoothVelocity(const TrajectoryPoints & input, TrajectoryPoints & traj_smoothed) const;
+  bool smoothVelocity(
+    const TrajectoryPoints & input, const size_t input_closest,
+    TrajectoryPoints & traj_smoothed) const;
 
-  std::tuple<double, double, InitializeType> calcInitialMotion(
+  std::pair<Motion, InitializeType> calcInitialMotion(
     const TrajectoryPoints & input_traj, const size_t input_closest,
     const TrajectoryPoints & prev_traj) const;
 
@@ -183,7 +193,7 @@ private:
     const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) const;
 
   Trajectory toTrajectoryMsg(
-    const TrajectoryPoints & points, const std_msgs::msg::Header & header) const;
+    const TrajectoryPoints & points, const std_msgs::msg::Header * header = nullptr) const;
 
   // parameter handling
   void initCommonParam();
@@ -209,6 +219,13 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_backward_filtered_trajectory_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_merged_filtered_trajectory_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_closest_merged_velocity_;
+
+  // helper functions
+  boost::optional<size_t> findNearestIndex(
+    const TrajectoryPoints & points, const geometry_msgs::msg::Pose & p) const;
+  boost::optional<size_t> findNearestIndexFromEgo(const TrajectoryPoints & points) const;
+  bool isReverse(const TrajectoryPoints & points) const;
+  void flipVelocity(TrajectoryPoints & points) const;
 };
 }  // namespace motion_velocity_smoother
 

@@ -110,20 +110,16 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
 
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {
-    constexpr double stop_vel = 0.0;
-    const double decel_vel = planner_param_.decel_velocity;
-    double v = (has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
+    constexpr double v = 0.0;
     util::setVelocityFrom(stop_line_idx, v, path);
 
     /* get stop point and stop factor */
-    if (v == stop_vel) {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = debug_data_.stop_point_pose;
-      stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
-      planning_utils::appendStopReason(stop_factor, stop_reason);
-    }
+    tier4_planning_msgs::msg::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.stop_point_pose;
+    stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
 
-    const double signed_arc_dist_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
+    const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
       path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position);
 
     constexpr double distance_threshold = 2.0;
