@@ -117,6 +117,8 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   max_vel_msg.stamp = this->now();
   max_vel_msg.max_velocity = node_param_.max_velocity;
   pub_velocity_limit_->publish(max_vel_msg);
+
+  clock_ = get_clock();
 }
 
 rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter(
@@ -343,10 +345,10 @@ bool MotionVelocitySmootherNode::checkData() const
 
 void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr msg)
 {
-  base_traj_raw_ptr_ = msg;
-
-  stop_watch_.tic();
   RCLCPP_DEBUG(get_logger(), "========================= run start =========================");
+  stop_watch_.tic();
+
+  base_traj_raw_ptr_ = msg;
 
   current_pose_ptr_ = self_pose_listener_.getCurrentPose();
 
@@ -359,28 +361,22 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   updateDataForExternalVelocityLimit();
 
   // calculate trajectory velocity
-  TrajectoryPoints output =
-    calcTrajectoryVelocity(motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_));
+  auto input_points = motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_);
+
+  // For negative velocity handling, multiple -1 to velocity if it is for reverse.
+  // NOTE: this process must be in the beginning of the process
+  is_reverse_ = isReverse(input_points);
+  if (is_reverse_) {
+    flipVelocity(input_points);
+  }
+
+  const auto output = calcTrajectoryVelocity(input_points);
   if (output.empty()) {
     RCLCPP_WARN(get_logger(), "Output Point is empty");
     return;
   }
 
-  // Get the nearest point
-  const auto output_closest_idx = findNearestIndexFromEgo(output);
-
-  const auto output_closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(output, current_pose_ptr_->pose);
-  if (!output_closest_idx) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Cannot find closest waypoint for output trajectory");
-    return;
-  }
-
-  // Resample the optimized trajectory
-  auto output_resampled = resampling::resampleTrajectory(
-    output, current_odometry_ptr_->twist.twist.linear.x, *output_closest_idx,
-    node_param_.post_resample_param);
+  auto output_resampled = poseResampleTrajectory(output);
   if (!output_resampled) {
     RCLCPP_WARN(get_logger(), "Failed to get the resampled output trajectory");
     return;
@@ -391,22 +387,24 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     output_resampled->back().longitudinal_velocity_mps = 0.0;
   }
 
+  // update previous step infomation
+  updatePrevValues(output);
+
+  // for reverse velocity
+  // NOTE: this process must be in the end of the process
+  if (is_reverse_) {
+    flipVelocity(*output_resampled);
+  }
+
   // publish message
   publishTrajectory(*output_resampled);
 
   // publish debug message
-  publishStopDistance(output, *output_closest_idx);
-  publishClosestState(output_closest_point);
-
-  prev_output_ = output;
-  prev_closest_point_ = output_closest_point;
+  publishStopDistance(output);
+  publishClosestState(output);
 
   // Publish Calculation Time
-  Float32Stamped calculation_time_data{};
-  calculation_time_data.stamp = this->now();
-  calculation_time_data.data = stop_watch_.toc();
-  debug_calculation_time_->publish(calculation_time_data);
-  RCLCPP_DEBUG(get_logger(), "run: calculation time = %f [ms]", calculation_time_data.data);
+  publishStopWatchTime();
   RCLCPP_DEBUG(get_logger(), "========================== run() end ==========================\n\n");
 }
 
@@ -446,16 +444,11 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
     return prev_output_;
   }
 
-  // Smoother can not handle negative velocity, so multiple -1 to velocity if any trajectory points
-  // have reverse velocity
-  const bool is_reverse = isReverse(traj_extracted);
-  if (is_reverse) {
-    flipVelocity(traj_extracted);
-  }
-
   // Debug
   if (publish_debug_trajs_) {
-    pub_trajectory_raw_->publish(toTrajectoryMsg(traj_extracted));
+    auto tmp = traj_extracted;
+    if (is_reverse_) flipVelocity(tmp);
+    pub_trajectory_raw_->publish(toTrajectoryMsg(tmp));
   }
 
   // Apply external velocity limit
@@ -474,17 +467,14 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   // Debug
   if (publish_debug_trajs_) {
+    auto tmp = traj_extracted;
+    if (is_reverse_) flipVelocity(tmp);
     pub_trajectory_vel_lim_->publish(toTrajectoryMsg(traj_extracted));
   }
 
   // Smoothing velocity
   if (!smoothVelocity(traj_extracted, *traj_extracted_closest, output)) {
     return prev_output_;
-  }
-
-  // for reverse velocity
-  if (is_reverse) {
-    flipVelocity(output);
   }
 
   return output;
@@ -565,8 +555,16 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
   RCLCPP_DEBUG(get_logger(), "smoothVelocity : traj_smoothed.size() = %lu", traj_smoothed.size());
   if (publish_debug_trajs_) {
-    pub_trajectory_latacc_filtered_->publish(toTrajectoryMsg(*traj_lateral_acc_filtered));
-    pub_trajectory_resampled_->publish(toTrajectoryMsg(*traj_resampled));
+    {
+      auto tmp = *traj_lateral_acc_filtered;
+      if (is_reverse_) flipVelocity(tmp);
+      pub_trajectory_latacc_filtered_->publish(toTrajectoryMsg(tmp));
+    }
+    {
+      auto tmp = *traj_resampled;
+      if (is_reverse_) flipVelocity(tmp);
+      pub_trajectory_resampled_->publish(toTrajectoryMsg(tmp));
+    }
 
     if (!debug_trajectories.empty()) {
       for (auto & debug_trajectory : debug_trajectories) {
@@ -608,9 +606,30 @@ void MotionVelocitySmootherNode::insertBehindVelocity(
   }
 }
 
-void MotionVelocitySmootherNode::publishStopDistance(
-  const TrajectoryPoints & trajectory, const size_t closest) const
+boost::optional<TrajectoryPoints> MotionVelocitySmootherNode::poseResampleTrajectory(
+  const TrajectoryPoints trajectory) const
 {
+  // Get the nearest point
+  const auto closest_idx = findNearestIndexFromEgo(trajectory);
+  if (!closest_idx) {
+    return {};
+  }
+
+  auto trajectory_resampled = resampling::resampleTrajectory(
+    trajectory, current_odometry_ptr_->twist.twist.linear.x, *closest_idx,
+    node_param_.post_resample_param);
+
+  return trajectory_resampled;
+}
+
+void MotionVelocitySmootherNode::publishStopDistance(const TrajectoryPoints & trajectory) const
+{
+  const auto closest_optional = findNearestIndexFromEgo(trajectory);
+  if (!closest_optional) {
+    return;
+  }
+  const auto closest = *closest_optional;
+
   // stop distance calculation
   const double stop_dist_lim{50.0};
   double stop_dist{stop_dist_lim};
@@ -647,7 +666,7 @@ MotionVelocitySmootherNode::calcInitialMotion(
   }
 
   const auto prev_output_closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(prev_traj, input_traj.at(input_closest).pose);
+    trajectory_utils::calcInterpolatedTrajectoryPoint(prev_traj, current_pose_ptr_->pose);
 
   // when velocity tracking deviation is large
   const double desired_vel{prev_output_closest_point.longitudinal_velocity_mps};
@@ -800,16 +819,22 @@ void MotionVelocitySmootherNode::applyStopApproachingVelocity(TrajectoryPoints &
 void MotionVelocitySmootherNode::publishDebugTrajectories(
   const std::vector<TrajectoryPoints> & debug_trajectories) const
 {
+  auto debug_trajectories_tmp = debug_trajectories;
   if (node_param_.algorithm_type == AlgorithmType::JERK_FILTERED) {
-    if (debug_trajectories.size() != 3) {
+    if (debug_trajectories_tmp.size() != 3) {
       RCLCPP_DEBUG(get_logger(), "Size of the debug trajectories is incorrect");
       return;
     }
-    pub_forward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories.at(0)));
-    pub_backward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories.at(1)));
-    pub_merged_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories.at(2)));
+    if (is_reverse_) {
+      flipVelocity(debug_trajectories_tmp.at(0));
+      flipVelocity(debug_trajectories_tmp.at(1));
+      flipVelocity(debug_trajectories_tmp.at(2));
+    }
+    pub_forward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories_tmp.at(0)));
+    pub_backward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories_tmp.at(1)));
+    pub_merged_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories_tmp.at(2)));
     publishClosestVelocity(
-      debug_trajectories.at(2), current_pose_ptr_->pose, pub_closest_merged_velocity_);
+      debug_trajectories_tmp.at(2), current_pose_ptr_->pose, pub_closest_merged_velocity_);
   }
 }
 
@@ -826,10 +851,12 @@ void MotionVelocitySmootherNode::publishClosestVelocity(
   pub->publish(vel_data);
 }
 
-void MotionVelocitySmootherNode::publishClosestState(const TrajectoryPoint & closest_point)
+void MotionVelocitySmootherNode::publishClosestState(const TrajectoryPoints & trajectory)
 {
-  auto publishFloat = [=](
-                        const double data, const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) {
+  const auto closest_point =
+    trajectory_utils::calcInterpolatedTrajectoryPoint(trajectory, current_pose_ptr_->pose);
+
+  auto publishFloat = [=](const double data, const auto pub) {
     Float32Stamped msg{};
     msg.stamp = this->now();
     msg.data = data;
@@ -858,6 +885,15 @@ void MotionVelocitySmootherNode::publishClosestState(const TrajectoryPoint & clo
   // Update
   prev_acc_ = curr_acc;
   *prev_time_ = curr_time;
+}
+
+void MotionVelocitySmootherNode::updatePrevValues(const TrajectoryPoints & final_result)
+{
+  prev_output_ = final_result;
+
+  const auto closest_point =
+    trajectory_utils::calcInterpolatedTrajectoryPoint(final_result, current_pose_ptr_->pose);
+  prev_closest_point_ = closest_point;
 }
 
 MotionVelocitySmootherNode::AlgorithmType MotionVelocitySmootherNode::getAlgorithmType(
@@ -934,6 +970,14 @@ void MotionVelocitySmootherNode::flipVelocity(TrajectoryPoints & points) const
   for (auto & pt : points) {
     pt.longitudinal_velocity_mps *= -1.0;
   }
+}
+
+void MotionVelocitySmootherNode::publishStopWatchTime()
+{
+  Float32Stamped calculation_time_data{};
+  calculation_time_data.stamp = this->now();
+  calculation_time_data.data = stop_watch_.toc();
+  debug_calculation_time_->publish(calculation_time_data);
 }
 
 }  // namespace motion_velocity_smoother
