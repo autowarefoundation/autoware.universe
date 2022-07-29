@@ -65,6 +65,15 @@ public:
   }
 };
 
+class TransformError : public ServiceException
+{
+public:
+  explicit TransformError(const std::string & message)
+  : ServiceException(ResponseStatus::TRANSFORM_ERROR, message)
+  {
+  }
+};
+
 }  // namespace component_interface_utils
 
 #endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_

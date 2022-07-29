@@ -64,8 +64,7 @@ public:
   /// Send request.
   typename WrapType::SharedFuture async_send_request(typename WrapType::SharedRequest request)
   {
-    const auto callback = [this](typename WrapType::SharedFuture) {};
-    return this->async_send_request(request, callback);
+    return this->async_send_request(request, [](typename WrapType::SharedFuture) {});
   }
 
   /// Send request.
