@@ -361,7 +361,15 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   updateDataForExternalVelocityLimit();
 
   // calculate trajectory velocity
-  const auto input_points = motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_);
+  auto input_points = motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_);
+
+  // For negative velocity handling, multiple -1 to velocity if it is for reverse.
+  // NOTE: this process must be in the beginning of the process
+  const bool is_reverse = isReverse(input_points);
+  if (is_reverse) {
+    flipVelocity(input_points);
+  }
+
   const auto output = calcTrajectoryVelocity(input_points);
   if (output.empty()) {
     RCLCPP_WARN(get_logger(), "Output Point is empty");
@@ -381,6 +389,12 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
 
   // update previous step infomation
   updatePrevValues(output);
+
+  // for reverse velocity
+  // NOTE: this process must be in the end of the process
+  if (is_reverse) {
+    flipVelocity(*output_resampled);
+  }
 
   // publish message
   publishTrajectory(*output_resampled);
@@ -430,13 +444,6 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
     return prev_output_;
   }
 
-  // Smoother can not handle negative velocity, so multiple -1 to velocity if any trajectory points
-  // have reverse velocity
-  const bool is_reverse = isReverse(traj_extracted);
-  if (is_reverse) {
-    flipVelocity(traj_extracted);
-  }
-
   // Debug
   if (publish_debug_trajs_) {
     pub_trajectory_raw_->publish(toTrajectoryMsg(traj_extracted));
@@ -464,11 +471,6 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   // Smoothing velocity
   if (!smoothVelocity(traj_extracted, *traj_extracted_closest, output)) {
     return prev_output_;
-  }
-
-  // for reverse velocity
-  if (is_reverse) {
-    flipVelocity(output);
   }
 
   return output;
