@@ -33,6 +33,7 @@ class ViewPlot(Node):
         super().__init__("plot_viewer")
         default_map_dir = args.default_map_dir
         calibrated_map_dir = args.calibrated_map_dir
+        calibration_method = args.method
         scatter_only = args.scatter_only
         log_file = args.log_file
         min_vel_thr = args.min_vel_thr
@@ -64,9 +65,16 @@ class ViewPlot(Node):
                 .get_parameter_value()
                 .string_value
             )
+        
+        if calibration_method is None:
+            calibration_method = "eachcell"
+        elif not ((calibration_method == "eachcell") | (calibration_method == "fourcell")):
+            print("inbalid method.")
+            calibration_method = "eachcell"
 
         print("default map dir: {}".format(default_map_dir))
         print("calibrated map dir: {}".format(calibrated_map_dir))
+        print("calibration method: {}".format(calibration_method))
 
         # read csv
         self.cr = CSVReader(log_file, csv_type="file")
@@ -93,6 +101,7 @@ class ViewPlot(Node):
             vel_diff_thr,
             CF.PEDAL_LIST,
             pedal_diff_thr,
+            calibration_method,
         )
 
         count_map, average_map, stddev_map = CalcUtils.create_stat_map(data)
@@ -268,6 +277,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-c", "--calibrated-map-dir", default=None, type=str, help="directory of calibrated map"
+    )
+    parser.add_argument(
+        "-m", "--method", default="None", type=str, help="calibration method : eachcell or fourcell"
     )
     parser.add_argument("-s", "--scatter-only", action="store_true", help="show only scatters")
     parser.add_argument(
