@@ -832,35 +832,41 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   const bool accel_mode, const int accel_pedal_index, const int accel_vel_index,
   const int brake_pedal_index, const int brake_vel_index, const double measured_acc)
 {
-  const double zll = accel_mode ? update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index)
-                                : update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index);
-  const double zhl = accel_mode
-                       ? update_accel_map_value_.at(accel_pedal_index + 1).at(accel_vel_index)
-                       : update_brake_map_value_.at(brake_pedal_index + 1).at(brake_vel_index);
-  const double zlh = accel_mode
-                       ? update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index + 1)
-                       : update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index + 1);
-  const double zhh = accel_mode
-                       ? update_accel_map_value_.at(accel_pedal_index + 1).at(accel_vel_index + 1)
-                       : update_brake_map_value_.at(brake_pedal_index + 1).at(brake_vel_index + 1);
+  // pre-defined
+  static std::vector<std::vector<double>> accel_map_offset_vec_(
+    accel_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
+  static std::vector<std::vector<double>> brake_map_offset_vec_(
+    brake_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
+  static std::vector<std::vector<Eigen::MatrixXd>> accel_covariance_mat_(
+    accel_map_value_.size() - 1,
+    std::vector<Eigen::MatrixXd>(
+      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
+  static std::vector<std::vector<Eigen::MatrixXd>> brake_covariance_mat_(
+    brake_map_value_.size() - 1,
+    std::vector<Eigen::MatrixXd>(
+      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
 
-  double rx = 0;
-  double ry = 0;
-  if (accel_mode) {
-    const double xl = accel_pedal_index_.at(accel_pedal_index);
-    const double xh = accel_pedal_index_.at(accel_pedal_index + 1);
-    rx = (delayed_accel_pedal_ptr_->data - xl) / (xh - xl);
-    const double yl = accel_vel_index_.at(accel_vel_index);
-    const double yh = accel_vel_index_.at(accel_vel_index + 1);
-    ry = (twist_ptr_->twist.linear.x - yl) / (yh - yl);
-  } else if (!accel_mode) {
-    const double xl = brake_pedal_index_.at(brake_pedal_index);
-    const double xh = brake_pedal_index_.at(brake_pedal_index + 1);
-    rx = (delayed_brake_pedal_ptr_->data - xl) / (xh - xl);
-    const double yl = brake_vel_index_.at(brake_vel_index);
-    const double yh = brake_vel_index_.at(brake_vel_index + 1);
-    ry = (twist_ptr_->twist.linear.x - yl) / (yh - yl);
-  }
+  auto & update_map_value = accel_mode ? update_accel_map_value_ : update_brake_map_value_;
+  const auto & map_value = accel_mode ? accel_map_value_ : brake_map_value_;
+  const auto & pedal_index = accel_mode ? accel_pedal_index : brake_pedal_index;
+  const auto & pedal_index_ = accel_mode ? accel_pedal_index_ : brake_pedal_index_;
+  const auto & vel_index = accel_mode ? accel_vel_index : brake_vel_index;
+  const auto & vel_index_ = accel_mode ? accel_vel_index_ : brake_vel_index_;
+  const auto & delayed_pedal = accel_mode ? delayed_accel_pedal_ptr_->data : delayed_brake_pedal_ptr_->data;
+  auto & map_offset_vec = accel_mode ? accel_map_offset_vec_ : brake_map_offset_vec_;
+  auto & covariance_mat = accel_mode ? accel_covariance_mat_ : brake_covariance_mat_;
+
+  const double zll = update_map_value.at(pedal_index + 0).at(vel_index + 0);
+  const double zhl = update_map_value.at(pedal_index + 1).at(vel_index + 0);
+  const double zlh = update_map_value.at(pedal_index + 0).at(vel_index + 1);
+  const double zhh = update_map_value.at(pedal_index + 1).at(vel_index + 1);
+
+  const double xl = pedal_index_.at(pedal_index + 0);
+  const double xh = pedal_index_.at(pedal_index + 1);
+  const double rx = (delayed_pedal - xl) / (xh - xl);
+  const double yl = vel_index_.at(vel_index + 0);
+  const double yh = vel_index_.at(vel_index + 1);
+  const double ry = (twist_ptr_->twist.linear.x - yl) / (yh - yl);
 
   Eigen::Vector4d phi(4);
   phi << (1 - rx) * (1 - ry), rx * (1 - ry), (1 - rx) * ry, rx * ry;
@@ -868,37 +874,18 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   Eigen::Vector4d theta(4);
   theta << zll, zhl, zlh, zhh;
 
-  // pre-defined
-  static std::vector<std::vector<double>> accel_map_offset_vec_(
-    accel_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
-  static std::vector<std::vector<double>> brake_map_offset_vec_(
-    brake_map_value_.size(), std::vector<double>(accel_map_value_.at(0).size(), map_offset_));
-  static std::vector<std::vector<Eigen::MatrixXd>> accel_covariance_vec_(
-    accel_map_value_.size() - 1,
-    std::vector<Eigen::MatrixXd>(
-      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
-  static std::vector<std::vector<Eigen::MatrixXd>> brake_covariance_vec_(
-    brake_map_value_.size() - 1,
-    std::vector<Eigen::MatrixXd>(
-      accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
-
-  const int vel_idx_l = accel_mode ? accel_vel_index : brake_vel_index;
-  const int vel_idx_h = accel_mode ? accel_vel_index + 1 : brake_vel_index + 1;
-  int ped_idx_l = accel_mode ? accel_pedal_index : brake_pedal_index;
-  int ped_idx_h = accel_mode ? accel_pedal_index + 1 : brake_pedal_index + 1;
+  const int vel_idx_l = vel_index + 0;
+  const int vel_idx_h = vel_index + 1;
+  const int ped_idx_l = pedal_index + 0;
+  const int ped_idx_h = pedal_index + 1;
 
   Eigen::VectorXd map_offset(4);
-  map_offset(0) = accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)
-                             : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l);
-  map_offset(1) = accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_l)
-                             : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_l);
-  map_offset(2) = accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_h)
-                             : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_h);
-  map_offset(3) = accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_h)
-                             : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_h);
+  map_offset(0) = map_offset_vec.at(ped_idx_l).at(vel_idx_l);
+  map_offset(1) = map_offset_vec.at(ped_idx_h).at(vel_idx_l);
+  map_offset(2) = map_offset_vec.at(ped_idx_l).at(vel_idx_h);
+  map_offset(3) = map_offset_vec.at(ped_idx_h).at(vel_idx_h);
 
-  Eigen::MatrixXd covariance = accel_mode ? accel_covariance_vec_.at(ped_idx_l).at(vel_idx_l)
-                                          : brake_covariance_vec_.at(ped_idx_l).at(vel_idx_l);
+  Eigen::MatrixXd covariance = covariance_mat.at(ped_idx_l).at(vel_idx_l);
 
   /* calculate adaptive map offset */
   Eigen::MatrixXd G(4, 4);
@@ -915,37 +902,21 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   map_offset = map_offset + G * error_map_offset;
 
   /* input calculated result and update map */
-  (accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)
-              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_l)) = map_offset(0);
-  (accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_l)
-              : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_l)) = map_offset(1);
-  (accel_mode ? accel_map_offset_vec_.at(ped_idx_l).at(vel_idx_h)
-              : brake_map_offset_vec_.at(ped_idx_l).at(vel_idx_h)) = map_offset(2);
-  (accel_mode ? accel_map_offset_vec_.at(ped_idx_h).at(vel_idx_h)
-              : brake_map_offset_vec_.at(ped_idx_h).at(vel_idx_h)) = map_offset(3);
+  map_offset_vec.at(ped_idx_l).at(vel_idx_l) = map_offset(0);
+  map_offset_vec.at(ped_idx_h).at(vel_idx_l) = map_offset(1);
+  map_offset_vec.at(ped_idx_l).at(vel_idx_h) = map_offset(2);
+  map_offset_vec.at(ped_idx_h).at(vel_idx_h) = map_offset(3);
 
-  (accel_mode ? accel_covariance_vec_.at(ped_idx_l).at(vel_idx_l)
-              : brake_covariance_vec_.at(ped_idx_l).at(vel_idx_l)) = covariance;
+  covariance_mat.at(ped_idx_l).at(vel_idx_l) = covariance;
 
-  if (accel_mode) {
-    update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index) =
-      accel_map_value_.at(accel_pedal_index).at(accel_vel_index) + map_offset(0);
-    update_accel_map_value_.at(accel_pedal_index + 1).at(accel_vel_index) =
-      accel_map_value_.at(accel_pedal_index + 1).at(accel_vel_index) + map_offset(1);
-    update_accel_map_value_.at(accel_pedal_index).at(accel_vel_index + 1) =
-      accel_map_value_.at(accel_pedal_index).at(accel_vel_index + 1) + map_offset(2);
-    update_accel_map_value_.at(accel_pedal_index + 1).at(accel_vel_index + 1) =
-      accel_map_value_.at(accel_pedal_index + 1).at(accel_vel_index + 1) + map_offset(3);
-  } else {
-    update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index) =
-      brake_map_value_.at(brake_pedal_index).at(brake_vel_index) + map_offset(0);
-    update_brake_map_value_.at(brake_pedal_index + 1).at(brake_vel_index) =
-      brake_map_value_.at(brake_pedal_index + 1).at(brake_vel_index) + map_offset(1);
-    update_brake_map_value_.at(brake_pedal_index).at(brake_vel_index + 1) =
-      brake_map_value_.at(brake_pedal_index).at(brake_vel_index + 1) + map_offset(2);
-    update_brake_map_value_.at(brake_pedal_index + 1).at(brake_vel_index + 1) =
-      brake_map_value_.at(brake_pedal_index + 1).at(brake_vel_index + 1) + map_offset(3);
-  }
+  update_map_value.at(pedal_index + 0).at(vel_index + 0) =
+    map_value.at(pedal_index + 0).at(vel_index + 0) + map_offset(0);
+  update_map_value.at(pedal_index + 1).at(vel_index + 0) =
+    map_value.at(pedal_index + 1).at(vel_index + 0) + map_offset(1);
+  update_map_value.at(pedal_index + 0).at(vel_index + 1) =
+    map_value.at(pedal_index + 0).at(vel_index + 1) + map_offset(2);
+  update_map_value.at(pedal_index + 1).at(vel_index + 1) =
+    map_value.at(pedal_index + 1).at(vel_index + 1) + map_offset(3);
 
   return true;
 }
