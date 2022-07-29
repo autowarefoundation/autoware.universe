@@ -773,7 +773,9 @@ void ObstacleStopPlannerNode::searchObstacle(
           planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
           &planner_data.stop_require, &output, trajectory_header);
 
-        last_detect_time_collision_point_ = trajectory_header.stamp;
+        if (planner_data.stop_require) {
+          last_detect_time_collision_point_ = trajectory_header.stamp;
+        }
 
         break;
       }
