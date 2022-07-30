@@ -6,12 +6,13 @@ namespace imgproc
 {
 cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
+  constexpr int MAX_INT = std::numeric_limits<int>::max();
+
   std::vector<std::vector<int>> distances;
   distances.resize(cost_map.rows);
   for (int i = 0; i < cost_map.rows; i++) {
     distances.at(i).resize(cost_map.cols);
-    std::fill(distances.at(i).begin(), distances.at(i).end(), -1);
-
+    std::fill(distances.at(i).begin(), distances.at(i).end(), MAX_INT);
     const uchar * intensity_ptr = intensity.ptr<uchar>(i);
     for (int j = 0; j < cost_map.cols; j++) {
       if (intensity_ptr[j] != 0) distances.at(i).at(j) = 0;
@@ -21,47 +22,44 @@ cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
   cv::Mat dst = cost_map.clone();
 
   // Forward
-  int cnt = 0;
   for (int r = 1; r < cost_map.rows; r++) {
     const uchar * upper_ptr = dst.ptr<uchar>(r - 1);
     uchar * current_ptr = dst.ptr<uchar>(r);
 
     for (int c = 1; c < cost_map.cols; c++) {
-      int u = distances.at(r - 1).at(c);
-      int l = distances.at(r).at(c - 1);
-
-      if ((u == -1) & (l == -1)) continue;
-      u = (u < 0) ? std::numeric_limits<int>::max() : u;
-      l = (l < 0) ? std::numeric_limits<int>::max() : l;
-      cnt++;
-      if (u < l) {
-        distances.at(r).at(c) = u + 1;
-        if (upper_ptr[c] == 0) {
-          std::cout << "r=" << r << " c=" << c << std::endl;
-          std::cout << "upper_ptr[c]==0" << std::endl;
-          std::cout << u << " " << l << std::endl;
-          std::cout << +upper_ptr[c] << std::endl;
-          std::cout << +current_ptr[c] << std::endl;
-          exit(EXIT_FAILURE);
-        }
+      int up = distances.at(r - 1).at(c);
+      int left = distances.at(r).at(c - 1);
+      if (up < left) {
+        if (distances.at(r).at(c) < up + 1) continue;
+        distances.at(r).at(c) = up + 1;
         current_ptr[c] = upper_ptr[c];
       } else {
-        distances.at(r).at(c) = l + 1;
-        if (current_ptr[c - 1] == 0) {
-          std::cout << "r=" << r << " c=" << c << std::endl;
-          std::cout << "upper_ptr[c-1]==0" << std::endl;
-          std::cout << u << " " << l << std::endl;
-          std::cout << +current_ptr[c - 1] << std::endl;
-          std::cout << +current_ptr[c] << std::endl;
-          exit(EXIT_FAILURE);
-        }
+        if (distances.at(r).at(c) < left + 1) continue;
+        distances.at(r).at(c) = left + 1;
         current_ptr[c] = current_ptr[c - 1];
       }
     }
   }
-  std::cout << cnt << std::endl;
 
   // Backward
+  for (int r = cost_map.rows - 2; r >= 0; r--) {
+    const uchar * downer_ptr = dst.ptr<uchar>(r + 1);
+    uchar * current_ptr = dst.ptr<uchar>(r);
+
+    for (int c = cost_map.cols - 2; c >= 0; c--) {
+      int down = distances.at(r + 1).at(c);
+      int right = distances.at(r).at(c + 1);
+      if (down < right) {
+        if (distances.at(r).at(c) < down + 1) continue;
+        distances.at(r).at(c) = down + 1;
+        current_ptr[c] = downer_ptr[c];
+      } else {
+        if (distances.at(r).at(c) < right + 1) continue;
+        distances.at(r).at(c) = right + 1;
+        current_ptr[c] = current_ptr[c + 1];
+      }
+    }
+  }
 
   return dst;
 }
@@ -91,7 +89,7 @@ cv::Mat visualizeDirectionMap(const cv::Mat & cost_map)
 int main()
 {
   // 0~180
-  cv::Mat raw_map = cv::Mat::zeros(cv::Size(800, 800), CV_8UC1);
+  cv::Mat raw_map = cv::Mat::zeros(cv::Size(640, 480), CV_8UC1);
   cv::line(raw_map, cv::Point(400, 0), cv::Point(400, 800), cv::Scalar::all(10), 3);
   cv::line(raw_map, cv::Point(0, 400), cv::Point(800, 400), cv::Scalar::all(80), 3);
   cv::line(raw_map, cv::Point(0, 0), cv::Point(400, 400), cv::Scalar::all(160), 3);
