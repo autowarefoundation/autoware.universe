@@ -13,21 +13,18 @@
 namespace imgproc
 {
 SegmentFilter::SegmentFilter()
-: Node("segment_filter"),
-  subscriber_(this, "lsd_cloud", "graph_segmented"),
-  tf_subscriber_(this->get_clock()),
+: BaseCameraInfoNode("segment_filter"),
   image_size_(declare_parameter<int>("image_size", 800)),
   max_range_(declare_parameter<float>("max_range", 20.f)),
   truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1)),
-  min_segment_length_(declare_parameter<float>("min_segment_length", -1))
+  min_segment_length_(declare_parameter<float>("min_segment_length", -1)),
+  subscriber_(this, "lsd_cloud", "graph_segmented"),
+  tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
   subscriber_.setCallback(cb);
-  auto cb_info = [this](const CameraInfo & msg) -> void { info_ = msg; };
-  sub_info_ =
-    create_subscription<CameraInfo>("/sensing/camera/traffic_light/camera_info", 10, cb_info);
 
   pub_cloud_ = create_publisher<PointCloud2>("/projected_lsd_cloud", 10);
   pub_image_ = create_publisher<Image>("/projected_image", 10);
@@ -43,18 +40,18 @@ cv::Point2i SegmentFilter::toCvPoint(const Eigen::Vector3f & v) const
 
 void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & segment_msg)
 {
-  if (!info_.has_value()) return;
+  if (isCameraInfoNullOpt()) return;
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   pcl::PointCloud<pcl::PointXYZ>::Ptr mask{new pcl::PointCloud<pcl::PointXYZ>()};
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(segment_msg, *mask);
   pcl::fromROSMsg(lsd_msg, *lsd);
 
-  Eigen::Matrix3f K =
-    Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
+  Eigen::Matrix3f K = intrinsic();
   Eigen::Matrix3f Kinv = K.inverse();
 
-  auto camera_extrinsic = tf_subscriber_(info_->header.frame_id, "base_link");
+  auto camera_extrinsic =
+    tf_subscriber_("traffic_light_left_camera/camera_optical_link", "base_link");
   if (!camera_extrinsic.has_value()) return;
   if (mask->empty()) {
     RCLCPP_WARN_STREAM(this->get_logger(), "there are no contours");

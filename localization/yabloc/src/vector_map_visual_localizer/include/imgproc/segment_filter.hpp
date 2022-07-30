@@ -1,4 +1,5 @@
 #pragma once
+#include "common/base_camera_info_node.hpp"
 #include "common/static_tf_subscriber.hpp"
 #include "common/synchro_subscriber.hpp"
 
@@ -14,7 +15,7 @@
 
 namespace imgproc
 {
-class SegmentFilter : public rclcpp::Node
+class SegmentFilter : public BaseCameraInfoNode
 {
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
@@ -30,8 +31,6 @@ private:
   const float min_segment_length_;
 
   SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
-  rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
-  std::optional<CameraInfo> info_{std::nullopt};
   common::StaticTfSubscriber tf_subscriber_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;

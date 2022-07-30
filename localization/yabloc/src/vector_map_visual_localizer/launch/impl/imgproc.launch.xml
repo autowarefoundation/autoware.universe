@@ -41,7 +41,7 @@
     <!-- ========================================= -->
     <node if="true" name="segment_filter" pkg="vector_map_visual_localizer" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="$(var src_info)" to="$(var resized_info)"/>
+        <remap from="/input/camera_info" to="$(var resized_info)"/>
         <param name="truncate_pixel_threshold" value="$(var truncate_pixel_threshold)" />
         <param name="min_segment_length" value="$(var min_segment_length)"/>
     </node>
