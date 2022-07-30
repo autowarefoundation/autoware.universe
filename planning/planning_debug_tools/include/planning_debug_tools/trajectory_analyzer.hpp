@@ -91,6 +91,8 @@ public:
     const auto arclength_offset = motion_utils::calcSignedArcLength(points, 0, ego_p);
     data.arclength = calcPathArcLengthArray(points, -arclength_offset);
     data.velocity = getVelocityArray(points);
+    data.height = getHeightArray(points);
+    data.yaw = getYawArray(points);
 
     if (data.size != data.arclength.size() || data.size != data.velocity.size()) {
       RCLCPP_ERROR(node_->get_logger(), "computation failed.");
