@@ -137,5 +137,7 @@ ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
 ADD_LIB(TARGET sign_lib SRC src/sign_board/sign_lib.cpp INC include LIB)
 ADD_EXE(TARGET sign_node SRC src/sign_board/sign_detector.cpp INC LIB util sign_lib)
 
+ADD_EXE(TARGET direct_map SRC src/imgproc/direct_cost_map.cpp INC LIB)
+
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)
