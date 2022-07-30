@@ -27,6 +27,7 @@ private:
   const int image_size_;
   const float max_range_;
   const int truncate_pixel_threshold_;
+  const float min_segment_length_;
 
   SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;

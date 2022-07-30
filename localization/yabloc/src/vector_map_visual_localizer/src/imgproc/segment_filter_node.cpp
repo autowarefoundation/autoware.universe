@@ -18,7 +18,8 @@ SegmentFilter::SegmentFilter()
   tf_subscriber_(this->get_clock()),
   image_size_(declare_parameter<int>("image_size", 800)),
   max_range_(declare_parameter<float>("max_range", 20.f)),
-  truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1))
+  truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1)),
+  min_segment_length_(declare_parameter<float>("min_segment_length", -1))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -182,6 +183,13 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::projectLines(
     std::optional<Eigen::Vector3f> opt2 = project(truncated_pn.getNormalVector3fMap());
     if (!opt1.has_value()) continue;
     if (!opt2.has_value()) continue;
+
+    // If linesegment has shoter length than config, it is excluded
+    if (min_segment_length_ > 0) {
+      float length = (opt1.value() - opt2.value()).norm();
+      if (length < min_segment_length_) continue;
+    }
+
     pcl::PointNormal xyz;
     xyz.x = opt1->x();
     xyz.y = opt1->y();

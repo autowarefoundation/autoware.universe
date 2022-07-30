@@ -2,22 +2,19 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
 
-    <arg name="pf" default="true"/>
-
     <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
     <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
-
-
     <arg name="rtk_enabled" default="true"/>
+    <arg name="min_segment_length" default="-1.0"/>
 
     <!-- ========================================= -->
     <!-- ============ PARTICLE FILTER ============ -->
     <!-- ========================================= -->
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/pf.launch.xml" if="$(var pf)">
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/pf.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
         <arg name="rtk_enabled" value="$(var rtk_enabled)"/>
@@ -26,13 +23,22 @@
     <!-- ========================================= -->
     <!-- ============ IMAGE PROCESSING =========== -->
     <!-- ========================================= -->
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/imgproc.launch.xml">
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/imgproc.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
         <arg name="src_image" value="$(var src_image)"/>
         <arg name="src_info" value="$(var src_info)"/>
         <arg name="resized_image" value="$(var resized_image)"/>
         <arg name="resized_info" value="$(var resized_info)"/>
+        <arg name="min_segment_length" value="$(var min_segment_length)"/>
+    </include>
+
+    <!-- ========================================= -->
+    <!-- =============== TRAJECTORY ============== -->
+    <!-- ========================================= -->
+    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/trajectory.launch.xml">
+        <arg name="use_sim_time" value="$(var use_sim_time)" />
+        <arg name="log_level" value="$(var log_level)"/>
     </include>
 
     <!-- ========================================= -->
@@ -40,42 +46,15 @@
     <!-- ========================================= -->
     <group>
         <push-ros-namespace namespace="validation"/>
-        <include file="$(find-pkg-share vector_map_visual_localizer)/launch/validation.launch.xml"/>
+        <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/validation.launch.xml"/>
     </group>
 
     <!-- ========================================= -->
-    <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
-
-    <node name="fix_to_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <remap from="pose" to="/sensing/gnss/ublox/pose"/>
-        <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
-    </node>
-
-    <node name="pose_to_path" pkg="vector_map_visual_localizer" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose]"/>
-        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path]"/>
-    </node>
-
-    <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-    </node>
-
+    <!-- ================ LANELET2 =============== -->
+    <!-- ========================================= -->
     <node name="ll2_decompose" pkg="vector_map_visual_localizer" exec="ll2_decompose_node" output="log" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="road_marking_labels" value="$(var road_marking_labels)"/>
-    </node>
-
-    <node name="twist_estimator" pkg="vector_map_visual_localizer" exec="twist_node" output="screen" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="rtk_enabled" value="$(var rtk_enabled)"/>
-    </node>
-
-    <node name="pose_initializer" pkg="vector_map_visual_localizer" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
-        <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="pose" to="/init/pose"/>
-        <param name="rtk_enabled" value="$(var rtk_enabled)"/>
     </node>
 
     <!-- ========================================= -->

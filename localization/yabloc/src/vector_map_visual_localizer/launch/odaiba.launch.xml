@@ -1,9 +1,10 @@
 <launch>
     <arg name="road_marking_labels" default="[zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
-
+    <arg name="min_segment_length" default="1.5" description="[m]"/>
 
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">
         <arg name="rtk_enabled" value="false"/>
         <arg name="road_marking_labels" value="$(var road_marking_labels)"/>
+        <arg name="min_segment_length" value="$(var min_segment_length)"/>
     </include>
 </launch>

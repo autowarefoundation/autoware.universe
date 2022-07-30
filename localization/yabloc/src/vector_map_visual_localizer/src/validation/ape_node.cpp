@@ -86,7 +86,9 @@ void AbsolutePoseError::poseCallback(const PoseCovStamped & pose_cov)
   ss << "--- APE Status ---" << std::endl;
   if (corresponding_reference.has_value()) {
     Eigen::Vector2f ape = computeApe(corresponding_reference.value(), pose_cov);
-    ss << "APE: " << std::fixed << std::setprecision(2) << ape.x() << " " << ape.y();
+    ss << std::fixed << std::setprecision(2);
+    ss << "LONGITUDINAL: " << ape.x();
+    ss << "LATERAL: " << ape.y();
   } else {
     ss << "APE: NaN";
   }
