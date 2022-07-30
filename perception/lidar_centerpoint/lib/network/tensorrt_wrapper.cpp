@@ -79,7 +79,7 @@ bool TensorRTWrapper::parseONNX(
     std::cout << "Fail to create config" << std::endl;
     return false;
   }
-  config->setMaxWorkspaceSize(workspace_size);
+  config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, workspace_size);
   if (precision == "fp16") {
     if (builder->platformHasFastFp16()) {
       std::cout << "use TensorRT FP16 Inference" << std::endl;
