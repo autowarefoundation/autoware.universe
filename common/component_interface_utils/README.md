@@ -7,8 +7,8 @@ This is a utility package that provides the following features:
 - Instantiation of the wrapper class
 - Logging for service and client
 - Service exception for response
-- Macros
 - Relays for topic and service
+- Readability for service callback
 
 ## Design
 
@@ -49,9 +49,9 @@ component_interface_utils::Subscription<SampleMessage>::SharedPtr sub_;
 // source file
 const auto node = component_interface_utils::NodeAdaptor(this);
 node.init_srv(srv_, callback);
-node.init_cli(srv_);
-node.init_pub(srv_);
-node.init_sub(srv_, callback);
+node.init_cli(cli_);
+node.init_pub(pub_);
+node.init_sub(sub_, callback);
 ```
 
 ## Logging for service and client
@@ -60,52 +60,34 @@ If the wrapper class is used, logging is automatically enabled. The log level is
 
 ## Service exception for response
 
-If the wrapper class is used, throwing `ServiceException` will automatically catch it and set it to response status.
+If the wrapper class is used and the service response has status, throwing `ServiceException` will automatically catch and set it to status.
 This is useful when returning an error from a function called from the service callback.
 
 ```cpp
-void ServiceCallback(Request req, Response res)
+void service_callback(Request req, Response res)
 {
-   Function();
+   function();
    res->status.success = true;
 }
 
-void Function()
+void function()
 {
    throw ServiceException(ERROR_CODE, "message");
 }
 ```
 
-If the wrapper class is not used, manually catch the `ServiceException` and set the response status as follows.
+If the wrapper class is not used or the service response has no status, manually catch the `ServiceException` as follows.
 
 ```cpp
-void ServiceCallback(Request req, Response res)
+void service_callback(Request req, Response res)
 {
    try {
-      Function();
+      function();
       res->status.success = true;
    } catch (const ServiceException & error) {
       res->status = error.status();
    }
 }
-```
-
-## Macros
-
-When creating callbacks for services and messages, developers have to write long arguments.
-This contains a lot of redundant information that is common to all callbacks.
-
-```cpp
-void ServiceCallback(
-   const some_package_name::srv::ServiceName::Request::SharedPtr req,
-   const some_package_name::srv::ServiceName::Response::SharedPtr res);
-```
-
-Developers only needs what type the callback argument is for.
-This macro completes the arguments from the type name.
-
-```cpp
-void ServiceCallback(ROS_SERVICE_ARG(some_package_name::srv::ServiceName));
 ```
 
 ## Relays for topic and service
@@ -115,6 +97,24 @@ There are utilities for relaying services and messages of the same type.
 ```cpp
 const auto node = component_interface_utils::NodeAdaptor(this);
 service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-node.relay_message(pub_, );
-node.relay_service(cli_, srv_, service_callback_group_);
+node.relay_message(pub_, sub_);
+node.relay_service(cli_, srv_, service_callback_group_);  // group is for avoiding deadlocks
+```
+
+## Readability for service callback
+
+When creating callback functions for services, developers have to write long arguments.
+This contains a lot of redundant information that is common to all service callbacks.
+
+```cpp
+void service_callback(
+   const some_package_name::srv::ServiceName::Request::SharedPtr req,
+   const some_package_name::srv::ServiceName::Response::SharedPtr res);
+```
+
+Developers only needs what type the callback argument is for.
+This macro completes the arguments from the type name.
+
+```cpp
+void service_callback(ROS_SERVICE_ARG(some_package_name::srv::ServiceName));
 ```
