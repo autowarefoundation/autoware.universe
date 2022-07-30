@@ -29,6 +29,7 @@ private:
   const float max_range_;
   const int truncate_pixel_threshold_;
   const float min_segment_length_;
+  const float max_segment_distance_;
 
   SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
   common::StaticTfSubscriber tf_subscriber_;
@@ -46,6 +47,8 @@ private:
   cv::Point2i toCvPoint(const Eigen::Vector3f & v) const;
   void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
 
+  // TODO: Rename function
   bool isLowerElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
+  bool isNearElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
 }  // namespace imgproc

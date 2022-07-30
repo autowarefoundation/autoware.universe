@@ -3,18 +3,17 @@
 
 #include <numeric>
 #include <optional>
+#include <random>
 #include <vector>
-
 namespace prediction_util
 {
+std::random_device seed_gen;
+std::default_random_engine engine(seed_gen());
 
-double nrand(double n)
+double nrand(double std)
 {
-  double r;
-  // Box-Muller
-  r = n * sqrt(-2.0 * log(static_cast<double>(rand()) / RAND_MAX)) *
-      cos(2.0 * M_PI * rand() / RAND_MAX);
-  return r;
+  std::normal_distribution<> dist(0.0, std);
+  return dist(engine);
 }
 
 double normalizeRadian(const double rad, const double min_rad = -M_PI)

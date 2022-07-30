@@ -19,8 +19,8 @@
         <param name="resampling_interval_seconds" value="1.5" />
         <param name="prediction_rate" value="50.0" />
 
-        <param name="static_linear_covariance" value="0.09" />
-        <param name="static_angular_covariance" value="0.01" />
+        <param name="static_linear_covariance" value="0.05" />
+        <param name="static_angular_covariance" value="0.005" />
 
         <param name="visualize" value="true"/>
         <remap from="/marker_array_particles" to="/weighted_particles/marker_array"/>

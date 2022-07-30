@@ -18,6 +18,7 @@ SegmentFilter::SegmentFilter()
   max_range_(declare_parameter<float>("max_range", 20.f)),
   truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1)),
   min_segment_length_(declare_parameter<float>("min_segment_length", -1)),
+  max_segment_distance_(declare_parameter<float>("max_segment_distance", -1)),
   subscriber_(this, "lsd_cloud", "graph_segmented"),
   tf_subscriber_(this->get_clock())
 {
@@ -120,6 +121,29 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   util::publishImage(*pub_image_, reliable_line_image, stamp);
 }
 
+bool SegmentFilter::isNearElement(
+  const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const
+{
+  float min_distance = std::min(pn.x, pn.normal_x);
+  float max_distance = std::max(pn.x, pn.normal_x);
+  if (min_distance > max_segment_distance_) return false;
+  if (max_distance < max_segment_distance_) {
+    truncated_pn = pn;
+    return true;
+  }
+
+  truncated_pn = pn;
+  Eigen::Vector3f t = pn.getVector3fMap() - pn.getNormalVector3fMap();
+  float not_zero_tx = t.x() > 0 ? std::max(t.x(), 1e-3f) : std::min(t.x(), -1e-3f);
+  float lambda = (max_segment_distance_ - pn.x) / not_zero_tx;
+  Eigen::Vector3f m = pn.getVector3fMap() + lambda * t;
+  if (pn.y < pn.normal_y)
+    truncated_pn.getVector3fMap() = m;
+  else
+    truncated_pn.getNormalVector3fMap() = m;
+  return true;
+}
+
 bool SegmentFilter::isLowerElement(
   const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const
 {
@@ -133,7 +157,8 @@ bool SegmentFilter::isLowerElement(
 
   truncated_pn = pn;
   Eigen::Vector3f t = pn.getVector3fMap() - pn.getNormalVector3fMap();
-  float lambda = (truncate_pixel_threshold_ - pn.y) / t.y();
+  float not_zero_ty = t.y() > 0 ? std::max(t.y(), 1e-3f) : std::min(t.y(), -1e-3f);
+  float lambda = (truncate_pixel_threshold_ - pn.y) / not_zero_ty;
   Eigen::Vector3f m = pn.getVector3fMap() + lambda * t;
   if (pn.y < pn.normal_y)
     truncated_pn.getVector3fMap() = m;
@@ -194,7 +219,13 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::projectLines(
     xyz.normal_x = opt2->x();
     xyz.normal_y = opt2->y();
     xyz.normal_z = opt2->z();
-    projected_points.push_back(xyz);
+
+    //
+    pcl::PointNormal truncated_xyz = xyz;
+    if (max_segment_distance_ > 0)
+      if (!isNearElement(xyz, truncated_xyz)) continue;
+
+    projected_points.push_back(truncated_xyz);
   }
   return projected_points;
 }
