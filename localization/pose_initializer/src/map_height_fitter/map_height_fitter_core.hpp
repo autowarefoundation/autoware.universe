@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__MAP_FIT_MODULE_HPP_
-#define LIB__MAP_FIT_MODULE_HPP_
+#ifndef MAP_HEIGHT_FITTER__MAP_HEIGHT_FITTER_CORE_HPP_
+#define MAP_HEIGHT_FITTER__MAP_HEIGHT_FITTER_CORE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -26,24 +27,26 @@
 
 #include <string>
 
-using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-
-class MapFitModule
+class MapHeightFitter : public rclcpp::Node
 {
 public:
-  explicit MapFitModule(rclcpp::Node * node);
-  PoseWithCovarianceStamped FitHeight(const PoseWithCovarianceStamped pose) const;
+  MapHeightFitter();
 
 private:
-  rclcpp::Logger logger_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
+  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using RequestHeightFitting = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
   tf2::BufferCore tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;
   std::string map_frame_;
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
+  rclcpp::Service<RequestHeightFitting>::SharedPtr srv_fit_;
 
-  void OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void OnMap(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void OnFit(
+    const RequestHeightFitting::Request::SharedPtr req,
+    const RequestHeightFitting::Response::SharedPtr res) const;
   double GetGroundHeight(const tf2::Vector3 & point) const;
 };
 
-#endif  // LIB__MAP_FIT_MODULE_HPP_
+#endif  // MAP_HEIGHT_FITTER__MAP_HEIGHT_FITTER_CORE_HPP_

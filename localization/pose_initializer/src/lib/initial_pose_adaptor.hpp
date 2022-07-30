@@ -15,17 +15,13 @@
 #ifndef LIB__INITIAL_POSE_ADAPTOR_HPP_
 #define LIB__INITIAL_POSE_ADAPTOR_HPP_
 
-#include "map_fit_module.hpp"
-
 #include <autoware_ad_api_specs/localization.hpp>
 #include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-
-using Initialize = autoware_ad_api::localization::Initialize;
-using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
 class InitialPoseAdaptor : public rclcpp::Node
 {
@@ -33,9 +29,11 @@ public:
   InitialPoseAdaptor();
 
 private:
-  MapFitModule map_fit_;
-  rclcpp::CallbackGroup::SharedPtr group_cli_;
+  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using Initialize = autoware_ad_api::localization::Initialize;
+  using RequestHeightFitting = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
+  rclcpp::Client<RequestHeightFitting>::SharedPtr cli_map_fit_;
   component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
   std::array<double, 36> rviz_particle_covariance_;
 

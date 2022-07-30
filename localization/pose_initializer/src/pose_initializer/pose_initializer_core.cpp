@@ -16,6 +16,7 @@
 
 #include "copy_vector_to_array.hpp"
 #include "gnss_module.hpp"
+#include "ndt_module.hpp"
 #include "stop_check_module.hpp"
 
 #include <memory>
@@ -27,14 +28,16 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, BIND_SERVICE(this, OnInitialize), group_srv_);
-  pub_reset_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset", 1);
-  cli_align_ = create_client<RequestPoseAlignment>("ndt_align");
+  pub_reset_ = create_publisher<PoseWithCovarianceStamped>("pose_reset", 1);
 
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
 
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
+  }
+  if (declare_parameter<bool>("ndt_enabled")) {
+    ndt_ = std::make_unique<NdtModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
@@ -65,9 +68,12 @@ void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
   }
   try {
     ChangeState(State::Message::INITIALIZING);
-    const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
-    const auto aligned_pose = AlignPose(request_pose);
-    pub_reset_->publish(aligned_pose);
+    auto pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
+    if (ndt_) {
+      pose = ndt_->AlignPose(pose);
+    }
+    pose.pose.covariance = output_pose_covariance_;
+    pub_reset_->publish(pose);
     res->status.success = true;
     ChangeState(State::Message::INITIALIZED);
   } catch (const ServiceException & error) {
@@ -76,7 +82,7 @@ void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
   }
 }
 
-PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
+geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
 {
   if (gnss_) {
     PoseWithCovarianceStamped pose = gnss_->GetPose();
@@ -85,26 +91,4 @@ PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
   }
   throw ServiceException(
     Initialize::Service::Response::ERROR_GNSS_SUPPORT, "GNSS is not supported.");
-}
-
-PoseWithCovarianceStamped PoseInitializer::AlignPose(const PoseWithCovarianceStamped & pose)
-{
-  const auto req = std::make_shared<RequestPoseAlignment::Request>();
-  req->pose_with_covariance = pose;
-
-  if (!cli_align_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("NDT align server is not ready.");
-  }
-
-  RCLCPP_INFO(get_logger(), "Call NDT align server.");
-  const auto res = cli_align_->async_send_request(req).get();
-  if (!res->success) {
-    throw ServiceException(
-      Initialize::Service::Response::ERROR_ESTIMATION, "NDT align server failed.");
-  }
-  RCLCPP_INFO(get_logger(), "NDT align server succeeded.");
-
-  // Overwrite the covariance.
-  res->pose_with_covariance.pose.covariance = output_pose_covariance_;
-  return res->pose_with_covariance;
 }

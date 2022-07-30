@@ -18,26 +18,41 @@
 
 #include <memory>
 
-InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_rviz_helper"), map_fit_(this)
+InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_rviz_helper")
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  node.init_cli(cli_initialize_, group_cli_);
-
+  rviz_particle_covariance_ = GetCovarianceParameter(this, "initialpose_particle_covariance");
+  cli_map_fit_ = create_client<RequestHeightFitting>("fit_map_height");
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "initialpose", rclcpp::QoS(1),
     std::bind(&InitialPoseAdaptor::OnInitialPose, this, std::placeholders::_1));
 
-  rviz_particle_covariance_ = GetCovarianceParameter(this, "initialpose_particle_covariance");
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_cli(cli_initialize_);
 }
+
+void Dump(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+{
+  const auto & p = pose.pose.pose.position;
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "x: " << p.x);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "y: " << p.y);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "z: " << p.z);
+}
+
+template <class ServiceT>
+using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
 
 void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
-  try {
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "==================================");
+  Dump(*msg);
+
+  const auto req = std::make_shared<RequestHeightFitting::Request>();
+  req->pose_with_covariance = *msg;
+  cli_map_fit_->async_send_request(req, [this](Future<RequestHeightFitting> future) {
+    Dump(future.get()->pose_with_covariance);
     const auto req = std::make_shared<Initialize::Service::Request>();
-    req->pose.push_back(map_fit_.FitHeight(*msg));
+    req->pose.push_back(future.get()->pose_with_covariance);
     req->pose.back().pose.covariance = rviz_particle_covariance_;
-    cli_initialize_->call(req);
-  } catch (const component_interface_utils::ServiceException & error) {
-  }
+    cli_initialize_->async_send_request(req);
+  });
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__STOP_CHECK_MODULE_HPP_
-#define LIB__STOP_CHECK_MODULE_HPP_
+#ifndef POSE_INITIALIZER__STOP_CHECK_MODULE_HPP_
+#define POSE_INITIALIZER__STOP_CHECK_MODULE_HPP_
 
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -33,4 +33,4 @@ private:
   void OnTwist(TwistWithCovarianceStamped::ConstSharedPtr msg);
 };
 
-#endif  // LIB__STOP_CHECK_MODULE_HPP_
+#endif  // POSE_INITIALIZER__STOP_CHECK_MODULE_HPP_

@@ -6,17 +6,25 @@ autoware_package()
 
 find_package(PCL REQUIRED COMPONENTS common)
 
+ament_auto_add_executable(pose_initializer_node
+  src/pose_initializer/pose_initializer_node.cpp
+  src/pose_initializer/pose_initializer_core.cpp
+  src/pose_initializer/gnss_module.cpp
+  src/pose_initializer/ndt_module.cpp
+  src/pose_initializer/stop_check_module.cpp
+)
+
+ament_auto_add_executable(map_height_fitter
+  src/map_height_fitter/map_height_fitter_node.cpp
+  src/map_height_fitter/map_height_fitter_core.cpp
+)
+target_link_libraries(map_height_fitter ${PCL_LIBRARIES})
+
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/lib/pose_initializer_core.cpp
-  src/lib/stop_check_module.cpp
-  src/lib/gnss_module.cpp
-  src/lib/map_fit_module.cpp
   src/lib/initial_pose_adaptor.cpp
   src/lib/automatic_api_caller.cpp
 )
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
 
-ament_auto_add_executable(pose_initializer_node src/pose_initializer_node.cpp)
 ament_auto_add_executable(initial_pose_adaptor src/initial_pose_adaptor.cpp)
 ament_auto_add_executable(automatic_api_caller src/automatic_api_caller.cpp)
 

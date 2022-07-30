@@ -17,30 +17,36 @@
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 
-GnssModule::GnssModule(rclcpp::Node * node) : map_fit_(node)
+#include <memory>
+
+GnssModule::GnssModule(rclcpp::Node * node)
 {
+  cli_map_fit_ = node->create_client<RequestHeightFitting>("fit_map_height");
   sub_gnss_pose_ = node->create_subscription<PoseWithCovarianceStamped>(
-    "gnss_pose_cov", 1, std::bind(&GnssModule::OnGnssPose, this, std::placeholders::_1));
+    "gnss_pose_cov", 1, [this](PoseWithCovarianceStamped::ConstSharedPtr msg) { pose_ = msg; });
 
   clock_ = node->get_clock();
   timeout_ = node->declare_parameter<double>("gnss_pose_timeout");
 }
 
-void GnssModule::OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg) { gnss_pose_ = msg; }
-
-PoseWithCovarianceStamped GnssModule::GetPose() const
+geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::GetPose() const
 {
   using Initialize = localization_interface::Initialize;
 
-  if (!gnss_pose_) {
+  if (!pose_) {
     throw component_interface_utils::ServiceException(
       Initialize::Service::Response::ERROR_GNSS, "The GNSS pose has not arrived.");
   }
 
-  const auto elapsed = rclcpp::Time(gnss_pose_->header.stamp) - clock_->now();
+  const auto elapsed = rclcpp::Time(pose_->header.stamp) - clock_->now();
   if (timeout_ < elapsed.seconds()) {
     throw component_interface_utils::ServiceException(
       Initialize::Service::Response::ERROR_GNSS, "The GNSS pose is out of date.");
   }
-  return *gnss_pose_;
+
+  const auto req = std::make_shared<RequestHeightFitting::Request>();
+  req->pose_with_covariance = *pose_;
+
+  const auto future = cli_map_fit_->async_send_request(req);
+  return future.get()->pose_with_covariance;
 }

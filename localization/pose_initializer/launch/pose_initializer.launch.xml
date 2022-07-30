@@ -1,26 +1,36 @@
 <launch>
   <arg name="config_file" default="$(find-pkg-share pose_initializer)/config/pose_initializer.param.yaml"/>
+  <arg name="gnss_enabled"/>
+  <arg name="ndt_enabled"/>
+  <arg name="stop_check_enabled"/>
 
   <!-- Initialize the pose using NDT scan matcher and EKF localizer. -->
   <node pkg="pose_initializer" exec="pose_initializer_node" name="pose_initializer_node">
     <param from="$(var config_file)"/>
-    <param name="stop_check_enabled" value="true"/>
+    <param name="ndt_enabled" value="$(var ndt_enabled)"/>
+    <remap from="ndt_align" to="/localization/pose_estimator/ndt_align_srv"/>
+    <param name="stop_check_enabled" value="$(var stop_check_enabled)"/>
     <param name="stop_check_duration" value="5.0"/>
     <remap from="stop_check_twist" to="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
-    <param name="gnss_enabled" value="true"/>
+    <param name="gnss_enabled" value="$(var gnss_enabled)"/>
     <param name="gnss_pose_timeout" value="3.0"/>
     <remap from="gnss_pose_cov" to="/sensing/gnss/pose_with_covariance"/>
-    <remap from="ndt_align" to="/localization/pose_estimator/ndt_align_srv"/>
-    <remap from="ekf_reset" to="/initialpose3d"/>
+    <remap from="pose_reset" to="/initialpose3d"/>
+  </node>
+
+  <!-- Map height fitting -->
+  <node pkg="pose_initializer" exec="map_height_fitter" name="map_height_fitter">
+    <remap from="fit_map_height" to="/localization/util/fit_map_height"/>
+    <remap from="pointcloud_map" to="/map/pointcloud_map"/>
   </node>
 
   <!-- Call AD API when initialpose from rviz. -->
   <node pkg="pose_initializer" exec="initial_pose_adaptor" name="initial_pose_adaptor">
     <param from="$(var config_file)"/>
     <remap from="initialpose" to="/initialpose"/>
-    <remap from="pointcloud_map" to="/map/pointcloud_map"/>
+    <remap from="fit_map_height" to="/localization/util/fit_map_height"/>
   </node>
 
   <!-- Call AD API for automatic initialization by GNSS. -->
-  <node pkg="pose_initializer" exec="automatic_api_caller" name="automatic_api_caller"/>
+  <!-- <node pkg="pose_initializer" exec="automatic_api_caller" name="automatic_api_caller"/> -->
 </launch>

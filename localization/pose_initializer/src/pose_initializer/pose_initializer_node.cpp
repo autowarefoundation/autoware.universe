@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_pose_initializer_core.hpp"
+#include "pose_initializer_core.hpp"
 
 #include <memory>
 
@@ -20,7 +20,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<DummyPoseInitializer>();
+  auto node = std::make_shared<PoseInitializer>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);

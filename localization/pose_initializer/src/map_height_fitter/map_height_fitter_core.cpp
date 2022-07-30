@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "map_fit_module.hpp"
+#include "map_height_fitter_core.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
-
-#include <algorithm>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -24,22 +22,28 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-MapFitModule::MapFitModule(rclcpp::Node * node)
-: logger_(node->get_logger()), tf2_listener_(tf2_buffer_)
+#include <algorithm>
+
+MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf2_buffer_)
 {
-  sub_map_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "pointcloud_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&MapFitModule::OnMap, this, std::placeholders::_1));
+  const auto durable_qos = rclcpp::QoS(1).transient_local();
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  sub_map_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+    "pointcloud_map", durable_qos, std::bind(&MapHeightFitter::OnMap, this, _1));
+  srv_fit_ = create_service<RequestHeightFitting>(
+    "fit_map_height", std::bind(&MapHeightFitter::OnFit, this, _1, _2));
 }
 
-void MapFitModule::OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+void MapHeightFitter::OnMap(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   map_frame_ = msg->header.frame_id;
   map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*msg, *map_cloud_);
 }
 
-double MapFitModule::GetGroundHeight(const tf2::Vector3 & point) const
+double MapHeightFitter::GetGroundHeight(const tf2::Vector3 & point) const
 {
   constexpr double radius = 1.0 * 1.0;
   const double x = point.getX();
@@ -54,32 +58,34 @@ double MapFitModule::GetGroundHeight(const tf2::Vector3 & point) const
       height = std::min(height, static_cast<double>(p.z));
     }
   }
-  RCLCPP_WARN_STREAM(logger_, "ground height: " << height);
   return std::isfinite(height) ? height : point.getZ();
 }
 
-PoseWithCovarianceStamped MapFitModule::FitHeight(const PoseWithCovarianceStamped pose) const
+void MapHeightFitter::OnFit(
+  const RequestHeightFitting::Request::SharedPtr req,
+  const RequestHeightFitting::Response::SharedPtr res) const
 {
-  const auto & position = pose.pose.pose.position;
+  const auto & position = req->pose_with_covariance.pose.pose.position;
   tf2::Vector3 point(position.x, position.y, position.z);
-  std::string fixed_frame = pose.header.frame_id;
+  std::string req_frame = req->pose_with_covariance.header.frame_id;
+  res->success = false;
 
   if (map_cloud_) {
     try {
-      const auto stamped = tf2_buffer_.lookupTransform(map_frame_, fixed_frame, tf2::TimePointZero);
+      const auto stamped = tf2_buffer_.lookupTransform(map_frame_, req_frame, tf2::TimePointZero);
       tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
       tf2::fromMsg(stamped.transform, transform);
       point = transform * point;
       point.setZ(GetGroundHeight(point));
       point = transform.inverse() * point;
+      res->success = true;
     } catch (tf2::TransformException & exception) {
-      RCLCPP_WARN_STREAM(logger_, "failed to lookup transform: " << exception.what());
+      RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
     }
   }
 
-  PoseWithCovarianceStamped result = pose;
-  result.pose.pose.position.x = point.getX();
-  result.pose.pose.position.y = point.getY();
-  result.pose.pose.position.z = point.getZ();
-  return result;
+  res->pose_with_covariance = req->pose_with_covariance;
+  res->pose_with_covariance.pose.pose.position.x = point.getX();
+  res->pose_with_covariance.pose.pose.position.y = point.getY();
+  res->pose_with_covariance.pose.pose.position.z = point.getZ();
 }

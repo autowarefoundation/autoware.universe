@@ -12,31 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__GNSS_MODULE_HPP_
-#define LIB__GNSS_MODULE_HPP_
-
-#include "map_fit_module.hpp"
+#ifndef POSE_INITIALIZER__GNSS_MODULE_HPP_
+#define POSE_INITIALIZER__GNSS_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-
-using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
 class GnssModule
 {
+private:
+  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using RequestHeightFitting = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
+
 public:
   explicit GnssModule(rclcpp::Node * node);
   PoseWithCovarianceStamped GetPose() const;
 
 private:
-  MapFitModule map_fit_;
   rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Client<RequestHeightFitting>::SharedPtr cli_map_fit_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_gnss_pose_;
-  PoseWithCovarianceStamped::ConstSharedPtr gnss_pose_;
+  PoseWithCovarianceStamped::ConstSharedPtr pose_;
   double timeout_;
-
-  void OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
 };
 
-#endif  // LIB__GNSS_MODULE_HPP_
+#endif  // POSE_INITIALIZER__GNSS_MODULE_HPP_
