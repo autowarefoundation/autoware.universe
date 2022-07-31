@@ -16,7 +16,6 @@
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
 #include <component_interface_specs/localization.hpp>
-#include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -51,9 +50,10 @@ private:
   std::unique_ptr<NdtModule> ndt_;
   std::unique_ptr<StopCheckModule> stop_check_;
   double stop_check_duration_;
-
   void ChangeState(State::Message::_state_type state);
-  void OnInitialize(API_SERVICE_ARG(Initialize, res, req));
+  void OnInitialize(
+    const Initialize::Service::Request::SharedPtr req,
+    const Initialize::Service::Response::SharedPtr res);
   PoseWithCovarianceStamped GetGnssPose();
 };
 

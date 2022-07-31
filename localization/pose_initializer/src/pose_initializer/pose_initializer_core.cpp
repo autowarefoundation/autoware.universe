@@ -27,7 +27,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   const auto node = component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
-  node.init_srv(srv_initialize_, BIND_SERVICE(this, OnInitialize), group_srv_);
+  node.init_srv(srv_initialize_, this, &PoseInitializer::OnInitialize, group_srv_);
   pub_reset_ = create_publisher<PoseWithCovarianceStamped>("pose_reset", 1);
 
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
@@ -59,7 +59,9 @@ void PoseInitializer::ChangeState(State::Message::_state_type state)
   pub_state_->publish(state_);
 }
 
-void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
+void PoseInitializer::OnInitialize(
+  const Initialize::Service::Request::SharedPtr req,
+  const Initialize::Service::Response::SharedPtr res)
 {
   // NOTE: This function is not executed during initialization because mutually exclusive.
   if (stop_check_ && !stop_check_->isVehicleStopped(stop_check_duration_)) {

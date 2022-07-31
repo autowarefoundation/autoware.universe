@@ -16,7 +16,6 @@
 #define AUTOMATIC_API_CALLER_HPP_
 
 #include <autoware_ad_api_specs/localization.hpp>
-#include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
