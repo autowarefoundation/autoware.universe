@@ -4,6 +4,4 @@
     <remap from="initialpose" to="/initialpose"/>
     <remap from="fit_map_height" to="/localization/util/fit_map_height"/>
   </node>
-
-  <node pkg="default_ad_api_helpers" exec="automatic_pose_initializer" name="automatic_pose_initializer"/>
 </launch>

@@ -35,17 +35,13 @@ AutomaticPoseInitializer::AutomaticPoseInitializer() : Node("automatic_pose_init
 
 void AutomaticPoseInitializer::OnTimer()
 {
-  RCLCPP_INFO_STREAM(get_logger(), "AAA.");
   if (state_.state == State::Message::UNINITIALIZED) {
-    RCLCPP_INFO_STREAM(get_logger(), "Request to initialize pose.");
     try {
       const auto req = std::make_shared<Initialize::Service::Request>();
       cli_initialize_->call(req);
     } catch (const component_interface_utils::ServiceException & error) {
-      RCLCPP_INFO_STREAM(get_logger(), "failed to initialize pose.");
     }
   }
-  RCLCPP_INFO_STREAM(get_logger(), "BBB.");
 }
 
 }  // namespace default_ad_api_helpers

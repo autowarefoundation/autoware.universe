@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="default_ad_api_helpers" exec="automatic_pose_initializer" name="automatic_pose_initializer"/>
+</launch>
