@@ -5,6 +5,5 @@
     <remap from="fit_map_height" to="/localization/util/fit_map_height"/>
   </node>
 
-  <!-- Call AD API for automatic initialization by GNSS. -->
-  <!-- <node pkg="pose_initializer" exec="automatic_api_caller" name="automatic_api_caller"/> -->
+  <node pkg="default_ad_api_helpers" exec="automatic_pose_initializer" name="automatic_pose_initializer"/>
 </launch>

@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOMATIC_API_CALLER_HPP_
-#define AUTOMATIC_API_CALLER_HPP_
+#ifndef AUTOMATIC_POSE_INITIALIZER_HPP_
+#define AUTOMATIC_POSE_INITIALIZER_HPP_
 
 #include <autoware_ad_api_specs/localization.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-class AutomaticApiCaller : public rclcpp::Node
+namespace default_ad_api_helpers
+{
+
+class AutomaticPoseInitializer : public rclcpp::Node
 {
 public:
-  AutomaticApiCaller();
+  AutomaticPoseInitializer();
 
 private:
   void OnTimer();
@@ -35,4 +38,6 @@ private:
   State::Message state_;
 };
 
-#endif  // AUTOMATIC_API_CALLER_HPP_
+}  // namespace default_ad_api_helpers
+
+#endif  // AUTOMATIC_POSE_INITIALIZER_HPP_

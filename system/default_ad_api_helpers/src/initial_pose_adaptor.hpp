@@ -28,7 +28,7 @@ namespace default_ad_api_helpers
 class InitialPoseAdaptor : public rclcpp::Node
 {
 public:
-  explicit InitialPoseAdaptor(const rclcpp::NodeOptions & options);
+  InitialPoseAdaptor();
 
 private:
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;

@@ -14,15 +14,27 @@
 
 #include "initial_pose_adaptor.hpp"
 
-#include "copy_vector_to_array.hpp"
-
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace default_ad_api_helpers
 {
+template <class ServiceT>
+using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
 
-InitialPoseAdaptor::InitialPoseAdaptor(const rclcpp::NodeOptions & options)
-: Node("initial_pose_adaptor", options)
+std::array<double, 36> GetCovarianceParameter(rclcpp::Node * node, const std::string & name)
+{
+  const auto vector = node->template declare_parameter<std::vector<double>>(name);
+  if (vector.size() != 36) {
+    throw std::invalid_argument("The covariance parameter size is not 36.");
+  }
+  std::array<double, 36> array;
+  std::copy_n(vector.begin(), array.size(), array.begin());
+  return array;
+}
+
+InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor")
 {
   rviz_particle_covariance_ = GetCovarianceParameter(this, "initial_pose_particle_covariance");
   cli_map_fit_ = create_client<RequestHeightFitting>("fit_map_height");
@@ -34,26 +46,11 @@ InitialPoseAdaptor::InitialPoseAdaptor(const rclcpp::NodeOptions & options)
   node.init_cli(cli_initialize_);
 }
 
-void Dump(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
-{
-  const auto & p = pose.pose.pose.position;
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "x: " << p.x);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "y: " << p.y);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "z: " << p.z);
-}
-
-template <class ServiceT>
-using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
-
 void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("test"), "==================================");
-  Dump(*msg);
-
   const auto req = std::make_shared<RequestHeightFitting::Request>();
   req->pose_with_covariance = *msg;
   cli_map_fit_->async_send_request(req, [this](Future<RequestHeightFitting> future) {
-    Dump(future.get()->pose_with_covariance);
     const auto req = std::make_shared<Initialize::Service::Request>();
     req->pose.push_back(future.get()->pose_with_covariance);
     req->pose.back().pose.covariance = rviz_particle_covariance_;
@@ -63,5 +60,5 @@ void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr
 
 }  // namespace default_ad_api_helpers
 
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api_helpers::InitialPoseAdaptor)
+#include "macros/create_node.hpp"
+CREATE_SINGLE_THREAD_NODE(default_ad_api_helpers::InitialPoseAdaptor)

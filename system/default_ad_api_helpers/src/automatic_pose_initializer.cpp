@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "automatic_api_caller.hpp"
+#include "automatic_pose_initializer.hpp"
 
 #include <memory>
 
-AutomaticApiCaller::AutomaticApiCaller() : Node("automatic_api_caller")
+namespace default_ad_api_helpers
+{
+
+AutomaticPoseInitializer::AutomaticPoseInitializer() : Node("automatic_pose_initializer")
 {
   const auto node = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_cli(cli_initialize_, group_cli_);
-  node.init_sub(sub_state_, [this](API_MESSAGE_ARG(State, msg)) { state_ = *msg; });
+  node.init_sub(sub_state_, [this](const State::Message::ConstSharedPtr msg) { state_ = *msg; });
 
   const auto period = rclcpp::Rate(1.0).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { OnTimer(); });
@@ -30,14 +33,22 @@ AutomaticApiCaller::AutomaticApiCaller() : Node("automatic_api_caller")
   state_.state = State::Message::UNKNOWN;
 }
 
-void AutomaticApiCaller::OnTimer()
+void AutomaticPoseInitializer::OnTimer()
 {
+  RCLCPP_INFO_STREAM(get_logger(), "AAA.");
   if (state_.state == State::Message::UNINITIALIZED) {
     RCLCPP_INFO_STREAM(get_logger(), "Request to initialize pose.");
-    const auto req = std::make_shared<Initialize::Service::Request>();
     try {
+      const auto req = std::make_shared<Initialize::Service::Request>();
       cli_initialize_->call(req);
     } catch (const component_interface_utils::ServiceException & error) {
+      RCLCPP_INFO_STREAM(get_logger(), "failed to initialize pose.");
     }
   }
+  RCLCPP_INFO_STREAM(get_logger(), "BBB.");
 }
+
+}  // namespace default_ad_api_helpers
+
+#include "macros/create_node.hpp"
+CREATE_MULTI_THREAD_NODE(default_ad_api_helpers::AutomaticPoseInitializer)
