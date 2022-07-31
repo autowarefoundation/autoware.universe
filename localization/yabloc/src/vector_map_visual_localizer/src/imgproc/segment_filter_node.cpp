@@ -137,7 +137,7 @@ bool SegmentFilter::isNearElement(
   float not_zero_tx = t.x() > 0 ? std::max(t.x(), 1e-3f) : std::min(t.x(), -1e-3f);
   float lambda = (max_segment_distance_ - pn.x) / not_zero_tx;
   Eigen::Vector3f m = pn.getVector3fMap() + lambda * t;
-  if (pn.y < pn.normal_y)
+  if (pn.x > pn.normal_x)
     truncated_pn.getVector3fMap() = m;
   else
     truncated_pn.getNormalVector3fMap() = m;

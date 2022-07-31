@@ -92,6 +92,13 @@ void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)
 float CameraParticleCorrector::computeScore(
   const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
+  auto absCos = [](const Eigen::Vector3f & t, float deg) -> float {
+    Eigen::Vector2f x(t.x(), t.y());
+    Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
+    x.normalize();
+    return std::abs(x.dot(y));
+  };
+
   float score = 0;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
     Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
@@ -103,7 +110,9 @@ float CameraParticleCorrector::computeScore(
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
-      score += gain * (cost_map_.at(p.topRows(2)) + score_offset_);
+
+      cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
+      score += absCos(t1, v2[1]) * gain * (v2[0] + score_offset_);
     }
   }
   return score;
@@ -112,6 +121,13 @@ float CameraParticleCorrector::computeScore(
 pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
   const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
+  auto absCos = [](const Eigen::Vector3f & t, float deg) -> float {
+    Eigen::Vector2f x(t.x(), t.y());
+    Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
+    x.normalize();
+    return std::abs(x.dot(y));
+  };
+
   pcl::PointCloud<pcl::PointXYZI> cloud;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
     Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
@@ -123,7 +139,10 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
-      float score = gain * (cost_map_.at(p.topRows(2)) + score_offset_);
+
+      // TODO:
+      cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
+      float score = absCos(t1, v2[1]) * gain * (v2[0] + score_offset_);
 
       pcl::PointXYZI xyzi(score);
       xyzi.getVector3fMap() = p;

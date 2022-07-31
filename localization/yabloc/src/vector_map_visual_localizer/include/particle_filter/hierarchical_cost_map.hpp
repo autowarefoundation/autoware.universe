@@ -61,6 +61,7 @@ public:
   void setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
 
   float at(const Eigen::Vector2f & position);
+  cv::Vec2b at2(const Eigen::Vector2f & position);
 
   MarkerArray showMapRange() const;
 
@@ -84,6 +85,5 @@ private:
 
   cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);
-  cv::Vec2b at2(const Eigen::Vector2f & position);
 };
 }  // namespace particle_filter

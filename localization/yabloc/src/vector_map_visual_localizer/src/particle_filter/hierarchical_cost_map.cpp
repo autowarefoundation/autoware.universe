@@ -156,7 +156,6 @@ cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
 
   cv::Mat rgb_image;
   cv::cvtColor(image, rgb_image, cv::COLOR_HSV2BGR);
-  // cv::applyColorMap(image, rgb_image, cv::COLORMAP_JET);
   return rgb_image;
 }
 
