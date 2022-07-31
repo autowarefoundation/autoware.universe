@@ -257,7 +257,7 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
                             vec_target_value_average * param_.velocity_weight_target_value_average;
   TwistWithCovariance estimated_twist_with_covariance = toTwistWithCovariance(sum_vec);
 
-  // [TODO] (Satoshi Tanaka) Implement
+  // TODO(Satoshi Tanaka): Implement
   // Convert doppler velocity to twist
   // if (param_.convert_doppler_to_twist) {
   //   twist_with_covariance = convertDopplerToTwist(object, twist_with_covariance);
@@ -280,7 +280,7 @@ bool RadarFusionToDetectedObject::isQualified(
   }
 }
 
-// [TODO] (Satoshi Tanaka) Implement for radar pointcloud fusion
+// TODO(Satoshi Tanaka): Implement for radar pointcloud fusion
 // TwistWithCovariance RadarFusionToDetectedObject::convertDopplerToTwist(
 //   const DetectedObject & object, const TwistWithCovariance & twist_with_covariance)
 // {
