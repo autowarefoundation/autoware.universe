@@ -8,7 +8,6 @@ This is a utility package that provides the following features:
 - Logging for service and client
 - Service exception for response
 - Relays for topic and service
-- Readability for service callback
 
 ## Design
 
@@ -99,22 +98,4 @@ const auto node = component_interface_utils::NodeAdaptor(this);
 service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 node.relay_message(pub_, sub_);
 node.relay_service(cli_, srv_, service_callback_group_);  // group is for avoiding deadlocks
-```
-
-## Readability for service callback
-
-When creating callback functions for services, developers have to write long arguments.
-This contains a lot of redundant information that is common to all service callbacks.
-
-```cpp
-void service_callback(
-   const some_package_name::srv::ServiceName::Request::SharedPtr req,
-   const some_package_name::srv::ServiceName::Response::SharedPtr res);
-```
-
-Developers only needs what type the callback argument is for.
-This macro completes the arguments from the type name.
-
-```cpp
-void service_callback(ROS_SERVICE_ARG(some_package_name::srv::ServiceName));
 ```
