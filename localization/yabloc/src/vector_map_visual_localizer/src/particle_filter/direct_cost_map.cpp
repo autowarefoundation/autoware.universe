@@ -1,8 +1,8 @@
-#include "imgproc/direct_cost_map.hpp"
+#include "particle_filter/direct_cost_map.hpp"
 
 #include <iostream>
 
-namespace imgproc
+namespace particle_filter
 {
 cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
@@ -15,7 +15,7 @@ cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
     std::fill(distances.at(i).begin(), distances.at(i).end(), MAX_INT);
     const uchar * intensity_ptr = intensity.ptr<uchar>(i);
     for (int j = 0; j < cost_map.cols; j++) {
-      if (intensity_ptr[j] != 0) distances.at(i).at(j) = 0;
+      if (intensity_ptr[j] == 0) distances.at(i).at(j) = 0;
     }
   }
 
@@ -82,25 +82,25 @@ cv::Mat visualizeDirectionMap(const cv::Mat & cost_map)
   return rgb;
 }
 
-}  // namespace imgproc
+}  // namespace particle_filter
 
-#include <opencv4/opencv2/highgui.hpp>
+// #include <opencv4/opencv2/highgui.hpp>
 
-int main()
-{
-  // 0~180
-  cv::Mat raw_map = cv::Mat::zeros(cv::Size(640, 480), CV_8UC1);
-  cv::line(raw_map, cv::Point(400, 0), cv::Point(400, 800), cv::Scalar::all(10), 3);
-  cv::line(raw_map, cv::Point(0, 400), cv::Point(800, 400), cv::Scalar::all(80), 3);
-  cv::line(raw_map, cv::Point(0, 0), cv::Point(400, 400), cv::Scalar::all(160), 3);
-  cv::line(raw_map, cv::Point(400, 400), cv::Point(800, 800), cv::Scalar::all(30), 3);
+// int main()
+// {
+//   // 0~180
+//   cv::Mat raw_map = cv::Mat::zeros(cv::Size(640, 480), CV_8UC1);
+//   cv::line(raw_map, cv::Point(400, 0), cv::Point(400, 800), cv::Scalar::all(10), 3);
+//   cv::line(raw_map, cv::Point(0, 400), cv::Point(800, 400), cv::Scalar::all(80), 3);
+//   cv::line(raw_map, cv::Point(0, 0), cv::Point(400, 400), cv::Scalar::all(160), 3);
+//   cv::line(raw_map, cv::Point(400, 400), cv::Point(800, 800), cv::Scalar::all(30), 3);
 
-  cv::Mat intensity = raw_map.clone();
+//   cv::Mat intensity = raw_map.clone();
 
-  cv::Mat directed = imgproc::directCostMap(raw_map, intensity);
-  cv::Mat show1 = imgproc::visualizeDirectionMap(raw_map);
-  cv::Mat show2 = imgproc::visualizeDirectionMap(directed);
-  cv::hconcat(show1, show2, show1);
-  cv::imshow("raw + directed", show1);
-  cv::waitKey(0);
-}
+//   cv::Mat directed = imgproc::directCostMap(raw_map, intensity);
+//   cv::Mat show1 = imgproc::visualizeDirectionMap(raw_map);
+//   cv::Mat show2 = imgproc::visualizeDirectionMap(directed);
+//   cv::hconcat(show1, show2, show1);
+//   cv::imshow("raw + directed", show1);
+//   cv::waitKey(0);
+// }

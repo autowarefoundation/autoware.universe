@@ -74,8 +74,6 @@ private:
   const size_t max_map_count_;
   rclcpp::Logger logger_;
 
-  cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
-  void buildMap(const Area & area);
   GammaConverter gamma_converter{4.0f};
 
   std::unordered_map<Area, bool, Area> map_accessed_;
@@ -83,5 +81,9 @@ private:
   std::list<Area> generated_map_history_;
   std::optional<pcl::PointCloud<pcl::PointNormal>> cloud_;
   std::unordered_map<Area, cv::Mat, Area> cost_maps_;
+
+  cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
+  void buildMap(const Area & area);
+  cv::Vec2b at2(const Eigen::Vector2f & position);
 };
 }  // namespace particle_filter

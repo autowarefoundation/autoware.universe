@@ -78,7 +78,7 @@ ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${Open
 ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd/regulatory_elements/include)
 ADD_LIB(TARGET ll2_util SRC lib/ll2_util.cpp INC 3rd/regulatory_elements/include include)
 ADD_LIB(TARGET util SRC lib/util.cpp lib/color.cpp lib/base_camera_info_node.cpp INC include)
-ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp INC include)
+ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp src/particle_filter/direct_cost_map.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
 ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)
 ADD_LIB(TARGET orientation SRC lib/orientation_optimizer.cpp INC include LIB ${CERES_LIBRARIES})
@@ -136,8 +136,6 @@ ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
 # sign_board
 ADD_LIB(TARGET sign_lib SRC src/sign_board/sign_lib.cpp INC include LIB)
 ADD_EXE(TARGET sign_node SRC src/sign_board/sign_detector.cpp INC LIB util sign_lib)
-
-ADD_EXE(TARGET direct_map SRC src/imgproc/direct_cost_map.cpp INC LIB)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

@@ -2,6 +2,7 @@
 
 #include "common/color.hpp"
 #include "common/util.hpp"
+#include "particle_filter/direct_cost_map.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
@@ -29,6 +30,18 @@ cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vecto
   return {static_cast<int>(px), static_cast<int>(py)};
 }
 
+cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
+{
+  Area key(position);
+  if (cost_maps_.count(key) == 0) {
+    buildMap(key);
+  }
+  map_accessed_[key] = true;
+
+  cv::Point2i tmp = toCvPoint(key, position);
+  return cost_maps_.at(key).at<cv::Vec2b>(tmp);
+}
+
 float HierarchicalCostMap::at(const Eigen::Vector2f & position)
 {
   Area key(position);
@@ -38,7 +51,7 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
   map_accessed_[key] = true;
 
   cv::Point2i tmp = toCvPoint(key, position);
-  return cost_maps_.at(key).at<uchar>(tmp);
+  return cost_maps_.at(key).at<cv::Vec2b>(tmp)[0];
 }
 
 void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
@@ -46,63 +59,42 @@ void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & clo
   cloud_ = cloud;
 }
 
-void makeOrientationMap(const cv::Mat & intensity_image)
-{
-  cv::Mat show_image = cv::Mat::zeros(intensity_image.size(), CV_8UC3);
-
-  cv::Mat dx, dy, angle;
-  cv::Sobel(intensity_image, dx, CV_32FC1, 1, 0);
-  cv::Sobel(intensity_image, dy, CV_32FC1, 0, 1);
-  cv::phase(dx, dy, angle, true);
-
-  for (int i = 0; i < intensity_image.rows; i++) {
-    const uchar * p1 = intensity_image.ptr<uchar>(i);
-    const float * p2 = angle.ptr<float>(i);
-    uchar * q = show_image.ptr<uchar>(i);
-    for (int j = 0; j < intensity_image.cols; j++) {
-      cv::Scalar color(0, 0, 0);
-      float phase = p2[j];
-      if (phase < 0) phase += 180;
-      color = cv::Scalar(phase, p1[j], p1[j]);
-
-      q[j * 3] = (uchar)color[0];
-      q[j * 3 + 1] = (uchar)color[1];
-      q[j * 3 + 2] = (uchar)color[2];
-    }
-  }
-  cv::cvtColor(show_image, show_image, cv::COLOR_HSV2BGR);
-
-  cv::imshow("angle", show_image);
-  cv::waitKey(5);
-}
-
 void HierarchicalCostMap::buildMap(const Area & area)
 {
   if (!cloud_.has_value()) return;
 
   cv::Mat image = 255 * cv::Mat::ones(cv::Size(image_size_, image_size_), CV_8UC1);
+  cv::Mat orientation = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
 
   auto cvPoint = [this, area](const Eigen::Vector3f & p) -> cv::Point {
     return this->toCvPoint(area, p.topRows(2));
   };
 
   for (const auto pn : cloud_.value()) {
-    cv::line(
-      image, cvPoint(pn.getVector3fMap()), cvPoint(pn.getNormalVector3fMap()), cv::Scalar::all(0),
-      1);
+    cv::Point2i from = cvPoint(pn.getVector3fMap());
+    cv::Point2i to = cvPoint(pn.getNormalVector3fMap());
+
+    float radian = std::atan2(from.y - to.y, from.x - to.x);
+    if (radian < 0) radian += M_PI;
+    float degree = radian * 180 / M_PI;
+
+    cv::line(image, from, to, cv::Scalar::all(0), 1);
+    cv::line(orientation, from, to, cv::Scalar::all(degree), 1);
   }
   cv::Mat distance;
   cv::distanceTransform(image, distance, cv::DIST_L2, 3);
   cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
-  cost_maps_[area] = gamma_converter(distance);
+  cv::Mat whole_orientation = particle_filter::directCostMap(orientation, image);
+  cv::Mat directed_cost_map;
+  cv::merge(std::vector<cv::Mat>{gamma_converter(distance), whole_orientation}, directed_cost_map);
+
+  cost_maps_[area] = directed_cost_map;
   generated_map_history_.push_back(area);
 
   RCLCPP_INFO_STREAM(
     logger_, "successed to build map " << area(area) << " " << area.realScale().transpose());
-
-  // makeOrientationMap(cost_maps_[area]);
 }
 
 HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
@@ -154,15 +146,17 @@ cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
     return center + R * offset;
   };
 
-  cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
+  cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
   for (int w = 0; w < image_size_; w++) {
     for (int h = 0; h < image_size_; h++) {
-      image.at<uchar>(h, w) = this->at(toVector2f(h, w));
+      cv::Vec2b v2 = this->at2(toVector2f(h, w));
+      image.at<cv::Vec3b>(h, w) = cv::Vec3b(v2[1], v2[0], v2[0]);
     }
   }
 
   cv::Mat rgb_image;
-  cv::applyColorMap(image, rgb_image, cv::COLORMAP_JET);
+  cv::cvtColor(image, rgb_image, cv::COLOR_HSV2BGR);
+  // cv::applyColorMap(image, rgb_image, cv::COLORMAP_JET);
   return rgb_image;
 }
 
