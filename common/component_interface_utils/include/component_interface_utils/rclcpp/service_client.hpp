@@ -43,7 +43,7 @@ public:
 
   /// Send request.
   typename WrapType::SharedResponse call(
-    const typename WrapType::SharedRequest request, double timeout = 0.0)
+    const typename WrapType::SharedRequest request, std::optional<double> timeout = std::nullopt)
   {
     if (!client_->service_is_ready()) {
       RCLCPP_INFO_STREAM(logger_, "client unready: " << SpecT::name);
@@ -51,7 +51,7 @@ public:
     }
 
     const auto future = this->async_send_request(request);
-    if (timeout != 0.0) {
+    if (timeout) {
       const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout);
       if (future.wait_for(duration) != std::future_status::ready) {
         RCLCPP_INFO_STREAM(logger_, "client timeout: " << SpecT::name);
@@ -64,8 +64,7 @@ public:
   /// Send request.
   typename WrapType::SharedFuture async_send_request(typename WrapType::SharedRequest request)
   {
-    const auto callback = [this](typename WrapType::SharedFuture) {};
-    return this->async_send_request(request, callback);
+    return this->async_send_request(request, [](typename WrapType::SharedFuture) {});
   }
 
   /// Send request.
