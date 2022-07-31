@@ -7,9 +7,9 @@
     start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
     downsample_factor: 10  # factor by which to downsample the input trajectory for calculation
 
-    forward_projection:
+    simulation:
       model: bicycle  # model to use for forward projection at each trajectory point. Either "particle" or "bicycle"
-      distance_method: exact  # distance calculation method. Either "exact" or "approx".
+      distance_method: exact  # distance calculation method. Either "exact" or "approximation".
       # parameters used only with the bicycle model
       steering_offset: 0.01 # [rad] steering angle offset used to model uncertainty in the forward projection
       nb_points: 5  # number of points representing the curved projections

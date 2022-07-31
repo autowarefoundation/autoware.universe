@@ -96,10 +96,10 @@ struct ObstacleParameters
 
 struct ProjectionParameters
 {
-  static constexpr auto MODEL_PARAM = "forward_projection.model";
-  static constexpr auto NBPOINTS_PARAM = "forward_projection.nb_points";
-  static constexpr auto STEER_OFFSET_PARAM = "forward_projection.steering_offset";
-  static constexpr auto DISTANCE_METHOD_PARAM = "forward_projection.distance_method";
+  static constexpr auto MODEL_PARAM = "simulation.model";
+  static constexpr auto NBPOINTS_PARAM = "simulation.nb_points";
+  static constexpr auto STEER_OFFSET_PARAM = "simulation.steering_offset";
+  static constexpr auto DISTANCE_METHOD_PARAM = "simulation.distance_method";
   static constexpr auto DURATION_PARAM = "min_ttc";
 
   enum { PARTICLE, BICYCLE } model = PARTICLE;
