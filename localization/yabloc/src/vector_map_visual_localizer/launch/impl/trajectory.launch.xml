@@ -1,6 +1,7 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
+    <arg name="rtk_enabled" default="true"/>
     
 
     <!-- ========================================= -->

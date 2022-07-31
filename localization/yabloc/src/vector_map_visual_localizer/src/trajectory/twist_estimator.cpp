@@ -7,7 +7,8 @@
 
 namespace trajectory
 {
-TwistEstimator::TwistEstimator() : Node("twist_estimaotr"), upside_down(true)
+TwistEstimator::TwistEstimator()
+: Node("twist_estimaotr"), upside_down(true), rtk_enabled_(declare_parameter("rtk_enabled", true))
 {
   using std::placeholders::_1;
   using namespace std::literals::chrono_literals;
@@ -122,9 +123,13 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
       break;
   }
 
-  if ((msg.flags != 131) && (msg.flags != 67)) {
-    RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "GNSS is unreliable!");
-    return;
+  publishDoppler(msg);
+
+  if (rtk_enabled_) {
+    if ((msg.flags != 131) && (msg.flags != 67)) {
+      RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "GNSS is unreliable!");
+      return;
+    }
   }
 
   static bool first_subscirbe = true;
@@ -165,7 +170,6 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   Float float_msg;
   float_msg.data = vel_xy.norm();
   pub_doppler_vel_->publish(float_msg);
-  publishDoppler(msg);
 
   scale_covariance_reset_flag = false;
 }

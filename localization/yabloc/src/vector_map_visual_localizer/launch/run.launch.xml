@@ -18,7 +18,6 @@
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/pf.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
-        <arg name="rtk_enabled" value="$(var rtk_enabled)"/>
     </include>
 
     <!-- ========================================= -->

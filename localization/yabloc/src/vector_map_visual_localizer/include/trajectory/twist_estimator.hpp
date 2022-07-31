@@ -47,6 +47,7 @@ private:
   Eigen::Vector4f state_;  // rotation, velocity, bias, scale
   Eigen::Matrix4f cov_;
   const bool upside_down;
+  const bool rtk_enabled_;
 
   Eigen::Matrix4f cov_predict_;
   int last_rtk_quality_{0};

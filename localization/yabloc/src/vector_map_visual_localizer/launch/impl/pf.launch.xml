@@ -4,7 +4,6 @@
 
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
-    <arg name="rtk_enabled" default="true"/>
 
     <!-- ========================================= -->
     <!-- ============= predict update ============ -->
