@@ -52,7 +52,7 @@ public:
 
     const auto future = this->async_send_request(request);
     if (timeout) {
-      const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout);
+      const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout.value());
       if (future.wait_for(duration) != std::future_status::ready) {
         RCLCPP_INFO_STREAM(logger_, "client timeout: " << SpecT::name);
         throw ServiceTimeout(SpecT::name);

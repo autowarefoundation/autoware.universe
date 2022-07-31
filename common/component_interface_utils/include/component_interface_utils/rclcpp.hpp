@@ -31,6 +31,11 @@ class NodeAdaptor
 private:
   using CallbackGroup = rclcpp::CallbackGroup::SharedPtr;
 
+  template <class SharedPtrT, class InstanceT>
+  using ServiceCallback = void (InstanceT::*)(
+    const typename SharedPtrT::element_type::SpecType::Service::Request::SharedPtr,
+    const typename SharedPtrT::element_type::SpecType::Service::Response::SharedPtr);
+
 public:
   /// Constructor.
   explicit NodeAdaptor(rclcpp::Node * node) : node_(node) {}
@@ -85,6 +90,16 @@ public:
     init_cli(cli);
     init_srv(
       srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+  }
+
+  /// Create a service wrapper for logging.
+  template <class SharedPtrT, class InstanceT>
+  void init_srv(
+    SharedPtrT & srv, InstanceT * instance, ServiceCallback<SharedPtrT, InstanceT> callback,
+    CallbackGroup group = nullptr) const
+  {
+    init_srv(
+      srv, [instance, callback](auto req, auto res) { (instance->*callback)(req, res); }, group);
   }
 
 private:
