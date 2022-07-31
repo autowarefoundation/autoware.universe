@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__COPY_VECTOR_TO_ARRAY_HPP_
-#define LIB__COPY_VECTOR_TO_ARRAY_HPP_
+#ifndef COPY_VECTOR_TO_ARRAY_HPP_
+#define COPY_VECTOR_TO_ARRAY_HPP_
 
 #include <fmt/core.h>
 
@@ -45,4 +45,4 @@ std::array<double, 36> GetCovarianceParameter(NodeT * node, const std::string & 
   return covariance;
 }
 
-#endif  // LIB__COPY_VECTOR_TO_ARRAY_HPP_
+#endif  // COPY_VECTOR_TO_ARRAY_HPP_

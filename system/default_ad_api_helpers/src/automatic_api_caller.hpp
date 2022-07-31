@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,32 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__INITIAL_POSE_ADAPTOR_HPP_
-#define LIB__INITIAL_POSE_ADAPTOR_HPP_
+#ifndef AUTOMATIC_API_CALLER_HPP_
+#define AUTOMATIC_API_CALLER_HPP_
 
 #include <autoware_ad_api_specs/localization.hpp>
 #include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
-
-class InitialPoseAdaptor : public rclcpp::Node
+class AutomaticApiCaller : public rclcpp::Node
 {
 public:
-  InitialPoseAdaptor();
+  AutomaticApiCaller();
 
 private:
-  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  void OnTimer();
   using Initialize = autoware_ad_api::localization::Initialize;
-  using RequestHeightFitting = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
-  rclcpp::Client<RequestHeightFitting>::SharedPtr cli_map_fit_;
+  using State = autoware_ad_api::localization::InitializationState;
+  rclcpp::CallbackGroup::SharedPtr group_cli_;
+  rclcpp::TimerBase::SharedPtr timer_;
   component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
-  std::array<double, 36> rviz_particle_covariance_;
-
-  void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+  component_interface_utils::Subscription<State>::SharedPtr sub_state_;
+  State::Message state_;
 };
 
-#endif  // LIB__INITIAL_POSE_ADAPTOR_HPP_
+#endif  // AUTOMATIC_API_CALLER_HPP_

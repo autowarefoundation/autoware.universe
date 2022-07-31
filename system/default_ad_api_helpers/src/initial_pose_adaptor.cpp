@@ -18,9 +18,13 @@
 
 #include <memory>
 
-InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_rviz_helper")
+namespace default_ad_api_helpers
 {
-  rviz_particle_covariance_ = GetCovarianceParameter(this, "initialpose_particle_covariance");
+
+InitialPoseAdaptor::InitialPoseAdaptor(const rclcpp::NodeOptions & options)
+: Node("initial_pose_adaptor", options)
+{
+  rviz_particle_covariance_ = GetCovarianceParameter(this, "initial_pose_particle_covariance");
   cli_map_fit_ = create_client<RequestHeightFitting>("fit_map_height");
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "initialpose", rclcpp::QoS(1),
@@ -56,3 +60,8 @@ void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr
     cli_initialize_->async_send_request(req);
   });
 }
+
+}  // namespace default_ad_api_helpers
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api_helpers::InitialPoseAdaptor)

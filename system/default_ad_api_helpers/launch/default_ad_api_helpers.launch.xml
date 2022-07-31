@@ -1,0 +1,10 @@
+<launch>
+  <node pkg="default_ad_api_helpers" exec="initial_pose_adaptor" name="initial_pose_adaptor">
+    <param from="$(find-pkg-share default_ad_api_helpers)/config/initial_pose.param.yaml"/>
+    <remap from="initialpose" to="/initialpose"/>
+    <remap from="fit_map_height" to="/localization/util/fit_map_height"/>
+  </node>
+
+  <!-- Call AD API for automatic initialization by GNSS. -->
+  <!-- <node pkg="pose_initializer" exec="automatic_api_caller" name="automatic_api_caller"/> -->
+</launch>
