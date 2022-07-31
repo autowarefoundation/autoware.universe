@@ -21,6 +21,7 @@
 #include <component_interface_utils/rclcpp/topic_publisher.hpp>
 #include <component_interface_utils/rclcpp/topic_subscription.hpp>
 
+#include <optional>
 #include <utility>
 
 namespace component_interface_utils
@@ -30,6 +31,11 @@ class NodeAdaptor
 {
 private:
   using CallbackGroup = rclcpp::CallbackGroup::SharedPtr;
+
+  template <class SharedPtrT, class InstanceT>
+  using ServiceCallback = void (InstanceT::*)(
+    const typename SharedPtrT::element_type::SpecType::Service::Request::SharedPtr,
+    const typename SharedPtrT::element_type::SpecType::Service::Response::SharedPtr);
 
 public:
   /// Constructor.
@@ -78,13 +84,24 @@ public:
 
   /// Relay service.
   template <class C, class S>
-  void relay_service(C & cli, S & srv, CallbackGroup group, double timeout = 0.0) const
+  void relay_service(
+    C & cli, S & srv, CallbackGroup group, std::optional<double> timeout = std::nullopt) const
   {
     using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
     using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
     init_cli(cli);
     init_srv(
       srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+  }
+
+  /// Create a service wrapper for logging.
+  template <class SharedPtrT, class InstanceT>
+  void init_srv(
+    SharedPtrT & srv, InstanceT * instance, ServiceCallback<SharedPtrT, InstanceT> callback,
+    CallbackGroup group = nullptr) const
+  {
+    init_srv(
+      srv, [instance, callback](auto req, auto res) { (instance->*callback)(req, res); }, group);
   }
 
 private:
