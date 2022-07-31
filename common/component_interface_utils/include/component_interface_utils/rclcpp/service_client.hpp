@@ -20,6 +20,7 @@
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 
+#include <optional>
 #include <utility>
 
 namespace component_interface_utils

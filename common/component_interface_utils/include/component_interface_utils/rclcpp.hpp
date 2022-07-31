@@ -21,6 +21,7 @@
 #include <component_interface_utils/rclcpp/topic_publisher.hpp>
 #include <component_interface_utils/rclcpp/topic_subscription.hpp>
 
+#include <optional>
 #include <utility>
 
 namespace component_interface_utils
@@ -83,7 +84,8 @@ public:
 
   /// Relay service.
   template <class C, class S>
-  void relay_service(C & cli, S & srv, CallbackGroup group, double timeout = 0.0) const
+  void relay_service(
+    C & cli, S & srv, CallbackGroup group, std::optional<double> timeout = std::nullopt) const
   {
     using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
     using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
