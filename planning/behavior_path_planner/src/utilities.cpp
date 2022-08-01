@@ -71,8 +71,9 @@ std::array<double, 4> getPathScope(
   const geometry_msgs::msg::Pose & current_pose, const double forward_lane_length,
   const double backward_lane_length, const double lane_margin)
 {
-  // extract lanes from path with lane id
+  // extract lanes from path_with_lane_id
   lanelet::ConstLanelets path_lanes = [&]() {
+    // extract "unique" lane ids from path_with_lane_id
     std::vector<size_t> path_lane_ids;
     for (const auto & path_point : path.points) {
       for (const size_t lane_id : path_point.lane_ids) {
@@ -82,6 +83,7 @@ std::array<double, 4> getPathScope(
       }
     }
 
+    // get lanes according to lane ids
     lanelet::ConstLanelets path_lanes;
     for (const auto path_lane_id : path_lane_ids) {
       const auto & lane = route_handler->getLaneletsFromId(path_lane_id);
