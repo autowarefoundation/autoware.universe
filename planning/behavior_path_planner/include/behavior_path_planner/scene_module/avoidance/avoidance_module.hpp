@@ -96,7 +96,6 @@ private:
         uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
       return;
     }
-    
     if(candidate.distance_to_path_change>0.0)
     {
       RCLCPP_WARN_STREAM(
