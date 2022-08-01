@@ -96,9 +96,12 @@ private:
         uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
       return;
     }
-
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Direction is UNKNOWN, distance = " << candidate.distance_to_path_change);
+    
+    if(candidate.distance_to_path_change>0.0)
+    {
+      RCLCPP_WARN_STREAM(
+        getLogger(), "Direction is UNKNOWN, distance = " << candidate.distance_to_path_change);
+    }
   }
 
   void removeRTCStatus() override
