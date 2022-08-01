@@ -1,7 +1,7 @@
 <launch>
     <arg name="road_marking_labels" default="[zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
     <arg name="min_segment_length" default="-1.0" description="[m]"/>
-    <arg name="max_segment_distance" default="25.0" description="[m]"/>
+    <arg name="max_segment_distance" default="30.0" description="[m]"/>
     <arg name="rtk_enabled" default="false" description="GNSS-RTK is enabled?"/>
 
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">

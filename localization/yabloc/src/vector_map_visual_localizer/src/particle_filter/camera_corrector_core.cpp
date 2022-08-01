@@ -112,7 +112,7 @@ float CameraParticleCorrector::computeScore(
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      score += absCos(t1, v2[1]) * gain * (v2[0] + score_offset_);
+      score += gain * (absCos(t1, v2[1]) * v2[0] + score_offset_);
     }
   }
   return score;
@@ -142,7 +142,7 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
 
       // TODO:
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      float score = absCos(t1, v2[1]) * gain * (v2[0] + score_offset_);
+      float score = gain * (absCos(t1, v2[1]) * v2[0] + score_offset_);
 
       pcl::PointXYZI xyzi(score);
       xyzi.getVector3fMap() = p;

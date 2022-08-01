@@ -34,8 +34,8 @@ class InitialPoseLatch(Node):
 
         target = self.last_initial_psoe_and_time[0]
         dt = (self.last_clock.nanoseconds-target.nanoseconds)/1e9
-        print('diff is', dt)
         if(abs(dt) < 1):
+            print('Publish initialpose', dt)
             self.pub_pose_.publish(self.last_initial_psoe_and_time[1])
 
     def pose_callback(self, msg: PoseWithCovarianceStamped):
@@ -45,7 +45,6 @@ class InitialPoseLatch(Node):
         self.last_initial_psoe_and_time = (stamp, msg)
 
     def clock_callback(self, msg: Clock):
-        # self.get_logger().info('now time is %s'+str(msg))
         self.last_clock = Time(seconds=msg.clock.sec, nanoseconds=msg.clock.nanosec)
 
 

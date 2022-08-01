@@ -48,6 +48,7 @@ private:
   Eigen::Matrix4f cov_;
   const bool upside_down;
   const bool rtk_enabled_;
+  const float stop_vel_threshold_;
 
   Eigen::Matrix4f cov_predict_;
   int last_rtk_quality_{0};

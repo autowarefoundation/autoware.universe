@@ -8,7 +8,10 @@
 namespace trajectory
 {
 TwistEstimator::TwistEstimator()
-: Node("twist_estimaotr"), upside_down(true), rtk_enabled_(declare_parameter("rtk_enabled", true))
+: Node("twist_estimaotr"),
+  upside_down(true),
+  rtk_enabled_(declare_parameter("rtk_enabled", true)),
+  stop_vel_threshold_(declare_parameter("stop_vel_threshold", 0.05f))
 {
   using std::placeholders::_1;
   using namespace std::literals::chrono_literals;
@@ -70,6 +73,24 @@ void TwistEstimator::callbackImu(const Imu & raw_msg)
 
   publishTwist(msg);
   publishString();
+
+  if (std::abs(state_[VELOCITY]) > stop_vel_threshold_) return;
+
+  {
+    // Compute error and jacobian
+    float error = w_z + state_[BIAS];
+    Eigen::Matrix<float, 1, 4> H;
+    H << 0, 0, -1, 0;
+
+    // Determain kalman gain
+    float W = 0.001;  // [(rad/s)^2]
+    float S = H * cov_ * H.transpose() + W;
+    Eigen::Matrix<float, 4, 1> K = cov_ * H.transpose() / S;
+
+    // Correct state and covariance
+    state_ += K * error;
+    cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
+  }
 }
 
 void TwistEstimator::publishTwist(const Imu & imu)
@@ -92,9 +113,11 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
     first_subscirbe = false;
     return;
   }
+  const float wheel = msg.twist.linear.x;
+
+  if (std::abs(wheel) < stop_vel_threshold_) return;
 
   // Compute error and jacobian
-  float wheel = msg.twist.linear.x;
   float error = state_[VELOCITY] - state_[SCALE] * wheel;
   Eigen::Matrix<float, 1, 4> H;
   H << 0, -1, 0, wheel;
