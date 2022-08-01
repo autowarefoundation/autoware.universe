@@ -2159,8 +2159,8 @@ CandidateOutput AvoidanceModule::planCandidate() const
 {
   DEBUG_PRINT("AVOIDANCE planCandidate start");
   CandidateOutput output;
-  output.distance_to_path_change=0.0;
-  
+  output.distance_to_path_change = 0.0;
+
   auto path_shifter = path_shifter_;
   auto debug_data = debug_data_;
   auto current_raw_shift_points = current_raw_shift_points_;
