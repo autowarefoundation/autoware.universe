@@ -277,8 +277,8 @@ PathWithLaneId setDecelerationVelocity(
 
 bool checkLaneIsInIntersection(
   const RouteHandler & route_handler, const PathWithLaneId & ref,
-  const lanelet::ConstLanelets & lanelet_sequence, double & additional_length_to_add,
-  const BehaviorPathPlannerParameters & parameters);
+  const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameters,
+  double & additional_length_to_add);
 
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
