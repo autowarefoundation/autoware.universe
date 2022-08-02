@@ -155,6 +155,25 @@ rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
   return stamp;
 }
 
+ublox_msgs::msg::NavPVT stamp2UbloxTime(const builtin_interfaces::msg::Time & stamp)
+{
+  time_t t_of_day = stamp.sec;
+  ublox_msgs::msg::NavPVT msg;
+  struct tm * t = localtime(&t_of_day);
+  msg.year = t->tm_year + 1900;
+  msg.month = t->tm_mon + 1;
+  msg.day = t->tm_mday;
+  msg.hour = t->tm_hour - 9;
+  if (msg.hour < 0) {
+    msg.hour += 24;
+    msg.day--;
+  }
+  msg.min = t->tm_min;
+  msg.sec = t->tm_sec;
+  msg.nano = stamp.nanosec;
+  return msg;
+}
+
 template <typename PointT>
 void publishCloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,

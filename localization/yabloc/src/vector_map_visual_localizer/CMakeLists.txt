@@ -113,6 +113,7 @@ ADD_EXE(TARGET fix_to_pose_node SRC src/trajectory/fix_to_pose_node.cpp INC LIB 
 ADD_EXE(TARGET pose_to_path_node SRC src/trajectory/pose_to_path_node.cpp INC LIB)
 ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Geographic)
 ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
+ADD_EXE(TARGET eagleye_bridge_node SRC src/trajectory/eagleye_bridge.cpp INC include LIB util)
 
 # particle_filter
 ADD_EXE(TARGET camera_corrector_node

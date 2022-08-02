@@ -2,6 +2,7 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
     <arg name="rtk_enabled" default="true"/>
+    <arg name="use_eagleye" default="false"/>
     
 
     <!-- ========================================= -->
@@ -17,14 +18,19 @@
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
     </node>
+    <node name="fix_to_pose2" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <remap from="pose" to="/eagleye/pose"/>
+        <remap from="fix_topic" to="/eagleye/fix"/>
+    </node>
 
     <!-- ========================================= -->
-    <!-- ============== POSE TO POSE ============= -->
+    <!-- ============== POSE TO PATH ============= -->
     <!-- ========================================= -->
     <node name="pose_to_path" pkg="vector_map_visual_localizer" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose]"/>
-        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path]"/>
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose, /eagleye/pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path, /eagleye/path]"/>
     </node>
 
     <!-- ========================================= -->
@@ -49,6 +55,11 @@
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="pose" to="/init/pose"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
+    </node>
+
+    <node if="$(var use_eagleye)" name="eagleye_bridge" pkg="vector_map_visual_localizer" exec="eagleye_bridge_node" output="log" args="--ros-args --log-level warn">
+        <remap from="/in/fix" to="/eagleye/fix"/>
+        <remap from="/out/navpvt" to="/bridge/navpvt"/>
     </node>
 
 </launch>

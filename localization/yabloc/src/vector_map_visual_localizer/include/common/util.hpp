@@ -36,6 +36,7 @@ Sophus::SE3f pose2Se3(const geometry_msgs::msg::Pose & pose);
 geometry_msgs::msg::Pose se32Pose(const Sophus::SE3f & se3f);
 
 rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg);
+ublox_msgs::msg::NavPVT stamp2UbloxTime(const builtin_interfaces::msg::Time & stamp);
 
 template <typename PointT>
 void publishCloud(
