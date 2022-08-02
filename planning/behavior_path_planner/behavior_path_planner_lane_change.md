@@ -372,4 +372,10 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | :--------------------- | ---- | ------- | ---------------------------- | ------------- |
 | `publish_debug_marker` | [-]  | boolean | Flag to publish debug marker | false         |
 
+## Debug Marker & Visualization
+
+The debug marker can be enable via `lane_change.param.yaml`. Simply set the `publish_debug_marker` to `true`, restart `rviz2` and add the marker `planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/markers/MarkerArray`.
+
+![debug](./image/lane_change/lane_change-debug.png)
+
 ## Limitations
