@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="default_ad_api_helpers" exec="routing_adaptor" name="routing_adaptor">
+    <remap from="input/goal" to="/planning/mission_planning/goal"/>
+    <remap from="input/checkpoint" to="/planning/mission_planning/checkpoint"/>
+  </node>
+</launch>

@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interface.hpp"
+#include "routing.hpp"
 
 namespace default_ad_api
 {
 
-InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interface", options)
+RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", options)
 {
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_srv(srv_, [](auto, auto res) {
-    res->major = 0;
-    res->minor = 1;
-    res->patch = 0;
-  });
+  group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  node.relay_message(pub_route_state_, sub_route_state_);
+  node.relay_message(pub_route_, sub_route_);
+  node.relay_service(cli_set_route_points_, srv_set_route_points_, group_srv_);
+  node.relay_service(cli_set_route_, srv_set_route_, group_srv_);
+  node.relay_service(cli_clear_route_, srv_clear_route_, group_srv_);
 }
 
 }  // namespace default_ad_api
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::InterfaceNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::RoutingNode)

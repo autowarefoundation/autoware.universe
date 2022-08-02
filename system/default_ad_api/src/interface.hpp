@@ -30,7 +30,7 @@ public:
   explicit InterfaceNode(const rclcpp::NodeOptions & options);
 
 private:
-  Service<ad_api::interface::version::T>::SharedPtr srv_;
+  component_interface_utils::Service<ad_api::interface::version::T>::SharedPtr srv_;
 };
 
 }  // namespace default_ad_api
