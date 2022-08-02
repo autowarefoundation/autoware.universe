@@ -11,12 +11,12 @@ public:
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using Path = nav_msgs::msg::Path;
 
-  Pose2Path() : Node("pose_to_path")
+  Pose2Path() : Node("pose_to_path"), min_interval_(declare_parameter<double>("min_interval", 0.5))
   {
     declare_parameter("sub_topics", std::vector<std::string>());
     declare_parameter("pub_topics", std::vector<std::string>());
-    std::vector<std::string> pub_topics = this->get_parameter("pub_topics").as_string_array();
-    std::vector<std::string> sub_topics = this->get_parameter("sub_topics").as_string_array();
+    std::vector<std::string> pub_topics = get_parameter("pub_topics").as_string_array();
+    std::vector<std::string> sub_topics = get_parameter("sub_topics").as_string_array();
 
     if (sub_topics.size() != pub_topics.size()) {
       RCLCPP_FATAL_STREAM(
@@ -38,6 +38,7 @@ public:
   }
 
 private:
+  const float min_interval_;
   struct PubSubMsg
   {
     PubSubMsg(
@@ -61,6 +62,11 @@ private:
   void poseCallback(const geometry_msgs::msg::PoseStamped & msg, int index)
   {
     auto & psm = pub_sub_msg_.at(index);
+    if (!psm.buffer_.empty()) {
+      rclcpp::Time t1(psm.buffer_.back().header.stamp);
+      rclcpp::Time t2(msg.header.stamp);
+      if (std::abs((t1 - t2).seconds()) < min_interval_) return;
+    }
     psm.buffer_.push_back(msg);
     psm.publish(msg.header);
   }
