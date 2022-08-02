@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2019 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER__GOAL_POSE_VISUALIZER_HPP_
-#define MISSION_PLANNER__GOAL_POSE_VISUALIZER_HPP_
+#ifndef MISSION_PLANNER__MISSION_PLANNER_PLUGIN_HPP_
+#define MISSION_PLANNER__MISSION_PLANNER_PLUGIN_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <vector>
 
 namespace mission_planner
 {
-class GoalPoseVisualizer : public rclcpp::Node
+
+class MissionPlannerPlugin
 {
 public:
-  explicit GoalPoseVisualizer(const rclcpp::NodeOptions & node_options);
+  using RoutePoints = std::vector<geometry_msgs::msg::Pose>;
+  using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-private:
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr sub_route_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_goal_pose_;
-
-  void echoBackRouteCallback(
-    const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
+  virtual ~MissionPlannerPlugin() = default;
+  virtual void Initialize(rclcpp::Node * node) = 0;
+  virtual bool Ready() const = 0;
+  virtual HADMapRoute Plan(const RoutePoints & points) = 0;
+  virtual MarkerArray Visualize(const HADMapRoute & route) const = 0;
 };
 
 }  // namespace mission_planner
-#endif  // MISSION_PLANNER__GOAL_POSE_VISUALIZER_HPP_
+
+#endif  // MISSION_PLANNER__MISSION_PLANNER_PLUGIN_HPP_

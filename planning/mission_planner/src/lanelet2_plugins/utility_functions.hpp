@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER__LANELET2_IMPL__UTILITY_FUNCTIONS_HPP_
-#define MISSION_PLANNER__LANELET2_IMPL__UTILITY_FUNCTIONS_HPP_
+#ifndef LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_
+#define LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -26,6 +27,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+
 bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id);
 
 template <typename T>
@@ -43,4 +45,5 @@ void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, doubl
 void insertMarkerArray(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);
 std::string toString(const geometry_msgs::msg::Pose & pose);
-#endif  // MISSION_PLANNER__LANELET2_IMPL__UTILITY_FUNCTIONS_HPP_
+
+#endif  // LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_

@@ -12,40 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER__LANELET2_IMPL__MISSION_PLANNER_LANELET2_HPP_
-#define MISSION_PLANNER__LANELET2_IMPL__MISSION_PLANNER_LANELET2_HPP_
+#ifndef LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
+#define LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 
-#include <string>
-#include <vector>
-
-// ROS
+#include <mission_planner/mission_planner_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
-
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-
-// Autoware
-#include "mission_planner/mission_planner_base.hpp"
-
 #include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
-// lanelet
-#include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-namespace mission_planner
+#include <memory>
+#include <vector>
+
+namespace mission_planner::lanelet2
 {
-using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
-class MissionPlannerLanelet2 : public MissionPlanner
+
+class DefaultPlanner : public mission_planner::MissionPlannerPlugin
 {
 public:
-  explicit MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options);
+  void Initialize(rclcpp::Node * node) override;
+  bool Ready() const override;
+  HADMapRoute Plan(const RoutePoints & points) override;
+  MarkerArray Visualize(const HADMapRoute & route) const override;
 
 private:
+  using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
+  using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
@@ -54,17 +51,14 @@ private:
   lanelet::ConstLanelets shoulder_lanelets_;
   route_handler::RouteHandler route_handler_;
 
+  rclcpp::Node * node_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  bool isGoalValid() const;
-  void refineGoalHeight(const RouteSections & route_sections);
-
-  // virtual functions
-  bool isRoutingGraphReady() const;
-  autoware_auto_planning_msgs::msg::HADMapRoute planRoute();
-  void visualizeRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const;
+  bool isGoalValid(const geometry_msgs::msg::Pose & goal) const;
+  Pose refineGoalHeight(const Pose & goal, const RouteSections & route_sections);
 };
-}  // namespace mission_planner
 
-#endif  // MISSION_PLANNER__LANELET2_IMPL__MISSION_PLANNER_LANELET2_HPP_
+}  // namespace mission_planner::lanelet2
+
+#endif  // LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
