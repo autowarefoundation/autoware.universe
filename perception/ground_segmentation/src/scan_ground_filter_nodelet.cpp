@@ -29,7 +29,7 @@ namespace ground_segmentation
 using pointcloud_preprocessor::get_param;
 using tier4_autoware_utils::calcDistance3d;
 using tier4_autoware_utils::deg2rad;
-using tier4_autoware_utils::normalizeRadian;
+using tier4_autoware_utils::normalizeDegree;
 using vehicle_info_util::VehicleInfoUtil;
 
 ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
