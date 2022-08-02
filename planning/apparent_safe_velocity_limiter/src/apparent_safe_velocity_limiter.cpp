@@ -25,6 +25,7 @@
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+#include <tf2/utils.h>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -61,6 +62,25 @@ Trajectory downsampleTrajectory(
   for (size_t i = start_idx; i < trajectory.points.size(); i += factor)
     downsampled_traj.points.push_back(trajectory.points[i]);
   return downsampled_traj;
+}
+
+void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base)
+{
+  auto t = 0.0;
+  auto prev_point = trajectory.points.front();
+  auto prev_heading = tf2::getYaw(prev_point.pose.orientation);
+  for (auto i = 1ul; i < trajectory.points.size(); ++i) {
+    const auto & prev_point = trajectory.points[i - 1];
+    auto & point = trajectory.points[i];
+    const auto dt = tier4_autoware_utils::calcDistance2d(prev_point, point) /
+                    prev_point.longitudinal_velocity_mps;
+    t += dt;
+    const auto heading = tf2::getYaw(point.pose.orientation);
+    const auto d_heading = heading - prev_heading;
+    prev_heading = heading;
+    point.front_wheel_angle_rad =
+      std::atan2(wheel_base * d_heading, point.longitudinal_velocity_mps * dt);
+  }
 }
 
 multipolygon_t createPolygonMasks(

@@ -159,11 +159,14 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   const auto ego_idx =
     tier4_autoware_utils::findNearestIndex(msg->points, self_pose_listener_.getCurrentPose()->pose);
   if (!validInputs(ego_idx)) return;
-
+  auto original_traj = *msg;
+  if (preprocessing_params_.calculate_steering_angles)
+    calculateSteeringAngles(original_traj, projection_params_.wheel_base);
   velocity_params_.current_ego_velocity = *current_ego_velocity_;
-  const auto start_idx = calculateStartIndex(*msg, *ego_idx, preprocessing_params_.start_distance);
+  const auto start_idx =
+    calculateStartIndex(original_traj, *ego_idx, preprocessing_params_.start_distance);
   Trajectory downsampled_traj =
-    downsampleTrajectory(*msg, start_idx, preprocessing_params_.downsample_factor);
+    downsampleTrajectory(original_traj, start_idx, preprocessing_params_.downsample_factor);
   const auto polygon_masks = createPolygonMasks(
     *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
@@ -178,9 +181,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     PointCloud debug_pointcloud;
     const auto dynamic_obstacles = createObstacles(
       *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, transform_listener_,
-      msg->header.frame_id, obstacle_params_, debug_pointcloud);
+      original_traj.header.frame_id, obstacle_params_, debug_pointcloud);
     debug_pointcloud.header.stamp = now();
-    debug_pointcloud.header.frame_id = msg->header.frame_id;
+    debug_pointcloud.header.frame_id = original_traj.header.frame_id;
     pub_debug_pointcloud_->publish(debug_pointcloud);
     obstacles.insert(obstacles.end(), dynamic_obstacles.begin(), dynamic_obstacles.end());
   }
@@ -188,7 +191,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
     velocity_params_, obstacle_params_.filter_envelope);
   auto safe_trajectory = copyDownsampledVelocity(
-    downsampled_traj, *msg, start_idx, preprocessing_params_.downsample_factor);
+    downsampled_traj, original_traj, start_idx, preprocessing_params_.downsample_factor);
   safe_trajectory.header.stamp = now();
 
   pub_trajectory_->publish(safe_trajectory);

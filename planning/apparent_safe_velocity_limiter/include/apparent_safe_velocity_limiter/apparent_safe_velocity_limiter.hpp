@@ -53,6 +53,12 @@ size_t calculateStartIndex(
 Trajectory downsampleTrajectory(
   const Trajectory & trajectory, const size_t start_idx, const int factor);
 
+/// @brief recalculate the steering angle of the trajectory
+/// @details uses the change in headings for calculation
+/// @param[inout] trajectory input trajectory
+/// @param[in] wheel_base wheel base of the vehicle
+void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base);
+
 /// @brief create negative polygon masks from the dynamic objects
 /// @param[in] dynamic_obstacles the dynamic objects to mask
 /// @param[in] buffer buffer used to enlarge the mask
