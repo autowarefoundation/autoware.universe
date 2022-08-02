@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.14)
+project(vehicle_interface)
+
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
+set(INTERFACE_NODE vehicle_interface_node)
+ament_auto_add_library(${INTERFACE_NODE} SHARED
+  include/vehicle_interface/base_interface.hpp
+  include/vehicle_interface/vehicle_interface_node.hpp
+  src/vehicle_interface_node.cpp
+  src/base_interface.cpp
+)
+
+target_compile_options(${INTERFACE_NODE} PRIVATE -Wno-error=old-style-cast)
+rclcpp_components_register_node(${INTERFACE_NODE}
+  PLUGIN "autoware::vehicle::interface::VehicleInterfaceNode"
+  EXECUTABLE ${INTERFACE_NODE}_exe
+)
+
+if(BUILD_TESTING)
+  set(INTERFACE_NODE_TEST test_vehicle_interface_node)
+  ament_add_ros_isolated_gtest(${INTERFACE_NODE_TEST}
+    test/test_vehicle_interface_node.cpp
+  )
+  ament_target_dependencies(${INTERFACE_NODE_TEST} fake_test_node)
+  target_link_libraries(
+    ${INTERFACE_NODE_TEST} ${INTERFACE_NODE})
+
+  find_package(autoware_testing REQUIRED)
+  add_smoke_test(${PROJECT_NAME} ${INTERFACE_NODE}_exe
+    PARAM_FILENAMES "vehicle_interface_node.param.yaml"
+  )
+endif()
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  param
+  launch
+)
