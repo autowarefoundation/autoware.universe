@@ -93,6 +93,8 @@ private:
 
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
+  bool is_reverse_;
+
   enum class AlgorithmType {
     INVALID = 0,
     JERK_FILTERED = 1,
@@ -134,7 +136,7 @@ private:
 
   double over_stop_velocity_warn_thr_;  // threshold to publish over velocity warn
 
-  mutable rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Clock::SharedPtr clock_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -151,15 +153,19 @@ private:
   // publish methods
   void publishTrajectory(const TrajectoryPoints & traj) const;
 
-  void publishStopDistance(const TrajectoryPoints & trajectory, const size_t closest) const;
+  void publishStopDistance(const TrajectoryPoints & trajectory) const;
 
   // non-const methods
-  void publishClosestState(const TrajectoryPoint & closest_point);
+  void publishClosestState(const TrajectoryPoints & trajectory);
+
+  void updatePrevValues(const TrajectoryPoints & final_result);
 
   // const methods
   bool checkData() const;
 
   void updateDataForExternalVelocityLimit();
+
+  boost::optional<TrajectoryPoints> poseResampleTrajectory(const TrajectoryPoints trajectory) const;
 
   AlgorithmType getAlgorithmType(const std::string & algorithm_name) const;
 
@@ -226,6 +232,7 @@ private:
   boost::optional<size_t> findNearestIndexFromEgo(const TrajectoryPoints & points) const;
   bool isReverse(const TrajectoryPoints & points) const;
   void flipVelocity(TrajectoryPoints & points) const;
+  void publishStopWatchTime();
 };
 }  // namespace motion_velocity_smoother
 
