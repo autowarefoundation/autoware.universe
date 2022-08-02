@@ -30,6 +30,7 @@ using pointcloud_preprocessor::get_param;
 using tier4_autoware_utils::calcDistance3d;
 using tier4_autoware_utils::deg2rad;
 using tier4_autoware_utils::normalizeDegree;
+using tier4_autoware_utils::normalizeRadian;
 using vehicle_info_util::VehicleInfoUtil;
 
 ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
@@ -86,7 +87,8 @@ void ScanGroundFilterComponent::convertPointcloud(
 
   for (size_t i = 0; i < in_cloud->points.size(); ++i) {
     auto radius{static_cast<float>(std::hypot(in_cloud->points[i].x, in_cloud->points[i].y))};
-    auto theta{std::atan2(in_cloud->points[i].x, in_cloud->points[i].y)};
+    // auto theta{std::atan2(in_cloud->points[i].x, in_cloud->points[i].y)};
+    auto theta{normalizeRadian(std::atan2(in_cloud->points[i].x, in_cloud->points[i].y), 0.0)};
     auto radial_div{
       static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
 
