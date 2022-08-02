@@ -41,7 +41,7 @@ std::array<double, 36> get_covariance_parameter(NodeT * node, const std::string 
 {
   const auto parameter = node->template declare_parameter<std::vector<double>>(name);
   std::array<double, 36> covariance;
-  CopyVectorToArray(parameter, covariance);
+  copy_vector_to_array(parameter, covariance);
   return covariance;
 }
 

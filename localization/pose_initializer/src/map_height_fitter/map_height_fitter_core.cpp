@@ -31,9 +31,9 @@ MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf
   using std::placeholders::_2;
 
   sub_map_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-    "pointcloud_map", durable_qos, std::bind(&MapHeightFitter::OnMap, this, _1));
+    "pointcloud_map", durable_qos, std::bind(&MapHeightFitter::on_map, this, _1));
   srv_fit_ = create_service<RequestHeightFitting>(
-    "fit_map_height", std::bind(&MapHeightFitter::OnFit, this, _1, _2));
+    "fit_map_height", std::bind(&MapHeightFitter::on_fit, this, _1, _2));
 }
 
 void MapHeightFitter::on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)

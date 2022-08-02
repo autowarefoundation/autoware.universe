@@ -27,11 +27,11 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   const auto node = component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
-  node.init_srv(srv_initialize_, this, &PoseInitializer::OnInitialize, group_srv_);
+  node.init_srv(srv_initialize_, this, &PoseInitializer::on_initialize, group_srv_);
   pub_reset_ = create_publisher<PoseWithCovarianceStamped>("pose_reset", 1);
 
-  output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
-  gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
+  output_pose_covariance_ = get_covariance_parameter(this, "output_pose_covariance");
+  gnss_particle_covariance_ = get_covariance_parameter(this, "gnss_particle_covariance");
 
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
@@ -44,7 +44,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
     stop_check_duration_ = declare_parameter<double>("stop_check_duration");
     stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);
   }
-  ChangeState(State::Message::UNINITIALIZED);
+  change_state(State::Message::UNINITIALIZED);
 }
 
 PoseInitializer::~PoseInitializer()
@@ -70,9 +70,9 @@ void PoseInitializer::on_initialize(
   }
   try {
     change_state(State::Message::INITIALIZING);
-    auto pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
+    auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
     if (ndt_) {
-      pose = ndt_->AlignPose(pose);
+      pose = ndt_->align_pose(pose);
     }
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
@@ -87,7 +87,7 @@ void PoseInitializer::on_initialize(
 geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
 {
   if (gnss_) {
-    PoseWithCovarianceStamped pose = gnss_->GetPose();
+    PoseWithCovarianceStamped pose = gnss_->get_pose();
     pose.pose.covariance = gnss_particle_covariance_;
     return pose;
   }

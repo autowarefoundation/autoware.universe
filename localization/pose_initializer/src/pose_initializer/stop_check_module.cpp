@@ -18,7 +18,7 @@ StopCheckModule::StopCheckModule(rclcpp::Node * node, double buffer_duration)
 : VehicleStopCheckerBase(node, buffer_duration)
 {
   sub_twist_ = node->create_subscription<TwistWithCovarianceStamped>(
-    "stop_check_twist", 1, std::bind(&StopCheckModule::OnTwist, this, std::placeholders::_1));
+    "stop_check_twist", 1, std::bind(&StopCheckModule::on_twist, this, std::placeholders::_1));
 }
 
 void StopCheckModule::on_twist(TwistWithCovarianceStamped::ConstSharedPtr msg)
