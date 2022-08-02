@@ -15,6 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__FORWARD_PROJECTION_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__FORWARD_PROJECTION_HPP_
 
+#include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>

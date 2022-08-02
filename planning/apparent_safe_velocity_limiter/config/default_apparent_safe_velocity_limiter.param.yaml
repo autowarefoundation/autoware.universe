@@ -4,8 +4,11 @@
     distance_buffer: 1.5  # [m] extra distance to add to a projection (in addition to the vehicle overhang)
     min_adjusted_velocity: 1.5  # [m/s] minimum velocity that the module can set
     max_deceleration: 2.0  # [m/s²] maximum deceleration caused by the adjusted velocity
-    start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
-    downsample_factor: 10  # factor by which to downsample the input trajectory for calculation
+
+    trajectory_preprocessing:
+      start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
+      downsample_factor: 10  # factor by which to downsample the input trajectory for calculation
+      calculate_steering_angles: true  # if true, the steering angle at each trajectory point is calculated from the change in heading
 
     simulation:
       model: bicycle  # model to use for forward projection at each trajectory point. Either "particle" or "bicycle"

@@ -17,6 +17,7 @@
 #include "apparent_safe_velocity_limiter/apparent_safe_velocity_limiter.hpp"
 #include "apparent_safe_velocity_limiter/debug.hpp"
 #include "apparent_safe_velocity_limiter/map_utils.hpp"
+#include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -33,6 +34,7 @@ namespace apparent_safe_velocity_limiter
 ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("apparent_safe_velocity_limiter", node_options),
+  preprocessing_params_(*this),
   projection_params_(*this),
   obstacle_params_(*this)
 {
@@ -87,16 +89,16 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
     if (parameter.get_name() == "distance_buffer") {
       distance_buffer_ = static_cast<Float>(parameter.as_double());
       projection_params_.extra_length = vehicle_front_offset_ + distance_buffer_;
-    } else if (parameter.get_name() == "start_distance") {
-      start_distance_ = static_cast<Float>(parameter.as_double());
-    } else if (parameter.get_name() == "downsample_factor") {
-      const auto new_downsample_factor = static_cast<int>(parameter.as_int());
-      if (new_downsample_factor > 0) {
-        downsample_factor_ = new_downsample_factor;
-      } else {
+      // Preprocessing parameters
+    } else if (parameter.get_name() == PreprocessingParameters::START_DIST_PARAM) {
+      preprocessing_params_.start_distance = static_cast<Float>(parameter.as_double());
+    } else if (parameter.get_name() == PreprocessingParameters::DOWNSAMPLING_PARAM) {
+      if (!preprocessing_params_.updateDownsampleFactor(parameter.as_int())) {
         result.successful = false;
         result.reason = "downsample_factor must be positive";
       }
+    } else if (parameter.get_name() == PreprocessingParameters::CALC_STEER_PARAM) {
+      preprocessing_params_.calculate_steering_angles = parameter.as_bool();
       // Velocity parameters
     } else if (parameter.get_name() == VelocityParameters::MIN_VEL_PARAM) {
       velocity_params_.min_velocity = static_cast<Float>(parameter.as_double());
@@ -159,8 +161,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   if (!validInputs(ego_idx)) return;
 
   velocity_params_.current_ego_velocity = *current_ego_velocity_;
-  const auto start_idx = calculateStartIndex(*msg, *ego_idx, start_distance_);
-  Trajectory downsampled_traj = downsampleTrajectory(*msg, start_idx, downsample_factor_);
+  const auto start_idx = calculateStartIndex(*msg, *ego_idx, preprocessing_params_.start_distance);
+  Trajectory downsampled_traj =
+    downsampleTrajectory(*msg, start_idx, preprocessing_params_.downsample_factor);
   const auto polygon_masks = createPolygonMasks(
     *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
@@ -184,8 +187,8 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   limitVelocity(
     downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
     velocity_params_, obstacle_params_.filter_envelope);
-  auto safe_trajectory =
-    copyDownsampledVelocity(downsampled_traj, *msg, start_idx, downsample_factor_);
+  auto safe_trajectory = copyDownsampledVelocity(
+    downsampled_traj, *msg, start_idx, preprocessing_params_.downsample_factor);
   safe_trajectory.header.stamp = now();
 
   pub_trajectory_->publish(safe_trajectory);

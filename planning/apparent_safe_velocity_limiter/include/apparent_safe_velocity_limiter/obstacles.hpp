@@ -23,21 +23,16 @@
 #include <geometry_msgs/msg/vector3.hpp>
 
 #include <boost/geometry.hpp>
-#include <boost/geometry/algorithms/centroid.hpp>
 
 namespace apparent_safe_velocity_limiter
 {
 
-/// @brief Obstacle represented by a linestring and the corresponding centroid
+/// @brief Obstacle represented by a linestring
 struct Obstacle
 {
   linestring_t line;
-  point_t centroid;
 
-  explicit Obstacle(const linestring_t & line_) : line{line_}
-  {
-    centroid = boost::geometry::return_centroid<point_t>(line);
-  }
+  explicit Obstacle(const linestring_t & line_) : line{line_} {}
 };
 
 /// @brief create a polygon from an object represented by a pose and a size

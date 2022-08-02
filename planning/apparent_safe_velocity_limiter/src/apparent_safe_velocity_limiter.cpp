@@ -134,11 +134,10 @@ std::vector<multilinestring_t> createProjectedLines(
 }
 
 std::vector<Obstacle> createObstacles(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const sensor_msgs::msg::PointCloud2 & pointcloud, const multipolygon_t & polygon_masks,
-  const polygon_t & envelope_polygon, tier4_autoware_utils::TransformListener & transform_listener,
-  const std::string & target_frame, const ObstacleParameters & obstacle_params,
-  PointCloud & debug_pointcloud)
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
+  const multipolygon_t & polygon_masks, const polygon_t & envelope_polygon,
+  tier4_autoware_utils::TransformListener & transform_listener, const std::string & target_frame,
+  const ObstacleParameters & obstacle_params, PointCloud & debug_pointcloud)
 {
   std::vector<Obstacle> obstacles;
   if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCYGRID) {
@@ -151,11 +150,10 @@ std::vector<Obstacle> createObstacles(
   }
   std::vector<Obstacle> filtered_obstacles;
   for (auto & obstacle : obstacles) {
-    // filterObstacles(obstacles, envelope_polygon, polygon_masks, obstacle_params.filter_envelope);
     if (
-      !boost::geometry::within(obstacle.centroid, polygon_masks) &&
+      !boost::geometry::within(obstacle.line, polygon_masks) &&
       (!obstacle_params.filter_envelope ||
-       boost::geometry::within(obstacle.centroid, envelope_polygon)))
+       boost::geometry::within(obstacle.line, envelope_polygon)))
       filtered_obstacles.push_back(std::move(obstacle));
   }
   return filtered_obstacles;

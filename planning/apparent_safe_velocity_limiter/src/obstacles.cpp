@@ -16,6 +16,8 @@
 
 #include <boost/assign.hpp>
 
+#include <tf2/utils.h>
+
 namespace apparent_safe_velocity_limiter
 {
 polygon_t createObjectPolygon(

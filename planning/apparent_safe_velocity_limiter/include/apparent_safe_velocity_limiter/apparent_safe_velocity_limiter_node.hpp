@@ -16,6 +16,7 @@
 #define APPARENT_SAFE_VELOCITY_LIMITER__APPARENT_SAFE_VELOCITY_LIMITER_NODE_HPP_
 
 #include "apparent_safe_velocity_limiter/obstacles.hpp"
+#include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -84,12 +85,11 @@ private:
     declare_parameter<std::vector<int64_t>>("obstacles.static_map_ids");
 
   // parameters
+  PreprocessingParameters preprocessing_params_;
   ProjectionParameters projection_params_;
   ObstacleParameters obstacle_params_;
   VelocityParameters velocity_params_;
   Float distance_buffer_ = static_cast<Float>(declare_parameter<Float>("distance_buffer"));
-  Float start_distance_ = static_cast<Float>(declare_parameter<Float>("start_distance"));
-  int downsample_factor_ = static_cast<int>(declare_parameter<int>("downsample_factor"));
   Float vehicle_lateral_offset_;
   Float vehicle_front_offset_;
 

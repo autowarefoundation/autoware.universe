@@ -16,6 +16,7 @@
 #define APPARENT_SAFE_VELOCITY_LIMITER__DISTANCE_HPP_
 
 #include "apparent_safe_velocity_limiter/obstacles.hpp"
+#include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <geometry_msgs/msg/vector3.hpp>
