@@ -210,7 +210,7 @@ bool BehaviorVelocityPlannerNode::isDataReady(
 
   // from tf
   if (d.current_pose.header.frame_id == "") {
-    RCLCPP_INFO(get_logger(), "Frame id of current pose is missing");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Frame id of current pose is missing");
     return false;
   }
 
