@@ -30,7 +30,7 @@ private:
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr sub_twist_;
-  void OnTwist(TwistWithCovarianceStamped::ConstSharedPtr msg);
+  void on_twist(TwistWithCovarianceStamped::ConstSharedPtr msg);
 };
 
 #endif  // POSE_INITIALIZER__STOP_CHECK_MODULE_HPP_

@@ -52,14 +52,14 @@ PoseInitializer::~PoseInitializer()
   // to delete gnss module
 }
 
-void PoseInitializer::ChangeState(State::Message::_state_type state)
+void PoseInitializer::change_state(State::Message::_state_type state)
 {
   state_.stamp = now();
   state_.state = state;
   pub_state_->publish(state_);
 }
 
-void PoseInitializer::OnInitialize(
+void PoseInitializer::on_initialize(
   const Initialize::Service::Request::SharedPtr req,
   const Initialize::Service::Response::SharedPtr res)
 {
@@ -69,7 +69,7 @@ void PoseInitializer::OnInitialize(
       Initialize::Service::Response::ERROR_UNSAFE, "The vehicle is not stopped.");
   }
   try {
-    ChangeState(State::Message::INITIALIZING);
+    change_state(State::Message::INITIALIZING);
     auto pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
     if (ndt_) {
       pose = ndt_->AlignPose(pose);
@@ -77,14 +77,14 @@ void PoseInitializer::OnInitialize(
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
     res->status.success = true;
-    ChangeState(State::Message::INITIALIZED);
+    change_state(State::Message::INITIALIZED);
   } catch (const ServiceException & error) {
     res->status = error.status();
-    ChangeState(State::Message::UNINITIALIZED);
+    change_state(State::Message::UNINITIALIZED);
   }
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
+geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
 {
   if (gnss_) {
     PoseWithCovarianceStamped pose = gnss_->GetPose();

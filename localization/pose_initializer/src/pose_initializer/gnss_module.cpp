@@ -29,7 +29,7 @@ GnssModule::GnssModule(rclcpp::Node * node)
   timeout_ = node->declare_parameter<double>("gnss_pose_timeout");
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::GetPose() const
+geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose() const
 {
   using Initialize = localization_interface::Initialize;
 

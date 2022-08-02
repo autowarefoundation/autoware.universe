@@ -28,7 +28,7 @@ NdtModule::NdtModule(rclcpp::Node * node) : logger_(node->get_logger())
   cli_align_ = node->create_client<RequestPoseAlignment>("ndt_align");
 }
 
-PoseWithCovarianceStamped NdtModule::AlignPose(const PoseWithCovarianceStamped & pose)
+PoseWithCovarianceStamped NdtModule::align_pose(const PoseWithCovarianceStamped & pose)
 {
   const auto req = std::make_shared<RequestPoseAlignment::Request>();
   req->pose_with_covariance = pose;

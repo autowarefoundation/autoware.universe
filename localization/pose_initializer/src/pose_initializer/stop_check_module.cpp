@@ -21,7 +21,7 @@ StopCheckModule::StopCheckModule(rclcpp::Node * node, double buffer_duration)
     "stop_check_twist", 1, std::bind(&StopCheckModule::OnTwist, this, std::placeholders::_1));
 }
 
-void StopCheckModule::OnTwist(TwistWithCovarianceStamped::ConstSharedPtr msg)
+void StopCheckModule::on_twist(TwistWithCovarianceStamped::ConstSharedPtr msg)
 {
   TwistStamped twist;
   twist.header = msg->header;

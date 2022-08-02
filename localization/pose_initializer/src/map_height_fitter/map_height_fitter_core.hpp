@@ -42,11 +42,11 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
   rclcpp::Service<RequestHeightFitting>::SharedPtr srv_fit_;
 
-  void OnMap(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void OnFit(
+  void on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void on_fit(
     const RequestHeightFitting::Request::SharedPtr req,
     const RequestHeightFitting::Response::SharedPtr res) const;
-  double GetGroundHeight(const tf2::Vector3 & point) const;
+  double get_ground_height(const tf2::Vector3 & point) const;
 };
 
 #endif  // MAP_HEIGHT_FITTER__MAP_HEIGHT_FITTER_CORE_HPP_

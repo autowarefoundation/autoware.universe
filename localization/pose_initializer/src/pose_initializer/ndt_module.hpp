@@ -28,7 +28,7 @@ private:
 
 public:
   explicit NdtModule(rclcpp::Node * node);
-  PoseWithCovarianceStamped AlignPose(const PoseWithCovarianceStamped & pose);
+  PoseWithCovarianceStamped align_pose(const PoseWithCovarianceStamped & pose);
 
 private:
   rclcpp::Logger logger_;

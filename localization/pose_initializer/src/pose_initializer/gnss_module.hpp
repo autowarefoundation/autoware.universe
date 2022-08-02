@@ -28,7 +28,7 @@ private:
 
 public:
   explicit GnssModule(rclcpp::Node * node);
-  PoseWithCovarianceStamped GetPose() const;
+  PoseWithCovarianceStamped get_pose() const;
 
 private:
   rclcpp::Clock::SharedPtr clock_;

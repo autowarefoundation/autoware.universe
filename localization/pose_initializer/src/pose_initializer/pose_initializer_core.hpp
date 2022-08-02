@@ -50,11 +50,11 @@ private:
   std::unique_ptr<NdtModule> ndt_;
   std::unique_ptr<StopCheckModule> stop_check_;
   double stop_check_duration_;
-  void ChangeState(State::Message::_state_type state);
-  void OnInitialize(
+  void change_state(State::Message::_state_type state);
+  void on_initialize(
     const Initialize::Service::Request::SharedPtr req,
     const Initialize::Service::Response::SharedPtr res);
-  PoseWithCovarianceStamped GetGnssPose();
+  PoseWithCovarianceStamped get_gnss_pose();
 };
 
 #endif  // POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_

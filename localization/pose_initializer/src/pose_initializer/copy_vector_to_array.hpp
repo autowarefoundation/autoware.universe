@@ -23,7 +23,7 @@
 #include <vector>
 
 template <typename T, size_t N>
-void CopyVectorToArray(const std::vector<T> & vector, std::array<T, N> & array)
+void copy_vector_to_array(const std::vector<T> & vector, std::array<T, N> & array)
 {
   if (N != vector.size()) {
     // throws the error to prevent causing an anonymous bug
@@ -37,7 +37,7 @@ void CopyVectorToArray(const std::vector<T> & vector, std::array<T, N> & array)
 }
 
 template <class NodeT>
-std::array<double, 36> GetCovarianceParameter(NodeT * node, const std::string & name)
+std::array<double, 36> get_covariance_parameter(NodeT * node, const std::string & name)
 {
   const auto parameter = node->template declare_parameter<std::vector<double>>(name);
   std::array<double, 36> covariance;

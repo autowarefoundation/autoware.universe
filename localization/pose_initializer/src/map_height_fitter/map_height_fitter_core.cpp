@@ -36,14 +36,14 @@ MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf
     "fit_map_height", std::bind(&MapHeightFitter::OnFit, this, _1, _2));
 }
 
-void MapHeightFitter::OnMap(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+void MapHeightFitter::on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   map_frame_ = msg->header.frame_id;
   map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*msg, *map_cloud_);
 }
 
-double MapHeightFitter::GetGroundHeight(const tf2::Vector3 & point) const
+double MapHeightFitter::get_ground_height(const tf2::Vector3 & point) const
 {
   constexpr double radius = 1.0 * 1.0;
   const double x = point.getX();
@@ -61,7 +61,7 @@ double MapHeightFitter::GetGroundHeight(const tf2::Vector3 & point) const
   return std::isfinite(height) ? height : point.getZ();
 }
 
-void MapHeightFitter::OnFit(
+void MapHeightFitter::on_fit(
   const RequestHeightFitting::Request::SharedPtr req,
   const RequestHeightFitting::Response::SharedPtr res) const
 {
@@ -76,7 +76,7 @@ void MapHeightFitter::OnFit(
       tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
       tf2::fromMsg(stamped.transform, transform);
       point = transform * point;
-      point.setZ(GetGroundHeight(point));
+      point.setZ(get_ground_height(point));
       point = transform.inverse() * point;
       res->success = true;
     } catch (tf2::TransformException & exception) {
