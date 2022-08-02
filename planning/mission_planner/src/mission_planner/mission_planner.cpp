@@ -136,10 +136,9 @@ void MissionPlanner::OnSetRoute(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
   // NOTE: The route services should be mutually exclusive by callback group.
-  RCLCPP_INFO_STREAM(get_logger(), "onSetRoute");
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
-      SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The planned route is empty.");
+      SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
 
   // Use common header for transforms
@@ -176,7 +175,7 @@ void MissionPlanner::OnSetRoutePoints(
   // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
-      SetRoutePoints::Service::Response::ERROR_ROUTE_EXISTS, "The planned route is empty.");
+      SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
   if (!planner_->Ready()) {
     throw component_interface_utils::ServiceException(
