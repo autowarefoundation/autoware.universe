@@ -53,11 +53,15 @@ private:
   rclcpp::Service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{
     nullptr};
 
+// Report query timer
+  rclcpp::TimerBase::SharedPtr m_report_timer{nullptr};
+
 // Callbacks
   void on_command(AckermannControlCommand::SharedPtr msg);
   void on_mode_change_request(
     ModeChangeRequest::SharedPtr request,
     ModeChangeResponse::SharedPtr response);
+  void on_report_timer();
 };
 }  // namespace interface
 }  // namespace vehicle

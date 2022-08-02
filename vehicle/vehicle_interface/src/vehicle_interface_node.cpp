@@ -14,6 +14,7 @@
 
 #include <functional>
 #include <string>
+#include <chrono>
 
 #include "vehicle_interface/vehicle_interface_node.hpp"
 namespace autoware
@@ -32,6 +33,8 @@ VehicleInterfaceNode::VehicleInterfaceNode(
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
+
+  this->features() = features;
   // Declare required sub and service
   m_command_sub = create_subscription<AckermannControlCommand>(
     "controller/output/control_cmd", 1, std::bind(
@@ -42,70 +45,64 @@ VehicleInterfaceNode::VehicleInterfaceNode(
 
   // Declare optional pubs and subs
   for (const auto & feat : features) {
-    switch (feat) {
-      case InterfaceFeature::GEAR:
-        m_gear_pub = create_publisher<GearReport>("gear_report", 1);
-        m_gear_sub =
-          create_subscription<GearCommand>(
-          "gear_cmd", 1, [this](GearCommand::SharedPtr msg) {
-            send_gear_command(*msg);
-          });
-        break;
-      case InterfaceFeature::HAND_BRAKE:
-        m_hand_brake_pub = create_publisher<HandBrakeReport>("hand_brake_report", 1);
-        m_hand_brake_sub =
-          create_subscription<HandBrakeCommand>(
-          "hand_brake_cmd", 1, [this](HandBrakeCommand::SharedPtr msg) {
-            send_hand_brake_command(*msg);
-          });
-        break;
-      case InterfaceFeature::HAZARD_LIGHTS:
-        m_hazard_lights_pub = create_publisher<HazardLightsReport>("hazard_lights_report", 1);
-        m_hazard_lights_sub =
-          create_subscription<HazardLightsCommand>(
-          "hazard_lights_cmd", 1, [this](HazardLightsCommand::SharedPtr msg) {
-            send_hazard_lights_command(*msg);
-          });
-        break;
-      case InterfaceFeature::HEADLIGHTS:
-        m_headlights_pub = create_publisher<HeadlightsReport>("headlights_report", 1);
-        m_headlights_sub =
-          create_subscription<HeadlightsCommand>(
-          "headlights_cmd", 1, [this](HeadlightsCommand::SharedPtr msg) {
-            send_headlights_command(*msg);
-          });
-        break;
-      case InterfaceFeature::HORN:
-        m_horn_pub = create_publisher<HornReport>("horn_report", 1);
-        m_horn_sub =
-          create_subscription<HornCommand>(
-          "horm_cmd", 1, [this](HornCommand::SharedPtr msg) {
-            send_horn_command(*msg);
-          });
-        break;
-      case InterfaceFeature::WIPERS:
-        m_wipers_pub = create_publisher<WipersReport>("wipers_report", 1);
-        m_wipers_sub =
-          create_subscription<WipersCommand>(
-          "wipers_cmd", 1, [this](WipersCommand::SharedPtr msg) {
-            send_wipers_command(*msg);
-          });
-        break;
-      case InterfaceFeature::TURN_INDICATORS:
-        m_turn_indicators_pub = create_publisher<TurnIndicatorsReport>("turn_indicators_report", 1);
-        m_turn_indicators_sub =
-          create_subscription<TurnIndicatorsCommand>(
-          "turn_indicator_cmd", 1, [this](TurnIndicatorsCommand::SharedPtr msg) {
-            send_turn_indicators_command(*msg);
-          });
-        break;
-      case InterfaceFeature::ODOMETRY:
-        m_odometry_pub = create_publisher<VehicleOdometry>("odom", 1);
-        break;
-      default:
-        throw std::runtime_error("Unknow vehicle interface feature.");
+    if (InterfaceFeature::GEAR == feat) {
+      m_gear_pub = create_publisher<GearReport>("gear_report", 1);
+      m_gear_sub =
+        create_subscription<GearCommand>(
+        "gear_cmd", 1, [this](GearCommand::SharedPtr msg) {
+          send_gear_command(*msg);
+        });
+    } else if (InterfaceFeature::HAND_BRAKE == feat) {
+      m_hand_brake_pub = create_publisher<HandBrakeReport>("hand_brake_report", 1);
+      m_hand_brake_sub =
+        create_subscription<HandBrakeCommand>(
+        "hand_brake_cmd", 1, [this](HandBrakeCommand::SharedPtr msg) {
+          send_hand_brake_command(*msg);
+        });
+    } else if (InterfaceFeature::HAZARD_LIGHTS == feat) {
+      m_hazard_lights_pub = create_publisher<HazardLightsReport>("hazard_lights_report", 1);
+      m_hazard_lights_sub =
+        create_subscription<HazardLightsCommand>(
+        "hazard_lights_cmd", 1, [this](HazardLightsCommand::SharedPtr msg) {
+          send_hazard_lights_command(*msg);
+        });
+    } else if (InterfaceFeature::HEADLIGHTS == feat) {
+      m_headlights_pub = create_publisher<HeadlightsReport>("headlights_report", 1);
+      m_headlights_sub =
+        create_subscription<HeadlightsCommand>(
+        "headlights_cmd", 1, [this](HeadlightsCommand::SharedPtr msg) {
+          send_headlights_command(*msg);
+        });
+    } else if (InterfaceFeature::HORN == feat) {
+      m_horn_pub = create_publisher<HornReport>("horn_report", 1);
+      m_horn_sub =
+        create_subscription<HornCommand>(
+        "horm_cmd", 1, [this](HornCommand::SharedPtr msg) {
+          send_horn_command(*msg);
+        });
+    } else if (InterfaceFeature::ODOMETRY == feat) {
+      m_odometry_pub = create_publisher<VehicleOdometry>("odom", 1);
+    } else if (InterfaceFeature::TURN_INDICATORS == feat) {
+      m_turn_indicators_pub = create_publisher<TurnIndicatorsReport>("turn_indicators_report", 1);
+      m_turn_indicators_sub =
+        create_subscription<TurnIndicatorsCommand>(
+        "turn_indicator_cmd", 1, [this](TurnIndicatorsCommand::SharedPtr msg) {
+          send_turn_indicators_command(*msg);
+        });
+    } else if (InterfaceFeature::WIPERS == feat) {
+      m_wipers_pub = create_publisher<WipersReport>("wipers_report", 1);
+      m_wipers_sub =
+        create_subscription<WipersCommand>(
+        "wipers_cmd", 1, [this](WipersCommand::SharedPtr msg) {
+          send_wipers_command(*msg);
+        });
     }
   }
+
+  // Start querying reports
+  m_report_timer = create_wall_timer(
+    std::chrono::milliseconds(declare_parameter<uint64_t>("report_interval_ms")),
+    std::bind(&VehicleInterfaceNode::on_report_timer, this));
 }
 
 void VehicleInterfaceNode::on_command(AckermannControlCommand::SharedPtr msg)
@@ -120,6 +117,29 @@ void VehicleInterfaceNode::on_mode_change_request(
 {
   handle_mode_change_request(request);
   // TODO(haoru): handle mode change failures
+}
+
+void VehicleInterfaceNode::on_report_timer()
+{
+  for (const auto & feat : features()) {
+    if (InterfaceFeature::GEAR == feat && m_gear_pub) {
+      m_gear_pub->publish(gear_report());
+    } else if (InterfaceFeature::HAND_BRAKE == feat && m_hand_brake_pub) {
+      m_hand_brake_pub->publish(hand_brake_report());
+    } else if (InterfaceFeature::HAZARD_LIGHTS == feat && m_hazard_lights_pub) {
+      m_hazard_lights_pub->publish(hazard_lights_report());
+    } else if (InterfaceFeature::HEADLIGHTS == feat && m_headlights_pub) {
+      m_headlights_pub->publish(headlights_report());
+    } else if (InterfaceFeature::HORN == feat && m_horn_pub) {
+      m_horn_pub->publish(horn_report());
+    } else if (InterfaceFeature::ODOMETRY == feat && m_odometry_pub) {
+      m_odometry_pub->publish(odometry());
+    } else if (InterfaceFeature::TURN_INDICATORS == feat && m_turn_indicators_pub) {
+      m_turn_indicators_pub->publish(turn_indicators_report());
+    } else if (InterfaceFeature::WIPERS == feat && m_wipers_pub) {
+      m_wipers_pub->publish(wipers_report());
+    }
+  }
 }
 }  // namespace interface
 }  // namespace vehicle
