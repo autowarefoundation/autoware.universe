@@ -26,14 +26,14 @@
 namespace mission_planner
 {
 
-class MissionPlannerPlugin
+class PlannerPlugin
 {
 public:
   using RoutePoints = std::vector<geometry_msgs::msg::Pose>;
   using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-  virtual ~MissionPlannerPlugin() = default;
+  virtual ~PlannerPlugin() = default;
   virtual void Initialize(rclcpp::Node * node) = 0;
   virtual bool Ready() const = 0;
   virtual HADMapRoute Plan(const RoutePoints & points) = 0;

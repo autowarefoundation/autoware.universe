@@ -53,8 +53,8 @@ public:
 
 private:
   ArrivalChecker arrival_checker_;
-  pluginlib::ClassLoader<MissionPlannerPlugin> plugin_loader_;
-  std::shared_ptr<MissionPlannerPlugin> planner_;
+  pluginlib::ClassLoader<PlannerPlugin> plugin_loader_;
+  std::shared_ptr<PlannerPlugin> planner_;
   std::string base_link_frame_;
   std::string map_frame_;
   tf2_ros::Buffer tf_buffer_;

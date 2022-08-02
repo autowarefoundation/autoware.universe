@@ -28,7 +28,7 @@ namespace mission_planner
 MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 : Node("mission_planner", options),
   arrival_checker_(this),
-  plugin_loader_("mission_planner", "mission_planner::MissionPlannerPlugin"),
+  plugin_loader_("mission_planner", "mission_planner::PlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_)
 {
@@ -187,7 +187,7 @@ void MissionPlanner::OnSetRoutePoints(
   pose.header = req->header;
 
   // Convert route points.
-  MissionPlannerPlugin::RoutePoints points;
+  PlannerPlugin::RoutePoints points;
   if (req->start.empty()) {
     points.push_back(GetEgoVehiclePose().pose);
   } else {

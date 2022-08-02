@@ -32,7 +32,7 @@
 namespace mission_planner::lanelet2
 {
 
-class DefaultPlanner : public mission_planner::MissionPlannerPlugin
+class DefaultPlanner : public mission_planner::PlannerPlugin
 {
 public:
   void Initialize(rclcpp::Node * node) override;

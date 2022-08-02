@@ -141,7 +141,7 @@ void DefaultPlanner::Initialize(rclcpp::Node * node)
 
 bool DefaultPlanner::Ready() const { return is_graph_ready_; }
 
-MissionPlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
+PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
 {
   std::stringstream log_ss;
   for (const auto & point : points) {
@@ -191,7 +191,7 @@ MissionPlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & point
   return route_msg;
 }
 
-MissionPlannerPlugin::MarkerArray DefaultPlanner::Visualize(const HADMapRoute & route) const
+PlannerPlugin::MarkerArray DefaultPlanner::Visualize(const HADMapRoute & route) const
 {
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets end_lanelets;
@@ -319,5 +319,4 @@ geometry_msgs::msg::Pose DefaultPlanner::refineGoalHeight(
 }  // namespace mission_planner::lanelet2
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(
-  mission_planner::lanelet2::DefaultPlanner, mission_planner::MissionPlannerPlugin)
+PLUGINLIB_EXPORT_CLASS(mission_planner::lanelet2::DefaultPlanner, mission_planner::PlannerPlugin)
