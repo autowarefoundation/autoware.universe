@@ -68,7 +68,7 @@ public:
     double stop_line_margin;
     double stop_position_threshold;
     // param for ego velocity
-    double slow_velocity;
+    float min_slow_down_velocity;
     double max_slow_down_jerk;
     double max_slow_down_accel;
     double no_relax_velocity;
@@ -106,11 +106,11 @@ public:
 private:
   int64_t module_id_;
 
-  boost::optional<std::pair<size_t, PathPointWithLaneId>> findRTCStopPoint(
-    const PathWithLaneId & ego_path);
+  boost::optional<geometry_msgs::msg::Point> findRTCStopPoint(
+    const PathWithLaneId & ego_path, StopFactor & stop_factor);
 
-  boost::optional<std::pair<size_t, PathPointWithLaneId>> findNearestStopPoint(
-    const PathWithLaneId & ego_path, StopReason & stop_reason);
+  boost::optional<geometry_msgs::msg::Point> findNearestStopPoint(
+    const PathWithLaneId & ego_path, StopFactor & stop_factor);
 
   boost::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
     const PathWithLaneId & ego_path) const;
@@ -122,7 +122,7 @@ private:
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
   void insertDecelPoint(
-    const std::pair<size_t, PathPointWithLaneId> & stop_point, const float target_velocity,
+    const geometry_msgs::msg::Point & stop_point, const float target_velocity,
     PathWithLaneId & output);
 
   void clampAttentionRangeByNeighborCrosswalks(
@@ -136,11 +136,13 @@ private:
   CollisionPointState getCollisionPointState(const double ttc, const double ttv) const;
 
   float calcTargetVelocity(
-    const PathPointWithLaneId & stop_point, const PathWithLaneId & ego_path) const;
+    const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
 
   bool isStuckVehicle(const PathWithLaneId & ego_path, const PredictedObject & object) const;
 
   bool isRedSignalForPedestrians() const;
+
+  bool isVehicle(const PredictedObject & object) const;
 
   bool isTargetType(const PredictedObject & object) const;
 

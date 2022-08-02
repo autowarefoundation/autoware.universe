@@ -194,7 +194,7 @@ CandidateOutput LaneChangeModule::planCandidate() const
   output.path_candidate = selected_path.path;
   output.lateral_shift = selected_path.shifted_path.shift_length.at(end_idx) -
                          selected_path.shifted_path.shift_length.at(start_idx);
-  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+  output.distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.start.position);
 
@@ -208,6 +208,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);
+  waitApproval();
   return out;
 }
 
@@ -270,7 +271,7 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
 
   double optional_lengths{0.0};
   const auto isInIntersection = util::checkLaneIsInIntersection(
-    *route_handler, reference_path, current_lanes, optional_lengths);
+    *route_handler, reference_path, current_lanes, common_parameters, optional_lengths);
   if (isInIntersection) {
     reference_path = util::getCenterLinePath(
       *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
@@ -329,8 +330,9 @@ lanelet::ConstLanelets LaneChangeModule::getLaneChangeLanes(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(
     current_lanes, planner_data_->self_pose->pose, &current_lane);
-  const double lane_change_prepare_length =
-    current_twist.linear.x * parameters_.lane_change_prepare_duration;
+  const double lane_change_prepare_length = std::max(
+    current_twist.linear.x * parameters_.lane_change_prepare_duration,
+    planner_data_->parameters.minimum_lane_change_length);
   lanelet::ConstLanelets current_check_lanes =
     route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
   lanelet::ConstLanelet lane_change_lane;

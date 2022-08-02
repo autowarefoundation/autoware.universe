@@ -89,13 +89,9 @@ private:
   rclcpp::Subscription<Odometry>::SharedPtr velocity_subscriber_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_subscriber_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
-  rclcpp::Subscription<ApprovalMsg>::SharedPtr external_approval_subscriber_;
-  rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_subscriber_;
+  rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
-  rclcpp::Publisher<PathChangeModuleArray>::SharedPtr force_available_publisher_;
-  rclcpp::Publisher<PathChangeModule>::SharedPtr plan_ready_publisher_;
-  rclcpp::Publisher<PathChangeModuleArray>::SharedPtr plan_running_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -104,8 +100,6 @@ private:
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   Scenario::SharedPtr current_scenario_{nullptr};
-
-  std::string prev_ready_module_name_ = "NONE";
 
   TurnSignalDecider turn_signal_decider_;
 
@@ -128,6 +122,7 @@ private:
   // callback
   void onVelocity(const Odometry::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
+  void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
   void onExternalApproval(const ApprovalMsg::ConstSharedPtr msg);
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
@@ -157,6 +152,12 @@ private:
    */
   PathWithLaneId::SharedPtr getPathCandidate(
     const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
+
+  /**
+   * @brief skip smooth goal connection
+   */
+  bool skipSmoothGoalConnection(
+    const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
 
   // debug
 

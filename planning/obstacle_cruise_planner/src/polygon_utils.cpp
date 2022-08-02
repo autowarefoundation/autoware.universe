@@ -14,6 +14,8 @@
 
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 namespace
 {
 namespace bg = boost::geometry;
@@ -27,35 +29,6 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   point.y() = geom_point.y;
 
   bg::append(polygon.outer(), point);
-}
-
-void appendPointToPolygon(Polygon2d & polygon, const Point2d point)
-{
-  bg::append(polygon.outer(), point);
-}
-
-bool isClockWise(const Polygon2d & polygon)
-{
-  const int n = polygon.outer().size();
-  const double x_offset = polygon.outer().at(0).x();
-  const double y_offset = polygon.outer().at(0).y();
-  double sum = 0.0;
-  for (std::size_t i = 0; i < polygon.outer().size(); ++i) {
-    sum +=
-      (polygon.outer().at(i).x() - x_offset) * (polygon.outer().at((i + 1) % n).y() - y_offset) -
-      (polygon.outer().at(i).y() - y_offset) * (polygon.outer().at((i + 1) % n).x() - x_offset);
-  }
-
-  return sum < 0.0;
-}
-
-Polygon2d inverseClockWise(const Polygon2d & polygon)
-{
-  Polygon2d inverted_polygon;
-  for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
-    inverted_polygon.outer().push_back(polygon.outer().at(i));
-  }
-  return inverted_polygon;
 }
 
 Polygon2d createOneStepPolygon(
@@ -100,102 +73,23 @@ Polygon2d createOneStepPolygon(
       tier4_autoware_utils::calcOffsetPose(next_step_pose, -rear_overhang, width, 0.0).position);
   }
 
-  polygon = isClockWise(polygon) ? polygon : inverseClockWise(polygon);
+  polygon = tier4_autoware_utils::isClockwise(polygon)
+              ? polygon
+              : tier4_autoware_utils::inverseClockwise(polygon);
 
   Polygon2d hull_polygon;
   bg::convex_hull(polygon, hull_polygon);
 
   return hull_polygon;
 }
-
-geometry_msgs::msg::Polygon rotatePolygon(
-  const geometry_msgs::msg::Polygon & polygon, const double & angle)
-{
-  const double cos = std::cos(angle);
-  const double sin = std::sin(angle);
-  geometry_msgs::msg::Polygon rotated_polygon;
-  for (const auto & point : polygon.points) {
-    auto rotated_point = point;
-    rotated_point.x = cos * point.x - sin * point.y;
-    rotated_point.y = sin * point.x + cos * point.y;
-    rotated_polygon.points.push_back(rotated_point);
-  }
-  return rotated_polygon;
-}
 }  // namespace
 
 namespace polygon_utils
 {
-Polygon2d convertObstacleToPolygon(
-  const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape)
-{
-  Polygon2d polygon;
-
-  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    const auto point0 = tier4_autoware_utils::calcOffsetPose(
-                          pose, shape.dimensions.x / 2.0, shape.dimensions.y / 2.0, 0.0)
-                          .position;
-    const auto point1 = tier4_autoware_utils::calcOffsetPose(
-                          pose, -shape.dimensions.x / 2.0, shape.dimensions.y / 2.0, 0.0)
-                          .position;
-    const auto point2 = tier4_autoware_utils::calcOffsetPose(
-                          pose, -shape.dimensions.x / 2.0, -shape.dimensions.y / 2.0, 0.0)
-                          .position;
-    const auto point3 = tier4_autoware_utils::calcOffsetPose(
-                          pose, shape.dimensions.x / 2.0, -shape.dimensions.y / 2.0, 0.0)
-                          .position;
-
-    appendPointToPolygon(polygon, point0);
-    appendPointToPolygon(polygon, point1);
-    appendPointToPolygon(polygon, point2);
-    appendPointToPolygon(polygon, point3);
-
-    // NOTE: push back the first point in order to close polygon
-    appendPointToPolygon(polygon, polygon.outer().front());
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
-    const double radius = shape.dimensions.x / 2.0;
-    constexpr int circle_discrete_num = 6;
-    for (int i = 0; i < circle_discrete_num; ++i) {
-      geometry_msgs::msg::Point point;
-      point.x = std::cos(
-                  (static_cast<double>(i) / static_cast<double>(circle_discrete_num)) * 2.0 * M_PI +
-                  M_PI / static_cast<double>(circle_discrete_num)) *
-                  radius +
-                pose.position.x;
-      point.y = std::sin(
-                  (static_cast<double>(i) / static_cast<double>(circle_discrete_num)) * 2.0 * M_PI +
-                  M_PI / static_cast<double>(circle_discrete_num)) *
-                  radius +
-                pose.position.y;
-      appendPointToPolygon(polygon, point);
-    }
-
-    // NOTE: push back the first point in order to close polygon
-    appendPointToPolygon(polygon, polygon.outer().front());
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-    const double poly_yaw = tf2::getYaw(pose.orientation);
-    const auto rotated_footprint = rotatePolygon(shape.footprint, poly_yaw);
-    for (const auto rel_point : rotated_footprint.points) {
-      geometry_msgs::msg::Point abs_point;
-      abs_point.x = pose.position.x + rel_point.x;
-      abs_point.y = pose.position.y + rel_point.y;
-
-      appendPointToPolygon(polygon, abs_point);
-    }
-    if (polygon.outer().size() > 0) {
-      // NOTE: push back the first point in order to close polygon
-      appendPointToPolygon(polygon, polygon.outer().front());
-    }
-  } else {
-    throw std::logic_error("The shape type is not supported in obstacle_cruise_planner.");
-  }
-
-  return isClockWise(polygon) ? polygon : inverseClockWise(polygon);
-}
-
 boost::optional<size_t> getFirstCollisionIndex(
   const std::vector<Polygon2d> & traj_polygons, const Polygon2d & obj_polygon,
-  std::vector<geometry_msgs::msg::Point> & collision_geom_points)
+  const std_msgs::msg::Header & obj_header,
+  std::vector<geometry_msgs::msg::PointStamped> & collision_geom_points)
 {
   for (size_t i = 0; i < traj_polygons.size(); ++i) {
     std::deque<Polygon2d> collision_polygons;
@@ -207,9 +101,10 @@ boost::optional<size_t> getFirstCollisionIndex(
         has_collision = true;
 
         for (const auto & collision_point : collision_polygon.outer()) {
-          geometry_msgs::msg::Point collision_geom_point;
-          collision_geom_point.x = collision_point.x();
-          collision_geom_point.y = collision_point.y();
+          geometry_msgs::msg::PointStamped collision_geom_point;
+          collision_geom_point.header = obj_header;
+          collision_geom_point.point.x = collision_point.x();
+          collision_geom_point.point.y = collision_point.y();
           collision_geom_points.push_back(collision_geom_point);
         }
       }
@@ -232,7 +127,7 @@ boost::optional<size_t> getFirstNonCollisionIndex(
 
   size_t latest_collision_idx = start_idx;
   for (const auto & path_point : predicted_path.path) {
-    const auto obj_polygon = convertObstacleToPolygon(path_point, shape);
+    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(path_point, shape);
     for (size_t i = start_idx; i < traj_polygons.size(); ++i) {
       const double dist = bg::distance(traj_polygons.at(i), obj_polygon);
       if (dist <= epsilon) {
@@ -249,12 +144,12 @@ boost::optional<size_t> getFirstNonCollisionIndex(
 
 boost::optional<size_t> willCollideWithSurroundObstacle(
   const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const std::vector<Polygon2d> & traj_polygons,
+  const std::vector<Polygon2d> & traj_polygons, const std_msgs::msg::Header & obj_header,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const double max_dist,
   const double ego_obstacle_overlap_time_threshold,
   const double max_prediction_time_for_collision_check,
-  std::vector<geometry_msgs::msg::Point> & collision_geom_points)
+  std::vector<geometry_msgs::msg::PointStamped> & collision_geom_points)
 {
   constexpr double epsilon = 1e-3;
 
@@ -277,7 +172,7 @@ boost::optional<size_t> willCollideWithSurroundObstacle(
       }
 
       const auto & traj_polygon = traj_polygons.at(j);
-      const auto obj_polygon = polygon_utils::convertObstacleToPolygon(path_point, shape);
+      const auto obj_polygon = tier4_autoware_utils::toPolygon2d(path_point, shape);
       const double dist = bg::distance(traj_polygon, obj_polygon);
 
       if (dist < epsilon) {
@@ -292,9 +187,13 @@ boost::optional<size_t> willCollideWithSurroundObstacle(
               has_collision = true;
 
               for (const auto & collision_point : collision_polygon.outer()) {
-                geometry_msgs::msg::Point collision_geom_point;
-                collision_geom_point.x = collision_point.x();
-                collision_geom_point.y = collision_point.y();
+                geometry_msgs::msg::PointStamped collision_geom_point;
+                const auto collision_time =
+                  rclcpp::Time(obj_header.stamp) + rclcpp::Duration(predicted_path.time_step) * i;
+                collision_geom_point.header.frame_id = obj_header.frame_id;
+                collision_geom_point.header.stamp = collision_time;
+                collision_geom_point.point.x = collision_point.x();
+                collision_geom_point.point.y = collision_point.y();
                 collision_geom_points.push_back(collision_geom_point);
               }
             }

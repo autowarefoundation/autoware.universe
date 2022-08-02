@@ -40,11 +40,11 @@
 
 namespace behavior_path_planner
 {
+using motion_utils::calcSignedArcLength;
+using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcLateralDeviation;
-using tier4_autoware_utils::calcSignedArcLength;
 using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::findNearestIndex;
 
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
@@ -475,8 +475,6 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
   const auto & lat_collision_margin = parameters_.lateral_collision_margin;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto & road_shoulder_safety_margin = parameters_.road_shoulder_safety_margin;
-  const auto max_allowable_lateral_distance = lat_collision_safety_buffer + lat_collision_margin +
-                                              vehicle_width - road_shoulder_safety_margin;
 
   const auto avoid_margin =
     lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
@@ -493,13 +491,16 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
         avoidance_debug_msg_array.push_back(avoidance_debug_msg);
       };
 
+    const auto max_allowable_lateral_distance =
+      o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
+
     avoidance_debug_msg.object_id = getUuidStr(o);
     avoidance_debug_msg.longitudinal_distance = o.longitudinal;
     avoidance_debug_msg.lateral_distance_from_centerline = o.lateral;
     avoidance_debug_msg.to_furthest_linestring_distance = o.to_road_shoulder_distance;
     avoidance_debug_msg.max_shift_length = max_allowable_lateral_distance;
 
-    if (!(o.to_road_shoulder_distance > max_allowable_lateral_distance)) {
+    if (max_allowable_lateral_distance <= avoid_margin) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
       continue;
     }
@@ -2000,7 +2001,7 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
 
   // for debug: check if the path backward distance is same as the desired length.
   // {
-  //   const auto back_to_ego = tier4_autoware_utils::calcSignedArcLength(
+  //   const auto back_to_ego = motion_utils::calcSignedArcLength(
   //     centerline_path.points, centerline_path.points.front().point.pose.position,
   //     getEgoPosition());
   //   RCLCPP_INFO(getLogger(), "actual back_to_ego distance = %f", back_to_ego);
@@ -2109,9 +2110,17 @@ BehaviorModuleOutput AvoidanceModule::plan()
     debug_data_.new_shift_points = *new_shift_points;
     DEBUG_PRINT("new_shift_points size = %lu", new_shift_points->size());
     printShiftPoints(*new_shift_points, "new_shift_points");
-    if (new_shift_points->back().getRelativeLength() > 0.0) {
+    int i = new_shift_points->size() - 1;
+    for (; i > 0; i--) {
+      if (fabs(new_shift_points->at(i).getRelativeLength()) < 0.01) {
+        continue;
+      } else {
+        break;
+      }
+    }
+    if (new_shift_points->at(i).getRelativeLength() > 0.0) {
       removePreviousRTCStatusRight();
-    } else if (new_shift_points->back().getRelativeLength() < 0.0) {
+    } else if (new_shift_points->at(i).getRelativeLength() < 0.0) {
       removePreviousRTCStatusLeft();
     } else {
       RCLCPP_WARN_STREAM(getLogger(), "Direction is UNKNOWN");
@@ -2178,7 +2187,16 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
   if (new_shift_points) {  // clip from shift start index for visualize
     clipByMinStartIdx(*new_shift_points, shifted_path.path);
-    output.lateral_shift = new_shift_points->back().getRelativeLength();
+
+    int i = new_shift_points->size() - 1;
+    for (; i > 0; i--) {
+      if (fabs(new_shift_points->at(i).getRelativeLength()) < 0.01) {
+        continue;
+      } else {
+        break;
+      }
+    }
+    output.lateral_shift = new_shift_points->at(i).getRelativeLength();
     output.distance_to_path_change = new_shift_points->front().start_longitudinal;
   }
 
@@ -2196,6 +2214,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);
+  waitApproval();
   return out;
 }
 
