@@ -234,6 +234,7 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   get_parameter_or<bool>("ignore_missing_diagnostics", params_.ignore_missing_diagnostics, false);
   get_parameter_or<bool>("add_leaf_diagnostics", params_.add_leaf_diagnostics, true);
   get_parameter_or<double>("data_ready_timeout", params_.data_ready_timeout, 30.0);
+  get_parameter_or<double>("data_heartbeat_timeout", params_.data_heartbeat_timeout, 1.0);
   get_parameter_or<double>("diag_timeout_sec", params_.diag_timeout_sec, 1.0);
   get_parameter_or<double>("hazard_recovery_timeout", params_.hazard_recovery_timeout, 5.0);
   get_parameter_or<int>(
@@ -283,6 +284,23 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   const auto period_ns = rclcpp::Rate(params_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&AutowareErrorMonitor::onTimer, this));
+
+  // Heartbeat
+  heartbeat_diag_array_ =
+    std::make_shared<HeaderlessHeartbeatChecker<diagnostic_msgs::msg::DiagnosticArray>>(
+      *this, "input/diag_array", params_.data_heartbeat_timeout);
+
+  heartbeat_current_gate_mode_ =
+    std::make_shared<HeaderlessHeartbeatChecker<tier4_control_msgs::msg::GateMode>>(
+      *this, "~/input/current_gate_mode", params_.data_heartbeat_timeout);
+
+  heartbeat_autoware_state_ =
+    std::make_shared<HeaderlessHeartbeatChecker<autoware_auto_system_msgs::msg::AutowareState>>(
+      *this, "~/input/autoware_state", params_.data_heartbeat_timeout);
+
+  heartbeat_control_mode_ = std::make_shared<
+    HeaderlessHeartbeatChecker<autoware_auto_vehicle_msgs::msg::ControlModeReport>>(
+    *this, "~/input/control_mode", params_.data_heartbeat_timeout);
 }
 
 void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
@@ -408,6 +426,32 @@ bool AutowareErrorMonitor::isDataReady()
   return true;
 }
 
+bool AutowareErrorMonitor::isDataHeartbeatTimeout()
+{
+  if (heartbeat_diag_array_->isTimeout()) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "diag_array msg is timeout...");
+    return true;
+  }
+
+  if (heartbeat_current_gate_mode_->isTimeout()) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "current_gate_mode msg is timeout...");
+    return true;
+  }
+
+  if (heartbeat_autoware_state_->isTimeout()) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "autoware_state msg is timeout...");
+    return true;
+  }
+
+  if (heartbeat_control_mode_->isTimeout()) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 5000, "vehicle_state_report msg is timeout...");
+    return true;
+  }
+
+  return false;
+}
+
 void AutowareErrorMonitor::onTimer()
 {
   if (!isDataReady()) {
@@ -417,6 +461,11 @@ void AutowareErrorMonitor::onTimer()
         "input data is timeout");
       publishHazardStatus(createTimeoutHazardStatus());
     }
+    return;
+  }
+
+  if (isDataHeartbeatTimeout()) {
+    publishHazardStatus(createTimeoutHazardStatus());
     return;
   }
 
