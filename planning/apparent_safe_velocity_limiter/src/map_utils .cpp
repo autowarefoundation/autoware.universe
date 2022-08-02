@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "apparent_safe_velocity_limiter/map_utils.hpp"
+#include "lanelet2_core/primitives/LineString.h"
 
 #include <lanelet2_core/Attribute.h>
 
@@ -24,7 +25,7 @@ namespace apparent_safe_velocity_limiter
 std::vector<Obstacle> extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map,
   const autoware_auto_planning_msgs::msg::HADMapRoute & route,
-  const std::vector<std::string> & tags)
+  const std::vector<std::string> & tags, const std::vector<int64_t> & obstacle_ids)
 {
   std::vector<Obstacle> obstacles;
   lanelet::Ids ids;
@@ -35,19 +36,23 @@ std::vector<Obstacle> extractStaticObstacles(
   for (const auto & id : ids) {
     const auto lanelet = lanelet_map.laneletLayer.find(id);
     if (lanelet == lanelet_map.laneletLayer.end()) continue;
-    const auto & left_type = lanelet->leftBound().attributeOr(lanelet::AttributeName::Type, "");
-    const auto & right_type = lanelet->rightBound().attributeOr(lanelet::AttributeName::Type, "");
-    if (std::find(tags.begin(), tags.end(), left_type) != tags.end()) {
-      linestring_t ls;
-      for (const auto & p : lanelet->leftBound2d()) ls.push_back(point_t{p.x(), p.y()});
-      obstacles.emplace_back(ls);
-    }
-    if (std::find(tags.begin(), tags.end(), right_type) != tags.end()) {
-      linestring_t ls;
-      for (const auto & p : lanelet->rightBound2d()) ls.push_back(point_t{p.x(), p.y()});
-      obstacles.emplace_back(ls);
+    for (const auto linestring : {lanelet->leftBound2d(), lanelet->rightBound2d()}) {
+      if (isObstacle(linestring, tags, obstacle_ids)) {
+        linestring_t ls;
+        for (const auto & p : linestring) ls.push_back(point_t{p.x(), p.y()});
+        obstacles.emplace_back(ls);
+      }
     }
   }
   return obstacles;
+}
+
+bool isObstacle(
+  const lanelet::ConstLineString2d & ls, const std::vector<std::string> & tags,
+  const std::vector<int64_t> & ids)
+{
+  const auto type = ls.attributeOr(lanelet::AttributeName::Type, "");
+  return type != "" && (std::find(tags.begin(), tags.end(), type) != tags.end() ||
+                        std::find(ids.begin(), ids.end(), ls.id()) != ids.end());
 }
 }  // namespace apparent_safe_velocity_limiter

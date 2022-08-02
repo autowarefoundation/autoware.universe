@@ -27,10 +27,29 @@
 
 namespace apparent_safe_velocity_limiter
 {
+
+/// @brief Extract from the lanelet map static obstacles that are along the given route
+/// @details Relevent lanelets are selected as listed from the route message.
+/// The left and right linestring of each relevent lanelet is determined to be an obstacle if
+/// its tag matches one of the given tags, or its id matches one of the given ids
+/// @param[in] lanelet_map lanelet map
+/// @param[in] route route to select relevent lanelets
+/// @param[in] tags tags to identify obstacle linestrings
+/// @param[in] obstacle_ids ids to identify obstacle linestrings
+/// @return the extracted obstacles
 std::vector<Obstacle> extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map,
   const autoware_auto_planning_msgs::msg::HADMapRoute & route,
-  const std::vector<std::string> & tags);
+  const std::vector<std::string> & tags, const std::vector<int64_t> & obstacle_ids);
+
+/// @brief Determine if the given linestring is an obstacle
+/// @param[in] ls linestring to check
+/// @param[in] tags obstacle tags
+/// @param[in] ids obstacle ids
+/// @return true if the linestring is an obstacle
+bool isObstacle(
+  const lanelet::ConstLineString2d & ls, const std::vector<std::string> & tags,
+  const std::vector<int64_t> & ids);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__MAP_UTILS_HPP_

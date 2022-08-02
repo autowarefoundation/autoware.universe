@@ -141,6 +141,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       projection_params_.steering_angle_offset = parameter.as_double();
     } else if (parameter.get_name() == ProjectionParameters::DISTANCE_METHOD_PARAM) {
       projection_params_.updateDistanceMethod(*this, parameter.as_string());
+    } else if (parameter.get_name() == "obstacles.static_map_ids") {
+      static_map_obstacle_ids_ = parameter.as_integer_array();
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -221,8 +223,8 @@ void ApparentSafeVelocityLimiterNode::onRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   if (!lanelet_map_ptr_) return;
-  static_map_obstacles_ =
-    extractStaticObstacles(*lanelet_map_ptr_, *msg, obstacle_params_.static_map_tags);
+  static_map_obstacles_ = extractStaticObstacles(
+    *lanelet_map_ptr_, *msg, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
 }
 }  // namespace apparent_safe_velocity_limiter
 

@@ -79,8 +79,9 @@ private:
   std::vector<Obstacle> static_map_obstacles_;
   std::optional<Float> current_ego_velocity_;
 
-  // Benchmarking & Debugging
-  std::multiset<double> runtimes;
+  // Benchmarking & Debugging TODO(Maxime CLEMENT): remove before merging
+  std::vector<int64_t> static_map_obstacle_ids_ =
+    declare_parameter<std::vector<int64_t>>("obstacles.static_map_ids");
 
   // parameters
   ProjectionParameters projection_params_;
