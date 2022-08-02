@@ -390,7 +390,7 @@ def launch_setup(context, *args, **kwargs):
             [
                 FindPackageShare("tier4_planning_launch"),
                 "/launch/scenario_planning/lane_driving/behavior_planning/compare_map.launch.py",
-            ]
+            ],
         ),
         launch_arguments={
             "use_pointcloud_container": LaunchConfiguration("use_pointcloud_container"),
@@ -413,10 +413,39 @@ def launch_setup(context, *args, **kwargs):
         ),
     )
 
+    load_no_detection_area_filter = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                FindPackageShare("tier4_planning_launch"),
+                "/launch/scenario_planning/lane_driving/behavior_planning/no_detection_area_filter.launch.py",
+            ]
+        ),
+        launch_arguments={
+            "use_pointcloud_container": LaunchConfiguration("use_pointcloud_container"),
+            "container_name": LaunchConfiguration("container_name"),
+            "use_multithread": "true",
+        }.items(),
+        # launch no detection area filter only when run_out module is enabled and detection method is Points
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    LaunchConfiguration(
+                        "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
+                    ),
+                    " and ",
+                    "'",
+                    run_out_param["run_out"]["detection_method"],
+                    "' == 'Points'",
+                ]
+            )
+        ),
+    )
+
     group = GroupAction(
         [
             container,
             load_compare_map,
+            load_no_detection_area_filter,
         ]
     )
 

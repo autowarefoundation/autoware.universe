@@ -40,28 +40,22 @@ def generate_launch_description():
     )
 
     composable_nodes = [
-        ComposableNode(
-            package="compare_map_segmentation",
-            plugin="compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent",
-            name="voxel_distance_based_compare_map_filter_node",
-            remappings=[
-                ("input", "no_detection_area_filtered/pointcloud"),
-                ("map", "/map/pointcloud_map"),
-                ("output", "compare_map_filtered/pointcloud"),
-            ],
-            parameters=[
-                {
-                    "distance_threshold": 0.7,
-                }
-            ],
-            extra_arguments=[
-                {"use_intra_process_comms": False}  # this node has QoS of transient local
-            ],
-        ),
+            ComposableNode(
+                package="pointcloud_preprocessor",
+                plugin="pointcloud_preprocessor::NoDetectionAreaFilterComponent",
+                name="no_detection_area_filter",
+                remappings=[
+                    ("input", "/perception/obstacle_segmentation/pointcloud"),
+                    ("input/vector_map", "/map/vector_map"),
+                    ("output", "no_detection_area_filtered/pointcloud"),
+                ],
+                # this node has QoS of transient local
+                extra_arguments=[{"use_intra_process_comms": False}],
+            )
     ]
 
-    compare_map_container = ComposableNodeContainer(
-        name=LaunchConfiguration("container_name"),
+    no_detection_area_filter_container = ComposableNodeContainer(
+        name="no_detection_area_filter_container",
         namespace="",
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
@@ -80,10 +74,10 @@ def generate_launch_description():
         [
             add_launch_arg("use_multithread", "true"),
             add_launch_arg("use_pointcloud_container", "true"),
-            add_launch_arg("container_name", "compare_map_container"),
+            add_launch_arg("container_name", "no_detection_area_filter_container"),
             set_container_executable,
             set_container_mt_executable,
-            compare_map_container,
+            no_detection_area_filter_container,
             load_composable_nodes,
         ]
     )
