@@ -20,7 +20,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
 
