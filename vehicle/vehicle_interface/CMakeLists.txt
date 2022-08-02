@@ -12,12 +12,6 @@ ament_auto_add_library(${INTERFACE_NODE} SHARED
   src/base_interface.cpp
 )
 
-target_compile_options(${INTERFACE_NODE} PRIVATE -Wno-error=old-style-cast)
-rclcpp_components_register_node(${INTERFACE_NODE}
-  PLUGIN "autoware::vehicle::interface::VehicleInterfaceNode"
-  EXECUTABLE ${INTERFACE_NODE}_exe
-)
-
 if(BUILD_TESTING)
   set(INTERFACE_NODE_TEST test_vehicle_interface_node)
   ament_add_ros_isolated_gtest(${INTERFACE_NODE_TEST}
@@ -36,5 +30,4 @@ endif()
 ament_auto_package(
   INSTALL_TO_SHARE
   param
-  launch
 )

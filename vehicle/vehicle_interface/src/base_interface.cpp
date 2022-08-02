@@ -109,6 +109,11 @@ const VehicleOdometry & BaseInterface::get_odometry() const noexcept
   return m_odometry;
 }
 
+const BaseInterface::FeatureSet & BaseInterface::get_features() const noexcept
+{
+  return m_features;
+}
+
 GearReport & BaseInterface::gear_report() noexcept
 {
   return m_gear_report;
@@ -147,6 +152,11 @@ TurnIndicatorsReport & BaseInterface::turn_indicators_report() noexcept
 VehicleOdometry & BaseInterface::odometry() noexcept
 {
   return m_odometry;
+}
+
+BaseInterface::FeatureSet & BaseInterface::features() noexcept
+{
+  return m_features;
 }
 
 }  // namespace interface

@@ -73,7 +73,8 @@ enum InterfaceFeature
   HEADLIGHTS = 3,
   HORN = 4,
   WIPERS = 5,
-  TURN_INDICATORS = 6
+  TURN_INDICATORS = 6,
+  ODOMETRY = 7
 };
 
 class BaseInterface
@@ -84,7 +85,6 @@ public:
   BaseInterface() = default;
   virtual ~BaseInterface() = default;
 
-  virtual FeatureSet get_interface_features() = 0;
   virtual bool8_t send_control_command(const AckermannControlCommand & msg) = 0;
   virtual bool8_t handle_mode_change_request(ModeChangeRequest::SharedPtr request) = 0;
   virtual void send_gear_command(const GearCommand & msg);
@@ -103,6 +103,7 @@ public:
   const WipersReport & get_wipers_report() const noexcept;
   const TurnIndicatorsReport & get_turn_indicators_report() const noexcept;
   const VehicleOdometry & get_odometry() const noexcept;
+  const FeatureSet & get_features() const noexcept;
 
 protected:
   // Used by a derrived interface to provide reports
@@ -114,6 +115,7 @@ protected:
   WipersReport & wipers_report() noexcept;
   TurnIndicatorsReport & turn_indicators_report() noexcept;
   VehicleOdometry & odometry() noexcept;
+  FeatureSet & features() noexcept;
 
 private:
 // Underlying reports of vehicle state
@@ -125,6 +127,7 @@ private:
   WipersReport m_wipers_report{};
   TurnIndicatorsReport m_turn_indicators_report{};
   VehicleOdometry m_odometry{};
+  FeatureSet m_features{};
 };
 }  // namespace interface
 }  // namespace vehicle
