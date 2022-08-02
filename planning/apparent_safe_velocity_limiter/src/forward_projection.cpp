@@ -79,32 +79,10 @@ polygon_t generateFootprint(const multilinestring_t & lines, const double latera
   polygon_t footprint;
   if (lines.size() == 1) {
     footprint = generateFootprint(lines.front(), lateral_offset);
-  } else {  // assumes 3 lines ordered from left to right
-    // calculate normal unit vector from the end a line to generate its left/right points
-    constexpr auto perpendicular_point =
-      [](const point_t & a, const point_t & b, const double offset) {
-        const auto vector = (b - a).normalized();
-        const auto normal_vector = point_t{-vector.y(), vector.x()};
-        const auto point = b + (normal_vector * offset);
-        return point_t{point.x(), point.y()};
-      };
-    footprint.outer().push_back(perpendicular_point(lines[0][1], lines[0][0], lateral_offset));
-    for (auto it = lines[0].begin(); it != std::prev(lines[0].end()); ++it)
-      footprint.outer().push_back(perpendicular_point(*it, *std::next(it), lateral_offset));
-    // only use the left/right points at the end of the center line
-    {
-      footprint.outer().push_back(
-        perpendicular_point(lines[1][lines[1].size() - 2], lines[1].back(), lateral_offset));
-      footprint.outer().push_back(
-        perpendicular_point(lines[1][lines[1].size() - 2], lines[1].back(), -lateral_offset));
-    }
-    // points to the right of the right line are added in reverse
-    footprint.outer().push_back(
-      perpendicular_point(lines[2][lines[2].size() - 2], lines[2].back(), -lateral_offset));
-    for (auto it = lines[2].rbegin(); it != std::prev(lines[2].rend()); ++it)
-      footprint.outer().push_back(perpendicular_point(*it, *std::next(it), lateral_offset));
+  } else if (lines.size() >= 3) {
+    // assumes 3 lines ordered from left to right
+    footprint = generateFootprint(lines[0], lines[1], lines[2], lateral_offset);
   }
-  footprint.outer().push_back(footprint.outer().front());  // close the polygon
   return footprint;
 }
 
@@ -124,5 +102,38 @@ polygon_t generateFootprint(const linestring_t & linestring, const double latera
     strategy::point_square());
   if (footprint.empty()) return {};
   return footprint[0];
+}
+
+polygon_t generateFootprint(
+  const linestring_t & left, const linestring_t & middle, const linestring_t & right,
+  const double lateral_offset)
+{
+  polygon_t footprint;
+  // calculate normal unit vector from the end of a line to generate its left/right points
+  constexpr auto perpendicular_point =
+    [](const point_t & a, const point_t & b, const double offset) {
+      const auto vector = (b - a).normalized();
+      const auto normal_vector = point_t{-vector.y(), vector.x()};
+      const auto point = b + (normal_vector * offset);
+      return point_t{point.x(), point.y()};
+    };
+
+  footprint.outer().push_back(perpendicular_point(left[1], left[0], -lateral_offset));
+  for (auto it = left.begin(); it != std::prev(left.end()); ++it)
+    footprint.outer().push_back(perpendicular_point(*it, *std::next(it), lateral_offset));
+  // only use the left/right points at the end of the center line
+  {
+    footprint.outer().push_back(
+      perpendicular_point(middle[middle.size() - 2], middle.back(), lateral_offset));
+    footprint.outer().push_back(
+      perpendicular_point(middle[middle.size() - 2], middle.back(), -lateral_offset));
+  }
+  // points to the right of the right line are added in reverse
+  footprint.outer().push_back(
+    perpendicular_point(right[right.size() - 2], right.back(), -lateral_offset));
+  for (auto it = right.rbegin(); it != std::prev(right.rend()); ++it)
+    footprint.outer().push_back(perpendicular_point(*it, *std::next(it), lateral_offset));
+  footprint.outer().push_back(footprint.outer().front());  // close the polygon
+  return footprint;
 }
 }  // namespace apparent_safe_velocity_limiter

@@ -64,6 +64,16 @@ polygon_t generateFootprint(const linestring_t & linestring, const double latera
 /// @param [in] lateral_offset offset around the segment used to create the footprint
 /// @return footprint polygon
 polygon_t generateFootprint(const multilinestring_t & lines, const double lateral_offset);
+
+/// @brief generate a footprint from a left, right, and middle linestrings and a lateral offset
+/// @param [in] left left linestring
+/// @param [in] middle left linestring
+/// @param [in] right left linestring
+/// @param [in] lateral_offset offset around the segment used to create the footprint
+/// @return footprint polygon
+polygon_t generateFootprint(
+  const linestring_t & left, const linestring_t & middle, const linestring_t & right,
+  const double lateral_offset);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__FORWARD_PROJECTION_HPP_
