@@ -29,12 +29,36 @@ void GraphSegment::callbackImage(const Image & msg)
   cv::Mat segmented;
   segmentation_->processImage(resized, segmented);
 
-  // TODO: THIS IS EFFICIENT BUT STUPID
-  int target_class = segmented.at<int>(cv::Point2i(resized.cols / 2, resized.rows * 0.8));
+  int target_class = -1;
+  {
+    cv::Point2i target_px(resized.cols / 2, resized.rows * 0.8);
+    cv::Rect2i rect(target_px + cv::Point2i(-20, -20), target_px + cv::Point2i(20, 20));
+
+    std::unordered_map<int, int> areas;
+    std::unordered_set<int> candidates;
+
+    for (int h = 0; h < resized.rows; h++) {
+      int * seg_ptr = segmented.ptr<int>(h);
+      for (int w = 0; w < resized.cols; w++) {
+        int key = seg_ptr[w];
+        if (areas.count(key) == 0) areas[key] = 0;
+        areas[key]++;
+        if (rect.contains(cv::Point2i{w, h})) candidates.insert(key);
+      }
+    }
+    int max_area = 0;
+    int max_area_id = -1;
+    for (int c : candidates) {
+      if (areas.at(c) < max_area) continue;
+      max_area = areas.at(c);
+      max_area_id = c;
+    }
+    target_class = max_area_id;
+  }
 
   cv::Mat output_image = cv::Mat::zeros(resized.size(), CV_8UC1);
-  for (int w = 0; w < resized.cols; w++) {
-    for (int h = 0; h < resized.rows; h++) {
+  for (int h = 0; h < resized.rows; h++) {
+    for (int w = 0; w < resized.cols; w++) {
       cv::Point2i px(w, h);
       if (segmented.at<int>(px) == target_class) output_image.at<uchar>(px) = 255;
     }
@@ -56,14 +80,14 @@ void GraphSegment::callbackImage(const Image & msg)
   }
   util::publishCloud(*pub_cloud_, cloud, msg.header.stamp);
 
-  publishImage(image, segmented, msg.header.stamp);
+  publishImage(image, segmented, msg.header.stamp, target_class);
 }
 
 void GraphSegment::publishImage(
-  const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp)
+  const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp,
+  int target_class)
 {
   const cv::Size size = segmentation.size();
-  int target_class = segmentation.at<int>(cv::Point2i(size.width / 2, size.height * 0.8));
 
   auto randomHsv = [](int index) -> cv::Scalar {
     double base = (double)(index)*0.618033988749895 + 0.24443434;
@@ -83,6 +107,13 @@ void GraphSegment::publishImage(
     }
   }
   cv::cvtColor(segmented_image, segmented_image, cv::COLOR_HSV2BGR);
+
+  {
+    cv::Point2i target(size.width / 2, size.height * 0.8);
+    cv::Rect2i rect(target + cv::Point2i(-20, -20), target + cv::Point2i(20, 20));
+    cv::rectangle(segmented_image, rect, cv::Scalar::all(0), 2);
+  }
+
   cv::resize(segmented_image, segmented_image, raw_image.size(), 0, 0, cv::INTER_NEAREST);
 
   cv::Mat show_image;

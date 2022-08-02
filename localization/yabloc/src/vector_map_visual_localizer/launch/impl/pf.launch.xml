@@ -49,7 +49,7 @@
     <!-- ========================================= -->
     <!-- ============= gnss correction =========== -->
     <!-- ========================================= -->
-    <node if="$(var use_eagleye)" name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level info">
+    <node if="$(var use_eagleye)" name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="2.0"/>
@@ -58,7 +58,7 @@
 
         <remap from="/sensing/gnss/ublox/navpvt" to="/bridge/navpvt"/>
     </node>
-    <node unless="$(var use_eagleye)" name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level info">
+    <node unless="$(var use_eagleye)" name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="2.0"/>

@@ -4,7 +4,7 @@
     <arg name="max_segment_distance" default="30.0" description="[m]"/>
     <arg name="rtk_enabled" default="false" description="GNSS-RTK is enabled?"/>
 
-    <arg name="use_eagleye" default="true"/>
+    <arg name="use_eagleye" default="false"/>
 
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">
         <arg name="rtk_enabled" value="$(var rtk_enabled)"/>

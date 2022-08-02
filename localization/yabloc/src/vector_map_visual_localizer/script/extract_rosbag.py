@@ -61,7 +61,7 @@ def main():
     dst_files = []
     for index, f in indexed_files:
         print_highlight(str(index)+' '+f)
-        tmp_dst = 'tmp_'+str(index)
+        tmp_dst = 'tmp'+str(index)
         dst_files.append(tmp_dst)
         command = ['ros2', 'bag', 'filter', f, '-o', tmp_dst, '-i']
         for t in TOPICS:

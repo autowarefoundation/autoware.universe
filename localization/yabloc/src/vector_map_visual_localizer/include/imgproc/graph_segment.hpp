@@ -23,6 +23,7 @@ private:
   void callbackImage(const Image & msg);
   void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
   void publishImage(
-    const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp);
+    const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp,
+    int target_class);
 };
 }  // namespace imgproc

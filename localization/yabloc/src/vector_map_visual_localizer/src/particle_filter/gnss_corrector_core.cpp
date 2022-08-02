@@ -36,11 +36,7 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
   }
 
   std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
-  if (!opt_particles.has_value()) {
-    RCLCPP_WARN_STREAM(
-      get_logger(), "There is no corresponding opt_particles " << stamp.nanoseconds());
-    return;
-  }
+  if (!opt_particles.has_value()) return;
 
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
   if (std::abs(dt.seconds()) > 0.1) {
