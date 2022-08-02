@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_initializer/pose_initializer_core.hpp"
-
-#include <rclcpp/rclcpp.hpp>
+#include "map_height_fitter_core.hpp"
 
 #include <memory>
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<PoseInitializer>();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  auto node = std::make_shared<MapHeightFitter>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);
   rclcpp::shutdown();
-  return 0;
 }

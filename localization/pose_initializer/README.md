@@ -11,14 +11,15 @@ Finally, it publishes the initial pose to `ekf_localizer`.
 
 ### Input topics
 
-| Name                                 | Type                                          | Description            |
-| ------------------------------------ | --------------------------------------------- | ---------------------- |
-| `/initialpose`                       | geometry_msgs::msg::PoseWithCovarianceStamped | initial pose from rviz |
-| `/sensing/gnss/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | pose from gnss         |
-| `/map/pointcloud_map`                | sensor_msgs::msg::PointCloud2                 | pointcloud map         |
+| Name                                 | Type                                              | Description           |
+| ------------------------------------ | ------------------------------------------------- | --------------------- |
+| `/localization/initialize`           | autoware_ad_api_msgs::srv::InitializeLocalization | initial pose from api |
+| `/sensing/gnss/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped     | pose from gnss        |
+| `/map/pointcloud_map`                | sensor_msgs::msg::PointCloud2                     | pointcloud map        |
 
 ### Output topics
 
-| Name             | Type                                          | Description                 |
-| ---------------- | --------------------------------------------- | --------------------------- |
-| `/initialpose3d` | geometry_msgs::msg::PoseWithCovarianceStamped | calculated initial ego pose |
+| Name                                 | Type                                                       | Description                 |
+| ------------------------------------ | ---------------------------------------------------------- | --------------------------- |
+| `/localization/initialization_state` | autoware_ad_api_msgs::msg::LocalizationInitializationState | pose initialization state   |
+| `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped              | calculated initial ego pose |
