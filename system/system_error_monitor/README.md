@@ -114,6 +114,8 @@ endif
 | `add_leaf_diagnostics`       | bool   | `true`        | Required to use children diagnostics.                                                                                                                   |
 | `diag_timeout_sec`           | double | `1.0` (sec)   | If required diagnostic is not received for a `diag_timeout_sec`, the diagnostic state become STALE state.                                               |
 | `data_ready_timeout`         | double | `30.0`        | If input topics required for system_error_monitor are not available for `data_ready_timeout` seconds, autoware_state will translate to emergency state. |
+| `data_heartbeat_timeout`         | double | `1.0`        | If input topics required for system_error_monitor are not no longer subscribed for `data_heartbeat_timeout` seconds, autoware_state will translate to emergency state. |
+
 
 ### Core Parameters
 
