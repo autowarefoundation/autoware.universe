@@ -28,8 +28,10 @@
 #include <autoware_auto_vehicle_msgs/msg/headlights_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/horn_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/horn_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/wipers_report.hpp>
 #include <autoware_auto_vehicle_msgs/srv/autonomy_mode_change.hpp>
@@ -50,8 +52,10 @@ using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
 using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
 using autoware_auto_vehicle_msgs::msg::HornCommand;
 using autoware_auto_vehicle_msgs::msg::HornReport;
+using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
+using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using autoware_auto_vehicle_msgs::msg::WipersCommand;
 using autoware_auto_vehicle_msgs::msg::WipersReport;
 using VehicleOdometry = nav_msgs::msg::Odometry;
@@ -65,7 +69,8 @@ namespace vehicle
 {
 namespace interface
 {
-enum InterfaceFeature {
+enum InterfaceFeature
+{
   GEAR = 0,
   HAND_BRAKE = 1,
   HAZARD_LIGHTS = 2,
@@ -103,9 +108,11 @@ public:
   const TurnIndicatorsReport & get_turn_indicators_report() const noexcept;
   const VehicleOdometry & get_odometry() const noexcept;
   const FeatureSet & get_features() const noexcept;
+  const SteeringReport & get_steering_report() noexcept;
+  const VelocityReport & get_velocity_report() noexcept;
 
 protected:
-  // Used by a derrived interface to provide reports
+  // Used by a derived interface to provide reports
   GearReport & gear_report() noexcept;
   HandBrakeReport & hand_brake_report() noexcept;
   HazardLightsReport & hazard_lights_report() noexcept;
@@ -115,6 +122,8 @@ protected:
   TurnIndicatorsReport & turn_indicators_report() noexcept;
   VehicleOdometry & odometry() noexcept;
   FeatureSet & features() noexcept;
+  SteeringReport & steering_report() noexcept;
+  VelocityReport & velocity_report() noexcept;
 
 private:
   // Underlying reports of vehicle state
@@ -127,6 +136,8 @@ private:
   TurnIndicatorsReport m_turn_indicators_report{};
   VehicleOdometry m_odometry{};
   FeatureSet m_features{};
+  SteeringReport m_steering_report{};
+  VelocityReport m_velocity_report{};
 };
 }  // namespace interface
 }  // namespace vehicle

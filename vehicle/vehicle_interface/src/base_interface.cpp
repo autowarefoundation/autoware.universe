@@ -99,6 +99,16 @@ const BaseInterface::FeatureSet & BaseInterface::get_features() const noexcept
   return m_features;
 }
 
+const SteeringReport & BaseInterface::get_steering_report() noexcept
+{
+  return m_steering_report;
+}
+
+const VelocityReport & BaseInterface::get_velocity_report() noexcept
+{
+  return m_velocity_report;
+}
+
 GearReport & BaseInterface::gear_report() noexcept { return m_gear_report; }
 
 HandBrakeReport & BaseInterface::hand_brake_report() noexcept { return m_handbrake_report; }
@@ -123,6 +133,8 @@ VehicleOdometry & BaseInterface::odometry() noexcept { return m_odometry; }
 
 BaseInterface::FeatureSet & BaseInterface::features() noexcept { return m_features; }
 
+SteeringReport & BaseInterface::steering_report() noexcept { return m_steering_report; }
+VelocityReport & BaseInterface::velocity_report() noexcept { return m_velocity_report; }
 }  // namespace interface
 }  // namespace vehicle
 }  // namespace autoware

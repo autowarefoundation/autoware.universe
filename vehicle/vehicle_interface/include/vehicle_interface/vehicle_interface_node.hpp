@@ -59,6 +59,8 @@ private:
   rclcpp::Publisher<WipersReport>::SharedPtr m_wipers_pub{nullptr};
   rclcpp::Publisher<TurnIndicatorsReport>::SharedPtr m_turn_indicators_pub{nullptr};
   rclcpp::Publisher<VehicleOdometry>::SharedPtr m_odometry_pub{nullptr};
+  rclcpp::Publisher<SteeringReport>::SharedPtr m_steering_pub{nullptr};
+  rclcpp::Publisher<VelocityReport>::SharedPtr m_velocity_pub{nullptr};
 
   // Mode-change service
   rclcpp::Service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{

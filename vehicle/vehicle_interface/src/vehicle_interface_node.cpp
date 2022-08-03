@@ -33,11 +33,13 @@ VehicleInterfaceNode::VehicleInterfaceNode(
   using std::placeholders::_2;
 
   this->features() = features;
-  // Declare required sub and service
+  // Declare required pubs, sub and service
   m_command_sub = create_subscription<AckermannControlCommand>(
     "control_cmd", 1, std::bind(&VehicleInterfaceNode::on_command, this, _1));
   m_mode_service = create_service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>(
     "autonomy_mode", std::bind(&VehicleInterfaceNode::on_mode_change_request, this, _1, _2));
+  m_steering_pub = create_publisher<SteeringReport>("steering_report", 1);
+  m_velocity_pub = create_publisher<VelocityReport>("velocity_report", 1);
 
   // Declare optional pubs and subs
   for (const auto & feat : features) {
@@ -101,6 +103,8 @@ void VehicleInterfaceNode::on_mode_change_request(
 
 void VehicleInterfaceNode::on_report_timer()
 {
+  m_velocity_pub->publish(velocity_report());
+  m_steering_pub->publish(steering_report());
   for (const auto & feat : features()) {
     if (InterfaceFeature::GEAR == feat && m_gear_pub) {
       m_gear_pub->publish(gear_report());

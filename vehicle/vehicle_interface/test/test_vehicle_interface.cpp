@@ -126,6 +126,8 @@ TEST_F(FakeNodeFixture, TestPub)
   WipersReport::SharedPtr wipers_report{};
   TurnIndicatorsReport::SharedPtr turn_indicators_report{};
   VehicleOdometry::SharedPtr odometry{};
+  SteeringReport::SharedPtr steering_report{};
+  VelocityReport::SharedPtr velocity_report{};
 
   auto test_node = std::make_shared<autoware::vehicle::interface ::DummyInterfaceNode>();
   auto gear_sub = create_subscription<GearReport>(
@@ -155,10 +157,14 @@ TEST_F(FakeNodeFixture, TestPub)
     });
   auto odom_sub = create_subscription<VehicleOdometry>(
     "odom", *test_node, [&odometry](const VehicleOdometry::SharedPtr msg) { odometry = msg; });
+  auto steering_sub = create_subscription<SteeringReport>(
+    "steering_report", *test_node, [&steering_report](const SteeringReport::SharedPtr msg) { steering_report = msg; });
+  auto veolcity_sub = create_subscription<VelocityReport>(
+    "velocity_report", *test_node, [&velocity_report](const VelocityReport::SharedPtr msg) { velocity_report = msg; });
 
   auto all_received = [&]() {
     return gear_report && handbrake_report && hazard_lights_report && headlights_report &&
-           horn_report && wipers_report && turn_indicators_report && odometry;
+           horn_report && wipers_report && turn_indicators_report && odometry && steering_report && velocity_report;
   };
   auto get_no_receive_names = [&](std::vector<std::string> & names) {
     if (!gear_report) {
@@ -184,6 +190,12 @@ TEST_F(FakeNodeFixture, TestPub)
     }
     if (!odometry) {
       names.push_back("VehicleOdometry");
+    }
+    if (!steering_report) {
+      names.push_back("SteeringReport");
+    }
+    if (!velocity_report) {
+      names.push_back("VelocityReport");
     }
   };
 
