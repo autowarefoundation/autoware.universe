@@ -101,6 +101,11 @@ private:
   autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
   void publishControlCommands();
 
+  rclcpp::Publisher<autoware_ad_api_msgs::msg::MRMState>::SharedPtr pub_mrm_state_;
+
+  autoware_ad_api_msgs::msg::MRMState mrm_state_;
+  void publishMRMState();
+
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
   rclcpp::Client<autoware_ad_api_msgs::srv::MRMOperation>::SharedPtr client_mrm_comfortable_stop_;

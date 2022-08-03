@@ -65,6 +65,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_emergency_state_ = create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
     "~/output/emergency_state", rclcpp::QoS{1});
+  pub_mrm_state_ = create_publisher<autoware_ad_api_msgs::msg::MRMState>(
+    "~/output/mrm/state", rclcpp::QoS{1});
 
   // Clients
   client_mrm_comfortable_stop_group_ =
@@ -85,6 +87,9 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
   mrm_comfortable_stop_status_ = std::make_shared<const autoware_ad_api_msgs::msg::MRMBehaviorStatus>();
   mrm_sudden_stop_status_ = std::make_shared<const autoware_ad_api_msgs::msg::MRMBehaviorStatus>();
+  mrm_state_.stamp = this->now();
+  mrm_state_.state = autoware_ad_api_msgs::msg::MRMState::NORMAL;
+  mrm_state_.behavior = autoware_ad_api_msgs::msg::MRMState::NONE;
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -193,6 +198,11 @@ void EmergencyHandler::publishControlCommands()
   }
 }
 
+void EmergencyHandler::publishMRMState()
+{
+  pub_mrm_state_->publish(mrm_state_);
+}
+
 void EmergencyHandler::operateMRM()
 {
   using autoware_auto_system_msgs::msg::EmergencyState;
@@ -204,6 +214,7 @@ void EmergencyHandler::operateMRM()
     if (current_mrm_behavior != mrm_behavior_) {
       cancelMRMBehavior(mrm_behavior_);
       mrm_behavior_ = current_mrm_behavior;
+      mrm_state_.behavior = current_mrm_behavior;
     }
     return;
   }
@@ -217,6 +228,7 @@ void EmergencyHandler::operateMRM()
       cancelMRMBehavior(mrm_behavior_);
       callMRMBehavior(current_mrm_behavior);
       mrm_behavior_ = current_mrm_behavior;
+      mrm_state_.behavior = current_mrm_behavior;
     }
     return;
   }
@@ -322,6 +334,7 @@ void EmergencyHandler::onTimer()
   // Publish control commands
   publishControlCommands();
   operateMRM();
+  publishMRMState();
 }
 
 void EmergencyHandler::transitionTo(const int new_state)

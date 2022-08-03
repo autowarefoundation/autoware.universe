@@ -11,6 +11,7 @@
   <arg name="output_gear" default="/system/emergency/gear_cmd"/>
   <arg name="output_hazard" default="/system/emergency/hazard_lights_cmd"/>
   <arg name="output_emergency_state" default="/system/emergency/emergency_state"/>
+  <arg name="output_mrm_state" default="/api/fail_safe/mrm_state"/>
   <arg name="output_mrm_comfortable_stop_operate" default="/system/api/mrm/comfortable_stop/operate"/>
   <arg name="output_mrm_sudden_stop_operate" default="/system/api/mrm/sudden_stop/operate"/>
 
@@ -29,6 +30,7 @@
     <remap from="~/output/gear" to="$(var output_gear)"/>
     <remap from="~/output/hazard" to="$(var output_hazard)"/>
     <remap from="~/output/emergency_state" to="$(var output_emergency_state)"/>
+    <remap from="~/output/mrm/state" to="$(var output_mrm_state)"/>
     <remap from="~/output/mrm/comfortable_stop/operate" to="$(var output_mrm_comfortable_stop_operate)"/>
     <remap from="~/output/mrm/sudden_stop/operate" to="$(var output_mrm_sudden_stop_operate)"/>
 
