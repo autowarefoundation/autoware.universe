@@ -2,7 +2,7 @@
 
 ## Purpose of Package
 
-`vehicle_interface` provides an API to bridge Autoware and any vehicle platform, whether or not it is part of an offical Autoware ODD. It converts Autoware control commands and vehicle commands to vehicle-specific messages, and convert the vehicle status (steering angle report, headlight state, etc.) to Autoware messages.
+`vehicle_interface` provides an API to bridge Autoware and any vehicle platform, whether or not it is part of an official Autoware ODD. It converts Autoware control commands and vehicle commands to vehicle-specific messages, and convert the vehicle status (steering angle report, headlight state, etc.) to Autoware messages.
 
 While the Autoware stack speaks ROS2 messages, the vehicle side of the interface could be in many forms. In most cases the vehicle interface simply publishes a different set of messages to a vehicle ROS2 driver, who then handles the communication with the actual vehicle via CAN, TCP/IP, USB, etc. In a few cases, the vehicle interface itself may include an instance of the vehicle platform's C++ SDK, who then communicates directly with the vehicle without a separate ROS2 driver.
 

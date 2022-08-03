@@ -160,7 +160,7 @@ TEST_F(FakeNodeFixture, TestPub)
   auto steering_sub = create_subscription<SteeringReport>(
     "steering_report", *test_node,
     [&steering_report](const SteeringReport::SharedPtr msg) { steering_report = msg; });
-  auto veolcity_sub = create_subscription<VelocityReport>(
+  auto velocity_sub = create_subscription<VelocityReport>(
     "velocity_report", *test_node,
     [&velocity_report](const VelocityReport::SharedPtr msg) { velocity_report = msg; });
 
