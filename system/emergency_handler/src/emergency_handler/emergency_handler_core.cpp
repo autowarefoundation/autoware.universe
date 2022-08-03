@@ -165,14 +165,14 @@ void EmergencyHandler::publishControlCommands()
   const auto stamp = this->now();
 
   // Publish ControlCommand
-  {
+  /* {
     autoware_auto_control_msgs::msg::AckermannControlCommand msg;
     msg = selectAlternativeControlCommand();
     msg.stamp = stamp;
     msg.lateral.stamp = stamp;
     msg.longitudinal.stamp = stamp;
     pub_control_command_->publish(msg);
-  }
+  } */
 
   // Publish hazard command
   pub_hazard_cmd_->publish(createHazardCmdMsg());
