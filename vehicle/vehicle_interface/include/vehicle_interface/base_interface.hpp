@@ -15,8 +15,6 @@
 #ifndef VEHICLE_INTERFACE__BASE_INTERFACE_HPP_
 #define VEHICLE_INTERFACE__BASE_INTERFACE_HPP_
 
-#include <unordered_set>
-
 #include <common/types.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
@@ -30,15 +28,18 @@
 #include <autoware_auto_vehicle_msgs/msg/headlights_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/horn_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/horn_report.hpp>
-#include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/wipers_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/wipers_report.hpp>
 #include <autoware_auto_vehicle_msgs/srv/autonomy_mode_change.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <unordered_set>
+
 using autoware::common::types::bool8_t;
 
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::GearReport;
 using autoware_auto_vehicle_msgs::msg::HandBrakeCommand;
@@ -49,11 +50,10 @@ using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
 using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
 using autoware_auto_vehicle_msgs::msg::HornCommand;
 using autoware_auto_vehicle_msgs::msg::HornReport;
-using autoware_auto_vehicle_msgs::msg::WipersCommand;
-using autoware_auto_vehicle_msgs::msg::WipersReport;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::WipersReport;
 using VehicleOdometry = nav_msgs::msg::Odometry;
 
 using ModeChangeRequest = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request;
@@ -65,8 +65,7 @@ namespace vehicle
 {
 namespace interface
 {
-enum InterfaceFeature
-{
+enum InterfaceFeature {
   GEAR = 0,
   HAND_BRAKE = 1,
   HAZARD_LIGHTS = 2,
@@ -118,10 +117,10 @@ protected:
   FeatureSet & features() noexcept;
 
 private:
-// Underlying reports of vehicle state
+  // Underlying reports of vehicle state
   GearReport m_gear_report{};
-  HandBrakeReport m_handbrake_report {};
-  HazardLightsReport m_hazard_lights_report {};
+  HandBrakeReport m_handbrake_report{};
+  HazardLightsReport m_hazard_lights_report{};
   HeadlightsReport m_headlights_report{};
   HornReport m_horn_report{};
   WipersReport m_wipers_report{};

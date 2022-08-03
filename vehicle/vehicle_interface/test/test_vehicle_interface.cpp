@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sstream>
-#include <vector>
-#include <string>
-#include <memory>
-
-#include "gtest/gtest.h"
 #include "dummy_node.hpp"
 #include "fake_test_node/fake_test_node.hpp"
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::GearReport;
 using autoware_auto_vehicle_msgs::msg::HandBrakeCommand;
@@ -33,18 +34,16 @@ using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
 using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
 using autoware_auto_vehicle_msgs::msg::HornCommand;
 using autoware_auto_vehicle_msgs::msg::HornReport;
-using autoware_auto_vehicle_msgs::msg::WipersCommand;
-using autoware_auto_vehicle_msgs::msg::WipersReport;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::WipersReport;
 using VehicleOdometry = nav_msgs::msg::Odometry;
 using autoware_auto_vehicle_msgs::srv::AutonomyModeChange;
 class TestVehicleInterfacePublisher : public rclcpp::Node
 {
 public:
-  TestVehicleInterfacePublisher()
-  : Node("test_pub", rclcpp::NodeOptions{}) {}
+  TestVehicleInterfacePublisher() : Node("test_pub", rclcpp::NodeOptions{}) {}
 };
 
 TEST(TestVehicleInterface, SmokeTest)
@@ -70,8 +69,7 @@ TEST(TestVehicleInterface, TestNotImplemented)
   EXPECT_THROW(test_node->send_horn_command(HornCommand()), std::runtime_error);
   EXPECT_THROW(test_node->send_wipers_command(WipersCommand()), std::runtime_error);
   EXPECT_THROW(
-    test_node->send_turn_indicators_command(TurnIndicatorsCommand()),
-    std::runtime_error);
+    test_node->send_turn_indicators_command(TurnIndicatorsCommand()), std::runtime_error);
   rclcpp::shutdown();
 }
 
@@ -121,8 +119,8 @@ TEST_F(FakeNodeFixture, TestSub)
 TEST_F(FakeNodeFixture, TestPub)
 {
   GearReport::SharedPtr gear_report{};
-  HandBrakeReport::SharedPtr handbrake_report {};
-  HazardLightsReport::SharedPtr hazard_lights_report {};
+  HandBrakeReport::SharedPtr handbrake_report{};
+  HazardLightsReport::SharedPtr hazard_lights_report{};
   HeadlightsReport::SharedPtr headlights_report{};
   HornReport::SharedPtr horn_report{};
   WipersReport::SharedPtr wipers_report{};
@@ -130,69 +128,64 @@ TEST_F(FakeNodeFixture, TestPub)
   VehicleOdometry::SharedPtr odometry{};
 
   auto test_node = std::make_shared<autoware::vehicle::interface ::DummyInterfaceNode>();
-  auto gear_sub =
-    create_subscription<GearReport>(
+  auto gear_sub = create_subscription<GearReport>(
     "gear_report", *test_node,
-    [&gear_report](const GearReport::SharedPtr msg) {gear_report = msg;});
-  auto hand_sub =
-    create_subscription<HandBrakeReport>(
+    [&gear_report](const GearReport::SharedPtr msg) { gear_report = msg; });
+  auto hand_sub = create_subscription<HandBrakeReport>(
     "hand_brake_report", *test_node,
-    [&handbrake_report](const HandBrakeReport::SharedPtr msg) {handbrake_report = msg;});
-  auto haza_sub =
-    create_subscription<HazardLightsReport>(
-    "hazard_lights_report", *test_node, [&hazard_lights_report](
-      const HazardLightsReport::SharedPtr msg) {hazard_lights_report = msg;});
-  auto head_sub =
-    create_subscription<HeadlightsReport>(
+    [&handbrake_report](const HandBrakeReport::SharedPtr msg) { handbrake_report = msg; });
+  auto haza_sub = create_subscription<HazardLightsReport>(
+    "hazard_lights_report", *test_node,
+    [&hazard_lights_report](const HazardLightsReport::SharedPtr msg) {
+      hazard_lights_report = msg;
+    });
+  auto head_sub = create_subscription<HeadlightsReport>(
     "headlights_report", *test_node,
-    [&headlights_report](const HeadlightsReport::SharedPtr msg) {headlights_report = msg;});
-  auto horn_sub =
-    create_subscription<HornReport>(
+    [&headlights_report](const HeadlightsReport::SharedPtr msg) { headlights_report = msg; });
+  auto horn_sub = create_subscription<HornReport>(
     "horn_report", *test_node,
-    [&horn_report](const HornReport::SharedPtr msg) {horn_report = msg;});
-  auto wipe_sub =
-    create_subscription<WipersReport>(
+    [&horn_report](const HornReport::SharedPtr msg) { horn_report = msg; });
+  auto wipe_sub = create_subscription<WipersReport>(
     "wipers_report", *test_node,
-    [&wipers_report](const WipersReport::SharedPtr msg) {wipers_report = msg;});
-  auto turn_sub =
-    create_subscription<TurnIndicatorsReport>(
-    "turn_indicators_report", *test_node, [&turn_indicators_report](
-      const TurnIndicatorsReport::SharedPtr msg) {turn_indicators_report = msg;});
-  auto odom_sub =
-    create_subscription<VehicleOdometry>(
-    "odom", *test_node,
-    [&odometry](const VehicleOdometry::SharedPtr msg) {odometry = msg;});
+    [&wipers_report](const WipersReport::SharedPtr msg) { wipers_report = msg; });
+  auto turn_sub = create_subscription<TurnIndicatorsReport>(
+    "turn_indicators_report", *test_node,
+    [&turn_indicators_report](const TurnIndicatorsReport::SharedPtr msg) {
+      turn_indicators_report = msg;
+    });
+  auto odom_sub = create_subscription<VehicleOdometry>(
+    "odom", *test_node, [&odometry](const VehicleOdometry::SharedPtr msg) { odometry = msg; });
 
   auto all_received = [&]() {
-      return gear_report && handbrake_report && hazard_lights_report && headlights_report &&
-             horn_report && wipers_report && turn_indicators_report && odometry;
-    };
+    return gear_report && handbrake_report && hazard_lights_report && headlights_report &&
+           horn_report && wipers_report && turn_indicators_report && odometry;
+  };
   auto get_no_receive_names = [&](std::vector<std::string> & names) {
-      if (!gear_report) {
-        names.push_back("GearReport");
-      }
-      if (!handbrake_report) {
-        names.push_back("HandBrakeReport");
-      }
-      if (!hazard_lights_report) {
-        names.push_back("HazardLightsReport");
-      }
-      if (!headlights_report) {
-        names.push_back("HeadlightsReport");
-      }
-      if (!horn_report) {
-        names.push_back("HornReport");
-      }
-      if (!wipers_report) {
-        names.push_back("WipersReport");
-      }
-      if (!turn_indicators_report) {
-        names.push_back("TurnIndicatorsReport");
-      }
-      if (!odometry) {
-        names.push_back("VehicleOdometry");
-      }
-    };
+    if (!gear_report) {
+      names.push_back("GearReport");
+    }
+    if (!handbrake_report) {
+      names.push_back("HandBrakeReport");
+    }
+    if (!hazard_lights_report) {
+      names.push_back("HazardLightsReport");
+    }
+    if (!headlights_report) {
+      names.push_back("HeadlightsReport");
+    }
+    if (!horn_report) {
+      names.push_back("HornReport");
+    }
+    if (!wipers_report) {
+      names.push_back("WipersReport");
+    }
+    if (!turn_indicators_report) {
+      names.push_back("TurnIndicatorsReport");
+    }
+    if (!odometry) {
+      names.push_back("VehicleOdometry");
+    }
+  };
 
   const auto dt{std::chrono::milliseconds{100LL}};
   const auto max_wait_time{std::chrono::seconds{10LL}};

@@ -42,13 +42,13 @@ These publishers of `VehicleInterfaceNode` trigger a callback in `BaseInterface`
 | Topic Name           | Message Type                                           | `BaseInterface` Method       |
 | -------------------- | ------------------------------------------------------ | ---------------------------- |
 | control_cmd          | autoware_auto_vehicle_msgs/msg/AckermannControlCommand | send_control_command         |
-| gear_cmd_            | autoware_auto_vehicle_msgs/msg/GearReport              | send_gear_command            |
-| hand_brake_cmd_      | autoware_auto_vehicle_msgs/msg/HandBrakeReport         | send_hand_brake_command      |
-| hazard_lights_cmd_   | autoware_auto_vehicle_msgs/msg/HazardLightsReport      | send_hazard_lights_command   |
-| headlights_cmd_      | autoware_auto_vehicle_msgs/msg/HeadlightsReport        | send_headlights_command      |
-| horn_cmd_            | autoware_auto_vehicle_msgs/msg/HornReport              | send_horn_command            |
-| wipers_cmd_          | autoware_auto_vehicle_msgs/msg/WipersReport            | send_wipers_command          |
-| turn_indicators_cmd_ | autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport    | send_turn_indicators_command |
+| gear*cmd*            | autoware_auto_vehicle_msgs/msg/GearReport              | send_gear_command            |
+| hand*brake_cmd*      | autoware_auto_vehicle_msgs/msg/HandBrakeReport         | send_hand_brake_command      |
+| hazard*lights_cmd*   | autoware_auto_vehicle_msgs/msg/HazardLightsReport      | send_hazard_lights_command   |
+| headlights*cmd*      | autoware_auto_vehicle_msgs/msg/HeadlightsReport        | send_headlights_command      |
+| horn*cmd*            | autoware_auto_vehicle_msgs/msg/HornReport              | send_horn_command            |
+| wipers*cmd*          | autoware_auto_vehicle_msgs/msg/WipersReport            | send_wipers_command          |
+| turn*indicators_cmd* | autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport    | send_turn_indicators_command |
 
 ### Service
 

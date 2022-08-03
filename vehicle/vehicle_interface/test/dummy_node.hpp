@@ -15,9 +15,10 @@
 #ifndef DUMMY_NODE_HPP_
 #define DUMMY_NODE_HPP_
 
+#include "vehicle_interface/vehicle_interface_node.hpp"
+
 #include <string>
 #include <vector>
-#include "vehicle_interface/vehicle_interface_node.hpp"
 
 namespace autoware
 {
@@ -34,7 +35,7 @@ class DummyInterfaceNode : public VehicleInterfaceNode
 public:
   DummyInterfaceNode();
 
-// Base Interface API
+  // Base Interface API
   bool8_t send_control_command(const AckermannControlCommand & msg);
   bool8_t handle_mode_change_request(ModeChangeRequest::SharedPtr request);
   void send_gear_command(const GearCommand & msg);
@@ -48,15 +49,15 @@ public:
   bool all_received();
   void get_no_receive_names(std::vector<std::string> & result);
 
-  bool cmd_received {false};
-  bool mode_change_received {false};
-  bool gear_received {false};
-  bool hand_brake_received {false};
-  bool hazard_lights_received {false};
-  bool headlights_received {false};
-  bool horn_received {false};
-  bool wipers_received {false};
-  bool turn_indicators_received {false};
+  bool cmd_received{false};
+  bool mode_change_received{false};
+  bool gear_received{false};
+  bool hand_brake_received{false};
+  bool hazard_lights_received{false};
+  bool headlights_received{false};
+  bool horn_received{false};
+  bool wipers_received{false};
+  bool turn_indicators_received{false};
 };
 
 /**

@@ -13,8 +13,9 @@
 // limitations under the License.
 
 #include "dummy_node.hpp"
-#include <vector>
+
 #include <string>
+#include <vector>
 
 namespace autoware
 {
@@ -23,10 +24,11 @@ namespace vehicle
 namespace interface
 {
 DummyInterfaceNode::DummyInterfaceNode()
-: VehicleInterfaceNode("dummy_interface", {InterfaceFeature::GEAR, InterfaceFeature::HAND_BRAKE,
-      InterfaceFeature::HAZARD_LIGHTS, InterfaceFeature::HEADLIGHTS,
-      InterfaceFeature::HORN, InterfaceFeature::ODOMETRY,
-      InterfaceFeature::TURN_INDICATORS, InterfaceFeature::WIPERS},
+: VehicleInterfaceNode(
+    "dummy_interface",
+    {InterfaceFeature::GEAR, InterfaceFeature::HAND_BRAKE, InterfaceFeature::HAZARD_LIGHTS,
+     InterfaceFeature::HEADLIGHTS, InterfaceFeature::HORN, InterfaceFeature::ODOMETRY,
+     InterfaceFeature::TURN_INDICATORS, InterfaceFeature::WIPERS},
     rclcpp::NodeOptions{})
 {
 }
@@ -130,12 +132,12 @@ DummyExceptionNode::DummyExceptionNode()
 }
 bool8_t DummyExceptionNode::send_control_command(const AckermannControlCommand & msg)
 {
-  (void) msg;
+  (void)msg;
   return false;
 }
 bool8_t DummyExceptionNode::handle_mode_change_request(ModeChangeRequest::SharedPtr request)
 {
-  (void) request;
+  (void)request;
   return false;
 }
 }  // namespace interface

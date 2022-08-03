@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_interface/base_interface.hpp>
+
 #include <string>
 
 namespace autoware
@@ -40,7 +41,7 @@ public:
     const rclcpp::NodeOptions & options);
 
 private:
-// Pubs and subs
+  // Pubs and subs
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr m_command_sub{nullptr};
   rclcpp::Subscription<GearCommand>::SharedPtr m_gear_sub{nullptr};
   rclcpp::Subscription<HandBrakeCommand>::SharedPtr m_hand_brake_sub{nullptr};
@@ -59,18 +60,17 @@ private:
   rclcpp::Publisher<TurnIndicatorsReport>::SharedPtr m_turn_indicators_pub{nullptr};
   rclcpp::Publisher<VehicleOdometry>::SharedPtr m_odometry_pub{nullptr};
 
-// Mode-change service
+  // Mode-change service
   rclcpp::Service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{
     nullptr};
 
-// Report query timer
+  // Report query timer
   rclcpp::TimerBase::SharedPtr m_report_timer{nullptr};
 
-// Callbacks
+  // Callbacks
   void on_command(AckermannControlCommand::SharedPtr msg);
   void on_mode_change_request(
-    ModeChangeRequest::SharedPtr request,
-    ModeChangeResponse::SharedPtr response);
+    ModeChangeRequest::SharedPtr request, ModeChangeResponse::SharedPtr response);
   void on_report_timer();
 };
 }  // namespace interface

@@ -20,8 +20,7 @@ namespace vehicle
 {
 namespace interface
 {
-void BaseInterface::send_gear_command(
-  const autoware_auto_vehicle_msgs::msg::GearCommand & msg)
+void BaseInterface::send_gear_command(const autoware_auto_vehicle_msgs::msg::GearCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("GearCommand not supported by this vehicle interface");
@@ -48,15 +47,13 @@ void BaseInterface::send_headlights_command(
   throw std::runtime_error("HeadlightsCommand not supported by this vehicle interface");
 }
 
-void BaseInterface::send_horn_command(
-  const autoware_auto_vehicle_msgs::msg::HornCommand & msg)
+void BaseInterface::send_horn_command(const autoware_auto_vehicle_msgs::msg::HornCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("HornCommand not supported by this vehicle interface");
 }
 
-void BaseInterface::send_wipers_command(
-  const autoware_auto_vehicle_msgs::msg::WipersCommand & msg)
+void BaseInterface::send_wipers_command(const autoware_auto_vehicle_msgs::msg::WipersCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("WipersCommand not supported by this vehicle interface");
@@ -69,10 +66,7 @@ void BaseInterface::send_turn_indicators_command(
   throw std::runtime_error("TurnIndicatorsCommand not supported by this vehicle interface");
 }
 
-const GearReport & BaseInterface::get_gear_report() const noexcept
-{
-  return m_gear_report;
-}
+const GearReport & BaseInterface::get_gear_report() const noexcept { return m_gear_report; }
 
 const HandBrakeReport & BaseInterface::get_hand_brake_report() const noexcept
 {
@@ -89,75 +83,45 @@ const HeadlightsReport & BaseInterface::get_headlights_report() const noexcept
   return m_headlights_report;
 }
 
-const HornReport & BaseInterface::get_horn_report() const noexcept
-{
-  return m_horn_report;
-}
+const HornReport & BaseInterface::get_horn_report() const noexcept { return m_horn_report; }
 
-const WipersReport & BaseInterface::get_wipers_report() const noexcept
-{
-  return m_wipers_report;
-}
+const WipersReport & BaseInterface::get_wipers_report() const noexcept { return m_wipers_report; }
 
 const TurnIndicatorsReport & BaseInterface::get_turn_indicators_report() const noexcept
 {
   return m_turn_indicators_report;
 }
 
-const VehicleOdometry & BaseInterface::get_odometry() const noexcept
-{
-  return m_odometry;
-}
+const VehicleOdometry & BaseInterface::get_odometry() const noexcept { return m_odometry; }
 
 const BaseInterface::FeatureSet & BaseInterface::get_features() const noexcept
 {
   return m_features;
 }
 
-GearReport & BaseInterface::gear_report() noexcept
-{
-  return m_gear_report;
-}
+GearReport & BaseInterface::gear_report() noexcept { return m_gear_report; }
 
-HandBrakeReport & BaseInterface::hand_brake_report() noexcept
-{
-  return m_handbrake_report;
-}
+HandBrakeReport & BaseInterface::hand_brake_report() noexcept { return m_handbrake_report; }
 
 HazardLightsReport & BaseInterface::hazard_lights_report() noexcept
 {
   return m_hazard_lights_report;
 }
 
-HeadlightsReport & BaseInterface::headlights_report() noexcept
-{
-  return m_headlights_report;
-}
+HeadlightsReport & BaseInterface::headlights_report() noexcept { return m_headlights_report; }
 
-HornReport & BaseInterface::horn_report() noexcept
-{
-  return m_horn_report;
-}
+HornReport & BaseInterface::horn_report() noexcept { return m_horn_report; }
 
-WipersReport & BaseInterface::wipers_report() noexcept
-{
-  return m_wipers_report;
-}
+WipersReport & BaseInterface::wipers_report() noexcept { return m_wipers_report; }
 
 TurnIndicatorsReport & BaseInterface::turn_indicators_report() noexcept
 {
   return m_turn_indicators_report;
 }
 
-VehicleOdometry & BaseInterface::odometry() noexcept
-{
-  return m_odometry;
-}
+VehicleOdometry & BaseInterface::odometry() noexcept { return m_odometry; }
 
-BaseInterface::FeatureSet & BaseInterface::features() noexcept
-{
-  return m_features;
-}
+BaseInterface::FeatureSet & BaseInterface::features() noexcept { return m_features; }
 
 }  // namespace interface
 }  // namespace vehicle
