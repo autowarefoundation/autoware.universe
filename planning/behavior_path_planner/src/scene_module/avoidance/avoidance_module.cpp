@@ -2592,6 +2592,8 @@ void AvoidanceModule::initVariables()
   prev_linear_shift_path_ = ShiftedPath();
   prev_reference_ = PathWithLaneId();
   path_shifter_ = PathShifter{};
+  left_shift_array_.clear();
+  right_shift_array_.clear();
 
   debug_avoidance_msg_array_ptr_.reset();
   debug_data_ = DebugData();
