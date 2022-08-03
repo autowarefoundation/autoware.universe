@@ -215,7 +215,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
 autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
   const double resample_interval, const bool use_lerp_for_xy, const bool use_lerp_for_z,
-  const bool use_zero_order_hold_for_v)
+  const bool use_zero_order_hold_for_v, const bool resample_input_path_stop_point)
 {
   // Check vector size and if out_arclength have the end point of the trajectory
   if (input_path.points.size() < 2 || resample_interval < 1e-3) {
@@ -251,25 +251,27 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   }
 
   // Insert stop point
-  const auto distance_to_stop_point =
-    motion_utils::calcDistanceToForwardStopPoint(transformed_input_path, 0);
-  if (distance_to_stop_point && !resampling_arclength.empty()) {
-    for (size_t i = 1; i < resampling_arclength.size(); ++i) {
-      if (
-        resampling_arclength.at(i - 1) <= *distance_to_stop_point &&
-        *distance_to_stop_point < resampling_arclength.at(i)) {
-        const double dist_to_prev_point =
-          std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
-        const double dist_to_following_point =
-          std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-        if (dist_to_prev_point < 1e-3) {
-          resampling_arclength.at(i - 1) = *distance_to_stop_point;
-        } else if (dist_to_following_point < 1e-3) {
-          resampling_arclength.at(i) = *distance_to_stop_point;
-        } else {
-          resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
+  if (resample_input_path_stop_point) {
+    const auto distance_to_stop_point =
+      motion_utils::calcDistanceToForwardStopPoint(transformed_input_path, 0);
+    if (distance_to_stop_point && !resampling_arclength.empty()) {
+      for (size_t i = 1; i < resampling_arclength.size(); ++i) {
+        if (
+          resampling_arclength.at(i - 1) <= *distance_to_stop_point &&
+          *distance_to_stop_point < resampling_arclength.at(i)) {
+          const double dist_to_prev_point =
+            std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
+          const double dist_to_following_point =
+            std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
+          if (dist_to_prev_point < 1e-3) {
+            resampling_arclength.at(i - 1) = *distance_to_stop_point;
+          } else if (dist_to_following_point < 1e-3) {
+            resampling_arclength.at(i) = *distance_to_stop_point;
+          } else {
+            resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
+          }
+          break;
         }
-        break;
       }
     }
   }
@@ -454,7 +456,7 @@ autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
 autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory,
   const double resample_interval, const bool use_lerp_for_xy, const bool use_lerp_for_z,
-  const bool use_zero_order_hold_for_twist)
+  const bool use_zero_order_hold_for_twist, const bool resample_input_trajectory_stop_point)
 {
   const double input_trajectory_len = motion_utils::calcArcLength(input_trajectory.points);
   // Check vector size and if out_arclength have the end point of the trajectory
@@ -483,25 +485,27 @@ autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   }
 
   // Insert stop point
-  const auto distance_to_stop_point =
-    motion_utils::calcDistanceToForwardStopPoint(input_trajectory.points, 0);
-  if (distance_to_stop_point && !resampling_arclength.empty()) {
-    for (size_t i = 1; i < resampling_arclength.size(); ++i) {
-      if (
-        resampling_arclength.at(i - 1) <= *distance_to_stop_point &&
-        *distance_to_stop_point < resampling_arclength.at(i)) {
-        const double dist_to_prev_point =
-          std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
-        const double dist_to_following_point =
-          std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-        if (dist_to_prev_point < 1e-3) {
-          resampling_arclength.at(i - 1) = *distance_to_stop_point;
-        } else if (dist_to_following_point < 1e-3) {
-          resampling_arclength.at(i) = *distance_to_stop_point;
-        } else {
-          resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
+  if (resample_input_trajectory_stop_point) {
+    const auto distance_to_stop_point =
+      motion_utils::calcDistanceToForwardStopPoint(input_trajectory.points, 0);
+    if (distance_to_stop_point && !resampling_arclength.empty()) {
+      for (size_t i = 1; i < resampling_arclength.size(); ++i) {
+        if (
+          resampling_arclength.at(i - 1) <= *distance_to_stop_point &&
+          *distance_to_stop_point < resampling_arclength.at(i)) {
+          const double dist_to_prev_point =
+            std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
+          const double dist_to_following_point =
+            std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
+          if (dist_to_prev_point < 1e-3) {
+            resampling_arclength.at(i - 1) = *distance_to_stop_point;
+          } else if (dist_to_following_point < 1e-3) {
+            resampling_arclength.at(i) = *distance_to_stop_point;
+          } else {
+            resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
+          }
+          break;
         }
-        break;
       }
     }
   }
