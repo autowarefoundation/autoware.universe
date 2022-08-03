@@ -28,6 +28,13 @@ namespace interface
 class VehicleInterfaceNode : public rclcpp::Node, public BaseInterface
 {
 public:
+  /**
+   * @brief Creates a new Vehicle Interface Node
+   *
+   * @param node_name Name of the node
+   * @param features Set of InterfaceFeature to turn on
+   * @param options NodeOptions
+   */
   explicit VehicleInterfaceNode(
     const std::string & node_name, const FeatureSet & features,
     const rclcpp::NodeOptions & options);
