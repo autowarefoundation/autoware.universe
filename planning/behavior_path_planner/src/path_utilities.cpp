@@ -96,30 +96,42 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     return path;
   }
 
-  std::vector<double> base_x, base_y, base_z;
+  std::vector<double> base_x{};
+  std::vector<double> base_y{};
+  std::vector<double> base_z{};
+  std::vector<double> base_v{};
+
+  base_x.reserve(path.points.size());
+  base_y.reserve(path.points.size());
+  base_z.reserve(path.points.size());
+  base_v.reserve(path.points.size());
+
   for (const auto & p : path.points) {
     const auto & pos = p.point.pose.position;
     base_x.push_back(pos.x);
     base_y.push_back(pos.y);
     base_z.push_back(pos.z);
+    base_v.push_back(p.point.longitudinal_velocity_mps);
   }
 
   const auto resampled_x = interpolation::slerp(base_points, base_x, sampling_points);
   const auto resampled_y = interpolation::slerp(base_points, base_y, sampling_points);
   const auto resampled_z = interpolation::lerp(base_points, base_z, sampling_points);
+  const auto resampled_v = interpolation::zero_order_hold(base_points, base_v, sampling_points);
 
   PathWithLaneId resampled_path{};
   resampled_path.header = path.header;
   resampled_path.drivable_area = path.drivable_area;
+  resampled_path.points.reserve(sampling_points.size());
 
   // For Point X, Y, Z
   for (size_t i = 0; i < sampling_points.size(); ++i) {
     PathPointWithLaneId p{};
     p.point.pose.position =
       tier4_autoware_utils::createPoint(resampled_x.at(i), resampled_y.at(i), resampled_z.at(i));
+    p.point.longitudinal_velocity_mps = static_cast<float>(resampled_v.at(i));
     resampled_path.points.push_back(p);
   }
-
   // For LaneIds, Type, Twist
   //
   // ------|----|----|----|----|----|----|-------> resampled
@@ -132,18 +144,19 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
   // resampled[4~5] = base[1]
   // resampled[6] = base[2]
   //
-  size_t base_idx{0};
-  for (size_t i = 0; i < resampled_path.points.size(); ++i) {
-    while (base_idx < base_points.size() - 1 && sampling_points.at(i) > base_points.at(base_idx)) {
+  int base_idx{0};
+  for (int i = 0; i < static_cast<int>(resampled_path.points.size()); ++i) {
+    const auto base_point_size = static_cast<int>(base_points.size());
+    while (base_idx < base_point_size - 1 && sampling_points.at(i) > base_points.at(base_idx)) {
       ++base_idx;
     }
-    size_t ref_idx = std::max(static_cast<int>(base_idx) - 1, 0);
-    if (i == resampled_path.points.size() - 1) {
-      ref_idx = base_points.size() - 1;  // for last point
-    }
+
+    const int ref_idx = (i == static_cast<int>(resampled_path.points.size()) - 1)
+                          ? base_point_size - 1
+                          : std ::max(base_idx - 1, 0);
+
     auto & p = resampled_path.points.at(i);
     p.lane_ids = path.points.at(ref_idx).lane_ids;
-    p.point.longitudinal_velocity_mps = path.points.at(ref_idx).point.longitudinal_velocity_mps;
     p.point.lateral_velocity_mps = path.points.at(ref_idx).point.lateral_velocity_mps;
     p.point.heading_rate_rps = path.points.at(ref_idx).point.heading_rate_rps;
     p.point.is_final = path.points.at(ref_idx).point.is_final;
