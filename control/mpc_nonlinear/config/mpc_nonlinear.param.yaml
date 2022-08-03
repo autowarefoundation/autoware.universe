@@ -83,8 +83,8 @@
     number_of_sqp_iterations: 1
 
     # CDOB - DOB parameters.
-    use_cdob: true
-    use_dob: true # activating use_dob only enables use_cdob. They are both used.
+    use_cdob: false
+    use_dob: false # activating use_dob only enables use_cdob. They are both used.
 
     # -- Kalman filter parameters for error model states [e_y, e_yaw[rad], v, steering [deg]] --
     # -- UKF specific parameters --

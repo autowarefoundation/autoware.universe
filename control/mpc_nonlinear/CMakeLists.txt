@@ -64,7 +64,7 @@ include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 if (COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native") #  -mtune=native -mavx2 -mfma
     message(STATUS "Enabling MARCH NATIVE ")
 endif ()
 
