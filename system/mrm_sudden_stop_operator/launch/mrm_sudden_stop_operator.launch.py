@@ -39,7 +39,7 @@ def generate_launch_description():
         ],
         remappings=[
             ("~/input/mrm/sudden_stop/operate", "/system/api/mrm/sudden_stop/operate"),
-            ("~/input/control/control_cmd", "/control/control_cmd"),
+            ("~/input/control/control_cmd", "/control/command/control_cmd"),
             ("~/output/mrm/sudden_stop/status", "/system/api/mrm/sudden_stop/status"),
             ("~/output/mrm/sudden_stop/control_cmd", "/system/emergency/control_cmd"),
         ],
