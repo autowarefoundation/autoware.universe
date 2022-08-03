@@ -99,15 +99,9 @@ const BaseInterface::FeatureSet & BaseInterface::get_features() const noexcept
   return m_features;
 }
 
-const SteeringReport & BaseInterface::get_steering_report() noexcept
-{
-  return m_steering_report;
-}
+const SteeringReport & BaseInterface::get_steering_report() noexcept { return m_steering_report; }
 
-const VelocityReport & BaseInterface::get_velocity_report() noexcept
-{
-  return m_velocity_report;
-}
+const VelocityReport & BaseInterface::get_velocity_report() noexcept { return m_velocity_report; }
 
 GearReport & BaseInterface::gear_report() noexcept { return m_gear_report; }
 

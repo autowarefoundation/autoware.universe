@@ -69,8 +69,7 @@ namespace vehicle
 {
 namespace interface
 {
-enum InterfaceFeature
-{
+enum InterfaceFeature {
   GEAR = 0,
   HAND_BRAKE = 1,
   HAZARD_LIGHTS = 2,
