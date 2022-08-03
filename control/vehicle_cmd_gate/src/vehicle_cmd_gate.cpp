@@ -567,11 +567,11 @@ AckermannControlCommand VehicleCmdGate::createEmergencyStopControlCmd() const
   return cmd;
 }
 
-void VehicleCmdGate::onEmergencyState(EmergencyState::ConstSharedPtr msg)
+void VehicleCmdGate::onEmergencyState(EmergencyState::ConstSharedPtr  /*msg*/)
 {
-  is_system_emergency_ = (msg->state == EmergencyState::MRM_OPERATING) ||
-                         (msg->state == EmergencyState::MRM_SUCCEEDED) ||
-                         (msg->state == EmergencyState::MRM_FAILED);
+  // is_system_emergency_ = (msg->state == EmergencyState::MRM_OPERATING) ||
+  //                       (msg->state == EmergencyState::MRM_SUCCEEDED) ||
+  //                       (msg->state == EmergencyState::MRM_FAILED);
   emergency_state_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 }
 
@@ -611,8 +611,9 @@ void VehicleCmdGate::onSteering(SteeringReport::ConstSharedPtr msg)
 void VehicleCmdGate::onMRMState(MRMState::ConstSharedPtr msg)
 {
   current_mrm_state_ = *msg;
-  is_system_emergency_ = (current_mrm_state_.state == MRMState::MRM_OPERATING ||
-                          current_mrm_state_.state == MRMState::MRM_SUCCEEDED) &&
+  // TODO(Makoto Kurihara): Use MRM state
+  is_system_emergency_ = (current_mrm_state_.state == EmergencyState::MRM_OPERATING ||
+                          current_mrm_state_.state == EmergencyState::MRM_SUCCEEDED) &&
                          (current_mrm_state_.behavior == MRMState::SUDDEN_STOP);
 }
 

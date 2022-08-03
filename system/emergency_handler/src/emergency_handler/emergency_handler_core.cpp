@@ -367,6 +367,8 @@ void EmergencyHandler::transitionTo(const int new_state)
     state2string(new_state));
 
   emergency_state_ = new_state;
+  // TODO(Makoto Kurihara): Use MRM state
+  mrm_state_.state = new_state;
 }
 
 void EmergencyHandler::updateEmergencyState()
