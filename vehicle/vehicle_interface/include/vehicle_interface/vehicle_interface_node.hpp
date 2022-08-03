@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_interface/base_interface.hpp>
+#include <string>
 
 namespace autoware
 {
@@ -27,7 +28,9 @@ namespace interface
 class VehicleInterfaceNode : public rclcpp::Node, public BaseInterface
 {
 public:
-  explicit VehicleInterfaceNode(const std::string & node_name, const FeatureSet & features, const rclcpp::NodeOptions & options);
+  explicit VehicleInterfaceNode(
+    const std::string & node_name, const FeatureSet & features,
+    const rclcpp::NodeOptions & options);
 
 private:
 // Pubs and subs

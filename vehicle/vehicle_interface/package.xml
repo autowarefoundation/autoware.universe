@@ -11,13 +11,12 @@
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>autoware_auto_common</depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>motion_utils</depend>
   <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>
   <depend>nav_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
@@ -25,6 +24,7 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
   <test_depend>autoware_testing</test_depend>
+  <test_depend>fake_test_node</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -15,16 +15,13 @@ ament_auto_add_library(${INTERFACE_NODE} SHARED
 if(BUILD_TESTING)
   set(INTERFACE_NODE_TEST test_vehicle_interface_node)
   ament_add_ros_isolated_gtest(${INTERFACE_NODE_TEST}
-    test/test_vehicle_interface_node.cpp
+    test/test_vehicle_interface.cpp
+    test/dummy_node.hpp
+    test/dummy_node.cpp
   )
   ament_target_dependencies(${INTERFACE_NODE_TEST} fake_test_node)
   target_link_libraries(
     ${INTERFACE_NODE_TEST} ${INTERFACE_NODE})
-
-  find_package(autoware_testing REQUIRED)
-  add_smoke_test(${PROJECT_NAME} ${INTERFACE_NODE}_exe
-    PARAM_FILENAMES "vehicle_interface_node.param.yaml"
-  )
 endif()
 
 ament_auto_package(

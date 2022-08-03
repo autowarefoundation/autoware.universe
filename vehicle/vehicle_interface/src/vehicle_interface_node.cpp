@@ -37,11 +37,11 @@ VehicleInterfaceNode::VehicleInterfaceNode(
   this->features() = features;
   // Declare required sub and service
   m_command_sub = create_subscription<AckermannControlCommand>(
-    "controller/output/control_cmd", 1, std::bind(
+    "control_cmd", 1, std::bind(
       &VehicleInterfaceNode::on_command, this,
       _1));
   m_mode_service = create_service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>(
-    "autonomy_mode", std::bind(&VehicleInterfaceNode::on_mode_change_request, _1, _2));
+    "autonomy_mode", std::bind(&VehicleInterfaceNode::on_mode_change_request, this, _1, _2));
 
   // Declare optional pubs and subs
   for (const auto & feat : features) {
@@ -77,7 +77,7 @@ VehicleInterfaceNode::VehicleInterfaceNode(
       m_horn_pub = create_publisher<HornReport>("horn_report", 1);
       m_horn_sub =
         create_subscription<HornCommand>(
-        "horm_cmd", 1, [this](HornCommand::SharedPtr msg) {
+        "horn_cmd", 1, [this](HornCommand::SharedPtr msg) {
           send_horn_command(*msg);
         });
     } else if (InterfaceFeature::ODOMETRY == feat) {
@@ -86,7 +86,7 @@ VehicleInterfaceNode::VehicleInterfaceNode(
       m_turn_indicators_pub = create_publisher<TurnIndicatorsReport>("turn_indicators_report", 1);
       m_turn_indicators_sub =
         create_subscription<TurnIndicatorsCommand>(
-        "turn_indicator_cmd", 1, [this](TurnIndicatorsCommand::SharedPtr msg) {
+        "turn_indicators_cmd", 1, [this](TurnIndicatorsCommand::SharedPtr msg) {
           send_turn_indicators_command(*msg);
         });
     } else if (InterfaceFeature::WIPERS == feat) {
@@ -101,7 +101,9 @@ VehicleInterfaceNode::VehicleInterfaceNode(
 
   // Start querying reports
   m_report_timer = create_wall_timer(
-    std::chrono::milliseconds(declare_parameter<uint64_t>("report_interval_ms")),
+    std::chrono::milliseconds(
+      static_cast<uint64_t>(declare_parameter<double>("report_interval_sec", 0.01) *
+      1000.0)),
     std::bind(&VehicleInterfaceNode::on_report_timer, this));
 }
 
@@ -116,6 +118,7 @@ void VehicleInterfaceNode::on_mode_change_request(
   ModeChangeResponse::SharedPtr response)
 {
   handle_mode_change_request(request);
+  (void)response;
   // TODO(haoru): handle mode change failures
 }
 
