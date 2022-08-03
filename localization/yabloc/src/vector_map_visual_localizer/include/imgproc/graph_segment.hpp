@@ -15,6 +15,9 @@ public:
   GraphSegment();
 
 private:
+  const float target_height_ratio_;
+  const int target_candidate_box_width_;
+
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;

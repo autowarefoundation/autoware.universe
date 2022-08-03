@@ -5,7 +5,10 @@
 
 namespace imgproc
 {
-GraphSegment::GraphSegment() : Node("graph_segment")
+GraphSegment::GraphSegment()
+: Node("graph_segment"),
+  target_height_ratio_(declare_parameter<float>("target_height_ratio", 0.85)),
+  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width", 15))
 {
   using std::placeholders::_1;
 
@@ -31,8 +34,10 @@ void GraphSegment::callbackImage(const Image & msg)
 
   int target_class = -1;
   {
-    cv::Point2i target_px(resized.cols / 2, resized.rows * 0.8);
-    cv::Rect2i rect(target_px + cv::Point2i(-20, -20), target_px + cv::Point2i(20, 20));
+    const int W = target_candidate_box_width_;
+    const float R = target_height_ratio_;
+    cv::Point2i target_px(resized.cols * 0.5, resized.rows * R);
+    cv::Rect2i rect(target_px + cv::Point2i(-W, -W), target_px + cv::Point2i(W, W));
 
     std::unordered_map<int, int> areas;
     std::unordered_set<int> candidates;
@@ -109,8 +114,10 @@ void GraphSegment::publishImage(
   cv::cvtColor(segmented_image, segmented_image, cv::COLOR_HSV2BGR);
 
   {
-    cv::Point2i target(size.width / 2, size.height * 0.8);
-    cv::Rect2i rect(target + cv::Point2i(-20, -20), target + cv::Point2i(20, 20));
+    const int W = target_candidate_box_width_;
+    const float R = target_height_ratio_;
+    cv::Point2i target(size.width / 2, size.height * R);
+    cv::Rect2i rect(target + cv::Point2i(-W, -W), target + cv::Point2i(W, W));
     cv::rectangle(segmented_image, rect, cv::Scalar::all(0), 2);
   }
 

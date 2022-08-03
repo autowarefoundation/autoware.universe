@@ -16,6 +16,7 @@ TOPICS = [
     '/vehicle/status/steering',
     '/vehicle/status/control_mode',
     '/vehicle/status/twist',
+    '/vehicle/status/velocity_status'
     ]
 LIDAR_TOPICS = [
     '/sensing/lidar/top/velodyne_packets',

@@ -1,9 +1,6 @@
 [submodule "src/sign_detector/scripts/lib/advanced_lane_finding"]
 	path = src/sign_detector/scripts/lib/advanced_lane_finding
 	url = https://github.com/windowsub0406/Advanced-lane-finding.git
-[submodule "src/autoware_auto_msgs"]
-	path = src/autoware_auto_msgs
-	url = https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs.git
 [submodule "src/rviz2_overlay_plugins"]
 	path = src/rviz2_overlay_plugins
 	url = git@github.com:KYabuuchi/rviz2_overlay_plugins.git
@@ -13,3 +10,6 @@
 [submodule "src/topic_tools"]
 	path = src/topic_tools
 	url = git@github.com:tier4/topic_tools.git
+[submodule "src/autoware_auto_msgs"]
+	path = src/autoware_auto_msgs
+	url = git@github.com:tier4/autoware_auto_msgs.git
