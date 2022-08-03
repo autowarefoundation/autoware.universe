@@ -63,39 +63,44 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const std::vector<polygon_t> & adjusted_footprints, const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
-  auto id = 0;
+  auto original_projections_id_offset = 0;
+  auto adjusted_projections_id_offset = 0;
   for (auto i = 0ul; i < original_projections.size(); ++i) {
-    for (const auto ls : original_projections[i]) {
-      auto marker = makeLinestringMarker(ls, marker_z);
+    for (auto j = 0ul; j < original_projections[i].size(); ++j) {
+      auto marker = makeLinestringMarker(original_projections[i][j], marker_z);
       marker.ns = "original_projections";
-      marker.id = id++;
+      marker.id = i + original_projections_id_offset + j;
       marker.color.r = 0.7;
       marker.color.b = 0.2;
       debug_markers.markers.push_back(marker);
     }
-    for (const auto ls : adjusted_projections[i]) {
-      auto marker = makeLinestringMarker(ls, marker_z);
+    original_projections_id_offset += original_projections[i].size() - 1;
+    for (auto j = 0ul; j < adjusted_projections[i].size(); ++j) {
+      auto marker = makeLinestringMarker(adjusted_projections[i][j], marker_z);
       marker.ns = "adjusted_projections";
-      marker.id = id++;
+      marker.id = i + adjusted_projections_id_offset + j;
       marker.color.g = 0.7;
       marker.color.b = 0.2;
       debug_markers.markers.push_back(marker);
     }
+    adjusted_projections_id_offset += adjusted_projections[i].size() - 1;
     {
       auto marker = makePolygonMarker(original_footprints[i], marker_z);
       marker.ns = "original_footprints";
-      marker.id = id++;
+      marker.id = i;
       marker.color.r = 0.7;
       debug_markers.markers.push_back(marker);
     }
     {
       auto marker = makePolygonMarker(adjusted_footprints[i], marker_z);
       marker.ns = "adjusted_footprints";
-      marker.id = id++;
+      marker.id = i;
       marker.color.g = 0.7;
       debug_markers.markers.push_back(marker);
     }
   }
+  const auto max_id = original_projections.size() +
+                      std::max(original_projections_id_offset, adjusted_projections_id_offset);
   auto obs_id = 0;
   for (const auto & obs : obstacles) {
     auto marker = makeLinestringMarker(obs.line, marker_z);
@@ -106,6 +111,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   }
 
   static auto prev_max_id = 0lu;
+  static auto prev_size = 0lu;
   static auto prev_max_obs_id = 0lu;
   visualization_msgs::msg::Marker marker;
   marker.action = visualization_msgs::msg::Marker::DELETE;
@@ -114,16 +120,23 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
     marker.id = delete_id;
     debug_markers.markers.push_back(marker);
   }
-  for (const auto & ns :
-       {"original_projections", "adjusted_projections", "original_footprints",
-        "adjusted_footprints"}) {
+  for (const auto & ns : {"original_projections", "adjusted_projections"}) {
     marker.ns = ns;
-    for (auto delete_id = id; delete_id < prev_max_id; ++delete_id) {
+    for (auto delete_id = max_id; delete_id < prev_max_id; ++delete_id) {
       marker.id = delete_id;
       debug_markers.markers.push_back(marker);
     }
   }
-  prev_max_id = id;
+  for (const auto & ns : {"original_footprints", "adjusted_footprints"}) {
+    marker.ns = ns;
+    for (auto delete_id = original_projections.size(); delete_id < prev_size; ++delete_id) {
+      marker.id = delete_id;
+      debug_markers.markers.push_back(marker);
+    }
+  }
+
+  prev_max_id = max_id;
+  prev_size = original_projections.size();
   prev_max_obs_id = obs_id;
   return debug_markers;
 }
