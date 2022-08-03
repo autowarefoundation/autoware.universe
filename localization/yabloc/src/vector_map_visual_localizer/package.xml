@@ -29,6 +29,7 @@
 
   <depend>ublox_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
 
   <depend>modularized_particle_filter</depend>
   <depend>modularized_particle_filter_msgs</depend>

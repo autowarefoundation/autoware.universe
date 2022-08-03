@@ -49,6 +49,13 @@
     </node>
 
     <!-- ========================================= -->
+    <!-- ====== VELOCITY REPORT CONVERTER ======== -->
+    <!-- ========================================= -->
+    <node name="velocity_report_node" pkg="vector_map_visual_localizer" exec="velocity_report_node" output="screen" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+    </node>
+
+    <!-- ========================================= -->
     <!-- ============ POSE INITIALIZER =========== -->
     <!-- ========================================= -->
     <node name="pose_initializer" pkg="vector_map_visual_localizer" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
