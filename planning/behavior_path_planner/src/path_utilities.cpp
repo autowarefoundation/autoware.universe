@@ -106,7 +106,7 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
 
   const auto resampled_x = interpolation::slerp(base_points, base_x, sampling_points);
   const auto resampled_y = interpolation::slerp(base_points, base_y, sampling_points);
-  const auto resampled_z = interpolation::slerp(base_points, base_z, sampling_points);
+  const auto resampled_z = interpolation::lerp(base_points, base_z, sampling_points);
 
   PathWithLaneId resampled_path{};
   resampled_path.header = path.header;
