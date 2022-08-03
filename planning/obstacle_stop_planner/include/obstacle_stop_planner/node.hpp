@@ -108,12 +108,13 @@ public:
 
   struct StopParam
   {
-    double stop_margin;               // stop margin distance from obstacle on the path [m]
-    double min_behavior_stop_margin;  // margin distance, any other stop point is inserted [m]
-    double expand_stop_range;         // margin of vehicle footprint [m]
-    double extend_distance;           // trajectory extend_distance [m]
-    double step_length;               // step length for pointcloud search range [m]
-    double stop_search_radius;        // search radius for obstacle point cloud [m]
+    double stop_margin;                // stop margin distance from obstacle on the path [m]
+    double min_behavior_stop_margin;   // margin distance, any other stop point is inserted [m]
+    double expand_stop_range;          // margin of vehicle footprint [m]
+    double extend_distance;            // trajectory extend_distance [m]
+    double step_length;                // step length for pointcloud search range [m]
+    double stop_search_radius;         // search radius for obstacle point cloud [m]
+    double hold_stop_margin_distance;  // keep stopping if the ego is in this margin [m]
   };
 
   struct SlowDownParam
@@ -194,6 +195,7 @@ private:
   nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
   nav_msgs::msg::Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};
   double current_acc_{0.0};
+  bool is_driving_forward_{true};
 
   bool set_velocity_limit_{false};
 
@@ -217,8 +219,6 @@ private:
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
 private:
-  bool isBackwardPath(const autoware_auto_planning_msgs::msg::Trajectory & trajectory) const;
-
   bool withinPolygon(
     const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
     const Point2d & next_point, pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
@@ -236,7 +236,7 @@ private:
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data,
     const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-    const double current_acc, const StopParam & stop_param);
+    const double current_acc, const double current_vel, const StopParam & stop_param);
 
   TrajectoryPoints decimateTrajectory(
     const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
@@ -286,7 +286,7 @@ private:
   SlowDownSection createSlowDownSection(
     const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
     const double dist_remain, const double dist_vehicle_to_obstacle,
-    const VehicleInfo & vehicle_info, const double current_acc);
+    const VehicleInfo & vehicle_info, const double current_acc, const double current_vel);
 
   SlowDownSection createSlowDownSectionFromMargin(
     const int idx, const TrajectoryPoints & base_trajectory, const double forward_margin,
@@ -301,9 +301,10 @@ private:
 
   void setExternalVelocityLimit();
 
-  void resetExternalVelocityLimit(const double current_acc);
+  void resetExternalVelocityLimit(const double current_acc, const double current_vel);
 
-  void publishDebugData(const PlannerData & planner_data, const double current_acc);
+  void publishDebugData(
+    const PlannerData & planner_data, const double current_acc, const double current_vel);
 };
 }  // namespace motion_planning
 

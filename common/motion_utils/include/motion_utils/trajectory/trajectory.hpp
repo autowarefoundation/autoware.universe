@@ -90,6 +90,39 @@ void validateNonSharpAngle(
 }
 
 template <class T>
+boost::optional<bool> isDrivingForward(const T points)
+{
+  if (points.size() < 2) {
+    return boost::none;
+  }
+
+  // check the first point direction
+  const auto & first_pose = tier4_autoware_utils::getPose(points.at(0));
+  const auto & second_pose = tier4_autoware_utils::getPose(points.at(1));
+
+  return tier4_autoware_utils::isDrivingForward(first_pose, second_pose);
+}
+
+template <class T>
+boost::optional<bool> isDrivingForwardWithTwist(const T points_with_twist)
+{
+  if (points_with_twist.empty()) {
+    return boost::none;
+  }
+  if (points_with_twist.size() == 1) {
+    if (0.0 < tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
+      return true;
+    } else if (0.0 > tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
+      return false;
+    } else {
+      return boost::none;
+    }
+  }
+
+  return isDrivingForward(points_with_twist);
+}
+
+template <class T>
 boost::optional<size_t> searchZeroVelocityIndex(
   const T & points_with_twist, const size_t src_idx, const size_t dst_idx)
 {
@@ -805,10 +838,16 @@ inline boost::optional<size_t> insertTargetPoint(
   const auto overlap_with_back =
     tier4_autoware_utils::calcDistance2d(p_target, p_back) < overlap_threshold;
 
+  const auto is_driving_forward = isDrivingForward(points);
+  if (!is_driving_forward) {
+    return {};
+  }
+
   geometry_msgs::msg::Pose target_pose;
   {
-    const auto pitch = tier4_autoware_utils::calcElevationAngle(p_target, p_back);
-    const auto yaw = tier4_autoware_utils::calcAzimuthAngle(p_target, p_back);
+    const auto p_base = is_driving_forward.get() ? p_back : p_front;
+    const auto pitch = tier4_autoware_utils::calcElevationAngle(p_target, p_base);
+    const auto yaw = tier4_autoware_utils::calcAzimuthAngle(p_target, p_base);
 
     target_pose.position = p_target;
     target_pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
@@ -817,17 +856,22 @@ inline boost::optional<size_t> insertTargetPoint(
   auto p_insert = points.at(seg_idx);
   tier4_autoware_utils::setPose(target_pose, p_insert);
 
-  geometry_msgs::msg::Pose front_pose;
+  geometry_msgs::msg::Pose base_pose;
   {
-    const auto pitch = tier4_autoware_utils::calcElevationAngle(p_front, p_target);
-    const auto yaw = tier4_autoware_utils::calcAzimuthAngle(p_front, p_target);
+    const auto p_base = is_driving_forward.get() ? p_front : p_back;
+    const auto pitch = tier4_autoware_utils::calcElevationAngle(p_base, p_target);
+    const auto yaw = tier4_autoware_utils::calcAzimuthAngle(p_base, p_target);
 
-    front_pose.position = tier4_autoware_utils::getPoint(points.at(seg_idx));
-    front_pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
+    base_pose.position = tier4_autoware_utils::getPoint(p_base);
+    base_pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw);
   }
 
   if (!overlap_with_front && !overlap_with_back) {
-    tier4_autoware_utils::setPose(front_pose, points.at(seg_idx));
+    if (is_driving_forward.get()) {
+      tier4_autoware_utils::setPose(base_pose, points.at(seg_idx));
+    } else {
+      tier4_autoware_utils::setPose(base_pose, points.at(seg_idx + 1));
+    }
     points.insert(points.begin() + seg_idx + 1, p_insert);
     return seg_idx + 1;
   }

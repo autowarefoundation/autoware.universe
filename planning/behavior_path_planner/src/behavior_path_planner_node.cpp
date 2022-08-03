@@ -73,12 +73,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
 
-  // For remote operation
-  plan_ready_publisher_ = create_publisher<PathChangeModule>("~/output/ready", 1);
-  plan_running_publisher_ = create_publisher<PathChangeModuleArray>("~/output/running", 1);
-  force_available_publisher_ =
-    create_publisher<PathChangeModuleArray>("~/output/force_available", 1);
-
   // Debug
   debug_marker_publisher_ = create_publisher<MarkerArray>("~/debug/markers", 1);
 
@@ -104,13 +98,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     [this](const Scenario::ConstSharedPtr msg) {
       current_scenario_ = std::make_shared<Scenario>(*msg);
     },
-    createSubscriptionOptions(this));
-  external_approval_subscriber_ = create_subscription<ApprovalMsg>(
-    "~/input/external_approval", 1,
-    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1),
-    createSubscriptionOptions(this));
-  force_approval_subscriber_ = create_subscription<PathChangeModule>(
-    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1),
     createSubscriptionOptions(this));
 
   // route_handler
@@ -177,9 +164,34 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
-  // ROS parameters
   BehaviorPathPlannerParameters p{};
-  p.backward_path_length = declare_parameter("backward_path_length", 5.0);
+
+  // vehicle info
+  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  p.vehicle_info = vehicle_info;
+  p.vehicle_width = vehicle_info.vehicle_width_m;
+  p.vehicle_length = vehicle_info.vehicle_length_m;
+  p.wheel_tread = vehicle_info.wheel_tread_m;
+  p.wheel_base = vehicle_info.wheel_base_m;
+  p.front_overhang = vehicle_info.front_overhang_m;
+  p.rear_overhang = vehicle_info.rear_overhang_m;
+  p.left_over_hang = vehicle_info.left_overhang_m;
+  p.right_over_hang = vehicle_info.right_overhang_m;
+  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
+  p.base_link2rear = p.rear_overhang;
+
+  // NOTE: backward_path_length is used not only calculating path length but also calculating the
+  // size of a drivable area.
+  //       The drivable area has to cover not the base link but the vehicle itself. Therefore
+  //       rear_overhang must be added to backward_path_length. In addition, because of the
+  //       calculation of the drivable area in the obstacle_avoidance_planner package, the drivable
+  //       area has to be a little longer than the backward_path_length parameter by adding
+  //       min_backward_offset.
+  constexpr double min_backward_offset = 1.0;
+  const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
+
+  // ROS parameters
+  p.backward_path_length = declare_parameter("backward_path_length", 5.0) + backward_offset;
   p.forward_path_length = declare_parameter("forward_path_length", 100.0);
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter("backward_length_buffer_for_end_of_lane", 5.0);
@@ -200,20 +212,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
-
-  // vehicle info
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
-  p.vehicle_info = vehicle_info;
-  p.vehicle_width = vehicle_info.vehicle_width_m;
-  p.vehicle_length = vehicle_info.vehicle_length_m;
-  p.wheel_tread = vehicle_info.wheel_tread_m;
-  p.wheel_base = vehicle_info.wheel_base_m;
-  p.front_overhang = vehicle_info.front_overhang_m;
-  p.rear_overhang = vehicle_info.rear_overhang_m;
-  p.left_over_hang = vehicle_info.left_overhang_m;
-  p.right_over_hang = vehicle_info.right_overhang_m;
-  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
-  p.base_link2rear = p.rear_overhang;
 
   return p;
 }
