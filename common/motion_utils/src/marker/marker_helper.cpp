@@ -123,4 +123,3 @@ visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
   return createDeletedVirtualWallMarkerArray("dead_line_", now, id);
 }
 }  // namespace motion_utils
->>>>>>> bf38b89ac... feat(tier4_autoware_utils): add function to create deleted marker:common/tier4_autoware_utils/src/planning/planning_marker_helper.cpp
