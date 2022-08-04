@@ -163,6 +163,11 @@ bool PullOverModule::isExecutionRequested() const
 
   // check if goal_pose is far
   const double goal_arc_length = lanelet::utils::getArcCoordinates(current_lanes, goal_pose).length;
+  if (std::abs(goal_arc_length) < std::numeric_limits<double>::epsilon()) {
+    // can not caluculate arc langth correctly, maybe lane loop.
+    return false;
+  }
+
   const double self_arc_length =
     lanelet::utils::getArcCoordinates(current_lanes, planner_data_->self_pose->pose).length;
   const double self_to_goal_arc_length = goal_arc_length - self_arc_length;
