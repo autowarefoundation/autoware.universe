@@ -197,7 +197,7 @@ void PIDBasedPlanner::planCruise(
     // delete marker
     const auto markers =
       motion_utils::createDeletedSlowDownVirtualWallMarker(planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.cruise_wall_marker);
   }
 }
 

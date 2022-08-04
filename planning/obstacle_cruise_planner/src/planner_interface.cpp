@@ -94,7 +94,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
     // delete marker
     const auto markers =
       motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
 
     return planner_data.traj;
   }
@@ -106,7 +106,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
     // delete marker
     const auto markers =
       motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
 
     return planner_data.traj;
   }
@@ -122,7 +122,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
     // delete marker
     const auto markers =
       motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
-    tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
 
     return planner_data.traj;
   }
