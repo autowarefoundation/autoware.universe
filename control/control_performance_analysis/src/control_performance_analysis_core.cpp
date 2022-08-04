@@ -38,8 +38,7 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
   p_.wheelbase_ = 2.74;
 }
 
-ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(param & p)
-: p_{p}
+ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(param & p) : p_{p}
 {
   // prepare control performance struct
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
@@ -90,29 +89,39 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
   }
 
   auto closest_idx = motion_utils::findNearestIndex(
-    current_waypoints_ptr_->poses, *current_vec_pose_ptr_, p_.acceptable_max_distance_to_waypoint_, p_.acceptable_max_yaw_difference_rad_);
+    current_waypoints_ptr_->poses, *current_vec_pose_ptr_, p_.acceptable_max_distance_to_waypoint_,
+    p_.acceptable_max_yaw_difference_rad_);
 
   // find the prev and next waypoint
 
-  if(*closest_idx != 0 && (*closest_idx + 1) != current_waypoints_ptr_->poses.size()){
-    double dist_to_prev = std::hypot(current_vec_pose_ptr_->position.x - current_waypoints_ptr_->poses.at(*closest_idx - 1).position.x, current_vec_pose_ptr_->position.y - current_waypoints_ptr_->poses.at(*closest_idx - 1).position.y);
-    double dist_to_next = std::hypot(current_vec_pose_ptr_->position.x - current_waypoints_ptr_->poses.at(*closest_idx + 1).position.x, current_vec_pose_ptr_->position.y - current_waypoints_ptr_->poses.at(*closest_idx + 1).position.y);
-    if(dist_to_next > dist_to_prev){
-        idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx - 1);
-        idx_next_wp_ = std::make_unique<int32_t>(*closest_idx);
+  if (*closest_idx != 0 && (*closest_idx + 1) != current_waypoints_ptr_->poses.size()) {
+    double dist_to_prev = std::hypot(
+      current_vec_pose_ptr_->position.x -
+        current_waypoints_ptr_->poses.at(*closest_idx - 1).position.x,
+      current_vec_pose_ptr_->position.y -
+        current_waypoints_ptr_->poses.at(*closest_idx - 1).position.y);
+    double dist_to_next = std::hypot(
+      current_vec_pose_ptr_->position.x -
+        current_waypoints_ptr_->poses.at(*closest_idx + 1).position.x,
+      current_vec_pose_ptr_->position.y -
+        current_waypoints_ptr_->poses.at(*closest_idx + 1).position.y);
+    if (dist_to_next > dist_to_prev) {
+      idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx - 1);
+      idx_next_wp_ = std::make_unique<int32_t>(*closest_idx);
     } else {
       idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx);
       idx_next_wp_ = std::make_unique<int32_t>(*closest_idx + 1);
     }
-  } else if(*closest_idx == 0) {
+  } else if (*closest_idx == 0) {
     idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx);
     idx_next_wp_ = std::make_unique<int32_t>(*closest_idx + 1);
   } else {
     idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx - 1);
     idx_next_wp_ = std::make_unique<int32_t>(*closest_idx);
   }
-    return (idx_prev_wp_ && idx_next_wp_) ? std::make_pair(true, *idx_prev_wp_)
-             : std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
+  return (idx_prev_wp_ && idx_next_wp_)
+           ? std::make_pair(true, *idx_prev_wp_)
+           : std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
 }
 
 bool ControlPerformanceAnalysisCore::isDataReady() const
@@ -182,7 +191,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   // Get Yaw angles of the reference waypoint and the vehicle
   double target_yaw = tf2::getYaw(pose_interp_wp_.orientation);
   double vehicle_yaw_angle = tf2::getYaw(current_vec_pose_ptr_->orientation);
-//  std::cout << " target yaw " << target_yaw << " vehicle yaw " << vehicle_yaw_angle<<std::endl;
+  //  std::cout << " target yaw " << target_yaw << " vehicle yaw " << vehicle_yaw_angle<<std::endl;
   // Compute Curvature at the point where the front axle might follow
   // get the waypoint corresponds to the front_axle center
 
@@ -277,8 +286,9 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   if (prev_target_vars_) {
     // LPF for error vars
 
-    error_vars.error.curvature_estimate = p_.lpf_gain_ * prev_target_vars_->error.curvature_estimate +
-                                          (1 - p_.lpf_gain_) * error_vars.error.curvature_estimate;
+    error_vars.error.curvature_estimate =
+      p_.lpf_gain_ * prev_target_vars_->error.curvature_estimate +
+      (1 - p_.lpf_gain_) * error_vars.error.curvature_estimate;
 
     error_vars.error.curvature_estimate_pp =
       p_.lpf_gain_ * prev_target_vars_->error.curvature_estimate_pp +
@@ -295,8 +305,9 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
       p_.lpf_gain_ * prev_target_vars_->error.lateral_error_acceleration +
       (1 - p_.lpf_gain_) * error_vars.error.lateral_error_acceleration;
 
-    error_vars.error.longitudinal_error = p_.lpf_gain_ * prev_target_vars_->error.longitudinal_error +
-                                          (1 - p_.lpf_gain_) * error_vars.error.longitudinal_error;
+    error_vars.error.longitudinal_error =
+      p_.lpf_gain_ * prev_target_vars_->error.longitudinal_error +
+      (1 - p_.lpf_gain_) * error_vars.error.longitudinal_error;
 
     error_vars.error.longitudinal_error_velocity =
       p_.lpf_gain_ * prev_target_vars_->error.longitudinal_error_velocity +
@@ -527,9 +538,12 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   double && dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
                            current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
-  double && delta_psi_prev2next = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation - current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
+  double && delta_psi_prev2next = tf2::getYaw(
+    current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation -
+    current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
   double && d_vel_prev2next = next_velocity - prev_velocity;
-//  std::cout << "pr idx " << *idx_prev_wp_ << " " << prev_yaw << " nxt idx " << *idx_next_wp_ << " " << next_yaw << " " <<delta_psi_prev2next;
+  //  std::cout << "pr idx " << *idx_prev_wp_ << " " << prev_yaw << " nxt idx " << *idx_next_wp_ <<
+  //  " " << next_yaw << " " <<delta_psi_prev2next;
 
   // Create a vector from p0 (prev) --> p1 (to next wp)
   std::vector<double> v_prev2next_wp{dx_prev2next, dy_prev2next};

@@ -19,6 +19,8 @@
 #include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
 #include "control_performance_analysis/msg/error_stamped.hpp"
 #include "control_performance_analysis/msg/float_stamped.hpp"
+#include "motion_common/motion_common.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <eigen3/Eigen/Core>
 #include <rclcpp/time.hpp>
@@ -30,8 +32,6 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include "motion_common/motion_common.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <memory>
 #include <utility>
@@ -50,7 +50,8 @@ using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 
-struct param{
+struct param
+{
   double wheelbase_;
   double curvature_interval_length_;
   uint odom_interval_;
@@ -95,7 +96,6 @@ public:
   DrivingMonitorStamped driving_status_vars;
 
 private:
-
   param p_;
 
   // Variables Received Outside

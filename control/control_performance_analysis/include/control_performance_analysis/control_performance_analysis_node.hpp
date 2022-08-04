@@ -44,7 +44,6 @@ using control_performance_analysis::msg::ErrorStamped;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 
-
 class ControlPerformanceAnalysisNode : public rclcpp::Node
 {
 public:

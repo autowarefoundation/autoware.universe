@@ -73,14 +73,14 @@ Error acceleration calculations are made based on the velocity calculations abov
 
 ## Parameters
 
-| Name                                  | Type             | Description                                                      |
-|---------------------------------------| ---------------- |------------------------------------------------------------------|
-| `curvature_interval_length`           | double           | Used for estimating current curvature                            |
-| `prevent_zero_division_value`         | double           | Value to avoid zero division. Default is `0.001`                 |
-| `odom_interval`                       | unsigned integer | Interval between odom messages, increase it for smoother curve.  |
-| `acceptable_max_distance_to_waypoint` | double           | Maximum distance between trajectory point and vehicle [m]        |
+| Name                                  | Type             | Description                                                       |
+| ------------------------------------- | ---------------- | ----------------------------------------------------------------- |
+| `curvature_interval_length`           | double           | Used for estimating current curvature                             |
+| `prevent_zero_division_value`         | double           | Value to avoid zero division. Default is `0.001`                  |
+| `odom_interval`                       | unsigned integer | Interval between odom messages, increase it for smoother curve.   |
+| `acceptable_max_distance_to_waypoint` | double           | Maximum distance between trajectory point and vehicle [m]         |
 | `acceptable_max_yaw_difference_rad`   | double           | Maximum yaw difference between trajectory point and vehicle [rad] |
-| `low_pass_filter_gain`                | double           | Low pass filter gain                                             |
+| `low_pass_filter_gain`                | double           | Low pass filter gain                                              |
 
 ## Usage
 
