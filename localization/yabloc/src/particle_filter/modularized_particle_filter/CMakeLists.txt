@@ -26,13 +26,17 @@ ament_auto_add_library(
   src/common/mean.cpp
 )
 
-ament_auto_add_executable(predictor
-  src/prediction/predictor_node.cpp
+ament_auto_add_library(predictor
   src/prediction/predictor.cpp
   src/prediction/resampler.cpp
   src/common/visualize.cpp
   src/common/mean.cpp
 )
+
+ament_auto_add_executable(predictor_node
+  src/prediction/predictor_node.cpp
+)
+target_link_libraries(predictor_node predictor)
 
 ament_auto_add_executable(lidar_pose_corrector
   src/correction/lidar_pose_corrector_node.cpp
@@ -49,6 +53,11 @@ ament_auto_add_executable(gnss_pose_corrector
 ament_auto_add_executable(particle_visualize
   src/common/particle_visualize_node.cpp
 )
+
+# TEST
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 install(PROGRAMS
   script/particle_array_to_marker_array.py
