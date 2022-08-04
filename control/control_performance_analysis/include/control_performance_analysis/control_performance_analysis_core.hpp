@@ -67,7 +67,7 @@ public:
   // See https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ControlPerformanceAnalysisCore();
-  ControlPerformanceAnalysisCore(param & p);
+  explicit ControlPerformanceAnalysisCore(param & p);
 
   // Setters
   void setCurrentPose(const Pose & msg);
