@@ -114,12 +114,12 @@ std::vector<double> slerpByAkima(
     if (i == 0) {
       s_values.push_back(m_values.front());
       continue;
+    } else if (i == base_keys.size() - 1) {
+      s_values.push_back(m_values.back());
+      continue;
     } else if (i == 1 || i == base_keys.size() - 2) {
       const double s_val = (m_values.at(i - 1) + m_values.at(i)) / 2.0;
       s_values.push_back(s_val);
-      continue;
-    } else if (i == base_keys.size() - 1) {
-      s_values.push_back(m_values.back());
       continue;
     }
 
@@ -166,7 +166,6 @@ std::vector<double> slerpByAkima(
   }
   return res;
 }
-
 }  // namespace interpolation
 
 void SplineInterpolation::calcSplineCoefficients(
