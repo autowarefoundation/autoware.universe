@@ -36,7 +36,8 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
 : rclcpp::Node("apparent_safe_velocity_limiter", node_options),
   preprocessing_params_(*this),
   projection_params_(*this),
-  obstacle_params_(*this)
+  obstacle_params_(*this),
+  velocity_params_(*this)
 {
   sub_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });

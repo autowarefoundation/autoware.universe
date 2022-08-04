@@ -123,8 +123,6 @@ std::vector<Obstacle> createObstacles(
 /// @param[in] obstacles obstacles that must be avoided by the forward projection
 /// @param[in] projections forward projection lines at each trajectory point
 /// @param[in] footprints footprint of the forward projection at each trajectory point
-/// @param[in] current_ego_velocity current ego velocity (at the first trajectory point)
-/// @param[in] max_deceleration maximum allowed deceleration
 /// @param[in] projection_params projection parameters
 /// @param[in] velocity_params velocity parameters
 /// @param[in] filter_envelope whether obstacles were already filtered using the envelope polygon
