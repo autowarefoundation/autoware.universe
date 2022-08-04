@@ -94,17 +94,6 @@ void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedP
   }
 
   current_trajectory_ptr_ = msg;
-//  for(size_t i = 0; i < current_trajectory_ptr_->points.size(); i++){
-//    if(i == 0){
-//      std::cout << "--------------------------------------" << std::endl;
-//    }
-//    else{
-//        if(fabs(tf2::getYaw(current_trajectory_ptr_->points.at(i).pose.orientation)-tf2::getYaw(current_trajectory_ptr_->points.at(i-1).pose.orientation))>0.2){
-//          std::cout << "problem var ";
-//        }
-//      }
-//    std::cout << "idx " << i << " yaw " << tf2::getYaw(current_trajectory_ptr_->points.at(i).pose.orientation)<<std::endl;
-//  }
 }
 
 void ControlPerformanceAnalysisNode::onControlRaw(
