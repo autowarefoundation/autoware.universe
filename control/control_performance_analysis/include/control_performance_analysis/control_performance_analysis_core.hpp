@@ -50,7 +50,7 @@ using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 
-struct param
+struct Params
 {
   double wheelbase_;
   double curvature_interval_length_;
@@ -67,7 +67,7 @@ public:
   // See https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ControlPerformanceAnalysisCore();
-  explicit ControlPerformanceAnalysisCore(param & p);
+  explicit ControlPerformanceAnalysisCore(Params & p);
 
   // Setters
   void setCurrentPose(const Pose & msg);
@@ -96,7 +96,7 @@ public:
   DrivingMonitorStamped driving_status_vars;
 
 private:
-  param p_;
+  Params p_;
 
   // Variables Received Outside
   std::shared_ptr<PoseArray> current_waypoints_ptr_;

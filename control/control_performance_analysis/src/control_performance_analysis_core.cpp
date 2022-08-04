@@ -38,7 +38,7 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
   p_.wheelbase_ = 2.74;
 }
 
-ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(param & p) : p_{p}
+ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(Params & p) : p_{p}
 {
   // prepare control performance struct
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>();

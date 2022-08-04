@@ -76,7 +76,7 @@ private:
   void onVelocity(const Odometry::ConstSharedPtr msg);
 
   // Parameters
-  param param_{};  // wheelbase, control period and feedback coefficients.
+  Params param_{};  // wheelbase, control period and feedback coefficients.
   // State holder
   std_msgs::msg::Header last_control_cmd_;
   double d_control_cmd_{0};
@@ -92,8 +92,6 @@ private:
   Trajectory prev_traj;
   AckermannControlCommand prev_cmd;
   SteeringReport prev_steering;
-
-  std_msgs::msg::Header odom_state_;
 
   // Algorithm
   std::unique_ptr<ControlPerformanceAnalysisCore> control_performance_core_ptr_;
