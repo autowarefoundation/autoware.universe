@@ -47,7 +47,8 @@ Predictor::Predictor()
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0f / prediction_rate));
-  timer_ = this->create_wall_timer(chrono_period, std::bind(&Predictor::timerCallback, this));
+  timer_ = rclcpp::create_timer(
+    this, this->get_clock(), chrono_period, std::bind(&Predictor::timerCallback, this));
 }
 
 void Predictor::gnssposeCallback(const PoseStamped::ConstSharedPtr pose)
