@@ -8,10 +8,12 @@
 #include <numeric>
 
 RetroactiveResampler::RetroactiveResampler(
-  float resampling_interval_seconds, int number_of_particles)
-: max_history_num_(100), resampling_interval_seconds_(resampling_interval_seconds)
+  float resampling_interval_seconds, int number_of_particles, bool dynamic_resampling)
+: max_history_num_(100),
+  resampling_interval_seconds_(resampling_interval_seconds),
+  number_of_particles_(number_of_particles),
+  dynamic_resampling_(dynamic_resampling)
 {
-  number_of_particles_ = number_of_particles;
   resampling_history_ = initializeResampleHistory(number_of_particles_, max_history_num_);
   resampling_history_wp_ = 0;
 }
@@ -32,10 +34,9 @@ std::vector<std::vector<int>> RetroactiveResampler::initializeResampleHistory(
   return resample_history;
 }
 
-std::optional<modularized_particle_filter_msgs::msg::ParticleArray>
-RetroactiveResampler::retroactiveWeighting(
-  const modularized_particle_filter_msgs::msg::ParticleArray & predicted_particles,
-  const modularized_particle_filter_msgs::msg::ParticleArray::ConstSharedPtr & weighted_particles)
+RetroactiveResampler::OptParticleArray RetroactiveResampler::retroactiveWeighting(
+  const ParticleArray & predicted_particles,
+  const ParticleArray::ConstSharedPtr & weighted_particles)
 {
   rclcpp::Logger logger = rclcpp::get_logger("modularized_particle_filter.retroactive_resampler");
   if (!(weighted_particles->id <= resampling_history_wp_ &&                    // not future data
@@ -46,7 +47,7 @@ RetroactiveResampler::retroactiveWeighting(
     return std::nullopt;
   }
 
-  modularized_particle_filter_msgs::msg::ParticleArray reweighted_particles{predicted_particles};
+  ParticleArray reweighted_particles{predicted_particles};
 
   RCLCPP_INFO_STREAM(
     logger, "current generation " << resampling_history_wp_ << " callback generation "
@@ -84,10 +85,8 @@ RetroactiveResampler::retroactiveWeighting(
 
   return reweighted_particles;
 }
-
-std::optional<modularized_particle_filter_msgs::msg::ParticleArray>
-RetroactiveResampler::resampling(
-  const modularized_particle_filter_msgs::msg::ParticleArray & predicted_particles)
+RetroactiveResampler::OptParticleArray RetroactiveResampler::resampling(
+  const ParticleArray & predicted_particles)
 {
   double current_time{rclcpp::Time(predicted_particles.header.stamp).seconds()};
 
@@ -100,8 +99,7 @@ RetroactiveResampler::resampling(
     return std::nullopt;
   }
 
-  modularized_particle_filter_msgs::msg::ParticleArray resampled_particles{predicted_particles};
-
+  ParticleArray resampled_particles{predicted_particles};
   resampling_history_wp_++;
   resampled_particles.id = resampling_history_wp_;
 
@@ -110,9 +108,7 @@ RetroactiveResampler::resampling(
   const double sum_weight_inv{
     1.0 / std::accumulate(
             predicted_particles.particles.begin(), predicted_particles.particles.end(), 0.0,
-            [](double weight, const modularized_particle_filter_msgs::msg::Particle & ps) {
-              return weight + ps.weight;
-            })};
+            [](double weight, const Particle & ps) { return weight + ps.weight; })};
 
   if (!std::isfinite(sum_weight_inv)) {
     exit(EXIT_FAILURE);

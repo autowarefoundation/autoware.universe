@@ -30,6 +30,7 @@ private:
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
+  using OptParticleArray = std::optional<ParticleArray>;
 
   // Subscriber
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
@@ -49,8 +50,9 @@ private:
   const bool visualize_;
   const int number_of_particles_;
   const float resampling_interval_seconds_;
-  const float static_linear_covariance;
-  const float static_angular_covariance;
+  const float static_linear_covariance_;
+  const float static_angular_covariance_;
+  const bool use_dynamic_noise_;
   float ground_height_;
 
   std::shared_ptr<ParticleVisualizer> visualizer_{nullptr};
@@ -67,6 +69,11 @@ private:
   void twistCallback(const TwistStamped::ConstSharedPtr twist);
   void weightedParticlesCallback(const ParticleArray::ConstSharedPtr weighted_particles);
   void timerCallback();
+
+  void updateWithStaticNoise(
+    ParticleArray & particle_array, const TwistWithCovarianceStamped & twist);
+  void updateWithDynamicNoise(
+    ParticleArray & particle_array, const TwistWithCovarianceStamped & twist);
 
   void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
 };

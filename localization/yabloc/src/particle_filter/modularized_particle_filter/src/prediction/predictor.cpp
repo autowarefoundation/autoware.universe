@@ -17,8 +17,9 @@ Predictor::Predictor()
   visualize_(declare_parameter<bool>("visualize", false)),
   number_of_particles_(declare_parameter("num_of_particles", 500)),
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
-  static_linear_covariance(declare_parameter("static_linear_covariance", 0.01)),
-  static_angular_covariance(declare_parameter("static_angular_covariance", 0.01))
+  static_linear_covariance_(declare_parameter("static_linear_covariance", 0.01)),
+  static_angular_covariance_(declare_parameter("static_angular_covariance", 0.01)),
+  use_dynamic_noise_(declare_parameter("use_dynamic_noise", false))
 {
   const double prediction_rate{declare_parameter("prediction_rate", 50.0f)};
 
@@ -47,8 +48,8 @@ Predictor::Predictor()
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0f / prediction_rate));
-  timer_ = rclcpp::create_timer(
-    this, this->get_clock(), chrono_period, std::bind(&Predictor::timerCallback, this));
+  auto cb_timer = std::bind(&Predictor::timerCallback, this);
+  timer_ = rclcpp::create_timer(this, this->get_clock(), chrono_period, std::move(cb_timer));
 }
 
 void Predictor::gnssposeCallback(const PoseStamped::ConstSharedPtr pose)
@@ -98,8 +99,8 @@ void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpos
   }
   particle_array_opt_ = particle_array;
 
-  resampler_ptr_ =
-    std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_);
+  resampler_ptr_ = std::make_shared<RetroactiveResampler>(
+    resampling_interval_seconds_, number_of_particles_, use_dynamic_noise_);
 }
 
 void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
@@ -107,23 +108,57 @@ void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
   TwistWithCovarianceStamped twist_covariance;
   twist_covariance.header = twist->header;
   twist_covariance.twist.twist = twist->twist;
-  twist_covariance.twist.covariance.at(0) = static_linear_covariance;
+  twist_covariance.twist.covariance.at(0) = static_linear_covariance_;
   twist_covariance.twist.covariance.at(7) = 1e4;
   twist_covariance.twist.covariance.at(14) = 1e4;
   twist_covariance.twist.covariance.at(21) = 1e4;
   twist_covariance.twist.covariance.at(28) = 1e4;
-  twist_covariance.twist.covariance.at(35) = static_angular_covariance;
+  twist_covariance.twist.covariance.at(35) = static_angular_covariance_;
   twist_opt_ = twist_covariance;
 }
 
-void Predictor::timerCallback()
+void Predictor::updateWithDynamicNoise(
+  ParticleArray & particle_array, const TwistWithCovarianceStamped & twist)
 {
-  if (!particle_array_opt_.has_value()) return;
-  if (!twist_opt_.has_value()) return;
+  rclcpp::Time current_time{this->now()};
+  rclcpp::Time msg_time{particle_array.header.stamp};
 
-  modularized_particle_filter_msgs::msg::ParticleArray particle_array = particle_array_opt_.value();
-  geometry_msgs::msg::TwistWithCovarianceStamped twist{twist_opt_.value()};
+  const float dt = static_cast<float>((current_time - msg_time).seconds());
+  if (dt < 0.0f) {
+    RCLCPP_WARN_STREAM(get_logger(), "time stamp is wrong? " << dt);
+    return;
+  }
 
+  particle_array.header.stamp = current_time;
+  const float linear_x = twist.twist.twist.linear.x;
+  const float angular_z = twist.twist.twist.angular.z;
+  const float roll = 0.0f;
+  const float pitch = 0.0f;
+  const float std_linear_x = std::sqrt(twist.twist.covariance[0]);
+  const float std_angular_z = std::sqrt(twist.twist.covariance[5 * 6 + 5]);
+
+  using prediction_util::nrand;
+  for (size_t i{0}; i < particle_array.particles.size(); i++) {
+    geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
+
+    float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
+    float vx{linear_x + nrand(16) * std_linear_x};
+    float wz{angular_z + nrand(1) * std_angular_z};
+
+    tf2::Quaternion q;
+    q.setRPY(roll, pitch, yaw + wz * dt);
+    pose.orientation = tf2::toMsg(q);
+    pose.position.x += vx * std::cos(yaw) * dt;
+    pose.position.y += vx * std::sin(yaw) * dt;
+    pose.position.z = ground_height_;
+
+    particle_array.particles[i].pose = pose;
+  }
+}
+
+void Predictor::updateWithStaticNoise(
+  ParticleArray & particle_array, const TwistWithCovarianceStamped & twist)
+{
   rclcpp::Time current_time{this->now()};
   const float dt =
     static_cast<float>((current_time - rclcpp::Time(particle_array.header.stamp)).seconds());
@@ -155,9 +190,24 @@ void Predictor::timerCallback()
 
     particle_array.particles[i].pose = pose;
   }
+}
+
+void Predictor::timerCallback()
+{
+  if (!particle_array_opt_.has_value()) return;
+  if (!twist_opt_.has_value()) return;
+  ParticleArray particle_array = particle_array_opt_.value();
+  TwistWithCovarianceStamped twist{twist_opt_.value()};
+
+  if (use_dynamic_noise_) {
+    updateWithStaticNoise(particle_array, twist);
+  } else {
+    updateWithDynamicNoise(particle_array, twist);
+  }
 
   predicted_particles_pub_->publish(particle_array);
 
+  rclcpp::Time current_time{this->now()};
   geometry_msgs::msg::Pose mean_pose{meanPose(particle_array)};
   publishMeanPose(mean_pose, current_time);
 
@@ -170,17 +220,15 @@ void Predictor::weightedParticlesCallback(
   const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "weightedParticleCallback is called");
-  modularized_particle_filter_msgs::msg::ParticleArray particle_array{particle_array_opt_.value()};
+  ParticleArray particle_array{particle_array_opt_.value()};
 
-  std::optional<modularized_particle_filter_msgs::msg::ParticleArray>
-    retroactive_weighted_particles{
-      resampler_ptr_->retroactiveWeighting(particle_array, weighted_particles_ptr)};
+  OptParticleArray retroactive_weighted_particles{
+    resampler_ptr_->retroactiveWeighting(particle_array, weighted_particles_ptr)};
   if (retroactive_weighted_particles.has_value()) {
     particle_array.particles = retroactive_weighted_particles.value().particles;
   }
 
-  std::optional<modularized_particle_filter_msgs::msg::ParticleArray> resampled_particles{
-    resampler_ptr_->resampling(particle_array)};
+  OptParticleArray resampled_particles{resampler_ptr_->resampling(particle_array)};
   if (resampled_particles.has_value()) {
     particle_array = resampled_particles.value();
   }
