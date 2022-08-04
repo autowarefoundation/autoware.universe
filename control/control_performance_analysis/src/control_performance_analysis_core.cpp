@@ -24,30 +24,26 @@ namespace control_performance_analysis
 {
 using geometry_msgs::msg::Quaternion;
 
-ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore() : wheelbase_{2.74}
+ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
 {
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
   prev_driving_vars_ = std::make_unique<msg::DrivingMonitorStamped>();
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
-  odom_interval_ = 0;
-  curvature_interval_length_ = 10.0;
-  acceptable_min_waypoint_distance_ = 2.0;
-  prevent_zero_division_value_ = 0.001;
-  lpf_gain_ = 0.8;
+  p_.odom_interval_ = 0;
+  p_.curvature_interval_length_ = 10.0;
+  p_.acceptable_max_distance_to_waypoint_ = 1.5;
+  p_.acceptable_max_yaw_difference_rad_ = 1.0472;
+  p_.prevent_zero_division_value_ = 0.001;
+  p_.lpf_gain_ = 0.8;
+  p_.wheelbase_ = 2.74;
 }
 
-ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(
-  double wheelbase, double curvature_interval_length, uint odom_interval,
-  double acceptable_min_waypoint_distance, double prevent_zero_division_value, double lpf_gain_val)
-: wheelbase_{wheelbase},
-  curvature_interval_length_{curvature_interval_length},
-  odom_interval_{odom_interval},
-  acceptable_min_waypoint_distance_{acceptable_min_waypoint_distance},
-  prevent_zero_division_value_{prevent_zero_division_value},
-  lpf_gain_{lpf_gain_val}
+ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(param & p)
+: p_{p}
 {
   // prepare control performance struct
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
+  prev_driving_vars_ = std::make_unique<msg::DrivingMonitorStamped>();
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
 }
 
@@ -68,7 +64,7 @@ void ControlPerformanceAnalysisCore::setOdomHistory(const Odometry & odom)
   if (!odom_history_ptr_->empty() && odom.header.stamp == odom_history_ptr_->back().header.stamp) {
     return;
   }
-  if (odom_history_ptr_->size() >= (3 + odom_interval_ * 2)) {
+  if (odom_history_ptr_->size() >= (3 + p_.odom_interval_ * 2)) {
     // If higher, remove the first element of vector
     odom_history_ptr_->erase(odom_history_ptr_->begin());
     odom_history_ptr_->push_back(odom);
@@ -93,66 +89,30 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
     return std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
   }
 
-  /*
-   *   Create Vectors of Path Directions for each interval
-   *   interval_vector_xy = {waypoint_1 - waypoint_0}_xy
-   * */
+  auto closest_idx = motion_utils::findNearestIndex(
+    current_waypoints_ptr_->poses, *current_vec_pose_ptr_, p_.acceptable_max_distance_to_waypoint_, p_.acceptable_max_yaw_difference_rad_);
 
-  // Prepare vector of projection distance values; projection of vehicle vectors onto the intervals
-  std::vector<double> projection_distances_ds;
+  // find the prev and next waypoint
 
-  auto f_projection_dist = [this](auto pose_1, auto pose_0) {
-    // Vector of intervals.
-    std::vector<double> int_vec{
-      pose_1.position.x - pose_0.position.x, pose_1.position.y - pose_0.position.y};
-
-    // Compute the magnitude of path interval vector
-    double ds_mag = std::hypot(int_vec[0], int_vec[1]);
-
-    // Vector to vehicle from the origin waypoints.
-    std::vector<double> vehicle_vec{
-      this->current_vec_pose_ptr_->position.x - pose_0.position.x,
-      this->current_vec_pose_ptr_->position.y - pose_0.position.y};
-
-    double projection_distance_onto_interval =
-      (int_vec[0] * vehicle_vec[0] + int_vec[1] * vehicle_vec[1]) / ds_mag;
-
-    return projection_distance_onto_interval;
-  };
-
-  // Fill the projection_distances vector.
-  std::transform(
-    current_waypoints_ptr_->poses.cbegin() + 1, current_waypoints_ptr_->poses.cend(),
-    current_waypoints_ptr_->poses.cbegin(), std::back_inserter(projection_distances_ds),
-    f_projection_dist);
-
-  // Lambda function to replace negative numbers with a large number.
-  auto fnc_check_if_negative = [](auto x) {
-    return x < 0 ? std::numeric_limits<double>::max() : x;
-  };
-
-  std::vector<double> projections_distances_all_positive;
-  std::transform(
-    projection_distances_ds.cbegin(), projection_distances_ds.cend(),
-    std::back_inserter(projections_distances_all_positive), fnc_check_if_negative);
-
-  // Minimum of all positive distances and the index of the next waypoint.
-  auto it = std::min_element(
-    projections_distances_all_positive.cbegin(), projections_distances_all_positive.cend());
-
-  // Extract the location of iterator idx and store in the class.
-  int32_t && temp_idx_prev_wp_ = std::distance(projections_distances_all_positive.cbegin(), it);
-  idx_prev_wp_ = std::make_unique<int32_t>(temp_idx_prev_wp_);
-
-  // Distance of next waypoint to the vehicle, for anomaly detection.
-  double min_distance_ds = projections_distances_all_positive[*idx_prev_wp_];
-  int32_t length_of_trajectory =
-    std::distance(current_waypoints_ptr_->poses.cbegin(), current_waypoints_ptr_->poses.cend());
-
-  return ((min_distance_ds <= acceptable_min_waypoint_distance_) && (*idx_prev_wp_ >= 0) &&
-          (*idx_prev_wp_ <= length_of_trajectory))
-           ? std::make_pair(true, *idx_prev_wp_)
-           : std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
+  if(*closest_idx != 0 && (*closest_idx + 1) != current_waypoints_ptr_->poses.size()){
+    double dist_to_prev = std::hypot(current_vec_pose_ptr_->position.x - current_waypoints_ptr_->poses.at(*closest_idx - 1).position.x, current_vec_pose_ptr_->position.y - current_waypoints_ptr_->poses.at(*closest_idx - 1).position.y);
+    double dist_to_next = std::hypot(current_vec_pose_ptr_->position.x - current_waypoints_ptr_->poses.at(*closest_idx + 1).position.x, current_vec_pose_ptr_->position.y - current_waypoints_ptr_->poses.at(*closest_idx + 1).position.y);
+    if(dist_to_next > dist_to_prev){
+        idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx - 1);
+        idx_next_wp_ = std::make_unique<int32_t>(*closest_idx);
+    } else {
+      idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx);
+      idx_next_wp_ = std::make_unique<int32_t>(*closest_idx + 1);
+    }
+  } else if(*closest_idx == 0) {
+    idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx);
+    idx_next_wp_ = std::make_unique<int32_t>(*closest_idx + 1);
+  } else {
+    idx_prev_wp_ = std::make_unique<int32_t>(*closest_idx - 1);
+    idx_next_wp_ = std::make_unique<int32_t>(*closest_idx);
+  }
+    return (idx_prev_wp_ && idx_next_wp_) ? std::make_pair(true, *idx_prev_wp_)
+             : std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
 }
 
 bool ControlPerformanceAnalysisCore::isDataReady() const
@@ -222,7 +182,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   // Get Yaw angles of the reference waypoint and the vehicle
   double target_yaw = tf2::getYaw(pose_interp_wp_.orientation);
   double vehicle_yaw_angle = tf2::getYaw(current_vec_pose_ptr_->orientation);
-
+//  std::cout << " target yaw " << target_yaw << " vehicle yaw " << vehicle_yaw_angle<<std::endl;
   // Compute Curvature at the point where the front axle might follow
   // get the waypoint corresponds to the front_axle center
 
@@ -268,8 +228,8 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
                        2.0;
   double && dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
                  odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
-  double && dt = ds / std::max(vel_mean, prevent_zero_division_value_);
-  double && Ax = dv / std::max(dt, prevent_zero_division_value_);  // current acceleration
+  double && dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
+  double && Ax = dv / std::max(dt, p_.prevent_zero_division_value_);  // current acceleration
 
   double && longitudinal_error_velocity =
     Vx * cos(heading_yaw_error) - *interpolated_velocity_ptr_ * (1 - curvature_est * lateral_error);
@@ -280,7 +240,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   double && current_steering_val = current_vec_steering_msg_ptr_->steering_tire_angle;
   error_vars.error.control_effort_energy = contR * steering_cmd * steering_cmd;  // u*R*u';
 
-  double && heading_velocity_error = (Vx * tan(current_steering_val)) / wheelbase_ -
+  double && heading_velocity_error = (Vx * tan(current_steering_val)) / p_.wheelbase_ -
                                      *this->interpolated_velocity_ptr_ * curvature_est;
 
   double && lateral_acceleration_error =
@@ -317,48 +277,48 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   if (prev_target_vars_) {
     // LPF for error vars
 
-    error_vars.error.curvature_estimate = lpf_gain_ * prev_target_vars_->error.curvature_estimate +
-                                          (1 - lpf_gain_) * error_vars.error.curvature_estimate;
+    error_vars.error.curvature_estimate = p_.lpf_gain_ * prev_target_vars_->error.curvature_estimate +
+                                          (1 - p_.lpf_gain_) * error_vars.error.curvature_estimate;
 
     error_vars.error.curvature_estimate_pp =
-      lpf_gain_ * prev_target_vars_->error.curvature_estimate_pp +
-      (1 - lpf_gain_) * error_vars.error.curvature_estimate_pp;
+      p_.lpf_gain_ * prev_target_vars_->error.curvature_estimate_pp +
+      (1 - p_.lpf_gain_) * error_vars.error.curvature_estimate_pp;
 
-    error_vars.error.lateral_error = lpf_gain_ * prev_target_vars_->error.lateral_error +
-                                     (1 - lpf_gain_) * error_vars.error.lateral_error;
+    error_vars.error.lateral_error = p_.lpf_gain_ * prev_target_vars_->error.lateral_error +
+                                     (1 - p_.lpf_gain_) * error_vars.error.lateral_error;
 
     error_vars.error.lateral_error_velocity =
-      lpf_gain_ * prev_target_vars_->error.lateral_error_velocity +
-      (1 - lpf_gain_) * error_vars.error.lateral_error_velocity;
+      p_.lpf_gain_ * prev_target_vars_->error.lateral_error_velocity +
+      (1 - p_.lpf_gain_) * error_vars.error.lateral_error_velocity;
 
     error_vars.error.lateral_error_acceleration =
-      lpf_gain_ * prev_target_vars_->error.lateral_error_acceleration +
-      (1 - lpf_gain_) * error_vars.error.lateral_error_acceleration;
+      p_.lpf_gain_ * prev_target_vars_->error.lateral_error_acceleration +
+      (1 - p_.lpf_gain_) * error_vars.error.lateral_error_acceleration;
 
-    error_vars.error.longitudinal_error = lpf_gain_ * prev_target_vars_->error.longitudinal_error +
-                                          (1 - lpf_gain_) * error_vars.error.longitudinal_error;
+    error_vars.error.longitudinal_error = p_.lpf_gain_ * prev_target_vars_->error.longitudinal_error +
+                                          (1 - p_.lpf_gain_) * error_vars.error.longitudinal_error;
 
     error_vars.error.longitudinal_error_velocity =
-      lpf_gain_ * prev_target_vars_->error.longitudinal_error_velocity +
-      (1 - lpf_gain_) * error_vars.error.longitudinal_error_velocity;
+      p_.lpf_gain_ * prev_target_vars_->error.longitudinal_error_velocity +
+      (1 - p_.lpf_gain_) * error_vars.error.longitudinal_error_velocity;
 
     error_vars.error.longitudinal_error_acceleration =
-      lpf_gain_ * prev_target_vars_->error.longitudinal_error_acceleration +
-      (1 - lpf_gain_) * error_vars.error.longitudinal_error_acceleration;
+      p_.lpf_gain_ * prev_target_vars_->error.longitudinal_error_acceleration +
+      (1 - p_.lpf_gain_) * error_vars.error.longitudinal_error_acceleration;
 
-    error_vars.error.heading_error = lpf_gain_ * prev_target_vars_->error.heading_error +
-                                     (1 - lpf_gain_) * error_vars.error.heading_error;
+    error_vars.error.heading_error = p_.lpf_gain_ * prev_target_vars_->error.heading_error +
+                                     (1 - p_.lpf_gain_) * error_vars.error.heading_error;
 
     error_vars.error.heading_error_velocity =
-      lpf_gain_ * prev_target_vars_->error.heading_error_velocity +
-      (1 - lpf_gain_) * error_vars.error.heading_error_velocity;
+      p_.lpf_gain_ * prev_target_vars_->error.heading_error_velocity +
+      (1 - p_.lpf_gain_) * error_vars.error.heading_error_velocity;
 
     error_vars.error.control_effort_energy =
-      lpf_gain_ * prev_target_vars_->error.control_effort_energy +
-      (1 - lpf_gain_) * error_vars.error.control_effort_energy;
+      p_.lpf_gain_ * prev_target_vars_->error.control_effort_energy +
+      (1 - p_.lpf_gain_) * error_vars.error.control_effort_energy;
 
-    error_vars.error.error_energy = lpf_gain_ * prev_target_vars_->error.error_energy +
-                                    (1 - lpf_gain_) * error_vars.error.error_energy;
+    error_vars.error.error_energy = p_.lpf_gain_ * prev_target_vars_->error.error_energy +
+                                    (1 - p_.lpf_gain_) * error_vars.error.error_energy;
   }
 
   prev_target_vars_ = std::make_unique<msg::ErrorStamped>(error_vars);
@@ -386,23 +346,23 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         odom_history_ptr_->at(odom_size - 1).header.stamp);
       driving_status_vars.lateral_acceleration.data =
         odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x *
-        tan(current_vec_steering_msg_ptr_->steering_tire_angle) / wheelbase_;
+        tan(current_vec_steering_msg_ptr_->steering_tire_angle) / p_.wheelbase_;
 
-      if (odom_history_ptr_->size() >= odom_interval_ + 2) {
+      if (odom_history_ptr_->size() >= p_.odom_interval_ + 2) {
         // Calculate longitudinal acceleration
 
         double dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
-                    odom_history_ptr_->at(odom_size - odom_interval_ - 2).twist.twist.linear.x;
+                    odom_history_ptr_->at(odom_size - p_.odom_interval_ - 2).twist.twist.linear.x;
 
         auto duration =
           (rclcpp::Time(odom_history_ptr_->at(odom_size - 1).header.stamp) -
-           rclcpp::Time(odom_history_ptr_->at(odom_size - odom_interval_ - 2).header.stamp));
+           rclcpp::Time(odom_history_ptr_->at(odom_size - p_.odom_interval_ - 2).header.stamp));
 
         double dt = duration.seconds();
 
         driving_status_vars.longitudinal_acceleration.data = dv / dt;
         driving_status_vars.longitudinal_acceleration.header.set__stamp(
-          rclcpp::Time(odom_history_ptr_->at(odom_size - odom_interval_ - 2).header.stamp) +
+          rclcpp::Time(odom_history_ptr_->at(odom_size - p_.odom_interval_ - 2).header.stamp) +
           duration * 0.5);  // Time stamp of acceleration data
 
         //  Calculate lateral jerk
@@ -417,7 +377,7 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
           driving_status_vars.longitudinal_acceleration.header;
       }
 
-      if (odom_history_ptr_->size() == 2 * odom_interval_ + 3) {
+      if (odom_history_ptr_->size() == 2 * p_.odom_interval_ + 3) {
         // calculate longitudinal jerk
         double d_a = driving_status_vars.longitudinal_acceleration.data -
                      prev_driving_vars_->longitudinal_acceleration.data;
@@ -434,28 +394,28 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         // LPF for driving status vars
 
         driving_status_vars.longitudinal_acceleration.data =
-          lpf_gain_ * prev_driving_vars_->longitudinal_acceleration.data +
-          (1 - lpf_gain_) * driving_status_vars.longitudinal_acceleration.data;
+          p_.lpf_gain_ * prev_driving_vars_->longitudinal_acceleration.data +
+          (1 - p_.lpf_gain_) * driving_status_vars.longitudinal_acceleration.data;
 
         driving_status_vars.lateral_acceleration.data =
-          lpf_gain_ * prev_driving_vars_->lateral_acceleration.data +
-          (1 - lpf_gain_) * driving_status_vars.lateral_acceleration.data;
+          p_.lpf_gain_ * prev_driving_vars_->lateral_acceleration.data +
+          (1 - p_.lpf_gain_) * driving_status_vars.lateral_acceleration.data;
 
         driving_status_vars.lateral_jerk.data =
-          lpf_gain_ * prev_driving_vars_->lateral_jerk.data +
-          (1 - lpf_gain_) * driving_status_vars.lateral_jerk.data;
+          p_.lpf_gain_ * prev_driving_vars_->lateral_jerk.data +
+          (1 - p_.lpf_gain_) * driving_status_vars.lateral_jerk.data;
 
         driving_status_vars.longitudinal_jerk.data =
-          lpf_gain_ * prev_driving_vars_->longitudinal_jerk.data +
-          (1 - lpf_gain_) * driving_status_vars.longitudinal_jerk.data;
+          p_.lpf_gain_ * prev_driving_vars_->longitudinal_jerk.data +
+          (1 - p_.lpf_gain_) * driving_status_vars.longitudinal_jerk.data;
 
         driving_status_vars.controller_processing_time.data =
-          lpf_gain_ * prev_driving_vars_->controller_processing_time.data +
-          (1 - lpf_gain_) * driving_status_vars.controller_processing_time.data;
+          p_.lpf_gain_ * prev_driving_vars_->controller_processing_time.data +
+          (1 - p_.lpf_gain_) * driving_status_vars.controller_processing_time.data;
 
         driving_status_vars.desired_steering_angle.data =
-          lpf_gain_ * prev_driving_vars_->desired_steering_angle.data +
-          (1 - lpf_gain_) * driving_status_vars.desired_steering_angle.data;
+          p_.lpf_gain_ * prev_driving_vars_->desired_steering_angle.data +
+          (1 - p_.lpf_gain_) * driving_status_vars.desired_steering_angle.data;
       }
 
       prev_driving_vars_ =
@@ -469,7 +429,7 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         current_vec_steering_msg_ptr_->stamp);
       driving_status_vars.lateral_acceleration.data =
         odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x *
-        tan(current_vec_steering_msg_ptr_->steering_tire_angle) / wheelbase_;
+        tan(current_vec_steering_msg_ptr_->steering_tire_angle) / p_.wheelbase_;
       last_steering_report.stamp = current_vec_steering_msg_ptr_->stamp;
     }
     return true;
@@ -506,7 +466,7 @@ void ControlPerformanceAnalysisCore::findCurveRefIdx()
       pose_t.position.x - this->interpolated_pose_ptr_->position.x,
       pose_t.position.y - this->interpolated_pose_ptr_->position.y);
 
-    return dist > wheelbase_;
+    return dist > p_.wheelbase_;
   };
 
   auto it = std::find_if(
@@ -557,7 +517,6 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   // First get te yaw angles of all three poses.
   double && prev_yaw = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
   double && next_yaw = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation);
-
   double & prev_velocity = current_waypoints_vel_ptr_->at(*idx_prev_wp_);
   double & next_velocity = current_waypoints_vel_ptr_->at(*idx_next_wp_);
 
@@ -568,8 +527,9 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   double && dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
                            current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
-  double && delta_psi_prev2next = utils::angleDistance(next_yaw, prev_yaw);
+  double && delta_psi_prev2next = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation - current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
   double && d_vel_prev2next = next_velocity - prev_velocity;
+//  std::cout << "pr idx " << *idx_prev_wp_ << " " << prev_yaw << " nxt idx " << *idx_next_wp_ << " " << next_yaw << " " <<delta_psi_prev2next;
 
   // Create a vector from p0 (prev) --> p1 (to next wp)
   std::vector<double> v_prev2next_wp{dx_prev2next, dy_prev2next};
@@ -635,14 +595,14 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
                          current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y;
     double && distance_p1_p2 = std::hypot(dx_p1_p2, dy_p1_p2);
     double && prev_steering =
-      static_cast<float>(std::atan((next_yaw - prev_yaw) * wheelbase_ / (distance_p02p1)));
+      static_cast<float>(std::atan((next_yaw - prev_yaw) * p_.wheelbase_ / (distance_p02p1)));
     double && next_steering = static_cast<float>(std::atan(
       (tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).orientation) - next_yaw) *
-      wheelbase_ / (distance_p1_p2)));
+      p_.wheelbase_ / (distance_p1_p2)));
     interp_steering_angle = prev_steering + ratio_t * (next_steering - prev_steering);
   } else {
     interp_steering_angle = static_cast<float>(std::atan(
-      (next_yaw - tf2::getYaw(interpolated_pose.orientation)) * wheelbase_ /
+      (next_yaw - tf2::getYaw(interpolated_pose.orientation)) * p_.wheelbase_ /
       (distance_p_interp2p1)));
   }
 
@@ -661,8 +621,8 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
                          2.0;
     double && dv = current_waypoints_vel_ptr_->at(*idx_next_wp_) -
                    current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1);
-    double && dt = ds / std::max(vel_mean, prevent_zero_division_value_);
-    prev_wp_acc = dv / std::max(dt, prevent_zero_division_value_);
+    double && dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
+    prev_wp_acc = dv / std::max(dt, p_.prevent_zero_division_value_);
   }
 
   if (*idx_next_wp_ == total_num_of_waypoints_in_traj - 1) {
@@ -678,8 +638,8 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
                          2.0;
     double && dv = current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) -
                    current_waypoints_vel_ptr_->at(*idx_prev_wp_);
-    double && dt = ds / std::max(vel_mean, prevent_zero_division_value_);
-    next_wp_acc = dv / std::max(dt, prevent_zero_division_value_);
+    double && dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
+    next_wp_acc = dv / std::max(dt, p_.prevent_zero_division_value_);
   }
   double && d_acc_prev2next = next_wp_acc - prev_wp_acc;
   double && interp_acceleration = prev_wp_acc + ratio_t * d_acc_prev2next;
@@ -720,7 +680,7 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
   // Define waypoints 10 meters behind the rear axle if exist.
   // If not exist, we will take the first point of the
   // curvature triangle as the start point of the trajectory.
-  auto && num_of_back_indices = std::round(curvature_interval_length_ / ds_arc_length);
+  auto && num_of_back_indices = std::round(p_.curvature_interval_length_ / ds_arc_length);
   int32_t loc_of_back_idx =
     (*idx_curve_ref_wp_ - num_of_back_indices < 0) ? 0 : *idx_curve_ref_wp_ - num_of_back_indices;
 
@@ -765,7 +725,7 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
 
   const uint32_t & odom_size = odom_history_ptr_->size();
   double & Vx = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x;
-  double look_ahead_distance_pp = std::max(wheelbase_, 2 * Vx);
+  double look_ahead_distance_pp = std::max(p_.wheelbase_, 2 * Vx);
 
   auto fun_distance_cond = [this, &look_ahead_distance_pp](auto pose_t) {
     double dist = std::hypot(

@@ -30,6 +30,8 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include "motion_common/motion_common.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <memory>
 #include <utility>
@@ -48,16 +50,23 @@ using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 
+struct param{
+  double wheelbase_;
+  double curvature_interval_length_;
+  uint odom_interval_;
+  double acceptable_max_distance_to_waypoint_;
+  double acceptable_max_yaw_difference_rad_;
+  double prevent_zero_division_value_;
+  double lpf_gain_;
+};
+
 class ControlPerformanceAnalysisCore
 {
 public:
   // See https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ControlPerformanceAnalysisCore();
-  ControlPerformanceAnalysisCore(
-    double wheelbase, double curvature_interval_length, uint odom_interval,
-    double acceptable_min_waypoint_distance, double prevent_zero_division_value,
-    double lpf_gain_val);
+  ControlPerformanceAnalysisCore(param & p);
 
   // Setters
   void setCurrentPose(const Pose & msg);
@@ -86,12 +95,8 @@ public:
   DrivingMonitorStamped driving_status_vars;
 
 private:
-  double wheelbase_;
-  double curvature_interval_length_;
-  uint odom_interval_;
-  double acceptable_min_waypoint_distance_;
-  double prevent_zero_division_value_;
-  double lpf_gain_;
+
+  param p_;
 
   // Variables Received Outside
   std::shared_ptr<PoseArray> current_waypoints_ptr_;

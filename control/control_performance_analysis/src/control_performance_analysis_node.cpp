@@ -42,20 +42,20 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
 
   // Implement Reading Global and Local Variables.
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
-  param_.wheel_base = vehicle_info.wheel_base_m;
+  param_.wheelbase_ = vehicle_info.wheel_base_m;
 
   // Node Parameters.
-  param_.curvature_interval_length = declare_parameter("curvature_interval_length", 10.0);
-  param_.prevent_zero_division_value = declare_parameter("prevent_zero_division_value", 0.001);
-  param_.odom_interval = declare_parameter("odom_interval", 2);
-  param_.acceptable_min_waypoint_distance =
-    declare_parameter("acceptable_min_waypoint_distance", 2.0);
-  param_.lpf_gain = declare_parameter("low_pass_filter_gain", 0.8);
+  param_.curvature_interval_length_ = declare_parameter("curvature_interval_length", 10.0);
+  param_.prevent_zero_division_value_ = declare_parameter("prevent_zero_division_value", 0.001);
+  param_.odom_interval_ = declare_parameter("odom_interval", 2);
+  param_.acceptable_max_distance_to_waypoint_ =
+    declare_parameter("acceptable_max_distance_to_waypoint", 1.5);
+  param_.acceptable_max_yaw_difference_rad_ =
+    declare_parameter("acceptable_max_yaw_difference_rad", 1.0472);
+  param_.lpf_gain_ = declare_parameter("low_pass_filter_gain", 0.8);
 
   // Prepare error computation class with the wheelbase parameter.
-  control_performance_core_ptr_ = std::make_unique<ControlPerformanceAnalysisCore>(
-    param_.wheel_base, param_.curvature_interval_length, param_.odom_interval,
-    param_.acceptable_min_waypoint_distance, param_.prevent_zero_division_value, param_.lpf_gain);
+  control_performance_core_ptr_ = std::make_unique<ControlPerformanceAnalysisCore>(param_);
 
   // Subscribers.
   sub_trajectory_ = create_subscription<Trajectory>(
@@ -94,6 +94,17 @@ void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedP
   }
 
   current_trajectory_ptr_ = msg;
+//  for(size_t i = 0; i < current_trajectory_ptr_->points.size(); i++){
+//    if(i == 0){
+//      std::cout << "--------------------------------------" << std::endl;
+//    }
+//    else{
+//        if(fabs(tf2::getYaw(current_trajectory_ptr_->points.at(i).pose.orientation)-tf2::getYaw(current_trajectory_ptr_->points.at(i-1).pose.orientation))>0.2){
+//          std::cout << "problem var ";
+//        }
+//      }
+//    std::cout << "idx " << i << " yaw " << tf2::getYaw(current_trajectory_ptr_->points.at(i).pose.orientation)<<std::endl;
+//  }
 }
 
 void ControlPerformanceAnalysisNode::onControlRaw(
