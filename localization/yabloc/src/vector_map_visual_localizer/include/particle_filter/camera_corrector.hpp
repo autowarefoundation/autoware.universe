@@ -50,5 +50,7 @@ private:
   const float min_prob_;
   const float far_weight_gain_;
   HierarchicalCostMap cost_map_;
+
+  Eigen::Vector3f last_mean_position_;
 };
 }  // namespace particle_filter

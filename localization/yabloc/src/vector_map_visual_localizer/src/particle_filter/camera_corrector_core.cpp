@@ -63,7 +63,16 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   cost_map_.eraseObsolete();
 
-  this->setWeightedParticleArray(weighted_particles);
+  // NOTE:
+  Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
+  Eigen::Vector3f mean_position = util::pose2Affine(mean_pose).translation();
+  if ((mean_position - last_mean_position_).squaredNorm() > 1) {
+    this->setWeightedParticleArray(weighted_particles);
+    last_mean_position_ = mean_position;
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
+  }
+
   pub_marker_->publish(cost_map_.showMapRange());
 
   // DEBUG: just visualization

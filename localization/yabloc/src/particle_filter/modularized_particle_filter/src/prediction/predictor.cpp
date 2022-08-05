@@ -144,8 +144,7 @@ void Predictor::updateWithDynamicNoise(
   const float std_linear_x = std::sqrt(twist.twist.covariance[0]);
   const float std_angular_z = std::sqrt(twist.twist.covariance[5 * 6 + 5]);
 
-  const float gain_linear = std::max(std::sqrt(std::abs(linear_x)), 0.1f);
-  const float gain_angular = std::max(std::sqrt(std::abs(linear_x)), 0.1f);
+  const float gain_linear = std::clamp(std::sqrt(std::abs(linear_x)), 0.1f, 1.0f);
 
   using util::nrand;
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
@@ -153,7 +152,7 @@ void Predictor::updateWithDynamicNoise(
 
     float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
     float vx{linear_x + nrand(16) * std_linear_x * gain_linear};
-    float wz{angular_z + nrand(1) * std_angular_z * gain_angular};
+    float wz{angular_z + nrand(1) * std_angular_z * gain_linear};
 
     tf2::Quaternion q;
     q.setRPY(roll, pitch, yaw + wz * dt);
@@ -239,18 +238,6 @@ void Predictor::weightedParticlesCallback(
   if (retroactive_weighted_particles.has_value()) {
     // TODO: Why do you copy only particles. Why do not copy all members including header and id
     particle_array.particles = retroactive_weighted_particles.value().particles;
-  }
-
-  if (use_dynamic_noise_) {
-    // Eigen::Vector3f eigen = stdOfDistribution(particle_array);
-    float std_weight = stdOfWeight(particle_array);
-    RCLCPP_WARN_STREAM(get_logger(), "log standard deviation weight: " << std::log(std_weight));
-    // If the distribution of particles does not spread enough wide, they are not resampled
-    // TODO:
-    if (std::log(std_weight) < log_std_weight_threshold_) {
-      particle_array_opt_ = particle_array;
-      return;
-    }
   }
 
   OptParticleArray resampled_particles{resampler_ptr_->resampling(particle_array)};
