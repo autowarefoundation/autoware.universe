@@ -95,3 +95,7 @@ Error acceleration calculations are made based on the velocity calculations abov
 > - /control_performance/performance_vars
 
 - In `Plotjuggler` you can export the statistic (max, min, average) values as csv file. Use that statistics to compare the control modules.
+
+## Future Improvements
+
+- Implement a LPF by cut-off frequency, differential equation and discrete state space update.
