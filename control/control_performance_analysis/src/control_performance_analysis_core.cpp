@@ -555,7 +555,7 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   const double & distance_p02p_interp =
     (dx_prev2next * dx_prev2vehicle + dy_prev2next * dy_prev2vehicle) / distance_p02p1;
 
-//  const double & distance_p_interp2p1 = distance_p02p1 - distance_p02p_interp;
+  //  const double & distance_p_interp2p1 = distance_p02p1 - distance_p02p_interp;
   /*
    * We use the following linear interpolation
    *  pi = p0 + ratio_t * (p1 - p0)
@@ -620,7 +620,6 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   const double & interp_acceleration = prev_wp_acc + ratio_t * d_acc_prev2next;
 
   const Pose interpolated_pose = temp_interpolated_pose;
-
 
   /* desired steering calculation */
 
