@@ -4,26 +4,28 @@
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace mpf_msgs = modularized_particle_filter_msgs;
-
 class ParticleVisualize : public rclcpp::Node
 {
 public:
+  using Particle = modularized_particle_filter_msgs::msg::Particle;
+  using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
+  using Marker = visualization_msgs::msg::Marker;
+  using MarkerArray = visualization_msgs::msg::MarkerArray;
+
   ParticleVisualize() : Node("particle_visualize")
   {
+    using std::placeholders::_1;
     // Subscriber
-    sub_particles_ = this->create_subscription<mpf_msgs::msg::ParticleArray>(
-      "/particle_array", 10,
-      std::bind(&ParticleVisualize::particlesCallback, this, std::placeholders::_1));
+    sub_particles_ = this->create_subscription<ParticleArray>(
+      "/particle_array", 10, std::bind(&ParticleVisualize::particlesCallback, this, _1));
 
     // Publisher
-    pub_marker_array =
-      this->create_publisher<visualization_msgs::msg::MarkerArray>("/marker_array", 10);
+    pub_marker_array = this->create_publisher<MarkerArray>("/marker_array", 10);
   }
 
 private:
-  rclcpp::Subscription<mpf_msgs::msg::ParticleArray>::SharedPtr sub_particles_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_marker_array;
+  rclcpp::Subscription<ParticleArray>::SharedPtr sub_particles_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_array;
 
   std_msgs::msg::ColorRGBA computeColor(float value) const
   {
@@ -49,14 +51,12 @@ private:
     return rgba;
   }
 
-  void particlesCallback(const mpf_msgs::msg::ParticleArray & msg)
+  void particlesCallback(const ParticleArray & msg)
   {
     visualization_msgs::msg::MarkerArray marker_array;
     auto minmax_weight = std::minmax_element(
       msg.particles.begin(), msg.particles.end(),
-      [](const mpf_msgs::msg::Particle & a, const mpf_msgs::msg::Particle & b) -> bool {
-        return a.weight < b.weight;
-      });
+      [](const Particle & a, const Particle & b) -> bool { return a.weight < b.weight; });
 
     float min = minmax_weight.first->weight;
     float max = minmax_weight.second->weight;
@@ -65,8 +65,8 @@ private:
 
     RCLCPP_INFO_STREAM(get_logger(), "min: " << min << " max: " << max);
     int id = 0;
-    for (const mpf_msgs::msg::Particle & p : msg.particles) {
-      visualization_msgs::msg::Marker marker;
+    for (const Particle & p : msg.particles) {
+      Marker marker;
       marker.frame_locked = true;
       marker.header.frame_id = "map";
       marker.id = id++;

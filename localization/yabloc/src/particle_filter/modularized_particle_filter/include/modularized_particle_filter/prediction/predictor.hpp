@@ -19,6 +19,8 @@
 
 #include <optional>
 
+namespace modularized_particle_filter
+{
 class Predictor : public rclcpp::Node
 {
 public:
@@ -78,4 +80,5 @@ private:
   void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
 };
 
+}  // namespace modularized_particle_filter
 #endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_

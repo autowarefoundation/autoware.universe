@@ -1,4 +1,6 @@
 #include "modularized_particle_filter/correction/correction_util.hpp"
+namespace modularized_particle_filter
+{
 
 std::optional<modularized_particle_filter_msgs::msg::ParticleArray> findSyncedParticles(
   boost::circular_buffer<modularized_particle_filter_msgs::msg::ParticleArray> circular_buffer,
@@ -19,3 +21,4 @@ std::optional<modularized_particle_filter_msgs::msg::ParticleArray> findSyncedPa
   }
   return std::nullopt;
 }
+}  // namespace modularized_particle_filter

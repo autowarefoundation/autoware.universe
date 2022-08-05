@@ -7,6 +7,8 @@
 #include <optional>
 #include <tuple>
 
+namespace modularized_particle_filter
+{
 class RetroactiveResampler
 {
 public:
@@ -38,5 +40,6 @@ private:
   std::vector<std::vector<int>> resampling_history_;
   int resampling_history_wp_;
 };
+}  // namespace modularized_particle_filter
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__RETROACTIVE_RESAMPLER_HPP_

@@ -7,6 +7,9 @@
 #include <cmath>
 #include <numeric>
 
+namespace modularized_particle_filter
+{
+
 RetroactiveResampler::RetroactiveResampler(
   float resampling_interval_seconds, int number_of_particles, bool dynamic_resampling)
 : max_history_num_(100),
@@ -138,3 +141,5 @@ RetroactiveResampler::OptParticleArray RetroactiveResampler::resampling(
 
   return resampled_particles;
 }
+
+}  // namespace modularized_particle_filter

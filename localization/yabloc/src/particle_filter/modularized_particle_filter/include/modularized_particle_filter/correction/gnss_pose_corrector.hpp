@@ -11,6 +11,8 @@
 
 #include <vector>
 
+namespace modularized_particle_filter
+{
 class GNSSPoseCorrector : public AbstCorrector
 {
 public:
@@ -30,5 +32,6 @@ private:
 
   float normalPDF(float x, float mu, float sigma);
 };
+}  // namespace modularized_particle_filter
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__GNSS_POSE_CORRECTOR_HPP_

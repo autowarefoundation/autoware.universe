@@ -1,4 +1,6 @@
 #include "modularized_particle_filter/correction/gnss_pose_corrector.hpp"
+namespace modularized_particle_filter
+{
 
 GNSSPoseCorrector::GNSSPoseCorrector()
 : AbstCorrector("gnss_pose_corrector"),
@@ -56,3 +58,4 @@ float GNSSPoseCorrector::normalPDF(float x, float mu, float sigma)
   float a = (x - mu) / sigma;
   return std::exp(-0.5f * a * a);
 }
+}  // namespace modularized_particle_filter

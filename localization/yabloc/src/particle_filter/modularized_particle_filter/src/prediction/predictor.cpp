@@ -1,7 +1,7 @@
 #include "modularized_particle_filter/prediction/predictor.hpp"
 
 #include "modularized_particle_filter/common/mean.hpp"
-#include "modularized_particle_filter/prediction/prediction_util.hpp"
+#include "modularized_particle_filter/common/prediction_util.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
 #include <tf2/utils.h>
@@ -12,6 +12,8 @@
 #include <memory>
 #include <numeric>
 
+namespace modularized_particle_filter
+{
 Predictor::Predictor()
 : Node("predictor"),
   visualize_(declare_parameter<bool>("visualize", false)),
@@ -86,10 +88,10 @@ void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpos
   const float yaw{static_cast<float>(tf2::getYaw(initialpose.pose.pose.orientation))};
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{initialpose.pose.pose};
-    pose.position.x += prediction_util::nrand(std::sqrt(initialpose.pose.covariance[0]));
-    pose.position.y += prediction_util::nrand(std::sqrt(initialpose.pose.covariance[6 * 1 + 1]));
-    float noised_yaw = prediction_util::normalizeRadian(
-      yaw + prediction_util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
+    pose.position.x += util::nrand(std::sqrt(initialpose.pose.covariance[0]));
+    pose.position.y += util::nrand(std::sqrt(initialpose.pose.covariance[6 * 1 + 1]));
+    float noised_yaw =
+      util::normalizeRadian(yaw + util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
     tf2::Quaternion q;
     q.setRPY(roll, pitch, noised_yaw);
     pose.orientation = tf2::toMsg(q);
@@ -137,7 +139,7 @@ void Predictor::updateWithDynamicNoise(
   const float std_linear_x = std::sqrt(twist.twist.covariance[0]);
   const float std_angular_z = std::sqrt(twist.twist.covariance[5 * 6 + 5]);
 
-  using prediction_util::nrand;
+  using util::nrand;
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
 
@@ -175,13 +177,11 @@ void Predictor::updateWithStaticNoise(
     const float pitch{0.0f};
     const float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
     const float vx{
-      twist.twist.twist.linear.x +
-      prediction_util::nrand(16 * std::sqrt(twist.twist.covariance[0]))};
+      twist.twist.twist.linear.x + util::nrand(16 * std::sqrt(twist.twist.covariance[0]))};
     const float wz{
-      twist.twist.twist.angular.z +
-      prediction_util::nrand(1 * std::sqrt(twist.twist.covariance[5 * 6 + 5]))};
+      twist.twist.twist.angular.z + util::nrand(1 * std::sqrt(twist.twist.covariance[5 * 6 + 5]))};
     tf2::Quaternion q;
-    q.setRPY(roll, pitch, prediction_util::normalizeRadian(yaw + wz * dt));
+    q.setRPY(roll, pitch, util::normalizeRadian(yaw + wz * dt));
 
     pose.orientation = tf2::toMsg(q);
     pose.position.x += vx * std::cos(yaw) * dt;
@@ -256,3 +256,5 @@ void Predictor::publishMeanPose(
   transform.transform.rotation = mean_pose.orientation;
   tf2_broadcaster_->sendTransform(transform);
 }
+
+}  // namespace modularized_particle_filter

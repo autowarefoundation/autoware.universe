@@ -9,8 +9,11 @@
 
 #include <optional>
 
+namespace modularized_particle_filter
+{
 std::optional<modularized_particle_filter_msgs::msg::ParticleArray> findSyncedParticles(
   boost::circular_buffer<modularized_particle_filter_msgs::msg::ParticleArray> circular_buffer,
   rclcpp::Time time);
+}
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_

@@ -11,6 +11,8 @@
 #include <complex>
 #include <numeric>
 
+namespace modularized_particle_filter
+{
 namespace
 {
 double meanRadian(const std::vector<double> & angles, const std::vector<double> & weights)
@@ -89,3 +91,4 @@ geometry_msgs::msg::Pose meanPose(
   mean_pose.orientation = tf2::toMsg(q);
   return mean_pose;
 }
+}  // namespace modularized_particle_filter

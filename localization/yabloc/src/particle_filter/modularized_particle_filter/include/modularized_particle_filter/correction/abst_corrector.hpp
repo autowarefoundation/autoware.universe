@@ -10,6 +10,8 @@
 
 #include <optional>
 
+namespace modularized_particle_filter
+{
 class AbstCorrector : public rclcpp::Node
 {
 public:
@@ -33,5 +35,6 @@ protected:
 private:
   void particleArrayCallback(const ParticleArray & particle_array);
 };
+}  // namespace modularized_particle_filter
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_

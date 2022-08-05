@@ -1,5 +1,7 @@
 #include "modularized_particle_filter/correction/abst_corrector.hpp"
 
+namespace modularized_particle_filter
+{
 AbstCorrector::AbstCorrector(const std::string & node_name)
 : Node(node_name), visualize_(declare_parameter<bool>("visualize", false))
 {
@@ -43,3 +45,5 @@ void AbstCorrector::setWeightedParticleArray(const ParticleArray & particle_arra
   particle_pub_->publish(particle_array);
   if (visualize_) visualizer_->publish(particle_array);
 }
+
+}  // namespace modularized_particle_filter

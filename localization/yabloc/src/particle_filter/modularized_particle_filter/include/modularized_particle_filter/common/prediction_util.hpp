@@ -1,11 +1,12 @@
-#ifndef MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTION_UTIL_HPP_
-#define MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTION_UTIL_HPP_
+#ifndef MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
+#define MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
 
 #include <numeric>
 #include <optional>
 #include <random>
 #include <vector>
-namespace prediction_util
+
+namespace modularized_particle_filter::util
 {
 std::random_device seed_gen;
 std::default_random_engine engine(seed_gen());
@@ -29,5 +30,5 @@ double normalizeRadian(const double rad, const double min_rad = -M_PI)
   return value - std::copysign(2 * M_PI, value);
 }
 
-}  // namespace prediction_util
-#endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTION_UTIL_HPP_
+}  // namespace modularized_particle_filter::util
+#endif  // MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
