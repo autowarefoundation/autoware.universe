@@ -50,7 +50,8 @@ struct TargetObstacle
 {
   TargetObstacle(
     const rclcpp::Time & arg_time_stamp, const PredictedObject & object,
-    const double aligned_velocity, const geometry_msgs::msg::PointStamped & arg_collision_point)
+    const double aligned_velocity,
+    const std::vector<geometry_msgs::msg::PointStamped> & arg_collision_points)
   {
     time_stamp = arg_time_stamp;
     orientation_reliable = true;
@@ -67,7 +68,7 @@ struct TargetObstacle
       predicted_paths.push_back(path);
     }
 
-    collision_point = arg_collision_point;
+    collision_points = arg_collision_points;
     has_stopped = false;
   }
 
@@ -81,7 +82,7 @@ struct TargetObstacle
   Shape shape;
   std::string uuid;
   std::vector<PredictedPath> predicted_paths;
-  geometry_msgs::msg::PointStamped collision_point;
+  std::vector<geometry_msgs::msg::PointStamped> collision_points;
   bool has_stopped;
 };
 
