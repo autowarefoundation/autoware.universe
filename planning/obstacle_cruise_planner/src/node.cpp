@@ -771,12 +771,10 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
     }
 
     // convert to obstacle type
-    const bool is_on_ego_traj = first_within_idx ? true : false;
     const double trajectory_aligned_adaptive_cruise =
       calcAlignedAdaptiveCruise(predicted_object, traj);
     const auto target_obstacle = TargetObstacle(
-      time_stamp, predicted_object, trajectory_aligned_adaptive_cruise, nearest_collision_point,
-      is_on_ego_traj);
+      time_stamp, predicted_object, trajectory_aligned_adaptive_cruise, nearest_collision_point);
     target_obstacles.push_back(target_obstacle);
   }
 

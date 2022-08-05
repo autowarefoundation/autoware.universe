@@ -50,8 +50,7 @@ struct TargetObstacle
 {
   TargetObstacle(
     const rclcpp::Time & arg_time_stamp, const PredictedObject & object,
-    const double aligned_velocity, const geometry_msgs::msg::PointStamped & arg_collision_point,
-    const bool arg_is_on_ego_trajectory)
+    const double aligned_velocity, const geometry_msgs::msg::PointStamped & arg_collision_point)
   {
     time_stamp = arg_time_stamp;
     orientation_reliable = true;
@@ -70,7 +69,6 @@ struct TargetObstacle
 
     collision_point = arg_collision_point;
     has_stopped = false;
-    is_on_ego_trajectory = arg_is_on_ego_trajectory;
   }
 
   rclcpp::Time time_stamp;
@@ -85,7 +83,6 @@ struct TargetObstacle
   std::vector<PredictedPath> predicted_paths;
   geometry_msgs::msg::PointStamped collision_point;
   bool has_stopped;
-  bool is_on_ego_trajectory;
 };
 
 struct ObstacleCruisePlannerData
