@@ -360,10 +360,10 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
     extractObstaclePointsWithinPolygon(voxel_grid_filtered_points, detection_area_polygon);
 
   // filter points that have lateral nearest distance
-  const auto laetral_nearest_points =
+  const auto lateral_nearest_points =
     extractLateralNearestPoints(detection_area_filtered_points, path, param_.points_interval);
 
   std::lock_guard<std::mutex> lock(mutex_);
-  dynamic_obstacle_data_.obstacle_points = laetral_nearest_points;
+  dynamic_obstacle_data_.obstacle_points = lateral_nearest_points;
 }
 }  // namespace behavior_velocity_planner
