@@ -5,7 +5,6 @@
 
 #include <iostream>
 #include <optional>
-#include <tuple>
 
 namespace modularized_particle_filter
 {
@@ -16,7 +15,7 @@ public:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using OptParticleArray = std::optional<ParticleArray>;
   RetroactiveResampler(
-    float resampling_interval_seconds, int number_of_particles, bool dynamic_resampling_);
+    float resampling_interval_seconds, int number_of_particles, int max_history_num);
 
   OptParticleArray retroactiveWeighting(
     const ParticleArray & predicted_particles,
@@ -24,21 +23,28 @@ public:
 
   std::optional<ParticleArray> resampling(const ParticleArray & predicted_particles);
 
-  static std::vector<std::vector<int>> initializeResampleHistory(
-    int number_of_particles, int max_history_num);
-
 private:
-  const int number_of_particles_;
-
-  const int max_history_num_;
+  // The minimum resampling interval is longer than this.
+  // It is assumed that users will call the resampling() function frequently.
   const float resampling_interval_seconds_;
-  const bool dynamic_resampling_;
+  // Number of particles to be managed.
+  const int number_of_particles_;
+  // Number of updates to keep resampling history.
+  // Resampling records prior to this will not be kept.
+  const int max_history_num_;
 
+  // Previous resampling time (At the first, it has nullopt)
   std::optional<double> previous_resampling_time_opt_;
 
-  // NOTE: circle_buffer<std::vector<int>> is better?
+  // This is handled like ring buffer.
+  // It keeps track of which particles each particle has transformed into at each resampling.
+  // NOTE: boost::circle_buffer<std::vector<int>> is better?
   std::vector<std::vector<int>> resampling_history_;
+
+  // Working Pointer? I guess.
   int resampling_history_wp_;
+
+  void initializeResampleHistory();
 };
 }  // namespace modularized_particle_filter
 

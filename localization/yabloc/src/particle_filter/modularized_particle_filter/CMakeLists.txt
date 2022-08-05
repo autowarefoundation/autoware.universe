@@ -18,6 +18,8 @@ add_definitions(${PCL_DEFINITIONS})
 
 ament_auto_find_build_dependencies()
 
+# ===================================================
+# Libraries
 ament_auto_add_library(
   abst_corrector
   SHARED
@@ -33,23 +35,24 @@ ament_auto_add_library(predictor
   src/common/mean.cpp
 )
 
+# ===================================================
+# Executables
 ament_auto_add_executable(predictor_node
-  src/prediction/predictor_node.cpp
+  src/app/predictor_node.cpp
 )
 target_link_libraries(predictor_node predictor)
 
-ament_auto_add_executable(lidar_pose_corrector
-  src/correction/lidar_pose_corrector_node.cpp
-  src/correction/lidar_pose_corrector.cpp
-  src/correction/correction_util.cpp
-)
+# ament_auto_add_executable(lidar_pose_corrector
+# src/correction/lidar_pose_corrector_node.cpp
+# src/correction/lidar_pose_corrector.cpp
+# src/correction/correction_util.cpp
+# )
 
-ament_auto_add_executable(gnss_pose_corrector
-  src/correction/gnss_pose_corrector_node.cpp
-  src/correction/gnss_pose_corrector.cpp
-  src/correction/correction_util.cpp
-)
-
+# ament_auto_add_executable(gnss_pose_corrector
+# src/correction/gnss_pose_corrector_node.cpp
+# src/correction/gnss_pose_corrector.cpp
+# src/correction/correction_util.cpp
+# )
 ament_auto_add_executable(particle_visualize
   src/common/particle_visualize_node.cpp
 )

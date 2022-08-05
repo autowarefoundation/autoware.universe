@@ -11,30 +11,24 @@ namespace modularized_particle_filter
 {
 
 RetroactiveResampler::RetroactiveResampler(
-  float resampling_interval_seconds, int number_of_particles, bool dynamic_resampling)
-: max_history_num_(100),
-  resampling_interval_seconds_(resampling_interval_seconds),
+  float resampling_interval_seconds, int number_of_particles, int max_history_num)
+: resampling_interval_seconds_(resampling_interval_seconds),
   number_of_particles_(number_of_particles),
-  dynamic_resampling_(dynamic_resampling)
+  max_history_num_(max_history_num)
 {
-  resampling_history_ = initializeResampleHistory(number_of_particles_, max_history_num_);
-  resampling_history_wp_ = 0;
+  initializeResampleHistory();
 }
 
-std::vector<std::vector<int>> RetroactiveResampler::initializeResampleHistory(
-  int number_of_particles, int max_history_num)
+void RetroactiveResampler::initializeResampleHistory()
 {
-  std::vector<std::vector<int>> resample_history;
-
-  resample_history.resize(max_history_num);
-  for (int i = 0; i < max_history_num; i++) {
-    resample_history[i].resize(number_of_particles);
-    for (int m = 0; m < number_of_particles; m++) {
-      resample_history[i][m] = m;
+  resampling_history_.resize(max_history_num_);
+  for (int i = 0; i < max_history_num_; i++) {
+    resampling_history_[i].resize(number_of_particles_);
+    for (int m = 0; m < number_of_particles_; m++) {
+      resampling_history_[i][m] = m;
     }
   }
-
-  return resample_history;
+  resampling_history_wp_ = 0;
 }
 
 RetroactiveResampler::OptParticleArray RetroactiveResampler::retroactiveWeighting(
