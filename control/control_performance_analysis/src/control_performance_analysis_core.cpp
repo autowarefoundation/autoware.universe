@@ -211,7 +211,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   const double & longitudinal_error = lateral_longitudinal_error[1];
 
   // Compute the yaw angle error.
-  const double && heading_yaw_error = utils::angleDistance(vehicle_yaw_angle, target_yaw);
+  const double & heading_yaw_error = utils::angleDistance(vehicle_yaw_angle, target_yaw);
 
   // Set the values of ErrorMsgVars.
 
@@ -220,44 +220,44 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   error_vars.error.heading_error = heading_yaw_error;
 
   // odom history contains k + 1, k, k - 1 ... steps. We are in kth step
-  const uint && odom_size = odom_history_ptr_->size();
+  const uint & odom_size = odom_history_ptr_->size();
 
   error_vars.header.stamp = odom_history_ptr_->at(odom_size - 2).header.stamp;  // we are in step k
 
   const double & Vx = odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
   // Current acceleration calculation
-  const double && d_x = odom_history_ptr_->at(odom_size - 1).pose.pose.position.x -
+  const double & d_x = odom_history_ptr_->at(odom_size - 1).pose.pose.position.x -
                   odom_history_ptr_->at(odom_size - 2).pose.pose.position.x;
-  const double && d_y = odom_history_ptr_->at(odom_size - 1).pose.pose.position.y -
+  const double & d_y = odom_history_ptr_->at(odom_size - 1).pose.pose.position.y -
                   odom_history_ptr_->at(odom_size - 2).pose.pose.position.y;
-  const double && ds = std::hypot(d_x, d_y);
+  const double & ds = std::hypot(d_x, d_y);
 
-  const double && vel_mean = (odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x +
+  const double & vel_mean = (odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x +
                         odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x) /
                        2.0;
-  const double && dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
+  const double & dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
                  odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
-  const double && dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
-  const double && Ax = dv / std::max(dt, p_.prevent_zero_division_value_);  // current acceleration
+  const double & dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
+  const double & Ax = dv / std::max(dt, p_.prevent_zero_division_value_);  // current acceleration
 
-  const double && longitudinal_error_velocity =
+  const double & longitudinal_error_velocity =
     Vx * cos(heading_yaw_error) - *interpolated_velocity_ptr_ * (1 - curvature_est * lateral_error);
-  const double && lateral_error_velocity =
+  const double & lateral_error_velocity =
     Vx * sin(heading_yaw_error) - *interpolated_velocity_ptr_ * curvature_est * longitudinal_error;
 
-  const double && steering_cmd = current_control_ptr_->lateral.steering_tire_angle;
-  const double && current_steering_val = current_vec_steering_msg_ptr_->steering_tire_angle;
+  const double & steering_cmd = current_control_ptr_->lateral.steering_tire_angle;
+  const double & current_steering_val = current_vec_steering_msg_ptr_->steering_tire_angle;
   error_vars.error.control_effort_energy = contR * steering_cmd * steering_cmd;  // u*R*u';
 
-  const double && heading_velocity_error = (Vx * tan(current_steering_val)) / p_.wheelbase_ -
+  const double & heading_velocity_error = (Vx * tan(current_steering_val)) / p_.wheelbase_ -
                                      *this->interpolated_velocity_ptr_ * curvature_est;
 
-  const double && lateral_acceleration_error =
+  const double & lateral_acceleration_error =
     -curvature_est * *interpolated_acceleration_ptr_ * longitudinal_error -
     curvature_est * *interpolated_velocity_ptr_ * longitudinal_error_velocity +
     Vx * heading_velocity_error * cos(heading_yaw_error) + Ax * sin(heading_yaw_error);
 
-  const double && longitudinal_acceleration_error =
+  const double & longitudinal_acceleration_error =
     curvature_est * *interpolated_acceleration_ptr_ * lateral_error +
     curvature_est * *interpolated_velocity_ptr_ * lateral_error_velocity -
     Vx * heading_velocity_error * sin(heading_yaw_error) + Ax * cos(heading_yaw_error) -
@@ -482,7 +482,7 @@ void ControlPerformanceAnalysisCore::findCurveRefIdx()
     it = std::prev(it);
   }
 
-  const int32_t && temp_idx_curve_ref_wp = std::distance(current_waypoints_ptr_->poses.cbegin(), it);
+  const int32_t & temp_idx_curve_ref_wp = std::distance(current_waypoints_ptr_->poses.cbegin(), it);
   idx_curve_ref_wp_ = std::make_unique<int32_t>(temp_idx_curve_ref_wp);
 }
 
@@ -508,21 +508,21 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
    * */
 
   // First get te yaw angles of all three poses.
-  const double && prev_yaw = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
+  const double & prev_yaw = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
   const double & prev_velocity = current_waypoints_vel_ptr_->at(*idx_prev_wp_);
   const double & next_velocity = current_waypoints_vel_ptr_->at(*idx_next_wp_);
 
   // Previous waypoint to next waypoint.
-  const double && dx_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
+  const double & dx_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
                            current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
 
-  const double && dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
+  const double & dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
                            current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
-  const double && delta_psi_prev2next = tf2::getYaw(
+  const double & delta_psi_prev2next = tf2::getYaw(
     current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation -
     current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
-  const double && d_vel_prev2next = next_velocity - prev_velocity;
+  const double & d_vel_prev2next = next_velocity - prev_velocity;
 
   // Create a vector from p0 (prev) --> p1 (to next wp)
   const std::vector<double> v_prev2next_wp{dx_prev2next, dy_prev2next};
@@ -534,32 +534,32 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
    *
    * */
 
-  const double && dx_prev2vehicle =
+  const double & dx_prev2vehicle =
     current_vec_pose_ptr_->position.x - current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
 
-  const double && dy_prev2vehicle =
+  const double & dy_prev2vehicle =
     current_vec_pose_ptr_->position.y - current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
   // Vector from p0 to p_vehicle
   const std::vector<double> v_prev2vehicle{dx_prev2vehicle, dy_prev2vehicle};
 
   // Compute the length of v_prev2next_wp : vector from p0 --> p1
-  const double && distance_p02p1 = std::hypot(dx_prev2next, dy_prev2next);
+  const double & distance_p02p1 = std::hypot(dx_prev2next, dy_prev2next);
 
   // Compute how far the car is away from p0 in p1 direction. p_interp is the location of the
   // interpolated waypoint. This is the dot product normalized by the length of the interval.
   // a.b = |a|.|b|.cos(alpha) -- > |a|.cos(alpha) = a.b / |b| where b is the path interval,
 
-  const double && distance_p02p_interp =
+  const double & distance_p02p_interp =
     (dx_prev2next * dx_prev2vehicle + dy_prev2next * dy_prev2vehicle) / distance_p02p1;
 
-  const double && distance_p_interp2p1 = distance_p02p1 - distance_p02p_interp;
+  const double & distance_p_interp2p1 = distance_p02p1 - distance_p02p_interp;
   /*
    * We use the following linear interpolation
    *  pi = p0 + ratio_t * (p1 - p0)
    * */
 
-  const double && ratio_t = distance_p02p_interp / distance_p02p1;
+  const double & ratio_t = distance_p02p_interp / distance_p02p1;
 
   // Interpolate pose.position and pose.orientation
   temp_interpolated_pose.position.x =
@@ -571,10 +571,10 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   temp_interpolated_pose.position.z = 0.0;
 
   // Interpolate the yaw angle of pi : interpolated waypoint
-  const double && interp_yaw_angle = prev_yaw + ratio_t * delta_psi_prev2next;
-  const double && interp_velocity = prev_velocity + ratio_t * d_vel_prev2next;
+  const double & interp_yaw_angle = prev_yaw + ratio_t * delta_psi_prev2next;
+  const double & interp_velocity = prev_velocity + ratio_t * d_vel_prev2next;
 
-  const Quaternion && orient_msg = utils::createOrientationMsgFromYaw(interp_yaw_angle);
+  const Quaternion & orient_msg = utils::createOrientationMsgFromYaw(interp_yaw_angle);
   temp_interpolated_pose.orientation = orient_msg;
 
   /* interpolated steering calculation */
@@ -582,14 +582,14 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   double tmp_interp_steering_angle = 0.0;
 
   if (static_cast<size_t>(*idx_next_wp_ + 1) < current_waypoints_ptr_->poses.size()) {
-    const double && dx_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
+    const double & dx_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
                          current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x;
-    const double && dy_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
+    const double & dy_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
                          current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y;
-    const double && distance_p1_p2 = std::hypot(dx_p1_p2, dy_p1_p2);
-    const double && prev_steering =
+    const double & distance_p1_p2 = std::hypot(dx_p1_p2, dy_p1_p2);
+    const double & prev_steering =
       static_cast<float>(std::atan(delta_psi_prev2next * p_.wheelbase_ / (distance_p02p1)));
-    const double && next_steering = static_cast<float>(std::atan(
+    const double & next_steering = static_cast<float>(std::atan(
       (tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).orientation - current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation)) *
       p_.wheelbase_ / (distance_p1_p2)));
     tmp_interp_steering_angle = prev_steering + ratio_t * (next_steering - prev_steering);
@@ -604,38 +604,38 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   if (*idx_prev_wp_ == 0 || static_cast<size_t>(*idx_prev_wp_ + 1) == current_waypoints_ptr_->poses.size()) {
     prev_wp_acc = 0.0;
   } else {
-    const double && d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
+    const double & d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
                     current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.x;
-    const double && d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
+    const double & d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
                     current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.y;
-    const double && ds = std::hypot(d_x, d_y);
-    const double && vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_) +
+    const double & ds = std::hypot(d_x, d_y);
+    const double & vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_) +
                           current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1)) /
                          2.0;
-    const double && dv = current_waypoints_vel_ptr_->at(*idx_next_wp_) -
+    const double & dv = current_waypoints_vel_ptr_->at(*idx_next_wp_) -
                    current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1);
-    const double && dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
+    const double & dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
     prev_wp_acc = dv / std::max(dt, p_.prevent_zero_division_value_);
   }
 
   if (static_cast<size_t>(*idx_next_wp_ + 1) == current_waypoints_ptr_->poses.size()) {
     next_wp_acc = 0.0;
   } else {
-    const double && d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
+    const double & d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
                     current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
-    const double && d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
+    const double & d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
                     current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
-    const double && ds = std::hypot(d_x, d_y);
-    const double && vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) +
+    const double & ds = std::hypot(d_x, d_y);
+    const double & vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) +
                           current_waypoints_vel_ptr_->at(*idx_prev_wp_)) /
                          2.0;
-    const double && dv = current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) -
+    const double & dv = current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) -
                    current_waypoints_vel_ptr_->at(*idx_prev_wp_);
-    const double && dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
+    const double & dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
     next_wp_acc = dv / std::max(dt, p_.prevent_zero_division_value_);
   }
-  const double && d_acc_prev2next = next_wp_acc - prev_wp_acc;
-  const double && interp_acceleration = prev_wp_acc + ratio_t * d_acc_prev2next;
+  const double & d_acc_prev2next = next_wp_acc - prev_wp_acc;
+  const double & interp_acceleration = prev_wp_acc + ratio_t * d_acc_prev2next;
 
   const Pose interpolated_pose = temp_interpolated_pose;
   const double interp_steering_angle = tmp_interp_steering_angle;
@@ -676,7 +676,7 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
   // Define waypoints 10 meters behind the rear axle if exist.
   // If not exist, we will take the first point of the
   // curvature triangle as the start point of the trajectory.
-  const auto && num_of_back_indices = std::round(p_.curvature_interval_length_ / ds_arc_length);
+  const auto & num_of_back_indices = std::round(p_.curvature_interval_length_ / ds_arc_length);
   const int32_t loc_of_back_idx =
     (*idx_curve_ref_wp_ - num_of_back_indices < 0) ? 0 : *idx_curve_ref_wp_ - num_of_back_indices;
 
@@ -745,7 +745,7 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
     Pose const & last_pose_on_traj = current_waypoints_ptr_->poses.at(temp_idx_pp);
 
     // get the yaw angle of the last traj point.
-    const double && yaw_pp = tf2::getYaw(last_pose_on_traj.orientation);
+    const double & yaw_pp = tf2::getYaw(last_pose_on_traj.orientation);
 
     // get unit tangent in this direction.
     const std::vector<double> unit_tangent = utils::getTangentVector(yaw_pp);
@@ -759,7 +759,7 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
     target_pose_pp.orientation = last_pose_on_traj.orientation;
   } else {
     // idx of the last waypoint on the trajectory is
-    const int32_t && temp_idx_pp = std::distance(current_waypoints_ptr_->poses.cbegin(), it);
+    const int32_t & temp_idx_pp = std::distance(current_waypoints_ptr_->poses.cbegin(), it);
     const Pose & last_pose_on_traj = current_waypoints_ptr_->poses.at(temp_idx_pp);
 
     target_pose_pp.position.z = last_pose_on_traj.position.z;
@@ -775,7 +775,7 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
     target_pose_pp.position.x - current_vec_pose_ptr_->position.x,
     target_pose_pp.position.y - current_vec_pose_ptr_->position.y};
 
-  const double && current_vec_yaw = tf2::getYaw(current_vec_pose_ptr_->orientation);
+  const double & current_vec_yaw = tf2::getYaw(current_vec_pose_ptr_->orientation);
   const std::vector<double> normal_vec = utils::getNormalVector(current_vec_yaw);  // ClockWise
 
   // Project this vector on the vehicle normal vector.

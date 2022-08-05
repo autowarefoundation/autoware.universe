@@ -42,7 +42,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
 
 
   // Implement Reading Global and Local Variables.
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  const auto & vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
   param_.wheelbase_ = vehicle_info.wheel_base_m;
 
   // Node Parameters.
@@ -112,7 +112,7 @@ void ControlPerformanceAnalysisNode::onControlRaw(
 
   } else {
     current_control_msg_ptr_ = control_msg;
-    const rclcpp::Duration duration =
+    const rclcpp::Duration & duration =
       (rclcpp::Time(current_control_msg_ptr_->stamp) - rclcpp::Time(last_control_cmd_.stamp));
     d_control_cmd_ = duration.seconds() * 1000;  // ms
     last_control_cmd_.stamp = current_control_msg_ptr_->stamp;
@@ -156,7 +156,7 @@ void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr m
     return;
   }
   // Find the index of the next waypoint.
-  const std::pair<bool, int32_t> prev_closest_wp_pose_idx =
+  const std::pair<bool, int32_t> & prev_closest_wp_pose_idx =
     control_performance_core_ptr_->findClosestPrevWayPointIdx_path_direction();
 
   if (!prev_closest_wp_pose_idx.first) {
