@@ -34,7 +34,8 @@ TwistEstimator::TwistEstimator()
   cov_ = Eigen::Vector4f(81, 400, 1e-6f, 1e-5f).asDiagonal();
   cov_predict_ = Eigen::Vector4f(0.01, 100, 1e-4f, 1e-4f).asDiagonal();
 
-  timer_ = create_wall_timer(3s, std::bind(&TwistEstimator::callbackTimer, this));
+  auto cb_timer = std::bind(&TwistEstimator::callbackTimer, this);
+  timer_ = rclcpp::create_timer(this, this->get_clock(), 3s, std::move(cb_timer));
 }
 
 void TwistEstimator::callbackTimer()
@@ -169,10 +170,19 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[ANGLE]).toRotationMatrix();
   Eigen::Vector2f error = R * state_[VELOCITY] * Eigen::Vector2f::UnitX() - vel_xy;
 
-  RCLCPP_INFO_STREAM(
-    get_logger(), state_[VELOCITY] << " " << vel_xy.norm() << " " << error.transpose());
+  float std_vel = std::sqrt(cov_(VELOCITY, VELOCITY));
 
-  // std::cout << cov_ << std::endl;
+  RCLCPP_INFO_STREAM(
+    get_logger(),
+    state_[VELOCITY] << " " << vel_xy.norm() << " " << error.transpose() << " " << std_vel);
+
+  if (error.norm() > std_vel) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "skip GNSS update because velocity error is too large " << error.transpose()
+                                                                            << " " << std_vel);
+    return;
+  }
+
   cov_ = rectifyPositiveSemiDefinite(cov_);
 
   // Determain kalman gain

@@ -33,7 +33,7 @@
     <!-- ========================================= -->
     <!-- ============ camera  correction ========= -->
     <!-- ========================================= -->
-    <node name="camera_corrector" pkg="vector_map_visual_localizer" exec="camera_corrector_node" output="screen" args="--ros-args --log-level warn">
+    <node name="camera_corrector" pkg="vector_map_visual_localizer" exec="camera_corrector_node" output="screen" args="--ros-args --log-level fatal">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
