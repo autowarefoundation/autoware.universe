@@ -555,7 +555,7 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   const double & distance_p02p_interp =
     (dx_prev2next * dx_prev2vehicle + dy_prev2next * dy_prev2vehicle) / distance_p02p1;
 
-  const double & distance_p_interp2p1 = distance_p02p1 - distance_p02p_interp;
+//  const double & distance_p_interp2p1 = distance_p02p1 - distance_p02p_interp;
   /*
    * We use the following linear interpolation
    *  pi = p0 + ratio_t * (p1 - p0)
@@ -578,32 +578,6 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
 
   const Quaternion & orient_msg = utils::createOrientationMsgFromYaw(interp_yaw_angle);
   temp_interpolated_pose.orientation = orient_msg;
-
-  /* interpolated steering calculation */
-
-  double tmp_interp_steering_angle = 0.0;
-
-  if (static_cast<size_t>(*idx_next_wp_ + 1) < current_waypoints_ptr_->poses.size()) {
-    const double & dx_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
-                              current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x;
-    const double & dy_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
-                              current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y;
-    const double & distance_p1_p2 = std::hypot(dx_p1_p2, dy_p1_p2);
-    const double & prev_steering =
-      static_cast<float>(std::atan(delta_psi_prev2next * p_.wheelbase_ / (distance_p02p1)));
-    const double & next_steering = static_cast<float>(std::atan(
-      (tf2::getYaw(
-        current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).orientation -
-        current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation)) *
-      p_.wheelbase_ / (distance_p1_p2)));
-    tmp_interp_steering_angle = prev_steering + ratio_t * (next_steering - prev_steering);
-  } else {
-    tmp_interp_steering_angle = static_cast<float>(std::atan(
-      (tf2::getYaw(
-        current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation -
-        temp_interpolated_pose.orientation)) *
-      p_.wheelbase_ / (distance_p_interp2p1)));
-  }
 
   /* interpolated acceleration calculation */
 
@@ -646,7 +620,11 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   const double & interp_acceleration = prev_wp_acc + ratio_t * d_acc_prev2next;
 
   const Pose interpolated_pose = temp_interpolated_pose;
-  const double interp_steering_angle = tmp_interp_steering_angle;
+
+
+  /* desired steering calculation */
+
+  const double interp_steering_angle = std::atan(p_.wheelbase_ * estimateCurvature());
 
   setInterpolatedVars(
     interpolated_pose, interp_velocity, interp_acceleration, interp_steering_angle);
@@ -669,6 +647,11 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
 {
   // Get idx of front-axle center reference point on the trajectory.
   // get the waypoint corresponds to the front_axle center.
+  if (!idx_curve_ref_wp_) {
+    RCLCPP_WARN(logger_, "Cannot find index of curvature reference waypoint ");
+    return 0;
+  }
+
   const Pose front_axleWP_pose = current_waypoints_ptr_->poses.at(*idx_curve_ref_wp_);
 
   // for guarding -1 in finding previous waypoint for the front axle
