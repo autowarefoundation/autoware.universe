@@ -4,6 +4,8 @@
 #include "modularized_particle_filter/common/prediction_util.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
+#include <eigen3/Eigen/StdVector>
+
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
@@ -21,7 +23,8 @@ Predictor::Predictor()
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
   static_linear_covariance_(declare_parameter("static_linear_covariance", 0.01)),
   static_angular_covariance_(declare_parameter("static_angular_covariance", 0.01)),
-  use_dynamic_noise_(declare_parameter("use_dynamic_noise", false))
+  use_dynamic_noise_(declare_parameter("use_dynamic_noise", false)),
+  log_std_weight_threshold_(declare_parameter("log_std_weight_threshold", -6))
 {
   const double prediction_rate{declare_parameter("prediction_rate", 50.0f)};
 
@@ -101,8 +104,10 @@ void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpos
   }
   particle_array_opt_ = particle_array;
 
-  resampler_ptr_ = std::make_shared<RetroactiveResampler>(
-    resampling_interval_seconds_, number_of_particles_, use_dynamic_noise_);
+  // We have to initialize resampler every particles initialization,
+  // because resampler has particles resampling history and it will be outdate.
+  resampler_ptr_ =
+    std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_, 100);
 }
 
 void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
@@ -139,13 +144,16 @@ void Predictor::updateWithDynamicNoise(
   const float std_linear_x = std::sqrt(twist.twist.covariance[0]);
   const float std_angular_z = std::sqrt(twist.twist.covariance[5 * 6 + 5]);
 
+  const float gain_linear = std::max(std::sqrt(std::abs(linear_x)), 0.1f);
+  const float gain_angular = std::max(std::sqrt(std::abs(linear_x)), 0.1f);
+
   using util::nrand;
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
 
     float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    float vx{linear_x + nrand(16) * std_linear_x};
-    float wz{angular_z + nrand(1) * std_angular_z};
+    float vx{linear_x + nrand(16) * std_linear_x * gain_linear};
+    float wz{angular_z + nrand(1) * std_angular_z * gain_angular};
 
     tf2::Quaternion q;
     q.setRPY(roll, pitch, yaw + wz * dt);
@@ -200,9 +208,9 @@ void Predictor::timerCallback()
   TwistWithCovarianceStamped twist{twist_opt_.value()};
 
   if (use_dynamic_noise_) {
-    updateWithStaticNoise(particle_array, twist);
-  } else {
     updateWithDynamicNoise(particle_array, twist);
+  } else {
+    updateWithStaticNoise(particle_array, twist);
   }
 
   predicted_particles_pub_->publish(particle_array);
@@ -220,19 +228,35 @@ void Predictor::weightedParticlesCallback(
   const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "weightedParticleCallback is called");
+
+  // Since the weighted_particles is generated from messages published from this node,
+  // the particle_array must have an entity in this function.
+  // Therefore, we need not to check particle_array_opt.has_value().
   ParticleArray particle_array{particle_array_opt_.value()};
 
   OptParticleArray retroactive_weighted_particles{
     resampler_ptr_->retroactiveWeighting(particle_array, weighted_particles_ptr)};
   if (retroactive_weighted_particles.has_value()) {
+    // TODO: Why do you copy only particles. Why do not copy all members including header and id
     particle_array.particles = retroactive_weighted_particles.value().particles;
+  }
+
+  if (use_dynamic_noise_) {
+    // Eigen::Vector3f eigen = stdOfDistribution(particle_array);
+    float std_weight = stdOfWeight(particle_array);
+    RCLCPP_WARN_STREAM(get_logger(), "log standard deviation weight: " << std::log(std_weight));
+    // If the distribution of particles does not spread enough wide, they are not resampled
+    // TODO:
+    if (std::log(std_weight) < log_std_weight_threshold_) {
+      particle_array_opt_ = particle_array;
+      return;
+    }
   }
 
   OptParticleArray resampled_particles{resampler_ptr_->resampling(particle_array)};
   if (resampled_particles.has_value()) {
     particle_array = resampled_particles.value();
   }
-
   particle_array_opt_ = particle_array;
 }
 

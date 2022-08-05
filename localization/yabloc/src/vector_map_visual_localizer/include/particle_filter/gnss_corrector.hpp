@@ -10,7 +10,7 @@
 
 namespace particle_filter
 {
-class GnssParticleCorrector : public AbstCorrector
+class GnssParticleCorrector : public modularized_particle_filter::AbstCorrector
 {
 public:
   using NavSatFix = sensor_msgs::msg::NavSatFix;

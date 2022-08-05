@@ -68,7 +68,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   // DEBUG: just visualization
   {
-    Pose mean_pose = meanPose(weighted_particles);
+    Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
     Eigen::Affine3f transform = util::pose2Affine(mean_pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
     pcl::PointCloud<pcl::PointXYZI> cloud = evaluateCloud(transformed_lsd, transform.translation());

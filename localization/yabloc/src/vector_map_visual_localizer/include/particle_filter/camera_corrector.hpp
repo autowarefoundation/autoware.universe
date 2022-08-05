@@ -13,7 +13,7 @@
 
 namespace particle_filter
 {
-class CameraParticleCorrector : public AbstCorrector
+class CameraParticleCorrector : public modularized_particle_filter::AbstCorrector
 {
 public:
   using LineSegment = pcl::PointCloud<pcl::PointNormal>;

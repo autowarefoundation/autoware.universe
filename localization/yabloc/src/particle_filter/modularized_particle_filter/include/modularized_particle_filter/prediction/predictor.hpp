@@ -55,6 +55,7 @@ private:
   const float static_linear_covariance_;
   const float static_angular_covariance_;
   const bool use_dynamic_noise_;
+  const float log_std_weight_threshold_;
   float ground_height_;
 
   std::shared_ptr<ParticleVisualizer> visualizer_{nullptr};

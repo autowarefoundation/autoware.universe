@@ -20,7 +20,7 @@
 
 namespace particle_filter
 {
-class SignCorrector : public AbstCorrector
+class SignCorrector : public modularized_particle_filter::AbstCorrector
 {
 public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;

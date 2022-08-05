@@ -120,7 +120,8 @@ ADD_EXE(TARGET camera_corrector_node
   SRC src/particle_filter/camera_corrector*.cpp
   INC include LIB util cost_map)
 ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
-ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp INC include LIB util)
+
+# ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp INC include LIB util)
 
 # validation
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
@@ -135,8 +136,8 @@ ADD_EXE(TARGET ground_server_node SRC src/map/ground_server_*.cpp INC LIB)
 ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
 
 # sign_board
-ADD_LIB(TARGET sign_lib SRC src/sign_board/sign_lib.cpp INC include LIB)
-ADD_EXE(TARGET sign_node SRC src/sign_board/sign_detector.cpp INC LIB util sign_lib)
+# ADD_LIB(TARGET sign_lib SRC src/sign_board/sign_lib.cpp INC include LIB)
+# ADD_EXE(TARGET sign_node SRC src/sign_board/sign_detector.cpp INC LIB util sign_lib)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

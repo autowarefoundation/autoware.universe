@@ -12,12 +12,13 @@
     <!-- ========================================= -->
     <!-- ============= predict update ============ -->
     <!-- ========================================= -->
-    <node pkg="modularized_particle_filter" exec="predictor" name="predictor" output="screen" args="--ros-args --log-level warn">
+    <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level warn">
         <remap from="twist" to="$(var predict_twist)" />
         <remap from="initialpose" to="/initialpose" />
         <remap from="pose" to="/init/pose"/> 
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="use_dynamic_noise" value="true"/>
         <param name="num_of_particles" value="500" />
         <param name="resampling_interval_seconds" value="1.5" />
         <param name="prediction_rate" value="50.0" />
