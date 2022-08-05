@@ -171,6 +171,7 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                    |
 | `max_prediction_time`       | double | [sec] create predicted path until this time                                                                 |
 | `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path |
+| `points_interval`                 | double | [m] divide obstacle points into groups with this interval, and detect only lateral nearest point. used only for Points method |
 
 | Parameter /approaching | Type   | Description                                                                                        |
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------------- |
