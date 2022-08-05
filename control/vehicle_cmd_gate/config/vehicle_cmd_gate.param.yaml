@@ -1,6 +1,9 @@
 /**:
   ros__parameters:
     update_rate: 10.0
+    use_emergency_handling: false
+    use_external_emergency_stop: true
+    use_start_request: false
     system_emergency_heartbeat_timeout: 0.5
     external_emergency_stop_heartbeat_timeout: 0.0
     stop_hold_acceleration: -1.5

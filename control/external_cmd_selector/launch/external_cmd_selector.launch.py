@@ -33,6 +33,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "initial_selector_mode", default_value="local", choices=["local", "remote"]
         ),
+        DeclareLaunchArgument("update_rate", default_value="10.0"),
         # service
         DeclareLaunchArgument(
             "service/select_external_command", default_value="~/select_external_command"
@@ -106,6 +107,7 @@ def generate_launch_description():
         parameters=[
             {
                 "initial_selector_mode": LaunchConfiguration("initial_selector_mode"),
+                "update_rate": LaunchConfiguration("update_rate"),
             }
         ],
         extra_arguments=[

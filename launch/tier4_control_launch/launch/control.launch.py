@@ -60,9 +60,11 @@ def launch_setup(context, *args, **kwargs):
     with open(vehicle_cmd_gate_param_path, "r") as f:
         vehicle_cmd_gate_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    lane_departure_checker_param_path = LaunchConfiguration(
-        "lane_departure_checker_param_path"
-    ).perform(context)
+    lane_departure_checker_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "lane_departure_checker",
+        "lane_departure_checker.param.yaml",
+    )
     with open(lane_departure_checker_param_path, "r") as f:
         lane_departure_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
@@ -174,11 +176,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             vehicle_cmd_gate_param,
             vehicle_info_param,
-            {
-                "use_emergency_handling": LaunchConfiguration("use_emergency_handling"),
-                "use_external_emergency_stop": LaunchConfiguration("use_external_emergency_stop"),
-                "use_start_request": LaunchConfiguration("use_start_request"),
-            },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -214,9 +211,10 @@ def launch_setup(context, *args, **kwargs):
             [FindPackageShare("external_cmd_selector"), "/launch/external_cmd_selector.launch.py"]
         ),
         launch_arguments=[
+            ("update_rate", LaunchConfiguration("update_rate")),
+            ("initial_selector_mode", LaunchConfiguration("initial_selector_mode")),
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
             ("target_container", "/control/control_container"),
-            ("initial_selector_mode", "remote"),
         ],
     )
 
@@ -276,13 +274,14 @@ def generate_launch_description():
         "tier4_control_launch parameter path",
     )
 
-    # lateral controller
+    # lateral controller mode
     add_launch_arg(
         "lateral_controller_mode",
         "mpc_follower",
         "lateral controller mode: `mpc_follower` or `pure_pursuit`",
     )
 
+    # vehicle info
     add_launch_arg(
         "vehicle_info_param_file",
         [
@@ -292,21 +291,8 @@ def generate_launch_description():
         "path to the parameter file of vehicle information",
     )
 
-    add_launch_arg(
-        "lane_departure_checker_param_path",
-        [FindPackageShare("lane_departure_checker"), "/config/lane_departure_checker.param.yaml"],
-    )
-
-    # velocity controller
-    add_launch_arg("show_debug_info", "false", "show debug information")
-    add_launch_arg("enable_pub_debug", "true", "enable to publish debug information")
-
-    # vehicle cmd gate
-    add_launch_arg("use_emergency_handling", "false", "use emergency handling")
-    add_launch_arg("use_external_emergency_stop", "true", "use external emergency stop")
-    add_launch_arg("use_start_request", "false", "use start request service")
-
     # external cmd selector
+    add_launch_arg("update_rate", "10.0", "update rate")
     add_launch_arg("initial_selector_mode", "remote", "local or remote")
 
     # component
