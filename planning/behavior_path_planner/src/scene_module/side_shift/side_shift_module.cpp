@@ -234,7 +234,7 @@ bool SideShiftModule::addShiftPoint()
   // check if the new_shift_points overlap with existing shift points.
   const auto new_sp = calcShiftPoint();
   // check if the new_shift_points is same with lately inserted shift_points.
-  if(new_sp.length == prev_shiftpoint_.length){
+  if (new_sp.length == prev_shiftpoint_.length) {
     return false;
   }
 
@@ -260,8 +260,8 @@ bool SideShiftModule::addShiftPoint()
       const bool sp_old_contain_new =
         ((old_sp_longitudinal_to_shift_start <= new_sp_longitudinal_to_shift_start) &&
          (new_sp_longitudinal_to_shift_end <= old_sp_longitudinal_to_shift_end));
-      const bool overlap_with_new_sp = (sp_overlap_front || sp_overlap_back ||
-      sp_new_contain_old || sp_old_contain_new);
+      const bool overlap_with_new_sp =
+        (sp_overlap_front || sp_overlap_back || sp_new_contain_old || sp_old_contain_new);
 
       return (overlap_with_new_sp && !check_with_prev_sp);
     });
@@ -283,8 +283,7 @@ bool SideShiftModule::addShiftPoint()
   shift_points.push_back(new_sp);
   const bool new_sp_is_same_with_previous = new_sp.length == prev_shiftpoint_.length;
 
-  if (!new_sp_is_same_with_previous)
-  {
+  if (!new_sp_is_same_with_previous) {
     prev_shiftpoint_ = new_sp;
   }
 
