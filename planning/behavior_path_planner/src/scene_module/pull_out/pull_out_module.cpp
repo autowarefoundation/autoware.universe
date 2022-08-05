@@ -199,7 +199,7 @@ CandidateOutput PullOutModule::planCandidate() const
         selected_retreat_path.pull_out_path.path.header =
           planner_data_->route_handler->getRouteHeader();
         CandidateOutput output_retreat(selected_retreat_path.pull_out_path.path);
-        output_retreat.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+        output_retreat.distance_to_path_change = motion_utils::calcSignedArcLength(
           selected_retreat_path.pull_out_path.path.points, current_pose.position,
           selected_retreat_path.backed_pose.position);
         return output_retreat;
@@ -210,7 +210,7 @@ CandidateOutput PullOutModule::planCandidate() const
 
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
   CandidateOutput output(selected_path.path);
-  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+  output.distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.start.position);
   return output;
 }
@@ -232,7 +232,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
     const double resolution = common_parameters.drivable_area_resolution;
     candidate_path.drivable_area = util::generateDrivableArea(
-      lanes, resolution, common_parameters.vehicle_length, planner_data_);
+      candidate_path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
 
     updateRTCStatus(candidate.distance_to_path_change);
   }
@@ -242,6 +242,8 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   out.path = std::make_shared<PathWithLaneId>(candidate_path);
 
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
+
+  waitApproval();
 
   return out;
 }
@@ -307,7 +309,8 @@ void PullOutModule::updatePullOutStatus()
 
     const double resolution = common_parameters.drivable_area_resolution;
     status_.pull_out_path.path.drivable_area = util::generateDrivableArea(
-      lanes, resolution, common_parameters.vehicle_length, planner_data_);
+      status_.pull_out_path.path, lanes, resolution, common_parameters.vehicle_length,
+      planner_data_);
   }
 
   const auto arclength_start =
@@ -346,8 +349,8 @@ PathWithLaneId PullOutModule::getReferencePath() const
     parameters_.deceleration_interval, goal_pose);
 
   reference_path.drivable_area = util::generateDrivableArea(
-    pull_out_lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
-    planner_data_);
+    reference_path, pull_out_lanes, common_parameters.drivable_area_resolution,
+    common_parameters.vehicle_length, planner_data_);
   return reference_path;
 }
 
@@ -480,7 +483,7 @@ std::pair<bool, bool> PullOutModule::getSafeRetreatPath(
   const auto shoulder_line_path = route_handler->getCenterLinePath(
     pull_out_lanes, arc_position_pose.length - pull_out_lane_length_,
     arc_position_pose.length + pull_out_lane_length_);
-  const auto idx = tier4_autoware_utils::findNearestIndex(shoulder_line_path.points, current_pose);
+  const auto idx = motion_utils::findNearestIndex(shoulder_line_path.points, current_pose);
   const auto yaw_shoulder_lane =
     tf2::getYaw(shoulder_line_path.points.at(*idx).point.pose.orientation);
 
@@ -557,8 +560,7 @@ bool PullOutModule::getBackDistance(
     const auto shoulder_line_path = route_handler->getCenterLinePath(
       pull_out_lanes, arc_position_pose.length - pull_out_lane_length_,
       arc_position_pose.length + pull_out_lane_length_);
-    const auto idx =
-      tier4_autoware_utils::findNearestIndex(shoulder_line_path.points, current_pose);
+    const auto idx = motion_utils::findNearestIndex(shoulder_line_path.points, current_pose);
     yaw_shoulder_lane = tf2::getYaw(shoulder_line_path.points.at(*idx).point.pose.orientation);
   }
 

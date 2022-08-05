@@ -103,6 +103,9 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       }
     }
   }
+  if (turn_signal.command == TurnIndicatorsCommand::NO_COMMAND) {
+    distance = std::numeric_limits<double>::max();
+  }
   return std::make_pair(turn_signal, distance);
 }
 }  // namespace behavior_path_planner

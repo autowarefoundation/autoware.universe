@@ -152,7 +152,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
     const double resolution = common_parameters.drivable_area_resolution;
     path.drivable_area = util::generateDrivableArea(
-      lanes, resolution, common_parameters.vehicle_length, planner_data_);
+      path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
   }
 
   if (isAbortConditionSatisfied()) {
@@ -166,8 +166,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
   const auto turn_signal_info = util::getPathTurnSignal(
     status_.current_lanes, status_.lane_change_path.shifted_path,
     status_.lane_change_path.shift_point, planner_data_->self_pose->pose,
-    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters,
-    parameters_.lane_change_search_distance);
+    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
   output.turn_signal_info.signal_distance = turn_signal_info.second;
   return output;
@@ -194,7 +193,7 @@ CandidateOutput LaneChangeModule::planCandidate() const
   output.path_candidate = selected_path.path;
   output.lateral_shift = selected_path.shifted_path.shift_length.at(end_idx) -
                          selected_path.shifted_path.shift_length.at(start_idx);
-  output.distance_to_path_change = tier4_autoware_utils::calcSignedArcLength(
+  output.distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.start.position);
 
@@ -208,6 +207,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);
+  waitApproval();
   return out;
 }
 
@@ -270,7 +270,7 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
 
   double optional_lengths{0.0};
   const auto isInIntersection = util::checkLaneIsInIntersection(
-    *route_handler, reference_path, current_lanes, optional_lengths);
+    *route_handler, reference_path, current_lanes, common_parameters, optional_lengths);
   if (isInIntersection) {
     reference_path = util::getCenterLinePath(
       *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
@@ -288,8 +288,8 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     lane_change_buffer);
 
   reference_path.drivable_area = util::generateDrivableArea(
-    current_lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
-    planner_data_);
+    reference_path, current_lanes, common_parameters.drivable_area_resolution,
+    common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -329,8 +329,9 @@ lanelet::ConstLanelets LaneChangeModule::getLaneChangeLanes(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(
     current_lanes, planner_data_->self_pose->pose, &current_lane);
-  const double lane_change_prepare_length =
-    current_twist.linear.x * parameters_.lane_change_prepare_duration;
+  const double lane_change_prepare_length = std::max(
+    current_twist.linear.x * parameters_.lane_change_prepare_duration,
+    planner_data_->parameters.minimum_lane_change_length);
   lanelet::ConstLanelets current_check_lanes =
     route_handler->getLaneletSequence(current_lane, current_pose, 0.0, lane_change_prepare_length);
   lanelet::ConstLanelet lane_change_lane;
