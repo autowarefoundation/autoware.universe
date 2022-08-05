@@ -40,18 +40,18 @@ def generate_launch_description():
     )
 
     composable_nodes = [
-            ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::NoDetectionAreaFilterComponent",
-                name="no_detection_area_filter",
-                remappings=[
-                    ("input", "/perception/obstacle_segmentation/pointcloud"),
-                    ("input/vector_map", "/map/vector_map"),
-                    ("output", "no_detection_area_filtered/pointcloud"),
-                ],
-                # this node has QoS of transient local
-                extra_arguments=[{"use_intra_process_comms": False}],
-            )
+        ComposableNode(
+            package="pointcloud_preprocessor",
+            plugin="pointcloud_preprocessor::NoDetectionAreaFilterComponent",
+            name="no_detection_area_filter",
+            remappings=[
+                ("input", "/perception/obstacle_segmentation/pointcloud"),
+                ("input/vector_map", "/map/vector_map"),
+                ("output", "no_detection_area_filtered/pointcloud"),
+            ],
+            # this node has QoS of transient local
+            extra_arguments=[{"use_intra_process_comms": False}],
+        )
     ]
 
     no_detection_area_filter_container = ComposableNodeContainer(
