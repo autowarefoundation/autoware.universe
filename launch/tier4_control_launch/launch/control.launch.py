@@ -291,6 +291,9 @@ def generate_launch_description():
         "path to the parameter file of vehicle information",
     )
 
+    # vehicle id
+    add_launch_arg("vehicle_id")
+
     # external cmd selector
     add_launch_arg("update_rate", "10.0", "update rate")
     add_launch_arg("initial_selector_mode", "remote", "local or remote")
