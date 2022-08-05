@@ -74,8 +74,8 @@ public:
   void setCurrentWaypoints(const Trajectory & trajectory);
   void setCurrentControlValue(const AckermannControlCommand & msg);
   void setInterpolatedVars(
-    const Pose & interpolated_pose, const double & interpolated_velocity, const double & interpolated_acceleration,
-    const double & interpolated_steering_angle);
+    const Pose & interpolated_pose, const double & interpolated_velocity,
+    const double & interpolated_acceleration, const double & interpolated_steering_angle);
   void setOdomHistory(const Odometry & odom);
   void setSteeringStatus(const SteeringReport & steering);
 

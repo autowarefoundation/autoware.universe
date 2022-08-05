@@ -40,7 +40,6 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
 {
   using std::placeholders::_1;
 
-
   // Implement Reading Global and Local Variables.
   const auto & vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
   param_.wheelbase_ = vehicle_info.wheel_base_m;

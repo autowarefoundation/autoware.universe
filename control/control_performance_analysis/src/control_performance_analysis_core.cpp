@@ -182,7 +182,8 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   const auto pose_interp_wp_ = pair_pose_interp_wp_.second;
 
   // Create interpolated waypoint vector
-  const std::vector<double> interp_waypoint_xy{pose_interp_wp_.position.x, pose_interp_wp_.position.y};
+  const std::vector<double> interp_waypoint_xy{
+    pose_interp_wp_.position.x, pose_interp_wp_.position.y};
 
   // Create vehicle position vector
   const std::vector<double> vehicle_position_xy{
@@ -227,16 +228,16 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   const double & Vx = odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
   // Current acceleration calculation
   const double & d_x = odom_history_ptr_->at(odom_size - 1).pose.pose.position.x -
-                  odom_history_ptr_->at(odom_size - 2).pose.pose.position.x;
+                       odom_history_ptr_->at(odom_size - 2).pose.pose.position.x;
   const double & d_y = odom_history_ptr_->at(odom_size - 1).pose.pose.position.y -
-                  odom_history_ptr_->at(odom_size - 2).pose.pose.position.y;
+                       odom_history_ptr_->at(odom_size - 2).pose.pose.position.y;
   const double & ds = std::hypot(d_x, d_y);
 
   const double & vel_mean = (odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x +
-                        odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x) /
-                       2.0;
+                             odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x) /
+                            2.0;
   const double & dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
-                 odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
+                      odom_history_ptr_->at(odom_size - 2).twist.twist.linear.x;
   const double & dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
   const double & Ax = dv / std::max(dt, p_.prevent_zero_division_value_);  // current acceleration
 
@@ -250,7 +251,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
   error_vars.error.control_effort_energy = contR * steering_cmd * steering_cmd;  // u*R*u';
 
   const double & heading_velocity_error = (Vx * tan(current_steering_val)) / p_.wheelbase_ -
-                                     *this->interpolated_velocity_ptr_ * curvature_est;
+                                          *this->interpolated_velocity_ptr_ * curvature_est;
 
   const double & lateral_acceleration_error =
     -curvature_est * *interpolated_acceleration_ptr_ * longitudinal_error -
@@ -362,8 +363,9 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
       if (odom_history_ptr_->size() >= p_.odom_interval_ + 2) {
         // Calculate longitudinal acceleration
 
-        const double dv = odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
-                    odom_history_ptr_->at(odom_size - p_.odom_interval_ - 2).twist.twist.linear.x;
+        const double dv =
+          odom_history_ptr_->at(odom_size - 1).twist.twist.linear.x -
+          odom_history_ptr_->at(odom_size - p_.odom_interval_ - 2).twist.twist.linear.x;
 
         const auto odom_duration =
           (rclcpp::Time(odom_history_ptr_->at(odom_size - 1).header.stamp) -
@@ -379,7 +381,7 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         //  Calculate lateral jerk
 
         const double d_lateral_jerk = driving_status_vars.lateral_acceleration.data -
-                                prev_driving_vars_->lateral_acceleration.data;
+                                      prev_driving_vars_->lateral_acceleration.data;
 
         //  We already know the delta time from above. same as longitudinal acceleration
 
@@ -391,7 +393,7 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
       if (odom_history_ptr_->size() == 2 * p_.odom_interval_ + 3) {
         // calculate longitudinal jerk
         const double d_a = driving_status_vars.longitudinal_acceleration.data -
-                     prev_driving_vars_->longitudinal_acceleration.data;
+                           prev_driving_vars_->longitudinal_acceleration.data;
         const auto duration =
           (rclcpp::Time(driving_status_vars.longitudinal_acceleration.header.stamp) -
            rclcpp::Time(prev_driving_vars_->longitudinal_acceleration.header.stamp));
@@ -500,7 +502,6 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   double next_wp_acc = 0.0;
   double prev_wp_acc = 0.0;
 
-
   /*
    *  Create two vectors originating from the previous waypoints to the next waypoint and the
    *  vehicle position and find projection of vehicle vector on the the trajectory section,
@@ -508,16 +509,17 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
    * */
 
   // First get te yaw angles of all three poses.
-  const double & prev_yaw = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
+  const double & prev_yaw =
+    tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
   const double & prev_velocity = current_waypoints_vel_ptr_->at(*idx_prev_wp_);
   const double & next_velocity = current_waypoints_vel_ptr_->at(*idx_next_wp_);
 
   // Previous waypoint to next waypoint.
   const double & dx_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
-                           current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
+                                current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
 
   const double & dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
-                           current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
+                                current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
   const double & delta_psi_prev2next = tf2::getYaw(
     current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation -
@@ -583,37 +585,43 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
 
   if (static_cast<size_t>(*idx_next_wp_ + 1) < current_waypoints_ptr_->poses.size()) {
     const double & dx_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
-                         current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x;
+                              current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x;
     const double & dy_p1_p2 = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
-                         current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y;
+                              current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y;
     const double & distance_p1_p2 = std::hypot(dx_p1_p2, dy_p1_p2);
     const double & prev_steering =
       static_cast<float>(std::atan(delta_psi_prev2next * p_.wheelbase_ / (distance_p02p1)));
     const double & next_steering = static_cast<float>(std::atan(
-      (tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).orientation - current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation)) *
+      (tf2::getYaw(
+        current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).orientation -
+        current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation)) *
       p_.wheelbase_ / (distance_p1_p2)));
     tmp_interp_steering_angle = prev_steering + ratio_t * (next_steering - prev_steering);
   } else {
     tmp_interp_steering_angle = static_cast<float>(std::atan(
-      (tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation - temp_interpolated_pose.orientation)) * p_.wheelbase_ /
-      (distance_p_interp2p1)));
+      (tf2::getYaw(
+        current_waypoints_ptr_->poses.at(*idx_next_wp_).orientation -
+        temp_interpolated_pose.orientation)) *
+      p_.wheelbase_ / (distance_p_interp2p1)));
   }
 
   /* interpolated acceleration calculation */
 
-  if (*idx_prev_wp_ == 0 || static_cast<size_t>(*idx_prev_wp_ + 1) == current_waypoints_ptr_->poses.size()) {
+  if (
+    *idx_prev_wp_ == 0 ||
+    static_cast<size_t>(*idx_prev_wp_ + 1) == current_waypoints_ptr_->poses.size()) {
     prev_wp_acc = 0.0;
   } else {
     const double & d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
-                    current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.x;
+                         current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.x;
     const double & d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
-                    current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.y;
+                         current_waypoints_ptr_->poses.at(*idx_prev_wp_ - 1).position.y;
     const double & ds = std::hypot(d_x, d_y);
     const double & vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_) +
-                          current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1)) /
-                         2.0;
+                               current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1)) /
+                              2.0;
     const double & dv = current_waypoints_vel_ptr_->at(*idx_next_wp_) -
-                   current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1);
+                        current_waypoints_vel_ptr_->at(*idx_prev_wp_ - 1);
     const double & dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
     prev_wp_acc = dv / std::max(dt, p_.prevent_zero_division_value_);
   }
@@ -622,15 +630,15 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
     next_wp_acc = 0.0;
   } else {
     const double & d_x = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.x -
-                    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
+                         current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
     const double & d_y = current_waypoints_ptr_->poses.at(*idx_next_wp_ + 1).position.y -
-                    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
+                         current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
     const double & ds = std::hypot(d_x, d_y);
     const double & vel_mean = (current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) +
-                          current_waypoints_vel_ptr_->at(*idx_prev_wp_)) /
-                         2.0;
+                               current_waypoints_vel_ptr_->at(*idx_prev_wp_)) /
+                              2.0;
     const double & dv = current_waypoints_vel_ptr_->at(*idx_next_wp_ + 1) -
-                   current_waypoints_vel_ptr_->at(*idx_prev_wp_);
+                        current_waypoints_vel_ptr_->at(*idx_prev_wp_);
     const double & dt = ds / std::max(vel_mean, p_.prevent_zero_division_value_);
     next_wp_acc = dv / std::max(dt, p_.prevent_zero_division_value_);
   }
@@ -648,8 +656,8 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
 
 // Sets interpolated waypoint_ptr_.
 void ControlPerformanceAnalysisCore::setInterpolatedVars(
-  const Pose & interpolated_pose, const double & interpolated_velocity, const double & interpolated_acceleration,
-  const double & interpolated_steering_angle)
+  const Pose & interpolated_pose, const double & interpolated_velocity,
+  const double & interpolated_acceleration, const double & interpolated_steering_angle)
 {
   interpolated_pose_ptr_ = std::make_shared<Pose>(interpolated_pose);
   interpolated_velocity_ptr_ = std::make_shared<double>(interpolated_velocity);
@@ -664,7 +672,8 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
   const Pose front_axleWP_pose = current_waypoints_ptr_->poses.at(*idx_curve_ref_wp_);
 
   // for guarding -1 in finding previous waypoint for the front axle
-  const int32_t idx_prev_waypoint = *idx_curve_ref_wp_ >= 1 ? *idx_curve_ref_wp_ - 1 : *idx_curve_ref_wp_;
+  const int32_t idx_prev_waypoint =
+    *idx_curve_ref_wp_ >= 1 ? *idx_curve_ref_wp_ - 1 : *idx_curve_ref_wp_;
 
   const Pose front_axleWP_pose_prev = current_waypoints_ptr_->poses.at(idx_prev_waypoint);
 
@@ -686,8 +695,8 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
 
   const auto num_of_forward_indices = num_of_back_indices;
   const int32_t loc_of_forward_idx = (*idx_curve_ref_wp_ + num_of_forward_indices > max_idx)
-                                 ? max_idx - 1
-                                 : *idx_curve_ref_wp_ + num_of_forward_indices - 1;
+                                       ? max_idx - 1
+                                       : *idx_curve_ref_wp_ + num_of_forward_indices - 1;
 
   // We have three indices of the three trajectory poses.
   // We compute a curvature estimate from these points.
