@@ -5,9 +5,17 @@
 
 #include <Eigen/Eigenvalues>
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+
 namespace map
 {
-GroundServer::GroundServer() : Node("ground_server"), vector_buffer_(50)
+GroundServer::GroundServer()
+: Node("ground_server"),
+  vector_buffer_(50),
+  force_zero_tilt_(declare_parameter("force_zero_tilt", false))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -115,6 +123,26 @@ float GroundServer::estimateHeight(const geometry_msgs::msg::Point & point)
   return cloud_->at(k_indices.front()).z;
 }
 
+std::vector<int> GroundServer::ransacEstimation(const std::vector<int> & indices_raw)
+{
+  pcl::PointIndicesPtr indices(new pcl::PointIndices);
+  indices->indices = indices_raw;
+
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  seg.setOptimizeCoefficients(true);
+  seg.setModelType(pcl::SACMODEL_PLANE);
+  seg.setMethodType(pcl::SAC_RANSAC);
+  seg.setDistanceThreshold(0.5);
+  seg.setProbability(0.6);
+
+  seg.setInputCloud(cloud_);
+  seg.setIndices(indices);
+  seg.segment(*inliers, *coefficients);
+  return inliers->indices;
+}
 GroundPlane GroundServer::estimateGround(const geometry_msgs::msg::Point & point)
 {
   std::vector<int> k_indices, r_indices;
@@ -126,7 +154,9 @@ GroundPlane GroundServer::estimateGround(const geometry_msgs::msg::Point & point
   kdtree_->nearestKSearch(p, K, k_indices, distances);
   kdtree_->radiusSearch(p, R, r_indices, distances);
 
-  std::vector<int> indices = mergeIndices(k_indices, r_indices);
+  std::vector<int> raw_indices = mergeIndices(k_indices, r_indices);
+  std::vector<int> indices = ransacEstimation(raw_indices);
+  if (indices.empty()) indices = raw_indices;
   last_near_point_indices_ = indices;
 
   Eigen::Vector3f v = cloud_->at(k_indices.front()).getVector3fMap();
@@ -155,6 +185,8 @@ GroundPlane GroundServer::estimateGround(const geometry_msgs::msg::Point & point
   for (const Eigen::Vector3f & v : vector_buffer_) mean += v;
   mean /= vector_buffer_.size();
   plane.normal = mean.normalized();
+
+  if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
 
   return plane;
 }

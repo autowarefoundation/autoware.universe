@@ -5,6 +5,7 @@
     <arg name="rtk_enabled" default="false" description="GNSS-RTK is enabled?"/>
 
     <arg name="use_eagleye" default="false"/>
+    <arg name="force_zero_tilt" default="true"/>
 
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">
         <arg name="rtk_enabled" value="$(var rtk_enabled)"/>

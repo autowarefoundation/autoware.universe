@@ -3,6 +3,7 @@
     <arg name="log_level" default="warn"/>
     <arg name="rtk_enabled" default="true"/>
     <arg name="use_eagleye" default="false"/>
+    <arg name="force_zero_tilt" default="false"/>
     
 
     <!-- ========================================= -->
@@ -38,6 +39,7 @@
     <!-- ========================================= -->
     <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
     </node>
 
     <!-- ========================================= -->

@@ -3,37 +3,30 @@ from rclpy.time import Time
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from rosgraph_msgs.msg import Clock
-from rclpy.qos import QoSProfile
-from rclpy.qos import ReliabilityPolicy
-from rclpy.qos import HistoryPolicy
+from rclpy.parameter import Parameter
 
 
 class InitialPoseLatch(Node):
     def __init__(self):
         super().__init__('initial_pose_latch')
 
-        qos = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT,
-                         history=HistoryPolicy.KEEP_ALL)
-        self.sub_clock_ = self.create_subscription(
-            Clock, '/clock',  self.clock_callback, qos)
         self.sub_pose_ = self.create_subscription(
             PoseWithCovarianceStamped, '/initialpose',  self.pose_callback, 10)
 
         self.pub_pose_ = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
 
-        self.last_clock = None
+        self.set_parameters([Parameter('use_sim_time', Parameter.Type.BOOL, True)])
+
         self.last_initial_psoe_and_time = None
-        self.timer_ = self.create_timer(1.0, self.timer_callback)
+        self.timer_ = self.create_timer(1.0, self.timer_callback, clock=self.get_clock())
 
     def timer_callback(self):
-        if self.last_clock is None:
-            return
         if self.last_initial_psoe_and_time is None:
             return
 
+        now_stamp = self.get_clock().now()
         target = self.last_initial_psoe_and_time[0]
-        dt = (self.last_clock.nanoseconds-target.nanoseconds)/1e9
+        dt = (now_stamp.nanoseconds-target.nanoseconds)/1e9
         if(abs(dt) < 1):
             print('Publish initialpose', dt)
             self.pub_pose_.publish(self.last_initial_psoe_and_time[1])
@@ -43,9 +36,6 @@ class InitialPoseLatch(Node):
         stamp = Time(seconds=stamp.sec, nanoseconds=stamp.nanosec)
         self.get_logger().info('Subscribed initialpose: "%s"' + str(stamp))
         self.last_initial_psoe_and_time = (stamp, msg)
-
-    def clock_callback(self, msg: Clock):
-        self.last_clock = Time(seconds=msg.clock.sec, nanoseconds=msg.clock.nanosec)
 
 
 def main(args=None):

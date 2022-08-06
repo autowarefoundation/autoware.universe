@@ -39,6 +39,7 @@ public:
 private:
   const float R = 10;
   const int K = 30;
+  const bool force_zero_tilt_;
 
   rclcpp::Service<Ground>::SharedPtr service_;
 
@@ -66,6 +67,8 @@ private:
 
   void callbackService(
     const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);
+
+  std::vector<int> ransacEstimation(const std::vector<int> & indices_raw);
 };
 
 }  // namespace map
