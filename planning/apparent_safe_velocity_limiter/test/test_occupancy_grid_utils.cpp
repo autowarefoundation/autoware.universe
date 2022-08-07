@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/types.hpp"
 
 #include "nav_msgs/msg/detail/occupancy_grid__struct.hpp"
 
@@ -33,16 +34,18 @@ TEST(TestOccupancyGridUtils, extractObstacleLines)
   occupancy_grid.info.resolution = 1.0;
 
   polygon_t full_mask;
-  full_mask.outer() = {{0.0, 0.0}, {0.0, 5.0}, {5.0, 5.0}, {5.0, 0.0}};
-  boost::geometry::correct(full_mask);
+  full_mask.outer() = {{0.0, 0.0}, {0.0, 5.0}, {5.0, 5.0}, {5.0, 0.0}, {0.0, 0.0}};
 
   constexpr auto extractObstacles = [](
                                       const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-                                      const multipolygon_t & in_mask, const polygon_t & out_mask,
-                                      const double thr) {
+                                      const multipolygon_t & negative_masks,
+                                      const polygon_t & positive_mask, const double thr) {
+    apparent_safe_velocity_limiter::ObstacleMasks masks;
+    masks.negative_masks = negative_masks;
+    masks.positive_mask = positive_mask;
     auto grid_map = apparent_safe_velocity_limiter::convertToGridMap(occupancy_grid);
     apparent_safe_velocity_limiter::threshold(grid_map, thr);
-    apparent_safe_velocity_limiter::maskPolygons(grid_map, in_mask, out_mask);
+    apparent_safe_velocity_limiter::maskPolygons(grid_map, masks);
     return apparent_safe_velocity_limiter::extractObstacles(grid_map, occupancy_grid);
   };
   auto obstacles = extractObstacles(occupancy_grid, {}, full_mask, occupied_thr);

@@ -16,8 +16,6 @@
 
 #include "apparent_safe_velocity_limiter/distance.hpp"
 #include "apparent_safe_velocity_limiter/forward_projection.hpp"
-#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
-#include "apparent_safe_velocity_limiter/pointcloud_utils.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
@@ -153,34 +151,8 @@ std::vector<multilinestring_t> createProjectedLines(
   return projections;
 }
 
-std::vector<Obstacle> createObstacles(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
-  const multipolygon_t & polygon_masks, const polygon_t & envelope_polygon,
-  tier4_autoware_utils::TransformListener & transform_listener, const std::string & target_frame,
-  const ObstacleParameters & obstacle_params, PointCloud & debug_pointcloud)
-{
-  std::vector<Obstacle> obstacles;
-  if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCYGRID) {
-    auto grid_map = convertToGridMap(occupancy_grid);
-    threshold(grid_map, obstacle_params.occupancy_grid_threshold);
-    obstacles = extractObstacles(grid_map, occupancy_grid);
-  } else {
-    const auto filtered_pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
-    obstacles = extractObstacles(filtered_pcd, obstacle_params.pcd_cluster_max_dist);
-  }
-  std::vector<Obstacle> filtered_obstacles;
-  for (auto & obstacle : obstacles) {
-    if (
-      !boost::geometry::within(obstacle.line, polygon_masks) &&
-      (!obstacle_params.filter_envelope ||
-       boost::geometry::within(obstacle.line, envelope_polygon)))
-      filtered_obstacles.push_back(std::move(obstacle));
-  }
-  return filtered_obstacles;
-}
-
 void limitVelocity(
-  Trajectory & trajectory, const std::vector<Obstacle> & obstacles,
+  Trajectory & trajectory, const Obstacles & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params,
   const bool filter_envelope)

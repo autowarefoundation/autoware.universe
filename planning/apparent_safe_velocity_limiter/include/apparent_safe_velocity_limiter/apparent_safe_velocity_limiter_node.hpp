@@ -57,8 +57,6 @@ private:
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     pub_debug_markers_;  //!< @brief publisher for debug markers
-  rclcpp::Publisher<PointCloud>::SharedPtr
-    pub_debug_pointcloud_;  //!< @brief publisher for filtered pointcloud
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
   rclcpp::Subscription<PredictedObjects>::SharedPtr
@@ -77,7 +75,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
-  std::vector<Obstacle> static_map_obstacles_;
+  Obstacles static_map_obstacles_;
   std::optional<Float> current_ego_velocity_;
 
   // Benchmarking & Debugging TODO(Maxime CLEMENT): remove before merging

@@ -14,6 +14,9 @@
 
 #include "apparent_safe_velocity_limiter/obstacles.hpp"
 
+#include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
+#include "apparent_safe_velocity_limiter/pointcloud_utils.hpp"
+
 #include <boost/assign.hpp>
 
 #include <tf2/utils.h>
@@ -65,4 +68,40 @@ multipolygon_t createObjectPolygons(
   }
   return polygons;
 }
+
+Obstacles createObstacles(
+  const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud, const ObstacleMasks & masks,
+  tier4_autoware_utils::TransformListener & transform_listener, const std::string & target_frame,
+  const ObstacleParameters & obstacle_params)
+{
+  Obstacles obstacles;
+  if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCYGRID) {
+    auto grid_map = convertToGridMap(occupancy_grid);
+    threshold(grid_map, obstacle_params.occupancy_grid_threshold);
+    maskPolygons(grid_map, masks);
+    obstacles = extractObstacles(grid_map, occupancy_grid);
+  } else {
+    const auto filtered_pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
+    obstacles = extractObstacles(filtered_pcd, obstacle_params.pcd_cluster_max_dist);
+    obstacles = filterObstacles(obstacles, masks);
+  }
+  return obstacles;
+}
+
+Obstacles filterObstacles(const Obstacles & obstacles, const ObstacleMasks & masks)
+{
+  namespace bg = boost::geometry;
+  Obstacles filtered_obstacles;
+  multilinestring_t masked_obstacles;
+  for (auto & obstacle : obstacles) {
+    masked_obstacles.clear();
+    bg::difference(obstacle, masks.negative_masks, masked_obstacles);
+    for (auto & masked_obstacle : masked_obstacles) {
+      if (bg::is_empty(masks.positive_mask) || bg::within(masked_obstacle, masks.positive_mask))
+        filtered_obstacles.emplace_back(std::move(masked_obstacle));
+    }
+  }
+  return filtered_obstacles;
+}
+
 }  // namespace apparent_safe_velocity_limiter

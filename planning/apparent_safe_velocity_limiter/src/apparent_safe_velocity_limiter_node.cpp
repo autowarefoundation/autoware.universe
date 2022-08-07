@@ -41,7 +41,7 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
 {
   sub_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, [this](const Trajectory::ConstSharedPtr msg) { onTrajectory(msg); });
-  sub_occupancy_grid_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
+  sub_occupancy_grid_ = create_subscription<OccupancyGrid>(
     "~/input/occupancy_grid", 1,
     [this](const OccupancyGrid::ConstSharedPtr msg) { occupancy_grid_ptr_ = msg; });
   sub_pointcloud_ = create_subscription<PointCloud>(
@@ -66,7 +66,6 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-  pub_debug_pointcloud_ = create_publisher<PointCloud>("~/output/debug_pointcloud", 1);
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
@@ -168,24 +167,20 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     calculateStartIndex(original_traj, *ego_idx, preprocessing_params_.start_distance);
   Trajectory downsampled_traj =
     downsampleTrajectory(original_traj, start_idx, preprocessing_params_.downsample_factor);
-  const auto polygon_masks = createPolygonMasks(
+  ObstacleMasks obstacle_masks;
+  obstacle_masks.negative_masks = createPolygonMasks(
     *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
   const auto projected_linestrings = createProjectedLines(downsampled_traj, projection_params_);
   const auto footprint_polygons =
     createFootprintPolygons(projected_linestrings, vehicle_lateral_offset_);
-  polygon_t envelope_polygon;
-  if (obstacle_params_.filter_envelope)
-    envelope_polygon = createEnvelopePolygon(footprint_polygons);
   auto obstacles = static_map_obstacles_;
   if (obstacle_params_.dynamic_source != ObstacleParameters::STATIC_ONLY) {
-    PointCloud debug_pointcloud;
+    if (obstacle_params_.filter_envelope)
+      obstacle_masks.positive_mask = createEnvelopePolygon(footprint_polygons);
     const auto dynamic_obstacles = createObstacles(
-      *occupancy_grid_ptr_, *pointcloud_ptr_, polygon_masks, envelope_polygon, transform_listener_,
-      original_traj.header.frame_id, obstacle_params_, debug_pointcloud);
-    debug_pointcloud.header.stamp = now();
-    debug_pointcloud.header.frame_id = original_traj.header.frame_id;
-    pub_debug_pointcloud_->publish(debug_pointcloud);
+      *occupancy_grid_ptr_, *pointcloud_ptr_, obstacle_masks, transform_listener_,
+      original_traj.header.frame_id, obstacle_params_);
     obstacles.insert(obstacles.end(), dynamic_obstacles.begin(), dynamic_obstacles.end());
   }
   limitVelocity(

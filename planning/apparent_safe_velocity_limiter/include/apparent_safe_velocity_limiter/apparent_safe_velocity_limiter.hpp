@@ -19,8 +19,6 @@
 #include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
-#include <tier4_autoware_utils/ros/transform_listener.hpp>
-
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
@@ -102,22 +100,6 @@ polygon_t createEnvelopePolygon(const std::vector<polygon_t> & footprints);
 std::vector<multilinestring_t> createProjectedLines(
   const Trajectory & trajectory, ProjectionParameters & params);
 
-/// @brief create linestrings around obstacles
-/// @param[in] occupancy_grid occupancy grid
-/// @param[in] pointcloud pointcloud
-/// @param[in] polygon_masks negative masks where obstacles will be ignored
-/// @param[in] positive_mask positive masks where obstacles must reside
-/// @param[in] transform_listener object used to retrieve the latest transform
-/// @param[in] target_frame frame of the returned obstacles
-/// @param[in] obstacle_params obstacle parameters
-/// @param[out] debug_pointcloud resulting filtered pointcloud
-/// @return linestrings representing obstacles to avoid
-std::vector<Obstacle> createObstacles(
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
-  const multipolygon_t & polygon_masks, const polygon_t & envelope_polygon,
-  tier4_autoware_utils::TransformListener & transform_listener, const std::string & target_frame,
-  const ObstacleParameters & obstacle_params, PointCloud & debug_pointcloud);
-
 /// @brief limit the velocity of the given trajectory
 /// @param[in] trajectory input trajectory
 /// @param[in] obstacles obstacles that must be avoided by the forward projection
@@ -127,7 +109,7 @@ std::vector<Obstacle> createObstacles(
 /// @param[in] velocity_params velocity parameters
 /// @param[in] filter_envelope whether obstacles were already filtered using the envelope polygon
 void limitVelocity(
-  Trajectory & trajectory, const std::vector<Obstacle> & obstacles,
+  Trajectory & trajectory, const Obstacles & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params,
   const bool filter_envelope);

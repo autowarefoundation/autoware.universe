@@ -98,10 +98,10 @@ void filterPointCloud(
   std::cerr << "* masks filter size = " << pointcloud->size() << "\n";
 }
 
-std::vector<Obstacle> extractObstacles(
+Obstacles extractObstacles(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr, const double cluster_tolerance)
 {
-  std::vector<Obstacle> obstacles;
+  Obstacles obstacles;
   if (pointcloud_ptr->empty()) return obstacles;
 
   tier4_autoware_utils::StopWatch stopwatch;

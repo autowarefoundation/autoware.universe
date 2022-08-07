@@ -27,18 +27,17 @@ namespace apparent_safe_velocity_limiter
 namespace bg = boost::geometry;
 
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint,
-  const std::vector<Obstacle> & obstacles, const ProjectionParameters & params,
-  const std::optional<double> max_obstacle_distance)
+  const linestring_t & projection, const polygon_t & footprint, const Obstacles & obstacles,
+  const ProjectionParameters & params, const std::optional<double> max_obstacle_distance)
 {
   std::optional<double> distance;
   if (projection.empty()) return distance;
   double min_dist = std::numeric_limits<double>::max();
   const auto max_dist = max_obstacle_distance.value_or(std::numeric_limits<double>::max());
   for (const auto & obstacle : obstacles) {
-    if (bg::distance(obstacle.line, projection.front()) > max_dist) continue;
+    if (bg::distance(obstacle, projection.front()) > max_dist) continue;
     multilinestring_t intersection_lines;
-    if (bg::intersection(footprint, obstacle.line, intersection_lines)) {
+    if (bg::intersection(footprint, obstacle, intersection_lines)) {
       for (const auto & intersection_line : intersection_lines) {
         for (const auto & obs_point : intersection_line) {
           const auto euclidian_dist = bg::distance(obs_point, projection.front());

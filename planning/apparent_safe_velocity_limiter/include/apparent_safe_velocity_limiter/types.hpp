@@ -39,5 +39,13 @@ using segment_t = tier4_autoware_utils::Segment2d;
 using linestring_t = tier4_autoware_utils::LineString2d;
 using multilinestring_t = tier4_autoware_utils::MultiLineString2d;
 
+using Obstacles = multilinestring_t;
+
+struct ObstacleMasks
+{
+  polygon_t positive_mask;        // discard obstacles outside of this polygon
+  multipolygon_t negative_masks;  // discard obstacles inside of these polygons
+};
+
 }  // namespace apparent_safe_velocity_limiter
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__TYPES_HPP_

@@ -30,7 +30,7 @@ namespace apparent_safe_velocity_limiter
 /// @param[in] obstacle Obstacle object to turn into a marker
 /// @param[in] z z-value to use in the marker
 /// @return marker representing the linestring
-visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, const Float z);
+visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & obstacle, const Float z);
 
 /// @brief make debug marker array
 /// @param[in] obstacles obstacles
@@ -41,8 +41,7 @@ visualization_msgs::msg::Marker makeLinestringMarker(const Obstacle & obstacle, 
 /// @param[in] marker_z z-value to use for markers
 /// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const std::vector<Obstacle> & obstacles,
-  const std::vector<multilinestring_t> & original_projections,
+  const Obstacles & obstacles, const std::vector<multilinestring_t> & original_projections,
   const std::vector<multilinestring_t> & adjusted_projections,
   const std::vector<polygon_t> & original_footprints,
   const std::vector<polygon_t> & adjusted_footprints, const Float marker_z);

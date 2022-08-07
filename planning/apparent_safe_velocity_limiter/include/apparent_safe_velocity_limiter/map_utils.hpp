@@ -37,7 +37,7 @@ namespace apparent_safe_velocity_limiter
 /// @param[in] tags tags to identify obstacle linestrings
 /// @param[in] obstacle_ids ids to identify obstacle linestrings
 /// @return the extracted obstacles
-std::vector<Obstacle> extractStaticObstacles(
+Obstacles extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map,
   const autoware_auto_planning_msgs::msg::HADMapRoute & route,
   const std::vector<std::string> & tags, const std::vector<int64_t> & obstacle_ids);

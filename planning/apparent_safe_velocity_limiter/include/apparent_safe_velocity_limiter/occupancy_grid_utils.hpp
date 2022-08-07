@@ -28,23 +28,21 @@ namespace apparent_safe_velocity_limiter
 /// @brief mask gridmap cells that are inside the given polygons
 /// @param[in, out] grid_map the grid map to modify
 /// @param[in] polygons the polygons to mask from the grid map
-void maskPolygons(
-  grid_map::GridMap & grid_map, const multipolygon_t & polygon_in_masks,
-  const polygon_t & polygon_out_mask);
+void maskPolygons(grid_map::GridMap & grid_map, const ObstacleMasks & masks);
 
 /// @brief apply a threshold to the grid map
 /// @param[in, out] grid_map the grid map to modify
 /// @param[in] threshold cells above this value are set to the max value, the other are set to 0
 void threshold(grid_map::GridMap & grid_map, const float threshold);
 
-grid_map::GridMap convertToGridMap(const nav_msgs::msg::OccupancyGrid & occupancy_grid);
+grid_map::GridMap convertToGridMap(const OccupancyGrid & occupancy_grid);
 
 /// @brief extract obstacles from an occupancy grid
 /// @param[in] occupancy_grid input occupancy grid
 /// @param[in] occupied_threshold threshold to use for identifying obstacles in the occupancy grid
 /// @return extracted obstacles
-std::vector<Obstacle> extractObstacles(
-  const grid_map::GridMap & grid_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid);
+Obstacles extractObstacles(
+  const grid_map::GridMap & grid_map, const OccupancyGrid & occupancy_grid);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__OCCUPANCY_GRID_UTILS_HPP_

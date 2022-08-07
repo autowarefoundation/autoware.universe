@@ -14,6 +14,8 @@
 
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 
+#include "apparent_safe_velocity_limiter/types.hpp"
+
 #include <grid_map_core/Polygon.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_cv/GridMapCvConverter.hpp>
@@ -26,35 +28,29 @@
 
 namespace apparent_safe_velocity_limiter
 {
-void maskPolygons(
-  grid_map::GridMap & grid_map, const multipolygon_t & polygon_in_masks,
-  const polygon_t & polygon_out_mask)
+void maskPolygons(grid_map::GridMap & grid_map, const ObstacleMasks & obstacle_masks)
 {
   constexpr auto convert = [](const polygon_t & in) {
     grid_map::Polygon out;
-    for (const auto & p : in.outer()) {
-      out.addVertex(grid_map::Position(p.x(), p.y()));
-    }
+    for (const auto & p : in.outer()) out.addVertex(p);
     return out;
   };
 
-  const auto layer_copy = grid_map["layer"];
   auto & layer = grid_map["layer"];
-  layer.setConstant(0.0);
 
-  std::vector<grid_map::Polygon> in_masks;
-  in_masks.reserve(polygon_in_masks.size());
-  for (const auto & poly : polygon_in_masks) in_masks.push_back(convert(poly));
-  grid_map::Position position;
-  for (grid_map_utils::PolygonIterator iterator(grid_map, convert(polygon_out_mask));
-       !iterator.isPastEnd(); ++iterator) {
-    grid_map.getPosition(*iterator, position);
-    if (std::find_if(in_masks.begin(), in_masks.end(), [&](const auto & mask) {
-          return mask.isInside(position);
-        }) == in_masks.end()) {
+  if (!obstacle_masks.positive_mask.outer().empty()) {
+    const auto layer_copy = grid_map["layer"];
+    layer.setConstant(0.0);
+    grid_map::Position position;
+    for (grid_map_utils::PolygonIterator iterator(grid_map, convert(obstacle_masks.positive_mask));
+         !iterator.isPastEnd(); ++iterator)
       layer((*iterator)(0), (*iterator)(1)) = layer_copy((*iterator)(0), (*iterator)(1));
-    }
   }
+
+  for (const auto & negative_mask : obstacle_masks.negative_masks)
+    for (grid_map_utils::PolygonIterator iterator(grid_map, convert(negative_mask));
+         !iterator.isPastEnd(); ++iterator)
+      layer((*iterator)(0), (*iterator)(1)) = 0.0;
 }
 
 void threshold(grid_map::GridMap & grid_map, const float threshold)
@@ -68,15 +64,14 @@ void threshold(grid_map::GridMap & grid_map, const float threshold)
   }
 }
 
-grid_map::GridMap convertToGridMap(const nav_msgs::msg::OccupancyGrid & occupancy_grid)
+grid_map::GridMap convertToGridMap(const OccupancyGrid & occupancy_grid)
 {
   grid_map::GridMap grid_map;
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
   return grid_map;
 }
 
-std::vector<Obstacle> extractObstacles(
-  const grid_map::GridMap & grid_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid)
+Obstacles extractObstacles(const grid_map::GridMap & grid_map, const OccupancyGrid & occupancy_grid)
 {
   cv::Mat cv_image;
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, cv_image);
@@ -84,7 +79,7 @@ std::vector<Obstacle> extractObstacles(
   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-  std::vector<Obstacle> obstacles;
+  Obstacles obstacles;
   const auto & info = occupancy_grid.info;
   for (const auto & contour : contours) {
     linestring_t line;

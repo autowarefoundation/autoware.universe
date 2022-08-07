@@ -34,9 +34,8 @@ namespace apparent_safe_velocity_limiter
 /// @param [in] max_obstacle_distance optional maximum distance for obstacles to be considered
 /// @return distance to the closest collision if any
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint,
-  const std::vector<Obstacle> & obstacles, const ProjectionParameters & params,
-  const std::optional<double> max_obstacle_distance);
+  const linestring_t & projection, const polygon_t & footprint, const Obstacles & obstacles,
+  const ProjectionParameters & params, const std::optional<double> max_obstacle_distance);
 
 /// @brief calculate the closest distance along a circle to a given target point
 /// @param [in] origin starting point

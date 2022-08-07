@@ -56,8 +56,7 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 }
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const std::vector<Obstacle> & obstacles,
-  const std::vector<multilinestring_t> & original_projections,
+  const Obstacles & obstacles, const std::vector<multilinestring_t> & original_projections,
   const std::vector<multilinestring_t> & adjusted_projections,
   const std::vector<polygon_t> & original_footprints,
   const std::vector<polygon_t> & adjusted_footprints, const Float marker_z)
@@ -103,7 +102,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
                       std::max(original_projections_id_offset, adjusted_projections_id_offset);
   auto obs_id = 0;
   for (const auto & obs : obstacles) {
-    auto marker = makeLinestringMarker(obs.line, marker_z);
+    auto marker = makeLinestringMarker(obs, marker_z);
     marker.ns = "obstacles";
     marker.id = obs_id++;
     marker.color.b = 1.0;

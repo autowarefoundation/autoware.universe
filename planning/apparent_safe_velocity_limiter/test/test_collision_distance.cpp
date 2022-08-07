@@ -45,7 +45,7 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
   polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
-  std::vector<apparent_safe_velocity_limiter::Obstacle> obstacles;
+  apparent_safe_velocity_limiter::Obstacles obstacles;
   constexpr auto no_distance_limit = std::numeric_limits<double>::max();
 
   std::optional<double> result =
