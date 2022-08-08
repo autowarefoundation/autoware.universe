@@ -516,7 +516,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   }
 
   const auto traj_length = motion_utils::calcSignedArcLength(
-    planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1);
+    planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1,
+    nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   if (!traj_length) {
     return {};
   }
@@ -625,7 +626,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOnTrajec
 {
   const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
   const auto traj_length = motion_utils::calcSignedArcLength(
-    planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1);
+    planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1,
+    nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   if (!traj_length) {
     return {};
   }
@@ -666,7 +668,8 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOffTraje
   const auto & current_time = planner_data.current_time;
   const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
   const auto traj_length = motion_utils::calcSignedArcLength(
-    planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1);
+    planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1,
+    nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   if (!traj_length) {
     return {};
   }
