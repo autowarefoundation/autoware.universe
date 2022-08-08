@@ -15,10 +15,8 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-find_package(rclpy REQUIRED)
-
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE config)
+ament_auto_package(INSTALL_TO_SHARE data launch)
 
 install(PROGRAMS
     src/semseg_core.py

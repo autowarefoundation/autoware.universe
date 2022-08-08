@@ -66,4 +66,7 @@
         <remap from="/src_info" to="$(var resized_info)"/>
     </node>
 
+
+    <include file="$(find-pkg-share semantic_segmentation)/launch/semseg.launch.xml">
+    </include>
 </launch>
