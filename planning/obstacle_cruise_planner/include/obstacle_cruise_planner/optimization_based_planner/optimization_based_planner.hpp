@@ -85,7 +85,7 @@ private:
     const double v0, const VelocityOptimizer::OptimizationResult & opt_result, const double offset);
 
   void publishDebugTrajectory(
-    const rclcpp::Time & current_time, const Trajectory & traj, const size_t closest_idx,
+    const ObstacleCruisePlannerData & planner_data, const double offset,
     const std::vector<double> & time_vec, const SBoundaries & s_boundaries,
     const VelocityOptimizer::OptimizationResult & opt_result);
   // Calculation time watcher
