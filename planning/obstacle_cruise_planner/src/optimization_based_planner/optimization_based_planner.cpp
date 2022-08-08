@@ -699,8 +699,17 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOffTraje
     const double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
     const double s_upper_bound =
       current_s_obj + (v_obj * v_obj) / (2 * std::fabs(min_object_accel_for_rss));
-    for (size_t i = 0; i < time_vec.size(); ++i) {
-      if (object_time < time_vec.at(i) && s_upper_bound < s_boundaries.at(i).max_s) {
+
+    size_t object_time_segment_idx = 0;
+    for (size_t i = 0; i < time_vec.size() - 1; ++i) {
+      if (time_vec.at(i) < object_time && object_time < time_vec.at(i + 1)) {
+        object_time_segment_idx = i;
+        break;
+      }
+    }
+
+    for (size_t i = 0; i <= object_time_segment_idx + 1; ++i) {
+      if (time_vec.at(i) < object_time && s_upper_bound < s_boundaries.at(i).max_s) {
         s_boundaries.at(i).max_s = std::max(0.0, s_upper_bound);
         s_boundaries.at(i).is_object = true;
       }
