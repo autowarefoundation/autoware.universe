@@ -1104,7 +1104,7 @@ double calcSignedArcLength(
 }
 
 template <class T>
-std::optional<size_t> findFirstNearestIndexWithSoftConstraints(
+size_t findFirstNearestIndexWithSoftConstraints(
   const T & points, const geometry_msgs::msg::Pose & pose,
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max())
@@ -1213,6 +1213,8 @@ size_t findNearestIndexWithinRange(
   const T & points, const geometry_msgs::msg::Point & pos, const size_t start_idx,
   const size_t end_idx)
 {
+  validateNonEmpty(points);
+
   const auto sub_points = T{points.begin() + start_idx, points.begin() + end_idx + 1};
   validateNonEmpty(sub_points);
 
@@ -1224,6 +1226,8 @@ size_t findNearestSegmentIndexWithinRange(
   const T & points, const geometry_msgs::msg::Point & pos, const size_t start_idx,
   const size_t end_idx)
 {
+  validateNonEmpty(points);
+
   const auto sub_points = T{points.begin() + start_idx, points.begin() + end_idx + 1};
   validateNonEmpty(sub_points);
 

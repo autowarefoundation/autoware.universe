@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace motion_utils
@@ -343,7 +344,7 @@ inline boost::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
   size_t end_idx;
 
   bool found_first_idx = false;
-  for (size_t i = 0; i < path.points.size(); i++) {
+  for (size_t i = 0; i < path.points.size(); ++i) {
     const auto & p = path.points.at(i);
     for (const auto & id : p.lane_ids) {
       if (id == lane_id) {
