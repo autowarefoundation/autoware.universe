@@ -37,8 +37,8 @@ public:
   GroundServer();
 
 private:
-  const float R = 10;
-  const int K = 30;
+  const float R;
+  const int K;
   const bool force_zero_tilt_;
 
   rclcpp::Service<Ground>::SharedPtr service_;

@@ -12,6 +12,8 @@
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="-1.0"/>
 
+    <arg name="semseg" default="false"/>
+
     <!-- ========================================= -->
     <!-- ============ PARTICLE FILTER ============ -->
     <!-- ========================================= -->
@@ -66,7 +68,9 @@
         <remap from="/src_info" to="$(var resized_info)"/>
     </node>
 
-
-    <include file="$(find-pkg-share semantic_segmentation)/launch/semseg.launch.xml">
+    <!-- ========================================= -->
+    <!-- ================ SIGN BOARD ============= -->
+    <!-- ========================================= -->
+    <include file="$(find-pkg-share semantic_segmentation)/launch/semseg.launch.xml" if="$(var semseg)">
     </include>
 </launch>

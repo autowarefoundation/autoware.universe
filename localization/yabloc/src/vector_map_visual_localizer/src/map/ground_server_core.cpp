@@ -6,6 +6,7 @@
 #include <Eigen/Eigenvalues>
 
 #include <pcl/ModelCoefficients.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
@@ -14,8 +15,10 @@ namespace map
 {
 GroundServer::GroundServer()
 : Node("ground_server"),
-  vector_buffer_(50),
-  force_zero_tilt_(declare_parameter("force_zero_tilt", false))
+  force_zero_tilt_(declare_parameter("force_zero_tilt", false)),
+  R(declare_parameter("R", 20)),
+  K(declare_parameter("K", 50)),
+  vector_buffer_(50)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -55,6 +58,7 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
     ss << std::fixed << std::setprecision(2);
     ss << "height: " << ground_plane.height() << std::endl;
     float cos = ground_plane.normal.dot(Eigen::Vector3f::UnitZ());
+    cos = std::clamp(cos, -1.f, 1.f);
     ss << "tilt: " << std::acos(cos) * 180 / 3.14 << " deg" << std::endl;
 
     String string_msg;
@@ -73,28 +77,44 @@ void GroundServer::callbackMap(const HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
-  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-
-  auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
-    pcl::PointXYZ q;
-    q.x = p.x();
-    q.y = p.y();
-    q.z = p.z();
-    return q;
+  auto upSample = [](
+                    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
+                    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) -> void {
+    Eigen::Vector3f f(from.x(), from.y(), from.z());
+    Eigen::Vector3f t(to.x(), to.y(), to.z());
+    float length = (t - f).norm();
+    Eigen::Vector3f d = (t - f).normalized();
+    for (float l = 0; l < length; l += 0.5f) {
+      pcl::PointXYZ xyz;
+      xyz.getVector3fMap() = (f + l * d);
+      cloud->push_back(xyz);
+    }
   };
 
   const std::set<std::string> visible_labels = {
     "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr upsampled_cloud =
+    boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
   for (lanelet::LineString3d & line : lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
 
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
+
+    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
     for (const lanelet::ConstPoint3d p : line) {
-      cloud_->push_back(toPointXYZ(p));
+      if (from.has_value()) upSample(from.value(), p, upsampled_cloud);
+      from = p;
     }
   }
+
+  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  pcl::VoxelGrid<pcl::PointXYZ> filter;
+  filter.setInputCloud(upsampled_cloud);
+  filter.setLeafSize(1.0f, 1.0f, 1.0f);
+  filter.filter(*cloud_);
 
   kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
   kdtree_->setInputCloud(cloud_);
@@ -143,7 +163,8 @@ std::vector<int> GroundServer::ransacEstimation(const std::vector<int> & indices
   seg.segment(*inliers, *coefficients);
   return inliers->indices;
 }
-GroundPlane GroundServer::estimateGround(const geometry_msgs::msg::Point & point)
+
+GroundPlane GroundServer::estimateGround(const Point & point)
 {
   std::vector<int> k_indices, r_indices;
   std::vector<float> distances;
@@ -178,6 +199,11 @@ GroundPlane GroundServer::estimateGround(const geometry_msgs::msg::Point & point
   pcl::solvePlaneParameters(covariance, centroid, plane_parameter, curvature);
   Eigen::Vector3f normal = plane_parameter.topRows(3);
   if (normal.z() < 0) normal = -normal;
+
+  // Remove NaN
+  if (normal.hasNaN()) normal = Eigen::Vector3f::UnitZ();
+  // Remove too large tilt
+  if ((normal.dot(Eigen::Vector3f::UnitZ())) < 0.707) normal = Eigen::Vector3f::UnitZ();
 
   // Smoothing
   vector_buffer_.push_back(normal);

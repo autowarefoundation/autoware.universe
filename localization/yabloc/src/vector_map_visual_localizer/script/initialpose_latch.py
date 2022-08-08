@@ -19,6 +19,7 @@ class InitialPoseLatch(Node):
 
         self.last_initial_psoe_and_time = None
         self.timer_ = self.create_timer(1.0, self.timer_callback, clock=self.get_clock())
+        self.last_time_diff = None
 
     def timer_callback(self):
         if self.last_initial_psoe_and_time is None:
@@ -26,15 +27,22 @@ class InitialPoseLatch(Node):
 
         now_stamp = self.get_clock().now()
         target = self.last_initial_psoe_and_time[0]
-        dt = (now_stamp.nanoseconds-target.nanoseconds)/1e9
-        if(abs(dt) < 1):
-            print('Publish initialpose', dt)
+        dt = abs(now_stamp.nanoseconds-target.nanoseconds)/1e9
+
+        if self.last_time_diff is not None:
+            if dt < self.last_time_diff:
+                self.get_logger().info('It will publish initialpose soon ' + str(dt))
+
+        if dt < 0.55:
+            self.get_logger().info('Publish initialpose')
             self.pub_pose_.publish(self.last_initial_psoe_and_time[1])
+
+        self.last_time_diff = dt
 
     def pose_callback(self, msg: PoseWithCovarianceStamped):
         stamp = msg.header.stamp
         stamp = Time(seconds=stamp.sec, nanoseconds=stamp.nanosec)
-        self.get_logger().info('Subscribed initialpose: "%s"' + str(stamp))
+        self.get_logger().info('Subscribed initialpose')
         self.last_initial_psoe_and_time = (stamp, msg)
 
 

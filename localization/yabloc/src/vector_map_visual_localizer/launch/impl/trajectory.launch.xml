@@ -40,6 +40,8 @@
     <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
+        <param name="K" value="50"/>
+        <param name="R" value="10"/>
     </node>
 
     <!-- ========================================= -->
