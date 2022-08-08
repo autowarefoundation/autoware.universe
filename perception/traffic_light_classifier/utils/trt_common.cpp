@@ -105,7 +105,11 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
     return false;
   }
 
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
   config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, 16 << 20);
+#else
+  config->setMaxWorkspaceSize(16 << 20);
+#endif
 
   if (precision_ == "fp16") {
     config->setFlag(nvinfer1::BuilderFlag::kFP16);
