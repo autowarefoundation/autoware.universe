@@ -136,6 +136,8 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
         clock_));
     }
     generateUUID(module_id);
+    updateRTCStatus(
+      getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
   }
 }
 
