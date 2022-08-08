@@ -133,6 +133,7 @@ void trtNet::InitEngine()
 
 void trtNet::doInference(const void * inputData, void * outputData)
 {
+  static const int batchSize = 1;
   assert(mTrtInputCount == 1);
 
   int inputIndex = 0;
@@ -140,7 +141,7 @@ void trtNet::doInference(const void * inputData, void * outputData)
     mTrtCudaBuffer[inputIndex], inputData, mTrtBindBufferSize[inputIndex], cudaMemcpyHostToDevice,
     mTrtCudaStream));
 
-  mTrtContext->executeV2(&mTrtCudaBuffer[inputIndex]);
+  mTrtContext->execute(batchSize, &mTrtCudaBuffer[inputIndex]);
 
   for (size_t bindingIdx = mTrtInputCount; bindingIdx < mTrtBindBufferSize.size(); ++bindingIdx) {
     auto size = mTrtBindBufferSize[bindingIdx];
