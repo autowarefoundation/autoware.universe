@@ -64,7 +64,7 @@ FrontVehicleVelocityEstimator::Output FrontVehicleVelocityEstimator::update(
   now_absolute_velocity = std::min(param_.threshold_absolute_velocity, now_absolute_velocity);
 
   // Set queue of nearest_neighbor_point
-  if ((int)velocity_queue_.size() >= param_.moving_average_num) {
+  if (static_cast<int>(velocity_queue_.size()) >= param_.moving_average_num) {
     velocity_queue_.pop_front();
   }
 
