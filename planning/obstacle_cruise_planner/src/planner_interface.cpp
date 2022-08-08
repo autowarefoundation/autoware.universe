@@ -197,7 +197,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
   return output_traj;
 }
 
-boost::optional<double> PlannerInterface::calcDistanceToCollisionPoint(
+double PlannerInterface::calcDistanceToCollisionPoint(
   const ObstacleCruisePlannerData & planner_data, const geometry_msgs::msg::Point & collision_point)
 {
   const double offset = planner_data.is_driving_forward
@@ -212,5 +212,7 @@ boost::optional<double> PlannerInterface::calcDistanceToCollisionPoint(
     return dist_to_collision_point.get() - offset;
   }
 
-  return {};
+  return motion_utils::calcSignedArcLength(
+           planner_data.traj.points, planner_data.current_pose.position, collision_point) -
+         offset;
 }

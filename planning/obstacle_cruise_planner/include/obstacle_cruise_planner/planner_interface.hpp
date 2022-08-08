@@ -115,7 +115,7 @@ protected:
   // TODO(shimizu) remove these parameters
   Trajectory::ConstSharedPtr smoothed_trajectory_ptr_;
 
-  boost::optional<double> calcDistanceToCollisionPoint(
+  double calcDistanceToCollisionPoint(
     const ObstacleCruisePlannerData & planner_data,
     const geometry_msgs::msg::Point & collision_point);
 

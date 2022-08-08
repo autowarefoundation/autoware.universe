@@ -626,9 +626,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOnTrajec
   const double & min_object_accel_for_rss = longitudinal_info_.min_object_accel_for_rss;
   const auto traj_length = motion_utils::calcSignedArcLength(
     planner_data.traj.points, planner_data.current_pose, planner_data.traj.points.size() - 1);
-  const auto dist_to_collision_point =
-    calcDistanceToCollisionPoint(planner_data, object.collision_points.front().point);
-  if (!traj_length || !dist_to_collision_point) {
+  if (!traj_length) {
     return {};
   }
 
@@ -639,7 +637,10 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOnTrajec
 
   const double v_obj = std::abs(object.velocity);
 
-  double current_s_obj = std::max(*dist_to_collision_point - safety_distance, 0.0);
+  const double dist_to_collision_point =
+    calcDistanceToCollisionPoint(planner_data, object.collision_points.front().point);
+
+  double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
   const double current_v_obj = object.has_stopped ? 0.0 : v_obj;
   const double initial_s_upper_bound =
     current_s_obj + (current_v_obj * current_v_obj) / (2 * std::fabs(min_object_accel_for_rss));
@@ -686,13 +687,13 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOffTraje
       continue;
     }
 
-    const auto dist_to_collision_point =
+    const double dist_to_collision_point =
       calcDistanceToCollisionPoint(planner_data, collision_point.point);
     if (!dist_to_collision_point) {
       continue;
     }
 
-    const double current_s_obj = std::max(*dist_to_collision_point - safety_distance, 0.0);
+    const double current_s_obj = std::max(dist_to_collision_point - safety_distance, 0.0);
     const double s_upper_bound =
       current_s_obj + (v_obj * v_obj) / (2 * std::fabs(min_object_accel_for_rss));
     for (size_t i = 0; i < time_vec.size(); ++i) {
