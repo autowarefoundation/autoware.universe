@@ -163,6 +163,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     return false;
   }
 
+
   // Get the interpolated pose
   std::pair<bool, Pose> pair_pose_interp_wp_ = calculateClosestPose();
 
@@ -190,9 +191,9 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     current_vec_pose_ptr_->position.x, current_vec_pose_ptr_->position.y};
 
   // Get Yaw angles of the reference waypoint and the vehicle
-  const double target_yaw = tf2::getYaw(pose_interp_wp_.orientation);
-  const double vehicle_yaw_angle = tf2::getYaw(current_vec_pose_ptr_->orientation);
-  //  std::cout << " target yaw " << target_yaw << " vehicle yaw " << vehicle_yaw_angle<<std::endl;
+  const double & target_yaw = tf2::getYaw(pose_interp_wp_.orientation);
+  const double & vehicle_yaw_angle = tf2::getYaw(current_vec_pose_ptr_->orientation);
+
   // Compute Curvature at the point where the front axle might follow
   // get the waypoint corresponds to the front_axle center
 
@@ -201,8 +202,8 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     return false;
   }
 
-  const double curvature_est = estimateCurvature();                // three point curvature
-  const double curvature_est_pp = estimatePurePursuitCurvature();  // pure pursuit curvature
+  const double & curvature_est = estimateCurvature();                // three point curvature
+  const double & curvature_est_pp = estimatePurePursuitCurvature();  // pure pursuit curvature
 
   // Compute lateral, longitudinal, heading error w.r.t. frenet frame
 
