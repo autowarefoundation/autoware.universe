@@ -12,88 +12,65 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "operation_mode_transition_manager/state.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
-#include <algorithm>
-#include <cmath>
+#include "data.hpp"
 
 namespace operation_mode_transition_manager
 {
 
-uint8_t toMsg(const State s)
+std::string toString(const std::optional<OperationMode> mode)
 {
-  if (s == State::STOP) {
-    return OperationMode::STOP;
-  } else if (s == State::REMOTE_OPERATOR) {
-    return OperationMode::REMOTE_OPERATOR;
-  } else if (s == State::MANUAL_DIRECT) {
-    return OperationMode::MANUAL_DIRECT;
-  } else if (s == State::LOCAL_OPERATOR) {
-    return OperationMode::LOCAL_OPERATOR;
-  } else if (s == State::TRANSITION_TO_AUTO) {
-    return OperationMode::TRANSITION_TO_AUTO;
-  } else if (s == State::AUTONOMOUS) {
-    return OperationMode::AUTONOMOUS;
+  if (!mode) {
+    return "DISENGAGE";
   }
-  return OperationMode::STOP;
+  switch (mode.value()) {
+    case OperationMode::STOP:
+      return "STOP";
+    case OperationMode::AUTONOMOUS:
+      return "AUTONOMOUS";
+    case OperationMode::LOCAL:
+      return "LOCAL";
+    case OperationMode::REMOTE:
+      return "REMOTE";
+  }
+  return "UNKNOWN";
 }
 
-State toEnum(const OperationMode m)
+std::optional<OperationMode> toEnum(const ChangeOperationMode::Request & request)
 {
-  if (m.mode == OperationMode::STOP) {
-    return State::STOP;
-  } else if (m.mode == OperationMode::REMOTE_OPERATOR) {
-    return State::REMOTE_OPERATOR;
-  } else if (m.mode == OperationMode::MANUAL_DIRECT) {
-    return State::MANUAL_DIRECT;
-  } else if (m.mode == OperationMode::LOCAL_OPERATOR) {
-    return State::LOCAL_OPERATOR;
-  } else if (m.mode == OperationMode::TRANSITION_TO_AUTO) {
-    return State::TRANSITION_TO_AUTO;
-  } else if (m.mode == OperationMode::AUTONOMOUS) {
-    return State::AUTONOMOUS;
+  using ServiceMode = ChangeOperationMode::Request::_operation_type;
+
+  switch (request.operation.mode) {
+    case ServiceMode::STOP:
+      return OperationMode::STOP;
+    case ServiceMode::AUTONOMOUS:
+      return OperationMode::AUTONOMOUS;
+    case ServiceMode::LOCAL:
+      return OperationMode::LOCAL;
+    case ServiceMode::REMOTE:
+      return OperationMode::REMOTE;
   }
-  return State::STOP;
+  return std::nullopt;
 }
 
-bool isManual(const State s)
+OperationModeStateValue toMsg(const OperationMode mode)
 {
-  if (
-    s == State::STOP || s == State::REMOTE_OPERATOR || s == State::MANUAL_DIRECT ||
-    s == State::LOCAL_OPERATOR) {
-    return true;
-  } else {
-    return false;
-  }
-}
+  const auto get_operation_mode = [](const OperationMode mode) {
+    switch (mode) {
+      case OperationMode::STOP:
+        return OperationModeStateValue::STOP;
+      case OperationMode::AUTONOMOUS:
+        return OperationModeStateValue::AUTONOMOUS;
+      case OperationMode::LOCAL:
+        return OperationModeStateValue::LOCAL;
+      case OperationMode::REMOTE:
+        return OperationModeStateValue::REMOTE;
+    }
+    return OperationModeStateValue::UNKNOWN;
+  };
 
-bool isAuto(const State s)
-{
-  if (s == State::AUTONOMOUS) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-std::string toStr(const State s)
-{
-  if (s == State::STOP) {
-    return "STOP";
-  } else if (s == State::REMOTE_OPERATOR) {
-    return "REMOTE_OPERATOR";
-  } else if (s == State::MANUAL_DIRECT) {
-    return "MANUAL_DIRECT";
-  } else if (s == State::LOCAL_OPERATOR) {
-    return "LOCAL_OPERATOR";
-  } else if (s == State::TRANSITION_TO_AUTO) {
-    return "TRANSITION_TO_AUTO";
-  } else if (s == State::AUTONOMOUS) {
-    return "AUTONOMOUS";
-  } else {
-    return "INVALID";
-  }
+  OperationModeStateValue operation;
+  operation.mode = get_operation_mode(mode);
+  return operation;
 }
 
 }  // namespace operation_mode_transition_manager

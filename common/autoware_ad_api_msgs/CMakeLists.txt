@@ -7,6 +7,9 @@ autoware_package()
 rosidl_generate_interfaces(${PROJECT_NAME}
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
+  operation_mode/srv/ChangeOperationMode.srv
+  operation_mode/msg/OperationMode.msg
+  operation_mode/msg/OperationModeState.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs

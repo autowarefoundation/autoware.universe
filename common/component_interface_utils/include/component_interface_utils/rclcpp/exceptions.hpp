@@ -17,34 +17,28 @@
 
 #include <autoware_ad_api_msgs/msg/response_status.hpp>
 
-#include <stdexcept>
+#include <exception>
 #include <string>
 
 namespace component_interface_utils
 {
 
-class ServiceException : public std::runtime_error
+class ServiceException : public std::exception
 {
 public:
   using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
   using ResponseStatusCode = ResponseStatus::_code_type;
 
-  ServiceException(ResponseStatusCode code, const std::string & message)
-  : std::runtime_error(message)
+  ServiceException(ResponseStatusCode code, const std::string & message, bool success = false)
   {
-    code_ = code;
+    status_.success = success;
+    status_.code = code;
+    status_.message = message;
   }
-  ResponseStatus status() const
-  {
-    ResponseStatus status;
-    status.success = false;
-    status.code = code_;
-    status.message = what();
-    return status;
-  }
+  ResponseStatus status() const { return status_; }
 
 private:
-  ResponseStatusCode code_;
+  ResponseStatus status_;
 };
 
 class ServiceUnready : public ServiceException
@@ -70,6 +64,24 @@ class TransformError : public ServiceException
 public:
   explicit TransformError(const std::string & message)
   : ServiceException(ResponseStatus::TRANSFORM_ERROR, message)
+  {
+  }
+};
+
+class ParameterError : public ServiceException
+{
+public:
+  explicit ParameterError(const std::string & message)
+  : ServiceException(ResponseStatus::PARAMETER_ERROR, message)
+  {
+  }
+};
+
+class NoEffectWarning : public ServiceException
+{
+public:
+  explicit NoEffectWarning(const std::string & message)
+  : ServiceException(ResponseStatus::NO_EFFECT, message, true)
   {
   }
 };
