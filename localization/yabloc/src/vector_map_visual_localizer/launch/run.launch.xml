@@ -69,7 +69,7 @@
     </node>
 
     <!-- ========================================= -->
-    <!-- ================ SIGN BOARD ============= -->
+    <!-- ========== SEMANTIC SEGMENTATION ======== -->
     <!-- ========================================= -->
     <include file="$(find-pkg-share semantic_segmentation)/launch/semseg.launch.xml" if="$(var semseg)">
     </include>

@@ -58,8 +58,9 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
     ss << std::fixed << std::setprecision(2);
     ss << "height: " << ground_plane.height() << std::endl;
     float cos = ground_plane.normal.dot(Eigen::Vector3f::UnitZ());
-    cos = std::clamp(cos, -1.f, 1.f);
     ss << "tilt: " << std::acos(cos) * 180 / 3.14 << " deg" << std::endl;
+    float raw_cos = vector_buffer_.back().dot(Eigen::Vector3f::UnitZ());
+    ss << "raw tilt: " << std::acos(raw_cos) * 180 / 3.14 << " deg" << std::endl;
 
     String string_msg;
     string_msg.data = ss.str();
@@ -155,7 +156,7 @@ std::vector<int> GroundServer::ransacEstimation(const std::vector<int> & indices
   seg.setOptimizeCoefficients(true);
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold(0.5);
+  seg.setDistanceThreshold(1.0);
   seg.setProbability(0.6);
 
   seg.setInputCloud(cloud_);

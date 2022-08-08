@@ -53,7 +53,15 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
 
   Eigen::Vector3f position = fix2Mgrs(fix).cast<float>();
   ParticleArray weighted_particles{weightParticles(opt_particles.value(), position, fixed)};
-  setWeightedParticleArray(weighted_particles);
+  // setWeightedParticleArray(weighted_particles);
+  geometry_msgs::msg::Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
+  Eigen::Vector3f mean_position = util::pose2Affine(mean_pose).translation();
+  if ((mean_position - last_mean_position_).squaredNorm() > 1) {
+    this->setWeightedParticleArray(weighted_particles);
+    last_mean_position_ = mean_position;
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
+  }
 
   publishMarker(position, fixed);
 }

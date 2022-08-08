@@ -9,6 +9,9 @@
     <arg name="predict_twist" default="/eagleye/twist" if="$(var use_eagleye)"/>
     <arg name="predict_twist" default="/kalman/twist" unless="$(var use_eagleye)"/>
 
+    <arg name="static_linear_covariance" default="0.05"/>
+    <arg name="static_angular_covariance" default="0.005"/>
+
     <!-- ========================================= -->
     <!-- ============= predict update ============ -->
     <!-- ========================================= -->
@@ -23,8 +26,8 @@
         <param name="resampling_interval_seconds" value="1.5" />
         <param name="prediction_rate" value="50.0" />
 
-        <param name="static_linear_covariance" value="0.05" />
-        <param name="static_angular_covariance" value="0.005" />
+        <param name="static_linear_covariance" value="$(var static_linear_covariance)" />
+        <param name="static_angular_covariance" value="$(var static_angular_covariance)" />
 
         <param name="visualize" value="true"/>
         <remap from="/marker_array_particles" to="/weighted_particles/marker_array"/>

@@ -33,6 +33,8 @@ private:
   const bool rtk_enabled_;
   Float32 latest_height_;
 
+  Eigen::Vector3f last_mean_position_;
+
   void ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg);
   rclcpp::Time ubloxTime2Stamp(const NavPVT & msg);
 
