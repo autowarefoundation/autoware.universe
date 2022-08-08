@@ -115,6 +115,7 @@ private:
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_array_;
   autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
   tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
+  rclcpp::Time current_gate_mode_stamp_;
   autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
 
   // Publisher
@@ -128,16 +129,6 @@ private:
   bool onClearEmergencyService(
     [[maybe_unused]] std_srvs::srv::Trigger::Request::SharedPtr request,
     std_srvs::srv::Trigger::Response::SharedPtr response);
-
-  // Heartbeat
-  std::shared_ptr<HeaderlessHeartbeatChecker<diagnostic_msgs::msg::DiagnosticArray>>
-    heartbeat_diag_array_;
-  std::shared_ptr<HeaderlessHeartbeatChecker<tier4_control_msgs::msg::GateMode>>
-    heartbeat_current_gate_mode_;
-  std::shared_ptr<HeaderlessHeartbeatChecker<autoware_auto_system_msgs::msg::AutowareState>>
-    heartbeat_autoware_state_;
-  std::shared_ptr<HeaderlessHeartbeatChecker<autoware_auto_vehicle_msgs::msg::ControlModeReport>>
-    heartbeat_control_mode_;
 
   // Algorithm
   boost::optional<DiagStamped> getLatestDiag(const std::string & diag_name) const;
