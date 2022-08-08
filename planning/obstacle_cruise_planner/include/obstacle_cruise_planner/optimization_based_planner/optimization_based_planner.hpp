@@ -64,8 +64,6 @@ private:
   struct ObjectData
   {
     geometry_msgs::msg::Pose pose;
-    double length;
-    double width;
     double time;
   };
 
@@ -78,43 +76,26 @@ private:
   TrajectoryPoint calcInterpolatedTrajectoryPoint(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose);
   bool checkHasReachedGoal(const ObstacleCruisePlannerData & planner_data);
-  TrajectoryData getTrajectoryData(
-    const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose);
-
-  TrajectoryData resampleTrajectoryData(
-    const TrajectoryData & base_traj_data, const double resampling_s_interval,
-    const double max_traj_length);
-  Trajectory resampleTrajectory(
-    const std::vector<double> & base_index, const Trajectory & base_trajectory,
-    const std::vector<double> & query_index, const bool use_spline_for_pose = false);
 
   boost::optional<SBoundaries> getSBoundaries(
-    const ObstacleCruisePlannerData & planner_data, const TrajectoryData & ego_traj_data,
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec);
+
+  boost::optional<SBoundaries> getSBoundaries(
+    const ObstacleCruisePlannerData & planner_data, const TargetObstacle & object,
     const std::vector<double> & time_vec);
 
   boost::optional<SBoundaries> getSBoundaries(
-    const rclcpp::Time & current_time, const TrajectoryData & ego_traj_data,
-    const TargetObstacle & object, const rclcpp::Time & obj_base_time,
-    const std::vector<double> & time_vec);
-
-  boost::optional<SBoundaries> getSBoundaries(
-    const TrajectoryData & ego_traj_data, const std::vector<double> & time_vec,
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
     const double safety_distance, const TargetObstacle & object,
     const double dist_to_collision_point);
 
   boost::optional<SBoundaries> getSBoundaries(
-    const rclcpp::Time & current_time, const TrajectoryData & ego_traj_data,
-    const std::vector<double> & time_vec, const double safety_distance,
-    const TargetObstacle & object, const rclcpp::Time & obj_base_time,
-    const PredictedPath & predicted_path);
-
-  boost::optional<PredictedPath> resamplePredictedPath(
-    const TargetObstacle & object, const rclcpp::Time & obj_base_time,
-    const rclcpp::Time & current_time, const std::vector<double> & resolutions,
-    const double horizon);
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
+    const double safety_distance, const TargetObstacle & object);
 
   boost::optional<double> getDistanceToCollisionPoint(
-    const TrajectoryData & ego_traj_data, const ObjectData & obj_data);
+    const ObstacleCruisePlannerData & planner_data,
+    const geometry_msgs::msg::Point & collision_point);
 
   boost::optional<size_t> getCollisionIdx(
     const TrajectoryData & ego_traj, const Box2d & obj_box, const size_t start_idx,
@@ -124,7 +105,7 @@ private:
     const geometry_msgs::msg::Pose & pose_base_link);
 
   boost::optional<VelocityOptimizer::OptimizationResult> processOptimizedResult(
-    const double v0, const VelocityOptimizer::OptimizationResult & opt_result);
+    const double v0, const VelocityOptimizer::OptimizationResult & opt_result, const double offset);
 
   void publishDebugTrajectory(
     const rclcpp::Time & current_time, const Trajectory & traj, const size_t closest_idx,
