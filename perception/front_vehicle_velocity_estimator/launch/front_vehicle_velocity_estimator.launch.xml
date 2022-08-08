@@ -1,15 +1,15 @@
 <launch>
   <!-- Input -->
-  <arg name="input/objects" default="~/input/objects" />
-  <arg name="input/pointcloud" default="~/input/pointcloud" />
-  <arg name="input/odometry" default="/localization/kinematic_state" />
+  <arg name="input/objects" default="~/input/objects"/>
+  <arg name="input/pointcloud" default="~/input/pointcloud"/>
+  <arg name="input/odometry" default="/localization/kinematic_state"/>
 
   <!-- Output -->
-  <arg name="output/objects" default="~/output/objects" />
-  <arg name="debug/nearest_neighbor_pointcloud" default="~/debug/nearest_neighbor_pointcloud" />
+  <arg name="output/objects" default="~/output/objects"/>
+  <arg name="debug/nearest_neighbor_pointcloud" default="~/debug/nearest_neighbor_pointcloud"/>
 
   <!-- Parameter -->
-  <arg name="core_params.moving_average_num" default="1" />
+  <arg name="core_params.moving_average_num" default="1"/>
 
   <!-- Node -->
   <node pkg="front_vehicle_velocity_estimator" exec="front_vehicle_velocity_estimator_node" name="front_vehicle_velocity_estimator" output="screen">
