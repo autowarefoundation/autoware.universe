@@ -50,11 +50,9 @@ private:
   void checkLocalizationAccuracy(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void checkLocalizationAccuracyLateralDirection(
     diagnostic_updater::DiagnosticStatusWrapper & stat);
-  void onOdom(
-    nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
+  void onOdom(nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
   visualization_msgs::msg::Marker createEllipseMarker(
-    const Ellipse & ellipse,
-    nav_msgs::msg::Odometry::ConstSharedPtr odom);
+    const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom);
   double measureSizeEllipseAlongBodyFrame(const Eigen::Matrix2d & Pinv, double theta);
   void onTimer();
 

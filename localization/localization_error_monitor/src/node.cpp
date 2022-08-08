@@ -43,8 +43,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
     this->declare_parameter("warn_ellipse_size_lateral_direction", 0.2);
 
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "input/odom", 1,
-    std::bind(&LocalizationErrorMonitor::onOdom, this, std::placeholders::_1));
+    "input/odom", 1, std::bind(&LocalizationErrorMonitor::onOdom, this, std::placeholders::_1));
 
   // QoS setup
   rclcpp::QoS durable_qos(1);
@@ -101,8 +100,7 @@ void LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection(
 }
 
 visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
-  const Ellipse & ellipse,
-  nav_msgs::msg::Odometry::ConstSharedPtr odom)
+  const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom)
 {
   tf2::Quaternion quat;
   quat.setEuler(0, 0, ellipse.yaw);
@@ -128,8 +126,7 @@ visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
   return marker;
 }
 
-void LocalizationErrorMonitor::onOdom(
-  nav_msgs::msg::Odometry::ConstSharedPtr input_msg)
+void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr input_msg)
 {
   // create xy covariance (2x2 matrix)
   // input geometry_msgs::PoseWithCovariance contain 6x6 matrix
