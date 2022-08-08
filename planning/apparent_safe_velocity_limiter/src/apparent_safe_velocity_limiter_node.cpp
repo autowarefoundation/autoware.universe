@@ -194,7 +194,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 
   const auto t_end = std::chrono::system_clock::now();
   const auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
-  RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %d ms", runtime);
+  RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %li ms", runtime.count());
 
   const auto safe_projected_linestrings =
     createProjectedLines(downsampled_traj, projection_params_);

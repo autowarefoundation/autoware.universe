@@ -100,7 +100,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   }
   const auto max_id = original_projections.size() +
                       std::max(original_projections_id_offset, adjusted_projections_id_offset);
-  auto obs_id = 0;
+  auto obs_id = 0lu;
   for (const auto & obs : obstacles) {
     auto marker = makeLinestringMarker(obs, marker_z);
     marker.ns = "obstacles";

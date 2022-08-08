@@ -51,8 +51,9 @@ bool isObstacle(
   const lanelet::ConstLineString2d & ls, const std::vector<std::string> & tags,
   const std::vector<int64_t> & ids)
 {
-  const auto type = ls.attributeOr(lanelet::AttributeName::Type, "");
-  return type != "" && (std::find(tags.begin(), tags.end(), type) != tags.end() ||
-                        std::find(ids.begin(), ids.end(), ls.id()) != ids.end());
+  constexpr auto NONE = "";
+  const auto type = ls.attributeOr(lanelet::AttributeName::Type, NONE);
+  return type != NONE && (std::find(tags.begin(), tags.end(), type) != tags.end() ||
+                          std::find(ids.begin(), ids.end(), ls.id()) != ids.end());
 }
 }  // namespace apparent_safe_velocity_limiter

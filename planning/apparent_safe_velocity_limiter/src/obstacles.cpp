@@ -18,6 +18,7 @@
 #include "apparent_safe_velocity_limiter/pointcloud_utils.hpp"
 
 #include <boost/assign.hpp>
+#include <boost/geometry.hpp>
 
 #include <tf2/utils.h>
 
