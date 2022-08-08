@@ -19,7 +19,6 @@
 #include "interpolation/zero_order_hold.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "obstacle_cruise_planner/optimization_based_planner/resample.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -179,6 +178,12 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
     return planner_data.traj;
   }
 
+  /*
+  for(size_t i=0; i<s_boundaries->size(); ++i) {
+    std::cerr << "s_max[" << i << "]: " << s_boundaries->at(i).max_s << std::endl;
+  }
+  */
+
   // Optimization
   VelocityOptimizer::OptimizationData data;
   data.time_vec = time_vec;
@@ -231,6 +236,10 @@ Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
   }
   const auto & opt_position = processed_result->s;
   const auto & opt_velocity = processed_result->v;
+
+  for (size_t i = 0; i < opt_velocity.size(); ++i) {
+    std::cerr << "opt_velocity[" << i << "]; " << opt_velocity.at(i) << std::endl;
+  }
 
   // Check Size
   if (opt_position.size() == 1 && opt_velocity.front() < ZERO_VEL_THRESHOLD) {
@@ -516,8 +525,6 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     return {};
   }
 
-  const auto & current_time = planner_data.current_time;
-
   SBoundaries s_boundaries(time_vec.size());
   for (size_t i = 0; i < s_boundaries.size(); ++i) {
     s_boundaries.at(i).max_s = *traj_length;
@@ -564,6 +571,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
   // Publish wall marker for slowing down or stopping
   if (min_slow_down_idx) {
     const auto & obj = planner_data.target_obstacles.at(min_slow_down_idx.get());
+    const auto & current_time = planner_data.current_time;
 
     const auto marker_pose = motion_utils::calcLongitudinalOffsetPose(
       planner_data.traj.points, planner_data.current_pose.position, min_slow_down_point_length);
@@ -711,22 +719,6 @@ boost::optional<double> OptimizationBasedPlanner::getDistanceToCollisionPoint(
 {
   return motion_utils::calcSignedArcLength(
     planner_data.traj.points, planner_data.current_pose, collision_point);
-}
-
-boost::optional<size_t> OptimizationBasedPlanner::getCollisionIdx(
-  const TrajectoryData & ego_traj, const Box2d & obj_box, const size_t start_idx,
-  const size_t end_idx)
-{
-  for (size_t ego_idx = start_idx; ego_idx <= end_idx; ++ego_idx) {
-    const auto ego_center_pose = transformBaseLink2Center(ego_traj.traj.points.at(ego_idx).pose);
-    const auto ego_box =
-      Box2d(ego_center_pose, vehicle_info_.vehicle_length_m, vehicle_info_.vehicle_width_m);
-    if (ego_box.hasOverlap(obj_box)) {
-      return ego_idx;
-    }
-  }
-
-  return boost::none;
 }
 
 geometry_msgs::msg::Pose OptimizationBasedPlanner::transformBaseLink2Center(

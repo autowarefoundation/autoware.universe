@@ -15,9 +15,7 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_
 #define OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_
 
-#include "obstacle_cruise_planner/optimization_based_planner/box2d.hpp"
 #include "obstacle_cruise_planner/optimization_based_planner/s_boundary.hpp"
-#include "obstacle_cruise_planner/optimization_based_planner/st_point.hpp"
 #include "obstacle_cruise_planner/optimization_based_planner/velocity_optimizer.hpp"
 #include "obstacle_cruise_planner/planner_interface.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -53,20 +51,6 @@ public:
     DebugData & debug_data) override;
 
 private:
-  struct TrajectoryData
-  {
-    TrajectoryData() {}
-
-    Trajectory traj;
-    std::vector<double> s;
-  };
-
-  struct ObjectData
-  {
-    geometry_msgs::msg::Pose pose;
-    double time;
-  };
-
   // Member Functions
   std::vector<double> createTimeVector();
   std::tuple<double, double> calcInitialMotion(
@@ -96,10 +80,6 @@ private:
   boost::optional<double> getDistanceToCollisionPoint(
     const ObstacleCruisePlannerData & planner_data,
     const geometry_msgs::msg::Point & collision_point);
-
-  boost::optional<size_t> getCollisionIdx(
-    const TrajectoryData & ego_traj, const Box2d & obj_box, const size_t start_idx,
-    const size_t end_idx);
 
   geometry_msgs::msg::Pose transformBaseLink2Center(
     const geometry_msgs::msg::Pose & pose_base_link);
