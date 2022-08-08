@@ -163,7 +163,6 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     return false;
   }
 
-
   // Get the interpolated pose
   std::pair<bool, Pose> pair_pose_interp_wp_ = calculateClosestPose();
 
