@@ -68,19 +68,16 @@ private:
     const ObstacleCruisePlannerData & planner_data, const TargetObstacle & object,
     const std::vector<double> & time_vec);
 
-  boost::optional<SBoundaries> getSBoundaries(
-    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
-    const double safety_distance, const TargetObstacle & object,
-    const double dist_to_collision_point);
-
-  boost::optional<SBoundaries> getSBoundaries(
+  boost::optional<SBoundaries> getSBoundariesForOnTrajectoryObject(
     const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
     const double safety_distance, const TargetObstacle & object);
 
-  boost::optional<double> getDistanceToCollisionPoint(
-    const ObstacleCruisePlannerData & planner_data,
-    const geometry_msgs::msg::Point & collision_point);
+  boost::optional<SBoundaries> getSBoundariesForOffTrajectoryObject(
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
+    const double safety_distance, const TargetObstacle & object);
 
+  bool checkOnTrajectory(
+    const ObstacleCruisePlannerData & planner_data, const geometry_msgs::msg::PointStamped & point);
   geometry_msgs::msg::Pose transformBaseLink2Center(
     const geometry_msgs::msg::Pose & pose_base_link);
 
@@ -107,8 +104,6 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_marker_pub_;
 
   // Resampling Parameter
-  double resampling_s_interval_;
-  double max_trajectory_length_;
   double dense_resampling_time_interval_;
   double sparse_resampling_time_interval_;
   double dense_time_horizon_;
