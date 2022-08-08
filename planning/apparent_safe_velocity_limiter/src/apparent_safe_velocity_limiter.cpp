@@ -154,10 +154,10 @@ std::vector<multilinestring_t> createProjectedLines(
 void limitVelocity(
   Trajectory & trajectory, const Obstacles & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
-  ProjectionParameters & projection_params, const VelocityParameters & velocity_params,
-  const bool filter_envelope)
+  ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
 {
   constexpr auto no_filter_envelope = std::optional<double>();
+  const ObstacleTree obstacle_tree(obstacles);
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
     auto & trajectory_point = trajectory.points[i];
@@ -171,10 +171,7 @@ void limitVelocity(
     if (projections[i].empty()) continue;
     projection_params.update(trajectory_point);
     const auto dist_to_collision = distanceToClosestCollision(
-      projections[i][0], footprints[i], obstacles, projection_params,
-      filter_envelope ? no_filter_envelope
-                      : trajectory_point.longitudinal_velocity_mps * projection_params.duration +
-                          projection_params.extra_length);
+      projections[i][0], footprints[i], obstacle_tree, projection_params);
     if (dist_to_collision) {
       const auto min_feasible_velocity =
         velocity_params.current_ego_velocity - velocity_params.max_deceleration * time;

@@ -37,7 +37,6 @@ struct ObstacleParameters
 
   enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
   int8_t occupancy_grid_threshold{};
-  Float pcd_cluster_max_dist{};
   Float dynamic_obstacles_buffer{};
   Float dynamic_obstacles_min_vel{};
   std::vector<std::string> static_map_tags{};

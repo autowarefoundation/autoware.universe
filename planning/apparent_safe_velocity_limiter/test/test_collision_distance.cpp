@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "apparent_safe_velocity_limiter/distance.hpp"
+#include "apparent_safe_velocity_limiter/obstacles.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
@@ -36,6 +37,7 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
 {
   using apparent_safe_velocity_limiter::distanceToClosestCollision;
   using apparent_safe_velocity_limiter::linestring_t;
+  using apparent_safe_velocity_limiter::ObstacleTree;
   using apparent_safe_velocity_limiter::polygon_t;
 
   apparent_safe_velocity_limiter::ProjectionParameters params;
@@ -46,32 +48,31 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
   apparent_safe_velocity_limiter::Obstacles obstacles;
-  constexpr auto no_distance_limit = std::numeric_limits<double>::max();
 
   std::optional<double> result =
-    distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+    distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_FALSE(result.has_value());
 
   obstacles.emplace_back(linestring_t{{-1.0, 0.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_FALSE(result.has_value());
 
   obstacles.emplace_back(linestring_t{{1.0, 2.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_FALSE(result.has_value());
 
   obstacles.emplace_back(linestring_t{{4.0, 0.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_DOUBLE_EQ(*result, 4.0);
 
   obstacles.emplace_back(linestring_t{{3.0, 0.5}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_DOUBLE_EQ(*result, 3.0);
 
   obstacles.emplace_back(linestring_t{{2.5, -0.75}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_DOUBLE_EQ(*result, 2.5);
 
@@ -82,37 +83,37 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
   obstacles.clear();
 
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_FALSE(result.has_value());
 
   obstacles.emplace_back(linestring_t{{4.0, 4.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_DOUBLE_EQ(*result, std::sqrt(2 * 4.0 * 4.0));
 
   obstacles.emplace_back(linestring_t{{1.0, 2.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.121, 1e-3);
 
   obstacles.emplace_back(linestring_t{{-2.0, 2.0}, {3.0, -1.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 0.354, 1e-3);
 
   obstacles.emplace_back(linestring_t{{-1.5, 1.5}, {0.0, 0.5}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 0.141, 1e-3);
 
   obstacles.emplace_back(linestring_t{{0.5, 1.0}, {0.5, -0.5}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 0.0, 1e-3);
 
   obstacles.clear();
   obstacles.emplace_back(linestring_t{{0.5, 1.0}, {0.5, 0.0}, {1.5, 0.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 0.353, 1e-3);
 
@@ -122,12 +123,12 @@ TEST(TestCollisionDistance, distanceToClosestCollision)
   obstacles.clear();
 
   obstacles.emplace_back(linestring_t{{1.0, 1.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_DOUBLE_EQ(*result, std::sqrt(2 * 4.0 * 4.0));
 
   obstacles.emplace_back(linestring_t{{4.0, 3.0}});
-  result = distanceToClosestCollision(vector, footprint, obstacles, params, no_distance_limit);
+  result = distanceToClosestCollision(vector, footprint, ObstacleTree(obstacles), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.121, 1e-3);
 }

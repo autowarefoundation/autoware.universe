@@ -108,6 +108,25 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
     marker.color.b = 1.0;
     debug_markers.markers.push_back(marker);
   }
+  visualization_msgs::msg::Marker points_marker;
+  points_marker.type = visualization_msgs::msg::Marker::POINTS;
+  points_marker.header.frame_id = "map";
+  points_marker.scale.x = 0.1;
+  points_marker.scale.y = 0.1;
+  points_marker.color.a = 1.0;
+  points_marker.color.b = 1.0;
+  points_marker.ns = "obstacles";
+  points_marker.id = obs_id++;
+  geometry_msgs::msg::Point point;
+  point.z = marker_z;
+  for (const auto & obs : obstacles) {
+    if (obs.size() == 1) {
+      point.x = obs[0].x();
+      point.y = obs[0].y();
+      points_marker.points.push_back(point);
+    }
+  }
+  debug_markers.markers.push_back(points_marker);
 
   static auto prev_max_id = 0lu;
   static auto prev_size = 0lu;

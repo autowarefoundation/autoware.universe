@@ -81,9 +81,9 @@ Obstacles createObstacles(
     threshold(grid_map, obstacle_params.occupancy_grid_threshold);
     maskPolygons(grid_map, masks);
     obstacles = extractObstacles(grid_map, occupancy_grid);
-  } else {
+  } else if (obstacle_params.dynamic_source == ObstacleParameters::POINTCLOUD) {
     const auto filtered_pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
-    obstacles = extractObstacles(filtered_pcd, obstacle_params.pcd_cluster_max_dist);
+    obstacles = extractObstacles(filtered_pcd);
     obstacles = filterObstacles(obstacles, masks);
   }
   return obstacles;

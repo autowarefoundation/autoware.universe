@@ -15,7 +15,6 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__OBSTACLES_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__OBSTACLES_HPP_
 
-#include "apparent_safe_velocity_limiter/obstacles.hpp"
 #include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
@@ -25,10 +24,73 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
+#include <boost/geometry/algorithms/envelope.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/index/predicates.hpp>
+#include <boost/geometry/index/rtree.hpp>
+#include <boost/geometry/io/wkt/write.hpp>
+
+#include <iterator>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace apparent_safe_velocity_limiter
 {
+
+using Obstacles = multilinestring_t;
+
+namespace bgi = boost::geometry::index;
+struct ObstacleTree
+{
+  using box_t = boost::geometry::model::box<point_t>;
+  using rtree_value = std::pair<box_t, size_t>;
+  bgi::rtree<point_t, bgi::rstar<16>> points_rtree;
+  bgi::rtree<rtree_value, bgi::rstar<16>> lines_rtree;
+  const multilinestring_t lines;
+
+  explicit ObstacleTree(Obstacles obstacles) : lines(std::move(obstacles))
+  {
+    std::vector<point_t> points;
+    std::vector<rtree_value> values;
+    values.reserve(obstacles.size());
+    box_t envelope;
+    for (size_t i = 0; i < lines.size(); ++i) {
+      if (lines[i].size() == 1lu) {
+        points.push_back(lines[i][0]);
+      } else {
+        boost::geometry::envelope(lines[i], envelope);
+        values.emplace_back(envelope, i);
+      }
+    }
+    points_rtree = bgi::rtree<point_t, bgi::rstar<16>>(points);
+    lines_rtree = bgi::rtree<rtree_value, bgi::rstar<16>>(values);
+  }
+
+  [[nodiscard]] std::vector<point_t> intersections(const polygon_t & polygon) const
+  {
+    std::vector<point_t> result;
+    // Query the points
+    points_rtree.query(bgi::covered_by(polygon), std::back_inserter(result));
+    // Query the lines
+    std::vector<point_t> intersection_points;
+    std::vector<rtree_value> values;
+    lines_rtree.query(bgi::intersects(polygon), std::back_inserter(values));
+    for (const auto & value : values) {
+      intersection_points.clear();
+      const auto & ls = lines[value.second];
+      boost::geometry::intersection(ls, polygon, intersection_points);
+      if (intersection_points.empty()) {
+        // No intersection with the box: line is outside or inside of the polygon
+        if (boost::geometry::within(ls, polygon))
+          for (const auto & p : ls) result.push_back(p);
+      } else {
+        result.insert(result.end(), intersection_points.begin(), intersection_points.end());
+      }
+    }
+    return result;
+  }
+};
 
 /// @brief create a polygon from an object represented by a pose and a size
 /// @param [in] pose pose of the object

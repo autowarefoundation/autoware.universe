@@ -27,10 +27,10 @@
 namespace apparent_safe_velocity_limiter
 {
 /// @brief make the visualization Marker of the given linestring
-/// @param[in] obstacle Obstacle object to turn into a marker
+/// @param[in] ls linestring to turn into a marker
 /// @param[in] z z-value to use in the marker
 /// @return marker representing the linestring
-visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & obstacle, const Float z);
+visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const Float z);
 
 /// @brief make debug marker array
 /// @param[in] obstacles obstacles

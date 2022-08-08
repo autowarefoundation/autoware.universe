@@ -41,17 +41,14 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
 
 /// @brief filter the pointcloud to keep only relevent points
 /// @param[in,out] pointcloud to filter
-/// @param[in] polygon_masks polygons to mask from the pointcloud
-/// @param[in] envelope polygon where points of the pointcloud must be
+/// @param[in] masks obstacle masks used to filter the pointcloud
 void filterPointCloud(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const ObstacleMasks & obstacle_masks);
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const ObstacleMasks & masks);
 
 /// @brief extract obstacles from the given pointcloud
 /// @param[in] pointcloud input pointcloud
-/// @param[in] cluster_tolerance minimum distance between two clusters
 /// @return extracted obstacles
-Obstacles extractObstacles(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const double cluster_tolerance);
+Obstacles extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
 
 }  // namespace apparent_safe_velocity_limiter
 

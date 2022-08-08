@@ -27,36 +27,27 @@ namespace apparent_safe_velocity_limiter
 namespace bg = boost::geometry;
 
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint, const Obstacles & obstacles,
-  const ProjectionParameters & params, const std::optional<double> max_obstacle_distance)
+  const linestring_t & projection, const polygon_t & footprint, const ObstacleTree & obstacle_tree,
+  const ProjectionParameters & params)
 {
   std::optional<double> distance;
   if (projection.empty()) return distance;
   double min_dist = std::numeric_limits<double>::max();
-  const auto max_dist = max_obstacle_distance.value_or(std::numeric_limits<double>::max());
-  for (const auto & obstacle : obstacles) {
-    if (bg::distance(obstacle, projection.front()) > max_dist) continue;
-    multilinestring_t intersection_lines;
-    if (bg::intersection(footprint, obstacle, intersection_lines)) {
-      for (const auto & intersection_line : intersection_lines) {
-        for (const auto & obs_point : intersection_line) {
-          const auto euclidian_dist = bg::distance(obs_point, projection.front());
-          if (params.distance_method == ProjectionParameters::EXACT) {
-            if (params.model == ProjectionParameters::PARTICLE) {
-              const auto collision_heading = std::atan2(
-                obs_point.y() - projection.front().y(), obs_point.x() - projection.front().x());
-              const auto angle = params.heading - collision_heading;
-              const auto long_dist = std::abs(std::cos(angle)) * euclidian_dist;
-              min_dist = std::min(min_dist, long_dist);
-            } else {  // BICYCLE model with curved projection
-              min_dist =
-                std::min(min_dist, arcDistance(projection.front(), params.heading, obs_point));
-            }
-          } else {  // APPROXIMATION
-            min_dist = std::min(min_dist, euclidian_dist);
-          }
-        }
+  for (const auto & obs_point : obstacle_tree.intersections(footprint)) {
+    if (params.distance_method == ProjectionParameters::EXACT) {
+      if (params.model == ProjectionParameters::PARTICLE) {
+        const auto euclidian_dist = bg::distance(obs_point, projection.front());
+        const auto collision_heading = std::atan2(
+          obs_point.y() - projection.front().y(), obs_point.x() - projection.front().x());
+        const auto angle = params.heading - collision_heading;
+        const auto long_dist = std::abs(std::cos(angle)) * euclidian_dist;
+        min_dist = std::min(min_dist, long_dist);
+      } else {  // BICYCLE model with curved projection
+        min_dist = std::min(min_dist, arcDistance(projection.front(), params.heading, obs_point));
       }
+    } else {  // APPROXIMATION
+      const auto euclidian_dist = bg::distance(obs_point, projection.front());
+      min_dist = std::min(min_dist, euclidian_dist);
     }
   }
   if (min_dist != std::numeric_limits<double>::max()) distance = min_dist;

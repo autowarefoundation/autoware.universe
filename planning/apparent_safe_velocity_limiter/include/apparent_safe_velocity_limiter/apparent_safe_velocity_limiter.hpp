@@ -107,12 +107,10 @@ std::vector<multilinestring_t> createProjectedLines(
 /// @param[in] footprints footprint of the forward projection at each trajectory point
 /// @param[in] projection_params projection parameters
 /// @param[in] velocity_params velocity parameters
-/// @param[in] filter_envelope whether obstacles were already filtered using the envelope polygon
 void limitVelocity(
   Trajectory & trajectory, const Obstacles & obstacles,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
-  ProjectionParameters & projection_params, const VelocityParameters & velocity_params,
-  const bool filter_envelope);
+  ProjectionParameters & projection_params, const VelocityParameters & velocity_params);
 
 /// @brief copy the velocity profile of a downsampled trajectory to the original trajectory
 /// @param[in] downsampled_trajectory downsampled trajectory

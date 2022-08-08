@@ -39,8 +39,6 @@ using segment_t = tier4_autoware_utils::Segment2d;
 using linestring_t = tier4_autoware_utils::LineString2d;
 using multilinestring_t = tier4_autoware_utils::MultiLineString2d;
 
-using Obstacles = multilinestring_t;
-
 struct ObstacleMasks
 {
   polygon_t positive_mask;        // discard obstacles outside of this polygon

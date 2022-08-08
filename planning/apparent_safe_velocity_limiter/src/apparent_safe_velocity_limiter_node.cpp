@@ -69,7 +69,6 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
-  obstacle_params_.pcd_cluster_max_dist = 2 * vehicle_lateral_offset_;
   vehicle_front_offset_ = static_cast<Float>(vehicle_info.max_longitudinal_offset_m);
 
   projection_params_.wheel_base = vehicle_info.wheel_base_m;
@@ -185,7 +184,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   }
   limitVelocity(
     downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
-    velocity_params_, obstacle_params_.filter_envelope);
+    velocity_params_);
   auto safe_trajectory = copyDownsampledVelocity(
     downsampled_traj, original_traj, start_idx, preprocessing_params_.downsample_factor);
   safe_trajectory.header.stamp = now();
