@@ -41,7 +41,7 @@ private:
   rclcpp::Client<AutoMode>::SharedPtr enable_cli_;
   rclcpp::Service<AutoMode>::SharedPtr enable_srv_;
 
-  std::string enable_auto_mode_namaspace_ = "/planning/enable_auto_mode";
+  std::string enable_auto_mode_namespace_ = "/planning/enable_auto_mode";
 };
 }  // namespace rtc_auto_mode_manager
 

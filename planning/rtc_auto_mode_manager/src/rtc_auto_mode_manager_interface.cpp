@@ -25,11 +25,11 @@ RTCAutoModeManagerInterface::RTCAutoModeManagerInterface(
 
   // Service client
   enable_cli_ = node->create_client<AutoMode>(
-    enable_auto_mode_namaspace_ + "/internal/" + module_name, rmw_qos_profile_services_default);
+    enable_auto_mode_namespace_ + "/internal/" + module_name, rmw_qos_profile_services_default);
 
   // Service
   enable_srv_ = node->create_service<AutoMode>(
-    enable_auto_mode_namaspace_ + "/" + module_name,
+    enable_auto_mode_namespace_ + "/" + module_name,
     std::bind(&RTCAutoModeManagerInterface::onEnableService, this, _1, _2));
 
   // Send enable auto mode request
