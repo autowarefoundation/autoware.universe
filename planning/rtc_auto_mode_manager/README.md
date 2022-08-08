@@ -8,22 +8,22 @@ RTC Auto Mode Manager is a node to approve request to cooperate from behavior pl
 
 ### Input
 
-| Name                                                                   | Type                                           | Description                                        |
-| ---------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------- |
-| `/planning/enable_auto_mode/**`                                                         | tier4_rtc_msgs/srv/AutoMode               | Service to enable auto mode for the module |
+| Name                            | Type                        | Description                                |
+| ------------------------------- | --------------------------- | ------------------------------------------ |
+| `/planning/enable_auto_mode/**` | tier4_rtc_msgs/srv/AutoMode | Service to enable auto mode for the module |
 
 ### Output
 
-| Name                  | Type                                   | Description                                                       |
-| --------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| Name                                     | Type                        | Description                                |
+| ---------------------------------------- | --------------------------- | ------------------------------------------ |
 | `/planning/enable_auto_mode/internal/**` | tier4_rtc_msgs/srv/AutoMode | Service to enable auto mode for the module |
 
 ## Parameters
 
-| Name           | Type     | Description                                    |
-| :------------- | :------- | :--------------------------------------------- |
-| `module_list` | List of `string` | Module names managing in `rtc_auto_mode_manager` |
-| `default_enable_list`    | List of `string` | Module names enabled auto mode at initialization |
+| Name                  | Type             | Description                                      |
+| :-------------------- | :--------------- | :----------------------------------------------- |
+| `module_list`         | List of `string` | Module names managing in `rtc_auto_mode_manager` |
+| `default_enable_list` | List of `string` | Module names enabled auto mode at initialization |
 
 ## Inner-workings / Algorithms
 
