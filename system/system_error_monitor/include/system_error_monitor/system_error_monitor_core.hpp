@@ -18,7 +18,6 @@
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <tier4_autoware_utils/system/heartbeat_checker.hpp>
 
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
@@ -30,7 +29,6 @@
 
 #include <deque>
 #include <map>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
