@@ -39,9 +39,9 @@ private:
   component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_route_;
   component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_goal_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_waypoints_;
-  void OnGoal(const PoseStamped::ConstSharedPtr pose);
-  void OnWaypoint(const PoseStamped::ConstSharedPtr pose);
+  rclcpp::Subscription<PoseStamped>::SharedPtr sub_waypoint_;
+  void on_goal(const PoseStamped::ConstSharedPtr pose);
+  void on_waypoint(const PoseStamped::ConstSharedPtr pose);
 };
 
 }  // namespace default_ad_api_helpers

@@ -24,9 +24,9 @@ RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
   RCLCPP_INFO_STREAM(get_logger(), "RoutingAdaptor");
 
   sub_goal_ = create_subscription<PoseStamped>(
-    "~/input/goal", 5, std::bind(&RoutingAdaptor::OnGoal, this, std::placeholders::_1));
-  sub_waypoints_ = create_subscription<PoseStamped>(
-    "~/input/waypoint", 5, std::bind(&RoutingAdaptor::OnWaypoint, this, std::placeholders::_1));
+    "~/input/goal", 5, std::bind(&RoutingAdaptor::on_goal, this, std::placeholders::_1));
+  sub_waypoint_ = create_subscription<PoseStamped>(
+    "~/input/waypoint", 5, std::bind(&RoutingAdaptor::on_waypoint, this, std::placeholders::_1));
 
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_cli(cli_route_);
@@ -34,7 +34,7 @@ RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
   route_points_ = std::make_shared<SetRoutePoints::Service::Request>();
 }
 
-void RoutingAdaptor::OnGoal(const PoseStamped::ConstSharedPtr pose)
+void RoutingAdaptor::on_goal(const PoseStamped::ConstSharedPtr pose)
 {
   route_points_->header = pose->header;
   route_points_->goal = pose->pose;
@@ -44,7 +44,7 @@ void RoutingAdaptor::OnGoal(const PoseStamped::ConstSharedPtr pose)
   cli_route_->async_send_request(route_points_);
 }
 
-void RoutingAdaptor::OnWaypoint(const PoseStamped::ConstSharedPtr pose)
+void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
 {
   if (route_points_->header.frame_id != pose->header.frame_id) {
     RCLCPP_ERROR_STREAM(get_logger(), "The waypoint frame does not match the goal.");
