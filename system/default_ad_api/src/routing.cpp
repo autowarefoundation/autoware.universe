@@ -19,13 +19,13 @@ namespace default_ad_api
 
 RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", options)
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  node.relay_message(pub_route_state_, sub_route_state_);
-  node.relay_message(pub_route_, sub_route_);
-  node.relay_service(cli_set_route_points_, srv_set_route_points_, group_srv_);
-  node.relay_service(cli_set_route_, srv_set_route_, group_srv_);
-  node.relay_service(cli_clear_route_, srv_clear_route_, group_srv_);
+  adaptor.relay_message(pub_route_state_, sub_route_state_);
+  adaptor.relay_message(pub_route_, sub_route_);
+  adaptor.relay_service(cli_set_route_points_, srv_set_route_points_, group_srv_);
+  adaptor.relay_service(cli_set_route_, srv_set_route_, group_srv_);
+  adaptor.relay_service(cli_clear_route_, srv_clear_route_, group_srv_);
 }
 
 }  // namespace default_ad_api
