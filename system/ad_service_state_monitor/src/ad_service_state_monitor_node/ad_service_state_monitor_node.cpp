@@ -307,7 +307,6 @@ void AutowareStateMonitorNode::onTimer()
   {
     autoware_auto_system_msgs::msg::AutowareState autoware_state_msg;
     autoware_state_msg.state = toMsg(autoware_state);
-    autoware_state_msg.stamp = this->now();
 
     pub_autoware_state_->publish(autoware_state_msg);
   }
