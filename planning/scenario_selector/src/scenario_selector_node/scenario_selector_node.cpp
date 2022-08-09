@@ -250,13 +250,26 @@ void ScenarioSelectorNode::onParkingState(const std_msgs::msg::Bool::ConstShared
   is_parking_completed_ = msg->data;
 }
 
-void ScenarioSelectorNode::onTimer()
+bool ScenarioSelectorNode::isDataReady()
 {
-  current_pose_ = getCurrentPose(tf_buffer_, this->get_logger());
+  if (!current_pose_) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for current pose.");
+    return false;
+  }
 
-  // Check all inputs are ready
-  if (!current_pose_ || !lanelet_map_ptr_ || !route_ || !twist_) {
-    return;
+  if (!lanelet_map_ptr_) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for lanelet map.");
+    return false;
+  }
+
+  if (!route_) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for route.");
+    return false;
+  }
+
+  if (!twist_) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for twist.");
+    return false;
   }
 
   // Check route handler is ready
@@ -264,6 +277,17 @@ void ScenarioSelectorNode::onTimer()
   if (!route_handler_->isHandlerReady()) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000, "Waiting for route handler.");
+    return false;
+  }
+
+  return true;
+}
+
+void ScenarioSelectorNode::onTimer()
+{
+  current_pose_ = getCurrentPose(tf_buffer_, this->get_logger());
+
+  if (!isDataReady()) {
     return;
   }
 
