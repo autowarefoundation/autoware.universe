@@ -29,25 +29,25 @@ namespace planning_interface
 struct SetRoutePoints
 {
   using Service = autoware_ad_api_msgs::srv::SetRoutePoints;
-  static constexpr char name[] = "/planning/routing/set_route_points";
+  static constexpr char name[] = "/planning/mission_planning/set_route_points";
 };
 
 struct SetRoute
 {
   using Service = autoware_ad_api_msgs::srv::SetRoute;
-  static constexpr char name[] = "/planning/routing/set_route";
+  static constexpr char name[] = "/planning/mission_planning/set_route";
 };
 
 struct ClearRoute
 {
   using Service = autoware_ad_api_msgs::srv::ClearRoute;
-  static constexpr char name[] = "/planning/routing/clear_route";
+  static constexpr char name[] = "/planning/mission_planning/clear_route";
 };
 
 struct RouteState
 {
   using Message = autoware_ad_api_msgs::msg::RouteState;
-  static constexpr char name[] = "/planning/routing/state";
+  static constexpr char name[] = "/planning/mission_planning/state";
   static constexpr size_t depth = 3;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
@@ -56,7 +56,7 @@ struct RouteState
 struct Route
 {
   using Message = autoware_ad_api_msgs::msg::Route;
-  static constexpr char name[] = "/planning/routing/route";
+  static constexpr char name[] = "/planning/mission_planning/route";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
