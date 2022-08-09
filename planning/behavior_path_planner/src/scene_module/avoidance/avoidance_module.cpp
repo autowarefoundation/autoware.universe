@@ -1725,26 +1725,22 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
 
   {
     const bool include_opposite = parameters_.enable_avoidance_over_opposite_direction;
-    if(include_opposite)
-    {
+    if (include_opposite) {
       lanelet::ConstLanelets search_lanelets;
       lanelet::ConstLanelet current_lane;
-      if(route_handler->getClosestLaneletWithinRoute(getEgoPose().pose, &current_lane))
-      {
+      if (route_handler->getClosestLaneletWithinRoute(getEgoPose().pose, &current_lane)) {
         constexpr bool get_right = true;
         constexpr bool get_left = true;
         const auto current_ego_shift = getCurrentShift();
-        if(fabs(current_ego_shift)>0.01)
-        {
-          if (current_ego_shift>0.0) {
-              search_lanelets = route_handler->getAllSharedLineStringLanelets(
+        if (fabs(current_ego_shift) > 0.01) {
+          if (current_ego_shift > 0.0) {
+            search_lanelets = route_handler->getAllSharedLineStringLanelets(
               current_lane, !get_right, get_left, include_opposite);
           } else {
-              search_lanelets = route_handler->getAllSharedLineStringLanelets(
+            search_lanelets = route_handler->getAllSharedLineStringLanelets(
               current_lane, get_right, !get_left, include_opposite);
           }
-          if(search_lanelets.size()>1)
-          {
+          if (search_lanelets.size() > 1) {
             extended_lanelets.push_back(search_lanelets.at(1));
           }
         }
