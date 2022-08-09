@@ -86,7 +86,7 @@ const size_t traffic_obj_nearest_idx = findNearestIndexFromLaneId(path_with_lane
 const size_t traffic_obj_nearest_seg_idx = findNearestSegmentIndexFromLaneId(path_with_lane_id, traffic_obj_pos, lane_id);
 ```
 
-## Path/Trajectory length calculation between designated points.
+## Path/Trajectory length calculation between designated points
 
 Based on the discussion so far, the nearest index search algorithm is different depending on the object type.
 Therefore, we recommended using the wrapper utility functions which require the nearest index search (e.g., calculating the path length) with each nearest index search.
