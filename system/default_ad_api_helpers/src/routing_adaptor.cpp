@@ -21,8 +21,6 @@ namespace default_ad_api_helpers
 
 RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
 {
-  RCLCPP_INFO_STREAM(get_logger(), "RoutingAdaptor");
-
   sub_goal_ = create_subscription<PoseStamped>(
     "~/input/goal", 5, std::bind(&RoutingAdaptor::on_goal, this, std::placeholders::_1));
   sub_waypoint_ = create_subscription<PoseStamped>(
