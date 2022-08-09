@@ -364,12 +364,17 @@ void AutowareErrorMonitor::onDiagArray(
       diag_buffer.pop_front();
     }
   }
+
+  // for Heartbeat
+  diag_array_stamp_ = this->now();
 }
 
 void AutowareErrorMonitor::onCurrentGateMode(
   const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
   current_gate_mode_ = msg;
+
+  // for Heartbeat
   current_gate_mode_stamp_ = this->now();
 }
 
@@ -377,12 +382,18 @@ void AutowareErrorMonitor::onAutowareState(
   const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg)
 {
   autoware_state_ = msg;
+
+  // for Heartbeat
+  autoware_state_stamp_ = this->now();
 }
 
 void AutowareErrorMonitor::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
+
+  // for Heartbeat
+  control_mode_stamp_ = this->now();
 }
 
 bool AutowareErrorMonitor::isDataReady()
@@ -417,7 +428,7 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
     return time_diff.seconds() > threshold;
   };
 
-  if (isTimeout(diag_array_->header.stamp, params_.data_heartbeat_timeout)) {
+  if (isTimeout(diag_array_stamp_, params_.data_heartbeat_timeout)) {
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "diag_array msg is timeout...");
     return true;
   }
@@ -427,12 +438,12 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
     return true;
   }
 
-  if (isTimeout(autoware_state_->stamp, params_.data_heartbeat_timeout)) {
+  if (isTimeout(autoware_state_stamp_, params_.data_heartbeat_timeout)) {
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "autoware_state msg is timeout...");
     return true;
   }
 
-  if (isTimeout(control_mode_->stamp, params_.data_heartbeat_timeout)) {
+  if (isTimeout(control_mode_stamp_, params_.data_heartbeat_timeout)) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "vehicle_state_report msg is timeout...");
     return true;
