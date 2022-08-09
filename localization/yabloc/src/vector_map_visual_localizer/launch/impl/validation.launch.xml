@@ -1,11 +1,12 @@
 <launch>
+    <arg name="enable_refiner" default="false"/>
     <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="/src_image" to="$(var resized_image)"/>
         <remap from="/src_info" to="$(var resized_info)"/>
         <remap from="/particle_pose" to="/particle_pose"/>
     </node>
 
-    <node if="false" name="refine" pkg="vector_map_visual_localizer" exec="refine_node" output="screen" args="--ros-args --log-level warn">
+    <node if="$(var enable_refiner)" name="refine" pkg="vector_map_visual_localizer" exec="refine_node" output="screen" args="--ros-args --log-level warn">
         <remap from="/src_image" to="$(var resized_image)"/>
         <remap from="/src_info" to="$(var resized_info)"/>
         <remap from="/particle_pose" to="/particle_pose"/>
