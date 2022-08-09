@@ -1743,8 +1743,10 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
               search_lanelets = route_handler->getAllSharedLineStringLanelets(
               current_lane, get_right, !get_left, include_opposite);
           }
-
-          if(search_lanelets.size()>1)extended_lanelets.push_back(search_lanelets.at(1));
+          if(search_lanelets.size()>1)
+          {
+            extended_lanelets.push_back(search_lanelets.at(1));
+          }
         }
       }
     }
