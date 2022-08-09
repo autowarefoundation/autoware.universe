@@ -219,8 +219,6 @@ void ScenarioSelectorNode::onMap(
 void ScenarioSelectorNode::onRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
-  route_handler_->setRoute(*msg);
-  if (!route_handler_->isHandlerReady()) return;
   route_ = msg;
   current_scenario_ = tier4_planning_msgs::msg::Scenario::EMPTY;
 }
@@ -258,6 +256,14 @@ void ScenarioSelectorNode::onTimer()
 
   // Check all inputs are ready
   if (!current_pose_ || !lanelet_map_ptr_ || !route_ || !twist_) {
+    return;
+  }
+
+  // Check route handler is ready
+  route_handler_->setRoute(*route_);
+  if (!route_handler_->isHandlerReady()) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000, "Waiting for route handler.");
     return;
   }
 
