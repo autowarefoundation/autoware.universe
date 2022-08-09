@@ -1177,32 +1177,6 @@ size_t findFirstNearestSegmentIndexWithSoftConstraints(
 
   return nearest_idx;
 }
-
-template <class T>
-size_t findNearestIndexWithinRange(
-  const T & points, const geometry_msgs::msg::Point & pos, const size_t start_idx,
-  const size_t end_idx)
-{
-  validateNonEmpty(points);
-
-  const auto sub_points = T{points.begin() + start_idx, points.begin() + end_idx + 1};
-  validateNonEmpty(sub_points);
-
-  return start_idx + findNearestIndex(sub_points, pos);
-}
-
-template <class T>
-size_t findNearestSegmentIndexWithinRange(
-  const T & points, const geometry_msgs::msg::Point & pos, const size_t start_idx,
-  const size_t end_idx)
-{
-  validateNonEmpty(points);
-
-  const auto sub_points = T{points.begin() + start_idx, points.begin() + end_idx + 1};
-  validateNonEmpty(sub_points);
-
-  return start_idx + findNearestSegmentIndex(sub_points, pos);
-}
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_

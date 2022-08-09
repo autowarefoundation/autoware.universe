@@ -32,13 +32,12 @@ There are default parameters for thresholds arguments so that you can decide whi
 3. When no thresholds are given.
    - Find the nearest index.
 
-The second function finds the nearest index within the range from `start_idx` to `end_idx`, usually used with another function calculating the range.
+The second function finds the nearest index in the lane whose id is `lane_id`.
 
 ```cpp
-template <class T>
-size_t findNearestIndexWithinRange(
-  const T & points, const geometry_msgs::msg::Point & pos, const size_t start_idx,
-  const size_t end_idx);
+size_t findNearestIndexFromLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & pos, const int64_t lane_id);
 ```
 
 ### Application to various object
@@ -64,14 +63,27 @@ const size_t ego_nearest_seg_idx = findFirstNearestIndexWithSoftConstraints(poin
 #### Nearest index for dynamic objects
 
 For the ego nearest index, the orientation is considered in addition to the position since the ego is supposed to follow the points.
-However, for the dynamic objects, sometimes its orientation may be different from the points order, e.g. the dynamic object driving backward although the ego is driving forward.
+However, for the dynamic objects (e.g., predicted object), sometimes its orientation may be different from the points order, e.g. the dynamic object driving backward although the ego is driving forward.
 
 Therefore, the yaw threshold should not be considered for the dynamic object.
 The implementation is as follows.
 
 ```cpp
-const size_t dyn_obj_nearest_idx = findFirstNearestIndex(points, dyn_obj_pose, dyn_obj_nearest_dist_threshold);
-const size_t dyn_obj_nearest_seg_idx = findFirstNearestIndex(points, dyn_obj_pose, dyn_obj_nearest_dist_threshold);
+const size_t dynamic_obj_nearest_idx = findFirstNearestIndexWithSoftConstraints(points, dynamic_obj_pose, dynamic_obj_nearest_dist_threshold);
+const size_t dynamic_obj_nearest_seg_idx = findFirstNearestIndexWithSoftConstraints(points, dynamic_obj_pose, dynamic_obj_nearest_dist_threshold);
+```
+
+#### Nearest index for traffic objects
+
+In lanelet maps, traffic objects belong to the specific lane.
+With this specific lane's id, the correct nearest index can be found.
+
+The implementation is as follows.
+
+```cpp
+// first extract `lane_id` which the traffic object belong to.
+const size_t traffic_obj_nearest_idx = findNearestIndexFromLaneId(path_with_lane_id, traffic_obj_pos, lane_id);
+const size_t traffic_obj_nearest_seg_idx = findNearestSegmentIndexFromLaneId(path_with_lane_id, traffic_obj_pos, lane_id);
 ```
 
 ## Path/Trajectory length calculation between designated points.

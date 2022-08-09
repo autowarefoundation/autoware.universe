@@ -15,11 +15,13 @@
 #ifndef MOTION_UTILS__TRAJECTORY__PATH_WITH_LANE_ID_HPP_
 #define MOTION_UTILS__TRAJECTORY__PATH_WITH_LANE_ID_HPP_
 
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp"
 
 #include <boost/optional.hpp>
 
 #include <utility>
+#include <vector>
 
 namespace motion_utils
 {
@@ -48,6 +50,49 @@ inline boost::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
   }
 
   return {};
+}
+
+inline size_t findNearestIndexFromLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & pos, const int64_t lane_id)
+{
+  const auto opt_range = getPathIndexRangeWithLaneId(path, lane_id);
+  if (opt_range) {
+    const size_t start_idx = opt_range->first;
+    const size_t end_idx = opt_range->second;
+
+    validateNonEmpty(path.points);
+
+    const auto sub_points = std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>{
+      path.points.begin() + start_idx, path.points.begin() + end_idx + 1};
+    validateNonEmpty(sub_points);
+
+    return start_idx + findNearestIndex(sub_points, pos);
+  }
+
+  return findNearestIndex(path.points, pos);
+}
+
+inline size_t findNearestSegmentIndexFromLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & pos, const int64_t lane_id)
+{
+  const size_t nearest_idx = findNearestIndexFromLaneId(path, pos, lane_id);
+
+  if (nearest_idx == 0) {
+    return 0;
+  }
+  if (nearest_idx == path.points.size() - 1) {
+    return path.points.size() - 2;
+  }
+
+  const double signed_length = calcLongitudinalOffsetToSegment(path.points, nearest_idx, pos);
+
+  if (signed_length <= 0) {
+    return nearest_idx - 1;
+  }
+
+  return nearest_idx;
 }
 }  // namespace motion_utils
 
