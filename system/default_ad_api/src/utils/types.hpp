@@ -12,26 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_HPP_
-#define INTERFACE_HPP_
-
-#include "default_ad_api/specs/interface/version.hpp"
+#ifndef UTILS__TYPES_HPP_
+#define UTILS__TYPES_HPP_
 
 #include <component_interface_utils/rclcpp.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 namespace default_ad_api
 {
 
-class InterfaceNode : public rclcpp::Node
-{
-public:
-  explicit InterfaceNode(const rclcpp::NodeOptions & options);
-
-private:
-  component_interface_utils::Service<ad_api::interface::version::T>::SharedPtr srv_;
-};
+template <class T>
+using Pub = typename component_interface_utils::Publisher<T>::SharedPtr;
+template <class T>
+using Sub = typename component_interface_utils::Subscription<T>::SharedPtr;
+template <class T>
+using Cli = typename component_interface_utils::Client<T>::SharedPtr;
+template <class T>
+using Srv = typename component_interface_utils::Service<T>::SharedPtr;
 
 }  // namespace default_ad_api
 
-#endif  // INTERFACE_HPP_
+#endif  // UTILS__TYPES_HPP_

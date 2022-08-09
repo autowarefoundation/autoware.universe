@@ -15,20 +15,15 @@
 #ifndef ROUTING_HPP_
 #define ROUTING_HPP_
 
-#include "utils/types.hpp"
-
 #include <autoware_ad_api_specs/routing.hpp>
 #include <component_interface_specs/planning.hpp>
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+// This file should be included after messages.
+#include "utils/types.hpp"
 
 namespace default_ad_api
 {
-
-using component_interface_utils::Client;
-using component_interface_utils::Publisher;
-using component_interface_utils::Service;
-using component_interface_utils::Subscription;
 
 class RoutingNode : public rclcpp::Node
 {
@@ -37,16 +32,16 @@ public:
 
 private:
   rclcpp::CallbackGroup::SharedPtr group_srv_;
-  Publisher<autoware_ad_api::routing::RouteState> pub_route_state_;
-  Publisher<autoware_ad_api::routing::Route> pub_route_;
-  Service<autoware_ad_api::routing::SetRoutePoints> srv_set_route_points_;
-  Service<autoware_ad_api::routing::SetRoute> srv_set_route_;
-  Service<autoware_ad_api::routing::ClearRoute> srv_clear_route_;
-  Subscription<planning_interface::RouteState> sub_route_state_;
-  Subscription<planning_interface::Route> sub_route_;
-  Client<planning_interface::SetRoutePoints> cli_set_route_points_;
-  Client<planning_interface::SetRoute> cli_set_route_;
-  Client<planning_interface::ClearRoute> cli_clear_route_;
+  Pub<autoware_ad_api::routing::RouteState> pub_route_state_;
+  Pub<autoware_ad_api::routing::Route> pub_route_;
+  Srv<autoware_ad_api::routing::SetRoutePoints> srv_set_route_points_;
+  Srv<autoware_ad_api::routing::SetRoute> srv_set_route_;
+  Srv<autoware_ad_api::routing::ClearRoute> srv_clear_route_;
+  Sub<planning_interface::RouteState> sub_route_state_;
+  Sub<planning_interface::Route> sub_route_;
+  Cli<planning_interface::SetRoutePoints> cli_set_route_points_;
+  Cli<planning_interface::SetRoute> cli_set_route_;
+  Cli<planning_interface::ClearRoute> cli_clear_route_;
 };
 
 }  // namespace default_ad_api
