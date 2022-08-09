@@ -39,18 +39,18 @@ TEST(trajectory, getPathIndexRangeWithLaneId)
 
     {
       const auto res = getPathIndexRangeWithLaneId(points, 3);
-      EXPECT_EQ(res->first, 0);
-      EXPECT_EQ(res->second, 1);
+      EXPECT_EQ(res->first, 0U);
+      EXPECT_EQ(res->second, 1U);
     }
     {
       const auto res = getPathIndexRangeWithLaneId(points, 1);
-      EXPECT_EQ(res->first, 2);
-      EXPECT_EQ(res->second, 2);
+      EXPECT_EQ(res->first, 2U);
+      EXPECT_EQ(res->second, 2U);
     }
     {
       const auto res = getPathIndexRangeWithLaneId(points, 2);
-      EXPECT_EQ(res->first, 3);
-      EXPECT_EQ(res->second, 5);
+      EXPECT_EQ(res->first, 3U);
+      EXPECT_EQ(res->second, 5U);
     }
     {
       const auto res = getPathIndexRangeWithLaneId(points, 4);

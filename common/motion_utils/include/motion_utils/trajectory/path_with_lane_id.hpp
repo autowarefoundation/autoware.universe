@@ -26,8 +26,8 @@ namespace motion_utils
 inline boost::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int64_t lane_id)
 {
-  size_t start_idx;
-  size_t end_idx;
+  size_t start_idx = 0;  // NOTE: to prevent from maybe-uninitialized error
+  size_t end_idx = 0;    // NOTE: to prevent from maybe-uninitialized error
 
   bool found_first_idx = false;
   for (size_t i = 0; i < path.points.size(); ++i) {
