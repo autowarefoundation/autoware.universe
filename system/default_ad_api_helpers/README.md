@@ -9,7 +9,7 @@ The clear API is called automatically before setting the route.
 
 | Interface    | Local Name       | Global Name                           | Description                 |
 | ------------ | ---------------- | ------------------------------------- | --------------------------- |
-| Subscription | input/goal       | /planning/mission_planning/goal       | The goal pose of route.     |
-| Subscription | input/checkpoint | /planning/mission_planning/checkpoint | The waypoint pose of route. |
+| Subscription | ~/input/goal     | /planning/mission_planning/goal       | The goal pose of route.     |
+| Subscription | ~/input/waypoint | /planning/mission_planning/checkpoint | The waypoint pose of route. |
 | Client       | -                | /api/routing/clear_route              | The route clear API.        |
 | Client       | -                | /api/routing/set_route_points         | The route points set API.   |

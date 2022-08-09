@@ -24,9 +24,9 @@ RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
   RCLCPP_INFO_STREAM(get_logger(), "RoutingAdaptor");
 
   sub_goal_ = create_subscription<PoseStamped>(
-    "input/goal", 5, std::bind(&RoutingAdaptor::OnGoal, this, std::placeholders::_1));
+    "~/input/goal", 5, std::bind(&RoutingAdaptor::OnGoal, this, std::placeholders::_1));
   sub_waypoints_ = create_subscription<PoseStamped>(
-    "input/checkpoint", 5, std::bind(&RoutingAdaptor::OnWaypoint, this, std::placeholders::_1));
+    "~/input/waypoint", 5, std::bind(&RoutingAdaptor::OnWaypoint, this, std::placeholders::_1));
 
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_cli(cli_route_);
