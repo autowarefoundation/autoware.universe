@@ -1,5 +1,7 @@
 #include "validation/refine_optimizer.hpp"
 
+#include "common/timer.hpp"
+
 #include <ceres/ceres.h>
 #include <ceres/cubic_interpolation.h>
 #include <ceres/rotation.h>
@@ -89,6 +91,8 @@ Sophus::SE3f refinePose(
   const Sophus::SE3f & pose, pcl::PointCloud<pcl::PointXYZ> & samples, const RefineConfig & config,
   std::string * summary_text)
 {
+  Timer timer;
+
   // Convert types from something float to double*
   const Sophus::SE3d extrinsic_d = extrinsic.cast<double>();
   const Sophus::SE3d pose_d = pose.cast<double>();
@@ -149,6 +153,8 @@ Sophus::SE3f refinePose(
     ss << "p: " << param_euler(0) << std::endl;
     ss << "r: " << param_euler(1) << std::endl;
     ss << "y: " << param_euler(2) << std::endl;
+    ss << "time: " << timer << std::endl;
+    ss << ceres::TerminationTypeToString(summary.termination_type) << std::endl;
     *summary_text = ss.str();
   }
 

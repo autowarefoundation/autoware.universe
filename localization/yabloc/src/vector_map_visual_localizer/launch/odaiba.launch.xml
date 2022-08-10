@@ -10,7 +10,7 @@
     <arg name="static_linear_covariance" default="0.04"/>
     <arg name="static_angular_covariance" default="0.0015"/>
 
-    <arg name="enable_refiner" default="true"/>
+    <arg name="enable_refiner" default="false"/>
 
     <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">
         <arg name="rtk_enabled" value="$(var rtk_enabled)"/>

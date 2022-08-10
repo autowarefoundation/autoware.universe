@@ -16,6 +16,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -34,6 +35,7 @@ public:
   using CameraInfo = sensor_msgs::msg::CameraInfo;
   using Image = sensor_msgs::msg::Image;
   using Float32Array = std_msgs::msg::Float32MultiArray;
+  using String = std_msgs::msg::String;
 
   RefineOptimizer();
 
@@ -47,6 +49,7 @@ protected:
   rclcpp::Subscription<Float32Array>::SharedPtr sub_ground_plane_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
+  rclcpp::Publisher<String>::SharedPtr pub_string_;
 
   std::optional<CameraInfo> info_{std::nullopt};
   std::optional<Sophus::SE3f> camera_extrinsic_{std::nullopt};
@@ -55,6 +58,7 @@ protected:
   SynchroSubscriber<Image, PointCloud2>::SharedPtr sub_synchro_;
 
   const int pixel_interval_;
+  const bool show_grad_image_;
   GammaConverter gamma_converter_{5.0};
   RefineConfig opt_config_;
 

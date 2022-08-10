@@ -18,6 +18,7 @@ namespace validation
 RefineOptimizer::RefineOptimizer()
 : Node("refine"),
   pixel_interval_(declare_parameter<int>("refine.pixel_interval", 10)),
+  show_grad_image_(declare_parameter<bool>("refine.show_grad_image", false)),
   pose_buffer_{40},
   tf_subscriber_(get_clock())
 {
@@ -33,16 +34,17 @@ RefineOptimizer::RefineOptimizer()
   auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
   auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
 
-  // Publisher
-  pub_image_ = create_publisher<Image>("/refine_image", 10);
-  pub_pose_ = create_publisher<PoseStamped>("/refine_pose", 10);
-
   sub_ground_plane_ = create_subscription<Float32Array>("/ground", 10, cb_ground);
   sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
   sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
   sub_ll2_ = create_subscription<PointCloud2>(
     "/ll2_road_marking", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
+
+  // Publisher
+  pub_image_ = create_publisher<Image>("/refine_image", 10);
+  pub_pose_ = create_publisher<PoseStamped>("/refine_pose", 10);
+  pub_string_ = create_publisher<String>("/refine_string", 10);
 
   opt_config_ = RefineConfig{this};
 
@@ -82,7 +84,7 @@ void addText(const std::string & text, const cv::Mat & image)
     cv::Size size = cv::getTextSize(line, fontface, fontscale, thickness, &balse_line);
     cumulative_height += (size.height + 5);
     cv::putText(
-      image, line, cv::Point2i(50, cumulative_height), fontface, fontscale, cv::Scalar::all(255),
+      image, line, cv::Point2i(50, cumulative_height), fontface, fontscale, cv::Scalar(0, 255, 255),
       thickness);
   }
 }
@@ -124,13 +126,21 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   }
 
   cv::Mat rgb_image;
-  cv::applyColorMap(cost_image, rgb_image, cv::COLORMAP_JET);
-  // cv::Mat rgb_image = util::decompress2CvMat(image_msg);
-  // drawOverlayLineSegments(rgb_image, raw_pose, linesegments, cv::Scalar(0, 0, 0));
+  if (show_grad_image_) {
+    cv::applyColorMap(cost_image, rgb_image, cv::COLORMAP_JET);
+  } else {
+    rgb_image = util::decompress2CvMat(image_msg);
+  }
   drawOverlayPoints(rgb_image, raw_pose, samples, cv::Scalar::all(0));
   drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(255, 255, 255));
 
   addText(summary_text, rgb_image);
+
+  {
+    String msg;
+    msg.data = summary_text;
+    pub_string_->publish(msg);
+  }
 
   util::publishImage(*pub_image_, rgb_image, stamp);
 
