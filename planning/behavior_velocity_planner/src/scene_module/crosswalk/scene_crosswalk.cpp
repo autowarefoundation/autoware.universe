@@ -32,12 +32,9 @@ using motion_utils::calcArcLength;
 using motion_utils::calcLateralOffset;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcLongitudinalOffsetPose;
-using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
 using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
-using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
@@ -134,7 +131,7 @@ void sortCrosswalksByDistance(
 
 CrosswalkModule::CrosswalkModule(
   const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), module_id_(module_id), crosswalk_(crosswalk)
 {
@@ -726,13 +723,13 @@ CollisionPointState CrosswalkModule::getCollisionPointState(
 {
   if (ttc + planner_param_.ego_pass_first_margin < ttv) {
     return CollisionPointState::EGO_PASS_FIRST;
-  } else if (ttv + planner_param_.ego_pass_later_margin < ttc) {
-    return CollisionPointState::EGO_PASS_LATER;
-  } else {
-    return CollisionPointState::YIELD;
   }
 
-  return CollisionPointState::IGNORE;
+  if (ttv + planner_param_.ego_pass_later_margin < ttc) {
+    return CollisionPointState::EGO_PASS_LATER;
+  }
+
+  return CollisionPointState::YIELD;
 }
 
 bool CrosswalkModule::isStuckVehicle(
@@ -801,7 +798,7 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
   return false;
 }
 
-bool CrosswalkModule::isVehicle(const PredictedObject & object) const
+bool CrosswalkModule::isVehicle(const PredictedObject & object)
 {
   if (object.classification.empty()) {
     return false;
@@ -875,7 +872,7 @@ bool CrosswalkModule::isTargetExternalInputStatus(const int target_status) const
 }
 
 geometry_msgs::msg::Polygon CrosswalkModule::createObjectPolygon(
-  const double width_m, const double length_m) const
+  const double width_m, const double length_m)
 {
   geometry_msgs::msg::Polygon polygon{};
 
@@ -888,7 +885,7 @@ geometry_msgs::msg::Polygon CrosswalkModule::createObjectPolygon(
 }
 
 geometry_msgs::msg::Polygon CrosswalkModule::createVehiclePolygon(
-  const vehicle_info_util::VehicleInfo & vehicle_info) const
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   const auto & i = vehicle_info;
   const auto & front_m = i.max_longitudinal_offset_m;

@@ -33,7 +33,7 @@ using tier4_autoware_utils::getPose;
 
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::ConstLanelet & walkway,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
@@ -139,8 +139,9 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
     }
 
     return true;
+  }
 
-  } else if (state_ == State::STOP) {
+  if (state_ == State::STOP) {
     if (planner_data_->isVehicleStopped()) {
       state_ = State::SURPASSED;
     }
