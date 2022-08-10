@@ -152,7 +152,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
     const double resolution = common_parameters.drivable_area_resolution;
     path.drivable_area = util::generateDrivableArea(
-      lanes, resolution, common_parameters.vehicle_length, planner_data_);
+      path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
   }
 
   if (isAbortConditionSatisfied()) {
@@ -166,8 +166,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
   const auto turn_signal_info = util::getPathTurnSignal(
     status_.current_lanes, status_.lane_change_path.shifted_path,
     status_.lane_change_path.shift_point, planner_data_->self_pose->pose,
-    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters,
-    parameters_.lane_change_search_distance);
+    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
   output.turn_signal_info.signal_distance = turn_signal_info.second;
   return output;
@@ -289,8 +288,8 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     lane_change_buffer);
 
   reference_path.drivable_area = util::generateDrivableArea(
-    current_lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
-    planner_data_);
+    reference_path, current_lanes, common_parameters.drivable_area_resolution,
+    common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }

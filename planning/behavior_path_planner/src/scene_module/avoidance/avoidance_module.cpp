@@ -1891,7 +1891,8 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
   {
     const auto & p = planner_data_->parameters;
     shifted_path->path.drivable_area = util::generateDrivableArea(
-      extended_lanelets, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+      shifted_path->path, extended_lanelets, p.drivable_area_resolution, p.vehicle_length,
+      planner_data_);
   }
 }
 
@@ -2346,11 +2347,6 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
     //   continue;
     // }
 
-    if (calcJerk(candidate) > parameters_.max_lateral_jerk) {
-      DEBUG_PRINT("%s, this shift exceeds jerk limit (%f). skip.", pfx, calcJerk(candidate));
-      continue;
-    }
-
     const auto current_shift = prev_linear_shift_path_.shift_length.at(
       findNearestIndex(prev_reference_.points, candidate.end.position));
 
@@ -2359,6 +2355,12 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
 
     const auto new_point_threshold = parameters_.avoidance_execution_lateral_threshold;
     if (std::abs(candidate.length - current_shift) > new_point_threshold) {
+      if (calcJerk(candidate) > parameters_.max_lateral_jerk) {
+        DEBUG_PRINT(
+          "%s, Failed to find new shift: jerk limit over (%f).", pfx, calcJerk(candidate));
+        break;
+      }
+
       DEBUG_PRINT(
         "%s, New shift point is found!!! shift change: %f -> %f", pfx, current_shift,
         candidate.length);
@@ -2653,8 +2655,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
 
   const auto turn_info = util::getPathTurnSignal(
     avoidance_data_.current_lanelets, path, latest_shift_point, planner_data_->self_pose->pose,
-    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters,
-    parameters_.avoidance_search_distance);
+    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
 
   // Set turn signal if the vehicle across the lane.
   if (!path.shift_length.empty()) {
