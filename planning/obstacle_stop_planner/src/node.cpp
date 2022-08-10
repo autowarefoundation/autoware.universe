@@ -44,8 +44,8 @@ namespace motion_planning
 {
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
-using motion_utils::findNearestSegmentIndex;
+using motion_utils::findFirstNearestIndexWithSoftConstraints;
+using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using tier4_autoware_utils::calcAzimuthAngle;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::createPoint;
@@ -457,8 +457,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.hunting_threshold = declare_parameter("hunting_threshold", 0.5);
     p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
     lpf_acc_ = std::make_shared<LowpassFilter1d>(p.lowpass_gain);
-    const double max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 90.0);
-    p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(max_yaw_deviation_deg);
+    p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
+    p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   }
 
   {
@@ -817,6 +817,7 @@ void ObstacleStopPlannerNode::insertVelocity(
         index_with_dist_remain.get().first, output, index_with_dist_remain.get().second,
         stop_param);
 
+      const auto & ego_pose = planner_data.current_pose;
       const auto & ego_pos = planner_data.current_pose.position;
       const auto stop_point_distance =
         calcSignedArcLength(output, ego_pos, getPoint(stop_point.point));
@@ -827,7 +828,9 @@ void ObstacleStopPlannerNode::insertVelocity(
 
         if (ego_pos_on_path) {
           StopPoint current_stop_pos{};
-          current_stop_pos.index = findNearestSegmentIndex(output, ego_pos);
+          current_stop_pos.index = findFirstNearestSegmentIndexWithSoftConstraints(
+            output, ego_pose, node_param_.ego_nearest_dist_threshold,
+            node_param_.ego_nearest_yaw_threshold);
           current_stop_pos.point.pose = ego_pos_on_path.get();
 
           insertStopPoint(current_stop_pos, output, planner_data.stop_reason_diag);
@@ -1316,14 +1319,10 @@ TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
 {
   TrajectoryPoints output{};
 
-  size_t min_distance_index = 0;
-  const auto nearest_index =
-    motion_utils::findNearestIndex(input, self_pose, 10.0, node_param_.max_yaw_deviation_rad);
-  if (!nearest_index) {
-    min_distance_index = motion_utils::findNearestIndex(input, self_pose.position);
-  } else {
-    min_distance_index = nearest_index.value();
-  }
+  const size_t min_distance_index = findFirstNearestIndexWithSoftConstraints(
+    input, self_pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+
   for (size_t i = min_distance_index; i < input.size(); ++i) {
     output.push_back(input.at(i));
   }
