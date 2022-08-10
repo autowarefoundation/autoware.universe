@@ -108,12 +108,13 @@ public:
 
   struct StopParam
   {
-    double stop_margin;               // stop margin distance from obstacle on the path [m]
-    double min_behavior_stop_margin;  // margin distance, any other stop point is inserted [m]
-    double expand_stop_range;         // margin of vehicle footprint [m]
-    double extend_distance;           // trajectory extend_distance [m]
-    double step_length;               // step length for pointcloud search range [m]
-    double stop_search_radius;        // search radius for obstacle point cloud [m]
+    double stop_margin;                // stop margin distance from obstacle on the path [m]
+    double min_behavior_stop_margin;   // margin distance, any other stop point is inserted [m]
+    double expand_stop_range;          // margin of vehicle footprint [m]
+    double extend_distance;            // trajectory extend_distance [m]
+    double step_length;                // step length for pointcloud search range [m]
+    double stop_search_radius;         // search radius for obstacle point cloud [m]
+    double hold_stop_margin_distance;  // keep stopping if the ego is in this margin [m]
   };
 
   struct SlowDownParam
@@ -184,12 +185,14 @@ private:
   std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   std::shared_ptr<LowpassFilter1d> lpf_acc_{nullptr};
-  boost::optional<SlowDownSection> latest_slow_down_section_{};
+  boost::optional<StopPoint> latest_stop_point_{boost::none};
+  boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
-  rclcpp::Time last_detection_time_;
+  rclcpp::Time last_detect_time_collision_point_;
+  rclcpp::Time last_detect_time_slowdown_point_;
 
   nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
   nav_msgs::msg::Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};

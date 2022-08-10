@@ -164,9 +164,34 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
-  // ROS parameters
   BehaviorPathPlannerParameters p{};
-  p.backward_path_length = declare_parameter("backward_path_length", 5.0);
+
+  // vehicle info
+  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  p.vehicle_info = vehicle_info;
+  p.vehicle_width = vehicle_info.vehicle_width_m;
+  p.vehicle_length = vehicle_info.vehicle_length_m;
+  p.wheel_tread = vehicle_info.wheel_tread_m;
+  p.wheel_base = vehicle_info.wheel_base_m;
+  p.front_overhang = vehicle_info.front_overhang_m;
+  p.rear_overhang = vehicle_info.rear_overhang_m;
+  p.left_over_hang = vehicle_info.left_overhang_m;
+  p.right_over_hang = vehicle_info.right_overhang_m;
+  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
+  p.base_link2rear = p.rear_overhang;
+
+  // NOTE: backward_path_length is used not only calculating path length but also calculating the
+  // size of a drivable area.
+  //       The drivable area has to cover not the base link but the vehicle itself. Therefore
+  //       rear_overhang must be added to backward_path_length. In addition, because of the
+  //       calculation of the drivable area in the obstacle_avoidance_planner package, the drivable
+  //       area has to be a little longer than the backward_path_length parameter by adding
+  //       min_backward_offset.
+  constexpr double min_backward_offset = 1.0;
+  const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
+
+  // ROS parameters
+  p.backward_path_length = declare_parameter("backward_path_length", 5.0) + backward_offset;
   p.forward_path_length = declare_parameter("forward_path_length", 100.0);
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter("backward_length_buffer_for_end_of_lane", 5.0);
@@ -187,20 +212,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
-
-  // vehicle info
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
-  p.vehicle_info = vehicle_info;
-  p.vehicle_width = vehicle_info.vehicle_width_m;
-  p.vehicle_length = vehicle_info.vehicle_length_m;
-  p.wheel_tread = vehicle_info.wheel_tread_m;
-  p.wheel_base = vehicle_info.wheel_base_m;
-  p.front_overhang = vehicle_info.front_overhang_m;
-  p.rear_overhang = vehicle_info.rear_overhang_m;
-  p.left_over_hang = vehicle_info.left_overhang_m;
-  p.right_over_hang = vehicle_info.right_overhang_m;
-  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
-  p.base_link2rear = p.rear_overhang;
 
   return p;
 }
@@ -268,7 +279,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.min_avoidance_speed_for_acc_prevention = dp("min_avoidance_speed_for_acc_prevention", 3.0);
   p.max_avoidance_acceleration = dp("max_avoidance_acceleration", 0.5);
-  p.avoidance_search_distance = dp("avoidance_search_distance", 30.0);
 
   p.publish_debug_marker = dp("publish_debug_marker", false);
   p.print_debug_info = dp("print_debug_info", false);
@@ -327,7 +337,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
   p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
-  p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
