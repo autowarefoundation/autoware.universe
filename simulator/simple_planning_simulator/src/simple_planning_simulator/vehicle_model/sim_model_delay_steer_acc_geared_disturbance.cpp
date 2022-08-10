@@ -21,43 +21,50 @@
 SimModelDelaySteerAccGeared_Disturbance::SimModelDelaySteerAccGeared_Disturbance(
   float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
   float64_t wheelbase, float64_t acc_delay, float64_t acc_time_constant, float64_t steer_delay,
-  float64_t steer_time_constant, IDisturbanceCollection const & disturbance_collection)
-: SimModelInterface(6 /* dim x */, 2 /* dim u */),
-  MIN_TIME_CONSTANT(0.03),
-  vx_lim_(vx_lim),
-  vx_rate_lim_(vx_rate_lim),
-  steer_lim_(steer_lim),
-  steer_rate_lim_(steer_rate_lim),
-  wheelbase_(wheelbase),
-  acc_delay_(acc_delay),
-  acc_time_constant_(std::max(acc_time_constant, MIN_TIME_CONSTANT)),
-  steer_delay_(steer_delay),
-  steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT))
+  float64_t steer_time_constant, IDisturbanceCollection const &disturbance_collection)
+  : SimModelInterface(6 /* dim x */, 2 /* dim u */),
+    MIN_TIME_CONSTANT(0.03),
+    vx_lim_(vx_lim),
+    vx_rate_lim_(vx_rate_lim),
+    steer_lim_(steer_lim),
+    steer_rate_lim_(steer_rate_lim),
+    wheelbase_(wheelbase),
+    acc_delay_(acc_delay),
+    acc_time_constant_(std::max(acc_time_constant, MIN_TIME_CONSTANT)),
+    steer_delay_(steer_delay),
+    steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT))
 {
   // initializeInputQueue(dt);
   setDisturbance(disturbance_collection);
 }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getX() {return state_(IDX::X);}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getX()
+{ return state_(IDX::X); }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getY() {return state_(IDX::Y);}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getY()
+{ return state_(IDX::Y); }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getYaw() {return state_(IDX::YAW);}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getYaw()
+{ return state_(IDX::YAW); }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getVx() {return state_(IDX::VX);}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getVx()
+{ return state_(IDX::VX); }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getVy() {return 0.0;}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getVy()
+{ return 0.0; }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getAx() {return state_(IDX::ACCX);}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getAx()
+{ return state_(IDX::ACCX); }
 
 float64_t SimModelDelaySteerAccGeared_Disturbance::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
 }
 
-float64_t SimModelDelaySteerAccGeared_Disturbance::getSteer() {return state_(IDX::STEER);}
+float64_t SimModelDelaySteerAccGeared_Disturbance::getSteer()
+{ return state_(IDX::STEER); }
 
-void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
+void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t &dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
 
@@ -70,16 +77,16 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
   //    steer_input_queue_.pop_front();
 
   // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
-  const double & raw_acc_command = input_(IDX_U::ACCX_DES);
-  const double & raw_steer_command = input_(IDX_U::STEER_DES);
+  const double &raw_acc_command = input_(IDX_U::ACCX_DES);
+  const double &raw_steer_command = input_(IDX_U::STEER_DES);
 
   delayed_input(IDX_U::ACCX_DES) = raw_acc_command;     // acc_delayed + acc_slope_dist;
   delayed_input(IDX_U::STEER_DES) = raw_steer_command;  // steer_delayed;
 
   // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
-  auto && steer_delayed =
+  auto &&steer_delayed =
     disturbance_collection_.steering_inputDisturbance_time_delay_ptr_->getDisturbedInput(
-    raw_steer_command);
+      raw_steer_command);
 
   // Apply the acceleration delay when only the vehicle is moving, as when stopping its const and we
   // do not want to send un-applied acceleration to the vehicle.
@@ -88,7 +95,8 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
   // Apply the slope disturbance in a similar manner.
   double acc_slope_dist{};
 
-  if (std::fabs(state_(IDX::VX)) > EPS) {
+  if (std::fabs(state_(IDX::VX)) > EPS)
+  {
     acc_delayed = disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(
       raw_acc_command);
 
@@ -96,20 +104,28 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
       disturbance_collection_.road_slope_outputDisturbance_ptr_->getDisturbedOutput();
 
     // ns_utils::print("Current Slope Acceleration : ", acc_slope_dist);
-  } else {
+  } else
+  {
     acc_delayed = raw_acc_command;
 
     // The delay model is a differential equation, and when vehicle is stopping, there is a constant
     // breaking input. We do not want to send this unused input to the delay model.
 
-    (void)disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(0.0);
+    (void) disturbance_collection_.acc_inputDisturbance_time_delay_ptr_->getDisturbedInput(0.0);
   }
 
   // Apply deadzone to steering
-  auto && steer_deviation = steer_delayed - state_(IDX::STEER);
-  auto && delta_steer_deadzoned =
+  auto &&steer_deviation = steer_delayed - state_(IDX::STEER);
+  auto &&delta_steer_deadzoned =
     disturbance_collection_.steering_dedzone_ptr_->getDisturbedInput(steer_deviation);
-  auto && steer_deadzoned = delta_steer_deadzoned + state_(IDX::STEER);
+
+  /**
+   *  steer_deviation = dxu = x - u
+   *  dxu_dz = fdx(dxu) that returns x-udz
+   *  x-udz  = dxu_dz --> udz = x - dxu_dz
+   * */
+
+  auto &&steer_deadzoned = state_(IDX::STEER) + delta_steer_deadzoned;
 
   delayed_input(IDX_U::STEER_DES) = steer_deadzoned;
   delayed_input(IDX_U::ACCX_DES) = acc_delayed + acc_slope_dist;
@@ -127,20 +143,20 @@ void SimModelDelaySteerAccGeared_Disturbance::update(const float64_t & dt)
 
   // Debug
   // ns_utils::print("In GEARED vehicle Model");
-	//  ns_utils::print("Steering delayed vs steering deadzone ", steer_delayed, steer_deadzoned);
-	//
-	//  // Returns pair of pairs [m, b]_right_left
-	//  auto current_deadzone_params =
-	//    disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
-	//  ns_utils::print(
-	//    "Left deadzone params slope, threshold:  ", current_deadzone_params[0],
-	//    current_deadzone_params[1]);
-	//  ns_utils::print(
-	//    "Right deadzone params slope, threshold:  ", current_deadzone_params[2],
-	//    current_deadzone_params[3], "\n");
+  //  ns_utils::print("Steering delayed vs steering deadzone ", steer_delayed, steer_deadzoned);
+  //
+  //  // Returns pair of pairs [m, b]_right_left
+  //  auto current_deadzone_params =
+  //    disturbance_collection_.steering_dedzone_ptr_->getCurrentDeadZoneParameters();
+  //  ns_utils::print(
+  //    "Left deadzone params slope, threshold:  ", current_deadzone_params[0],
+  //    current_deadzone_params[1]);
+  //  ns_utils::print(
+  //    "Right deadzone params slope, threshold:  ", current_deadzone_params[2],
+  //    current_deadzone_params[3], "\n");
 }
 
-void SimModelDelaySteerAccGeared_Disturbance::initializeInputQueue(const float64_t & dt)
+void SimModelDelaySteerAccGeared_Disturbance::initializeInputQueue(const float64_t &dt)
 {
   auto acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
   acc_input_queue_.resize(acc_input_queue_size);
@@ -152,9 +168,10 @@ void SimModelDelaySteerAccGeared_Disturbance::initializeInputQueue(const float64
 }
 
 Eigen::VectorXd SimModelDelaySteerAccGeared_Disturbance::calcModel(
-  const Eigen::VectorXd & state, const Eigen::VectorXd & input)
+  const Eigen::VectorXd &state, const Eigen::VectorXd &input)
 {
-  auto sat = [](float64_t val, float64_t u, float64_t l) {return std::max(std::min(val, u), l);};
+  auto sat = [](float64_t val, float64_t u, float64_t l)
+  { return std::max(std::min(val, u), l); };
 
   const float64_t vel = sat(state(IDX::VX), vx_lim_, -vx_lim_);
   const float64_t acc = sat(state(IDX::ACCX), vx_rate_lim_, -vx_rate_lim_);
@@ -177,7 +194,7 @@ Eigen::VectorXd SimModelDelaySteerAccGeared_Disturbance::calcModel(
 }
 
 void SimModelDelaySteerAccGeared_Disturbance::updateStateWithGear(
-  Eigen::VectorXd & state, const Eigen::VectorXd & prev_state, const uint8_t gear, const double dt)
+  Eigen::VectorXd &state, const Eigen::VectorXd &prev_state, const uint8_t gear, const double dt)
 {
   using autoware_auto_vehicle_msgs::msg::GearCommand;
   if (
@@ -190,25 +207,30 @@ void SimModelDelaySteerAccGeared_Disturbance::updateStateWithGear(
     gear == GearCommand::DRIVE_16 || gear == GearCommand::DRIVE_17 ||
     gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2)
   {
-    if (state(IDX::VX) < 0.0) {
+    if (state(IDX::VX) < 0.0)
+    {
       state(IDX::VX) = 0.0;
       state(IDX::X) = prev_state(IDX::X);
       state(IDX::Y) = prev_state(IDX::Y);
       state(IDX::YAW) = prev_state(IDX::YAW);
     }
-  } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
-    if (state(IDX::VX) > 0.0) {
+  } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2)
+  {
+    if (state(IDX::VX) > 0.0)
+    {
       state(IDX::VX) = 0.0;
       state(IDX::X) = prev_state(IDX::X);
       state(IDX::Y) = prev_state(IDX::Y);
       state(IDX::YAW) = prev_state(IDX::YAW);
     }
-  } else if (gear == GearCommand::PARK) {
+  } else if (gear == GearCommand::PARK)
+  {
     state(IDX::VX) = 0.0;
     state(IDX::X) = prev_state(IDX::X);
     state(IDX::Y) = prev_state(IDX::Y);
     state(IDX::YAW) = prev_state(IDX::YAW);
-  } else {
+  } else
+  {
     state(IDX::VX) = 0.0;
     state(IDX::X) = prev_state(IDX::X);
     state(IDX::Y) = prev_state(IDX::Y);

@@ -1645,9 +1645,15 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
   // Keep in the class object.
   idx_next_wp_ptr_ = std::make_unique<size_t>(idx_next_wp_temp);
 
+  /**
+   * Autoware motion utils.
+   * */
+
+
+
   // DEBUG
-  // ns_utils::print("\nPrevious and next index points idx : ", *idx_prev_wp_ptr_,
-  // *idx_next_wp_ptr_); ns_utils::print("Current trajectory size : ",
+  ns_utils::print("\nPrevious and next index points idx : ", *idx_prev_wp_ptr_, *idx_next_wp_ptr_);
+  // ns_utils::print("Current trajectory size : ",
   // current_trajectory_ptr_->points.size());
   //    ns_utils::print("Projection distances : \n");
   //    ns_utils::print_container(projection_distances_ds);
