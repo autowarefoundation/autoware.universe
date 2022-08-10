@@ -278,9 +278,9 @@ void NonlinearMPCNode::initTimer(double period_s)
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
 
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback) >>(this->get_clock(), period_ns,
-                                                                             std::move(timer_callback),
-                                                                             this->get_node_base_interface()->get_context());
+  timer_ = std::make_shared < rclcpp::GenericTimer < decltype(timer_callback) >> (this->get_clock(), period_ns,
+    std::move(timer_callback),
+    this->get_node_base_interface()->get_context());
 
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
@@ -869,22 +869,22 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
   params_filters.Vsqrt.setZero();
   std::vector<double> temp(Model::state_dim);
   std::vector<double> default_vec{0.2, 0.2, 0.05, 0.2, 0.05, 0.02, 0.15, 0.03, 0.05};
-  temp = declare_parameter<std::vector<double >>("kalman_filters.Vprocess", default_vec);
+  temp = declare_parameter < std::vector < double >> ("kalman_filters.Vprocess", default_vec);
   params_filters.Vsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
   params_filters.Wsqrt.setZero();
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
-  temp = declare_parameter<std::vector<double >>("kalman_filters.Wmeasurement", default_vec);
+  default_vec = std::vector < double > {0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
+  temp = declare_parameter < std::vector < double >> ("kalman_filters.Wmeasurement", default_vec);
   params_filters.Wsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // Updated covariance matrix.
   params_filters.Psqrt.setZero();
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
-  temp = declare_parameter<std::vector<double >>("kalman_filters.Pkalman", default_vec);
+  default_vec = std::vector < double > {0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
+  temp = declare_parameter < std::vector < double >> ("kalman_filters.Pkalman", default_vec);
   params_filters.Psqrt.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // UKF specific parameters.
@@ -915,88 +915,88 @@ void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &dat
   // State and control weights. Q. Reads only the diagonal terms .
   std::vector<double> temp(Model::state_dim);
   std::vector<double> default_vec{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0., 0.0};
-  temp = declare_parameter<std::vector<double> >("state_weights", default_vec);
+  temp = declare_parameter < std::vector < double > > ("state_weights", default_vec);
   params_optimization.Q.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // QN
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0};
-  temp = declare_parameter<std::vector<double> >("state_weights_terminal", default_vec);
+  default_vec = std::vector < double > {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0};
+  temp = declare_parameter < std::vector < double > > ("state_weights_terminal", default_vec);
   params_optimization.QN.diagonal() = Model::state_vector_t::Map(temp.data());
 
   // R - Control weights.
   temp.clear();
   temp.reserve(Model::input_dim);
-  default_vec = std::vector<double>{0.001, 0.0001};
-  temp = declare_parameter<std::vector<double> >("control_weights", default_vec);
+  default_vec = std::vector < double > {0.001, 0.0001};
+  temp = declare_parameter < std::vector < double > > ("control_weights", default_vec);
   params_optimization.R.diagonal() = Model::input_vector_t::Map(temp.data());
 
   // Rj - Jerk weights.
   temp.clear();
   temp.reserve(Model::input_dim);
-  default_vec = std::vector<double>{1., 1.};
-  temp = declare_parameter<std::vector<double> >("jerk_weights", default_vec);
+  default_vec = std::vector < double > {1., 1.};
+  temp = declare_parameter < std::vector < double > > ("jerk_weights", default_vec);
   params_optimization.Rj.diagonal() = Model::input_vector_t::Map(temp.data());
 
   // State and input bounds. xlower bound.
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>
-    {-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
+  default_vec = std::vector < double >
+                {-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0, -1.0, 0.0, -0.69, -kInfinity};
 
-  temp = declare_parameter<std::vector<double> >("xlower", default_vec);
+  temp = declare_parameter < std::vector < double > > ("xlower", default_vec);
   params_optimization.xlower = Model::state_vector_t::Map(temp.data());
 
   // State and input bounds. xupper bound.
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec =
-    std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0, 1.0, 25.0, 0.69, kInfinity};
-  temp = declare_parameter<std::vector<double> >("xupper", default_vec);
+    std::vector < double > {kInfinity, kInfinity, kInfinity, kInfinity, 2.0, 1.0, 25.0, 0.69, kInfinity};
+  temp = declare_parameter < std::vector < double > > ("xupper", default_vec);
   params_optimization.xupper = Model::state_vector_t::Map(temp.data());
 
   // State and input bounds. ulower bound.
   temp.clear();
   temp.reserve(Model::input_dim);
-  default_vec = std::vector<double>{-30., -1.};
-  temp = declare_parameter<std::vector<double> >("ulower", default_vec);
+  default_vec = std::vector < double > {-30., -1.};
+  temp = declare_parameter < std::vector < double > > ("ulower", default_vec);
   params_optimization.ulower = Model::input_vector_t::Map(temp.data());
 
   temp.clear();
   temp.reserve(Model::input_dim);
-  default_vec = std::vector<double>{30., 1.};
-  temp = declare_parameter<std::vector<double> >("uupper", default_vec);
+  default_vec = std::vector < double > {30., 1.};
+  temp = declare_parameter < std::vector < double > > ("uupper", default_vec);
   params_optimization.uupper = Model::input_vector_t::Map(temp.data());
 
   // xmax bound: xmax is used for scaling, whereas xlower is related to whether there is an upper bound.
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{-50., -50., -3.14, 0.0, -3.0, -1.0, 0.0, -0.69, -5.0};
-  temp = declare_parameter<std::vector<double> >("xmin_for_scaling", default_vec);
+  default_vec = std::vector < double > {-50., -50., -3.14, 0.0, -3.0, -1.0, 0.0, -0.69, -5.0};
+  temp = declare_parameter < std::vector < double > > ("xmin_for_scaling", default_vec);
   params_optimization.xmin_for_scaling = Model::state_vector_t::Map(temp.data());
 
   temp.clear();
   temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{50., 50., 3.14, 40.0, 3.0, 1.0, 10.0, 0.69, 5.0};
-  temp = declare_parameter<std::vector<double> >("xmax_for_scaling", default_vec);
+  default_vec = std::vector < double > {50., 50., 3.14, 40.0, 3.0, 1.0, 10.0, 0.69, 5.0};
+  temp = declare_parameter < std::vector < double > > ("xmax_for_scaling", default_vec);
   params_optimization.xmax_for_scaling = Model::state_vector_t::Map(temp.data());
 
   temp.clear();
   temp.reserve(Model::input_dim);
-  default_vec = std::vector<double>{-50., -1.0};
+  default_vec = std::vector < double > {-50., -1.0};
   temp = declare_parameter("umin_for_scaling", default_vec);
   params_optimization.umin_for_scaling = Model::input_vector_t::Map(temp.data());
 
   temp.clear();
   temp.reserve(Model::input_dim);
-  default_vec = std::vector<double>{50., 1.0};
-  temp = declare_parameter<std::vector<double> >("umax_for_scaling", default_vec);
+  default_vec = std::vector < double > {50., 1.0};
+  temp = declare_parameter < std::vector < double > > ("umax_for_scaling", default_vec);
   params_optimization.umax_for_scaling = Model::input_vector_t::Map(temp.data());
 
   // Load the normalization scaling range.
   params_optimization.scaling_range =
-    declare_parameter<std::vector<double >>("scaling_range", std::vector<double>{-1., 1.});
+    declare_parameter < std::vector < double >> ("scaling_range", std::vector < double > {-1., 1.});
 
   // OSQP parameters
   params_optimization.osqp_warm_start = declare_parameter<bool>("osqp_warm_start", true);
@@ -1041,8 +1041,8 @@ void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &dat
     auto labelX = labelX_tag + std::to_string(k + 1);
     auto labelY = labelY_tag + std::to_string(k + 1);
 
-    tempX = declare_parameter<std::vector<double >>(labelX);
-    tempY = declare_parameter<std::vector<double >>(labelY);
+    tempX = declare_parameter < std::vector < double >> (labelX);
+    tempY = declare_parameter < std::vector < double >> (labelY);
 
     auto tempXmat = Model::state_matrix_X_t::Map(tempX.data());
     auto tempYmat = Model::input_matrix_Y_t::Map(tempY.data());
@@ -1536,125 +1536,74 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 
 void NonlinearMPCNode::findClosestPrevWayPointIdx()
 {
+
   /**
-   *  Create Vectors of Path Directions for each interval
-   *  interval_vector_xy = {waypoint_1 - waypoint_0}_xy using dot products.
+   * from the Autoware motion utils.
    * */
 
-  // Prepare vector of projection distance values; projection of vehicle vectors onto the intervals
-  std::vector<double> projection_distances_ds;
+  auto const &xvec = current_COG_pose_ptr_->pose.position.x;
+  auto const &yvec = current_COG_pose_ptr_->pose.position.y;
+  auto const &yawvec = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
+  double min_dist = std::numeric_limits<double>::max();
 
-  auto f_projection_dist = [this](auto const &point_1, auto const &point_0)
+  size_t nearest_idx{};
+
+  for (size_t k = 0; k < current_trajectory_size_; ++k)
   {
-    auto const &pose_0 = point_0.pose;
-    auto const &pose_1 = point_1.pose;
 
-    // vector of intervals
-    std::array<double, 2> int_vec{pose_1.position.x - pose_0.position.x, pose_1.position.y - pose_0.position.y};
+    auto const &point = current_trajectory_ptr_->points[k];
+    auto const &pose_yaw = tf2::getYaw(point.pose.orientation);
 
-    // Compute the magnitude of path interval vector.
-    double const &ds_mag = std::hypot(int_vec[0], int_vec[1]);
-
-    // vector to vehicle from the origin waypoints
-    // std::array<double, 2> vehicle_vec{
-    // this->current_pose_ptr_->pose.position.x - pose_0.position.x,
-    // this->current_pose_ptr_->pose.position.y - pose_0.position.y};
-    std::array<double, 2> const &&vehicle_vec{this->current_COG_pose_ptr_->pose.position.x - pose_0.position.x,
-                                              this->current_COG_pose_ptr_->pose.position.y - pose_0.position.y};
-
-    // <-@brief ds = <p1, p2> / |p2|
-    double const
-      &&projection_distance_onto_interval = (int_vec[0] * vehicle_vec[0] + int_vec[1] * vehicle_vec[1]) / ds_mag;
-
-    return projection_distance_onto_interval;
-  };
-
-  // The projection distances must be decreasing along the trajectory until the distance becomes
-  // negative.
-  std::vector<double> positive_projection_distances;
-
-  for (size_t k = 1; k < current_trajectory_ptr_->points.size(); ++k)
-  {
-    auto const point_1 = current_trajectory_ptr_->points.at(k);
-    auto const point_0 = current_trajectory_ptr_->points.at(k - 1);
-    auto &&ds_proj = f_projection_dist(point_1, point_0);
-
-    if (ds_proj > 0.)
+    if (auto const &yaw_diff = ns_utils::angleDistance(yawvec, pose_yaw); std::fabs(yaw_diff) > (M_PI / 3.0))
     {
-      positive_projection_distances.emplace_back(ds_proj);
-    } else
+
+      continue;
+    }
+
+    auto const &posex = point.pose.position.x;
+    auto const &posey = point.pose.position.y;
+
+    auto const &dist_to_point = std::hypot(posex - xvec, posey - yvec);
+
+    if (dist_to_point < min_dist)
     {
-      break;
+      // ns_utils::print("yaw condition matched k", k);
+      min_dist = dist_to_point;
+      nearest_idx = k;
     }
   }
 
-  // Fill the projection_distances vector.
-  std::transform(current_trajectory_ptr_->points.cbegin() + 1, current_trajectory_ptr_->points.cend(),
-                 current_trajectory_ptr_->points.cbegin(), std::back_inserter(projection_distances_ds),
-                 f_projection_dist);
+  // Check if the nearest idx point is behind or ahead of the vehicle.
+  auto const &nearest_position = current_trajectory_ptr_->points[nearest_idx].pose.position;
+  std::array<double, 2> next_idx_point_vec{nearest_position.x - xvec, nearest_position.y - yvec};
 
-  // Lambda function to replace negative numbers with a large number.
-  // auto fnc_check_if_negative = [](auto const &x) -> double
-  // {
-  // 	return x < 0 ? std::numeric_limits<double>::max() : x;
-  // };
+  auto const &vehicle_tangent = ns_utils::getTangentVector(yawvec);
+  auto const &projection_on_vehicle_tangent = vehicle_tangent[0] * next_idx_point_vec[0] +
+                                              vehicle_tangent[1] * next_idx_point_vec[1];
 
-  /**
-   * We compute the projection of vehicle vector to all the waypoints on their intervals, and get
-   * the smallest positive distance which gives the waypoint that the vehicle has just left behind.
-   * */
+  size_t nearest_idx_prev{};
+  size_t nearest_idx_next{};
 
-  //    std::vector<double> projections_distances_all_positive;
-  //    std::transform(projection_distances_ds.cbegin(), projection_distances_ds.cend(),
-  //                   std::back_inserter(projections_distances_all_positive),
-  //                   fnc_check_if_negative);
-
-  // Minimum of all positive distances and the index of the next waypoint.
-  auto const it =
-    std::min_element(positive_projection_distances.cbegin(), positive_projection_distances.cend());
-
-  // Extract location of iterator idx and store in the class.
-  size_t const &&temp_idx_prev_wp_ =
-    static_cast<size_t>(std::distance(positive_projection_distances.cbegin(), it));
-
-  idx_prev_wp_ptr_ = std::make_unique<size_t>(temp_idx_prev_wp_);
-
-  // Distance of next waypoint to the vehicle, for anomaly detection.
-  // double min_distance_ds = projections_distances_all_positive[*idx_prev_wp_ptr_];
-
-  // Check if the computed closest point index is valid.
-  if (*idx_prev_wp_ptr_ > current_trajectory_size_)
+  if (projection_on_vehicle_tangent <= 0)
   {
-    RCLCPP_ERROR(get_logger(),
-                 "[mpc_nonlinear] The computed closest point indices are out of trajectory size ...");
-  }
-
-  // Set the next waypoint index.
-  size_t idx_next_wp_temp{};
-  if (*idx_prev_wp_ptr_ < current_trajectory_size_ - 1)
-  {
-    // we are not at the last point.
-    idx_next_wp_temp = *idx_prev_wp_ptr_ + 1;
-
+    nearest_idx_prev = nearest_idx;
   } else
   {
-    // The current prev. waypoint id is the last point. Set the next waypoint as the last point.
-    idx_next_wp_temp = current_trajectory_size_ - 1;
+    size_t zero{};
+    nearest_idx_prev = std::max(zero, nearest_idx - 1);
   }
 
-  // Keep in the class object.
-  idx_next_wp_ptr_ = std::make_unique<size_t>(idx_next_wp_temp);
+  nearest_idx_next = std::min(nearest_idx_prev + 1, current_trajectory_size_ - 1);
 
-  /**
-   * Autoware motion utils.
-   * */
-
-
+  idx_prev_wp_ptr_ = std::make_unique<size_t>(nearest_idx_prev);
+  idx_next_wp_ptr_ = std::make_unique<size_t>(nearest_idx_next);
 
   // DEBUG
   ns_utils::print("\nPrevious and next index points idx : ", *idx_prev_wp_ptr_, *idx_next_wp_ptr_);
-  // ns_utils::print("Current trajectory size : ",
-  // current_trajectory_ptr_->points.size());
+  //  ns_utils::print("\nNearest idx : ", nearest_idx);
+  //  ns_utils::print("\nPrevious and next nearest idxs : ", nearest_idx_prev, nearest_idx_next);
+
+  //  ns_utils::print("Current trajectory size : ",  // current_trajectory_ptr_->points.size());
   //    ns_utils::print("Projection distances : \n");
   //    ns_utils::print_container(projection_distances_ds);
 
@@ -2274,7 +2223,7 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
   auto const &target_vel = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
   // state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
-  return std::array<double, 3>{distance_to_stopping_point, current_vel, static_cast<double>(target_vel)};
+  return std::array < double, 3 > {distance_to_stopping_point, current_vel, static_cast<double>(target_vel)};
 }
 
 void NonlinearMPCNode::setErrorReport(Model::state_vector_t const &x)
