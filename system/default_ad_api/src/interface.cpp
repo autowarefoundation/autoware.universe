@@ -19,16 +19,12 @@ namespace default_ad_api
 
 InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interface", options)
 {
-  using InterfaceVersion = autoware_ad_api_msgs::srv::InterfaceVersion;
-
-  const auto on_interface_version = [](SERVICE_ARG_NO_REQ(InterfaceVersion)) {
-    response->major = 0;
-    response->minor = 1;
-    response->patch = 0;
-  };
-
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_srv(srv_, on_interface_version);
+  node.init_srv(srv_, [](auto, auto res) {
+    res->major = 0;
+    res->minor = 1;
+    res->patch = 0;
+  });
 }
 
 }  // namespace default_ad_api

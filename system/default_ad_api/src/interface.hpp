@@ -16,7 +16,6 @@
 #define INTERFACE_HPP_
 
 #include "default_ad_api/specs/interface/version.hpp"
-#include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -30,7 +29,7 @@ public:
   explicit InterfaceNode(const rclcpp::NodeOptions & options);
 
 private:
-  Service<ad_api::interface::version::T>::SharedPtr srv_;
+  component_interface_utils::Service<ad_api::interface::version::T>::SharedPtr srv_;
 };
 
 }  // namespace default_ad_api
