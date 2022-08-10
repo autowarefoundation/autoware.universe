@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mission_planner/lanelet2_impl/mission_planner_lanelet2.hpp"
+#include "mission_planner_lanelet2.hpp"
 
-#include "mission_planner/lanelet2_impl/utility_functions.hpp"
+#include "utility_functions.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
