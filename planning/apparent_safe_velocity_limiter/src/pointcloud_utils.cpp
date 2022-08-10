@@ -101,9 +101,9 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
   std::cerr << "* after negative filter size = " << pointcloud->size() << "\n";
 }
 
-Obstacles extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr)
+multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr)
 {
-  Obstacles obstacles;
+  multipoint_t obstacles;
   if (pointcloud_ptr->empty()) return obstacles;
   obstacles.reserve(pointcloud_ptr->size());
 

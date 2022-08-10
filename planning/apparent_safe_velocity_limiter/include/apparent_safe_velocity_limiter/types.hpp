@@ -15,7 +15,7 @@
 #ifndef APPARENT_SAFE_VELOCITY_LIMITER__TYPES_HPP_
 #define APPARENT_SAFE_VELOCITY_LIMITER__TYPES_HPP_
 
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -33,6 +33,7 @@ using PointCloud = sensor_msgs::msg::PointCloud2;
 using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
 
 using point_t = tier4_autoware_utils::Point2d;
+using multipoint_t = tier4_autoware_utils::MultiPoint2d;
 using polygon_t = tier4_autoware_utils::Polygon2d;
 using multipolygon_t = tier4_autoware_utils::MultiPolygon2d;
 using segment_t = tier4_autoware_utils::Segment2d;

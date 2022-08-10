@@ -40,8 +40,8 @@ grid_map::GridMap convertToGridMap(const OccupancyGrid & occupancy_grid);
 /// @brief extract obstacles from an occupancy grid
 /// @param[in] occupancy_grid input occupancy grid
 /// @param[in] occupied_threshold threshold to use for identifying obstacles in the occupancy grid
-/// @return extracted obstacles
-Obstacles extractObstacles(
+/// @return extracted obstacle linestrings
+multilinestring_t extractObstacles(
   const grid_map::GridMap & grid_map, const OccupancyGrid & occupancy_grid);
 }  // namespace apparent_safe_velocity_limiter
 

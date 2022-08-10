@@ -70,39 +70,21 @@ multipolygon_t createObjectPolygons(
   return polygons;
 }
 
-Obstacles createObstacles(
-  const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud, const ObstacleMasks & masks,
-  tier4_autoware_utils::TransformListener & transform_listener, const std::string & target_frame,
-  const ObstacleParameters & obstacle_params)
+void addSensorObstacles(
+  Obstacles & obstacles, const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
+  const ObstacleMasks & masks, tier4_autoware_utils::TransformListener & transform_listener,
+  const std::string & target_frame, const ObstacleParameters & obstacle_params)
 {
-  Obstacles obstacles;
   if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCYGRID) {
     auto grid_map = convertToGridMap(occupancy_grid);
     threshold(grid_map, obstacle_params.occupancy_grid_threshold);
     maskPolygons(grid_map, masks);
-    obstacles = extractObstacles(grid_map, occupancy_grid);
+    const auto obstacle_lines = extractObstacles(grid_map, occupancy_grid);
+    obstacles.lines.insert(obstacles.lines.end(), obstacle_lines.begin(), obstacle_lines.end());
   } else if (obstacle_params.dynamic_source == ObstacleParameters::POINTCLOUD) {
-    const auto filtered_pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
-    obstacles = extractObstacles(filtered_pcd);
-    obstacles = filterObstacles(obstacles, masks);
+    auto pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
+    filterPointCloud(pcd, masks);
+    obstacles.points = extractObstacles(pcd);
   }
-  return obstacles;
 }
-
-Obstacles filterObstacles(const Obstacles & obstacles, const ObstacleMasks & masks)
-{
-  namespace bg = boost::geometry;
-  Obstacles filtered_obstacles;
-  multilinestring_t masked_obstacles;
-  for (auto & obstacle : obstacles) {
-    masked_obstacles.clear();
-    bg::difference(obstacle, masks.negative_masks, masked_obstacles);
-    for (auto & masked_obstacle : masked_obstacles) {
-      if (bg::is_empty(masks.positive_mask) || bg::within(masked_obstacle, masks.positive_mask))
-        filtered_obstacles.emplace_back(std::move(masked_obstacle));
-    }
-  }
-  return filtered_obstacles;
-}
-
 }  // namespace apparent_safe_velocity_limiter

@@ -38,7 +38,11 @@
 namespace apparent_safe_velocity_limiter
 {
 
-using Obstacles = multilinestring_t;
+struct Obstacles
+{
+  multilinestring_t lines;
+  multipoint_t points;
+};
 
 namespace bgi = boost::geometry::index;
 struct ObstacleTree
@@ -49,21 +53,18 @@ struct ObstacleTree
   bgi::rtree<rtree_value, bgi::rstar<16>> lines_rtree;
   const multilinestring_t lines;
 
-  explicit ObstacleTree(Obstacles obstacles) : lines(std::move(obstacles))
+  explicit ObstacleTree(const Obstacles & obstacles)
+  : points_rtree(obstacles.points), lines(obstacles.lines)
   {
-    std::vector<point_t> points;
     std::vector<rtree_value> values;
-    values.reserve(obstacles.size());
+    values.reserve(lines.size());
     box_t envelope;
-    for (size_t i = 0; i < lines.size(); ++i) {
-      if (lines[i].size() == 1lu) {
-        points.push_back(lines[i][0]);
-      } else {
+    for (auto i = 0lu; i < lines.size(); ++i) {
+      if (!lines[i].empty()) {
         boost::geometry::envelope(lines[i], envelope);
         values.emplace_back(envelope, i);
       }
     }
-    points_rtree = bgi::rtree<point_t, bgi::rstar<16>>(points);
     lines_rtree = bgi::rtree<rtree_value, bgi::rstar<16>>(values);
   }
 
@@ -110,18 +111,18 @@ multipolygon_t createObjectPolygons(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
   const double min_velocity);
 
-/// @brief create linestrings around obstacles
+/// @brief add obstacles obtained from sensors to the given Obstacles object
+/// @param[out] obstacles Obstacles object in which to add the sensor obstacles
 /// @param[in] occupancy_grid occupancy grid
 /// @param[in] pointcloud pointcloud
 /// @param[in] masks masks used to discard some obstacles
 /// @param[in] transform_listener object used to retrieve the latest transform
 /// @param[in] target_frame frame of the returned obstacles
 /// @param[in] obstacle_params obstacle parameters
-/// @return linestrings representing obstacles to avoid
-Obstacles createObstacles(
-  const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud, const ObstacleMasks & masks,
-  tier4_autoware_utils::TransformListener & transform_listener, const std::string & target_frame,
-  const ObstacleParameters & obstacle_params);
+void addSensorObstacles(
+  Obstacles & obstacles, const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
+  const ObstacleMasks & masks, tier4_autoware_utils::TransformListener & transform_listener,
+  const std::string & target_frame, const ObstacleParameters & obstacle_params);
 
 /// @brief filter obstacles with the given negative and positive masks
 /// @param[in] obstacles obstacles to filter

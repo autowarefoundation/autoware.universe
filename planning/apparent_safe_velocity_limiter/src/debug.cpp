@@ -101,8 +101,8 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const auto max_id = original_projections.size() +
                       std::max(original_projections_id_offset, adjusted_projections_id_offset);
   auto obs_id = 0lu;
-  for (const auto & obs : obstacles) {
-    auto marker = makeLinestringMarker(obs, marker_z);
+  for (const auto & ls : obstacles.lines) {
+    auto marker = makeLinestringMarker(ls, marker_z);
     marker.ns = "obstacles";
     marker.id = obs_id++;
     marker.color.b = 1.0;
@@ -119,12 +119,10 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   points_marker.id = obs_id++;
   geometry_msgs::msg::Point point;
   point.z = marker_z;
-  for (const auto & obs : obstacles) {
-    if (obs.size() == 1) {
-      point.x = obs[0].x();
-      point.y = obs[0].y();
-      points_marker.points.push_back(point);
-    }
+  for (const auto & p : obstacles.points) {
+    point.x = p.x();
+    point.y = p.y();
+    points_marker.points.push_back(point);
   }
   debug_markers.markers.push_back(points_marker);
 

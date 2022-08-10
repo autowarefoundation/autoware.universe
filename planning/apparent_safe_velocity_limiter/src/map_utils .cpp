@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "apparent_safe_velocity_limiter/map_utils.hpp"
+#include "apparent_safe_velocity_limiter/types.hpp"
 #include "lanelet2_core/primitives/LineString.h"
 
 #include <lanelet2_core/Attribute.h>
@@ -22,12 +23,12 @@
 
 namespace apparent_safe_velocity_limiter
 {
-Obstacles extractStaticObstacles(
+multilinestring_t extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map,
   const autoware_auto_planning_msgs::msg::HADMapRoute & route,
   const std::vector<std::string> & tags, const std::vector<int64_t> & obstacle_ids)
 {
-  Obstacles obstacles;
+  multilinestring_t lines;
   lanelet::Ids ids;
   for (const auto & segment : route.segments) {
     ids.push_back(segment.preferred_primitive_id);
@@ -36,15 +37,15 @@ Obstacles extractStaticObstacles(
   for (const auto & id : ids) {
     const auto lanelet = lanelet_map.laneletLayer.find(id);
     if (lanelet == lanelet_map.laneletLayer.end()) continue;
-    for (const auto linestring : {lanelet->leftBound2d(), lanelet->rightBound2d()}) {
-      if (isObstacle(linestring, tags, obstacle_ids)) {
+    for (const auto & ls : {lanelet->leftBound2d(), lanelet->rightBound2d()}) {
+      if (isObstacle(ls, tags, obstacle_ids)) {
         linestring_t ls;
-        for (const auto & p : linestring) ls.push_back(point_t{p.x(), p.y()});
-        obstacles.push_back(ls);
+        for (const auto & p : ls) ls.push_back(point_t{p.x(), p.y()});
+        lines.push_back(ls);
       }
     }
   }
-  return obstacles;
+  return lines;
 }
 
 bool isObstacle(

@@ -77,7 +77,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
-  Obstacles static_map_obstacles_;
+  multilinestring_t static_map_obstacles_;
   std::optional<Float> current_ego_velocity_;
 
   // Benchmarking & Debugging TODO(Maxime CLEMENT): remove before merging

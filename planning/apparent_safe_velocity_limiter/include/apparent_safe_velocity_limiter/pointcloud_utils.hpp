@@ -42,13 +42,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
 /// @brief filter the pointcloud to keep only relevent points
 /// @param[in,out] pointcloud to filter
 /// @param[in] masks obstacle masks used to filter the pointcloud
-void filterPointCloud(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const ObstacleMasks & masks);
+void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const ObstacleMasks & masks);
 
 /// @brief extract obstacles from the given pointcloud
 /// @param[in] pointcloud input pointcloud
 /// @return extracted obstacles
-Obstacles extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
+multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
 
 }  // namespace apparent_safe_velocity_limiter
 

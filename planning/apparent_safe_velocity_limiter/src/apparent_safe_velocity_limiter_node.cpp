@@ -188,14 +188,14 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   const auto projected_linestrings = createProjectedLines(downsampled_traj, projection_params_);
   const auto footprint_polygons =
     createFootprintPolygons(projected_linestrings, vehicle_lateral_offset_);
-  auto obstacles = static_map_obstacles_;
+  Obstacles obstacles;
+  obstacles.lines = static_map_obstacles_;
   if (obstacle_params_.dynamic_source != ObstacleParameters::STATIC_ONLY) {
     if (obstacle_params_.filter_envelope)
       obstacle_masks.positive_mask = createEnvelopePolygon(footprint_polygons);
-    const auto dynamic_obstacles = createObstacles(
-      *occupancy_grid_ptr_, *pointcloud_ptr_, obstacle_masks, transform_listener_,
+    addSensorObstacles(
+      obstacles, *occupancy_grid_ptr_, *pointcloud_ptr_, obstacle_masks, transform_listener_,
       original_traj.header.frame_id, obstacle_params_);
-    obstacles.insert(obstacles.end(), dynamic_obstacles.begin(), dynamic_obstacles.end());
   }
   limitVelocity(
     downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
