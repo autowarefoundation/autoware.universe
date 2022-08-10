@@ -54,8 +54,7 @@ private:
   // Member Functions
   std::vector<double> createTimeVector();
   std::tuple<double, double> calcInitialMotion(
-    const ObstacleCruisePlannerData & planner_data, const size_t input_closest,
-    const Trajectory & prev_traj);
+    const ObstacleCruisePlannerData & planner_data, const Trajectory & prev_traj);
 
   TrajectoryPoint calcInterpolatedTrajectoryPoint(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose);
@@ -66,18 +65,23 @@ private:
 
   boost::optional<SBoundaries> getSBoundaries(
     const ObstacleCruisePlannerData & planner_data, const TargetObstacle & object,
-    const std::vector<double> & time_vec);
+    const std::vector<double> & time_vec, const double traj_length);
 
   boost::optional<SBoundaries> getSBoundariesForOnTrajectoryObject(
     const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
-    const double safety_distance, const TargetObstacle & object);
+    const double safety_distance, const TargetObstacle & object, const double traj_length);
 
   boost::optional<SBoundaries> getSBoundariesForOffTrajectoryObject(
     const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
-    const double safety_distance, const TargetObstacle & object);
+    const double safety_distance, const TargetObstacle & object, const double traj_length);
 
   bool checkOnTrajectory(
     const ObstacleCruisePlannerData & planner_data, const geometry_msgs::msg::PointStamped & point);
+
+  boost::optional<double> calcTrajectoryLengthFromCurrentPose(
+    const autoware_auto_planning_msgs::msg::Trajectory & traj,
+    const geometry_msgs::msg::Pose & current_pose);
+
   geometry_msgs::msg::Pose transformBaseLink2Center(
     const geometry_msgs::msg::Pose & pose_base_link);
 
@@ -88,8 +92,6 @@ private:
     const ObstacleCruisePlannerData & planner_data, const double offset,
     const std::vector<double> & time_vec, const SBoundaries & s_boundaries,
     const VelocityOptimizer::OptimizationResult & opt_result);
-  // Calculation time watcher
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
   Trajectory prev_output_;
 
@@ -100,7 +102,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr boundary_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_sv_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_st_graph_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_marker_pub_;
 
   // Resampling Parameter

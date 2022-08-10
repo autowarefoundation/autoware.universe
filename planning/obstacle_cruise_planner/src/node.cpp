@@ -455,6 +455,7 @@ void ObstacleCruisePlannerNode::onObjects(const PredictedObjects::ConstSharedPtr
 
 void ObstacleCruisePlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
 {
+  std::cerr << "current_vel_ptr: " << msg->twist.twist.linear.x << std::endl;
   if (current_twist_ptr_) {
     prev_twist_ptr_ = current_twist_ptr_;
   }
