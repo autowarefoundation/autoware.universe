@@ -117,6 +117,7 @@ void RTCInterface::onCooperateCommandService(
     // Update command if the command has been already received
     if (itr != registered_status_.statuses.end()) {
       itr->command_status = command.command;
+      itr->auto_mode = false;
       response.success = true;
     } else {
       RCLCPP_WARN_STREAM(
@@ -126,9 +127,6 @@ void RTCInterface::onCooperateCommandService(
     }
     responses->responses.push_back(response);
   }
-
-  // Disable auto mode
-  is_auto_mode_ = false;
 }
 
 void RTCInterface::onAutoModeService(
@@ -136,6 +134,9 @@ void RTCInterface::onAutoModeService(
 {
   std::lock_guard<std::mutex> lock(mutex_);
   is_auto_mode_ = request->enable;
+  for (auto & status : registered_status_.statuses) {
+    status.auto_mode = request->enable;
+  }
   response->success = true;
 }
 
@@ -204,7 +205,7 @@ bool RTCInterface::isActivated(const UUID & uuid)
     [uuid](auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
-    if (is_auto_mode_) {
+    if (itr->auto_mode) {
       return itr->safe;
     } else {
       return itr->command_status.type == Command::ACTIVATE;
