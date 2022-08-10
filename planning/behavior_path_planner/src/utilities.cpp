@@ -1830,7 +1830,7 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 {
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_pose->pose;
-  const auto common_parameters = planner_data->parameters;
+  const auto & common_parameters = planner_data->parameters;
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
