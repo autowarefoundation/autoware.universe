@@ -94,9 +94,8 @@ public:
   };
 
   CrosswalkModule(
-    const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
-    const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, lanelet::ConstLanelet crosswalk, const PlannerParam & planner_param,
+    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 

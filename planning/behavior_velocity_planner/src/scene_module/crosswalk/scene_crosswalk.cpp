@@ -130,12 +130,13 @@ void sortCrosswalksByDistance(
 }  // namespace
 
 CrosswalkModule::CrosswalkModule(
-  const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
-  const PlannerParam & planner_param, const rclcpp::Logger & logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), module_id_(module_id), crosswalk_(crosswalk)
+  const int64_t module_id, lanelet::ConstLanelet crosswalk, const PlannerParam & planner_param,
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock),
+  module_id_(module_id),
+  crosswalk_(std::move(crosswalk)),
+  planner_param_(planner_param)
 {
-  planner_param_ = planner_param;
 }
 
 bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)

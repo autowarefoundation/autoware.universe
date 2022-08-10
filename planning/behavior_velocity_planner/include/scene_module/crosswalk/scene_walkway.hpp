@@ -47,9 +47,8 @@ public:
     double external_input_timeout;
   };
   WalkwayModule(
-    const int64_t module_id, const lanelet::ConstLanelet & walkway,
-    const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, lanelet::ConstLanelet walkway, const PlannerParam & planner_param,
+    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
