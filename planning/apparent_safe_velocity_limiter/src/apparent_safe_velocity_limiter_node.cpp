@@ -28,6 +28,7 @@
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <algorithm>
+#include <chrono>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -66,6 +67,7 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
+  pub_runtime_ = create_publisher<std_msgs::msg::Int64>("~/output/runtime_us", 1);
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
@@ -192,8 +194,9 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   pub_trajectory_->publish(safe_trajectory);
 
   const auto t_end = std::chrono::system_clock::now();
-  const auto runtime = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start);
-  RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %li ms", runtime.count());
+  const auto runtime = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+  RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %li us", runtime.count());
+  pub_runtime_->publish(std_msgs::msg::Int64().set__data(runtime.count()));
 
   const auto safe_projected_linestrings =
     createProjectedLines(downsampled_traj, projection_params_);

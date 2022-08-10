@@ -24,8 +24,6 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "nav_msgs/msg/detail/occupancy_grid__struct.hpp"
-
 namespace apparent_safe_velocity_limiter
 {
 void maskPolygons(grid_map::GridMap & grid_map, const ObstacleMasks & obstacle_masks)

@@ -15,8 +15,6 @@
 #include "apparent_safe_velocity_limiter/occupancy_grid_utils.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
-#include "nav_msgs/msg/detail/occupancy_grid__struct.hpp"
-
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <gtest/gtest.h>
