@@ -511,8 +511,6 @@ boost::optional<int64_t> getNearestLaneId(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose, boost::optional<size_t> & nearest_segment_idx)
 {
-  boost::optional<int64_t> nearest_lane_id;
-
   nearest_segment_idx = motion_utils::findNearestSegmentIndex(
     path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
@@ -520,27 +518,14 @@ boost::optional<int64_t> getNearestLaneId(
     return boost::none;
   }
 
-  lanelet::ConstLanelets current_lanes;
-  if (
-    lanelet::utils::query::getCurrentLanelets(
-      lanelet::utils::query::laneletLayer(lanelet_map), current_pose, &current_lanes) &&
-    nearest_segment_idx) {
-    for (const auto & ll : current_lanes) {
-      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
-        nearest_lane_id = ll.id();
-        return nearest_lane_id;
-      }
-    }
+  lanelet::ConstLanelets lanes;
+  for (const auto & point : path.points) {
+    lanes.push_back(lanelet_map->laneletLayer.get(point.lane_ids.at(0)));
+  }
 
-    // if the lane_id of nearest_segment_idx does not involved in current_lanes,
-    // search the lane_id of nearest_segment_idx + 1
-    *nearest_segment_idx += 1;
-    for (const auto & ll : current_lanes) {
-      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
-        nearest_lane_id = ll.id();
-        return nearest_lane_id;
-      }
-    }
+  lanelet::Lanelet closest_lane;
+  if (lanelet::utils::query::getClosestLanelet(lanes, current_pose, &closest_lane)) {
+    return closest_lane.id();
   }
   return boost::none;
 }
