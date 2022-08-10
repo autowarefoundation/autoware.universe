@@ -827,12 +827,13 @@ float64_t MPC::calcDesiredSteeringRate(
   const Eigen::MatrixXd Xex = m.Aex * x0 + m.Bex * Uex + m.Wex;
 
   const size_t STEER_IDX = 2;  // for kinematics model
-  const size_t STATE_SIZE = m_vehicle_model_ptr->getDimX();
 
-  const auto steer_0 = Xex(STEER_IDX, 0);
-  const auto steer_1 = Xex(STEER_IDX + STATE_SIZE, 0);
+  const auto steer_0 = x0(STEER_IDX, 0);
+  const auto steer_1 = Xex(STEER_IDX, 0);
 
-  return (steer_1 - steer_0) / m_param.prediction_dt;
+  const auto steer_rate = (steer_1 - steer_0) / predict_dt;
+
+  return steer_rate;
 }
 
 bool8_t MPC::isValid(const MPCMatrix & m) const
