@@ -178,10 +178,14 @@ struct PreprocessingParameters
   static constexpr auto DOWNSAMPLING_PARAM = "trajectory_preprocessing.downsample_factor";
   static constexpr auto START_DIST_PARAM = "trajectory_preprocessing.start_distance";
   static constexpr auto CALC_STEER_PARAM = "trajectory_preprocessing.calculate_steering_angles";
+  static constexpr auto MAX_LENGTH_PARAM = "trajectory_preprocessing.max_length";
+  static constexpr auto MAX_DURATION_PARAM = "trajectory_preprocessing.max_duration";
 
   int downsample_factor{};
   Float start_distance{};
   bool calculate_steering_angles{};
+  Float max_length{};
+  Float max_duration{};
 
   PreprocessingParameters() = default;
   explicit PreprocessingParameters(rclcpp::Node & node)
@@ -189,6 +193,8 @@ struct PreprocessingParameters
     downsample_factor = node.declare_parameter<int>(DOWNSAMPLING_PARAM);
     start_distance = static_cast<Float>(node.declare_parameter<double>(START_DIST_PARAM));
     calculate_steering_angles = node.declare_parameter<bool>(CALC_STEER_PARAM);
+    max_length = node.declare_parameter<Float>(MAX_LENGTH_PARAM);
+    max_duration = node.declare_parameter<Float>(MAX_DURATION_PARAM);
   }
   bool updateDownsampleFactor(const int new_downsample_factor)
   {

@@ -7,6 +7,8 @@
 
     trajectory_preprocessing:
       start_distance: 0.0  # [m] distance ahead of ego from which to start modifying the trajectory
+      max_length: 100.0 # [m] maximum distance (from the start point) where the velocity is adjusted
+      max_duration: 10.0 # [s] maximum duration (from the start point) where the velocity is adjusted
       downsample_factor: 10  # factor by which to downsample the input trajectory for calculation
       calculate_steering_angles: false # if true, the steering angle at each trajectory point is calculated from the change in heading
 

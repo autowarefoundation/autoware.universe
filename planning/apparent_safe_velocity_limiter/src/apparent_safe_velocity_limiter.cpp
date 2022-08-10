@@ -17,13 +17,13 @@
 #include "apparent_safe_velocity_limiter/distance.hpp"
 #include "apparent_safe_velocity_limiter/forward_projection.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf2/utils.h>
 
 namespace apparent_safe_velocity_limiter
 {
@@ -35,50 +35,6 @@ Float calculateSafeVelocity(
   return std::min(
     trajectory_point.longitudinal_velocity_mps,
     std::max(min_adjusted_velocity, static_cast<Float>(dist_to_collision / time_buffer)));
-}
-
-size_t calculateStartIndex(
-  const Trajectory & trajectory, const size_t ego_idx, const Float start_distance)
-{
-  auto dist = 0.0;
-  auto idx = ego_idx;
-  while (idx + 1 < trajectory.points.size() && dist < start_distance) {
-    dist +=
-      tier4_autoware_utils::calcDistance2d(trajectory.points[idx], trajectory.points[idx + 1]);
-    ++idx;
-  }
-  return idx;
-}
-
-Trajectory downsampleTrajectory(
-  const Trajectory & trajectory, const size_t start_idx, const int factor)
-{
-  if (factor < 1) return trajectory;
-  Trajectory downsampled_traj;
-  downsampled_traj.header = trajectory.header;
-  downsampled_traj.points.reserve(trajectory.points.size() / factor);
-  for (size_t i = start_idx; i < trajectory.points.size(); i += factor)
-    downsampled_traj.points.push_back(trajectory.points[i]);
-  return downsampled_traj;
-}
-
-void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base)
-{
-  auto t = 0.0;
-  auto prev_point = trajectory.points.front();
-  auto prev_heading = tf2::getYaw(prev_point.pose.orientation);
-  for (auto i = 1ul; i < trajectory.points.size(); ++i) {
-    const auto & prev_point = trajectory.points[i - 1];
-    auto & point = trajectory.points[i];
-    const auto dt = tier4_autoware_utils::calcDistance2d(prev_point, point) /
-                    prev_point.longitudinal_velocity_mps;
-    t += dt;
-    const auto heading = tf2::getYaw(point.pose.orientation);
-    const auto d_heading = heading - prev_heading;
-    prev_heading = heading;
-    point.front_wheel_angle_rad =
-      std::atan2(wheel_base * d_heading, point.longitudinal_velocity_mps * dt);
-  }
 }
 
 multipolygon_t createPolygonMasks(
@@ -190,17 +146,5 @@ void limitVelocity(
           projection_params.duration, velocity_params.min_velocity));
     }
   }
-}
-
-Trajectory copyDownsampledVelocity(
-  const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
-  const int factor)
-{
-  const auto size = std::min(downsampled_traj.points.size(), trajectory.points.size());
-  for (size_t i = 0; i < size; ++i) {
-    trajectory.points[start_idx + i * factor].longitudinal_velocity_mps =
-      downsampled_traj.points[i].longitudinal_velocity_mps;
-  }
-  return trajectory;
 }
 }  // namespace apparent_safe_velocity_limiter

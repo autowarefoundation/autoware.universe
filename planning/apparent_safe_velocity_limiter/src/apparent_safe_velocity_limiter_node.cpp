@@ -19,6 +19,7 @@
 #include "apparent_safe_velocity_limiter/forward_projection.hpp"
 #include "apparent_safe_velocity_limiter/map_utils.hpp"
 #include "apparent_safe_velocity_limiter/parameters.hpp"
+#include "apparent_safe_velocity_limiter/trajectory_preprocessing.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -101,6 +102,10 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       }
     } else if (parameter.get_name() == PreprocessingParameters::CALC_STEER_PARAM) {
       preprocessing_params_.calculate_steering_angles = parameter.as_bool();
+    } else if (parameter.get_name() == PreprocessingParameters::MAX_LENGTH_PARAM) {
+      preprocessing_params_.max_length = static_cast<Float>(parameter.as_double());
+    } else if (parameter.get_name() == PreprocessingParameters::MAX_DURATION_PARAM) {
+      preprocessing_params_.max_duration = static_cast<Float>(parameter.as_double());
       // Velocity parameters
     } else if (parameter.get_name() == VelocityParameters::MIN_VEL_PARAM) {
       velocity_params_.min_velocity = static_cast<Float>(parameter.as_double());
@@ -169,8 +174,10 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   velocity_params_.current_ego_velocity = *current_ego_velocity_;
   const auto start_idx =
     calculateStartIndex(original_traj, *ego_idx, preprocessing_params_.start_distance);
-  Trajectory downsampled_traj =
-    downsampleTrajectory(original_traj, start_idx, preprocessing_params_.downsample_factor);
+  const auto end_idx = calculateEndIndex(
+    original_traj, start_idx, preprocessing_params_.max_length, preprocessing_params_.max_duration);
+  Trajectory downsampled_traj = downsampleTrajectory(
+    original_traj, start_idx, end_idx, preprocessing_params_.downsample_factor);
   ObstacleMasks obstacle_masks;
   obstacle_masks.negative_masks = createPolygonMasks(
     *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
