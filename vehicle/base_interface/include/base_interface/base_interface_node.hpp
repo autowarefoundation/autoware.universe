@@ -15,8 +15,8 @@
 #ifndef BASE_INTERFACE__BASE_INTERFACE_NODE_HPP_
 #define BASE_INTERFACE__BASE_INTERFACE_NODE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <base_interface/base_interface.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <string>
 
