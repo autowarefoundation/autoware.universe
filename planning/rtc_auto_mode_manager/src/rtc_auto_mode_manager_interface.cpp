@@ -19,7 +19,7 @@ namespace rtc_auto_mode_manager
 RTCAutoModeManagerInterface::RTCAutoModeManagerInterface(
   rclcpp::Node * node, const std::string & module_name, const bool default_enable)
 {
-  using std::chrono_literals;
+  using std::chrono_literals::operator""s;
   using std::placeholders::_1;
   using std::placeholders::_2;
 
