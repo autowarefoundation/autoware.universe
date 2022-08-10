@@ -40,7 +40,6 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
       srv_autoware_control, this, &OperationModeTransitionManager::onChangeAutowareControl);
     node.init_srv(srv_operation_mode, this, &OperationModeTransitionManager::onChangeOperationMode);
     node.init_pub(pub_operation_mode_);
-    node.init_pub(pub_auto_mode_available_);
   }
 
   // timer
@@ -54,7 +53,7 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   transition_timeout_ = declare_parameter<double>("transition_timeout");
   current_mode_ = OperationMode::STOP;
   transition_ = nullptr;
-  gate_operation_mode_.operation.mode = OperationModeStateValue::UNKNOWN;
+  gate_operation_mode_.operation.mode = OperationModeValue::UNKNOWN;
   gate_operation_mode_.is_in_transition = false;
   control_mode_report_.mode = ControlModeReport::NO_COMMAND;
 
@@ -206,23 +205,22 @@ void OperationModeTransitionManager::onTimer()
 
 void OperationModeTransitionManager::publishData()
 {
+  const bool current_control = control_mode_report_.mode == ControlModeReport::AUTONOMOUS;
   const auto time = now();
 
-  OperationModeStateAPI::Message operation_mode_state;
-  operation_mode_state.operation = toMsg(current_mode_);
-  operation_mode_state.is_in_transition = transition_ ? true : false;
-  if (prev_pub_state_ != operation_mode_state) {
-    prev_pub_state_ = operation_mode_state;
-    operation_mode_state.stamp = time;
-    pub_operation_mode_->publish(operation_mode_state);
-  }
+  OperationModeStateAPI::Message state;
+  state.operation = toMsg(current_mode_);
+  state.is_autoware_control_enabled = current_control;
+  state.is_in_transition = transition_ ? true : false;
+  state.change_to_stop = modes_.at(OperationMode::STOP)->isModeChangeAvailable();
+  state.change_to_autonomous = modes_.at(OperationMode::AUTONOMOUS)->isModeChangeAvailable();
+  state.change_to_local = modes_.at(OperationMode::LOCAL)->isModeChangeAvailable();
+  state.change_to_remote = modes_.at(OperationMode::REMOTE)->isModeChangeAvailable();
 
-  AutoModeAvailableAPI::Message available;
-  available.available = modes_.at(OperationMode::AUTONOMOUS)->isModeChangeAvailable();
-  if (prev_pub_available_ != available) {
-    prev_pub_available_ = available;
-    available.stamp = time;
-    pub_auto_mode_available_->publish(available);
+  if (prev_state_ != state) {
+    prev_state_ = state;
+    state.stamp = time;
+    pub_operation_mode_->publish(state);
   }
 
   ModeChangeBase::DebugInfo debug_info = modes_.at(OperationMode::AUTONOMOUS)->getDebugInfo();

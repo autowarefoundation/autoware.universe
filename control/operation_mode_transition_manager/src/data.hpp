@@ -17,9 +17,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_ad_api_msgs/msg/operation_mode_state.hpp>
 #include <autoware_ad_api_msgs/srv/change_operation_mode.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
-#include <tier4_system_msgs/msg/operation_mode_state.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
@@ -31,8 +31,8 @@ namespace operation_mode_transition_manager
 {
 
 using ServiceResponse = autoware_ad_api_msgs::srv::ChangeOperationMode::Response;
-using OperationModeState = tier4_system_msgs::msg::OperationModeState;
-using OperationModeStateValue = OperationModeState::_operation_type;
+using OperationModeState = autoware_ad_api_msgs::msg::OperationModeState;
+using OperationModeValue = OperationModeState::_operation_type;
 using ChangeOperationMode = tier4_system_msgs::srv::ChangeOperationMode;
 using ControlModeRequest = tier4_vehicle_msgs::srv::ControlModeRequest;
 using ControlModeReport = autoware_auto_vehicle_msgs::msg::ControlModeReport;
@@ -79,7 +79,7 @@ struct StableCheckParam
 
 std::string toString(const std::optional<OperationMode> mode);
 std::optional<OperationMode> toEnum(const ChangeOperationMode::Request & request);
-OperationModeStateValue toMsg(const OperationMode mode);
+OperationModeValue toMsg(const OperationMode mode);
 
 }  // namespace operation_mode_transition_manager
 

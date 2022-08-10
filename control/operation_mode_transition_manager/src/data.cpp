@@ -52,23 +52,23 @@ std::optional<OperationMode> toEnum(const ChangeOperationMode::Request & request
   return std::nullopt;
 }
 
-OperationModeStateValue toMsg(const OperationMode mode)
+OperationModeValue toMsg(const OperationMode mode)
 {
   const auto get_operation_mode = [](const OperationMode mode) {
     switch (mode) {
       case OperationMode::STOP:
-        return OperationModeStateValue::STOP;
+        return OperationModeValue::STOP;
       case OperationMode::AUTONOMOUS:
-        return OperationModeStateValue::AUTONOMOUS;
+        return OperationModeValue::AUTONOMOUS;
       case OperationMode::LOCAL:
-        return OperationModeStateValue::LOCAL;
+        return OperationModeValue::LOCAL;
       case OperationMode::REMOTE:
-        return OperationModeStateValue::REMOTE;
+        return OperationModeValue::REMOTE;
     }
-    return OperationModeStateValue::UNKNOWN;
+    return OperationModeValue::UNKNOWN;
   };
 
-  OperationModeStateValue operation;
+  OperationModeValue operation;
   operation.mode = get_operation_mode(mode);
   return operation;
 }

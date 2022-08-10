@@ -37,11 +37,9 @@ private:
   using ChangeAutowareControlAPI = system_interface::ChangeAutowareControl;
   using ChangeOperationModeAPI = system_interface::ChangeOperationMode;
   using OperationModeStateAPI = system_interface::OperationModeState;
-  using AutoModeAvailableAPI = system_interface::AutonomousModeAvailable;
   component_interface_utils::Service<ChangeAutowareControlAPI>::SharedPtr srv_autoware_control;
   component_interface_utils::Service<ChangeOperationModeAPI>::SharedPtr srv_operation_mode;
   component_interface_utils::Publisher<OperationModeStateAPI>::SharedPtr pub_operation_mode_;
-  component_interface_utils::Publisher<AutoModeAvailableAPI>::SharedPtr pub_auto_mode_available_;
   void onChangeAutowareControl(
     const ChangeAutowareControlAPI::Service::Request::SharedPtr request,
     const ChangeAutowareControlAPI::Service::Response::SharedPtr response);
@@ -70,8 +68,7 @@ private:
   OperationModeState gate_operation_mode_;
   ControlModeReport control_mode_report_;
 
-  std::optional<OperationModeStateAPI::Message> prev_pub_state_;
-  std::optional<AutoModeAvailableAPI::Message> prev_pub_available_;
+  std::optional<OperationModeStateAPI::Message> prev_state_;
 };
 
 }  // namespace operation_mode_transition_manager
