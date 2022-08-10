@@ -99,6 +99,14 @@ std::vector<polygon_t> createFootprintPolygons(
   return footprints;
 }
 
+polygon_t createTrajectoryFootprint(const Trajectory & trajectory, const Float lateral_offset)
+{
+  linestring_t ls;
+  ls.reserve(trajectory.points.size());
+  for (const auto & p : trajectory.points) ls.emplace_back(p.pose.position.x, p.pose.position.y);
+  return generateFootprint(ls, lateral_offset);
+}
+
 polygon_t createEnvelopePolygon(
   const Trajectory & trajectory, const size_t start_idx, ProjectionParameters & projection_params)
 {

@@ -75,6 +75,12 @@ multipolygon_t createPolygonMasks(
 std::vector<polygon_t> createFootprintPolygons(
   const std::vector<multilinestring_t> & projected_linestrings, const Float lateral_offset);
 
+/// @brief create the footprint polygon from a trajectory
+/// @param[in] trajectory the trajectory for which to create a footprint
+/// @param[in] lateral_offset offset to create polygons around the trajectory points
+/// @return polygon footprint of the trajectory
+polygon_t createTrajectoryFootprint(const Trajectory & trajectory, const Float lateral_offset);
+
 /// @brief create a polygon of the safety envelope
 /// @details the safety envelope is the area covered by forward projections at each trajectory
 /// point

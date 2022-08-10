@@ -75,7 +75,6 @@ linestring_t bicycleProjectionLine(
 
 polygon_t generateFootprint(const multilinestring_t & lines, const double lateral_offset)
 {
-  namespace bg = boost::geometry;
   polygon_t footprint;
   if (lines.size() == 1) {
     footprint = generateFootprint(lines.front(), lateral_offset);
