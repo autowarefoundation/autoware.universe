@@ -57,7 +57,6 @@ struct TwistInfo
   int smoothing_steps;
 };
 
-
 class Simple1DFilter
 {
 public:
@@ -92,7 +91,7 @@ public:
     // Update step
     double kalman_gain = dev_ / (dev_ + obs_dev);
     x_ = x_ + kalman_gain * (obs - x_);
-    dev_ = (1 - kalman_gain)*dev_;
+    dev_ = (1 - kalman_gain) * dev_;
 
     latest_time_ = time;
     return;
