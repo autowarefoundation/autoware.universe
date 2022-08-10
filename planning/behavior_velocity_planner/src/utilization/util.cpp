@@ -181,7 +181,7 @@ void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons
     for (const auto & p : partition) {
       line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
     }
-    // corect line to calculate distance accuratry
+    // correct line to calculate distance in accurate
     boost::geometry::correct(line);
     polys.emplace_back(lanelet::BasicPolygon2d(line));
   }
