@@ -136,7 +136,7 @@ double projectGoalToMap(
 namespace mission_planner
 {
 MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
-: MissionPlanner("mission_planner_node", node_options), is_graph_ready_(false)
+: MissionPlanner("mission_planner", node_options), is_graph_ready_(false)
 {
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
