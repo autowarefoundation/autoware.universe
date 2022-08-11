@@ -24,11 +24,9 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
-#include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/index/predicates.hpp>
 #include <boost/geometry/index/rtree.hpp>
-#include <boost/geometry/io/wkt/write.hpp>
 
 #include <iterator>
 #include <string>
@@ -48,24 +46,16 @@ namespace bgi = boost::geometry::index;
 struct ObstacleTree
 {
   using box_t = boost::geometry::model::box<point_t>;
-  using rtree_value = std::pair<box_t, size_t>;
   bgi::rtree<point_t, bgi::rstar<16>> points_rtree;
-  bgi::rtree<rtree_value, bgi::rstar<16>> lines_rtree;
-  const multilinestring_t lines;
+  bgi::rtree<segment_t, bgi::rstar<16>> segments_rtree;
 
-  explicit ObstacleTree(const Obstacles & obstacles)
-  : points_rtree(obstacles.points), lines(obstacles.lines)
+  explicit ObstacleTree(const Obstacles & obstacles) : points_rtree(obstacles.points)
   {
-    std::vector<rtree_value> values;
-    values.reserve(lines.size());
-    box_t envelope;
-    for (auto i = 0lu; i < lines.size(); ++i) {
-      if (!lines[i].empty()) {
-        boost::geometry::envelope(lines[i], envelope);
-        values.emplace_back(envelope, i);
-      }
-    }
-    lines_rtree = bgi::rtree<rtree_value, bgi::rstar<16>>(values);
+    std::vector<segment_t> segments;
+    segments.reserve(obstacles.lines.size() * 4);
+    for (const auto & line : obstacles.lines)
+      for (int i = 0; i + 1 < line.size(); ++i) segments.emplace_back(line[i], line[i + 1]);
+    segments_rtree = bgi::rtree<segment_t, bgi::rstar<16>>(segments);
   }
 
   [[nodiscard]] std::vector<point_t> intersections(const polygon_t & polygon) const
@@ -73,18 +63,21 @@ struct ObstacleTree
     std::vector<point_t> result;
     // Query the points
     points_rtree.query(bgi::covered_by(polygon), std::back_inserter(result));
-    // Query the lines
+    // Query the segments
+    std::vector<segment_t> candidates;
+    segments_rtree.query(bgi::intersects(polygon), std::back_inserter(candidates));
     std::vector<point_t> intersection_points;
-    std::vector<rtree_value> values;
-    lines_rtree.query(bgi::intersects(polygon), std::back_inserter(values));
-    for (const auto & value : values) {
+    for (const auto & candidate : candidates) {
+      // need conversion to a linestring to use the 'intersection' and 'within' functions
+      const auto ls = linestring_t{candidate.first, candidate.second};
       intersection_points.clear();
-      const auto & ls = lines[value.second];
       boost::geometry::intersection(ls, polygon, intersection_points);
       if (intersection_points.empty()) {
-        // No intersection with the box: line is outside or inside of the polygon
-        if (boost::geometry::within(ls, polygon))
-          for (const auto & p : ls) result.push_back(p);
+        // No intersection with the polygon: segment is outside or inside of the polygon
+        if (boost::geometry::within(ls, polygon)) {
+          result.push_back(candidate.first);
+          result.push_back(candidate.second);
+        }
       } else {
         result.insert(result.end(), intersection_points.begin(), intersection_points.end());
       }
