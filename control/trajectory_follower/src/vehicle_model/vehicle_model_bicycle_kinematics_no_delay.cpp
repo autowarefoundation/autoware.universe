@@ -52,13 +52,13 @@ void KinematicsBicycleModelNoDelay::calculateDiscreteMatrix(
 
   w_d << 0.0, -m_velocity / m_wheelbase * delta_r * cos_delta_r_squared_inv;
 
-  // bilinear discretization
+  // bilinear discretization for ZOH system
+  // no discretization is needed for Cd
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(m_dim_x, m_dim_x);
-  const Eigen::MatrixXd inv = (I - dt * 0.5 * a_d).inverse();
-  a_d = inv * (I + dt * 0.5 * a_d);
-  c_d = c_d * inv;
-  b_d = inv * b_d * dt;
-  w_d = inv * w_d * dt;
+  const Eigen::MatrixXd i_dt2a_inv = (I - dt * 0.5 * a_d).inverse();
+  a_d = i_dt2a_inv * (I + dt * 0.5 * a_d);
+  b_d = i_dt2a_inv * b_d * dt;
+  w_d = i_dt2a_inv * w_d * dt;
 }
 
 void KinematicsBicycleModelNoDelay::calculateReferenceInput(Eigen::MatrixXd & u_ref)
