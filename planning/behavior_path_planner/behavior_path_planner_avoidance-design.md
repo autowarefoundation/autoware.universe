@@ -186,80 +186,49 @@ The avoidance target should be limited to stationary objects (you should not avo
 
 ##### Compensation for detection lost
 
-In order to prevent chattering of recognition results, once an obstacle is targeted, it is hold for a while even if it disappears. This is effective when recognition is unstable. However, since it will result in over-detection (increase a number of false-positive), it is necessary to adjust parameters according to the recognition accuracy (if `object_hold_max_count = 0`, the recognition result is 100% trusted).
+In order to prevent chattering of recognition results, once an obstacle is targeted, it is hold for a while even if it disappears. This is effective when recognition is unstable. However, since it will result in over-detection (increase a number of false-positive), it is necessary to adjust parameters according to the recognition accuracy (if `object_last_seen_threshold = 0.0`, the recognition result is 100% trusted).
 
-#### How to decide the path shape
+#### Computing Shift Length and Shift Points
 
-Generate shift points for obstacles with given lateral jerk. These points are integrated to generate an avoidance path. The detailed process flow for each case corresponding to the obstacle placement are described below. The actual implementation is not separated for each case, but the function corresponding to `multiple obstacle case (both directions)` is always running.
+The lateral shift length is affected by 4 variables, namely `lateral_collision_safety_buffer`, `lateral_collision_margin`, `vehicle_width` and `overhang_distance`. The equation is as follows
 
-##### One obstacle case
+```C++
+max_allowable_lateral_distance = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
+shift_length = max_allowable_lateral_distance - overhang_distance
+```
 
-The lateral shift distance to the obstacle is calculated, and then the shift point is generated from the ego vehicle speed and the given lateral jerk as shown in the figure below. A smooth avoidance path is then calculated based on the shift point.
+The following figure illustrates these variables.
+![shift_point_and_its_constraints](./image/avoidance_design/avoidance_module-shift_point_and_its_constraints.drawio.png)
 
-Additionally, the following processes are executed in special cases.
+##### Rationale of having safety buffer and safety margin
 
-###### Lateral jerk relaxation conditions
+To compute the shift length, additional parameters that can be tune are `lateral_collision_safety_buffer` and `road_shoulder_safety_margin`.
 
-- If the ego vehicle is close to the avoidance target, the lateral jerk will be relaxed up to the maximum jerk
-- When returning to the center line after avoidance, if there is not enough distance left to the goal (end of path), the jerk condition will be relaxed as above.
+- The `lateral_collision_safety_buffer` parameter is used to set a safety gap that will act as the final line of defense when computing avoidance path.
+  - The rationale behind having this parameter is that the parameter `lateral_collision_margin` might be changing according to the situation for various reasons. Therefore, `lateral_collision_safety_buffer` will act as the final line of defense in case of the usage of `lateral_collision_margin` fails.
+  - It is recommended to set the value to more than half of the ego vehicle's width.
+- The `road_shoulder_safety_margin` will prevent the module from generating a path that might cause the vehicle to go too near the road shoulder or adjacent lane dividing line.
 
-###### Minimum velocity relaxation conditions
+![shift_length_parameters](./image/shift_length_parameters.drawio.svg)
 
-There is a problem that we can not know the actual speed during avoidance in advance. This is especially critical when the ego vehicle speed is 0.
-To solve that, this module provides a parameter for the minimum avoidance speed, which is used for the lateral jerk calculation when the vehicle speed is low.
+##### Generating path only within lanelet boundaries
 
-- If the ego vehicle speed is lower than "nominal" minimum speed, use the minimum speed in the calculation of the jerk.
-- If the ego vehicle speed is lower than "sharp" minimum speed and a nominal lateral jerk is not enough for avoidance (the case where the ego vehicle is stopped close to the obstacle), use the "sharp" minimum speed in the calculation of the jerk (it should be lower than "nominal" speed).
-
-![fig1](./image/avoidance_design/how_to_decide_path_shape_one_object.drawio.svg)
-
-##### Multiple obstacle case (one direction)
-
-Generate shift points for multiple obstacles. All of them are merged to generate new shift points along the reference path. The new points are filtered (e.g. remove small-impact shift points), and the avoidance path is computed for the filtered shift points.
-
-**Merge process of raw shift points**: check the shift length on each path points. If the shift points are overlapped, the maximum shift value is selected for the same direction.
-
-For the details of the shift point filtering, see [filtering for shift points](#filtering-for-shift-points).
-
-![fig1](./image/avoidance_design/how_to_decide_path_shape_multi_object_one_direction.drawio.svg)
-
-##### Multiple obstacle case (both direction)
-
-Generate shift points for multiple obstacles. All of them are merged to generate new shift points. If there are areas where the desired shifts conflict in different directions, the sum of the maximum shift amounts of these areas is used as the final shift amount. The rest of the process is the same as in the case of one direction.
-
-![fig1](./image/avoidance_design/how_to_decide_path_shape_multi_object_both_direction.drawio.svg)
-
-##### Filtering for shift points
-
-The shift points are modified by a filtering process in order to get the expected shape of the avoidance path. It contains the following filters.
-
-- Quantization: Quantize the avoidance width in order to ignore small shifts.
-- Small shifts removal: Shifts with small changes with respect to the previous shift point are unified in the previous shift width.
-- Similar gradient removal: Connect two shift points with a straight line, and remove the shift points in between if their shift amount is in the vicinity of the straight line.
-- Remove momentary returns: For shift points that reduce the avoidance width (for going back to the center line), if there is enough long distance in the longitudinal direction, remove them.
-
-#### Computing shift length
-
-The shift length is set as a constant value before the feature is implemented. Setting the shift length like this will cause the module to generate an avoidance path regardless of actual environmental properties. For example, the path might exceed the actual road boundary or go towards a wall. Therefore, to address this limitation, in addition to [how to decide the target obstacle](#how-to-decide-the-target-obstacles), the upgraded module also takes into account the following additional element
+The shift length is set as a constant value before the feature is implemented. Setting the shift length like this will cause the module to generate an avoidance path regardless of actual environmental properties. For example, the path might exceed the actual road boundary or go towards a wall. Therefore, to address this limitation, in addition to [how to decide the target obstacle](#how-to-decide-the-target-obstacles), the module also takes into account the following additional element
 
 - The obstacles' current lane and position.
 - The road shoulder with reference to the direction to avoid.
-  - Note: Lane direction is disregarded.
 
-These elements are used to compute the distance from the object to the road's shoulder (`(class ObjectData.to_road_shoulder_distance)`).
+These elements are used to compute the distance from the object to the road's shoulder (`to_road_shoulder_distance`). The parameters `enable_avoidance_over_same_direction` and `enable_avoidance_over_opposite_direction` allows further configuration of the to `to_road_shoulder_distance`. The following image illustrates the configuration.
 
-![obstacle_to_road_shoulder_distance](./image/obstacle_to_road_shoulder_distance.drawio.svg)
+![obstacle_to_road_shoulder_distance](./image/avoidance_design/obstacle_to_road_shoulder_distance.drawio.svg)
 
-##### Computing shift length
+If the following condition is `false`, then the shift point will not be generated.
 
-To compute the shift length, in addition to the vehicle's width and the parameterized `lateral_collision_margin`, the upgraded feature also adds two new parameters; `lateral_collision_safety_buffer` and `road_shoulder_safety_margin`.
+```C++
+max_allowable_lateral_distance <= (to_road_shoulder_distance - 0.5 * vehicle_width - road_shoulder_safety_margin)
+```
 
-- The `lateral_collision_safety_buffer` parameter is used to set a safety gap that will act as the final line of defense when computing avoidance path.
-  - The rationale behind having this parameter is that the parameter `lateral_collision_margin` might be changed according to the situation for various reasons. Therefore, `lateral_collision_safety_buffer` will act as the final line of defense in case of the usage of `lateral_collision_margin` fails.
-  - It is recommended to set the value to more than half of the ego vehicle's width.
-- The `road_shoulder_safety_margin` will prevent the module from generating a path that might cause the vehicle to go too near the road shoulder.
-
-![shift_length_parameters](./image/shift_length_parameters.drawio.svg)
+##### Flow-chart of the process
 
 <!-- spell-checker:disable -->
 
@@ -360,6 +329,56 @@ stop
 ```
 
 <!-- spell-checker:enable -->
+
+#### How to decide the path shape
+
+Generate shift points for obstacles with given lateral jerk. These points are integrated to generate an avoidance path. The detailed process flow for each case corresponding to the obstacle placement are described below. The actual implementation is not separated for each case, but the function corresponding to `multiple obstacle case (both directions)` is always running.
+
+##### One obstacle case
+
+The lateral shift distance to the obstacle is calculated, and then the shift point is generated from the ego vehicle speed and the given lateral jerk as shown in the figure below. A smooth avoidance path is then calculated based on the shift point.
+
+Additionally, the following processes are executed in special cases.
+
+###### Lateral jerk relaxation conditions
+
+- If the ego vehicle is close to the avoidance target, the lateral jerk will be relaxed up to the maximum jerk
+- When returning to the center line after avoidance, if there is not enough distance left to the goal (end of path), the jerk condition will be relaxed as above.
+
+###### Minimum velocity relaxation conditions
+
+There is a problem that we can not know the actual speed during avoidance in advance. This is especially critical when the ego vehicle speed is 0.
+To solve that, this module provides a parameter for the minimum avoidance speed, which is used for the lateral jerk calculation when the vehicle speed is low.
+
+- If the ego vehicle speed is lower than "nominal" minimum speed, use the minimum speed in the calculation of the jerk.
+- If the ego vehicle speed is lower than "sharp" minimum speed and a nominal lateral jerk is not enough for avoidance (the case where the ego vehicle is stopped close to the obstacle), use the "sharp" minimum speed in the calculation of the jerk (it should be lower than "nominal" speed).
+
+![fig1](./image/avoidance_design/how_to_decide_path_shape_one_object.drawio.svg)
+
+##### Multiple obstacle case (one direction)
+
+Generate shift points for multiple obstacles. All of them are merged to generate new shift points along the reference path. The new points are filtered (e.g. remove small-impact shift points), and the avoidance path is computed for the filtered shift points.
+
+**Merge process of raw shift points**: check the shift length on each path points. If the shift points are overlapped, the maximum shift value is selected for the same direction.
+
+For the details of the shift point filtering, see [filtering for shift points](#filtering-for-shift-points).
+
+![fig1](./image/avoidance_design/how_to_decide_path_shape_multi_object_one_direction.drawio.svg)
+
+##### Multiple obstacle case (both direction)
+
+Generate shift points for multiple obstacles. All of them are merged to generate new shift points. If there are areas where the desired shifts conflict in different directions, the sum of the maximum shift amounts of these areas is used as the final shift amount. The rest of the process is the same as in the case of one direction.
+
+![fig1](./image/avoidance_design/how_to_decide_path_shape_multi_object_both_direction.drawio.svg)
+
+##### Filtering for shift points
+
+The shift points are modified by a filtering process in order to get the expected shape of the avoidance path. It contains the following filters.
+
+- Quantization: Quantize the avoidance width in order to ignore small shifts.
+- Small shifts removal: Shifts with small changes with respect to the previous shift point are unified in the previous shift width.
+- Similar gradient removal: Connect two shift points with a straight line, and remove the shift points in between if their shift amount is in the vicinity of the straight line.
+- Remove momentary returns: For shift points that reduce the avoidance width (for going back to the center line), if there is enough long distance in the longitudinal direction, remove them.
 
 #### How to keep the consistency of the planning
 
