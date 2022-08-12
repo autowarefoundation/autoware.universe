@@ -384,7 +384,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    # load compare map for dynamic obstacle stop module
+    # load compare map for run_out module
     load_compare_map = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
