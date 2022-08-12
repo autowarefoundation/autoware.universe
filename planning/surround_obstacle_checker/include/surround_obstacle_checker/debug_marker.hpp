@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -35,6 +36,7 @@ using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using geometry_msgs::msg::PolygonStamped;
 
 namespace bg = boost::geometry;
 using Point2d = bg::model::d2::point_xy<double>;
@@ -59,6 +61,8 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr pub_vehicle_footprint_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr pub_vehicle_footprint_offset_;
 
   Polygon2d ego_polygon_;
   double base_link2front_;

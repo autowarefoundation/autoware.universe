@@ -47,6 +47,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
+  pub_vehicle_footprint_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
+  pub_vehicle_footprint_offset_ = node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
