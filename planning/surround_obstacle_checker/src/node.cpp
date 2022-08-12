@@ -124,15 +124,16 @@ Polygon2d createObjPolygon(
 Polygon2d createSelfPolygon(const VehicleInfo & vehicle_info)
 {
   const double & front_m = vehicle_info.max_longitudinal_offset_m;
-  const double & width_m = vehicle_info.min_lateral_offset_m;
+  const double & width_left_m = vehicle_info.max_lateral_offset_m;
+  const double & width_right_m = vehicle_info.min_lateral_offset_m;
   const double & rear_m = vehicle_info.min_longitudinal_offset_m;
 
   Polygon2d ego_polygon;
 
-  ego_polygon.outer().push_back(Point2d(front_m, -width_m));
-  ego_polygon.outer().push_back(Point2d(front_m, width_m));
-  ego_polygon.outer().push_back(Point2d(rear_m, width_m));
-  ego_polygon.outer().push_back(Point2d(rear_m, -width_m));
+  ego_polygon.outer().push_back(Point2d(front_m, width_left_m));
+  ego_polygon.outer().push_back(Point2d(front_m, width_right_m));
+  ego_polygon.outer().push_back(Point2d(rear_m, width_right_m));
+  ego_polygon.outer().push_back(Point2d(rear_m, width_left_m));
 
   bg::correct(ego_polygon);
 
