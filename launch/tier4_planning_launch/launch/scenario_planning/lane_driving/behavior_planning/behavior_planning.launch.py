@@ -384,6 +384,19 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
+    # This condition determine whether the points filter below are launched
+    launch_run_out_with_points_method = PythonExpression(
+                [
+                    LaunchConfiguration(
+                        "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
+                    ),
+                    " and ",
+                    "'",
+                    run_out_param["run_out"]["detection_method"],
+                    "' == 'Points'",
+                ]
+    )
+
     # load compare map for run_out module
     load_compare_map = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -398,19 +411,7 @@ def launch_setup(context, *args, **kwargs):
             "use_multithread": "true",
         }.items(),
         # launch compare map only when run_out module is enabled and detection method is Points
-        condition=IfCondition(
-            PythonExpression(
-                [
-                    LaunchConfiguration(
-                        "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
-                    ),
-                    " and ",
-                    "'",
-                    run_out_param["run_out"]["detection_method"],
-                    "' == 'Points'",
-                ]
-            )
-        ),
+        condition=IfCondition(launch_run_out_with_points_method),
     )
 
     load_no_detection_area_filter = IncludeLaunchDescription(
@@ -426,19 +427,7 @@ def launch_setup(context, *args, **kwargs):
             "use_multithread": "true",
         }.items(),
         # launch no detection area filter only when run_out module is enabled and detection method is Points
-        condition=IfCondition(
-            PythonExpression(
-                [
-                    LaunchConfiguration(
-                        "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
-                    ),
-                    " and ",
-                    "'",
-                    run_out_param["run_out"]["detection_method"],
-                    "' == 'Points'",
-                ]
-            )
-        ),
+        condition=IfCondition(launch_run_out_with_points_method),
     )
 
     group = GroupAction(
