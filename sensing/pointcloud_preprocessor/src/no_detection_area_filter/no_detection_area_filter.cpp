@@ -48,7 +48,6 @@ tier4_autoware_utils::Box2d calcBoundingBox(
     candidate_points.emplace_back(p.x, p.y);
   }
 
-  // return envelope_box;
   return boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(candidate_points);
 }
 
