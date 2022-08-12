@@ -20,10 +20,11 @@ namespace default_ad_api
 {
 
 using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
-using OperationMode = OperationModeRequest::_operation_type;
 using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
+using ServiceResponse = autoware_ad_api_msgs::srv::ChangeOperationMode::Response;
 
-OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options) : Node("routing", options)
+OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
+: Node("operation_mode", options), diagnostics_(this)
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -37,48 +38,67 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options) : Node
   adaptor.init_srv(srv_disable_control_, this, &OperationModeNode::on_disable_autoware_control);
   adaptor.init_cli(cli_mode_, group_cli_);
   adaptor.init_cli(cli_control_, group_cli_);
+
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), rclcpp::Rate(1.0).period(), std::bind(&OperationModeNode::on_timer, this));
+
+  curr_state_.mode.mode = OperationMode::UNKNOWN;
+  prev_state_.mode.mode = OperationMode::UNKNOWN;
+  mode_available_[OperationMode::UNKNOWN] = false;
+  mode_available_[OperationMode::STOP] = true;
+  mode_available_[OperationMode::AUTONOMOUS] = false;
+  mode_available_[OperationMode::LOCAL] = true;
+  mode_available_[OperationMode::REMOTE] = true;
+}
+
+template <class ResponseT>
+void OperationModeNode::change_mode(const ResponseT res, const OperationMode::_mode_type mode)
+{
+  if (!mode_available_[mode]) {
+    throw component_interface_utils::ServiceException(
+      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
+  }
+  const auto req = std::make_shared<OperationModeRequest>();
+  req->operation.mode = mode;
+  res->status = cli_mode_->call(req)->status;
 }
 
 void OperationModeNode::on_change_to_stop(
   const ChangeToStop::Service::Request::SharedPtr,
   const ChangeToStop::Service::Response::SharedPtr res)
 {
-  const auto req = std::make_shared<OperationModeRequest>();
-  req->operation.mode = OperationMode::STOP;
-  res->status = cli_mode_->call(req)->status;
+  change_mode(res, OperationMode::STOP);
 }
 
 void OperationModeNode::on_change_to_autonomous(
   const ChangeToAutonomous::Service::Request::SharedPtr,
   const ChangeToAutonomous::Service::Response::SharedPtr res)
 {
-  const auto req = std::make_shared<OperationModeRequest>();
-  req->operation.mode = OperationMode::AUTONOMOUS;
-  res->status = cli_mode_->call(req)->status;
+  change_mode(res, OperationMode::AUTONOMOUS);
 }
 
 void OperationModeNode::on_change_to_local(
   const ChangeToLocal::Service::Request::SharedPtr,
   const ChangeToLocal::Service::Response::SharedPtr res)
 {
-  const auto req = std::make_shared<OperationModeRequest>();
-  req->operation.mode = OperationMode::LOCAL;
-  res->status = cli_mode_->call(req)->status;
+  change_mode(res, OperationMode::LOCAL);
 }
 
 void OperationModeNode::on_change_to_remote(
   const ChangeToRemote::Service::Request::SharedPtr,
   const ChangeToRemote::Service::Response::SharedPtr res)
 {
-  const auto req = std::make_shared<OperationModeRequest>();
-  req->operation.mode = OperationMode::REMOTE;
-  res->status = cli_mode_->call(req)->status;
+  change_mode(res, OperationMode::REMOTE);
 }
 
 void OperationModeNode::on_enable_autoware_control(
   const EnableAutowareControl::Service::Request::SharedPtr,
   const EnableAutowareControl::Service::Response::SharedPtr res)
 {
+  if (!mode_available_[curr_state_.mode.mode]) {
+    throw component_interface_utils::ServiceException(
+      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
+  }
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = true;
   res->status = cli_control_->call(req)->status;
@@ -95,7 +115,31 @@ void OperationModeNode::on_disable_autoware_control(
 
 void OperationModeNode::on_state(const OperationModeState::Message::ConstSharedPtr msg)
 {
-  pub_state_->publish(*msg);
+  curr_state_ = *msg;
+  update_state();
+}
+
+void OperationModeNode::on_timer()
+{
+  mode_available_[OperationMode::AUTONOMOUS] = diagnostics_.is_ok();
+  update_state();
+}
+
+void OperationModeNode::update_state()
+{
+  // Clear stamp to compare other fields.
+  OperationModeState::Message state = curr_state_;
+  state.stamp = builtin_interfaces::msg::Time();
+  state.is_stop_mode_available &= mode_available_[OperationMode::STOP];
+  state.is_autonomous_mode_available &= mode_available_[OperationMode::AUTONOMOUS];
+  state.is_local_mode_available &= mode_available_[OperationMode::LOCAL];
+  state.is_remote_mode_available &= mode_available_[OperationMode::REMOTE];
+
+  if (prev_state_ != state) {
+    prev_state_ = state;
+    state.stamp = now();
+    pub_state_->publish(state);
+  }
 }
 
 }  // namespace default_ad_api

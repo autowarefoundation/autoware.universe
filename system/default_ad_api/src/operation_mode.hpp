@@ -15,9 +15,13 @@
 #ifndef OPERATION_MODE_HPP_
 #define OPERATION_MODE_HPP_
 
+#include "diagnostics.hpp"
+
 #include <autoware_ad_api_specs/operation_mode.hpp>
 #include <component_interface_specs/system.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <unordered_map>
 
 // This file should be included after messages.
 #include "utils/types.hpp"
@@ -25,13 +29,30 @@
 namespace default_ad_api
 {
 
+class DiagnosticsMonitor;
+
 class OperationModeNode : public rclcpp::Node
 {
 public:
   explicit OperationModeNode(const rclcpp::NodeOptions & options);
 
 private:
+  using OperationModeState = autoware_ad_api::operation_mode::OperationModeState;
+  using OperationMode = OperationModeState::Message::_mode_type;
+  using ChangeToStop = autoware_ad_api::operation_mode::ChangeToStop;
+  using ChangeToAutonomous = autoware_ad_api::operation_mode::ChangeToAutonomous;
+  using ChangeToLocal = autoware_ad_api::operation_mode::ChangeToLocal;
+  using ChangeToRemote = autoware_ad_api::operation_mode::ChangeToRemote;
+  using EnableAutowareControl = autoware_ad_api::operation_mode::EnableAutowareControl;
+  using DisableAutowareControl = autoware_ad_api::operation_mode::DisableAutowareControl;
+
+  DiagnosticsMonitor diagnostics_;
+  OperationModeState::Message curr_state_;
+  OperationModeState::Message prev_state_;
+  std::unordered_map<OperationMode::_mode_type, bool> mode_available_;
+
   rclcpp::CallbackGroup::SharedPtr group_cli_;
+  rclcpp::TimerBase::SharedPtr timer_;
   Pub<autoware_ad_api::operation_mode::OperationModeState> pub_state_;
   Srv<autoware_ad_api::operation_mode::ChangeToStop> srv_stop_mode_;
   Srv<autoware_ad_api::operation_mode::ChangeToAutonomous> srv_autonomous_mode_;
@@ -42,14 +63,6 @@ private:
   Sub<system_interface::OperationModeState> sub_state_;
   Cli<system_interface::ChangeOperationMode> cli_mode_;
   Cli<system_interface::ChangeAutowareControl> cli_control_;
-
-  using OperationModeState = autoware_ad_api::operation_mode::OperationModeState;
-  using ChangeToStop = autoware_ad_api::operation_mode::ChangeToStop;
-  using ChangeToAutonomous = autoware_ad_api::operation_mode::ChangeToAutonomous;
-  using ChangeToLocal = autoware_ad_api::operation_mode::ChangeToLocal;
-  using ChangeToRemote = autoware_ad_api::operation_mode::ChangeToRemote;
-  using EnableAutowareControl = autoware_ad_api::operation_mode::EnableAutowareControl;
-  using DisableAutowareControl = autoware_ad_api::operation_mode::DisableAutowareControl;
 
   void on_change_to_stop(
     const ChangeToStop::Service::Request::SharedPtr req,
@@ -71,6 +84,11 @@ private:
     const DisableAutowareControl::Service::Response::SharedPtr res);
 
   void on_state(const OperationModeState::Message::ConstSharedPtr msg);
+  void on_timer();
+  void update_state();
+
+  template <class ResponseT>
+  void change_mode(const ResponseT res, const OperationMode::_mode_type mode);
 };
 
 }  // namespace default_ad_api

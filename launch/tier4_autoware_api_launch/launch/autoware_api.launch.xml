@@ -9,7 +9,9 @@
 
   <!-- AD API -->
   <group if="$(var launch_default_ad_api)">
-    <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py"/>
+    <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py">
+      <arg name="config_file" value="$(find-pkg-share default_ad_api)/config/topic_monitor.csv"/>
+    </include>
   </group>
 
   <!-- awapi (deprecated) -->

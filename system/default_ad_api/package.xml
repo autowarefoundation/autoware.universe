@@ -15,6 +15,7 @@
   <depend>autoware_ad_api_specs</depend>
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tier4_system_msgs</depend>
