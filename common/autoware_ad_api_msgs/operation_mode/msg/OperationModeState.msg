@@ -1,8 +1,8 @@
 builtin_interfaces/Time stamp
-autoware_ad_api_msgs/OperationMode operation
+autoware_ad_api_msgs/OperationMode mode
 bool is_autoware_control_enabled
 bool is_in_transition
-bool change_to_stop
-bool change_to_autonomous
-bool change_to_local
-bool change_to_remote
+bool is_stop_mode_available
+bool is_autonomous_mode_available
+bool is_local_mode_available
+bool is_remote_mode_available
