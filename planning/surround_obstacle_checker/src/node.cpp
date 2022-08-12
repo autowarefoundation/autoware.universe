@@ -336,7 +336,7 @@ bool SurroundObstacleCheckerNode::isObstacleFound(const double min_dist_to_obj)
 bool SurroundObstacleCheckerNode::isStopRequired(
   const bool is_obstacle_found, const bool is_stopped)
 {
-  if (!is_stopped) {
+  if (is_stopped) {
     return false;
   }
 
