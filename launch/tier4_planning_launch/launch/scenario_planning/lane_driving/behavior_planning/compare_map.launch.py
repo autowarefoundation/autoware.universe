@@ -61,7 +61,7 @@ def generate_launch_description():
     ]
 
     compare_map_container = ComposableNodeContainer(
-        name=LaunchConfiguration("container_name"),
+        name="compare_map_container",
         namespace="",
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
