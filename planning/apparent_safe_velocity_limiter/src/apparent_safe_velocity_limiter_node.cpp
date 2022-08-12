@@ -137,6 +137,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       obstacle_params_.filter_envelope = parameter.as_bool();
     } else if (parameter.get_name() == ObstacleParameters::IGNORE_ON_PATH_PARAM) {
       obstacle_params_.ignore_on_path = parameter.as_bool();
+    } else if (parameter.get_name() == ObstacleParameters::IGNORE_DIST_PARAM) {
+      obstacle_params_.ignore_extra_distance = static_cast<Float>(parameter.as_double());
       // Projection parameters
     } else if (parameter.get_name() == ProjectionParameters::MODEL_PARAM) {
       if (!projection_params_.updateModel(*this, parameter.as_string())) {
@@ -183,8 +185,8 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
   if (obstacle_params_.ignore_on_path)
-    obstacle_masks.negative_masks.push_back(
-      createTrajectoryFootprint(*msg, vehicle_lateral_offset_));
+    obstacle_masks.negative_masks.push_back(createTrajectoryFootprint(
+      *msg, vehicle_lateral_offset_ + obstacle_params_.ignore_extra_distance));
   const auto projected_linestrings = createProjectedLines(downsampled_traj, projection_params_);
   const auto footprint_polygons =
     createFootprintPolygons(projected_linestrings, vehicle_lateral_offset_);

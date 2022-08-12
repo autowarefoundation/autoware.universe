@@ -17,7 +17,6 @@
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry/algorithms/within.hpp>
 
@@ -58,7 +57,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
 
 void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const ObstacleMasks & masks)
 {
-  std::cerr << "* [FILTERING PCD] origin size = " << pointcloud->size() << "\n";
   pcl::PointCloud<pcl::PointXYZ>::Ptr polygon_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   if (!masks.positive_mask.outer().empty()) {
     for (const auto & p : masks.positive_mask.outer())
@@ -73,8 +71,6 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
     crop.setHullIndices(polygons_idx);
     crop.setCropOutside(true);
     crop.filter(*pointcloud);
-
-    std::cerr << "* after positive filter size = " << pointcloud->size() << "\n";
   }
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr mask_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -83,7 +79,6 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
   for (size_t i = 0; i < masks.negative_masks.size(); ++i) {
     const auto & polygon_mask = masks.negative_masks[i];
     const auto mask_size = polygon_mask.outer().size();
-    std::cerr << "\tMask of size " << mask_size << "\n";
     for (const auto & p : polygon_mask.outer())
       mask_cloud_ptr->push_back(pcl::PointXYZ(p.x(), p.y(), 0));
     auto & mask_idx = masks_idx[i];
@@ -98,7 +93,6 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
   crop_masks.setHullIndices(masks_idx);
   crop_masks.setCropOutside(false);
   crop_masks.filter(*pointcloud);
-  std::cerr << "* after negative filter size = " << pointcloud->size() << "\n";
 }
 
 multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr)
@@ -107,11 +101,9 @@ multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointclo
   if (pointcloud_ptr->empty()) return obstacles;
   obstacles.reserve(pointcloud_ptr->size());
 
-  tier4_autoware_utils::StopWatch stopwatch;
   for (const auto & point : *pointcloud_ptr) {
     obstacles.push_back({point_t{point.x, point.y}});
   }
-  std::cerr << "* pointcloud extract = " << stopwatch.toc() << " s\n";
   return obstacles;
 }
 

@@ -35,6 +35,7 @@ struct ObstacleParameters
   static constexpr auto MAP_TAGS_PARAM = "obstacles.static_map_tags";
   static constexpr auto FILTERING_PARAM = "obstacles.filter_envelope";
   static constexpr auto IGNORE_ON_PATH_PARAM = "obstacles.ignore_obstacles_on_path";
+  static constexpr auto IGNORE_DIST_PARAM = "obstacles.ignore_extra_distance";
 
   enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
   int8_t occupancy_grid_threshold{};
@@ -43,6 +44,7 @@ struct ObstacleParameters
   std::vector<std::string> static_map_tags{};
   bool filter_envelope;
   bool ignore_on_path;
+  Float ignore_extra_distance;
 
   ObstacleParameters() = default;
   explicit ObstacleParameters(rclcpp::Node & node)
@@ -55,6 +57,7 @@ struct ObstacleParameters
     static_map_tags = node.declare_parameter<std::vector<std::string>>(MAP_TAGS_PARAM);
     filter_envelope = node.declare_parameter<bool>(FILTERING_PARAM);
     ignore_on_path = node.declare_parameter<bool>(IGNORE_ON_PATH_PARAM);
+    ignore_extra_distance = static_cast<Float>(node.declare_parameter<Float>(IGNORE_DIST_PARAM));
   }
 
   bool updateType(rclcpp::Node & node, const std::string & type)
