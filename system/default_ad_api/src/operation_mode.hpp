@@ -43,6 +43,7 @@ private:
   Cli<system_interface::ChangeOperationMode> cli_mode_;
   Cli<system_interface::ChangeAutowareControl> cli_control_;
 
+  using OperationModeState = autoware_ad_api::operation_mode::OperationModeState;
   using ChangeToStop = autoware_ad_api::operation_mode::ChangeToStop;
   using ChangeToAutonomous = autoware_ad_api::operation_mode::ChangeToAutonomous;
   using ChangeToLocal = autoware_ad_api::operation_mode::ChangeToLocal;
@@ -68,6 +69,8 @@ private:
   void on_disable_autoware_control(
     const DisableAutowareControl::Service::Request::SharedPtr req,
     const DisableAutowareControl::Service::Response::SharedPtr res);
+
+  void on_state(const OperationModeState::Message::ConstSharedPtr msg);
 };
 
 }  // namespace default_ad_api

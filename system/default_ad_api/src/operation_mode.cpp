@@ -27,7 +27,8 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options) : Node
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  // adaptor.relay_message(pub_state_, sub_state_);
+  adaptor.init_sub(sub_state_, this, &OperationModeNode::on_state);
+  adaptor.init_pub(pub_state_);
   adaptor.init_srv(srv_stop_mode_, this, &OperationModeNode::on_change_to_stop);
   adaptor.init_srv(srv_autonomous_mode_, this, &OperationModeNode::on_change_to_autonomous);
   adaptor.init_srv(srv_local_mode_, this, &OperationModeNode::on_change_to_local);
@@ -90,6 +91,11 @@ void OperationModeNode::on_disable_autoware_control(
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = false;
   res->status = cli_control_->call(req)->status;
+}
+
+void OperationModeNode::on_state(const OperationModeState::Message::ConstSharedPtr msg)
+{
+  pub_state_->publish(*msg);
 }
 
 }  // namespace default_ad_api
