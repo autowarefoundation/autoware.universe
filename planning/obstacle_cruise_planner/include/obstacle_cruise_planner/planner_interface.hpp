@@ -123,8 +123,24 @@ protected:
     const double ego_vel, const double obj_vel, const double margin = 0.0) const
   {
     const auto & i = longitudinal_info_;
+    const double min_ego_accel_for_rss = i.min_ego_accel_for_rss;
+    const double limit_min_ego_accel_for_rss = -1.0;
+    const double v_max_for_rss = 10.0;
+    const double v_min_for_rss = 3.0;
+
+    double ego_accel_for_rss = min_ego_accel_for_rss;
+    if (ego_vel > v_max_for_rss) {
+      ego_accel_for_rss = limit_min_ego_accel_for_rss;
+    } else if (v_min_for_rss < ego_vel && ego_vel < v_max_for_rss) {
+      const double a =
+        (limit_min_ego_accel_for_rss - min_ego_accel_for_rss) / (v_max_for_rss - v_min_for_rss);
+      const double b = min_ego_accel_for_rss - a * v_min_for_rss;
+
+      ego_accel_for_rss = a * ego_vel + b;
+    }
+
     const double rss_dist_with_margin =
-      ego_vel * i.idling_time + std::pow(ego_vel, 2) * 0.5 / std::abs(i.min_ego_accel_for_rss) -
+      ego_vel * i.idling_time + std::pow(ego_vel, 2) * 0.5 / std::abs(ego_accel_for_rss) -
       std::pow(obj_vel, 2) * 0.5 / std::abs(i.min_object_accel_for_rss) + margin;
     return rss_dist_with_margin;
   }
