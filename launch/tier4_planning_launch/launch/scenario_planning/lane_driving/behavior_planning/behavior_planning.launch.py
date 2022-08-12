@@ -386,15 +386,15 @@ def launch_setup(context, *args, **kwargs):
 
     # This condition determine whether the points filter below are launched
     launch_run_out_with_points_method = PythonExpression(
-                [
-                    LaunchConfiguration(
-                        "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
-                    ),
-                    " and ",
-                    "'",
-                    run_out_param["run_out"]["detection_method"],
-                    "' == 'Points'",
-                ]
+        [
+            LaunchConfiguration(
+                "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
+            ),
+            " and ",
+            "'",
+            run_out_param["run_out"]["detection_method"],
+            "' == 'Points'",
+        ]
     )
 
     # load compare map for run_out module
