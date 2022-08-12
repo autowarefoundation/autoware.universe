@@ -1,0 +1,14 @@
+skip_psim,module,suffix,topic,topic_type,timeout,warn_rate,error_rate,transient_local,best_effort
+,map,vector_map,/map/vector_map,autoware_auto_mapping_msgs/msg/HADMapBin,0.0,0.0,0.0,true,false
+true,map,pointcloud_map,/map/pointcloud_map,sensor_msgs/msg/PointCloud2,0.0,0.0,0.0,true,false
+,localization,initialpose3d,/initialpose3d,geometry_msgs/msg/PoseWithCovarianceStamped,0.0,0.0,0.0,false,false
+true,localization,pose_twist_fusion_filter_pose,/localization/pose_twist_fusion_filter/pose,geometry_msgs/msg/PoseStamped,1.0,5.0,1.0,false,false
+true,sensing,obstacle_segmentation_pointcloud,/perception/obstacle_segmentation/pointcloud,sensor_msgs/msg/PointCloud2,1.0,5.0,1.0,false,true
+,perception,object_recognition_objects,/perception/object_recognition/objects,autoware_auto_perception_msgs/msg/PredictedObjects,1.0,5.0,1.0,false,false
+,planning,mission_planning_route,/planning/mission_planning/route,autoware_auto_planning_msgs/msg/HADMapRoute,0.0,0.0,0.0,true,false
+,planning,scenario_planning_trajectory,/planning/scenario_planning/trajectory,autoware_auto_planning_msgs/msg/Trajectory,1.0,5.0,1.0,false,false
+,control,trajectory_follower_control_cmd,/control/trajectory_follower/control_cmd,autoware_auto_control_msgs/msg/AckermannControlCommand,1.0,5.0,1.0,false,false
+,control,control_command_control_cmd,/control/command/control_cmd,autoware_auto_control_msgs/msg/AckermannControlCommand,1.0,5.0,1.0,false,false
+,vehicle,vehicle_status_velocity_status,/vehicle/status/velocity_status,autoware_auto_vehicle_msgs/msg/VelocityReport,1.0,5.0,1.0,false,false
+,vehicle,vehicle_status_steering_status,/vehicle/status/steering_status,autoware_auto_vehicle_msgs/msg/SteeringReport,1.0,5.0,1.0,false,false
+,system,system_emergency_control_cmd,/system/emergency/control_cmd,autoware_auto_control_msgs/msg/AckermannControlCommand,1.0,5.0,1.0,false,false

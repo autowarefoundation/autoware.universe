@@ -1,0 +1,7 @@
+<launch>
+  <arg name="config_file" default="$(find-pkg-share default_ad_api)/config/topic_monitor.csv"/>
+
+  <include file="$(find-pkg-share default_ad_api)/launch/topic_monitor.launch.py">
+    <arg name="config_file" value="$(var config_file)"/>
+  </include>
+</launch>
