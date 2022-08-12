@@ -31,6 +31,7 @@
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <geometry_msgs/msg/polygon_stamped.hpp>
 
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
@@ -51,6 +52,7 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using motion_utils::VehicleStopChecker;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
+using geometry_msgs::msg::PolygonStamped;
 using vehicle_info_util::VehicleInfo;
 
 using Obstacle = std::pair<double /* distance */, geometry_msgs::msg::Point>;
@@ -107,6 +109,8 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr pub_vehicle_footprint_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr pub_vehicle_footprint_offset_;
 
   // stop checker
   std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;

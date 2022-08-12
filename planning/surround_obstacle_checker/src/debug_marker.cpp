@@ -36,8 +36,12 @@ using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
-  const double base_link2front, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
-: base_link2front_(base_link2front), clock_(clock)
+  const Polygon2d & ego_polygon, const double base_link2front,
+  const double & surround_check_distance, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
+: ego_polygon_(ego_polygon),
+  base_link2front_(base_link2front),
+  surround_check_distance_(surround_check_distance),
+  clock_(clock)
 {
   debug_virtual_wall_pub_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
@@ -82,6 +86,10 @@ void SurroundObstacleCheckerDebugNode::publish()
   /* publish stop reason for autoware api */
   const auto stop_reason_msg = makeStopReasonArray();
   stop_reason_pub_->publish(stop_reason_msg);
+
+  /* publish vehicle footprint polygon */
+
+  /* publish vehicle footprint polygon with offset */
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;

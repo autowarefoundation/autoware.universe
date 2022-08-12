@@ -22,6 +22,8 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/geometry.hpp>
+
 #include <memory>
 #include <string>
 
@@ -34,6 +36,10 @@ using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
+namespace bg = boost::geometry;
+using Point2d = bg::model::d2::point_xy<double>;
+using Polygon2d = bg::model::polygon<Point2d>;
+
 enum class PoseType : int8_t { NoStart = 0 };
 enum class PointType : int8_t { NoStart = 0 };
 
@@ -41,7 +47,9 @@ class SurroundObstacleCheckerDebugNode
 {
 public:
   explicit SurroundObstacleCheckerDebugNode(
-    const double base_link2front, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node);
+    const Polygon2d & ego_polygon, const double base_link2front,
+    const double & surround_check_distance, const rclcpp::Clock::SharedPtr clock,
+    rclcpp::Node & node);
 
   bool pushPose(const geometry_msgs::msg::Pose & pose, const PoseType & type);
   bool pushObstaclePoint(const geometry_msgs::msg::Point & obstacle_point, const PointType & type);
@@ -51,7 +59,10 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
+
+  Polygon2d ego_polygon_;
   double base_link2front_;
+  double surround_check_distance_;
 
   MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
