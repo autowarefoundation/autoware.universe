@@ -164,7 +164,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Set default value
   current_gate_mode_.data = GateMode::AUTO;
-  current_operation_mode_.operation.mode = OperationModeState::_operation_type::STOP;
+  current_operation_mode_.mode.mode = OperationModeState::_mode_type::STOP;
 
   // Service
   srv_engage_ = create_service<tier4_external_api_msgs::srv::Engage>(

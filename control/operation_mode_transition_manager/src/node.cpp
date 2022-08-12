@@ -53,7 +53,7 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   transition_timeout_ = declare_parameter<double>("transition_timeout");
   current_mode_ = OperationMode::STOP;
   transition_ = nullptr;
-  gate_operation_mode_.operation.mode = OperationModeValue::UNKNOWN;
+  gate_operation_mode_.mode.mode = OperationModeValue::UNKNOWN;
   gate_operation_mode_.is_in_transition = false;
   control_mode_report_.mode = ControlModeReport::NO_COMMAND;
 
@@ -110,6 +110,8 @@ void OperationModeTransitionManager::changeControlMode(ControlModeRequestType::_
 
 void OperationModeTransitionManager::changeOperationMode(std::optional<OperationMode> request_mode)
 {
+  // NOTE: If request_mode is nullopt, indicates to enable autoware control
+
   const bool current_control = control_mode_report_.mode == ControlModeReport::AUTONOMOUS;
   const bool request_control = request_mode ? false : true;
 
@@ -127,7 +129,7 @@ void OperationModeTransitionManager::changeOperationMode(std::optional<Operation
       ServiceResponse::ERROR_IN_TRANSITION, "The mode transition is in progress.");
   }
 
-  if (!modes_.at(request_mode.value_or(current_mode_))->isModeChangeAvailable()) {
+  if (!available_mode_change_[request_mode.value_or(current_mode_)]) {
     throw component_interface_utils::ServiceException(
       ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
   }
@@ -196,6 +198,10 @@ void OperationModeTransitionManager::onTimer()
     mode->update(current_mode_ == type && transition_);
   }
 
+  for (const auto & [type, mode] : modes_) {
+    available_mode_change_[type] = mode->isModeChangeAvailable();
+  }
+
   if (transition_) {
     processTransition();
   }
@@ -209,13 +215,13 @@ void OperationModeTransitionManager::publishData()
   const auto time = now();
 
   OperationModeStateAPI::Message state;
-  state.operation = toMsg(current_mode_);
+  state.mode = toMsg(current_mode_);
   state.is_autoware_control_enabled = current_control;
   state.is_in_transition = transition_ ? true : false;
-  state.change_to_stop = modes_.at(OperationMode::STOP)->isModeChangeAvailable();
-  state.change_to_autonomous = modes_.at(OperationMode::AUTONOMOUS)->isModeChangeAvailable();
-  state.change_to_local = modes_.at(OperationMode::LOCAL)->isModeChangeAvailable();
-  state.change_to_remote = modes_.at(OperationMode::REMOTE)->isModeChangeAvailable();
+  state.is_stop_mode_available = available_mode_change_[OperationMode::STOP];
+  state.is_autonomous_mode_available = available_mode_change_[OperationMode::AUTONOMOUS];
+  state.is_local_mode_available = available_mode_change_[OperationMode::LOCAL];
+  state.is_remote_mode_available = available_mode_change_[OperationMode::REMOTE];
 
   if (prev_state_ != state) {
     prev_state_ = state;

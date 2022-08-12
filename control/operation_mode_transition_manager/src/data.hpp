@@ -32,7 +32,7 @@ namespace operation_mode_transition_manager
 
 using ServiceResponse = autoware_ad_api_msgs::srv::ChangeOperationMode::Response;
 using OperationModeState = autoware_ad_api_msgs::msg::OperationModeState;
-using OperationModeValue = OperationModeState::_operation_type;
+using OperationModeValue = OperationModeState::_mode_type;
 using ChangeOperationMode = tier4_system_msgs::srv::ChangeOperationMode;
 using ControlModeRequest = tier4_vehicle_msgs::srv::ControlModeRequest;
 using ControlModeReport = autoware_auto_vehicle_msgs::msg::ControlModeReport;
