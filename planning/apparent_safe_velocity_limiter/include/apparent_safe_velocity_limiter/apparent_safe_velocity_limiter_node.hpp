@@ -19,6 +19,7 @@
 #include "apparent_safe_velocity_limiter/parameters.hpp"
 #include "apparent_safe_velocity_limiter/types.hpp"
 
+#include <experimental/optional>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
@@ -31,8 +32,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/int64.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-
-#include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -111,7 +110,7 @@ private:
   /// @brief validate the inputs of the node
   /// @param[in] ego_idx trajectory index closest to the current ego pose
   /// @return true if the inputs are valid
-  bool validInputs(const boost::optional<size_t> & ego_idx);
+  bool validInputs(const std::experimental::fundamentals_v1::optional<size_t> & ego_idx);
 };
 }  // namespace apparent_safe_velocity_limiter
 

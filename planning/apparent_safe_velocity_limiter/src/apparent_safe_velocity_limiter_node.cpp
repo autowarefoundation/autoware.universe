@@ -23,10 +23,10 @@
 #include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <motion_common/trajectory_common.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <algorithm>
@@ -167,8 +167,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
 void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   const auto t_start = std::chrono::system_clock::now();
-  const auto ego_idx =
-    tier4_autoware_utils::findNearestIndex(msg->points, self_pose_listener_.getCurrentPose()->pose);
+  const auto ego_idx = autoware::motion::motion_common::findNearestIndex(
+    msg->points, self_pose_listener_.getCurrentPose()->pose);
   if (!validInputs(ego_idx)) return;
   auto original_traj = *msg;
   if (preprocessing_params_.calculate_steering_angles)
@@ -222,7 +222,8 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
     safe_footprint_polygons, occupancy_grid_ptr_->info.origin.position.z));
 }
 
-bool ApparentSafeVelocityLimiterNode::validInputs(const boost::optional<size_t> & ego_idx)
+bool ApparentSafeVelocityLimiterNode::validInputs(
+  const std::experimental::fundamentals_v1::optional<size_t> & ego_idx)
 {
   constexpr auto one_sec = rcutils_duration_value_t(1000);
   if (!occupancy_grid_ptr_)
