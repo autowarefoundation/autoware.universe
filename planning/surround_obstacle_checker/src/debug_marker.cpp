@@ -85,6 +85,11 @@ void SurroundObstacleCheckerDebugNode::publishFootprints()
   vehicle_footprint_pub_->publish(footprint);
 
   /* publish vehicle footprint polygon with offset */
+  const auto polygon_with_offset =
+    createSelfPolygonWithOffset(ego_polygon_, surround_check_distance_);
+  const auto footprint_with_offset =
+    boostPolygonToPolygonStamped(polygon_with_offset, self_pose_.position.z);
+  vehicle_footprint_offset_pub_->publish(footprint_with_offset);
 }
 
 void SurroundObstacleCheckerDebugNode::publish()
@@ -165,6 +170,26 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;
+}
+
+Polygon2d SurroundObstacleCheckerDebugNode::createSelfPolygonWithOffset(
+  const Polygon2d & base_polygon, const double & offset)
+{
+  typedef double coordinate_type;
+  const double buffer_distance = offset;
+  const int points_per_circle = 36;
+  boost::geometry::strategy::buffer::distance_symmetric<coordinate_type> distance_strategy(
+    buffer_distance);
+  boost::geometry::strategy::buffer::join_round join_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::end_round end_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::point_circle circle_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+  boost::geometry::model::multi_polygon<Polygon2d> result;
+  // Create the buffer of a multi polygon
+  boost::geometry::buffer(
+    base_polygon, result, distance_strategy, side_strategy, join_strategy, end_strategy,
+    circle_strategy);
+  return result.front();
 }
 
 PolygonStamped SurroundObstacleCheckerDebugNode::boostPolygonToPolygonStamped(

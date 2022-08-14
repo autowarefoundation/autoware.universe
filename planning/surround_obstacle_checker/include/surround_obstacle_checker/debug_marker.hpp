@@ -73,6 +73,8 @@ private:
   MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
   StopReasonArray makeStopReasonArray();
+
+  Polygon2d createSelfPolygonWithOffset(const Polygon2d & base_polygon, const double & offset);
   PolygonStamped boostPolygonToPolygonStamped(const Polygon2d & boost_polygon, const double & z);
 
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
