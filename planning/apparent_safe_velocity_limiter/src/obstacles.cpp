@@ -28,13 +28,12 @@ polygon_t createObjectPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & dimensions,
   const double buffer)
 {
-  // (objects.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
   // rename
-  const double x = pose.position.x;
-  const double y = pose.position.y;
-  const double h = dimensions.x + buffer;
-  const double w = dimensions.y + buffer;
-  const double yaw = tf2::getYaw(pose.orientation);
+  const auto x = pose.position.x;
+  const auto y = pose.position.y;
+  const auto h = dimensions.x + buffer;
+  const auto w = dimensions.y + buffer;
+  const auto yaw = tf2::getYaw(pose.orientation);
 
   // create base polygon
   polygon_t obj_poly;

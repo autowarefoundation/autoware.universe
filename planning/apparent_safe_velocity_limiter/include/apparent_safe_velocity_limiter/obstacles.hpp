@@ -54,7 +54,7 @@ struct ObstacleTree
     std::vector<segment_t> segments;
     segments.reserve(obstacles.lines.size() * 4);
     for (const auto & line : obstacles.lines)
-      for (int i = 0; i + 1 < line.size(); ++i) segments.emplace_back(line[i], line[i + 1]);
+      for (size_t i = 0; i + 1 < line.size(); ++i) segments.emplace_back(line[i], line[i + 1]);
     segments_rtree = bgi::rtree<segment_t, bgi::rstar<16>>(segments);
   }
 

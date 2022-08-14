@@ -18,17 +18,8 @@
 
 #include <pcl_ros/transforms.hpp>
 
-#include <boost/geometry/algorithms/within.hpp>
-
-#include <pcl/ModelCoefficients.h>
 #include <pcl/Vertices.h>
 #include <pcl/filters/crop_hull.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/project_inliers.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/segmentation/extract_clusters.h>
-#include <pcl/surface/concave_hull.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_eigen/tf2_eigen.h>
 

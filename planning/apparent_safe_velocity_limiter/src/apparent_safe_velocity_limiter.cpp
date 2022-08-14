@@ -120,7 +120,6 @@ void limitVelocity(
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
 {
-  constexpr auto no_filter_envelope = std::optional<double>();
   const ObstacleTree obstacle_tree(obstacles);
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
@@ -143,7 +142,7 @@ void limitVelocity(
         min_feasible_velocity,
         calculateSafeVelocity(
           trajectory_point, static_cast<Float>(*dist_to_collision - projection_params.extra_length),
-          projection_params.duration, velocity_params.min_velocity));
+          static_cast<Float>(projection_params.duration), velocity_params.min_velocity));
     }
   }
 }
